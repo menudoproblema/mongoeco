@@ -1,0 +1,56 @@
+import datetime
+import unittest
+import uuid
+
+from mongoeco.core.codec import DocumentCodec
+
+
+class DocumentCodecTests(unittest.TestCase):
+    def test_document_codec_round_trip_restores_nested_special_types(self):
+        original = {
+            "created_at": datetime.datetime(2026, 3, 23, 12, 34, 56),
+            "owner_id": uuid.UUID("12345678-1234-5678-1234-567812345678"),
+            "nested": [
+                {"updated_at": datetime.datetime(2026, 3, 23, 18, 0, 0)},
+                {"member_id": uuid.UUID("87654321-4321-8765-4321-876543218765")},
+            ],
+        }
+
+        encoded = DocumentCodec.encode(original)
+        decoded = DocumentCodec.decode(encoded)
+
+        self.assertEqual(decoded, original)
+        self.assertIsNot(decoded, original)
+        self.assertIsNot(decoded["nested"][0], original["nested"][0])
+
+    def test_document_codec_does_not_mutate_original_input(self):
+        original = {"items": [{"when": datetime.datetime(2026, 3, 23, 12, 0, 0)}]}
+
+        encoded = DocumentCodec.encode(original)
+
+        self.assertIsInstance(original["items"][0]["when"], datetime.datetime)
+        self.assertNotEqual(encoded, original)
+
+    def test_document_codec_does_not_confuse_user_dicts_with_internal_tags(self):
+        original = {
+            "$mongoeco": {"type": "datetime", "value": "user-data"},
+            "legacy_date": {"$date": "2026-03-23T12:00:00"},
+            "nested": [{"$uuid": "not-a-real-uuid"}],
+        }
+
+        encoded = DocumentCodec.encode(original)
+        decoded = DocumentCodec.decode(encoded)
+
+        self.assertEqual(decoded, original)
+
+    def test_document_codec_can_round_trip_tagged_user_dict_inside_document(self):
+        original = {
+            "meta": {
+                "$mongoeco": {
+                    "type": "objectid",
+                    "value": "507f1f77bcf86cd799439011",
+                }
+            }
+        }
+
+        self.assertEqual(DocumentCodec.decode(DocumentCodec.encode(original)), original)
