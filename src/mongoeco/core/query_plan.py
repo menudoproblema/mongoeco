@@ -63,6 +63,43 @@ class NotInCondition(QueryNode):
 
 
 @dataclass(frozen=True)
+class AllCondition(QueryNode):
+    field: str
+    values: tuple[Any, ...]
+
+
+@dataclass(frozen=True)
+class SizeCondition(QueryNode):
+    field: str
+    value: int
+
+
+@dataclass(frozen=True)
+class ModCondition(QueryNode):
+    field: str
+    divisor: int | float
+    remainder: int | float
+
+
+@dataclass(frozen=True)
+class RegexCondition(QueryNode):
+    field: str
+    pattern: str
+    options: str = ""
+
+
+@dataclass(frozen=True)
+class NotCondition(QueryNode):
+    clause: QueryNode
+
+
+@dataclass(frozen=True)
+class ElemMatchCondition(QueryNode):
+    field: str
+    condition: Any
+
+
+@dataclass(frozen=True)
 class ExistsCondition(QueryNode):
     field: str
     value: bool
@@ -83,6 +120,8 @@ def _compile_field_condition(field: str, condition: Any) -> QueryNode:
         return EqualsCondition(field, condition)
 
     clauses: list[QueryNode] = []
+    regex_value: Any = None
+    regex_options = ""
     for operator, value in condition.items():
         if operator == "$eq":
             clauses.append(EqualsCondition(field, value))
@@ -104,10 +143,50 @@ def _compile_field_condition(field: str, condition: Any) -> QueryNode:
             if not isinstance(value, (list, tuple)):
                 raise ValueError("$nin necesita una lista")
             clauses.append(NotInCondition(field, tuple(value)))
+        elif operator == "$all":
+            if not isinstance(value, (list, tuple)):
+                raise ValueError("$all necesita una lista")
+            clauses.append(AllCondition(field, tuple(value)))
+        elif operator == "$size":
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                raise ValueError("$size necesita un entero no negativo")
+            clauses.append(SizeCondition(field, value))
+        elif operator == "$mod":
+            if not isinstance(value, (list, tuple)) or len(value) != 2:
+                raise ValueError("$mod necesita una lista de dos numeros")
+            divisor, remainder = value
+            if not isinstance(divisor, (int, float)) or isinstance(divisor, bool) or divisor == 0:
+                raise ValueError("$mod necesita un divisor numerico distinto de cero")
+            if not isinstance(remainder, (int, float)) or isinstance(remainder, bool):
+                raise ValueError("$mod necesita un resto numerico")
+            clauses.append(ModCondition(field, divisor, remainder))
+        elif operator == "$regex":
+            if not isinstance(value, str):
+                raise ValueError("$regex necesita un patron string")
+            regex_value = value
+        elif operator == "$options":
+            if not isinstance(value, str):
+                raise ValueError("$options necesita un string")
+            regex_options = value
+        elif operator == "$not":
+            if not isinstance(value, dict) or not any(isinstance(key, str) and key.startswith("$") for key in value):
+                raise ValueError("$not necesita una expresion de operador")
+            clauses.append(NotCondition(_compile_field_condition(field, value)))
+        elif operator == "$elemMatch":
+            if not isinstance(value, dict):
+                raise ValueError("$elemMatch necesita una expresion de filtro")
+            clauses.append(ElemMatchCondition(field, value))
         elif operator == "$exists":
-            clauses.append(ExistsCondition(field, bool(value)))
+            if not isinstance(value, bool):
+                raise ValueError("$exists necesita un booleano")
+            clauses.append(ExistsCondition(field, value))
         else:
             raise OperationFailure(f"Unsupported query operator: {operator}")
+
+    if regex_options and regex_value is None:
+        raise OperationFailure("$options requires $regex")
+    if regex_value is not None:
+        clauses.append(RegexCondition(field, regex_value, regex_options))
 
     if len(clauses) == 1:
         return clauses[0]
@@ -115,11 +194,17 @@ def _compile_field_condition(field: str, condition: Any) -> QueryNode:
 
 
 def compile_filter(filter_spec: Filter) -> QueryNode:
+    if filter_spec is None:
+        return MatchAll()
+    if not isinstance(filter_spec, dict):
+        raise ValueError("filter_spec must be a document")
     if not filter_spec:
         return MatchAll()
 
     clauses: list[QueryNode] = []
     for key, value in filter_spec.items():
+        if key == "$expr":
+            raise OperationFailure("$expr is not supported in query filters outside aggregation $match")
         if key == "$and":
             if not isinstance(value, list):
                 raise ValueError("$and necesita una lista de filtros")
@@ -130,8 +215,23 @@ def compile_filter(filter_spec: Filter) -> QueryNode:
                 raise ValueError("$or necesita una lista de filtros")
             clauses.append(OrCondition(tuple(compile_filter(clause) for clause in value)))
             continue
+        if key == "$nor":
+            if not isinstance(value, list):
+                raise ValueError("$nor necesita una lista de filtros")
+            clauses.append(NotCondition(OrCondition(tuple(compile_filter(clause) for clause in value))))
+            continue
+        if isinstance(key, str) and key.startswith("$"):
+            raise OperationFailure(f"Unsupported top-level query operator: {key}")
         clauses.append(_compile_field_condition(key, value))
 
     if len(clauses) == 1:
         return clauses[0]
     return AndCondition(tuple(clauses))
+
+
+def ensure_query_plan(filter_spec: Filter | None = None, plan: QueryNode | None = None) -> QueryNode:
+    if plan is not None:
+        return plan
+    if filter_spec is None:
+        return MatchAll()
+    return compile_filter(filter_spec)

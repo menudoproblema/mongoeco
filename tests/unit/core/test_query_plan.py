@@ -1,12 +1,23 @@
 import unittest
 
+from mongoeco.errors import OperationFailure
 from mongoeco.core.query_plan import (
+    AllCondition,
     AndCondition,
+    ElemMatchCondition,
     EqualsCondition,
+    ExistsCondition,
     GreaterThanOrEqualCondition,
     InCondition,
+    LessThanOrEqualCondition,
+    MatchAll,
+    ModCondition,
+    NotCondition,
     OrCondition,
+    RegexCondition,
+    SizeCondition,
     compile_filter,
+    ensure_query_plan,
 )
 
 
@@ -35,6 +46,21 @@ class QueryPlanTests(unittest.TestCase):
             ),
         )
 
+    def test_compile_filter_supports_nor(self):
+        plan = compile_filter({"$nor": [{"name": "Ada"}, {"role": "admin"}]})
+
+        self.assertEqual(
+            plan,
+            NotCondition(
+                OrCondition(
+                    (
+                        EqualsCondition("name", "Ada"),
+                        EqualsCondition("role", "admin"),
+                    )
+                )
+            ),
+        )
+
     def test_compile_filter_expands_in_operator_to_typed_leaf(self):
         plan = compile_filter({"role": {"$in": ["admin", "staff"]}})
 
@@ -44,3 +70,152 @@ class QueryPlanTests(unittest.TestCase):
         plan = compile_filter({"age": {"$gte": 18, "$in": [18, 21, 30]}})
 
         self.assertIsInstance(plan, AndCondition)
+
+    def test_compile_filter_supports_all_size_and_regex(self):
+        self.assertEqual(
+            compile_filter({"tags": {"$all": ["python", "mongodb"]}}),
+            AllCondition("tags", ("python", "mongodb")),
+        )
+        self.assertEqual(
+            compile_filter({"tags": {"$size": 2}}),
+            SizeCondition("tags", 2),
+        )
+        self.assertEqual(
+            compile_filter({"count": {"$lte": 2}}),
+            LessThanOrEqualCondition("count", 2),
+        )
+        self.assertEqual(
+            compile_filter({"count": {"$mod": [3, 1]}}),
+            ModCondition("count", 3, 1),
+        )
+        self.assertEqual(
+            compile_filter({"name": {"$regex": "^ad", "$options": "i"}}),
+            RegexCondition("name", "^ad", "i"),
+        )
+        self.assertEqual(
+            compile_filter({"name": {"$not": {"$regex": "^ad", "$options": "i"}}}),
+            NotCondition(RegexCondition("name", "^ad", "i")),
+        )
+        self.assertEqual(
+            compile_filter({"items": {"$elemMatch": {"kind": "a"}}}),
+            ElemMatchCondition("items", {"kind": "a"}),
+        )
+        self.assertEqual(
+            compile_filter({"flag": {"$exists": False}}),
+            ExistsCondition("flag", False),
+        )
+
+    def test_compile_filter_rejects_invalid_all_size_and_regex_payloads(self):
+        with self.assertRaises(ValueError):
+            compile_filter({"tags": {"$all": "python"}})
+        with self.assertRaises(ValueError):
+            compile_filter({"tags": {"$size": -1}})
+        with self.assertRaises(ValueError):
+            compile_filter({"count": {"$mod": 3}})
+        with self.assertRaises(ValueError):
+            compile_filter({"count": {"$mod": [0, 1]}})
+        with self.assertRaises(ValueError):
+            compile_filter({"count": {"$mod": [3, "x"]}})
+        with self.assertRaises(ValueError):
+            compile_filter({"name": {"$regex": 123}})
+        with self.assertRaises(ValueError):
+            compile_filter({"name": {"$options": 1}})
+        with self.assertRaises(ValueError):
+            compile_filter({"name": {"$not": 1}})
+        with self.assertRaises(ValueError):
+            compile_filter({"name": {"$not": {}}})
+        with self.assertRaises(ValueError):
+            compile_filter({"name": {"$not": {"x": 1}}})
+        with self.assertRaises(ValueError):
+            compile_filter({"items": {"$elemMatch": 1}})
+        with self.assertRaises(ValueError):
+            compile_filter({"flag": {"$exists": 1}})
+        with self.assertRaises(ValueError):
+            compile_filter({"flag": {"$exists": "yes"}})
+
+    def test_compile_filter_rejects_options_without_regex(self):
+        with self.assertRaises(Exception):
+            compile_filter({"name": {"$options": "i"}})
+
+    def test_compile_filter_rejects_expr_outside_aggregation_match(self):
+        with self.assertRaises(OperationFailure):
+            compile_filter({"$expr": {"$gt": ["$a", 1]}})
+        with self.assertRaises(OperationFailure):
+            compile_filter({"$foo": 1})
+        with self.assertRaises(OperationFailure):
+            compile_filter({"$where": "this.a > 1"})
+        with self.assertRaises(OperationFailure):
+            compile_filter({"$jsonSchema": {"required": ["name"]}})
+
+    def test_compile_filter_rejects_json_schema_with_dedicated_test(self):
+        with self.assertRaises(OperationFailure):
+            compile_filter({"$jsonSchema": {"required": ["name"]}})
+
+    def test_compile_filter_rejects_where_with_dedicated_test(self):
+        with self.assertRaises(OperationFailure):
+            compile_filter({"$where": "this.a > 1"})
+
+    def test_compile_filter_rejects_unsupported_field_level_query_operators_explicitly(self):
+        unsupported_filters = [
+            {"value": {"$type": "string"}},
+            {"value": {"$bitsAllClear": 1}},
+            {"value": {"$bitsAllSet": 1}},
+            {"value": {"$bitsAnyClear": 1}},
+            {"value": {"$bitsAnySet": 1}},
+            {"location": {"$geoIntersects": {"$geometry": {}}}},
+            {"location": {"$geoWithin": {"$geometry": {}}}},
+            {"location": {"$near": [0, 0]}},
+            {"location": {"$nearSphere": [0, 0]}},
+        ]
+
+        for filter_spec in unsupported_filters:
+            with self.subTest(filter_spec=filter_spec):
+                with self.assertRaises(OperationFailure):
+                    compile_filter(filter_spec)
+
+    def test_compile_filter_rejects_geo_within_with_dedicated_test(self):
+        with self.assertRaises(OperationFailure):
+            compile_filter({"location": {"$geoWithin": {"$geometry": {}}}})
+
+    def test_compile_filter_rejects_geo_intersects_with_dedicated_test(self):
+        with self.assertRaises(OperationFailure):
+            compile_filter({"location": {"$geoIntersects": {"$geometry": {}}}})
+
+    def test_compile_filter_rejects_near_with_dedicated_test(self):
+        with self.assertRaises(OperationFailure):
+            compile_filter({"location": {"$near": [0, 0]}})
+
+    def test_compile_filter_rejects_near_sphere_with_dedicated_test(self):
+        with self.assertRaises(OperationFailure):
+            compile_filter({"location": {"$nearSphere": [0, 0]}})
+
+    def test_compile_filter_rejects_bits_all_set_with_dedicated_test(self):
+        with self.assertRaises(OperationFailure):
+            compile_filter({"value": {"$bitsAllSet": 1}})
+
+    def test_compile_filter_rejects_bits_any_set_with_dedicated_test(self):
+        with self.assertRaises(OperationFailure):
+            compile_filter({"value": {"$bitsAnySet": 1}})
+
+    def test_compile_filter_rejects_invalid_nor_payload(self):
+        with self.assertRaises(ValueError):
+            compile_filter({"$nor": {"name": "Ada"}})
+        with self.assertRaises(ValueError):
+            compile_filter({"$and": [[]]})  # type: ignore[list-item]
+        with self.assertRaises(ValueError):
+            compile_filter({"$or": [[]]})  # type: ignore[list-item]
+        with self.assertRaises(ValueError):
+            compile_filter({"$nor": [[]]})  # type: ignore[list-item]
+
+    def test_compile_filter_rejects_non_document_top_level_payload(self):
+        with self.assertRaises(ValueError):
+            compile_filter([])  # type: ignore[arg-type]
+
+    def test_compile_filter_accepts_none_as_match_all(self):
+        self.assertIsInstance(compile_filter(None), MatchAll)  # type: ignore[arg-type]
+
+    def test_ensure_query_plan_prefers_explicit_plan_and_defaults_to_match_all(self):
+        explicit = EqualsCondition("kind", "view")
+
+        self.assertIs(ensure_query_plan({"kind": "click"}, explicit), explicit)
+        self.assertIsInstance(ensure_query_plan(), MatchAll)

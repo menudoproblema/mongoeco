@@ -17,6 +17,9 @@ dev = [
     "pytest-cov",
     "ruff",
 ]
+mongodb7 = [
+    "pymongo>=4.9,<5",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

@@ -1,3 +1,4 @@
+import binascii
 import datetime
 import uuid
 from typing import Any
@@ -55,6 +56,9 @@ class DocumentCodec:
         if isinstance(data, ObjectId):
             return DocumentCodec._tagged_value("objectid", str(data))
 
+        if isinstance(data, bytes):
+            return DocumentCodec._tagged_value("bytes", binascii.hexlify(data).decode("ascii"))
+
         return data
 
     @staticmethod
@@ -70,8 +74,11 @@ class DocumentCodec:
                 return uuid.UUID(value)
             if value_type == "objectid":
                 return ObjectId(value)
+            if value_type == "bytes":
+                return binascii.unhexlify(value)
             if value_type == "dict":
                 return {k: DocumentCodec.decode(v) for k, v in value.items()}
+            raise ValueError(f"Unsupported tagged value type: {value_type}")
 
         if isinstance(data, dict):
             return {k: DocumentCodec.decode(v) for k, v in data.items()}

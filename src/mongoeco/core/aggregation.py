@@ -1,0 +1,1499 @@
+import datetime
+import math
+import uuid
+from collections.abc import Iterable
+from copy import deepcopy
+from dataclasses import dataclass
+from functools import cmp_to_key
+from typing import Any
+
+from mongoeco.core.filtering import BSONComparator
+from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.paths import delete_document_value, get_document_value, set_document_value
+from mongoeco.core.projections import apply_projection, validate_projection_spec
+from mongoeco.core.query_plan import compile_filter
+from mongoeco.core.sorting import sort_documents
+from mongoeco.errors import OperationFailure
+from mongoeco.types import Document, Filter, ObjectId, Projection, SortSpec
+
+
+type PipelineStage = dict[str, Any]
+type Pipeline = list[PipelineStage]
+
+
+def _aggregation_key(value: Any) -> Any:
+    if value is None:
+        return ("none", None)
+    if isinstance(value, bool):
+        return ("bool", value)
+    if isinstance(value, int):
+        return ("int", value)
+    if isinstance(value, float):
+        return ("float", value)
+    if isinstance(value, str):
+        return ("str", value)
+    if isinstance(value, bytes):
+        return ("bytes", value)
+    if isinstance(value, uuid.UUID):
+        return ("uuid", value)
+    if isinstance(value, ObjectId):
+        return ("objectid", value)
+    if isinstance(value, datetime.datetime):
+        return ("datetime", value)
+    if isinstance(value, dict):
+        return ("dict", tuple((key, _aggregation_key(item)) for key, item in value.items()))
+    if isinstance(value, list):
+        return ("list", tuple(_aggregation_key(item) for item in value))
+    try:
+        hash(value)
+        return (value.__class__, value)
+    except TypeError:
+        return ("repr", repr(value))
+
+
+@dataclass(frozen=True, slots=True)
+class AggregationPushdown:
+    filter_spec: Filter
+    projection: Projection | None
+    sort: SortSpec | None
+    skip: int
+    limit: int | None
+    remaining_pipeline: Pipeline
+
+
+@dataclass(slots=True)
+class _AverageAccumulator:
+    total: int | float = 0
+    count: int = 0
+
+
+def _require_stage(stage: object) -> tuple[str, object]:
+    if not isinstance(stage, dict) or len(stage) != 1:
+        raise OperationFailure("Each pipeline stage must be a single-key document")
+    operator, spec = next(iter(stage.items()))
+    if not isinstance(operator, str) or not operator.startswith("$"):
+        raise OperationFailure("Pipeline stage operator must start with '$'")
+    return operator, spec
+
+
+def _require_projection(spec: object) -> Projection:
+    if not isinstance(spec, dict):
+        raise OperationFailure("$project requires a document specification")
+    include_flags: list[int] = []
+    exclude_flags: list[int] = []
+    computed_fields_present = False
+    for key, value in spec.items():
+        if not isinstance(key, str):
+            raise OperationFailure("$project field names must be strings")
+        flag = _projection_flag(value)
+        if flag is None:
+            if key != "_id":
+                computed_fields_present = True
+            continue
+        if key != "_id":
+            if flag == 1:
+                include_flags.append(flag)
+            else:
+                exclude_flags.append(flag)
+    if include_flags and exclude_flags:
+        raise OperationFailure("cannot mix inclusion and exclusion in $project")
+    if exclude_flags and computed_fields_present:
+        raise OperationFailure("cannot mix exclusion and computed fields in $project")
+    return spec
+
+
+def _require_sort(spec: object) -> SortSpec:
+    if not isinstance(spec, dict):
+        raise OperationFailure("$sort requires a document specification")
+    sort: SortSpec = []
+    for field, direction in spec.items():
+        if not isinstance(field, str):
+            raise OperationFailure("$sort fields must be strings")
+        if isinstance(direction, bool):
+            raise OperationFailure("$sort directions must be 1 or -1")
+        if direction not in (1, -1):
+            raise OperationFailure("$sort directions must be 1 or -1")
+        sort.append((field, direction))
+    return sort
+
+
+def _require_non_negative_int(name: str, value: object) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+        raise OperationFailure(f"{name} requires a non-negative integer")
+    return value
+
+
+def _is_simple_projection(spec: object) -> bool:
+    if not isinstance(spec, dict):
+        return False
+    return all(
+        isinstance(value, bool) or (isinstance(value, int) and value in (0, 1))
+        for value in spec.values()
+    )
+
+
+def _projection_flag(value: object) -> int | None:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int) and value in (0, 1):
+        return value
+    return None
+
+
+def _require_unwind_spec(spec: object) -> tuple[str, bool, str | None]:
+    if isinstance(spec, str):
+        path = spec
+        preserve = False
+        include_array_index = None
+    elif isinstance(spec, dict):
+        path = spec.get("path")
+        preserve = bool(spec.get("preserveNullAndEmptyArrays", False))
+        include_array_index = spec.get("includeArrayIndex")
+        if include_array_index is not None and not isinstance(include_array_index, str):
+            raise OperationFailure("$unwind includeArrayIndex must be a string")
+    else:
+        raise OperationFailure("$unwind requires a path string or document")
+
+    if not isinstance(path, str) or not path.startswith("$") or path == "$":
+        raise OperationFailure("$unwind path must be a string starting with '$'")
+
+    if include_array_index is not None and include_array_index.startswith("$"):
+        raise OperationFailure("$unwind includeArrayIndex must be a field name, not a path expression")
+
+    return path[1:], preserve, include_array_index
+
+
+def _require_lookup_spec(spec: object) -> dict[str, Any]:
+    if not isinstance(spec, dict):
+        raise OperationFailure("$lookup requires a document specification")
+    if "from" not in spec or "as" not in spec:
+        raise OperationFailure("$lookup requires from and as")
+    from_collection = spec["from"]
+    output_field = spec["as"]
+    if not all(isinstance(value, str) for value in (from_collection, output_field)):
+        raise OperationFailure("$lookup fields must be strings")
+
+    if "pipeline" in spec:
+        let_spec = spec.get("let", {})
+        if not isinstance(let_spec, dict):
+            raise OperationFailure("$lookup let must be a document")
+        lookup = {
+            "from": from_collection,
+            "as": output_field,
+            "pipeline": _require_pipeline_spec("$lookup", spec["pipeline"]),
+            "let": let_spec,
+        }
+        has_local = "localField" in spec
+        has_foreign = "foreignField" in spec
+        if has_local != has_foreign:
+            raise OperationFailure("$lookup localField and foreignField must be provided together")
+        if has_local:
+            local_field = spec["localField"]
+            foreign_field = spec["foreignField"]
+            if not all(isinstance(value, str) for value in (local_field, foreign_field)):
+                raise OperationFailure("$lookup fields must be strings")
+            lookup["localField"] = local_field
+            lookup["foreignField"] = foreign_field
+        return lookup
+
+    required = {"from", "localField", "foreignField", "as"}
+    if not required <= set(spec):
+        raise OperationFailure("$lookup requires from, localField, foreignField and as")
+    if "let" in spec:
+        raise OperationFailure("$lookup let requires pipeline form")
+    local_field = spec["localField"]
+    foreign_field = spec["foreignField"]
+    if not all(isinstance(value, str) for value in (local_field, foreign_field)):
+        raise OperationFailure("$lookup fields must be strings")
+    return {
+        "from": from_collection,
+        "as": output_field,
+        "localField": local_field,
+        "foreignField": foreign_field,
+    }
+
+
+def _require_pipeline_spec(operator: str, spec: object) -> Pipeline:
+    if not isinstance(spec, list):
+        raise OperationFailure(f"{operator} requires a pipeline list")
+    return spec
+
+
+def _apply_unwind(documents: list[Document], spec: object) -> list[Document]:
+    path, preserve, include_array_index = _require_unwind_spec(spec)
+    result: list[Document] = []
+    for document in documents:
+        found, value = get_document_value(document, path)
+        if not found or value is None:
+            if preserve:
+                preserved = deepcopy(document)
+                if include_array_index is not None:
+                    preserved[include_array_index] = None
+                result.append(preserved)
+            continue
+
+        if isinstance(value, list):
+            if not value:
+                if preserve:
+                    preserved = deepcopy(document)
+                    if include_array_index is not None:
+                        preserved[include_array_index] = None
+                    result.append(preserved)
+                continue
+            for index, item in enumerate(value):
+                unwound = deepcopy(document)
+                set_document_value(unwound, path, item)
+                if include_array_index is not None:
+                    unwound[include_array_index] = index
+                result.append(unwound)
+            continue
+
+        unwound = deepcopy(document)
+        if include_array_index is not None:
+            unwound[include_array_index] = None
+        result.append(unwound)
+    return result
+
+
+def _lookup_matches(local_values: list[Any], foreign_values: list[Any]) -> bool:
+    left = local_values or [None]
+    right = foreign_values or [None]
+    return any(QueryEngine._values_equal(local_value, foreign_value) for local_value in left for foreign_value in right)
+
+
+def _match_spec_contains_expr(match_spec: object) -> bool:
+    if not isinstance(match_spec, dict):
+        return False
+    for key, value in match_spec.items():
+        if key == "$expr":
+            return True
+        if key in {"$and", "$or", "$nor"} and isinstance(value, list):
+            if any(_match_spec_contains_expr(item) for item in value):
+                return True
+    return False
+
+
+def _merge_match_filters(left: Filter, right: Filter) -> Filter:
+    if not left:
+        return right
+    return {"$and": [left, right]}
+
+
+def _require_expression_args(operator: str, spec: object, *, min_args: int, max_args: int | None = None) -> list[object]:
+    if not isinstance(spec, list):
+        raise OperationFailure(f"{operator} requires a list expression")
+    if len(spec) < min_args:
+        raise OperationFailure(f"{operator} requires at least {min_args} arguments")
+    if max_args is not None and len(spec) > max_args:
+        raise OperationFailure(f"{operator} accepts at most {max_args} arguments")
+    return spec
+
+
+def _compare_values(left: Any, right: Any, operator: str) -> bool:
+    if operator == "$eq":
+        return QueryEngine._values_equal(left, right)
+    if operator == "$ne":
+        return not QueryEngine._values_equal(left, right)
+    comparison = BSONComparator.compare(left, right)
+    return {
+        "$gt": comparison > 0,
+        "$gte": comparison >= 0,
+        "$lt": comparison < 0,
+        "$lte": comparison <= 0,
+    }[operator]
+
+
+def _require_numeric(operator: str, value: object) -> int | float:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        raise OperationFailure(f"{operator} requires numeric arguments")
+    return value
+
+
+def _is_numeric(value: object) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _require_array(operator: str, value: object) -> list[Any]:
+    if not isinstance(value, list):
+        raise OperationFailure(f"{operator} requires array arguments")
+    return value
+
+
+def _expression_truthy(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return value != 0
+    return True
+
+
+def _append_unique_values(target: list[Any], values: list[Any]) -> None:
+    for value in values:
+        if any(QueryEngine._values_equal(value, existing) for existing in target):
+            continue
+        target.append(deepcopy(value))
+
+
+def _normalize_sort_array_spec(spec: object) -> SortSpec | int:
+    if spec in (1, -1) and not isinstance(spec, bool):
+        return spec
+    if not isinstance(spec, dict):
+        raise OperationFailure("$sortArray sortBy must be 1, -1 or a document")
+    sort_spec: SortSpec = []
+    for field, direction in spec.items():
+        if not isinstance(field, str):
+            raise OperationFailure("$sortArray sort fields must be strings")
+        if isinstance(direction, bool):
+            raise OperationFailure("$sortArray sort directions must be 1 or -1")
+        if direction not in (1, -1):
+            raise OperationFailure("$sortArray sort directions must be 1 or -1")
+        sort_spec.append((field, direction))
+    return sort_spec
+
+
+def _truncate_datetime(value: datetime.datetime, unit: str, bin_size: int, start_of_week: str) -> datetime.datetime:
+    if bin_size <= 0:
+        raise OperationFailure("$dateTrunc binSize must be a positive integer")
+
+    if unit == "year":
+        year = ((value.year - 1) // bin_size) * bin_size + 1
+        return value.replace(year=year, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    if unit == "quarter":
+        quarter_index = (value.month - 1) // 3
+        truncated_quarter = (quarter_index // bin_size) * bin_size
+        month = truncated_quarter * 3 + 1
+        return value.replace(month=month, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    if unit == "month":
+        month_index = value.month - 1
+        month = (month_index // bin_size) * bin_size + 1
+        return value.replace(month=month, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    if unit == "week":
+        weekdays = {
+            "sunday": 6,
+            "monday": 0,
+            "tuesday": 1,
+            "wednesday": 2,
+            "thursday": 3,
+            "friday": 4,
+            "saturday": 5,
+        }
+        normalized = start_of_week.lower()
+        if normalized not in weekdays:
+            raise OperationFailure("$dateTrunc startOfWeek is invalid")
+        weekday_index = weekdays[normalized]
+        day_start = value.replace(hour=0, minute=0, second=0, microsecond=0)
+        delta = (day_start.weekday() - weekday_index) % 7
+        week_start = day_start - datetime.timedelta(days=delta)
+        anchor = datetime.datetime(1970, 1, 4, tzinfo=value.tzinfo)
+        if normalized != "sunday":
+            anchor_delta = (anchor.weekday() - weekday_index) % 7
+            anchor -= datetime.timedelta(days=anchor_delta)
+        weeks = (week_start - anchor).days // 7
+        return anchor + datetime.timedelta(weeks=(weeks // bin_size) * bin_size)
+
+    if unit == "day":
+        day_start = value.replace(hour=0, minute=0, second=0, microsecond=0)
+        anchor = datetime.datetime(1970, 1, 1, tzinfo=value.tzinfo)
+        days = (day_start - anchor).days
+        return anchor + datetime.timedelta(days=(days // bin_size) * bin_size)
+
+    if unit == "hour":
+        hour_start = value.replace(minute=0, second=0, microsecond=0)
+        anchor = datetime.datetime(1970, 1, 1, tzinfo=value.tzinfo)
+        hours = int((hour_start - anchor).total_seconds() // 3600)
+        return anchor + datetime.timedelta(hours=(hours // bin_size) * bin_size)
+
+    if unit == "minute":
+        minute_start = value.replace(second=0, microsecond=0)
+        anchor = datetime.datetime(1970, 1, 1, tzinfo=value.tzinfo)
+        minutes = int((minute_start - anchor).total_seconds() // 60)
+        return anchor + datetime.timedelta(minutes=(minutes // bin_size) * bin_size)
+
+    if unit == "second":
+        second_start = value.replace(microsecond=0)
+        anchor = datetime.datetime(1970, 1, 1, tzinfo=value.tzinfo)
+        seconds = int((second_start - anchor).total_seconds())
+        return anchor + datetime.timedelta(seconds=(seconds // bin_size) * bin_size)
+
+    raise OperationFailure(f"Unsupported $dateTrunc unit: {unit}")
+
+
+def _resolve_variable_expression(expression: str, variables: dict[str, Any]) -> Any:
+    name_and_path = expression[2:]
+    name, _, path = name_and_path.partition(".")
+    if name == "REMOVE":
+        return _REMOVE if not path else None
+    value = variables.get(name)
+    if not path:
+        return value
+    if value is None:
+        return None
+    resolved = _resolve_aggregation_field_path(value, path)
+    return None if resolved is _MISSING else resolved
+
+
+_MISSING = object()
+_REMOVE = object()
+
+
+def _resolve_aggregation_field_path(value: Any, path: str) -> Any:
+    if not path:
+        return value
+
+    if isinstance(value, list):
+        head, _, tail = path.partition(".")
+        if head.isdigit():
+            index = int(head)
+            if index >= len(value):
+                return _MISSING
+            next_value = value[index]
+            return _resolve_aggregation_field_path(next_value, tail)
+
+        resolved_items: list[Any] = []
+        for item in value:
+            resolved = _resolve_aggregation_field_path(item, path)
+            if resolved is _MISSING:
+                continue
+            resolved_items.append(resolved)
+        return resolved_items if resolved_items else _MISSING
+
+    if not isinstance(value, dict):
+        return _MISSING
+
+    head, _, tail = path.partition(".")
+    if head not in value:
+        return _MISSING
+    return _resolve_aggregation_field_path(value[head], tail)
+
+
+def _mongo_mod(left: int | float, right: int | float) -> int | float:
+    if not math.isfinite(left) or not math.isfinite(right):
+        return math.nan
+    quotient = int(left / right)
+    return left - right * quotient
+
+
+def _stringify_aggregation_value(value: Any) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, float):
+        if math.isnan(value):
+            return "NaN"
+        if math.isinf(value):
+            return "Infinity" if value > 0 else "-Infinity"
+    if isinstance(value, datetime.datetime):
+        normalized = value.astimezone(datetime.UTC) if value.tzinfo is not None else value
+        return normalized.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    return str(value)
+
+
+def evaluate_expression(document: Document, expression: object, variables: dict[str, Any] | None = None) -> Any:
+    if variables is None:
+        variables = {"ROOT": document, "CURRENT": document}
+    else:
+        variables = {**variables, "ROOT": document, "CURRENT": document}
+
+    if isinstance(expression, str):
+        if expression.startswith("$$"):
+            return _resolve_variable_expression(expression, variables)
+        if expression.startswith("$"):
+            value = _resolve_aggregation_field_path(document, expression[1:])
+            return None if value is _MISSING else value
+        return expression
+
+    if isinstance(expression, list):
+        return [evaluate_expression(document, item, variables) for item in expression]
+
+    if not isinstance(expression, dict):
+        return expression
+
+    if len(expression) == 1:
+        operator, spec = next(iter(expression.items()))
+        if isinstance(operator, str) and operator.startswith("$"):
+            if operator == "$literal":
+                return deepcopy(spec)
+            if operator in {"$eq", "$ne", "$gt", "$gte", "$lt", "$lte"}:
+                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
+                left = evaluate_expression(document, args[0], variables)
+                right = evaluate_expression(document, args[1], variables)
+                return _compare_values(left, right, operator)
+            if operator == "$and":
+                args = _require_expression_args(operator, spec, min_args=0)
+                return all(_expression_truthy(evaluate_expression(document, item, variables)) for item in args)
+            if operator == "$or":
+                args = _require_expression_args(operator, spec, min_args=0)
+                return any(_expression_truthy(evaluate_expression(document, item, variables)) for item in args)
+            if operator == "$in":
+                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
+                needle = evaluate_expression(document, args[0], variables)
+                haystack = evaluate_expression(document, args[1], variables)
+                if haystack is None:
+                    return None
+                if not isinstance(haystack, list):
+                    raise OperationFailure("$in requires the second argument to evaluate to a list")
+                return any(QueryEngine._values_equal(needle, item) for item in haystack)
+            if operator == "$ifNull":
+                args = _require_expression_args(operator, spec, min_args=2)
+                for item in args:
+                    value = evaluate_expression(document, item, variables)
+                    if value is not None:
+                        return value
+                return None
+            if operator == "$cond":
+                if isinstance(spec, list):
+                    args = _require_expression_args(operator, spec, min_args=3, max_args=3)
+                    condition, when_true, when_false = args
+                elif isinstance(spec, dict):
+                    if not {"if", "then", "else"} <= set(spec):
+                        raise OperationFailure("$cond object form requires if, then and else")
+                    condition = spec["if"]
+                    when_true = spec["then"]
+                    when_false = spec["else"]
+                else:
+                    raise OperationFailure("$cond requires a list or document specification")
+                branch = when_true if _expression_truthy(evaluate_expression(document, condition, variables)) else when_false
+                return evaluate_expression(document, branch, variables)
+            if operator in {"$add", "$multiply"}:
+                args = _require_expression_args(operator, spec, min_args=2)
+                raw_values = [evaluate_expression(document, item, variables) for item in args]
+                if any(value is None for value in raw_values):
+                    return None
+                values = [_require_numeric(operator, value) for value in raw_values]
+                result = values[0]
+                for value in values[1:]:
+                    result = result + value if operator == "$add" else result * value
+                return result
+            if operator in {"$subtract", "$divide", "$mod"}:
+                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
+                left_raw = evaluate_expression(document, args[0], variables)
+                right_raw = evaluate_expression(document, args[1], variables)
+                if left_raw is None or right_raw is None:
+                    return None
+                left = _require_numeric(operator, left_raw)
+                right = _require_numeric(operator, right_raw)
+                if operator == "$subtract":
+                    return left - right
+                if operator == "$divide":
+                    if right == 0:
+                        raise OperationFailure("$divide cannot divide by zero")
+                    return left / right
+                if right == 0:
+                    raise OperationFailure("$mod cannot divide by zero")
+                return _mongo_mod(left, right)
+            if operator in {"$floor", "$ceil"}:
+                args = _require_expression_args(operator, spec, min_args=1, max_args=1)
+                raw_value = evaluate_expression(document, args[0], variables)
+                if raw_value is None:
+                    return None
+                value = _require_numeric(operator, raw_value)
+                if math.isnan(value) or math.isinf(value):
+                    return value
+                integer = int(value)
+                if operator == "$floor":
+                    return integer if integer <= value else integer - 1
+                return integer if integer >= value else integer + 1
+            if operator == "$size":
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                value = evaluate_expression(document, args[0], variables)
+                if value is None:
+                    return None
+                if not isinstance(value, list):
+                    raise OperationFailure("$size requires an array value")
+                return len(value)
+            if operator == "$arrayElemAt":
+                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
+                values = evaluate_expression(document, args[0], variables)
+                index = evaluate_expression(document, args[1], variables)
+                if values is None:
+                    return None
+                if index is None:
+                    return None
+                if not isinstance(values, list):
+                    raise OperationFailure("$arrayElemAt requires an array as first argument")
+                if not isinstance(index, int) or isinstance(index, bool):
+                    raise OperationFailure("$arrayElemAt requires an integer index")
+                if index < 0:
+                    index += len(values)
+                if index < 0 or index >= len(values):
+                    return None
+                return values[index]
+            if operator == "$toString":
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                value = evaluate_expression(document, args[0], variables)
+                return None if value is None else _stringify_aggregation_value(value)
+            if operator == "$let":
+                if not isinstance(spec, dict) or "vars" not in spec or "in" not in spec or not isinstance(spec["vars"], dict):
+                    raise OperationFailure("$let requires vars and in")
+                scoped = dict(variables)
+                for name, value_expression in spec["vars"].items():
+                    scoped[name] = evaluate_expression(document, value_expression, variables)
+                return evaluate_expression(document, spec["in"], scoped)
+            if operator == "$first":
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                value = evaluate_expression(document, args[0], variables)
+                if isinstance(value, list):
+                    return value[0] if value else None
+                return value
+            if operator == "$concatArrays":
+                args = _require_expression_args(operator, spec, min_args=1)
+                result: list[Any] = []
+                for item in args:
+                    value = evaluate_expression(document, item, variables)
+                    if value is None:
+                        return None
+                    result.extend(deepcopy(_require_array(operator, value)))
+                return result
+            if operator == "$setUnion":
+                args = _require_expression_args(operator, spec, min_args=1)
+                result: list[Any] = []
+                for item in args:
+                    value = evaluate_expression(document, item, variables)
+                    if value is None:
+                        return None
+                    _append_unique_values(result, _require_array(operator, value))
+                return result
+            if operator == "$map":
+                if not isinstance(spec, dict) or "input" not in spec or "in" not in spec:
+                    raise OperationFailure("$map requires input and in")
+                source = evaluate_expression(document, spec["input"], variables)
+                if source is None:
+                    return None
+                source = _require_array(operator, source)
+                alias = spec.get("as", "this")
+                if not isinstance(alias, str):
+                    raise OperationFailure("$map as must be a string")
+                result = []
+                for item in source:
+                    scoped = dict(variables)
+                    scoped[alias] = item
+                    scoped["this"] = item
+                    result.append(evaluate_expression(document, spec["in"], scoped))
+                return result
+            if operator == "$filter":
+                if not isinstance(spec, dict) or "input" not in spec or "cond" not in spec:
+                    raise OperationFailure("$filter requires input and cond")
+                source = evaluate_expression(document, spec["input"], variables)
+                if source is None:
+                    return None
+                source = _require_array(operator, source)
+                alias = spec.get("as", "this")
+                if not isinstance(alias, str):
+                    raise OperationFailure("$filter as must be a string")
+                result = []
+                for item in source:
+                    scoped = dict(variables)
+                    scoped[alias] = item
+                    scoped["this"] = item
+                    if _expression_truthy(evaluate_expression(document, spec["cond"], scoped)):
+                        result.append(deepcopy(item))
+                return result
+            if operator == "$reduce":
+                if not isinstance(spec, dict) or not {"input", "initialValue", "in"} <= set(spec):
+                    raise OperationFailure("$reduce requires input, initialValue and in")
+                source = evaluate_expression(document, spec["input"], variables)
+                if source is None:
+                    return None
+                source = _require_array(operator, source)
+                accumulated = evaluate_expression(document, spec["initialValue"], variables)
+                for item in source:
+                    scoped = dict(variables)
+                    scoped["value"] = accumulated
+                    scoped["this"] = item
+                    accumulated = evaluate_expression(document, spec["in"], scoped)
+                return accumulated
+            if operator == "$arrayToObject":
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                raw_values = evaluate_expression(document, args[0], variables)
+                if raw_values is None:
+                    return None
+                values = _require_array(operator, raw_values)
+                result: dict[str, Any] = {}
+                for item in values:
+                    if isinstance(item, list) and len(item) == 2:
+                        key, value = item
+                    elif isinstance(item, dict) and set(item) == {"k", "v"}:
+                        key, value = item["k"], item["v"]
+                    else:
+                        raise OperationFailure("$arrayToObject requires [key, value] pairs or {k, v} documents")
+                    if not isinstance(key, str):
+                        raise OperationFailure("$arrayToObject keys must be strings")
+                    result[key] = deepcopy(value)
+                return result
+            if operator == "$indexOfArray":
+                args = _require_expression_args(operator, spec, min_args=2, max_args=4)
+                values = evaluate_expression(document, args[0], variables)
+                if values is None:
+                    return None
+                values = _require_array(operator, values)
+                needle = evaluate_expression(document, args[1], variables)
+                start = 0
+                end = len(values)
+                if len(args) >= 3:
+                    start = evaluate_expression(document, args[2], variables)
+                    if not isinstance(start, int) or isinstance(start, bool):
+                        raise OperationFailure("$indexOfArray start must be an integer")
+                if len(args) == 4:
+                    end = evaluate_expression(document, args[3], variables)
+                    if not isinstance(end, int) or isinstance(end, bool):
+                        raise OperationFailure("$indexOfArray end must be an integer")
+                for index, value in enumerate(values[max(start, 0):max(end, 0)], start=max(start, 0)):
+                    if QueryEngine._values_equal(value, needle):
+                        return index
+                return -1
+            if operator == "$sortArray":
+                if not isinstance(spec, dict) or "input" not in spec or "sortBy" not in spec:
+                    raise OperationFailure("$sortArray requires input and sortBy")
+                input_value = evaluate_expression(document, spec["input"], variables)
+                if input_value is None:
+                    return None
+                values = deepcopy(_require_array(operator, input_value))
+                sort_by = _normalize_sort_array_spec(spec["sortBy"])
+                if isinstance(sort_by, int):
+                    return sorted(values, key=cmp_to_key(BSONComparator.compare), reverse=sort_by == -1)
+                return sort_documents(values, sort_by)
+            if operator == "$dateTrunc":
+                if not isinstance(spec, dict) or "date" not in spec or "unit" not in spec:
+                    raise OperationFailure("$dateTrunc requires date and unit")
+                value = evaluate_expression(document, spec["date"], variables)
+                if value is None:
+                    return None
+                if not isinstance(value, datetime.datetime):
+                    raise OperationFailure("$dateTrunc requires a datetime value")
+                unit = spec["unit"]
+                if not isinstance(unit, str):
+                    raise OperationFailure("$dateTrunc unit must be a string")
+                bin_size = spec.get("binSize", 1)
+                if not isinstance(bin_size, int) or isinstance(bin_size, bool):
+                    raise OperationFailure("$dateTrunc binSize must be an integer")
+                timezone = spec.get("timezone")
+                if timezone not in (None, "UTC"):
+                    raise OperationFailure("$dateTrunc timezone is not supported")
+                start_of_week = spec.get("startOfWeek", "sunday")
+                if not isinstance(start_of_week, str):
+                    raise OperationFailure("$dateTrunc startOfWeek must be a string")
+                return _truncate_datetime(value, unit, bin_size, start_of_week)
+            if operator == "$mergeObjects":
+                args = _require_expression_args(operator, spec, min_args=1)
+                merged: dict[str, Any] = {}
+                for item in args:
+                    value = evaluate_expression(document, item, variables)
+                    if value is None:
+                        continue
+                    if not isinstance(value, dict):
+                        raise OperationFailure("$mergeObjects requires document operands")
+                    merged.update(deepcopy(value))
+                return merged
+            if operator == "$getField":
+                if isinstance(spec, str):
+                    field_name = spec
+                    source = document
+                elif isinstance(spec, dict):
+                    if "field" not in spec:
+                        raise OperationFailure("$getField requires field")
+                    field_name = evaluate_expression(document, spec["field"], variables)
+                    source = evaluate_expression(document, spec.get("input", "$$CURRENT"), variables)
+                else:
+                    raise OperationFailure("$getField requires a string or document specification")
+                if field_name is None:
+                    return None
+                if not isinstance(field_name, str):
+                    raise OperationFailure("$getField field must evaluate to a string")
+                if not isinstance(source, dict):
+                    return None
+                return deepcopy(source.get(field_name))
+            raise OperationFailure(f"Unsupported aggregation expression: {operator}")
+
+    return {key: evaluate_expression(document, value, variables) for key, value in expression.items()}
+
+
+def _apply_match(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+    if not isinstance(spec, dict):
+        raise OperationFailure("$match requires a document specification")
+
+    def _match_spec(document: Document, match_spec: dict[str, Any]) -> bool:
+        expr = match_spec.get("$expr")
+        filter_spec = {key: value for key, value in match_spec.items() if key != "$expr"}
+        if "$and" in filter_spec:
+            clauses = filter_spec.pop("$and")
+            if not isinstance(clauses, list):
+                raise OperationFailure("$and in $match requires a list")
+            if not all(_match_spec(document, clause) for clause in clauses):
+                return False
+        if "$or" in filter_spec:
+            clauses = filter_spec.pop("$or")
+            if not isinstance(clauses, list):
+                raise OperationFailure("$or in $match requires a list")
+            if not any(_match_spec(document, clause) for clause in clauses):
+                return False
+        if "$nor" in filter_spec:
+            clauses = filter_spec.pop("$nor")
+            if not isinstance(clauses, list):
+                raise OperationFailure("$nor in $match requires a list")
+            if any(_match_spec(document, clause) for clause in clauses):
+                return False
+        if filter_spec:
+            plan = compile_filter(filter_spec)
+            if not QueryEngine.match_plan(document, plan):
+                return False
+        if expr is not None and not _expression_truthy(evaluate_expression(document, expr, variables)):
+            return False
+        return True
+
+    if _match_spec_contains_expr(spec):
+        return [document for document in documents if _match_spec(document, spec)]
+
+    plan = compile_filter(spec) if spec else None
+    result: list[Document] = []
+    for document in documents:
+        if plan is not None and not QueryEngine.match_plan(document, plan):
+            continue
+        result.append(document)
+    return result
+
+
+def _apply_add_fields(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+    if not isinstance(spec, dict):
+        raise OperationFailure("$addFields requires a document specification")
+    result: list[Document] = []
+    for document in documents:
+        enriched = deepcopy(document)
+        evaluated = {
+            path: evaluate_expression(document, expression, variables)
+            for path, expression in spec.items()
+        }
+        for path, expression in spec.items():
+            if not isinstance(path, str):
+                raise OperationFailure("$addFields field names must be strings")
+            if evaluated[path] is _REMOVE:
+                delete_document_value(enriched, path)
+                continue
+            set_document_value(enriched, path, evaluated[path])
+        result.append(enriched)
+    return result
+
+
+def _apply_project(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+    projection = _require_projection(spec)
+    computed_fields = {
+        key: value
+        for key, value in projection.items()
+        if _projection_flag(value) is None
+    }
+    if not computed_fields:
+        return [apply_projection(document, projection) for document in documents]
+
+    include_fields = {
+        key: _projection_flag(value)
+        for key, value in projection.items()
+        if _projection_flag(value) is not None
+    }
+    include_id = include_fields.get("_id", 1) != 0
+    result: list[Document] = []
+    for document in documents:
+        projected: Document = {}
+        include_mode = any(value == 1 for key, value in include_fields.items() if key != "_id")
+        if include_mode:
+            projected = apply_projection(document, include_fields)
+        elif include_id and "_id" in document:
+            projected["_id"] = deepcopy(document["_id"])
+        for path, expression in computed_fields.items():
+            value = evaluate_expression(document, expression, variables)
+            if value is _REMOVE:
+                delete_document_value(projected, path)
+                continue
+            set_document_value(projected, path, value)
+        result.append(projected)
+    return result
+
+
+def _apply_group(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+    if not isinstance(spec, dict) or "_id" not in spec:
+        raise OperationFailure("$group requires a document specification with _id")
+
+    accumulator_specs = {key: value for key, value in spec.items() if key != "_id"}
+    groups: dict[Any, dict[str, Any]] = {}
+
+    for document in documents:
+        group_id = evaluate_expression(document, spec["_id"], variables)
+        group_key = _aggregation_key(group_id)
+        if group_key not in groups:
+            groups[group_key] = {"_id": deepcopy(group_id)}
+            for field, accumulator in accumulator_specs.items():
+                if not isinstance(accumulator, dict) or len(accumulator) != 1:
+                    raise OperationFailure("$group accumulator must be a single-key document")
+                operator, _ = next(iter(accumulator.items()))
+                if operator == "$sum":
+                    groups[group_key][field] = 0
+                elif operator in {"$min", "$max", "$first"}:
+                    groups[group_key][field] = None
+                    groups[group_key][f"__has_{field}"] = False
+                elif operator == "$avg":
+                    groups[group_key][field] = _AverageAccumulator()
+                elif operator == "$push":
+                    groups[group_key][field] = []
+                else:
+                    raise OperationFailure(f"Unsupported $group accumulator: {operator}")
+
+        bucket = groups[group_key]
+        for field, accumulator in accumulator_specs.items():
+            operator, expression = next(iter(accumulator.items()))
+            value = evaluate_expression(document, expression, variables)
+            if operator == "$sum":
+                if value is None:
+                    continue
+                if not _is_numeric(value):
+                    continue
+                bucket[field] += value
+            elif operator == "$min":
+                if value is None:
+                    continue
+                if not bucket[f"__has_{field}"] or BSONComparator.compare(value, bucket[field]) < 0:
+                    bucket[field] = deepcopy(value)
+                    bucket[f"__has_{field}"] = True
+            elif operator == "$max":
+                if value is None:
+                    continue
+                if not bucket[f"__has_{field}"] or BSONComparator.compare(value, bucket[field]) > 0:
+                    bucket[field] = deepcopy(value)
+                    bucket[f"__has_{field}"] = True
+            elif operator == "$avg":
+                if value is None:
+                    continue
+                if not _is_numeric(value):
+                    continue
+                bucket[field].total += value
+                bucket[field].count += 1
+            elif operator == "$push":
+                bucket[field].append(deepcopy(value))
+            elif operator == "$first":
+                if not bucket[f"__has_{field}"]:
+                    bucket[field] = deepcopy(value)
+                    bucket[f"__has_{field}"] = True
+
+    result: list[Document] = []
+    for bucket in groups.values():
+        document: Document = {}
+        for field, value in bucket.items():
+            if field.startswith("__has_"):
+                continue
+            if isinstance(value, _AverageAccumulator):
+                document[field] = None if value.count == 0 else value.total / value.count
+            else:
+                document[field] = value
+        result.append(document)
+    return result
+
+
+def _initialize_accumulators(accumulator_specs: dict[str, object] | None, *, default_sum: bool = False) -> dict[str, Any]:
+    initialized: dict[str, Any] = {}
+    specs = {"count": {"$sum": 1}} if accumulator_specs is None and default_sum else (accumulator_specs or {})
+    for field, accumulator in specs.items():
+        if not isinstance(accumulator, dict) or len(accumulator) != 1:
+            raise OperationFailure("Accumulator must be a single-key document")
+        operator, _ = next(iter(accumulator.items()))
+        if operator == "$sum":
+            initialized[field] = 0
+        elif operator in {"$min", "$max", "$first"}:
+            initialized[field] = None
+            initialized[f"__has_{field}"] = False
+        elif operator == "$avg":
+            initialized[field] = _AverageAccumulator()
+        elif operator == "$push":
+            initialized[field] = []
+        else:
+            raise OperationFailure(f"Unsupported accumulator: {operator}")
+    return initialized
+
+
+def _apply_accumulators(
+    bucket: dict[str, Any],
+    accumulator_specs: dict[str, object] | None,
+    document: Document,
+    variables: dict[str, Any] | None = None,
+) -> None:
+    specs = {"count": {"$sum": 1}} if accumulator_specs is None else accumulator_specs
+    for field, accumulator in specs.items():
+        operator, expression = next(iter(accumulator.items()))
+        value = evaluate_expression(document, expression, variables)
+        if operator == "$sum":
+            if value is None:
+                continue
+            if not _is_numeric(value):
+                continue
+            bucket[field] += value
+        elif operator == "$min":
+            if value is None:
+                continue
+            if not bucket[f"__has_{field}"] or BSONComparator.compare(value, bucket[field]) < 0:
+                bucket[field] = deepcopy(value)
+                bucket[f"__has_{field}"] = True
+        elif operator == "$max":
+            if value is None:
+                continue
+            if not bucket[f"__has_{field}"] or BSONComparator.compare(value, bucket[field]) > 0:
+                bucket[field] = deepcopy(value)
+                bucket[f"__has_{field}"] = True
+        elif operator == "$avg":
+            if value is None:
+                continue
+            if not _is_numeric(value):
+                continue
+            bucket[field].total += value
+            bucket[field].count += 1
+        elif operator == "$push":
+            bucket[field].append(deepcopy(value))
+        elif operator == "$first":
+            if not bucket[f"__has_{field}"]:
+                bucket[field] = deepcopy(value)
+                bucket[f"__has_{field}"] = True
+
+
+def _finalize_accumulators(bucket: dict[str, Any]) -> Document:
+    document: Document = {}
+    for field, value in bucket.items():
+        if field.startswith("__has_"):
+            continue
+        if isinstance(value, _AverageAccumulator):
+            document[field] = None if value.count == 0 else value.total / value.count
+        else:
+            document[field] = value
+    return document
+
+
+def _apply_bucket(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+    if not isinstance(spec, dict) or "groupBy" not in spec or "boundaries" not in spec:
+        raise OperationFailure("$bucket requires groupBy and boundaries")
+    boundaries = spec["boundaries"]
+    if not isinstance(boundaries, list) or len(boundaries) < 2:
+        raise OperationFailure("$bucket boundaries must be a list with at least two values")
+    for index in range(len(boundaries) - 1):
+        if BSONComparator.compare(boundaries[index], boundaries[index + 1]) >= 0:
+            raise OperationFailure("$bucket boundaries must be strictly increasing")
+
+    output = spec.get("output")
+    if output is not None and not isinstance(output, dict):
+        raise OperationFailure("$bucket output must be a document")
+
+    default_bucket = spec.get("default")
+    buckets: list[dict[str, Any]] = []
+    for lower in boundaries[:-1]:
+        bucket = {"_id": deepcopy(lower)}
+        bucket.update(_initialize_accumulators(output, default_sum=output is None))
+        buckets.append(bucket)
+
+    default_state: dict[str, Any] | None = None
+    if "default" in spec:
+        default_state = {"_id": deepcopy(default_bucket)}
+        default_state.update(_initialize_accumulators(output, default_sum=output is None))
+
+    for document in documents:
+        value = evaluate_expression(document, spec["groupBy"], variables)
+        matched = False
+        for index, lower in enumerate(boundaries[:-1]):
+            upper = boundaries[index + 1]
+            if BSONComparator.compare(value, lower) >= 0 and BSONComparator.compare(value, upper) < 0:
+                _apply_accumulators(buckets[index], output, document, variables)
+                matched = True
+                break
+        if matched:
+            continue
+        if default_state is not None:
+            _apply_accumulators(default_state, output, document, variables)
+            continue
+        raise OperationFailure("$bucket found a document outside of the specified boundaries")
+
+    result = [_finalize_accumulators(bucket) for bucket in buckets]
+    if default_state is not None:
+        result.append(_finalize_accumulators(default_state))
+    return result
+
+
+def _apply_bucket_auto(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+    if not isinstance(spec, dict) or "groupBy" not in spec or "buckets" not in spec:
+        raise OperationFailure("$bucketAuto requires groupBy and buckets")
+    buckets = spec["buckets"]
+    if not isinstance(buckets, int) or isinstance(buckets, bool) or buckets <= 0:
+        raise OperationFailure("$bucketAuto buckets must be a positive integer")
+    if "granularity" in spec:
+        raise OperationFailure("$bucketAuto granularity is not supported")
+
+    output = spec.get("output")
+    if output is not None and not isinstance(output, dict):
+        raise OperationFailure("$bucketAuto output must be a document")
+
+    evaluated = [(evaluate_expression(document, spec["groupBy"], variables), document) for document in documents]
+    if not evaluated:
+        return []
+
+    evaluated.sort(key=lambda item: cmp_to_key(BSONComparator.compare)(item[0]))
+    bucket_count = min(buckets, len(evaluated))
+    base = len(evaluated) // bucket_count
+    remainder = len(evaluated) % bucket_count
+    sizes = [base + (1 if index < remainder else 0) for index in range(bucket_count)]
+
+    result: list[Document] = []
+    start = 0
+    for size_index, size in enumerate(sizes):
+        chunk = evaluated[start:start + size]
+        start += size
+        lower = deepcopy(chunk[0][0])
+        if size_index + 1 < len(sizes):
+            upper = deepcopy(evaluated[start][0])
+        else:
+            upper = deepcopy(chunk[-1][0])
+
+        bucket = {"_id": {"min": lower, "max": upper}}
+        bucket.update(_initialize_accumulators(output, default_sum=output is None))
+        for _, document in chunk:
+            _apply_accumulators(bucket, output, document, variables)
+        result.append(_finalize_accumulators(bucket))
+    return result
+
+
+def _require_window_output_spec(spec: object) -> tuple[str, object, dict[str, object] | None]:
+    if not isinstance(spec, dict):
+        raise OperationFailure("$setWindowFields output entries must be documents")
+    window = spec.get("window")
+    if window is not None and not isinstance(window, dict):
+        raise OperationFailure("$setWindowFields window must be a document")
+    operator_items = [(key, value) for key, value in spec.items() if key != "window"]
+    if len(operator_items) != 1:
+        raise OperationFailure("$setWindowFields output entries require exactly one accumulator")
+    operator, expression = operator_items[0]
+    return operator, expression, window
+
+
+def _resolve_window_index(bound: object, current_index: int, last_index: int, *, lower: bool) -> int:
+    if bound == "unbounded":
+        return 0 if lower else last_index
+    if bound == "current":
+        return current_index
+    if isinstance(bound, int) and not isinstance(bound, bool):
+        return current_index + bound
+    raise OperationFailure("$setWindowFields documents bounds must be integers, 'current' or 'unbounded'")
+
+
+def _require_range_bound(bound: object) -> int | float | str:
+    if bound in {"current", "unbounded"}:
+        return bound
+    if isinstance(bound, (int, float)) and not isinstance(bound, bool):
+        return bound
+    raise OperationFailure("$setWindowFields range bounds must be numeric, 'current' or 'unbounded'")
+
+
+def _resolve_range_value(current_value: object, bound: int | float | str, *, lower: bool) -> float:
+    if bound == "unbounded":
+        return float("-inf") if lower else float("inf")
+    if bound == "current":
+        return float(current_value)  # type: ignore[arg-type]
+    return float(current_value) + float(bound)  # type: ignore[arg-type]
+
+
+def _apply_set_window_fields(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+    if not isinstance(spec, dict) or "output" not in spec:
+        raise OperationFailure("$setWindowFields requires output")
+    output = spec["output"]
+    if not isinstance(output, dict):
+        raise OperationFailure("$setWindowFields output must be a document")
+
+    sort_spec = None
+    if "sortBy" in spec:
+        sort_spec = _require_sort(spec["sortBy"])
+
+    partitions: dict[Any, list[Document]] = {}
+    for document in documents:
+        partition_key = evaluate_expression(document, spec["partitionBy"], variables) if "partitionBy" in spec else None
+        partitions.setdefault(_aggregation_key(partition_key), []).append(deepcopy(document))
+
+    result: list[Document] = []
+    for partition_documents in partitions.values():
+        ordered = sort_documents(partition_documents, sort_spec) if sort_spec is not None else partition_documents
+        last_index = len(ordered) - 1
+        for current_index, document in enumerate(ordered):
+            enriched = deepcopy(document)
+            for field, field_spec in output.items():
+                if not isinstance(field, str):
+                    raise OperationFailure("$setWindowFields output field names must be strings")
+                operator, expression, window = _require_window_output_spec(field_spec)
+                if operator not in {"$sum", "$min", "$max", "$avg", "$push", "$first"}:
+                    raise OperationFailure(f"Unsupported $setWindowFields accumulator: {operator}")
+                if window is None:
+                    start = 0
+                    end = last_index
+                    window_documents = ordered[start:end + 1]
+                else:
+                    has_documents = "documents" in window
+                    has_range = "range" in window
+                    if has_documents == has_range:
+                        raise OperationFailure("$setWindowFields window must contain exactly one of documents or range")
+                    if has_documents:
+                        documents_window = window.get("documents")
+                        if not isinstance(documents_window, list) or len(documents_window) != 2:
+                            raise OperationFailure("$setWindowFields requires a two-item documents window")
+                        start = _resolve_window_index(documents_window[0], current_index, last_index, lower=True)
+                        end = _resolve_window_index(documents_window[1], current_index, last_index, lower=False)
+                        start = max(0, start)
+                        end = min(last_index, end)
+                        window_documents = ordered[start:end + 1] if start <= end else []
+                    else:
+                        if sort_spec is None or len(sort_spec) != 1:
+                            raise OperationFailure("$setWindowFields range windows require exactly one sort field")
+                        range_window = window.get("range")
+                        if not isinstance(range_window, list) or len(range_window) != 2:
+                            raise OperationFailure("$setWindowFields requires a two-item range window")
+                        lower_bound = _require_range_bound(range_window[0])
+                        upper_bound = _require_range_bound(range_window[1])
+                        sort_field = sort_spec[0][0]
+                        found_current, current_value = get_document_value(document, sort_field)
+                        if not found_current or not isinstance(current_value, (int, float)) or isinstance(current_value, bool):
+                            raise OperationFailure("$setWindowFields numeric range windows require numeric sort values")
+                        lower_value = _resolve_range_value(current_value, lower_bound, lower=True)
+                        upper_value = _resolve_range_value(current_value, upper_bound, lower=False)
+                        window_documents = []
+                        for candidate in ordered:
+                            found_candidate, candidate_value = get_document_value(candidate, sort_field)
+                            if not found_candidate or not isinstance(candidate_value, (int, float)) or isinstance(candidate_value, bool):
+                                raise OperationFailure("$setWindowFields numeric range windows require numeric sort values")
+                            numeric_candidate = float(candidate_value)
+                            if lower_value <= numeric_candidate <= upper_value:
+                                window_documents.append(candidate)
+                state = _initialize_accumulators({field: {operator: expression}})
+                for window_document in window_documents:
+                    _apply_accumulators(state, {field: {operator: expression}}, window_document, variables)
+                set_document_value(enriched, field, _finalize_accumulators(state)[field])
+            result.append(enriched)
+    return result
+
+
+def _apply_lookup(
+    documents: list[Document],
+    spec: object,
+    collection_resolver,
+    variables: dict[str, Any] | None = None,
+) -> list[Document]:
+    lookup = _require_lookup_spec(spec)
+    if collection_resolver is None:
+        raise OperationFailure("$lookup requires collection resolver support")
+
+    resolved_foreign_documents = collection_resolver(lookup["from"]) or []
+    foreign_documents = [deepcopy(document) for document in resolved_foreign_documents]
+    result: list[Document] = []
+    for document in documents:
+        candidate_documents = foreign_documents
+        if "localField" in lookup and "foreignField" in lookup:
+            local_values = QueryEngine.extract_values(document, lookup["localField"])
+            candidate_documents = [
+                deepcopy(foreign_document)
+                for foreign_document in foreign_documents
+                if _lookup_matches(local_values, QueryEngine.extract_values(foreign_document, lookup["foreignField"]))
+            ]
+        if "pipeline" in lookup:
+            scoped = dict(variables or {})
+            for name, expression in lookup["let"].items():
+                scoped[name] = evaluate_expression(document, expression, variables)
+            matches = apply_pipeline(
+                candidate_documents,
+                lookup["pipeline"],
+                collection_resolver=collection_resolver,
+                variables=scoped,
+            )
+        else:
+            matches = candidate_documents
+        joined = deepcopy(document)
+        joined[lookup["as"]] = matches
+        result.append(joined)
+    return result
+
+
+def _apply_replace_root(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+    if not isinstance(spec, dict) or "newRoot" not in spec:
+        raise OperationFailure("$replaceRoot requires a document with newRoot")
+    result: list[Document] = []
+    for document in documents:
+        new_root = evaluate_expression(document, spec["newRoot"], variables)
+        if not isinstance(new_root, dict):
+            raise OperationFailure("$replaceRoot newRoot must evaluate to a document")
+        result.append(deepcopy(new_root))
+    return result
+
+
+def _apply_facet(
+    documents: list[Document],
+    spec: object,
+    collection_resolver,
+    variables: dict[str, Any] | None = None,
+) -> list[Document]:
+    if not isinstance(spec, dict):
+        raise OperationFailure("$facet requires a document specification")
+    faceted: Document = {}
+    for field, pipeline in spec.items():
+        if not isinstance(field, str):
+            raise OperationFailure("$facet field names must be strings")
+        faceted[field] = apply_pipeline(
+            documents,
+            _require_pipeline_spec("$facet", pipeline),
+            collection_resolver=collection_resolver,
+            variables=variables,
+        )
+    return [faceted]
+
+
+def _apply_count(documents: list[Document], spec: object) -> list[Document]:
+    if not isinstance(spec, str) or not spec or spec.startswith("$"):
+        raise OperationFailure("$count requires a non-empty field name")
+    return [{spec: len(documents)}]
+
+
+def _apply_sort_by_count(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+    grouped = _apply_group(
+        documents,
+        {"_id": spec, "count": {"$sum": 1}},
+        variables,
+    )
+    return sort_documents(grouped, [("count", -1), ("_id", 1)])
+
+
+def split_pushdown_pipeline(pipeline: Pipeline) -> AggregationPushdown:
+    filter_spec: Filter = {}
+    projection: Projection | None = None
+    sort: SortSpec | None = None
+    skip = 0
+    limit: int | None = None
+    phase = "match"
+
+    for index, stage in enumerate(pipeline):
+        operator, spec = _require_stage(stage)
+
+        if operator == "$match" and phase == "match":
+            if not isinstance(spec, dict):
+                raise OperationFailure("$match requires a document specification")
+            if _match_spec_contains_expr(spec):
+                return AggregationPushdown(
+                    filter_spec=filter_spec,
+                    projection=projection,
+                    sort=sort,
+                    skip=skip,
+                    limit=limit,
+                    remaining_pipeline=pipeline[index:],
+                )
+            filter_spec = _merge_match_filters(filter_spec, spec)
+            continue
+
+        if operator == "$sort" and phase in {"match", "sort"} and sort is None:
+            sort = _require_sort(spec)
+            phase = "sort"
+            continue
+
+        if operator == "$skip" and phase in {"match", "sort", "skip"}:
+            skip += _require_non_negative_int("$skip", spec)
+            phase = "skip"
+            continue
+
+        if operator == "$limit" and phase in {"match", "sort", "skip", "limit"}:
+            value = _require_non_negative_int("$limit", spec)
+            limit = value if limit is None else min(limit, value)
+            phase = "limit"
+            continue
+
+        if operator == "$project" and phase in {"match", "sort", "skip", "limit"} and projection is None:
+            checked_projection = _require_projection(spec)
+            if not _is_simple_projection(checked_projection):
+                return AggregationPushdown(
+                    filter_spec=filter_spec,
+                    projection=projection,
+                    sort=sort,
+                    skip=skip,
+                    limit=limit,
+                    remaining_pipeline=pipeline[index:],
+                )
+            projection = checked_projection
+            phase = "project"
+            continue
+
+        return AggregationPushdown(
+            filter_spec=filter_spec,
+            projection=projection,
+            sort=sort,
+            skip=skip,
+            limit=limit,
+            remaining_pipeline=pipeline[index:],
+        )
+
+    return AggregationPushdown(
+        filter_spec=filter_spec,
+        projection=projection,
+        sort=sort,
+        skip=skip,
+        limit=limit,
+        remaining_pipeline=[],
+    )
+
+
+def apply_pipeline(
+    documents: Iterable[Document],
+    pipeline: Pipeline,
+    *,
+    collection_resolver=None,
+    variables: dict[str, Any] | None = None,
+) -> list[Document]:
+    result = [deepcopy(document) for document in documents]
+    for stage in pipeline:
+        operator, spec = _require_stage(stage)
+        if operator == "$match":
+            result = _apply_match(result, spec, variables)
+            continue
+        if operator == "$project":
+            result = _apply_project(result, spec, variables)
+            continue
+        if operator == "$sort":
+            result = sort_documents(result, _require_sort(spec))
+            continue
+        if operator == "$skip":
+            result = result[_require_non_negative_int("$skip", spec):]
+            continue
+        if operator == "$limit":
+            result = result[:_require_non_negative_int("$limit", spec)]
+            continue
+        if operator in {"$addFields", "$set"}:
+            result = _apply_add_fields(result, spec, variables)
+            continue
+        if operator == "$unwind":
+            result = _apply_unwind(result, spec)
+            continue
+        if operator == "$group":
+            result = _apply_group(result, spec, variables)
+            continue
+        if operator == "$bucket":
+            result = _apply_bucket(result, spec, variables)
+            continue
+        if operator == "$bucketAuto":
+            result = _apply_bucket_auto(result, spec, variables)
+            continue
+        if operator == "$lookup":
+            result = _apply_lookup(result, spec, collection_resolver, variables)
+            continue
+        if operator == "$replaceRoot":
+            result = _apply_replace_root(result, spec, variables)
+            continue
+        if operator == "$replaceWith":
+            result = _apply_replace_root(result, {"newRoot": spec}, variables)
+            continue
+        if operator == "$facet":
+            result = _apply_facet(result, spec, collection_resolver, variables)
+            continue
+        if operator == "$count":
+            result = _apply_count(result, spec)
+            continue
+        if operator == "$sortByCount":
+            result = _apply_sort_by_count(result, spec, variables)
+            continue
+        if operator == "$setWindowFields":
+            result = _apply_set_window_fields(result, spec, variables)
+            continue
+        raise OperationFailure(f"Unsupported aggregation stage: {operator}")
+    return result

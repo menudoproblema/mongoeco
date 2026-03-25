@@ -1,8 +1,10 @@
 import datetime
 import unittest
+import uuid
+from unittest.mock import patch
 
 from mongoeco.core.codec import DocumentCodec
-from mongoeco.core.identity import canonical_document_id
+from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import DuplicateKeyError
 
@@ -83,6 +85,25 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_update_matching_document_upsert_raises_duplicate_on_secondary_unique_index_collision(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+            await engine.create_index("db", "coll", ["email"], unique=True)
+
+            with self.assertRaises(DuplicateKeyError):
+                await engine.update_matching_document(
+                    "db",
+                    "coll",
+                    {"kind": "missing"},
+                    {"$set": {"email": "a@example.com"}},
+                    upsert=True,
+                    upsert_seed={"kind": "missing"},
+                )
+        finally:
+            await engine.disconnect()
+
     async def test_engine_supports_datetime_ids_via_storage_key_normalization(self):
         engine = MemoryEngine()
         doc_id = datetime.datetime(2026, 3, 23, 12, 0, 0)
@@ -107,6 +128,29 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(found, {"_id": doc_id, "kind": "event"})
 
+    async def test_engine_distinguishes_bool_and_int_ids(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": True, "kind": "bool"})
+            await engine.put_document("db", "coll", {"_id": 1, "kind": "int"})
+            bool_doc = await engine.get_document("db", "coll", True)
+            int_doc = await engine.get_document("db", "coll", 1)
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(bool_doc, {"_id": True, "kind": "bool"})
+        self.assertEqual(int_doc, {"_id": 1, "kind": "int"})
+
+    async def test_typed_engine_key_covers_common_scalar_types(self):
+        engine = MemoryEngine()
+
+        self.assertEqual(engine._typed_engine_key(None), ("none", None))
+        self.assertEqual(engine._typed_engine_key(1.5), ("float", 1.5))
+        self.assertEqual(engine._typed_engine_key(b"abc"), ("bytes", b"abc"))
+        session_id = uuid.UUID("12345678-1234-5678-1234-567812345678")
+        self.assertEqual(engine._typed_engine_key(session_id), ("uuid", session_id))
+
     async def test_engine_falls_back_to_repr_for_unhashable_unknown_id_types(self):
         engine = MemoryEngine()
         doc_id = _UnhashableValue()
@@ -118,6 +162,18 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertEqual(found, {"_id": doc_id, "kind": "event"})
+
+    async def test_get_document_uses_is_none_check_for_storage_payload(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            with engine._meta_lock:
+                engine._storage.setdefault("db", {}).setdefault("coll", {})[engine._storage_key("empty")] = {}
+            found = await engine.get_document("db", "coll", "empty")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(found, {})
 
     async def test_create_index_is_idempotent_and_list_indexes_returns_copy(self):
         engine = MemoryEngine()
@@ -181,6 +237,21 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 )
         finally:
             await engine.disconnect()
+
+    async def test_unique_index_distinguishes_bool_and_int_values(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["flag"], unique=True)
+            await engine.put_document("db", "coll", {"_id": "1", "flag": True})
+            await engine.put_document("db", "coll", {"_id": "2", "flag": 1})
+            first = await engine.get_document("db", "coll", "1")
+            second = await engine.get_document("db", "coll", "2")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(first, {"_id": "1", "flag": True})
+        self.assertEqual(second, {"_id": "2", "flag": 1})
 
     async def test_disconnect_resets_engine_state_when_last_connection_closes(self):
         engine = MemoryEngine()
@@ -283,7 +354,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(
             engine._index_value({"tags": ["python", {"level": 1}]}, "tags"),
-            canonical_document_id(["python", {"level": 1}]),
+            engine._typed_engine_key(["python", {"level": 1}]),
         )
 
     async def test_delete_matching_document_returns_zero_when_no_match(self):
@@ -327,19 +398,6 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             )
         finally:
             await engine.disconnect()
-
-    async def test_sort_value_handles_missing_and_empty_array(self):
-        self.assertIsNone(MemoryEngine._sort_value({"name": "Ada"}, "rank", 1))
-        self.assertEqual(MemoryEngine._sort_value({"rank": []}, "rank", 1), [])
-
-    async def test_compare_documents_returns_zero_for_equal_sort_keys(self):
-        result = MemoryEngine._compare_documents(
-            {"_id": "1", "rank": 3},
-            {"_id": "2", "rank": 3},
-            [("rank", 1)],
-        )
-
-        self.assertEqual(result, 0)
 
     async def test_scan_collection_applies_sort_skip_and_limit(self):
         engine = MemoryEngine()
@@ -415,3 +473,34 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(set(await engine.list_collections("db1")), {"coll1"})
         finally:
             await engine.disconnect()
+
+    async def test_scan_and_count_prefer_explicit_plan_over_conflicting_filter(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
+            await engine.put_document("db", "coll", {"_id": "2", "kind": "click"})
+            plan = compile_filter({"kind": "view"})
+
+            documents = [
+                doc
+                async for doc in engine.scan_collection("db", "coll", {"kind": "click"}, plan=plan)
+            ]
+            count = await engine.count_matching_documents("db", "coll", {"kind": "click"}, plan=plan)
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, [{"_id": "1", "kind": "view"}])
+        self.assertEqual(count, 1)
+
+    async def test_scan_collection_short_circuits_match_all(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
+            with patch("mongoeco.engines.memory.QueryEngine.match_plan", side_effect=AssertionError("match_plan")):
+                documents = [doc async for doc in engine.scan_collection("db", "coll", plan=MatchAll())]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, [{"_id": "1", "kind": "view"}])

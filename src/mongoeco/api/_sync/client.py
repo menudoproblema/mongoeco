@@ -14,6 +14,29 @@ class _SyncRunner:
         self._runner = asyncio.Runner()
         self._closed = False
 
+    def _cleanup_pending_tasks(self) -> None:
+        if self._closed:
+            return
+        get_loop = getattr(self._runner, "get_loop", None)
+        if not callable(get_loop):
+            return
+        try:
+            loop = get_loop()
+        except Exception:
+            return
+        if loop.is_closed():
+            return
+        pending = [task for task in asyncio.all_tasks(loop) if not task.done()]
+        if not pending:
+            return
+        for task in pending:
+            task.cancel()
+
+        async def _drain_pending() -> None:
+            await asyncio.gather(*pending, return_exceptions=True)
+
+        self._runner.run(_drain_pending())
+
     def run(self, awaitable):
         if self._closed:
             raise InvalidOperation("El cliente sincronico ya esta cerrado")
@@ -31,7 +54,24 @@ class _SyncRunner:
     def close(self) -> None:
         if not self._closed:
             try:
-                self._runner.close()
+                try:
+                    asyncio.get_running_loop()
+                    running_loop_active = True
+                except RuntimeError:
+                    running_loop_active = False
+
+                if running_loop_active:
+                    get_loop = getattr(self._runner, "get_loop", None)
+                    if callable(get_loop):
+                        try:
+                            loop = get_loop()
+                        except Exception:
+                            loop = None
+                        if loop is not None and not loop.is_closed():
+                            loop.close()
+                else:
+                    self._cleanup_pending_tasks()
+                    self._runner.close()
             finally:
                 self._closed = True
 

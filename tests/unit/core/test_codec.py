@@ -54,3 +54,14 @@ class DocumentCodecTests(unittest.TestCase):
         }
 
         self.assertEqual(DocumentCodec.decode(DocumentCodec.encode(original)), original)
+
+    def test_document_codec_rejects_unknown_internal_tag_type(self):
+        with self.assertRaises(ValueError):
+            DocumentCodec.decode({"$mongoeco": {"type": "mystery", "value": "x"}})
+
+    def test_document_codec_round_trip_restores_bytes(self):
+        original = {"_id": b"123456789012", "payload": {"blob": b"\x00\x01\xff"}}
+
+        decoded = DocumentCodec.decode(DocumentCodec.encode(original))
+
+        self.assertEqual(decoded, original)

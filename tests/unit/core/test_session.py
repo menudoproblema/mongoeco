@@ -2,6 +2,7 @@ import unittest
 
 from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
 
@@ -30,11 +31,40 @@ class ClientSessionTests(unittest.TestCase):
             session.get_engine_state("memory")
 
     def test_async_client_start_session_binds_engine_state(self):
-        client = AsyncMongoClient(MemoryEngine())
+        engine = MemoryEngine()
+        client = AsyncMongoClient(engine)
 
         session = client.start_session()
 
-        self.assertEqual(session.get_engine_state("memory"), {"connected": False})
+        self.assertEqual(session.get_engine_state(f"memory:{id(engine)}"), {"connected": False})
+
+    def test_async_client_start_session_binds_sqlite_engine_state(self):
+        engine = SQLiteEngine()
+        client = AsyncMongoClient(engine)
+
+        session = client.start_session()
+
+        self.assertEqual(
+            session.get_engine_state(f"sqlite:{id(engine)}"),
+            {"connected": False, "path": ":memory:"},
+        )
+
+    def test_session_distinguishes_multiple_engine_instances_of_same_kind(self):
+        session = ClientSession()
+        memory_a = MemoryEngine()
+        memory_b = MemoryEngine()
+        sqlite_a = SQLiteEngine(path=":memory:")
+        sqlite_b = SQLiteEngine(path=":memory:")
+
+        memory_a.create_session_state(session)
+        memory_b.create_session_state(session)
+        sqlite_a.create_session_state(session)
+        sqlite_b.create_session_state(session)
+
+        self.assertIn(f"memory:{id(memory_a)}", session.engine_state)
+        self.assertIn(f"memory:{id(memory_b)}", session.engine_state)
+        self.assertIn(f"sqlite:{id(sqlite_a)}", session.engine_state)
+        self.assertIn(f"sqlite:{id(sqlite_b)}", session.engine_state)
 
     def test_session_context_manager_closes_session(self):
         session = ClientSession()

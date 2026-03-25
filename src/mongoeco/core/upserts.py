@@ -1,3 +1,4 @@
+from mongoeco.core.filtering import BSONComparator
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, Filter
 
@@ -8,7 +9,7 @@ def _seed_filter_value(document: Document, path: str, value: object) -> None:
             document[path] = value
             return
 
-        if document[path] != value:
+        if BSONComparator.compare(document[path], value) != 0:
             raise OperationFailure(f"Conflicting upsert seed path: {path}")
         return
 

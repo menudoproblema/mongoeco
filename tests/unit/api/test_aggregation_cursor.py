@@ -1,0 +1,327 @@
+import unittest
+from unittest.mock import patch
+
+from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
+from mongoeco.api._sync.aggregation_cursor import AggregationCursor
+from mongoeco.core.projections import apply_projection
+from mongoeco.core.sorting import sort_documents
+from mongoeco.errors import InvalidOperation
+
+
+class _FakeAsyncFindCursor:
+    def __init__(self, documents):
+        self._documents = documents
+
+    async def to_list(self):
+        return list(self._documents)
+
+
+class _FakeCollection:
+    def __init__(self, documents):
+        self._documents = documents
+        self.calls = []
+
+    def find(self, filter_spec=None, projection=None, *, sort=None, skip=0, limit=None, session=None):
+        self.calls.append(
+            {
+                "filter_spec": filter_spec,
+                "projection": projection,
+                "sort": sort,
+                "skip": skip,
+                "limit": limit,
+                "session": session,
+            }
+        )
+        documents = list(self._documents)
+        documents = sort_documents(documents, sort)
+        if skip:
+            documents = documents[skip:]
+        if limit is not None:
+            documents = documents[:limit]
+        if projection is not None:
+            documents = [apply_projection(document, projection) for document in documents]
+        return _FakeAsyncFindCursor(documents)
+
+
+class _SyncClientStub:
+    def _run(self, awaitable):
+        import asyncio
+
+        return asyncio.run(awaitable)
+
+
+class _BrokenSyncClientStub:
+    def _run(self, awaitable):
+        close = getattr(awaitable, "close", None)
+        if callable(close):
+            close()
+        raise RuntimeError("boom")
+
+
+class _AsyncAggregationCursorStub:
+    def __init__(self, documents):
+        self.documents = documents
+        self.to_list_calls = 0
+        self.first_calls = 0
+        self.close_calls = 0
+        self._iterator = None
+
+    async def to_list(self):
+        self.to_list_calls += 1
+        return list(self.documents)
+
+    async def first(self):
+        self.first_calls += 1
+        return self.documents[0] if self.documents else None
+
+    def __aiter__(self):
+        self._iterator = iter(self.documents)
+        return self
+
+    async def __anext__(self):
+        if self._iterator is None:
+            self._iterator = iter(self.documents)
+        try:
+            return next(self._iterator)
+        except StopIteration as exc:
+            raise StopAsyncIteration from exc
+
+    async def aclose(self):
+        self.close_calls += 1
+
+
+class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
+    async def test_collect_lookup_names_skips_invalid_stages_and_recurses_nested_lookup_pipelines(self):
+        cursor = AsyncAggregationCursor(
+            _FakeCollection([]),
+            [],
+        )
+
+        names = cursor._collect_lookup_names(
+            [
+                "invalid",
+                {"$lookup": []},
+                {
+                    "$lookup": {
+                        "from": "users",
+                        "pipeline": [
+                            {"$lookup": {"from": "roles", "localField": "role_id", "foreignField": "_id", "as": "roles"}}
+                        ],
+                        "as": "users",
+                    }
+                },
+                {"$facet": {"nested": [{"$lookup": {"from": "teams", "localField": "team_id", "foreignField": "_id", "as": "teams"}}]}},
+            ]
+        )
+
+        self.assertEqual(names, {"users", "roles", "teams"})
+
+    async def test_materialize_pushes_safe_prefix_to_find(self):
+        collection = _FakeCollection(
+            [
+                {"_id": "1", "kind": "view", "rank": 2},
+                {"_id": "2", "kind": "view", "rank": 3},
+            ]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [
+                {"$match": {"kind": "view"}},
+                {"$sort": {"rank": 1}},
+                {"$skip": 1},
+                {"$limit": 1},
+                {"$project": {"rank": 1, "_id": 0}},
+            ],
+        )
+
+        documents = await cursor.to_list()
+
+        self.assertEqual(
+            collection.calls,
+            [
+                {
+                    "filter_spec": {"kind": "view"},
+                    "projection": {"rank": 1, "_id": 0},
+                    "sort": [("rank", 1)],
+                    "skip": 1,
+                    "limit": 1,
+                    "session": None,
+                }
+            ],
+        )
+        self.assertEqual(documents, [{"rank": 3}])
+
+    async def test_materialize_keeps_remaining_pipeline_when_prefix_breaks(self):
+        collection = _FakeCollection(
+            [
+                {"kind": "view"},
+                {"kind": "click"},
+            ]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [
+                {"$project": {"kind": 1, "_id": 0}},
+                {"$sort": {"kind": 1}},
+            ],
+        )
+
+        documents = await cursor.to_list()
+
+        self.assertEqual(
+            collection.calls,
+            [
+                {
+                    "filter_spec": {},
+                    "projection": {"kind": 1, "_id": 0},
+                    "sort": None,
+                    "skip": 0,
+                    "limit": None,
+                    "session": None,
+                }
+            ],
+        )
+        self.assertEqual(documents, [{"kind": "click"}, {"kind": "view"}])
+
+
+class SyncAggregationCursorTests(unittest.TestCase):
+    def test_first_uses_direct_async_first_path_without_materializing_cache(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+
+        self.assertEqual(cursor.first(), {"_id": "1"})
+        self.assertEqual(async_cursor.first_calls, 1)
+        self.assertEqual(async_cursor.to_list_calls, 0)
+
+    def test_close_is_idempotent_and_blocks_further_use(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+
+        cursor.close()
+        cursor.close()
+
+        with self.assertRaises(InvalidOperation):
+            cursor.first()
+        with self.assertRaises(InvalidOperation):
+            cursor.to_list()
+        with self.assertRaises(InvalidOperation):
+            list(cursor)
+
+    def test_iteration_closes_active_async_iterator_on_early_break(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+
+        for document in cursor:
+            self.assertEqual(document, {"_id": "1"})
+            break
+
+        self.assertEqual(async_cursor.close_calls, 1)
+
+    def test_close_closes_active_async_iterator(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+        iterator = iter(cursor)
+
+        self.assertEqual(next(iterator), {"_id": "1"})
+        cursor.close()
+
+        self.assertEqual(async_cursor.close_calls, 1)
+
+    def test_reiterating_after_partial_consumption_continues_from_current_position(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+
+        iterator = iter(cursor)
+        self.assertEqual(next(iterator), {"_id": "1"})
+
+        self.assertEqual(list(cursor), [{"_id": "2"}])
+
+    def test_first_uses_current_position_after_iteration_starts(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+
+        iterator = iter(cursor)
+        self.assertEqual(next(iterator), {"_id": "1"})
+
+        self.assertEqual(cursor.first(), {"_id": "2"})
+
+    def test_iterator_stops_when_closed(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+        iterator = iter(cursor)
+
+        self.assertIs(iter(iterator), iterator)
+        self.assertEqual(next(iterator), {"_id": "1"})
+        with self.assertRaises(StopIteration):
+            next(iterator)
+
+    def test_iterator_stops_if_replaced_by_another_active_iterator(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+        iterator = iter(cursor)
+        cursor._active_async_iterable = object()
+
+        with self.assertRaises(StopIteration):
+            next(iterator)
+
+    def test_iterator_del_swallows_close_errors(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
+        cursor = AggregationCursor(_BrokenSyncClientStub(), async_cursor)
+        iterator = iter(cursor)
+
+        iterator.__del__()
+        self.assertTrue(iterator._closed)
+
+    def test_first_returns_none_when_active_iterator_is_exhausted(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+        iterator = iter(cursor)
+        self.assertEqual(next(iterator), {"_id": "1"})
+
+        self.assertIsNone(cursor.first())
+
+    def test_cursor_stays_exhausted_after_full_iteration(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+
+        self.assertEqual(list(cursor), [{"_id": "1"}, {"_id": "2"}])
+        self.assertEqual(list(cursor), [])
+        self.assertEqual(cursor.to_list(), [])
+        self.assertIsNone(cursor.first())
+        self.assertEqual(async_cursor.close_calls, 1)
+
+    def test_iter_uses_cache_when_loaded(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+
+        self.assertEqual(cursor.to_list(), [{"_id": "1"}])
+        self.assertEqual(list(cursor), [{"_id": "1"}])
+
+    def test_iterator_raises_stop_iteration_when_closed_explicitly(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+        iterator = iter(cursor)
+
+        iterator.close()
+
+        with self.assertRaises(StopIteration):
+            next(iterator)
+
+    def test_first_returns_none_for_loaded_empty_cache(self):
+        async_cursor = _AsyncAggregationCursorStub([])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+
+        self.assertEqual(cursor.to_list(), [])
+        self.assertIsNone(cursor.first())
+
+    def test_del_swallows_close_errors(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+
+        def broken_close() -> None:
+            raise RuntimeError("boom")
+
+        cursor.close = broken_close
+        cursor.__del__()
+
+        self.assertTrue(cursor._closed)

@@ -2,10 +2,17 @@ from contextlib import asynccontextmanager
 
 from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.engines.sqlite import SQLiteEngine
 
 
 ENGINE_FACTORIES = {
     "memory": MemoryEngine,
+    "sqlite": SQLiteEngine,
+}
+
+ENGINE_SESSION_KEYS = {
+    "memory": "memory",
+    "sqlite": "sqlite",
 }
 
 

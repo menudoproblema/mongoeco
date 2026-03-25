@@ -1,12 +1,41 @@
 from copy import deepcopy
 from typing import Any
 
+from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, Projection
+
+
+def _projection_flag(value: object) -> int | None:
+    if isinstance(value, bool):
+        return 1 if value else 0
+    if isinstance(value, int) and value in (0, 1):
+        return value
+    return None
+
+
+def validate_projection_spec(projection: Projection) -> Projection:
+    if not isinstance(projection, dict):
+        raise OperationFailure("projection must be a document specification")
+    non_id_flags: list[int] = []
+    for key, value in projection.items():
+        if not isinstance(key, str):
+            raise OperationFailure("projection field names must be strings")
+        if any(segment == "$" for segment in key.split(".")):
+            raise OperationFailure("positional projection is not supported")
+        flag = _projection_flag(value)
+        if flag is None:
+            raise OperationFailure("projection values must be 0, 1, True or False")
+        if key != "_id":
+            non_id_flags.append(flag)
+    if any(flag == 1 for flag in non_id_flags) and any(flag == 0 for flag in non_id_flags):
+        raise OperationFailure("cannot mix inclusion and exclusion in projection")
+    return projection
 
 
 def apply_projection(doc: Document, projection: Projection | None) -> Document:
     if not projection:
         return doc
+    projection = validate_projection_spec(projection)
 
     include_id = projection.get("_id", True)
     fields = {key: value for key, value in projection.items() if key != "_id"}
@@ -39,6 +68,23 @@ def apply_projection(doc: Document, projection: Projection | None) -> Document:
 
 
 def _set_projection_value(target: Document, source: Document, path: str) -> None:
+    if isinstance(source, list):
+        projected_items: list[Any] = []
+        for item in source:
+            if isinstance(item, dict):
+                projected_item: Document = {}
+                _set_projection_value(projected_item, item, path)
+                projected_items.append(projected_item)
+            elif isinstance(item, list):
+                projected_item = []
+                _set_projection_value(projected_item, item, path)
+                projected_items.append(projected_item)
+            else:
+                projected_items.append({})
+        if isinstance(target, list):
+            target.extend(projected_items)
+        return
+
     if "." not in path:
         if path in source:
             target[path] = source[path]
@@ -49,9 +95,19 @@ def _set_projection_value(target: Document, source: Document, path: str) -> None
         if first not in target:
             target[first] = {}
         _set_projection_value(target[first], source[first], rest)
+    elif first in source and isinstance(source[first], list):
+        if first not in target:
+            target[first] = []
+        _set_projection_value(target[first], source[first], rest)
 
 
 def _delete_projection_value(target: Document, path: str) -> None:
+    if isinstance(target, list):
+        for item in target:
+            if isinstance(item, (dict, list)):
+                _delete_projection_value(item, path)
+        return
+
     if "." not in path:
         if path in target:
             del target[path]
@@ -59,4 +115,6 @@ def _delete_projection_value(target: Document, path: str) -> None:
 
     first, rest = path.split(".", 1)
     if first in target and isinstance(target[first], dict):
+        _delete_projection_value(target[first], rest)
+    elif first in target and isinstance(target[first], list):
         _delete_projection_value(target[first], rest)

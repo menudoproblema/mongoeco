@@ -8,7 +8,7 @@ Este documento define la visión técnica para la reescritura de **mongoeco**, e
 * **Async-First**: Implementación nativa con `async/await`.
 * **Arquitectura Hexagonal**: Separación total entre lógica de MongoDB, almacenamiento y API de cara al usuario.
 * **Persistencia Profesional**: Uso opcional de SQLite (JSON1) para soportar transacciones ACID reales y atomicidad sin bloqueos manuales complejos.
-* **Single Source of Truth**: La semántica funcional vive en el Core y en la implementación async. En Fase 1, la capa sync se resuelve con un adaptador delgado; la automatización completa vía `unasync` queda diferida.
+* **Single Source of Truth**: La semántica funcional vive en el Core y en la implementación async. La capa sync se resuelve mediante un adaptador delgado y esa estrategia queda asumida como dirección actual del proyecto.
 * **Zero External Dependencies**: La librería debe funcionar sin `pymongo` instalado. Todas las excepciones y clases de resultado (`InsertResult`, etc.) deben ser implementaciones propias que emulen la API de PyMongo para evitar el acoplamiento.
 * **Modern Stack**: 
     * **Python 3.13+**: La base de código adopta sintaxis y tipado modernos de Python 3.13 (`PEP 695`, `@override`, aliases `type`, `TypeIs`, etc.) como decisión explícita de Fase 1.
@@ -29,7 +29,7 @@ Ubicación: `src/mongoeco/core/`
 Ubicación: `src/mongoeco/engines/`
 * Define un `AsyncStorageEngine` (Protocolo).
 * **MemoryEngine**: Implementación rápida para tests volátiles con lifecycle acotado por conexiones y locks compatibles con hilos.
-* **SQLiteEngine**: Objetivo explícito de Fase 2. Su diseño seguirá el mismo protocolo async-first cuando se implemente.
+* **SQLiteEngine**: Baseline funcional de Fase 2 sobre `sqlite3` estándar. Comparte el mismo protocolo async-first y ya pasa los contratos comunes, aunque las optimizaciones SQL avanzadas quedan para iteraciones posteriores.
 * El protocolo ya no es un almacén puramente ciego: permite pushdown de filtros y proyecciones, borrado y actualización atómicos sobre un documento coincidente, conteo directo y metadatos básicos de índices para que futuros motores no queden condenados a escaneos completos.
 
 ### C. API Drivers
@@ -49,6 +49,8 @@ Ubicación: `src/mongoeco/api/`
 6. **API Sync Funcional**: Exponer `MongoClient` como adaptador sincronico sobre la capa async.
 
 ### Perímetro de Cierre de Fase 1
+Estado actual: **Completado**.
+
 La Fase 1 se considera cerrada cuando se cumplen estos puntos y solo estos puntos:
 * **API pública async estable**: `AsyncMongoClient`, acceso a bases y colecciones, `insert_one`, `find_one`, `update_one`, `delete_one`, `count_documents`, `create_index` y `list_indexes`.
 * **API pública sync funcional**: `MongoClient` como adaptador sobre la capa async, con la misma superficie mínima de operaciones ya cerrada en Fase 1.
@@ -62,9 +64,8 @@ La Fase 1 se considera cerrada cuando se cumplen estos puntos y solo estos punto
 
 ### Fuera de Alcance de Fase 1
 Estos puntos quedan explícitamente fuera del cierre de Fase 1:
-* **SQLiteEngine** real y optimizaciones SQL.
-* **Pipeline automático `unasync`**. La sync de Fase 1 es un adaptador funcional, no código generado.
-* **Agregación pública** (`aggregate`) y pipeline de `core/aggregation.py`.
+* **Optimización SQL real en SQLite** (`json_extract`, pushdown semántico profundo, uso de índices para lectura y planificación de consultas).
+* **Generación automática de la capa sync**. La sync de Fase 1 es un adaptador funcional, no código generado.
 * **Cursores públicos** tipo `find()` con iteración múltiple.
 * **Sesiones, transacciones y semántica distribuida**.
 * **Índices reales** con enforcement, planificación de consultas o garantías de rendimiento. En Fase 1 solo existen metadatos mínimos de índices.
@@ -95,10 +96,12 @@ Estos puntos quedan explícitamente fuera del cierre de Fase 1:
 ### C. Verificación de Cierre
 * El cierre operativo de Fase 1 se valida con `python3 -m compileall src/mongoeco tests`.
 * La suite ejecutable de referencia se valida con `python3 -m unittest discover -s tests -p 'test*.py'`.
+* La suite de cobertura local se valida con `pytest --cov=src/mongoeco --cov-report=term-missing` usando directorios temporales dentro del repo cuando el entorno no expone un `TMPDIR` escribible.
 
 ### D. Estructura del Proyecto
 * El código instalable vive bajo `src/mongoeco/`.
 * El baseline de lenguaje (`Python 3.13+`) se declara en `pyproject.toml`, no solo en este documento.
+* La estrategia de evolución por dialectos y perfiles de compatibilidad se documenta en `DIALECTS.md`.
 
 ---
 
@@ -125,14 +128,258 @@ Estos puntos quedan explícitamente fuera del cierre de Fase 1:
 *   **Decisión: Índices de Fase 1**: El engine expone solo metadatos mínimos de índices. No hay enforcement de unicidad por índice, ni optimizador, ni garantías de rendimiento todavía. La planificación de consultas e integración real con índices queda diferida a Fase 2.
 *   **Decisión: Sesión Placeholder Estructural**: `ClientSession` existe ya como contexto mínimo, se propaga por la API y el protocolo, y conserva estado por engine y flags de transacción para no bloquear una evolución posterior hacia transacciones reales, aunque Fase 1 no implemente aislamiento ni commit.
 *   **Deuda Aceptada para Fase 3**: La atomicidad de Fase 1 se limita a operaciones elementales que el engine implementa de forma indivisible (`update_matching_document`, `delete_matching_document`, etc.). El protocolo no modela todavía rollback, WAL ni transacciones multioperación.
-*   **Decisión: unasync Diferido**: El pipeline automático de generación no forma parte del cierre de Fase 1. El script `scripts/unasync_api.py` queda explícitamente marcado como pendiente de Fase 2 para evitar generar código roto.
+*   **Decisión: Adaptador Sync Definitivo por Ahora**: La capa `_sync/` se mantiene como adaptador manual sobre la implementación async. No se introduce `unasync` en el cierre de Fase 1 ni se arrastra como pendiente inmediata.
 *   **Decisión: Compatibilidad de Lenguaje**: La Fase 1 se cierra deliberadamente sobre Python 3.13+ y permite usar sintaxis moderna de tipado, `override` y validadores `TypeIs` sin arrastrar compatibilidad artificial con versiones anteriores.
 *   **Decisión: Suite de Conformidad**: La suite se organiza por capas en `tests/contracts/`, `tests/integration/` y `tests/unit/`. Cualquier motor futuro debe pasar los contratos de engine y la integracion de API.
 *   **Deuda Aceptada al Entrar en Fase 2**:
-    * `find()` ya existe, pero la capa sync devuelve una lista materializada, no un cursor estilo PyMongo.
+    * `find()` ya existe, pero al entrar en Fase 2 la capa sync seguía sin exponer todavía un cursor incremental estilo PyMongo.
     * `QueryPlan` ya es canónico y tipado, pero el contrato público del engine sigue aceptando `Filter`; la migración interna hacia `QueryNode` queda para el trabajo de SQLite.
     * `ClientSession` ya puede anclar estado por engine, pero sigue siendo un placeholder sin transacciones, rollback ni isolation real.
     * Los índices `unique=True` ya se aplican en `MemoryEngine`, pero todavía no existe planificación de consultas ni uso de índices para acelerar lecturas.
     * `paths.py` ya soporta segmentos numéricos simples sobre listas, pero no cubre todavía semántica Mongo más avanzada sobre arrays posicionales.
 *   **Definition of Done**: El cierre de Fase 1 exige compilación del paquete, suite en verde, documentación alineada y cobertura de contratos para engine, API async, API sync y core mínimo.
-*   **Estado**: Fase 1 Completada dentro del perímetro descrito arriba. SQLite, agregación, sesiones, transacciones, `find()` cursor público, índices reales y `unasync` real quedan diferidos a fases posteriores.
+*   **Estado**: **Fase 1 Completada** dentro del perímetro descrito arriba. SQLite, agregación, sesiones, transacciones, `find()` cursor público e índices reales quedan diferidos a fases posteriores.
+
+### Fase 2: SQLite, Pushdown y Agregación Pública (Marzo 2026)
+*   **Decisión: SQLite Baseline Primero**: Antes de optimizar consultas, se introduce un `SQLiteEngine` funcional que comparte el contrato del engine de memoria y permite validar persistencia real sin dependencias externas.
+*   **Decisión: `sqlite3` Estándar**: El backend inicial se implementa sobre `sqlite3` de la stdlib con conexión async-first vía `asyncio.to_thread`, manteniendo la política de cero dependencias externas.
+*   **Decisión: Paridad de Contrato Antes que Pushdown Completo**: El primer objetivo de Fase 2 es pasar contratos e integración compartidos con `MemoryEngine`; la traducción desde `QueryNode` y la optimización SQL ya forman parte del estado real del backend.
+*   **Decisión: Pushdown SQL Selectivo Real**: `SQLiteEngine` ya empuja a SQL el subset traducible de `find`, `count`, `delete_one` y `update_one`, incluyendo `WHERE`, `ORDER BY`, `LIMIT/OFFSET`, borrado nativo y updates con `$set/$unset` por rutas simples y con dot notation.
+*   **Decisión: Índices Físicos Normalizados**: Los índices SQLite se crean sobre expresiones normalizadas `type/value`, compartidas con el traductor SQL. Esto permite que igualdad y membresía usen el mismo índice físico tanto para escalares como para tipos codificados (`ObjectId`, `datetime`, `UUID`).
+*   **Decisión: Validación del Plan Real**: La suite ya verifica con `EXPLAIN QUERY PLAN` que SQLite usa índices físicos en filtros traducibles representativos, evitando asumir ciegamente que el optimizador los aprovechará.
+*   **Decisión: Paridad Diferencial**: Además de contratos e integración, la suite compara explícitamente resultados `memory vs sqlite` para filtros codec-aware, combinaciones de `$and/$or`, membresía, proyección, ordenación, paginación, updates anidados y deletes.
+*   **Decisión: `QueryNode` como Artefacto Interno Compartido**: Aunque la API pública sigue aceptando `Filter`, la capa de colección ya compila una sola vez el filtro a `QueryNode` y lo propaga internamente al engine. `MemoryEngine` y `SQLiteEngine` consumen ese plan compartido para evitar recompilaciones y mantener una única representación canónica dentro del pipeline interno.
+*   **Subset Optimizado Actual**:
+    * igualdad y desigualdad sobre escalares
+    * igualdad y membresía sobre `ObjectId`, `datetime` y `UUID`
+    * comparaciones simples (`$gt`, `$gte`, `$lt`, `$lte`) sobre escalares
+    * `AND` / `OR` / `EXISTS`
+    * `ORDER BY`, `LIMIT`, `OFFSET` para sorts traducibles
+    * `UPDATE` SQL para `$set` / `$unset`, incluyendo dot notation simple
+    * `DELETE` SQL directo sobre el primer documento coincidente cuando el filtro es traducible
+*   **Fallback Explícito**:
+    * filtros no traducibles siguen evaluándose con `QueryEngine` en Python
+    * sorts sobre arrays y sobre objetos JSON no tipados siguen ordenándose en Python para mantener semántica alineada con `MemoryEngine`
+    * el fallback Python ya no materializa la colección completa para filtrar; cuando no hay `sort`, el recorrido sigue siendo incremental
+    * si el fallback Python necesita ordenar, SQLite sigue materializando el subconjunto filtrado para poder aplicar `sort_documents(...)`; esto preserva correctitud, pero no equivale a memoria O(1) universal
+    * sorts sobre escalares, dot notation escalar y valores codificados homogéneos (`ObjectId`, `datetime`, `UUID`) siguen yendo por la ruta SQL optimizada
+    * updates no traducibles siguen cayendo a la ruta segura de reserialización del documento
+*   **Limitación Explícita de Índices sobre Arrays en SQLite**:
+    * los índices físicos actuales se crean sobre expresiones del campo completo
+    * las búsquedas de membresía sobre arrays se resuelven con `json_each(...)`
+    * esto no equivale a un multikey index real de MongoDB: en el diseño actual, esos índices no aceleran de forma fiable filtros de membresía sobre elementos individuales de arrays
+*   **Decisión: Cursor Público Mínimo para `find()`**: `find()` ya no devuelve un iterable crudo en async ni una lista desnuda en sync. Ambas capas exponen un cursor pequeño y explícito con iteración, `to_list()`, `first()` y encadenado básico de `sort`, `skip` y `limit`. En la capa sync, la iteración ya consume el cursor async paso a paso y cierra el iterable subyacente de forma determinista.
+*   **Decisión: Agregación Pública Materializada pero Ya Útil**: `aggregate()` ya existe en async y sync como superficie pública establecida, también con cursor mínimo público (`iteración`, `to_list()`, `first()` y `close()` en sync). El pipeline vive en `core/aggregation.py`, conserva pushdown conservador del prefijo seguro hacia `find()` y ya soporta un subconjunto funcional amplio:
+    * stages: `$match`, `$project`, `$sort`, `$skip`, `$limit`, `$unwind`, `$group`, `$lookup`, `$replaceRoot`, `$replaceWith`, `$facet`, `$bucket`, `$bucketAuto`, `$setWindowFields`, `$count`, `$sortByCount`
+    * acumuladores: `$sum`, `$min`, `$max`, `$avg`, `$push`, `$first`
+    * expresiones: `$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$and`, `$or`, `$in`, `$cond`, `$ifNull`, `$add`, `$subtract`, `$multiply`, `$divide`, `$mod`, `$arrayElemAt`, `$size`, `$floor`, `$ceil`, `$let`, `$toString`, `$first`, `$map`, `$filter`, `$reduce`, `$concatArrays`, `$setUnion`, `$mergeObjects`, `$getField`, `$arrayToObject`, `$indexOfArray`, `$sortArray`, `$dateTrunc`
+*   **Estado Actual de Stages Avanzados**:
+    * `"$lookup"` soporta tanto la forma simple (`localField` / `foreignField`) como la forma con `let + pipeline`.
+    * `"$bucketAuto"` ya existe con reparto automático básico por documentos ordenados y `output` funcional; `granularity` sigue fuera.
+    * `"$setWindowFields"` ya soporta ventanas por `documents` y, para el caso numérico, ventanas por `range` con bounds numéricos, `"current"` y `"unbounded"`.
+*   **Contrato Actual del Cursor**:
+    * Async: iteración con `async for`, `to_list()`, `first()`, `sort()`, `skip()` y `limit()`.
+    * Sync: iteración con `for` / `list(...)`, `to_list()`, `first()`, `sort()`, `skip()`, `limit()` y `close()`.
+    * El cursor actual sigue siendo deliberadamente mínimo: no expone todavía la superficie completa de PyMongo.
+*   **Compatibilidad Explícita del Cambio en `find()`**:
+    * La API sync ya no devuelve una `list` directa en `find()`.
+    * El consumidor debe iterar el cursor o materializarlo con `to_list()` / `list(...)`.
+    * El cambio acerca la API al modelo de cursores de MongoDB/PyMongo y evita fijar demasiado pronto una interfaz basada en listas materializadas.
+*   **Estado**: **Lista para cierre**. Fase 2 ya no está solo “iniciada”: existe un `SQLiteEngine` funcional con persistencia real, índices únicos físicos, pushdown SQL útil, cursor público mínimo para `find()`, agregación materializada amplia, streaming robusto en `find()` sync y paridad observable reforzada frente a `MemoryEngine`.
+
+### Perímetro de Cierre de Fase 2
+La Fase 2 se considera cerrada cuando se acepta explícitamente este perímetro y no se sigue ensanchando el alcance dentro de la propia fase:
+* **SQLiteEngine funcional y persistente**:
+  * almacenamiento real sobre `sqlite3`
+  * índices únicos físicos
+  * lifecycle de conexión estable
+  * contratos comunes de engine en verde
+* **Pushdown SQL útil y verificado**:
+  * `find`, `count_documents`, `delete_one` y parte de `update_one` ya usan SQL cuando el plan es traducible
+  * `EXPLAIN QUERY PLAN` ya valida uso real de índices en casos representativos
+  * fallbacks explícitos a Core/Python donde la traducción no es segura
+* **Plan canónico compartido**:
+  * la capa pública sigue aceptando `Filter`
+  * internamente, driver y engines ya comparten `QueryNode` como representación canónica del filtro
+* **Cursores públicos mínimos de lectura**:
+  * async y sync exponen cursor para `find()`
+  * soporte explícito de iteración, `to_list()`, `first()`, `sort()`, `skip()`, `limit()` y `close()` en la capa sync
+  * la iteración sync de `find()` ya es incremental y cierra el iterable async subyacente en `break` temprano o `close()`
+* **Agregación pública útil y materializada**:
+  * `aggregate()` ya existe en async y sync como superficie pública estable
+  * cursor mínimo público para `aggregate()` en async y sync, con iteración, `to_list()`, `first()` y `close()` en sync
+  * la iteración sync de `aggregate()` ya es incremental sobre el cursor async, aunque la materialización del pipeline siga existiendo en el core de agregación
+  * stages soportados: `$match`, `$project`, `$sort`, `$skip`, `$limit`, `$unwind`, `$group`, `$lookup`, `$replaceRoot`, `$replaceWith`, `$facet`, `$bucket`, `$bucketAuto`, `$setWindowFields`, `$count`, `$sortByCount`
+  * acumuladores soportados: `$sum`, `$min`, `$max`, `$avg`, `$push`, `$first`
+  * expresiones soportadas: `$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$and`, `$or`, `$in`, `$cond`, `$ifNull`, `$add`, `$subtract`, `$multiply`, `$divide`, `$mod`, `$arrayElemAt`, `$size`, `$floor`, `$ceil`, `$let`, `$toString`, `$first`, `$map`, `$filter`, `$reduce`, `$concatArrays`, `$setUnion`, `$mergeObjects`, `$getField`, `$arrayToObject`, `$indexOfArray`, `$sortArray`, `$dateTrunc`
+* **Paridad observable reforzada**:
+  * `MemoryEngine` y `SQLiteEngine` se comparan explícitamente en filtros, sorts, paginación, updates, deletes y pipelines de agregación representativos
+* **Verificación ejecutable del cierre**:
+  * compilación del paquete y tests
+  * snapshot actual de referencia: `647` tests en `unittest`, `647 passed` y `419 subtests passed` en `pytest`
+  * cobertura actual de referencia: `100%` sobre `src/mongoeco`
+
+### Fuera de Alcance de Fase 2
+Estos puntos quedan ya movidos explícitamente a fases posteriores y no deben seguir ensanchando el cierre de Fase 2:
+* **Sesiones transaccionales reales**:
+  * `BEGIN`
+  * `COMMIT`
+  * `ROLLBACK`
+  * aislamiento y ownership transaccional de conexión
+* **Ampliación ancha de la API de colección**:
+  * `insert_many`
+  * `update_many`
+  * `delete_many`
+  * `replace_one`
+  * familia `find_one_and_*`
+  * `bulk_write`
+  * `distinct`
+* **Cursor más cercano a PyMongo**:
+  * más métodos, opciones y semántica incremental
+  * ampliar la historia incremental de la capa sync más allá del baseline actual de `find()`
+  * reducir la materialización que sigue siendo estructural en agregación y en caminos que requieren ordenación Python
+* **Profundidad adicional de agregación**:
+  * más semántica de `"$bucketAuto"`
+  * más semántica de `"$setWindowFields"`
+  * stages analíticos adicionales y variantes más profundas de `"$lookup"`
+* **Compatibilidad PyMongo más ancha** fuera del subconjunto ya implementado y testeado
+* **Planificación de consultas propia** más allá del uso que ya hace SQLite de sus índices y del pushdown selectivo actual
+* **Reabrir la estrategia sync solo si aparece una necesidad real que el adaptador actual no cubra**
+
+### Cierre Operativo Pendiente
+No quedan bloqueos técnicos claros dentro del perímetro actual de Fase 2. Lo que falta para cerrarla de forma limpia es operativo, no de implementación:
+1. **Aceptar el corte de alcance** descrito arriba.
+2. **Mantener la documentación alineada** con el estado real del código y la suite.
+3. **Cerrar con commit** cuando proceda, sin seguir añadiendo operadores o superficie nueva dentro de Fase 2.
+
+### Decisión Consolidada sobre la Capa Sync
+La capa sync se considera, por ahora, una adaptación manual y deliberada de la implementación async.
+
+Esto implica:
+* no introducir un pipeline `unasync` en Fase 2
+* no mantener stubs o recordatorios de una generación automática que ya no forma parte del plan inmediato
+* reevaluar esta decisión solo si fases posteriores exigen una historia sync con requisitos que el adaptador actual no pueda cubrir con claridad
+* asumir explícitamente que `find()` sync ya itera de forma incremental, mientras que `to_list()` sigue materializando de forma deliberada
+* asumir explícitamente que `aggregate()` sync ya expone iteración incremental, aunque la agregación subyacente siga materializándose en el core
+
+### Cobertura Semántica Consolidada
+El estado actual de la suite ya no se limita a “happy paths” por operador. La estrategia de verificación combina varias capas:
+* **tests unitarios directos** para semántica fina de Core (`filtering`, `aggregation`, `paths`, `operators`, `projections`, `query_plan`, `sorting`)
+* **tests de integración** para API async/sync, cursores, sesiones, agregación pública y paridad observable entre `MemoryEngine` y `SQLiteEngine`
+* **tests de rechazo explícito** para operadores fuera de perímetro, de modo que el sistema falle con error claro en lugar de degradar silenciosamente a comportamientos inventados
+* **tests agrupados con `subTest`** para inventarios grandes de operadores no soportados, reservando tests dedicados para los casos con semántica más delicada o con mayor valor diagnóstico
+
+La cobertura semántica se organiza en tres categorías deliberadas:
+* **soportado y verificado**: el operador o familia ya existe y tiene tests propios o de integración
+* **no soportado pero rechazado explícitamente**: el operador queda fuera del perímetro actual, pero existe test que fija el fallo explícito
+* **no aplicable al repo actual**: el caso pertenece a superficies que `mongoeco` no modela todavía como abstracción propia (por ejemplo, restricciones específicas de vistas)
+
+### Testing Diferencial Contra MongoDB Real 7.0
+Como siguiente capa de verificación, el repositorio ya incluye un arnés opcional de contraste contra un servidor real de MongoDB 7.0:
+* módulo: `tests/differential/mongodb7_real_parity.py`
+* script manual: `scripts/run_mongodb7_differential.py`
+* dependencia opcional: extra `mongodb7` en `pyproject.toml`
+
+Objetivo del arnés diferencial:
+* comparar `mongoeco` frente a MongoDB real en una selección reducida de casos de alto riesgo semántico
+* priorizar zonas donde la documentación y la intuición del lenguaje anfitrión suelen divergir:
+  * `"$expr"` comparando campos
+  * truthiness de expresiones
+  * sensibilidad al orden de campos en subdocumentos
+  * `"$all"` con múltiples `"$elemMatch"`
+  * `"$addToSet"` con documentos embebidos
+  * traversal de arrays y `"$getField"` con nombres literales no triviales
+
+Restricciones deliberadas del arnés diferencial:
+* no forma parte del green bar obligatorio diario
+* se activa solo si existe `MONGOECO_REAL_MONGODB_URI`
+* requiere `pymongo` instalado mediante el extra opcional `mongodb7`
+* verifica explícitamente que el servidor remoto sea `MongoDB 7.0.x`
+
+Comando de ejecución previsto:
+* `MONGOECO_REAL_MONGODB_URI=... .venv/bin/python scripts/run_mongodb7_differential.py`
+
+Esta capa no sustituye a la suite local pura; la complementa. La intención es usarla como detector de divergencias de semántica real, no como requisito permanente para cada ejecución local o CI mínima.
+
+### Decisión Consolidada sobre Paths y Expansión de Arrays
+`core/paths.py` ya no expande arrays sin límite ni sobrescribe silenciosamente padres escalares.
+
+Esto implica:
+* existe un límite configurable de expansión de índices de array (`get_max_array_index()` / `set_max_array_index()`)
+* cruzar un padre escalar en una ruta anidada (`"a.b"` sobre `{"a": 1}`) ya se trata como error, alineando la semántica con MongoDB
+* la protección actual es deliberadamente conservadora para evitar consumo abusivo de memoria y corrupción silenciosa de datos
+
+### Fase 3: Ampliación Funcional Avanzada
+La Fase 3 pasa a priorizar funcionalidad visible y útil que ya supera el baseline actual, sin mezclar todavía el cierre completo de la historia transaccional.
+
+Objetivos principales:
+* **Agregación avanzada**:
+  * ampliar `aggregate()` desde el subconjunto amplio actual hacia operadores más costosos o especializados
+  * siguientes candidatos razonables: más semántica de `"$setWindowFields"`, más semántica de `"$bucketAuto"` y stages analíticos adicionales
+* **Evolución de índices para arrays en SQLite**:
+  * diseñar una estrategia tipo multikey sobre tablas auxiliares de entradas indexadas por elemento
+  * mantener esas entradas sincronizadas en `insert` / `update` / `delete`
+  * permitir que filtros de membresía sobre arrays puedan usar índices reales en vez de depender de `json_each(...)` sobre el documento completo
+  * asumir explícitamente que esto exige un cambio de modelo físico y de planner, no solo retocar las expresiones SQL actuales
+* **Ampliación de escrituras con alto valor práctico**:
+  * `insert_many`
+  * `update_many`
+  * `delete_many`
+  * `replace_one`
+  * familia `find_one_and_*` si encaja bien con el estado del motor
+* **Ampliación de operadores con alto retorno funcional**:
+  * updates y queries ya no están en baseline mínimo; la prioridad pasa a semánticas más avanzadas, paridad fina y operadores de borde con valor real
+* **Pushdown SQL adicional donde aporte valor directo**:
+  * ampliar el subset traducible de updates
+  * reforzar la consistencia entre `MemoryEngine` y `SQLiteEngine`
+* **Cierre de la migración interna hacia `QueryNode`**:
+  * usar el plan canónico como artefacto interno compartido de forma más explícita
+
+Criterio de foco:
+* la prioridad es aumentar el valor funcional visible sin perder coherencia arquitectónica
+* aggregation mínima útil se considera más prioritaria que transacciones reales, porque abre más casos de uso inmediatos con menor coste estructural
+
+### Fase 4: Robustez Transaccional y Superficie Avanzada
+La Fase 4 queda reservada para cerrar la parte más costosa del backend y seguir ampliando superficie avanzada una vez que Fase 3 haya ensanchado el uso práctico de la librería.
+
+Objetivos principales:
+* **Sesiones transaccionales reales en SQLite**:
+  * introducir `BEGIN`, `COMMIT` y `ROLLBACK`
+  * anclar el estado transaccional a `ClientSession`
+  * definir una historia pública mínima de transacción
+* **Atomicidad y lifecycle de escritura más fuertes**:
+  * cerrar bien la interacción entre sesiones, engine y cierre de recursos
+  * reducir huecos entre rutas SQL nativas y fallbacks en Python
+* **Ampliar la superficie de colección y escritura avanzada**:
+  * `bulk_write`
+  * completar la familia `find_one_and_*` si no se cerró antes
+  * más clases de resultados y errores de escritura
+* **Ampliar operadores de update**:
+  * `$rename`
+  * otros operadores de mutación menos prioritarios o más complejos
+* **Ampliar operadores de query**:
+  * `regex`
+  * `not`
+  * `all`
+  * `elemMatch`
+  * `size`
+  * `type`
+  * semántica más fina sobre arrays
+* **Extender aggregation**:
+  * más etapas y semántica más cercana a MongoDB sobre la base mínima de Fase 3
+* **Compatibilidad de firmas más amplia**:
+  * aceptar más parámetros de PyMongo, aunque algunos sean inicialmente no-op controlados
+  * acercar la ergonomía del cursor y de los resultados al uso real esperado por aplicaciones y suites de tests
+
+Criterio de foco:
+* Fase 4 mezcla dos tipos de trabajo ya más costosos: robustez transaccional real y amplitud avanzada de superficie
+* la prioridad aquí ya no es abrir casos de uso básicos, sino cerrar capacidades profundas y bordes de compatibilidad
+
+### Regla de Corte Entre Fases
+Para evitar mezclar objetivos y perder foco:
+* **Fase 3**: aggregation mínima, ampliación funcional útil, operaciones de escritura de alto valor y más operadores con retorno práctico inmediato
+* **Fase 4**: transacciones reales, robustez profunda del backend y superficie avanzada adicional
+
+Regla práctica:
+* si una funcionalidad abre muchos casos de uso con coste estructural moderado, debe evaluarse primero para Fase 3
+* si una funcionalidad exige coordinación transaccional profunda o cierra bordes avanzados de compatibilidad, debe evaluarse primero para Fase 4

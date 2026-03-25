@@ -1,9 +1,14 @@
+from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
+from mongoeco.api._async.cursor import AsyncCursor
+from mongoeco.core.aggregation import Pipeline
+from mongoeco.core.projections import apply_projection
+from mongoeco.core.query_plan import compile_filter
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.core.upserts import seed_upsert_document
 from mongoeco.core.validation import is_document, is_filter, is_projection, is_update
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    ObjectId, Document, DocumentId, Filter, Update, Projection, InsertOneResult, UpdateResult, DeleteResult
+    ObjectId, Document, DocumentId, Filter, Update, Projection, InsertOneResult, UpdateResult, DeleteResult, SortSpec
 )
 from mongoeco.errors import DuplicateKeyError
 
@@ -89,44 +94,53 @@ class AsyncCollection:
                 context=session,
             )
         else:
+            plan = compile_filter(filter_spec)
             async for d in self._engine.scan_collection(
                 self._db_name,
                 self._collection_name,
                 filter_spec,
+                plan=plan,
                 projection=projection,
                 context=session,
             ):
                 doc = d
                 break
 
-        return doc
+        return apply_projection(doc, projection) if doc is not None else None
 
     def find(
         self,
         filter_spec: Filter | None = None,
         projection: Projection | None = None,
         *,
-        sort: list[tuple[str, int]] | None = None,
+        sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
         session: ClientSession | None = None,
     ):
         filter_spec = self._normalize_filter(filter_spec)
         projection = self._normalize_projection(projection)
-        return self._engine.scan_collection(
-            self._db_name,
-            self._collection_name,
+        plan = compile_filter(filter_spec)
+        return AsyncCursor(
+            self,
             filter_spec,
-            projection=projection,
+            plan,
+            projection,
             sort=sort,
             skip=skip,
             limit=limit,
-            context=session,
+            session=session,
         )
+
+    def aggregate(self, pipeline: Pipeline, *, session: ClientSession | None = None) -> AsyncAggregationCursor:
+        if not isinstance(pipeline, list):
+            raise TypeError("pipeline must be a list")
+        return AsyncAggregationCursor(self, pipeline, session=session)
 
     async def update_one(self, filter_spec: Filter, update_spec: Update, upsert: bool = False, *, session: ClientSession | None = None) -> UpdateResult[DocumentId]:
         filter_spec = self._normalize_filter(filter_spec)
         update_spec = self._require_update(update_spec)
+        plan = compile_filter(filter_spec)
         upsert_seed = None
         if upsert:
             upsert_seed = {}
@@ -139,24 +153,29 @@ class AsyncCollection:
             update_spec,
             upsert=upsert,
             upsert_seed=upsert_seed,
+            plan=plan,
             context=session,
         )
 
     async def delete_one(self, filter_spec: Filter, *, session: ClientSession | None = None) -> DeleteResult:
         filter_spec = self._normalize_filter(filter_spec)
+        plan = compile_filter(filter_spec)
         return await self._engine.delete_matching_document(
             self._db_name,
             self._collection_name,
             filter_spec,
+            plan=plan,
             context=session,
         )
 
     async def count_documents(self, filter_spec: Filter, *, session: ClientSession | None = None) -> int:
         filter_spec = self._normalize_filter(filter_spec)
+        plan = compile_filter(filter_spec)
         return await self._engine.count_matching_documents(
             self._db_name,
             self._collection_name,
             filter_spec,
+            plan=plan,
             context=session,
         )
 

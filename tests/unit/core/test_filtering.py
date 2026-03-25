@@ -1,7 +1,8 @@
-import unittest
 import math
+import unittest
+import uuid
 
-from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.core.query_plan import QueryNode
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ObjectId
@@ -38,6 +39,14 @@ class QueryEngineTests(unittest.TestCase):
         document = {"items": [{"kind": "a"}, {"kind": "b"}]}
         self.assertTrue(QueryEngine.match(document, {"items.kind": "b"}))
 
+    def test_query_engine_supports_numeric_array_segments_in_paths(self):
+        document = {"a": [1, 2], "items": [{"kind": "a"}, {"kind": "b"}]}
+        self.assertTrue(QueryEngine.match(document, {"a.0": 1}))
+        self.assertTrue(QueryEngine.match(document, {"a.1": {"$gt": 1}}))
+        self.assertFalse(QueryEngine.match(document, {"a.1": 1}))
+        self.assertTrue(QueryEngine.match(document, {"items.1.kind": "b"}))
+        self.assertFalse(QueryEngine.match(document, {"items.2.kind": "b"}))
+
     def test_query_engine_supports_top_level_or(self):
         document = {"a": 1, "b": 3}
         self.assertTrue(QueryEngine.match(document, {"$or": [{"a": 2}, {"b": 3}]}))
@@ -66,8 +75,170 @@ class QueryEngineTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             QueryEngine.match({"a": 1}, {"a": {"$unknown": 1}})
 
+    def test_query_engine_supports_all_operator(self):
+        document = {"tags": ["python", "mongodb", "sqlite"]}
+        self.assertTrue(QueryEngine.match(document, {"tags": {"$all": ["python", "sqlite"]}}))
+        self.assertFalse(QueryEngine.match(document, {"tags": {"$all": ["python", "redis"]}}))
+        self.assertTrue(QueryEngine.match({"tags": "python"}, {"tags": {"$all": ["python"]}}))
+        self.assertFalse(QueryEngine.match({"tags": "python"}, {"tags": {"$all": ["python", "mongodb"]}}))
+        self.assertTrue(
+            QueryEngine.match(
+                {"items": [{"kind": "a"}, {"kind": "b"}]},
+                {"items.kind": {"$all": ["a", "b"]}},
+            )
+        )
+        self.assertFalse(
+            QueryEngine.match(
+                {"tags": [["python", "mongodb"]]},
+                {"tags": {"$all": ["python"]}},
+            )
+        )
+
+    def test_query_engine_supports_all_with_elem_match_clauses(self):
+        document = {
+            "items": [
+                {"kind": "a", "qty": 1},
+                {"kind": "b", "qty": 2},
+                {"kind": "b", "qty": 5},
+            ]
+        }
+
+        self.assertTrue(
+            QueryEngine.match(
+                document,
+                {
+                    "items": {
+                        "$all": [
+                            {"$elemMatch": {"kind": "a"}},
+                            {"$elemMatch": {"kind": "b", "qty": {"$gte": 5}}},
+                        ]
+                    }
+                },
+            )
+        )
+        self.assertFalse(
+            QueryEngine.match(
+                document,
+                {
+                    "items": {
+                        "$all": [
+                            {"$elemMatch": {"kind": "a", "qty": {"$gte": 2}}},
+                            {"$elemMatch": {"kind": "b", "qty": {"$gte": 5}}},
+                        ]
+                    }
+                },
+            )
+        )
+
+    def test_query_engine_treats_subdocument_order_as_significant_in_in_operator(self):
+        self.assertFalse(
+            QueryEngine.match(
+                {"value": {"b": 2, "a": 1}},
+                {"value": {"$in": [{"a": 1, "b": 2}]}},
+            )
+        )
+
+    def test_query_engine_treats_subdocument_order_as_significant_in_exact_equality(self):
+        self.assertFalse(
+            QueryEngine.match(
+                {"value": {"b": 2, "a": 1}},
+                {"value": {"a": 1, "b": 2}},
+            )
+        )
+
+    def test_query_engine_supports_size_operator(self):
+        document = {"tags": ["python", "mongodb"]}
+        self.assertTrue(QueryEngine.match(document, {"tags": {"$size": 2}}))
+        self.assertFalse(QueryEngine.match(document, {"tags": {"$size": 3}}))
+        self.assertFalse(QueryEngine.match({"tags": "python"}, {"tags": {"$size": 1}}))
+        self.assertFalse(QueryEngine.match({"tags": [[1, 2]]}, {"tags": {"$size": 2}}))
+
+    def test_query_engine_supports_mod_operator(self):
+        self.assertTrue(QueryEngine.match({"count": 10}, {"count": {"$mod": [3, 1]}}))
+        self.assertFalse(QueryEngine.match({"count": 10}, {"count": {"$mod": [3, 0]}}))
+        self.assertFalse(QueryEngine.match({"count": "10"}, {"count": {"$mod": [3, 1]}}))
+        self.assertFalse(QueryEngine.match({"count": float("inf")}, {"count": {"$mod": [3, 1]}}))
+        self.assertFalse(QueryEngine.match({"count": 10}, {"count": {"$mod": [float("inf"), 1]}}))
+
+    def test_query_engine_supports_lte_operator(self):
+        self.assertTrue(QueryEngine.match({"count": 10}, {"count": {"$lte": 10}}))
+        self.assertTrue(QueryEngine.match({"count": 9}, {"count": {"$lte": 10}}))
+        self.assertFalse(QueryEngine.match({"count": 11}, {"count": {"$lte": 10}}))
+
+    def test_query_engine_supports_mod_with_negative_and_float_values(self):
+        self.assertFalse(QueryEngine.match({"count": -5}, {"count": {"$mod": [3, 1]}}))
+        self.assertTrue(QueryEngine.match({"count": -5}, {"count": {"$mod": [3, -2]}}))
+        self.assertTrue(QueryEngine.match({"count": 5.5}, {"count": {"$mod": [2.5, 0.5]}}))
+        self.assertFalse(QueryEngine.match({"count": 5.5}, {"count": {"$mod": [2.5, 0.0]}}))
+
+    def test_query_engine_supports_regex_operator(self):
+        self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": {"$regex": "^Ad"}}))
+        self.assertTrue(QueryEngine.match({"name": "ada"}, {"name": {"$regex": "^ad", "$options": "i"}}))
+        self.assertTrue(QueryEngine.match({"tags": ["python", "mongodb"]}, {"tags": {"$regex": "^py"}}))
+        self.assertFalse(QueryEngine.match({"name": "Grace"}, {"name": {"$regex": "^Ad"}}))
+
+    def test_query_engine_supports_not_operator(self):
+        self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": {"$not": {"$regex": "^Gr"}}}))
+        self.assertFalse(QueryEngine.match({"name": "Ada"}, {"name": {"$not": {"$regex": "^Ad"}}}))
+        self.assertTrue(QueryEngine.match({"value": 2}, {"value": {"$not": {"$gt": 3}}}))
+
+    def test_query_engine_supports_not_with_elem_match(self):
+        document = {"scores": [1, 4, 7]}
+
+        self.assertTrue(QueryEngine.match(document, {"scores": {"$not": {"$elemMatch": {"$gt": 7}}}}))
+        self.assertFalse(QueryEngine.match(document, {"scores": {"$not": {"$elemMatch": {"$gt": 3, "$lt": 5}}}}))
+
+    def test_query_engine_supports_elem_match_for_scalars_and_documents(self):
+        self.assertTrue(QueryEngine.match({"scores": [1, 4, 7]}, {"scores": {"$elemMatch": {"$gt": 3, "$lt": 5}}}))
+        self.assertFalse(QueryEngine.match({"scores": [1, 5, 7]}, {"scores": {"$elemMatch": {"$gt": 3, "$lt": 5}}}))
+        self.assertTrue(
+            QueryEngine.match(
+                {"items": [{"kind": "a", "qty": 1}, {"kind": "b", "qty": 2}]},
+                {"items": {"$elemMatch": {"kind": "b", "qty": 2}}},
+            )
+        )
+        self.assertFalse(QueryEngine.match({"items": "x"}, {"items": {"$elemMatch": {"kind": "b"}}}))
+        self.assertFalse(QueryEngine.match({"items": [1, 2]}, {"items": {"$elemMatch": {"kind": "b"}}}))
+
+    def test_query_engine_supports_elem_match_with_compound_subdocument_operators(self):
+        document = {
+            "items": [
+                {"kind": "a", "qty": 1, "price": 5},
+                {"kind": "b", "qty": 3, "price": 9},
+                {"kind": "b", "qty": 5, "price": 12},
+            ]
+        }
+
+        self.assertTrue(
+            QueryEngine.match(
+                document,
+                {"items": {"$elemMatch": {"kind": "b", "qty": {"$gte": 3}, "price": {"$lt": 10}}}},
+            )
+        )
+        self.assertFalse(
+            QueryEngine.match(
+                document,
+                {"items": {"$elemMatch": {"kind": "b", "qty": {"$gte": 4}, "price": {"$lt": 10}}}},
+            )
+        )
+
+    def test_query_engine_elem_match_private_helper_supports_direct_scalar_condition(self):
+        self.assertTrue(QueryEngine._match_elem_match_candidate("python", "python"))
+        self.assertFalse(QueryEngine._match_elem_match_candidate("python", "mongodb"))
+
+    def test_query_engine_rejects_unsupported_regex_option(self):
+        with self.assertRaises(OperationFailure):
+            QueryEngine.match({"name": "Ada"}, {"name": {"$regex": "^Ad", "$options": "z"}})
+
     def test_query_engine_handles_nan_comparison_without_crashing(self):
         self.assertTrue(QueryEngine.match({"value": math.nan}, {"value": math.nan}))
+
+    def test_bson_comparator_orders_nan_before_other_numbers(self):
+        nan = math.nan
+
+        self.assertEqual(BSONComparator.compare(nan, math.nan), 0)
+        self.assertLess(BSONComparator.compare(nan, 5), 0)
+        self.assertGreater(BSONComparator.compare(5, nan), 0)
 
     def test_bson_comparator_orders_objectid_as_distinct_bson_type(self):
         smaller = ObjectId("000000000000000000000001")
@@ -76,6 +247,79 @@ class QueryEngineTests(unittest.TestCase):
         self.assertFalse(QueryEngine.match({"value": smaller}, {"value": "000000000000000000000001"}))
         self.assertTrue(QueryEngine.match({"value": smaller}, {"value": smaller}))
         self.assertTrue(QueryEngine.match({"value": larger}, {"value": {"$gt": smaller}}))
+
+    def test_bson_comparator_respects_document_and_array_structure(self):
+        self.assertNotEqual(
+            BSONComparator.compare({"a": 1, "b": 2}, {"b": 2, "a": 1}),
+            0,
+        )
+        self.assertNotEqual(
+            BSONComparator.compare([{"a": 1, "b": 2}], [{"b": 2, "a": 1}]),
+            0,
+        )
+
+    def test_bson_comparator_orders_shorter_documents_and_lists_first(self):
+        self.assertLess(BSONComparator.compare({"a": 1}, {"a": 1, "b": 2}), 0)
+        self.assertLess(BSONComparator.compare([1], [1, 2]), 0)
+        self.assertEqual(BSONComparator.compare([1, 2], [1, 2]), 0)
+
+    def test_bson_comparator_returns_zero_for_equal_ordered_values_and_string_fallback(self):
+        self.assertEqual(BSONComparator.compare({"a": 1}, {"a": 1}), 0)
+
+        class _Unordered:
+            def __init__(self, value):
+                self.value = value
+
+            def __repr__(self) -> str:
+                return self.value
+
+        self.assertLess(BSONComparator.compare(_Unordered("a"), _Unordered("b")), 0)
+        self.assertEqual(BSONComparator.compare(_Unordered("same"), _Unordered("same")), 0)
+
+        class _NonOrdering:
+            def __eq__(self, other) -> bool:
+                return False
+
+            def __lt__(self, other) -> bool:
+                return False
+
+            def __gt__(self, other) -> bool:
+                return False
+
+        self.assertEqual(BSONComparator.compare(_NonOrdering(), _NonOrdering()), 0)
+
+    def test_extract_values_supports_empty_path_and_indexed_nested_arrays(self):
+        self.assertEqual(QueryEngine.extract_values([1, [2, 3]], ""), [[1, [2, 3]], [2, 3]])
+        self.assertEqual(QueryEngine.extract_values([[1, 2]], "0"), [[1, 2], 1, 2])
+
+    def test_get_field_value_returns_false_for_invalid_list_paths(self):
+        self.assertEqual(QueryEngine._get_field_value([1, 2], "x"), (False, None))
+        self.assertEqual(QueryEngine._get_field_value([1, 2], "5"), (False, None))
+        self.assertEqual(QueryEngine._get_field_value([1, 2], "1"), (True, 2))
+        self.assertEqual(QueryEngine._get_field_value([1, 2], "1.name"), (False, None))
+        self.assertEqual(QueryEngine._get_field_value([1, 2], "x.name"), (False, None))
+        self.assertEqual(QueryEngine._get_field_value([1], "2.name"), (False, None))
+        self.assertEqual(QueryEngine._get_field_value([{"name": "Ada"}], "0.name"), (True, "Ada"))
+        self.assertEqual(QueryEngine._get_field_value(1, "a"), (False, None))
+        self.assertEqual(QueryEngine._get_field_value({"items": 1}, "items.name"), (False, None))
+
+    def test_query_engine_all_returns_false_when_no_candidates_exist(self):
+        self.assertFalse(QueryEngine.match({}, {"tags": {"$all": ["python"]}}))
+
+    def test_query_engine_match_plan_rejects_unknown_plan_node(self):
+        class UnknownPlan(QueryNode):
+            pass
+
+        with self.assertRaises(TypeError):
+            QueryEngine.match_plan({"a": 1}, UnknownPlan())
+
+    def test_query_engine_extract_values_handles_indexed_scalar_nested_array(self):
+        document = {"items": [[1, 2], [3, 4]]}
+        self.assertTrue(QueryEngine.match(document, {"items.1.0": 3}))
+
+    def test_query_engine_values_equal_distinguishes_bool_and_int_inside_compound_values(self):
+        self.assertFalse(QueryEngine._values_equal({"a": True}, {"a": 1}))
+        self.assertFalse(QueryEngine._values_equal([True], [1]))
 
     def test_query_engine_does_not_match_comparison_operator_when_field_is_missing(self):
         self.assertFalse(QueryEngine.match({}, {"value": {"$lt": 5}}))
@@ -97,3 +341,8 @@ class QueryEngineTests(unittest.TestCase):
     def test_query_engine_rejects_unknown_comparison_kind(self):
         with self.assertRaises(ValueError):
             QueryEngine._evaluate_comparison({"a": 1}, "a", 1, "between")
+
+    def test_query_engine_supports_exists_true_and_false(self):
+        self.assertTrue(QueryEngine.match({"a": 1}, {"a": {"$exists": True}}))
+        self.assertTrue(QueryEngine.match({}, {"a": {"$exists": False}}))
+        self.assertFalse(QueryEngine.match({"a": 1}, {"a": {"$exists": False}}))

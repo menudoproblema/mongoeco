@@ -1,15 +1,17 @@
 import asyncio
+import datetime
 import threading
+import uuid
 from copy import deepcopy
-from functools import cmp_to_key
 from typing import Any, AsyncIterable, override
 
 from mongoeco.engines.base import AsyncStorageEngine
-from mongoeco.core.filtering import BSONComparator, QueryEngine
-from mongoeco.core.identity import canonical_document_id
+from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operators import UpdateEngine
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.query_plan import MatchAll, QueryNode, ensure_query_plan
+from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import DuplicateKeyError
 from mongoeco.session import ClientSession
 from mongoeco.types import DeleteResult, Document, DocumentId, Filter, Projection, SortSpec, Update, UpdateResult, ObjectId
@@ -44,7 +46,7 @@ class MemoryEngine(AsyncStorageEngine):
     @override
     def create_session_state(self, session: ClientSession) -> None:
         session.bind_engine_state(
-            "memory",
+            f"memory:{id(self)}",
             {
                 "connected": self._connection_count > 0,
             },
@@ -59,7 +61,36 @@ class MemoryEngine(AsyncStorageEngine):
             return self._locks.setdefault(key, _AsyncThreadLock())
 
     def _storage_key(self, value: Any) -> Any:
-        return canonical_document_id(value)
+        return self._typed_engine_key(value)
+
+    def _typed_engine_key(self, value: Any) -> Any:
+        if value is None:
+            return ("none", None)
+        if isinstance(value, bool):
+            return ("bool", value)
+        if isinstance(value, int):
+            return ("int", value)
+        if isinstance(value, float):
+            return ("float", value)
+        if isinstance(value, str):
+            return ("str", value)
+        if isinstance(value, bytes):
+            return ("bytes", value)
+        if isinstance(value, uuid.UUID):
+            return ("uuid", value)
+        if isinstance(value, ObjectId):
+            return ("objectid", value)
+        if isinstance(value, datetime.datetime):
+            return ("datetime", value)
+        if isinstance(value, dict):
+            return ("dict", tuple((key, self._typed_engine_key(item)) for key, item in value.items()))
+        if isinstance(value, list):
+            return ("list", tuple(self._typed_engine_key(item) for item in value))
+        try:
+            hash(value)
+            return (value.__class__, value)
+        except TypeError:
+            return ("repr", repr(value))
 
     def _index_value(self, document: Document, field: str) -> Any:
         values = QueryEngine.extract_values(document, field)
@@ -67,9 +98,7 @@ class MemoryEngine(AsyncStorageEngine):
             return None
 
         primary = values[0]
-        if isinstance(primary, list):
-            return canonical_document_id(primary)
-        return canonical_document_id(primary)
+        return self._typed_engine_key(primary)
 
     def _index_key(self, document: Document, fields: list[str]) -> tuple[Any, ...]:
         return tuple(self._index_value(document, field) for field in fields)
@@ -84,6 +113,9 @@ class MemoryEngine(AsyncStorageEngine):
     ) -> None:
         indexes = self._indexes.get(db_name, {}).get(coll_name, [])
         coll = self._storage.get(db_name, {}).get(coll_name, {})
+        normalized_exclude = exclude_storage_key
+        if exclude_storage_key is not None and exclude_storage_key not in coll:
+            normalized_exclude = self._storage_key(exclude_storage_key)
 
         for index in indexes:
             if not index.get("unique"):
@@ -92,7 +124,7 @@ class MemoryEngine(AsyncStorageEngine):
             fields = index["fields"]
             candidate_key = self._index_key(candidate, fields)
             for storage_key, data in coll.items():
-                if exclude_storage_key is not None and storage_key == exclude_storage_key:
+                if normalized_exclude is not None and storage_key == normalized_exclude:
                     continue
                 existing = self._codec.decode(data)
                 existing_key = self._index_key(existing, fields)
@@ -100,38 +132,6 @@ class MemoryEngine(AsyncStorageEngine):
                     raise DuplicateKeyError(
                         f"Duplicate key for unique index '{index['name']}': {fields}={candidate_key!r}"
                     )
-
-    @staticmethod
-    def _sort_value(document: Document, field: str, direction: int) -> Any:
-        values = QueryEngine.extract_values(document, field)
-        if not values:
-            return None
-
-        primary = values[0]
-        if isinstance(primary, list):
-            if not primary:
-                return []
-            members = values[1:] or primary
-            ordered = sorted(members, key=cmp_to_key(BSONComparator.compare))
-            return ordered[0] if direction == 1 else ordered[-1]
-        return primary
-
-    @classmethod
-    def _compare_documents(cls, left: Document, right: Document, sort: SortSpec) -> int:
-        for field, direction in sort:
-            result = BSONComparator.compare(
-                cls._sort_value(left, field, direction),
-                cls._sort_value(right, field, direction),
-            )
-            if result != 0:
-                return result if direction == 1 else -result
-        return 0
-
-    @classmethod
-    def _sort_documents(cls, documents: list[Document], sort: SortSpec | None) -> list[Document]:
-        if not sort:
-            return documents
-        return sorted(documents, key=cmp_to_key(lambda left, right: cls._compare_documents(left, right, sort)))
 
     @override
     async def connect(self) -> None:
@@ -177,7 +177,7 @@ class MemoryEngine(AsyncStorageEngine):
         async with self._get_lock(db_name, coll_name):
             storage_key = self._storage_key(doc_id)
             data = self._storage.get(db_name, {}).get(coll_name, {}).get(storage_key)
-        if not data:
+        if data is None:
             return None
         return apply_projection(self._codec.decode(data), projection)
 
@@ -192,12 +192,13 @@ class MemoryEngine(AsyncStorageEngine):
             return False
 
     @override
-    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, projection: Projection | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
+    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
         async def _scan():
             if skip < 0:
                 raise ValueError("skip must be >= 0")
             if limit is not None and limit < 0:
                 raise ValueError("limit must be >= 0")
+            query_plan = ensure_query_plan(filter_spec, plan)
 
             async with self._get_lock(db_name, coll_name):
                 coll = self._storage.get(db_name, {}).get(coll_name, {})
@@ -206,9 +207,9 @@ class MemoryEngine(AsyncStorageEngine):
                     for data in list(coll.values())
                 ]
 
-            if filter_spec is not None:
-                documents = [document for document in documents if QueryEngine.match(document, filter_spec)]
-            documents = self._sort_documents(documents, sort)
+            if not isinstance(query_plan, MatchAll):
+                documents = [document for document in documents if QueryEngine.match_plan(document, query_plan)]
+            documents = sort_documents(documents, sort)
 
             if skip:
                 documents = documents[skip:]
@@ -220,7 +221,8 @@ class MemoryEngine(AsyncStorageEngine):
         return _scan()
 
     @override
-    async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, context: ClientSession | None = None) -> UpdateResult[DocumentId]:
+    async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, plan: QueryNode | None = None, context: ClientSession | None = None) -> UpdateResult[DocumentId]:
+        query_plan = ensure_query_plan(filter_spec, plan)
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
                 db = self._storage.setdefault(db_name, {})
@@ -228,7 +230,7 @@ class MemoryEngine(AsyncStorageEngine):
 
             for storage_key, data in list(coll.items()):
                 document = self._codec.decode(data)
-                if not QueryEngine.match(document, filter_spec):
+                if not QueryEngine.match_plan(document, query_plan):
                     continue
 
                 modified = UpdateEngine.apply_update(document, update_spec)
@@ -265,25 +267,27 @@ class MemoryEngine(AsyncStorageEngine):
             )
 
     @override
-    async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, context: ClientSession | None = None) -> DeleteResult:
+    async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, context: ClientSession | None = None) -> DeleteResult:
+        query_plan = ensure_query_plan(filter_spec, plan)
         async with self._get_lock(db_name, coll_name):
             coll = self._storage.get(db_name, {}).get(coll_name, {})
             for storage_key, data in list(coll.items()):
                 document = self._codec.decode(data)
-                if not QueryEngine.match(document, filter_spec):
+                if not QueryEngine.match_plan(document, query_plan):
                     continue
                 del coll[storage_key]
                 return DeleteResult(deleted_count=1)
             return DeleteResult(deleted_count=0)
 
     @override
-    async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, context: ClientSession | None = None) -> int:
+    async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, context: ClientSession | None = None) -> int:
+        query_plan = ensure_query_plan(filter_spec, plan)
         async with self._get_lock(db_name, coll_name):
             coll = self._storage.get(db_name, {}).get(coll_name, {})
             return sum(
                 1
                 for data in coll.values()
-                if QueryEngine.match(self._codec.decode(data), filter_spec)
+                if QueryEngine.match_plan(self._codec.decode(data), query_plan)
             )
 
     @override

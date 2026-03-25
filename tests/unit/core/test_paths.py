@@ -1,6 +1,8 @@
 import unittest
 
-from mongoeco.core.paths import delete_document_value, set_document_value
+import mongoeco.core.paths as paths_module
+from mongoeco.core.paths import delete_document_value, get_document_value, set_document_value
+from mongoeco.errors import OperationFailure
 
 
 class PathHelpersTests(unittest.TestCase):
@@ -21,6 +23,59 @@ class PathHelpersTests(unittest.TestCase):
         self.assertTrue(changed)
         self.assertFalse(unchanged)
         self.assertEqual(document, [None, None, "Ada"])
+
+    def test_set_document_value_distinguishes_bool_and_number(self):
+        document = {"flag": 1, "items": [1]}
+
+        changed_dict = set_document_value(document, "flag", True)
+        changed_list = set_document_value(document["items"], "0", True)
+
+        self.assertTrue(changed_dict)
+        self.assertTrue(changed_list)
+        self.assertEqual(document, {"flag": True, "items": [True]})
+
+    def test_set_document_value_distinguishes_int_and_float(self):
+        document = {"count": 1, "items": [1]}
+
+        changed_dict = set_document_value(document, "count", 1.0)
+        changed_list = set_document_value(document["items"], "0", 1.0)
+
+        self.assertTrue(changed_dict)
+        self.assertTrue(changed_list)
+        self.assertEqual(document, {"count": 1.0, "items": [1.0]})
+
+    def test_set_document_value_treats_reordered_subdocuments_as_changes(self):
+        document = {
+            "profile": {"kind": "a", "qty": 1},
+            "items": [{"kind": "a", "qty": 1}],
+        }
+
+        changed_dict = set_document_value(document, "profile", {"qty": 1, "kind": "a"})
+        changed_list = set_document_value(document["items"], "0", {"qty": 1, "kind": "a"})
+
+        self.assertTrue(changed_dict)
+        self.assertTrue(changed_list)
+        self.assertEqual(
+            document,
+            {
+                "profile": {"qty": 1, "kind": "a"},
+                "items": [{"qty": 1, "kind": "a"}],
+            },
+        )
+
+    def test_set_document_value_returns_false_for_equal_nested_documents_and_lists(self):
+        document = {
+            "profile": {"kind": "a", "qty": 1},
+            "items": [{"kind": "a", "qty": 1}],
+        }
+
+        changed_dict = set_document_value(document, "profile", {"kind": "a", "qty": 1})
+        changed_list = set_document_value(document["items"], "0", {"kind": "a", "qty": 1})
+        changed_whole_list = set_document_value(document, "items", [{"kind": "a", "qty": 1}])
+
+        self.assertFalse(changed_dict)
+        self.assertFalse(changed_list)
+        self.assertFalse(changed_whole_list)
 
     def test_set_document_value_returns_false_for_non_numeric_nested_list_segment(self):
         document = []
@@ -45,6 +100,40 @@ class PathHelpersTests(unittest.TestCase):
 
         self.assertTrue(changed)
         self.assertEqual(document, {"items": [None, None, {"name": "Ada"}]})
+
+    def test_set_document_value_rejects_crossing_scalar_parent(self):
+        with self.assertRaises(OperationFailure):
+            set_document_value({"profile": 1}, "profile.name", "Ada")
+
+        with self.assertRaises(OperationFailure):
+            set_document_value([1], "0.name", "Ada")
+
+    def test_set_document_value_rejects_array_indexes_beyond_limit(self):
+        with self.assertRaises(OperationFailure):
+            set_document_value([], "10001", "Ada")
+
+        with self.assertRaises(OperationFailure):
+            set_document_value({"items": []}, "items.10001.name", "Ada")
+
+    def test_max_array_index_is_configurable(self):
+        original_limit = paths_module.get_max_array_index()
+        try:
+            paths_module.set_max_array_index(2)
+            with self.assertRaises(OperationFailure):
+                set_document_value([], "3", "Ada")
+            changed = set_document_value([], "2", "Ada")
+            self.assertTrue(changed)
+            self.assertEqual(paths_module.get_max_array_index(), 2)
+        finally:
+            paths_module.set_max_array_index(original_limit)
+
+    def test_set_max_array_index_rejects_invalid_values(self):
+        with self.assertRaises(ValueError):
+            paths_module.set_max_array_index(-1)
+        with self.assertRaises(ValueError):
+            paths_module.set_max_array_index(True)
+        with self.assertRaises(ValueError):
+            paths_module.set_max_array_index(1.5)
 
     def test_delete_document_value_handles_list_leaf_miss_and_existing_none(self):
         document = [None]
@@ -87,3 +176,13 @@ class PathHelpersTests(unittest.TestCase):
 
         self.assertFalse(changed)
         self.assertEqual(document, {"items": ["a"]})
+
+    def test_get_document_value_supports_dicts_lists_and_missing_paths(self):
+        document = {"profile": {"name": "Ada"}, "items": [{"name": "Grace"}]}
+
+        self.assertEqual(get_document_value(document, "profile.name"), (True, "Ada"))
+        self.assertEqual(get_document_value(["Ada"], "0"), (True, "Ada"))
+        self.assertEqual(get_document_value(document, "items.0.name"), (True, "Grace"))
+        self.assertEqual(get_document_value([1], "0.name"), (False, None))
+        self.assertEqual(get_document_value(document, "items.2.name"), (False, None))
+        self.assertEqual(get_document_value(document, "items.x"), (False, None))

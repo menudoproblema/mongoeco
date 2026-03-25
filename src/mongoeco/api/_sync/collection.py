@@ -1,5 +1,8 @@
+from mongoeco.api._sync.aggregation_cursor import AggregationCursor
+from mongoeco.api._sync.cursor import Cursor
+from mongoeco.core.aggregation import Pipeline
 from mongoeco.session import ClientSession
-from mongoeco.types import DeleteResult, Document, DocumentId, Filter, InsertOneResult, Projection, Update, UpdateResult
+from mongoeco.types import DeleteResult, Document, DocumentId, Filter, InsertOneResult, Projection, SortSpec, Update, UpdateResult
 
 
 class Collection:
@@ -25,27 +28,25 @@ class Collection:
         filter_spec: Filter | None = None,
         projection: Projection | None = None,
         *,
-        sort: list[tuple[str, int]] | None = None,
+        sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
         session: ClientSession | None = None,
-    ) -> list[Document]:
+    ) -> Cursor:
         async_collection = self._async_collection()
+        return Cursor(
+            self._client,
+            async_collection,
+            {} if filter_spec is None else filter_spec,
+            projection,
+            sort=sort,
+            skip=skip,
+            limit=limit,
+            session=session,
+        )
 
-        async def _collect():
-            return [
-                doc
-                async for doc in async_collection.find(
-                    filter_spec,
-                    projection,
-                    sort=sort,
-                    skip=skip,
-                    limit=limit,
-                    session=session,
-                )
-            ]
-
-        return self._client._run(_collect())
+    def aggregate(self, pipeline: Pipeline, *, session: ClientSession | None = None) -> AggregationCursor:
+        return AggregationCursor(self._client, self._async_collection().aggregate(pipeline, session=session))
 
     def update_one(self, filter_spec: Filter, update_spec: Update, upsert: bool = False, *, session: ClientSession | None = None) -> UpdateResult[DocumentId]:
         return self._client._run(self._async_collection().update_one(filter_spec, update_spec, upsert, session=session))
