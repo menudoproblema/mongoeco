@@ -11,6 +11,8 @@ from mongoeco.compat.base import (
     PYMONGO_PROFILE_413,
     PYMONGO_PROFILE_ALIASES,
     PYMONGO_PROFILES,
+    SUPPORTED_MONGODB_MAJORS,
+    SUPPORTED_PYMONGO_MAJORS,
 )
 
 
@@ -21,6 +23,19 @@ DEFAULT_MONGODB_DIALECT = '7.0'
 DEFAULT_PYMONGO_PROFILE = '4.9'
 AUTO_INSTALLED_PYMONGO_PROFILE = 'auto-installed'
 STRICT_AUTO_INSTALLED_PYMONGO_PROFILE = 'strict-auto-installed'
+
+_KNOWN_PYMONGO_PROFILE_VERSIONS = {
+    tuple(map(int, profile.key.split('.', 1))): profile
+    for profile in PYMONGO_PROFILES.values()
+}
+_KNOWN_PYMONGO_PROFILE_MINORS_BY_MAJOR = {
+    major: sorted(
+        minor
+        for (profile_major, minor) in _KNOWN_PYMONGO_PROFILE_VERSIONS
+        if profile_major == major
+    )
+    for major in SUPPORTED_PYMONGO_MAJORS
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,6 +87,14 @@ def resolve_mongodb_dialect_resolution(
             resolved_dialect=MONGODB_DIALECTS[canonical],
             resolution_mode='explicit-alias',
         )
+    if isinstance(value, str):
+        major, _, _minor = value.partition('.')
+        if major.isdigit() and int(major) not in SUPPORTED_MONGODB_MAJORS:
+            supported = ', '.join(str(item) for item in sorted(SUPPORTED_MONGODB_MAJORS))
+            raise ValueError(
+                f'Unsupported MongoDB major version: {value}. '
+                f'Supported majors: {supported}'
+            )
     raise ValueError(f'Unsupported MongoDB dialect: {value}')
 
 
@@ -138,18 +161,19 @@ def detect_installed_pymongo_profile_resolution(
     minor, _, _patch = remainder.partition('.')
     if not major.isdigit() or (minor and not minor.isdigit()):
         raise ValueError(f'Unsupported installed PyMongo version: {installed}')
-    if int(major) != 4:
-        raise ValueError(f'Unsupported installed PyMongo version: {installed}')
+    major_number = int(major)
+    if major_number not in SUPPORTED_PYMONGO_MAJORS:
+        supported = ', '.join(str(item) for item in sorted(SUPPORTED_PYMONGO_MAJORS))
+        raise ValueError(
+            f'Unsupported installed PyMongo major version: {installed}. '
+            f'Supported majors: {supported}'
+        )
     minor_number = int(minor or '0')
-    if minor_number < 9:
+    if (major_number, minor_number) < min(_KNOWN_PYMONGO_PROFILE_VERSIONS):
         raise ValueError(f'Unsupported installed PyMongo version: {installed}')
-    exact_profiles = {
-        9: PYMONGO_PROFILE_49,
-        11: PYMONGO_PROFILE_411,
-        13: PYMONGO_PROFILE_413,
-    }
+    exact_profile = _KNOWN_PYMONGO_PROFILE_VERSIONS.get((major_number, minor_number))
     if strict:
-        if minor_number not in exact_profiles:
+        if exact_profile is None:
             raise ValueError(
                 'Unsupported installed PyMongo version for strict-auto-installed: '
                 f'{installed}'
@@ -157,17 +181,19 @@ def detect_installed_pymongo_profile_resolution(
         return PyMongoProfileResolution(
             requested=STRICT_AUTO_INSTALLED_PYMONGO_PROFILE,
             installed_version=installed,
-            resolved_profile=exact_profiles[minor_number],
+            resolved_profile=exact_profile,
             resolution_mode='auto-exact',
         )
-    if minor_number >= 13:
-        resolved = PYMONGO_PROFILE_413
-    elif minor_number >= 11:
-        resolved = PYMONGO_PROFILE_411
+    if exact_profile is not None:
+        resolved = exact_profile
+        resolution_mode = 'auto-exact'
     else:
-        resolved = PYMONGO_PROFILE_49
-    resolution_mode = 'auto-exact'
-    if minor_number not in exact_profiles:
+        compatible_minor = max(
+            minor
+            for minor in _KNOWN_PYMONGO_PROFILE_MINORS_BY_MAJOR[major_number]
+            if minor <= minor_number
+        )
+        resolved = _KNOWN_PYMONGO_PROFILE_VERSIONS[(major_number, compatible_minor)]
         resolution_mode = 'auto-compatible-minor-fallback'
     return PyMongoProfileResolution(
         requested=AUTO_INSTALLED_PYMONGO_PROFILE,

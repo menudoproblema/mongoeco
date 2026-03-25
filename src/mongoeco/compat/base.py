@@ -102,19 +102,83 @@ SUPPORTED_GROUP_ACCUMULATORS = frozenset({'$sum', '$min', '$max', '$first', '$av
 
 SUPPORTED_WINDOW_ACCUMULATORS = frozenset({'$sum', '$min', '$max', '$avg', '$push', '$first'})
 
+DEFAULT_BSON_TYPE_ORDER = MappingProxyType(
+    {
+        type(None): 1,
+        UndefinedType: 1,
+        int: 2,
+        float: 2,
+        str: 3,
+        dict: 4,
+        list: 5,
+        bytes: 6,
+        uuid.UUID: 6,
+        ObjectId: 7,
+        bool: 8,
+        datetime.datetime: 9,
+    }
+)
+
+MONGODB_DIALECT_HOOK_NAMES = (
+    'null_query_matches_undefined',
+)
+
+PYMONGO_PROFILE_HOOK_NAMES = (
+    'supports_update_one_sort',
+)
+
+
+def _build_behavior_flags(instance: object, hook_names: Sequence[str]) -> MappingProxyType:
+    return MappingProxyType(
+        {
+            hook_name: getattr(instance, hook_name)()
+            for hook_name in hook_names
+        }
+    )
+
+
+def _build_behavior_flag_catalog(
+    catalog: MappingProxyType,
+    hook_names: Sequence[str],
+) -> MappingProxyType:
+    return MappingProxyType(
+        {
+            key: _build_behavior_flags(instance, hook_names)
+            for key, instance in catalog.items()
+        }
+    )
+
+
+def _build_capability_catalog(catalog: MappingProxyType) -> MappingProxyType:
+    return MappingProxyType(
+        {
+            key: instance.capabilities
+            for key, instance in catalog.items()
+        }
+    )
+
 
 @dataclass(frozen=True, slots=True)
 class MongoDialect:
-    """Describe la semántica observable objetivo del servidor MongoDB."""
+    """Describe la semántica observable objetivo del servidor MongoDB.
+
+    Contrato:
+    - La metadata (`key`, `server_version`, `label`) identifica el dialecto.
+    - Los hooks de comportamiento registran deltas versionados explícitos.
+    - Los hooks lógicos son la única puerta por la que el core debe consultar
+      decisiones semánticas versionables.
+    """
 
     key: str
     server_version: str
     label: str
 
     def null_query_matches_undefined(self) -> bool:
+        """Controla si `null` en query iguala el BSON `undefined` legado."""
         return True
 
     def expression_truthy(self, value: object) -> bool:
+        """Truthiness de expresiones agregadas y `$expr`."""
         if value is None:
             return False
         if isinstance(value, UndefinedType):
@@ -125,26 +189,62 @@ class MongoDialect:
             return value != 0
         return True
 
+    @property
+    def query_field_operators(self) -> frozenset[str]:
+        return SUPPORTED_QUERY_FIELD_OPERATORS
+
+    @property
+    def query_top_level_operators(self) -> frozenset[str]:
+        return SUPPORTED_QUERY_TOP_LEVEL_OPERATORS
+
+    @property
+    def update_operators(self) -> frozenset[str]:
+        return SUPPORTED_UPDATE_OPERATORS
+
+    @property
+    def aggregation_expression_operators(self) -> frozenset[str]:
+        return SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS
+
+    @property
+    def aggregation_stages(self) -> frozenset[str]:
+        return SUPPORTED_AGGREGATION_STAGES
+
+    @property
+    def group_accumulators(self) -> frozenset[str]:
+        return SUPPORTED_GROUP_ACCUMULATORS
+
+    @property
+    def window_accumulators(self) -> frozenset[str]:
+        return SUPPORTED_WINDOW_ACCUMULATORS
+
+    @property
+    def bson_type_order(self) -> MappingProxyType:
+        return DEFAULT_BSON_TYPE_ORDER
+
+    @property
+    def capabilities(self) -> frozenset[str]:
+        return frozenset()
+
     def supports_query_field_operator(self, name: str) -> bool:
-        return name in SUPPORTED_QUERY_FIELD_OPERATORS
+        return name in self.query_field_operators
 
     def supports_query_top_level_operator(self, name: str) -> bool:
-        return name in SUPPORTED_QUERY_TOP_LEVEL_OPERATORS
+        return name in self.query_top_level_operators
 
     def supports_update_operator(self, name: str) -> bool:
-        return name in SUPPORTED_UPDATE_OPERATORS
+        return name in self.update_operators
 
     def supports_aggregation_expression_operator(self, name: str) -> bool:
-        return name in SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS
+        return name in self.aggregation_expression_operators
 
     def supports_aggregation_stage(self, name: str) -> bool:
-        return name in SUPPORTED_AGGREGATION_STAGES
+        return name in self.aggregation_stages
 
     def supports_group_accumulator(self, name: str) -> bool:
-        return name in SUPPORTED_GROUP_ACCUMULATORS
+        return name in self.group_accumulators
 
     def supports_window_accumulator(self, name: str) -> bool:
-        return name in SUPPORTED_WINDOW_ACCUMULATORS
+        return name in self.window_accumulators
 
     def projection_flag(self, value: object) -> int | None:
         if isinstance(value, bool):
@@ -168,6 +268,7 @@ class MongoDialect:
         return sorted(params.items(), key=sort_key)
 
     def values_equal(self, left: Any, right: Any) -> bool:
+        """Igualdad observable BSON, sensible al orden de campos en documentos."""
         if isinstance(left, dict) and isinstance(right, dict):
             left_items = list(left.items())
             right_items = list(right.items())
@@ -184,23 +285,9 @@ class MongoDialect:
         return self.compare_values(left, right) == 0
 
     def compare_values(self, left: Any, right: Any) -> int:
-        type_order: dict[type, int] = {
-            type(None): 1,
-            UndefinedType: 1,
-            int: 2,
-            float: 2,
-            str: 3,
-            dict: 4,
-            list: 5,
-            bytes: 6,
-            uuid.UUID: 6,
-            ObjectId: 7,
-            bool: 8,
-            datetime.datetime: 9,
-        }
-
-        type_left = type_order.get(type(left), 100)
-        type_right = type_order.get(type(right), 100)
+        """Orden observable BSON para comparaciones y sorting."""
+        type_left = self.bson_type_order.get(type(left), 100)
+        type_right = self.bson_type_order.get(type(right), 100)
         if type_left != type_right:
             return -1 if type_left < type_right else 1
 
@@ -247,15 +334,23 @@ class MongoDialect:
                 return 0
             return -1 if left_repr < right_repr else 1
 
+    def behavior_flags(self) -> MappingProxyType:
+        """Expone metadata derivada directamente de los hooks del dialecto."""
+        return _build_behavior_flags(self, MONGODB_DIALECT_HOOK_NAMES)
 
+
+@dataclass(frozen=True, slots=True)
 class MongoDialect70(MongoDialect):
-    def __init__(self):
-        super().__init__(key='7.0', server_version='7.0', label='MongoDB 7.0')
+    key: str = '7.0'
+    server_version: str = '7.0'
+    label: str = 'MongoDB 7.0'
 
 
+@dataclass(frozen=True, slots=True)
 class MongoDialect80(MongoDialect):
-    def __init__(self):
-        super().__init__(key='8.0', server_version='8.0', label='MongoDB 8.0')
+    key: str = '8.0'
+    server_version: str = '8.0'
+    label: str = 'MongoDB 8.0'
 
     def null_query_matches_undefined(self) -> bool:
         return False
@@ -263,7 +358,13 @@ class MongoDialect80(MongoDialect):
 
 @dataclass(frozen=True, slots=True)
 class PyMongoProfile:
-    """Describe la superficie pública objetivo compatible con PyMongo."""
+    """Describe la superficie pública objetivo compatible con PyMongo.
+
+    Contrato:
+    - La metadata identifica la serie pública objetivo del driver.
+    - Los hooks solo modelan diferencias visibles de API Python.
+    - Nunca deben controlar semántica MQL o comparación BSON.
+    """
 
     key: str
     driver_series: str
@@ -272,25 +373,41 @@ class PyMongoProfile:
     def supports_update_one_sort(self) -> bool:
         return False
 
+    @property
+    def capabilities(self) -> frozenset[str]:
+        return frozenset()
 
+    def behavior_flags(self) -> MappingProxyType:
+        """Expone metadata derivada directamente de los hooks del perfil."""
+        return _build_behavior_flags(self, PYMONGO_PROFILE_HOOK_NAMES)
+
+
+@dataclass(frozen=True, slots=True)
 class PyMongoProfile49(PyMongoProfile):
-    def __init__(self):
-        super().__init__(key='4.9', driver_series='4.x', label='PyMongo 4.9')
+    key: str = '4.9'
+    driver_series: str = '4.x'
+    label: str = 'PyMongo 4.9'
 
 
+@dataclass(frozen=True, slots=True)
 class PyMongoProfile411(PyMongoProfile):
-    def __init__(self):
-        super().__init__(key='4.11', driver_series='4.x', label='PyMongo 4.11')
+    key: str = '4.11'
+    driver_series: str = '4.x'
+    label: str = 'PyMongo 4.11'
 
     def supports_update_one_sort(self) -> bool:
         return True
 
+    @property
+    def capabilities(self) -> frozenset[str]:
+        return frozenset({'update_one.sort'})
 
+
+@dataclass(frozen=True, slots=True)
 class PyMongoProfile413(PyMongoProfile411):
-    def __init__(self):
-        super().__init__()
-        object.__setattr__(self, 'key', '4.13')
-        object.__setattr__(self, 'label', 'PyMongo 4.13')
+    key: str = '4.13'
+    driver_series: str = '4.x'
+    label: str = 'PyMongo 4.13'
 
 
 MONGODB_DIALECT_70 = MongoDialect70()
@@ -316,26 +433,11 @@ MONGODB_DIALECT_ALIASES = MappingProxyType(
     }
 )
 
-MONGODB_DIALECT_CAPABILITIES = MappingProxyType(
-    {
-        MONGODB_DIALECT_70.key: frozenset(),
-        MONGODB_DIALECT_80.key: frozenset(),
-    }
-)
+MONGODB_DIALECT_CAPABILITIES = _build_capability_catalog(MONGODB_DIALECTS)
 
-MONGODB_DIALECT_BEHAVIOR_FLAGS = MappingProxyType(
-    {
-        MONGODB_DIALECT_70.key: MappingProxyType(
-            {
-                'null_query_matches_undefined': MONGODB_DIALECT_70.null_query_matches_undefined(),
-            }
-        ),
-        MONGODB_DIALECT_80.key: MappingProxyType(
-            {
-                'null_query_matches_undefined': MONGODB_DIALECT_80.null_query_matches_undefined(),
-            }
-        ),
-    }
+MONGODB_DIALECT_BEHAVIOR_FLAGS = _build_behavior_flag_catalog(
+    MONGODB_DIALECTS,
+    MONGODB_DIALECT_HOOK_NAMES,
 )
 
 PYMONGO_PROFILES = MappingProxyType(
@@ -355,30 +457,19 @@ PYMONGO_PROFILE_ALIASES = MappingProxyType(
     }
 )
 
-PYMONGO_PROFILE_CAPABILITIES = MappingProxyType(
-    {
-        PYMONGO_PROFILE_49.key: frozenset(),
-        PYMONGO_PROFILE_411.key: frozenset({'update_one.sort'}),
-        PYMONGO_PROFILE_413.key: frozenset({'update_one.sort'}),
-    }
+PYMONGO_PROFILE_CAPABILITIES = _build_capability_catalog(PYMONGO_PROFILES)
+
+PYMONGO_PROFILE_BEHAVIOR_FLAGS = _build_behavior_flag_catalog(
+    PYMONGO_PROFILES,
+    PYMONGO_PROFILE_HOOK_NAMES,
 )
 
-PYMONGO_PROFILE_BEHAVIOR_FLAGS = MappingProxyType(
-    {
-        PYMONGO_PROFILE_49.key: MappingProxyType(
-            {
-                'supports_update_one_sort': PYMONGO_PROFILE_49.supports_update_one_sort(),
-            }
-        ),
-        PYMONGO_PROFILE_411.key: MappingProxyType(
-            {
-                'supports_update_one_sort': PYMONGO_PROFILE_411.supports_update_one_sort(),
-            }
-        ),
-        PYMONGO_PROFILE_413.key: MappingProxyType(
-            {
-                'supports_update_one_sort': PYMONGO_PROFILE_413.supports_update_one_sort(),
-            }
-        ),
-    }
+SUPPORTED_MONGODB_MAJORS = frozenset(
+    int(key.split('.', 1)[0])
+    for key in MONGODB_DIALECTS
+)
+
+SUPPORTED_PYMONGO_MAJORS = frozenset(
+    int(key.split('.', 1)[0])
+    for key in PYMONGO_PROFILES
 )

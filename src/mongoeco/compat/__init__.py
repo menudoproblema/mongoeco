@@ -1,5 +1,6 @@
 from mongoeco.compat.base import (
     MongoDialect,
+    MONGODB_DIALECT_HOOK_NAMES,
     MONGODB_DIALECT_70,
     MONGODB_DIALECT_80,
     MONGODB_DIALECT_ALIASES,
@@ -8,6 +9,7 @@ from mongoeco.compat.base import (
     MONGODB_DIALECTS,
     MongoDialect70,
     MongoDialect80,
+    PYMONGO_PROFILE_HOOK_NAMES,
     PYMONGO_PROFILE_49,
     PYMONGO_PROFILE_411,
     PYMONGO_PROFILE_413,
@@ -19,6 +21,8 @@ from mongoeco.compat.base import (
     PyMongoProfile49,
     PyMongoProfile411,
     PyMongoProfile413,
+    SUPPORTED_MONGODB_MAJORS,
+    SUPPORTED_PYMONGO_MAJORS,
 )
 from mongoeco.compat.registry import (
     AUTO_INSTALLED_PYMONGO_PROFILE,
@@ -37,6 +41,7 @@ from mongoeco.compat.registry import (
 
 __all__ = [
     'MongoDialect',
+    'MONGODB_DIALECT_HOOK_NAMES',
     'MONGODB_DIALECT_70',
     'MONGODB_DIALECT_80',
     'MONGODB_DIALECTS',
@@ -46,6 +51,7 @@ __all__ = [
     'MongoDialect70',
     'MongoDialect80',
     'PyMongoProfile',
+    'PYMONGO_PROFILE_HOOK_NAMES',
     'PYMONGO_PROFILE_49',
     'PYMONGO_PROFILE_411',
     'PYMONGO_PROFILE_413',
@@ -56,6 +62,8 @@ __all__ = [
     'PyMongoProfile49',
     'PyMongoProfile411',
     'PyMongoProfile413',
+    'SUPPORTED_MONGODB_MAJORS',
+    'SUPPORTED_PYMONGO_MAJORS',
     'DEFAULT_MONGODB_DIALECT',
     'DEFAULT_PYMONGO_PROFILE',
     'AUTO_INSTALLED_PYMONGO_PROFILE',

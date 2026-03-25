@@ -63,6 +63,11 @@ cambiar entre versiones:
 * diferencias entre error y no-op
 * reglas sutiles de proyección, update y agregación
 
+Los dialectos y perfiles oficiales siguen siendo **dataclasses inmutables**,
+pero sus versiones concretas ya no dependen de `__init__` manuales ni de
+mutaciones con `object.__setattr__`. La identidad por versión vive en defaults
+de clase, y los deltas viven solo en hooks o catálogos declarativos.
+
 Además del comportamiento ejecutable, el catálogo oficial puede registrar
 **flags de comportamiento versionados** para diferencias reales documentadas.
 
@@ -91,14 +96,14 @@ caminos.
 
 ### Deltas activos hoy
 
-| Caso | MongoDialect70 | MongoDialect80 | Cobertura |
-|---|---|---|---|
-| `null_query_matches_undefined()` | `True` | `False` | `tests/unit/test_compat.py` |
-| Igualdad query `{"field": null}` sobre `UNDEFINED` | match | no match | `tests/unit/core/test_filtering.py` |
-| `"$in": [null]` sobre `UNDEFINED` | match | no match | `tests/unit/core/test_filtering.py` |
-| `"$ne": null` con campo ausente | no match | match | `tests/unit/core/test_filtering.py` |
-| `"$nin": [null]` con campo ausente | no match | match | `tests/unit/core/test_filtering.py` |
-| `$lookup` simple con `null` vs `UNDEFINED` | iguala | no iguala | `tests/unit/core/test_aggregation.py`, `tests/differential/*` |
+| Caso | MongoDialect70 | MongoDialect80 | Hook implicado | Runtime activo | Cobertura |
+|---|---|---|---|---|---|
+| `null_query_matches_undefined()` | `True` | `False` | `null_query_matches_undefined()` | sí | `tests/unit/test_compat.py` |
+| Igualdad query `{"field": null}` sobre `UNDEFINED` | match | no match | `null_query_matches_undefined()` | sí | `tests/unit/core/test_filtering.py` |
+| `"$in": [null]` sobre `UNDEFINED` | match | no match | `null_query_matches_undefined()` | sí | `tests/unit/core/test_filtering.py` |
+| `"$ne": null` con campo ausente | no match | match | `null_query_matches_undefined()` | sí | `tests/unit/core/test_filtering.py` |
+| `"$nin": [null]` con campo ausente | no match | match | `null_query_matches_undefined()` | sí | `tests/unit/core/test_filtering.py` |
+| `$lookup` simple con `null` vs `UNDEFINED` | iguala | no iguala | `null_query_matches_undefined()` | sí | `tests/unit/core/test_aggregation.py`, `tests/differential/*` |
 
 ### Regla de implementación
 
@@ -118,6 +123,41 @@ el core debe preguntar a una abstracción de dialecto:
 * `dialect.supports_expression_operator(name)`
 * `dialect.validate_projection(spec)`
 * `dialect.validate_update(spec)`
+
+Cuando el delta sea declarativo, la forma preferida es exponer catálogo y
+derivar el helper:
+
+* `dialect.query_field_operators`
+* `dialect.query_top_level_operators`
+* `dialect.update_operators`
+* `dialect.aggregation_expression_operators`
+* `dialect.bson_type_order`
+
+Los métodos `supports_*` y `compare_values()` deben apoyarse en esos catálogos,
+no duplicar listas o tablas embebidas localmente.
+
+### Contrato de mantenimiento
+
+La metadata del catálogo y el comportamiento ejecutable no deben divergir.
+
+Reglas:
+
+* los flags públicos de comportamiento deben derivarse de los hooks reales del
+  dialecto o del perfil, no mantenerse a mano como una segunda verdad
+* las capacidades declarativas públicas también deben derivarse de los objetos
+  oficiales del catálogo, no replicarse en matrices manuales paralelas
+* las majors soportadas deben derivarse del catálogo oficial hardcoded, no de
+  constantes sueltas sin relación con el registro real
+* cualquier delta nuevo debe registrarse en esta tabla con:
+  * caso observable
+  * hook implicado
+  * cobertura exacta
+  * estado de runtime activo
+
+La suite ya incluye tests de contrato específicos en:
+
+* `tests/unit/test_compat.py`
+* `tests/unit/test_compat_contract.py`
 
 ### Baseline de desarrollo
 
@@ -220,7 +260,6 @@ Versiones anteriores a `4.9` y series mayores desconocidas no se aceptan silenci
 También existe `pymongo_profile="strict-auto-installed"` para entornos donde la
 instalación local debe encajar exactamente en un perfil registrado y cualquier
 minor nueva debe fallar de forma explícita.
-3. fallback por defecto documentado
 
 ---
 

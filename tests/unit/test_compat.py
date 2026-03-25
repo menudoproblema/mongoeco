@@ -7,6 +7,7 @@ from mongoeco.compat import (
     DEFAULT_MONGODB_DIALECT,
     DEFAULT_PYMONGO_PROFILE,
     detect_installed_pymongo_profile_resolution,
+    MONGODB_DIALECT_HOOK_NAMES,
     MONGODB_DIALECT_70,
     MONGODB_DIALECT_80,
     MONGODB_DIALECT_ALIASES,
@@ -22,10 +23,13 @@ from mongoeco.compat import (
     PYMONGO_PROFILE_ALIASES,
     PYMONGO_PROFILE_BEHAVIOR_FLAGS,
     PYMONGO_PROFILE_CAPABILITIES,
+    PYMONGO_PROFILE_HOOK_NAMES,
     PYMONGO_PROFILES,
     PyMongoProfile49,
     PyMongoProfile411,
     PyMongoProfile413,
+    SUPPORTED_MONGODB_MAJORS,
+    SUPPORTED_PYMONGO_MAJORS,
     detect_installed_pymongo_profile,
     PyMongoProfileResolution,
     resolve_mongodb_dialect,
@@ -50,6 +54,10 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertEqual(DEFAULT_PYMONGO_PROFILE, '4.9')
         self.assertEqual(AUTO_INSTALLED_PYMONGO_PROFILE, 'auto-installed')
         self.assertEqual(STRICT_AUTO_INSTALLED_PYMONGO_PROFILE, 'strict-auto-installed')
+        self.assertEqual(MONGODB_DIALECT_HOOK_NAMES, ('null_query_matches_undefined',))
+        self.assertEqual(PYMONGO_PROFILE_HOOK_NAMES, ('supports_update_one_sort',))
+        self.assertEqual(SUPPORTED_MONGODB_MAJORS, frozenset({7, 8}))
+        self.assertEqual(SUPPORTED_PYMONGO_MAJORS, frozenset({4}))
 
     def test_catalog_singletons_are_the_official_instances(self):
         self.assertIs(MONGODB_DIALECTS['7.0'], MONGODB_DIALECT_70)
@@ -57,20 +65,46 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertIs(PYMONGO_PROFILES['4.9'], PYMONGO_PROFILE_49)
         self.assertIs(PYMONGO_PROFILES['4.11'], PYMONGO_PROFILE_411)
         self.assertIs(PYMONGO_PROFILES['4.13'], PYMONGO_PROFILE_413)
+        self.assertEqual(MONGODB_DIALECT_CAPABILITIES['7.0'], MONGODB_DIALECT_70.capabilities)
+        self.assertEqual(MONGODB_DIALECT_CAPABILITIES['8.0'], MONGODB_DIALECT_80.capabilities)
+        self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.9'], PYMONGO_PROFILE_49.capabilities)
+        self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.11'], PYMONGO_PROFILE_411.capabilities)
+        self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.13'], PYMONGO_PROFILE_413.capabilities)
+
+    def test_official_versioned_classes_provide_identity_defaults_without_manual_init(self):
+        self.assertEqual(MongoDialect70().key, '7.0')
+        self.assertEqual(MongoDialect80().key, '8.0')
+        self.assertEqual(PyMongoProfile49().key, '4.9')
+        self.assertEqual(PyMongoProfile411().key, '4.11')
+        self.assertEqual(PyMongoProfile413().key, '4.13')
+        self.assertEqual(PyMongoProfile413().label, 'PyMongo 4.13')
 
     def test_versioned_behavior_flags_capture_known_server_delta_between_7_and_8(self):
         self.assertTrue(MONGODB_DIALECT_70.null_query_matches_undefined())
         self.assertFalse(MONGODB_DIALECT_80.null_query_matches_undefined())
         self.assertTrue(MONGODB_DIALECT_BEHAVIOR_FLAGS['7.0']['null_query_matches_undefined'])
         self.assertFalse(MONGODB_DIALECT_BEHAVIOR_FLAGS['8.0']['null_query_matches_undefined'])
+        self.assertEqual(MONGODB_DIALECT_BEHAVIOR_FLAGS['7.0'], MONGODB_DIALECT_70.behavior_flags())
+        self.assertEqual(MONGODB_DIALECT_BEHAVIOR_FLAGS['8.0'], MONGODB_DIALECT_80.behavior_flags())
 
     def test_pymongo_profile_flags_capture_first_public_api_delta(self):
         self.assertFalse(PYMONGO_PROFILE_49.supports_update_one_sort())
         self.assertTrue(PYMONGO_PROFILE_411.supports_update_one_sort())
         self.assertTrue(PYMONGO_PROFILE_413.supports_update_one_sort())
+        self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.9'], frozenset())
+        self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.11'], frozenset({'update_one.sort'}))
+        self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.13'], frozenset({'update_one.sort'}))
         self.assertFalse(PYMONGO_PROFILE_BEHAVIOR_FLAGS['4.9']['supports_update_one_sort'])
         self.assertTrue(PYMONGO_PROFILE_BEHAVIOR_FLAGS['4.11']['supports_update_one_sort'])
         self.assertTrue(PYMONGO_PROFILE_BEHAVIOR_FLAGS['4.13']['supports_update_one_sort'])
+        self.assertEqual(PYMONGO_PROFILE_BEHAVIOR_FLAGS['4.9'], PYMONGO_PROFILE_49.behavior_flags())
+        self.assertEqual(PYMONGO_PROFILE_BEHAVIOR_FLAGS['4.11'], PYMONGO_PROFILE_411.behavior_flags())
+        self.assertEqual(PYMONGO_PROFILE_BEHAVIOR_FLAGS['4.13'], PYMONGO_PROFILE_413.behavior_flags())
+
+    def test_dialect_support_helpers_are_derived_from_declarative_catalogs(self):
+        self.assertIn('$eq', MongoDialect70().query_field_operators)
+        self.assertTrue(MongoDialect70().supports_query_field_operator('$eq'))
+        self.assertFalse(MongoDialect70().supports_query_field_operator('$unknown'))
 
     def test_resolve_mongodb_dialect_uses_baseline_by_default(self):
         self.assertIs(resolve_mongodb_dialect(), MONGODB_DIALECT_70)
@@ -175,6 +209,8 @@ class CompatResolutionTests(unittest.TestCase):
     def test_detect_installed_pymongo_profile_rejects_unknown_major_series(self, _version):
         with self.assertRaises(ValueError):
             detect_installed_pymongo_profile()
+        with self.assertRaises(ValueError):
+            resolve_pymongo_profile_resolution('auto-installed')
 
     @patch('mongoeco.compat.registry.importlib_metadata.version', return_value='dev-build')
     def test_detect_installed_pymongo_profile_rejects_unparseable_version(self, _version):
