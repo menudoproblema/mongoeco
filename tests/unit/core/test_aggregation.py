@@ -977,6 +977,15 @@ class AggregationTests(unittest.TestCase):
 
         self.assertEqual(result, [{"_id": "1", "name": "Ada"}])
 
+    def test_apply_pipeline_unset_supports_string_and_list_specs(self):
+        documents = [{"_id": "1", "name": "Ada", "role": "admin", "profile": {"city": "Madrid", "zip": 28001}}]
+
+        single = apply_pipeline(documents, [{"$unset": "role"}])
+        multiple = apply_pipeline(documents, [{"$unset": ["role", "profile.zip"]}])
+
+        self.assertEqual(single, [{"_id": "1", "name": "Ada", "profile": {"city": "Madrid", "zip": 28001}}])
+        self.assertEqual(multiple, [{"_id": "1", "name": "Ada", "profile": {"city": "Madrid"}}])
+
     def test_apply_pipeline_project_computed_only_keeps_id_by_default(self):
         documents = [{"_id": "1", "score": 10}]
 

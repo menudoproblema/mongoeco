@@ -187,6 +187,19 @@ def _require_unwind_spec(spec: object) -> tuple[str, bool, str | None]:
     return path[1:], preserve, include_array_index
 
 
+def _require_unset_spec(spec: object) -> list[str]:
+    if isinstance(spec, str):
+        fields = [spec]
+    elif isinstance(spec, list):
+        fields = spec
+    else:
+        raise OperationFailure("$unset requires a field path string or a list of field path strings")
+
+    if not fields or not all(isinstance(field, str) and field for field in fields):
+        raise OperationFailure("$unset requires non-empty field path strings")
+    return fields
+
+
 def _require_lookup_spec(spec: object) -> dict[str, Any]:
     if not isinstance(spec, dict):
         raise OperationFailure("$lookup requires a document specification")
@@ -1002,6 +1015,20 @@ def _apply_add_fields(
     return result
 
 
+def _apply_unset(
+    documents: list[Document],
+    spec: object,
+) -> list[Document]:
+    fields = _require_unset_spec(spec)
+    result: list[Document] = []
+    for document in documents:
+        trimmed = deepcopy(document)
+        for field in fields:
+            delete_document_value(trimmed, field)
+        result.append(trimmed)
+    return result
+
+
 def _apply_project(
     documents: list[Document],
     spec: object,
@@ -1709,6 +1736,9 @@ def apply_pipeline(
             continue
         if operator == "$project":
             result = _apply_project(result, spec, variables, dialect=dialect)
+            continue
+        if operator == "$unset":
+            result = _apply_unset(result, spec)
             continue
         if operator == "$sort":
             result = sort_documents(result, _require_sort(spec), dialect=dialect)

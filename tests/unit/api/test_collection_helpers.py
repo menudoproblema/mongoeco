@@ -7,7 +7,8 @@ from mongoeco.core.query_plan import MatchAll
 from mongoeco.core.upserts import _seed_filter_value, seed_upsert_document
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import OperationFailure
+from mongoeco.errors import DuplicateKeyError, OperationFailure
+from mongoeco.types import ReturnDocument
 
 
 class AsyncCollectionHelperTests(unittest.TestCase):
@@ -66,6 +67,287 @@ class AsyncCollectionHelperTests(unittest.TestCase):
     def test_seed_filter_value_rejects_bool_number_conflict(self):
         with self.assertRaises(OperationFailure):
             _seed_filter_value({"a": 1}, "a", True)
+
+    def test_insert_many_requires_non_empty_document_list(self):
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.insert_many({"name": "Ada"}))  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            asyncio.run(self.collection.insert_many([]))
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.insert_many([{"name": "Ada"}, []]))  # type: ignore[list-item]
+
+    def test_insert_many_raises_duplicate_key_error_when_engine_rejects_document(self):
+        class EngineStub:
+            def __init__(self):
+                self.calls = 0
+
+            async def put_document(self, *args, **kwargs):
+                self.calls += 1
+                return self.calls == 1
+
+        collection = AsyncCollection(EngineStub(), "db", "coll")
+
+        with self.assertRaisesRegex(DuplicateKeyError, "Duplicate key"):
+            asyncio.run(collection.insert_many([{"_id": "1"}, {"_id": "1"}]))
+
+    def test_update_many_returns_zero_counts_when_nothing_matches_and_upsert_is_false(self):
+        class EngineStub:
+            def scan_collection(self, *args, **kwargs):
+                async def _scan():
+                    if False:
+                        yield None
+
+                return _scan()
+
+        collection = AsyncCollection(EngineStub(), "db", "coll")
+
+        result = asyncio.run(collection.update_many({"kind": "missing"}, {"$set": {"done": True}}))
+
+        self.assertEqual(result.matched_count, 0)
+        self.assertEqual(result.modified_count, 0)
+
+    def test_replace_one_rejects_update_operator_document(self):
+        with self.assertRaises(ValueError):
+            asyncio.run(self.collection.replace_one({"name": "Ada"}, {"$set": {"name": "Grace"}}))
+
+    def test_replace_one_rejects_non_document_replacement(self):
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.replace_one({"name": "Ada"}, []))  # type: ignore[arg-type]
+
+    def test_replace_one_sort_is_rejected_by_older_pymongo_profile(self):
+        collection = AsyncCollection(
+            MemoryEngine(),
+            "db",
+            "coll",
+            pymongo_profile="4.9",
+        )
+
+        with self.assertRaises(TypeError):
+            asyncio.run(
+                collection.replace_one(
+                    {"name": "Ada"},
+                    {"name": "Grace"},
+                    sort=[("rank", 1)],
+                )
+            )
+
+    def test_replace_one_returns_zero_when_nothing_matches_and_upsert_is_false(self):
+        class EngineStub:
+            def scan_collection(self, *args, **kwargs):
+                async def _scan():
+                    if False:
+                        yield None
+
+                return _scan()
+
+        collection = AsyncCollection(EngineStub(), "db", "coll")
+
+        result = asyncio.run(collection.replace_one({"name": "Ada"}, {"name": "Grace"}))
+
+        self.assertEqual(result.matched_count, 0)
+        self.assertEqual(result.modified_count, 0)
+
+    def test_replace_one_upsert_builds_seeded_document(self):
+        class EngineStub:
+            def __init__(self):
+                self.document = None
+
+            def scan_collection(self, *args, **kwargs):
+                async def _scan():
+                    if False:
+                        yield None
+
+                return _scan()
+
+            async def put_document(self, _db, _coll, document, **kwargs):
+                self.document = document
+                return True
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        result = asyncio.run(
+            collection.replace_one(
+                {"kind": "missing", "tenant": "a"},
+                {"done": True},
+                upsert=True,
+            )
+        )
+
+        self.assertEqual(result.matched_count, 0)
+        self.assertEqual(result.modified_count, 0)
+        self.assertTrue(result.upserted_id)
+        self.assertEqual(
+            engine.document,
+            {"_id": result.upserted_id, "kind": "missing", "tenant": "a", "done": True},
+        )
+
+    def test_replace_one_upsert_duplicate_key_error_when_engine_rejects_document(self):
+        class EngineStub:
+            def scan_collection(self, *args, **kwargs):
+                async def _scan():
+                    if False:
+                        yield None
+
+                return _scan()
+
+            async def put_document(self, *args, **kwargs):
+                return False
+
+        collection = AsyncCollection(EngineStub(), "db", "coll")
+
+        with self.assertRaises(DuplicateKeyError):
+            asyncio.run(collection.replace_one({"kind": "missing"}, {"done": True}, upsert=True))
+
+    def test_replace_one_rejects_changing_id(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                await collection.insert_one({"_id": "1", "name": "Ada"})
+                await collection.replace_one({"_id": "1"}, {"_id": "2", "name": "Grace"})
+            finally:
+                await engine.disconnect()
+
+        with self.assertRaises(OperationFailure):
+            asyncio.run(_exercise())
+
+    def test_find_one_and_update_requires_return_document_enum(self):
+        with self.assertRaises(TypeError):
+            asyncio.run(
+                self.collection.find_one_and_update(
+                    {"name": "Ada"},
+                    {"$set": {"name": "Grace"}},
+                    return_document="after",  # type: ignore[arg-type]
+                )
+            )
+
+    def test_find_one_and_update_returns_none_when_nothing_matches_without_upsert(self):
+        class EngineStub:
+            def scan_collection(self, *args, **kwargs):
+                async def _scan():
+                    if False:
+                        yield None
+
+                return _scan()
+
+        collection = AsyncCollection(EngineStub(), "db", "coll")
+
+        result = asyncio.run(
+            collection.find_one_and_update(
+                {"name": "Ada"},
+                {"$set": {"name": "Grace"}},
+            )
+        )
+
+        self.assertIsNone(result)
+
+    def test_find_one_and_update_returns_after_document_for_existing_match(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                await collection.insert_one({"_id": "1", "name": "Ada", "done": False})
+                return await collection.find_one_and_update(
+                    {"_id": "1"},
+                    {"$set": {"done": True}},
+                    return_document=ReturnDocument.AFTER,
+                    projection={"done": 1, "_id": 0},
+                )
+            finally:
+                await engine.disconnect()
+
+        result = asyncio.run(_exercise())
+
+        self.assertEqual(result, {"done": True})
+
+    def test_find_one_and_replace_covers_before_after_and_none_branches(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll", pymongo_profile="4.11")
+                none_result = await collection.find_one_and_replace(
+                    {"name": "missing"},
+                    {"name": "Grace"},
+                )
+                before_upsert = await collection.find_one_and_replace(
+                    {"name": "upserted"},
+                    {"done": True},
+                    upsert=True,
+                )
+                after_upsert = await collection.find_one_and_replace(
+                    {"name": "after-upsert"},
+                    {"done": True},
+                    upsert=True,
+                    return_document=ReturnDocument.AFTER,
+                    projection={"done": 1, "_id": 0},
+                )
+                await collection.insert_one({"_id": "1", "name": "Ada", "done": False})
+                before_existing = await collection.find_one_and_replace(
+                    {"_id": "1"},
+                    {"name": "Ada", "done": True},
+                    return_document=ReturnDocument.BEFORE,
+                    projection={"done": 1, "_id": 0},
+                )
+                return none_result, before_upsert, after_upsert, before_existing
+            finally:
+                await engine.disconnect()
+
+        none_result, before_upsert, after_upsert, before_existing = asyncio.run(_exercise())
+
+        self.assertIsNone(none_result)
+        self.assertIsNone(before_upsert)
+        self.assertEqual(after_upsert, {"done": True})
+        self.assertEqual(before_existing, {"done": False})
+
+    def test_find_one_and_delete_returns_none_when_nothing_matches(self):
+        class EngineStub:
+            def scan_collection(self, *args, **kwargs):
+                async def _scan():
+                    if False:
+                        yield None
+
+                return _scan()
+
+        collection = AsyncCollection(EngineStub(), "db", "coll")
+
+        result = asyncio.run(collection.find_one_and_delete({"name": "missing"}))
+
+        self.assertIsNone(result)
+
+    def test_distinct_rejects_non_string_key(self):
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.distinct(1))  # type: ignore[arg-type]
+
+    def test_distinct_honors_custom_dialect_equality(self):
+        class CaseInsensitiveDialect(MongoDialect70):
+            def values_equal(self, left, right) -> bool:
+                if isinstance(left, str) and isinstance(right, str):
+                    return left.lower() == right.lower()
+                return super().values_equal(left, right)
+
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(
+                    engine,
+                    "db",
+                    "coll",
+                    mongodb_dialect=CaseInsensitiveDialect(),
+                )
+                await collection.insert_one({"_id": "1", "tag": "Ada"})
+                await collection.insert_one({"_id": "2", "tag": "ada"})
+                return await collection.distinct("tag")
+            finally:
+                await engine.disconnect()
+
+        result = asyncio.run(_exercise())
+
+        self.assertEqual(result, ["Ada"])
 
     def test_find_one_reapplies_projection_if_engine_ignores_it(self):
         class EngineStub:

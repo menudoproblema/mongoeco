@@ -44,7 +44,7 @@ from .compat import (
     SUPPORTED_PYMONGO_MAJORS,
 )
 from .session import ClientSession
-from .types import ObjectId, UNDEFINED, UndefinedType
+from .types import ObjectId, ReturnDocument, UNDEFINED, UndefinedType
 
 __all__ = [
     "AsyncMongoClient",
@@ -87,6 +87,7 @@ __all__ = [
     "detect_installed_pymongo_profile_resolution",
     "ClientSession",
     "ObjectId",
+    "ReturnDocument",
     "UndefinedType",
     "UNDEFINED",
     "__version__",

@@ -79,6 +79,7 @@ SUPPORTED_AGGREGATION_STAGES = frozenset(
     {
         '$match',
         '$project',
+        '$unset',
         '$sort',
         '$skip',
         '$limit',

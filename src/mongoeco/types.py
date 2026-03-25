@@ -3,6 +3,7 @@ import os
 import threading
 import time
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Literal, Self
 
 
@@ -114,6 +115,11 @@ type SortDirection = Literal[1, -1]
 type SortSpec = list[tuple[str, SortDirection]]
 type DocumentScalarId = ObjectId | str | bytes | int | float | bool | None | UndefinedType
 type DocumentId = DocumentScalarId | list[DocumentId] | dict[str, DocumentId]
+
+
+class ReturnDocument(Enum):
+    BEFORE = 'before'
+    AFTER = 'after'
 
 
 @dataclass(frozen=True, slots=True)

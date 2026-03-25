@@ -8,7 +8,7 @@ from mongoeco.compat import (
 )
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.session import ClientSession
-from mongoeco.types import DeleteResult, Document, DocumentId, Filter, InsertOneResult, Projection, SortSpec, Update, UpdateResult
+from mongoeco.types import DeleteResult, Document, DocumentId, Filter, InsertManyResult, InsertOneResult, Projection, ReturnDocument, SortSpec, Update, UpdateResult
 
 
 class Collection:
@@ -25,6 +25,14 @@ class Collection:
 
     def insert_one(self, document: Document, *, session: ClientSession | None = None) -> InsertOneResult[DocumentId]:
         return self._client._run(self._async_collection().insert_one(document, session=session))
+
+    def insert_many(
+        self,
+        documents: list[Document],
+        *,
+        session: ClientSession | None = None,
+    ) -> InsertManyResult[DocumentId]:
+        return self._client._run(self._async_collection().insert_many(documents, session=session))
 
     def find_one(self, filter_spec: Filter | None = None, projection: Projection | None = None, *, session: ClientSession | None = None) -> Document | None:
         return self._client._run(self._async_collection().find_one(filter_spec, projection, session=session))
@@ -73,11 +81,122 @@ class Collection:
             )
         )
 
+    def replace_one(
+        self,
+        filter_spec: Filter,
+        replacement: Document,
+        upsert: bool = False,
+        *,
+        sort: SortSpec | None = None,
+        session: ClientSession | None = None,
+    ) -> UpdateResult[DocumentId]:
+        return self._client._run(
+            self._async_collection().replace_one(
+                filter_spec,
+                replacement,
+                upsert,
+                sort=sort,
+                session=session,
+            )
+        )
+
+    def find_one_and_update(
+        self,
+        filter_spec: Filter,
+        update_spec: Update,
+        *,
+        projection: Projection | None = None,
+        sort: SortSpec | None = None,
+        upsert: bool = False,
+        return_document: ReturnDocument | None = None,
+        session: ClientSession | None = None,
+    ) -> Document | None:
+        return self._client._run(
+            self._async_collection().find_one_and_update(
+                filter_spec,
+                update_spec,
+                projection=projection,
+                sort=sort,
+                upsert=upsert,
+                return_document=return_document,
+                session=session,
+            )
+        )
+
+    def find_one_and_replace(
+        self,
+        filter_spec: Filter,
+        replacement: Document,
+        *,
+        projection: Projection | None = None,
+        sort: SortSpec | None = None,
+        upsert: bool = False,
+        return_document: ReturnDocument | None = None,
+        session: ClientSession | None = None,
+    ) -> Document | None:
+        return self._client._run(
+            self._async_collection().find_one_and_replace(
+                filter_spec,
+                replacement,
+                projection=projection,
+                sort=sort,
+                upsert=upsert,
+                return_document=return_document,
+                session=session,
+            )
+        )
+
+    def find_one_and_delete(
+        self,
+        filter_spec: Filter,
+        *,
+        projection: Projection | None = None,
+        sort: SortSpec | None = None,
+        session: ClientSession | None = None,
+    ) -> Document | None:
+        return self._client._run(
+            self._async_collection().find_one_and_delete(
+                filter_spec,
+                projection=projection,
+                sort=sort,
+                session=session,
+            )
+        )
+
     def delete_one(self, filter_spec: Filter, *, session: ClientSession | None = None) -> DeleteResult:
         return self._client._run(self._async_collection().delete_one(filter_spec, session=session))
 
+    def update_many(
+        self,
+        filter_spec: Filter,
+        update_spec: Update,
+        upsert: bool = False,
+        *,
+        session: ClientSession | None = None,
+    ) -> UpdateResult[DocumentId]:
+        return self._client._run(
+            self._async_collection().update_many(
+                filter_spec,
+                update_spec,
+                upsert,
+                session=session,
+            )
+        )
+
+    def delete_many(self, filter_spec: Filter, *, session: ClientSession | None = None) -> DeleteResult:
+        return self._client._run(self._async_collection().delete_many(filter_spec, session=session))
+
     def count_documents(self, filter_spec: Filter, *, session: ClientSession | None = None) -> int:
         return self._client._run(self._async_collection().count_documents(filter_spec, session=session))
+
+    def distinct(
+        self,
+        key: str,
+        filter_spec: Filter | None = None,
+        *,
+        session: ClientSession | None = None,
+    ) -> list[object]:
+        return self._client._run(self._async_collection().distinct(key, filter_spec, session=session))
 
     def create_index(self, fields: list[str], *, unique: bool = False, name: str | None = None, session: ClientSession | None = None) -> str:
         return self._client._run(self._async_collection().create_index(fields, unique=unique, name=name, session=session))

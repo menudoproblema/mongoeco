@@ -10,6 +10,7 @@ from mongoeco import (
     MongoClient,
     MongoDialect80,
     PyMongoProfile413,
+    ReturnDocument,
 )
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api._async.cursor import AsyncCursor
@@ -133,6 +134,158 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     with self.assertRaises(DuplicateKeyError):
                         await collection.insert_one({"_id": "same", "name": "Grace"})
+
+    async def test_insert_many_returns_ids_and_persists_documents(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.users
+
+                    result = await collection.insert_many(
+                        [{"name": "Ada"}, {"_id": "grace", "name": "Grace"}]
+                    )
+                    documents = await collection.find({}, sort=[("name", 1)]).to_list()
+
+                    self.assertEqual(len(result.inserted_ids), 2)
+                    self.assertEqual(result.inserted_ids[1], "grace")
+                    self.assertEqual([document["name"] for document in documents], ["Ada", "Grace"])
+                    self.assertTrue(result.inserted_ids[0])
+
+    async def test_update_many_updates_all_matching_documents_and_supports_upsert(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.users
+                    await collection.insert_one({"_id": "1", "kind": "view", "done": False})
+                    await collection.insert_one({"_id": "2", "kind": "view", "done": False})
+                    await collection.insert_one({"_id": "3", "kind": "click", "done": False})
+
+                    result = await collection.update_many(
+                        {"kind": "view"},
+                        {"$set": {"done": True}},
+                    )
+                    upserted = await collection.update_many(
+                        {"kind": "missing", "tenant": "a"},
+                        {"$set": {"done": True}},
+                        upsert=True,
+                    )
+                    documents = await collection.find({}, sort=[("_id", 1)]).to_list()
+
+                    self.assertEqual(result.matched_count, 2)
+                    self.assertEqual(result.modified_count, 2)
+                    self.assertEqual(upserted.matched_count, 0)
+                    self.assertEqual(upserted.modified_count, 0)
+                    self.assertTrue(upserted.upserted_id)
+                    self.assertEqual(
+                        [(doc["_id"], doc["done"]) for doc in documents if doc["kind"] != "missing"],
+                        [("1", True), ("2", True), ("3", False)],
+                    )
+                    upserted_document = await collection.find_one({"_id": upserted.upserted_id})
+                    self.assertEqual(
+                        upserted_document,
+                        {"_id": upserted.upserted_id, "kind": "missing", "tenant": "a", "done": True},
+                    )
+
+    async def test_delete_many_deletes_all_matching_documents(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.users
+                    await collection.insert_one({"_id": "1", "kind": "view"})
+                    await collection.insert_one({"_id": "2", "kind": "view"})
+                    await collection.insert_one({"_id": "3", "kind": "click"})
+
+                    result = await collection.delete_many({"kind": "view"})
+                    remaining = await collection.find({}, sort=[("_id", 1)]).to_list()
+
+                    self.assertEqual(result.deleted_count, 2)
+                    self.assertEqual(remaining, [{"_id": "3", "kind": "click"}])
+
+    async def test_replace_one_and_find_one_and_family(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with AsyncMongoClient(ENGINE_FACTORIES[engine_name](), pymongo_profile='4.11') as client:
+                    collection = client.test.users
+                    await collection.insert_one({"_id": "1", "kind": "view", "rank": 2, "done": False})
+                    await collection.insert_one({"_id": "2", "kind": "view", "rank": 1, "done": False})
+
+                    replaced = await collection.replace_one(
+                        {"kind": "view"},
+                        {"kind": "view", "rank": 1, "done": True, "tag": "replaced"},
+                        sort=[("rank", 1)],
+                    )
+                    before = await collection.find_one_and_update(
+                        {"kind": "view"},
+                        {"$set": {"done": False}},
+                        sort=[("rank", 1)],
+                        projection={"done": 1, "_id": 0},
+                    )
+                    after = await collection.find_one_and_replace(
+                        {"kind": "view"},
+                        {"kind": "view", "rank": 1, "done": True, "tag": "after"},
+                        sort=[("rank", 1)],
+                        return_document=ReturnDocument.AFTER,
+                        projection={"done": 1, "tag": 1, "_id": 0},
+                    )
+                    deleted = await collection.find_one_and_delete(
+                        {"kind": "view"},
+                        sort=[("rank", -1)],
+                        projection={"rank": 1, "_id": 0},
+                    )
+                    remaining = await collection.find({}, sort=[("_id", 1)]).to_list()
+
+                    self.assertEqual(replaced.matched_count, 1)
+                    self.assertEqual(replaced.modified_count, 1)
+                    self.assertEqual(before, {"done": True})
+                    self.assertEqual(after, {"done": True, "tag": "after"})
+                    self.assertEqual(deleted, {"rank": 2})
+                    self.assertEqual(
+                        remaining,
+                        [{"_id": "2", "kind": "view", "rank": 1, "done": True, "tag": "after"}],
+                    )
+
+    async def test_find_one_and_update_upsert_returns_none_or_after_document(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.users
+
+                    before = await collection.find_one_and_update(
+                        {"kind": "missing", "tenant": "a"},
+                        {"$set": {"done": True}},
+                        upsert=True,
+                    )
+                    after = await collection.find_one_and_update(
+                        {"kind": "another", "tenant": "b"},
+                        {"$set": {"done": True}},
+                        upsert=True,
+                        return_document=ReturnDocument.AFTER,
+                        projection={"kind": 1, "tenant": 1, "done": 1, "_id": 0},
+                    )
+
+                    self.assertIsNone(before)
+                    self.assertEqual(after, {"kind": "another", "tenant": "b", "done": True})
+
+    async def test_distinct_supports_scalars_arrays_nested_paths_and_filter(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.users
+                    await collection.insert_one(
+                        {"_id": "1", "kind": "view", "tags": ["a", "b"], "profile": {"city": "Madrid"}}
+                    )
+                    await collection.insert_one(
+                        {"_id": "2", "kind": "view", "tags": ["b", "c"], "profile": {"city": "Sevilla"}}
+                    )
+                    await collection.insert_one(
+                        {"_id": "3", "kind": "click", "tags": [], "profile": {"city": "Madrid"}}
+                    )
+
+                    tags = await collection.distinct("tags")
+                    cities = await collection.distinct("profile.city", {"kind": "view"})
+
+                    self.assertEqual(tags, ["a", "b", "c"])
+                    self.assertEqual(cities, ["Madrid", "Sevilla"])
 
     async def test_find_one_projection_supports_inclusion_and_id_exclusion(self):
         for engine_name in ENGINE_FACTORIES:

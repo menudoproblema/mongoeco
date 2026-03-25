@@ -39,7 +39,7 @@ from mongoeco.compat import (
     SUPPORTED_PYMONGO_MAJORS,
 )
 from mongoeco.session import ClientSession
-from mongoeco.types import ObjectId, UNDEFINED, UndefinedType
+from mongoeco.types import ObjectId, ReturnDocument, UNDEFINED, UndefinedType
 
 __all__ = [
     "AsyncMongoClient",
@@ -82,6 +82,7 @@ __all__ = [
     "detect_installed_pymongo_profile_resolution",
     "ClientSession",
     "ObjectId",
+    "ReturnDocument",
     "UndefinedType",
     "UNDEFINED",
     "__version__",

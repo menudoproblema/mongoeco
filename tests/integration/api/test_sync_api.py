@@ -2,7 +2,7 @@ import threading
 import datetime
 import unittest
 
-from mongoeco import ClientSession, MongoClient, ObjectId
+from mongoeco import ClientSession, MongoClient, ObjectId, ReturnDocument
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
 from mongoeco.engines.memory import MemoryEngine
@@ -51,6 +51,113 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     with self.assertRaises(DuplicateKeyError):
                         collection.insert_one({"_id": "same", "name": "Grace"})
+
+    def test_insert_many_update_many_and_delete_many(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+
+                    inserted = collection.insert_many(
+                        [{"_id": "1", "kind": "view", "done": False}, {"_id": "2", "kind": "view", "done": False}]
+                    )
+                    collection.insert_one({"_id": "3", "kind": "click", "done": False})
+
+                    updated = collection.update_many({"kind": "view"}, {"$set": {"done": True}})
+                    deleted = collection.delete_many({"kind": "view"})
+                    remaining = collection.find({}, sort=[("_id", 1)]).to_list()
+
+                    self.assertEqual(inserted.inserted_ids, ["1", "2"])
+                    self.assertEqual(updated.matched_count, 2)
+                    self.assertEqual(updated.modified_count, 2)
+                    self.assertEqual(deleted.deleted_count, 2)
+                    self.assertEqual(remaining, [{"_id": "3", "kind": "click", "done": False}])
+
+    def test_replace_one_and_find_one_and_family(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory(), pymongo_profile='4.11') as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "kind": "view", "rank": 2, "done": False})
+                    collection.insert_one({"_id": "2", "kind": "view", "rank": 1, "done": False})
+
+                    replaced = collection.replace_one(
+                        {"kind": "view"},
+                        {"kind": "view", "rank": 1, "done": True, "tag": "replaced"},
+                        sort=[("rank", 1)],
+                    )
+                    before = collection.find_one_and_update(
+                        {"kind": "view"},
+                        {"$set": {"done": False}},
+                        sort=[("rank", 1)],
+                        projection={"done": 1, "_id": 0},
+                    )
+                    after = collection.find_one_and_replace(
+                        {"kind": "view"},
+                        {"kind": "view", "rank": 1, "done": True, "tag": "after"},
+                        sort=[("rank", 1)],
+                        return_document=ReturnDocument.AFTER,
+                        projection={"done": 1, "tag": 1, "_id": 0},
+                    )
+                    deleted = collection.find_one_and_delete(
+                        {"kind": "view"},
+                        sort=[("rank", -1)],
+                        projection={"rank": 1, "_id": 0},
+                    )
+                    remaining = collection.find({}, sort=[("_id", 1)]).to_list()
+
+                    self.assertEqual(replaced.matched_count, 1)
+                    self.assertEqual(replaced.modified_count, 1)
+                    self.assertEqual(before, {"done": True})
+                    self.assertEqual(after, {"done": True, "tag": "after"})
+                    self.assertEqual(deleted, {"rank": 2})
+                    self.assertEqual(
+                        remaining,
+                        [{"_id": "2", "kind": "view", "rank": 1, "done": True, "tag": "after"}],
+                    )
+
+    def test_find_one_and_update_upsert_returns_none_or_after_document(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+
+                    before = collection.find_one_and_update(
+                        {"kind": "missing", "tenant": "a"},
+                        {"$set": {"done": True}},
+                        upsert=True,
+                    )
+                    after = collection.find_one_and_update(
+                        {"kind": "another", "tenant": "b"},
+                        {"$set": {"done": True}},
+                        upsert=True,
+                        return_document=ReturnDocument.AFTER,
+                        projection={"kind": 1, "tenant": 1, "done": 1, "_id": 0},
+                    )
+
+                    self.assertIsNone(before)
+                    self.assertEqual(after, {"kind": "another", "tenant": "b", "done": True})
+
+    def test_distinct_supports_scalars_arrays_nested_paths_and_filter(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one(
+                        {"_id": "1", "kind": "view", "tags": ["a", "b"], "profile": {"city": "Madrid"}}
+                    )
+                    collection.insert_one(
+                        {"_id": "2", "kind": "view", "tags": ["b", "c"], "profile": {"city": "Sevilla"}}
+                    )
+                    collection.insert_one(
+                        {"_id": "3", "kind": "click", "tags": [], "profile": {"city": "Madrid"}}
+                    )
+
+                    tags = collection.distinct("tags")
+                    cities = collection.distinct("profile.city", {"kind": "view"})
+
+                    self.assertEqual(tags, ["a", "b", "c"])
+                    self.assertEqual(cities, ["Madrid", "Sevilla"])
 
     def test_update_and_projection(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
