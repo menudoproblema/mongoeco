@@ -1,12 +1,13 @@
 import datetime
 import math
 import re
-from typing import Any
 import uuid
+from typing import Any
 
+from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.identity import canonical_document_id
 from mongoeco.errors import OperationFailure
-from mongoeco.types import ObjectId
+from mongoeco.types import ObjectId, UndefinedType
 from mongoeco.core.query_plan import (
     AllCondition,
     AndCondition,
@@ -35,6 +36,7 @@ class BSONComparator:
     """Reglas de comparación de MongoDB (Type Brackets)."""
     TYPE_ORDER: dict[type, int] = {
         type(None): 1,
+        UndefinedType: 1,
         int: 2, float: 2,
         str: 3,
         dict: 4,
@@ -48,80 +50,98 @@ class BSONComparator:
 
     @staticmethod
     def compare(a: Any, b: Any) -> int:
-        type_a = BSONComparator.TYPE_ORDER.get(type(a), 100)
-        type_b = BSONComparator.TYPE_ORDER.get(type(b), 100)
-
-        if type_a != type_b:
-            return -1 if type_a < type_b else 1
-
-        if isinstance(a, dict) and isinstance(b, dict):
-            left_items = list(a.items())
-            right_items = list(b.items())
-            for (left_key, left_value), (right_key, right_value) in zip(left_items, right_items):
-                if left_key != right_key:
-                    return -1 if left_key < right_key else 1
-                value_comparison = BSONComparator.compare(left_value, right_value)
-                if value_comparison != 0:
-                    return value_comparison
-            if len(left_items) == len(right_items):
-                return 0
-            return -1 if len(left_items) < len(right_items) else 1
-
-        if isinstance(a, list) and isinstance(b, list):
-            for left_value, right_value in zip(a, b):
-                comparison = BSONComparator.compare(left_value, right_value)
-                if comparison != 0:
-                    return comparison
-            if len(a) == len(b):
-                return 0
-            return -1 if len(a) < len(b) else 1
-
-        if isinstance(a, float) and math.isnan(a):
-            return 0 if isinstance(b, float) and math.isnan(b) else -1
-        if isinstance(b, float) and math.isnan(b):
-            return 1
-
-        if a == b:
-            return 0
-
-        try:
-            if a < b: return -1
-            if a > b: return 1
-            return 0
-        except TypeError:
-            str_a, str_b = str(a), str(b)
-            if str_a == str_b: return 0
-            return -1 if str_a < str_b else 1
+        return MONGODB_DIALECT_70.compare_values(a, b)
 
 class QueryEngine:
     """Motor central de filtrado de MongoDB."""
 
     @staticmethod
-    def match(document: dict[str, Any], filter_spec: dict[str, Any]) -> bool:
-        return QueryEngine.match_plan(document, compile_filter(filter_spec))
+    def match(
+        document: dict[str, Any],
+        filter_spec: dict[str, Any],
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
+        return QueryEngine.match_plan(document, compile_filter(filter_spec, dialect=dialect), dialect=dialect)
 
     @staticmethod
-    def match_plan(document: dict[str, Any], plan: QueryNode) -> bool:
+    def match_plan(
+        document: dict[str, Any],
+        plan: QueryNode,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
         if isinstance(plan, MatchAll):
             return True
         if isinstance(plan, EqualsCondition):
-            return QueryEngine._evaluate_equals(document, plan.field, plan.value)
+            return QueryEngine._evaluate_equals(
+                document,
+                plan.field,
+                plan.value,
+                null_matches_undefined=plan.null_matches_undefined,
+                dialect=dialect,
+            )
         if isinstance(plan, NotEqualsCondition):
-            return QueryEngine._evaluate_not_equals(document, plan.field, plan.value)
+            return QueryEngine._evaluate_not_equals(
+                document,
+                plan.field,
+                plan.value,
+                dialect=dialect,
+            )
         if isinstance(plan, GreaterThanCondition):
-            return QueryEngine._evaluate_comparison(document, plan.field, plan.value, "gt")
+            return QueryEngine._evaluate_comparison(
+                document,
+                plan.field,
+                plan.value,
+                "gt",
+                dialect=dialect,
+            )
         if isinstance(plan, GreaterThanOrEqualCondition):
-            return QueryEngine._evaluate_comparison(document, plan.field, plan.value, "gte")
+            return QueryEngine._evaluate_comparison(
+                document,
+                plan.field,
+                plan.value,
+                "gte",
+                dialect=dialect,
+            )
         if isinstance(plan, LessThanCondition):
-            return QueryEngine._evaluate_comparison(document, plan.field, plan.value, "lt")
+            return QueryEngine._evaluate_comparison(
+                document,
+                plan.field,
+                plan.value,
+                "lt",
+                dialect=dialect,
+            )
         if isinstance(plan, LessThanOrEqualCondition):
-            return QueryEngine._evaluate_comparison(document, plan.field, plan.value, "lte")
+            return QueryEngine._evaluate_comparison(
+                document,
+                plan.field,
+                plan.value,
+                "lte",
+                dialect=dialect,
+            )
         if isinstance(plan, InCondition):
-            return QueryEngine._evaluate_in(document, plan.field, plan.values)
+            return QueryEngine._evaluate_in(
+                document,
+                plan.field,
+                plan.values,
+                null_matches_undefined=plan.null_matches_undefined,
+                dialect=dialect,
+            )
         if isinstance(plan, NotInCondition):
-            return QueryEngine._evaluate_not_in(document, plan.field, plan.values)
+            return QueryEngine._evaluate_not_in(
+                document,
+                plan.field,
+                plan.values,
+                dialect=dialect,
+            )
         if isinstance(plan, AllCondition):
-            return QueryEngine._evaluate_all(document, plan.field, plan.values)
+            return QueryEngine._evaluate_all(
+                document,
+                plan.field,
+                plan.values,
+                dialect=dialect,
+            )
         if isinstance(plan, SizeCondition):
             return QueryEngine._evaluate_size(document, plan.field, plan.value)
         if isinstance(plan, ModCondition):
@@ -129,15 +149,15 @@ class QueryEngine:
         if isinstance(plan, RegexCondition):
             return QueryEngine._evaluate_regex(document, plan.field, plan.pattern, plan.options)
         if isinstance(plan, NotCondition):
-            return not QueryEngine.match_plan(document, plan.clause)
+            return not QueryEngine.match_plan(document, plan.clause, dialect=dialect)
         if isinstance(plan, ElemMatchCondition):
-            return QueryEngine._evaluate_elem_match(document, plan.field, plan.condition)
+            return QueryEngine._evaluate_elem_match(document, plan.field, plan.condition, dialect=plan.dialect)
         if isinstance(plan, ExistsCondition):
             return QueryEngine._evaluate_exists(document, plan.field, plan.value)
         if isinstance(plan, AndCondition):
-            return all(QueryEngine.match_plan(document, clause) for clause in plan.clauses)
+            return all(QueryEngine.match_plan(document, clause, dialect=dialect) for clause in plan.clauses)
         if isinstance(plan, OrCondition):
-            return any(QueryEngine.match_plan(document, clause) for clause in plan.clauses)
+            return any(QueryEngine.match_plan(document, clause, dialect=dialect) for clause in plan.clauses)
         raise TypeError(f"Unsupported query plan node: {type(plan)!r}")
 
     @staticmethod
@@ -230,52 +250,121 @@ class QueryEngine:
         return QueryEngine._extract_values(doc, path)
 
     @staticmethod
-    def _values_equal(left: Any, right: Any) -> bool:
-        if isinstance(left, (dict, list)) and isinstance(right, (dict, list)):
-            return canonical_document_id(left) == canonical_document_id(right)
-        return BSONComparator.compare(left, right) == 0
+    def _values_equal(
+        left: Any,
+        right: Any,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
+        return dialect.values_equal(left, right)
 
     @staticmethod
-    def _evaluate_equals(doc: dict[str, Any], field: str, condition: Any) -> bool:
+    def _query_equality_matches(
+        candidate: Any,
+        expected: Any,
+        *,
+        null_matches_undefined: bool,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
+        if expected is None:
+            if candidate is None:
+                return True
+            if null_matches_undefined and isinstance(candidate, UndefinedType):
+                return True
+        if null_matches_undefined and candidate is None and isinstance(expected, UndefinedType):
+            return True
+        return QueryEngine._values_equal(candidate, expected, dialect=dialect)
+
+    @staticmethod
+    def _evaluate_equals(
+        doc: dict[str, Any],
+        field: str,
+        condition: Any,
+        *,
+        null_matches_undefined: bool = False,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
         values = QueryEngine._extract_values(doc, field)
         candidates = values or [None]
-        return any(QueryEngine._values_equal(value, condition) for value in candidates)
+        return any(
+            QueryEngine._query_equality_matches(
+                value,
+                condition,
+                null_matches_undefined=null_matches_undefined,
+                dialect=dialect,
+            )
+            for value in candidates
+        )
 
     @staticmethod
-    def _evaluate_not_equals(doc: dict[str, Any], field: str, condition: Any) -> bool:
+    def _evaluate_not_equals(
+        doc: dict[str, Any],
+        field: str,
+        condition: Any,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
         values = QueryEngine._extract_values(doc, field)
         candidates = values or [None]
-        return all(not QueryEngine._values_equal(value, condition) for value in candidates)
+        return all(
+            not QueryEngine._values_equal(value, condition, dialect=dialect)
+            for value in candidates
+        )
 
     @staticmethod
-    def _evaluate_comparison(doc: dict[str, Any], field: str, target: Any, operator: str) -> bool:
+    def _evaluate_comparison(
+        doc: dict[str, Any],
+        field: str,
+        target: Any,
+        operator: str,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
         candidates = QueryEngine._extract_values(doc, field)
         if not candidates:
             return False
         if operator == "gt":
-            return any(BSONComparator.compare(value, target) > 0 for value in candidates)
+            return any(dialect.compare_values(value, target) > 0 for value in candidates)
         if operator == "gte":
-            return any(BSONComparator.compare(value, target) >= 0 for value in candidates)
+            return any(dialect.compare_values(value, target) >= 0 for value in candidates)
         if operator == "lt":
-            return any(BSONComparator.compare(value, target) < 0 for value in candidates)
+            return any(dialect.compare_values(value, target) < 0 for value in candidates)
         if operator == "lte":
-            return any(BSONComparator.compare(value, target) <= 0 for value in candidates)
+            return any(dialect.compare_values(value, target) <= 0 for value in candidates)
         raise ValueError(f"Unsupported comparison operator kind: {operator}")
 
     @staticmethod
-    def _evaluate_in(doc: dict[str, Any], field: str, values: tuple[Any, ...]) -> bool:
+    def _evaluate_in(
+        doc: dict[str, Any],
+        field: str,
+        values: tuple[Any, ...],
+        *,
+        null_matches_undefined: bool = False,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
         candidates = QueryEngine._extract_values(doc, field) or [None]
         return any(
-            QueryEngine._values_equal(candidate, item)
+            QueryEngine._query_equality_matches(
+                candidate,
+                item,
+                null_matches_undefined=null_matches_undefined,
+                dialect=dialect,
+            )
             for candidate in candidates
             for item in values
         )
 
     @staticmethod
-    def _evaluate_not_in(doc: dict[str, Any], field: str, values: tuple[Any, ...]) -> bool:
+    def _evaluate_not_in(
+        doc: dict[str, Any],
+        field: str,
+        values: tuple[Any, ...],
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
         candidates = QueryEngine._extract_values(doc, field) or [None]
         return not any(
-            QueryEngine._values_equal(candidate, item)
+            QueryEngine._values_equal(candidate, item, dialect=dialect)
             for candidate in candidates
             for item in values
         )
@@ -287,7 +376,13 @@ class QueryEngine:
         return exists == expected
 
     @staticmethod
-    def _evaluate_all(doc: dict[str, Any], field: str, expected_values: tuple[Any, ...]) -> bool:
+    def _evaluate_all(
+        doc: dict[str, Any],
+        field: str,
+        expected_values: tuple[Any, ...],
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
         found, value = QueryEngine._get_field_value(doc, field)
         if found and isinstance(value, list):
             candidates = value
@@ -300,12 +395,15 @@ class QueryEngine:
         for expected in expected_values:
             if isinstance(expected, dict) and set(expected) == {"$elemMatch"}:
                 if not any(
-                    QueryEngine._match_elem_match_candidate(candidate, expected["$elemMatch"])
+                    QueryEngine._match_elem_match_candidate(candidate, expected["$elemMatch"], dialect=dialect)
                     for candidate in candidates
                 ):
                     return False
                 continue
-            if not any(QueryEngine._values_equal(candidate, expected) for candidate in candidates):
+            if not any(
+                QueryEngine._values_equal(candidate, expected, dialect=dialect)
+                for candidate in candidates
+            ):
                 return False
         return True
 
@@ -339,23 +437,37 @@ class QueryEngine:
         return any(isinstance(value, str) and regex.search(value) is not None for value in QueryEngine._extract_values(doc, field))
 
     @staticmethod
-    def _evaluate_elem_match(doc: dict[str, Any], field: str, condition: Any) -> bool:
+    def _evaluate_elem_match(
+        doc: dict[str, Any],
+        field: str,
+        condition: Any,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
         values = QueryEngine._extract_values(doc, field)
         array_candidates = [value for value in values if isinstance(value, list)]
         if not array_candidates:
             return False
         for array_candidate in array_candidates:
-            if any(QueryEngine._match_elem_match_candidate(candidate, condition) for candidate in array_candidate):
+            if any(
+                QueryEngine._match_elem_match_candidate(candidate, condition, dialect=dialect)
+                for candidate in array_candidate
+            ):
                 return True
         return False
 
     @staticmethod
-    def _match_elem_match_candidate(candidate: Any, condition: Any) -> bool:
+    def _match_elem_match_candidate(
+        candidate: Any,
+        condition: Any,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
         if not isinstance(condition, dict):
-            return QueryEngine._values_equal(candidate, condition)
+            return QueryEngine._values_equal(candidate, condition, dialect=dialect)
         if any(isinstance(key, str) and key.startswith("$") for key in condition):
             wrapper = {"value": candidate}
-            return QueryEngine.match(wrapper, {"value": condition})
+            return QueryEngine.match(wrapper, {"value": condition}, dialect=dialect)
         if not isinstance(candidate, dict):
             return False
-        return QueryEngine.match(candidate, condition)
+        return QueryEngine.match(candidate, condition, dialect=dialect)

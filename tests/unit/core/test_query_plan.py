@@ -1,5 +1,6 @@
 import unittest
 
+from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80, MongoDialect
 from mongoeco.errors import OperationFailure
 from mongoeco.core.query_plan import (
     AllCondition,
@@ -22,6 +23,47 @@ from mongoeco.core.query_plan import (
 
 
 class QueryPlanTests(unittest.TestCase):
+    def test_compile_filter_can_use_custom_dialect_operator_catalog(self):
+        class _NoRegexDialect(MongoDialect):
+            def supports_query_field_operator(self, name: str) -> bool:
+                return False if name == "$regex" else super().supports_query_field_operator(name)
+
+        with self.assertRaises(OperationFailure):
+            compile_filter(
+                {"name": {"$regex": "^ad"}},
+                dialect=_NoRegexDialect(key="test", server_version="test", label="No Regex"),
+            )
+
+    def test_compile_filter_rejects_custom_supported_but_unimplemented_field_operator(self):
+        class _FutureFieldDialect(MongoDialect):
+            def supports_query_field_operator(self, name: str) -> bool:
+                return True if name == "$futureField" else super().supports_query_field_operator(name)
+
+        with self.assertRaises(OperationFailure):
+            compile_filter(
+                {"name": {"$futureField": "Ada"}},
+                dialect=_FutureFieldDialect(
+                    key="test",
+                    server_version="test",
+                    label="Future Field",
+                ),
+            )
+
+    def test_compile_filter_rejects_custom_supported_but_unimplemented_top_level_operator(self):
+        class _FutureTopLevelDialect(MongoDialect):
+            def supports_query_top_level_operator(self, name: str) -> bool:
+                return True if name == "$futureTopLevel" else super().supports_query_top_level_operator(name)
+
+        with self.assertRaises(OperationFailure):
+            compile_filter(
+                {"$futureTopLevel": {"name": "Ada"}},
+                dialect=_FutureTopLevelDialect(
+                    key="test",
+                    server_version="test",
+                    label="Future Top Level",
+                ),
+            )
+
     def test_compile_filter_produces_typed_field_conditions(self):
         plan = compile_filter({"name": "Ada", "age": {"$gte": 18}})
 
@@ -65,6 +107,20 @@ class QueryPlanTests(unittest.TestCase):
         plan = compile_filter({"role": {"$in": ["admin", "staff"]}})
 
         self.assertEqual(plan, InCondition("role", ("admin", "staff")))
+
+    def test_compile_filter_carries_null_undefined_behavior_in_equals_and_in(self):
+        self.assertEqual(
+            compile_filter({"role": None}, dialect=MONGODB_DIALECT_70),
+            EqualsCondition("role", None, null_matches_undefined=True),
+        )
+        self.assertEqual(
+            compile_filter({"role": None}, dialect=MONGODB_DIALECT_80),
+            EqualsCondition("role", None, null_matches_undefined=False),
+        )
+        self.assertEqual(
+            compile_filter({"role": {"$in": [None]}}, dialect=MONGODB_DIALECT_70),
+            InCondition("role", (None,), null_matches_undefined=True),
+        )
 
     def test_compile_filter_returns_and_condition_for_multiple_field_operators(self):
         plan = compile_filter({"age": {"$gte": 18, "$in": [18, 21, 30]}})

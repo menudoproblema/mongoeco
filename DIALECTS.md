@@ -5,6 +5,9 @@ versiones futuras de MongoDB y distintas superficies de compatibilidad con
 PyMongo sin duplicar la suite ni dispersar `if version == ...` por todo el
 core.
 
+Para una guía de uso orientada a configuración de aplicación, testing local y
+CI, ver [COMPATIBILITY.md](/Users/uve/Proyectos/mongoeco2/COMPATIBILITY.md).
+
 ---
 
 ## 1. Principio General
@@ -26,6 +29,9 @@ Por tanto:
 * la semántica del core debe depender del **dialecto MongoDB**
 * la compatibilidad de la API pública debe depender del **perfil PyMongo**
 
+Ambos ejes ya exponen resolución estructurada y metadata pública en cliente,
+base de datos y colección.
+
 ---
 
 ## 2. Dialectos de MongoDB
@@ -43,6 +49,10 @@ Se define una familia de dialectos semánticos, por ejemplo:
 * `MongoDialect80`
 * `MongoDialect90`
 
+La resolución pública actual del dialecto ya usa una estructura explícita
+(`MongoDialectResolution`) para reflejar baseline, alias explícito o instancia
+explícita.
+
 Cada dialecto encapsula solo los puntos de decisión que realmente pueden
 cambiar entre versiones:
 
@@ -52,6 +62,31 @@ cambiar entre versiones:
 * validación de payloads
 * diferencias entre error y no-op
 * reglas sutiles de proyección, update y agregación
+
+Además del comportamiento ejecutable, el catálogo oficial puede registrar
+**flags de comportamiento versionados** para diferencias reales documentadas.
+
+Esto sirve para:
+
+* fijar el contrato en tests y documentación
+* preparar un hueco de diseño antes o durante su conexión al core
+* evitar introducir un delta artificial solo para “usar” el dialecto
+
+Primer ejemplo registrado:
+
+* `MongoDialect70.null_query_matches_undefined() -> True`
+* `MongoDialect80.null_query_matches_undefined() -> False`
+
+Este delta también vive en `MONGODB_DIALECT_BEHAVIOR_FLAGS` como dato
+inmutable de módulo. `mongoeco` ya modela un valor `UNDEFINED` propio y este
+delta ya está conectado al runtime en el perímetro actualmente soportado:
+
+* igualdad por `null` y `$eq`
+* `$in` que incluye `null`
+* `$lookup` con `localField` / `foreignField`
+
+La suite local fija explícitamente la diferencia entre `7.0` y `8.0` en esos
+caminos.
 
 ### Regla de implementación
 
@@ -105,8 +140,9 @@ Eso sería frágil porque mezcla:
 Introducir una segunda abstracción, separada del dialecto MongoDB:
 
 * `PyMongoProfile49`
-* `PyMongoProfile50`
-* etc.
+* `PyMongoProfile411`
+* `PyMongoProfile413`
+* perfiles futuros si aparece una divergencia real adicional
 
 Este perfil controla:
 
@@ -153,6 +189,26 @@ Para el perfil PyMongo:
 
 1. valor explícito dado por la aplicación
 2. autodetección opcional de la versión instalada de `pymongo`
+
+### Estado actual del catálogo
+
+El catálogo oficial hardcoded del repo modela hoy:
+
+* `4.9` como baseline de API pública
+* `4.11` como primer perfil con delta activo: `update_one(sort=...)`
+* `4.13` como perfil posterior compatible, hoy sin un segundo delta activo adicional
+
+La autodetección `pymongo_profile="auto-installed"` mapea:
+
+* `4.9` a `4.10` -> `PyMongoProfile49`
+* `4.11` a `4.12` -> `PyMongoProfile411`
+* `4.13+` -> `PyMongoProfile413`
+
+Versiones anteriores a `4.9` y series mayores desconocidas no se aceptan silenciosamente.
+
+También existe `pymongo_profile="strict-auto-installed"` para entornos donde la
+instalación local debe encajar exactamente en un perfil registrado y cualquier
+minor nueva debe fallar de forma explícita.
 3. fallback por defecto documentado
 
 ---
@@ -160,6 +216,19 @@ Para el perfil PyMongo:
 ## 4. API Recomendada
 
 La forma más sana de evolucionar esto es permitir una API explícita y estable.
+
+### Estado actual
+
+Este repositorio ya implementa la **infraestructura mínima pública**:
+
+* `mongoeco.compat` expone dialectos y perfiles base
+* el catálogo oficial vive en constantes inmutables de módulo
+* `AsyncMongoClient` y `MongoClient` aceptan `mongodb_dialect` y
+  `pymongo_profile`
+* `Database` y `Collection` propagan la configuración efectiva
+
+Lo que **aún no se ha hecho** de forma masiva es mover cada decisión semántica
+del core a objetos de dialecto. Esa es la siguiente fase del refactor.
 
 Ejemplo conceptual:
 
@@ -191,15 +260,33 @@ AsyncMongoClient(
 
 Se puede admitir, pero debe ser **opt-in** y con alcance acotado:
 
-* `mongodb_dialect="auto-server"`
 * `pymongo_profile="auto-installed"`
 
 Restricciones:
 
-* `auto-server` solo tiene sentido si existe conexión a un Mongo real
 * `auto-installed` solo debe ajustar la capa de API pública
 * ningún modo `auto` debe cambiar silenciosamente la semántica del core sin que
   quede claro en logs o configuración efectiva
+
+### Catálogo hardcoded e inmutable
+
+El registro oficial de dialectos y perfiles vive en código como datos
+inmutables de módulo:
+
+* instancias singleton oficiales por versión
+* alias oficiales de resolución
+* pequeñas matrices de capacidades
+* flags de comportamiento versionados
+
+Eso da:
+
+* tipado fuerte
+* refactor seguro
+* tests directos
+* cero dependencia de configuración dinámica externa
+
+Lo que no debe existir es un "dialecto activo global" mutable a nivel de
+proceso. La selección efectiva sigue perteneciendo al cliente o a su contexto.
 
 ---
 
@@ -230,18 +317,20 @@ La estrategia correcta es:
 
 ### Testing diferencial real
 
-El repositorio ya incluye una primera capa opcional:
+El repositorio ya incluye una capa opcional compartida:
 
+* `tests/differential/_real_parity_base.py`
 * `tests/differential/mongodb7_real_parity.py`
+* `tests/differential/mongodb8_real_parity.py`
+* `scripts/run_mongodb_real_differential.py`
 * `scripts/run_mongodb7_differential.py`
+* `scripts/run_mongodb8_differential.py`
 
-Esta capa compara `mongoeco` contra un servidor real de MongoDB 7.0 en casos
-de alto riesgo semántico.
+Esta capa compara `mongoeco` contra un servidor real de MongoDB 7.0 u 8.0 en
+casos de alto riesgo semántico.
 
 La evolución prevista es:
 
-* `tests/differential/mongodb8_real_parity.py`
-* runner compartido por versión
 * matriz explícita de divergencias por dialecto
 
 ### Filosofía de cobertura
@@ -304,10 +393,11 @@ En el punto actual del proyecto:
 
 * la baseline efectiva es **MongoDB 7.0**
 * la suite local principal está verde y con cobertura completa
-* existe un arnés diferencial opcional para MongoDB 7.0 real
-* la arquitectura de dialectos y perfiles de PyMongo queda **diseñada y
-  recomendada**, pero todavía no se ha introducido como capa de ejecución en el
-  core
+* existe un arnés diferencial opcional compartido para MongoDB 7.0 y 8.0
+* la arquitectura de dialectos y perfiles de PyMongo ya existe como capa de
+  ejecución pública y como punto de extensión del core
+* ya hay un primer delta versionado registrado en el catálogo oficial, aunque
+  todavía no conectado a comportamiento activo del motor
 
 Esto permite cerrar la fase actual sin rediseñar la suite, y a la vez deja una
 dirección clara para soportar MongoDB 8/9 y compatibilidad de API con PyMongo

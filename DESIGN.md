@@ -1,5 +1,10 @@
 # Diseño de Arquitectura: mongoeco 2.0 (Async Reboot)
 
+Guías complementarias:
+
+* [DIALECTS.md](/Users/uve/Proyectos/mongoeco2/DIALECTS.md)
+* [COMPATIBILITY.md](/Users/uve/Proyectos/mongoeco2/COMPATIBILITY.md)
+
 Este documento define la visión técnica para la reescritura de **mongoeco**, enfocándose en un diseño moderno, asíncrono nativo y desacoplado.
 
 ---
@@ -13,7 +18,7 @@ Este documento define la visión técnica para la reescritura de **mongoeco**, e
 * **Modern Stack**: 
     * **Python 3.13+**: La base de código adopta sintaxis y tipado modernos de Python 3.13 (`PEP 695`, `@override`, aliases `type`, `TypeIs`, etc.) como decisión explícita de Fase 1.
     * **MongoDB 7.0 Parity**: El Core persigue la semántica de la v7.0 dentro del perímetro explícito de Fase 1.
-    * **PyMongo 4.9+ Compatibility**: La API pública busca compatibilidad práctica con PyMongo 4.9+ dentro del subconjunto ya implementado y testeado.
+    * **PyMongo Profile Compatibility**: La API pública ya modela perfiles reales `4.9`, `4.11` y `4.13`, manteniendo `4.9` como baseline y activando el primer delta público observable en `4.11` (`update_one(sort=...)`).
 
 ---
 
@@ -102,6 +107,9 @@ Estos puntos quedan explícitamente fuera del cierre de Fase 1:
 * El código instalable vive bajo `src/mongoeco/`.
 * El baseline de lenguaje (`Python 3.13+`) se declara en `pyproject.toml`, no solo en este documento.
 * La estrategia de evolución por dialectos y perfiles de compatibilidad se documenta en `DIALECTS.md`.
+* La infraestructura de compatibilidad ya existe en la API pública y en el core: clientes, bases de datos y colecciones aceptan y propagan `mongodb_dialect` y `pymongo_profile`, y el core ya delega en esos objetos truthiness, catálogos de operadores, semántica básica de proyección, orden de campos de updates y comparación/igualdad de valores.
+* En el eje PyMongo ya hay un primer delta vivo y testeado: `update_one(sort=...)` solo está habilitado desde el perfil `4.11`.
+* Ambos ejes de compatibilidad ya exponen metadata de resolución (`mongodb_dialect_resolution` y `pymongo_profile_resolution`) en cliente, base de datos y colección, de forma que una app o suite de tests puede inspeccionar si está usando baseline, alias explícito o fallback compatible.
 
 ---
 
@@ -274,11 +282,13 @@ La cobertura semántica se organiza en tres categorías deliberadas:
 * **no soportado pero rechazado explícitamente**: el operador queda fuera del perímetro actual, pero existe test que fija el fallo explícito
 * **no aplicable al repo actual**: el caso pertenece a superficies que `mongoeco` no modela todavía como abstracción propia (por ejemplo, restricciones específicas de vistas)
 
-### Testing Diferencial Contra MongoDB Real 7.0
-Como siguiente capa de verificación, el repositorio ya incluye un arnés opcional de contraste contra un servidor real de MongoDB 7.0:
-* módulo: `tests/differential/mongodb7_real_parity.py`
-* script manual: `scripts/run_mongodb7_differential.py`
-* dependencia opcional: extra `mongodb7` en `pyproject.toml`
+### Testing Diferencial Contra MongoDB Real 7.0 y 8.0
+Como siguiente capa de verificación, el repositorio ya incluye un arnés opcional de contraste contra MongoDB real compartido por versión:
+* base compartida: `tests/differential/_real_parity_base.py`
+* módulos por versión: `tests/differential/mongodb7_real_parity.py`, `tests/differential/mongodb8_real_parity.py`
+* script genérico: `scripts/run_mongodb_real_differential.py`
+* wrappers manuales: `scripts/run_mongodb7_differential.py`, `scripts/run_mongodb8_differential.py`
+* dependencia opcional: extras `mongodb7`, `mongodb8` y `mongodb-real` en `pyproject.toml`
 
 Objetivo del arnés diferencial:
 * comparar `mongoeco` frente a MongoDB real en una selección reducida de casos de alto riesgo semántico
@@ -293,13 +303,28 @@ Objetivo del arnés diferencial:
 Restricciones deliberadas del arnés diferencial:
 * no forma parte del green bar obligatorio diario
 * se activa solo si existe `MONGOECO_REAL_MONGODB_URI`
-* requiere `pymongo` instalado mediante el extra opcional `mongodb7`
-* verifica explícitamente que el servidor remoto sea `MongoDB 7.0.x`
+* requiere `pymongo` instalado mediante uno de los extras opcionales de Mongo real
+* verifica explícitamente que el servidor remoto coincida con la versión objetivo (`7.0.x` o `8.0.x`)
 
 Comando de ejecución previsto:
 * `MONGOECO_REAL_MONGODB_URI=... .venv/bin/python scripts/run_mongodb7_differential.py`
+* `MONGOECO_REAL_MONGODB_URI=... .venv/bin/python scripts/run_mongodb8_differential.py`
+* `MONGOECO_REAL_MONGODB_URI=... .venv/bin/python scripts/run_mongodb_real_differential.py 7.0`
+* `MONGOECO_REAL_MONGODB_URI=... .venv/bin/python scripts/run_mongodb_real_differential.py 8.0`
 
 Esta capa no sustituye a la suite local pura; la complementa. La intención es usarla como detector de divergencias de semántica real, no como requisito permanente para cada ejecución local o CI mínima.
+
+### Primer Delta Versionado Registrado
+El catálogo de dialectos ya registra una primera divergencia oficial entre `7.0` y `8.0` como flag de comportamiento:
+* `null_query_matches_undefined`
+
+Actualmente:
+* `MongoDialect70` la marca como `True`
+* `MongoDialect80` la marca como `False`
+
+Ese delta ya está fijado en tests, documentación y runtime. `mongoeco` modela
+un valor `UNDEFINED` propio y aplica la diferencia `7.0/8.0` en igualdad por
+`null`, `$in` con `null` y `$lookup`.
 
 ### Decisión Consolidada sobre Paths y Expansión de Arrays
 `core/paths.py` ya no expande arrays sin límite ni sobrescribe silenciosamente padres escalares.

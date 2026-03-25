@@ -1,10 +1,29 @@
 import unittest
 
+from mongoeco.compat import MongoDialect
 from mongoeco.core.projections import apply_projection
 from mongoeco.errors import OperationFailure
 
 
 class ProjectionTests(unittest.TestCase):
+    def test_projection_can_use_custom_dialect_flag_rules(self):
+        class _NoBooleanFlagDialect(MongoDialect):
+            def projection_flag(self, value: object) -> int | None:
+                if isinstance(value, bool):
+                    return None
+                return super().projection_flag(value)
+
+        with self.assertRaises(OperationFailure):
+            apply_projection(
+                {"_id": 1, "name": "Val"},
+                {"name": True},
+                dialect=_NoBooleanFlagDialect(
+                    key="test",
+                    server_version="test",
+                    label="No Bool Projection Flag",
+                ),
+            )
+
     def test_inclusion_projection(self):
         doc = {"_id": 1, "name": "Val", "age": 30, "profile": {"city": "Madrid", "job": "Dev"}}
 

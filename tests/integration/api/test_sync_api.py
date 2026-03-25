@@ -90,6 +90,40 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
         self.assertEqual(documents, [])
 
+    def test_update_one_sort_is_profile_gated(self):
+        with MongoClient(MemoryEngine(), pymongo_profile='4.9') as client:
+            collection = client.test.users
+            collection.insert_one({"_id": "1", "kind": "view", "rank": 2})
+            collection.insert_one({"_id": "2", "kind": "view", "rank": 1})
+
+            with self.assertRaises(TypeError):
+                collection.update_one(
+                    {"kind": "view"},
+                    {"$set": {"done": True}},
+                    sort=[("rank", 1)],
+                )
+
+    def test_update_one_sort_updates_first_sorted_document(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory(), pymongo_profile='4.11') as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "kind": "view", "rank": 2, "done": False})
+                    collection.insert_one({"_id": "2", "kind": "view", "rank": 1, "done": False})
+
+                    result = collection.update_one(
+                        {"kind": "view"},
+                        {"$set": {"done": True}},
+                        sort=[("rank", 1)],
+                    )
+                    first = collection.find_one({"_id": "1"})
+                    second = collection.find_one({"_id": "2"})
+
+                    self.assertEqual(result.matched_count, 1)
+                    self.assertEqual(result.modified_count, 1)
+                    self.assertFalse(first["done"])
+                    self.assertTrue(second["done"])
+
     def test_find_preserves_async_validation_for_falsy_invalid_filters(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

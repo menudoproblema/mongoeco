@@ -2,11 +2,12 @@ import datetime
 import unittest
 import uuid
 
-from mongoeco import MongoClient
+from mongoeco import AsyncMongoClient, MongoClient
+from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import DuplicateKeyError
-from mongoeco.types import ObjectId
+from mongoeco.types import ObjectId, UNDEFINED
 from tests.support import open_client
 
 
@@ -130,6 +131,71 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                 }
 
         self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_null_equality_and_in_respect_undefined_delta_in_7_and_8_for_both_engines(self):
+        expected_by_dialect = {
+            MONGODB_DIALECT_70.key: ["array-null", "array-undefined", "missing", "null", "undefined"],
+            MONGODB_DIALECT_80.key: ["array-null", "missing", "null"],
+        }
+
+        for engine_factory in (MemoryEngine, SQLiteEngine):
+            for dialect in (MONGODB_DIALECT_70, MONGODB_DIALECT_80):
+                with self.subTest(engine=engine_factory.__name__, dialect=dialect.key):
+                    async with AsyncMongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                        collection = client.get_database("db").get_collection("events")
+                        await collection.insert_one({"_id": "null", "v": None})
+                        await collection.insert_one({"_id": "undefined", "v": UNDEFINED})
+                        await collection.insert_one({"_id": "array-null", "v": ["x", None]})
+                        await collection.insert_one({"_id": "array-undefined", "v": ["x", UNDEFINED]})
+                        await collection.insert_one({"_id": "missing"})
+
+                        eq_ids = [
+                            document["_id"]
+                            async for document in collection.find({"v": None}, sort=[("_id", 1)])
+                        ]
+                        in_ids = [
+                            document["_id"]
+                            async for document in collection.find({"v": {"$in": [None]}}, sort=[("_id", 1)])
+                        ]
+
+                        self.assertEqual(eq_ids, expected_by_dialect[dialect.key])
+                        self.assertEqual(in_ids, expected_by_dialect[dialect.key])
+
+    async def test_lookup_respects_undefined_delta_in_7_and_8_for_both_engines(self):
+        expected_joined_ids = {
+            MONGODB_DIALECT_70.key: ["user-null", "user-undefined"],
+            MONGODB_DIALECT_80.key: ["user-null"],
+        }
+
+        for engine_factory in (MemoryEngine, SQLiteEngine):
+            for dialect in (MONGODB_DIALECT_70, MONGODB_DIALECT_80):
+                with self.subTest(engine=engine_factory.__name__, dialect=dialect.key):
+                    async with AsyncMongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                        database = client.get_database("db")
+                        events = database.get_collection("events")
+                        users = database.get_collection("users")
+
+                        await events.insert_one({"_id": "event-null", "tenant": None})
+                        await users.insert_one({"_id": "user-null", "tenant": None})
+                        await users.insert_one({"_id": "user-undefined", "tenant": UNDEFINED})
+
+                        documents = await events.aggregate(
+                            [
+                                {
+                                    "$lookup": {
+                                        "from": "users",
+                                        "localField": "tenant",
+                                        "foreignField": "tenant",
+                                        "as": "joined",
+                                    }
+                                }
+                            ]
+                        ).to_list()
+
+                        self.assertEqual(
+                            [joined["_id"] for joined in documents[0]["joined"]],
+                            expected_joined_ids[dialect.key],
+                        )
 
     async def test_nested_update_and_delete_match_in_memory_and_sqlite(self):
         results: dict[str, tuple[object, int]] = {}

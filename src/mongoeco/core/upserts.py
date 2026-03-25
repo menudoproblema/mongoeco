@@ -30,8 +30,9 @@ def seed_upsert_document(document: Document, filter_spec: Filter) -> None:
         candidate = value
         if isinstance(value, dict):
             operators = [operator for operator in value if isinstance(operator, str) and operator.startswith("$")]
-            if operators != ["$eq"]:
-                continue
-            candidate = value["$eq"]
+            if operators:
+                if operators != ["$eq"]:
+                    continue
+                candidate = value["$eq"]
 
         _seed_filter_value(document, key, candidate)

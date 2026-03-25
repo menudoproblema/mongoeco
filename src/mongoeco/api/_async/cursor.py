@@ -1,3 +1,4 @@
+from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.query_plan import QueryNode
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
@@ -57,6 +58,7 @@ class AsyncCursor:
             sort=self._sort,
             skip=self._skip,
             limit=self._limit if limit is None else limit,
+            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
             context=self._session,
         )
 

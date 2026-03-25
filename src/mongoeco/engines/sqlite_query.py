@@ -188,12 +188,25 @@ def _translate_codec_aware_equals(field: str, value: object) -> SqlFragment | No
     )
 
 
-def _translate_array_contains_scalar(field: str, value: object) -> SqlFragment:
+def _translate_array_contains_scalar(
+    field: str,
+    value: object,
+    *,
+    null_matches_undefined: bool = False,
+) -> SqlFragment:
     path = _path_literal(field)
     if value is None:
+        each_type_path, _ = _json_each_tagged_paths()
+        undefined_clause = (
+            f" OR (json_each.type = 'object' "
+            f"AND COALESCE(json_extract(json_each.value, {_quote_sql_string(each_type_path)}), '') = 'undefined')"
+            if null_matches_undefined
+            else ""
+        )
         return (
             f"(json_type(document, {path}) = 'array' "
-            f"AND EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE json_each.type = 'null'))",
+            f"AND EXISTS (SELECT 1 FROM json_each(document, {path}) "
+            f"WHERE json_each.type = 'null'{undefined_clause}))",
             [],
         )
     if isinstance(value, bool):
@@ -238,13 +251,26 @@ def _translate_array_contains_codec_aware(field: str, value: object) -> SqlFragm
     )
 
 
-def _translate_scalar_equals(field: str, value: object) -> SqlFragment:
+def _translate_scalar_equals(
+    field: str,
+    value: object,
+    *,
+    null_matches_undefined: bool = False,
+) -> SqlFragment:
     path = _path_literal(field)
     tagged = _translate_codec_aware_equals(field, value)
     if tagged is not None:
         return tagged
     if value is None:
-        return f"(json_type(document, {path}) IS NULL OR json_type(document, {path}) = 'null')", []
+        undefined_clause = (
+            f" OR {type_expression_sql(field)} = 'undefined'"
+            if null_matches_undefined
+            else ""
+        )
+        return (
+            f"(json_type(document, {path}) IS NULL OR json_type(document, {path}) = 'null'{undefined_clause})",
+            [],
+        )
     if isinstance(value, bool):
         return f"(json_type(document, {path}) IN ('true', 'false') AND json_extract(document, {path}) = ?)", [int(value)]
     if isinstance(value, str):
@@ -254,14 +280,27 @@ def _translate_scalar_equals(field: str, value: object) -> SqlFragment:
     return f"({type_expression_sql(field)} = ? AND {value_expression_sql(field)} = ?)", ["", value]
 
 
-def _translate_equals(field: str, value: object) -> SqlFragment:
+def _translate_equals(
+    field: str,
+    value: object,
+    *,
+    null_matches_undefined: bool = False,
+) -> SqlFragment:
     if not _is_translatable_equality_value(value):
         raise NotImplementedError("Unsupported equality value for SQL translation")
-    scalar_sql, scalar_params = _translate_scalar_equals(field, value)
+    scalar_sql, scalar_params = _translate_scalar_equals(
+        field,
+        value,
+        null_matches_undefined=null_matches_undefined,
+    )
     array_sql, array_params = (
         _translate_array_contains_codec_aware(field, value)
         if _is_codec_aware_value(value)
-        else _translate_array_contains_scalar(field, value)
+        else _translate_array_contains_scalar(
+            field,
+            value,
+            null_matches_undefined=null_matches_undefined,
+        )
     )
     return f"({scalar_sql} OR {array_sql})", [*scalar_params, *array_params]
 
@@ -353,7 +392,13 @@ def _translate_comparison(operator: str, field: str, value: object) -> SqlFragme
     )
 
 
-def _translate_membership(field: str, values: tuple[object, ...], *, negated: bool) -> SqlFragment:
+def _translate_membership(
+    field: str,
+    values: tuple[object, ...],
+    *,
+    negated: bool,
+    null_matches_undefined: bool = False,
+) -> SqlFragment:
     if values and all(_is_codec_aware_value(value) for value in values):
         path = _path_literal(field)
         params: list[object] = []
@@ -372,14 +417,22 @@ def _translate_membership(field: str, values: tuple[object, ...], *, negated: bo
                 params,
             )
         return wrapped, params
-    if not values or any(not _is_supported_scalar(value) or value is None for value in values):
+    if not values or any(not _is_supported_scalar(value) and value is not None for value in values):
         raise NotImplementedError("Unsupported membership values for SQL translation")
     path = _path_literal(field)
     params: list[object] = []
     clauses: list[str] = []
     for value in values:
-        scalar_sql, scalar_sql_params = _translate_scalar_equals(field, value)
-        array_sql, array_sql_params = _translate_array_contains_scalar(field, value)
+        scalar_sql, scalar_sql_params = _translate_scalar_equals(
+            field,
+            value,
+            null_matches_undefined=null_matches_undefined,
+        )
+        array_sql, array_sql_params = _translate_array_contains_scalar(
+            field,
+            value,
+            null_matches_undefined=null_matches_undefined,
+        )
         clauses.append(f"({scalar_sql})")
         params.extend(scalar_sql_params)
         clauses.append(array_sql)
@@ -451,7 +504,11 @@ def translate_query_plan(plan: QueryNode) -> SqlFragment:
     if isinstance(plan, EqualsCondition):
         if not _is_translatable_equality_value(plan.value):
             raise NotImplementedError("Unsupported equality value for SQL translation")
-        return _translate_equals(plan.field, plan.value)
+        return _translate_equals(
+            plan.field,
+            plan.value,
+            null_matches_undefined=plan.null_matches_undefined,
+        )
     if isinstance(plan, NotEqualsCondition):
         if not _is_translatable_equality_value(plan.value):
             raise NotImplementedError("Unsupported inequality value for SQL translation")
@@ -465,7 +522,12 @@ def translate_query_plan(plan: QueryNode) -> SqlFragment:
     if isinstance(plan, LessThanOrEqualCondition):
         return _translate_comparison("<=", plan.field, plan.value)
     if isinstance(plan, InCondition):
-        return _translate_membership(plan.field, plan.values, negated=False)
+        return _translate_membership(
+            plan.field,
+            plan.values,
+            negated=False,
+            null_matches_undefined=plan.null_matches_undefined,
+        )
     if isinstance(plan, NotInCondition):
         return _translate_membership(plan.field, plan.values, negated=True)
     if isinstance(plan, ExistsCondition):

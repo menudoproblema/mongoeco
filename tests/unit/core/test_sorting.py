@@ -2,11 +2,36 @@ import datetime
 import unittest
 import uuid
 
+from mongoeco.compat import MongoDialect
 from mongoeco.core.sorting import compare_documents, sort_documents, sort_value
 from mongoeco.types import ObjectId
 
 
 class SortingHelpersTests(unittest.TestCase):
+    def test_sort_documents_can_use_custom_dialect_comparator(self):
+        class _ReverseStringDialect(MongoDialect):
+            def compare_values(self, left, right) -> int:
+                if isinstance(left, str) and isinstance(right, str):
+                    if left == right:
+                        return 0
+                    return -1 if left > right else 1
+                return super().compare_values(left, right)
+
+        documents = [{"_id": "1", "name": "Ada"}, {"_id": "2", "name": "Grace"}]
+
+        self.assertEqual(
+            sort_documents(
+                documents,
+                [("name", 1)],
+                dialect=_ReverseStringDialect(
+                    key="test",
+                    server_version="test",
+                    label="Reverse String Dialect",
+                ),
+            ),
+            [{"_id": "2", "name": "Grace"}, {"_id": "1", "name": "Ada"}],
+        )
+
     def test_sort_value_handles_missing_and_arrays(self):
         self.assertIsNone(sort_value({"name": "Ada"}, "rank", 1))
         self.assertEqual(sort_value({"rank": []}, "rank", 1), [])

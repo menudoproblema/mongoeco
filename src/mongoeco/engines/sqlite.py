@@ -7,6 +7,7 @@ import threading
 from copy import deepcopy
 from typing import Any, AsyncIterable, override
 
+from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect, MongoDialect70, MongoDialect80
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import canonical_document_id
@@ -77,6 +78,9 @@ class SQLiteEngine(AsyncStorageEngine):
         if self._connection is None:
             raise RuntimeError("SQLiteEngine is not connected")
         return self._connection
+
+    def _dialect_requires_python_fallback(self, dialect: MongoDialect) -> bool:
+        return type(dialect) not in (MongoDialect70, MongoDialect80)
 
     def _storage_key(self, value: Any) -> str:
         return repr(canonical_document_id(value))
@@ -153,6 +157,8 @@ class SQLiteEngine(AsyncStorageEngine):
             if self._field_traverses_array_in_collection(db_name, coll_name, field):
                 return True
             if self._field_contains_tagged_bytes_in_collection(db_name, coll_name, field):
+                return True
+            if self._field_contains_tagged_undefined_in_collection(db_name, coll_name, field):
                 return True
             path_literal = "'" + json_path_for_field(field).replace("'", "''") + "'"
             row = conn.execute(
@@ -232,7 +238,13 @@ class SQLiteEngine(AsyncStorageEngine):
             return fields
         return set()
 
-    def _field_contains_tagged_bytes_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
+    def _field_contains_tagged_value_type_in_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+        value_type: str,
+    ) -> bool:
         conn = self._require_connection()
         tagged_type_path = json_path_for_field(field) + f'."{DocumentCodec._MARKER}".{DocumentCodec._TYPE}'
         row = conn.execute(
@@ -240,16 +252,28 @@ class SQLiteEngine(AsyncStorageEngine):
             SELECT 1
             FROM documents
             WHERE db_name = ? AND coll_name = ?
-              AND json_extract(document, ?) = 'bytes'
+              AND json_extract(document, ?) = ?
             LIMIT 1
             """,
-            (db_name, coll_name, tagged_type_path),
+            (db_name, coll_name, tagged_type_path, value_type),
         ).fetchone()
         return row is not None
+
+    def _field_contains_tagged_bytes_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
+        return self._field_contains_tagged_value_type_in_collection(db_name, coll_name, field, 'bytes')
+
+    def _field_contains_tagged_undefined_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
+        return self._field_contains_tagged_value_type_in_collection(db_name, coll_name, field, 'undefined')
 
     def _plan_requires_python_for_bytes(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
         return any(
             self._field_contains_tagged_bytes_in_collection(db_name, coll_name, field)
+            for field in self._comparison_fields(plan)
+        )
+
+    def _plan_requires_python_for_undefined(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
+        return any(
+            self._field_contains_tagged_undefined_in_collection(db_name, coll_name, field)
             for field in self._comparison_fields(plan)
         )
 
@@ -303,6 +327,8 @@ class SQLiteEngine(AsyncStorageEngine):
             raise NotImplementedError("Top-level array comparisons require Python fallback")
         if self._plan_requires_python_for_bytes(db_name, coll_name, plan):
             raise NotImplementedError("Tagged bytes require Python fallback")
+        if self._plan_requires_python_for_undefined(db_name, coll_name, plan):
+            raise NotImplementedError("Tagged undefined values require Python fallback")
         sql, params = self._build_select_sql(
             db_name,
             coll_name,
@@ -335,6 +361,8 @@ class SQLiteEngine(AsyncStorageEngine):
                 raise NotImplementedError("Top-level array comparisons require Python fallback")
             if self._plan_requires_python_for_bytes(db_name, coll_name, plan):
                 raise NotImplementedError("Tagged bytes require Python fallback")
+            if self._plan_requires_python_for_undefined(db_name, coll_name, plan):
+                raise NotImplementedError("Tagged undefined values require Python fallback")
             sql, params = self._build_select_sql(
                 db_name,
                 coll_name,
@@ -467,7 +495,8 @@ class SQLiteEngine(AsyncStorageEngine):
                 conn.rollback()
                 raise DuplicateKeyError(str(exc)) from exc
 
-    def _get_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, projection: Projection | None, context: ClientSession | None) -> Document | None:
+    def _get_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, projection: Projection | None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
+        effective_dialect = dialect or MONGODB_DIALECT_70
         with self._lock:
             conn = self._require_connection()
             row = conn.execute(
@@ -480,7 +509,13 @@ class SQLiteEngine(AsyncStorageEngine):
             ).fetchone()
         if row is None:
             return None
-        return apply_projection(self._deserialize_document(row[0]), projection)
+        if effective_dialect is MONGODB_DIALECT_70:
+            return apply_projection(self._deserialize_document(row[0]), projection)
+        return apply_projection(
+            self._deserialize_document(row[0]),
+            projection,
+            dialect=effective_dialect,
+        )
 
     def _delete_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, context: ClientSession | None) -> bool:
         with self._lock:
@@ -507,19 +542,25 @@ class SQLiteEngine(AsyncStorageEngine):
         limit: int | None,
         context: ClientSession | None,
         stop_event: threading.Event | None = None,
+        dialect: MongoDialect | None = None,
     ):
+        effective_dialect = dialect or MONGODB_DIALECT_70
         if skip < 0:
             raise ValueError("skip must be >= 0")
         if limit is not None and limit < 0:
             raise ValueError("limit must be >= 0")
 
-        plan = ensure_query_plan(filter_spec, plan)
+        plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         with self._lock:
             try:
+                if self._dialect_requires_python_fallback(effective_dialect):
+                    raise NotImplementedError("Custom dialect requires Python fallback")
                 if self._plan_has_array_traversing_paths(db_name, coll_name, plan):
                     raise NotImplementedError("Array traversal requires Python fallback")
                 if self._plan_requires_python_for_array_comparisons(db_name, coll_name, plan):
                     raise NotImplementedError("Top-level array comparisons require Python fallback")
+                if self._plan_requires_python_for_undefined(db_name, coll_name, plan):
+                    raise NotImplementedError("Tagged undefined requires Python fallback")
                 if self._sort_requires_python(db_name, coll_name, plan, sort):
                     raise NotImplementedError("Sort requires Python fallback")
                 sql, sql_params = self._build_select_sql(
@@ -537,7 +578,14 @@ class SQLiteEngine(AsyncStorageEngine):
                     for (payload,) in cursor:
                         if stop_event is not None and stop_event.is_set():
                             break
-                        yield apply_projection(self._deserialize_document(payload), projection)
+                        if effective_dialect is MONGODB_DIALECT_70:
+                            yield apply_projection(self._deserialize_document(payload), projection)
+                        else:
+                            yield apply_projection(
+                                self._deserialize_document(payload),
+                                projection,
+                                dialect=effective_dialect,
+                            )
                 finally:
                     cursor.close()
                 return
@@ -547,7 +595,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     documents_iter = (
                         document
                         for document in documents_iter
-                        if QueryEngine.match_plan(document, plan)
+                        if QueryEngine.match_plan(document, plan, dialect=effective_dialect)
                     )
                 try:
                     if sort is None:
@@ -559,14 +607,28 @@ class SQLiteEngine(AsyncStorageEngine):
                             if remaining_skip:
                                 remaining_skip -= 1
                                 continue
-                            yield apply_projection(document, projection)
+                            if effective_dialect is MONGODB_DIALECT_70:
+                                yield apply_projection(document, projection)
+                            else:
+                                yield apply_projection(
+                                    document,
+                                    projection,
+                                    dialect=effective_dialect,
+                                )
                             if remaining_limit is not None:
                                 remaining_limit -= 1
                                 if remaining_limit == 0:
                                     return
                         return
 
-                    documents = sort_documents(list(documents_iter), sort)
+                    if effective_dialect is MONGODB_DIALECT_70:
+                        documents = sort_documents(list(documents_iter), sort)
+                    else:
+                        documents = sort_documents(
+                            list(documents_iter),
+                            sort,
+                            dialect=effective_dialect,
+                        )
                 finally:
                     close = getattr(documents_iter, "close", None)
                     if callable(close):
@@ -579,7 +641,14 @@ class SQLiteEngine(AsyncStorageEngine):
         for document in documents:
             if stop_event is not None and stop_event.is_set():
                 break
-            yield apply_projection(document, projection)
+            if effective_dialect is MONGODB_DIALECT_70:
+                yield apply_projection(document, projection)
+            else:
+                yield apply_projection(
+                    document,
+                    projection,
+                    dialect=effective_dialect,
+                )
 
     def _update_matching_document_sync(
         self,
@@ -591,13 +660,17 @@ class SQLiteEngine(AsyncStorageEngine):
         upsert_seed: Document | None,
         plan: QueryNode | None,
         context: ClientSession | None,
+        dialect: MongoDialect | None = None,
     ) -> UpdateResult[DocumentId]:
-        plan = ensure_query_plan(filter_spec, plan)
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         with self._lock:
             conn = self._require_connection()
             selected: tuple[str, Document] | None = None
             sql_selection_supported = False
             try:
+                if self._dialect_requires_python_fallback(effective_dialect):
+                    raise NotImplementedError("Custom dialect requires Python fallback")
                 selected = self._select_first_document_for_plan(db_name, coll_name, plan)
                 sql_selection_supported = True
             except (NotImplementedError, TypeError):
@@ -605,7 +678,7 @@ class SQLiteEngine(AsyncStorageEngine):
 
             if selected is None and not sql_selection_supported:
                 for storage_key, document in self._load_documents(db_name, coll_name):
-                    if not QueryEngine.match_plan(document, plan):
+                    if not QueryEngine.match_plan(document, plan, dialect=effective_dialect):
                         continue
                     selected = (storage_key, document)
                     break
@@ -613,12 +686,18 @@ class SQLiteEngine(AsyncStorageEngine):
             if selected is not None:
                 storage_key, original_document = selected
                 document = deepcopy(original_document)
-                modified = UpdateEngine.apply_update(document, update_spec)
+                modified = UpdateEngine.apply_update(
+                    document,
+                    update_spec,
+                    dialect=effective_dialect,
+                )
                 if not modified:
                     return UpdateResult(matched_count=1, modified_count=0)
                 self._validate_document_against_unique_indexes(db_name, coll_name, document)
 
                 try:
+                    if self._dialect_requires_python_fallback(effective_dialect):
+                        raise NotImplementedError("Custom dialect requires Python fallback")
                     update_sql, update_params = translate_update_spec(update_spec, current_document=original_document)
                     conn.execute(
                         f"""
@@ -655,7 +734,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 return UpdateResult(matched_count=0, modified_count=0)
 
             new_doc = deepcopy(upsert_seed or {})
-            UpdateEngine.apply_update(new_doc, update_spec)
+            UpdateEngine.apply_update(new_doc, update_spec, dialect=effective_dialect)
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
             self._validate_document_against_unique_indexes(db_name, coll_name, new_doc)
@@ -682,17 +761,23 @@ class SQLiteEngine(AsyncStorageEngine):
         filter_spec: Filter,
         plan: QueryNode | None,
         context: ClientSession | None,
+        dialect: MongoDialect | None = None,
     ) -> DeleteResult:
-        plan = ensure_query_plan(filter_spec, plan)
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         with self._lock:
             conn = self._require_connection()
             try:
+                if self._dialect_requires_python_fallback(effective_dialect):
+                    raise NotImplementedError("Custom dialect requires Python fallback")
                 if self._plan_has_array_traversing_paths(db_name, coll_name, plan):
                     raise NotImplementedError("Array traversal requires Python fallback")
                 if self._plan_requires_python_for_array_comparisons(db_name, coll_name, plan):
                     raise NotImplementedError("Top-level array comparisons require Python fallback")
                 if self._plan_requires_python_for_bytes(db_name, coll_name, plan):
                     raise NotImplementedError("Tagged bytes require Python fallback")
+                if self._plan_requires_python_for_undefined(db_name, coll_name, plan):
+                    raise NotImplementedError("Tagged undefined requires Python fallback")
                 select_sql, params = self._build_select_sql(
                     db_name,
                     coll_name,
@@ -713,7 +798,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 pass
 
             for storage_key, document in self._load_documents(db_name, coll_name):
-                if not QueryEngine.match_plan(document, plan):
+                if not QueryEngine.match_plan(document, plan, dialect=effective_dialect):
                     continue
                 conn.execute(
                     """
@@ -733,14 +818,20 @@ class SQLiteEngine(AsyncStorageEngine):
         filter_spec: Filter,
         plan: QueryNode | None,
         context: ClientSession | None,
+        dialect: MongoDialect | None = None,
     ) -> int:
-        plan = ensure_query_plan(filter_spec, plan)
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         with self._lock:
             try:
+                if self._dialect_requires_python_fallback(effective_dialect):
+                    raise NotImplementedError("Custom dialect requires Python fallback")
                 if self._plan_has_array_traversing_paths(db_name, coll_name, plan):
                     raise NotImplementedError("Array traversal requires Python fallback")
                 if self._plan_requires_python_for_array_comparisons(db_name, coll_name, plan):
                     raise NotImplementedError("Top-level array comparisons require Python fallback")
+                if self._plan_requires_python_for_undefined(db_name, coll_name, plan):
+                    raise NotImplementedError("Tagged undefined requires Python fallback")
                 where_sql, params = translate_query_plan(plan)
                 conn = self._require_connection()
                 if self._plan_requires_python_for_bytes(db_name, coll_name, plan):
@@ -758,7 +849,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 return sum(
                     1
                     for _, document in self._load_documents(db_name, coll_name)
-                    if QueryEngine.match_plan(document, plan)
+                    if QueryEngine.match_plan(document, plan, dialect=effective_dialect)
                 )
 
     def _create_index_sync(
@@ -885,8 +976,8 @@ class SQLiteEngine(AsyncStorageEngine):
         return await asyncio.to_thread(self._put_document_sync, db_name, coll_name, document, overwrite, context)
 
     @override
-    async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, context: ClientSession | None = None) -> Document | None:
-        return await asyncio.to_thread(self._get_document_sync, db_name, coll_name, doc_id, projection, context)
+    async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
+        return await asyncio.to_thread(self._get_document_sync, db_name, coll_name, doc_id, projection, dialect, context)
 
     @override
     async def delete_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, context: ClientSession | None = None) -> bool:
@@ -904,6 +995,7 @@ class SQLiteEngine(AsyncStorageEngine):
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
+        dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> AsyncIterable[Document]:
         async def _scan() -> AsyncIterable[Document]:
@@ -924,8 +1016,9 @@ class SQLiteEngine(AsyncStorageEngine):
                         sort,
                         skip,
                         limit,
-                        context,
-                        stop_event,
+                        context=context,
+                        stop_event=stop_event,
+                        dialect=dialect,
                     ):
                         if stop_event.is_set():
                             break
@@ -964,6 +1057,7 @@ class SQLiteEngine(AsyncStorageEngine):
         upsert_seed: Document | None = None,
         *,
         plan: QueryNode | None = None,
+        dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
         return await asyncio.to_thread(
@@ -976,15 +1070,32 @@ class SQLiteEngine(AsyncStorageEngine):
             upsert_seed,
             plan,
             context,
+            dialect,
         )
 
     @override
-    async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, context: ClientSession | None = None) -> DeleteResult:
-        return await asyncio.to_thread(self._delete_matching_document_sync, db_name, coll_name, filter_spec, plan, context)
+    async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult:
+        return await asyncio.to_thread(
+            self._delete_matching_document_sync,
+            db_name,
+            coll_name,
+            filter_spec,
+            plan,
+            context,
+            dialect,
+        )
 
     @override
-    async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, context: ClientSession | None = None) -> int:
-        return await asyncio.to_thread(self._count_matching_documents_sync, db_name, coll_name, filter_spec, plan, context)
+    async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int:
+        return await asyncio.to_thread(
+            self._count_matching_documents_sync,
+            db_name,
+            coll_name,
+            filter_spec,
+            plan,
+            context,
+            dialect,
+        )
 
     @override
     async def create_index(

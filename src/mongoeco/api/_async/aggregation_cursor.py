@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 
+from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.aggregation import Pipeline, apply_pipeline, split_pushdown_pipeline
 from mongoeco.session import ClientSession
 from mongoeco.types import Document
@@ -46,13 +47,18 @@ class AsyncAggregationCursor:
                 self._collection._db_name,
                 name,
                 {},
+                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
                 context=self._session,
             )
             loaded[name] = [document async for document in collection]
         return loaded
 
     async def _materialize(self) -> list[Document]:
-        pushdown = split_pushdown_pipeline(self._pipeline)
+        dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
+        pushdown = split_pushdown_pipeline(
+            self._pipeline,
+            dialect=dialect,
+        )
         lookup_collections = await self._load_lookup_collections()
         documents = await self._collection.find(
             pushdown.filter_spec,
@@ -66,6 +72,7 @@ class AsyncAggregationCursor:
             documents,
             pushdown.remaining_pipeline,
             collection_resolver=lookup_collections.get,
+            dialect=dialect,
         )
 
     async def to_list(self) -> list[Document]:

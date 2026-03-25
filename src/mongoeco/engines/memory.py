@@ -5,6 +5,7 @@ import uuid
 from copy import deepcopy
 from typing import Any, AsyncIterable, override
 
+from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operators import UpdateEngine
@@ -173,13 +174,20 @@ class MemoryEngine(AsyncStorageEngine):
             return True
 
     @override
-    async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, context: ClientSession | None = None) -> Document | None:
+    async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
+        effective_dialect = dialect or MONGODB_DIALECT_70
         async with self._get_lock(db_name, coll_name):
             storage_key = self._storage_key(doc_id)
             data = self._storage.get(db_name, {}).get(coll_name, {}).get(storage_key)
         if data is None:
             return None
-        return apply_projection(self._codec.decode(data), projection)
+        if effective_dialect is MONGODB_DIALECT_70:
+            return apply_projection(self._codec.decode(data), projection)
+        return apply_projection(
+            self._codec.decode(data),
+            projection,
+            dialect=effective_dialect,
+        )
 
     @override
     async def delete_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, context: ClientSession | None = None) -> bool:
@@ -192,13 +200,14 @@ class MemoryEngine(AsyncStorageEngine):
             return False
 
     @override
-    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
+    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
         async def _scan():
+            effective_dialect = dialect or MONGODB_DIALECT_70
             if skip < 0:
                 raise ValueError("skip must be >= 0")
             if limit is not None and limit < 0:
                 raise ValueError("limit must be >= 0")
-            query_plan = ensure_query_plan(filter_spec, plan)
+            query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
 
             async with self._get_lock(db_name, coll_name):
                 coll = self._storage.get(db_name, {}).get(coll_name, {})
@@ -208,8 +217,15 @@ class MemoryEngine(AsyncStorageEngine):
                 ]
 
             if not isinstance(query_plan, MatchAll):
-                documents = [document for document in documents if QueryEngine.match_plan(document, query_plan)]
-            documents = sort_documents(documents, sort)
+                documents = [
+                    document
+                    for document in documents
+                    if QueryEngine.match_plan(document, query_plan, dialect=effective_dialect)
+                ]
+            if effective_dialect is MONGODB_DIALECT_70:
+                documents = sort_documents(documents, sort)
+            else:
+                documents = sort_documents(documents, sort, dialect=effective_dialect)
 
             if skip:
                 documents = documents[skip:]
@@ -217,12 +233,20 @@ class MemoryEngine(AsyncStorageEngine):
                 documents = documents[:limit]
 
             for document in documents:
-                yield apply_projection(document, projection)
+                if effective_dialect is MONGODB_DIALECT_70:
+                    yield apply_projection(document, projection)
+                else:
+                    yield apply_projection(
+                        document,
+                        projection,
+                        dialect=effective_dialect,
+                    )
         return _scan()
 
     @override
-    async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, plan: QueryNode | None = None, context: ClientSession | None = None) -> UpdateResult[DocumentId]:
-        query_plan = ensure_query_plan(filter_spec, plan)
+    async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> UpdateResult[DocumentId]:
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
                 db = self._storage.setdefault(db_name, {})
@@ -230,10 +254,14 @@ class MemoryEngine(AsyncStorageEngine):
 
             for storage_key, data in list(coll.items()):
                 document = self._codec.decode(data)
-                if not QueryEngine.match_plan(document, query_plan):
+                if not QueryEngine.match_plan(document, query_plan, dialect=effective_dialect):
                     continue
 
-                modified = UpdateEngine.apply_update(document, update_spec)
+                modified = UpdateEngine.apply_update(
+                    document,
+                    update_spec,
+                    dialect=effective_dialect,
+                )
                 self._ensure_unique_indexes(
                     db_name,
                     coll_name,
@@ -250,7 +278,7 @@ class MemoryEngine(AsyncStorageEngine):
                 return UpdateResult(matched_count=0, modified_count=0)
 
             new_doc = deepcopy(upsert_seed or {})
-            UpdateEngine.apply_update(new_doc, update_spec)
+            UpdateEngine.apply_update(new_doc, update_spec, dialect=effective_dialect)
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
 
@@ -267,27 +295,33 @@ class MemoryEngine(AsyncStorageEngine):
             )
 
     @override
-    async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, context: ClientSession | None = None) -> DeleteResult:
-        query_plan = ensure_query_plan(filter_spec, plan)
+    async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult:
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
             coll = self._storage.get(db_name, {}).get(coll_name, {})
             for storage_key, data in list(coll.items()):
                 document = self._codec.decode(data)
-                if not QueryEngine.match_plan(document, query_plan):
+                if not QueryEngine.match_plan(document, query_plan, dialect=effective_dialect):
                     continue
                 del coll[storage_key]
                 return DeleteResult(deleted_count=1)
             return DeleteResult(deleted_count=0)
 
     @override
-    async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, context: ClientSession | None = None) -> int:
-        query_plan = ensure_query_plan(filter_spec, plan)
+    async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int:
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
             coll = self._storage.get(db_name, {}).get(coll_name, {})
             return sum(
                 1
                 for data in coll.values()
-                if QueryEngine.match_plan(self._codec.decode(data), query_plan)
+                if QueryEngine.match_plan(
+                    self._codec.decode(data),
+                    query_plan,
+                    dialect=effective_dialect,
+                )
             )
 
     @override

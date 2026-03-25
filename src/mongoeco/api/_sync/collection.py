@@ -1,5 +1,11 @@
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
+from mongoeco.compat import (
+    MongoDialect,
+    MongoDialectResolution,
+    PyMongoProfile,
+    PyMongoProfileResolution,
+)
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.session import ClientSession
 from mongoeco.types import DeleteResult, Document, DocumentId, Filter, InsertOneResult, Projection, SortSpec, Update, UpdateResult
@@ -48,8 +54,24 @@ class Collection:
     def aggregate(self, pipeline: Pipeline, *, session: ClientSession | None = None) -> AggregationCursor:
         return AggregationCursor(self._client, self._async_collection().aggregate(pipeline, session=session))
 
-    def update_one(self, filter_spec: Filter, update_spec: Update, upsert: bool = False, *, session: ClientSession | None = None) -> UpdateResult[DocumentId]:
-        return self._client._run(self._async_collection().update_one(filter_spec, update_spec, upsert, session=session))
+    def update_one(
+        self,
+        filter_spec: Filter,
+        update_spec: Update,
+        upsert: bool = False,
+        *,
+        sort: SortSpec | None = None,
+        session: ClientSession | None = None,
+    ) -> UpdateResult[DocumentId]:
+        return self._client._run(
+            self._async_collection().update_one(
+                filter_spec,
+                update_spec,
+                upsert,
+                sort=sort,
+                session=session,
+            )
+        )
 
     def delete_one(self, filter_spec: Filter, *, session: ClientSession | None = None) -> DeleteResult:
         return self._client._run(self._async_collection().delete_one(filter_spec, session=session))
@@ -62,3 +84,19 @@ class Collection:
 
     def list_indexes(self, *, session: ClientSession | None = None) -> list[dict[str, object]]:
         return self._client._run(self._async_collection().list_indexes(session=session))
+
+    @property
+    def mongodb_dialect(self) -> MongoDialect:
+        return self._client.mongodb_dialect
+
+    @property
+    def mongodb_dialect_resolution(self) -> MongoDialectResolution:
+        return self._client.mongodb_dialect_resolution
+
+    @property
+    def pymongo_profile(self) -> PyMongoProfile:
+        return self._client.pymongo_profile
+
+    @property
+    def pymongo_profile_resolution(self) -> PyMongoProfileResolution:
+        return self._client.pymongo_profile_resolution

@@ -6,15 +6,61 @@ import unittest
 import uuid
 from unittest.mock import Mock, patch
 
+from mongoeco.compat import MongoDialect70
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import DuplicateKeyError, OperationFailure
-from mongoeco.types import ObjectId
+from mongoeco.types import ObjectId, UNDEFINED
 
 
 class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
+    def test_delete_matching_document_sync_falls_back_for_custom_dialect(self):
+        class CustomDialect(MongoDialect70):
+            pass
+
+        engine = SQLiteEngine()
+        fake_connection = Mock()
+        fake_connection.execute.return_value.rowcount = 1
+        engine._require_connection = Mock(return_value=fake_connection)
+        engine._load_documents = Mock(return_value=[("1", {"kind": "match"})])
+
+        result = engine._delete_matching_document_sync(
+            "db",
+            "coll",
+            {"kind": "match"},
+            compile_filter({"kind": "match"}),
+            None,
+            CustomDialect(),
+        )
+
+        self.assertEqual(result.deleted_count, 1)
+        fake_connection.execute.assert_called_once()
+
+    def test_count_matching_documents_sync_falls_back_for_custom_dialect(self):
+        class CustomDialect(MongoDialect70):
+            pass
+
+        engine = SQLiteEngine()
+        engine._load_documents = Mock(
+            return_value=[
+                ("1", {"kind": "match"}),
+                ("2", {"kind": "skip"}),
+            ]
+        )
+
+        count = engine._count_matching_documents_sync(
+            "db",
+            "coll",
+            {"kind": "match"},
+            compile_filter({"kind": "match"}),
+            None,
+            CustomDialect(),
+        )
+
+        self.assertEqual(count, 1)
+
     def test_require_connection_raises_when_disconnected(self):
         engine = SQLiteEngine()
 
@@ -952,6 +998,80 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "1", "payload": b"abc"})
 
             self.assertTrue(engine._sort_requires_python("db", "coll", MatchAll(), [("payload", 1)]))
+        finally:
+            await engine.disconnect()
+
+    async def test_sort_requires_python_when_tagged_undefined_is_present(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "payload": UNDEFINED})
+
+            self.assertTrue(engine._sort_requires_python("db", "coll", MatchAll(), [("payload", 1)]))
+        finally:
+            await engine.disconnect()
+
+    async def test_scan_collection_falls_back_for_undefined_range_filter(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "legacy", "v": UNDEFINED})
+            documents = [
+                document
+                async for document in engine.scan_collection(
+                    "db",
+                    "coll",
+                    {"v": {"$gt": 0}},
+                )
+            ]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, [])
+
+    async def test_delete_matching_document_falls_back_for_undefined_range_filter(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "legacy", "v": UNDEFINED})
+            result = await engine.delete_matching_document(
+                "db",
+                "coll",
+                {"v": {"$gt": 0}},
+            )
+            remaining = await engine.get_document("db", "coll", "legacy")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(result.deleted_count, 0)
+        self.assertEqual(remaining, {"_id": "legacy", "v": UNDEFINED})
+
+    async def test_count_matching_documents_falls_back_for_undefined_range_filter(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "legacy", "v": UNDEFINED})
+            count = await engine.count_matching_documents(
+                "db",
+                "coll",
+                {"v": {"$gt": 0}},
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(count, 0)
+
+    async def test_select_and_explain_fall_back_for_tagged_undefined_comparison_fields(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "payload": UNDEFINED})
+            plan = compile_filter({"payload": {"$gt": 0}})
+
+            with self.assertRaises(NotImplementedError):
+                engine._select_first_document_for_plan("db", "coll", plan)
+            with self.assertRaises(NotImplementedError):
+                engine._explain_query_plan_sync("db", "coll", {"payload": {"$gt": 0}})
         finally:
             await engine.disconnect()
 

@@ -1,19 +1,20 @@
 from copy import deepcopy
 from typing import Any
 
+from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, Projection
 
 
-def _projection_flag(value: object) -> int | None:
-    if isinstance(value, bool):
-        return 1 if value else 0
-    if isinstance(value, int) and value in (0, 1):
-        return value
-    return None
+def _projection_flag(value: object, *, dialect: MongoDialect) -> int | None:
+    return dialect.projection_flag(value)
 
 
-def validate_projection_spec(projection: Projection) -> Projection:
+def validate_projection_spec(
+    projection: Projection,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> Projection:
     if not isinstance(projection, dict):
         raise OperationFailure("projection must be a document specification")
     non_id_flags: list[int] = []
@@ -22,7 +23,7 @@ def validate_projection_spec(projection: Projection) -> Projection:
             raise OperationFailure("projection field names must be strings")
         if any(segment == "$" for segment in key.split(".")):
             raise OperationFailure("positional projection is not supported")
-        flag = _projection_flag(value)
+        flag = _projection_flag(value, dialect=dialect)
         if flag is None:
             raise OperationFailure("projection values must be 0, 1, True or False")
         if key != "_id":
@@ -32,10 +33,15 @@ def validate_projection_spec(projection: Projection) -> Projection:
     return projection
 
 
-def apply_projection(doc: Document, projection: Projection | None) -> Document:
+def apply_projection(
+    doc: Document,
+    projection: Projection | None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> Document:
     if not projection:
         return doc
-    projection = validate_projection_spec(projection)
+    projection = validate_projection_spec(projection, dialect=dialect)
 
     include_id = projection.get("_id", True)
     fields = {key: value for key, value in projection.items() if key != "_id"}

@@ -42,7 +42,7 @@ from mongoeco.engines.sqlite_query import (
     type_expression_sql,
     value_expression_sql,
 )
-from mongoeco.types import ObjectId
+from mongoeco.types import ObjectId, UNDEFINED
 
 
 class SQLiteQueryTranslationTests(unittest.TestCase):
@@ -75,6 +75,13 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
             translate_query_plan(EqualsCondition("name", None)),
             (
                 "((json_type(document, '$.name') IS NULL OR json_type(document, '$.name') = 'null') OR (json_type(document, '$.name') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.name') WHERE json_each.type = 'null')))",
+                [],
+            ),
+        )
+        self.assertEqual(
+            translate_query_plan(EqualsCondition("name", None, null_matches_undefined=True)),
+            (
+                "((json_type(document, '$.name') IS NULL OR json_type(document, '$.name') = 'null' OR COALESCE(json_extract(document, '$.name.\"$mongoeco\".type'), '') = 'undefined') OR (json_type(document, '$.name') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.name') WHERE json_each.type = 'null' OR (json_each.type = 'object' AND COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') = 'undefined'))))",
                 [],
             ),
         )
@@ -200,6 +207,13 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
                 ["admin", "admin", "staff", "staff"],
             ),
         )
+        self.assertEqual(
+            translate_query_plan(InCondition("role", (None,), null_matches_undefined=True)),
+            (
+                "((json_type(document, '$.role') IS NULL OR json_type(document, '$.role') = 'null' OR COALESCE(json_extract(document, '$.role.\"$mongoeco\".type'), '') = 'undefined')) OR (json_type(document, '$.role') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.role') WHERE json_each.type = 'null' OR (json_each.type = 'object' AND COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') = 'undefined')))",
+                [],
+            ),
+        )
 
     def test_translate_codec_aware_equals(self):
         object_id = ObjectId("0123456789abcdef01234567")
@@ -217,6 +231,10 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
         sql, params = translate_query_plan(EqualsCondition("session_id", session_id))
         self.assertIn("json_each.type = 'object'", sql)
         self.assertEqual(params, ["uuid", "12345678-1234-5678-1234-567812345678", "uuid", "12345678-1234-5678-1234-567812345678"])
+
+        sql, params = translate_query_plan(EqualsCondition("legacy", UNDEFINED))
+        self.assertIn("json_each.type = 'object'", sql)
+        self.assertEqual(params, ["undefined", True, "undefined", True])
 
         sql, params = translate_query_plan(NotEqualsCondition("_id", object_id))
         self.assertIn("NOT (", sql)
@@ -393,8 +411,11 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             translate_query_plan(GreaterThanCondition("data", {"$mongoeco": {"type": "x", "value": "y"}}))
 
+        sql, params = translate_query_plan(InCondition("value", (None,)))
+        self.assertIn("json_each.type = 'null'", sql)
+        self.assertEqual(params, [])
         with self.assertRaises(NotImplementedError):
-            translate_query_plan(InCondition("value", (None,)))
+            translate_query_plan(InCondition("value", (object(),)))
 
 
     def test_translate_rejects_unknown_node(self):

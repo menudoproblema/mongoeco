@@ -20,6 +20,12 @@ dev = [
 mongodb7 = [
     "pymongo>=4.9,<5",
 ]
+mongodb8 = [
+    "pymongo>=4.9,<5",
+]
+mongodb-real = [
+    "pymongo>=4.9,<5",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

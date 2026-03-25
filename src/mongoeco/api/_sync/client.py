@@ -1,5 +1,11 @@
 import asyncio
 
+from mongoeco.compat import (
+    MongoDialect,
+    MongoDialectResolution,
+    PyMongoProfile,
+    PyMongoProfileResolution,
+)
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
@@ -103,12 +109,38 @@ class Database:
         async_database = self._client._async_client.get_database(self._name)
         return self._client._run(async_database.list_collection_names())
 
+    @property
+    def mongodb_dialect(self) -> MongoDialect:
+        return self._client.mongodb_dialect
+
+    @property
+    def mongodb_dialect_resolution(self) -> MongoDialectResolution:
+        return self._client.mongodb_dialect_resolution
+
+    @property
+    def pymongo_profile(self) -> PyMongoProfile:
+        return self._client.pymongo_profile
+
+    @property
+    def pymongo_profile_resolution(self) -> PyMongoProfileResolution:
+        return self._client.pymongo_profile_resolution
+
 
 class MongoClient:
     """Cliente sincronico que adapta la implementacion async."""
 
-    def __init__(self, engine: AsyncStorageEngine | None = None):
-        self._async_client = AsyncMongoClient(engine)
+    def __init__(
+        self,
+        engine: AsyncStorageEngine | None = None,
+        *,
+        mongodb_dialect: MongoDialect | str | None = None,
+        pymongo_profile: PyMongoProfile | str | None = None,
+    ):
+        self._async_client = AsyncMongoClient(
+            engine,
+            mongodb_dialect=mongodb_dialect,
+            pymongo_profile=pymongo_profile,
+        )
         self._runner = _SyncRunner()
         self._connected = False
         self._closed = False
@@ -176,3 +208,19 @@ class MongoClient:
     def list_database_names(self) -> list[str]:
         self._ensure_connected()
         return self._run(self._async_client.list_database_names())
+
+    @property
+    def mongodb_dialect(self) -> MongoDialect:
+        return self._async_client.mongodb_dialect
+
+    @property
+    def mongodb_dialect_resolution(self) -> MongoDialectResolution:
+        return self._async_client.mongodb_dialect_resolution
+
+    @property
+    def pymongo_profile(self) -> PyMongoProfile:
+        return self._async_client.pymongo_profile
+
+    @property
+    def pymongo_profile_resolution(self) -> PyMongoProfileResolution:
+        return self._async_client.pymongo_profile_resolution

@@ -1,7 +1,9 @@
 import unittest
 import asyncio
 
+from mongoeco import MongoDialect80, PyMongoProfile413
 from mongoeco.api._sync.client import MongoClient, _SyncRunner
+from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import InvalidOperation
 
 
@@ -157,3 +159,60 @@ class SyncClientUnitTests(unittest.TestCase):
         runner.__del__()
 
         self.assertTrue(runner._closed)
+
+    def test_client_exposes_resolved_dialect_and_profile(self):
+        client = MongoClient(
+            MemoryEngine(),
+            mongodb_dialect='8.0',
+            pymongo_profile='4.13',
+        )
+
+        self.assertEqual(client.mongodb_dialect, MongoDialect80())
+        self.assertEqual(client.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
+        self.assertEqual(client.pymongo_profile, PyMongoProfile413())
+        self.assertEqual(client.pymongo_profile_resolution.resolution_mode, 'explicit-alias')
+        self.assertEqual(client.get_database('alpha').mongodb_dialect, MongoDialect80())
+        self.assertEqual(
+            client.get_database('alpha').mongodb_dialect_resolution.resolution_mode,
+            'explicit-alias',
+        )
+        self.assertEqual(client.get_database('alpha').pymongo_profile, PyMongoProfile413())
+        self.assertEqual(
+            client.get_database('alpha').pymongo_profile_resolution.resolution_mode,
+            'explicit-alias',
+        )
+        self.assertEqual(
+            client.get_database('alpha').get_collection('users').mongodb_dialect,
+            MongoDialect80(),
+        )
+        self.assertEqual(
+            client.get_database('alpha').get_collection('users').mongodb_dialect_resolution.resolution_mode,
+            'explicit-alias',
+        )
+        self.assertEqual(
+            client.get_database('alpha').get_collection('users').pymongo_profile,
+            PyMongoProfile413(),
+        )
+        self.assertEqual(
+            client.get_database('alpha').get_collection('users').pymongo_profile_resolution.resolution_mode,
+            'explicit-alias',
+        )
+
+        client.close()
+
+    def test_sync_collection_resolution_metadata_does_not_force_connection(self):
+        client = MongoClient(
+            MemoryEngine(),
+            mongodb_dialect='8.0',
+            pymongo_profile='4.13',
+        )
+        collection = client.get_database('alpha').get_collection('users')
+
+        self.assertFalse(client._connected)
+        self.assertEqual(collection.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
+        self.assertEqual(collection.pymongo_profile_resolution.resolution_mode, 'explicit-alias')
+        self.assertFalse(client._connected)
+
+        client.close()
+        self.assertEqual(collection.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
+        self.assertEqual(collection.pymongo_profile_resolution.resolution_mode, 'explicit-alias')

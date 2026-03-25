@@ -6,6 +6,24 @@ from dataclasses import dataclass
 from typing import Any, Literal, Self
 
 
+class UndefinedType:
+    """Representa el tipo BSON `undefined` legado de MongoDB."""
+
+    __slots__ = ()
+
+    def __repr__(self) -> str:
+        return 'UNDEFINED'
+
+    def __hash__(self) -> int:
+        return hash(UndefinedType)
+
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, UndefinedType)
+
+
+UNDEFINED = UndefinedType()
+
+
 class ObjectId:
     """
     Implementacion nativa minima de ObjectId (BSON).
@@ -94,7 +112,7 @@ type Update = dict[str, Any]
 type Projection = dict[str, Any]
 type SortDirection = Literal[1, -1]
 type SortSpec = list[tuple[str, SortDirection]]
-type DocumentScalarId = ObjectId | str | bytes | int | float | bool | None
+type DocumentScalarId = ObjectId | str | bytes | int | float | bool | None | UndefinedType
 type DocumentId = DocumentScalarId | list[DocumentId] | dict[str, DocumentId]
 
 

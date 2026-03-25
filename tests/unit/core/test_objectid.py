@@ -1,7 +1,7 @@
 import unittest
 import time
 
-from mongoeco.types import DeleteResult, InsertManyResult, InsertOneResult, ObjectId, UpdateResult
+from mongoeco.types import DeleteResult, InsertManyResult, InsertOneResult, ObjectId, UNDEFINED, UndefinedType, UpdateResult
 
 class TestObjectId(unittest.TestCase):
     def test_generation_is_unique(self):
@@ -78,3 +78,8 @@ class TestObjectId(unittest.TestCase):
         self.assertFalse(hasattr(InsertManyResult(inserted_ids=["x"]), "__dict__"))
         self.assertFalse(hasattr(UpdateResult(matched_count=1, modified_count=0), "__dict__"))
         self.assertFalse(hasattr(DeleteResult(deleted_count=1), "__dict__"))
+
+    def test_undefined_singleton_has_stable_repr_hash_and_equality(self):
+        self.assertEqual(repr(UNDEFINED), "UNDEFINED")
+        self.assertEqual(hash(UNDEFINED), hash(UndefinedType))
+        self.assertEqual(UNDEFINED, UndefinedType())

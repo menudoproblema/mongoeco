@@ -3,6 +3,7 @@ import unittest
 import uuid
 
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.types import UNDEFINED
 
 
 class DocumentCodecTests(unittest.TestCase):
@@ -65,3 +66,11 @@ class DocumentCodecTests(unittest.TestCase):
         decoded = DocumentCodec.decode(DocumentCodec.encode(original))
 
         self.assertEqual(decoded, original)
+
+    def test_document_codec_round_trip_restores_undefined(self):
+        original = {"value": UNDEFINED, "items": [1, UNDEFINED]}
+
+        decoded = DocumentCodec.decode(DocumentCodec.encode(original))
+
+        self.assertIs(decoded["value"], UNDEFINED)
+        self.assertIs(decoded["items"][1], UNDEFINED)

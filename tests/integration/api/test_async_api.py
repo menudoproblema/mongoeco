@@ -4,7 +4,13 @@ import threading
 import unittest
 import uuid
 
-from mongoeco import AsyncMongoClient, ClientSession, MongoClient
+from mongoeco import (
+    AsyncMongoClient,
+    ClientSession,
+    MongoClient,
+    MongoDialect80,
+    PyMongoProfile413,
+)
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api._async.cursor import AsyncCursor
 from mongoeco.engines.memory import MemoryEngine
@@ -13,6 +19,30 @@ from tests.support import ENGINE_FACTORIES, open_client
 
 
 class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_client_propagates_dialect_and_profile_to_database_and_collection(self):
+        engine = MemoryEngine()
+
+        async with AsyncMongoClient(
+            engine,
+            mongodb_dialect='8.0',
+            pymongo_profile='4.13',
+        ) as client:
+            database = client.get_database('alpha')
+            collection = database.get_collection('users')
+
+            self.assertEqual(client.mongodb_dialect, MongoDialect80())
+            self.assertEqual(client.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
+            self.assertEqual(client.pymongo_profile, PyMongoProfile413())
+            self.assertEqual(client.pymongo_profile_resolution.resolution_mode, 'explicit-alias')
+            self.assertEqual(database.mongodb_dialect, MongoDialect80())
+            self.assertEqual(database.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
+            self.assertEqual(database.pymongo_profile, PyMongoProfile413())
+            self.assertEqual(database.pymongo_profile_resolution.resolution_mode, 'explicit-alias')
+            self.assertEqual(collection.mongodb_dialect, MongoDialect80())
+            self.assertEqual(collection.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
+            self.assertEqual(collection.pymongo_profile, PyMongoProfile413())
+            self.assertEqual(collection.pymongo_profile_resolution.resolution_mode, 'explicit-alias')
+
     async def test_client_supports_attribute_and_item_access(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -35,6 +65,43 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     found = await collection.find_one()
 
                     self.assertEqual(found, {"_id": "user-1", "name": "Ada"})
+
+    async def test_update_one_sort_is_profile_gated(self):
+        engine = MemoryEngine()
+
+        async with AsyncMongoClient(engine, pymongo_profile='4.9') as client:
+            collection = client.test.users
+            await collection.insert_one({"_id": "1", "kind": "view", "rank": 2})
+            await collection.insert_one({"_id": "2", "kind": "view", "rank": 1})
+
+            with self.assertRaises(TypeError):
+                await collection.update_one(
+                    {"kind": "view"},
+                    {"$set": {"done": True}},
+                    sort=[("rank", 1)],
+                )
+
+    async def test_update_one_sort_updates_first_sorted_document(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                engine = ENGINE_FACTORIES[engine_name]()
+                async with AsyncMongoClient(engine, pymongo_profile='4.11') as client:
+                    collection = client.test.users
+                    await collection.insert_one({"_id": "1", "kind": "view", "rank": 2, "done": False})
+                    await collection.insert_one({"_id": "2", "kind": "view", "rank": 1, "done": False})
+
+                    result = await collection.update_one(
+                        {"kind": "view"},
+                        {"$set": {"done": True}},
+                        sort=[("rank", 1)],
+                    )
+                    first = await collection.find_one({"_id": "1"})
+                    second = await collection.find_one({"_id": "2"})
+
+                    self.assertEqual(result.matched_count, 1)
+                    self.assertEqual(result.modified_count, 1)
+                    self.assertFalse(first["done"])
+                    self.assertTrue(second["done"])
 
     async def test_insert_one_generates_id_and_persists_document(self):
         for engine_name in ENGINE_FACTORIES:

@@ -4,21 +4,37 @@ import unittest
 import uuid
 from unittest.mock import ANY
 
+from mongoeco.compat import MongoDialect
 from mongoeco.core.aggregation import (
+    _ACCUMULATOR_FLAGS_KEY,
     _MISSING,
+    _accumulator_flags,
     _aggregation_key,
+    _apply_accumulators,
+    _apply_group,
+    _finalize_accumulators,
+    _initialize_accumulators,
     _is_simple_projection,
     _match_spec_contains_expr,
+    _require_projection,
     _resolve_aggregation_field_path,
     apply_pipeline,
     evaluate_expression,
     split_pushdown_pipeline,
 )
 from mongoeco.errors import OperationFailure
-from mongoeco.types import ObjectId
+from mongoeco.types import ObjectId, UNDEFINED
 
 
 class AggregationTests(unittest.TestCase):
+    def test_accumulator_flags_initializes_missing_internal_state(self):
+        bucket: dict[object, object] = {_ACCUMULATOR_FLAGS_KEY: "invalid"}
+
+        flags = _accumulator_flags(bucket)
+
+        self.assertEqual(flags, {})
+        self.assertIs(bucket[_ACCUMULATOR_FLAGS_KEY], flags)
+
     def test_aggregation_key_covers_supported_scalar_and_container_types(self):
         self.assertEqual(_aggregation_key(1.5), ("float", 1.5))
         self.assertEqual(_aggregation_key(b"abc"), ("bytes", b"abc"))
@@ -145,7 +161,15 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(evaluate_expression(document, {"$literal": "$score"}), "$score")
 
     def test_evaluate_expression_uses_mongo_truthiness_rules(self):
-        document = {"empty_array": [], "non_empty_array": [1], "zero": 0, "one": 1, "text": "", "flag": False}
+        document = {
+            "empty_array": [],
+            "non_empty_array": [1],
+            "zero": 0,
+            "one": 1,
+            "text": "",
+            "flag": False,
+            "legacy": UNDEFINED,
+        }
 
         self.assertTrue(evaluate_expression(document, {"$and": ["$empty_array", "$non_empty_array", "$one", "$text"]}))
         self.assertFalse(evaluate_expression(document, {"$and": ["$empty_array", "$zero"]}))
@@ -161,6 +185,200 @@ class AggregationTests(unittest.TestCase):
             ),
             [[], "ok"],
         )
+        self.assertEqual(
+            evaluate_expression(document, {"$cond": {"if": "$legacy", "then": "truthy", "else": "falsey"}}),
+            "falsey",
+        )
+
+    def test_evaluate_expression_and_pipeline_can_use_custom_dialect_truthiness(self):
+        class _ArrayFalseDialect(MongoDialect):
+            def expression_truthy(self, value: object) -> bool:
+                if isinstance(value, list):
+                    return False
+                return super().expression_truthy(value)
+
+        dialect = _ArrayFalseDialect(
+            key="test",
+            server_version="test",
+            label="Array False Dialect",
+        )
+
+        self.assertFalse(
+            evaluate_expression(
+                {"empty_array": []},
+                {"$or": ["$empty_array", False]},
+                dialect=dialect,
+            )
+        )
+        self.assertEqual(
+            apply_pipeline(
+                [{"_id": "1", "items": []}, {"_id": "2", "items": [1]}],
+                [{"$match": {"$expr": "$items"}}],
+                dialect=dialect,
+            ),
+            [],
+        )
+
+    def test_apply_pipeline_can_use_custom_dialect_stage_catalog(self):
+        class _NoProjectDialect(MongoDialect):
+            def supports_aggregation_stage(self, name: str) -> bool:
+                return False if name == "$project" else super().supports_aggregation_stage(name)
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "name": "Ada"}],
+                [{"$project": {"name": 1}}],
+                dialect=_NoProjectDialect(
+                    key="test",
+                    server_version="test",
+                    label="No Project",
+                ),
+            )
+
+    def test_require_projection_wrapper_uses_default_dialect(self):
+        self.assertEqual(_require_projection({"name": 1, "_id": 0}), {"name": 1, "_id": 0})
+
+    def test_evaluate_expression_rejects_custom_supported_but_unimplemented_operator(self):
+        class _FutureExpressionDialect(MongoDialect):
+            def supports_aggregation_expression_operator(self, name: str) -> bool:
+                return True if name == "$futureExpr" else super().supports_aggregation_expression_operator(name)
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(
+                {"value": 1},
+                {"$futureExpr": "$value"},
+                dialect=_FutureExpressionDialect(
+                    key="test",
+                    server_version="test",
+                    label="Future Expr",
+                ),
+            )
+
+    def test_group_rejects_unsupported_accumulator_for_default_and_custom_dialects(self):
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"value": 1}],
+                [{"$group": {"_id": None, "value": {"$futureAccumulator": "$value"}}}],
+            )
+
+        class _FutureGroupDialect(MongoDialect):
+            def supports_group_accumulator(self, name: str) -> bool:
+                return True if name == "$futureAccumulator" else super().supports_group_accumulator(name)
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"value": 1}],
+                [{"$group": {"_id": None, "value": {"$futureAccumulator": "$value"}}}],
+                dialect=_FutureGroupDialect(
+                    key="test",
+                    server_version="test",
+                    label="Future Group",
+                ),
+            )
+
+    def test_apply_group_directly_rejects_unsupported_accumulator_under_default_dialect(self):
+        with self.assertRaises(OperationFailure):
+            _apply_group(
+                [{"value": 1}],
+                {"_id": None, "value": {"$futureAccumulator": "$value"}},
+                {},
+            )
+
+    def test_group_preserves_user_fields_with_has_prefix(self):
+        grouped = _apply_group(
+            [{"kind": "a", "value": 1}],
+            {"_id": "$kind", "__has_total": {"$first": "$value"}},
+        )
+
+        self.assertEqual(grouped, [{"_id": "a", "__has_total": 1}])
+
+    def test_finalize_accumulators_preserves_user_fields_with_has_prefix(self):
+        bucket = _initialize_accumulators({"__has_total": {"$first": "$value"}})
+        _apply_accumulators(bucket, {"__has_total": {"$first": "$value"}}, {"value": 7})
+
+        self.assertEqual(_finalize_accumulators(bucket), {"__has_total": 7})
+
+    def test_bucket_auto_rejects_unsupported_accumulator_for_default_and_custom_dialects(self):
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"value": 1}],
+                [
+                    {
+                        "$bucketAuto": {
+                            "groupBy": "$value",
+                            "buckets": 1,
+                            "output": {"value": {"$futureAccumulator": "$value"}},
+                        }
+                    }
+                ],
+            )
+
+        class _FutureBucketDialect(MongoDialect):
+            def supports_group_accumulator(self, name: str) -> bool:
+                return True if name == "$futureAccumulator" else super().supports_group_accumulator(name)
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"value": 1}],
+                [
+                    {
+                        "$bucketAuto": {
+                            "groupBy": "$value",
+                            "buckets": 1,
+                            "output": {"value": {"$futureAccumulator": "$value"}},
+                        }
+                    }
+                ],
+                dialect=_FutureBucketDialect(
+                    key="test",
+                    server_version="test",
+                    label="Future Bucket",
+                ),
+            )
+
+    def test_initialize_accumulators_directly_rejects_unsupported_accumulator_under_default_dialect(self):
+        with self.assertRaises(OperationFailure):
+            _initialize_accumulators({"value": {"$futureAccumulator": "$value"}})
+
+    def test_set_window_fields_rejects_supported_but_unimplemented_accumulator(self):
+        class _FutureWindowDialect(MongoDialect):
+            def supports_window_accumulator(self, name: str) -> bool:
+                return True if name == "$rank" else super().supports_window_accumulator(name)
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"kind": "a", "value": 1}],
+                [
+                    {
+                        "$setWindowFields": {
+                            "partitionBy": "$kind",
+                            "sortBy": {"value": 1},
+                            "output": {"rank": {"$rank": "$value"}},
+                        }
+                    }
+                ],
+                dialect=_FutureWindowDialect(
+                    key="test",
+                    server_version="test",
+                    label="Future Window",
+                ),
+            )
+
+    def test_apply_pipeline_rejects_custom_supported_but_unimplemented_stage(self):
+        class _FutureStageDialect(MongoDialect):
+            def supports_aggregation_stage(self, name: str) -> bool:
+                return True if name == "$futureStage" else super().supports_aggregation_stage(name)
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1"}],
+                [{"$futureStage": {"value": 1}}],
+                dialect=_FutureStageDialect(
+                    key="test",
+                    server_version="test",
+                    label="Future Stage",
+                ),
+            )
 
     def test_evaluate_expression_rejects_currently_unsupported_operators_explicitly(self):
         document = {"value": "10", "tags": ["a", "b"]}
@@ -457,6 +675,10 @@ class AggregationTests(unittest.TestCase):
             "low",
         )
         self.assertIsNone(evaluate_expression(document, {"$ifNull": ["$bonus", None]}))
+        self.assertEqual(
+            evaluate_expression({"legacy": UNDEFINED}, {"$ifNull": ["$legacy", "fallback"]}),
+            "fallback",
+        )
         self.assertIsNone(evaluate_expression(document, "$$missing"))
         self.assertIsNone(evaluate_expression(document, "$missing"))
         self.assertIsNone(evaluate_expression(document, {"$toString": None}))
@@ -873,6 +1095,25 @@ class AggregationTests(unittest.TestCase):
             result,
             [{"kind": "view", "passed": "yes", "first_tag": "a"}],
         )
+
+    def test_pipeline_match_honors_custom_dialect(self):
+        class _CaseInsensitiveDialect(MongoDialect):
+            def values_equal(self, left, right):
+                if isinstance(left, str) and isinstance(right, str):
+                    return left.lower() == right.lower()
+                return super().values_equal(left, right)
+
+        result = apply_pipeline(
+            [{"name": "Ada"}, {"name": "Grace"}],
+            [{"$match": {"name": "ada"}}],
+            dialect=_CaseInsensitiveDialect(
+                key="test",
+                server_version="test",
+                label="Case Insensitive",
+            ),
+        )
+
+        self.assertEqual(result, [{"name": "Ada"}])
 
     def test_pipeline_supports_group_with_common_accumulators(self):
         documents = [

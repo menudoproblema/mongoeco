@@ -3,10 +3,12 @@ import unittest
 import uuid
 from unittest.mock import patch
 
+from mongoeco.compat import MONGODB_DIALECT_80
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import DuplicateKeyError
+from mongoeco.types import UNDEFINED
 
 
 class _UnhashableValue:
@@ -17,6 +19,22 @@ class _UnhashableValue:
 
 
 class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
+    async def test_engine_compiles_filter_with_requested_dialect_when_plan_is_omitted(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "legacy", "v": UNDEFINED})
+            count = await engine.count_matching_documents(
+                "db",
+                "coll",
+                {"v": None},
+                dialect=MONGODB_DIALECT_80,
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(count, 0)
+
     async def test_delete_document_returns_false_when_id_is_missing(self):
         engine = MemoryEngine()
         await engine.connect()

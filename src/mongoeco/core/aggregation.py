@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from functools import cmp_to_key
 from typing import Any
 
+from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.filtering import BSONComparator
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import delete_document_value, get_document_value, set_document_value
@@ -14,11 +15,13 @@ from mongoeco.core.projections import apply_projection, validate_projection_spec
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, Filter, ObjectId, Projection, SortSpec
+from mongoeco.types import Document, Filter, ObjectId, Projection, SortSpec, UndefinedType
 
 
 type PipelineStage = dict[str, Any]
 type Pipeline = list[PipelineStage]
+
+_ACCUMULATOR_FLAGS_KEY = ("__mongoeco_internal__", "accumulator_flags")
 
 
 def _aggregation_key(value: Any) -> Any:
@@ -67,6 +70,15 @@ class _AverageAccumulator:
     count: int = 0
 
 
+def _accumulator_flags(bucket: dict[object, Any]) -> dict[str, bool]:
+    flags = bucket.get(_ACCUMULATOR_FLAGS_KEY)
+    if isinstance(flags, dict):
+        return flags
+    new_flags: dict[str, bool] = {}
+    bucket[_ACCUMULATOR_FLAGS_KEY] = new_flags
+    return new_flags
+
+
 def _require_stage(stage: object) -> tuple[str, object]:
     if not isinstance(stage, dict) or len(stage) != 1:
         raise OperationFailure("Each pipeline stage must be a single-key document")
@@ -77,6 +89,14 @@ def _require_stage(stage: object) -> tuple[str, object]:
 
 
 def _require_projection(spec: object) -> Projection:
+    return _require_projection_for_dialect(spec, dialect=MONGODB_DIALECT_70)
+
+
+def _require_projection_for_dialect(
+    spec: object,
+    *,
+    dialect: MongoDialect,
+) -> Projection:
     if not isinstance(spec, dict):
         raise OperationFailure("$project requires a document specification")
     include_flags: list[int] = []
@@ -85,7 +105,7 @@ def _require_projection(spec: object) -> Projection:
     for key, value in spec.items():
         if not isinstance(key, str):
             raise OperationFailure("$project field names must be strings")
-        flag = _projection_flag(value)
+        flag = _projection_flag(value, dialect=dialect)
         if flag is None:
             if key != "_id":
                 computed_fields_present = True
@@ -124,20 +144,24 @@ def _require_non_negative_int(name: str, value: object) -> int:
 
 
 def _is_simple_projection(spec: object) -> bool:
+    return _is_simple_projection_for_dialect(spec, dialect=MONGODB_DIALECT_70)
+
+
+def _is_simple_projection_for_dialect(
+    spec: object,
+    *,
+    dialect: MongoDialect,
+) -> bool:
     if not isinstance(spec, dict):
         return False
     return all(
-        isinstance(value, bool) or (isinstance(value, int) and value in (0, 1))
+        _projection_flag(value, dialect=dialect) is not None
         for value in spec.values()
     )
 
 
-def _projection_flag(value: object) -> int | None:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int) and value in (0, 1):
-        return value
-    return None
+def _projection_flag(value: object, *, dialect: MongoDialect) -> int | None:
+    return dialect.projection_flag(value)
 
 
 def _require_unwind_spec(spec: object) -> tuple[str, bool, str | None]:
@@ -255,10 +279,24 @@ def _apply_unwind(documents: list[Document], spec: object) -> list[Document]:
     return result
 
 
-def _lookup_matches(local_values: list[Any], foreign_values: list[Any]) -> bool:
+def _lookup_matches(
+    local_values: list[Any],
+    foreign_values: list[Any],
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> bool:
     left = local_values or [None]
     right = foreign_values or [None]
-    return any(QueryEngine._values_equal(local_value, foreign_value) for local_value in left for foreign_value in right)
+    return any(
+        QueryEngine._query_equality_matches(
+            local_value,
+            foreign_value,
+            null_matches_undefined=dialect.null_query_matches_undefined(),
+            dialect=dialect,
+        )
+        for local_value in left
+        for foreign_value in right
+    )
 
 
 def _match_spec_contains_expr(match_spec: object) -> bool:
@@ -289,12 +327,18 @@ def _require_expression_args(operator: str, spec: object, *, min_args: int, max_
     return spec
 
 
-def _compare_values(left: Any, right: Any, operator: str) -> bool:
+def _compare_values(
+    left: Any,
+    right: Any,
+    operator: str,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> bool:
     if operator == "$eq":
-        return QueryEngine._values_equal(left, right)
+        return QueryEngine._values_equal(left, right, dialect=dialect)
     if operator == "$ne":
-        return not QueryEngine._values_equal(left, right)
-    comparison = BSONComparator.compare(left, right)
+        return not QueryEngine._values_equal(left, right, dialect=dialect)
+    comparison = dialect.compare_values(left, right)
     return {
         "$gt": comparison > 0,
         "$gte": comparison >= 0,
@@ -319,19 +363,21 @@ def _require_array(operator: str, value: object) -> list[Any]:
     return value
 
 
-def _expression_truthy(value: Any) -> bool:
-    if value is None:
-        return False
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, float)) and not isinstance(value, bool):
-        return value != 0
-    return True
+def _expression_truthy(value: Any, *, dialect: MongoDialect) -> bool:
+    return dialect.expression_truthy(value)
 
 
-def _append_unique_values(target: list[Any], values: list[Any]) -> None:
+def _append_unique_values(
+    target: list[Any],
+    values: list[Any],
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> None:
     for value in values:
-        if any(QueryEngine._values_equal(value, existing) for existing in target):
+        if any(
+            QueryEngine._values_equal(value, existing, dialect=dialect)
+            for existing in target
+        ):
             continue
         target.append(deepcopy(value))
 
@@ -492,7 +538,13 @@ def _stringify_aggregation_value(value: Any) -> str:
     return str(value)
 
 
-def evaluate_expression(document: Document, expression: object, variables: dict[str, Any] | None = None) -> Any:
+def evaluate_expression(
+    document: Document,
+    expression: object,
+    variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> Any:
     if variables is None:
         variables = {"ROOT": document, "CURRENT": document}
     else:
@@ -507,7 +559,10 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
         return expression
 
     if isinstance(expression, list):
-        return [evaluate_expression(document, item, variables) for item in expression]
+        return [
+            evaluate_expression(document, item, variables, dialect=dialect)
+            for item in expression
+        ]
 
     if not isinstance(expression, dict):
         return expression
@@ -515,33 +570,50 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
     if len(expression) == 1:
         operator, spec = next(iter(expression.items()))
         if isinstance(operator, str) and operator.startswith("$"):
+            if not dialect.supports_aggregation_expression_operator(operator):
+                raise OperationFailure(f"Unsupported aggregation expression: {operator}")
             if operator == "$literal":
                 return deepcopy(spec)
             if operator in {"$eq", "$ne", "$gt", "$gte", "$lt", "$lte"}:
                 args = _require_expression_args(operator, spec, min_args=2, max_args=2)
-                left = evaluate_expression(document, args[0], variables)
-                right = evaluate_expression(document, args[1], variables)
-                return _compare_values(left, right, operator)
+                left = evaluate_expression(document, args[0], variables, dialect=dialect)
+                right = evaluate_expression(document, args[1], variables, dialect=dialect)
+                return _compare_values(left, right, operator, dialect=dialect)
             if operator == "$and":
                 args = _require_expression_args(operator, spec, min_args=0)
-                return all(_expression_truthy(evaluate_expression(document, item, variables)) for item in args)
+                return all(
+                    _expression_truthy(
+                        evaluate_expression(document, item, variables, dialect=dialect),
+                        dialect=dialect,
+                    )
+                    for item in args
+                )
             if operator == "$or":
                 args = _require_expression_args(operator, spec, min_args=0)
-                return any(_expression_truthy(evaluate_expression(document, item, variables)) for item in args)
+                return any(
+                    _expression_truthy(
+                        evaluate_expression(document, item, variables, dialect=dialect),
+                        dialect=dialect,
+                    )
+                    for item in args
+                )
             if operator == "$in":
                 args = _require_expression_args(operator, spec, min_args=2, max_args=2)
-                needle = evaluate_expression(document, args[0], variables)
-                haystack = evaluate_expression(document, args[1], variables)
+                needle = evaluate_expression(document, args[0], variables, dialect=dialect)
+                haystack = evaluate_expression(document, args[1], variables, dialect=dialect)
                 if haystack is None:
                     return None
                 if not isinstance(haystack, list):
                     raise OperationFailure("$in requires the second argument to evaluate to a list")
-                return any(QueryEngine._values_equal(needle, item) for item in haystack)
+                return any(
+                    QueryEngine._values_equal(needle, item, dialect=dialect)
+                    for item in haystack
+                )
             if operator == "$ifNull":
                 args = _require_expression_args(operator, spec, min_args=2)
                 for item in args:
-                    value = evaluate_expression(document, item, variables)
-                    if value is not None:
+                    value = evaluate_expression(document, item, variables, dialect=dialect)
+                    if value is not None and not isinstance(value, UndefinedType):
                         return value
                 return None
             if operator == "$cond":
@@ -556,11 +628,20 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                     when_false = spec["else"]
                 else:
                     raise OperationFailure("$cond requires a list or document specification")
-                branch = when_true if _expression_truthy(evaluate_expression(document, condition, variables)) else when_false
-                return evaluate_expression(document, branch, variables)
+                condition_value = evaluate_expression(
+                    document,
+                    condition,
+                    variables,
+                    dialect=dialect,
+                )
+                branch = when_true if _expression_truthy(condition_value, dialect=dialect) else when_false
+                return evaluate_expression(document, branch, variables, dialect=dialect)
             if operator in {"$add", "$multiply"}:
                 args = _require_expression_args(operator, spec, min_args=2)
-                raw_values = [evaluate_expression(document, item, variables) for item in args]
+                raw_values = [
+                    evaluate_expression(document, item, variables, dialect=dialect)
+                    for item in args
+                ]
                 if any(value is None for value in raw_values):
                     return None
                 values = [_require_numeric(operator, value) for value in raw_values]
@@ -570,8 +651,8 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                 return result
             if operator in {"$subtract", "$divide", "$mod"}:
                 args = _require_expression_args(operator, spec, min_args=2, max_args=2)
-                left_raw = evaluate_expression(document, args[0], variables)
-                right_raw = evaluate_expression(document, args[1], variables)
+                left_raw = evaluate_expression(document, args[0], variables, dialect=dialect)
+                right_raw = evaluate_expression(document, args[1], variables, dialect=dialect)
                 if left_raw is None or right_raw is None:
                     return None
                 left = _require_numeric(operator, left_raw)
@@ -587,7 +668,7 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                 return _mongo_mod(left, right)
             if operator in {"$floor", "$ceil"}:
                 args = _require_expression_args(operator, spec, min_args=1, max_args=1)
-                raw_value = evaluate_expression(document, args[0], variables)
+                raw_value = evaluate_expression(document, args[0], variables, dialect=dialect)
                 if raw_value is None:
                     return None
                 value = _require_numeric(operator, raw_value)
@@ -599,7 +680,7 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                 return integer if integer >= value else integer + 1
             if operator == "$size":
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
-                value = evaluate_expression(document, args[0], variables)
+                value = evaluate_expression(document, args[0], variables, dialect=dialect)
                 if value is None:
                     return None
                 if not isinstance(value, list):
@@ -607,8 +688,8 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                 return len(value)
             if operator == "$arrayElemAt":
                 args = _require_expression_args(operator, spec, min_args=2, max_args=2)
-                values = evaluate_expression(document, args[0], variables)
-                index = evaluate_expression(document, args[1], variables)
+                values = evaluate_expression(document, args[0], variables, dialect=dialect)
+                index = evaluate_expression(document, args[1], variables, dialect=dialect)
                 if values is None:
                     return None
                 if index is None:
@@ -624,18 +705,23 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                 return values[index]
             if operator == "$toString":
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
-                value = evaluate_expression(document, args[0], variables)
+                value = evaluate_expression(document, args[0], variables, dialect=dialect)
                 return None if value is None else _stringify_aggregation_value(value)
             if operator == "$let":
                 if not isinstance(spec, dict) or "vars" not in spec or "in" not in spec or not isinstance(spec["vars"], dict):
                     raise OperationFailure("$let requires vars and in")
                 scoped = dict(variables)
                 for name, value_expression in spec["vars"].items():
-                    scoped[name] = evaluate_expression(document, value_expression, variables)
-                return evaluate_expression(document, spec["in"], scoped)
+                    scoped[name] = evaluate_expression(
+                        document,
+                        value_expression,
+                        variables,
+                        dialect=dialect,
+                    )
+                return evaluate_expression(document, spec["in"], scoped, dialect=dialect)
             if operator == "$first":
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
-                value = evaluate_expression(document, args[0], variables)
+                value = evaluate_expression(document, args[0], variables, dialect=dialect)
                 if isinstance(value, list):
                     return value[0] if value else None
                 return value
@@ -643,7 +729,7 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                 args = _require_expression_args(operator, spec, min_args=1)
                 result: list[Any] = []
                 for item in args:
-                    value = evaluate_expression(document, item, variables)
+                    value = evaluate_expression(document, item, variables, dialect=dialect)
                     if value is None:
                         return None
                     result.extend(deepcopy(_require_array(operator, value)))
@@ -652,15 +738,19 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                 args = _require_expression_args(operator, spec, min_args=1)
                 result: list[Any] = []
                 for item in args:
-                    value = evaluate_expression(document, item, variables)
+                    value = evaluate_expression(document, item, variables, dialect=dialect)
                     if value is None:
                         return None
-                    _append_unique_values(result, _require_array(operator, value))
+                    _append_unique_values(
+                        result,
+                        _require_array(operator, value),
+                        dialect=dialect,
+                    )
                 return result
             if operator == "$map":
                 if not isinstance(spec, dict) or "input" not in spec or "in" not in spec:
                     raise OperationFailure("$map requires input and in")
-                source = evaluate_expression(document, spec["input"], variables)
+                source = evaluate_expression(document, spec["input"], variables, dialect=dialect)
                 if source is None:
                     return None
                 source = _require_array(operator, source)
@@ -672,12 +762,12 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                     scoped = dict(variables)
                     scoped[alias] = item
                     scoped["this"] = item
-                    result.append(evaluate_expression(document, spec["in"], scoped))
+                    result.append(evaluate_expression(document, spec["in"], scoped, dialect=dialect))
                 return result
             if operator == "$filter":
                 if not isinstance(spec, dict) or "input" not in spec or "cond" not in spec:
                     raise OperationFailure("$filter requires input and cond")
-                source = evaluate_expression(document, spec["input"], variables)
+                source = evaluate_expression(document, spec["input"], variables, dialect=dialect)
                 if source is None:
                     return None
                 source = _require_array(operator, source)
@@ -689,26 +779,34 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                     scoped = dict(variables)
                     scoped[alias] = item
                     scoped["this"] = item
-                    if _expression_truthy(evaluate_expression(document, spec["cond"], scoped)):
+                    if _expression_truthy(
+                        evaluate_expression(document, spec["cond"], scoped, dialect=dialect),
+                        dialect=dialect,
+                    ):
                         result.append(deepcopy(item))
                 return result
             if operator == "$reduce":
                 if not isinstance(spec, dict) or not {"input", "initialValue", "in"} <= set(spec):
                     raise OperationFailure("$reduce requires input, initialValue and in")
-                source = evaluate_expression(document, spec["input"], variables)
+                source = evaluate_expression(document, spec["input"], variables, dialect=dialect)
                 if source is None:
                     return None
                 source = _require_array(operator, source)
-                accumulated = evaluate_expression(document, spec["initialValue"], variables)
+                accumulated = evaluate_expression(
+                    document,
+                    spec["initialValue"],
+                    variables,
+                    dialect=dialect,
+                )
                 for item in source:
                     scoped = dict(variables)
                     scoped["value"] = accumulated
                     scoped["this"] = item
-                    accumulated = evaluate_expression(document, spec["in"], scoped)
+                    accumulated = evaluate_expression(document, spec["in"], scoped, dialect=dialect)
                 return accumulated
             if operator == "$arrayToObject":
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
-                raw_values = evaluate_expression(document, args[0], variables)
+                raw_values = evaluate_expression(document, args[0], variables, dialect=dialect)
                 if raw_values is None:
                     return None
                 values = _require_array(operator, raw_values)
@@ -726,40 +824,44 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                 return result
             if operator == "$indexOfArray":
                 args = _require_expression_args(operator, spec, min_args=2, max_args=4)
-                values = evaluate_expression(document, args[0], variables)
+                values = evaluate_expression(document, args[0], variables, dialect=dialect)
                 if values is None:
                     return None
                 values = _require_array(operator, values)
-                needle = evaluate_expression(document, args[1], variables)
+                needle = evaluate_expression(document, args[1], variables, dialect=dialect)
                 start = 0
                 end = len(values)
                 if len(args) >= 3:
-                    start = evaluate_expression(document, args[2], variables)
+                    start = evaluate_expression(document, args[2], variables, dialect=dialect)
                     if not isinstance(start, int) or isinstance(start, bool):
                         raise OperationFailure("$indexOfArray start must be an integer")
                 if len(args) == 4:
-                    end = evaluate_expression(document, args[3], variables)
+                    end = evaluate_expression(document, args[3], variables, dialect=dialect)
                     if not isinstance(end, int) or isinstance(end, bool):
                         raise OperationFailure("$indexOfArray end must be an integer")
                 for index, value in enumerate(values[max(start, 0):max(end, 0)], start=max(start, 0)):
-                    if QueryEngine._values_equal(value, needle):
+                    if QueryEngine._values_equal(value, needle, dialect=dialect):
                         return index
                 return -1
             if operator == "$sortArray":
                 if not isinstance(spec, dict) or "input" not in spec or "sortBy" not in spec:
                     raise OperationFailure("$sortArray requires input and sortBy")
-                input_value = evaluate_expression(document, spec["input"], variables)
+                input_value = evaluate_expression(document, spec["input"], variables, dialect=dialect)
                 if input_value is None:
                     return None
                 values = deepcopy(_require_array(operator, input_value))
                 sort_by = _normalize_sort_array_spec(spec["sortBy"])
                 if isinstance(sort_by, int):
-                    return sorted(values, key=cmp_to_key(BSONComparator.compare), reverse=sort_by == -1)
-                return sort_documents(values, sort_by)
+                    return sorted(
+                        values,
+                        key=cmp_to_key(dialect.compare_values),
+                        reverse=sort_by == -1,
+                    )
+                return sort_documents(values, sort_by, dialect=dialect)
             if operator == "$dateTrunc":
                 if not isinstance(spec, dict) or "date" not in spec or "unit" not in spec:
                     raise OperationFailure("$dateTrunc requires date and unit")
-                value = evaluate_expression(document, spec["date"], variables)
+                value = evaluate_expression(document, spec["date"], variables, dialect=dialect)
                 if value is None:
                     return None
                 if not isinstance(value, datetime.datetime):
@@ -781,7 +883,7 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                 args = _require_expression_args(operator, spec, min_args=1)
                 merged: dict[str, Any] = {}
                 for item in args:
-                    value = evaluate_expression(document, item, variables)
+                    value = evaluate_expression(document, item, variables, dialect=dialect)
                     if value is None:
                         continue
                     if not isinstance(value, dict):
@@ -795,8 +897,13 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                 elif isinstance(spec, dict):
                     if "field" not in spec:
                         raise OperationFailure("$getField requires field")
-                    field_name = evaluate_expression(document, spec["field"], variables)
-                    source = evaluate_expression(document, spec.get("input", "$$CURRENT"), variables)
+                    field_name = evaluate_expression(document, spec["field"], variables, dialect=dialect)
+                    source = evaluate_expression(
+                        document,
+                        spec.get("input", "$$CURRENT"),
+                        variables,
+                        dialect=dialect,
+                    )
                 else:
                     raise OperationFailure("$getField requires a string or document specification")
                 if field_name is None:
@@ -808,10 +915,19 @@ def evaluate_expression(document: Document, expression: object, variables: dict[
                 return deepcopy(source.get(field_name))
             raise OperationFailure(f"Unsupported aggregation expression: {operator}")
 
-    return {key: evaluate_expression(document, value, variables) for key, value in expression.items()}
+    return {
+        key: evaluate_expression(document, value, variables, dialect=dialect)
+        for key, value in expression.items()
+    }
 
 
-def _apply_match(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+def _apply_match(
+    documents: list[Document],
+    spec: object,
+    variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> list[Document]:
     if not isinstance(spec, dict):
         raise OperationFailure("$match requires a document specification")
 
@@ -837,33 +953,42 @@ def _apply_match(documents: list[Document], spec: object, variables: dict[str, A
             if any(_match_spec(document, clause) for clause in clauses):
                 return False
         if filter_spec:
-            plan = compile_filter(filter_spec)
-            if not QueryEngine.match_plan(document, plan):
+            plan = compile_filter(filter_spec, dialect=dialect)
+            if not QueryEngine.match_plan(document, plan, dialect=dialect):
                 return False
-        if expr is not None and not _expression_truthy(evaluate_expression(document, expr, variables)):
+        if expr is not None and not _expression_truthy(
+            evaluate_expression(document, expr, variables, dialect=dialect),
+            dialect=dialect,
+        ):
             return False
         return True
 
     if _match_spec_contains_expr(spec):
         return [document for document in documents if _match_spec(document, spec)]
 
-    plan = compile_filter(spec) if spec else None
+    plan = compile_filter(spec, dialect=dialect) if spec else None
     result: list[Document] = []
     for document in documents:
-        if plan is not None and not QueryEngine.match_plan(document, plan):
+        if plan is not None and not QueryEngine.match_plan(document, plan, dialect=dialect):
             continue
         result.append(document)
     return result
 
 
-def _apply_add_fields(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+def _apply_add_fields(
+    documents: list[Document],
+    spec: object,
+    variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> list[Document]:
     if not isinstance(spec, dict):
         raise OperationFailure("$addFields requires a document specification")
     result: list[Document] = []
     for document in documents:
         enriched = deepcopy(document)
         evaluated = {
-            path: evaluate_expression(document, expression, variables)
+            path: evaluate_expression(document, expression, variables, dialect=dialect)
             for path, expression in spec.items()
         }
         for path, expression in spec.items():
@@ -877,20 +1002,29 @@ def _apply_add_fields(documents: list[Document], spec: object, variables: dict[s
     return result
 
 
-def _apply_project(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
-    projection = _require_projection(spec)
+def _apply_project(
+    documents: list[Document],
+    spec: object,
+    variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> list[Document]:
+    projection = _require_projection_for_dialect(spec, dialect=dialect)
     computed_fields = {
         key: value
         for key, value in projection.items()
-        if _projection_flag(value) is None
+        if _projection_flag(value, dialect=dialect) is None
     }
     if not computed_fields:
-        return [apply_projection(document, projection) for document in documents]
+        return [
+            apply_projection(document, projection, dialect=dialect)
+            for document in documents
+        ]
 
     include_fields = {
-        key: _projection_flag(value)
+        key: _projection_flag(value, dialect=dialect)
         for key, value in projection.items()
-        if _projection_flag(value) is not None
+        if _projection_flag(value, dialect=dialect) is not None
     }
     include_id = include_fields.get("_id", 1) != 0
     result: list[Document] = []
@@ -898,11 +1032,11 @@ def _apply_project(documents: list[Document], spec: object, variables: dict[str,
         projected: Document = {}
         include_mode = any(value == 1 for key, value in include_fields.items() if key != "_id")
         if include_mode:
-            projected = apply_projection(document, include_fields)
+            projected = apply_projection(document, include_fields, dialect=dialect)
         elif include_id and "_id" in document:
             projected["_id"] = deepcopy(document["_id"])
         for path, expression in computed_fields.items():
-            value = evaluate_expression(document, expression, variables)
+            value = evaluate_expression(document, expression, variables, dialect=dialect)
             if value is _REMOVE:
                 delete_document_value(projected, path)
                 continue
@@ -911,27 +1045,36 @@ def _apply_project(documents: list[Document], spec: object, variables: dict[str,
     return result
 
 
-def _apply_group(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+def _apply_group(
+    documents: list[Document],
+    spec: object,
+    variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> list[Document]:
     if not isinstance(spec, dict) or "_id" not in spec:
         raise OperationFailure("$group requires a document specification with _id")
 
     accumulator_specs = {key: value for key, value in spec.items() if key != "_id"}
-    groups: dict[Any, dict[str, Any]] = {}
+    groups: dict[Any, dict[object, Any]] = {}
 
     for document in documents:
-        group_id = evaluate_expression(document, spec["_id"], variables)
+        group_id = evaluate_expression(document, spec["_id"], variables, dialect=dialect)
         group_key = _aggregation_key(group_id)
         if group_key not in groups:
-            groups[group_key] = {"_id": deepcopy(group_id)}
+            groups[group_key] = {"_id": deepcopy(group_id), _ACCUMULATOR_FLAGS_KEY: {}}
+            flags = _accumulator_flags(groups[group_key])
             for field, accumulator in accumulator_specs.items():
                 if not isinstance(accumulator, dict) or len(accumulator) != 1:
                     raise OperationFailure("$group accumulator must be a single-key document")
                 operator, _ = next(iter(accumulator.items()))
+                if not dialect.supports_group_accumulator(operator):
+                    raise OperationFailure(f"Unsupported $group accumulator: {operator}")
                 if operator == "$sum":
                     groups[group_key][field] = 0
                 elif operator in {"$min", "$max", "$first"}:
                     groups[group_key][field] = None
-                    groups[group_key][f"__has_{field}"] = False
+                    flags[field] = False
                 elif operator == "$avg":
                     groups[group_key][field] = _AverageAccumulator()
                 elif operator == "$push":
@@ -940,9 +1083,10 @@ def _apply_group(documents: list[Document], spec: object, variables: dict[str, A
                     raise OperationFailure(f"Unsupported $group accumulator: {operator}")
 
         bucket = groups[group_key]
+        flags = _accumulator_flags(bucket)
         for field, accumulator in accumulator_specs.items():
             operator, expression = next(iter(accumulator.items()))
-            value = evaluate_expression(document, expression, variables)
+            value = evaluate_expression(document, expression, variables, dialect=dialect)
             if operator == "$sum":
                 if value is None:
                     continue
@@ -952,15 +1096,15 @@ def _apply_group(documents: list[Document], spec: object, variables: dict[str, A
             elif operator == "$min":
                 if value is None:
                     continue
-                if not bucket[f"__has_{field}"] or BSONComparator.compare(value, bucket[field]) < 0:
+                if not flags[field] or dialect.compare_values(value, bucket[field]) < 0:
                     bucket[field] = deepcopy(value)
-                    bucket[f"__has_{field}"] = True
+                    flags[field] = True
             elif operator == "$max":
                 if value is None:
                     continue
-                if not bucket[f"__has_{field}"] or BSONComparator.compare(value, bucket[field]) > 0:
+                if not flags[field] or dialect.compare_values(value, bucket[field]) > 0:
                     bucket[field] = deepcopy(value)
-                    bucket[f"__has_{field}"] = True
+                    flags[field] = True
             elif operator == "$avg":
                 if value is None:
                     continue
@@ -971,15 +1115,15 @@ def _apply_group(documents: list[Document], spec: object, variables: dict[str, A
             elif operator == "$push":
                 bucket[field].append(deepcopy(value))
             elif operator == "$first":
-                if not bucket[f"__has_{field}"]:
+                if not flags[field]:
                     bucket[field] = deepcopy(value)
-                    bucket[f"__has_{field}"] = True
+                    flags[field] = True
 
     result: list[Document] = []
     for bucket in groups.values():
         document: Document = {}
         for field, value in bucket.items():
-            if field.startswith("__has_"):
+            if field == _ACCUMULATOR_FLAGS_KEY:
                 continue
             if isinstance(value, _AverageAccumulator):
                 document[field] = None if value.count == 0 else value.total / value.count
@@ -989,25 +1133,33 @@ def _apply_group(documents: list[Document], spec: object, variables: dict[str, A
     return result
 
 
-def _initialize_accumulators(accumulator_specs: dict[str, object] | None, *, default_sum: bool = False) -> dict[str, Any]:
-    initialized: dict[str, Any] = {}
+def _initialize_accumulators(
+    accumulator_specs: dict[str, object] | None,
+    *,
+    default_sum: bool = False,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> dict[str, Any]:
+    initialized: dict[object, Any] = {_ACCUMULATOR_FLAGS_KEY: {}}
+    flags = _accumulator_flags(initialized)
     specs = {"count": {"$sum": 1}} if accumulator_specs is None and default_sum else (accumulator_specs or {})
     for field, accumulator in specs.items():
         if not isinstance(accumulator, dict) or len(accumulator) != 1:
             raise OperationFailure("Accumulator must be a single-key document")
         operator, _ = next(iter(accumulator.items()))
+        if not dialect.supports_group_accumulator(operator):
+            raise OperationFailure(f"Unsupported accumulator: {operator}")
         if operator == "$sum":
             initialized[field] = 0
         elif operator in {"$min", "$max", "$first"}:
             initialized[field] = None
-            initialized[f"__has_{field}"] = False
+            flags[field] = False
         elif operator == "$avg":
             initialized[field] = _AverageAccumulator()
         elif operator == "$push":
             initialized[field] = []
         else:
             raise OperationFailure(f"Unsupported accumulator: {operator}")
-    return initialized
+    return initialized  # type: ignore[return-value]
 
 
 def _apply_accumulators(
@@ -1015,11 +1167,14 @@ def _apply_accumulators(
     accumulator_specs: dict[str, object] | None,
     document: Document,
     variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> None:
     specs = {"count": {"$sum": 1}} if accumulator_specs is None else accumulator_specs
+    flags = _accumulator_flags(bucket)
     for field, accumulator in specs.items():
         operator, expression = next(iter(accumulator.items()))
-        value = evaluate_expression(document, expression, variables)
+        value = evaluate_expression(document, expression, variables, dialect=dialect)
         if operator == "$sum":
             if value is None:
                 continue
@@ -1029,15 +1184,15 @@ def _apply_accumulators(
         elif operator == "$min":
             if value is None:
                 continue
-            if not bucket[f"__has_{field}"] or BSONComparator.compare(value, bucket[field]) < 0:
+            if not flags[field] or dialect.compare_values(value, bucket[field]) < 0:
                 bucket[field] = deepcopy(value)
-                bucket[f"__has_{field}"] = True
+                flags[field] = True
         elif operator == "$max":
             if value is None:
                 continue
-            if not bucket[f"__has_{field}"] or BSONComparator.compare(value, bucket[field]) > 0:
+            if not flags[field] or dialect.compare_values(value, bucket[field]) > 0:
                 bucket[field] = deepcopy(value)
-                bucket[f"__has_{field}"] = True
+                flags[field] = True
         elif operator == "$avg":
             if value is None:
                 continue
@@ -1048,15 +1203,15 @@ def _apply_accumulators(
         elif operator == "$push":
             bucket[field].append(deepcopy(value))
         elif operator == "$first":
-            if not bucket[f"__has_{field}"]:
+            if not flags[field]:
                 bucket[field] = deepcopy(value)
-                bucket[f"__has_{field}"] = True
+                flags[field] = True
 
 
 def _finalize_accumulators(bucket: dict[str, Any]) -> Document:
     document: Document = {}
     for field, value in bucket.items():
-        if field.startswith("__has_"):
+        if field == _ACCUMULATOR_FLAGS_KEY:
             continue
         if isinstance(value, _AverageAccumulator):
             document[field] = None if value.count == 0 else value.total / value.count
@@ -1065,14 +1220,20 @@ def _finalize_accumulators(bucket: dict[str, Any]) -> Document:
     return document
 
 
-def _apply_bucket(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+def _apply_bucket(
+    documents: list[Document],
+    spec: object,
+    variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> list[Document]:
     if not isinstance(spec, dict) or "groupBy" not in spec or "boundaries" not in spec:
         raise OperationFailure("$bucket requires groupBy and boundaries")
     boundaries = spec["boundaries"]
     if not isinstance(boundaries, list) or len(boundaries) < 2:
         raise OperationFailure("$bucket boundaries must be a list with at least two values")
     for index in range(len(boundaries) - 1):
-        if BSONComparator.compare(boundaries[index], boundaries[index + 1]) >= 0:
+        if dialect.compare_values(boundaries[index], boundaries[index + 1]) >= 0:
             raise OperationFailure("$bucket boundaries must be strictly increasing")
 
     output = spec.get("output")
@@ -1083,27 +1244,51 @@ def _apply_bucket(documents: list[Document], spec: object, variables: dict[str, 
     buckets: list[dict[str, Any]] = []
     for lower in boundaries[:-1]:
         bucket = {"_id": deepcopy(lower)}
-        bucket.update(_initialize_accumulators(output, default_sum=output is None))
+        bucket.update(
+            _initialize_accumulators(
+                output,
+                default_sum=output is None,
+                dialect=dialect,
+            )
+        )
         buckets.append(bucket)
 
     default_state: dict[str, Any] | None = None
     if "default" in spec:
         default_state = {"_id": deepcopy(default_bucket)}
-        default_state.update(_initialize_accumulators(output, default_sum=output is None))
+        default_state.update(
+            _initialize_accumulators(
+                output,
+                default_sum=output is None,
+                dialect=dialect,
+            )
+        )
 
     for document in documents:
-        value = evaluate_expression(document, spec["groupBy"], variables)
+        value = evaluate_expression(document, spec["groupBy"], variables, dialect=dialect)
         matched = False
         for index, lower in enumerate(boundaries[:-1]):
             upper = boundaries[index + 1]
-            if BSONComparator.compare(value, lower) >= 0 and BSONComparator.compare(value, upper) < 0:
-                _apply_accumulators(buckets[index], output, document, variables)
+            if dialect.compare_values(value, lower) >= 0 and dialect.compare_values(value, upper) < 0:
+                _apply_accumulators(
+                    buckets[index],
+                    output,
+                    document,
+                    variables,
+                    dialect=dialect,
+                )
                 matched = True
                 break
         if matched:
             continue
         if default_state is not None:
-            _apply_accumulators(default_state, output, document, variables)
+            _apply_accumulators(
+                default_state,
+                output,
+                document,
+                variables,
+                dialect=dialect,
+            )
             continue
         raise OperationFailure("$bucket found a document outside of the specified boundaries")
 
@@ -1113,7 +1298,13 @@ def _apply_bucket(documents: list[Document], spec: object, variables: dict[str, 
     return result
 
 
-def _apply_bucket_auto(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+def _apply_bucket_auto(
+    documents: list[Document],
+    spec: object,
+    variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> list[Document]:
     if not isinstance(spec, dict) or "groupBy" not in spec or "buckets" not in spec:
         raise OperationFailure("$bucketAuto requires groupBy and buckets")
     buckets = spec["buckets"]
@@ -1126,11 +1317,14 @@ def _apply_bucket_auto(documents: list[Document], spec: object, variables: dict[
     if output is not None and not isinstance(output, dict):
         raise OperationFailure("$bucketAuto output must be a document")
 
-    evaluated = [(evaluate_expression(document, spec["groupBy"], variables), document) for document in documents]
+    evaluated = [
+        (evaluate_expression(document, spec["groupBy"], variables, dialect=dialect), document)
+        for document in documents
+    ]
     if not evaluated:
         return []
 
-    evaluated.sort(key=lambda item: cmp_to_key(BSONComparator.compare)(item[0]))
+    evaluated.sort(key=lambda item: cmp_to_key(dialect.compare_values)(item[0]))
     bucket_count = min(buckets, len(evaluated))
     base = len(evaluated) // bucket_count
     remainder = len(evaluated) % bucket_count
@@ -1148,9 +1342,15 @@ def _apply_bucket_auto(documents: list[Document], spec: object, variables: dict[
             upper = deepcopy(chunk[-1][0])
 
         bucket = {"_id": {"min": lower, "max": upper}}
-        bucket.update(_initialize_accumulators(output, default_sum=output is None))
+        bucket.update(
+            _initialize_accumulators(
+                output,
+                default_sum=output is None,
+                dialect=dialect,
+            )
+        )
         for _, document in chunk:
-            _apply_accumulators(bucket, output, document, variables)
+            _apply_accumulators(bucket, output, document, variables, dialect=dialect)
         result.append(_finalize_accumulators(bucket))
     return result
 
@@ -1194,7 +1394,13 @@ def _resolve_range_value(current_value: object, bound: int | float | str, *, low
     return float(current_value) + float(bound)  # type: ignore[arg-type]
 
 
-def _apply_set_window_fields(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+def _apply_set_window_fields(
+    documents: list[Document],
+    spec: object,
+    variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> list[Document]:
     if not isinstance(spec, dict) or "output" not in spec:
         raise OperationFailure("$setWindowFields requires output")
     output = spec["output"]
@@ -1207,12 +1413,20 @@ def _apply_set_window_fields(documents: list[Document], spec: object, variables:
 
     partitions: dict[Any, list[Document]] = {}
     for document in documents:
-        partition_key = evaluate_expression(document, spec["partitionBy"], variables) if "partitionBy" in spec else None
+        partition_key = (
+            evaluate_expression(document, spec["partitionBy"], variables, dialect=dialect)
+            if "partitionBy" in spec
+            else None
+        )
         partitions.setdefault(_aggregation_key(partition_key), []).append(deepcopy(document))
 
     result: list[Document] = []
     for partition_documents in partitions.values():
-        ordered = sort_documents(partition_documents, sort_spec) if sort_spec is not None else partition_documents
+        ordered = (
+            sort_documents(partition_documents, sort_spec, dialect=dialect)
+            if sort_spec is not None
+            else partition_documents
+        )
         last_index = len(ordered) - 1
         for current_index, document in enumerate(ordered):
             enriched = deepcopy(document)
@@ -1220,6 +1434,8 @@ def _apply_set_window_fields(documents: list[Document], spec: object, variables:
                 if not isinstance(field, str):
                     raise OperationFailure("$setWindowFields output field names must be strings")
                 operator, expression, window = _require_window_output_spec(field_spec)
+                if not dialect.supports_window_accumulator(operator):
+                    raise OperationFailure(f"Unsupported $setWindowFields accumulator: {operator}")
                 if operator not in {"$sum", "$min", "$max", "$avg", "$push", "$first"}:
                     raise OperationFailure(f"Unsupported $setWindowFields accumulator: {operator}")
                 if window is None:
@@ -1262,9 +1478,18 @@ def _apply_set_window_fields(documents: list[Document], spec: object, variables:
                             numeric_candidate = float(candidate_value)
                             if lower_value <= numeric_candidate <= upper_value:
                                 window_documents.append(candidate)
-                state = _initialize_accumulators({field: {operator: expression}})
+                state = _initialize_accumulators(
+                    {field: {operator: expression}},
+                    dialect=dialect,
+                )
                 for window_document in window_documents:
-                    _apply_accumulators(state, {field: {operator: expression}}, window_document, variables)
+                    _apply_accumulators(
+                        state,
+                        {field: {operator: expression}},
+                        window_document,
+                        variables,
+                        dialect=dialect,
+                    )
                 set_document_value(enriched, field, _finalize_accumulators(state)[field])
             result.append(enriched)
     return result
@@ -1275,6 +1500,8 @@ def _apply_lookup(
     spec: object,
     collection_resolver,
     variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> list[Document]:
     lookup = _require_lookup_spec(spec)
     if collection_resolver is None:
@@ -1290,17 +1517,27 @@ def _apply_lookup(
             candidate_documents = [
                 deepcopy(foreign_document)
                 for foreign_document in foreign_documents
-                if _lookup_matches(local_values, QueryEngine.extract_values(foreign_document, lookup["foreignField"]))
+                if _lookup_matches(
+                    local_values,
+                    QueryEngine.extract_values(foreign_document, lookup["foreignField"]),
+                    dialect=dialect,
+                )
             ]
         if "pipeline" in lookup:
             scoped = dict(variables or {})
             for name, expression in lookup["let"].items():
-                scoped[name] = evaluate_expression(document, expression, variables)
+                scoped[name] = evaluate_expression(
+                    document,
+                    expression,
+                    variables,
+                    dialect=dialect,
+                )
             matches = apply_pipeline(
                 candidate_documents,
                 lookup["pipeline"],
                 collection_resolver=collection_resolver,
                 variables=scoped,
+                dialect=dialect,
             )
         else:
             matches = candidate_documents
@@ -1310,12 +1547,18 @@ def _apply_lookup(
     return result
 
 
-def _apply_replace_root(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+def _apply_replace_root(
+    documents: list[Document],
+    spec: object,
+    variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> list[Document]:
     if not isinstance(spec, dict) or "newRoot" not in spec:
         raise OperationFailure("$replaceRoot requires a document with newRoot")
     result: list[Document] = []
     for document in documents:
-        new_root = evaluate_expression(document, spec["newRoot"], variables)
+        new_root = evaluate_expression(document, spec["newRoot"], variables, dialect=dialect)
         if not isinstance(new_root, dict):
             raise OperationFailure("$replaceRoot newRoot must evaluate to a document")
         result.append(deepcopy(new_root))
@@ -1327,6 +1570,8 @@ def _apply_facet(
     spec: object,
     collection_resolver,
     variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> list[Document]:
     if not isinstance(spec, dict):
         raise OperationFailure("$facet requires a document specification")
@@ -1339,6 +1584,7 @@ def _apply_facet(
             _require_pipeline_spec("$facet", pipeline),
             collection_resolver=collection_resolver,
             variables=variables,
+            dialect=dialect,
         )
     return [faceted]
 
@@ -1349,16 +1595,27 @@ def _apply_count(documents: list[Document], spec: object) -> list[Document]:
     return [{spec: len(documents)}]
 
 
-def _apply_sort_by_count(documents: list[Document], spec: object, variables: dict[str, Any] | None = None) -> list[Document]:
+def _apply_sort_by_count(
+    documents: list[Document],
+    spec: object,
+    variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> list[Document]:
     grouped = _apply_group(
         documents,
         {"_id": spec, "count": {"$sum": 1}},
         variables,
+        dialect=dialect,
     )
-    return sort_documents(grouped, [("count", -1), ("_id", 1)])
+    return sort_documents(grouped, [("count", -1), ("_id", 1)], dialect=dialect)
 
 
-def split_pushdown_pipeline(pipeline: Pipeline) -> AggregationPushdown:
+def split_pushdown_pipeline(
+    pipeline: Pipeline,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> AggregationPushdown:
     filter_spec: Filter = {}
     projection: Projection | None = None
     sort: SortSpec | None = None
@@ -1401,8 +1658,8 @@ def split_pushdown_pipeline(pipeline: Pipeline) -> AggregationPushdown:
             continue
 
         if operator == "$project" and phase in {"match", "sort", "skip", "limit"} and projection is None:
-            checked_projection = _require_projection(spec)
-            if not _is_simple_projection(checked_projection):
+            checked_projection = _require_projection_for_dialect(spec, dialect=dialect)
+            if not _is_simple_projection_for_dialect(checked_projection, dialect=dialect):
                 return AggregationPushdown(
                     filter_spec=filter_spec,
                     projection=projection,
@@ -1440,18 +1697,21 @@ def apply_pipeline(
     *,
     collection_resolver=None,
     variables: dict[str, Any] | None = None,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> list[Document]:
     result = [deepcopy(document) for document in documents]
     for stage in pipeline:
         operator, spec = _require_stage(stage)
+        if not dialect.supports_aggregation_stage(operator):
+            raise OperationFailure(f"Unsupported aggregation stage: {operator}")
         if operator == "$match":
-            result = _apply_match(result, spec, variables)
+            result = _apply_match(result, spec, variables, dialect=dialect)
             continue
         if operator == "$project":
-            result = _apply_project(result, spec, variables)
+            result = _apply_project(result, spec, variables, dialect=dialect)
             continue
         if operator == "$sort":
-            result = sort_documents(result, _require_sort(spec))
+            result = sort_documents(result, _require_sort(spec), dialect=dialect)
             continue
         if operator == "$skip":
             result = result[_require_non_negative_int("$skip", spec):]
@@ -1460,40 +1720,57 @@ def apply_pipeline(
             result = result[:_require_non_negative_int("$limit", spec)]
             continue
         if operator in {"$addFields", "$set"}:
-            result = _apply_add_fields(result, spec, variables)
+            result = _apply_add_fields(result, spec, variables, dialect=dialect)
             continue
         if operator == "$unwind":
             result = _apply_unwind(result, spec)
             continue
         if operator == "$group":
-            result = _apply_group(result, spec, variables)
+            result = _apply_group(result, spec, variables, dialect=dialect)
             continue
         if operator == "$bucket":
-            result = _apply_bucket(result, spec, variables)
+            result = _apply_bucket(result, spec, variables, dialect=dialect)
             continue
         if operator == "$bucketAuto":
-            result = _apply_bucket_auto(result, spec, variables)
+            result = _apply_bucket_auto(result, spec, variables, dialect=dialect)
             continue
         if operator == "$lookup":
-            result = _apply_lookup(result, spec, collection_resolver, variables)
+            result = _apply_lookup(
+                result,
+                spec,
+                collection_resolver,
+                variables,
+                dialect=dialect,
+            )
             continue
         if operator == "$replaceRoot":
-            result = _apply_replace_root(result, spec, variables)
+            result = _apply_replace_root(result, spec, variables, dialect=dialect)
             continue
         if operator == "$replaceWith":
-            result = _apply_replace_root(result, {"newRoot": spec}, variables)
+            result = _apply_replace_root(
+                result,
+                {"newRoot": spec},
+                variables,
+                dialect=dialect,
+            )
             continue
         if operator == "$facet":
-            result = _apply_facet(result, spec, collection_resolver, variables)
+            result = _apply_facet(
+                result,
+                spec,
+                collection_resolver,
+                variables,
+                dialect=dialect,
+            )
             continue
         if operator == "$count":
             result = _apply_count(result, spec)
             continue
         if operator == "$sortByCount":
-            result = _apply_sort_by_count(result, spec, variables)
+            result = _apply_sort_by_count(result, spec, variables, dialect=dialect)
             continue
         if operator == "$setWindowFields":
-            result = _apply_set_window_fields(result, spec, variables)
+            result = _apply_set_window_fields(result, spec, variables, dialect=dialect)
             continue
         raise OperationFailure(f"Unsupported aggregation stage: {operator}")
     return result

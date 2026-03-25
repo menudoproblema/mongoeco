@@ -1,5 +1,13 @@
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
-from mongoeco.api._async.cursor import AsyncCursor
+from mongoeco.api._async.cursor import AsyncCursor, _validate_sort_spec
+from mongoeco.compat import (
+    MongoDialect,
+    MongoDialectResolution,
+    PyMongoProfile,
+    PyMongoProfileResolution,
+    resolve_mongodb_dialect_resolution,
+    resolve_pymongo_profile_resolution,
+)
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import compile_filter
@@ -16,10 +24,32 @@ from mongoeco.errors import DuplicateKeyError
 class AsyncCollection:
     """Representa una colección de MongoDB."""
 
-    def __init__(self, engine: AsyncStorageEngine, db_name: str, collection_name: str):
+    def __init__(
+        self,
+        engine: AsyncStorageEngine,
+        db_name: str,
+        collection_name: str,
+        *,
+        mongodb_dialect: MongoDialect | str | None = None,
+        mongodb_dialect_resolution: MongoDialectResolution | None = None,
+        pymongo_profile: PyMongoProfile | str | None = None,
+        pymongo_profile_resolution: PyMongoProfileResolution | None = None,
+    ):
         self._engine = engine
         self._db_name = db_name
         self._collection_name = collection_name
+        self._mongodb_dialect_resolution = (
+            mongodb_dialect_resolution
+            if mongodb_dialect_resolution is not None
+            else resolve_mongodb_dialect_resolution(mongodb_dialect)
+        )
+        self._mongodb_dialect = self._mongodb_dialect_resolution.resolved_dialect
+        self._pymongo_profile_resolution = (
+            pymongo_profile_resolution
+            if pymongo_profile_resolution is not None
+            else resolve_pymongo_profile_resolution(pymongo_profile)
+        )
+        self._pymongo_profile = self._pymongo_profile_resolution.resolved_profile
 
     @staticmethod
     def _require_document(document: object) -> Document:
@@ -57,6 +87,13 @@ class AsyncCollection:
         return update_spec
 
     @staticmethod
+    def _normalize_sort(sort: object | None) -> SortSpec | None:
+        if sort is None:
+            return None
+        _validate_sort_spec(sort)
+        return sort
+
+    @staticmethod
     def _can_use_direct_id_lookup(filter_spec: Filter) -> bool:
         if len(filter_spec) != 1 or "_id" not in filter_spec:
             return False
@@ -91,22 +128,28 @@ class AsyncCollection:
                 self._collection_name,
                 filter_spec["_id"],
                 projection=projection,
+                dialect=self._mongodb_dialect,
                 context=session,
             )
         else:
-            plan = compile_filter(filter_spec)
+            plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
             async for d in self._engine.scan_collection(
                 self._db_name,
                 self._collection_name,
                 filter_spec,
                 plan=plan,
                 projection=projection,
+                dialect=self._mongodb_dialect,
                 context=session,
             ):
                 doc = d
                 break
 
-        return apply_projection(doc, projection) if doc is not None else None
+        return (
+            apply_projection(doc, projection, dialect=self._mongodb_dialect)
+            if doc is not None
+            else None
+        )
 
     def find(
         self,
@@ -120,7 +163,7 @@ class AsyncCollection:
     ):
         filter_spec = self._normalize_filter(filter_spec)
         projection = self._normalize_projection(projection)
-        plan = compile_filter(filter_spec)
+        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
         return AsyncCursor(
             self,
             filter_spec,
@@ -137,10 +180,46 @@ class AsyncCollection:
             raise TypeError("pipeline must be a list")
         return AsyncAggregationCursor(self, pipeline, session=session)
 
-    async def update_one(self, filter_spec: Filter, update_spec: Update, upsert: bool = False, *, session: ClientSession | None = None) -> UpdateResult[DocumentId]:
+    async def update_one(
+        self,
+        filter_spec: Filter,
+        update_spec: Update,
+        upsert: bool = False,
+        *,
+        sort: SortSpec | None = None,
+        session: ClientSession | None = None,
+    ) -> UpdateResult[DocumentId]:
         filter_spec = self._normalize_filter(filter_spec)
         update_spec = self._require_update(update_spec)
-        plan = compile_filter(filter_spec)
+        sort = self._normalize_sort(sort)
+        if sort is not None and not self._pymongo_profile.supports_update_one_sort():
+            raise TypeError(
+                f"sort is not supported by PyMongo profile {self._pymongo_profile.key} "
+                "for update_one()"
+            )
+        if sort is not None:
+            selected = await self.find(
+                filter_spec,
+                sort=sort,
+                limit=1,
+                session=session,
+            ).first()
+            if selected is None and not upsert:
+                return UpdateResult(matched_count=0, modified_count=0)
+            if selected is not None:
+                identity_filter = {'_id': selected['_id']}
+                identity_plan = compile_filter(identity_filter, dialect=self._mongodb_dialect)
+                return await self._engine.update_matching_document(
+                    self._db_name,
+                    self._collection_name,
+                    identity_filter,
+                    update_spec,
+                    upsert=False,
+                    plan=identity_plan,
+                    dialect=self._mongodb_dialect,
+                    context=session,
+                )
+        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
         upsert_seed = None
         if upsert:
             upsert_seed = {}
@@ -154,28 +233,31 @@ class AsyncCollection:
             upsert=upsert,
             upsert_seed=upsert_seed,
             plan=plan,
+            dialect=self._mongodb_dialect,
             context=session,
         )
 
     async def delete_one(self, filter_spec: Filter, *, session: ClientSession | None = None) -> DeleteResult:
         filter_spec = self._normalize_filter(filter_spec)
-        plan = compile_filter(filter_spec)
+        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
         return await self._engine.delete_matching_document(
             self._db_name,
             self._collection_name,
             filter_spec,
             plan=plan,
+            dialect=self._mongodb_dialect,
             context=session,
         )
 
     async def count_documents(self, filter_spec: Filter, *, session: ClientSession | None = None) -> int:
         filter_spec = self._normalize_filter(filter_spec)
-        plan = compile_filter(filter_spec)
+        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
         return await self._engine.count_matching_documents(
             self._db_name,
             self._collection_name,
             filter_spec,
             plan=plan,
+            dialect=self._mongodb_dialect,
             context=session,
         )
 
@@ -191,3 +273,19 @@ class AsyncCollection:
 
     async def list_indexes(self, *, session: ClientSession | None = None) -> list[dict[str, object]]:
         return await self._engine.list_indexes(self._db_name, self._collection_name, context=session)
+
+    @property
+    def mongodb_dialect(self) -> MongoDialect:
+        return self._mongodb_dialect
+
+    @property
+    def mongodb_dialect_resolution(self) -> MongoDialectResolution:
+        return self._mongodb_dialect_resolution
+
+    @property
+    def pymongo_profile(self) -> PyMongoProfile:
+        return self._pymongo_profile
+
+    @property
+    def pymongo_profile_resolution(self) -> PyMongoProfileResolution:
+        return self._pymongo_profile_resolution

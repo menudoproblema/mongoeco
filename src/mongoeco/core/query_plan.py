@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Filter
 
@@ -18,6 +19,7 @@ class MatchAll(QueryNode):
 class EqualsCondition(QueryNode):
     field: str
     value: Any
+    null_matches_undefined: bool = False
 
 
 @dataclass(frozen=True)
@@ -54,6 +56,7 @@ class LessThanOrEqualCondition(QueryNode):
 class InCondition(QueryNode):
     field: str
     values: tuple[Any, ...]
+    null_matches_undefined: bool = False
 
 
 @dataclass(frozen=True)
@@ -97,6 +100,7 @@ class NotCondition(QueryNode):
 class ElemMatchCondition(QueryNode):
     field: str
     condition: Any
+    dialect: MongoDialect = MONGODB_DIALECT_70
 
 
 @dataclass(frozen=True)
@@ -115,16 +119,33 @@ class OrCondition(QueryNode):
     clauses: tuple[QueryNode, ...]
 
 
-def _compile_field_condition(field: str, condition: Any) -> QueryNode:
+def _compile_field_condition(
+    field: str,
+    condition: Any,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> QueryNode:
     if not isinstance(condition, dict) or not any(isinstance(key, str) and key.startswith("$") for key in condition):
-        return EqualsCondition(field, condition)
+        return EqualsCondition(
+            field,
+            condition,
+            null_matches_undefined=condition is None and dialect.null_query_matches_undefined(),
+        )
 
     clauses: list[QueryNode] = []
     regex_value: Any = None
     regex_options = ""
     for operator, value in condition.items():
+        if not dialect.supports_query_field_operator(operator):
+            raise OperationFailure(f"Unsupported query operator: {operator}")
         if operator == "$eq":
-            clauses.append(EqualsCondition(field, value))
+            clauses.append(
+                EqualsCondition(
+                    field,
+                    value,
+                    null_matches_undefined=value is None and dialect.null_query_matches_undefined(),
+                )
+            )
         elif operator == "$ne":
             clauses.append(NotEqualsCondition(field, value))
         elif operator == "$gt":
@@ -138,7 +159,14 @@ def _compile_field_condition(field: str, condition: Any) -> QueryNode:
         elif operator == "$in":
             if not isinstance(value, (list, tuple)):
                 raise ValueError("$in necesita una lista")
-            clauses.append(InCondition(field, tuple(value)))
+            clauses.append(
+                InCondition(
+                    field,
+                    tuple(value),
+                    null_matches_undefined=any(item is None for item in value)
+                    and dialect.null_query_matches_undefined(),
+                )
+            )
         elif operator == "$nin":
             if not isinstance(value, (list, tuple)):
                 raise ValueError("$nin necesita una lista")
@@ -171,11 +199,11 @@ def _compile_field_condition(field: str, condition: Any) -> QueryNode:
         elif operator == "$not":
             if not isinstance(value, dict) or not any(isinstance(key, str) and key.startswith("$") for key in value):
                 raise ValueError("$not necesita una expresion de operador")
-            clauses.append(NotCondition(_compile_field_condition(field, value)))
+            clauses.append(NotCondition(_compile_field_condition(field, value, dialect=dialect)))
         elif operator == "$elemMatch":
             if not isinstance(value, dict):
                 raise ValueError("$elemMatch necesita una expresion de filtro")
-            clauses.append(ElemMatchCondition(field, value))
+            clauses.append(ElemMatchCondition(field, value, dialect=dialect))
         elif operator == "$exists":
             if not isinstance(value, bool):
                 raise ValueError("$exists necesita un booleano")
@@ -193,7 +221,11 @@ def _compile_field_condition(field: str, condition: Any) -> QueryNode:
     return AndCondition(tuple(clauses))
 
 
-def compile_filter(filter_spec: Filter) -> QueryNode:
+def compile_filter(
+    filter_spec: Filter,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> QueryNode:
     if filter_spec is None:
         return MatchAll()
     if not isinstance(filter_spec, dict):
@@ -203,35 +235,42 @@ def compile_filter(filter_spec: Filter) -> QueryNode:
 
     clauses: list[QueryNode] = []
     for key, value in filter_spec.items():
+        if isinstance(key, str) and key.startswith("$") and not dialect.supports_query_top_level_operator(key):
+            raise OperationFailure(f"Unsupported top-level query operator: {key}")
         if key == "$expr":
             raise OperationFailure("$expr is not supported in query filters outside aggregation $match")
         if key == "$and":
             if not isinstance(value, list):
                 raise ValueError("$and necesita una lista de filtros")
-            clauses.append(AndCondition(tuple(compile_filter(clause) for clause in value)))
+            clauses.append(AndCondition(tuple(compile_filter(clause, dialect=dialect) for clause in value)))
             continue
         if key == "$or":
             if not isinstance(value, list):
                 raise ValueError("$or necesita una lista de filtros")
-            clauses.append(OrCondition(tuple(compile_filter(clause) for clause in value)))
+            clauses.append(OrCondition(tuple(compile_filter(clause, dialect=dialect) for clause in value)))
             continue
         if key == "$nor":
             if not isinstance(value, list):
                 raise ValueError("$nor necesita una lista de filtros")
-            clauses.append(NotCondition(OrCondition(tuple(compile_filter(clause) for clause in value))))
+            clauses.append(NotCondition(OrCondition(tuple(compile_filter(clause, dialect=dialect) for clause in value))))
             continue
         if isinstance(key, str) and key.startswith("$"):
             raise OperationFailure(f"Unsupported top-level query operator: {key}")
-        clauses.append(_compile_field_condition(key, value))
+        clauses.append(_compile_field_condition(key, value, dialect=dialect))
 
     if len(clauses) == 1:
         return clauses[0]
     return AndCondition(tuple(clauses))
 
 
-def ensure_query_plan(filter_spec: Filter | None = None, plan: QueryNode | None = None) -> QueryNode:
+def ensure_query_plan(
+    filter_spec: Filter | None = None,
+    plan: QueryNode | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> QueryNode:
     if plan is not None:
         return plan
     if filter_spec is None:
         return MatchAll()
-    return compile_filter(filter_spec)
+    return compile_filter(filter_spec, dialect=dialect)

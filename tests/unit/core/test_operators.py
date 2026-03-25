@@ -1,11 +1,45 @@
 import unittest
 import re
 
+from mongoeco.compat import MongoDialect
 from mongoeco.core.operators import UpdateEngine
 from mongoeco.errors import OperationFailure
 
 
 class UpdateEngineTests(unittest.TestCase):
+    def test_update_engine_can_use_custom_dialect_operator_catalog(self):
+        class _NoSetDialect(MongoDialect):
+            def supports_update_operator(self, name: str) -> bool:
+                return False if name == "$set" else super().supports_update_operator(name)
+
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                {},
+                {"$set": {"field": 1}},
+                dialect=_NoSetDialect(key="test", server_version="test", label="No Set"),
+            )
+
+    def test_update_engine_can_use_custom_dialect_field_ordering(self):
+        class _InsertionFieldOrderDialect(MongoDialect):
+            def sort_update_path_items(
+                self,
+                params: dict[str, object],
+            ) -> list[tuple[str, object]]:
+                return list(params.items())
+
+        document: dict[str, object] = {}
+        UpdateEngine.apply_update(
+            document,
+            {"$set": {"b": 1, "a": 2}},
+            dialect=_InsertionFieldOrderDialect(
+                key="test",
+                server_version="test",
+                label="Insertion Update Order",
+            ),
+        )
+
+        self.assertEqual(list(document.keys()), ["b", "a"])
+
     def test_set_none_creates_missing_field(self):
         document = {}
 
@@ -17,6 +51,22 @@ class UpdateEngineTests(unittest.TestCase):
     def test_unknown_operator_raises_operation_failure(self):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"arr": []}, {"$rename": {"arr": "items"}})
+
+    def test_update_engine_rejects_custom_supported_but_unimplemented_operator(self):
+        class _FutureUpdateDialect(MongoDialect):
+            def supports_update_operator(self, name: str) -> bool:
+                return True if name == "$futureUpdate" else super().supports_update_operator(name)
+
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                {"arr": []},
+                {"$futureUpdate": {"arr": "items"}},
+                dialect=_FutureUpdateDialect(
+                    key="test",
+                    server_version="test",
+                    label="Future Update",
+                ),
+            )
 
     def test_update_rejects_other_unsupported_update_operators_explicitly(self):
         unsupported_specs = [
@@ -154,6 +204,58 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertTrue(add_new)
         self.assertTrue(pull_doc)
         self.assertEqual(document, {"items": [{"kind": "b"}]})
+
+    def test_add_to_set_and_pull_honor_custom_dialect_equality(self):
+        class _CaseInsensitiveDialect(MongoDialect):
+            def values_equal(self, left, right):
+                if isinstance(left, str) and isinstance(right, str):
+                    return left.lower() == right.lower()
+                return super().values_equal(left, right)
+
+        dialect = _CaseInsensitiveDialect(
+            key="test",
+            server_version="test",
+            label="Case Insensitive",
+        )
+        document = {"tags": ["Ada"]}
+
+        add_duplicate = UpdateEngine.apply_update(
+            document,
+            {"$addToSet": {"tags": "ada"}},
+            dialect=dialect,
+        )
+        pulled = UpdateEngine.apply_update(
+            document,
+            {"$pull": {"tags": "ada"}},
+            dialect=dialect,
+        )
+
+        self.assertFalse(add_duplicate)
+        self.assertTrue(pulled)
+        self.assertEqual(document, {"tags": []})
+
+    def test_pull_predicate_honors_custom_dialect(self):
+        class _CaseInsensitiveDialect(MongoDialect):
+            def values_equal(self, left, right):
+                if isinstance(left, str) and isinstance(right, str):
+                    return left.lower() == right.lower()
+                return super().values_equal(left, right)
+
+        dialect = _CaseInsensitiveDialect(
+            key="test",
+            server_version="test",
+            label="Case Insensitive",
+        )
+        document = {"items": [{"kind": "Ada"}, {"kind": "Grace"}]}
+
+        modified = UpdateEngine.apply_update(
+            document,
+            {"$pull": {"items": {"kind": "ada"}}},
+            dialect=dialect,
+        )
+
+        self.assertTrue(modified)
+        self.assertEqual(document, {"items": [{"kind": "Grace"}]})
 
     def test_pull_supports_predicate_documents(self):
         document = {

@@ -2,13 +2,67 @@ import math
 import unittest
 import uuid
 
+from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.filtering import BSONComparator, QueryEngine
-from mongoeco.core.query_plan import QueryNode
+from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.errors import OperationFailure
-from mongoeco.types import ObjectId
+from mongoeco.types import ObjectId, UNDEFINED
 
 
 class QueryEngineTests(unittest.TestCase):
+    def test_query_engine_uses_custom_dialect_for_equality_membership_and_ranges(self):
+        class CaseInsensitiveReverseRangeDialect(type(MONGODB_DIALECT_70)):
+            pass
+
+        class CustomDialect(CaseInsensitiveReverseRangeDialect):
+            def values_equal(self, left, right):
+                if isinstance(left, str) and isinstance(right, str):
+                    return left.lower() == right.lower()
+                return super().values_equal(left, right)
+
+            def compare_values(self, left, right):
+                if (
+                    isinstance(left, (int, float))
+                    and not isinstance(left, bool)
+                    and isinstance(right, (int, float))
+                    and not isinstance(right, bool)
+                    and left != right
+                ):
+                    return -1 if left > right else 1
+                return super().compare_values(left, right)
+
+        dialect = CustomDialect()
+        document = {"name": "Ada", "rank": 2, "tags": ["Ada", "Mongo"]}
+
+        self.assertTrue(
+            QueryEngine.match_plan(
+                document,
+                compile_filter({"name": "ada"}, dialect=dialect),
+                dialect=dialect,
+            )
+        )
+        self.assertTrue(
+            QueryEngine.match_plan(
+                document,
+                compile_filter({"tags": {"$in": ["mongo"]}}, dialect=dialect),
+                dialect=dialect,
+            )
+        )
+        self.assertTrue(
+            QueryEngine.match_plan(
+                document,
+                compile_filter({"rank": {"$lt": 1}}, dialect=dialect),
+                dialect=dialect,
+            )
+        )
+        self.assertFalse(
+            QueryEngine.match_plan(
+                document,
+                compile_filter({"rank": {"$gt": 1}}, dialect=dialect),
+                dialect=dialect,
+            )
+        )
+
     def test_query_engine_matches_empty_filter(self):
         self.assertTrue(QueryEngine.match({"a": 1}, {}))
 
@@ -26,6 +80,27 @@ class QueryEngineTests(unittest.TestCase):
 
     def test_query_engine_treats_equal_numeric_values_as_equal(self):
         self.assertTrue(QueryEngine.match({"value": 1.0}, {"value": 1}))
+
+    def test_query_equality_to_null_matches_undefined_in_7_but_not_in_8(self):
+        document = {"value": UNDEFINED}
+        array_document = {"value": ["x", UNDEFINED]}
+
+        plan_70 = compile_filter({"value": None}, dialect=MONGODB_DIALECT_70)
+        plan_80 = compile_filter({"value": None}, dialect=MONGODB_DIALECT_80)
+
+        self.assertTrue(QueryEngine.match_plan(document, plan_70))
+        self.assertFalse(QueryEngine.match_plan(document, plan_80))
+        self.assertTrue(QueryEngine.match_plan(array_document, plan_70))
+        self.assertFalse(QueryEngine.match_plan(array_document, plan_80))
+
+    def test_query_including_null_matches_undefined_in_7_but_not_in_8(self):
+        document = {"value": UNDEFINED}
+
+        plan_70 = compile_filter({"value": {"$in": [None]}}, dialect=MONGODB_DIALECT_70)
+        plan_80 = compile_filter({"value": {"$in": [None]}}, dialect=MONGODB_DIALECT_80)
+
+        self.assertTrue(QueryEngine.match_plan(document, plan_70))
+        self.assertFalse(QueryEngine.match_plan(document, plan_80))
 
     def test_query_engine_does_not_treat_bool_and_number_as_equal(self):
         self.assertFalse(QueryEngine.match({"value": 1}, {"value": True}))
@@ -320,6 +395,10 @@ class QueryEngineTests(unittest.TestCase):
     def test_query_engine_values_equal_distinguishes_bool_and_int_inside_compound_values(self):
         self.assertFalse(QueryEngine._values_equal({"a": True}, {"a": 1}))
         self.assertFalse(QueryEngine._values_equal([True], [1]))
+
+    def test_query_engine_values_equal_treats_int_and_float_as_equal_inside_compound_values(self):
+        self.assertTrue(QueryEngine._values_equal({"a": 1}, {"a": 1.0}))
+        self.assertTrue(QueryEngine._values_equal([1], [1.0]))
 
     def test_query_engine_does_not_match_comparison_operator_when_field_is_missing(self):
         self.assertFalse(QueryEngine.match({}, {"value": {"$lt": 5}}))
