@@ -305,6 +305,8 @@ class QueryEngine:
         dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> bool:
         values = QueryEngine._extract_values(doc, field)
+        if not values:
+            return not (condition is None and dialect.null_query_matches_undefined())
         candidates = values or [None]
         return all(
             not QueryEngine._values_equal(value, condition, dialect=dialect)
@@ -362,7 +364,10 @@ class QueryEngine:
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> bool:
-        candidates = QueryEngine._extract_values(doc, field) or [None]
+        candidates = QueryEngine._extract_values(doc, field)
+        if not candidates:
+            has_null = any(item is None for item in values)
+            return not (has_null and dialect.null_query_matches_undefined())
         return not any(
             QueryEngine._values_equal(candidate, item, dialect=dialect)
             for candidate in candidates

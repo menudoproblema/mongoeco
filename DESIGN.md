@@ -193,7 +193,7 @@ Estos puntos quedan explícitamente fuera del cierre de Fase 1:
     * La API sync ya no devuelve una `list` directa en `find()`.
     * El consumidor debe iterar el cursor o materializarlo con `to_list()` / `list(...)`.
     * El cambio acerca la API al modelo de cursores de MongoDB/PyMongo y evita fijar demasiado pronto una interfaz basada en listas materializadas.
-*   **Estado**: **Lista para cierre**. Fase 2 ya no está solo “iniciada”: existe un `SQLiteEngine` funcional con persistencia real, índices únicos físicos, pushdown SQL útil, cursor público mínimo para `find()`, agregación materializada amplia, streaming robusto en `find()` sync y paridad observable reforzada frente a `MemoryEngine`.
+*   **Estado**: **Completada**. Fase 2 ya no está solo “iniciada”: existe un `SQLiteEngine` funcional con persistencia real, índices únicos físicos, pushdown SQL útil, cursor público mínimo para `find()`, agregación materializada amplia, streaming robusto en `find()` sync, arquitectura de dialectos/perfiles integrada y paridad observable reforzada frente a `MemoryEngine`.
 
 ### Perímetro de Cierre de Fase 2
 La Fase 2 se considera cerrada cuando se acepta explícitamente este perímetro y no se sigue ensanchando el alcance dentro de la propia fase:
@@ -224,7 +224,7 @@ La Fase 2 se considera cerrada cuando se acepta explícitamente este perímetro 
   * `MemoryEngine` y `SQLiteEngine` se comparan explícitamente en filtros, sorts, paginación, updates, deletes y pipelines de agregación representativos
 * **Verificación ejecutable del cierre**:
   * compilación del paquete y tests
-  * snapshot actual de referencia: `647` tests en `unittest`, `647 passed` y `419 subtests passed` en `pytest`
+  * snapshot actual de referencia: `726` tests en `unittest`, `726 passed` y `437 subtests passed` en `pytest`
   * cobertura actual de referencia: `100%` sobre `src/mongoeco`
 
 ### Fuera de Alcance de Fase 2
@@ -254,11 +254,16 @@ Estos puntos quedan ya movidos explícitamente a fases posteriores y no deben se
 * **Planificación de consultas propia** más allá del uso que ya hace SQLite de sus índices y del pushdown selectivo actual
 * **Reabrir la estrategia sync solo si aparece una necesidad real que el adaptador actual no cubra**
 
-### Cierre Operativo Pendiente
-No quedan bloqueos técnicos claros dentro del perímetro actual de Fase 2. Lo que falta para cerrarla de forma limpia es operativo, no de implementación:
-1. **Aceptar el corte de alcance** descrito arriba.
-2. **Mantener la documentación alineada** con el estado real del código y la suite.
-3. **Cerrar con commit** cuando proceda, sin seguir añadiendo operadores o superficie nueva dentro de Fase 2.
+### Cierre Operativo de Fase 2
+El cierre local de Fase 2 se considera ya satisfecho:
+1. **El corte de alcance está fijado** y la fase no sigue ensanchándose con superficie ajena al perímetro descrito arriba.
+2. **La documentación está alineada** con el estado real del código, la suite y la estrategia de compatibilidad.
+3. **La verificación local está cerrada**:
+   * `python -m unittest discover -s tests -p 'test*.py'` -> `726` tests, `OK (skipped=1)`
+   * `pytest --cov=src/mongoeco` -> `726 passed, 7 skipped, 437 subtests passed`
+   * cobertura -> `100%`
+
+La validación diferencial contra MongoDB real queda como capa adicional recomendada, pero ya no como requisito bloqueante para declarar completada la implementación local de Fase 2.
 
 ### Decisión Consolidada sobre la Capa Sync
 La capa sync se considera, por ahora, una adaptación manual y deliberada de la implementación async.
@@ -323,8 +328,11 @@ Actualmente:
 * `MongoDialect80` la marca como `False`
 
 Ese delta ya está fijado en tests, documentación y runtime. `mongoeco` modela
-un valor `UNDEFINED` propio y aplica la diferencia `7.0/8.0` en igualdad por
-`null`, `$in` con `null` y `$lookup`.
+un valor `UNDEFINED` propio y aplica la diferencia `7.0/8.0` en:
+* igualdad por `null` y `$eq`
+* `$in` con `null`
+* `$ne` / `$nin` sobre campo ausente frente a `null`
+* `$lookup`
 
 ### Decisión Consolidada sobre Paths y Expansión de Arrays
 `core/paths.py` ya no expande arrays sin límite ni sobrescribe silenciosamente padres escalares.

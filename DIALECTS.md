@@ -83,10 +83,22 @@ delta ya está conectado al runtime en el perímetro actualmente soportado:
 
 * igualdad por `null` y `$eq`
 * `$in` que incluye `null`
+* `$ne` / `$nin` frente a `null` cuando el campo está ausente
 * `$lookup` con `localField` / `foreignField`
 
 La suite local fija explícitamente la diferencia entre `7.0` y `8.0` en esos
 caminos.
+
+### Deltas activos hoy
+
+| Caso | MongoDialect70 | MongoDialect80 | Cobertura |
+|---|---|---|---|
+| `null_query_matches_undefined()` | `True` | `False` | `tests/unit/test_compat.py` |
+| Igualdad query `{"field": null}` sobre `UNDEFINED` | match | no match | `tests/unit/core/test_filtering.py` |
+| `"$in": [null]` sobre `UNDEFINED` | match | no match | `tests/unit/core/test_filtering.py` |
+| `"$ne": null` con campo ausente | no match | match | `tests/unit/core/test_filtering.py` |
+| `"$nin": [null]` con campo ausente | no match | match | `tests/unit/core/test_filtering.py` |
+| `$lookup` simple con `null` vs `UNDEFINED` | iguala | no iguala | `tests/unit/core/test_aggregation.py`, `tests/differential/*` |
 
 ### Regla de implementación
 
@@ -182,8 +194,7 @@ API, pero nunca como fuente de verdad de la semántica del servidor.
 ### Prioridad de resolución recomendada
 
 1. valor explícito dado por la aplicación
-2. autodetección opcional del **server** si existe Mongo real accesible
-3. fallback por defecto del proyecto
+2. fallback por defecto del proyecto
 
 Para el perfil PyMongo:
 
@@ -396,8 +407,8 @@ En el punto actual del proyecto:
 * existe un arnés diferencial opcional compartido para MongoDB 7.0 y 8.0
 * la arquitectura de dialectos y perfiles de PyMongo ya existe como capa de
   ejecución pública y como punto de extensión del core
-* ya hay un primer delta versionado registrado en el catálogo oficial, aunque
-  todavía no conectado a comportamiento activo del motor
+* ya hay un primer delta versionado registrado en el catálogo oficial y
+  conectado a comportamiento activo del motor
 
 Esto permite cerrar la fase actual sin rediseñar la suite, y a la vez deja una
 dirección clara para soportar MongoDB 8/9 y compatibilidad de API con PyMongo

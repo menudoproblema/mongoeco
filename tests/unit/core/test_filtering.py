@@ -102,6 +102,26 @@ class QueryEngineTests(unittest.TestCase):
         self.assertTrue(QueryEngine.match_plan(document, plan_70))
         self.assertFalse(QueryEngine.match_plan(document, plan_80))
 
+    def test_query_ne_null_on_missing_field_differs_between_7_and_8(self):
+        document = {}
+
+        self.assertFalse(QueryEngine.match(document, {"value": {"$ne": None}}, dialect=MONGODB_DIALECT_70))
+        self.assertTrue(QueryEngine.match(document, {"value": {"$ne": None}}, dialect=MONGODB_DIALECT_80))
+
+    def test_query_nin_null_on_missing_field_differs_between_7_and_8(self):
+        document = {}
+
+        self.assertFalse(QueryEngine.match(document, {"value": {"$nin": [None]}}, dialect=MONGODB_DIALECT_70))
+        self.assertTrue(QueryEngine.match(document, {"value": {"$nin": [None]}}, dialect=MONGODB_DIALECT_80))
+
+    def test_query_ne_and_nin_on_missing_field_still_match_non_null_values(self):
+        document = {}
+
+        self.assertTrue(QueryEngine.match(document, {"value": {"$ne": 1}}, dialect=MONGODB_DIALECT_70))
+        self.assertTrue(QueryEngine.match(document, {"value": {"$ne": 1}}, dialect=MONGODB_DIALECT_80))
+        self.assertTrue(QueryEngine.match(document, {"value": {"$nin": [1]}}, dialect=MONGODB_DIALECT_70))
+        self.assertTrue(QueryEngine.match(document, {"value": {"$nin": [1]}}, dialect=MONGODB_DIALECT_80))
+
     def test_query_engine_does_not_treat_bool_and_number_as_equal(self):
         self.assertFalse(QueryEngine.match({"value": 1}, {"value": True}))
         self.assertFalse(QueryEngine.match({"value": True}, {"value": 1}))

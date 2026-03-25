@@ -56,6 +56,7 @@ Regla práctica:
 
 * `7.0` es la baseline de desarrollo
 * `8.0` se trata como compatibilidad adicional con deltas explícitos
+* la selección del dialecto es explícita; `mongoeco` no autodetecta servidor en el flujo normal
 
 ## 3.1 Resolución del dialecto MongoDB
 

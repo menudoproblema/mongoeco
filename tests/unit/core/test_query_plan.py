@@ -160,6 +160,18 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({"flag": {"$exists": False}}),
             ExistsCondition("flag", False),
         )
+        self.assertEqual(
+            compile_filter({"flag": {"$exists": 1}}),
+            ExistsCondition("flag", True),
+        )
+        self.assertEqual(
+            compile_filter({"flag": {"$exists": 0}}),
+            ExistsCondition("flag", False),
+        )
+        self.assertEqual(
+            compile_filter({"flag": {"$exists": "yes"}}),
+            ExistsCondition("flag", True),
+        )
 
     def test_compile_filter_rejects_invalid_all_size_and_regex_payloads(self):
         with self.assertRaises(ValueError):
@@ -184,10 +196,6 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({"name": {"$not": {"x": 1}}})
         with self.assertRaises(ValueError):
             compile_filter({"items": {"$elemMatch": 1}})
-        with self.assertRaises(ValueError):
-            compile_filter({"flag": {"$exists": 1}})
-        with self.assertRaises(ValueError):
-            compile_filter({"flag": {"$exists": "yes"}})
 
     def test_compile_filter_rejects_options_without_regex(self):
         with self.assertRaises(Exception):

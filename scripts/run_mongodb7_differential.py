@@ -1,4 +1,4 @@
-from scripts.run_mongodb_real_differential import main
+from run_mongodb_real_differential import main
 
 
 if __name__ == '__main__':

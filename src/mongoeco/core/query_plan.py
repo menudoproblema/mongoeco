@@ -205,9 +205,7 @@ def _compile_field_condition(
                 raise ValueError("$elemMatch necesita una expresion de filtro")
             clauses.append(ElemMatchCondition(field, value, dialect=dialect))
         elif operator == "$exists":
-            if not isinstance(value, bool):
-                raise ValueError("$exists necesita un booleano")
-            clauses.append(ExistsCondition(field, value))
+            clauses.append(ExistsCondition(field, bool(value)))
         else:
             raise OperationFailure(f"Unsupported query operator: {operator}")
 
