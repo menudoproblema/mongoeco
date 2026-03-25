@@ -322,6 +322,22 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             asyncio.run(self.collection.distinct(1))  # type: ignore[arg-type]
 
+    def test_distinct_skips_documents_without_matching_values(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                await collection.insert_one({"_id": "1", "kind": "view"})
+                await collection.insert_one({"_id": "2", "other": 1})
+                return await collection.distinct("kind")
+            finally:
+                await engine.disconnect()
+
+        result = asyncio.run(_exercise())
+
+        self.assertEqual(result, ["view"])
+
     def test_distinct_honors_custom_dialect_equality(self):
         class CaseInsensitiveDialect(MongoDialect70):
             def values_equal(self, left, right) -> bool:

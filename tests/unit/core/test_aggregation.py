@@ -1078,6 +1078,15 @@ class AggregationTests(unittest.TestCase):
             ],
         )
 
+    def test_pipeline_supports_unset_string_and_list_specs(self):
+        documents = [{"_id": "1", "secret": "x", "profile": {"city": "Madrid", "zip": 28001}}]
+
+        single = apply_pipeline(documents, [{"$unset": "secret"}])
+        multiple = apply_pipeline(documents, [{"$unset": ["secret", "profile.zip"]}])
+
+        self.assertEqual(single, [{"_id": "1", "profile": {"city": "Madrid", "zip": 28001}}])
+        self.assertEqual(multiple, [{"_id": "1", "profile": {"city": "Madrid"}}])
+
     def test_pipeline_supports_add_fields_project_expr_and_match_expr(self):
         documents = [
             {"_id": "1", "kind": "view", "score": 10, "bonus": None, "tags": ["a", "b"]},
@@ -2233,6 +2242,62 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(counted, [{"total": 4}])
         self.assertEqual(sorted_counts, [{"_id": "click", "count": 2}, {"_id": "view", "count": 2}])
 
+    def test_pipeline_supports_sample(self):
+        documents = [
+            {"_id": "1"},
+            {"_id": "2"},
+            {"_id": "3"},
+        ]
+
+        sampled = apply_pipeline(documents, [{"$sample": {"size": 2}}])
+        oversampled = apply_pipeline(documents, [{"$sample": {"size": 10}}])
+        empty = apply_pipeline(documents, [{"$sample": {"size": 0}}])
+
+        self.assertEqual(len(sampled), 2)
+        self.assertEqual(len({item["_id"] for item in sampled}), 2)
+        self.assertTrue(all(item in documents for item in sampled))
+        self.assertCountEqual(oversampled, documents)
+        self.assertEqual(empty, [])
+
+    def test_pipeline_supports_union_with_string_and_pipeline_spec(self):
+        documents = [
+            {"_id": "e1", "kind": "event", "tenant": "a"},
+            {"_id": "e2", "kind": "event", "tenant": "b"},
+        ]
+        collections = {
+            "archived_events": [
+                {"_id": "a1", "kind": "archive", "tenant": "a", "rank": 2},
+                {"_id": "a2", "kind": "archive", "tenant": "b", "rank": 1},
+            ]
+        }
+
+        plain = apply_pipeline(
+            documents,
+            [{"$unionWith": "archived_events"}],
+            collection_resolver=collections.get,
+        )
+        filtered = apply_pipeline(
+            documents,
+            [
+                {
+                    "$unionWith": {
+                        "coll": "archived_events",
+                        "pipeline": [
+                            {"$match": {"tenant": "b"}},
+                            {"$project": {"_id": 1, "kind": 1, "rank": 1}},
+                        ],
+                    }
+                }
+            ],
+            collection_resolver=collections.get,
+        )
+
+        self.assertEqual(plain, documents + collections["archived_events"])
+        self.assertEqual(
+            filtered,
+            documents + [{"_id": "a2", "kind": "archive", "rank": 1}],
+        )
+
     def test_pipeline_count_returns_empty_result_for_empty_input(self):
         self.assertEqual(apply_pipeline([], [{"$count": "total"}]), [{"total": 0}])
 
@@ -2313,6 +2378,10 @@ class AggregationTests(unittest.TestCase):
             apply_pipeline([], [{"$unwind": {"path": "$tags", "includeArrayIndex": 1}}])
         with self.assertRaises(OperationFailure):
             apply_pipeline([], [{"$unwind": {"path": "$tags", "includeArrayIndex": "$idx"}}])
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([], [{"$unset": {}}])
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([], [{"$unset": ["ok", ""]}])
 
     def test_pipeline_rejects_invalid_sort_direction(self):
         with self.assertRaises(OperationFailure):
@@ -2331,6 +2400,12 @@ class AggregationTests(unittest.TestCase):
             apply_pipeline([], [{"$skip": -1}])
         with self.assertRaises(OperationFailure):
             apply_pipeline([], [{"$limit": True}])
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([], [{"$sample": []}])
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([], [{"$sample": {"size": True}}])
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([], [{"$sample": {"size": 1, "extra": 2}}])
 
     def test_pipeline_rejects_invalid_group_and_expression_payloads(self):
         with self.assertRaises(OperationFailure):
@@ -2407,6 +2482,27 @@ class AggregationTests(unittest.TestCase):
                 [{"_id": "1"}],
                 [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": "user", "let": {"x": 1}}}],
             )
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$unionWith": []}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$unionWith": {}}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$unionWith": {"coll": "", "pipeline": []}}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$unionWith": ""}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$unionWith": {"coll": "users", "pipeline": {}}}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$unionWith": {"coll": "users", "extra": 1}}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$unionWith": "users"}])
 
         with self.assertRaises(OperationFailure):
             apply_pipeline([{"_id": "1"}], [{"$replaceRoot": []}])

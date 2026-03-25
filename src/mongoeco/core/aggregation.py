@@ -1,5 +1,6 @@
 import datetime
 import math
+import random
 import uuid
 from collections.abc import Iterable
 from copy import deepcopy
@@ -200,6 +201,14 @@ def _require_unset_spec(spec: object) -> list[str]:
     return fields
 
 
+def _require_sample_spec(spec: object) -> int:
+    if not isinstance(spec, dict):
+        raise OperationFailure("$sample requires a document specification")
+    if set(spec) != {"size"}:
+        raise OperationFailure("$sample requires only a size field")
+    return _require_non_negative_int("$sample size", spec["size"])
+
+
 def _require_lookup_spec(spec: object) -> dict[str, Any]:
     if not isinstance(spec, dict):
         raise OperationFailure("$lookup requires a document specification")
@@ -248,6 +257,26 @@ def _require_lookup_spec(spec: object) -> dict[str, Any]:
         "localField": local_field,
         "foreignField": foreign_field,
     }
+
+
+def _require_union_with_spec(spec: object) -> dict[str, Any]:
+    if isinstance(spec, str):
+        if not spec:
+            raise OperationFailure("$unionWith collection name must be a non-empty string")
+        return {"coll": spec, "pipeline": []}
+    if not isinstance(spec, dict):
+        raise OperationFailure("$unionWith requires a collection name string or a document specification")
+    if "coll" not in spec:
+        raise OperationFailure("$unionWith currently requires a coll field")
+    coll = spec["coll"]
+    if not isinstance(coll, str) or not coll:
+        raise OperationFailure("$unionWith coll must be a non-empty string")
+    pipeline = spec.get("pipeline", [])
+    if "pipeline" in spec:
+        pipeline = _require_pipeline_spec("$unionWith", pipeline)
+    if set(spec) - {"coll", "pipeline"}:
+        raise OperationFailure("$unionWith only supports coll and pipeline")
+    return {"coll": coll, "pipeline": pipeline}
 
 
 def _require_pipeline_spec(operator: str, spec: object) -> Pipeline:
@@ -1029,6 +1058,14 @@ def _apply_unset(
     return result
 
 
+def _apply_sample(documents: list[Document], spec: object) -> list[Document]:
+    size = _require_sample_spec(spec)
+    if size == 0:
+        return []
+    sample_size = min(size, len(documents))
+    return random.sample(documents, sample_size)
+
+
 def _apply_project(
     documents: list[Document],
     spec: object,
@@ -1574,6 +1611,31 @@ def _apply_lookup(
     return result
 
 
+def _apply_union_with(
+    documents: list[Document],
+    spec: object,
+    collection_resolver,
+    variables: dict[str, Any] | None = None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> list[Document]:
+    union_with = _require_union_with_spec(spec)
+    if collection_resolver is None:
+        raise OperationFailure("$unionWith requires collection resolver support")
+
+    resolved_foreign_documents = collection_resolver(union_with["coll"]) or []
+    foreign_documents = [deepcopy(document) for document in resolved_foreign_documents]
+    if union_with["pipeline"]:
+        foreign_documents = apply_pipeline(
+            foreign_documents,
+            union_with["pipeline"],
+            collection_resolver=collection_resolver,
+            variables=variables,
+            dialect=dialect,
+        )
+    return [deepcopy(document) for document in documents] + foreign_documents
+
+
 def _apply_replace_root(
     documents: list[Document],
     spec: object,
@@ -1740,6 +1802,9 @@ def apply_pipeline(
         if operator == "$unset":
             result = _apply_unset(result, spec)
             continue
+        if operator == "$sample":
+            result = _apply_sample(result, spec)
+            continue
         if operator == "$sort":
             result = sort_documents(result, _require_sort(spec), dialect=dialect)
             continue
@@ -1766,6 +1831,15 @@ def apply_pipeline(
             continue
         if operator == "$lookup":
             result = _apply_lookup(
+                result,
+                spec,
+                collection_resolver,
+                variables,
+                dialect=dialect,
+            )
+            continue
+        if operator == "$unionWith":
+            result = _apply_union_with(
                 result,
                 spec,
                 collection_resolver,
