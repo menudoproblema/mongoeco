@@ -50,11 +50,18 @@ from mongoeco.types import (
     Document,
     DocumentId,
     Filter,
+    IndexKeySpec,
     ObjectId,
     Projection,
     SortSpec,
     Update,
     UpdateResult,
+    default_id_index_document,
+    default_id_index_information,
+    default_index_name,
+    index_fields,
+    index_key_document,
+    normalize_index_keys,
 )
 
 
@@ -197,6 +204,10 @@ class SQLiteEngine(AsyncStorageEngine):
     def _physical_multikey_index_name(self, db_name: str, coll_name: str, index_name: str) -> str:
         digest = hashlib.sha1(f"{db_name}:{coll_name}:{index_name}:multikey".encode("utf-8")).hexdigest()[:16]
         return f"mkidx_{digest}"
+
+    @staticmethod
+    def _is_builtin_id_index(keys: IndexKeySpec) -> bool:
+        return keys == [("_id", 1)]
 
     def _serialize_document(self, document: Document) -> str:
         return json.dumps(self._codec.encode(document), separators=(",", ":"), sort_keys=False)
@@ -664,7 +675,7 @@ class SQLiteEngine(AsyncStorageEngine):
         conn = self._require_connection()
         cursor = conn.execute(
             """
-            SELECT name, physical_name, fields, unique_flag, multikey_flag, multikey_physical_name
+            SELECT name, physical_name, fields, keys, unique_flag, multikey_flag, multikey_physical_name
             FROM indexes
             WHERE db_name = ? AND coll_name = ?
             ORDER BY name
@@ -672,7 +683,7 @@ class SQLiteEngine(AsyncStorageEngine):
             (db_name, coll_name),
         )
         indexes: list[dict[str, object]] = []
-        for name, physical_name, fields, unique_flag, multikey_flag, multikey_physical_name in cursor.fetchall():
+        for name, physical_name, fields, keys, unique_flag, multikey_flag, multikey_physical_name in cursor.fetchall():
             try:
                 parsed_fields = json.loads(fields)
             except json.JSONDecodeError as exc:
@@ -683,11 +694,21 @@ class SQLiteEngine(AsyncStorageEngine):
                 raise OperationFailure(
                     f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
                 )
+            if keys is None:
+                parsed_keys = [(field, 1) for field in parsed_fields]
+            else:
+                try:
+                    parsed_keys = normalize_index_keys(json.loads(keys))
+                except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                    raise OperationFailure(
+                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                    ) from exc
             indexes.append(
                 {
                     "name": name,
                     "physical_name": physical_name or self._physical_index_name(db_name, coll_name, name),
                     "fields": parsed_fields,
+                    "key": parsed_keys,
                     "unique": bool(unique_flag),
                     "multikey": bool(multikey_flag),
                     "multikey_physical_name": multikey_physical_name
@@ -794,6 +815,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         name TEXT NOT NULL,
                         physical_name TEXT,
                         fields TEXT NOT NULL,
+                        keys TEXT,
                         unique_flag INTEGER NOT NULL,
                         multikey_flag INTEGER NOT NULL DEFAULT 0,
                         multikey_physical_name TEXT,
@@ -819,6 +841,8 @@ class SQLiteEngine(AsyncStorageEngine):
                 }
                 if "physical_name" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN physical_name TEXT")
+                if "keys" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN keys TEXT")
                 if "multikey_flag" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN multikey_flag INTEGER NOT NULL DEFAULT 0")
                 if "multikey_physical_name" not in columns:
@@ -1304,12 +1328,20 @@ class SQLiteEngine(AsyncStorageEngine):
         self,
         db_name: str,
         coll_name: str,
-        fields: list[str],
+        keys: IndexKeySpec,
         unique: bool,
         name: str | None,
         context: ClientSession | None,
     ) -> str:
-        index_name = name or "_".join(f"{field}_1" for field in fields)
+        normalized_keys = normalize_index_keys(keys)
+        fields = index_fields(normalized_keys)
+        index_name = name or default_index_name(normalized_keys)
+        if self._is_builtin_id_index(normalized_keys):
+            if name not in (None, "_id_"):
+                raise OperationFailure("Conflicting index definition for '_id_'")
+            return "_id_"
+        if index_name == "_id_":
+            raise OperationFailure("Conflicting index definition for '_id_'")
         physical_name = self._physical_index_name(db_name, coll_name, index_name)
         multikey = self._supports_multikey_index(fields, unique)
         multikey_physical_name = self._physical_multikey_index_name(db_name, coll_name, index_name)
@@ -1319,16 +1351,30 @@ class SQLiteEngine(AsyncStorageEngine):
                 indexes = self._load_indexes(db_name, coll_name)
                 for index in indexes:
                     if index["name"] == index_name:
-                        if index["fields"] != fields or index["unique"] != unique:
+                        if index["key"] != normalized_keys or index["unique"] != unique:
                             raise OperationFailure(f"Conflicting index definition for '{index_name}'")
                         return index_name
+                    if index["key"] == normalized_keys:
+                        if index["unique"] != unique:
+                            raise OperationFailure(
+                                f"Conflicting index definition for key pattern '{normalized_keys!r}'"
+                            )
+                        return str(index["name"])
 
                 if unique:
                     for field in fields:
                         if self._field_traverses_array_in_collection(db_name, coll_name, field):
                             raise OperationFailure("SQLite unique indexes do not support paths that traverse arrays")
                 expressions = ", ".join(
-                    ["db_name", "coll_name", *[expression for field in fields for expression in index_expressions_sql(field)]]
+                    [
+                        "db_name",
+                        "coll_name",
+                        *[
+                            f"{expression}{' DESC' if direction == -1 else ''}"
+                            for field, direction in normalized_keys
+                            for expression in index_expressions_sql(field)
+                        ],
+                    ]
                 )
                 unique_sql = "UNIQUE " if unique else ""
                 try:
@@ -1345,9 +1391,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     conn.execute(
                         """
                         INSERT INTO indexes (
-                            db_name, coll_name, name, physical_name, fields, unique_flag, multikey_flag, multikey_physical_name
+                            db_name, coll_name, name, physical_name, fields, keys, unique_flag, multikey_flag, multikey_physical_name
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             db_name,
@@ -1355,6 +1401,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             index_name,
                             physical_name,
                             json.dumps(fields),
+                            json.dumps(normalized_keys),
                             1 if unique else 0,
                             1 if multikey else 0,
                             multikey_physical_name if multikey else None,
@@ -1364,6 +1411,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         index_metadata = {
                             "name": index_name,
                             "fields": fields,
+                            "key": normalized_keys,
                             "unique": unique,
                             "multikey": True,
                             "multikey_physical_name": multikey_physical_name,
@@ -1388,14 +1436,139 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 indexes = deepcopy(self._load_indexes(db_name, coll_name))
-        return [
+        result = [default_id_index_document()]
+        result.extend(
             {
                 "name": index["name"],
-                "fields": index["fields"],
+                "fields": deepcopy(index["fields"]),
+                "key": index_key_document(deepcopy(index["key"])),
                 "unique": index["unique"],
             }
             for index in indexes
-        ]
+        )
+        return result
+
+    def _index_information_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        context: ClientSession | None,
+    ) -> dict[str, dict[str, object]]:
+        with self._lock:
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
+                indexes = deepcopy(self._load_indexes(db_name, coll_name))
+        return {
+            **default_id_index_information(),
+            **{
+                str(index["name"]): {
+                    "key": deepcopy(index["key"]),
+                    **({"unique": True} if index["unique"] else {}),
+                }
+                for index in indexes
+            },
+        }
+
+    def _drop_index_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        index_or_name: str | IndexKeySpec,
+        context: ClientSession | None,
+    ) -> None:
+        normalized_keys: IndexKeySpec | None = None
+        if isinstance(index_or_name, str):
+            if index_or_name == "_id_":
+                raise OperationFailure("cannot drop _id index")
+        else:
+            normalized_keys = normalize_index_keys(index_or_name)
+            if self._is_builtin_id_index(normalized_keys):
+                raise OperationFailure("cannot drop _id index")
+        with self._lock:
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
+                indexes = self._load_indexes(db_name, coll_name)
+                target: dict[str, object] | None = None
+                if isinstance(index_or_name, str):
+                    for index in indexes:
+                        if index["name"] == index_or_name:
+                            target = index
+                            break
+                    if target is None:
+                        raise OperationFailure(f"index not found with name [{index_or_name}]")
+                else:
+                    for index in indexes:
+                        if index["key"] == normalized_keys:
+                            target = index
+                            break
+                    if target is None:
+                        raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
+                try:
+                    self._begin_write(conn, context)
+                    conn.execute(
+                        f"DROP INDEX IF EXISTS {self._quote_identifier(str(target['physical_name']))}"
+                    )
+                    if target.get("multikey"):
+                        conn.execute(
+                            f"DROP INDEX IF EXISTS {self._quote_identifier(str(target['multikey_physical_name']))}"
+                        )
+                        conn.execute(
+                            """
+                            DELETE FROM multikey_entries
+                            WHERE db_name = ? AND coll_name = ? AND index_name = ?
+                            """,
+                            (db_name, coll_name, target["name"]),
+                        )
+                    conn.execute(
+                        """
+                        DELETE FROM indexes
+                        WHERE db_name = ? AND coll_name = ? AND name = ?
+                        """,
+                        (db_name, coll_name, target["name"]),
+                    )
+                    self._commit_write(conn, context)
+                except Exception:
+                    self._rollback_write(conn, context)
+                    raise
+
+    def _drop_indexes_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        context: ClientSession | None,
+    ) -> None:
+        with self._lock:
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
+                indexes = self._load_indexes(db_name, coll_name)
+                try:
+                    self._begin_write(conn, context)
+                    for index in indexes:
+                        conn.execute(
+                            f"DROP INDEX IF EXISTS {self._quote_identifier(str(index['physical_name']))}"
+                        )
+                        if index.get("multikey"):
+                            conn.execute(
+                                f"DROP INDEX IF EXISTS {self._quote_identifier(str(index['multikey_physical_name']))}"
+                            )
+                    conn.execute(
+                        """
+                        DELETE FROM multikey_entries
+                        WHERE db_name = ? AND coll_name = ?
+                        """,
+                        (db_name, coll_name),
+                    )
+                    conn.execute(
+                        """
+                        DELETE FROM indexes
+                        WHERE db_name = ? AND coll_name = ?
+                        """,
+                        (db_name, coll_name),
+                    )
+                    self._commit_write(conn, context)
+                except Exception:
+                    self._rollback_write(conn, context)
+                    raise
 
     def _list_databases_sync(self) -> list[str]:
         with self._lock:
@@ -1608,17 +1781,42 @@ class SQLiteEngine(AsyncStorageEngine):
         self,
         db_name: str,
         coll_name: str,
-        fields: list[str],
+        keys: IndexKeySpec,
         *,
         unique: bool = False,
         name: str | None = None,
         context: ClientSession | None = None,
     ) -> str:
-        return await asyncio.to_thread(self._create_index_sync, db_name, coll_name, fields, unique, name, context)
+        return await asyncio.to_thread(self._create_index_sync, db_name, coll_name, keys, unique, name, context)
 
     @override
     async def list_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> list[dict[str, object]]:
         return await asyncio.to_thread(self._list_indexes_sync, db_name, coll_name, context)
+
+    @override
+    async def index_information(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> dict[str, dict[str, object]]:
+        return await asyncio.to_thread(self._index_information_sync, db_name, coll_name, context)
+
+    @override
+    async def drop_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        index_or_name: str | IndexKeySpec,
+        *,
+        context: ClientSession | None = None,
+    ) -> None:
+        await asyncio.to_thread(self._drop_index_sync, db_name, coll_name, index_or_name, context)
+
+    @override
+    async def drop_indexes(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> None:
+        await asyncio.to_thread(self._drop_indexes_sync, db_name, coll_name, context)
 
     @override
     async def explain_query_plan(

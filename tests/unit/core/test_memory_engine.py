@@ -207,7 +207,13 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(name1, "kind_1")
         self.assertEqual(name2, "kind_1")
-        self.assertEqual(indexes_again, [{"name": "kind_1", "fields": ["kind"], "unique": False}])
+        self.assertEqual(
+            indexes_again,
+            [
+                {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
+                {"name": "kind_1", "fields": ["kind"], "key": {"kind": 1}, "unique": False},
+            ],
+        )
 
     async def test_create_index_rejects_conflicting_definition_for_existing_name(self):
         engine = MemoryEngine()
@@ -281,7 +287,10 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             self.assertIsNone(await engine.get_document("db", "coll", "1"))
-            self.assertEqual(await engine.list_indexes("db", "coll"), [])
+            self.assertEqual(
+                await engine.list_indexes("db", "coll"),
+                [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
+            )
         finally:
             await engine.disconnect()
 
@@ -298,7 +307,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertIsNone(found)
-        self.assertEqual(indexes, [])
+        self.assertEqual(indexes, [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}])
 
     async def test_drop_collection_prunes_empty_database_metadata(self):
         engine = MemoryEngine()
@@ -316,6 +325,37 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(databases, [])
         self.assertEqual(collections, [])
+
+    async def test_index_information_and_drop_index_support_key_specs(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", [("kind", 1), ("rank", -1)], unique=True)
+            info = await engine.index_information("db", "coll")
+            await engine.drop_index("db", "coll", [("kind", 1), ("rank", -1)])
+            indexes = await engine.list_indexes("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(
+            info,
+            {
+                "_id_": {"key": [("_id", 1)], "unique": True},
+                "kind_1_rank_-1": {"key": [("kind", 1), ("rank", -1)], "unique": True},
+            },
+        )
+        self.assertEqual(indexes, [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}])
+
+    async def test_builtin_id_index_cannot_be_dropped(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            with self.assertRaises(OperationFailure):
+                await engine.drop_index("db", "coll", "_id_")
+            with self.assertRaises(OperationFailure):
+                await engine.drop_index("db", "coll", [("_id", 1)])
+        finally:
+            await engine.disconnect()
 
     async def test_disconnect_is_noop_when_engine_is_not_connected(self):
         engine = MemoryEngine()

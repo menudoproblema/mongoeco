@@ -31,6 +31,7 @@ from mongoeco.types import (
     ObjectId, Document, DocumentId, Filter, Update, Projection, InsertManyResult, InsertOneResult,
     ReturnDocument, UpdateResult, DeleteResult, SortSpec, BulkWriteResult, WriteModel,
     InsertOne, UpdateOne, UpdateMany, ReplaceOne, DeleteOne, DeleteMany,
+    IndexKeySpec, IndexModel, normalize_index_keys,
 )
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure, WriteError
 
@@ -163,6 +164,21 @@ class AsyncCollection:
         if not isinstance(let, dict):
             raise TypeError("let must be a dict")
         return let
+
+    @staticmethod
+    def _normalize_index_keys(keys: object) -> IndexKeySpec:
+        return normalize_index_keys(keys)
+
+    @classmethod
+    def _normalize_index_models(cls, indexes: object) -> list[IndexModel]:
+        if not isinstance(indexes, Sequence) or isinstance(indexes, (str, bytes, bytearray, dict)):
+            raise TypeError("indexes must be a sequence of IndexModel instances")
+        normalized = list(indexes)
+        if not normalized:
+            raise ValueError("indexes must not be empty")
+        if not all(isinstance(index, IndexModel) for index in normalized):
+            raise TypeError("indexes must contain only IndexModel instances")
+        return normalized
 
     @staticmethod
     def _normalize_return_document(value: object | None) -> ReturnDocument:
@@ -1019,18 +1035,108 @@ class AsyncCollection:
                     distinct_values.append(candidate)
         return distinct_values
 
-    async def create_index(self, fields: list[str], *, unique: bool = False, name: str | None = None, session: ClientSession | None = None) -> str:
+    async def create_index(
+        self,
+        keys: object,
+        *,
+        unique: bool = False,
+        name: str | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> str:
+        normalized_keys = self._normalize_index_keys(keys)
+        self._normalize_max_time_ms(max_time_ms)
         return await self._engine.create_index(
             self._db_name,
             self._collection_name,
-            fields,
+            normalized_keys,
             unique=unique,
             name=name,
             context=session,
         )
 
-    async def list_indexes(self, *, session: ClientSession | None = None) -> list[dict[str, object]]:
+    async def create_indexes(
+        self,
+        indexes: object,
+        *,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> list[str]:
+        models = self._normalize_index_models(indexes)
+        self._normalize_max_time_ms(max_time_ms)
+        existing = await self._engine.index_information(
+            self._db_name,
+            self._collection_name,
+            context=session,
+        )
+        names: list[str] = []
+        created_names: list[str] = []
+        for index in models:
+            try:
+                name = await self._engine.create_index(
+                    self._db_name,
+                    self._collection_name,
+                    index.keys,
+                    unique=index.unique,
+                    name=index.name,
+                    context=session,
+                )
+            except Exception:
+                for created_name in reversed(created_names):
+                    try:
+                        await self._engine.drop_index(
+                            self._db_name,
+                            self._collection_name,
+                            created_name,
+                            context=session,
+                        )
+                    except Exception:
+                        pass
+                raise
+            names.append(name)
+            if name not in existing and name not in created_names:
+                created_names.append(name)
+        return names
+
+    async def list_indexes(
+        self,
+        *,
+        comment: object | None = None,
+        session: ClientSession | None = None,
+    ) -> list[dict[str, object]]:
         return await self._engine.list_indexes(self._db_name, self._collection_name, context=session)
+
+    async def index_information(
+        self,
+        *,
+        comment: object | None = None,
+        session: ClientSession | None = None,
+    ) -> dict[str, dict[str, object]]:
+        return await self._engine.index_information(self._db_name, self._collection_name, context=session)
+
+    async def drop_index(
+        self,
+        index_or_name: str | object,
+        *,
+        comment: object | None = None,
+        session: ClientSession | None = None,
+    ) -> None:
+        target: str | IndexKeySpec
+        if isinstance(index_or_name, str):
+            target = index_or_name
+        else:
+            target = self._normalize_index_keys(index_or_name)
+        await self._engine.drop_index(self._db_name, self._collection_name, target, context=session)
+
+    async def drop_indexes(
+        self,
+        *,
+        comment: object | None = None,
+        session: ClientSession | None = None,
+    ) -> None:
+        await self._engine.drop_indexes(self._db_name, self._collection_name, context=session)
 
     async def drop(self, *, session: ClientSession | None = None) -> None:
         await self._engine.drop_collection(

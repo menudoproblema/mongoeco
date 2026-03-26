@@ -45,8 +45,8 @@ from .compat import (
 )
 from .session import ClientSession
 from .types import (
-    BulkWriteResult, DeleteMany, DeleteOne, InsertOne, ObjectId, ReplaceOne,
-    ReturnDocument, UNDEFINED, UndefinedType, UpdateMany, UpdateOne,
+    BulkWriteResult, DeleteMany, DeleteOne, IndexModel, InsertOne, ObjectId,
+    ReplaceOne, ReturnDocument, UNDEFINED, UndefinedType, UpdateMany, UpdateOne,
 )
 
 __all__ = [
@@ -95,6 +95,7 @@ __all__ = [
     "ReplaceOne",
     "DeleteOne",
     "DeleteMany",
+    "IndexModel",
     "BulkWriteResult",
     "ObjectId",
     "ReturnDocument",

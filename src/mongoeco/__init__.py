@@ -40,8 +40,8 @@ from mongoeco.compat import (
 )
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    BulkWriteResult, DeleteMany, DeleteOne, InsertOne, ObjectId, ReplaceOne,
-    ReturnDocument, UNDEFINED, UndefinedType, UpdateMany, UpdateOne,
+    BulkWriteResult, DeleteMany, DeleteOne, IndexModel, InsertOne, ObjectId,
+    ReplaceOne, ReturnDocument, UNDEFINED, UndefinedType, UpdateMany, UpdateOne,
 )
 
 __all__ = [
@@ -90,6 +90,7 @@ __all__ = [
     "ReplaceOne",
     "DeleteOne",
     "DeleteMany",
+    "IndexModel",
     "BulkWriteResult",
     "ObjectId",
     "ReturnDocument",

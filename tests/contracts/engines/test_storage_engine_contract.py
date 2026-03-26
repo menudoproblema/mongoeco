@@ -258,9 +258,46 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                         indexes,
                         [
                             {
+                                "name": "_id_",
+                                "fields": ["_id"],
+                                "key": {"_id": 1},
+                                "unique": True,
+                            },
+                            {
                                 "name": "kind_1_created_at_1",
                                 "fields": ["kind", "created_at"],
+                                "key": {"kind": 1, "created_at": 1},
                                 "unique": False,
                             }
                         ],
+                    )
+
+    async def test_engine_can_drop_and_describe_indexes(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_engine(engine_name) as engine:
+                    await engine.create_index(
+                        "test_db",
+                        "test_coll",
+                        [("kind", 1), ("created_at", -1)],
+                        unique=True,
+                    )
+
+                    info = await engine.index_information("test_db", "test_coll")
+                    await engine.drop_index("test_db", "test_coll", [("kind", 1), ("created_at", -1)])
+                    indexes_after_drop = await engine.list_indexes("test_db", "test_coll")
+
+                    self.assertEqual(
+                        info,
+                        {
+                            "_id_": {"key": [("_id", 1)], "unique": True},
+                            "kind_1_created_at_-1": {
+                                "key": [("kind", 1), ("created_at", -1)],
+                                "unique": True,
+                            },
+                        },
+                    )
+                    self.assertEqual(
+                        indexes_after_drop,
+                        [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
                     )

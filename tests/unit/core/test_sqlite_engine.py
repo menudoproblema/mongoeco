@@ -853,11 +853,11 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 """
                 CREATE TABLE indexes (
                     db_name TEXT NOT NULL,
-                    coll_name TEXT NOT NULL,
-                    name TEXT NOT NULL,
-                    fields TEXT NOT NULL,
-                    unique_flag INTEGER NOT NULL,
-                    PRIMARY KEY (db_name, coll_name, name)
+                        coll_name TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        fields TEXT NOT NULL,
+                        unique_flag INTEGER NOT NULL,
+                        PRIMARY KEY (db_name, coll_name, name)
                 )
                 """
             )
@@ -877,6 +877,73 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 await engine.disconnect()
 
         self.assertIn("physical_name", columns)
+        self.assertIn("keys", columns)
+
+    async def test_list_indexes_includes_builtin_id_and_index_information_round_trips_key_spec(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", [("email", 1), ("created_at", -1)], unique=True)
+            indexes = await engine.list_indexes("db", "coll")
+            info = await engine.index_information("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(
+            indexes,
+            [
+                {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
+                {
+                    "name": "email_1_created_at_-1",
+                    "fields": ["email", "created_at"],
+                    "key": {"email": 1, "created_at": -1},
+                    "unique": True,
+                },
+            ],
+        )
+        self.assertEqual(
+            info,
+            {
+                "_id_": {"key": [("_id", 1)], "unique": True},
+                "email_1_created_at_-1": {"key": [("email", 1), ("created_at", -1)], "unique": True},
+            },
+        )
+
+    async def test_drop_index_and_drop_indexes_preserve_builtin_id_index(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["email"], unique=False, name="idx_email")
+            await engine.create_index("db", "coll", ["kind"], unique=False, name="idx_kind")
+            await engine.drop_index("db", "coll", "idx_email")
+            after_single_drop = await engine.list_indexes("db", "coll")
+            await engine.drop_indexes("db", "coll")
+            after_drop_all = await engine.list_indexes("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(
+            after_single_drop,
+            [
+                {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
+                {"name": "idx_kind", "fields": ["kind"], "key": {"kind": 1}, "unique": False},
+            ],
+        )
+        self.assertEqual(
+            after_drop_all,
+            [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
+        )
+
+    async def test_builtin_id_index_cannot_be_dropped(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            with self.assertRaises(OperationFailure):
+                await engine.drop_index("db", "coll", "_id_")
+            with self.assertRaises(OperationFailure):
+                await engine.drop_index("db", "coll", [("_id", 1)])
+        finally:
+            await engine.disconnect()
 
     async def test_drop_collection_removes_physical_index(self):
         engine = SQLiteEngine()

@@ -6,6 +6,7 @@ from mongoeco import (
     ClientSession,
     DeleteMany,
     DeleteOne,
+    IndexModel,
     InsertOne,
     MongoClient,
     ObjectId,
@@ -1385,13 +1386,78 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
 
-                    name = collection.create_index(["profile.name"], unique=False)
+                    name = collection.create_index([("profile.name", -1)], unique=False)
                     indexes = collection.list_indexes()
+                    info = collection.index_information()
 
-                    self.assertEqual(name, "profile.name_1")
+                    self.assertEqual(name, "profile.name_-1")
                     self.assertEqual(
                         indexes,
-                        [{"name": "profile.name_1", "fields": ["profile.name"], "unique": False}],
+                        [
+                            {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
+                            {
+                                "name": "profile.name_-1",
+                                "fields": ["profile.name"],
+                                "key": {"profile.name": -1},
+                                "unique": False,
+                            },
+                        ],
+                    )
+                    self.assertEqual(
+                        info,
+                        {
+                            "_id_": {"key": [("_id", 1)], "unique": True},
+                            "profile.name_-1": {"key": [("profile.name", -1)]},
+                        },
+                    )
+
+    def test_collection_can_create_and_drop_multiple_indexes(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+
+                    names = collection.create_indexes(
+                        [
+                            IndexModel([("email", 1)], unique=True),
+                            IndexModel([("tenant", 1), ("created_at", -1)], name="tenant_created"),
+                        ]
+                    )
+                    collection.drop_index([("tenant", 1), ("created_at", -1)])
+                    indexes_after_drop = collection.list_indexes()
+                    collection.drop_indexes()
+                    indexes_after_drop_all = collection.list_indexes()
+
+                    self.assertEqual(names, ["email_1", "tenant_created"])
+                    self.assertEqual(
+                        indexes_after_drop,
+                        [
+                            {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
+                            {"name": "email_1", "fields": ["email"], "key": {"email": 1}, "unique": True},
+                        ],
+                    )
+                    self.assertEqual(
+                        indexes_after_drop_all,
+                        [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
+                    )
+
+    def test_create_indexes_rolls_back_batch_on_failure(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+
+                    with self.assertRaises(OperationFailure):
+                        collection.create_indexes(
+                            [
+                                IndexModel([("email", 1)], name="idx_email"),
+                                IndexModel([("email", 1)], unique=True, name="idx_email_unique"),
+                            ]
+                        )
+
+                    self.assertEqual(
+                        collection.list_indexes(),
+                        [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
                     )
 
     def test_unique_index_is_enforced(self):

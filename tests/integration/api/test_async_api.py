@@ -9,6 +9,7 @@ from mongoeco import (
     ClientSession,
     DeleteMany,
     DeleteOne,
+    IndexModel,
     InsertOne,
     MongoClient,
     MongoDialect80,
@@ -1670,13 +1671,78 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 async with open_client(engine_name) as client:
                     collection = client.analytics.events
 
-                    name = await collection.create_index(["payload.kind"], unique=False)
+                    name = await collection.create_index([("payload.kind", -1)], unique=False)
                     indexes = await collection.list_indexes()
+                    info = await collection.index_information()
 
-                    self.assertEqual(name, "payload.kind_1")
+                    self.assertEqual(name, "payload.kind_-1")
                     self.assertEqual(
                         indexes,
-                        [{"name": "payload.kind_1", "fields": ["payload.kind"], "unique": False}],
+                        [
+                            {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
+                            {
+                                "name": "payload.kind_-1",
+                                "fields": ["payload.kind"],
+                                "key": {"payload.kind": -1},
+                                "unique": False,
+                            },
+                        ],
+                    )
+                    self.assertEqual(
+                        info,
+                        {
+                            "_id_": {"key": [("_id", 1)], "unique": True},
+                            "payload.kind_-1": {"key": [("payload.kind", -1)]},
+                        },
+                    )
+
+    async def test_collection_can_create_and_drop_multiple_indexes(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+
+                    names = await collection.create_indexes(
+                        [
+                            IndexModel([("email", 1)], unique=True),
+                            IndexModel([("tenant", 1), ("created_at", -1)], name="tenant_created"),
+                        ]
+                    )
+                    await collection.drop_index([("tenant", 1), ("created_at", -1)])
+                    indexes_after_drop = await collection.list_indexes()
+                    await collection.drop_indexes()
+                    indexes_after_drop_all = await collection.list_indexes()
+
+                    self.assertEqual(names, ["email_1", "tenant_created"])
+                    self.assertEqual(
+                        indexes_after_drop,
+                        [
+                            {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
+                            {"name": "email_1", "fields": ["email"], "key": {"email": 1}, "unique": True},
+                        ],
+                    )
+                    self.assertEqual(
+                        indexes_after_drop_all,
+                        [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
+                    )
+
+    async def test_create_indexes_rolls_back_batch_on_failure(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+
+                    with self.assertRaises(OperationFailure):
+                        await collection.create_indexes(
+                            [
+                                IndexModel([("email", 1)], name="idx_email"),
+                                IndexModel([("email", 1)], unique=True, name="idx_email_unique"),
+                            ]
+                        )
+
+                    self.assertEqual(
+                        await collection.list_indexes(),
+                        [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
                     )
 
     async def test_unique_index_is_enforced_via_public_api(self):

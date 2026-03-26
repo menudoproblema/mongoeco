@@ -15,7 +15,12 @@ from mongoeco.core.query_plan import MatchAll, QueryNode, ensure_query_plan
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import DuplicateKeyError, OperationFailure
 from mongoeco.session import ClientSession
-from mongoeco.types import DeleteResult, Document, DocumentId, Filter, Projection, SortSpec, Update, UpdateResult, ObjectId
+from mongoeco.types import (
+    DeleteResult, Document, DocumentId, Filter, IndexKeySpec, ObjectId,
+    Projection, SortSpec, Update, UpdateResult, default_index_name,
+    default_id_index_document, default_id_index_information, index_fields,
+    index_key_document, normalize_index_keys,
+)
 
 
 class _AsyncThreadLock:
@@ -106,6 +111,10 @@ class MemoryEngine(AsyncStorageEngine):
 
     def _index_key(self, document: Document, fields: list[str]) -> tuple[Any, ...]:
         return tuple(self._index_value(document, field) for field in fields)
+
+    @staticmethod
+    def _is_builtin_id_index(keys: IndexKeySpec) -> bool:
+        return keys == [("_id", 1)]
 
     def _ensure_unique_indexes(
         self,
@@ -328,8 +337,16 @@ class MemoryEngine(AsyncStorageEngine):
             )
 
     @override
-    async def create_index(self, db_name: str, coll_name: str, fields: list[str], *, unique: bool = False, name: str | None = None, context: ClientSession | None = None) -> str:
-        index_name = name or "_".join(f"{field}_1" for field in fields)
+    async def create_index(self, db_name: str, coll_name: str, keys: IndexKeySpec, *, unique: bool = False, name: str | None = None, context: ClientSession | None = None) -> str:
+        normalized_keys = normalize_index_keys(keys)
+        fields = index_fields(normalized_keys)
+        index_name = name or default_index_name(normalized_keys)
+        if self._is_builtin_id_index(normalized_keys):
+            if name not in (None, "_id_"):
+                raise OperationFailure("Conflicting index definition for '_id_'")
+            return "_id_"
+        if index_name == "_id_":
+            raise OperationFailure("Conflicting index definition for '_id_'")
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
                 db_indexes = self._indexes.setdefault(db_name, {})
@@ -337,11 +354,17 @@ class MemoryEngine(AsyncStorageEngine):
 
             for index in coll_indexes:
                 if index["name"] == index_name:
-                    if index["fields"] != fields or index["unique"] != unique:
+                    if index["key"] != normalized_keys or index["unique"] != unique:
                         raise OperationFailure(
                             f"Conflicting index definition for '{index_name}'"
                         )
                     return index_name
+                if index["key"] == normalized_keys:
+                    if index["unique"] != unique:
+                        raise OperationFailure(
+                            f"Conflicting index definition for key pattern '{normalized_keys!r}'"
+                        )
+                    return index["name"]
 
             if unique:
                 seen: set[tuple[Any, ...]] = set()
@@ -359,6 +382,7 @@ class MemoryEngine(AsyncStorageEngine):
                 {
                     "name": index_name,
                     "fields": fields.copy(),
+                    "key": deepcopy(normalized_keys),
                     "unique": unique,
                 }
             )
@@ -368,7 +392,86 @@ class MemoryEngine(AsyncStorageEngine):
     async def list_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> list[dict[str, object]]:
         async with self._get_lock(db_name, coll_name):
             indexes = self._indexes.get(db_name, {}).get(coll_name, [])
-        return deepcopy(indexes)
+        result = [default_id_index_document()]
+        result.extend(
+            {
+                "name": index["name"],
+                "fields": deepcopy(index["fields"]),
+                "key": index_key_document(deepcopy(index["key"])),
+                "unique": index["unique"],
+            }
+            for index in deepcopy(indexes)
+        )
+        return result
+
+    @override
+    async def index_information(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> dict[str, dict[str, object]]:
+        async with self._get_lock(db_name, coll_name):
+            indexes = deepcopy(self._indexes.get(db_name, {}).get(coll_name, []))
+        result = default_id_index_information()
+        result.update(
+            {
+                index["name"]: {
+                    "key": deepcopy(index["key"]),
+                    **({"unique": True} if index["unique"] else {}),
+                }
+                for index in indexes
+            }
+        )
+        return result
+
+    @override
+    async def drop_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        index_or_name: str | IndexKeySpec,
+        *,
+        context: ClientSession | None = None,
+    ) -> None:
+        normalized_keys: IndexKeySpec | None = None
+        if isinstance(index_or_name, str):
+            if index_or_name == "_id_":
+                raise OperationFailure("cannot drop _id index")
+        else:
+            normalized_keys = normalize_index_keys(index_or_name)
+            if self._is_builtin_id_index(normalized_keys):
+                raise OperationFailure("cannot drop _id index")
+        async with self._get_lock(db_name, coll_name):
+            indexes = self._indexes.get(db_name, {}).get(coll_name, [])
+            if isinstance(index_or_name, str):
+                for idx, index in enumerate(indexes):
+                    if index["name"] == index_or_name:
+                        del indexes[idx]
+                        break
+                else:
+                    raise OperationFailure(f"index not found with name [{index_or_name}]")
+            else:
+                for idx, index in enumerate(indexes):
+                    if index["key"] == normalized_keys:
+                        del indexes[idx]
+                        break
+                else:
+                    raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
+
+            if db_name in self._indexes and coll_name in self._indexes[db_name] and not self._indexes[db_name][coll_name]:
+                del self._indexes[db_name][coll_name]
+                if not self._indexes[db_name]:
+                    del self._indexes[db_name]
+
+    @override
+    async def drop_indexes(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> None:
+        async with self._get_lock(db_name, coll_name):
+            if db_name in self._indexes and coll_name in self._indexes[db_name]:
+                del self._indexes[db_name][coll_name]
+                if not self._indexes[db_name]:
+                    del self._indexes[db_name]
 
     @override
     async def explain_query_plan(

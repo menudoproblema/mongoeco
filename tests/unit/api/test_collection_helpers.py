@@ -10,8 +10,8 @@ from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure
 from mongoeco.types import (
-    DeleteMany, DeleteOne, DeleteResult, InsertOne, ReplaceOne, ReturnDocument,
-    UpdateMany, UpdateOne, UpdateResult,
+    DeleteMany, DeleteOne, DeleteResult, IndexModel, InsertOne, ReplaceOne,
+    ReturnDocument, UpdateMany, UpdateOne, UpdateResult,
 )
 
 
@@ -1236,10 +1236,30 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                 return 0
 
             async def create_index(self, *args, **kwargs):
+                self.create_index_args = args
+                self.create_index_kwargs = kwargs
                 return "idx"
 
+            async def create_indexes(self, *args, **kwargs):
+                raise AssertionError("unexpected direct create_indexes call")
+
             async def list_indexes(self, *args, **kwargs):
-                return []
+                self.list_indexes_args = args
+                self.list_indexes_kwargs = kwargs
+                return [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}]
+
+            async def index_information(self, *args, **kwargs):
+                self.index_information_args = args
+                self.index_information_kwargs = kwargs
+                return {"_id_": {"key": [("_id", 1)], "unique": True}}
+
+            async def drop_index(self, *args, **kwargs):
+                self.drop_index_args = args
+                self.drop_index_kwargs = kwargs
+
+            async def drop_indexes(self, *args, **kwargs):
+                self.drop_indexes_args = args
+                self.drop_indexes_kwargs = kwargs
 
         engine = EngineStub()
         collection = AsyncCollection(engine, "db", "coll")
@@ -1258,6 +1278,110 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         self.assertIs(engine.update_dialect, collection.mongodb_dialect)
         self.assertIs(engine.delete_dialect, collection.mongodb_dialect)
         self.assertIs(engine.count_dialect, collection.mongodb_dialect)
+
+    def test_index_helpers_normalize_and_forward_arguments(self):
+        class EngineStub:
+            async def create_index(self, *args, **kwargs):
+                self.create_index_args = args
+                self.create_index_kwargs = kwargs
+                return "email_1_created_at_-1"
+
+            async def list_indexes(self, *args, **kwargs):
+                self.list_indexes_args = args
+                self.list_indexes_kwargs = kwargs
+                return [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}]
+
+            async def index_information(self, *args, **kwargs):
+                self.index_information_args = args
+                self.index_information_kwargs = kwargs
+                return {"_id_": {"key": [("_id", 1)], "unique": True}}
+
+            async def drop_index(self, *args, **kwargs):
+                self.drop_index_args = args
+                self.drop_index_kwargs = kwargs
+
+            async def drop_indexes(self, *args, **kwargs):
+                self.drop_indexes_args = args
+                self.drop_indexes_kwargs = kwargs
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        name = asyncio.run(
+            collection.create_index([("email", 1), ("created_at", -1)], unique=True, name="idx_email")
+        )
+        indexes = asyncio.run(collection.list_indexes())
+        info = asyncio.run(collection.index_information())
+        asyncio.run(collection.drop_index([("email", 1), ("created_at", -1)]))
+        asyncio.run(collection.drop_indexes())
+
+        self.assertEqual(name, "email_1_created_at_-1")
+        self.assertEqual(
+            engine.create_index_args,
+            ("db", "coll", [("email", 1), ("created_at", -1)]),
+        )
+        self.assertEqual(
+            engine.create_index_kwargs,
+            {"unique": True, "name": "idx_email", "context": None},
+        )
+        self.assertEqual(indexes, [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}])
+        self.assertEqual(info, {"_id_": {"key": [("_id", 1)], "unique": True}})
+        self.assertEqual(engine.drop_index_args, ("db", "coll", [("email", 1), ("created_at", -1)]))
+        self.assertEqual(engine.drop_index_kwargs, {"context": None})
+        self.assertEqual(engine.drop_indexes_args, ("db", "coll"))
+        self.assertEqual(engine.drop_indexes_kwargs, {"context": None})
+
+    def test_create_indexes_requires_index_models(self):
+        collection = AsyncCollection(MemoryEngine(), "db", "coll")
+
+        with self.assertRaises(TypeError):
+            asyncio.run(collection.create_indexes([{"name": "idx"}]))
+
+        with self.assertRaises(ValueError):
+            asyncio.run(collection.create_indexes([]))
+
+    def test_create_indexes_uses_models_sequentially(self):
+        class EngineStub:
+            def __init__(self):
+                self.calls = []
+
+            async def create_index(self, *args, **kwargs):
+                self.calls.append((args, kwargs))
+                return kwargs["name"] or "email_1"
+
+            async def index_information(self, *args, **kwargs):
+                return {"_id_": {"key": [("_id", 1)], "unique": True}}
+
+            async def drop_index(self, *args, **kwargs):
+                self.dropped = getattr(self, "dropped", [])
+                self.dropped.append((args, kwargs))
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        names = asyncio.run(
+            collection.create_indexes(
+                [
+                    IndexModel([("email", 1)], unique=True),
+                    IndexModel([("tenant", 1), ("created_at", -1)], name="tenant_created"),
+                ]
+            )
+        )
+
+        self.assertEqual(names, ["email_1", "tenant_created"])
+        self.assertEqual(
+            engine.calls,
+            [
+                (
+                    ("db", "coll", [("email", 1)]),
+                    {"unique": True, "name": None, "context": None},
+                ),
+                (
+                    ("db", "coll", [("tenant", 1), ("created_at", -1)]),
+                    {"unique": False, "name": "tenant_created", "context": None},
+                ),
+            ],
+        )
 
     def test_update_one_sort_is_rejected_by_older_pymongo_profile(self):
         collection = AsyncCollection(

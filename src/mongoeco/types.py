@@ -2,7 +2,8 @@ import binascii
 import os
 import threading
 import time
-from dataclasses import dataclass
+from collections.abc import Sequence
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Literal, Self
 
@@ -113,6 +114,7 @@ type Update = dict[str, Any]
 type Projection = dict[str, Any]
 type SortDirection = Literal[1, -1]
 type SortSpec = list[tuple[str, SortDirection]]
+type IndexKeySpec = SortSpec
 type DocumentScalarId = ObjectId | str | bytes | int | float | bool | None | UndefinedType
 type DocumentId = DocumentScalarId | list[DocumentId] | dict[str, DocumentId]
 
@@ -120,6 +122,109 @@ type DocumentId = DocumentScalarId | list[DocumentId] | dict[str, DocumentId]
 class ReturnDocument(Enum):
     BEFORE = 'before'
     AFTER = 'after'
+
+
+def normalize_index_keys(keys: object) -> IndexKeySpec:
+    if isinstance(keys, str):
+        if not keys:
+            raise ValueError("index field names must be non-empty strings")
+        return [(keys, 1)]
+
+    if not isinstance(keys, Sequence) or isinstance(keys, (bytes, bytearray, dict)):
+        raise TypeError("keys must be a string or a sequence of strings or (field, direction) tuples")
+
+    normalized_items = list(keys)
+    if not normalized_items:
+        raise ValueError("keys must not be empty")
+
+    normalized: IndexKeySpec = []
+    for item in normalized_items:
+        if isinstance(item, str):
+            if not item:
+                raise ValueError("index field names must be non-empty strings")
+            normalized.append((item, 1))
+            continue
+        if (
+            not isinstance(item, Sequence)
+            or isinstance(item, (str, bytes, bytearray, dict))
+            or len(item) != 2
+        ):
+            raise TypeError("keys must be a list of strings or (field, direction) tuples")
+        field, direction = item
+        if not isinstance(field, str) or not field:
+            raise TypeError("index field names must be non-empty strings")
+        if direction not in (1, -1) or isinstance(direction, bool):
+            raise ValueError("index directions must be 1 or -1")
+        normalized.append((field, direction))
+    return normalized
+
+
+def default_index_name(keys: IndexKeySpec) -> str:
+    return "_".join(f"{field}_{direction}" for field, direction in keys)
+
+
+def index_fields(keys: IndexKeySpec) -> list[str]:
+    return [field for field, _direction in keys]
+
+
+def index_key_document(keys: IndexKeySpec) -> dict[str, SortDirection]:
+    return {field: direction for field, direction in keys}
+
+
+def default_id_index_information() -> dict[str, dict[str, object]]:
+    return {
+        "_id_": {
+            "key": [("_id", 1)],
+            "unique": True,
+        }
+    }
+
+
+def default_id_index_document() -> dict[str, object]:
+    return {
+        "name": "_id_",
+        "key": {"_id": 1},
+        "fields": ["_id"],
+        "unique": True,
+    }
+
+
+@dataclass(frozen=True, slots=True)
+class IndexModel:
+    keys: IndexKeySpec
+    name: str | None = None
+    unique: bool = False
+    options: dict[str, Any] = field(default_factory=dict)
+
+    def __init__(self, keys: object, **kwargs: Any):
+        normalized = normalize_index_keys(keys)
+        name = kwargs.pop("name", None)
+        unique = kwargs.pop("unique", False)
+        if name is not None and (not isinstance(name, str) or not name):
+            raise ValueError("name must be a non-empty string")
+        if not isinstance(unique, bool):
+            raise TypeError("unique must be a bool")
+        if kwargs:
+            unsupported = ", ".join(sorted(kwargs))
+            raise TypeError(f"unsupported IndexModel options: {unsupported}")
+        object.__setattr__(self, "keys", normalized)
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "unique", unique)
+        object.__setattr__(self, "options", {})
+
+    @property
+    def resolved_name(self) -> str:
+        return self.name or default_index_name(self.keys)
+
+    @property
+    def document(self) -> dict[str, Any]:
+        document: dict[str, Any] = {
+            "name": self.resolved_name,
+            "key": index_key_document(self.keys),
+        }
+        if self.unique:
+            document["unique"] = True
+        return document
 
 
 @dataclass(frozen=True, slots=True)

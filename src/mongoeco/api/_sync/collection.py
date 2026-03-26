@@ -11,7 +11,8 @@ from mongoeco.core.aggregation import Pipeline
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     BulkWriteResult, DeleteResult, Document, DocumentId, Filter, InsertManyResult,
-    InsertOneResult, Projection, ReturnDocument, SortSpec, Update, UpdateResult, WriteModel,
+    IndexModel, IndexKeySpec, InsertOneResult, Projection, ReturnDocument, SortSpec, Update,
+    UpdateResult, WriteModel,
 )
 
 
@@ -327,11 +328,80 @@ class Collection:
     ) -> list[object]:
         return self._client._run(self._async_collection().distinct(key, filter_spec, session=session))
 
-    def create_index(self, fields: list[str], *, unique: bool = False, name: str | None = None, session: ClientSession | None = None) -> str:
-        return self._client._run(self._async_collection().create_index(fields, unique=unique, name=name, session=session))
+    def create_index(
+        self,
+        keys: object,
+        *,
+        unique: bool = False,
+        name: str | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> str:
+        return self._client._run(
+            self._async_collection().create_index(
+                keys,
+                unique=unique,
+                name=name,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                session=session,
+            )
+        )
 
-    def list_indexes(self, *, session: ClientSession | None = None) -> list[dict[str, object]]:
-        return self._client._run(self._async_collection().list_indexes(session=session))
+    def create_indexes(
+        self,
+        indexes: list[IndexModel],
+        *,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> list[str]:
+        return self._client._run(
+            self._async_collection().create_indexes(
+                indexes,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                session=session,
+            )
+        )
+
+    def list_indexes(
+        self,
+        *,
+        comment: object | None = None,
+        session: ClientSession | None = None,
+    ) -> list[dict[str, object]]:
+        return self._client._run(self._async_collection().list_indexes(comment=comment, session=session))
+
+    def index_information(
+        self,
+        *,
+        comment: object | None = None,
+        session: ClientSession | None = None,
+    ) -> dict[str, dict[str, object]]:
+        return self._client._run(
+            self._async_collection().index_information(comment=comment, session=session)
+        )
+
+    def drop_index(
+        self,
+        index_or_name: str | IndexKeySpec,
+        *,
+        comment: object | None = None,
+        session: ClientSession | None = None,
+    ) -> None:
+        self._client._run(
+            self._async_collection().drop_index(index_or_name, comment=comment, session=session)
+        )
+
+    def drop_indexes(
+        self,
+        *,
+        comment: object | None = None,
+        session: ClientSession | None = None,
+    ) -> None:
+        self._client._run(self._async_collection().drop_indexes(comment=comment, session=session))
 
     def drop(self, *, session: ClientSession | None = None) -> None:
         self._client._run(self._async_collection().drop(session=session))
