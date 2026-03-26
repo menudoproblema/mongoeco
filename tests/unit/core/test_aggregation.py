@@ -527,9 +527,6 @@ class AggregationTests(unittest.TestCase):
             {"$dateToParts": {"date": "$created_at"}},
             {"$dateToString": {"date": "$created_at"}},
             {"$toDate": "$text"},
-            {"$week": "$created_at"},
-            {"$isoWeek": "$created_at"},
-            {"$isoWeekYear": "$created_at"},
             {"$rand": {}},
             {"$sampleRate": 0.5},
             {"$toHashedIndexKey": "$text"},
@@ -804,6 +801,25 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$round": [1.25, 101]})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$trunc": [1.25, True]})
+
+    def test_evaluate_expression_supports_week_variants(self):
+        document = {"created_at": datetime.datetime(2026, 1, 1, 23, 30, 0)}
+
+        self.assertEqual(evaluate_expression(document, {"$week": "$created_at"}), 0)
+        self.assertEqual(
+            evaluate_expression(document, {"$week": {"date": "$created_at", "timezone": "+02:00"}}),
+            0,
+        )
+        self.assertEqual(evaluate_expression(document, {"$isoWeek": "$created_at"}), 1)
+        self.assertEqual(evaluate_expression(document, {"$isoWeekYear": "$created_at"}), 2026)
+
+    def test_evaluate_expression_week_variants_reject_invalid_values(self):
+        document = {"text": "Ada"}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$week": "$text"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$isoWeek": {"timezone": "UTC"}})
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]

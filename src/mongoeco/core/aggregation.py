@@ -1715,6 +1715,31 @@ def evaluate_expression(
                 signed_amount = amount if operator == "$dateAdd" else -amount
                 updated = _add_date_unit(localized, unit, signed_amount)
                 return _restore_datetime_timezone(updated, value)
+            if operator in {"$week", "$isoWeek", "$isoWeekYear"}:
+                timezone_value = None
+                date_expression: Any = spec
+                if isinstance(spec, dict):
+                    if "date" not in spec:
+                        raise OperationFailure(f"{operator} requires a date expression")
+                    date_expression = spec["date"]
+                    timezone_value = (
+                        evaluate_expression(document, spec["timezone"], variables, dialect=dialect)
+                        if "timezone" in spec
+                        else None
+                    )
+                value = _evaluate_expression_with_missing(document, date_expression, variables, dialect=dialect)
+                if value is _MISSING or value is None:
+                    return None
+                if not isinstance(value, datetime.datetime):
+                    raise OperationFailure(f"{operator} requires a date input")
+                timezone = _resolve_timezone(operator, timezone_value)
+                localized = _localize_datetime(value, timezone)
+                if operator == "$week":
+                    return int(localized.strftime("%U"))
+                iso_parts = localized.isocalendar()
+                if operator == "$isoWeek":
+                    return iso_parts.week
+                return iso_parts.year
             if operator == "$dateDiff":
                 if not isinstance(spec, dict) or not {"startDate", "endDate", "unit"} <= set(spec):
                     raise OperationFailure("$dateDiff requires startDate, endDate and unit")

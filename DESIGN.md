@@ -682,6 +682,9 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$dateAdd`
     * `$dateSubtract`
     * `$dateDiff`
+    * `$week`
+    * `$isoWeek`
+    * `$isoWeekYear`
     * `$substrBytes`
     * `$substrCP`
     * `$strLenBytes`

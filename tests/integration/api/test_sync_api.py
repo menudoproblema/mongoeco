@@ -1239,6 +1239,31 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(documents[0]["truncated"], 10)
                     self.assertEqual(documents[0]["root"], 5.0)
 
+    def test_aggregate_supports_week_variants(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "created_at": datetime.datetime(2026, 1, 1, 23, 30, 0)})
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "week": {"$week": "$created_at"},
+                                    "iso_week": {"$isoWeek": "$created_at"},
+                                    "iso_week_year": {"$isoWeekYear": "$created_at"},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "week": 0, "iso_week": 1, "iso_week_year": 2026}],
+                    )
+
     def test_aggregate_supports_sync_iteration(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

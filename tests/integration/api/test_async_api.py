@@ -1346,6 +1346,31 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(documents[0]["truncated"], 10)
                     self.assertEqual(documents[0]["root"], 5.0)
 
+    async def test_aggregate_supports_week_variants(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "created_at": datetime.datetime(2026, 1, 1, 23, 30, 0)})
+
+                    documents = await collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "week": {"$week": "$created_at"},
+                                    "iso_week": {"$isoWeek": "$created_at"},
+                                    "iso_week_year": {"$isoWeekYear": "$created_at"},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "week": 0, "iso_week": 1, "iso_week_year": 2026}],
+                    )
+
     async def test_aggregate_supports_async_iteration_and_validates_pipeline_type(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
