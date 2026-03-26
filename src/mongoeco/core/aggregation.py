@@ -1060,6 +1060,16 @@ def _convert_aggregation_scalar(operator: str, value: Any, target: str) -> Any:
                 raise OperationFailure(f"{operator} cannot convert the string value") from exc
         raise OperationFailure(f"{operator} cannot convert the value")
 
+    if target == "objectId":
+        if isinstance(value, ObjectId):
+            return value
+        if isinstance(value, str):
+            try:
+                return ObjectId(value)
+            except Exception as exc:
+                raise OperationFailure(f"{operator} cannot convert the string value") from exc
+        raise OperationFailure(f"{operator} cannot convert the value")
+
     raise OperationFailure(f"Unsupported conversion target for {operator}")
 
 
@@ -1549,7 +1559,7 @@ def evaluate_expression(
                 if not isinstance(value, str):
                     raise OperationFailure(f"{operator} requires a string argument")
                 return len(value.encode("utf-8")) if operator == "$strLenBytes" else len(value)
-            if operator in {"$toBool", "$toDate", "$toInt", "$toDouble", "$toLong"}:
+            if operator in {"$toBool", "$toDate", "$toInt", "$toDouble", "$toLong", "$toObjectId"}:
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
                 value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
                 target = {
@@ -1558,6 +1568,7 @@ def evaluate_expression(
                     "$toInt": "int",
                     "$toDouble": "double",
                     "$toLong": "long",
+                    "$toObjectId": "objectId",
                 }[operator]
                 return _convert_aggregation_scalar(operator, value, target)
             if operator in {"$toLower", "$toUpper"}:

@@ -684,6 +684,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$type`
     * `$toBool`
     * `$toDate`
+    * `$toObjectId`
     * `$toInt`
     * `$toDouble`
     * `$toLong`

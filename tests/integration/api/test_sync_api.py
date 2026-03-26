@@ -1386,6 +1386,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_aggregate_supports_to_object_id(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "oid_text": "65f0a1000000000000000000"})
+
+                    documents = collection.aggregate(
+                        [{"$project": {"_id": 1, "oid": {"$toObjectId": "$oid_text"}}}]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "oid": ObjectId("65f0a1000000000000000000")}],
+                    )
+
     def test_aggregate_supports_switch_and_bitwise_variants(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

@@ -14,6 +14,7 @@ from mongoeco import (
     InsertOne,
     MongoClient,
     MongoDialect80,
+    ObjectId,
     PyMongoProfile413,
     ReadConcern,
     ReadPreference,
@@ -1491,6 +1492,22 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                 "from_parts": datetime.datetime(2026, 3, 25, 10, 0, 0),
                             }
                         ],
+                    )
+
+    async def test_aggregate_supports_to_object_id(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "oid_text": "65f0a1000000000000000000"})
+
+                    documents = await collection.aggregate(
+                        [{"$project": {"_id": 1, "oid": {"$toObjectId": "$oid_text"}}}]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "oid": ObjectId("65f0a1000000000000000000")}],
                     )
 
     async def test_aggregate_supports_switch_and_bitwise_variants(self):

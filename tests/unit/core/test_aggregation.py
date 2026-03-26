@@ -519,7 +519,6 @@ class AggregationTests(unittest.TestCase):
             {"$sampleRate": 0.5},
             {"$toHashedIndexKey": "$text"},
             {"$toDecimal": "$text"},
-            {"$toObjectId": "$text"},
             {"$function": {"body": "function() { return 1; }", "args": [], "lang": "js"}},
             {"$accumulator": {"init": "function(){}", "accumulate": "function(){}", "accumulateArgs": [], "merge": "function(){}", "finalize": "function(x){return x;}", "lang": "js"}},
         ]
@@ -928,6 +927,10 @@ class AggregationTests(unittest.TestCase):
             datetime.datetime.fromtimestamp(oid.generation_time, tz=datetime.UTC).replace(tzinfo=None),
         )
         self.assertEqual(
+            evaluate_expression(document, {"$toObjectId": "65f0a1000000000000000000"}),
+            oid,
+        )
+        self.assertEqual(
             evaluate_expression(
                 document,
                 {"$dateFromParts": {"year": 2026, "month": 3, "day": 25, "hour": 12, "timezone": "+02:00"}},
@@ -947,6 +950,8 @@ class AggregationTests(unittest.TestCase):
 
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$toDate": "$text"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toObjectId": "$text"})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$dateFromParts": {"year": 2026, "isoWeekYear": 2026}})
         with self.assertRaises(OperationFailure):
