@@ -267,10 +267,83 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     )
                     self.assertNotIn("alpha", await client.list_database_names())
 
+    async def test_database_command_supports_collection_index_count_and_distinct_commands(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    self.assertEqual(
+                        await client.alpha.command({"create": "events", "capped": True}),
+                        {"ok": 1.0},
+                    )
+                    await client.alpha.events.insert_many(
+                        [
+                            {"_id": "1", "kind": "view", "tag": "python"},
+                            {"_id": "2", "kind": "view", "tag": "mongodb"},
+                        ]
+                    )
+                    self.assertEqual(
+                        await client.alpha.command(
+                            {
+                                "createIndexes": "events",
+                                "indexes": [
+                                    {
+                                        "key": {"kind": 1},
+                                        "name": "kind_idx",
+                                    }
+                                ],
+                            }
+                        ),
+                        {
+                            "numIndexesBefore": 1,
+                            "numIndexesAfter": 2,
+                            "createdCollectionAutomatically": False,
+                            "ok": 1.0,
+                        },
+                    )
+                    self.assertEqual(
+                        await client.alpha.command({"count": "events", "query": {"kind": "view"}}),
+                        {"n": 2, "ok": 1.0},
+                    )
+                    self.assertEqual(
+                        await client.alpha.command({"distinct": "events", "key": "tag"}),
+                        {"values": ["python", "mongodb"], "ok": 1.0},
+                    )
+                    self.assertEqual(
+                        await client.alpha.command({"listIndexes": "events"}),
+                        {
+                            "cursor": {
+                                "id": 0,
+                                "ns": "alpha.events",
+                                "firstBatch": [
+                                    {"name": "_id_", "key": {"_id": 1}, "fields": ["_id"], "unique": True},
+                                    {"name": "kind_idx", "key": {"kind": 1}, "fields": ["kind"], "unique": False},
+                                ],
+                            },
+                            "ok": 1.0,
+                        },
+                    )
+                    self.assertEqual(
+                        await client.alpha.command({"dropIndexes": "events", "index": "kind_idx"}),
+                        {"nIndexesWas": 2, "ok": 1.0},
+                    )
+                    self.assertEqual(
+                        await client.alpha.command({"drop": "events"}),
+                        {"ns": "alpha.events", "ok": 1.0},
+                    )
+
     async def test_database_command_rejects_unsupported_commands(self):
         async with open_client("memory") as client:
             with self.assertRaises(OperationFailure):
                 await client.alpha.command("collStats")
+
+    async def test_database_command_rejects_invalid_command_shapes(self):
+        async with open_client("memory") as client:
+            with self.assertRaises(TypeError):
+                await client.alpha.command({"createIndexes": "events", "indexes": ()})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                await client.alpha.command({"distinct": "events", "key": 1})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                await client.alpha.command({"dropIndexes": "events", "index": 1.5})  # type: ignore[arg-type]
 
     async def test_collection_rename_moves_documents_and_indexes(self):
         for engine_name in ENGINE_FACTORIES:

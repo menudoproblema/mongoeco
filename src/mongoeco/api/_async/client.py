@@ -17,6 +17,7 @@ from mongoeco.types import (
     CodecOptions,
     Document,
     Filter,
+    IndexModel,
     ReadConcern,
     ReadPreference,
     TransactionOptions,
@@ -205,6 +206,39 @@ class AsyncDatabase:
             raise TypeError("keyword arguments are only supported when command is a string")
         return command
 
+    @staticmethod
+    def _require_collection_name(value: object, field_name: str) -> str:
+        if not isinstance(value, str) or not value:
+            raise TypeError(f"{field_name} must be a non-empty string")
+        return value
+
+    @staticmethod
+    def _normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
+        if not isinstance(indexes, list) or not indexes:
+            raise TypeError("indexes must be a non-empty list")
+
+        normalized: list[IndexModel] = []
+        for raw_index in indexes:
+            if not isinstance(raw_index, dict):
+                raise TypeError("each index specification must be a dict")
+            if "key" not in raw_index:
+                raise OperationFailure("index specification must contain 'key'")
+
+            unsupported = set(raw_index) - {"key", "name", "unique"}
+            if unsupported:
+                unsupported_names = ", ".join(sorted(unsupported))
+                raise TypeError(
+                    f"unsupported createIndexes options in command: {unsupported_names}"
+                )
+
+            kwargs: dict[str, object] = {}
+            if "name" in raw_index:
+                kwargs["name"] = raw_index["name"]
+            if "unique" in raw_index:
+                kwargs["unique"] = raw_index["unique"]
+            normalized.append(IndexModel(raw_index["key"], **kwargs))
+        return normalized
+
     async def command(
         self,
         command: object,
@@ -232,6 +266,117 @@ class AsyncDatabase:
                     "ns": f"{self._db_name}.$cmd.listCollections",
                     "firstBatch": first_batch,
                 },
+                "ok": 1.0,
+            }
+
+        if command_name == "create":
+            collection_name = self._require_collection_name(spec.get("create"), "create")
+            options = {
+                key: value
+                for key, value in spec.items()
+                if key not in {"create", "$db"}
+            }
+            await self.create_collection(
+                collection_name,
+                session=session,
+                **options,
+            )
+            return {"ok": 1.0}
+
+        if command_name == "drop":
+            collection_name = self._require_collection_name(spec.get("drop"), "drop")
+            await self.drop_collection(collection_name, session=session)
+            return {
+                "ns": f"{self._db_name}.{collection_name}",
+                "ok": 1.0,
+            }
+
+        if command_name == "count":
+            collection_name = self._require_collection_name(spec.get("count"), "count")
+            query = self._normalize_filter(spec.get("query"))
+            count = await self.get_collection(collection_name).count_documents(
+                query,
+                session=session,
+            )
+            return {"n": count, "ok": 1.0}
+
+        if command_name == "distinct":
+            collection_name = self._require_collection_name(
+                spec.get("distinct"),
+                "distinct",
+            )
+            key = spec.get("key")
+            if not isinstance(key, str) or not key:
+                raise TypeError("key must be a non-empty string")
+            query = self._normalize_filter(spec.get("query"))
+            values = await self.get_collection(collection_name).distinct(
+                key,
+                query,
+                session=session,
+            )
+            return {"values": values, "ok": 1.0}
+
+        if command_name == "listIndexes":
+            collection_name = self._require_collection_name(
+                spec.get("listIndexes"),
+                "listIndexes",
+            )
+            first_batch = await self.get_collection(collection_name).list_indexes(
+                session=session,
+            ).to_list()
+            return {
+                "cursor": {
+                    "id": 0,
+                    "ns": f"{self._db_name}.{collection_name}",
+                    "firstBatch": first_batch,
+                },
+                "ok": 1.0,
+            }
+
+        if command_name == "createIndexes":
+            collection_name = self._require_collection_name(
+                spec.get("createIndexes"),
+                "createIndexes",
+            )
+            indexes = self._normalize_index_models_from_command(spec.get("indexes"))
+            collection_names_before = set(
+                await self._engine.list_collections(self._db_name, context=session)
+            )
+            collection = self.get_collection(collection_name)
+            info_before = await collection.index_information(session=session)
+            await collection.create_indexes(indexes, session=session)
+            info_after = await collection.index_information(session=session)
+            result: dict[str, object] = {
+                "numIndexesBefore": len(info_before),
+                "numIndexesAfter": len(info_after),
+                "createdCollectionAutomatically": collection_name not in collection_names_before,
+                "ok": 1.0,
+            }
+            if len(info_before) == len(info_after):
+                result["note"] = "all indexes already exist"
+            return result
+
+        if command_name == "dropIndexes":
+            collection_name = self._require_collection_name(
+                spec.get("dropIndexes"),
+                "dropIndexes",
+            )
+            target = spec.get("index")
+            collection = self.get_collection(collection_name)
+            info_before = await collection.index_information(session=session)
+            if target == "*":
+                await collection.drop_indexes(session=session)
+            elif isinstance(target, (str, list, tuple, dict)):
+                await collection.drop_index(target, session=session)
+            else:
+                raise TypeError("index must be '*', a name, or a key specification")
+            info_after = await collection.index_information(session=session)
+            return {
+                "nIndexesWas": len(info_before),
+                "ok": 1.0,
+                "msg": f"non-_id indexes for collection {self._db_name}.{collection_name} dropped",
+            } if target == "*" else {
+                "nIndexesWas": len(info_before),
                 "ok": 1.0,
             }
 

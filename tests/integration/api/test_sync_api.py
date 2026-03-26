@@ -177,10 +177,83 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     )
                     self.assertNotIn("alpha", client.list_database_names())
 
+    def test_database_command_supports_collection_index_count_and_distinct_commands(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    self.assertEqual(
+                        client.alpha.command({"create": "events", "capped": True}),
+                        {"ok": 1.0},
+                    )
+                    client.alpha.events.insert_many(
+                        [
+                            {"_id": "1", "kind": "view", "tag": "python"},
+                            {"_id": "2", "kind": "view", "tag": "mongodb"},
+                        ]
+                    )
+                    self.assertEqual(
+                        client.alpha.command(
+                            {
+                                "createIndexes": "events",
+                                "indexes": [
+                                    {
+                                        "key": {"kind": 1},
+                                        "name": "kind_idx",
+                                    }
+                                ],
+                            }
+                        ),
+                        {
+                            "numIndexesBefore": 1,
+                            "numIndexesAfter": 2,
+                            "createdCollectionAutomatically": False,
+                            "ok": 1.0,
+                        },
+                    )
+                    self.assertEqual(
+                        client.alpha.command({"count": "events", "query": {"kind": "view"}}),
+                        {"n": 2, "ok": 1.0},
+                    )
+                    self.assertEqual(
+                        client.alpha.command({"distinct": "events", "key": "tag"}),
+                        {"values": ["python", "mongodb"], "ok": 1.0},
+                    )
+                    self.assertEqual(
+                        client.alpha.command({"listIndexes": "events"}),
+                        {
+                            "cursor": {
+                                "id": 0,
+                                "ns": "alpha.events",
+                                "firstBatch": [
+                                    {"name": "_id_", "key": {"_id": 1}, "fields": ["_id"], "unique": True},
+                                    {"name": "kind_idx", "key": {"kind": 1}, "fields": ["kind"], "unique": False},
+                                ],
+                            },
+                            "ok": 1.0,
+                        },
+                    )
+                    self.assertEqual(
+                        client.alpha.command({"dropIndexes": "events", "index": "kind_idx"}),
+                        {"nIndexesWas": 2, "ok": 1.0},
+                    )
+                    self.assertEqual(
+                        client.alpha.command({"drop": "events"}),
+                        {"ns": "alpha.events", "ok": 1.0},
+                    )
+
     def test_database_command_rejects_unsupported_commands(self):
         with MongoClient(MemoryEngine()) as client:
             with self.assertRaises(OperationFailure):
                 client.alpha.command("collStats")
+
+    def test_database_command_rejects_invalid_command_shapes(self):
+        with MongoClient(MemoryEngine()) as client:
+            with self.assertRaises(TypeError):
+                client.alpha.command({"createIndexes": "events", "indexes": ()})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command({"distinct": "events", "key": 1})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command({"dropIndexes": "events", "index": 1.5})  # type: ignore[arg-type]
 
     def test_collection_rename_moves_documents_and_indexes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
