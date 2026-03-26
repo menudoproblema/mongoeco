@@ -7,6 +7,7 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.core.paths import _same_value_for_update, delete_document_value, get_document_value, set_document_value
+from mongoeco.core.update_paths import parse_update_path
 
 
 class UpdateEngine:
@@ -109,16 +110,24 @@ class UpdateEngine:
 
     @staticmethod
     def _assert_mutable_path(path: str) -> None:
-        if path == "_id" or path.startswith("_id."):
+        segments = parse_update_path(path)
+        if segments[0].raw == "_id":
             raise OperationFailure("Modifying the immutable field '_id' is not allowed")
-        for segment in path.split("."):
-            if segment == "$" or (segment.startswith("$[") and segment.endswith("]")):
+        for segment in segments:
+            if segment.kind in {"positional", "all_positional", "filtered_positional"}:
                 raise OperationFailure("Positional and array-filter update paths are not supported")
 
     @staticmethod
     def _assert_rename_path(path: str) -> None:
-        UpdateEngine._assert_mutable_path(path)
-        if any(segment.isdigit() for segment in path.split(".")):
+        segments = parse_update_path(path)
+        if segments[0].raw == "_id":
+            raise OperationFailure("Modifying the immutable field '_id' is not allowed")
+        if any(
+            segment.kind in {"positional", "all_positional", "filtered_positional"}
+            for segment in segments
+        ):
+            raise OperationFailure("Positional and array-filter update paths are not supported")
+        if any(segment.kind == "index" for segment in segments):
             raise OperationFailure("$rename does not support embedded documents in arrays")
 
     @staticmethod
