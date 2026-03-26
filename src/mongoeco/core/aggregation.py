@@ -654,6 +654,28 @@ def _substr_code_points(value: str, start: int, length: int) -> str:
     return value[start:end]
 
 
+def _normalize_index_bounds(operator: str, start: Any, end: Any, upper_bound: int) -> tuple[int, int]:
+    if start is None:
+        start_index = 0
+    else:
+        if not isinstance(start, int) or isinstance(start, bool):
+            raise OperationFailure(f"{operator} start must be an integer")
+        if start < 0:
+            raise OperationFailure(f"{operator} start must be a non-negative integer")
+        start_index = start
+    if end is None:
+        end_index = upper_bound
+    else:
+        if not isinstance(end, int) or isinstance(end, bool):
+            raise OperationFailure(f"{operator} end must be an integer")
+        if end < 0:
+            raise OperationFailure(f"{operator} end must be a non-negative integer")
+        end_index = end
+    if start_index > upper_bound:
+        return upper_bound, upper_bound
+    return start_index, min(end_index, upper_bound)
+
+
 def _add_milliseconds(value: datetime.datetime, milliseconds: int | float) -> datetime.datetime:
     return value + datetime.timedelta(milliseconds=milliseconds)
 
@@ -1441,6 +1463,38 @@ def evaluate_expression(
                     if QueryEngine._values_equal(value, needle, dialect=dialect):
                         return index
                 return -1
+            if operator in {"$indexOfBytes", "$indexOfCP"}:
+                args = _require_expression_args(operator, spec, min_args=2, max_args=4)
+                source = evaluate_expression(document, args[0], variables, dialect=dialect)
+                substring = evaluate_expression(document, args[1], variables, dialect=dialect)
+                if source is None:
+                    return None
+                if not isinstance(source, str) or not isinstance(substring, str):
+                    raise OperationFailure(f"{operator} requires string arguments")
+                start = evaluate_expression(document, args[2], variables, dialect=dialect) if len(args) >= 3 else None
+                end = evaluate_expression(document, args[3], variables, dialect=dialect) if len(args) == 4 else None
+                if operator == "$indexOfBytes":
+                    source_bytes = source.encode("utf-8")
+                    substring_bytes = substring.encode("utf-8")
+                    start_index, end_index = _normalize_index_bounds(operator, start, end, len(source_bytes))
+                    if start_index > end_index:
+                        return -1
+                    found = source_bytes.find(substring_bytes, start_index, end_index)
+                    return found
+                start_index, end_index = _normalize_index_bounds(operator, start, end, len(source))
+                if start_index > end_index:
+                    return -1
+                return source.find(substring, start_index, end_index)
+            if operator == "$binarySize":
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
+                if value is _MISSING or value is None:
+                    return None
+                if isinstance(value, (bytes, bytearray)):
+                    return len(value)
+                if isinstance(value, uuid.UUID):
+                    return len(value.bytes)
+                raise OperationFailure("$binarySize requires a BinData argument")
             if operator == "$sortArray":
                 if not isinstance(spec, dict) or "input" not in spec or "sortBy" not in spec:
                     raise OperationFailure("$sortArray requires input and sortBy")

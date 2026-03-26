@@ -1248,6 +1248,31 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [{"_id": "1", "byte_substr": "é", "cp_substr": "寿司", "byte_len": 9, "cp_len": 4}],
                     )
 
+    async def test_aggregate_supports_string_index_and_binary_size_variants(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "text": "é寿司A", "blob": b"abcd"})
+
+                    documents = await collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "byte_index": {"$indexOfBytes": ["$text", "寿", 0, 9]},
+                                    "cp_index": {"$indexOfCP": ["$text", "司A", 0, 4]},
+                                    "blob_size": {"$binarySize": "$blob"},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "byte_index": 2, "cp_index": 2, "blob_size": 4}],
+                    )
+
     async def test_aggregate_supports_async_iteration_and_validates_pipeline_type(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

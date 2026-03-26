@@ -116,6 +116,8 @@ SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
         '$reduce',
         '$arrayToObject',
         '$indexOfArray',
+        '$indexOfBytes',
+        '$indexOfCP',
         '$sortArray',
         '$dateTrunc',
         '$dateAdd',
@@ -125,6 +127,7 @@ SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
         '$getField',
         '$isNumber',
         '$type',
+        '$binarySize',
     }
 )
 

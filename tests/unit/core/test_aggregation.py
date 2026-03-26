@@ -497,8 +497,6 @@ class AggregationTests(unittest.TestCase):
             {"$setField": {"field": "name", "input": "$$ROOT", "value": "Ada"}},
             {"$percentile": {"input": "$value", "p": [0.5], "method": "approximate"}},
             {"$median": {"input": "$value", "method": "approximate"}},
-            {"$indexOfBytes": ["$value", "1"]},
-            {"$indexOfCP": ["$value", "1"]},
         ]
 
         for spec in unsupported_specs:
@@ -531,7 +529,6 @@ class AggregationTests(unittest.TestCase):
             {"$bitOr": [7, 3]},
             {"$bitXor": [7, 3]},
             {"$switch": {"branches": [], "default": 0}},
-            {"$binarySize": "$text"},
             {"$bsonSize": "$$ROOT"},
             {"$dateFromParts": {"year": 2026}},
             {"$dateFromString": {"dateString": "2026-03-25T10:00:00Z"}},
@@ -730,6 +727,26 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$strLenBytes": "$missing"})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$strLenCP": "$items"})
+
+    def test_evaluate_expression_supports_string_index_and_binary_size_variants(self):
+        document = {"text": "é寿司A", "blob": b"abcd", "uuid": uuid.UUID("12345678-1234-5678-1234-567812345678")}
+
+        self.assertEqual(evaluate_expression(document, {"$indexOfBytes": ["$text", "寿", 0, 9]}), 2)
+        self.assertEqual(evaluate_expression(document, {"$indexOfCP": ["$text", "司A", 0, 4]}), 2)
+        self.assertEqual(evaluate_expression(document, {"$indexOfCP": ["$text", "x"]}), -1)
+        self.assertEqual(evaluate_expression(document, {"$binarySize": "$blob"}), 4)
+        self.assertEqual(evaluate_expression(document, {"$binarySize": "$uuid"}), 16)
+        self.assertIsNone(evaluate_expression(document, {"$binarySize": "$missing"}))
+
+    def test_evaluate_expression_index_and_binary_size_variants_reject_invalid_values(self):
+        document = {"text": "é寿司A", "blob": b"abcd", "items": [1]}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$indexOfBytes": ["$text", "寿", -1]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$indexOfCP": ["$items", "1"]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$binarySize": "$text"})
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]

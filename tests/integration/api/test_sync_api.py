@@ -1141,6 +1141,31 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"_id": "1", "byte_substr": "é", "cp_substr": "寿司", "byte_len": 9, "cp_len": 4}],
                     )
 
+    def test_aggregate_supports_string_index_and_binary_size_variants(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "text": "é寿司A", "blob": b"abcd"})
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "byte_index": {"$indexOfBytes": ["$text", "寿", 0, 9]},
+                                    "cp_index": {"$indexOfCP": ["$text", "司A", 0, 4]},
+                                    "blob_size": {"$binarySize": "$blob"},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "byte_index": 2, "cp_index": 2, "blob_size": 4}],
+                    )
+
     def test_aggregate_supports_sync_iteration(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

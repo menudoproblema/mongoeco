@@ -677,6 +677,9 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$substrCP`
     * `$strLenBytes`
     * `$strLenCP`
+    * `$indexOfBytes`
+    * `$indexOfCP`
+    * `$binarySize`
   * más stages
   * más acumuladores
   * más expresiones
