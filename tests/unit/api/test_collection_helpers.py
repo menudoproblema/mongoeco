@@ -9,7 +9,10 @@ from mongoeco.core.upserts import _seed_filter_value, seed_upsert_document
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure
-from mongoeco.types import DeleteMany, DeleteOne, InsertOne, ReplaceOne, ReturnDocument, UpdateMany, UpdateOne
+from mongoeco.types import (
+    DeleteMany, DeleteOne, DeleteResult, InsertOne, ReplaceOne, ReturnDocument,
+    UpdateMany, UpdateOne, UpdateResult,
+)
 
 
 class AsyncCollectionHelperTests(unittest.TestCase):
@@ -55,6 +58,32 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             self.collection.find(sort="name")  # type: ignore[arg-type]
         with self.assertRaises(ValueError):
             self.collection.find(sort=[("name", 2)])  # type: ignore[list-item]
+        with self.assertRaises(TypeError):
+            self.collection.aggregate([], let="bad")  # type: ignore[arg-type]
+
+    def test_write_operations_validate_hint_max_time_ms_and_let(self):
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.update_one({}, {"$set": {"done": True}}, hint=1))  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.replace_one({}, {"done": True}, let="bad"))  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.delete_one({}, hint=1.5))  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.bulk_write([DeleteOne({})], let="bad"))  # type: ignore[arg-type]
+
+    def test_write_operations_reject_unsupported_max_time_ms_surface(self):
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.update_one({}, {"$set": {"done": True}}, max_time_ms=5))  # type: ignore[call-arg]
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.update_many({}, {"$set": {"done": True}}, max_time_ms=5))  # type: ignore[call-arg]
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.replace_one({}, {"done": True}, max_time_ms=5))  # type: ignore[call-arg]
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.delete_one({}, max_time_ms=5))  # type: ignore[call-arg]
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.delete_many({}, max_time_ms=5))  # type: ignore[call-arg]
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.bulk_write([DeleteOne({})], max_time_ms=5))  # type: ignore[call-arg]
 
     def test_seed_upsert_document_rejects_conflicting_paths(self):
         with self.assertRaises(OperationFailure):
@@ -304,6 +333,23 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         self.assertEqual(ctx.exception.details["nInserted"], 1)
         self.assertEqual(ctx.exception.details["nModified"], 0)
 
+    def test_bulk_write_rejects_sort_write_models_for_older_profile(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll", pymongo_profile="4.9")
+                await collection.bulk_write(
+                    [
+                        UpdateOne({"_id": "1"}, {"$set": {"done": True}}, sort=[("rank", 1)]),
+                    ]
+                )
+            finally:
+                await engine.disconnect()
+
+        with self.assertRaises(TypeError):
+            asyncio.run(_exercise())
+
     def test_bulk_write_unordered_collects_later_successes(self):
         async def _exercise():
             engine = MemoryEngine()
@@ -361,6 +407,117 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         self.assertEqual(error.details["writeErrors"][0]["index"], 0)
         self.assertEqual(error.details["nModified"], 1)
         self.assertEqual(document, {"_id": "1", "name": "Ada", "done": True})
+
+    def test_bulk_write_propagates_request_and_bulk_level_write_options(self):
+        class EngineStub:
+            pass
+
+        async def _exercise():
+            collection = AsyncCollection(EngineStub(), "db", "coll")
+            recorded: list[tuple[str, dict[str, object | None]]] = []
+
+            async def _update_one(*args, **kwargs):
+                recorded.append(("update_one", kwargs))
+                return UpdateResult(matched_count=1, modified_count=1)
+
+            async def _update_many(*args, **kwargs):
+                recorded.append(("update_many", kwargs))
+                return UpdateResult(matched_count=2, modified_count=2)
+
+            async def _replace_one(*args, **kwargs):
+                recorded.append(("replace_one", kwargs))
+                return UpdateResult(matched_count=1, modified_count=1)
+
+            async def _delete_one(*args, **kwargs):
+                recorded.append(("delete_one", kwargs))
+                return DeleteResult(deleted_count=1)
+
+            async def _delete_many(*args, **kwargs):
+                recorded.append(("delete_many", kwargs))
+                return DeleteResult(deleted_count=2)
+
+            collection.update_one = _update_one  # type: ignore[method-assign]
+            collection.update_many = _update_many  # type: ignore[method-assign]
+            collection.replace_one = _replace_one  # type: ignore[method-assign]
+            collection.delete_one = _delete_one  # type: ignore[method-assign]
+            collection.delete_many = _delete_many  # type: ignore[method-assign]
+
+            result = await collection.bulk_write(
+                [
+                    UpdateOne(
+                        {"kind": "one"},
+                        {"$set": {"done": True}},
+                        hint="req_hint",
+                        comment="req_comment",
+                        let={"scope": "request"},
+                    ),
+                    UpdateMany({"kind": "many"}, {"$set": {"done": True}}),
+                    ReplaceOne({"kind": "replace"}, {"done": True}),
+                    DeleteOne({"kind": "delete-one"}),
+                    DeleteMany({"kind": "delete-many"}),
+                ],
+                comment="bulk_comment",
+                let={"scope": "bulk"},
+            )
+            return result, recorded
+
+        result, recorded = asyncio.run(_exercise())
+
+        self.assertEqual(result.matched_count, 4)
+        self.assertEqual(result.modified_count, 4)
+        self.assertEqual(result.deleted_count, 3)
+        self.assertEqual(
+            recorded,
+            [
+                (
+                    "update_one",
+                    {
+                        "sort": None,
+                        "hint": "req_hint",
+                        "comment": "req_comment",
+                        "let": {"scope": "request"},
+                        "session": None,
+                    },
+                ),
+                (
+                    "update_many",
+                    {
+                        "hint": None,
+                        "comment": "bulk_comment",
+                        "let": {"scope": "bulk"},
+                        "session": None,
+                    },
+                ),
+                (
+                    "replace_one",
+                    {
+                        "sort": None,
+                        "hint": None,
+                        "comment": "bulk_comment",
+                        "let": {"scope": "bulk"},
+                        "session": None,
+                    },
+                ),
+                (
+                    "delete_one",
+                    {
+                        "hint": None,
+                        "comment": "bulk_comment",
+                        "let": {"scope": "bulk"},
+                        "session": None,
+                    },
+                ),
+                (
+                    "delete_many",
+                    {
+                        "hint": None,
+                        "comment": "bulk_comment",
+                        "let": {"scope": "bulk"},
+                        "session": None,
+                    },
+                ),
+            ],
+        )
 
     def test_distinct_includes_null_once_for_missing_fields(self):
         async def _exercise():
@@ -701,6 +858,14 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                     return_document="after",  # type: ignore[arg-type]
                 )
             )
+        with self.assertRaises(TypeError):
+            asyncio.run(
+                self.collection.find_one_and_update(
+                    {"name": "Ada"},
+                    {"$set": {"name": "Grace"}},
+                    let="bad",  # type: ignore[arg-type]
+                )
+            )
 
     def test_find_one_and_update_returns_none_when_nothing_matches_without_upsert(self):
         class EngineStub:
@@ -796,6 +961,166 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         result = asyncio.run(collection.find_one_and_delete({"name": "missing"}))
 
         self.assertIsNone(result)
+
+    def test_find_one_and_update_replace_and_delete_accept_option_surface(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll", pymongo_profile="4.11")
+                await collection.insert_one({"_id": "1", "name": "Ada", "done": False})
+                updated = await collection.find_one_and_update(
+                    {"_id": "1"},
+                    {"$set": {"done": True}},
+                    return_document=ReturnDocument.AFTER,
+                    hint="_id_1",
+                    comment="trace",
+                    max_time_ms=5,
+                    let={"tenant": "a"},
+                )
+                replaced = await collection.find_one_and_replace(
+                    {"_id": "1"},
+                    {"name": "Ada", "done": False},
+                    return_document=ReturnDocument.AFTER,
+                    hint="_id_1",
+                    comment="trace",
+                    max_time_ms=5,
+                    let={"tenant": "a"},
+                )
+                deleted = await collection.find_one_and_delete(
+                    {"_id": "1"},
+                    hint="_id_1",
+                    comment="trace",
+                    max_time_ms=5,
+                    let={"tenant": "a"},
+                )
+                return updated, replaced, deleted
+            finally:
+                await engine.disconnect()
+
+        updated, replaced, deleted = asyncio.run(_exercise())
+
+        self.assertEqual(updated["done"], True)
+        self.assertEqual(replaced["done"], False)
+        self.assertEqual(deleted["_id"], "1")
+
+    def test_update_replace_and_delete_accept_and_propagate_option_surface(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll", pymongo_profile="4.11")
+                await collection.insert_many(
+                    [
+                        {"_id": "1", "kind": "view", "rank": 2, "done": False},
+                        {"_id": "2", "kind": "view", "rank": 1, "done": False},
+                        {"_id": "3", "kind": "replace", "done": False},
+                        {"_id": "4", "kind": "delete"},
+                    ]
+                )
+
+                recorded_find: list[dict[str, object | None]] = []
+                recorded_select: list[dict[str, object | None]] = []
+                original_find = collection.find
+                original_select = collection._select_first_document
+
+                def _wrapped_find(*args, **kwargs):
+                    recorded_find.append(
+                        {
+                            "hint": kwargs.get("hint"),
+                            "comment": kwargs.get("comment"),
+                        }
+                    )
+                    return original_find(*args, **kwargs)
+
+                async def _wrapped_select(*args, **kwargs):
+                    recorded_select.append(
+                        {
+                            "hint": kwargs.get("hint"),
+                            "comment": kwargs.get("comment"),
+                        }
+                    )
+                    return await original_select(*args, **kwargs)
+
+                collection.find = _wrapped_find  # type: ignore[method-assign]
+                collection._select_first_document = _wrapped_select  # type: ignore[method-assign]
+
+                update_one_result = await collection.update_one(
+                    {"kind": "view"},
+                    {"$set": {"done": True}},
+                    sort=[("rank", 1)],
+                    hint="kind_rank_idx",
+                    comment="trace-update-one",
+                    let={"tenant": "a"},
+                )
+                update_many_result = await collection.update_many(
+                    {"kind": "view"},
+                    {"$set": {"tag": "seen"}},
+                    hint="kind_idx",
+                    comment="trace-update-many",
+                    let={"tenant": "a"},
+                )
+                replace_one_result = await collection.replace_one(
+                    {"kind": "replace"},
+                    {"kind": "replace", "done": True},
+                    hint="replace_idx",
+                    comment="trace-replace",
+                    let={"tenant": "a"},
+                )
+                delete_one_result = await collection.delete_one(
+                    {"_id": "4"},
+                    hint="_id_",
+                    comment="trace-delete-one",
+                    let={"tenant": "a"},
+                )
+                delete_many_result = await collection.delete_many(
+                    {"kind": "view"},
+                    hint="kind_idx",
+                    comment="trace-delete-many",
+                    let={"tenant": "a"},
+                )
+                return (
+                    update_one_result,
+                    update_many_result,
+                    replace_one_result,
+                    delete_one_result,
+                    delete_many_result,
+                    recorded_find,
+                    recorded_select,
+                )
+            finally:
+                await engine.disconnect()
+
+        (
+            update_one_result,
+            update_many_result,
+            replace_one_result,
+            delete_one_result,
+            delete_many_result,
+            recorded_find,
+            recorded_select,
+        ) = asyncio.run(_exercise())
+
+        self.assertEqual(update_one_result.modified_count, 1)
+        self.assertEqual(update_many_result.modified_count, 2)
+        self.assertEqual(replace_one_result.modified_count, 1)
+        self.assertEqual(delete_one_result.deleted_count, 1)
+        self.assertEqual(delete_many_result.deleted_count, 2)
+        self.assertEqual(
+            recorded_find,
+            [
+                {"hint": "kind_rank_idx", "comment": "trace-update-one"},
+                {"hint": "kind_idx", "comment": "trace-update-many"},
+                {"hint": "replace_idx", "comment": "trace-replace"},
+                {"hint": "kind_idx", "comment": "trace-delete-many"},
+            ],
+        )
+        self.assertEqual(
+            recorded_select,
+            [
+                {"hint": "replace_idx", "comment": "trace-replace"},
+            ],
+        )
 
     def test_distinct_rejects_non_string_key(self):
         with self.assertRaises(TypeError):

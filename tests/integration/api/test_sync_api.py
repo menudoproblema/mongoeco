@@ -1406,7 +1406,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     with self.assertRaises(DuplicateKeyError):
                         collection.insert_one({"_id": "2", "profile": {"email": "a@example.com"}})
 
-    def test_sync_client_exposes_session_placeholder_and_accepts_it(self):
+    def test_sync_client_exposes_client_session_and_accepts_it(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -1440,7 +1440,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
             self.assertEqual(found["name"], "Ada")
 
-    def test_sync_session_transaction_placeholder_round_trip(self):
+    def test_sync_session_transaction_round_trip(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -1449,9 +1449,41 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     session.start_transaction()
                     self.assertTrue(session.transaction_active)
                     client.test.users.insert_one({"_id": "1", "name": "Ada"}, session=session)
-                    session.end_transaction()
+                    session.commit_transaction()
 
                     self.assertFalse(session.transaction_active)
+
+    def test_sync_session_with_transaction_commits_and_returns_result(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    session = client.start_session()
+
+                    def _run(active: ClientSession) -> str:
+                        client.test.users.insert_one({"_id": "1", "name": "Ada"}, session=active)
+                        return "ok"
+
+                    result = session.with_transaction(_run)
+
+                    self.assertEqual(result, "ok")
+                    self.assertFalse(session.in_transaction)
+                    self.assertEqual(client.test.users.count_documents({}), 1)
+
+    def test_sync_sqlite_session_transaction_is_isolated_and_abortable(self):
+        with MongoClient(SQLiteEngine()) as client:
+            session = client.start_session()
+            self.assertTrue(session.get_engine_state(next(iter(session.engine_state)))["supports_transactions"])
+
+            session.start_transaction()
+            client.test.users.insert_one({"_id": "1", "name": "Ada"}, session=session)
+
+            self.assertEqual(client.test.users.count_documents({}, session=session), 1)
+            with self.assertRaises(InvalidOperation):
+                client.test.users.count_documents({})
+
+            session.abort_transaction()
+
+            self.assertEqual(client.test.users.count_documents({}), 0)
 
     def test_update_and_delete_support_embedded_document_id(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

@@ -4,6 +4,7 @@ from unittest.mock import patch
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.core.projections import apply_projection
+from mongoeco.core.query_plan import MatchAll
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import InvalidOperation
 
@@ -11,6 +12,7 @@ from mongoeco.errors import InvalidOperation
 class _FakeAsyncFindCursor:
     def __init__(self, documents):
         self._documents = documents
+        self._plan = MatchAll()
 
     async def to_list(self):
         return list(self._documents)
@@ -20,8 +22,24 @@ class _FakeCollection:
     def __init__(self, documents):
         self._documents = documents
         self.calls = []
+        self._engine = _FakeEngine()
+        self._db_name = "db"
+        self._collection_name = "coll"
 
-    def find(self, filter_spec=None, projection=None, *, sort=None, skip=0, limit=None, session=None):
+    def find(
+        self,
+        filter_spec=None,
+        projection=None,
+        *,
+        sort=None,
+        skip=0,
+        limit=None,
+        hint=None,
+        comment=None,
+        max_time_ms=None,
+        batch_size=None,
+        session=None,
+    ):
         self.calls.append(
             {
                 "filter_spec": filter_spec,
@@ -29,6 +47,10 @@ class _FakeCollection:
                 "sort": sort,
                 "skip": skip,
                 "limit": limit,
+                "hint": hint,
+                "comment": comment,
+                "max_time_ms": max_time_ms,
+                "batch_size": batch_size,
                 "session": session,
             }
         )
@@ -41,6 +63,15 @@ class _FakeCollection:
         if projection is not None:
             documents = [apply_projection(document, projection) for document in documents]
         return _FakeAsyncFindCursor(documents)
+
+
+class _FakeEngine:
+    def __init__(self):
+        self.explain_calls = []
+
+    async def explain_query_plan(self, *args, **kwargs):
+        self.explain_calls.append((args, kwargs))
+        return {"engine": "fake", "details": ["SCAN"]}
 
 
 class _SyncClientStub:
@@ -163,6 +194,10 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                     "sort": [("rank", 1)],
                     "skip": 1,
                     "limit": 1,
+                    "hint": None,
+                    "comment": None,
+                    "max_time_ms": None,
+                    "batch_size": None,
                     "session": None,
                 }
             ],
@@ -195,11 +230,55 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                     "sort": None,
                     "skip": 0,
                     "limit": None,
+                    "hint": None,
+                    "comment": None,
+                    "max_time_ms": None,
+                    "batch_size": None,
                     "session": None,
                 }
             ],
         )
         self.assertEqual(documents, [{"kind": "click"}, {"kind": "view"}])
+
+    async def test_materialize_propagates_aggregate_cursor_options_to_find(self):
+        collection = _FakeCollection([{"_id": "1", "kind": "view"}])
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$match": {"kind": "view"}}],
+            hint="kind_1",
+            comment="trace",
+            max_time_ms=5,
+            batch_size=10,
+            let={"tenant": "a"},
+        )
+
+        await cursor.to_list()
+
+        self.assertEqual(collection.calls[0]["hint"], "kind_1")
+        self.assertEqual(collection.calls[0]["comment"], "trace")
+        self.assertEqual(collection.calls[0]["max_time_ms"], 5)
+        self.assertEqual(collection.calls[0]["batch_size"], 10)
+
+    async def test_async_aggregation_cursor_explain_includes_engine_plan_and_options(self):
+        collection = _FakeCollection([{"_id": "1", "kind": "view"}])
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$match": {"kind": "view"}}],
+            hint="kind_1",
+            comment="trace",
+            max_time_ms=5,
+            batch_size=10,
+            let={"tenant": "a"},
+        )
+
+        explanation = await cursor.explain()
+
+        self.assertEqual(explanation["engine_plan"], {"engine": "fake", "details": ["SCAN"]})
+        self.assertEqual(explanation["hint"], "kind_1")
+        self.assertEqual(explanation["comment"], "trace")
+        self.assertEqual(explanation["max_time_ms"], 5)
+        self.assertEqual(explanation["batch_size"], 10)
+        self.assertEqual(explanation["let"], {"tenant": "a"})
 
 
 class SyncAggregationCursorTests(unittest.TestCase):
@@ -224,6 +303,15 @@ class SyncAggregationCursorTests(unittest.TestCase):
             cursor.to_list()
         with self.assertRaises(InvalidOperation):
             list(cursor)
+
+    def test_explain_delegates_to_async_cursor(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
+        async def _explain():
+            return {"engine": "fake", "details": ["SCAN"]}
+        async_cursor.explain = _explain  # type: ignore[method-assign]
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+
+        self.assertEqual(cursor.explain(), {"engine": "fake", "details": ["SCAN"]})
 
     def test_iteration_closes_active_async_iterator_on_early_break(self):
         async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])

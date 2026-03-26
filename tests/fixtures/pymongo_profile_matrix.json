@@ -1,0 +1,110 @@
+{
+  "generated_from": [
+    "PyMongo 4.9.2",
+    "PyMongo 4.11.3",
+    "PyMongo 4.13.2"
+  ],
+  "scope": {
+    "write_methods": [
+      "update_one",
+      "update_many",
+      "replace_one",
+      "delete_one",
+      "delete_many",
+      "find_one_and_update",
+      "find_one_and_replace",
+      "find_one_and_delete",
+      "bulk_write"
+    ],
+    "aggregate": [
+      "hint",
+      "comment",
+      "maxTimeMS",
+      "batchSize",
+      "let"
+    ]
+  },
+  "confirmed_baseline_4_9_plus": {
+    "update_one": [
+      "hint",
+      "comment",
+      "let"
+    ],
+    "update_many": [
+      "hint",
+      "comment",
+      "let"
+    ],
+    "replace_one": [
+      "hint",
+      "comment",
+      "let"
+    ],
+    "delete_one": [
+      "hint",
+      "comment",
+      "let"
+    ],
+    "delete_many": [
+      "hint",
+      "comment",
+      "let"
+    ],
+    "find_one_and_update": [
+      "hint",
+      "comment",
+      "max_time_ms",
+      "let"
+    ],
+    "find_one_and_replace": [
+      "hint",
+      "comment",
+      "max_time_ms",
+      "let"
+    ],
+    "find_one_and_delete": [
+      "hint",
+      "comment",
+      "max_time_ms",
+      "let"
+    ],
+    "bulk_write": [
+      "comment",
+      "let",
+      "UpdateOne.hint",
+      "DeleteOne.hint"
+    ],
+    "aggregate": [
+      "hint",
+      "comment",
+      "max_time_ms",
+      "batch_size",
+      "let"
+    ]
+  },
+  "confirmed_profile_deltas": {
+    "4.11_plus": [
+      "update_one.sort",
+      "replace_one.sort",
+      "bulk_write.UpdateOne.sort",
+      "bulk_write.ReplaceOne.sort"
+    ]
+  },
+  "confirmed_unsupported_in_4_9_to_4_13": {
+    "update_one": [
+      "max_time_ms"
+    ],
+    "update_many": [
+      "max_time_ms"
+    ],
+    "replace_one": [
+      "max_time_ms"
+    ],
+    "delete_one": [
+      "max_time_ms"
+    ],
+    "delete_many": [
+      "max_time_ms"
+    ]
+  }
+}

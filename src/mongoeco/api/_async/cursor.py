@@ -5,6 +5,9 @@ from mongoeco.session import ClientSession
 from mongoeco.types import Document, Filter, Projection, SortSpec
 
 
+type HintSpec = str | SortSpec
+
+
 def _validate_sort_spec(sort: SortSpec) -> None:
     if not isinstance(sort, list):
         raise TypeError("sort must be a list of (field, direction) tuples")
@@ -16,6 +19,28 @@ def _validate_sort_spec(sort: SortSpec) -> None:
             raise TypeError("sort fields must be strings")
         if direction not in (1, -1) or isinstance(direction, bool):
             raise ValueError("sort directions must be 1 or -1")
+
+
+def _validate_hint_spec(hint: HintSpec) -> None:
+    if isinstance(hint, str):
+        if not hint:
+            raise ValueError("hint string must not be empty")
+        return
+    _validate_sort_spec(hint)
+
+
+def _validate_batch_size(batch_size: int) -> None:
+    if not isinstance(batch_size, int) or isinstance(batch_size, bool):
+        raise TypeError("batch_size must be an integer")
+    if batch_size < 0:
+        raise ValueError("batch_size must be >= 0")
+
+
+def _validate_max_time_ms(max_time_ms: int) -> None:
+    if not isinstance(max_time_ms, int) or isinstance(max_time_ms, bool):
+        raise TypeError("max_time_ms must be an integer")
+    if max_time_ms < 0:
+        raise ValueError("max_time_ms must be >= 0")
 
 
 class AsyncCursor:
@@ -31,6 +56,10 @@ class AsyncCursor:
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        batch_size: int | None = None,
         session: ClientSession | None = None,
     ):
         self._collection = collection
@@ -40,8 +69,13 @@ class AsyncCursor:
         self._sort = sort
         self._skip = skip
         self._limit = limit
+        self._hint = hint
+        self._comment = comment
+        self._max_time_ms = max_time_ms
+        self._batch_size = batch_size
         self._session = session
         self._started = False
+        self._exhausted = False
 
     def _ensure_mutable(self) -> None:
         if self._started:
@@ -71,6 +105,29 @@ class AsyncCursor:
         self._sort = sort
         return self
 
+    def hint(self, hint: HintSpec) -> "AsyncCursor":
+        self._ensure_mutable()
+        _validate_hint_spec(hint)
+        self._hint = hint
+        return self
+
+    def comment(self, comment: object) -> "AsyncCursor":
+        self._ensure_mutable()
+        self._comment = comment
+        return self
+
+    def max_time_ms(self, max_time_ms: int) -> "AsyncCursor":
+        self._ensure_mutable()
+        _validate_max_time_ms(max_time_ms)
+        self._max_time_ms = max_time_ms
+        return self
+
+    def batch_size(self, batch_size: int) -> "AsyncCursor":
+        self._ensure_mutable()
+        _validate_batch_size(batch_size)
+        self._batch_size = batch_size
+        return self
+
     def skip(self, skip: int) -> "AsyncCursor":
         self._ensure_mutable()
         if skip < 0:
@@ -86,7 +143,9 @@ class AsyncCursor:
         return self
 
     async def to_list(self) -> list[Document]:
-        return [document async for document in self]
+        documents = [document async for document in self]
+        self._exhausted = True
+        return documents
 
     async def first(self) -> Document | None:
         if self._limit == 0:
@@ -94,3 +153,41 @@ class AsyncCursor:
         async for document in self._scan(limit=1):
             return document
         return None
+
+    def rewind(self) -> "AsyncCursor":
+        self._started = False
+        self._exhausted = False
+        return self
+
+    def clone(self) -> "AsyncCursor":
+        return type(self)(
+            self._collection,
+            self._filter_spec,
+            self._plan,
+            self._projection,
+            sort=self._sort,
+            skip=self._skip,
+            limit=self._limit,
+            hint=self._hint,
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
+            batch_size=self._batch_size,
+            session=self._session,
+        )
+
+    @property
+    def alive(self) -> bool:
+        return not self._exhausted
+
+    async def explain(self) -> dict[str, object]:
+        return await self._collection._engine.explain_query_plan(
+            self._collection._db_name,
+            self._collection._collection_name,
+            self._filter_spec,
+            plan=self._plan,
+            sort=self._sort,
+            skip=self._skip,
+            limit=self._limit,
+            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+            context=self._session,
+        )

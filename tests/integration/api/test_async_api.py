@@ -1584,7 +1584,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ],
                     )
 
-    async def test_async_client_exposes_session_placeholder_and_accepts_it(self):
+    async def test_async_client_exposes_client_session_and_accepts_it(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
@@ -1596,6 +1596,38 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     self.assertFalse(session.active)
                     self.assertEqual(found["name"], "Ada")
+
+    async def test_async_session_with_transaction_commits_and_returns_result(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    session = client.start_session()
+
+                    async def _run(active: ClientSession) -> str:
+                        await client.test.users.insert_one({"_id": "1", "name": "Ada"}, session=active)
+                        return "ok"
+
+                    result = await session.with_transaction(_run)
+
+                    self.assertEqual(result, "ok")
+                    self.assertFalse(session.in_transaction)
+                    self.assertEqual(await client.test.users.count_documents({}), 1)
+
+    async def test_async_sqlite_session_transaction_is_isolated_and_abortable(self):
+        async with AsyncMongoClient(SQLiteEngine()) as client:
+            session = client.start_session()
+            self.assertTrue(session.get_engine_state(next(iter(session.engine_state)))["supports_transactions"])
+
+            session.start_transaction()
+            await client.test.users.insert_one({"_id": "1", "name": "Ada"}, session=session)
+
+            self.assertEqual(await client.test.users.count_documents({}, session=session), 1)
+            with self.assertRaises(InvalidOperation):
+                await client.test.users.count_documents({})
+
+            session.abort_transaction()
+
+            self.assertEqual(await client.test.users.count_documents({}), 0)
 
     async def test_async_session_state_reflects_connected_engine(self):
         for engine_name in ENGINE_FACTORIES:

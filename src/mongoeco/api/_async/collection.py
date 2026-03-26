@@ -2,7 +2,14 @@ from collections.abc import Sequence
 from copy import deepcopy
 
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
-from mongoeco.api._async.cursor import AsyncCursor, _validate_sort_spec
+from mongoeco.api._async.cursor import (
+    AsyncCursor,
+    HintSpec,
+    _validate_batch_size,
+    _validate_hint_spec,
+    _validate_max_time_ms,
+    _validate_sort_spec,
+)
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,
@@ -129,6 +136,35 @@ class AsyncCollection:
         return sort
 
     @staticmethod
+    def _normalize_hint(hint: object | None) -> HintSpec | None:
+        if hint is None:
+            return None
+        _validate_hint_spec(hint)
+        return hint
+
+    @staticmethod
+    def _normalize_batch_size(batch_size: object | None) -> int | None:
+        if batch_size is None:
+            return None
+        _validate_batch_size(batch_size)
+        return batch_size
+
+    @staticmethod
+    def _normalize_max_time_ms(max_time_ms: object | None) -> int | None:
+        if max_time_ms is None:
+            return None
+        _validate_max_time_ms(max_time_ms)
+        return max_time_ms
+
+    @staticmethod
+    def _normalize_let(let: object | None) -> dict[str, object] | None:
+        if let is None:
+            return None
+        if not isinstance(let, dict):
+            raise TypeError("let must be a dict")
+        return let
+
+    @staticmethod
     def _normalize_return_document(value: object | None) -> ReturnDocument:
         if value is None:
             return ReturnDocument.BEFORE
@@ -152,12 +188,18 @@ class AsyncCollection:
         filter_spec: Filter,
         *,
         sort: SortSpec | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
         return await self.find(
             filter_spec,
             sort=sort,
             limit=1,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
             session=session,
         ).first()
 
@@ -216,6 +258,17 @@ class AsyncCollection:
             replacement_document["_id"] = deepcopy(selected["_id"])
         return replacement_document
 
+    def _validate_bulk_write_request_against_profile(self, request: WriteModel) -> None:
+        if (
+            isinstance(request, (UpdateOne, ReplaceOne))
+            and request.sort is not None
+            and not self._pymongo_profile.supports_update_one_sort()
+        ):
+            raise TypeError(
+                f"sort is not supported by PyMongo profile {self._pymongo_profile.key} "
+                f"for {type(request).__name__} in bulk_write()"
+            )
+
     async def insert_one(self, document: Document, *, session: ClientSession | None = None) -> InsertOneResult[DocumentId]:
         original = self._require_document(document)
         if "_id" not in original:
@@ -260,11 +313,14 @@ class AsyncCollection:
         requests: list[WriteModel],
         *,
         ordered: bool = True,
+        comment: object | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> BulkWriteResult[DocumentId]:
         requests = self._require_write_requests(requests)
         if not isinstance(ordered, bool):
             raise TypeError("ordered must be a bool")
+        let = self._normalize_let(let)
 
         inserted_count = 0
         matched_count = 0
@@ -274,6 +330,7 @@ class AsyncCollection:
         write_errors: list[dict[str, object]] = []
 
         for index, request in enumerate(requests):
+            self._validate_bulk_write_request_against_profile(request)
             try:
                 if isinstance(request, InsertOne):
                     await self.insert_one(request.document, session=session)
@@ -284,6 +341,9 @@ class AsyncCollection:
                         request.update,
                         request.upsert,
                         sort=request.sort,
+                        hint=request.hint,
+                        comment=request.comment if request.comment is not None else comment,
+                        let=request.let if request.let is not None else let,
                         session=session,
                     )
                     matched_count += result.matched_count
@@ -295,6 +355,9 @@ class AsyncCollection:
                         request.filter,
                         request.update,
                         request.upsert,
+                        hint=request.hint,
+                        comment=request.comment if request.comment is not None else comment,
+                        let=request.let if request.let is not None else let,
                         session=session,
                     )
                     matched_count += result.matched_count
@@ -307,6 +370,9 @@ class AsyncCollection:
                         request.replacement,
                         request.upsert,
                         sort=request.sort,
+                        hint=request.hint,
+                        comment=request.comment if request.comment is not None else comment,
+                        let=request.let if request.let is not None else let,
                         session=session,
                     )
                     matched_count += result.matched_count
@@ -314,10 +380,22 @@ class AsyncCollection:
                     if result.upserted_id is not None:
                         upserted_ids[index] = result.upserted_id
                 elif isinstance(request, DeleteOne):
-                    result = await self.delete_one(request.filter, session=session)
+                    result = await self.delete_one(
+                        request.filter,
+                        hint=request.hint,
+                        comment=request.comment if request.comment is not None else comment,
+                        let=request.let if request.let is not None else let,
+                        session=session,
+                    )
                     deleted_count += result.deleted_count
                 elif isinstance(request, DeleteMany):
-                    result = await self.delete_many(request.filter, session=session)
+                    result = await self.delete_many(
+                        request.filter,
+                        hint=request.hint,
+                        comment=request.comment if request.comment is not None else comment,
+                        let=request.let if request.let is not None else let,
+                        session=session,
+                    )
                     deleted_count += result.deleted_count
             except (WriteError, OperationFailure, TypeError, ValueError) as exc:
                 write_errors.append(
@@ -395,11 +473,18 @@ class AsyncCollection:
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        batch_size: int | None = None,
         session: ClientSession | None = None,
     ):
         filter_spec = self._normalize_filter(filter_spec)
         projection = self._normalize_projection(projection)
         sort = self._normalize_sort(sort)
+        hint = self._normalize_hint(hint)
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
+        batch_size = self._normalize_batch_size(batch_size)
         plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
         return AsyncCursor(
             self,
@@ -409,13 +494,40 @@ class AsyncCollection:
             sort=sort,
             skip=skip,
             limit=limit,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            batch_size=batch_size,
             session=session,
         )
 
-    def aggregate(self, pipeline: Pipeline, *, session: ClientSession | None = None) -> AsyncAggregationCursor:
+    def aggregate(
+        self,
+        pipeline: Pipeline,
+        *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        batch_size: int | None = None,
+        let: dict[str, object] | None = None,
+        session: ClientSession | None = None,
+    ) -> AsyncAggregationCursor:
         if not isinstance(pipeline, list):
             raise TypeError("pipeline must be a list")
-        return AsyncAggregationCursor(self, pipeline, session=session)
+        hint = self._normalize_hint(hint)
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
+        batch_size = self._normalize_batch_size(batch_size)
+        let = self._normalize_let(let)
+        return AsyncAggregationCursor(
+            self,
+            pipeline,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            batch_size=batch_size,
+            let=let,
+            session=session,
+        )
 
     async def update_one(
         self,
@@ -424,11 +536,16 @@ class AsyncCollection:
         upsert: bool = False,
         *,
         sort: SortSpec | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
         filter_spec = self._normalize_filter(filter_spec)
         update_spec = self._require_update(update_spec)
         sort = self._normalize_sort(sort)
+        hint = self._normalize_hint(hint)
+        let = self._normalize_let(let)
         if sort is not None and not self._pymongo_profile.supports_update_one_sort():
             raise TypeError(
                 f"sort is not supported by PyMongo profile {self._pymongo_profile.key} "
@@ -439,6 +556,8 @@ class AsyncCollection:
                 filter_spec,
                 sort=sort,
                 limit=1,
+                hint=hint,
+                comment=comment,
                 session=session,
             ).first()
             if selected is None and not upsert:
@@ -504,13 +623,20 @@ class AsyncCollection:
         update_spec: Update,
         upsert: bool = False,
         *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
         filter_spec = self._normalize_filter(filter_spec)
         update_spec = self._require_update(update_spec)
+        hint = self._normalize_hint(hint)
+        let = self._normalize_let(let)
         matched_documents = await self.find(
             filter_spec,
             {"_id": 1},
+            hint=hint,
+            comment=comment,
             session=session,
         ).to_list()
         if not matched_documents:
@@ -519,6 +645,9 @@ class AsyncCollection:
                     filter_spec,
                     update_spec,
                     upsert=True,
+                    hint=hint,
+                    comment=comment,
+                    let=let,
                     session=session,
                 )
             return UpdateResult(matched_count=0, modified_count=0)
@@ -551,11 +680,16 @@ class AsyncCollection:
         upsert: bool = False,
         *,
         sort: SortSpec | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
         filter_spec = self._normalize_filter(filter_spec)
         replacement = self._require_replacement(replacement)
         sort = self._normalize_sort(sort)
+        hint = self._normalize_hint(hint)
+        let = self._normalize_let(let)
         if sort is not None and not self._pymongo_profile.supports_update_one_sort():
             raise TypeError(
                 f"sort is not supported by PyMongo profile {self._pymongo_profile.key} "
@@ -565,6 +699,8 @@ class AsyncCollection:
         selected = await self._select_first_document(
             filter_spec,
             sort=sort,
+            hint=hint,
+            comment=comment,
             session=session,
         )
         if selected is None:
@@ -594,15 +730,29 @@ class AsyncCollection:
         sort: SortSpec | None = None,
         upsert: bool = False,
         return_document: ReturnDocument | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
         filter_spec = self._normalize_filter(filter_spec)
         projection = self._normalize_projection(projection)
         update_spec = self._require_update(update_spec)
         sort = self._normalize_sort(sort)
+        hint = self._normalize_hint(hint)
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
+        let = self._normalize_let(let)
         return_document = self._normalize_return_document(return_document)
 
-        before = await self._select_first_document(filter_spec, sort=sort, session=session)
+        before = await self._select_first_document(
+            filter_spec,
+            sort=sort,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+        )
         if before is None:
             if not upsert:
                 return None
@@ -615,7 +765,15 @@ class AsyncCollection:
             )
             if return_document is ReturnDocument.BEFORE:
                 return None
-            return await self.find_one({"_id": result.upserted_id}, projection, session=session)
+            return await self.find(
+                {"_id": result.upserted_id},
+                projection,
+                limit=1,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                session=session,
+            ).first()
 
         identity_filter = {"_id": before["_id"]}
         identity_plan = compile_filter(identity_filter, dialect=self._mongodb_dialect)
@@ -631,7 +789,15 @@ class AsyncCollection:
         )
         if return_document is ReturnDocument.BEFORE:
             return apply_projection(before, projection, dialect=self._mongodb_dialect)
-        return await self.find_one(identity_filter, projection, session=session)
+        return await self.find(
+            identity_filter,
+            projection,
+            limit=1,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+        ).first()
 
     async def find_one_and_replace(
         self,
@@ -642,15 +808,29 @@ class AsyncCollection:
         sort: SortSpec | None = None,
         upsert: bool = False,
         return_document: ReturnDocument | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
         filter_spec = self._normalize_filter(filter_spec)
         projection = self._normalize_projection(projection)
         replacement = self._require_replacement(replacement)
         sort = self._normalize_sort(sort)
+        hint = self._normalize_hint(hint)
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
+        let = self._normalize_let(let)
         return_document = self._normalize_return_document(return_document)
 
-        before = await self._select_first_document(filter_spec, sort=sort, session=session)
+        before = await self._select_first_document(
+            filter_spec,
+            sort=sort,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+        )
         if before is None:
             if not upsert:
                 return None
@@ -663,7 +843,15 @@ class AsyncCollection:
             )
             if return_document is ReturnDocument.BEFORE:
                 return None
-            return await self.find_one({"_id": result.upserted_id}, projection, session=session)
+            return await self.find(
+                {"_id": result.upserted_id},
+                projection,
+                limit=1,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                session=session,
+            ).first()
 
         identity_filter = {"_id": before["_id"]}
         await self.replace_one(
@@ -674,7 +862,15 @@ class AsyncCollection:
         )
         if return_document is ReturnDocument.BEFORE:
             return apply_projection(before, projection, dialect=self._mongodb_dialect)
-        return await self.find_one(identity_filter, projection, session=session)
+        return await self.find(
+            identity_filter,
+            projection,
+            limit=1,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+        ).first()
 
     async def find_one_and_delete(
         self,
@@ -682,13 +878,27 @@ class AsyncCollection:
         *,
         projection: Projection | None = None,
         sort: SortSpec | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
         filter_spec = self._normalize_filter(filter_spec)
         projection = self._normalize_projection(projection)
         sort = self._normalize_sort(sort)
+        hint = self._normalize_hint(hint)
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
+        let = self._normalize_let(let)
 
-        before = await self._select_first_document(filter_spec, sort=sort, session=session)
+        before = await self._select_first_document(
+            filter_spec,
+            sort=sort,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+        )
         if before is None:
             return None
 
@@ -700,8 +910,18 @@ class AsyncCollection:
         )
         return apply_projection(before, projection, dialect=self._mongodb_dialect)
 
-    async def delete_one(self, filter_spec: Filter, *, session: ClientSession | None = None) -> DeleteResult:
+    async def delete_one(
+        self,
+        filter_spec: Filter,
+        *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        let: dict[str, object] | None = None,
+        session: ClientSession | None = None,
+    ) -> DeleteResult:
         filter_spec = self._normalize_filter(filter_spec)
+        hint = self._normalize_hint(hint)
+        let = self._normalize_let(let)
         plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
         return await self._engine.delete_matching_document(
             self._db_name,
@@ -712,11 +932,23 @@ class AsyncCollection:
             context=session,
         )
 
-    async def delete_many(self, filter_spec: Filter, *, session: ClientSession | None = None) -> DeleteResult:
+    async def delete_many(
+        self,
+        filter_spec: Filter,
+        *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        let: dict[str, object] | None = None,
+        session: ClientSession | None = None,
+    ) -> DeleteResult:
         filter_spec = self._normalize_filter(filter_spec)
+        hint = self._normalize_hint(hint)
+        let = self._normalize_let(let)
         matched_documents = await self.find(
             filter_spec,
             {"_id": 1},
+            hint=hint,
+            comment=comment,
             session=session,
         ).to_list()
         deleted_count = 0

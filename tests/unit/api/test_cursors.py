@@ -10,6 +10,7 @@ from mongoeco.errors import InvalidOperation
 class _AsyncEngineStub:
     def __init__(self, documents):
         self._documents = documents
+        self.explain_calls = []
 
     async def _scan(self, limit=None):
         documents = self._documents if limit is None else self._documents[:limit]
@@ -19,12 +20,19 @@ class _AsyncEngineStub:
     def scan_collection(self, *args, **kwargs):
         return self._scan(limit=kwargs.get("limit"))
 
+    async def explain_query_plan(self, *args, **kwargs):
+        self.explain_calls.append((args, kwargs))
+        return {"engine": "stub", "details": ["COLLSCAN"]}
+
 
 class _AsyncCollectionStub:
     def __init__(self, documents):
         self._engine = _AsyncEngineStub(documents)
         self._db_name = "db"
         self._collection_name = "coll"
+
+    def find(self, *args, **kwargs):
+        return AsyncCursor(self, {}, MatchAll(), None)
 
 
 class _AsyncCursorFactoryStub:
@@ -114,6 +122,18 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             cursor.sort([(1, 1)])  # type: ignore[list-item]
         with self.assertRaises(ValueError):
             cursor.sort([("name", 0)])
+        with self.assertRaises(TypeError):
+            cursor.batch_size("10")  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            cursor.batch_size(-1)
+        with self.assertRaises(TypeError):
+            cursor.max_time_ms("5")  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            cursor.max_time_ms(-1)
+        with self.assertRaises(TypeError):
+            cursor.hint({"name": 1})  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            cursor.hint("")
 
     async def test_async_cursor_first_does_not_mutate_limit(self):
         cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}, {"_id": "2"}]), {}, MatchAll(), None)
@@ -143,6 +163,45 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             cursor.skip(1)
         with self.assertRaises(InvalidOperation):
             cursor.sort([("_id", 1)])
+        with self.assertRaises(InvalidOperation):
+            cursor.batch_size(10)
+
+    async def test_async_cursor_clone_rewind_alive_and_explain(self):
+        collection = _AsyncCollectionStub([{"_id": "1"}, {"_id": "2"}])
+        cursor = AsyncCursor(
+            collection,
+            {},
+            MatchAll(),
+            None,
+            sort=[("_id", 1)],
+            skip=1,
+            limit=2,
+            hint="name_1",
+            comment="trace",
+            max_time_ms=5,
+            batch_size=10,
+        )
+
+        clone = cursor.clone()
+        self.assertIsNot(clone, cursor)
+        self.assertEqual(clone._sort, [("_id", 1)])
+        self.assertEqual(clone._skip, 1)
+        self.assertEqual(clone._limit, 2)
+        self.assertEqual(clone._hint, "name_1")
+        self.assertEqual(clone._comment, "trace")
+        self.assertEqual(clone._max_time_ms, 5)
+        self.assertEqual(clone._batch_size, 10)
+        self.assertTrue(cursor.alive)
+
+        self.assertEqual(await cursor.to_list(), [{"_id": "1"}, {"_id": "2"}])
+        self.assertFalse(cursor.alive)
+
+        cursor.rewind()
+        self.assertTrue(cursor.alive)
+        self.assertEqual(await cursor.first(), {"_id": "1"})
+
+        self.assertEqual(await cursor.explain(), {"engine": "stub", "details": ["COLLSCAN"]})
+        self.assertEqual(collection._engine.explain_calls[0][1]["sort"], [("_id", 1)])
 
     def test_sync_cursor_rejects_negative_skip_and_limit_and_supports_iteration(self):
         cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}]), {}, None)
@@ -164,6 +223,18 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             cursor.sort([("name", 1), "bad"])  # type: ignore[list-item]
         with self.assertRaises(ValueError):
             cursor.sort([("name", True)])
+        with self.assertRaises(TypeError):
+            cursor.batch_size("10")  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            cursor.batch_size(-1)
+        with self.assertRaises(TypeError):
+            cursor.max_time_ms("5")  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            cursor.max_time_ms(-1)
+        with self.assertRaises(TypeError):
+            cursor.hint({"name": 1})  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            cursor.hint("")
 
     def test_sync_cursor_first_uses_cache_when_already_loaded(self):
         factory = _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}])
@@ -202,6 +273,8 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             cursor.skip(1)
         with self.assertRaises(InvalidOperation):
             cursor.sort([("_id", 1)])
+        with self.assertRaises(InvalidOperation):
+            cursor.batch_size(10)
 
     def test_sync_cursor_close_is_idempotent_and_blocks_further_use(self):
         cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
@@ -329,3 +402,33 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         cursor.__del__()
 
         self.assertTrue(cursor._closed)
+
+    def test_sync_cursor_clone_rewind_alive_and_explain(self):
+        collection = _AsyncCollectionStub([{"_id": "1"}, {"_id": "2"}])
+        cursor = Cursor(
+            _SyncClientStub(),
+            collection,
+            {},
+            None,
+            sort=[("_id", 1)],
+            skip=1,
+            limit=2,
+            hint="name_1",
+            comment="trace",
+            max_time_ms=5,
+            batch_size=10,
+        )
+
+        clone = cursor.clone()
+        self.assertIsNot(clone, cursor)
+        self.assertEqual(clone._sort, [("_id", 1)])
+        self.assertEqual(clone._hint, "name_1")
+        self.assertTrue(cursor.alive)
+
+        self.assertEqual(cursor.to_list(), [{"_id": "1"}, {"_id": "2"}])
+        self.assertFalse(cursor.alive)
+
+        cursor.rewind()
+        self.assertTrue(cursor.alive)
+        self.assertEqual(cursor.first(), {"_id": "1"})
+        self.assertEqual(cursor.explain(), {"engine": "stub", "details": ["COLLSCAN"]})

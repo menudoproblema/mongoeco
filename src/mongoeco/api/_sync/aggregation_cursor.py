@@ -104,8 +104,12 @@ class AggregationCursor:
             except StopAsyncIteration:
                 self._exhausted = True
                 self._close_active_iterator(active)
-                return None
+            return None
         return self._client._run(self._async_aggregation_cursor.first())
+
+    def explain(self) -> dict[str, object]:
+        self._ensure_open()
+        return self._client._run(self._async_aggregation_cursor.explain())
 
     def close(self) -> None:
         if self._closed:

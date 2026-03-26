@@ -16,8 +16,10 @@ class ClientSessionTests(unittest.TestCase):
 
         self.assertEqual(session.get_engine_state("memory"), {"connection": 1})
         self.assertTrue(session.transaction_active)
+        self.assertTrue(session.in_transaction)
+        self.assertEqual(session.transaction_number, 1)
 
-        session.end_transaction()
+        session.commit_transaction()
         self.assertFalse(session.transaction_active)
 
     def test_closed_session_rejects_state_access(self):
@@ -36,7 +38,10 @@ class ClientSessionTests(unittest.TestCase):
 
         session = client.start_session()
 
-        self.assertEqual(session.get_engine_state(f"memory:{id(engine)}"), {"connected": False})
+        self.assertEqual(
+            session.get_engine_state(f"memory:{id(engine)}"),
+            {"connected": False, "supports_transactions": False},
+        )
 
     def test_async_client_start_session_binds_sqlite_engine_state(self):
         engine = SQLiteEngine()
@@ -46,7 +51,12 @@ class ClientSessionTests(unittest.TestCase):
 
         self.assertEqual(
             session.get_engine_state(f"sqlite:{id(engine)}"),
-            {"connected": False, "path": ":memory:"},
+            {
+                "connected": False,
+                "path": ":memory:",
+                "supports_transactions": True,
+                "transaction_active": False,
+            },
         )
 
     def test_session_distinguishes_multiple_engine_instances_of_same_kind(self):
@@ -74,6 +84,7 @@ class ClientSessionTests(unittest.TestCase):
             self.assertTrue(session.active)
 
         self.assertFalse(session.active)
+        self.assertTrue(session.has_ended)
 
     def test_session_transaction_round_trip(self):
         session = ClientSession()
@@ -81,5 +92,55 @@ class ClientSessionTests(unittest.TestCase):
         session.start_transaction()
         self.assertTrue(session.transaction_active)
 
-        session.end_transaction()
+        session.abort_transaction()
         self.assertFalse(session.transaction_active)
+
+    def test_session_rejects_nested_transactions(self):
+        session = ClientSession()
+
+        session.start_transaction()
+
+        with self.assertRaises(InvalidOperation):
+            session.start_transaction()
+
+    def test_session_rejects_commit_without_active_transaction(self):
+        session = ClientSession()
+
+        with self.assertRaises(InvalidOperation):
+            session.commit_transaction()
+
+    def test_session_rejects_abort_without_active_transaction(self):
+        session = ClientSession()
+
+        with self.assertRaises(InvalidOperation):
+            session.abort_transaction()
+
+    def test_session_with_transaction_commits_on_success(self):
+        session = ClientSession()
+
+        result = session.with_transaction(lambda active: ("ok", active.transaction_number))
+
+        self.assertEqual(result, ("ok", 1))
+        self.assertFalse(session.in_transaction)
+        self.assertEqual(session.transaction_number, 1)
+
+    def test_session_with_transaction_aborts_on_error(self):
+        session = ClientSession()
+
+        with self.assertRaisesRegex(RuntimeError, "boom"):
+            session.with_transaction(lambda active: (_ for _ in ()).throw(RuntimeError("boom")))
+
+        self.assertFalse(session.in_transaction)
+        self.assertEqual(session.transaction_number, 1)
+
+    def test_session_close_aborts_active_transaction(self):
+        session = ClientSession()
+        phases: list[str] = []
+        session.register_transaction_hooks("memory", abort=lambda active: phases.append(active.session_id))
+
+        session.start_transaction()
+        session.close()
+
+        self.assertEqual(phases, [session.session_id])
+        self.assertFalse(session.active)
+        self.assertFalse(session.in_transaction)

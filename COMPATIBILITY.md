@@ -223,7 +223,52 @@ Para CI y suites de compatibilidad:
 * `mongodb_dialect` fijado explícitamente
 * `pymongo_profile` fijado explícitamente, o `strict-auto-installed`
 
-## 8. Qué no hace `mongoeco`
+## 8. Verificación contractual contra PyMongo real
+
+La ampliación de superficie pública no debe decidirse por memoria ni por lectura
+aislada de firmas.
+
+El repositorio incluye un arnés repetible:
+
+* [scripts/run_pymongo_profile_matrix.py](/Users/uve/Proyectos/mongoeco2/scripts/run_pymongo_profile_matrix.py)
+* [tests/fixtures/pymongo_profile_matrix.json](/Users/uve/Proyectos/mongoeco2/tests/fixtures/pymongo_profile_matrix.json)
+
+Uso recomendado:
+
+```bash
+python3 scripts/run_pymongo_profile_matrix.py
+```
+
+El script crea entornos aislados para `PyMongo 4.9`, `4.11` y `4.13`, ejecuta
+una sonda de aceptación de parámetros reales y devuelve un JSON con los
+resultados.
+
+El JSON versionado en `tests/fixtures/` actúa como snapshot contractual del
+último contraste validado y debe actualizarse cuando cambie la matriz real.
+
+Regla de mantenimiento:
+
+* cualquier parámetro nuevo en la API pública debe contrastarse primero con este
+  arnés
+* solo se añade un hook nuevo a `PyMongoProfile` cuando la matriz real detecta
+  un delta observable entre perfiles
+
+Matriz ya verificada:
+
+* baseline común en `4.9/4.11/4.13`:
+  * `hint`, `comment` y `let` en `update_*`, `replace_one`, `delete_*`
+  * `comment` y `let` en `bulk_write`
+  * `max_time_ms` en `find_one_and_*`
+  * `hint`, `comment`, `let`, `batchSize/maxTimeMS` en `aggregate`
+* delta real desde `4.11+`:
+  * `sort` en `update_one`
+  * `sort` en `replace_one`
+  * `sort` en `UpdateOne(...)` y `ReplaceOne(...)` para `bulk_write`
+* explícitamente no soportado en `4.9+`:
+  * `max_time_ms` en `update_one`, `update_many`, `replace_one`,
+    `delete_one` y `delete_many`
+
+## 9. Qué no hace `mongoeco`
 
 `mongoeco` no:
 

@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 
+from mongoeco.api._async.cursor import HintSpec
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.aggregation import (
     Pipeline,
@@ -14,9 +15,25 @@ from mongoeco.types import Document
 class AsyncAggregationCursor:
     """Cursor async mínimo para resultados de aggregate()."""
 
-    def __init__(self, collection, pipeline: Pipeline, *, session: ClientSession | None = None):
+    def __init__(
+        self,
+        collection,
+        pipeline: Pipeline,
+        *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        batch_size: int | None = None,
+        let: dict[str, object] | None = None,
+        session: ClientSession | None = None,
+    ):
         self._collection = collection
         self._pipeline = pipeline
+        self._hint = hint
+        self._comment = comment
+        self._max_time_ms = max_time_ms
+        self._batch_size = batch_size
+        self._let = let
         self._session = session
 
     def _collect_collection_names(self, pipeline: Pipeline) -> set[str]:
@@ -113,6 +130,10 @@ class AsyncAggregationCursor:
             sort=pushdown.sort,
             skip=pushdown.skip,
             limit=pushdown.limit,
+            hint=self._hint,
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
+            batch_size=self._batch_size,
             session=self._session,
         ).to_list()
         return apply_pipeline(
@@ -128,6 +149,47 @@ class AsyncAggregationCursor:
     async def first(self) -> Document | None:
         documents = await self._materialize()
         return documents[0] if documents else None
+
+    async def explain(self) -> dict[str, object]:
+        dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
+        pushdown = split_pushdown_pipeline(
+            self._pipeline,
+            dialect=dialect,
+        )
+        plan = getattr(
+            self._collection.find(
+                pushdown.filter_spec,
+                pushdown.projection,
+                sort=pushdown.sort,
+                skip=pushdown.skip,
+                limit=pushdown.limit,
+                hint=self._hint,
+                comment=self._comment,
+                max_time_ms=self._max_time_ms,
+                batch_size=self._batch_size,
+                session=self._session,
+            ),
+            "_plan",
+        )
+        return {
+            "engine_plan": await self._collection._engine.explain_query_plan(
+                self._collection._db_name,
+                self._collection._collection_name,
+                pushdown.filter_spec,
+                plan=plan,
+                sort=pushdown.sort,
+                skip=pushdown.skip,
+                limit=pushdown.limit,
+                dialect=dialect,
+                context=self._session,
+            ),
+            "remaining_pipeline": pushdown.remaining_pipeline,
+            "hint": self._hint,
+            "comment": self._comment,
+            "max_time_ms": self._max_time_ms,
+            "batch_size": self._batch_size,
+            "let": self._let,
+        }
 
     def __aiter__(self) -> AsyncIterator[Document]:
         async def _iterate() -> AsyncIterator[Document]:

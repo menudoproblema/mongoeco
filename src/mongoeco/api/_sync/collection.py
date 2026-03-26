@@ -1,3 +1,4 @@
+from mongoeco.api._async.cursor import HintSpec
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
 from mongoeco.compat import (
@@ -45,12 +46,16 @@ class Collection:
         requests: list[WriteModel],
         *,
         ordered: bool = True,
+        comment: object | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> BulkWriteResult[DocumentId]:
         return self._client._run(
             self._async_collection().bulk_write(
                 requests,
                 ordered=ordered,
+                comment=comment,
+                let=let,
                 session=session,
             )
         )
@@ -63,6 +68,10 @@ class Collection:
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        batch_size: int | None = None,
         session: ClientSession | None = None,
     ) -> Cursor:
         async_collection = self._async_collection()
@@ -74,11 +83,36 @@ class Collection:
             sort=sort,
             skip=skip,
             limit=limit,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            batch_size=batch_size,
             session=session,
         )
 
-    def aggregate(self, pipeline: Pipeline, *, session: ClientSession | None = None) -> AggregationCursor:
-        return AggregationCursor(self._client, self._async_collection().aggregate(pipeline, session=session))
+    def aggregate(
+        self,
+        pipeline: Pipeline,
+        *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        batch_size: int | None = None,
+        let: dict[str, object] | None = None,
+        session: ClientSession | None = None,
+    ) -> AggregationCursor:
+        return AggregationCursor(
+            self._client,
+            self._async_collection().aggregate(
+                pipeline,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                batch_size=batch_size,
+                let=let,
+                session=session,
+            ),
+        )
 
     def update_one(
         self,
@@ -87,6 +121,9 @@ class Collection:
         upsert: bool = False,
         *,
         sort: SortSpec | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
         return self._client._run(
@@ -95,6 +132,9 @@ class Collection:
                 update_spec,
                 upsert,
                 sort=sort,
+                hint=hint,
+                comment=comment,
+                let=let,
                 session=session,
             )
         )
@@ -106,6 +146,9 @@ class Collection:
         upsert: bool = False,
         *,
         sort: SortSpec | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
         return self._client._run(
@@ -114,6 +157,9 @@ class Collection:
                 replacement,
                 upsert,
                 sort=sort,
+                hint=hint,
+                comment=comment,
+                let=let,
                 session=session,
             )
         )
@@ -127,6 +173,10 @@ class Collection:
         sort: SortSpec | None = None,
         upsert: bool = False,
         return_document: ReturnDocument | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
         return self._client._run(
@@ -137,6 +187,10 @@ class Collection:
                 sort=sort,
                 upsert=upsert,
                 return_document=return_document,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                let=let,
                 session=session,
             )
         )
@@ -150,6 +204,10 @@ class Collection:
         sort: SortSpec | None = None,
         upsert: bool = False,
         return_document: ReturnDocument | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
         return self._client._run(
@@ -160,6 +218,10 @@ class Collection:
                 sort=sort,
                 upsert=upsert,
                 return_document=return_document,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                let=let,
                 session=session,
             )
         )
@@ -170,6 +232,10 @@ class Collection:
         *,
         projection: Projection | None = None,
         sort: SortSpec | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
         return self._client._run(
@@ -177,12 +243,32 @@ class Collection:
                 filter_spec,
                 projection=projection,
                 sort=sort,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                let=let,
                 session=session,
             )
         )
 
-    def delete_one(self, filter_spec: Filter, *, session: ClientSession | None = None) -> DeleteResult:
-        return self._client._run(self._async_collection().delete_one(filter_spec, session=session))
+    def delete_one(
+        self,
+        filter_spec: Filter,
+        *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        let: dict[str, object] | None = None,
+        session: ClientSession | None = None,
+    ) -> DeleteResult:
+        return self._client._run(
+            self._async_collection().delete_one(
+                filter_spec,
+                hint=hint,
+                comment=comment,
+                let=let,
+                session=session,
+            )
+        )
 
     def update_many(
         self,
@@ -190,6 +276,9 @@ class Collection:
         update_spec: Update,
         upsert: bool = False,
         *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
         return self._client._run(
@@ -197,12 +286,31 @@ class Collection:
                 filter_spec,
                 update_spec,
                 upsert,
+                hint=hint,
+                comment=comment,
+                let=let,
                 session=session,
             )
         )
 
-    def delete_many(self, filter_spec: Filter, *, session: ClientSession | None = None) -> DeleteResult:
-        return self._client._run(self._async_collection().delete_many(filter_spec, session=session))
+    def delete_many(
+        self,
+        filter_spec: Filter,
+        *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        let: dict[str, object] | None = None,
+        session: ClientSession | None = None,
+    ) -> DeleteResult:
+        return self._client._run(
+            self._async_collection().delete_many(
+                filter_spec,
+                hint=hint,
+                comment=comment,
+                let=let,
+                session=session,
+            )
+        )
 
     def count_documents(self, filter_spec: Filter, *, session: ClientSession | None = None) -> int:
         return self._client._run(self._async_collection().count_documents(filter_spec, session=session))

@@ -114,6 +114,7 @@ Estos puntos quedan explícitamente fuera del cierre de Fase 1:
 * La infraestructura de compatibilidad ya existe en la API pública y en el core: clientes, bases de datos y colecciones aceptan y propagan `mongodb_dialect` y `pymongo_profile`, y el core ya delega en esos objetos truthiness, catálogos de operadores, semántica básica de proyección, orden de campos de updates y comparación/igualdad de valores.
 * En el eje PyMongo ya hay un primer delta vivo y testeado: `update_one(sort=...)` solo está habilitado desde el perfil `4.11`.
 * Ambos ejes de compatibilidad ya exponen metadata de resolución (`mongodb_dialect_resolution` y `pymongo_profile_resolution`) en cliente, base de datos y colección, de forma que una app o suite de tests puede inspeccionar si está usando baseline, alias explícito o fallback compatible.
+* La ampliación de superficie PyMongo ya no se valida solo con tests locales: el repositorio incluye `scripts/run_pymongo_profile_matrix.py`, que contrasta opciones reales contra `PyMongo 4.9`, `4.11` y `4.13` antes de convertir una diferencia en hook de perfil, y conserva el último snapshot contractual en `tests/fixtures/pymongo_profile_matrix.json`.
 * El cierre arquitectónico actual deja el catálogo oficial como fuente de verdad:
   * dialectos y perfiles oficiales son dataclasses inmutables con identidad declarativa por versión
   * `behavior_flags` y `capabilities` derivan de los objetos oficiales, no de matrices manuales paralelas

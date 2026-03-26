@@ -46,12 +46,15 @@ class MemoryEngine(AsyncStorageEngine):
 
     @override
     def create_session_state(self, session: ClientSession) -> None:
+        engine_key = f"memory:{id(self)}"
         session.bind_engine_state(
-            f"memory:{id(self)}",
+            engine_key,
             {
                 "connected": self._connection_count > 0,
+                "supports_transactions": False,
             },
         )
+        session.register_transaction_hooks(engine_key)
 
     def _lock_key(self, db: str, coll: str) -> str:
         return f"{db}.{coll}"
@@ -366,6 +369,34 @@ class MemoryEngine(AsyncStorageEngine):
         async with self._get_lock(db_name, coll_name):
             indexes = self._indexes.get(db_name, {}).get(coll_name, [])
         return deepcopy(indexes)
+
+    @override
+    async def explain_query_plan(
+        self,
+        db_name: str,
+        coll_name: str,
+        filter_spec: Filter | None = None,
+        *,
+        plan: QueryNode | None = None,
+        sort: SortSpec | None = None,
+        skip: int = 0,
+        limit: int | None = None,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> dict[str, object]:
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
+        async with self._get_lock(db_name, coll_name):
+            indexes = deepcopy(self._indexes.get(db_name, {}).get(coll_name, []))
+        return {
+            "engine": "memory",
+            "strategy": "python",
+            "plan": repr(query_plan),
+            "sort": sort,
+            "skip": skip,
+            "limit": limit,
+            "indexes": indexes,
+        }
 
     @override
     async def list_databases(self) -> list[str]:

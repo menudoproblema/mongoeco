@@ -8,7 +8,7 @@ from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import OperationFailure
-from mongoeco.types import UNDEFINED
+from mongoeco.types import ReplaceOne, UNDEFINED, UpdateOne
 
 
 class DialectAndProfileContractTests(unittest.TestCase):
@@ -101,3 +101,40 @@ class DialectAndProfileContractTests(unittest.TestCase):
         result = asyncio.run(_exercise(True))
         self.assertEqual(result.matched_count, 1)
         self.assertEqual(result.modified_count, 1)
+
+    def test_async_collection_respects_supports_update_one_sort_profile_hook_in_bulk_write(self):
+        class _ToggleSortProfile(PyMongoProfile49):
+            __slots__ = ("_enabled",)
+
+            def __init__(self, enabled: bool):
+                super().__init__()
+                object.__setattr__(self, "_enabled", enabled)
+
+            def supports_update_one_sort(self) -> bool:
+                return self._enabled
+
+        async def _exercise(enabled: bool):
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(
+                    engine,
+                    "db",
+                    "coll",
+                    pymongo_profile=_ToggleSortProfile(enabled),
+                )
+                return await collection.bulk_write(
+                    [
+                        UpdateOne({"kind": "view"}, {"$set": {"done": True}}, sort=[("rank", 1)]),
+                        ReplaceOne({"kind": "view"}, {"done": True}, sort=[("rank", 1)]),
+                    ]
+                )
+            finally:
+                await engine.disconnect()
+
+        with self.assertRaises(TypeError):
+            asyncio.run(_exercise(False))
+
+        result = asyncio.run(_exercise(True))
+        self.assertEqual(result.matched_count, 0)
+        self.assertEqual(result.modified_count, 0)

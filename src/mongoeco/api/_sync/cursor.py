@@ -1,4 +1,11 @@
-from mongoeco.api._async.cursor import _validate_sort_spec
+from mongoeco.api._async.cursor import (
+    HintSpec,
+    _validate_batch_size,
+    _validate_hint_spec,
+    _validate_max_time_ms,
+    _validate_sort_spec,
+)
+from mongoeco.core.query_plan import compile_filter
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
 from mongoeco.types import Document, Filter, Projection, SortSpec
@@ -52,6 +59,10 @@ class Cursor:
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        batch_size: int | None = None,
         session: ClientSession | None = None,
     ):
         self._client = client
@@ -61,6 +72,10 @@ class Cursor:
         self._sort = sort
         self._skip = skip
         self._limit = limit
+        self._hint = hint
+        self._comment = comment
+        self._max_time_ms = max_time_ms
+        self._batch_size = batch_size
         self._session = session
         self._cache: list[Document] | None = None
         self._started = False
@@ -74,6 +89,7 @@ class Cursor:
 
     def _invalidate(self) -> None:
         self._cache = None
+        self._exhausted = False
 
     def _ensure_mutable(self) -> None:
         self._ensure_open()
@@ -84,6 +100,33 @@ class Cursor:
         self._ensure_mutable()
         _validate_sort_spec(sort)
         self._sort = sort
+        self._invalidate()
+        return self
+
+    def hint(self, hint: HintSpec) -> "Cursor":
+        self._ensure_mutable()
+        _validate_hint_spec(hint)
+        self._hint = hint
+        self._invalidate()
+        return self
+
+    def comment(self, comment: object) -> "Cursor":
+        self._ensure_mutable()
+        self._comment = comment
+        self._invalidate()
+        return self
+
+    def max_time_ms(self, max_time_ms: int) -> "Cursor":
+        self._ensure_mutable()
+        _validate_max_time_ms(max_time_ms)
+        self._max_time_ms = max_time_ms
+        self._invalidate()
+        return self
+
+    def batch_size(self, batch_size: int) -> "Cursor":
+        self._ensure_mutable()
+        _validate_batch_size(batch_size)
+        self._batch_size = batch_size
         self._invalidate()
         return self
 
@@ -116,9 +159,14 @@ class Cursor:
                     sort=self._sort,
                     skip=self._skip,
                     limit=self._limit,
+                    hint=self._hint,
+                    comment=self._comment,
+                    max_time_ms=self._max_time_ms,
+                    batch_size=self._batch_size,
                     session=self._session,
                 ).to_list()
             )
+            self._exhausted = True
         return self._cache
 
     def _close_active_iterator(self, async_iterable) -> None:
@@ -148,6 +196,10 @@ class Cursor:
                 sort=self._sort,
                 skip=self._skip,
                 limit=self._limit,
+                hint=self._hint,
+                comment=self._comment,
+                max_time_ms=self._max_time_ms,
+                batch_size=self._batch_size,
                 session=self._session,
             ).__aiter__()
             self._active_async_iterable = async_iterable
@@ -179,8 +231,59 @@ class Cursor:
                 sort=self._sort,
                 skip=self._skip,
                 limit=self._limit,
+                hint=self._hint,
+                comment=self._comment,
+                max_time_ms=self._max_time_ms,
+                batch_size=self._batch_size,
                 session=self._session,
             ).first()
+        )
+
+    def rewind(self) -> "Cursor":
+        self._ensure_open()
+        active = self._active_async_iterable
+        if active is not None:
+            self._close_active_iterator(active)
+        self._started = False
+        self._exhausted = False
+        self._cache = None
+        return self
+
+    def clone(self) -> "Cursor":
+        return type(self)(
+            self._client,
+            self._async_collection,
+            self._filter_spec,
+            self._projection,
+            sort=self._sort,
+            skip=self._skip,
+            limit=self._limit,
+            hint=self._hint,
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
+            batch_size=self._batch_size,
+            session=self._session,
+        )
+
+    @property
+    def alive(self) -> bool:
+        return not self._closed and not self._exhausted
+
+    def explain(self) -> dict[str, object]:
+        self._ensure_open()
+        dialect = getattr(self._async_collection, "mongodb_dialect", None)
+        return self._client._run(
+            self._async_collection._engine.explain_query_plan(
+                self._async_collection._db_name,
+                self._async_collection._collection_name,
+                self._filter_spec,
+                plan=compile_filter(self._filter_spec, dialect=dialect),
+                sort=self._sort,
+                skip=self._skip,
+                limit=self._limit,
+                dialect=dialect,
+                context=self._session,
+            )
         )
 
     def close(self) -> None:
