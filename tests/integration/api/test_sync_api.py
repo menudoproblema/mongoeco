@@ -958,6 +958,28 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     self.assertEqual(documents, [{"name": "Ada"}])
 
+    def test_aggregate_let_bindings_are_visible_to_pipeline_expressions(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.events
+                    collection.insert_one({"_id": "1", "tenant": "a", "name": "Ada"})
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 0,
+                                    "tenant_match": {"$eq": ["$tenant", "$$tenant"]},
+                                    "label": {"$concat": ["$$prefix", "$name"]},
+                                }
+                            }
+                        ],
+                        let={"tenant": "a", "prefix": "user:"},
+                    ).to_list()
+
+                    self.assertEqual(documents, [{"tenant_match": True, "label": "user:Ada"}])
+
     def test_aggregate_supports_array_to_object_index_of_array_and_sort_array(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

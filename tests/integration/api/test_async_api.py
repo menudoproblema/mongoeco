@@ -1066,6 +1066,28 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     self.assertEqual(documents, [{"name": "Ada"}])
 
+    async def test_aggregate_let_bindings_are_visible_to_pipeline_expressions(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "tenant": "a", "name": "Ada"})
+
+                    documents = await collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 0,
+                                    "tenant_match": {"$eq": ["$tenant", "$$tenant"]},
+                                    "label": {"$concat": ["$$prefix", "$name"]},
+                                }
+                            }
+                        ],
+                        let={"tenant": "a", "prefix": "user:"},
+                    ).to_list()
+
+                    self.assertEqual(documents, [{"tenant_match": True, "label": "user:Ada"}])
+
     async def test_aggregate_supports_array_to_object_index_of_array_and_sort_array(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

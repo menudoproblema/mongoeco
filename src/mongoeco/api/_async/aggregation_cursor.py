@@ -140,6 +140,7 @@ class AsyncAggregationCursor:
             documents,
             pushdown.remaining_pipeline,
             collection_resolver=referenced_collections.get,
+            variables=self._let,
             dialect=dialect,
         )
 
