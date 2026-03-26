@@ -1311,7 +1311,7 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             collection.create_index([("email", 1), ("created_at", -1)], unique=True, name="idx_email")
         )
         async def _exercise():
-            cursor = await collection.list_indexes()
+            cursor = collection.list_indexes()
             indexes = await cursor.to_list()
             info = await collection.index_information()
             await collection.drop_index([("email", 1), ("created_at", -1)])
@@ -1347,7 +1347,7 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
         async def _exercise():
-            cursor = await collection.list_indexes()
+            cursor = collection.list_indexes()
             return await cursor.first(), await cursor.to_list()
 
         first, indexes = asyncio.run(_exercise())

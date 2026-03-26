@@ -1672,7 +1672,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     collection = client.analytics.events
 
                     name = await collection.create_index([("payload.kind", -1)], unique=False)
-                    indexes = await (await collection.list_indexes()).to_list()
+                    indexes = await collection.list_indexes().to_list()
                     info = await collection.index_information()
 
                     self.assertEqual(name, "payload.kind_-1")
@@ -1724,9 +1724,9 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ]
                     )
                     await collection.drop_index("tenant_created")
-                    indexes_after_drop = await (await collection.list_indexes()).to_list()
+                    indexes_after_drop = await collection.list_indexes().to_list()
                     await collection.drop_indexes()
-                    indexes_after_drop_all = await (await collection.list_indexes()).to_list()
+                    indexes_after_drop_all = await collection.list_indexes().to_list()
 
                     self.assertEqual(names, ["email_1", "tenant_created"])
                     self.assertEqual(
@@ -1756,7 +1756,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         )
 
                     self.assertEqual(
-                        await (await collection.list_indexes()).to_list(),
+                        await collection.list_indexes().to_list(),
                         [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
                     )
 

@@ -30,7 +30,20 @@ class IndexCursor:
         documents = self._load()
         return documents[0] if documents else None
 
+    def rewind(self) -> "IndexCursor":
+        self._ensure_open()
+        self._async_index_cursor.rewind()
+        self._cache = None
+        return self
+
+    def clone(self) -> "IndexCursor":
+        return type(self)(self._client, self._async_index_cursor.clone())
+
     def close(self) -> None:
         self._closed = True
+        self._async_index_cursor.close()
         self._cache = None
 
+    @property
+    def alive(self) -> bool:
+        return not self._closed and self._async_index_cursor.alive

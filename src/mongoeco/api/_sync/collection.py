@@ -375,7 +375,7 @@ class Collection:
     ) -> IndexCursor:
         return IndexCursor(
             self._client,
-            self._client._run(self._async_collection().list_indexes(comment=comment, session=session)),
+            self._async_collection().list_indexes(comment=comment, session=session),
         )
 
     def index_information(

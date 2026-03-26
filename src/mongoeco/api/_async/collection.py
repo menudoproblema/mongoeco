@@ -1101,7 +1101,7 @@ class AsyncCollection:
                 created_names.append(name)
         return names
 
-    async def list_indexes(
+    def list_indexes(
         self,
         *,
         comment: object | None = None,

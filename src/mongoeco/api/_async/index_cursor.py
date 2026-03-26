@@ -1,5 +1,7 @@
 from collections.abc import AsyncIterator, Awaitable, Callable
 
+from mongoeco.errors import InvalidOperation
+
 
 class AsyncIndexCursor:
     """Cursor async mínimo para list_indexes()."""
@@ -9,8 +11,14 @@ class AsyncIndexCursor:
         self._cache: list[dict[str, object]] | None = None
         self._started = False
         self._exhausted = False
+        self._closed = False
+
+    def _ensure_open(self) -> None:
+        if self._closed:
+            raise InvalidOperation("cannot use index cursor after it has been closed")
 
     async def _materialize(self) -> list[dict[str, object]]:
+        self._ensure_open()
         self._started = True
         if self._cache is None:
             self._cache = await self._loader()
@@ -31,3 +39,21 @@ class AsyncIndexCursor:
 
         return _iterate()
 
+    def rewind(self) -> "AsyncIndexCursor":
+        self._ensure_open()
+        self._started = False
+        self._exhausted = False
+        self._cache = None
+        return self
+
+    def clone(self) -> "AsyncIndexCursor":
+        return type(self)(self._loader)
+
+    def close(self) -> None:
+        self._closed = True
+        self._cache = None
+        self._exhausted = True
+
+    @property
+    def alive(self) -> bool:
+        return not self._closed and not self._exhausted
