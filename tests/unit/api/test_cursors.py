@@ -3,8 +3,10 @@ from unittest.mock import patch
 
 from mongoeco.api._async.cursor import AsyncCursor
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
+from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.api._sync.cursor import Cursor
 from mongoeco.api._sync.index_cursor import IndexCursor
+from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.core.query_plan import MatchAll
 from mongoeco.errors import InvalidOperation
 
@@ -161,6 +163,49 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
                 {"name": "email_1", "key": {"email": 1}},
             ],
         )
+
+    async def test_async_listing_cursor_supports_first_to_list_and_close(self):
+        cursor = AsyncListingCursor(
+            lambda: self._load_indexes_async(
+                [
+                    {"name": "events", "type": "collection"},
+                    {"name": "logs", "type": "collection"},
+                ]
+            )
+        )
+
+        self.assertEqual(await cursor.first(), {"name": "events", "type": "collection"})
+        self.assertEqual(
+            await cursor.to_list(),
+            [
+                {"name": "events", "type": "collection"},
+                {"name": "logs", "type": "collection"},
+            ],
+        )
+        cursor.close()
+        with self.assertRaises(InvalidOperation):
+            await cursor.to_list()
+
+    async def test_async_listing_cursor_supports_rewind_clone_and_alive(self):
+        cursor = AsyncListingCursor(
+            lambda: self._load_indexes_async(
+                [
+                    {"name": "events", "type": "collection"},
+                ]
+            )
+        )
+
+        self.assertTrue(cursor.alive)
+        self.assertEqual(await cursor.first(), {"name": "events", "type": "collection"})
+        self.assertTrue(cursor.alive)
+        cursor.rewind()
+        self.assertTrue(cursor.alive)
+        clone = cursor.clone()
+        self.assertEqual(await clone.to_list(), [{"name": "events", "type": "collection"}])
+        cursor.close()
+        self.assertFalse(cursor.alive)
+        with self.assertRaises(InvalidOperation):
+            await cursor.to_list()
 
     async def test_async_cursor_rejects_negative_skip_and_limit_and_returns_none_first(self):
         cursor = AsyncCursor(_AsyncCollectionStub([]), {}, MatchAll(), None)
@@ -567,6 +612,51 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
                 {"name": "email_1", "key": {"email": 1}},
             ],
         )
+
+    def test_sync_listing_cursor_supports_first_to_list_and_close(self):
+        async_cursor = AsyncListingCursor(
+            lambda: self._load_indexes_async(
+                [
+                    {"name": "events", "type": "collection"},
+                    {"name": "logs", "type": "collection"},
+                ]
+            )
+        )
+        cursor = ListingCursor(_SyncClientStub(), async_cursor)
+
+        self.assertEqual(cursor.first(), {"name": "events", "type": "collection"})
+        self.assertEqual(
+            cursor.to_list(),
+            [
+                {"name": "events", "type": "collection"},
+                {"name": "logs", "type": "collection"},
+            ],
+        )
+        cursor.close()
+        with self.assertRaises(InvalidOperation):
+            cursor.to_list()
+
+    def test_sync_listing_cursor_supports_rewind_clone_and_alive(self):
+        async_cursor = AsyncListingCursor(
+            lambda: self._load_indexes_async(
+                [
+                    {"name": "events", "type": "collection"},
+                ]
+            )
+        )
+        cursor = ListingCursor(_SyncClientStub(), async_cursor)
+
+        self.assertTrue(cursor.alive)
+        self.assertEqual(cursor.first(), {"name": "events", "type": "collection"})
+        self.assertTrue(cursor.alive)
+        cursor.rewind()
+        self.assertTrue(cursor.alive)
+        clone = cursor.clone()
+        self.assertEqual(clone.to_list(), [{"name": "events", "type": "collection"}])
+        cursor.close()
+        self.assertFalse(cursor.alive)
+        with self.assertRaises(InvalidOperation):
+            cursor.to_list()
 
     async def _load_indexes_async(self, indexes):
         return indexes

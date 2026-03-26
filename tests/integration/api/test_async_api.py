@@ -77,6 +77,53 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(CollectionInvalid):
                         await client.alpha.create_collection("events")
 
+    async def test_list_collections_returns_cursor_documents_and_supports_filter(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    await client.alpha.create_collection("events")
+                    await client.alpha.create_collection("logs")
+
+                    cursor = client.alpha.list_collections({"name": "events"})
+
+                    self.assertEqual(
+                        await cursor.to_list(),
+                        [
+                            {
+                                "name": "events",
+                                "type": "collection",
+                                "options": {},
+                                "info": {"readOnly": False},
+                            }
+                        ],
+                    )
+                    self.assertEqual(
+                        await client.alpha.list_collection_names({"name": "logs"}),
+                        ["logs"],
+                    )
+
+    async def test_list_collections_rejects_invalid_filter(self):
+        async with open_client("memory") as client:
+            with self.assertRaises(TypeError):
+                client.alpha.list_collections(["bad"])  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                await client.alpha.list_collection_names(["bad"])  # type: ignore[arg-type]
+
+    async def test_database_admin_methods_respect_session_bound_sqlite_transactions(self):
+        async with AsyncMongoClient(SQLiteEngine()) as client:
+            session = client.start_session()
+            session.start_transaction()
+
+            await client.alpha.create_collection("events", session=session)
+
+            self.assertEqual(await client.list_database_names(session=session), ["alpha"])
+            self.assertEqual(await client.alpha.list_collection_names(session=session), ["events"])
+
+            session.abort_transaction()
+
+            self.assertEqual(await client.list_database_names(), [])
+            self.assertEqual(await client.alpha.list_collection_names(), [])
+
     async def test_find_one_without_filter_returns_first_document(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

@@ -1710,9 +1710,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     self._rollback_write(conn, context)
                     raise
 
-    def _list_databases_sync(self) -> list[str]:
+    def _list_databases_sync(self, context: ClientSession | None = None) -> list[str]:
         with self._lock:
-            conn = self._require_connection()
+            conn = self._require_connection(context)
             cursor = conn.execute(
                 """
                 SELECT db_name
@@ -1728,9 +1728,9 @@ class SQLiteEngine(AsyncStorageEngine):
             )
             return [row[0] for row in cursor.fetchall()]
 
-    def _list_collections_sync(self, db_name: str) -> list[str]:
+    def _list_collections_sync(self, db_name: str, context: ClientSession | None = None) -> list[str]:
         with self._lock:
-            conn = self._require_connection()
+            conn = self._require_connection(context)
             cursor = conn.execute(
                 """
                 SELECT coll_name
@@ -2060,12 +2060,12 @@ class SQLiteEngine(AsyncStorageEngine):
         }
 
     @override
-    async def list_databases(self) -> list[str]:
-        return await asyncio.to_thread(self._list_databases_sync)
+    async def list_databases(self, *, context: ClientSession | None = None) -> list[str]:
+        return await asyncio.to_thread(self._list_databases_sync, context)
 
     @override
-    async def list_collections(self, db_name: str) -> list[str]:
-        return await asyncio.to_thread(self._list_collections_sync, db_name)
+    async def list_collections(self, db_name: str, *, context: ClientSession | None = None) -> list[str]:
+        return await asyncio.to_thread(self._list_collections_sync, db_name, context)
 
     @override
     async def create_collection(

@@ -11,6 +11,8 @@ from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
 from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.api._sync.collection import Collection
+from mongoeco.api._sync.listing_cursor import ListingCursor
+from mongoeco.types import Filter
 
 
 class _SyncRunner:
@@ -104,20 +106,45 @@ class Database:
     def get_collection(self, name: str) -> Collection:
         return Collection(self._client, self._name, name)
 
-    def list_collection_names(self) -> list[str]:
+    def list_collection_names(
+        self,
+        filter_spec: Filter | None = None,
+        *,
+        session: ClientSession | None = None,
+    ) -> list[str]:
         self._client._ensure_connected()
         async_database = self._client._async_client.get_database(self._name)
-        return self._client._run(async_database.list_collection_names())
+        return self._client._run(
+            async_database.list_collection_names(filter_spec, session=session)
+        )
 
-    def create_collection(self, name: str) -> Collection:
+    def list_collections(
+        self,
+        filter_spec: Filter | None = None,
+        *,
+        session: ClientSession | None = None,
+    ) -> ListingCursor:
         self._client._ensure_connected()
         async_database = self._client._async_client.get_database(self._name)
-        return self._client._run(async_database.create_collection(name))
+        return ListingCursor(
+            self._client,
+            async_database.list_collections(filter_spec, session=session),
+        )
 
-    def drop_collection(self, name: str) -> None:
+    def create_collection(
+        self,
+        name: str,
+        *,
+        session: ClientSession | None = None,
+    ) -> Collection:
         self._client._ensure_connected()
         async_database = self._client._async_client.get_database(self._name)
-        self._client._run(async_database.drop_collection(name))
+        return self._client._run(async_database.create_collection(name, session=session))
+
+    def drop_collection(self, name: str, *, session: ClientSession | None = None) -> None:
+        self._client._ensure_connected()
+        async_database = self._client._async_client.get_database(self._name)
+        self._client._run(async_database.drop_collection(name, session=session))
 
     @property
     def mongodb_dialect(self) -> MongoDialect:
@@ -215,13 +242,13 @@ class MongoClient:
     def start_session(self) -> ClientSession:
         return self._async_client.start_session()
 
-    def list_database_names(self) -> list[str]:
+    def list_database_names(self, *, session: ClientSession | None = None) -> list[str]:
         self._ensure_connected()
-        return self._run(self._async_client.list_database_names())
+        return self._run(self._async_client.list_database_names(session=session))
 
-    def drop_database(self, name: str) -> None:
+    def drop_database(self, name: str, *, session: ClientSession | None = None) -> None:
         self._ensure_connected()
-        self._run(self._async_client.drop_database(name))
+        self._run(self._async_client.drop_database(name, session=session))
 
     @property
     def mongodb_dialect(self) -> MongoDialect:

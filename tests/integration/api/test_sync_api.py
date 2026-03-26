@@ -67,6 +67,53 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     with self.assertRaises(CollectionInvalid):
                         client.alpha.create_collection("events")
 
+    def test_list_collections_returns_cursor_documents_and_supports_filter(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.alpha.create_collection("events")
+                    client.alpha.create_collection("logs")
+
+                    cursor = client.alpha.list_collections({"name": "events"})
+
+                    self.assertEqual(
+                        cursor.to_list(),
+                        [
+                            {
+                                "name": "events",
+                                "type": "collection",
+                                "options": {},
+                                "info": {"readOnly": False},
+                            }
+                        ],
+                    )
+                    self.assertEqual(
+                        client.alpha.list_collection_names({"name": "logs"}),
+                        ["logs"],
+                    )
+
+    def test_list_collections_rejects_invalid_filter(self):
+        with MongoClient(MemoryEngine()) as client:
+            with self.assertRaises(TypeError):
+                client.alpha.list_collections(["bad"])  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.list_collection_names(["bad"])  # type: ignore[arg-type]
+
+    def test_database_admin_methods_respect_session_bound_sqlite_transactions(self):
+        with MongoClient(SQLiteEngine()) as client:
+            session = client.start_session()
+            session.start_transaction()
+
+            client.alpha.create_collection("events", session=session)
+
+            self.assertEqual(client.list_database_names(session=session), ["alpha"])
+            self.assertEqual(client.alpha.list_collection_names(session=session), ["events"])
+
+            session.abort_transaction()
+
+            self.assertEqual(client.list_database_names(), [])
+            self.assertEqual(client.alpha.list_collection_names(), [])
+
     def test_duplicate_id_raises(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

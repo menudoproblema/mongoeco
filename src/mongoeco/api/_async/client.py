@@ -1,4 +1,5 @@
 from mongoeco.api._async.collection import AsyncCollection
+from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,
@@ -7,8 +8,11 @@ from mongoeco.compat import (
     resolve_mongodb_dialect_resolution,
     resolve_pymongo_profile_resolution,
 )
+from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.validation import is_filter
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.session import ClientSession
+from mongoeco.types import Document, Filter
 
 
 class AsyncDatabase:
@@ -56,15 +60,72 @@ class AsyncDatabase:
             pymongo_profile_resolution=self._pymongo_profile_resolution,
         )
 
-    async def list_collection_names(self) -> list[str]:
-        return await self._engine.list_collections(self._db_name)
+    @staticmethod
+    def _normalize_filter(filter_spec: object | None) -> Filter:
+        if filter_spec is None:
+            return {}
+        if not is_filter(filter_spec):
+            raise TypeError("filter_spec must be a dict")
+        return filter_spec
 
-    async def create_collection(self, name: str) -> AsyncCollection:
-        await self._engine.create_collection(self._db_name, name)
+    async def list_collection_names(
+        self,
+        filter_spec: Filter | None = None,
+        *,
+        session: ClientSession | None = None,
+    ) -> list[str]:
+        if filter_spec is None:
+            return await self._engine.list_collections(self._db_name, context=session)
+        documents = await self.list_collections(filter_spec, session=session).to_list()
+        return [str(document["name"]) for document in documents]
+
+    def list_collections(
+        self,
+        filter_spec: Filter | None = None,
+        *,
+        session: ClientSession | None = None,
+    ) -> AsyncListingCursor:
+        normalized_filter = self._normalize_filter(filter_spec)
+
+        async def _load() -> list[Document]:
+            names = await self._engine.list_collections(self._db_name, context=session)
+            documents: list[Document] = [
+                {
+                    "name": name,
+                    "type": "collection",
+                    "options": {},
+                    "info": {"readOnly": False},
+                }
+                for name in names
+            ]
+            return [
+                document
+                for document in documents
+                if QueryEngine.match(
+                    document,
+                    normalized_filter,
+                    dialect=self._mongodb_dialect,
+                )
+            ]
+
+        return AsyncListingCursor(_load)
+
+    async def create_collection(
+        self,
+        name: str,
+        *,
+        session: ClientSession | None = None,
+    ) -> AsyncCollection:
+        await self._engine.create_collection(self._db_name, name, context=session)
         return self.get_collection(name)
 
-    async def drop_collection(self, name: str) -> None:
-        await self._engine.drop_collection(self._db_name, name)
+    async def drop_collection(
+        self,
+        name: str,
+        *,
+        session: ClientSession | None = None,
+    ) -> None:
+        await self._engine.drop_collection(self._db_name, name, context=session)
 
     @property
     def mongodb_dialect(self) -> MongoDialect:
@@ -139,13 +200,22 @@ class AsyncMongoClient:
         self._engine.create_session_state(session)
         return session
 
-    async def list_database_names(self) -> list[str]:
-        return await self._engine.list_databases()
+    async def list_database_names(
+        self,
+        *,
+        session: ClientSession | None = None,
+    ) -> list[str]:
+        return await self._engine.list_databases(context=session)
 
-    async def drop_database(self, name: str) -> None:
-        collection_names = await self._engine.list_collections(name)
+    async def drop_database(
+        self,
+        name: str,
+        *,
+        session: ClientSession | None = None,
+    ) -> None:
+        collection_names = await self._engine.list_collections(name, context=session)
         for collection_name in collection_names:
-            await self._engine.drop_collection(name, collection_name)
+            await self._engine.drop_collection(name, collection_name, context=session)
 
     @property
     def mongodb_dialect(self) -> MongoDialect:

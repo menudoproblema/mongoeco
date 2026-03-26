@@ -627,7 +627,7 @@ class MemoryEngine(AsyncStorageEngine):
         }
 
     @override
-    async def list_databases(self) -> list[str]:
+    async def list_databases(self, *, context: ClientSession | None = None) -> list[str]:
         with self._meta_lock:
             return sorted(
                 set(self._storage.keys())
@@ -636,7 +636,7 @@ class MemoryEngine(AsyncStorageEngine):
             )
 
     @override
-    async def list_collections(self, db_name: str) -> list[str]:
+    async def list_collections(self, db_name: str, *, context: ClientSession | None = None) -> list[str]:
         with self._meta_lock:
             return sorted(
                 set(self._storage.get(db_name, {}).keys())
