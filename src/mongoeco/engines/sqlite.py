@@ -886,6 +886,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     CREATE TABLE IF NOT EXISTS collections (
                         db_name TEXT NOT NULL,
                         coll_name TEXT NOT NULL,
+                        options_json TEXT NOT NULL DEFAULT '{}',
                         PRIMARY KEY (db_name, coll_name)
                     )
                     """
@@ -929,6 +930,14 @@ class SQLiteEngine(AsyncStorageEngine):
                     )
                     """
                 )
+                collection_columns = {
+                    row[1]
+                    for row in connection.execute("PRAGMA table_info(collections)").fetchall()
+                }
+                if "options_json" not in collection_columns:
+                    connection.execute(
+                        "ALTER TABLE collections ADD COLUMN options_json TEXT NOT NULL DEFAULT '{}'"
+                    )
                 columns = {
                     row[1]
                     for row in connection.execute("PRAGMA table_info(indexes)").fetchall()
@@ -943,23 +952,30 @@ class SQLiteEngine(AsyncStorageEngine):
                     connection.execute("ALTER TABLE indexes ADD COLUMN multikey_physical_name TEXT")
                 connection.execute(
                     """
-                    INSERT OR IGNORE INTO collections (db_name, coll_name)
-                    SELECT db_name, coll_name FROM documents
+                    INSERT OR IGNORE INTO collections (db_name, coll_name, options_json)
+                    SELECT db_name, coll_name, '{}' FROM documents
                     UNION
-                    SELECT db_name, coll_name FROM indexes
+                    SELECT db_name, coll_name, '{}' FROM indexes
                     """
                 )
                 connection.commit()
                 self._connection = connection
             self._connection_count += 1
 
-    def _ensure_collection_row(self, conn: sqlite3.Connection, db_name: str, coll_name: str) -> None:
+    def _ensure_collection_row(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        *,
+        options: dict[str, object] | None = None,
+    ) -> None:
         conn.execute(
             """
-            INSERT OR IGNORE INTO collections (db_name, coll_name)
-            VALUES (?, ?)
+            INSERT OR IGNORE INTO collections (db_name, coll_name, options_json)
+            VALUES (?, ?, ?)
             """,
-            (db_name, coll_name),
+            (db_name, coll_name, json.dumps(options or {}, separators=(",", ":"), sort_keys=True)),
         )
 
     def _collection_exists_sync(self, conn: sqlite3.Connection, db_name: str, coll_name: str) -> bool:
@@ -981,6 +997,28 @@ class SQLiteEngine(AsyncStorageEngine):
             (db_name, coll_name, db_name, coll_name, db_name, coll_name),
         ).fetchone()
         return row is not None
+
+    def _collection_options_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        context: ClientSession | None = None,
+    ) -> dict[str, object]:
+        with self._lock:
+            conn = self._require_connection(context)
+            row = conn.execute(
+                """
+                SELECT options_json
+                FROM collections
+                WHERE db_name = ? AND coll_name = ?
+                """,
+                (db_name, coll_name),
+            ).fetchone()
+            if row is not None:
+                return json.loads(row[0] or "{}")
+            if self._collection_exists_sync(conn, db_name, coll_name):
+                return {}
+            raise CollectionInvalid(f"collection '{coll_name}' does not exist")
 
     def _disconnect_sync(self) -> None:
         connection: sqlite3.Connection | None = None
@@ -1754,6 +1792,7 @@ class SQLiteEngine(AsyncStorageEngine):
         self,
         db_name: str,
         coll_name: str,
+        options: dict[str, object] | None = None,
         context: ClientSession | None = None,
     ) -> None:
         with self._lock:
@@ -1762,7 +1801,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._begin_write(conn, context)
                 if self._collection_exists_sync(conn, db_name, coll_name):
                     raise CollectionInvalid(f"collection '{coll_name}' already exists")
-                self._ensure_collection_row(conn, db_name, coll_name)
+                self._ensure_collection_row(conn, db_name, coll_name, options=options)
                 self._commit_write(conn, context)
             except Exception:
                 self._rollback_write(conn, context)
@@ -2099,14 +2138,36 @@ class SQLiteEngine(AsyncStorageEngine):
         return await asyncio.to_thread(self._list_collections_sync, db_name, context)
 
     @override
-    async def create_collection(
+    async def collection_options(
         self,
         db_name: str,
         coll_name: str,
         *,
         context: ClientSession | None = None,
+    ) -> dict[str, object]:
+        return await asyncio.to_thread(
+            self._collection_options_sync,
+            db_name,
+            coll_name,
+            context,
+        )
+
+    @override
+    async def create_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        options: dict[str, object] | None = None,
+        context: ClientSession | None = None,
     ) -> None:
-        await asyncio.to_thread(self._create_collection_sync, db_name, coll_name, context)
+        await asyncio.to_thread(
+            self._create_collection_sync,
+            db_name,
+            coll_name,
+            options,
+            context,
+        )
 
     @override
     async def rename_collection(

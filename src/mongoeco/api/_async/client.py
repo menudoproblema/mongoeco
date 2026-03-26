@@ -11,6 +11,7 @@ from mongoeco.compat import (
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.validation import is_filter
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import Document, Filter
 
@@ -89,15 +90,20 @@ class AsyncDatabase:
 
         async def _load() -> list[Document]:
             names = await self._engine.list_collections(self._db_name, context=session)
-            documents: list[Document] = [
-                {
-                    "name": name,
-                    "type": "collection",
-                    "options": {},
-                    "info": {"readOnly": False},
-                }
-                for name in names
-            ]
+            documents: list[Document] = []
+            for name in names:
+                documents.append(
+                    {
+                        "name": name,
+                        "type": "collection",
+                        "options": await self._engine.collection_options(
+                            self._db_name,
+                            name,
+                            context=session,
+                        ),
+                        "info": {"readOnly": False},
+                    }
+                )
             return [
                 document
                 for document in documents
@@ -115,8 +121,14 @@ class AsyncDatabase:
         name: str,
         *,
         session: ClientSession | None = None,
+        **options: object,
     ) -> AsyncCollection:
-        await self._engine.create_collection(self._db_name, name, context=session)
+        await self._engine.create_collection(
+            self._db_name,
+            name,
+            options=dict(options),
+            context=session,
+        )
         return self.get_collection(name)
 
     async def drop_collection(
@@ -126,6 +138,63 @@ class AsyncDatabase:
         session: ClientSession | None = None,
     ) -> None:
         await self._engine.drop_collection(self._db_name, name, context=session)
+
+    @staticmethod
+    def _normalize_command(command: object, kwargs: dict[str, object]) -> dict[str, object]:
+        if isinstance(command, str):
+            if not command:
+                raise TypeError("command name must be a non-empty string")
+            return {command: 1, **kwargs}
+        if not isinstance(command, dict) or not command:
+            raise TypeError("command must be a non-empty string or dict")
+        if kwargs:
+            raise TypeError("keyword arguments are only supported when command is a string")
+        return command
+
+    async def command(
+        self,
+        command: object,
+        *,
+        session: ClientSession | None = None,
+        **kwargs: object,
+    ) -> dict[str, object]:
+        spec = self._normalize_command(command, kwargs)
+        command_name = next(iter(spec))
+        if not isinstance(command_name, str):
+            raise TypeError("command name must be a string")
+
+        if command_name == "ping":
+            return {"ok": 1.0}
+
+        if command_name == "listCollections":
+            filter_spec = self._normalize_filter(spec.get("filter"))
+            first_batch = await self.list_collections(
+                filter_spec,
+                session=session,
+            ).to_list()
+            return {
+                "cursor": {
+                    "id": 0,
+                    "ns": f"{self._db_name}.$cmd.listCollections",
+                    "firstBatch": first_batch,
+                },
+                "ok": 1.0,
+            }
+
+        if command_name == "dropDatabase":
+            collection_names = await self._engine.list_collections(
+                self._db_name,
+                context=session,
+            )
+            for collection_name in collection_names:
+                await self._engine.drop_collection(
+                    self._db_name,
+                    collection_name,
+                    context=session,
+                )
+            return {"dropped": self._db_name, "ok": 1.0}
+
+        raise OperationFailure(f"Unsupported command: {command_name}")
 
     @property
     def mongodb_dialect(self) -> MongoDialect:

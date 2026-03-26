@@ -92,6 +92,32 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ["logs"],
                     )
 
+    def test_collection_options_round_trip_through_admin_metadata(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.alpha.create_collection(
+                        "events",
+                        capped=True,
+                        size=1024,
+                    )
+
+                    self.assertEqual(
+                        collection.options(),
+                        {"capped": True, "size": 1024},
+                    )
+                    self.assertEqual(
+                        client.alpha.list_collections({"name": "events"}).to_list(),
+                        [
+                            {
+                                "name": "events",
+                                "type": "collection",
+                                "options": {"capped": True, "size": 1024},
+                                "info": {"readOnly": False},
+                            }
+                        ],
+                    )
+
     def test_list_collections_rejects_invalid_filter(self):
         with MongoClient(MemoryEngine()) as client:
             with self.assertRaises(TypeError):
@@ -114,6 +140,42 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertEqual(client.list_database_names(), [])
             self.assertEqual(client.alpha.list_collection_names(), [])
 
+    def test_database_command_supports_ping_list_collections_and_drop_database(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.alpha.create_collection("events", capped=True)
+
+                    self.assertEqual(client.alpha.command("ping"), {"ok": 1.0})
+                    self.assertEqual(
+                        client.alpha.command("listCollections", filter={"name": "events"}),
+                        {
+                            "cursor": {
+                                "id": 0,
+                                "ns": "alpha.$cmd.listCollections",
+                                "firstBatch": [
+                                    {
+                                        "name": "events",
+                                        "type": "collection",
+                                        "options": {"capped": True},
+                                        "info": {"readOnly": False},
+                                    }
+                                ],
+                            },
+                            "ok": 1.0,
+                        },
+                    )
+                    self.assertEqual(
+                        client.alpha.command({"dropDatabase": 1}),
+                        {"dropped": "alpha", "ok": 1.0},
+                    )
+                    self.assertNotIn("alpha", client.list_database_names())
+
+    def test_database_command_rejects_unsupported_commands(self):
+        with MongoClient(MemoryEngine()) as client:
+            with self.assertRaises(OperationFailure):
+                client.alpha.command("collStats")
+
     def test_collection_rename_moves_documents_and_indexes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -128,6 +190,24 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(client.alpha.list_collection_names(), ["archived"])
                     self.assertEqual(renamed.find_one({"_id": "1"}), {"_id": "1", "kind": "view"})
                     self.assertIn("kind_idx", renamed.index_information())
+                    self.assertEqual(renamed.options(), {})
+
+    def test_collection_rename_preserves_options_metadata(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.alpha.create_collection(
+                        "events",
+                        capped=True,
+                        size=512,
+                    )
+
+                    renamed = collection.rename("archived")
+
+                    self.assertEqual(
+                        renamed.options(),
+                        {"capped": True, "size": 512},
+                    )
 
     def test_collection_rename_rejects_conflicting_or_identical_names(self):
         with MongoClient(MemoryEngine()) as client:

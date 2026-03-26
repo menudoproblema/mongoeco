@@ -102,6 +102,32 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ["logs"],
                     )
 
+    async def test_collection_options_round_trip_through_admin_metadata(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = await client.alpha.create_collection(
+                        "events",
+                        capped=True,
+                        size=1024,
+                    )
+
+                    self.assertEqual(
+                        await collection.options(),
+                        {"capped": True, "size": 1024},
+                    )
+                    self.assertEqual(
+                        await client.alpha.list_collections({"name": "events"}).to_list(),
+                        [
+                            {
+                                "name": "events",
+                                "type": "collection",
+                                "options": {"capped": True, "size": 1024},
+                                "info": {"readOnly": False},
+                            }
+                        ],
+                    )
+
     async def test_list_collections_rejects_invalid_filter(self):
         async with open_client("memory") as client:
             with self.assertRaises(TypeError):
@@ -124,6 +150,42 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(await client.list_database_names(), [])
             self.assertEqual(await client.alpha.list_collection_names(), [])
 
+    async def test_database_command_supports_ping_list_collections_and_drop_database(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    await client.alpha.create_collection("events", capped=True)
+
+                    self.assertEqual(await client.alpha.command("ping"), {"ok": 1.0})
+                    self.assertEqual(
+                        await client.alpha.command("listCollections", filter={"name": "events"}),
+                        {
+                            "cursor": {
+                                "id": 0,
+                                "ns": "alpha.$cmd.listCollections",
+                                "firstBatch": [
+                                    {
+                                        "name": "events",
+                                        "type": "collection",
+                                        "options": {"capped": True},
+                                        "info": {"readOnly": False},
+                                    }
+                                ],
+                            },
+                            "ok": 1.0,
+                        },
+                    )
+                    self.assertEqual(
+                        await client.alpha.command({"dropDatabase": 1}),
+                        {"dropped": "alpha", "ok": 1.0},
+                    )
+                    self.assertNotIn("alpha", await client.list_database_names())
+
+    async def test_database_command_rejects_unsupported_commands(self):
+        async with open_client("memory") as client:
+            with self.assertRaises(OperationFailure):
+                await client.alpha.command("collStats")
+
     async def test_collection_rename_moves_documents_and_indexes(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -138,6 +200,24 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(await client.alpha.list_collection_names(), ["archived"])
                     self.assertEqual(await renamed.find_one({"_id": "1"}), {"_id": "1", "kind": "view"})
                     self.assertIn("kind_idx", await renamed.index_information())
+                    self.assertEqual(await renamed.options(), {})
+
+    async def test_collection_rename_preserves_options_metadata(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = await client.alpha.create_collection(
+                        "events",
+                        capped=True,
+                        size=512,
+                    )
+
+                    renamed = await collection.rename("archived")
+
+                    self.assertEqual(
+                        await renamed.options(),
+                        {"capped": True, "size": 512},
+                    )
 
     async def test_collection_rename_rejects_conflicting_or_identical_names(self):
         async with open_client("memory") as client:

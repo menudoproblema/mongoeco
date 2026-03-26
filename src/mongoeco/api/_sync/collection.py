@@ -421,6 +421,9 @@ class Collection:
             lambda: type(self)(self._client, self._db_name, new_name),
         )
 
+    def options(self, *, session: ClientSession | None = None) -> dict[str, object]:
+        return self._client._run(self._async_collection().options(session=session))
+
     @property
     def name(self) -> str:
         return self._collection_name

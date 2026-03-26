@@ -136,11 +136,12 @@ class Database:
         name: str,
         *,
         session: ClientSession | None = None,
+        **options: object,
     ) -> Collection:
         self._client._ensure_connected()
         async_database = self._client._async_client.get_database(self._name)
         return self._client._run_resource(
-            async_database.create_collection(name, session=session),
+            async_database.create_collection(name, session=session, **options),
             lambda: self.get_collection(name),
         )
 
@@ -148,6 +149,19 @@ class Database:
         self._client._ensure_connected()
         async_database = self._client._async_client.get_database(self._name)
         self._client._run(async_database.drop_collection(name, session=session))
+
+    def command(
+        self,
+        command: object,
+        *,
+        session: ClientSession | None = None,
+        **kwargs: object,
+    ) -> dict[str, object]:
+        self._client._ensure_connected()
+        async_database = self._client._async_client.get_database(self._name)
+        return self._client._run(
+            async_database.command(command, session=session, **kwargs)
+        )
 
     @property
     def mongodb_dialect(self) -> MongoDialect:

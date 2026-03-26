@@ -49,6 +49,9 @@ class ArchitectureUnitTests(unittest.TestCase):
                 self.assertIsInstance(engine, AsyncAdminEngine)
                 self.assertIsInstance(engine, AsyncStorageEngine)
 
+    def test_namespace_admin_protocol_exposes_collection_options(self):
+        self.assertIn("collection_options", AsyncNamespaceAdminEngine.__dict__)
+
     def test_admin_cursors_share_materialized_base_classes(self):
         self.assertTrue(issubclass(AsyncIndexCursor, AsyncMaterializedCursor))
         self.assertTrue(issubclass(AsyncListingCursor, AsyncMaterializedCursor))

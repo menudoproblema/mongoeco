@@ -1233,6 +1233,13 @@ class AsyncCollection:
             pymongo_profile_resolution=self._pymongo_profile_resolution,
         )
 
+    async def options(self, *, session: ClientSession | None = None) -> dict[str, object]:
+        return await self._engine.collection_options(
+            self._db_name,
+            self._collection_name,
+            context=session,
+        )
+
     @property
     def name(self) -> str:
         return self._collection_name

@@ -49,6 +49,7 @@ class MemoryEngine(AsyncStorageEngine):
         self._locks: dict[str, _AsyncThreadLock] = {}
         self._indexes: dict[str, dict[str, list[dict[str, object]]]] = {}
         self._collections: dict[str, set[str]] = {}
+        self._collection_options: dict[str, dict[str, Document]] = {}
         self._meta_lock = threading.Lock()
         self._connection_count = 0
         self._codec = codec
@@ -138,8 +139,16 @@ class MemoryEngine(AsyncStorageEngine):
     def _storage_key(self, value: Any) -> Any:
         return self._typed_engine_key(value)
 
-    def _register_collection_locked(self, db_name: str, coll_name: str) -> None:
+    def _register_collection_locked(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        options: Document | None = None,
+    ) -> None:
         self._collections.setdefault(db_name, set()).add(coll_name)
+        db_options = self._collection_options.setdefault(db_name, {})
+        db_options.setdefault(coll_name, deepcopy(options or {}))
 
     def _prune_collection_registry_locked(self, db_name: str, coll_name: str) -> None:
         collections = self._collections.get(db_name)
@@ -148,6 +157,11 @@ class MemoryEngine(AsyncStorageEngine):
         collections.discard(coll_name)
         if not collections:
             del self._collections[db_name]
+        db_options = self._collection_options.get(db_name)
+        if db_options is not None:
+            db_options.pop(coll_name, None)
+            if not db_options:
+                del self._collection_options[db_name]
 
     def _namespace_exists_locked(self, db_name: str, coll_name: str) -> bool:
         return (
@@ -246,6 +260,7 @@ class MemoryEngine(AsyncStorageEngine):
             self._storage.clear()
             self._indexes.clear()
             self._collections.clear()
+            self._collection_options.clear()
             self._locks.clear()
 
     @override
@@ -653,18 +668,36 @@ class MemoryEngine(AsyncStorageEngine):
             )
 
     @override
+    async def collection_options(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> dict[str, object]:
+        with self._meta_lock:
+            if not self._namespace_exists_locked(db_name, coll_name):
+                raise CollectionInvalid(f"collection '{coll_name}' does not exist")
+            return deepcopy(self._collection_options.get(db_name, {}).get(coll_name, {}))
+
+    @override
     async def create_collection(
         self,
         db_name: str,
         coll_name: str,
         *,
+        options: dict[str, object] | None = None,
         context: ClientSession | None = None,
     ) -> None:
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
                 if self._namespace_exists_locked(db_name, coll_name):
                     raise CollectionInvalid(f"collection '{coll_name}' already exists")
-                self._register_collection_locked(db_name, coll_name)
+                self._register_collection_locked(
+                    db_name,
+                    coll_name,
+                    options=deepcopy(options or {}),
+                )
 
     @override
     async def rename_collection(
@@ -695,8 +728,18 @@ class MemoryEngine(AsyncStorageEngine):
                 if indexes is not None and coll_name in indexes:
                     indexes[new_name] = indexes.pop(coll_name)
 
+                db_options = self._collection_options.get(db_name)
+                if db_options is not None and coll_name in db_options:
+                    db_options[new_name] = db_options.pop(coll_name)
+
                 self._prune_collection_registry_locked(db_name, coll_name)
-                self._register_collection_locked(db_name, new_name)
+                self._register_collection_locked(
+                    db_name,
+                    new_name,
+                    options=deepcopy(
+                        self._collection_options.get(db_name, {}).get(new_name, {})
+                    ),
+                )
 
     @override
     async def drop_collection(

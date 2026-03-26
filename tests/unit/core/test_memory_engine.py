@@ -609,9 +609,13 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = MemoryEngine()
         await engine.connect()
         try:
-            await engine.create_collection("db", "empty")
+            await engine.create_collection("db", "empty", options={"capped": True})
             self.assertEqual(await engine.list_databases(), ["db"])
             self.assertEqual(await engine.list_collections("db"), ["empty"])
+            self.assertEqual(
+                await engine.collection_options("db", "empty"),
+                {"capped": True},
+            )
             with self.assertRaises(CollectionInvalid):
                 await engine.create_collection("db", "empty")
         finally:
@@ -642,6 +646,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = MemoryEngine()
         await engine.connect()
         try:
+            await engine.create_collection("db", "events", options={"capped": True})
             await engine.put_document("db", "events", {"_id": "1"})
             await engine.create_index("db", "events", ["kind"], name="kind_idx")
 
@@ -650,6 +655,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(await engine.list_collections("db"), ["archived"])
             self.assertEqual(await engine.get_document("db", "archived", "1"), {"_id": "1"})
             self.assertIn("kind_idx", await engine.index_information("db", "archived"))
+            self.assertEqual(await engine.collection_options("db", "archived"), {"capped": True})
         finally:
             await engine.disconnect()
 
