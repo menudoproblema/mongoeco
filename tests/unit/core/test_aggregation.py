@@ -494,7 +494,6 @@ class AggregationTests(unittest.TestCase):
 
         unsupported_specs = [
             {"$convert": {"input": "$value", "to": "int"}},
-            {"$toInt": "$value"},
             {"$setField": {"field": "name", "input": "$$ROOT", "value": "Ada"}},
             {"$percentile": {"input": "$value", "p": [0.5], "method": "approximate"}},
             {"$median": {"input": "$value", "method": "approximate"}},
@@ -555,10 +554,7 @@ class AggregationTests(unittest.TestCase):
             {"$rand": {}},
             {"$sampleRate": 0.5},
             {"$toHashedIndexKey": "$text"},
-            {"$toBool": "$text"},
             {"$toDecimal": "$text"},
-            {"$toDouble": "$text"},
-            {"$toLong": "$text"},
             {"$toObjectId": "$text"},
             {"$function": {"body": "function() { return 1; }", "args": [], "lang": "js"}},
             {"$accumulator": {"init": "function(){}", "accumulate": "function(){}", "accumulateArgs": [], "merge": "function(){}", "finalize": "function(x){return x;}", "lang": "js"}},
@@ -591,6 +587,44 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(evaluate_expression(document, {"$type": "$created_at"}), "date")
         self.assertEqual(evaluate_expression(document, {"$type": "$legacy"}), "undefined")
         self.assertEqual(evaluate_expression(document, {"$type": "$missing"}), "missing")
+
+    def test_evaluate_expression_supports_scalar_coercions(self):
+        document = {
+            "int_text": "42",
+            "float_text": "3.5",
+            "truthy_text": "false",
+            "date": datetime.datetime(2026, 3, 25, 10, 0, 0),
+            "zero": 0,
+            "flag": True,
+            "missing": None,
+        }
+
+        self.assertEqual(evaluate_expression(document, {"$toInt": "$int_text"}), 42)
+        self.assertEqual(evaluate_expression(document, {"$toDouble": "$float_text"}), 3.5)
+        self.assertEqual(evaluate_expression(document, {"$toLong": "$flag"}), 1)
+        self.assertEqual(evaluate_expression(document, {"$toBool": "$zero"}), False)
+        self.assertEqual(evaluate_expression(document, {"$toBool": "$truthy_text"}), True)
+        self.assertEqual(evaluate_expression(document, {"$toLong": "$date"}), 1774432800000)
+        self.assertEqual(evaluate_expression(document, {"$toDouble": "$date"}), 1774432800000.0)
+        self.assertIsNone(evaluate_expression(document, {"$toInt": "$missing"}))
+        self.assertIsNone(evaluate_expression(document, {"$toLong": "$unknown"}))
+
+    def test_evaluate_expression_scalar_coercions_reject_invalid_values(self):
+        document = {
+            "bad_text": "4.2",
+            "array_value": [1],
+            "huge": 1 << 70,
+            "fractional": 3.5,
+        }
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toInt": "$bad_text"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toInt": "$fractional"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toLong": "$huge"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toDouble": "$array_value"})
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]

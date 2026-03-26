@@ -663,6 +663,13 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * positional operators
     * `array_filters`
 * aggregation adicional:
+  * ya implementadas en esta fase:
+    * `$isNumber`
+    * `$type`
+    * `$toBool`
+    * `$toInt`
+    * `$toDouble`
+    * `$toLong`
   * más stages
   * más acumuladores
   * más expresiones

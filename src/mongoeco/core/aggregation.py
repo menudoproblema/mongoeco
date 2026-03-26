@@ -722,6 +722,97 @@ def _aggregation_type_name(value: Any) -> str:
     return type(value).__name__
 
 
+def _datetime_to_epoch_millis(value: datetime.datetime) -> int:
+    normalized = value.astimezone(datetime.UTC) if value.tzinfo is not None else value.replace(tzinfo=datetime.UTC)
+    return int(normalized.timestamp() * 1000)
+
+
+def _parse_base10_int_string(operator: str, value: str) -> int:
+    text = value.strip()
+    if not text or not re.fullmatch(r"[+-]?\d+", text):
+        raise OperationFailure(f"{operator} cannot convert the string value")
+    return int(text, 10)
+
+
+def _convert_aggregation_scalar(operator: str, value: Any, target: str) -> Any:
+    if value is _MISSING or value is None:
+        return None
+    if isinstance(value, UndefinedType):
+        return None
+
+    if target == "bool":
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return value != 0
+        if isinstance(value, (str, list, dict, bytes, bytearray, uuid.UUID, ObjectId, datetime.datetime)):
+            return True
+        raise OperationFailure(f"{operator} cannot convert the value")
+
+    if target == "int":
+        if isinstance(value, bool):
+            return int(value)
+        if isinstance(value, int):
+            if value < -(1 << 31) or value > (1 << 31) - 1:
+                raise OperationFailure(f"{operator} overflow")
+            return value
+        if isinstance(value, float):
+            if not math.isfinite(value) or not value.is_integer():
+                raise OperationFailure(f"{operator} cannot convert the value")
+            integer = int(value)
+            if integer < -(1 << 31) or integer > (1 << 31) - 1:
+                raise OperationFailure(f"{operator} overflow")
+            return integer
+        if isinstance(value, str):
+            integer = _parse_base10_int_string(operator, value)
+            if integer < -(1 << 31) or integer > (1 << 31) - 1:
+                raise OperationFailure(f"{operator} overflow")
+            return integer
+        raise OperationFailure(f"{operator} cannot convert the value")
+
+    if target == "long":
+        if isinstance(value, bool):
+            return int(value)
+        if isinstance(value, int):
+            if value < -(1 << 63) or value > (1 << 63) - 1:
+                raise OperationFailure(f"{operator} overflow")
+            return value
+        if isinstance(value, float):
+            if not math.isfinite(value) or not value.is_integer():
+                raise OperationFailure(f"{operator} cannot convert the value")
+            integer = int(value)
+            if integer < -(1 << 63) or integer > (1 << 63) - 1:
+                raise OperationFailure(f"{operator} overflow")
+            return integer
+        if isinstance(value, str):
+            integer = _parse_base10_int_string(operator, value)
+            if integer < -(1 << 63) or integer > (1 << 63) - 1:
+                raise OperationFailure(f"{operator} overflow")
+            return integer
+        if isinstance(value, datetime.datetime):
+            return _datetime_to_epoch_millis(value)
+        raise OperationFailure(f"{operator} cannot convert the value")
+
+    if target == "double":
+        if isinstance(value, bool):
+            return 1.0 if value else 0.0
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return float(value)
+        if isinstance(value, str):
+            text = value.strip()
+            if not text:
+                raise OperationFailure(f"{operator} cannot convert the string value")
+            try:
+                return float(text)
+            except ValueError as exc:
+                raise OperationFailure(f"{operator} cannot convert the string value") from exc
+        if isinstance(value, datetime.datetime):
+            return float(_datetime_to_epoch_millis(value))
+        raise OperationFailure(f"{operator} cannot convert the value")
+
+    raise OperationFailure(f"Unsupported conversion target for {operator}")
+
+
 def evaluate_expression(
     document: Document,
     expression: object,
@@ -1003,6 +1094,16 @@ def evaluate_expression(
                 if not isinstance(length, int) or isinstance(length, bool):
                     raise OperationFailure("$substr length must be an integer")
                 return _substr_string(source, start, length)
+            if operator in {"$toBool", "$toInt", "$toDouble", "$toLong"}:
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
+                target = {
+                    "$toBool": "bool",
+                    "$toInt": "int",
+                    "$toDouble": "double",
+                    "$toLong": "long",
+                }[operator]
+                return _convert_aggregation_scalar(operator, value, target)
             if operator in {"$toLower", "$toUpper"}:
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
                 value = evaluate_expression(document, args[0], variables, dialect=dialect)
