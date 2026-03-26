@@ -1222,6 +1222,32 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ],
                     )
 
+    async def test_aggregate_supports_substr_and_strlen_variants(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "text": "é寿司A"})
+
+                    documents = await collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "byte_substr": {"$substrBytes": ["$text", 0, 2]},
+                                    "cp_substr": {"$substrCP": ["$text", 1, 2]},
+                                    "byte_len": {"$strLenBytes": "$text"},
+                                    "cp_len": {"$strLenCP": "$text"},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "byte_substr": "é", "cp_substr": "寿司", "byte_len": 9, "cp_len": 4}],
+                    )
+
     async def test_aggregate_supports_async_iteration_and_validates_pipeline_type(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

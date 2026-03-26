@@ -673,6 +673,10 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$dateAdd`
     * `$dateSubtract`
     * `$dateDiff`
+    * `$substrBytes`
+    * `$substrCP`
+    * `$strLenBytes`
+    * `$strLenCP`
   * más stages
   * más acumuladores
   * más expresiones

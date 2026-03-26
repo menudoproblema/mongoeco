@@ -645,6 +645,15 @@ def _substr_string(value: str, start: int, length: int) -> str:
     return raw[start:end].decode("utf-8")
 
 
+def _substr_code_points(value: str, start: int, length: int) -> str:
+    if start < 0:
+        return ""
+    if start > len(value):
+        return ""
+    end = len(value) if length < 0 else min(len(value), start + length)
+    return value[start:end]
+
+
 def _add_milliseconds(value: datetime.datetime, milliseconds: int | float) -> datetime.datetime:
     return value + datetime.timedelta(milliseconds=milliseconds)
 
@@ -1190,7 +1199,7 @@ def evaluate_expression(
                 if not isinstance(left, str) or not isinstance(right, str):
                     raise OperationFailure("$strcasecmp requires string arguments")
                 return _compare_strings_case_insensitive(left, right)
-            if operator == "$substr":
+            if operator in {"$substr", "$substrBytes", "$substrCP"}:
                 args = _require_expression_args(operator, spec, min_args=3, max_args=3)
                 source = evaluate_expression(document, args[0], variables, dialect=dialect)
                 start = evaluate_expression(document, args[1], variables, dialect=dialect)
@@ -1198,12 +1207,22 @@ def evaluate_expression(
                 if source is None:
                     return ""
                 if not isinstance(source, str):
-                    raise OperationFailure("$substr requires the first argument to evaluate to a string")
+                    raise OperationFailure(f"{operator} requires the first argument to evaluate to a string")
                 if not isinstance(start, int) or isinstance(start, bool):
-                    raise OperationFailure("$substr start must be an integer")
+                    raise OperationFailure(f"{operator} start must be an integer")
                 if not isinstance(length, int) or isinstance(length, bool):
-                    raise OperationFailure("$substr length must be an integer")
+                    raise OperationFailure(f"{operator} length must be an integer")
+                if operator == "$substrCP":
+                    return _substr_code_points(source, start, length)
                 return _substr_string(source, start, length)
+            if operator in {"$strLenBytes", "$strLenCP"}:
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
+                if value is _MISSING or value is None:
+                    raise OperationFailure(f"{operator} requires a string argument, found: null")
+                if not isinstance(value, str):
+                    raise OperationFailure(f"{operator} requires a string argument")
+                return len(value.encode("utf-8")) if operator == "$strLenBytes" else len(value)
             if operator in {"$toBool", "$toInt", "$toDouble", "$toLong"}:
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
                 value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)

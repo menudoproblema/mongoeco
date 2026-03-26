@@ -499,10 +499,6 @@ class AggregationTests(unittest.TestCase):
             {"$median": {"input": "$value", "method": "approximate"}},
             {"$indexOfBytes": ["$value", "1"]},
             {"$indexOfCP": ["$value", "1"]},
-            {"$substrBytes": ["$value", 0, 1]},
-            {"$substrCP": ["$value", 0, 1]},
-            {"$strLenBytes": "$value"},
-            {"$strLenCP": "$value"},
         ]
 
         for spec in unsupported_specs:
@@ -712,6 +708,28 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$dateSubtract": {"startDate": "$start", "unit": "century", "amount": 1}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$dateDiff": {"startDate": "$start", "endDate": "$start", "unit": "week", "startOfWeek": 1}})
+
+    def test_evaluate_expression_supports_substr_and_strlen_byte_and_codepoint_variants(self):
+        document = {"text": "é寿司A"}
+
+        self.assertEqual(evaluate_expression(document, {"$substrBytes": ["$text", 0, 2]}), "é")
+        self.assertEqual(evaluate_expression(document, {"$substrCP": ["$text", 1, 2]}), "寿司")
+        self.assertEqual(evaluate_expression(document, {"$strLenBytes": "$text"}), len("é寿司A".encode("utf-8")))
+        self.assertEqual(evaluate_expression(document, {"$strLenCP": "$text"}), 4)
+        self.assertEqual(evaluate_expression(document, {"$substrBytes": ["$missing", 0, 2]}), "")
+        self.assertEqual(evaluate_expression(document, {"$substrCP": ["$missing", 0, 2]}), "")
+
+    def test_evaluate_expression_substr_and_strlen_variants_reject_invalid_values(self):
+        document = {"text": "é寿司A", "items": [1]}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$substrBytes": ["$text", 1, 1]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$substrCP": ["$items", 0, 1]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$strLenBytes": "$missing"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$strLenCP": "$items"})
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]

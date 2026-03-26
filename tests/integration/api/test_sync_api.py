@@ -1115,6 +1115,32 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_aggregate_supports_substr_and_strlen_variants(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "text": "é寿司A"})
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "byte_substr": {"$substrBytes": ["$text", 0, 2]},
+                                    "cp_substr": {"$substrCP": ["$text", 1, 2]},
+                                    "byte_len": {"$strLenBytes": "$text"},
+                                    "cp_len": {"$strLenCP": "$text"},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "byte_substr": "é", "cp_substr": "寿司", "byte_len": 9, "cp_len": 4}],
+                    )
+
     def test_aggregate_supports_sync_iteration(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
