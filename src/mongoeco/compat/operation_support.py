@@ -34,29 +34,29 @@ def _build_operation_option_support() -> MappingProxyType[str, MappingProxyType[
         },
         "update_one": {
             "hint": OperationOptionSupport(effective, "Applied through hinted document selection before single-document update execution."),
-            "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
+            "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for the write operation."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but update paths do not yet consume command-level let variables."),
             "sort": OperationOptionSupport(effective, "Implemented with profile-aware validation since PyMongo 4.11."),
         },
         "update_many": {
             "hint": OperationOptionSupport(effective, "Applied through hinted _id preselection before per-document updates."),
-            "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
+            "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for the write operation."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but update paths do not yet consume command-level let variables."),
         },
         "replace_one": {
             "hint": OperationOptionSupport(effective, "Applied through hinted document selection before replacement."),
-            "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
+            "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for the write operation."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but replacement paths do not yet consume command-level let variables."),
             "sort": OperationOptionSupport(effective, "Implemented with profile-aware validation since PyMongo 4.11."),
         },
         "delete_one": {
             "hint": OperationOptionSupport(effective, "Applied through hinted document selection before delete."),
-            "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
+            "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for the write operation."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but delete paths do not yet consume command-level let variables."),
         },
         "delete_many": {
             "hint": OperationOptionSupport(effective, "Applied through hinted _id preselection before per-document deletes."),
-            "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
+            "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for the write operation."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but delete paths do not yet consume command-level let variables."),
         },
         "find_one_and_update": {
@@ -81,25 +81,25 @@ def _build_operation_option_support() -> MappingProxyType[str, MappingProxyType[
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but delete paths do not yet consume command-level let variables."),
         },
         "bulk_write": {
-            "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
+            "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for the batch write operation."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but command-level variables are not consumed by write execution yet."),
         },
         "list_indexes": {
-            "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
+            "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for index administration."),
         },
         "create_index": {
-            "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
+            "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for index administration."),
             "max_time_ms": OperationOptionSupport(accepted_noop, "Validated, but local index builds are still serialized inside the engine."),
         },
         "create_indexes": {
-            "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
+            "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for index administration."),
             "max_time_ms": OperationOptionSupport(accepted_noop, "Validated, but local index builds are still serialized inside the engine."),
         },
         "drop_index": {
-            "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
+            "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for index administration."),
         },
         "drop_indexes": {
-            "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
+            "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for index administration."),
         },
     }
     return MappingProxyType(

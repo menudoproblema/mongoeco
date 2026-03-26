@@ -356,6 +356,18 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertEqual(tuned_collection.read_preference, ReadPreference(ReadPreferenceMode.SECONDARY_PREFERRED))
             self.assertEqual(tuned_collection.codec_options, CodecOptions(dict, tz_aware=True))
 
+    def test_client_with_options_clones_client_without_mutating_parent(self):
+        with MongoClient(MemoryEngine()) as client:
+            tuned = client.with_options(
+                write_concern=WriteConcern(1),
+                read_concern=ReadConcern("local"),
+            )
+
+            self.assertEqual(client.write_concern, WriteConcern())
+            self.assertEqual(client.read_concern, ReadConcern())
+            self.assertEqual(tuned.write_concern, WriteConcern(1))
+            self.assertEqual(tuned.read_concern, ReadConcern("local"))
+
     def test_start_session_inherits_default_transaction_options_from_client(self):
         transaction_options = TransactionOptions(
             write_concern=WriteConcern("majority"),
@@ -1947,6 +1959,33 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(state["last_operation"]["max_time_ms"], 25)
                     self.assertEqual(explanation["comment"], "trace-find")
                     self.assertEqual(explanation["max_time_ms"], 25)
+
+    def test_write_and_index_comments_update_session_state(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    session = client.start_session()
+                    collection = client.analytics.events
+                    collection.insert_one({"_id": "1", "kind": "view"}, session=session)
+
+                    collection.update_one(
+                        {"_id": "1"},
+                        {"$set": {"done": True}},
+                        comment="trace-update",
+                        session=session,
+                    )
+                    state = next(iter(session.engine_state.values()))
+                    self.assertEqual(state["last_operation"]["operation"], "update_one")
+                    self.assertEqual(state["last_operation"]["comment"], "trace-update")
+
+                    collection.create_index(
+                        [("kind", 1)],
+                        comment="trace-index",
+                        session=session,
+                    )
+                    state = next(iter(session.engine_state.values()))
+                    self.assertEqual(state["last_operation"]["operation"], "create_index")
+                    self.assertEqual(state["last_operation"]["comment"], "trace-index")
 
     def test_sync_client_accepts_sqlite_engine(self):
         with MongoClient(SQLiteEngine()) as client:

@@ -349,6 +349,30 @@ class MongoClient:
     def __getitem__(self, name: str) -> Database:
         return self.get_database(name)
 
+    def with_options(
+        self,
+        *,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+        transaction_options: TransactionOptions | None = None,
+    ) -> "MongoClient":
+        return type(self)(
+            self._async_client._engine,
+            mongodb_dialect=self.mongodb_dialect,
+            pymongo_profile=self.pymongo_profile,
+            write_concern=self.write_concern if write_concern is None else write_concern,
+            read_concern=self.read_concern if read_concern is None else read_concern,
+            read_preference=self.read_preference if read_preference is None else read_preference,
+            codec_options=self.codec_options if codec_options is None else codec_options,
+            transaction_options=(
+                self.transaction_options
+                if transaction_options is None
+                else transaction_options
+            ),
+        )
+
     def get_database(
         self,
         name: str,

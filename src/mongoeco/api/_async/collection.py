@@ -224,6 +224,27 @@ class AsyncCollection:
             return value
         raise TypeError("return_document must be a ReturnDocument value")
 
+    def _record_operation_metadata(
+        self,
+        *,
+        operation: str,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        hint: HintSpec | None = None,
+        session: ClientSession | None = None,
+    ) -> None:
+        if session is None:
+            return
+        recorder = getattr(self._engine, "_record_operation_metadata", None)
+        if callable(recorder):
+            recorder(
+                session,
+                operation=operation,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                hint=hint,
+            )
+
     @staticmethod
     def _can_use_direct_id_lookup(filter_spec: Filter) -> bool:
         if len(filter_spec) != 1 or "_id" not in filter_spec:
@@ -485,6 +506,11 @@ class AsyncCollection:
                     ],
                 },
             )
+        self._record_operation_metadata(
+            operation="bulk_write",
+            comment=comment,
+            session=session,
+        )
         return result
 
     async def find_one(self, filter_spec: Filter | None = None, projection: Projection | None = None, *, session: ClientSession | None = None) -> Document | None:
@@ -617,7 +643,7 @@ class AsyncCollection:
             if selected is not None:
                 identity_filter = {'_id': selected['_id']}
                 identity_plan = compile_filter(identity_filter, dialect=self._mongodb_dialect)
-                return await self._engine.update_matching_document(
+                result = await self._engine.update_matching_document(
                     self._db_name,
                     self._collection_name,
                     identity_filter,
@@ -627,6 +653,13 @@ class AsyncCollection:
                     dialect=self._mongodb_dialect,
                     context=session,
                 )
+                self._record_operation_metadata(
+                    operation="update_one",
+                    comment=comment,
+                    hint=hint,
+                    session=session,
+                )
+                return result
             return await self._perform_upsert_update(
                 filter_spec,
                 update_spec,
@@ -651,7 +684,7 @@ class AsyncCollection:
                 return UpdateResult(matched_count=0, modified_count=0)
             identity_filter = {"_id": selected["_id"]}
             identity_plan = compile_filter(identity_filter, dialect=self._mongodb_dialect)
-            return await self._engine.update_matching_document(
+            result = await self._engine.update_matching_document(
                 self._db_name,
                 self._collection_name,
                 identity_filter,
@@ -661,13 +694,20 @@ class AsyncCollection:
                 dialect=self._mongodb_dialect,
                 context=session,
             )
+            self._record_operation_metadata(
+                operation="update_one",
+                comment=comment,
+                hint=hint,
+                session=session,
+            )
+            return result
         plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
         upsert_seed = None
         if upsert:
             upsert_seed = {}
             seed_upsert_document(upsert_seed, filter_spec)
 
-        return await self._engine.update_matching_document(
+        result = await self._engine.update_matching_document(
             self._db_name,
             self._collection_name,
             filter_spec,
@@ -678,6 +718,13 @@ class AsyncCollection:
             dialect=self._mongodb_dialect,
             context=session,
         )
+        self._record_operation_metadata(
+            operation="update_one",
+            comment=comment,
+            hint=hint,
+            session=session,
+        )
+        return result
 
     async def _perform_upsert_update(
         self,
@@ -749,6 +796,12 @@ class AsyncCollection:
             )
             modified_count += result.modified_count
 
+        self._record_operation_metadata(
+            operation="update_many",
+            comment=comment,
+            hint=hint,
+            session=session,
+        )
         return UpdateResult(
             matched_count=len(matched_documents),
             modified_count=modified_count,
@@ -789,6 +842,12 @@ class AsyncCollection:
                 return UpdateResult(matched_count=0, modified_count=0)
             document = self._build_upsert_replacement_document(filter_spec, replacement)
             await self._put_replacement_document(document, overwrite=False, session=session)
+            self._record_operation_metadata(
+                operation="replace_one",
+                comment=comment,
+                hint=hint,
+                session=session,
+            )
             return UpdateResult(
                 matched_count=0,
                 modified_count=0,
@@ -800,6 +859,12 @@ class AsyncCollection:
         document = self._materialize_replacement_document(selected, replacement)
         modified_count = 0 if self._mongodb_dialect.values_equal(selected, document) else 1
         await self._put_replacement_document(document, overwrite=True, session=session)
+        self._record_operation_metadata(
+            operation="replace_one",
+            comment=comment,
+            hint=hint,
+            session=session,
+        )
         return UpdateResult(matched_count=1, modified_count=modified_count)
 
     async def find_one_and_update(
@@ -1026,9 +1091,15 @@ class AsyncCollection:
                 selected["_id"],
                 context=session,
             )
+            self._record_operation_metadata(
+                operation="delete_one",
+                comment=comment,
+                hint=hint,
+                session=session,
+            )
             return DeleteResult(deleted_count=1 if deleted else 0)
         plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
-        return await self._engine.delete_matching_document(
+        result = await self._engine.delete_matching_document(
             self._db_name,
             self._collection_name,
             filter_spec,
@@ -1036,6 +1107,13 @@ class AsyncCollection:
             dialect=self._mongodb_dialect,
             context=session,
         )
+        self._record_operation_metadata(
+            operation="delete_one",
+            comment=comment,
+            hint=hint,
+            session=session,
+        )
+        return result
 
     async def delete_many(
         self,
@@ -1066,6 +1144,12 @@ class AsyncCollection:
             )
             if deleted:
                 deleted_count += 1
+        self._record_operation_metadata(
+            operation="delete_many",
+            comment=comment,
+            hint=hint,
+            session=session,
+        )
         return DeleteResult(deleted_count=deleted_count)
 
     async def count_documents(self, filter_spec: Filter, *, session: ClientSession | None = None) -> int:
@@ -1136,7 +1220,7 @@ class AsyncCollection:
     ) -> str:
         normalized_keys = self._normalize_index_keys(keys)
         self._normalize_max_time_ms(max_time_ms)
-        return await self._engine.create_index(
+        created_name = await self._engine.create_index(
             self._db_name,
             self._collection_name,
             normalized_keys,
@@ -1144,6 +1228,13 @@ class AsyncCollection:
             name=name,
             context=session,
         )
+        self._record_operation_metadata(
+            operation="create_index",
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+        )
+        return created_name
 
     async def create_indexes(
         self,
@@ -1187,6 +1278,12 @@ class AsyncCollection:
             names.append(name)
             if name not in existing and name not in created_names:
                 created_names.append(name)
+        self._record_operation_metadata(
+            operation="create_indexes",
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+        )
         return names
 
     def list_indexes(
@@ -1195,6 +1292,11 @@ class AsyncCollection:
         comment: object | None = None,
         session: ClientSession | None = None,
     ) -> AsyncIndexCursor:
+        self._record_operation_metadata(
+            operation="list_indexes",
+            comment=comment,
+            session=session,
+        )
         return AsyncIndexCursor(
             lambda: self._engine.list_indexes(
                 self._db_name,
@@ -1209,6 +1311,11 @@ class AsyncCollection:
         comment: object | None = None,
         session: ClientSession | None = None,
     ) -> IndexInformation:
+        self._record_operation_metadata(
+            operation="index_information",
+            comment=comment,
+            session=session,
+        )
         return await self._engine.index_information(self._db_name, self._collection_name, context=session)
 
     async def drop_index(
@@ -1224,6 +1331,11 @@ class AsyncCollection:
         else:
             target = self._normalize_index_keys(index_or_name)
         await self._engine.drop_index(self._db_name, self._collection_name, target, context=session)
+        self._record_operation_metadata(
+            operation="drop_index",
+            comment=comment,
+            session=session,
+        )
 
     async def drop_indexes(
         self,
@@ -1232,6 +1344,11 @@ class AsyncCollection:
         session: ClientSession | None = None,
     ) -> None:
         await self._engine.drop_indexes(self._db_name, self._collection_name, context=session)
+        self._record_operation_metadata(
+            operation="drop_indexes",
+            comment=comment,
+            session=session,
+        )
 
     async def drop(self, *, session: ClientSession | None = None) -> None:
         await self._engine.drop_collection(

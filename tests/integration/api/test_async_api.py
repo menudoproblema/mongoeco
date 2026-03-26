@@ -198,6 +198,18 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 CodecOptions(dict, tz_aware=True),
             )
 
+    async def test_client_with_options_clones_client_without_mutating_parent(self):
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            tuned = client.with_options(
+                write_concern=WriteConcern(1),
+                read_concern=ReadConcern("local"),
+            )
+
+            self.assertEqual(client.write_concern, WriteConcern())
+            self.assertEqual(client.read_concern, ReadConcern())
+            self.assertEqual(tuned.write_concern, WriteConcern(1))
+            self.assertEqual(tuned.read_concern, ReadConcern("local"))
+
     async def test_start_session_inherits_default_transaction_options_from_client(self):
         transaction_options = TransactionOptions(
             write_concern=WriteConcern("majority"),
@@ -2037,6 +2049,33 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(state["last_operation"]["max_time_ms"], 25)
                     self.assertEqual(explanation["comment"], "trace-find")
                     self.assertEqual(explanation["max_time_ms"], 25)
+
+    async def test_write_and_index_comments_update_session_state(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    session = client.start_session()
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "kind": "view"}, session=session)
+
+                    await collection.update_one(
+                        {"_id": "1"},
+                        {"$set": {"done": True}},
+                        comment="trace-update",
+                        session=session,
+                    )
+                    state = next(iter(session.engine_state.values()))
+                    self.assertEqual(state["last_operation"]["operation"], "update_one")
+                    self.assertEqual(state["last_operation"]["comment"], "trace-update")
+
+                    await collection.create_index(
+                        [("kind", 1)],
+                        comment="trace-index",
+                        session=session,
+                    )
+                    state = next(iter(session.engine_state.values()))
+                    self.assertEqual(state["last_operation"]["operation"], "create_index")
+                    self.assertEqual(state["last_operation"]["comment"], "trace-index")
 
     async def test_collection_can_manage_index_metadata(self):
         for engine_name in ENGINE_FACTORIES:

@@ -103,6 +103,9 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertTrue(is_operation_option_effective("aggregate", "comment"))
         self.assertTrue(is_operation_option_effective("aggregate", "max_time_ms"))
         self.assertTrue(is_operation_option_effective("aggregate", "let"))
+        self.assertTrue(is_operation_option_effective("update_one", "comment"))
+        self.assertTrue(is_operation_option_effective("bulk_write", "comment"))
+        self.assertTrue(is_operation_option_effective("create_index", "comment"))
         self.assertFalse(is_operation_option_effective("update_one", "let"))
         self.assertEqual(
             get_operation_option_support("missing", "hint").status,
