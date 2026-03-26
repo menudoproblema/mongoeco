@@ -8,6 +8,7 @@ from mongoeco.compat import (
     resolve_mongodb_dialect_resolution,
     resolve_pymongo_profile_resolution,
 )
+from mongoeco.core.aggregation import _bson_document_size
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.validation import is_filter
 from mongoeco.engines.base import AsyncStorageEngine
@@ -239,6 +240,54 @@ class AsyncDatabase:
             normalized.append(IndexModel(raw_index["key"], **kwargs))
         return normalized
 
+    async def _collection_stats(
+        self,
+        collection_name: str,
+        *,
+        session: ClientSession | None = None,
+    ) -> dict[str, object]:
+        collection = self.get_collection(collection_name)
+        documents = await collection.find({}, session=session).to_list()
+        indexes = await collection.list_indexes(session=session).to_list()
+        data_size = sum(_bson_document_size(document) for document in documents)
+        count = len(documents)
+        return {
+            "ns": f"{self._db_name}.{collection_name}",
+            "count": count,
+            "size": data_size,
+            "avgObjSize": (data_size / count) if count else 0,
+            "storageSize": data_size,
+            "nindexes": len(indexes),
+            "totalIndexSize": 0,
+            "ok": 1.0,
+        }
+
+    async def _database_stats(
+        self,
+        *,
+        session: ClientSession | None = None,
+    ) -> dict[str, object]:
+        collection_names = await self._engine.list_collections(self._db_name, context=session)
+        objects = 0
+        data_size = 0
+        indexes = 0
+        for collection_name in collection_names:
+            stats = await self._collection_stats(collection_name, session=session)
+            objects += int(stats["count"])
+            data_size += int(stats["size"])
+            indexes += int(stats["nindexes"])
+        return {
+            "db": self._db_name,
+            "collections": len(collection_names),
+            "objects": objects,
+            "avgObjSize": (data_size / objects) if objects else 0,
+            "dataSize": data_size,
+            "storageSize": data_size,
+            "indexes": indexes,
+            "indexSize": 0,
+            "ok": 1.0,
+        }
+
     async def command(
         self,
         command: object,
@@ -392,6 +441,13 @@ class AsyncDatabase:
                     context=session,
                 )
             return {"dropped": self._db_name, "ok": 1.0}
+
+        if command_name == "collStats":
+            collection_name = self._require_collection_name(spec.get("collStats"), "collStats")
+            return await self._collection_stats(collection_name, session=session)
+
+        if command_name == "dbStats":
+            return await self._database_stats(session=session)
 
         raise OperationFailure(f"Unsupported command: {command_name}")
 

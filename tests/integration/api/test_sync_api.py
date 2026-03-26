@@ -242,10 +242,33 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"ns": "alpha.events", "ok": 1.0},
                     )
 
+    def test_database_command_supports_coll_stats_and_db_stats(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.alpha.events.insert_one({"_id": "1", "kind": "view"})
+                    client.alpha.events.create_index([("kind", 1)], name="kind_idx")
+
+                    coll_stats = client.alpha.command({"collStats": "events"})
+                    db_stats = client.alpha.command("dbStats")
+
+                    self.assertEqual(coll_stats["ns"], "alpha.events")
+                    self.assertEqual(coll_stats["count"], 1)
+                    self.assertEqual(coll_stats["nindexes"], 2)
+                    self.assertGreater(coll_stats["size"], 0)
+                    self.assertEqual(coll_stats["storageSize"], coll_stats["size"])
+                    self.assertEqual(coll_stats["ok"], 1.0)
+                    self.assertEqual(db_stats["db"], "alpha")
+                    self.assertEqual(db_stats["collections"], 1)
+                    self.assertEqual(db_stats["objects"], 1)
+                    self.assertEqual(db_stats["indexes"], 2)
+                    self.assertEqual(db_stats["storageSize"], db_stats["dataSize"])
+                    self.assertEqual(db_stats["ok"], 1.0)
+
     def test_database_command_rejects_unsupported_commands(self):
         with MongoClient(MemoryEngine()) as client:
             with self.assertRaises(OperationFailure):
-                client.alpha.command("collStats")
+                client.alpha.command("serverStatus")
 
     def test_database_command_rejects_invalid_command_shapes(self):
         with MongoClient(MemoryEngine()) as client:

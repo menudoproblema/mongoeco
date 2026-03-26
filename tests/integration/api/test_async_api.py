@@ -345,10 +345,33 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         {"ns": "alpha.events", "ok": 1.0},
                     )
 
+    async def test_database_command_supports_coll_stats_and_db_stats(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    await client.alpha.events.insert_one({"_id": "1", "kind": "view"})
+                    await client.alpha.events.create_index([("kind", 1)], name="kind_idx")
+
+                    coll_stats = await client.alpha.command({"collStats": "events"})
+                    db_stats = await client.alpha.command("dbStats")
+
+                    self.assertEqual(coll_stats["ns"], "alpha.events")
+                    self.assertEqual(coll_stats["count"], 1)
+                    self.assertEqual(coll_stats["nindexes"], 2)
+                    self.assertGreater(coll_stats["size"], 0)
+                    self.assertEqual(coll_stats["storageSize"], coll_stats["size"])
+                    self.assertEqual(coll_stats["ok"], 1.0)
+                    self.assertEqual(db_stats["db"], "alpha")
+                    self.assertEqual(db_stats["collections"], 1)
+                    self.assertEqual(db_stats["objects"], 1)
+                    self.assertEqual(db_stats["indexes"], 2)
+                    self.assertEqual(db_stats["storageSize"], db_stats["dataSize"])
+                    self.assertEqual(db_stats["ok"], 1.0)
+
     async def test_database_command_rejects_unsupported_commands(self):
         async with open_client("memory") as client:
             with self.assertRaises(OperationFailure):
-                await client.alpha.command("collStats")
+                await client.alpha.command("serverStatus")
 
     async def test_database_command_rejects_invalid_command_shapes(self):
         async with open_client("memory") as client:
