@@ -1264,6 +1264,54 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"_id": "1", "week": 0, "iso_week": 1, "iso_week_year": 2026}],
                     )
 
+    def test_aggregate_supports_date_string_parts_and_parsing_variants(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "created_at": datetime.datetime(2026, 3, 25, 10, 5, 6, 789000)})
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "formatted": {
+                                        "$dateToString": {
+                                            "date": "$created_at",
+                                            "format": "%Y-%m-%d %H:%M:%S.%L",
+                                            "timezone": "UTC",
+                                        }
+                                    },
+                                    "parts": {"$dateToParts": {"date": "$created_at", "timezone": "UTC"}},
+                                    "parsed": {
+                                        "$dateFromString": {
+                                            "dateString": "2026-03-25 12:05:06.789",
+                                            "format": "%Y-%m-%d %H:%M:%S.%L",
+                                            "timezone": "+02:00",
+                                        }
+                                    },
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(documents[0]["_id"], "1")
+                    self.assertEqual(documents[0]["formatted"], "2026-03-25 10:05:06.789")
+                    self.assertEqual(
+                        documents[0]["parts"],
+                        {
+                            "year": 2026,
+                            "month": 3,
+                            "day": 25,
+                            "hour": 10,
+                            "minute": 5,
+                            "second": 6,
+                            "millisecond": 789,
+                        },
+                    )
+                    self.assertEqual(documents[0]["parsed"], datetime.datetime(2026, 3, 25, 10, 5, 6, 789000))
+
     def test_aggregate_supports_sync_iteration(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

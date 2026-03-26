@@ -704,6 +704,70 @@ def _trunc_numeric(value: int | float, place: int) -> int | float:
     return int(truncated)
 
 
+def _format_timezone_offset(value: datetime.datetime) -> str:
+    offset = value.utcoffset() or datetime.timedelta()
+    total_minutes = int(offset.total_seconds() // 60)
+    sign = "+" if total_minutes >= 0 else "-"
+    total_minutes = abs(total_minutes)
+    hours, minutes = divmod(total_minutes, 60)
+    return f"{sign}{hours:02d}{minutes:02d}"
+
+
+def _mongo_format_datetime(value: datetime.datetime, fmt: str) -> str:
+    result = fmt
+    replacements = {
+        "%Y": f"{value.year:04d}",
+        "%m": f"{value.month:02d}",
+        "%d": f"{value.day:02d}",
+        "%H": f"{value.hour:02d}",
+        "%M": f"{value.minute:02d}",
+        "%S": f"{value.second:02d}",
+        "%L": f"{value.microsecond // 1000:03d}",
+        "%z": _format_timezone_offset(value),
+        "%G": f"{value.isocalendar().year:04d}",
+        "%V": f"{value.isocalendar().week:02d}",
+        "%u": str(value.isocalendar().weekday),
+    }
+    for token, replacement in replacements.items():
+        result = result.replace(token, replacement)
+    return result
+
+
+def _python_strptime_format(operator: str, fmt: str) -> str:
+    supported_tokens = {
+        "%Y": "%Y",
+        "%m": "%m",
+        "%d": "%d",
+        "%H": "%H",
+        "%M": "%M",
+        "%S": "%S",
+        "%L": "%f",
+        "%z": "%z",
+    }
+    result = ""
+    index = 0
+    while index < len(fmt):
+        if fmt[index] == "%" and index + 1 < len(fmt):
+            token = fmt[index : index + 2]
+            if token not in supported_tokens:
+                raise OperationFailure(f"{operator} format token is not supported")
+            result += supported_tokens[token]
+            index += 2
+            continue
+        result += fmt[index]
+        index += 1
+    return result
+
+
+def _default_date_to_string_format(timezone: datetime.tzinfo) -> str:
+    return "%Y-%m-%dT%H:%M:%S.%LZ" if timezone == datetime.UTC else "%Y-%m-%dT%H:%M:%S.%L"
+
+
+def _to_utc_naive(value: datetime.datetime) -> datetime.datetime:
+    aware = value.astimezone(datetime.UTC) if value.tzinfo is not None else value.replace(tzinfo=datetime.UTC)
+    return aware.replace(tzinfo=None)
+
+
 def _add_milliseconds(value: datetime.datetime, milliseconds: int | float) -> datetime.datetime:
     return value + datetime.timedelta(milliseconds=milliseconds)
 
@@ -1715,6 +1779,102 @@ def evaluate_expression(
                 signed_amount = amount if operator == "$dateAdd" else -amount
                 updated = _add_date_unit(localized, unit, signed_amount)
                 return _restore_datetime_timezone(updated, value)
+            if operator == "$dateToString":
+                if not isinstance(spec, dict) or "date" not in spec:
+                    raise OperationFailure("$dateToString requires date")
+                value = _evaluate_expression_with_missing(document, spec["date"], variables, dialect=dialect)
+                if value is _MISSING or value is None:
+                    return evaluate_expression(document, spec["onNull"], variables, dialect=dialect) if "onNull" in spec else None
+                if not isinstance(value, datetime.datetime):
+                    raise OperationFailure("$dateToString requires a date input")
+                timezone = _resolve_timezone(
+                    operator,
+                    evaluate_expression(document, spec["timezone"], variables, dialect=dialect)
+                    if "timezone" in spec
+                    else None,
+                )
+                fmt = (
+                    evaluate_expression(document, spec["format"], variables, dialect=dialect)
+                    if "format" in spec
+                    else _default_date_to_string_format(timezone)
+                )
+                if not isinstance(fmt, str):
+                    raise OperationFailure("$dateToString format must evaluate to a string")
+                localized = _localize_datetime(value, timezone)
+                return _mongo_format_datetime(localized, fmt)
+            if operator == "$dateToParts":
+                if not isinstance(spec, dict) or "date" not in spec:
+                    raise OperationFailure("$dateToParts requires date")
+                value = _evaluate_expression_with_missing(document, spec["date"], variables, dialect=dialect)
+                if value is _MISSING or value is None:
+                    return None
+                if not isinstance(value, datetime.datetime):
+                    raise OperationFailure("$dateToParts requires a date input")
+                timezone = _resolve_timezone(
+                    operator,
+                    evaluate_expression(document, spec["timezone"], variables, dialect=dialect)
+                    if "timezone" in spec
+                    else None,
+                )
+                localized = _localize_datetime(value, timezone)
+                iso8601 = (
+                    evaluate_expression(document, spec["iso8601"], variables, dialect=dialect)
+                    if "iso8601" in spec
+                    else False
+                )
+                if not isinstance(iso8601, bool):
+                    raise OperationFailure("$dateToParts iso8601 must evaluate to a boolean")
+                if iso8601:
+                    iso_parts = localized.isocalendar()
+                    return {
+                        "isoWeekYear": iso_parts.year,
+                        "isoWeek": iso_parts.week,
+                        "isoDayOfWeek": iso_parts.weekday,
+                        "hour": localized.hour,
+                        "minute": localized.minute,
+                        "second": localized.second,
+                        "millisecond": localized.microsecond // 1000,
+                    }
+                return {
+                    "year": localized.year,
+                    "month": localized.month,
+                    "day": localized.day,
+                    "hour": localized.hour,
+                    "minute": localized.minute,
+                    "second": localized.second,
+                    "millisecond": localized.microsecond // 1000,
+                }
+            if operator == "$dateFromString":
+                if not isinstance(spec, dict) or "dateString" not in spec:
+                    raise OperationFailure("$dateFromString requires dateString")
+                raw_value = _evaluate_expression_with_missing(document, spec["dateString"], variables, dialect=dialect)
+                if raw_value is _MISSING or raw_value is None:
+                    return evaluate_expression(document, spec["onNull"], variables, dialect=dialect) if "onNull" in spec else None
+                if not isinstance(raw_value, str):
+                    raise OperationFailure("$dateFromString dateString must evaluate to a string")
+                timezone = _resolve_timezone(
+                    operator,
+                    evaluate_expression(document, spec["timezone"], variables, dialect=dialect)
+                    if "timezone" in spec
+                    else None,
+                )
+                try:
+                    if "format" in spec:
+                        fmt = evaluate_expression(document, spec["format"], variables, dialect=dialect)
+                        if not isinstance(fmt, str):
+                            raise OperationFailure("$dateFromString format must evaluate to a string")
+                        parsed = datetime.datetime.strptime(raw_value, _python_strptime_format(operator, fmt))
+                    else:
+                        parsed = datetime.datetime.fromisoformat(raw_value.replace("Z", "+00:00"))
+                except OperationFailure:
+                    raise
+                except Exception as exc:
+                    if "onError" in spec:
+                        return evaluate_expression(document, spec["onError"], variables, dialect=dialect)
+                    raise OperationFailure("$dateFromString could not parse dateString") from exc
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=timezone)
+                return _to_utc_naive(parsed)
             if operator in {"$week", "$isoWeek", "$isoWeekYear"}:
                 timezone_value = None
                 date_expression: Any = spec

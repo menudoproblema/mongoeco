@@ -523,9 +523,6 @@ class AggregationTests(unittest.TestCase):
             {"$switch": {"branches": [], "default": 0}},
             {"$bsonSize": "$$ROOT"},
             {"$dateFromParts": {"year": 2026}},
-            {"$dateFromString": {"dateString": "2026-03-25T10:00:00Z"}},
-            {"$dateToParts": {"date": "$created_at"}},
-            {"$dateToString": {"date": "$created_at"}},
             {"$toDate": "$text"},
             {"$rand": {}},
             {"$sampleRate": 0.5},
@@ -820,6 +817,79 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$week": "$text"})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$isoWeek": {"timezone": "UTC"}})
+
+    def test_evaluate_expression_supports_date_string_parts_and_parsing_variants(self):
+        document = {"created_at": datetime.datetime(2026, 3, 25, 10, 5, 6, 789000)}
+
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateToString": {"date": "$created_at", "format": "%Y-%m-%d %H:%M:%S.%L", "timezone": "UTC"}},
+            ),
+            "2026-03-25 10:05:06.789",
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateToParts": {"date": "$created_at", "timezone": "UTC"}},
+            ),
+            {
+                "year": 2026,
+                "month": 3,
+                "day": 25,
+                "hour": 10,
+                "minute": 5,
+                "second": 6,
+                "millisecond": 789,
+            },
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateToParts": {"date": "$created_at", "timezone": "UTC", "iso8601": True}},
+            ),
+            {
+                "isoWeekYear": 2026,
+                "isoWeek": 13,
+                "isoDayOfWeek": 3,
+                "hour": 10,
+                "minute": 5,
+                "second": 6,
+                "millisecond": 789,
+            },
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateFromString": {"dateString": "2026-03-25T10:05:06.789Z"}},
+            ),
+            datetime.datetime(2026, 3, 25, 10, 5, 6, 789000),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {
+                    "$dateFromString": {
+                        "dateString": "2026-03-25 12:05:06.789",
+                        "format": "%Y-%m-%d %H:%M:%S.%L",
+                        "timezone": "+02:00",
+                    }
+                },
+            ),
+            datetime.datetime(2026, 3, 25, 10, 5, 6, 789000),
+        )
+
+    def test_evaluate_expression_date_string_parts_and_parsing_variants_reject_invalid_values(self):
+        document = {"text": "Ada", "created_at": datetime.datetime(2026, 3, 25, 10, 5, 6)}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateToString": {"date": "$text"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateToParts": {"date": "$created_at", "iso8601": "yes"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateFromString": {"dateString": 1}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateFromString": {"dateString": "2026-03-25", "format": "%Q"}})
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]
