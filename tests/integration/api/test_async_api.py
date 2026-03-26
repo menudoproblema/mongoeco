@@ -1446,6 +1446,58 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     self.assertEqual(documents, [{"tenant_match": True, "label": "user:Ada"}])
 
+    async def test_write_operations_support_let_through_expr_filters(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "tenant": "a", "matched": False},
+                            {"_id": "2", "tenant": "b", "matched": False},
+                        ]
+                    )
+
+                    result = await collection.update_many(
+                        {"$expr": {"$eq": ["$tenant", "$$tenant"]}},
+                        {"$set": {"matched": True}},
+                        let={"tenant": "a"},
+                    )
+
+                    self.assertEqual(result.matched_count, 1)
+                    self.assertEqual(
+                        await collection.find({}, {"_id": 1, "matched": 1}, sort=[("_id", 1)]).to_list(),
+                        [{"_id": "1", "matched": True}, {"_id": "2", "matched": False}],
+                    )
+
+    async def test_bulk_write_inherits_let_for_expr_filters(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "tenant": "a", "flag": False},
+                            {"_id": "2", "tenant": "b", "flag": False},
+                        ]
+                    )
+
+                    result = await collection.bulk_write(
+                        [
+                            UpdateOne(
+                                {"$expr": {"$eq": ["$tenant", "$$tenant"]}},
+                                {"$set": {"flag": True}},
+                            )
+                        ],
+                        let={"tenant": "b"},
+                    )
+
+                    self.assertEqual(result.matched_count, 1)
+                    self.assertEqual(
+                        await collection.find({}, {"_id": 1, "flag": 1}, sort=[("_id", 1)]).to_list(),
+                        [{"_id": "1", "flag": False}, {"_id": "2", "flag": True}],
+                    )
+
     async def test_aggregate_supports_array_to_object_index_of_array_and_sort_array(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

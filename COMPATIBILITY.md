@@ -286,18 +286,20 @@ support = get_operation_option_support("aggregate", "let")
 assert support is not None
 assert support.status is OptionSupportStatus.EFFECTIVE
 
-assert not is_operation_option_effective("find", "hint")
+assert is_operation_option_effective("find", "hint")
 ```
 
 Casos relevantes hoy:
 
 * `aggregate(let=...)` -> `effective`
-* `find(hint=...)` -> `accepted-noop`
-* `find(comment=...)` -> `accepted-noop`
-* `find(max_time_ms=...)` -> `accepted-noop`
-* `update_one(let=...)` -> `accepted-noop`
-* `replace_one(let=...)` -> `accepted-noop`
-* `bulk_write(comment=...)` -> `accepted-noop`
+* `find(hint=...)` -> `effective`
+* `find(comment=...)` -> `effective`
+* `find(max_time_ms=...)` -> `effective`
+* `find(batch_size=...)` -> `effective` con batching local del cursor
+* `update_one(let=...)` -> `effective` cuando el filtro usa `$expr`
+* `replace_one(let=...)` -> `effective` cuando el filtro usa `$expr`
+* `bulk_write(comment=...)` -> `effective`
+* `bulk_write(let=...)` -> `effective` cuando las operaciones usan filtros con `$expr`
 
 Regla de mantenimiento:
 

@@ -152,6 +152,40 @@ class QueryEngineTests(unittest.TestCase):
         self.assertTrue(QueryEngine.match(document, {"$and": [{"a": 1}, {"b": 3}]}))
         self.assertFalse(QueryEngine.match(document, {"$and": [{"a": 1}, {"b": 4}]}))
 
+    def test_query_engine_supports_top_level_expr(self):
+        document = {"tenant": "a", "score": 7}
+
+        self.assertTrue(
+            QueryEngine.match(
+                document,
+                {"$expr": {"$and": [{"$eq": ["$tenant", "a"]}, {"$gt": ["$score", 5]}]}},
+            )
+        )
+        self.assertFalse(
+            QueryEngine.match(
+                document,
+                {"$expr": {"$lt": ["$score", 5]}},
+            )
+        )
+
+    def test_query_engine_expr_can_use_bound_variables(self):
+        document = {"tenant": "a", "score": 7}
+        plan = compile_filter(
+            {"$expr": {"$and": [{"$eq": ["$tenant", "$$tenant"]}, {"$gt": ["$score", "$$min_score"]}]}},
+            variables={"tenant": "a", "min_score": 5},
+        )
+
+        self.assertTrue(QueryEngine.match_plan(document, plan))
+        self.assertFalse(
+            QueryEngine.match_plan(
+                document,
+                compile_filter(
+                    {"$expr": {"$eq": ["$tenant", "$$tenant"]}},
+                    variables={"tenant": "b"},
+                ),
+            )
+        )
+
     def test_query_engine_rejects_invalid_boolean_operator_payloads(self):
         with self.assertRaises(ValueError):
             QueryEngine.match({"a": 1}, {"$and": {"a": 1}})

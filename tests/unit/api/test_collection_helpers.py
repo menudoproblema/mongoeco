@@ -15,6 +15,17 @@ from mongoeco.types import (
 )
 
 
+def _scan_stub_documents(documents, *, skip=0, limit=None):
+    async def _scan():
+        selected = documents[skip:]
+        if limit is not None:
+            selected = selected[:limit]
+        for document in selected:
+            yield document
+
+    return _scan()
+
+
 class AsyncCollectionHelperTests(unittest.TestCase):
     def setUp(self):
         self.collection = AsyncCollection(MemoryEngine(), "db", "coll")
@@ -540,10 +551,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
     def test_distinct_uses_scalar_fallback_when_exact_path_exists_but_extract_values_is_empty(self):
         class EngineStub:
             def scan_collection(self, *args, **kwargs):
-                async def _scan():
-                    yield {"profile": {"city": "Madrid"}}
-
-                return _scan()
+                return _scan_stub_documents(
+                    [{"profile": {"city": "Madrid"}}],
+                    skip=kwargs.get("skip", 0),
+                    limit=kwargs.get("limit"),
+                )
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -556,10 +568,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
     def test_distinct_skips_list_fallback_when_exact_path_is_an_empty_array(self):
         class EngineStub:
             def scan_collection(self, *args, **kwargs):
-                async def _scan():
-                    yield {"profile": {"city": []}}
-
-                return _scan()
+                return _scan_stub_documents(
+                    [{"profile": {"city": []}}],
+                    skip=kwargs.get("skip", 0),
+                    limit=kwargs.get("limit"),
+                )
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -601,11 +614,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
     def test_update_many_returns_zero_counts_when_nothing_matches_and_upsert_is_false(self):
         class EngineStub:
             def scan_collection(self, *args, **kwargs):
-                async def _scan():
-                    if False:
-                        yield None
-
-                return _scan()
+                return _scan_stub_documents(
+                    [],
+                    skip=kwargs.get("skip", 0),
+                    limit=kwargs.get("limit"),
+                )
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -667,11 +680,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
     def test_replace_one_returns_zero_when_nothing_matches_and_upsert_is_false(self):
         class EngineStub:
             def scan_collection(self, *args, **kwargs):
-                async def _scan():
-                    if False:
-                        yield None
-
-                return _scan()
+                return _scan_stub_documents(
+                    [],
+                    skip=kwargs.get("skip", 0),
+                    limit=kwargs.get("limit"),
+                )
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -686,11 +699,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                 self.document = None
 
             def scan_collection(self, *args, **kwargs):
-                async def _scan():
-                    if False:
-                        yield None
-
-                return _scan()
+                return _scan_stub_documents(
+                    [],
+                    skip=kwargs.get("skip", 0),
+                    limit=kwargs.get("limit"),
+                )
 
             async def put_document(self, _db, _coll, document, **kwargs):
                 self.document = document
@@ -820,11 +833,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
     def test_replace_one_upsert_duplicate_key_error_when_engine_rejects_document(self):
         class EngineStub:
             def scan_collection(self, *args, **kwargs):
-                async def _scan():
-                    if False:
-                        yield None
-
-                return _scan()
+                return _scan_stub_documents(
+                    [],
+                    skip=kwargs.get("skip", 0),
+                    limit=kwargs.get("limit"),
+                )
 
             async def put_document(self, *args, **kwargs):
                 return False
@@ -869,11 +882,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
     def test_find_one_and_update_returns_none_when_nothing_matches_without_upsert(self):
         class EngineStub:
             def scan_collection(self, *args, **kwargs):
-                async def _scan():
-                    if False:
-                        yield None
-
-                return _scan()
+                return _scan_stub_documents(
+                    [],
+                    skip=kwargs.get("skip", 0),
+                    limit=kwargs.get("limit"),
+                )
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -949,11 +962,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
     def test_find_one_and_delete_returns_none_when_nothing_matches(self):
         class EngineStub:
             def scan_collection(self, *args, **kwargs):
-                async def _scan():
-                    if False:
-                        yield None
-
-                return _scan()
+                return _scan_stub_documents(
+                    [],
+                    skip=kwargs.get("skip", 0),
+                    limit=kwargs.get("limit"),
+                )
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -1023,17 +1036,17 @@ class AsyncCollectionHelperTests(unittest.TestCase):
 
                 recorded_find: list[dict[str, object | None]] = []
                 recorded_select: list[dict[str, object | None]] = []
-                original_find = collection.find
+                original_build_cursor = collection._build_cursor
                 original_select = collection._select_first_document
 
-                def _wrapped_find(*args, **kwargs):
+                def _wrapped_build_cursor(*args, **kwargs):
                     recorded_find.append(
                         {
                             "hint": kwargs.get("hint"),
                             "comment": kwargs.get("comment"),
                         }
                     )
-                    return original_find(*args, **kwargs)
+                    return original_build_cursor(*args, **kwargs)
 
                 async def _wrapped_select(*args, **kwargs):
                     recorded_select.append(
@@ -1044,7 +1057,7 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                     )
                     return await original_select(*args, **kwargs)
 
-                collection.find = _wrapped_find  # type: ignore[method-assign]
+                collection._build_cursor = _wrapped_build_cursor  # type: ignore[method-assign]
                 collection._select_first_document = _wrapped_select  # type: ignore[method-assign]
 
                 update_one_result = await collection.update_one(
@@ -1192,10 +1205,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                 return {"name": "Ada"}
 
             def scan_collection(self, *args, **kwargs):
-                async def _scan():
-                    yield {"_id": "1", "name": "Ada"}
-
-                return _scan()
+                return _scan_stub_documents(
+                    [{"_id": "1", "name": "Ada"}],
+                    skip=kwargs.get("skip", 0),
+                    limit=kwargs.get("limit"),
+                )
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -1226,12 +1240,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             def scan_collection(self, *args, **kwargs):
                 self.scan_plan = kwargs["plan"]
                 self.scan_dialect = kwargs["dialect"]
-
-                async def _scan():
-                    if False:
-                        yield None
-
-                return _scan()
+                return _scan_stub_documents(
+                    [],
+                    skip=kwargs.get("skip", 0),
+                    limit=kwargs.get("limit"),
+                )
 
             async def update_matching_document(self, *args, **kwargs):
                 self.update_plan = kwargs["plan"]

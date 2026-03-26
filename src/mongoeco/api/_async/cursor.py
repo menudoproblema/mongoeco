@@ -8,6 +8,53 @@ from mongoeco.types import Document, Filter, Projection, SortSpec
 type HintSpec = str | SortSpec
 
 
+class _AsyncCursorIterator:
+    def __init__(self, cursor: "AsyncCursor", *, batch_size: int | None, enforce_ownership: bool):
+        self._cursor = cursor
+        self._batch_size = batch_size
+        self._enforce_ownership = enforce_ownership
+        self._buffer: list[Document] = []
+        self._closed = False
+        self._position = 0
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self) -> Document:
+        if self._closed:
+            raise StopAsyncIteration
+        if self._enforce_ownership and self._cursor._active_async_iterable is not self:
+            self._closed = True
+            raise StopAsyncIteration
+        if not self._buffer:
+            await self._fill_buffer()
+        if not self._buffer:
+            await self.close()
+            raise StopAsyncIteration
+        return self._buffer.pop(0)
+
+    async def _fill_buffer(self) -> None:
+        target_size = self._batch_size if self._batch_size not in (None, 0) else 1
+        page = await self._cursor._fetch_batch(self._position, target_size)
+        if not page:
+            self._cursor._exhausted = True
+            return
+        self._position += len(page)
+        self._buffer.extend(page)
+
+    async def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        if self._cursor._active_async_iterable is self:
+            self._cursor._active_async_iterable = None
+        if self._cursor._active_async_iterable is None and self._cursor._exhausted:
+            self._cursor._started = True
+
+    async def aclose(self) -> None:
+        await self.close()
+
+
 def _validate_sort_spec(sort: SortSpec) -> None:
     if not isinstance(sort, list):
         raise TypeError("sort must be a list of (field, direction) tuples")
@@ -76,6 +123,7 @@ class AsyncCursor:
         self._session = session
         self._started = False
         self._exhausted = False
+        self._active_async_iterable: _AsyncCursorIterator | None = None
 
     def _ensure_mutable(self) -> None:
         if self._started:
@@ -99,8 +147,48 @@ class AsyncCursor:
             context=self._session,
         )
 
+    async def _fetch_batch(self, offset: int, batch_size: int) -> list[Document]:
+        effective_skip = self._skip + offset
+        effective_limit = batch_size
+        if self._limit is not None:
+            remaining = self._limit - offset
+            if remaining <= 0:
+                return []
+            effective_limit = min(batch_size, remaining)
+        return [
+            document
+            async for document in self._collection._engine.scan_collection(
+                self._collection._db_name,
+                self._collection._collection_name,
+                self._filter_spec,
+                plan=self._plan,
+                projection=self._projection,
+                sort=self._sort,
+                skip=effective_skip,
+                limit=effective_limit,
+                hint=self._hint,
+                comment=self._comment,
+                max_time_ms=self._max_time_ms,
+                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+                context=self._session,
+            )
+        ]
+
+    def _iter(self, *, limit: int | None = None, enforce_ownership: bool = True) -> _AsyncCursorIterator:
+        self._started = True
+        batch_size = self._batch_size if limit is None else limit
+        return _AsyncCursorIterator(self, batch_size=batch_size, enforce_ownership=enforce_ownership)
+
     def __aiter__(self):
-        return self._scan()
+        if self._exhausted and self._active_async_iterable is None:
+            async def _empty():
+                if False:
+                    yield None
+
+            return _empty()
+        if self._active_async_iterable is None:
+            self._active_async_iterable = self._iter()
+        return self._active_async_iterable
 
     def sort(self, sort: SortSpec) -> "AsyncCursor":
         self._ensure_mutable()
@@ -147,17 +235,27 @@ class AsyncCursor:
 
     async def to_list(self) -> list[Document]:
         documents = [document async for document in self]
-        self._exhausted = True
         return documents
 
     async def first(self) -> Document | None:
         if self._limit == 0:
             return None
-        async for document in self._scan(limit=1):
+        active = self._active_async_iterable
+        if active is not None:
+            try:
+                return await active.__anext__()
+            except StopAsyncIteration:
+                return None
+        if self._exhausted:
+            return None
+        async for document in self._iter(limit=1, enforce_ownership=False):
             return document
         return None
 
     def rewind(self) -> "AsyncCursor":
+        active = self._active_async_iterable
+        if active is not None:
+            self._active_async_iterable = None
         self._started = False
         self._exhausted = False
         return self

@@ -110,6 +110,12 @@ class ExistsCondition(QueryNode):
 
 
 @dataclass(frozen=True)
+class ExprCondition(QueryNode):
+    expression: Any
+    variables: dict[str, Any]
+
+
+@dataclass(frozen=True)
 class AndCondition(QueryNode):
     clauses: tuple[QueryNode, ...]
 
@@ -223,6 +229,7 @@ def compile_filter(
     filter_spec: Filter,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    variables: dict[str, Any] | None = None,
 ) -> QueryNode:
     if filter_spec is None:
         return MatchAll()
@@ -236,21 +243,57 @@ def compile_filter(
         if isinstance(key, str) and key.startswith("$") and not dialect.supports_query_top_level_operator(key):
             raise OperationFailure(f"Unsupported top-level query operator: {key}")
         if key == "$expr":
-            raise OperationFailure("$expr is not supported in query filters outside aggregation $match")
+            clauses.append(ExprCondition(value, {} if variables is None else dict(variables)))
+            continue
         if key == "$and":
             if not isinstance(value, list):
                 raise ValueError("$and necesita una lista de filtros")
-            clauses.append(AndCondition(tuple(compile_filter(clause, dialect=dialect) for clause in value)))
+            clauses.append(
+                AndCondition(
+                    tuple(
+                        compile_filter(
+                            clause,
+                            dialect=dialect,
+                            variables=variables,
+                        )
+                        for clause in value
+                    )
+                )
+            )
             continue
         if key == "$or":
             if not isinstance(value, list):
                 raise ValueError("$or necesita una lista de filtros")
-            clauses.append(OrCondition(tuple(compile_filter(clause, dialect=dialect) for clause in value)))
+            clauses.append(
+                OrCondition(
+                    tuple(
+                        compile_filter(
+                            clause,
+                            dialect=dialect,
+                            variables=variables,
+                        )
+                        for clause in value
+                    )
+                )
+            )
             continue
         if key == "$nor":
             if not isinstance(value, list):
                 raise ValueError("$nor necesita una lista de filtros")
-            clauses.append(NotCondition(OrCondition(tuple(compile_filter(clause, dialect=dialect) for clause in value))))
+            clauses.append(
+                NotCondition(
+                    OrCondition(
+                        tuple(
+                            compile_filter(
+                                clause,
+                                dialect=dialect,
+                                variables=variables,
+                            )
+                            for clause in value
+                        )
+                    )
+                )
+            )
             continue
         if isinstance(key, str) and key.startswith("$"):
             raise OperationFailure(f"Unsupported top-level query operator: {key}")
@@ -266,9 +309,10 @@ def ensure_query_plan(
     plan: QueryNode | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    variables: dict[str, Any] | None = None,
 ) -> QueryNode:
     if plan is not None:
         return plan
     if filter_spec is None:
         return MatchAll()
-    return compile_filter(filter_spec, dialect=dialect)
+    return compile_filter(filter_spec, dialect=dialect, variables=variables)

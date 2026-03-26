@@ -100,15 +100,17 @@ class ArchitectureUnitTests(unittest.TestCase):
         )
         self.assertTrue(is_operation_option_effective("find", "comment"))
         self.assertTrue(is_operation_option_effective("find", "max_time_ms"))
+        self.assertTrue(is_operation_option_effective("find", "batch_size"))
         self.assertTrue(is_operation_option_effective("aggregate", "comment"))
         self.assertTrue(is_operation_option_effective("aggregate", "max_time_ms"))
         self.assertTrue(is_operation_option_effective("aggregate", "let"))
         self.assertTrue(is_operation_option_effective("update_one", "comment"))
+        self.assertTrue(is_operation_option_effective("update_one", "let"))
+        self.assertTrue(is_operation_option_effective("bulk_write", "let"))
         self.assertTrue(is_operation_option_effective("bulk_write", "comment"))
         self.assertTrue(is_operation_option_effective("create_index", "comment"))
         self.assertTrue(is_operation_option_effective("create_index", "max_time_ms"))
         self.assertTrue(is_operation_option_effective("create_indexes", "max_time_ms"))
-        self.assertFalse(is_operation_option_effective("update_one", "let"))
         self.assertEqual(
             get_operation_option_support("missing", "hint").status,
             OptionSupportStatus.UNSUPPORTED,

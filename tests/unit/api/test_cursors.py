@@ -16,13 +16,15 @@ class _AsyncEngineStub:
         self._documents = documents
         self.explain_calls = []
 
-    async def _scan(self, limit=None):
-        documents = self._documents if limit is None else self._documents[:limit]
+    async def _scan(self, *, skip=0, limit=None):
+        documents = self._documents[skip:]
+        if limit is not None:
+            documents = documents[:limit]
         for document in documents:
             yield document
 
     def scan_collection(self, *args, **kwargs):
-        return self._scan(limit=kwargs.get("limit"))
+        return self._scan(skip=kwargs.get("skip", 0), limit=kwargs.get("limit"))
 
     async def explain_query_plan(self, *args, **kwargs):
         self.explain_calls.append((args, kwargs))
@@ -37,6 +39,74 @@ class _AsyncCollectionStub:
 
     def find(self, *args, **kwargs):
         return AsyncCursor(self, {}, MatchAll(), None)
+
+
+class _BatchTrackingScanStub:
+    def __init__(self, documents):
+        self._documents = iter(documents)
+        self.pull_count = 0
+        self.yield_count = 0
+        self.close_calls = 0
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        self.pull_count += 1
+        try:
+            value = next(self._documents)
+            self.yield_count += 1
+            return value
+        except StopIteration as exc:
+            raise StopAsyncIteration from exc
+
+    async def aclose(self):
+        self.close_calls += 1
+
+
+class _BatchTrackingEngineStub:
+    def __init__(self, documents):
+        self._documents = documents
+        self.created_scans = []
+
+    def scan_collection(self, *args, **kwargs):
+        skip = kwargs.get("skip", 0)
+        limit = kwargs.get("limit")
+        documents = self._documents[skip:]
+        if limit is not None:
+            documents = documents[:limit]
+        scan = _BatchTrackingScanStub(documents)
+        self.created_scans.append(scan)
+        return scan
+
+    async def explain_query_plan(self, *args, **kwargs):
+        return {"engine": "tracking"}
+
+
+class _BatchTrackingCollectionStub:
+    def __init__(self, documents):
+        self._engine = _BatchTrackingEngineStub(documents)
+        self._db_name = "db"
+        self._collection_name = "coll"
+
+
+class _BatchTrackingFindCollectionStub:
+    def __init__(self, documents):
+        self._collection = _BatchTrackingCollectionStub(documents)
+
+    @property
+    def last_scan(self):
+        scans = self._collection._engine.created_scans
+        return scans[-1] if scans else None
+
+    def find(self, *args, **kwargs):
+        return AsyncCursor(
+            self._collection,
+            {},
+            MatchAll(),
+            None,
+            batch_size=kwargs.get("batch_size"),
+        )
 
 
 class _AsyncCursorFactoryStub:
@@ -273,6 +343,26 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(InvalidOperation):
             cursor.batch_size(10)
 
+    async def test_async_cursor_batch_size_prefetches_local_batches(self):
+        collection = _BatchTrackingCollectionStub([{"_id": "1"}, {"_id": "2"}, {"_id": "3"}])
+        cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=2)
+
+        iterator = cursor.__aiter__()
+        first = await iterator.__anext__()
+
+        self.assertEqual(first, {"_id": "1"})
+        self.assertEqual(collection._engine.created_scans[0].yield_count, 2)
+        self.assertEqual(await cursor.to_list(), [{"_id": "2"}, {"_id": "3"}])
+
+    async def test_async_cursor_stays_exhausted_until_rewind(self):
+        cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}, {"_id": "2"}]), {}, MatchAll(), None)
+
+        self.assertEqual(await cursor.to_list(), [{"_id": "1"}, {"_id": "2"}])
+        self.assertEqual(await cursor.to_list(), [])
+        self.assertIsNone(await cursor.first())
+        cursor.rewind()
+        self.assertEqual(await cursor.to_list(), [{"_id": "1"}, {"_id": "2"}])
+
     async def test_async_cursor_clone_rewind_alive_and_explain(self):
         collection = _AsyncCollectionStub([{"_id": "1"}, {"_id": "2"}])
         cursor = AsyncCursor(
@@ -300,12 +390,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(clone._batch_size, 10)
         self.assertTrue(cursor.alive)
 
-        self.assertEqual(await cursor.to_list(), [{"_id": "1"}, {"_id": "2"}])
+        self.assertEqual(await cursor.to_list(), [{"_id": "2"}])
         self.assertFalse(cursor.alive)
 
         cursor.rewind()
         self.assertTrue(cursor.alive)
-        self.assertEqual(await cursor.first(), {"_id": "1"})
+        self.assertEqual(await cursor.first(), {"_id": "2"})
 
         self.assertEqual(await cursor.explain(), {"engine": "stub", "details": ["COLLSCAN"]})
         self.assertEqual(collection._engine.explain_calls[0][1]["sort"], [("_id", 1)])
@@ -386,6 +476,17 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             cursor.sort([("_id", 1)])
         with self.assertRaises(InvalidOperation):
             cursor.batch_size(10)
+
+    def test_sync_cursor_batch_size_prefetches_local_batches(self):
+        collection = _BatchTrackingFindCollectionStub([{"_id": "1"}, {"_id": "2"}, {"_id": "3"}])
+        cursor = Cursor(_SyncClientStub(), collection, {}, None, batch_size=2)
+
+        iterator = iter(cursor)
+        self.assertEqual(next(iterator), {"_id": "1"})
+
+        self.assertIsNotNone(collection.last_scan)
+        self.assertEqual(collection.last_scan.yield_count, 2)
+        self.assertEqual(list(cursor), [{"_id": "2"}, {"_id": "3"}])
 
     def test_sync_cursor_close_is_idempotent_and_blocks_further_use(self):
         cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)

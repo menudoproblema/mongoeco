@@ -25,7 +25,7 @@ from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operators import UpdateEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.projections import apply_projection
-from mongoeco.core.query_plan import compile_filter
+from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.core.upserts import seed_upsert_document
 from mongoeco.core.validation import is_document, is_filter, is_projection, is_update
@@ -262,14 +262,22 @@ class AsyncCollection:
         self,
         filter_spec: Filter,
         *,
+        plan: QueryNode | None = None,
         sort: SortSpec | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
-        return await self.find(
+        effective_plan = (
+            compile_filter(filter_spec, dialect=self._mongodb_dialect)
+            if plan is None
+            else plan
+        )
+        return await self._build_cursor(
             filter_spec,
+            effective_plan,
+            None,
             sort=sort,
             limit=1,
             hint=hint,
@@ -277,6 +285,36 @@ class AsyncCollection:
             max_time_ms=max_time_ms,
             session=session,
         ).first()
+
+    def _build_cursor(
+        self,
+        filter_spec: Filter,
+        plan: QueryNode,
+        projection: Projection | None,
+        *,
+        sort: SortSpec | None = None,
+        skip: int = 0,
+        limit: int | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        batch_size: int | None = None,
+        session: ClientSession | None = None,
+    ) -> AsyncCursor:
+        return AsyncCursor(
+            self,
+            filter_spec,
+            plan,
+            projection,
+            sort=sort,
+            skip=skip,
+            limit=limit,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            batch_size=batch_size,
+            session=session,
+        )
 
     async def _put_replacement_document(
         self,
@@ -566,8 +604,7 @@ class AsyncCollection:
         max_time_ms = self._normalize_max_time_ms(max_time_ms)
         batch_size = self._normalize_batch_size(batch_size)
         plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
-        return AsyncCursor(
-            self,
+        return self._build_cursor(
             filter_spec,
             plan,
             projection,
@@ -631,9 +668,12 @@ class AsyncCollection:
                 f"sort is not supported by PyMongo profile {self._pymongo_profile.key} "
                 "for update_one()"
             )
+        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect, variables=let)
         if sort is not None:
-            selected = await self.find(
+            selected = await self._build_cursor(
                 filter_spec,
+                plan,
+                None,
                 sort=sort,
                 limit=1,
                 hint=hint,
@@ -668,8 +708,9 @@ class AsyncCollection:
                 session=session,
             )
         if hint is not None:
-            selected = await self.find(
+            selected = await self._build_cursor(
                 filter_spec,
+                plan,
                 {"_id": 1},
                 limit=1,
                 hint=hint,
@@ -703,7 +744,6 @@ class AsyncCollection:
                 session=session,
             )
             return result
-        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
         upsert_seed = None
         if upsert:
             upsert_seed = {}
@@ -762,8 +802,10 @@ class AsyncCollection:
         update_spec = self._require_update(update_spec)
         hint = self._normalize_hint(hint)
         let = self._normalize_let(let)
-        matched_documents = await self.find(
+        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect, variables=let)
+        matched_documents = await self._build_cursor(
             filter_spec,
+            plan,
             {"_id": 1},
             hint=hint,
             comment=comment,
@@ -831,9 +873,11 @@ class AsyncCollection:
                 f"sort is not supported by PyMongo profile {self._pymongo_profile.key} "
                 "for replace_one()"
             )
+        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect, variables=let)
 
         selected = await self._select_first_document(
             filter_spec,
+            plan=plan,
             sort=sort,
             hint=hint,
             comment=comment,
@@ -892,9 +936,11 @@ class AsyncCollection:
         max_time_ms = self._normalize_max_time_ms(max_time_ms)
         let = self._normalize_let(let)
         return_document = self._normalize_return_document(return_document)
+        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect, variables=let)
 
         before = await self._select_first_document(
             filter_spec,
+            plan=plan,
             sort=sort,
             hint=hint,
             comment=comment,
@@ -973,9 +1019,11 @@ class AsyncCollection:
         max_time_ms = self._normalize_max_time_ms(max_time_ms)
         let = self._normalize_let(let)
         return_document = self._normalize_return_document(return_document)
+        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect, variables=let)
 
         before = await self._select_first_document(
             filter_spec,
+            plan=plan,
             sort=sort,
             hint=hint,
             comment=comment,
@@ -1044,9 +1092,11 @@ class AsyncCollection:
         hint = self._normalize_hint(hint)
         max_time_ms = self._normalize_max_time_ms(max_time_ms)
         let = self._normalize_let(let)
+        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect, variables=let)
 
         before = await self._select_first_document(
             filter_spec,
+            plan=plan,
             sort=sort,
             hint=hint,
             comment=comment,
@@ -1076,9 +1126,11 @@ class AsyncCollection:
         filter_spec = self._normalize_filter(filter_spec)
         hint = self._normalize_hint(hint)
         let = self._normalize_let(let)
+        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect, variables=let)
         if hint is not None:
-            selected = await self.find(
+            selected = await self._build_cursor(
                 filter_spec,
+                plan,
                 {"_id": 1},
                 limit=1,
                 hint=hint,
@@ -1100,7 +1152,6 @@ class AsyncCollection:
                 session=session,
             )
             return DeleteResult(deleted_count=1 if deleted else 0)
-        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
         result = await self._engine.delete_matching_document(
             self._db_name,
             self._collection_name,
@@ -1129,8 +1180,10 @@ class AsyncCollection:
         filter_spec = self._normalize_filter(filter_spec)
         hint = self._normalize_hint(hint)
         let = self._normalize_let(let)
-        matched_documents = await self.find(
+        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect, variables=let)
+        matched_documents = await self._build_cursor(
             filter_spec,
+            plan,
             {"_id": 1},
             hint=hint,
             comment=comment,

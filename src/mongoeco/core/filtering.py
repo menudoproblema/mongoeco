@@ -13,6 +13,7 @@ from mongoeco.core.query_plan import (
     AndCondition,
     ElemMatchCondition,
     EqualsCondition,
+    ExprCondition,
     ExistsCondition,
     GreaterThanCondition,
     GreaterThanOrEqualCondition,
@@ -154,6 +155,16 @@ class QueryEngine:
             return QueryEngine._evaluate_elem_match(document, plan.field, plan.condition, dialect=plan.dialect)
         if isinstance(plan, ExistsCondition):
             return QueryEngine._evaluate_exists(document, plan.field, plan.value)
+        if isinstance(plan, ExprCondition):
+            from mongoeco.core.aggregation import _expression_truthy, evaluate_expression
+
+            value = evaluate_expression(
+                document,
+                plan.expression,
+                plan.variables,
+                dialect=dialect,
+            )
+            return _expression_truthy(value, dialect=dialect)
         if isinstance(plan, AndCondition):
             return all(QueryEngine.match_plan(document, clause, dialect=dialect) for clause in plan.clauses)
         if isinstance(plan, OrCondition):

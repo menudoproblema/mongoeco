@@ -458,7 +458,7 @@ La Fase 3 se considera cerrada con este alcance ya implementado y verificado:
 ### Fase 4: Transacciones, Ergonomía PyMongo y Administración Local
 La Fase 4 se centra en cerrar primero la base que más condiciona el crecimiento posterior: sesiones reales, robustez de escritura y la primera gran ampliación de ergonomía PyMongo sobre la arquitectura local ya consolidada.
 
-Estado actual: **En curso**.
+Estado actual: **Completada**.
 
 Objetivos principales:
 * **Sesiones transaccionales reales en SQLite**:
@@ -484,6 +484,12 @@ Objetivos principales:
 * **Primer bloque de configuración estructural del driver local**:
   * `WriteConcern`, `ReadConcern`, `ReadPreference`, `CodecOptions`, `TransactionOptions`
   * soporte inicial como configuración local explícita, aunque no toda su semántica tenga efecto real inmediato en todos los engines
+
+Perímetro real de cierre:
+* `find(batch_size=...)` ya es `effective` con batching local observable del cursor.
+* `let` en writes ya es `effective` cuando el filtro usa `$expr`, incluidas las rutas de selección previas a `update_*`, `replace_one`, `delete_*`, `find_one_and_*` y `bulk_write`.
+* `aggregate(batch_size=...)` es el único caso que sigue en `accepted-noop`; se acepta por compatibilidad, pero la agregación sigue materializándose completa.
+* Ese último punto se mueve explícitamente a Fase 5, porque ya implica semántica más profunda de ejecución incremental sobre pipelines, no solo ergonomía de API.
 
 Criterio de foco:
 * Fase 4 prioriza lo que habilita mejor el resto del roadmap: transacciones, opciones públicas estables y metadatos/administración con forma PyMongo.
@@ -628,6 +634,10 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * `ReadPreference`
   * `CodecOptions`
   * `TransactionOptions`
+* perímetro explícito:
+  * `find(batch_size=...)` efectivo con batching local
+  * `let` en writes efectivo vía filtros con `$expr`
+  * `aggregate(batch_size=...)` diferido a Fase 5
 
 #### Fase 5
 * query operators adicionales:
@@ -656,6 +666,8 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
 * raw batches:
   * `find_raw_batches`
   * `aggregate_raw_batches`
+* ejecución incremental adicional:
+  * batching menos superficial en `aggregate()`
 * opciones avanzadas por método:
   * `collation`
   * `allow_disk_use`
