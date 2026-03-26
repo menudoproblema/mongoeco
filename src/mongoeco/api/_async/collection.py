@@ -10,6 +10,7 @@ from mongoeco.api._async.cursor import (
     _validate_max_time_ms,
     _validate_sort_spec,
 )
+from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,
@@ -1105,8 +1106,14 @@ class AsyncCollection:
         *,
         comment: object | None = None,
         session: ClientSession | None = None,
-    ) -> list[dict[str, object]]:
-        return await self._engine.list_indexes(self._db_name, self._collection_name, context=session)
+    ) -> AsyncIndexCursor:
+        return AsyncIndexCursor(
+            lambda: self._engine.list_indexes(
+                self._db_name,
+                self._collection_name,
+                context=session,
+            )
+        )
 
     async def index_information(
         self,

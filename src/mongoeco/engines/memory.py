@@ -429,30 +429,26 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> None:
-        normalized_keys: IndexKeySpec | None = None
+        target_name: str | None = None
         if isinstance(index_or_name, str):
             if index_or_name == "_id_":
                 raise OperationFailure("cannot drop _id index")
+            target_name = index_or_name
         else:
             normalized_keys = normalize_index_keys(index_or_name)
             if self._is_builtin_id_index(normalized_keys):
                 raise OperationFailure("cannot drop _id index")
+            target_name = default_index_name(normalized_keys)
         async with self._get_lock(db_name, coll_name):
             indexes = self._indexes.get(db_name, {}).get(coll_name, [])
-            if isinstance(index_or_name, str):
-                for idx, index in enumerate(indexes):
-                    if index["name"] == index_or_name:
-                        del indexes[idx]
-                        break
-                else:
-                    raise OperationFailure(f"index not found with name [{index_or_name}]")
+            for idx, index in enumerate(indexes):
+                if index["name"] == target_name:
+                    del indexes[idx]
+                    break
             else:
-                for idx, index in enumerate(indexes):
-                    if index["key"] == normalized_keys:
-                        del indexes[idx]
-                        break
-                else:
-                    raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
+                if isinstance(index_or_name, str):
+                    raise OperationFailure(f"index not found with name [{index_or_name}]")
+                raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
 
             if db_name in self._indexes and coll_name in self._indexes[db_name] and not self._indexes[db_name][coll_name]:
                 del self._indexes[db_name][coll_name]

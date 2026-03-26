@@ -3,7 +3,7 @@ import os
 import threading
 import time
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Literal, Self
 
@@ -130,6 +130,18 @@ def normalize_index_keys(keys: object) -> IndexKeySpec:
             raise ValueError("index field names must be non-empty strings")
         return [(keys, 1)]
 
+    if isinstance(keys, dict):
+        if not keys:
+            raise ValueError("keys must not be empty")
+        normalized: IndexKeySpec = []
+        for field, direction in keys.items():
+            if not isinstance(field, str) or not field:
+                raise TypeError("index field names must be non-empty strings")
+            if direction not in (1, -1) or isinstance(direction, bool):
+                raise ValueError("index directions must be 1 or -1")
+            normalized.append((field, direction))
+        return normalized
+
     if not isinstance(keys, Sequence) or isinstance(keys, (bytes, bytearray, dict)):
         raise TypeError("keys must be a string or a sequence of strings or (field, direction) tuples")
 
@@ -194,7 +206,6 @@ class IndexModel:
     keys: IndexKeySpec
     name: str | None = None
     unique: bool = False
-    options: dict[str, Any] = field(default_factory=dict)
 
     def __init__(self, keys: object, **kwargs: Any):
         normalized = normalize_index_keys(keys)
@@ -210,7 +221,6 @@ class IndexModel:
         object.__setattr__(self, "keys", normalized)
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "unique", unique)
-        object.__setattr__(self, "options", {})
 
     @property
     def resolved_name(self) -> str:

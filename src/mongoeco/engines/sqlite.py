@@ -1477,32 +1477,29 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
     ) -> None:
         normalized_keys: IndexKeySpec | None = None
+        target_name: str
         if isinstance(index_or_name, str):
             if index_or_name == "_id_":
                 raise OperationFailure("cannot drop _id index")
+            target_name = index_or_name
         else:
             normalized_keys = normalize_index_keys(index_or_name)
             if self._is_builtin_id_index(normalized_keys):
                 raise OperationFailure("cannot drop _id index")
+            target_name = default_index_name(normalized_keys)
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 indexes = self._load_indexes(db_name, coll_name)
                 target: dict[str, object] | None = None
-                if isinstance(index_or_name, str):
-                    for index in indexes:
-                        if index["name"] == index_or_name:
-                            target = index
-                            break
-                    if target is None:
+                for index in indexes:
+                    if index["name"] == target_name:
+                        target = index
+                        break
+                if target is None:
+                    if isinstance(index_or_name, str):
                         raise OperationFailure(f"index not found with name [{index_or_name}]")
-                else:
-                    for index in indexes:
-                        if index["key"] == normalized_keys:
-                            target = index
-                            break
-                    if target is None:
-                        raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
+                    raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
                 try:
                     self._begin_write(conn, context)
                     conn.execute(

@@ -1672,7 +1672,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     collection = client.analytics.events
 
                     name = await collection.create_index([("payload.kind", -1)], unique=False)
-                    indexes = await collection.list_indexes()
+                    indexes = await (await collection.list_indexes()).to_list()
                     info = await collection.index_information()
 
                     self.assertEqual(name, "payload.kind_-1")
@@ -1696,6 +1696,21 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         },
                     )
 
+    async def test_collection_accepts_mapping_key_spec_for_create_index(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+
+                    name = await collection.create_index({"email": 1, "created_at": -1})
+                    info = await collection.index_information()
+
+                    self.assertEqual(name, "email_1_created_at_-1")
+                    self.assertEqual(
+                        info["email_1_created_at_-1"],
+                        {"key": [("email", 1), ("created_at", -1)]},
+                    )
+
     async def test_collection_can_create_and_drop_multiple_indexes(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -1708,10 +1723,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             IndexModel([("tenant", 1), ("created_at", -1)], name="tenant_created"),
                         ]
                     )
-                    await collection.drop_index([("tenant", 1), ("created_at", -1)])
-                    indexes_after_drop = await collection.list_indexes()
+                    await collection.drop_index("tenant_created")
+                    indexes_after_drop = await (await collection.list_indexes()).to_list()
                     await collection.drop_indexes()
-                    indexes_after_drop_all = await collection.list_indexes()
+                    indexes_after_drop_all = await (await collection.list_indexes()).to_list()
 
                     self.assertEqual(names, ["email_1", "tenant_created"])
                     self.assertEqual(
@@ -1741,9 +1756,19 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         )
 
                     self.assertEqual(
-                        await collection.list_indexes(),
+                        await (await collection.list_indexes()).to_list(),
                         [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
                     )
+
+    async def test_drop_index_by_spec_rejects_custom_named_index(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.create_index([("email", 1)], name="idx_email")
+
+                    with self.assertRaises(OperationFailure):
+                        await collection.drop_index([("email", 1)])
 
     async def test_unique_index_is_enforced_via_public_api(self):
         for engine_name in ENGINE_FACTORIES:

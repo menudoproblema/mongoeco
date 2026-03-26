@@ -1,6 +1,7 @@
 from mongoeco.api._async.cursor import HintSpec
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
+from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,
@@ -371,8 +372,11 @@ class Collection:
         *,
         comment: object | None = None,
         session: ClientSession | None = None,
-    ) -> list[dict[str, object]]:
-        return self._client._run(self._async_collection().list_indexes(comment=comment, session=session))
+    ) -> IndexCursor:
+        return IndexCursor(
+            self._client,
+            self._client._run(self._async_collection().list_indexes(comment=comment, session=session)),
+        )
 
     def index_information(
         self,

@@ -2,5 +2,6 @@ from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api._async.client import AsyncDatabase, AsyncMongoClient
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.cursor import AsyncCursor
+from mongoeco.api._async.index_cursor import AsyncIndexCursor
 
-__all__ = ["AsyncMongoClient", "AsyncDatabase", "AsyncCollection", "AsyncCursor", "AsyncAggregationCursor"]
+__all__ = ["AsyncMongoClient", "AsyncDatabase", "AsyncCollection", "AsyncCursor", "AsyncAggregationCursor", "AsyncIndexCursor"]

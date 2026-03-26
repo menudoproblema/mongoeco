@@ -1310,10 +1310,15 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         name = asyncio.run(
             collection.create_index([("email", 1), ("created_at", -1)], unique=True, name="idx_email")
         )
-        indexes = asyncio.run(collection.list_indexes())
-        info = asyncio.run(collection.index_information())
-        asyncio.run(collection.drop_index([("email", 1), ("created_at", -1)]))
-        asyncio.run(collection.drop_indexes())
+        async def _exercise():
+            cursor = await collection.list_indexes()
+            indexes = await cursor.to_list()
+            info = await collection.index_information()
+            await collection.drop_index([("email", 1), ("created_at", -1)])
+            await collection.drop_indexes()
+            return indexes, info
+
+        indexes, info = asyncio.run(_exercise())
 
         self.assertEqual(name, "email_1_created_at_-1")
         self.assertEqual(
@@ -1331,6 +1336,31 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         self.assertEqual(engine.drop_indexes_args, ("db", "coll"))
         self.assertEqual(engine.drop_indexes_kwargs, {"context": None})
 
+    def test_list_indexes_returns_cursor(self):
+        class EngineStub:
+            async def list_indexes(self, *args, **kwargs):
+                return [
+                    {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
+                    {"name": "email_1", "fields": ["email"], "key": {"email": 1}, "unique": False},
+                ]
+
+        collection = AsyncCollection(EngineStub(), "db", "coll")
+
+        async def _exercise():
+            cursor = await collection.list_indexes()
+            return await cursor.first(), await cursor.to_list()
+
+        first, indexes = asyncio.run(_exercise())
+
+        self.assertEqual(first, {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True})
+        self.assertEqual(
+            indexes,
+            [
+                {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
+                {"name": "email_1", "fields": ["email"], "key": {"email": 1}, "unique": False},
+            ],
+        )
+
     def test_create_indexes_requires_index_models(self):
         collection = AsyncCollection(MemoryEngine(), "db", "coll")
 
@@ -1339,6 +1369,26 @@ class AsyncCollectionHelperTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             asyncio.run(collection.create_indexes([]))
+
+    def test_create_index_accepts_ordered_mapping_key_spec(self):
+        class EngineStub:
+            async def create_index(self, *args, **kwargs):
+                self.create_index_args = args
+                self.create_index_kwargs = kwargs
+                return "email_1_created_at_-1"
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        name = asyncio.run(
+            collection.create_index({"email": 1, "created_at": -1}, unique=True)
+        )
+
+        self.assertEqual(name, "email_1_created_at_-1")
+        self.assertEqual(
+            engine.create_index_args,
+            ("db", "coll", [("email", 1), ("created_at", -1)]),
+        )
 
     def test_create_indexes_uses_models_sequentially(self):
         class EngineStub:

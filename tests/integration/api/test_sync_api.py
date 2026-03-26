@@ -1387,7 +1387,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.test.users
 
                     name = collection.create_index([("profile.name", -1)], unique=False)
-                    indexes = collection.list_indexes()
+                    indexes = collection.list_indexes().to_list()
                     info = collection.index_information()
 
                     self.assertEqual(name, "profile.name_-1")
@@ -1411,6 +1411,21 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         },
                     )
 
+    def test_collection_accepts_mapping_key_spec_for_create_index(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+
+                    name = collection.create_index({"email": 1, "created_at": -1})
+                    info = collection.index_information()
+
+                    self.assertEqual(name, "email_1_created_at_-1")
+                    self.assertEqual(
+                        info["email_1_created_at_-1"],
+                        {"key": [("email", 1), ("created_at", -1)]},
+                    )
+
     def test_collection_can_create_and_drop_multiple_indexes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -1423,10 +1438,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             IndexModel([("tenant", 1), ("created_at", -1)], name="tenant_created"),
                         ]
                     )
-                    collection.drop_index([("tenant", 1), ("created_at", -1)])
-                    indexes_after_drop = collection.list_indexes()
+                    collection.drop_index("tenant_created")
+                    indexes_after_drop = collection.list_indexes().to_list()
                     collection.drop_indexes()
-                    indexes_after_drop_all = collection.list_indexes()
+                    indexes_after_drop_all = collection.list_indexes().to_list()
 
                     self.assertEqual(names, ["email_1", "tenant_created"])
                     self.assertEqual(
@@ -1456,9 +1471,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         )
 
                     self.assertEqual(
-                        collection.list_indexes(),
+                        collection.list_indexes().to_list(),
                         [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
                     )
+
+    def test_drop_index_by_spec_rejects_custom_named_index(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.create_index([("email", 1)], name="idx_email")
+
+                    with self.assertRaises(OperationFailure):
+                        collection.drop_index([("email", 1)])
 
     def test_unique_index_is_enforced(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

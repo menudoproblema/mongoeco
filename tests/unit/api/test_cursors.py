@@ -2,7 +2,9 @@ import unittest
 from unittest.mock import patch
 
 from mongoeco.api._async.cursor import AsyncCursor
+from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._sync.cursor import Cursor
+from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.core.query_plan import MatchAll
 from mongoeco.errors import InvalidOperation
 
@@ -100,6 +102,25 @@ class _StreamingAsyncCollectionStub:
 
 
 class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
+    async def test_async_index_cursor_supports_first_and_to_list(self):
+        cursor = AsyncIndexCursor(
+            lambda: self._load_indexes_async(
+                [
+                    {"name": "_id_", "key": {"_id": 1}},
+                    {"name": "email_1", "key": {"email": 1}},
+                ]
+            )
+        )
+
+        self.assertEqual(await cursor.first(), {"name": "_id_", "key": {"_id": 1}})
+        self.assertEqual(
+            await cursor.to_list(),
+            [
+                {"name": "_id_", "key": {"_id": 1}},
+                {"name": "email_1", "key": {"email": 1}},
+            ],
+        )
+
     async def test_async_cursor_rejects_negative_skip_and_limit_and_returns_none_first(self):
         cursor = AsyncCursor(_AsyncCollectionStub([]), {}, MatchAll(), None)
 
@@ -202,6 +223,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(await cursor.explain(), {"engine": "stub", "details": ["COLLSCAN"]})
         self.assertEqual(collection._engine.explain_calls[0][1]["sort"], [("_id", 1)])
+
 
     def test_sync_cursor_rejects_negative_skip_and_limit_and_supports_iteration(self):
         cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}]), {}, None)
@@ -432,3 +454,29 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(cursor.alive)
         self.assertEqual(cursor.first(), {"_id": "1"})
         self.assertEqual(cursor.explain(), {"engine": "stub", "details": ["COLLSCAN"]})
+
+    def test_sync_index_cursor_supports_first_to_list_and_close(self):
+        async_cursor = AsyncIndexCursor(
+            lambda: self._load_indexes_async(
+                [
+                    {"name": "_id_", "key": {"_id": 1}},
+                    {"name": "email_1", "key": {"email": 1}},
+                ]
+            )
+        )
+        cursor = IndexCursor(_SyncClientStub(), async_cursor)
+
+        self.assertEqual(cursor.first(), {"name": "_id_", "key": {"_id": 1}})
+        self.assertEqual(
+            cursor.to_list(),
+            [
+                {"name": "_id_", "key": {"_id": 1}},
+                {"name": "email_1", "key": {"email": 1}},
+            ],
+        )
+        cursor.close()
+        with self.assertRaises(InvalidOperation):
+            cursor.to_list()
+
+    async def _load_indexes_async(self, indexes):
+        return indexes
