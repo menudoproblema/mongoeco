@@ -1,6 +1,7 @@
 import base64
 import calendar
 import datetime
+import decimal
 import math
 import random
 import re
@@ -676,6 +677,33 @@ def _normalize_index_bounds(operator: str, start: Any, end: Any, upper_bound: in
     return start_index, min(end_index, upper_bound)
 
 
+def _normalize_numeric_place(operator: str, place: Any) -> int:
+    if not isinstance(place, int) or isinstance(place, bool):
+        raise OperationFailure(f"{operator} place must be an integer")
+    if place < -20 or place > 100:
+        raise OperationFailure(f"{operator} place must be between -20 and 100")
+    return place
+
+
+def _round_numeric(value: int | float, place: int) -> int | float:
+    if isinstance(value, int) and place >= 0:
+        return value
+    quantizer = decimal.Decimal(f"1e{-place}")
+    rounded = decimal.Decimal(str(value)).quantize(quantizer, rounding=decimal.ROUND_HALF_EVEN)
+    return int(rounded) if place <= 0 else float(rounded)
+
+
+def _trunc_numeric(value: int | float, place: int) -> int | float:
+    if isinstance(value, int) and place >= 0:
+        return value
+    factor = 10 ** place if place >= 0 else 10 ** (-place)
+    if place >= 0:
+        truncated = math.trunc(value * factor) / factor
+        return int(truncated) if place == 0 else truncated
+    truncated = math.trunc(value / factor) * factor
+    return int(truncated)
+
+
 def _add_milliseconds(value: datetime.datetime, milliseconds: int | float) -> datetime.datetime:
     return value + datetime.timedelta(milliseconds=milliseconds)
 
@@ -1139,6 +1167,53 @@ def evaluate_expression(
                 if right == 0:
                     raise OperationFailure("$mod cannot divide by zero")
                 return _mongo_mod(left, right)
+            if operator in {"$abs", "$exp", "$ln", "$log10", "$sqrt"}:
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                raw_value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
+                if raw_value is _MISSING or raw_value is None:
+                    return None
+                value = _require_numeric(operator, raw_value)
+                if operator == "$abs":
+                    return abs(value)
+                if math.isnan(value):
+                    return value
+                if operator == "$exp":
+                    return math.exp(value)
+                if operator == "$sqrt":
+                    if value < 0:
+                        raise OperationFailure("$sqrt cannot operate on negative numbers")
+                    return math.sqrt(value)
+                if value <= 0:
+                    raise OperationFailure(f"{operator} requires a positive numeric argument")
+                return math.log(value) if operator == "$ln" else math.log10(value)
+            if operator in {"$log", "$pow"}:
+                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
+                left_raw = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
+                right_raw = _evaluate_expression_with_missing(document, args[1], variables, dialect=dialect)
+                if left_raw is _MISSING or right_raw is _MISSING or left_raw is None or right_raw is None:
+                    return None
+                left = _require_numeric(operator, left_raw)
+                right = _require_numeric(operator, right_raw)
+                if operator == "$pow":
+                    return math.pow(left, right)
+                if math.isnan(left) or math.isnan(right):
+                    return math.nan
+                if left <= 0 or right <= 0 or right == 1:
+                    raise OperationFailure("$log requires a positive argument and base where base != 1")
+                return math.log(left, right)
+            if operator in {"$round", "$trunc"}:
+                args = _require_expression_args(operator, spec, min_args=1, max_args=2)
+                raw_value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
+                if raw_value is _MISSING or raw_value is None:
+                    return None
+                value = _require_numeric(operator, raw_value)
+                if math.isnan(value) or math.isinf(value):
+                    return value
+                place_raw = evaluate_expression(document, args[1], variables, dialect=dialect) if len(args) == 2 else 0
+                place = _normalize_numeric_place(operator, place_raw)
+                if operator == "$round":
+                    return _round_numeric(value, place)
+                return _trunc_numeric(value, place)
             if operator in {"$floor", "$ceil"}:
                 args = _require_expression_args(operator, spec, min_args=1, max_args=1)
                 raw_value = evaluate_expression(document, args[0], variables, dialect=dialect)

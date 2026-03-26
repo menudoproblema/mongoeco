@@ -1311,6 +1311,41 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ],
                     )
 
+    async def test_aggregate_supports_numeric_math_variants(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "value": 19.25, "base": 100})
+
+                    documents = await collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "absolute": {"$abs": -4},
+                                    "natural_log": {"$ln": {"$exp": 1}},
+                                    "base_log": {"$log": ["$base", 10]},
+                                    "base10_log": {"$log10": "$base"},
+                                    "power": {"$pow": [2, 3]},
+                                    "rounded": {"$round": ["$value", 1]},
+                                    "truncated": {"$trunc": ["$value", -1]},
+                                    "root": {"$sqrt": 25},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(documents[0]["_id"], "1")
+                    self.assertEqual(documents[0]["absolute"], 4)
+                    self.assertAlmostEqual(documents[0]["natural_log"], 1.0)
+                    self.assertAlmostEqual(documents[0]["base_log"], 2.0)
+                    self.assertAlmostEqual(documents[0]["base10_log"], 2.0)
+                    self.assertEqual(documents[0]["power"], 8.0)
+                    self.assertEqual(documents[0]["rounded"], 19.2)
+                    self.assertEqual(documents[0]["truncated"], 10)
+                    self.assertEqual(documents[0]["root"], 5.0)
+
     async def test_aggregate_supports_async_iteration_and_validates_pipeline_type(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

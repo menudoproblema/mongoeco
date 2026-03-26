@@ -514,15 +514,6 @@ class AggregationTests(unittest.TestCase):
         }
 
         unsupported_specs = [
-            {"$abs": -1},
-            {"$exp": 1},
-            {"$ln": 1},
-            {"$log": [8, 2]},
-            {"$log10": 10},
-            {"$pow": [2, 3]},
-            {"$round": ["$value", 0]},
-            {"$sqrt": 4},
-            {"$trunc": ["$value", 0]},
             {"$objectToArray": {"a": 1}},
             {"$zip": {"inputs": [["a"], ["b"]]}},
             {"$bitAnd": [7, 3]},
@@ -783,6 +774,36 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$regexMatch": {"input": "$text", "regex": re.compile("a", re.DOTALL)}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$regexMatch": {"input": "$text", "regex": re.compile("a"), "options": "i"}})
+
+    def test_evaluate_expression_supports_numeric_math_variants(self):
+        document = {"value": 19.25, "base": 100, "power": 3}
+
+        self.assertEqual(evaluate_expression(document, {"$abs": -4}), 4)
+        self.assertAlmostEqual(evaluate_expression(document, {"$exp": 1}), math.e)
+        self.assertAlmostEqual(evaluate_expression(document, {"$ln": math.e}), 1.0)
+        self.assertAlmostEqual(evaluate_expression(document, {"$log": ["$base", 10]}), 2.0)
+        self.assertAlmostEqual(evaluate_expression(document, {"$log10": "$base"}), 2.0)
+        self.assertEqual(evaluate_expression(document, {"$pow": [2, "$power"]}), 8.0)
+        self.assertEqual(evaluate_expression(document, {"$round": ["$value", 1]}), 19.2)
+        self.assertEqual(evaluate_expression(document, {"$round": [25, 0]}), 25)
+        self.assertEqual(evaluate_expression(document, {"$trunc": ["$value", 1]}), 19.2)
+        self.assertEqual(evaluate_expression(document, {"$trunc": ["$value", -1]}), 10)
+        self.assertEqual(evaluate_expression(document, {"$sqrt": 25}), 5.0)
+        self.assertIsNone(evaluate_expression(document, {"$ln": "$missing"}))
+
+    def test_evaluate_expression_numeric_math_variants_reject_invalid_values(self):
+        document = {"value": -1}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$sqrt": "$value"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$ln": 0})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$log": [8, 1]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$round": [1.25, 101]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$trunc": [1.25, True]})
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]

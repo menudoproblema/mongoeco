@@ -664,6 +664,15 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `array_filters`
 * aggregation adicional:
   * ya implementadas en esta fase:
+    * `$abs`
+    * `$exp`
+    * `$ln`
+    * `$log`
+    * `$log10`
+    * `$pow`
+    * `$round`
+    * `$sqrt`
+    * `$trunc`
     * `$isNumber`
     * `$type`
     * `$toBool`
