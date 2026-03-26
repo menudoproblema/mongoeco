@@ -413,7 +413,12 @@ class MemoryEngine(AsyncStorageEngine):
                 return UpdateResult(matched_count=0, modified_count=0)
 
             new_doc = deepcopy(upsert_seed or {})
-            UpdateEngine.apply_update(new_doc, update_spec, dialect=effective_dialect)
+            UpdateEngine.apply_update(
+                new_doc,
+                update_spec,
+                dialect=effective_dialect,
+                is_upsert_insert=True,
+            )
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
 

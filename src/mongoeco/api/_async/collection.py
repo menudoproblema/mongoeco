@@ -777,7 +777,12 @@ class AsyncCollection:
     ) -> UpdateResult[DocumentId]:
         new_doc: Document = {}
         seed_upsert_document(new_doc, filter_spec)
-        UpdateEngine.apply_update(new_doc, update_spec, dialect=self._mongodb_dialect)
+        UpdateEngine.apply_update(
+            new_doc,
+            update_spec,
+            dialect=self._mongodb_dialect,
+            is_upsert_insert=True,
+        )
         if "_id" not in new_doc:
             new_doc["_id"] = ObjectId()
         await self._put_replacement_document(new_doc, overwrite=False, session=session)

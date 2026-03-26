@@ -1,4 +1,5 @@
 import re
+from datetime import UTC, datetime
 from copy import deepcopy
 from typing import Any
 
@@ -17,6 +18,7 @@ class UpdateEngine:
         update_spec: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        is_upsert_insert: bool = False,
     ) -> bool:
         """
         Aplica las operaciones de actualización a un documento (in-place).
@@ -54,6 +56,17 @@ class UpdateEngine:
                     modified = True
             elif op == "$rename":
                 if UpdateEngine._apply_rename(doc, params, dialect=dialect):
+                    modified = True
+            elif op == "$currentDate":
+                if UpdateEngine._apply_current_date(doc, params, dialect=dialect):
+                    modified = True
+            elif op == "$setOnInsert":
+                if UpdateEngine._apply_set_on_insert(
+                    doc,
+                    params,
+                    dialect=dialect,
+                    is_upsert_insert=is_upsert_insert,
+                ):
                     modified = True
             elif op == "$push":
                 if UpdateEngine._apply_push(doc, params, dialect=dialect):
@@ -251,6 +264,39 @@ class UpdateEngine:
             delete_document_value(doc, source_path)
             modified = True
         return modified
+
+    @staticmethod
+    def _apply_current_date(
+        doc: dict[str, Any],
+        params: dict[str, Any],
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
+        modified = False
+        now = datetime.now(UTC).replace(tzinfo=None)
+        for path, value in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
+            UpdateEngine._assert_mutable_path(path)
+            if value is True:
+                replacement = now
+            elif isinstance(value, dict) and set(value) == {"$type"} and value["$type"] == "date":
+                replacement = now
+            else:
+                raise OperationFailure("$currentDate only supports True or {$type: 'date'}")
+            if set_document_value(doc, path, replacement):
+                modified = True
+        return modified
+
+    @staticmethod
+    def _apply_set_on_insert(
+        doc: dict[str, Any],
+        params: dict[str, Any],
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+        is_upsert_insert: bool = False,
+    ) -> bool:
+        if not is_upsert_insert:
+            return False
+        return UpdateEngine._apply_set(doc, params, dialect=dialect)
 
     @staticmethod
     def _expand_array_update_values(operator: str, value: Any) -> list[Any]:

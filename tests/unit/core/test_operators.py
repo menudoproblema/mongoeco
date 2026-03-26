@@ -51,7 +51,7 @@ class UpdateEngineTests(unittest.TestCase):
 
     def test_unknown_operator_raises_operation_failure(self):
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({"arr": []}, {"$currentDate": {"updated_at": True}})
+            UpdateEngine.apply_update({"arr": []}, {"$bit": {"arr": {"and": 1}}})
 
     def test_update_engine_rejects_custom_supported_but_unimplemented_operator(self):
         class _FutureUpdateDialect(MongoDialect):
@@ -71,8 +71,6 @@ class UpdateEngineTests(unittest.TestCase):
 
     def test_update_rejects_other_unsupported_update_operators_explicitly(self):
         unsupported_specs = [
-            {"$currentDate": {"updated_at": True}},
-            {"$setOnInsert": {"created_at": 1}},
             {"$pullAll": {"tags": ["python"]}},
             {"$bit": {"score": {"and": 1}}},
         ]
@@ -258,6 +256,41 @@ class UpdateEngineTests(unittest.TestCase):
             UpdateEngine.apply_update({"name": "Ada"}, {"$rename": {"name": "name"}})
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"profile": {"name": "Ada"}}, {"$rename": {"profile": "profile.name"}})
+
+    def test_current_date_sets_datetime_and_rejects_unsupported_shapes(self):
+        document = {"name": "Ada"}
+
+        modified = UpdateEngine.apply_update(
+            document,
+            {"$currentDate": {"updated_at": True, "reviewed_at": {"$type": "date"}}},
+        )
+
+        self.assertTrue(modified)
+        self.assertIsInstance(document["updated_at"], type(document["reviewed_at"]))
+
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({}, {"$currentDate": {"updated_at": {"$type": "timestamp"}}})
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({}, {"$currentDate": {"updated_at": {"$type": "date", "extra": 1}}})
+
+    def test_set_on_insert_only_applies_for_upsert_insert_mode(self):
+        existing = {"name": "Ada"}
+        inserted = {"name": "Ada"}
+
+        modified_existing = UpdateEngine.apply_update(
+            existing,
+            {"$setOnInsert": {"created_at": 1}},
+        )
+        modified_insert = UpdateEngine.apply_update(
+            inserted,
+            {"$setOnInsert": {"created_at": 1}},
+            is_upsert_insert=True,
+        )
+
+        self.assertFalse(modified_existing)
+        self.assertEqual(existing, {"name": "Ada"})
+        self.assertTrue(modified_insert)
+        self.assertEqual(inserted, {"name": "Ada", "created_at": 1})
 
     def test_push_add_to_set_and_pull_support_array_mutation(self):
         document = {"tags": ["python"]}

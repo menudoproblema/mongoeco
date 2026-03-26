@@ -616,6 +616,39 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(first["rank"], 5)
                     self.assertEqual(second, {"_id": "2", "rank": 1, "points": 16})
 
+    async def test_current_date_and_set_on_insert_are_observable_via_api(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.users
+                    await collection.insert_one({"_id": "1", "name": "Ada"})
+
+                    updated = await collection.update_one(
+                        {"_id": "1"},
+                        {"$currentDate": {"updated_at": True}},
+                    )
+                    inserted = await collection.update_one(
+                        {"_id": "2"},
+                        {
+                            "$set": {"name": "Grace"},
+                            "$setOnInsert": {"created_at": "seeded"},
+                        },
+                        upsert=True,
+                    )
+                    existing = await collection.update_one(
+                        {"_id": "1"},
+                        {"$setOnInsert": {"created_at": "ignored"}},
+                    )
+                    first = await collection.find_one({"_id": "1"})
+                    second = await collection.find_one({"_id": "2"})
+
+                    self.assertEqual(updated.modified_count, 1)
+                    self.assertEqual(inserted.upserted_id, "2")
+                    self.assertEqual(existing.modified_count, 0)
+                    self.assertIsInstance(first["updated_at"], datetime.datetime)
+                    self.assertNotIn("created_at", first)
+                    self.assertEqual(second["created_at"], "seeded")
+
     async def test_delete_many_deletes_all_matching_documents(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

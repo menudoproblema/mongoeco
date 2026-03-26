@@ -575,6 +575,39 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(first["rank"], 5)
                     self.assertEqual(second, {"_id": "2", "rank": 1, "points": 16})
 
+    def test_current_date_and_set_on_insert_are_observable_via_api(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "name": "Ada"})
+
+                    updated = collection.update_one(
+                        {"_id": "1"},
+                        {"$currentDate": {"updated_at": True}},
+                    )
+                    inserted = collection.update_one(
+                        {"_id": "2"},
+                        {
+                            "$set": {"name": "Grace"},
+                            "$setOnInsert": {"created_at": "seeded"},
+                        },
+                        upsert=True,
+                    )
+                    existing = collection.update_one(
+                        {"_id": "1"},
+                        {"$setOnInsert": {"created_at": "ignored"}},
+                    )
+                    first = collection.find_one({"_id": "1"})
+                    second = collection.find_one({"_id": "2"})
+
+                    self.assertEqual(updated.modified_count, 1)
+                    self.assertEqual(inserted.upserted_id, "2")
+                    self.assertEqual(existing.modified_count, 0)
+                    self.assertIsInstance(first["updated_at"], datetime.datetime)
+                    self.assertNotIn("created_at", first)
+                    self.assertEqual(second["created_at"], "seeded")
+
     def test_distinct_supports_scalars_arrays_nested_paths_and_filter(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

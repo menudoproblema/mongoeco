@@ -32,7 +32,21 @@ SUPPORTED_QUERY_FIELD_OPERATORS = frozenset(
 SUPPORTED_QUERY_TOP_LEVEL_OPERATORS = frozenset({'$and', '$or', '$nor', '$expr'})
 
 SUPPORTED_UPDATE_OPERATORS = frozenset(
-    {'$set', '$unset', '$inc', '$min', '$max', '$mul', '$rename', '$push', '$addToSet', '$pull', '$pop'}
+    {
+        '$set',
+        '$unset',
+        '$inc',
+        '$min',
+        '$max',
+        '$mul',
+        '$rename',
+        '$currentDate',
+        '$setOnInsert',
+        '$push',
+        '$addToSet',
+        '$pull',
+        '$pop',
+    }
 )
 
 SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
