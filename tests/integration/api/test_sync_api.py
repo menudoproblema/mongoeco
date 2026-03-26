@@ -47,6 +47,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
         finally:
             client.close()
 
+    def test_client_server_info_reflects_target_dialect(self):
+        with MongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
+            server_info = client.server_info()
+
+            self.assertEqual(server_info["version"], "8.0.0")
+            self.assertEqual(server_info["versionArray"], [8, 0, 0, 0])
+            self.assertEqual(server_info["gitVersion"], "mongoeco")
+            self.assertEqual(server_info["ok"], 1.0)
+
     def test_insert_find_and_list_names(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -278,6 +287,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 client.alpha.command({"distinct": "events", "key": 1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 client.alpha.command({"dropIndexes": "events", "index": 1.5})  # type: ignore[arg-type]
+
+    def test_validate_collection_returns_metadata_and_rejects_missing_namespace(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.alpha.events.insert_one({"_id": "1", "kind": "view"})
+                    client.alpha.events.create_index([("kind", 1)], name="kind_idx")
+
+                    validated = client.alpha.validate_collection("events")
+                    validated_from_command = client.alpha.command({"validate": "events"})
+
+                    self.assertEqual(validated["ns"], "alpha.events")
+                    self.assertEqual(validated["nrecords"], 1)
+                    self.assertEqual(validated["nIndexes"], 2)
+                    self.assertEqual(validated["keysPerIndex"], {"_id_": 1, "kind_idx": 1})
+                    self.assertTrue(validated["valid"])
+                    self.assertEqual(validated_from_command, validated)
+
+        with MongoClient(MemoryEngine()) as client:
+            with self.assertRaises(CollectionInvalid):
+                client.alpha.validate_collection("missing")
 
     def test_collection_rename_moves_documents_and_indexes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

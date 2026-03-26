@@ -12,7 +12,7 @@ from mongoeco.core.aggregation import _bson_document_size
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.validation import is_filter
 from mongoeco.engines.base import AsyncStorageEngine
-from mongoeco.errors import OperationFailure
+from mongoeco.errors import CollectionInvalid, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     CodecOptions,
@@ -214,6 +214,15 @@ class AsyncDatabase:
         return value
 
     @staticmethod
+    def _resolve_collection_reference(value: object, field_name: str) -> str:
+        if isinstance(value, str):
+            return AsyncDatabase._require_collection_name(value, field_name)
+        name = getattr(value, "name", None)
+        if isinstance(name, str) and name:
+            return name
+        raise TypeError(f"{field_name} must be a collection name or collection object")
+
+    @staticmethod
     def _normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
         if not isinstance(indexes, list) or not indexes:
             raise TypeError("indexes must be a non-empty list")
@@ -285,6 +294,50 @@ class AsyncDatabase:
             "storageSize": data_size,
             "indexes": indexes,
             "indexSize": 0,
+            "ok": 1.0,
+        }
+
+    async def validate_collection(
+        self,
+        name_or_collection: object,
+        *,
+        scandata: bool = False,
+        full: bool = False,
+        background: bool | None = None,
+        session: ClientSession | None = None,
+        comment: object | None = None,
+    ) -> dict[str, object]:
+        if not isinstance(scandata, bool):
+            raise TypeError("scandata must be a bool")
+        if not isinstance(full, bool):
+            raise TypeError("full must be a bool")
+        if background is not None and not isinstance(background, bool):
+            raise TypeError("background must be a bool or None")
+        if comment is not None and not isinstance(comment, str):
+            raise TypeError("comment must be a string")
+
+        collection_name = self._resolve_collection_reference(
+            name_or_collection,
+            "name_or_collection",
+        )
+        collection_names = await self._engine.list_collections(self._db_name, context=session)
+        if collection_name not in collection_names:
+            raise CollectionInvalid(f"collection '{collection_name}' does not exist")
+
+        indexes = await self.get_collection(collection_name).list_indexes(session=session).to_list()
+        return {
+            "ns": f"{self._db_name}.{collection_name}",
+            "valid": True,
+            "nrecords": await self.get_collection(collection_name).count_documents(
+                {},
+                session=session,
+            ),
+            "nIndexes": len(indexes),
+            "keysPerIndex": {
+                str(index["name"]): len(index.get("fields", []))
+                for index in indexes
+            },
+            "warnings": [],
             "ok": 1.0,
         }
 
@@ -449,6 +502,16 @@ class AsyncDatabase:
         if command_name == "dbStats":
             return await self._database_stats(session=session)
 
+        if command_name == "validate":
+            collection_name = self._require_collection_name(spec.get("validate"), "validate")
+            return await self.validate_collection(
+                collection_name,
+                scandata=bool(spec.get("scandata", False)),
+                full=bool(spec.get("full", False)),
+                background=spec.get("background"),
+                session=session,
+            )
+
         raise OperationFailure(f"Unsupported command: {command_name}")
 
     @property
@@ -612,6 +675,18 @@ class AsyncMongoClient:
         collection_names = await self._engine.list_collections(name, context=session)
         for collection_name in collection_names:
             await self._engine.drop_collection(name, collection_name, context=session)
+
+    async def server_info(self) -> dict[str, object]:
+        version_parts = [int(part) for part in self._mongodb_dialect.server_version.split(".")]
+        while len(version_parts) < 2:
+            version_parts.append(0)
+        major, minor = version_parts[:2]
+        return {
+            "version": f"{major}.{minor}.0",
+            "versionArray": [major, minor, 0, 0],
+            "gitVersion": "mongoeco",
+            "ok": 1.0,
+        }
 
     @property
     def mongodb_dialect(self) -> MongoDialect:

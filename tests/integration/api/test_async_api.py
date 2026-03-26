@@ -72,6 +72,15 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(found, {"_id": "1", "name": "Ada"})
                     self.assertEqual(collections, ["users"])
 
+    async def test_client_server_info_reflects_target_dialect(self):
+        async with AsyncMongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
+            server_info = await client.server_info()
+
+            self.assertEqual(server_info["version"], "8.0.0")
+            self.assertEqual(server_info["versionArray"], [8, 0, 0, 0])
+            self.assertEqual(server_info["gitVersion"], "mongoeco")
+            self.assertEqual(server_info["ok"], 1.0)
+
     async def test_create_collection_registers_empty_namespace_and_rejects_duplicates(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -381,6 +390,27 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await client.alpha.command({"distinct": "events", "key": 1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 await client.alpha.command({"dropIndexes": "events", "index": 1.5})  # type: ignore[arg-type]
+
+    async def test_validate_collection_returns_metadata_and_rejects_missing_namespace(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    await client.alpha.events.insert_one({"_id": "1", "kind": "view"})
+                    await client.alpha.events.create_index([("kind", 1)], name="kind_idx")
+
+                    validated = await client.alpha.validate_collection("events")
+                    validated_from_command = await client.alpha.command({"validate": "events"})
+
+                    self.assertEqual(validated["ns"], "alpha.events")
+                    self.assertEqual(validated["nrecords"], 1)
+                    self.assertEqual(validated["nIndexes"], 2)
+                    self.assertEqual(validated["keysPerIndex"], {"_id_": 1, "kind_idx": 1})
+                    self.assertTrue(validated["valid"])
+                    self.assertEqual(validated_from_command, validated)
+
+        async with open_client("memory") as client:
+            with self.assertRaises(CollectionInvalid):
+                await client.alpha.validate_collection("missing")
 
     async def test_collection_rename_moves_documents_and_indexes(self):
         for engine_name in ENGINE_FACTORIES:

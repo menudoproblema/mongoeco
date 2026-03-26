@@ -217,6 +217,28 @@ class Database:
         async_database = self._async_database()
         self._client._run(async_database.drop_collection(name, session=session))
 
+    def validate_collection(
+        self,
+        name_or_collection: object,
+        *,
+        scandata: bool = False,
+        full: bool = False,
+        background: bool | None = None,
+        session: ClientSession | None = None,
+        comment: object | None = None,
+    ) -> dict[str, object]:
+        async_database = self._async_database()
+        return self._client._run(
+            async_database.validate_collection(
+                name_or_collection,
+                scandata=scandata,
+                full=full,
+                background=background,
+                session=session,
+                comment=comment,
+            )
+        )
+
     def command(
         self,
         command: object,
@@ -407,6 +429,10 @@ class MongoClient:
     def drop_database(self, name: str, *, session: ClientSession | None = None) -> None:
         self._ensure_connected()
         self._run(self._async_client.drop_database(name, session=session))
+
+    def server_info(self) -> dict[str, object]:
+        self._ensure_connected()
+        return self._run(self._async_client.server_info())
 
     @property
     def mongodb_dialect(self) -> MongoDialect:
