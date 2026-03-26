@@ -27,6 +27,10 @@ SUPPORTED_QUERY_FIELD_OPERATORS = frozenset(
         '$elemMatch',
         '$exists',
         '$type',
+        '$bitsAllSet',
+        '$bitsAnySet',
+        '$bitsAllClear',
+        '$bitsAnyClear',
     }
 )
 

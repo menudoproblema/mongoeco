@@ -251,6 +251,35 @@ class QueryEngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             QueryEngine.match({"score": 7}, {"score": {"$type": True}})
 
+    def test_query_engine_supports_bitwise_query_operators(self):
+        document = {
+            "mask": 0b1010,
+            "negative": -5,
+            "float_mask": 10.0,
+            "binary": bytes([0b00000101]),
+            "array": [0b1010],
+        }
+
+        self.assertTrue(QueryEngine.match(document, {"mask": {"$bitsAllSet": 0b1000}}))
+        self.assertTrue(QueryEngine.match(document, {"mask": {"$bitsAnySet": [0, 1]}}))
+        self.assertTrue(QueryEngine.match(document, {"mask": {"$bitsAllClear": 0b0001}}))
+        self.assertTrue(QueryEngine.match(document, {"mask": {"$bitsAnyClear": [0, 2]}}))
+        self.assertTrue(QueryEngine.match(document, {"float_mask": {"$bitsAllSet": 0b0010}}))
+        self.assertTrue(QueryEngine.match(document, {"binary": {"$bitsAllSet": bytes([0b00000101])}}))
+        self.assertTrue(QueryEngine.match(document, {"negative": {"$bitsAllSet": 1 << 10}}))
+        self.assertFalse(QueryEngine.match(document, {"mask": {"$bitsAllSet": 0b0101}}))
+        self.assertFalse(QueryEngine.match(document, {"array": {"$bitsAnySet": 0b0010}}))
+
+    def test_query_engine_bitwise_rejects_invalid_masks(self):
+        with self.assertRaises(ValueError):
+            QueryEngine.match({"mask": 0b1010}, {"mask": {"$bitsAllSet": -1}})
+        with self.assertRaises(ValueError):
+            QueryEngine.match({"mask": 0b1010}, {"mask": {"$bitsAnySet": [1, -1]}})
+        with self.assertRaises(ValueError):
+            QueryEngine.match({"mask": 0b1010}, {"mask": {"$bitsAllClear": 1 << 63}})
+        with self.assertRaises(ValueError):
+            QueryEngine.match({"mask": 0b1010}, {"mask": {"$bitsAnyClear": 1.5}})
+
     def test_query_engine_supports_all_operator(self):
         document = {"tags": ["python", "mongodb", "sqlite"]}
         self.assertTrue(QueryEngine.match(document, {"tags": {"$all": ["python", "sqlite"]}}))

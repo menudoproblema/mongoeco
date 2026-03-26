@@ -230,10 +230,6 @@ class QueryPlanTests(unittest.TestCase):
 
     def test_compile_filter_rejects_unsupported_field_level_query_operators_explicitly(self):
         unsupported_filters = [
-            {"value": {"$bitsAllClear": 1}},
-            {"value": {"$bitsAllSet": 1}},
-            {"value": {"$bitsAnyClear": 1}},
-            {"value": {"$bitsAnySet": 1}},
             {"location": {"$geoIntersects": {"$geometry": {}}}},
             {"location": {"$geoWithin": {"$geometry": {}}}},
             {"location": {"$near": [0, 0]}},
@@ -261,13 +257,11 @@ class QueryPlanTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             compile_filter({"location": {"$nearSphere": [0, 0]}})
 
-    def test_compile_filter_rejects_bits_all_set_with_dedicated_test(self):
-        with self.assertRaises(OperationFailure):
-            compile_filter({"value": {"$bitsAllSet": 1}})
+    def test_compile_filter_accepts_bits_all_set_with_dedicated_test(self):
+        self.assertIsNotNone(compile_filter({"value": {"$bitsAllSet": 1}}))
 
-    def test_compile_filter_rejects_bits_any_set_with_dedicated_test(self):
-        with self.assertRaises(OperationFailure):
-            compile_filter({"value": {"$bitsAnySet": 1}})
+    def test_compile_filter_accepts_bits_any_set_with_dedicated_test(self):
+        self.assertIsNotNone(compile_filter({"value": {"$bitsAnySet": 1}}))
 
     def test_compile_filter_rejects_invalid_nor_payload(self):
         with self.assertRaises(ValueError):

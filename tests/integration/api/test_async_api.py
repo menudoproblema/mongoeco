@@ -865,6 +865,27 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(arrays, ["3"])
                     self.assertEqual(strings_in_arrays, ["2", "3"])
 
+    async def test_find_supports_bitwise_query_operators(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.users
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "mask": 0b1010},
+                            {"_id": "2", "mask": 0b0101},
+                            {"_id": "3", "mask": bytes([0b00000101])},
+                        ]
+                    )
+
+                    all_set = [doc["_id"] async for doc in collection.find({"mask": {"$bitsAllSet": 0b1000}})]
+                    any_clear = [doc["_id"] async for doc in collection.find({"mask": {"$bitsAnyClear": [1, 3]}})]
+                    binary = [doc["_id"] async for doc in collection.find({"mask": {"$bitsAllSet": bytes([0b00000101])}})]
+
+                    self.assertEqual(all_set, ["1"])
+                    self.assertEqual(any_clear, ["2", "3"])
+                    self.assertEqual(binary, ["2", "3"])
+
     async def test_find_one_projection_supports_inclusion_and_id_exclusion(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

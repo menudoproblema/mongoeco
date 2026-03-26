@@ -116,6 +116,13 @@ class TypeCondition(QueryNode):
 
 
 @dataclass(frozen=True)
+class BitwiseCondition(QueryNode):
+    field: str
+    operator: str
+    operand: Any
+
+
+@dataclass(frozen=True)
 class ExprCondition(QueryNode):
     expression: Any
     variables: dict[str, Any]
@@ -225,6 +232,8 @@ def _compile_field_condition(
                 clauses.append(TypeCondition(field, tuple(value)))
             else:
                 clauses.append(TypeCondition(field, (value,)))
+        elif operator in {"$bitsAllSet", "$bitsAnySet", "$bitsAllClear", "$bitsAnyClear"}:
+            clauses.append(BitwiseCondition(field, operator, value))
         else:
             raise OperationFailure(f"Unsupported query operator: {operator}")
 

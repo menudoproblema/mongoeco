@@ -11,6 +11,7 @@ from mongoeco.types import ObjectId, UndefinedType
 from mongoeco.core.query_plan import (
     AllCondition,
     AndCondition,
+    BitwiseCondition,
     ElemMatchCondition,
     EqualsCondition,
     ExprCondition,
@@ -158,6 +159,8 @@ class QueryEngine:
             return QueryEngine._evaluate_exists(document, plan.field, plan.value)
         if isinstance(plan, TypeCondition):
             return QueryEngine._evaluate_type(document, plan.field, plan.values)
+        if isinstance(plan, BitwiseCondition):
+            return QueryEngine._evaluate_bitwise(document, plan.field, plan.operator, plan.operand)
         if isinstance(plan, ExprCondition):
             from mongoeco.core.aggregation import _expression_truthy, evaluate_expression
 
@@ -483,6 +486,76 @@ class QueryEngine:
             any(QueryEngine._matches_bson_type(candidate, alias) for alias in aliases)
             for candidate in values
         )
+
+    @staticmethod
+    def _coerce_bitwise_mask(operand: Any) -> int:
+        int64_min = -(1 << 63)
+        int64_max = (1 << 63) - 1
+        if isinstance(operand, bool):
+            raise ValueError("bitwise query operators do not accept boolean masks")
+        if isinstance(operand, int):
+            if operand < 0 or operand > int64_max:
+                raise ValueError("numeric bitmasks must be non-negative signed 64-bit integers")
+            return operand
+        if isinstance(operand, bytes):
+            return int.from_bytes(operand, byteorder="little", signed=False)
+        if isinstance(operand, uuid.UUID):
+            return int.from_bytes(operand.bytes, byteorder="little", signed=False)
+        if isinstance(operand, list):
+            mask = 0
+            for position in operand:
+                if not isinstance(position, int) or isinstance(position, bool) or position < 0:
+                    raise ValueError("bit position lists must contain non-negative integers")
+                mask |= 1 << position
+            return mask
+        raise ValueError("bitwise query operators require a numeric mask, BinData, or list of bit positions")
+
+    @staticmethod
+    def _coerce_bitwise_candidate(candidate: Any) -> int | None:
+        int64_min = -(1 << 63)
+        int64_max = (1 << 63) - 1
+        if isinstance(candidate, bool):
+            return None
+        if isinstance(candidate, int):
+            if candidate < int64_min or candidate > int64_max:
+                return None
+            return candidate
+        if isinstance(candidate, float):
+            if not math.isfinite(candidate) or not candidate.is_integer():
+                return None
+            integer = int(candidate)
+            if integer < int64_min or integer > int64_max:
+                return None
+            return integer
+        if isinstance(candidate, bytes):
+            return int.from_bytes(candidate, byteorder="little", signed=False)
+        if isinstance(candidate, uuid.UUID):
+            return int.from_bytes(candidate.bytes, byteorder="little", signed=False)
+        return None
+
+    @staticmethod
+    def _evaluate_bitwise(
+        doc: dict[str, Any],
+        field: str,
+        operator: str,
+        operand: Any,
+    ) -> bool:
+        found, candidate = QueryEngine._get_field_value(doc, field)
+        if not found:
+            return False
+        candidate_value = QueryEngine._coerce_bitwise_candidate(candidate)
+        if candidate_value is None:
+            return False
+        mask = QueryEngine._coerce_bitwise_mask(operand)
+        if operator == "$bitsAllSet":
+            return (candidate_value & mask) == mask
+        if operator == "$bitsAnySet":
+            return (candidate_value & mask) != 0
+        if operator == "$bitsAllClear":
+            return (candidate_value & mask) == 0
+        if operator == "$bitsAnyClear":
+            return (~candidate_value & mask) != 0
+        raise ValueError(f"Unsupported bitwise query operator: {operator}")
 
     @staticmethod
     def _evaluate_all(

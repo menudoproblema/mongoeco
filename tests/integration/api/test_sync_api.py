@@ -744,6 +744,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(arrays, ["3"])
                     self.assertEqual(strings_in_arrays, ["2", "3"])
 
+    def test_find_supports_bitwise_query_operators(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "mask": 0b1010},
+                            {"_id": "2", "mask": 0b0101},
+                            {"_id": "3", "mask": bytes([0b00000101])},
+                        ]
+                    )
+
+                    all_set = [doc["_id"] for doc in collection.find({"mask": {"$bitsAllSet": 0b1000}})]
+                    any_clear = [doc["_id"] for doc in collection.find({"mask": {"$bitsAnyClear": [1, 3]}})]
+                    binary = [doc["_id"] for doc in collection.find({"mask": {"$bitsAllSet": bytes([0b00000101])}})]
+
+                    self.assertEqual(all_set, ["1"])
+                    self.assertEqual(any_clear, ["2", "3"])
+                    self.assertEqual(binary, ["2", "3"])
+
     def test_update_and_projection(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

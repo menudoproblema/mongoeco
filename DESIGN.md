@@ -647,9 +647,9 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `elemMatch`
     * `size`
     * `type`
+    * bitwise
   * siguiente bloque prioritario:
     * `where`
-    * bitwise
 * update operators adicionales:
   * ya implementados en esta fase:
     * `$rename`
