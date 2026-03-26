@@ -4,6 +4,16 @@ import inspect
 import uuid
 
 from mongoeco.errors import InvalidOperation
+from mongoeco.types import (
+    ReadConcern,
+    ReadPreference,
+    TransactionOptions,
+    WriteConcern,
+    normalize_read_concern,
+    normalize_read_preference,
+    normalize_transaction_options,
+    normalize_write_concern,
+)
 
 
 type SessionCallback = Callable[["ClientSession"], None]
@@ -24,7 +34,9 @@ class ClientSession:
     active: bool = True
     transaction_active: bool = False
     transaction_number: int = 0
+    default_transaction_options: TransactionOptions = field(default_factory=TransactionOptions)
     engine_state: dict[str, object] = field(default_factory=dict)
+    _current_transaction_options: TransactionOptions | None = field(default=None, repr=False)
     _transaction_hooks: dict[str, _TransactionHooks] = field(default_factory=dict, repr=False)
 
     def ensure_active(self) -> None:
@@ -38,6 +50,10 @@ class ClientSession:
     @property
     def in_transaction(self) -> bool:
         return self.transaction_active
+
+    @property
+    def transaction_options(self) -> TransactionOptions | None:
+        return self._current_transaction_options
 
     def bind_engine_state(self, engine_key: str, state: object) -> None:
         self.ensure_active()
@@ -74,17 +90,51 @@ class ClientSession:
             if callback is not None:
                 callback(self)
 
-    def start_transaction(self) -> None:
+    def start_transaction(
+        self,
+        *,
+        read_concern: ReadConcern | None = None,
+        write_concern: WriteConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        max_commit_time_ms: int | None = None,
+    ) -> None:
         self.ensure_active()
         if self.transaction_active:
             raise InvalidOperation("Ya hay una transaccion activa en esta sesion")
+        resolved_read_concern = (
+            self.default_transaction_options.read_concern
+            if read_concern is None
+            else normalize_read_concern(read_concern)
+        )
+        resolved_write_concern = (
+            self.default_transaction_options.write_concern
+            if write_concern is None
+            else normalize_write_concern(write_concern)
+        )
+        resolved_read_preference = (
+            self.default_transaction_options.read_preference
+            if read_preference is None
+            else normalize_read_preference(read_preference)
+        )
+        resolved_max_commit_time_ms = (
+            self.default_transaction_options.max_commit_time_ms
+            if max_commit_time_ms is None
+            else max_commit_time_ms
+        )
         self.transaction_number += 1
         self.transaction_active = True
+        self._current_transaction_options = TransactionOptions(
+            read_concern=resolved_read_concern,
+            write_concern=resolved_write_concern,
+            read_preference=resolved_read_preference,
+            max_commit_time_ms=resolved_max_commit_time_ms,
+        )
         try:
             self._run_transaction_hooks("start")
         except Exception:
             self.transaction_active = False
             self.transaction_number -= 1
+            self._current_transaction_options = None
             raise
 
     def commit_transaction(self) -> None:
@@ -95,6 +145,7 @@ class ClientSession:
             self._run_transaction_hooks("commit")
         finally:
             self.transaction_active = False
+            self._current_transaction_options = None
 
     def abort_transaction(self) -> None:
         self.ensure_active()
@@ -104,13 +155,28 @@ class ClientSession:
             self._run_transaction_hooks("abort")
         finally:
             self.transaction_active = False
+            self._current_transaction_options = None
 
     def end_transaction(self) -> None:
         self.commit_transaction()
 
-    def with_transaction(self, callback: Callable[["ClientSession"], object], *args, **kwargs) -> object:
+    def with_transaction(
+        self,
+        callback: Callable[["ClientSession"], object],
+        *args,
+        read_concern: ReadConcern | None = None,
+        write_concern: WriteConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        max_commit_time_ms: int | None = None,
+        **kwargs,
+    ) -> object:
         self.ensure_active()
-        self.start_transaction()
+        self.start_transaction(
+            read_concern=read_concern,
+            write_concern=write_concern,
+            read_preference=read_preference,
+            max_commit_time_ms=max_commit_time_ms,
+        )
         try:
             result = callback(self, *args, **kwargs)
         except Exception:
@@ -145,6 +211,7 @@ class ClientSession:
                 abort_error = exc
             finally:
                 self.transaction_active = False
+                self._current_transaction_options = None
         self._transaction_hooks.clear()
         self.engine_state.clear()
         self.active = False

@@ -198,6 +198,22 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 CodecOptions(dict, tz_aware=True),
             )
 
+    async def test_start_session_inherits_default_transaction_options_from_client(self):
+        transaction_options = TransactionOptions(
+            write_concern=WriteConcern("majority"),
+            max_commit_time_ms=200,
+        )
+
+        async with AsyncMongoClient(
+            MemoryEngine(),
+            transaction_options=transaction_options,
+        ) as client:
+            session = client.start_session()
+            session.start_transaction()
+
+            self.assertEqual(session.default_transaction_options, transaction_options)
+            self.assertEqual(session.transaction_options, transaction_options)
+
     async def test_list_collections_rejects_invalid_filter(self):
         async with open_client("memory") as client:
             with self.assertRaises(TypeError):

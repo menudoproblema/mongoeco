@@ -367,8 +367,14 @@ class MongoClient:
             codec_options=codec_options,
         )
 
-    def start_session(self) -> ClientSession:
-        return self._async_client.start_session()
+    def start_session(
+        self,
+        *,
+        default_transaction_options: TransactionOptions | None = None,
+    ) -> ClientSession:
+        return self._async_client.start_session(
+            default_transaction_options=default_transaction_options
+        )
 
     def list_database_names(self, *, session: ClientSession | None = None) -> list[str]:
         self._ensure_connected()

@@ -356,8 +356,18 @@ class AsyncMongoClient:
             codec_options=self._codec_options if codec_options is None else codec_options,
         )
 
-    def start_session(self) -> ClientSession:
-        session = ClientSession()
+    def start_session(
+        self,
+        *,
+        default_transaction_options: TransactionOptions | None = None,
+    ) -> ClientSession:
+        session = ClientSession(
+            default_transaction_options=(
+                self._transaction_options
+                if default_transaction_options is None
+                else normalize_transaction_options(default_transaction_options)
+            )
+        )
         self._engine.create_session_state(session)
         return session
 

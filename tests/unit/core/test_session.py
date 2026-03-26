@@ -5,6 +5,13 @@ from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
+from mongoeco.types import (
+    ReadConcern,
+    ReadPreference,
+    ReadPreferenceMode,
+    TransactionOptions,
+    WriteConcern,
+)
 
 
 class ClientSessionTests(unittest.TestCase):
@@ -21,6 +28,55 @@ class ClientSessionTests(unittest.TestCase):
 
         session.commit_transaction()
         self.assertFalse(session.transaction_active)
+        self.assertIsNone(session.transaction_options)
+
+    def test_session_start_transaction_uses_default_transaction_options(self):
+        session = ClientSession(
+            default_transaction_options=TransactionOptions(
+                read_concern=ReadConcern("majority"),
+                write_concern=WriteConcern("majority", j=True),
+                read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
+                max_commit_time_ms=250,
+            )
+        )
+
+        session.start_transaction()
+
+        self.assertEqual(
+            session.transaction_options,
+            TransactionOptions(
+                read_concern=ReadConcern("majority"),
+                write_concern=WriteConcern("majority", j=True),
+                read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
+                max_commit_time_ms=250,
+            ),
+        )
+
+    def test_session_start_transaction_allows_option_overrides(self):
+        session = ClientSession(
+            default_transaction_options=TransactionOptions(
+                read_concern=ReadConcern("majority"),
+                write_concern=WriteConcern("majority"),
+                read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
+            )
+        )
+
+        session.start_transaction(
+            read_concern=ReadConcern("local"),
+            write_concern=WriteConcern(1),
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+            max_commit_time_ms=500,
+        )
+
+        self.assertEqual(
+            session.transaction_options,
+            TransactionOptions(
+                read_concern=ReadConcern("local"),
+                write_concern=WriteConcern(1),
+                read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+                max_commit_time_ms=500,
+            ),
+        )
 
     def test_closed_session_rejects_state_access(self):
         session = ClientSession()
@@ -34,13 +90,26 @@ class ClientSessionTests(unittest.TestCase):
 
     def test_async_client_start_session_binds_engine_state(self):
         engine = MemoryEngine()
-        client = AsyncMongoClient(engine)
+        client = AsyncMongoClient(
+            engine,
+            transaction_options=TransactionOptions(
+                write_concern=WriteConcern("majority"),
+                max_commit_time_ms=250,
+            ),
+        )
 
         session = client.start_session()
 
         self.assertEqual(
             session.get_engine_state(f"memory:{id(engine)}"),
             {"connected": False, "supports_transactions": False},
+        )
+        self.assertEqual(
+            session.default_transaction_options,
+            TransactionOptions(
+                write_concern=WriteConcern("majority"),
+                max_commit_time_ms=250,
+            ),
         )
 
     def test_async_client_start_session_binds_sqlite_engine_state(self):
@@ -123,6 +192,32 @@ class ClientSessionTests(unittest.TestCase):
         self.assertEqual(result, ("ok", 1))
         self.assertFalse(session.in_transaction)
         self.assertEqual(session.transaction_number, 1)
+        self.assertIsNone(session.transaction_options)
+
+    def test_session_with_transaction_accepts_transaction_option_overrides(self):
+        session = ClientSession()
+
+        def _run(active: ClientSession):
+            self.assertEqual(
+                active.transaction_options,
+                TransactionOptions(
+                    read_concern=ReadConcern("local"),
+                    write_concern=WriteConcern(1),
+                    read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+                    max_commit_time_ms=50,
+                ),
+            )
+            return "ok"
+
+        result = session.with_transaction(
+            _run,
+            read_concern=ReadConcern("local"),
+            write_concern=WriteConcern(1),
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+            max_commit_time_ms=50,
+        )
+
+        self.assertEqual(result, "ok")
 
     def test_session_with_transaction_respects_callback_committing_early(self):
         session = ClientSession()

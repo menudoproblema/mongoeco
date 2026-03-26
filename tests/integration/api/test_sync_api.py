@@ -283,6 +283,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertEqual(tuned_collection.read_preference, ReadPreference(ReadPreferenceMode.SECONDARY_PREFERRED))
             self.assertEqual(tuned_collection.codec_options, CodecOptions(dict, tz_aware=True))
 
+    def test_start_session_inherits_default_transaction_options_from_client(self):
+        transaction_options = TransactionOptions(
+            write_concern=WriteConcern("majority"),
+            max_commit_time_ms=200,
+        )
+
+        with MongoClient(
+            MemoryEngine(),
+            transaction_options=transaction_options,
+        ) as client:
+            session = client.start_session()
+            session.start_transaction()
+
+            self.assertEqual(session.default_transaction_options, transaction_options)
+            self.assertEqual(session.transaction_options, transaction_options)
+
     def test_duplicate_id_raises(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
