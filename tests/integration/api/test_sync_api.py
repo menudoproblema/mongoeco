@@ -1593,6 +1593,34 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         state["connected"]
                     )
 
+    def test_find_with_comment_and_max_time_updates_session_state_and_explain(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    session = client.start_session()
+                    collection = client.analytics.events
+                    collection.insert_one({"_id": "1", "kind": "view"}, session=session)
+
+                    documents = collection.find(
+                        {"kind": "view"},
+                        comment="trace-find",
+                        max_time_ms=25,
+                        session=session,
+                    ).to_list()
+                    explanation = collection.find(
+                        {"kind": "view"},
+                        comment="trace-find",
+                        max_time_ms=25,
+                        session=session,
+                    ).explain()
+                    state = next(iter(session.engine_state.values()))
+
+                    self.assertEqual(documents, [{"_id": "1", "kind": "view"}])
+                    self.assertEqual(state["last_operation"]["comment"], "trace-find")
+                    self.assertEqual(state["last_operation"]["max_time_ms"], 25)
+                    self.assertEqual(explanation["comment"], "trace-find")
+                    self.assertEqual(explanation["max_time_ms"], 25)
+
     def test_sync_client_accepts_sqlite_engine(self):
         with MongoClient(SQLiteEngine()) as client:
             collection = client.test.users

@@ -6,6 +6,7 @@ import math
 import queue
 import sqlite3
 import threading
+import time
 from copy import deepcopy
 from decimal import Decimal
 from typing import Any, AsyncIterable, override
@@ -15,6 +16,7 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import canonical_document_id
 from mongoeco.core.operators import UpdateEngine
+from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import (
@@ -84,6 +86,28 @@ class SQLiteEngine(AsyncStorageEngine):
 
     def _engine_key(self) -> str:
         return f"sqlite:{id(self)}"
+
+    def _record_operation_metadata(
+        self,
+        context: ClientSession | None,
+        *,
+        operation: str,
+        comment: object | None,
+        max_time_ms: int | None,
+        hint: str | IndexKeySpec | None,
+    ) -> None:
+        if context is None:
+            return
+        context.update_engine_state(
+            self._engine_key(),
+            last_operation={
+                "operation": operation,
+                "comment": comment,
+                "max_time_ms": max_time_ms,
+                "hint": hint,
+                "recorded_at": time.monotonic(),
+            },
+        )
 
     @override
     def create_session_state(self, session: ClientSession) -> None:
@@ -703,10 +727,13 @@ class SQLiteEngine(AsyncStorageEngine):
         skip: int = 0,
         limit: int | None = None,
         hint: str | IndexKeySpec | None = None,
+        max_time_ms: int | None = None,
     ) -> list[str]:
+        deadline = operation_deadline(max_time_ms)
         with self._lock:
             conn = self._require_connection()
             plan = ensure_query_plan(filter_spec)
+            enforce_deadline(deadline)
             if self._plan_has_array_traversing_paths(db_name, coll_name, plan):
                 raise NotImplementedError("Array traversal requires Python fallback")
             if self._plan_requires_python_for_array_comparisons(db_name, coll_name, plan):
@@ -726,6 +753,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 hint=hint,
             )
             rows = conn.execute(f"EXPLAIN QUERY PLAN {sql}", tuple(params)).fetchall()
+        enforce_deadline(deadline)
         return [str(row[3]) for row in rows]
 
     def _load_indexes(self, db_name: str, coll_name: str) -> list[dict[str, object]]:
@@ -1038,8 +1066,10 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         *,
         hint: str | IndexKeySpec | None = None,
+        max_time_ms: int | None = None,
     ):
         effective_dialect = dialect or MONGODB_DIALECT_70
+        deadline = operation_deadline(max_time_ms)
         if skip < 0:
             raise ValueError("skip must be >= 0")
         if limit is not None and limit < 0:
@@ -1052,6 +1082,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 conn = self._require_connection(context)
             with self._bind_connection(conn) if conn is not None else nullcontext():
                 try:
+                    enforce_deadline(deadline)
                     if self._dialect_requires_python_fallback(effective_dialect):
                         raise NotImplementedError("Custom dialect requires Python fallback")
                     if self._plan_has_array_traversing_paths(db_name, coll_name, plan):
@@ -1077,6 +1108,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     cursor = conn.execute(sql, tuple(sql_params))
                     try:
                         for (payload,) in cursor:
+                            enforce_deadline(deadline)
                             if stop_event is not None and stop_event.is_set():
                                 break
                             if effective_dialect is MONGODB_DIALECT_70:
@@ -1103,6 +1135,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             remaining_skip = skip
                             remaining_limit = limit
                             for document in documents_iter:
+                                enforce_deadline(deadline)
                                 if stop_event is not None and stop_event.is_set():
                                     break
                                 if remaining_skip:
@@ -1140,6 +1173,7 @@ class SQLiteEngine(AsyncStorageEngine):
         if limit is not None:
             documents = documents[:limit]
         for document in documents:
+            enforce_deadline(deadline)
             if stop_event is not None and stop_event.is_set():
                 break
             if effective_dialect is MONGODB_DIALECT_70:
@@ -1732,10 +1766,19 @@ class SQLiteEngine(AsyncStorageEngine):
         skip: int = 0,
         limit: int | None = None,
         hint: str | IndexKeySpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> AsyncIterable[Document]:
         async def _scan() -> AsyncIterable[Document]:
+            self._record_operation_metadata(
+                context,
+                operation="scan_collection",
+                comment=comment,
+                max_time_ms=max_time_ms,
+                hint=hint,
+            )
             items: queue.Queue[object] = queue.Queue()
             sentinel = object()
             stop_event = threading.Event()
@@ -1754,6 +1797,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         skip,
                         limit,
                         context,
+                        max_time_ms=max_time_ms,
                         hint=hint,
                         stop_event=stop_event,
                         dialect=dialect,
@@ -1889,11 +1933,20 @@ class SQLiteEngine(AsyncStorageEngine):
         skip: int = 0,
         limit: int | None = None,
         hint: str | IndexKeySpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> dict[str, object]:
         effective_dialect = dialect or MONGODB_DIALECT_70
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
+        self._record_operation_metadata(
+            context,
+            operation="explain_query_plan",
+            comment=comment,
+            max_time_ms=max_time_ms,
+            hint=hint,
+        )
         hinted_index = await asyncio.to_thread(
             self._resolve_hint_index,
             db_name,
@@ -1909,6 +1962,7 @@ class SQLiteEngine(AsyncStorageEngine):
             skip=skip,
             limit=limit,
             hint=hint,
+            max_time_ms=max_time_ms,
         )
         return {
             "engine": "sqlite",
@@ -1920,6 +1974,8 @@ class SQLiteEngine(AsyncStorageEngine):
             "limit": limit,
             "hint": hint,
             "hinted_index": None if hinted_index is None else hinted_index["name"],
+            "comment": comment,
+            "max_time_ms": max_time_ms,
         }
 
     @override

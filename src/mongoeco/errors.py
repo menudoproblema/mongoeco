@@ -39,3 +39,8 @@ class OperationFailure(PyMongoError):
         super().__init__(message)
         self.code = code
         self.details = details
+
+
+class ExecutionTimeout(OperationFailure):
+    """Se produce cuando una operación excede su max_time_ms local."""
+    pass

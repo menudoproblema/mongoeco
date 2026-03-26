@@ -1677,6 +1677,34 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         True,
                     )
 
+    async def test_find_with_comment_and_max_time_updates_session_state_and_explain(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    session = client.start_session()
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "kind": "view"}, session=session)
+
+                    documents = await collection.find(
+                        {"kind": "view"},
+                        comment="trace-find",
+                        max_time_ms=25,
+                        session=session,
+                    ).to_list()
+                    explanation = await collection.find(
+                        {"kind": "view"},
+                        comment="trace-find",
+                        max_time_ms=25,
+                        session=session,
+                    ).explain()
+                    state = next(iter(session.engine_state.values()))
+
+                    self.assertEqual(documents, [{"_id": "1", "kind": "view"}])
+                    self.assertEqual(state["last_operation"]["comment"], "trace-find")
+                    self.assertEqual(state["last_operation"]["max_time_ms"], 25)
+                    self.assertEqual(explanation["comment"], "trace-find")
+                    self.assertEqual(explanation["max_time_ms"], 25)
+
     async def test_collection_can_manage_index_metadata(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

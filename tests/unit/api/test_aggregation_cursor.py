@@ -6,7 +6,7 @@ from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll
 from mongoeco.core.sorting import sort_documents
-from mongoeco.errors import InvalidOperation
+from mongoeco.errors import ExecutionTimeout, InvalidOperation
 
 
 class _FakeAsyncFindCursor:
@@ -279,6 +279,18 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explanation["max_time_ms"], 5)
         self.assertEqual(explanation["batch_size"], 10)
         self.assertEqual(explanation["let"], {"tenant": "a"})
+
+    async def test_materialize_enforces_max_time_deadline(self):
+        collection = _FakeCollection([{"_id": "1", "kind": "view"}])
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$match": {"kind": "view"}}],
+            max_time_ms=1,
+        )
+
+        with patch("mongoeco.api._async.aggregation_cursor.enforce_deadline", side_effect=ExecutionTimeout("operation exceeded time limit")):
+            with self.assertRaises(ExecutionTimeout):
+                await cursor.to_list()
 
 
 class SyncAggregationCursorTests(unittest.TestCase):

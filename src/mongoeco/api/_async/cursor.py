@@ -93,6 +93,8 @@ class AsyncCursor:
             skip=self._skip,
             limit=self._limit if limit is None else limit,
             hint=self._hint,
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
             dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
             context=self._session,
         )
@@ -190,6 +192,8 @@ class AsyncCursor:
             skip=self._skip,
             limit=self._limit,
             hint=self._hint,
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
             dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
             context=self._session,
         )

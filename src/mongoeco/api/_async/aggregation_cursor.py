@@ -2,6 +2,7 @@ from collections.abc import AsyncIterator
 
 from mongoeco.api._async.cursor import HintSpec
 from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.aggregation import (
     Pipeline,
     _CURRENT_COLLECTION_RESOLVER_KEY,
@@ -98,6 +99,8 @@ class AsyncAggregationCursor:
                     db_name,
                     collection_name,
                     {},
+                    comment=self._comment,
+                    max_time_ms=self._max_time_ms,
                     dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
                     context=self._session,
                 )
@@ -111,6 +114,8 @@ class AsyncAggregationCursor:
                 self._collection._db_name,
                 name,
                 {},
+                comment=self._comment,
+                max_time_ms=self._max_time_ms,
                 dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
                 context=self._session,
             )
@@ -118,12 +123,15 @@ class AsyncAggregationCursor:
         return loaded
 
     async def _materialize(self) -> list[Document]:
+        deadline = operation_deadline(self._max_time_ms)
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
         pushdown = split_pushdown_pipeline(
             self._pipeline,
             dialect=dialect,
         )
+        enforce_deadline(deadline)
         referenced_collections = await self._load_referenced_collections()
+        enforce_deadline(deadline)
         documents = await self._collection.find(
             pushdown.filter_spec,
             pushdown.projection,
@@ -136,13 +144,16 @@ class AsyncAggregationCursor:
             batch_size=self._batch_size,
             session=self._session,
         ).to_list()
-        return apply_pipeline(
+        enforce_deadline(deadline)
+        result = apply_pipeline(
             documents,
             pushdown.remaining_pipeline,
             collection_resolver=referenced_collections.get,
             variables=self._let,
             dialect=dialect,
         )
+        enforce_deadline(deadline)
+        return result
 
     async def to_list(self) -> list[Document]:
         return await self._materialize()
@@ -182,6 +193,8 @@ class AsyncAggregationCursor:
                 skip=pushdown.skip,
                 limit=pushdown.limit,
                 hint=self._hint,
+                comment=self._comment,
+                max_time_ms=self._max_time_ms,
                 dialect=dialect,
                 context=self._session,
             ),

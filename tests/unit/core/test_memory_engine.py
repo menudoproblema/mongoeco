@@ -7,7 +7,8 @@ from mongoeco.compat import MONGODB_DIALECT_80
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.engines.memory import MemoryEngine
-from mongoeco.errors import DuplicateKeyError, OperationFailure
+from mongoeco.errors import DuplicateKeyError, ExecutionTimeout, OperationFailure
+from mongoeco.session import ClientSession
 from mongoeco.types import UNDEFINED
 
 
@@ -19,6 +20,53 @@ class _UnhashableValue:
 
 
 class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
+    async def test_scan_collection_records_comment_and_max_time_in_session_state(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            session = ClientSession()
+            engine.create_session_state(session)
+            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
+
+            documents = [
+                doc
+                async for doc in engine.scan_collection(
+                    "db",
+                    "coll",
+                    {"kind": "view"},
+                    comment="trace-memory",
+                    max_time_ms=25,
+                    context=session,
+                )
+            ]
+            state = session.get_engine_state(f"memory:{id(engine)}")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, [{"_id": "1", "kind": "view"}])
+        self.assertIsInstance(state, dict)
+        self.assertEqual(state["last_operation"]["comment"], "trace-memory")
+        self.assertEqual(state["last_operation"]["max_time_ms"], 25)
+
+    async def test_scan_collection_enforces_max_time_ms_deadline(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
+            with patch("mongoeco.engines.memory.enforce_deadline", side_effect=ExecutionTimeout("operation exceeded time limit")):
+                with self.assertRaises(ExecutionTimeout):
+                    [
+                        doc
+                        async for doc in engine.scan_collection(
+                            "db",
+                            "coll",
+                            {"kind": "view"},
+                            max_time_ms=1,
+                        )
+                    ]
+        finally:
+            await engine.disconnect()
+
     async def test_engine_compiles_filter_with_requested_dialect_when_plan_is_omitted(self):
         engine = MemoryEngine()
         await engine.connect()

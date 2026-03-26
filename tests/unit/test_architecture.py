@@ -71,6 +71,10 @@ class ArchitectureUnitTests(unittest.TestCase):
             get_operation_option_support("find", "hint").status,
             OptionSupportStatus.EFFECTIVE,
         )
+        self.assertTrue(is_operation_option_effective("find", "comment"))
+        self.assertTrue(is_operation_option_effective("find", "max_time_ms"))
+        self.assertTrue(is_operation_option_effective("aggregate", "comment"))
+        self.assertTrue(is_operation_option_effective("aggregate", "max_time_ms"))
         self.assertTrue(is_operation_option_effective("aggregate", "let"))
         self.assertFalse(is_operation_option_effective("update_one", "let"))
         self.assertEqual(

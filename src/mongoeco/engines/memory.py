@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import threading
+import time
 import uuid
 from copy import deepcopy
 from typing import Any, AsyncIterable, override
@@ -12,6 +13,7 @@ from mongoeco.core.operators import UpdateEngine
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import MatchAll, QueryNode, ensure_query_plan
+from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import DuplicateKeyError, OperationFailure
 from mongoeco.session import ClientSession
@@ -68,6 +70,28 @@ class MemoryEngine(AsyncStorageEngine):
         key = f"{db}.{coll}"
         with self._meta_lock:
             return self._locks.setdefault(key, _AsyncThreadLock())
+
+    def _record_operation_metadata(
+        self,
+        context: ClientSession | None,
+        *,
+        operation: str,
+        comment: object | None,
+        max_time_ms: int | None,
+        hint: str | IndexKeySpec | None,
+    ) -> None:
+        if context is None:
+            return
+        context.update_engine_state(
+            f"memory:{id(self)}",
+            last_operation={
+                "operation": operation,
+                "comment": comment,
+                "max_time_ms": max_time_ms,
+                "hint": hint,
+                "recorded_at": time.monotonic(),
+            },
+        )
 
     def _resolve_hint_index(
         self,
@@ -252,14 +276,23 @@ class MemoryEngine(AsyncStorageEngine):
             return False
 
     @override
-    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, hint: str | IndexKeySpec | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
+    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, hint: str | IndexKeySpec | None = None, comment: object | None = None, max_time_ms: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
         async def _scan():
             effective_dialect = dialect or MONGODB_DIALECT_70
+            deadline = operation_deadline(max_time_ms)
             if skip < 0:
                 raise ValueError("skip must be >= 0")
             if limit is not None and limit < 0:
                 raise ValueError("limit must be >= 0")
             query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
+            self._record_operation_metadata(
+                context,
+                operation="scan_collection",
+                comment=comment,
+                max_time_ms=max_time_ms,
+                hint=hint,
+            )
+            enforce_deadline(deadline)
 
             async with self._get_lock(db_name, coll_name):
                 coll = self._storage.get(db_name, {}).get(coll_name, {})
@@ -270,21 +303,25 @@ class MemoryEngine(AsyncStorageEngine):
                     hint,
                     indexes=indexes,
                 )
+                enforce_deadline(deadline)
                 documents = [
                     self._codec.decode(data)
                     for data in list(coll.values())
                 ]
 
             if not isinstance(query_plan, MatchAll):
-                documents = [
-                    document
-                    for document in documents
-                    if QueryEngine.match_plan(document, query_plan, dialect=effective_dialect)
-                ]
+                filtered: list[Document] = []
+                for document in documents:
+                    enforce_deadline(deadline)
+                    if QueryEngine.match_plan(document, query_plan, dialect=effective_dialect):
+                        filtered.append(document)
+                documents = filtered
+            enforce_deadline(deadline)
             if effective_dialect is MONGODB_DIALECT_70:
                 documents = sort_documents(documents, sort)
             else:
                 documents = sort_documents(documents, sort, dialect=effective_dialect)
+            enforce_deadline(deadline)
 
             if skip:
                 documents = documents[skip:]
@@ -292,6 +329,7 @@ class MemoryEngine(AsyncStorageEngine):
                 documents = documents[:limit]
 
             for document in documents:
+                enforce_deadline(deadline)
                 if effective_dialect is MONGODB_DIALECT_70:
                     yield apply_projection(document, projection)
                 else:
@@ -528,11 +566,22 @@ class MemoryEngine(AsyncStorageEngine):
         skip: int = 0,
         limit: int | None = None,
         hint: str | IndexKeySpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> dict[str, object]:
         effective_dialect = dialect or MONGODB_DIALECT_70
+        deadline = operation_deadline(max_time_ms)
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
+        self._record_operation_metadata(
+            context,
+            operation="explain_query_plan",
+            comment=comment,
+            max_time_ms=max_time_ms,
+            hint=hint,
+        )
+        enforce_deadline(deadline)
         async with self._get_lock(db_name, coll_name):
             indexes = deepcopy(self._indexes.get(db_name, {}).get(coll_name, []))
         hinted_index = self._resolve_hint_index(
@@ -541,6 +590,7 @@ class MemoryEngine(AsyncStorageEngine):
             hint,
             indexes=indexes,
         )
+        enforce_deadline(deadline)
         return {
             "engine": "memory",
             "strategy": "python",
@@ -550,6 +600,8 @@ class MemoryEngine(AsyncStorageEngine):
             "limit": limit,
             "hint": hint,
             "hinted_index": None if hinted_index is None else hinted_index["name"],
+            "comment": comment,
+            "max_time_ms": max_time_ms,
             "indexes": indexes,
         }
 

@@ -282,6 +282,8 @@ class Cursor:
                 skip=self._skip,
                 limit=self._limit,
                 hint=self._hint,
+                comment=self._comment,
+                max_time_ms=self._max_time_ms,
                 dialect=dialect,
                 context=self._session,
             )

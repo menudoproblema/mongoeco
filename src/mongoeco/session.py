@@ -47,6 +47,12 @@ class ClientSession:
         self.ensure_active()
         return self.engine_state.get(engine_key)
 
+    def update_engine_state(self, engine_key: str, **updates: object) -> None:
+        self.ensure_active()
+        state = self.engine_state.get(engine_key)
+        if isinstance(state, dict):
+            state.update(updates)
+
     def register_transaction_hooks(
         self,
         engine_key: str,
