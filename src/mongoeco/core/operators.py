@@ -59,6 +59,9 @@ class UpdateEngine:
             elif op == "$mul":
                 if UpdateEngine._apply_mul(doc, params, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
                     modified = True
+            elif op == "$bit":
+                if UpdateEngine._apply_bit(doc, params, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
+                    modified = True
             elif op == "$rename":
                 if UpdateEngine._apply_rename(doc, params, dialect=dialect):
                     modified = True
@@ -83,6 +86,9 @@ class UpdateEngine:
                     modified = True
             elif op == "$pull":
                 if UpdateEngine._apply_pull(doc, params, dialect=dialect):
+                    modified = True
+            elif op == "$pullAll":
+                if UpdateEngine._apply_pull_all(doc, params, dialect=dialect):
                     modified = True
             elif op == "$pop":
                 if UpdateEngine._apply_pop(doc, params, dialect=dialect):
@@ -321,6 +327,10 @@ class UpdateEngine:
         return isinstance(value, (int, float)) and not isinstance(value, bool)
 
     @staticmethod
+    def _is_integral(value: Any) -> bool:
+        return isinstance(value, int) and not isinstance(value, bool)
+
+    @staticmethod
     def _iter_ordered_update_items(
         params: dict[str, Any],
         *,
@@ -489,6 +499,51 @@ class UpdateEngine:
                 if not UpdateEngine._is_numeric(current):
                     raise OperationFailure("$mul requires the target field to be numeric")
                 if set_document_value(doc, concrete_path, current * factor):
+                    modified = True
+        return modified
+
+    @staticmethod
+    def _apply_bit(
+        doc: dict[str, Any],
+        params: dict[str, Any],
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+        selector_filter: Filter | None = None,
+        array_filters: dict[str, dict[str, Any]] | None = None,
+    ) -> bool:
+        modified = False
+        for path, bit_spec in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
+            if not isinstance(bit_spec, dict):
+                raise OperationFailure("$bit requires a document of bitwise operations")
+            if not bit_spec:
+                continue
+            if len(bit_spec) != 1:
+                raise OperationFailure("$bit requires exactly one of and, or, or xor")
+            operator, operand = next(iter(bit_spec.items()))
+            if operator not in {"and", "or", "xor"}:
+                raise OperationFailure("$bit only supports and, or, and xor")
+            if not UpdateEngine._is_integral(operand):
+                raise OperationFailure("$bit requires integer operands")
+            for concrete_path in UpdateEngine._expand_update_targets(
+                doc,
+                path,
+                selector_filter=selector_filter,
+                array_filters=array_filters or {},
+                allow_positional=True,
+                dialect=dialect,
+            ):
+                found, current = get_document_value(doc, concrete_path)
+                if not found:
+                    raise OperationFailure("$bit requires the target field to exist and be an integer")
+                if not UpdateEngine._is_integral(current):
+                    raise OperationFailure("$bit requires the target field to be an integer")
+                if operator == "and":
+                    replacement = current & operand
+                elif operator == "or":
+                    replacement = current | operand
+                else:
+                    replacement = current ^ operand
+                if set_document_value(doc, concrete_path, replacement):
                     modified = True
         return modified
 
@@ -673,6 +728,36 @@ class UpdateEngine:
                     for candidate in current
                     if not QueryEngine._values_equal(candidate, value, dialect=dialect)
                 ]
+            if not _same_value_for_update(filtered, current):
+                if set_document_value(doc, path, filtered):
+                    modified = True
+        return modified
+
+    @staticmethod
+    def _apply_pull_all(
+        doc: dict[str, Any],
+        params: dict[str, Any],
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
+        modified = False
+        for path, value in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
+            UpdateEngine._assert_mutable_path(path)
+            if not isinstance(value, list):
+                raise OperationFailure("$pullAll requires an array of values")
+            found, current = get_document_value(doc, path)
+            if not found:
+                continue
+            if not isinstance(current, list):
+                raise OperationFailure("$pullAll requires the target field to be an array")
+            filtered = [
+                candidate
+                for candidate in current
+                if not any(
+                    QueryEngine._values_equal(candidate, removal, dialect=dialect)
+                    for removal in value
+                )
+            ]
             if not _same_value_for_update(filtered, current):
                 if set_document_value(doc, path, filtered):
                     modified = True

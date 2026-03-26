@@ -664,6 +664,44 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(result.modified_count, 1)
                     self.assertEqual(updated["items"], [{"qty": 1}, {"qty": 5}, {"qty": 4}])
 
+    def test_bit_update_operator_is_observable_via_api(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "score": 13, "flags": [1, 3, 4]})
+
+                    update_one_result = collection.update_one(
+                        {"_id": "1"},
+                        {"$bit": {"score": {"and": 10}}},
+                    )
+                    update_many_result = collection.update_many(
+                        {"_id": "1"},
+                        {"$bit": {"flags.$[flag]": {"xor": 2}}},
+                        array_filters=[{"flag": {"$gte": 3}}],
+                    )
+                    updated = collection.find_one({"_id": "1"})
+
+                    self.assertEqual(update_one_result.modified_count, 1)
+                    self.assertEqual(update_many_result.modified_count, 1)
+                    self.assertEqual(updated, {"_id": "1", "score": 8, "flags": [1, 1, 6]})
+
+    def test_pull_all_update_operator_is_observable_via_api(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "tags": ["python", "async", "python"], "nums": [1, 2, 3, 2]})
+
+                    update_one_result = collection.update_one(
+                        {"_id": "1"},
+                        {"$pullAll": {"tags": ["python"], "nums": [2, 4]}},
+                    )
+                    updated = collection.find_one({"_id": "1"})
+
+                    self.assertEqual(update_one_result.modified_count, 1)
+                    self.assertEqual(updated, {"_id": "1", "tags": ["async"], "nums": [1, 3]})
+
     def test_distinct_supports_scalars_arrays_nested_paths_and_filter(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

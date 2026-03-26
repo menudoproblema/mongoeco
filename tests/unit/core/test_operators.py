@@ -71,8 +71,7 @@ class UpdateEngineTests(unittest.TestCase):
 
     def test_update_rejects_other_unsupported_update_operators_explicitly(self):
         unsupported_specs = [
-            {"$pullAll": {"tags": ["python"]}},
-            {"$bit": {"score": {"and": 1}}},
+            {"$pushAll": {"tags": ["python"]}},
         ]
 
         for spec in unsupported_specs:
@@ -403,6 +402,59 @@ class UpdateEngineTests(unittest.TestCase):
                 {"$set": {"scores.$": 9}},
                 selector_filter={"scores": {"$ne": 4}},
             )
+
+    def test_bit_supports_and_or_xor_and_positional_targets(self):
+        document = {"score": 13, "flags": [1, 3, 4]}
+
+        and_modified = UpdateEngine.apply_update(document, {"$bit": {"score": {"and": 10}}})
+        or_modified = UpdateEngine.apply_update(document, {"$bit": {"score": {"or": 1}}})
+        xor_modified = UpdateEngine.apply_update(
+            document,
+            {"$bit": {"flags.$[flag]": {"xor": 2}}},
+            array_filters=[{"flag": {"$gte": 3}}],
+        )
+
+        self.assertTrue(and_modified)
+        self.assertTrue(or_modified)
+        self.assertTrue(xor_modified)
+        self.assertEqual(document, {"score": 9, "flags": [1, 1, 6]})
+
+    def test_bit_rejects_missing_non_integer_or_invalid_operation_shapes(self):
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({}, {"$bit": {"score": {"and": 1}}})
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"score": 1.5}, {"$bit": {"score": {"and": 1}}})
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"score": 1}, {"$bit": {"score": {"and": 1.5}}})
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"score": 1}, {"$bit": {"score": {"shift": 1}}})
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"score": 1}, {"$bit": {"score": {"and": 1, "or": 2}}})
+
+    def test_bit_allows_empty_field_spec_as_noop(self):
+        document = {"score": 7}
+
+        modified = UpdateEngine.apply_update(document, {"$bit": {"score": {}}})
+
+        self.assertFalse(modified)
+        self.assertEqual(document, {"score": 7})
+
+    def test_pull_all_removes_exact_matches_and_rejects_invalid_shapes(self):
+        document = {"tags": ["python", "async", "python", {"x": 1}], "nested": {"items": [1, 2, 3]}}
+
+        modified_tags = UpdateEngine.apply_update(document, {"$pullAll": {"tags": ["python", {"x": 1}]}})
+        modified_nested = UpdateEngine.apply_update(document, {"$pullAll": {"nested.items": [2, 4]}})
+        missing_noop = UpdateEngine.apply_update(document, {"$pullAll": {"missing": [1]}})
+
+        self.assertTrue(modified_tags)
+        self.assertTrue(modified_nested)
+        self.assertFalse(missing_noop)
+        self.assertEqual(document, {"tags": ["async"], "nested": {"items": [1, 3]}})
+
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"tags": ["python"]}, {"$pullAll": {"tags": "python"}})
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"tags": "python"}, {"$pullAll": {"tags": ["python"]}})
 
     def test_push_add_to_set_and_pull_support_array_mutation(self):
         document = {"tags": ["python"]}

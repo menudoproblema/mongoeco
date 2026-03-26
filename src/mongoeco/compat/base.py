@@ -39,12 +39,14 @@ SUPPORTED_UPDATE_OPERATORS = frozenset(
         '$min',
         '$max',
         '$mul',
+        '$bit',
         '$rename',
         '$currentDate',
         '$setOnInsert',
         '$push',
         '$addToSet',
         '$pull',
+        '$pullAll',
         '$pop',
     }
 )

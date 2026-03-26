@@ -656,10 +656,10 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$min`
     * `$max`
     * `$mul`
-  * siguiente bloque prioritario:
-  * `$bit`
-  * positional operators
-  * `array_filters`
+    * `$bit`
+    * `$pullAll`
+    * positional operators
+    * `array_filters`
 * aggregation adicional:
   * más stages
   * más acumuladores
