@@ -774,6 +774,16 @@ def _require_int_part(operator: str, name: str, value: Any) -> int:
     return value
 
 
+def _require_integral_numeric(operator: str, value: Any) -> int:
+    if isinstance(value, bool):
+        raise OperationFailure(f"{operator} requires integral numeric arguments")
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    raise OperationFailure(f"{operator} requires integral numeric arguments")
+
+
 def _build_date_from_parts(
     operator: str,
     spec: dict[str, Any],
@@ -1259,6 +1269,21 @@ def evaluate_expression(
                 )
                 branch = when_true if _expression_truthy(condition_value, dialect=dialect) else when_false
                 return evaluate_expression(document, branch, variables, dialect=dialect)
+            if operator == "$switch":
+                if not isinstance(spec, dict) or "branches" not in spec:
+                    raise OperationFailure("$switch requires branches")
+                branches = spec["branches"]
+                if not isinstance(branches, list) or not branches:
+                    raise OperationFailure("$switch branches must be a non-empty array")
+                for branch in branches:
+                    if not isinstance(branch, dict) or set(branch) != {"case", "then"}:
+                        raise OperationFailure("$switch branches must contain case and then")
+                    condition_value = evaluate_expression(document, branch["case"], variables, dialect=dialect)
+                    if _expression_truthy(condition_value, dialect=dialect):
+                        return evaluate_expression(document, branch["then"], variables, dialect=dialect)
+                if "default" in spec:
+                    return evaluate_expression(document, spec["default"], variables, dialect=dialect)
+                raise OperationFailure("$switch could not find a matching branch for an input, and no default was specified")
             if operator in {"$add", "$multiply"}:
                 args = _require_expression_args(operator, spec, min_args=2)
                 raw_values = [
@@ -1303,6 +1328,31 @@ def evaluate_expression(
                 if right == 0:
                     raise OperationFailure("$mod cannot divide by zero")
                 return _mongo_mod(left, right)
+            if operator in {"$bitAnd", "$bitOr", "$bitXor"}:
+                args = _require_expression_args(operator, spec, min_args=2)
+                values = [
+                    _require_integral_numeric(
+                        operator,
+                        evaluate_expression(document, item, variables, dialect=dialect),
+                    )
+                    for item in args
+                ]
+                result = values[0]
+                for value in values[1:]:
+                    if operator == "$bitAnd":
+                        result &= value
+                    elif operator == "$bitOr":
+                        result |= value
+                    else:
+                        result ^= value
+                return result
+            if operator == "$bitNot":
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                value = _require_integral_numeric(
+                    operator,
+                    evaluate_expression(document, args[0], variables, dialect=dialect),
+                )
+                return ~value
             if operator in {"$abs", "$exp", "$ln", "$log10", "$sqrt"}:
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
                 raw_value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)

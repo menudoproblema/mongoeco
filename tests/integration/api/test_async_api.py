@@ -1493,6 +1493,36 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ],
                     )
 
+    async def test_aggregate_supports_switch_and_bitwise_variants(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "value": 5})
+
+                    documents = await collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "size": {
+                                        "$switch": {
+                                            "branches": [{"case": {"$gt": ["$value", 10]}, "then": "big"}],
+                                            "default": "small",
+                                        }
+                                    },
+                                    "anded": {"$bitAnd": [7, 3]},
+                                    "notted": {"$bitNot": 7},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "size": "small", "anded": 3, "notted": -8}],
+                    )
+
     async def test_aggregate_supports_async_iteration_and_validates_pipeline_type(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

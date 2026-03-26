@@ -664,6 +664,11 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `array_filters`
 * aggregation adicional:
   * ya implementadas en esta fase:
+    * `$switch`
+    * `$bitAnd`
+    * `$bitNot`
+    * `$bitOr`
+    * `$bitXor`
     * `$abs`
     * `$exp`
     * `$ln`

@@ -1386,6 +1386,36 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_aggregate_supports_switch_and_bitwise_variants(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "value": 5})
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "size": {
+                                        "$switch": {
+                                            "branches": [{"case": {"$gt": ["$value", 10]}, "then": "big"}],
+                                            "default": "small",
+                                        }
+                                    },
+                                    "anded": {"$bitAnd": [7, 3]},
+                                    "notted": {"$bitNot": 7},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "size": "small", "anded": 3, "notted": -8}],
+                    )
+
     def test_aggregate_supports_sync_iteration(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

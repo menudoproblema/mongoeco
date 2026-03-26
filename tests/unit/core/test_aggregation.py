@@ -514,11 +514,6 @@ class AggregationTests(unittest.TestCase):
         }
 
         unsupported_specs = [
-            {"$bitAnd": [7, 3]},
-            {"$bitNot": [7]},
-            {"$bitOr": [7, 3]},
-            {"$bitXor": [7, 3]},
-            {"$switch": {"branches": [], "default": 0}},
             {"$bsonSize": "$$ROOT"},
             {"$rand": {}},
             {"$sampleRate": 0.5},
@@ -956,6 +951,31 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$dateFromParts": {"year": 2026, "isoWeekYear": 2026}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$dateFromParts": {"month": 3}})
+
+    def test_evaluate_expression_supports_switch_and_bitwise_variants(self):
+        document = {"value": 5}
+
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$switch": {"branches": [{"case": {"$gt": ["$value", 10]}, "then": "big"}], "default": "small"}},
+            ),
+            "small",
+        )
+        self.assertEqual(evaluate_expression(document, {"$bitAnd": [7, 3]}), 3)
+        self.assertEqual(evaluate_expression(document, {"$bitOr": [4, 1]}), 5)
+        self.assertEqual(evaluate_expression(document, {"$bitXor": [7, 3]}), 4)
+        self.assertEqual(evaluate_expression(document, {"$bitNot": 7}), -8)
+
+    def test_evaluate_expression_switch_and_bitwise_variants_reject_invalid_values(self):
+        document = {"value": 5}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$switch": {"branches": []}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$switch": {"branches": [{"case": True}]}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$bitAnd": [7, 3.5]})
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]
