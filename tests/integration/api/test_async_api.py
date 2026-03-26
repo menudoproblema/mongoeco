@@ -578,6 +578,44 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         {"_id": upserted.upserted_id, "kind": "missing", "tenant": "a", "done": True},
                     )
 
+    async def test_update_operators_min_max_mul_and_rename_are_observable_via_api(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.users
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "score": 10, "rank": 2, "profile": {"name": "Ada"}},
+                            {"_id": "2", "score": 4, "rank": 1},
+                        ]
+                    )
+
+                    min_result = await collection.update_one({"_id": "1"}, {"$min": {"score": 7}})
+                    max_result = await collection.update_one({"_id": "2"}, {"$max": {"score": 8}})
+                    mul_result = await collection.update_many({}, {"$mul": {"score": 2}})
+                    renamed = await collection.find_one_and_update(
+                        {"_id": "1"},
+                        {"$rename": {"profile.name": "profile.alias"}},
+                        return_document=ReturnDocument.AFTER,
+                    )
+                    bulk = await collection.bulk_write(
+                        [
+                            UpdateOne({"_id": "1"}, {"$max": {"rank": 5}}),
+                            UpdateOne({"_id": "2"}, {"$rename": {"score": "points"}}),
+                        ]
+                    )
+                    first = await collection.find_one({"_id": "1"})
+                    second = await collection.find_one({"_id": "2"})
+
+                    self.assertEqual(min_result.modified_count, 1)
+                    self.assertEqual(max_result.modified_count, 1)
+                    self.assertEqual(mul_result.modified_count, 2)
+                    self.assertEqual(renamed["profile"], {"alias": "Ada"})
+                    self.assertEqual(bulk.modified_count, 2)
+                    self.assertEqual(first["score"], 14)
+                    self.assertEqual(first["rank"], 5)
+                    self.assertEqual(second, {"_id": "2", "rank": 1, "points": 16})
+
     async def test_delete_many_deletes_all_matching_documents(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

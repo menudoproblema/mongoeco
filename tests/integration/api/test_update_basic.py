@@ -89,7 +89,7 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
                     await coll.insert_one({"_id": "1", "arr": []})
 
                     with self.assertRaises(OperationFailure):
-                        await coll.update_one({"_id": "1"}, {"$rename": {"arr": "items"}})
+                        await coll.update_one({"_id": "1"}, {"$currentDate": {"updated_at": True}})
 
     async def test_update_one_rejects_modifying_id(self):
         for engine_name in ENGINE_FACTORIES:

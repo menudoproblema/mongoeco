@@ -51,7 +51,7 @@ class UpdateEngineTests(unittest.TestCase):
 
     def test_unknown_operator_raises_operation_failure(self):
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({"arr": []}, {"$rename": {"arr": "items"}})
+            UpdateEngine.apply_update({"arr": []}, {"$currentDate": {"updated_at": True}})
 
     def test_update_engine_rejects_custom_supported_but_unimplemented_operator(self):
         class _FutureUpdateDialect(MongoDialect):
@@ -72,9 +72,6 @@ class UpdateEngineTests(unittest.TestCase):
     def test_update_rejects_other_unsupported_update_operators_explicitly(self):
         unsupported_specs = [
             {"$currentDate": {"updated_at": True}},
-            {"$min": {"score": 1}},
-            {"$max": {"score": 1}},
-            {"$mul": {"score": 2}},
             {"$setOnInsert": {"created_at": 1}},
             {"$pullAll": {"tags": ["python"]}},
             {"$bit": {"score": {"and": 1}}},
@@ -118,6 +115,15 @@ class UpdateEngineTests(unittest.TestCase):
 
         self.assertFalse(modified)
         self.assertEqual(document, {"field": 1})
+
+    def test_set_detaches_inserted_values_from_update_spec(self):
+        document: dict[str, object] = {}
+        payload = {"nested": {"value": 1}}
+
+        UpdateEngine.apply_update(document, {"$set": {"field": payload}})
+        payload["nested"]["value"] = 2
+
+        self.assertEqual(document, {"field": {"nested": {"value": 1}}})
 
     def test_set_nested_rejects_crossing_non_container_parent(self):
         document = {"profile": "invalid"}
@@ -179,6 +185,79 @@ class UpdateEngineTests(unittest.TestCase):
             UpdateEngine.apply_update({"count": 1}, {"$inc": {"count": "x"}})
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"count": "x"}, {"$inc": {"count": 1}})
+
+    def test_min_updates_missing_or_greater_values_using_bson_order(self):
+        document = {"score": 10, "typed": "text"}
+
+        changed_existing = UpdateEngine.apply_update(document, {"$min": {"score": 4}})
+        changed_missing = UpdateEngine.apply_update(document, {"$min": {"nested.level": 3}})
+        changed_type = UpdateEngine.apply_update(document, {"$min": {"typed": 5}})
+        unchanged = UpdateEngine.apply_update(document, {"$min": {"score": 7}})
+
+        self.assertTrue(changed_existing)
+        self.assertTrue(changed_missing)
+        self.assertTrue(changed_type)
+        self.assertFalse(unchanged)
+        self.assertEqual(document, {"score": 4, "typed": 5, "nested": {"level": 3}})
+
+    def test_max_updates_missing_or_lower_values_using_bson_order(self):
+        document = {"score": 10, "typed": None}
+
+        changed_existing = UpdateEngine.apply_update(document, {"$max": {"score": 12}})
+        changed_missing = UpdateEngine.apply_update(document, {"$max": {"nested.level": 3}})
+        changed_type = UpdateEngine.apply_update(document, {"$max": {"typed": "text"}})
+        unchanged = UpdateEngine.apply_update(document, {"$max": {"score": 11}})
+
+        self.assertTrue(changed_existing)
+        self.assertTrue(changed_missing)
+        self.assertTrue(changed_type)
+        self.assertFalse(unchanged)
+        self.assertEqual(document, {"score": 12, "typed": "text", "nested": {"level": 3}})
+
+    def test_mul_supports_missing_existing_and_rejects_non_numeric_values(self):
+        document = {"count": 3, "ratio": 1.5}
+
+        changed_existing = UpdateEngine.apply_update(document, {"$mul": {"count": 4, "ratio": 2.0}})
+        changed_missing = UpdateEngine.apply_update(document, {"$mul": {"missing_int": 3, "missing_float": 1.5}})
+
+        self.assertTrue(changed_existing)
+        self.assertTrue(changed_missing)
+        self.assertEqual(
+            document,
+            {"count": 12, "ratio": 3.0, "missing_int": 0, "missing_float": 0.0},
+        )
+
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"count": 1}, {"$mul": {"count": "x"}})
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"count": "x"}, {"$mul": {"count": 2}})
+
+    def test_rename_moves_fields_and_removes_existing_target(self):
+        document = {"profile": {"name": "Ada"}, "name": "Grace"}
+
+        modified = UpdateEngine.apply_update(
+            document,
+            {"$rename": {"profile.name": "profile.alias", "name": "display_name"}},
+        )
+
+        self.assertTrue(modified)
+        self.assertEqual(document, {"profile": {"alias": "Ada"}, "display_name": "Grace"})
+
+    def test_rename_is_noop_for_missing_source_field(self):
+        document = {"profile": {"name": "Ada"}}
+
+        modified = UpdateEngine.apply_update(document, {"$rename": {"missing": "alias"}})
+
+        self.assertFalse(modified)
+        self.assertEqual(document, {"profile": {"name": "Ada"}})
+
+    def test_rename_rejects_array_paths_and_conflicting_targets(self):
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"items": [{"name": "Ada"}]}, {"$rename": {"items.0.name": "items.0.alias"}})
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"name": "Ada"}, {"$rename": {"name": "name"}})
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"profile": {"name": "Ada"}}, {"$rename": {"profile": "profile.name"}})
 
     def test_push_add_to_set_and_pull_support_array_mutation(self):
         document = {"tags": ["python"]}

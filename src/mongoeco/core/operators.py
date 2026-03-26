@@ -43,6 +43,18 @@ class UpdateEngine:
             elif op == "$inc":
                 if UpdateEngine._apply_inc(doc, params, dialect=dialect):
                     modified = True
+            elif op == "$min":
+                if UpdateEngine._apply_min(doc, params, dialect=dialect):
+                    modified = True
+            elif op == "$max":
+                if UpdateEngine._apply_max(doc, params, dialect=dialect):
+                    modified = True
+            elif op == "$mul":
+                if UpdateEngine._apply_mul(doc, params, dialect=dialect):
+                    modified = True
+            elif op == "$rename":
+                if UpdateEngine._apply_rename(doc, params, dialect=dialect):
+                    modified = True
             elif op == "$push":
                 if UpdateEngine._apply_push(doc, params, dialect=dialect):
                     modified = True
@@ -63,16 +75,24 @@ class UpdateEngine:
     @staticmethod
     def _validate_update_paths(update_spec: dict[str, Any]) -> None:
         seen_paths: list[str] = []
-        for params in update_spec.values():
+        for operator, params in update_spec.items():
             if not isinstance(params, dict):
                 continue
-            for path in params:
+            for path, value in params.items():
                 if not isinstance(path, str):
                     raise OperationFailure("update field names must be strings")
-                for seen in seen_paths:
-                    if path == seen or path.startswith(f"{seen}.") or seen.startswith(f"{path}."):
-                        raise OperationFailure("conflicting update paths are not allowed")
-                seen_paths.append(path)
+                UpdateEngine._register_update_path(seen_paths, path)
+                if operator == "$rename":
+                    if not isinstance(value, str):
+                        raise OperationFailure("$rename requires string target paths")
+                    UpdateEngine._register_update_path(seen_paths, value)
+
+    @staticmethod
+    def _register_update_path(seen_paths: list[str], path: str) -> None:
+        for seen in seen_paths:
+            if path == seen or path.startswith(f"{seen}.") or seen.startswith(f"{path}."):
+                raise OperationFailure("conflicting update paths are not allowed")
+        seen_paths.append(path)
 
     @staticmethod
     def _assert_mutable_path(path: str) -> None:
@@ -81,6 +101,12 @@ class UpdateEngine:
         for segment in path.split("."):
             if segment == "$" or (segment.startswith("$[") and segment.endswith("]")):
                 raise OperationFailure("Positional and array-filter update paths are not supported")
+
+    @staticmethod
+    def _assert_rename_path(path: str) -> None:
+        UpdateEngine._assert_mutable_path(path)
+        if any(segment.isdigit() for segment in path.split(".")):
+            raise OperationFailure("$rename does not support embedded documents in arrays")
 
     @staticmethod
     def _is_numeric(value: Any) -> bool:
@@ -107,7 +133,7 @@ class UpdateEngine:
         modified = False
         for path, value in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
             UpdateEngine._assert_mutable_path(path)
-            if set_document_value(doc, path, value):
+            if set_document_value(doc, path, deepcopy(value)):
                 modified = True
         return modified
 
@@ -146,6 +172,84 @@ class UpdateEngine:
                 raise OperationFailure("$inc requires the target field to be numeric")
             if set_document_value(doc, path, current + increment):
                 modified = True
+        return modified
+
+    @staticmethod
+    def _apply_min(
+        doc: dict[str, Any],
+        params: dict[str, Any],
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
+        modified = False
+        for path, value in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
+            UpdateEngine._assert_mutable_path(path)
+            found, current = get_document_value(doc, path)
+            if not found or dialect.compare_values(current, value) > 0:
+                if set_document_value(doc, path, deepcopy(value)):
+                    modified = True
+        return modified
+
+    @staticmethod
+    def _apply_max(
+        doc: dict[str, Any],
+        params: dict[str, Any],
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
+        modified = False
+        for path, value in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
+            UpdateEngine._assert_mutable_path(path)
+            found, current = get_document_value(doc, path)
+            if not found or dialect.compare_values(current, value) < 0:
+                if set_document_value(doc, path, deepcopy(value)):
+                    modified = True
+        return modified
+
+    @staticmethod
+    def _apply_mul(
+        doc: dict[str, Any],
+        params: dict[str, Any],
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
+        modified = False
+        for path, factor in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
+            UpdateEngine._assert_mutable_path(path)
+            if not UpdateEngine._is_numeric(factor):
+                raise OperationFailure("$mul requires numeric values")
+            found, current = get_document_value(doc, path)
+            if not found:
+                missing_value: int | float = 0.0 if isinstance(factor, float) else 0
+                if set_document_value(doc, path, missing_value):
+                    modified = True
+                continue
+            if not UpdateEngine._is_numeric(current):
+                raise OperationFailure("$mul requires the target field to be numeric")
+            if set_document_value(doc, path, current * factor):
+                modified = True
+        return modified
+
+    @staticmethod
+    def _apply_rename(
+        doc: dict[str, Any],
+        params: dict[str, Any],
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
+        modified = False
+        for source_path, target_path in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
+            if not isinstance(target_path, str):
+                raise OperationFailure("$rename requires string target paths")
+            UpdateEngine._assert_rename_path(source_path)
+            UpdateEngine._assert_rename_path(target_path)
+            found, current = get_document_value(doc, source_path)
+            if not found:
+                continue
+            delete_document_value(doc, target_path)
+            set_document_value(doc, target_path, deepcopy(current))
+            delete_document_value(doc, source_path)
+            modified = True
         return modified
 
     @staticmethod
