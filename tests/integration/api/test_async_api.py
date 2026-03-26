@@ -1534,6 +1534,22 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [{"_id": "1", "converted": 10, "updated": {"a": 1, "name": "Ada"}}],
                     )
 
+    async def test_aggregate_supports_bson_size_and_rand(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "doc": {"a": 1, "name": "Ada"}})
+
+                    documents = await collection.aggregate(
+                        [{"$project": {"_id": 1, "size": {"$bsonSize": "$doc"}, "random": {"$rand": {}}}}]
+                    ).to_list()
+
+                    self.assertEqual(documents[0]["_id"], "1")
+                    self.assertEqual(documents[0]["size"], 26)
+                    self.assertGreaterEqual(documents[0]["random"], 0.0)
+                    self.assertLess(documents[0]["random"], 1.0)
+
     async def test_aggregate_supports_switch_and_bitwise_variants(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

@@ -1426,6 +1426,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"_id": "1", "converted": 10, "updated": {"a": 1, "name": "Ada"}}],
                     )
 
+    def test_aggregate_supports_bson_size_and_rand(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "doc": {"a": 1, "name": "Ada"}})
+
+                    documents = collection.aggregate(
+                        [{"$project": {"_id": 1, "size": {"$bsonSize": "$doc"}, "random": {"$rand": {}}}}]
+                    ).to_list()
+
+                    self.assertEqual(documents[0]["_id"], "1")
+                    self.assertEqual(documents[0]["size"], 26)
+                    self.assertGreaterEqual(documents[0]["random"], 0.0)
+                    self.assertLess(documents[0]["random"], 1.0)
+
     def test_aggregate_supports_switch_and_bitwise_variants(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

@@ -512,8 +512,6 @@ class AggregationTests(unittest.TestCase):
         }
 
         unsupported_specs = [
-            {"$bsonSize": "$$ROOT"},
-            {"$rand": {}},
             {"$sampleRate": 0.5},
             {"$toHashedIndexKey": "$text"},
             {"$toDecimal": "$text"},
@@ -1018,6 +1016,22 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$setField": {"field": 1, "input": "$nested", "value": "Ada"}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$setField": {"field": "name", "input": "$text", "value": "Ada"}})
+
+    def test_evaluate_expression_supports_bson_size_and_rand(self):
+        document = {"doc": {"a": 1, "name": "Ada"}, "nested": {"flag": True}}
+
+        self.assertEqual(evaluate_expression(document, {"$bsonSize": "$doc"}), 26)
+        value = evaluate_expression(document, {"$rand": {}})
+        self.assertGreaterEqual(value, 0.0)
+        self.assertLess(value, 1.0)
+
+    def test_evaluate_expression_bson_size_and_rand_reject_invalid_values(self):
+        document = {"text": "Ada"}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$bsonSize": "$text"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$rand": 1})
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]

@@ -834,6 +834,57 @@ def _build_date_from_parts(
     return _to_utc_naive(localized)
 
 
+def _bson_cstring_size(value: str) -> int:
+    encoded = value.encode("utf-8")
+    if b"\x00" in encoded:
+        raise OperationFailure("$bsonSize cannot encode strings containing NUL bytes")
+    return len(encoded) + 1
+
+
+def _bson_string_size(value: str) -> int:
+    encoded = value.encode("utf-8")
+    return 4 + len(encoded) + 1
+
+
+def _bson_value_size(value: Any) -> int:
+    if isinstance(value, float):
+        return 8
+    if isinstance(value, str):
+        return _bson_string_size(value)
+    if isinstance(value, dict):
+        return _bson_document_size(value)
+    if isinstance(value, list):
+        return _bson_document_size({str(index): item for index, item in enumerate(value)})
+    if isinstance(value, (bytes, bytearray)):
+        return 4 + 1 + len(value)
+    if isinstance(value, uuid.UUID):
+        return 4 + 1 + 16
+    if isinstance(value, ObjectId):
+        return 12
+    if isinstance(value, bool):
+        return 1
+    if isinstance(value, datetime.datetime):
+        return 8
+    if value is None or isinstance(value, UndefinedType):
+        return 0
+    if isinstance(value, re.Pattern):
+        return _bson_cstring_size(value.pattern) + _bson_cstring_size("")
+    if isinstance(value, int):
+        return 4 if -(1 << 31) <= value <= (1 << 31) - 1 else 8
+    raise OperationFailure(f"$bsonSize cannot encode value of type {type(value).__name__}")
+
+
+def _bson_element_size(key: str, value: Any) -> int:
+    return 1 + _bson_cstring_size(key) + _bson_value_size(value)
+
+
+def _bson_document_size(document: dict[str, Any]) -> int:
+    total = 4 + 1
+    for key, value in document.items():
+        total += _bson_element_size(key, value)
+    return total
+
+
 def _add_milliseconds(value: datetime.datetime, milliseconds: int | float) -> datetime.datetime:
     return value + datetime.timedelta(milliseconds=milliseconds)
 
@@ -1220,6 +1271,10 @@ def evaluate_expression(
                 raise OperationFailure(f"Unsupported aggregation expression: {operator}")
             if operator == "$literal":
                 return deepcopy(spec)
+            if operator == "$rand":
+                if spec != {}:
+                    raise OperationFailure("$rand does not accept arguments")
+                return random.random()
             if operator == "$convert":
                 if not isinstance(spec, dict) or "input" not in spec or "to" not in spec:
                     raise OperationFailure("$convert requires input and to")
@@ -1248,6 +1303,14 @@ def evaluate_expression(
                     if "onError" in spec:
                         return evaluate_expression(document, spec["onError"], variables, dialect=dialect)
                     raise
+            if operator == "$bsonSize":
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
+                if value is _MISSING or value is None:
+                    return None
+                if not isinstance(value, dict):
+                    raise OperationFailure("$bsonSize requires an object input")
+                return _bson_document_size(value)
             if operator in {"$eq", "$ne", "$gt", "$gte", "$lt", "$lte"}:
                 args = _require_expression_args(operator, spec, min_args=2, max_args=2)
                 left = evaluate_expression(document, args[0], variables, dialect=dialect)
