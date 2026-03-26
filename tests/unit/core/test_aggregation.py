@@ -520,8 +520,6 @@ class AggregationTests(unittest.TestCase):
             {"$bitXor": [7, 3]},
             {"$switch": {"branches": [], "default": 0}},
             {"$bsonSize": "$$ROOT"},
-            {"$dateFromParts": {"year": 2026}},
-            {"$toDate": "$text"},
             {"$rand": {}},
             {"$sampleRate": 0.5},
             {"$toHashedIndexKey": "$text"},
@@ -917,6 +915,47 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$zip": {"inputs": ["$left", "$right"], "useLongestLength": "yes"}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$zip": {"inputs": ["$left", "$right"], "defaults": [0]}})
+
+    def test_evaluate_expression_supports_to_date_and_date_from_parts(self):
+        oid = ObjectId("65f0a1000000000000000000")
+        document = {"millis": 1_711_361_506_789, "text": "2026-03-25T10:05:06.789Z", "oid": oid}
+
+        self.assertEqual(
+            evaluate_expression(document, {"$toDate": "$millis"}),
+            datetime.datetime(2024, 3, 25, 10, 11, 46, 789000),
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$toDate": "$text"}),
+            datetime.datetime(2026, 3, 25, 10, 5, 6, 789000),
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$toDate": "$oid"}),
+            datetime.datetime.fromtimestamp(oid.generation_time, tz=datetime.UTC).replace(tzinfo=None),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateFromParts": {"year": 2026, "month": 3, "day": 25, "hour": 12, "timezone": "+02:00"}},
+            ),
+            datetime.datetime(2026, 3, 25, 10, 0, 0),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateFromParts": {"isoWeekYear": 2026, "isoWeek": 13, "isoDayOfWeek": 3, "hour": 10}},
+            ),
+            datetime.datetime(2026, 3, 25, 10, 0, 0),
+        )
+
+    def test_evaluate_expression_to_date_and_date_from_parts_reject_invalid_values(self):
+        document = {"text": "Ada"}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toDate": "$text"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateFromParts": {"year": 2026, "isoWeekYear": 2026}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateFromParts": {"month": 3}})
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]

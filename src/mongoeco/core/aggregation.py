@@ -768,6 +768,62 @@ def _to_utc_naive(value: datetime.datetime) -> datetime.datetime:
     return aware.replace(tzinfo=None)
 
 
+def _require_int_part(operator: str, name: str, value: Any) -> int:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise OperationFailure(f"{operator} {name} must evaluate to an integer")
+    return value
+
+
+def _build_date_from_parts(
+    operator: str,
+    spec: dict[str, Any],
+    document: Document,
+    variables: dict[str, Any],
+    *,
+    dialect: MongoDialect,
+) -> datetime.datetime:
+    timezone = _resolve_timezone(
+        operator,
+        evaluate_expression(document, spec["timezone"], variables, dialect=dialect)
+        if "timezone" in spec
+        else None,
+    )
+
+    standard_keys = {"year", "month", "day"}
+    iso_keys = {"isoWeekYear", "isoWeek", "isoDayOfWeek"}
+    has_standard = any(key in spec for key in standard_keys)
+    has_iso = any(key in spec for key in iso_keys)
+    if has_standard and has_iso:
+        raise OperationFailure(f"{operator} cannot mix calendar and iso week date parts")
+    if not has_standard and not has_iso:
+        raise OperationFailure(f"{operator} requires either year or isoWeekYear")
+    if has_standard and "year" not in spec:
+        raise OperationFailure(f"{operator} year must be specified for calendar date parts")
+    if has_iso and "isoWeekYear" not in spec:
+        raise OperationFailure(f"{operator} isoWeekYear must be specified for iso week date parts")
+
+    hour = _require_int_part(operator, "hour", evaluate_expression(document, spec.get("hour", 0), variables, dialect=dialect))
+    minute = _require_int_part(operator, "minute", evaluate_expression(document, spec.get("minute", 0), variables, dialect=dialect))
+    second = _require_int_part(operator, "second", evaluate_expression(document, spec.get("second", 0), variables, dialect=dialect))
+    millisecond = _require_int_part(operator, "millisecond", evaluate_expression(document, spec.get("millisecond", 0), variables, dialect=dialect))
+
+    try:
+        if has_standard:
+            year = _require_int_part(operator, "year", evaluate_expression(document, spec["year"], variables, dialect=dialect))
+            month = _require_int_part(operator, "month", evaluate_expression(document, spec.get("month", 1), variables, dialect=dialect))
+            day = _require_int_part(operator, "day", evaluate_expression(document, spec.get("day", 1), variables, dialect=dialect))
+            localized = datetime.datetime(year, month, day, hour, minute, second, millisecond * 1000, tzinfo=timezone)
+        else:
+            iso_year = _require_int_part(operator, "isoWeekYear", evaluate_expression(document, spec["isoWeekYear"], variables, dialect=dialect))
+            iso_week = _require_int_part(operator, "isoWeek", evaluate_expression(document, spec.get("isoWeek", 1), variables, dialect=dialect))
+            iso_day = _require_int_part(operator, "isoDayOfWeek", evaluate_expression(document, spec.get("isoDayOfWeek", 1), variables, dialect=dialect))
+            base = datetime.date.fromisocalendar(iso_year, iso_week, iso_day)
+            localized = datetime.datetime(base.year, base.month, base.day, hour, minute, second, millisecond * 1000, tzinfo=timezone)
+    except ValueError as exc:
+        raise OperationFailure(f"{operator} produced an invalid date") from exc
+    return _to_utc_naive(localized)
+
+
 def _add_milliseconds(value: datetime.datetime, milliseconds: int | float) -> datetime.datetime:
     return value + datetime.timedelta(milliseconds=milliseconds)
 
@@ -976,6 +1032,22 @@ def _convert_aggregation_scalar(operator: str, value: Any, target: str) -> Any:
                 raise OperationFailure(f"{operator} cannot convert the string value") from exc
         if isinstance(value, datetime.datetime):
             return float(_datetime_to_epoch_millis(value))
+        raise OperationFailure(f"{operator} cannot convert the value")
+
+    if target == "date":
+        if isinstance(value, datetime.datetime):
+            return _to_utc_naive(value)
+        if isinstance(value, ObjectId):
+            return datetime.datetime.fromtimestamp(value.generation_time, tz=datetime.UTC).replace(tzinfo=None)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            if not math.isfinite(value):
+                raise OperationFailure(f"{operator} cannot convert the value")
+            return datetime.datetime.fromtimestamp(value / 1000, tz=datetime.UTC).replace(tzinfo=None)
+        if isinstance(value, str):
+            try:
+                return _to_utc_naive(datetime.datetime.fromisoformat(value.replace("Z", "+00:00")))
+            except Exception as exc:
+                raise OperationFailure(f"{operator} cannot convert the string value") from exc
         raise OperationFailure(f"{operator} cannot convert the value")
 
     raise OperationFailure(f"Unsupported conversion target for {operator}")
@@ -1427,11 +1499,12 @@ def evaluate_expression(
                 if not isinstance(value, str):
                     raise OperationFailure(f"{operator} requires a string argument")
                 return len(value.encode("utf-8")) if operator == "$strLenBytes" else len(value)
-            if operator in {"$toBool", "$toInt", "$toDouble", "$toLong"}:
+            if operator in {"$toBool", "$toDate", "$toInt", "$toDouble", "$toLong"}:
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
                 value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
                 target = {
                     "$toBool": "bool",
+                    "$toDate": "date",
                     "$toInt": "int",
                     "$toDouble": "double",
                     "$toLong": "long",
@@ -1925,6 +1998,10 @@ def evaluate_expression(
                 if parsed.tzinfo is None:
                     parsed = parsed.replace(tzinfo=timezone)
                 return _to_utc_naive(parsed)
+            if operator == "$dateFromParts":
+                if not isinstance(spec, dict):
+                    raise OperationFailure("$dateFromParts requires a document specification")
+                return _build_date_from_parts(operator, spec, document, variables, dialect=dialect)
             if operator in {"$week", "$isoWeek", "$isoWeekYear"}:
                 timezone_value = None
                 date_expression: Any = spec

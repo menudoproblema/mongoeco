@@ -1348,6 +1348,44 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_aggregate_supports_to_date_and_date_from_parts(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "millis": 1_711_361_506_789, "text": "2026-03-25T10:05:06.789Z"})
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "as_date": {"$toDate": "$text"},
+                                    "from_parts": {
+                                        "$dateFromParts": {
+                                            "year": 2026,
+                                            "month": 3,
+                                            "day": 25,
+                                            "hour": 12,
+                                            "timezone": "+02:00",
+                                        }
+                                    },
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {
+                                "_id": "1",
+                                "as_date": datetime.datetime(2026, 3, 25, 10, 5, 6, 789000),
+                                "from_parts": datetime.datetime(2026, 3, 25, 10, 0, 0),
+                            }
+                        ],
+                    )
+
     def test_aggregate_supports_sync_iteration(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

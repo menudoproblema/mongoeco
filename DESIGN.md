@@ -678,6 +678,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$isNumber`
     * `$type`
     * `$toBool`
+    * `$toDate`
     * `$toInt`
     * `$toDouble`
     * `$toLong`
@@ -685,6 +686,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$dateSubtract`
     * `$dateDiff`
     * `$dateFromString`
+    * `$dateFromParts`
     * `$dateToParts`
     * `$dateToString`
     * `$week`
