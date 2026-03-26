@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import math
 import re
 import uuid
@@ -40,7 +41,7 @@ class BSONComparator:
     TYPE_ORDER: dict[type, int] = {
         type(None): 1,
         UndefinedType: 1,
-        int: 2, float: 2,
+        int: 2, float: 2, decimal.Decimal: 2,
         str: 3,
         dict: 4,
         list: 5,
@@ -415,6 +416,7 @@ class QueryEngine:
                 11: ("regex",),
                 16: ("int",),
                 18: ("long",),
+                19: ("decimal",),
             }
             if type_spec not in numeric_mapping:
                 raise ValueError("$type usa un codigo BSON no soportado")
@@ -434,8 +436,9 @@ class QueryEngine:
             "regex": ("regex",),
             "int": ("int",),
             "long": ("long",),
+            "decimal": ("decimal",),
             "undefined": ("undefined",),
-            "number": ("double", "int", "long"),
+            "number": ("double", "int", "long", "decimal"),
         }
         normalized = type_spec.strip()
         if normalized not in alias_mapping:
@@ -446,6 +449,8 @@ class QueryEngine:
     def _matches_bson_type(candidate: Any, alias: str) -> bool:
         if alias == "double":
             return isinstance(candidate, float) and not isinstance(candidate, bool)
+        if alias == "decimal":
+            return isinstance(candidate, decimal.Decimal)
         if alias in {"int", "long"}:
             return isinstance(candidate, int) and not isinstance(candidate, bool)
         if alias == "string":

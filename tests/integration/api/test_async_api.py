@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import decimal
 import threading
 import unittest
 import uuid
@@ -1508,6 +1509,22 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(
                         documents,
                         [{"_id": "1", "oid": ObjectId("65f0a1000000000000000000")}],
+                    )
+
+    async def test_aggregate_supports_to_decimal(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "value": "10.25"})
+
+                    documents = await collection.aggregate(
+                        [{"$project": {"_id": 1, "decimal": {"$toDecimal": "$value"}}}]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "decimal": decimal.Decimal("10.25")}],
                     )
 
     async def test_aggregate_supports_convert_and_set_field(self):

@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import math
 import re
 import unittest
@@ -244,10 +245,8 @@ class QueryEngineTests(unittest.TestCase):
     def test_query_engine_type_rejects_unsupported_or_invalid_type_specs(self):
         with self.assertRaises(ValueError):
             QueryEngine.match({"score": 7}, {"score": {"$type": []}})
-        with self.assertRaises(ValueError):
-            QueryEngine.match({"score": 7}, {"score": {"$type": "decimal"}})
-        with self.assertRaises(ValueError):
-            QueryEngine.match({"score": 7}, {"score": {"$type": 19}})
+        self.assertTrue(QueryEngine.match({"score": decimal.Decimal("7.5")}, {"score": {"$type": "decimal"}}))
+        self.assertTrue(QueryEngine.match({"score": decimal.Decimal("7.5")}, {"score": {"$type": 19}}))
         with self.assertRaises(ValueError):
             QueryEngine.match({"score": 7}, {"score": {"$type": True}})
 

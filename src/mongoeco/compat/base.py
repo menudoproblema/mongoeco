@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -120,6 +121,7 @@ SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
         '$split',
         '$toBool',
         '$toDate',
+        '$toDecimal',
         '$toInt',
         '$toDouble',
         '$toLong',
@@ -199,6 +201,7 @@ DEFAULT_BSON_TYPE_ORDER = MappingProxyType(
         UndefinedType: 1,
         int: 2,
         float: 2,
+        decimal.Decimal: 2,
         str: 3,
         dict: 4,
         list: 5,

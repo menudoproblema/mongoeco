@@ -416,13 +416,13 @@ def _compare_values(
 
 
 def _require_numeric(operator: str, value: object) -> int | float:
-    if not isinstance(value, (int, float)) or isinstance(value, bool):
+    if not isinstance(value, (int, float, decimal.Decimal)) or isinstance(value, bool):
         raise OperationFailure(f"{operator} requires numeric arguments")
     return value
 
 
 def _is_numeric(value: object) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool)
+    return isinstance(value, (int, float, decimal.Decimal)) and not isinstance(value, bool)
 
 
 def _sum_accumulator_operand(value: Any) -> int | float | None:
@@ -603,6 +603,8 @@ def _mongo_mod(left: int | float, right: int | float) -> int | float:
 def _stringify_aggregation_value(value: Any) -> str:
     if isinstance(value, bool):
         return "true" if value else "false"
+    if isinstance(value, decimal.Decimal):
+        return format(value, "f")
     if isinstance(value, float):
         if math.isnan(value):
             return "NaN"
@@ -990,6 +992,8 @@ def _aggregation_type_name(value: Any) -> str:
         return "long" if value < -(1 << 31) or value > (1 << 31) - 1 else "int"
     if isinstance(value, float):
         return "double"
+    if isinstance(value, decimal.Decimal):
+        return "decimal"
     if isinstance(value, str):
         return "string"
     if isinstance(value, dict):
@@ -1117,6 +1121,27 @@ def _convert_aggregation_scalar(operator: str, value: Any, target: str) -> Any:
         if isinstance(value, str):
             try:
                 return ObjectId(value)
+            except Exception as exc:
+                raise OperationFailure(f"{operator} cannot convert the string value") from exc
+        raise OperationFailure(f"{operator} cannot convert the value")
+
+    if target == "decimal":
+        if isinstance(value, bool):
+            return decimal.Decimal(int(value))
+        if isinstance(value, int):
+            return decimal.Decimal(value)
+        if isinstance(value, float):
+            if not math.isfinite(value):
+                raise OperationFailure(f"{operator} cannot convert the value")
+            return decimal.Decimal(str(value))
+        if isinstance(value, decimal.Decimal):
+            return value
+        if isinstance(value, str):
+            text = value.strip()
+            if not text:
+                raise OperationFailure(f"{operator} cannot convert the string value")
+            try:
+                return decimal.Decimal(text)
             except Exception as exc:
                 raise OperationFailure(f"{operator} cannot convert the string value") from exc
         raise OperationFailure(f"{operator} cannot convert the value")
@@ -1667,12 +1692,13 @@ def evaluate_expression(
                 if not isinstance(value, str):
                     raise OperationFailure(f"{operator} requires a string argument")
                 return len(value.encode("utf-8")) if operator == "$strLenBytes" else len(value)
-            if operator in {"$toBool", "$toDate", "$toInt", "$toDouble", "$toLong", "$toObjectId"}:
+            if operator in {"$toBool", "$toDate", "$toInt", "$toDouble", "$toLong", "$toObjectId", "$toDecimal"}:
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
                 value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
                 target = {
                     "$toBool": "bool",
                     "$toDate": "date",
+                    "$toDecimal": "decimal",
                     "$toInt": "int",
                     "$toDouble": "double",
                     "$toLong": "long",

@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import math
 import re
 import unittest
@@ -514,7 +515,6 @@ class AggregationTests(unittest.TestCase):
         unsupported_specs = [
             {"$sampleRate": 0.5},
             {"$toHashedIndexKey": "$text"},
-            {"$toDecimal": "$text"},
             {"$function": {"body": "function() { return 1; }", "args": [], "lang": "js"}},
             {"$accumulator": {"init": "function(){}", "accumulate": "function(){}", "accumulateArgs": [], "merge": "function(){}", "finalize": "function(x){return x;}", "lang": "js"}},
         ]
@@ -927,6 +927,10 @@ class AggregationTests(unittest.TestCase):
             oid,
         )
         self.assertEqual(
+            evaluate_expression(document, {"$toDecimal": "10.25"}),
+            decimal.Decimal("10.25"),
+        )
+        self.assertEqual(
             evaluate_expression(
                 document,
                 {"$dateFromParts": {"year": 2026, "month": 3, "day": 25, "hour": 12, "timezone": "+02:00"}},
@@ -948,6 +952,8 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$toDate": "$text"})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$toObjectId": "$text"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toDecimal": "$text"})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$dateFromParts": {"year": 2026, "isoWeekYear": 2026}})
         with self.assertRaises(OperationFailure):

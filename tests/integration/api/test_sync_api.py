@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import threading
 import unittest
 
@@ -1400,6 +1401,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         documents,
                         [{"_id": "1", "oid": ObjectId("65f0a1000000000000000000")}],
+                    )
+
+    def test_aggregate_supports_to_decimal(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "value": "10.25"})
+
+                    documents = collection.aggregate(
+                        [{"$project": {"_id": 1, "decimal": {"$toDecimal": "$value"}}}]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "decimal": decimal.Decimal("10.25")}],
                     )
 
     def test_aggregate_supports_convert_and_set_field(self):
