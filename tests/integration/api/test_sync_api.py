@@ -1312,6 +1312,42 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     )
                     self.assertEqual(documents[0]["parsed"], datetime.datetime(2026, 3, 25, 10, 5, 6, 789000))
 
+    def test_aggregate_supports_object_to_array_and_zip(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "doc": {"a": 1, "b": 2}, "left": ["a", "b"], "right": [1], "defaults": ["x", 0]})
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "pairs": {"$objectToArray": "$doc"},
+                                    "zipped": {
+                                        "$zip": {
+                                            "inputs": ["$left", "$right"],
+                                            "useLongestLength": True,
+                                            "defaults": "$defaults",
+                                        }
+                                    },
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {
+                                "_id": "1",
+                                "pairs": [{"k": "a", "v": 1}, {"k": "b", "v": 2}],
+                                "zipped": [["a", 1], ["b", 0]],
+                            }
+                        ],
+                    )
+
     def test_aggregate_supports_sync_iteration(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

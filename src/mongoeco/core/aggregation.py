@@ -1606,6 +1606,14 @@ def evaluate_expression(
                     scoped["this"] = item
                     accumulated = evaluate_expression(document, spec["in"], scoped, dialect=dialect)
                 return accumulated
+            if operator == "$objectToArray":
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                raw_value = evaluate_expression(document, args[0], variables, dialect=dialect)
+                if raw_value is None:
+                    return None
+                if not isinstance(raw_value, dict):
+                    raise OperationFailure("$objectToArray requires a document input")
+                return [{"k": key, "v": deepcopy(value)} for key, value in raw_value.items()]
             if operator == "$arrayToObject":
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
                 raw_values = evaluate_expression(document, args[0], variables, dialect=dialect)
@@ -1623,6 +1631,48 @@ def evaluate_expression(
                     if not isinstance(key, str):
                         raise OperationFailure("$arrayToObject keys must be strings")
                     result[key] = deepcopy(value)
+                return result
+            if operator == "$zip":
+                if not isinstance(spec, dict) or "inputs" not in spec:
+                    raise OperationFailure("$zip requires inputs")
+                raw_inputs = evaluate_expression(document, spec["inputs"], variables, dialect=dialect)
+                if raw_inputs is None:
+                    return None
+                inputs = _require_array(operator, raw_inputs)
+                arrays: list[list[Any]] = []
+                for item in inputs:
+                    resolved = evaluate_expression(document, item, variables, dialect=dialect) if not isinstance(item, list) else item
+                    if resolved is None or resolved is _MISSING:
+                        return None
+                    arrays.append(_require_array(operator, resolved))
+                use_longest = (
+                    evaluate_expression(document, spec["useLongestLength"], variables, dialect=dialect)
+                    if "useLongestLength" in spec
+                    else False
+                )
+                if not isinstance(use_longest, bool):
+                    raise OperationFailure("$zip useLongestLength must evaluate to a boolean")
+                defaults = (
+                    evaluate_expression(document, spec["defaults"], variables, dialect=dialect)
+                    if "defaults" in spec
+                    else None
+                )
+                if defaults is not None and not isinstance(defaults, list):
+                    raise OperationFailure("$zip defaults must evaluate to an array")
+                if defaults is not None and len(defaults) != len(arrays):
+                    raise OperationFailure("$zip defaults length must match inputs length")
+                target_length = max((len(array) for array in arrays), default=0) if use_longest else min((len(array) for array in arrays), default=0)
+                result: list[list[Any]] = []
+                for index in range(target_length):
+                    row: list[Any] = []
+                    for array_index, array in enumerate(arrays):
+                        if index < len(array):
+                            row.append(deepcopy(array[index]))
+                        elif defaults is not None:
+                            row.append(deepcopy(defaults[array_index]))
+                        else:
+                            row.append(None)
+                    result.append(row)
                 return result
             if operator == "$indexOfArray":
                 args = _require_expression_args(operator, spec, min_args=2, max_args=4)

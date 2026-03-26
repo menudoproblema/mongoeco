@@ -91,6 +91,8 @@ SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
         '$arrayElemAt',
         '$allElementsTrue',
         '$anyElementTrue',
+        '$objectToArray',
+        '$zip',
         '$concat',
         '$ltrim',
         '$replaceOne',

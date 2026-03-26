@@ -673,6 +673,8 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$round`
     * `$sqrt`
     * `$trunc`
+    * `$objectToArray`
+    * `$zip`
     * `$isNumber`
     * `$type`
     * `$toBool`

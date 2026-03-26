@@ -514,8 +514,6 @@ class AggregationTests(unittest.TestCase):
         }
 
         unsupported_specs = [
-            {"$objectToArray": {"a": 1}},
-            {"$zip": {"inputs": [["a"], ["b"]]}},
             {"$bitAnd": [7, 3]},
             {"$bitNot": [7]},
             {"$bitOr": [7, 3]},
@@ -890,6 +888,35 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$dateFromString": {"dateString": 1}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$dateFromString": {"dateString": "2026-03-25", "format": "%Q"}})
+
+    def test_evaluate_expression_supports_object_to_array_and_zip(self):
+        document = {"doc": {"a": 1, "b": 2}, "left": ["a", "b"], "right": [1], "defaults": ["x", 0]}
+
+        self.assertEqual(
+            evaluate_expression(document, {"$objectToArray": "$doc"}),
+            [{"k": "a", "v": 1}, {"k": "b", "v": 2}],
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$zip": {"inputs": ["$left", "$right"]}}),
+            [["a", 1]],
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$zip": {"inputs": ["$left", "$right"], "useLongestLength": True, "defaults": "$defaults"}},
+            ),
+            [["a", 1], ["b", 0]],
+        )
+
+    def test_evaluate_expression_object_to_array_and_zip_reject_invalid_values(self):
+        document = {"text": "Ada", "left": ["a"], "right": [1]}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$objectToArray": "$text"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$zip": {"inputs": ["$left", "$right"], "useLongestLength": "yes"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$zip": {"inputs": ["$left", "$right"], "defaults": [0]}})
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]

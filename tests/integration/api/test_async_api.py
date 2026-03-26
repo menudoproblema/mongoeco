@@ -1419,6 +1419,42 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     )
                     self.assertEqual(documents[0]["parsed"], datetime.datetime(2026, 3, 25, 10, 5, 6, 789000))
 
+    async def test_aggregate_supports_object_to_array_and_zip(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "doc": {"a": 1, "b": 2}, "left": ["a", "b"], "right": [1], "defaults": ["x", 0]})
+
+                    documents = await collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "pairs": {"$objectToArray": "$doc"},
+                                    "zipped": {
+                                        "$zip": {
+                                            "inputs": ["$left", "$right"],
+                                            "useLongestLength": True,
+                                            "defaults": "$defaults",
+                                        }
+                                    },
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {
+                                "_id": "1",
+                                "pairs": [{"k": "a", "v": 1}, {"k": "b", "v": 2}],
+                                "zipped": [["a", 1], ["b", 0]],
+                            }
+                        ],
+                    )
+
     async def test_aggregate_supports_async_iteration_and_validates_pipeline_type(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
