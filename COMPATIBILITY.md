@@ -296,6 +296,7 @@ Casos relevantes hoy:
 * `find(comment=...)` -> `effective`
 * `find(max_time_ms=...)` -> `effective`
 * `find(batch_size=...)` -> `effective` con batching local del cursor
+* `aggregate(batch_size=...)` -> `effective` en pipelines streamables; stages globales siguen materializando completo
 * `update_one(let=...)` -> `effective` cuando el filtro usa `$expr`
 * `replace_one(let=...)` -> `effective` cuando el filtro usa `$expr`
 * `bulk_write(comment=...)` -> `effective`

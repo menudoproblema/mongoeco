@@ -37,6 +37,44 @@ class AsyncAggregationCursor:
         self._let = let
         self._session = session
 
+    @staticmethod
+    def _split_streamable_pipeline(
+        pipeline: Pipeline,
+    ) -> tuple[Pipeline, int, int | None] | None:
+        streamable_operators = {
+            "$match",
+            "$project",
+            "$unset",
+            "$addFields",
+            "$set",
+            "$unwind",
+            "$replaceRoot",
+            "$replaceWith",
+            "$lookup",
+        }
+        streamable_pipeline: Pipeline = []
+        trailing_skip = 0
+        trailing_limit: int | None = None
+        seen_trailing_window = False
+
+        for stage in pipeline:
+            operator, spec = next(iter(stage.items()))
+            if operator in {"$skip", "$limit"}:
+                seen_trailing_window = True
+                if operator == "$skip":
+                    trailing_skip += int(spec)
+                else:
+                    value = int(spec)
+                    trailing_limit = value if trailing_limit is None else min(trailing_limit, value)
+                continue
+            if seen_trailing_window:
+                return None
+            if operator not in streamable_operators:
+                return None
+            streamable_pipeline.append(stage)
+
+        return streamable_pipeline, trailing_skip, trailing_limit
+
     def _collect_collection_names(self, pipeline: Pipeline) -> set[str]:
         names: set[str] = set()
         for stage in pipeline:
@@ -155,12 +193,88 @@ class AsyncAggregationCursor:
         enforce_deadline(deadline)
         return result
 
+    async def _stream_batches(self) -> AsyncIterator[Document]:
+        if self._batch_size in (None, 0):
+            for document in await self._materialize():
+                yield document
+            return
+
+        deadline = operation_deadline(self._max_time_ms)
+        dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
+        pushdown = split_pushdown_pipeline(
+            self._pipeline,
+            dialect=dialect,
+        )
+        stream_plan = self._split_streamable_pipeline(pushdown.remaining_pipeline)
+        if stream_plan is None:
+            for document in await self._materialize():
+                yield document
+            return
+
+        streamable_pipeline, trailing_skip, trailing_limit = stream_plan
+        enforce_deadline(deadline)
+        referenced_collections = await self._load_referenced_collections()
+        enforce_deadline(deadline)
+
+        source_offset = 0
+        remaining_limit = trailing_limit
+        while True:
+            if remaining_limit == 0:
+                return
+            page_limit = self._batch_size
+            if pushdown.limit is not None:
+                remaining_source = pushdown.limit - source_offset
+                if remaining_source <= 0:
+                    return
+                page_limit = min(page_limit, remaining_source)
+
+            page = await self._collection.find(
+                pushdown.filter_spec,
+                pushdown.projection,
+                sort=pushdown.sort,
+                skip=pushdown.skip + source_offset,
+                limit=page_limit,
+                hint=self._hint,
+                comment=self._comment,
+                max_time_ms=self._max_time_ms,
+                batch_size=self._batch_size,
+                session=self._session,
+            ).to_list()
+            enforce_deadline(deadline)
+            if not page:
+                return
+
+            source_offset += len(page)
+            transformed = apply_pipeline(
+                page,
+                streamable_pipeline,
+                collection_resolver=referenced_collections.get,
+                variables=self._let,
+                dialect=dialect,
+            )
+            enforce_deadline(deadline)
+
+            if trailing_skip:
+                if len(transformed) <= trailing_skip:
+                    trailing_skip -= len(transformed)
+                    continue
+                transformed = transformed[trailing_skip:]
+                trailing_skip = 0
+
+            if remaining_limit is not None:
+                transformed = transformed[:remaining_limit]
+                remaining_limit -= len(transformed)
+
+            for document in transformed:
+                yield document
+
     async def to_list(self) -> list[Document]:
-        return await self._materialize()
+        return [document async for document in self]
 
     async def first(self) -> Document | None:
-        documents = await self._materialize()
-        return documents[0] if documents else None
+        async for document in self:
+            return document
+        return None
 
     async def explain(self) -> dict[str, object]:
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
@@ -204,11 +318,9 @@ class AsyncAggregationCursor:
             "max_time_ms": self._max_time_ms,
             "batch_size": self._batch_size,
             "let": self._let,
+            "streaming_batch_execution": self._batch_size not in (None, 0)
+            and self._split_streamable_pipeline(pushdown.remaining_pipeline) is not None,
         }
 
     def __aiter__(self) -> AsyncIterator[Document]:
-        async def _iterate() -> AsyncIterator[Document]:
-            for document in await self._materialize():
-                yield document
-
-        return _iterate()
+        return self._stream_batches()

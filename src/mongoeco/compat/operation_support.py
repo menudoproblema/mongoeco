@@ -29,7 +29,7 @@ def _build_operation_option_support() -> MappingProxyType[str, MappingProxyType[
             "hint": OperationOptionSupport(effective, "Applied through the pushdown find() path used by aggregate() and surfaced in explain()."),
             "comment": OperationOptionSupport(effective, "Recorded in engine session metadata and propagated through aggregate explain/materialization."),
             "max_time_ms": OperationOptionSupport(effective, "Applied to referenced collection loads, pushdown reads and final pipeline materialization."),
-            "batch_size": OperationOptionSupport(accepted_noop, "Cursor shape supports it, but aggregation remains materialized."),
+            "batch_size": OperationOptionSupport(effective, "Positive batch sizes trigger chunked execution for streamable aggregate pipelines; global stages still fall back to full materialization."),
             "let": OperationOptionSupport(effective, "Propagated into aggregate expression evaluation and subpipelines."),
         },
         "update_one": {

@@ -488,8 +488,7 @@ Objetivos principales:
 Perímetro real de cierre:
 * `find(batch_size=...)` ya es `effective` con batching local observable del cursor.
 * `let` en writes ya es `effective` cuando el filtro usa `$expr`, incluidas las rutas de selección previas a `update_*`, `replace_one`, `delete_*`, `find_one_and_*` y `bulk_write`.
-* `aggregate(batch_size=...)` es el único caso que sigue en `accepted-noop`; se acepta por compatibilidad, pero la agregación sigue materializándose completa.
-* Ese último punto se mueve explícitamente a Fase 5, porque ya implica semántica más profunda de ejecución incremental sobre pipelines, no solo ergonomía de API.
+* `aggregate(batch_size=...)` ya es `effective` en pipelines streamables; cuando aparecen stages globales (`$group`, `$sort`, `$facet`, ventanas, buckets, etc.), la ejecución sigue cayendo al camino materializado completo.
 
 Criterio de foco:
 * Fase 4 prioriza lo que habilita mejor el resto del roadmap: transacciones, opciones públicas estables y metadatos/administración con forma PyMongo.
@@ -637,7 +636,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
 * perímetro explícito:
   * `find(batch_size=...)` efectivo con batching local
   * `let` en writes efectivo vía filtros con `$expr`
-  * `aggregate(batch_size=...)` diferido a Fase 5
+  * `aggregate(batch_size=...)` efectivo en pipelines streamables; los stages globales siguen siendo materializados
 
 #### Fase 5
 * query operators adicionales:
@@ -666,8 +665,6 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
 * raw batches:
   * `find_raw_batches`
   * `aggregate_raw_batches`
-* ejecución incremental adicional:
-  * batching menos superficial en `aggregate()`
 * opciones avanzadas por método:
   * `collation`
   * `allow_disk_use`

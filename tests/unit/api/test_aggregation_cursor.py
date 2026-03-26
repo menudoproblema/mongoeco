@@ -259,6 +259,78 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(collection.calls[0]["max_time_ms"], 5)
         self.assertEqual(collection.calls[0]["batch_size"], 10)
 
+    async def test_streaming_batch_execution_splits_find_calls_for_streamable_pipeline(self):
+        collection = _FakeCollection(
+            [
+                {"_id": "1", "kind": "view", "rank": 1},
+                {"_id": "2", "kind": "view", "rank": 2},
+                {"_id": "3", "kind": "view", "rank": 3},
+            ]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$match": {"kind": "view"}}],
+            batch_size=2,
+        )
+
+        documents = await cursor.to_list()
+
+        self.assertEqual(documents, collection._documents)
+        self.assertEqual(
+            [call["skip"] for call in collection.calls],
+            [0, 2, 3],
+        )
+        self.assertEqual(
+            [call["limit"] for call in collection.calls],
+            [2, 2, 2],
+        )
+
+    async def test_streaming_batch_execution_handles_trailing_skip_and_limit_globally(self):
+        collection = _FakeCollection(
+            [
+                {"_id": "1", "kind": "view", "rank": 1},
+                {"_id": "2", "kind": "view", "rank": 2},
+                {"_id": "3", "kind": "view", "rank": 3},
+                {"_id": "4", "kind": "view", "rank": 4},
+            ]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$match": {"kind": "view"}}, {"$skip": 1}, {"$limit": 2}],
+            batch_size=2,
+        )
+
+        documents = await cursor.to_list()
+
+        self.assertEqual(
+            documents,
+            [
+                {"_id": "2", "kind": "view", "rank": 2},
+                {"_id": "3", "kind": "view", "rank": 3},
+            ],
+        )
+
+    async def test_streaming_batch_execution_falls_back_for_global_pipeline_stages(self):
+        collection = _FakeCollection(
+            [
+                {"_id": "1", "kind": "view", "rank": 2},
+                {"_id": "2", "kind": "view", "rank": 1},
+                {"_id": "3", "kind": "view", "rank": 3},
+            ]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$group": {"_id": "$kind", "count": {"$sum": 1}}}],
+            batch_size=2,
+        )
+
+        documents = await cursor.to_list()
+
+        self.assertEqual(documents, [{"_id": "view", "count": 3}])
+        self.assertEqual(len(collection.calls), 1)
+        explanation = await cursor.explain()
+        self.assertFalse(explanation["streaming_batch_execution"])
+
     async def test_async_aggregation_cursor_explain_includes_engine_plan_and_options(self):
         collection = _FakeCollection([{"_id": "1", "kind": "view"}])
         cursor = AsyncAggregationCursor(
@@ -279,6 +351,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explanation["max_time_ms"], 5)
         self.assertEqual(explanation["batch_size"], 10)
         self.assertEqual(explanation["let"], {"tenant": "a"})
+        self.assertTrue(explanation["streaming_batch_execution"])
 
     async def test_materialize_enforces_max_time_deadline(self):
         collection = _FakeCollection([{"_id": "1", "kind": "view"}])
