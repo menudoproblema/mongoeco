@@ -416,8 +416,10 @@ class Collection:
         *,
         session: ClientSession | None = None,
     ) -> "Collection":
-        self._client._run(self._async_collection().rename(new_name, session=session))
-        return type(self)(self._client, self._db_name, new_name)
+        return self._client._run_resource(
+            self._async_collection().rename(new_name, session=session),
+            lambda: type(self)(self._client, self._db_name, new_name),
+        )
 
     @property
     def name(self) -> str:

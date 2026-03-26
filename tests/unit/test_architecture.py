@@ -2,7 +2,13 @@ import inspect
 import unittest
 
 from mongoeco.api._async.collection import AsyncCollection
+from mongoeco.api._async._materialized_cursor import AsyncMaterializedCursor
+from mongoeco.api._async.index_cursor import AsyncIndexCursor
+from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.api._sync.collection import Collection
+from mongoeco.api._sync._materialized_cursor import MaterializedCursor
+from mongoeco.api._sync.index_cursor import IndexCursor
+from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.compat import (
     OPERATION_OPTION_SUPPORT,
     OptionSupportStatus,
@@ -15,10 +21,12 @@ from mongoeco.compat.operation_support import (
 )
 from mongoeco.engines.base import (
     AsyncAdminEngine,
+    AsyncDatabaseAdminEngine,
     AsyncCrudEngine,
     AsyncExplainEngine,
     AsyncIndexAdminEngine,
     AsyncLifecycleEngine,
+    AsyncNamespaceAdminEngine,
     AsyncSessionEngine,
     AsyncStorageEngine,
 )
@@ -36,8 +44,16 @@ class ArchitectureUnitTests(unittest.TestCase):
                 self.assertIsInstance(engine, AsyncCrudEngine)
                 self.assertIsInstance(engine, AsyncIndexAdminEngine)
                 self.assertIsInstance(engine, AsyncExplainEngine)
+                self.assertIsInstance(engine, AsyncDatabaseAdminEngine)
+                self.assertIsInstance(engine, AsyncNamespaceAdminEngine)
                 self.assertIsInstance(engine, AsyncAdminEngine)
                 self.assertIsInstance(engine, AsyncStorageEngine)
+
+    def test_admin_cursors_share_materialized_base_classes(self):
+        self.assertTrue(issubclass(AsyncIndexCursor, AsyncMaterializedCursor))
+        self.assertTrue(issubclass(AsyncListingCursor, AsyncMaterializedCursor))
+        self.assertTrue(issubclass(IndexCursor, MaterializedCursor))
+        self.assertTrue(issubclass(ListingCursor, MaterializedCursor))
 
     def test_index_definition_is_shared_source_for_public_metadata(self):
         index = IndexDefinition([("email", 1), ("created_at", -1)], name="email_created", unique=True)
@@ -131,3 +147,8 @@ class ArchitectureUnitTests(unittest.TestCase):
             inspect.signature(SQLiteEngine.index_information).return_annotation,
             IndexInformation,
         )
+
+    def test_sync_client_exposes_resource_return_helper(self):
+        from mongoeco.api._sync.client import MongoClient
+
+        self.assertTrue(callable(getattr(MongoClient, "_run_resource", None)))

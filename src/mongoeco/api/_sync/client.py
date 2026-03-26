@@ -139,8 +139,10 @@ class Database:
     ) -> Collection:
         self._client._ensure_connected()
         async_database = self._client._async_client.get_database(self._name)
-        self._client._run(async_database.create_collection(name, session=session))
-        return self.get_collection(name)
+        return self._client._run_resource(
+            async_database.create_collection(name, session=session),
+            lambda: self.get_collection(name),
+        )
 
     def drop_collection(self, name: str, *, session: ClientSession | None = None) -> None:
         self._client._ensure_connected()
@@ -185,6 +187,10 @@ class MongoClient:
 
     def _run(self, awaitable):
         return self._runner.run(awaitable)
+
+    def _run_resource(self, awaitable, factory):
+        self._run(awaitable)
+        return factory()
 
     def _ensure_connected(self) -> None:
         if self._closed:

@@ -55,12 +55,25 @@ class AsyncExplainEngine(Protocol):
 
 
 @runtime_checkable
-class AsyncAdminEngine(Protocol):
+class AsyncDatabaseAdminEngine(Protocol):
     async def list_databases(self, *, context: ClientSession | None = None) -> list[str]: ...
+
+
+@runtime_checkable
+class AsyncNamespaceAdminEngine(Protocol):
     async def list_collections(self, db_name: str, *, context: ClientSession | None = None) -> list[str]: ...
     async def create_collection(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> None: ...
     async def rename_collection(self, db_name: str, coll_name: str, new_name: str, *, context: ClientSession | None = None) -> None: ...
     async def drop_collection(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> None: ...
+
+
+@runtime_checkable
+class AsyncAdminEngine(
+    AsyncDatabaseAdminEngine,
+    AsyncNamespaceAdminEngine,
+    Protocol,
+):
+    pass
 
 
 @runtime_checkable
