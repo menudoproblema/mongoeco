@@ -1280,6 +1280,7 @@ class SQLiteEngine(AsyncStorageEngine):
         update_spec: Update,
         upsert: bool,
         upsert_seed: Document | None,
+        selector_filter: Filter | None,
         array_filters: ArrayFilters | None,
         plan: QueryNode | None,
         context: ClientSession | None,
@@ -1314,6 +1315,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         document,
                         update_spec,
                         dialect=effective_dialect,
+                        selector_filter=selector_filter or filter_spec,
                         array_filters=array_filters,
                     )
                     if not modified:
@@ -1385,6 +1387,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     new_doc,
                     update_spec,
                     dialect=effective_dialect,
+                    selector_filter=selector_filter or filter_spec,
                     array_filters=array_filters,
                     is_upsert_insert=True,
                 )
@@ -2009,6 +2012,7 @@ class SQLiteEngine(AsyncStorageEngine):
         upsert: bool = False,
         upsert_seed: Document | None = None,
         *,
+        selector_filter: Filter | None = None,
         array_filters: ArrayFilters | None = None,
         plan: QueryNode | None = None,
         dialect: MongoDialect | None = None,
@@ -2022,6 +2026,7 @@ class SQLiteEngine(AsyncStorageEngine):
             update_spec,
             upsert,
             upsert_seed,
+            selector_filter,
             array_filters,
             plan,
             context,

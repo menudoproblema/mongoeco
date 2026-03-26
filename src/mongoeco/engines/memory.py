@@ -378,7 +378,7 @@ class MemoryEngine(AsyncStorageEngine):
         return _scan()
 
     @override
-    async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, array_filters: ArrayFilters | None = None, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> UpdateResult[DocumentId]:
+    async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, selector_filter: Filter | None = None, array_filters: ArrayFilters | None = None, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> UpdateResult[DocumentId]:
         effective_dialect = dialect or MONGODB_DIALECT_70
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
@@ -396,6 +396,7 @@ class MemoryEngine(AsyncStorageEngine):
                     document,
                     update_spec,
                     dialect=effective_dialect,
+                    selector_filter=selector_filter or filter_spec,
                     array_filters=array_filters,
                 )
                 self._ensure_unique_indexes(
@@ -418,6 +419,7 @@ class MemoryEngine(AsyncStorageEngine):
                 new_doc,
                 update_spec,
                 dialect=effective_dialect,
+                selector_filter=selector_filter or filter_spec,
                 array_filters=array_filters,
                 is_upsert_insert=True,
             )

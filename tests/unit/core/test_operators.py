@@ -359,6 +359,51 @@ class UpdateEngineTests(unittest.TestCase):
                 array_filters=[{"item.qty": {"$gte": 1}}],
             )
 
+    def test_legacy_positional_operator_updates_first_matching_array_element(self):
+        document = {"items": [{"qty": 1}, {"qty": 3}, {"qty": 4}]}
+
+        modified = UpdateEngine.apply_update(
+            document,
+            {"$inc": {"items.$.qty": 2}},
+            selector_filter={"items.qty": {"$gte": 3}},
+        )
+
+        self.assertTrue(modified)
+        self.assertEqual(document, {"items": [{"qty": 1}, {"qty": 5}, {"qty": 4}]})
+
+    def test_legacy_positional_operator_supports_array_field_predicates_and_rejects_missing_match(self):
+        document = {"scores": [1, 5, 3]}
+
+        modified = UpdateEngine.apply_update(
+            document,
+            {"$set": {"scores.$": 9}},
+            selector_filter={"scores": {"$gte": 4}},
+        )
+
+        self.assertTrue(modified)
+        self.assertEqual(document, {"scores": [1, 9, 3]})
+
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                {"scores": [1, 2, 3]},
+                {"$set": {"scores.$": 9}},
+                selector_filter={"scores": {"$gte": 4}},
+            )
+
+    def test_legacy_positional_operator_rejects_upsert_without_match_and_negation_queries(self):
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                {"scores": []},
+                {"$set": {"scores.$": 9}},
+                is_upsert_insert=True,
+            )
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                {"scores": [1, 2, 3]},
+                {"$set": {"scores.$": 9}},
+                selector_filter={"scores": {"$ne": 4}},
+            )
+
     def test_push_add_to_set_and_pull_support_array_mutation(self):
         document = {"tags": ["python"]}
 

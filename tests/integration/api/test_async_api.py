@@ -689,6 +689,22 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [{"qty": 1, "flag": True}, {"qty": 8, "flag": True}],
                     )
 
+    async def test_legacy_positional_operator_is_observable_via_api(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.users
+                    await collection.insert_one({"_id": "1", "items": [{"qty": 1}, {"qty": 3}, {"qty": 4}]})
+
+                    result = await collection.update_one(
+                        {"items.qty": {"$gte": 3}},
+                        {"$inc": {"items.$.qty": 2}},
+                    )
+                    updated = await collection.find_one({"_id": "1"})
+
+                    self.assertEqual(result.modified_count, 1)
+                    self.assertEqual(updated["items"], [{"qty": 1}, {"qty": 5}, {"qty": 4}])
+
     async def test_delete_many_deletes_all_matching_documents(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

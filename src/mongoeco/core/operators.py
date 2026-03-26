@@ -8,7 +8,7 @@ from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.core.paths import _same_value_for_update, delete_document_value, get_document_value, set_document_value
 from mongoeco.core.update_paths import expand_positional_update_paths, is_valid_array_filter_identifier, parse_update_path
-from mongoeco.types import ArrayFilters
+from mongoeco.types import ArrayFilters, Filter
 
 
 class UpdateEngine:
@@ -20,6 +20,7 @@ class UpdateEngine:
         update_spec: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        selector_filter: Filter | None = None,
         array_filters: ArrayFilters | None = None,
         is_upsert_insert: bool = False,
     ) -> bool:
@@ -41,34 +42,35 @@ class UpdateEngine:
             if not isinstance(params, dict):
                 raise OperationFailure(f"{op} requires a document specification")
             if op == "$set":
-                if UpdateEngine._apply_set(doc, params, dialect=dialect, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_set(doc, params, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$unset":
-                if UpdateEngine._apply_unset(doc, params, dialect=dialect, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_unset(doc, params, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$inc":
-                if UpdateEngine._apply_inc(doc, params, dialect=dialect, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_inc(doc, params, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$min":
-                if UpdateEngine._apply_min(doc, params, dialect=dialect, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_min(doc, params, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$max":
-                if UpdateEngine._apply_max(doc, params, dialect=dialect, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_max(doc, params, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$mul":
-                if UpdateEngine._apply_mul(doc, params, dialect=dialect, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_mul(doc, params, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$rename":
                 if UpdateEngine._apply_rename(doc, params, dialect=dialect):
                     modified = True
             elif op == "$currentDate":
-                if UpdateEngine._apply_current_date(doc, params, dialect=dialect, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_current_date(doc, params, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$setOnInsert":
                 if UpdateEngine._apply_set_on_insert(
                     doc,
                     params,
                     dialect=dialect,
+                    selector_filter=selector_filter,
                     array_filters=compiled_array_filters,
                     is_upsert_insert=is_upsert_insert,
                 ):
@@ -104,8 +106,6 @@ class UpdateEngine:
                 if not isinstance(path, str):
                     raise OperationFailure("update field names must be strings")
                 for segment in parse_update_path(path):
-                    if segment.kind == "positional":
-                        raise OperationFailure("Legacy positional '$' update paths are not supported")
                     if segment.kind == "filtered_positional":
                         if segment.identifier is None or segment.identifier not in array_filters:
                             raise OperationFailure("No array filter found for identifier used in update path")
@@ -175,6 +175,7 @@ class UpdateEngine:
         doc: dict[str, Any],
         path: str,
         *,
+        selector_filter: Filter | None = None,
         array_filters: dict[str, dict[str, Any]],
         allow_positional: bool,
         dialect: MongoDialect = MONGODB_DIALECT_70,
@@ -187,6 +188,10 @@ class UpdateEngine:
             for segment in segments
         ):
             raise OperationFailure("Positional and array-filter update paths are not supported")
+        if any(segment.kind == "positional" for segment in segments):
+            if selector_filter is None:
+                raise OperationFailure("The positional operator did not find the match needed from the query")
+            return [UpdateEngine._resolve_legacy_positional_path(doc, path, selector_filter, dialect=dialect)]
         concrete_paths = expand_positional_update_paths(
             doc,
             path,
@@ -198,6 +203,89 @@ class UpdateEngine:
             ),
         )
         return list(dict.fromkeys(concrete_paths))
+
+    @staticmethod
+    def _resolve_legacy_positional_path(
+        doc: dict[str, Any],
+        path: str,
+        selector_filter: Filter,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> str:
+        segments = parse_update_path(path)
+        positional_indexes = [index for index, segment in enumerate(segments) if segment.kind == "positional"]
+        if len(positional_indexes) != 1:
+            raise OperationFailure("Legacy positional '$' update paths support exactly one positional segment")
+        positional_index = positional_indexes[0]
+        array_prefix = ".".join(segment.raw for segment in segments[:positional_index])
+        suffix = ".".join(segment.raw for segment in segments[positional_index + 1 :])
+        found, array_value = get_document_value(doc, array_prefix)
+        if not found or not isinstance(array_value, list):
+            raise OperationFailure("The positional operator did not find the match needed from the query")
+
+        matcher = UpdateEngine._build_legacy_positional_matcher(
+            array_prefix,
+            selector_filter,
+            dialect=dialect,
+        )
+        for item_index, item in enumerate(array_value):
+            if matcher(item):
+                parts = [array_prefix, str(item_index)]
+                if suffix:
+                    parts.append(suffix)
+                return ".".join(parts)
+        raise OperationFailure("The positional operator did not find the match needed from the query")
+
+    @staticmethod
+    def _build_legacy_positional_matcher(
+        array_prefix: str,
+        selector_filter: Filter,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ):
+        predicates: list[tuple[str, Any]] = []
+
+        def _collect(filter_spec: Filter) -> None:
+            for key, value in filter_spec.items():
+                if key == "$and" and isinstance(value, list):
+                    for clause in value:
+                        if isinstance(clause, dict):
+                            _collect(clause)
+                    continue
+                if not isinstance(key, str) or key.startswith("$"):
+                    continue
+                if key == array_prefix:
+                    predicates.append(("", value))
+                    continue
+                prefix = f"{array_prefix}."
+                if key.startswith(prefix):
+                    predicates.append((key[len(prefix):], value))
+
+        _collect(selector_filter)
+        if not predicates:
+            raise OperationFailure("The positional operator did not find the match needed from the query")
+
+        def _matches(candidate: Any) -> bool:
+            for subpath, condition in predicates:
+                if subpath == "":
+                    if isinstance(condition, dict) and set(condition) == {"$elemMatch"}:
+                        if not QueryEngine._match_elem_match_candidate(candidate, condition["$elemMatch"], dialect=dialect):
+                            return False
+                        continue
+                    if isinstance(condition, dict) and any(
+                        operator in condition for operator in ("$ne", "$nin", "$not")
+                    ):
+                        raise OperationFailure("Negation queries are not supported with the positional operator")
+                    if not QueryEngine._match_elem_match_candidate(candidate, condition, dialect=dialect):
+                        return False
+                    continue
+                if not isinstance(candidate, dict):
+                    return False
+                if not QueryEngine.match(candidate, {subpath: condition}, dialect=dialect):
+                    return False
+            return True
+
+        return _matches
 
     @staticmethod
     def _register_update_path(seen_paths: list[str], path: str) -> None:
@@ -249,6 +337,7 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        selector_filter: Filter | None = None,
         array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
@@ -256,6 +345,7 @@ class UpdateEngine:
             for concrete_path in UpdateEngine._expand_update_targets(
                 doc,
                 path,
+                selector_filter=selector_filter,
                 array_filters=array_filters or {},
                 allow_positional=True,
                 dialect=dialect,
@@ -270,6 +360,7 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        selector_filter: Filter | None = None,
         array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
@@ -277,6 +368,7 @@ class UpdateEngine:
             for concrete_path in UpdateEngine._expand_update_targets(
                 doc,
                 path,
+                selector_filter=selector_filter,
                 array_filters=array_filters or {},
                 allow_positional=True,
                 dialect=dialect,
@@ -291,6 +383,7 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        selector_filter: Filter | None = None,
         array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
@@ -300,6 +393,7 @@ class UpdateEngine:
             for concrete_path in UpdateEngine._expand_update_targets(
                 doc,
                 path,
+                selector_filter=selector_filter,
                 array_filters=array_filters or {},
                 allow_positional=True,
                 dialect=dialect,
@@ -321,6 +415,7 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        selector_filter: Filter | None = None,
         array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
@@ -328,6 +423,7 @@ class UpdateEngine:
             for concrete_path in UpdateEngine._expand_update_targets(
                 doc,
                 path,
+                selector_filter=selector_filter,
                 array_filters=array_filters or {},
                 allow_positional=True,
                 dialect=dialect,
@@ -344,6 +440,7 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        selector_filter: Filter | None = None,
         array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
@@ -351,6 +448,7 @@ class UpdateEngine:
             for concrete_path in UpdateEngine._expand_update_targets(
                 doc,
                 path,
+                selector_filter=selector_filter,
                 array_filters=array_filters or {},
                 allow_positional=True,
                 dialect=dialect,
@@ -367,6 +465,7 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        selector_filter: Filter | None = None,
         array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
@@ -376,6 +475,7 @@ class UpdateEngine:
             for concrete_path in UpdateEngine._expand_update_targets(
                 doc,
                 path,
+                selector_filter=selector_filter,
                 array_filters=array_filters or {},
                 allow_positional=True,
                 dialect=dialect,
@@ -420,6 +520,7 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        selector_filter: Filter | None = None,
         array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
@@ -434,6 +535,7 @@ class UpdateEngine:
             for concrete_path in UpdateEngine._expand_update_targets(
                 doc,
                 path,
+                selector_filter=selector_filter,
                 array_filters=array_filters or {},
                 allow_positional=True,
                 dialect=dialect,
@@ -448,12 +550,19 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        selector_filter: Filter | None = None,
         array_filters: dict[str, dict[str, Any]] | None = None,
         is_upsert_insert: bool = False,
     ) -> bool:
         if not is_upsert_insert:
             return False
-        return UpdateEngine._apply_set(doc, params, dialect=dialect, array_filters=array_filters)
+        return UpdateEngine._apply_set(
+            doc,
+            params,
+            dialect=dialect,
+            selector_filter=selector_filter,
+            array_filters=array_filters,
+        )
 
     @staticmethod
     def _expand_array_update_values(operator: str, value: Any) -> list[Any]:

@@ -648,6 +648,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"qty": 1, "flag": True}, {"qty": 8, "flag": True}],
                     )
 
+    def test_legacy_positional_operator_is_observable_via_api(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "items": [{"qty": 1}, {"qty": 3}, {"qty": 4}]})
+
+                    result = collection.update_one(
+                        {"items.qty": {"$gte": 3}},
+                        {"$inc": {"items.$.qty": 2}},
+                    )
+                    updated = collection.find_one({"_id": "1"})
+
+                    self.assertEqual(result.modified_count, 1)
+                    self.assertEqual(updated["items"], [{"qty": 1}, {"qty": 5}, {"qty": 4}])
+
     def test_distinct_supports_scalars_arrays_nested_paths_and_filter(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
