@@ -680,6 +680,9 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$indexOfBytes`
     * `$indexOfCP`
     * `$binarySize`
+    * `$regexMatch`
+    * `$regexFind`
+    * `$regexFindAll`
   * más stages
   * más acumuladores
   * más expresiones

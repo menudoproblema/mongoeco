@@ -1166,6 +1166,44 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"_id": "1", "byte_index": 2, "cp_index": 2, "blob_size": 4}],
                     )
 
+    def test_aggregate_supports_regex_match_find_and_find_all(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "text": "Ada and ada"})
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "matched": {"$regexMatch": {"input": "$text", "regex": "^ada", "options": "i"}},
+                                    "found": {"$regexFind": {"input": "$text", "regex": "(a)(d)a", "options": "i"}},
+                                    "found_all": {"$regexFindAll": {"input": "$text", "regex": "a", "options": "i"}},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {
+                                "_id": "1",
+                                "matched": True,
+                                "found": {"match": "Ada", "idx": 0, "captures": ["A", "d"]},
+                                "found_all": [
+                                    {"match": "A", "idx": 0, "captures": []},
+                                    {"match": "a", "idx": 2, "captures": []},
+                                    {"match": "a", "idx": 4, "captures": []},
+                                    {"match": "a", "idx": 8, "captures": []},
+                                    {"match": "a", "idx": 10, "captures": []},
+                                ],
+                            }
+                        ],
+                    )
+
     def test_aggregate_supports_sync_iteration(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

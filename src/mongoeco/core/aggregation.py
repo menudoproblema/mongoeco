@@ -710,6 +710,49 @@ def _trim_string(value: str, chars: str | None, *, mode: str) -> str:
     return value.strip(chars)
 
 
+def _compile_aggregation_regex(
+    regex_value: Any,
+    options_value: Any,
+    *,
+    operator: str,
+) -> re.Pattern[str]:
+    supported = {"i": re.IGNORECASE, "m": re.MULTILINE, "s": re.DOTALL, "x": re.VERBOSE}
+    flags = 0
+    pattern: str
+
+    if options_value is not None and not isinstance(options_value, str):
+        raise OperationFailure(f"{operator} options must be a string")
+
+    if isinstance(regex_value, re.Pattern):
+        if options_value not in {None, ""}:
+            raise OperationFailure(f"{operator} cannot specify options in both regex and options")
+        disallowed_flags = regex_value.flags & (re.DOTALL | re.VERBOSE)
+        if disallowed_flags:
+            raise OperationFailure(f"{operator} regex patterns only support embedded i and m options")
+        flags = regex_value.flags & (re.IGNORECASE | re.MULTILINE)
+        pattern = regex_value.pattern
+    elif isinstance(regex_value, str):
+        pattern = regex_value
+    else:
+        raise OperationFailure(f"{operator} regex must resolve to a string or regex pattern")
+
+    if options_value:
+        for option in options_value:
+            if option not in supported:
+                raise OperationFailure(f"Unsupported regex option: {option}")
+            flags |= supported[option]
+
+    return re.compile(pattern, flags)
+
+
+def _build_regex_match_result(match: re.Match[str]) -> dict[str, Any]:
+    return {
+        "match": match.group(0),
+        "idx": match.start(),
+        "captures": list(match.groups(default=None)),
+    }
+
+
 def _evaluate_expression_with_missing(
     document: Document,
     expression: object,
@@ -1495,6 +1538,33 @@ def evaluate_expression(
                 if isinstance(value, uuid.UUID):
                     return len(value.bytes)
                 raise OperationFailure("$binarySize requires a BinData argument")
+            if operator in {"$regexMatch", "$regexFind", "$regexFindAll"}:
+                if not isinstance(spec, dict) or "input" not in spec or "regex" not in spec:
+                    raise OperationFailure(f"{operator} requires input and regex")
+                input_value = _evaluate_expression_with_missing(document, spec["input"], variables, dialect=dialect)
+                if input_value is _MISSING or input_value is None:
+                    if operator == "$regexMatch":
+                        return False
+                    if operator == "$regexFindAll":
+                        return []
+                    return None
+                if not isinstance(input_value, str):
+                    raise OperationFailure(f"{operator} input must resolve to a string")
+                regex_value = evaluate_expression(document, spec["regex"], variables, dialect=dialect)
+                options_value = (
+                    evaluate_expression(document, spec["options"], variables, dialect=dialect)
+                    if "options" in spec
+                    else None
+                )
+                compiled = _compile_aggregation_regex(regex_value, options_value, operator=operator)
+                if operator == "$regexMatch":
+                    return compiled.search(input_value) is not None
+                if operator == "$regexFind":
+                    match = compiled.search(input_value)
+                    if match is None:
+                        return None
+                    return _build_regex_match_result(match)
+                return [_build_regex_match_result(match) for match in compiled.finditer(input_value)]
             if operator == "$sortArray":
                 if not isinstance(spec, dict) or "input" not in spec or "sortBy" not in spec:
                     raise OperationFailure("$sortArray requires input and sortBy")

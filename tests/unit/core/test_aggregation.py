@@ -1,5 +1,6 @@
 import datetime
 import math
+import re
 import unittest
 import uuid
 from unittest.mock import ANY
@@ -538,9 +539,6 @@ class AggregationTests(unittest.TestCase):
             {"$week": "$created_at"},
             {"$isoWeek": "$created_at"},
             {"$isoWeekYear": "$created_at"},
-            {"$regexFind": {"input": "$text", "regex": "A"}},
-            {"$regexFindAll": {"input": "$text", "regex": "A"}},
-            {"$regexMatch": {"input": "$text", "regex": "A"}},
             {"$rand": {}},
             {"$sampleRate": 0.5},
             {"$toHashedIndexKey": "$text"},
@@ -747,6 +745,44 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$indexOfCP": ["$items", "1"]})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$binarySize": "$text"})
+
+    def test_evaluate_expression_supports_regex_match_find_and_find_all(self):
+        document = {"text": "Ada and ada", "missing": None}
+
+        self.assertTrue(
+            evaluate_expression(document, {"$regexMatch": {"input": "$text", "regex": "^ada", "options": "i"}})
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$regexFind": {"input": "$text", "regex": "(a)(d)a", "options": "i"}}),
+            {"match": "Ada", "idx": 0, "captures": ["A", "d"]},
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$regexFindAll": {"input": "$text", "regex": "a", "options": "i"}}),
+            [
+                {"match": "A", "idx": 0, "captures": []},
+                {"match": "a", "idx": 2, "captures": []},
+                {"match": "a", "idx": 4, "captures": []},
+                {"match": "a", "idx": 8, "captures": []},
+                {"match": "a", "idx": 10, "captures": []},
+            ],
+        )
+        self.assertFalse(evaluate_expression(document, {"$regexMatch": {"input": "$missing", "regex": "a"}}))
+        self.assertIsNone(evaluate_expression(document, {"$regexFind": {"input": "$missing", "regex": "a"}}))
+        self.assertEqual(evaluate_expression(document, {"$regexFindAll": {"input": "$missing", "regex": "a"}}), [])
+
+    def test_evaluate_expression_regex_variants_reject_invalid_values(self):
+        document = {"text": "Ada", "items": [1]}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$regexMatch": {"input": "$items", "regex": "a"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$regexFind": {"input": "$text", "regex": 1}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$regexFindAll": {"input": "$text", "regex": "a", "options": 1}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$regexMatch": {"input": "$text", "regex": re.compile("a", re.DOTALL)}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$regexMatch": {"input": "$text", "regex": re.compile("a"), "options": "i"}})
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]
