@@ -1070,6 +1070,9 @@ def _convert_aggregation_scalar(operator: str, value: Any, target: str) -> Any:
                 raise OperationFailure(f"{operator} cannot convert the string value") from exc
         raise OperationFailure(f"{operator} cannot convert the value")
 
+    if target == "string":
+        return _stringify_aggregation_value(value)
+
     raise OperationFailure(f"Unsupported conversion target for {operator}")
 
 
@@ -1217,6 +1220,34 @@ def evaluate_expression(
                 raise OperationFailure(f"Unsupported aggregation expression: {operator}")
             if operator == "$literal":
                 return deepcopy(spec)
+            if operator == "$convert":
+                if not isinstance(spec, dict) or "input" not in spec or "to" not in spec:
+                    raise OperationFailure("$convert requires input and to")
+                value = _evaluate_expression_with_missing(document, spec["input"], variables, dialect=dialect)
+                if value is _MISSING or value is None:
+                    return evaluate_expression(document, spec["onNull"], variables, dialect=dialect) if "onNull" in spec else None
+                target = evaluate_expression(document, spec["to"], variables, dialect=dialect)
+                if isinstance(target, dict):
+                    target = target.get("type")
+                if not isinstance(target, str):
+                    raise OperationFailure("$convert to must resolve to a string")
+                aliases = {
+                    "bool": "bool",
+                    "int": "int",
+                    "long": "long",
+                    "double": "double",
+                    "date": "date",
+                    "objectId": "objectId",
+                    "string": "string",
+                }
+                try:
+                    if target not in aliases:
+                        raise OperationFailure("$convert target type is not supported")
+                    return _convert_aggregation_scalar(operator, value, aliases[target])
+                except OperationFailure:
+                    if "onError" in spec:
+                        return evaluate_expression(document, spec["onError"], variables, dialect=dialect)
+                    raise
             if operator in {"$eq", "$ne", "$gt", "$gte", "$lt", "$lte"}:
                 args = _require_expression_args(operator, spec, min_args=2, max_args=2)
                 left = evaluate_expression(document, args[0], variables, dialect=dialect)
@@ -1279,6 +1310,20 @@ def evaluate_expression(
                 )
                 branch = when_true if _expression_truthy(condition_value, dialect=dialect) else when_false
                 return evaluate_expression(document, branch, variables, dialect=dialect)
+            if operator == "$setField":
+                if not isinstance(spec, dict) or not {"field", "input", "value"} <= set(spec):
+                    raise OperationFailure("$setField requires field, input, and value")
+                field_name = evaluate_expression(document, spec["field"], variables, dialect=dialect)
+                if not isinstance(field_name, str):
+                    raise OperationFailure("$setField field must resolve to a string")
+                input_value = _evaluate_expression_with_missing(document, spec["input"], variables, dialect=dialect)
+                if input_value is _MISSING or input_value is None:
+                    return None
+                if not isinstance(input_value, dict):
+                    raise OperationFailure("$setField input must resolve to an object")
+                result = deepcopy(input_value)
+                result[field_name] = evaluate_expression(document, spec["value"], variables, dialect=dialect)
+                return result
             if operator == "$switch":
                 if not isinstance(spec, dict) or "branches" not in spec:
                     raise OperationFailure("$switch requires branches")

@@ -494,8 +494,6 @@ class AggregationTests(unittest.TestCase):
         document = {"value": "10", "tags": ["a", "b"]}
 
         unsupported_specs = [
-            {"$convert": {"input": "$value", "to": "int"}},
-            {"$setField": {"field": "name", "input": "$$ROOT", "value": "Ada"}},
             {"$percentile": {"input": "$value", "p": [0.5], "method": "approximate"}},
             {"$median": {"input": "$value", "method": "approximate"}},
         ]
@@ -982,6 +980,45 @@ class AggregationTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$bitAnd": [7, 3.5]})
 
+    def test_evaluate_expression_supports_convert_and_set_field(self):
+        document = {"value": "10", "nested": {"a": 1}}
+
+        self.assertEqual(
+            evaluate_expression(document, {"$convert": {"input": "$value", "to": "int"}}),
+            10,
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$convert": {"input": "$missing", "to": "int", "onNull": 7}},
+            ),
+            7,
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$setField": {"field": "name", "input": "$nested", "value": "Ada"}},
+            ),
+            {"a": 1, "name": "Ada"},
+        )
+
+    def test_evaluate_expression_convert_and_set_field_reject_invalid_values(self):
+        document = {"value": "Ada", "nested": {"a": 1}, "text": "not-an-object"}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$convert": {"input": "$value", "to": "int"}})
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$convert": {"input": "$value", "to": "int", "onError": -1}},
+            ),
+            -1,
+        )
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$setField": {"field": 1, "input": "$nested", "value": "Ada"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$setField": {"field": "name", "input": "$text", "value": "Ada"}})
+
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]
 
@@ -1114,13 +1151,17 @@ class AggregationTests(unittest.TestCase):
             [{"_id": "1", "flag": [], "kind": "keep"}],
         )
 
-    def test_evaluate_expression_rejects_convert_with_dedicated_test(self):
-        with self.assertRaises(OperationFailure):
-            evaluate_expression({"value": "10"}, {"$convert": {"input": "$value", "to": "int"}})
+    def test_evaluate_expression_supports_convert_with_dedicated_test(self):
+        self.assertEqual(
+            evaluate_expression({"value": "10"}, {"$convert": {"input": "$value", "to": "int"}}),
+            10,
+        )
 
-    def test_evaluate_expression_rejects_set_field_with_dedicated_test(self):
-        with self.assertRaises(OperationFailure):
-            evaluate_expression({"value": 1}, {"$setField": {"field": "name", "input": "$$ROOT", "value": "Ada"}})
+    def test_evaluate_expression_supports_set_field_with_dedicated_test(self):
+        self.assertEqual(
+            evaluate_expression({"value": 1}, {"$setField": {"field": "name", "input": "$$ROOT", "value": "Ada"}}),
+            {"value": 1, "name": "Ada"},
+        )
 
     def test_evaluate_expression_rejects_percentile_with_dedicated_test(self):
         with self.assertRaises(OperationFailure):

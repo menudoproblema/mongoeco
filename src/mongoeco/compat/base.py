@@ -59,6 +59,7 @@ SUPPORTED_UPDATE_OPERATORS = frozenset(
 SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
     {
         '$literal',
+        '$convert',
         '$eq',
         '$ne',
         '$gt',
@@ -148,6 +149,7 @@ SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
         '$dateFromParts',
         '$dateToParts',
         '$dateToString',
+        '$setField',
         '$week',
         '$isoWeek',
         '$isoWeekYear',

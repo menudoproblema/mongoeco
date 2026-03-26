@@ -1402,6 +1402,30 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"_id": "1", "oid": ObjectId("65f0a1000000000000000000")}],
                     )
 
+    def test_aggregate_supports_convert_and_set_field(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "value": "10", "nested": {"a": 1}})
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "converted": {"$convert": {"input": "$value", "to": "int"}},
+                                    "updated": {"$setField": {"field": "name", "input": "$nested", "value": "Ada"}},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "converted": 10, "updated": {"a": 1, "name": "Ada"}}],
+                    )
+
     def test_aggregate_supports_switch_and_bitwise_variants(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
