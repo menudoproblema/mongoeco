@@ -13,7 +13,20 @@ from mongoeco.core.validation import is_filter
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
-from mongoeco.types import Document, Filter
+from mongoeco.types import (
+    CodecOptions,
+    Document,
+    Filter,
+    ReadConcern,
+    ReadPreference,
+    TransactionOptions,
+    WriteConcern,
+    normalize_codec_options,
+    normalize_read_concern,
+    normalize_read_preference,
+    normalize_transaction_options,
+    normalize_write_concern,
+)
 
 
 class AsyncDatabase:
@@ -28,6 +41,10 @@ class AsyncDatabase:
         mongodb_dialect_resolution: MongoDialectResolution | None = None,
         pymongo_profile: PyMongoProfile | str | None = None,
         pymongo_profile_resolution: PyMongoProfileResolution | None = None,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
     ):
         self._engine = engine
         self._db_name = db_name
@@ -43,6 +60,10 @@ class AsyncDatabase:
             else resolve_pymongo_profile_resolution(pymongo_profile)
         )
         self._pymongo_profile = self._pymongo_profile_resolution.resolved_profile
+        self._write_concern = normalize_write_concern(write_concern)
+        self._read_concern = normalize_read_concern(read_concern)
+        self._read_preference = normalize_read_preference(read_preference)
+        self._codec_options = normalize_codec_options(codec_options)
 
     def __getattr__(self, name: str) -> AsyncCollection:
         return self.get_collection(name)
@@ -50,7 +71,15 @@ class AsyncDatabase:
     def __getitem__(self, name: str) -> AsyncCollection:
         return self.get_collection(name)
 
-    def get_collection(self, name: str) -> AsyncCollection:
+    def get_collection(
+        self,
+        name: str,
+        *,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+    ) -> AsyncCollection:
         return AsyncCollection(
             self._engine,
             self._db_name,
@@ -59,6 +88,31 @@ class AsyncDatabase:
             mongodb_dialect_resolution=self._mongodb_dialect_resolution,
             pymongo_profile=self._pymongo_profile,
             pymongo_profile_resolution=self._pymongo_profile_resolution,
+            write_concern=self._write_concern if write_concern is None else write_concern,
+            read_concern=self._read_concern if read_concern is None else read_concern,
+            read_preference=self._read_preference if read_preference is None else read_preference,
+            codec_options=self._codec_options if codec_options is None else codec_options,
+        )
+
+    def with_options(
+        self,
+        *,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+    ) -> "AsyncDatabase":
+        return type(self)(
+            self._engine,
+            self._db_name,
+            mongodb_dialect=self._mongodb_dialect,
+            mongodb_dialect_resolution=self._mongodb_dialect_resolution,
+            pymongo_profile=self._pymongo_profile,
+            pymongo_profile_resolution=self._pymongo_profile_resolution,
+            write_concern=self._write_concern if write_concern is None else write_concern,
+            read_concern=self._read_concern if read_concern is None else read_concern,
+            read_preference=self._read_preference if read_preference is None else read_preference,
+            codec_options=self._codec_options if codec_options is None else codec_options,
         )
 
     @staticmethod
@@ -212,6 +266,22 @@ class AsyncDatabase:
     def pymongo_profile_resolution(self) -> PyMongoProfileResolution:
         return self._pymongo_profile_resolution
 
+    @property
+    def write_concern(self) -> WriteConcern:
+        return self._write_concern
+
+    @property
+    def read_concern(self) -> ReadConcern:
+        return self._read_concern
+
+    @property
+    def read_preference(self) -> ReadPreference:
+        return self._read_preference
+
+    @property
+    def codec_options(self) -> CodecOptions:
+        return self._codec_options
+
 
 class AsyncMongoClient:
     """
@@ -224,6 +294,11 @@ class AsyncMongoClient:
         *,
         mongodb_dialect: MongoDialect | str | None = None,
         pymongo_profile: PyMongoProfile | str | None = None,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+        transaction_options: TransactionOptions | None = None,
     ):
         self._engine = engine or self._create_default_engine()
         self._mongodb_dialect_resolution = resolve_mongodb_dialect_resolution(
@@ -234,6 +309,11 @@ class AsyncMongoClient:
             pymongo_profile
         )
         self._pymongo_profile = self._pymongo_profile_resolution.resolved_profile
+        self._write_concern = normalize_write_concern(write_concern)
+        self._read_concern = normalize_read_concern(read_concern)
+        self._read_preference = normalize_read_preference(read_preference)
+        self._codec_options = normalize_codec_options(codec_options)
+        self._transaction_options = normalize_transaction_options(transaction_options)
 
     @staticmethod
     def _create_default_engine() -> AsyncStorageEngine:
@@ -254,7 +334,15 @@ class AsyncMongoClient:
     def __getitem__(self, name: str) -> AsyncDatabase:
         return self.get_database(name)
 
-    def get_database(self, name: str) -> AsyncDatabase:
+    def get_database(
+        self,
+        name: str,
+        *,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+    ) -> AsyncDatabase:
         return AsyncDatabase(
             self._engine,
             name,
@@ -262,6 +350,10 @@ class AsyncMongoClient:
             mongodb_dialect_resolution=self._mongodb_dialect_resolution,
             pymongo_profile=self._pymongo_profile,
             pymongo_profile_resolution=self._pymongo_profile_resolution,
+            write_concern=self._write_concern if write_concern is None else write_concern,
+            read_concern=self._read_concern if read_concern is None else read_concern,
+            read_preference=self._read_preference if read_preference is None else read_preference,
+            codec_options=self._codec_options if codec_options is None else codec_options,
         )
 
     def start_session(self) -> ClientSession:
@@ -301,3 +393,23 @@ class AsyncMongoClient:
     @property
     def pymongo_profile_resolution(self) -> PyMongoProfileResolution:
         return self._pymongo_profile_resolution
+
+    @property
+    def write_concern(self) -> WriteConcern:
+        return self._write_concern
+
+    @property
+    def read_concern(self) -> ReadConcern:
+        return self._read_concern
+
+    @property
+    def read_preference(self) -> ReadPreference:
+        return self._read_preference
+
+    @property
+    def codec_options(self) -> CodecOptions:
+        return self._codec_options
+
+    @property
+    def transaction_options(self) -> TransactionOptions:
+        return self._transaction_options

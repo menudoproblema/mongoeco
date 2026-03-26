@@ -33,6 +33,14 @@ from mongoeco.engines.base import (
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.types import IndexDefinition, IndexInformation, default_id_index_definition
+from mongoeco.types import (
+    CodecOptions,
+    ReadConcern,
+    ReadPreference,
+    ReadPreferenceMode,
+    TransactionOptions,
+    WriteConcern,
+)
 
 
 class ArchitectureUnitTests(unittest.TestCase):
@@ -155,3 +163,37 @@ class ArchitectureUnitTests(unittest.TestCase):
         from mongoeco.api._sync.client import MongoClient
 
         self.assertTrue(callable(getattr(MongoClient, "_run_resource", None)))
+
+    def test_pymongo_configuration_types_validate_and_are_immutable(self):
+        write_concern = WriteConcern("majority", j=True, wtimeout=1000)
+        read_concern = ReadConcern("majority")
+        read_preference = ReadPreference(
+            ReadPreferenceMode.SECONDARY_PREFERRED,
+            tag_sets=[{"region": "eu-west"}],
+            max_staleness_seconds=120,
+        )
+        codec_options = CodecOptions(dict, tz_aware=True)
+        transaction_options = TransactionOptions(
+            read_concern=read_concern,
+            write_concern=write_concern,
+            read_preference=read_preference,
+            max_commit_time_ms=500,
+        )
+
+        self.assertEqual(write_concern.document, {"w": "majority", "j": True, "wtimeout": 1000})
+        self.assertEqual(read_concern.document, {"level": "majority"})
+        self.assertEqual(read_preference.name, "secondaryPreferred")
+        self.assertEqual(codec_options.document_class, dict)
+        self.assertEqual(transaction_options.max_commit_time_ms, 500)
+
+    def test_pymongo_configuration_types_reject_invalid_values(self):
+        with self.assertRaises(TypeError):
+            WriteConcern(True)  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            ReadConcern("")
+        with self.assertRaises(ValueError):
+            ReadPreference("invalid")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            CodecOptions(list)  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            TransactionOptions(max_commit_time_ms=0)

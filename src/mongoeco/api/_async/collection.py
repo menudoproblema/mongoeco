@@ -29,10 +29,11 @@ from mongoeco.core.upserts import seed_upsert_document
 from mongoeco.core.validation import is_document, is_filter, is_projection, is_update
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    ObjectId, Document, DocumentId, Filter, Update, Projection, InsertManyResult, InsertOneResult,
-    ReturnDocument, UpdateResult, DeleteResult, SortSpec, BulkWriteResult, WriteModel,
-    InsertOne, UpdateOne, UpdateMany, ReplaceOne, DeleteOne, DeleteMany,
-    IndexInformation, IndexKeySpec, IndexModel, normalize_index_keys,
+    CodecOptions, ObjectId, Document, DocumentId, Filter, Update, Projection, InsertManyResult, InsertOneResult,
+    ReadConcern, ReadPreference, ReturnDocument, UpdateResult, DeleteResult, SortSpec, BulkWriteResult, WriteModel,
+    WriteConcern, InsertOne, UpdateOne, UpdateMany, ReplaceOne, DeleteOne, DeleteMany,
+    IndexInformation, IndexKeySpec, IndexModel, normalize_codec_options, normalize_index_keys,
+    normalize_read_concern, normalize_read_preference, normalize_write_concern,
 )
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure, WriteError
 
@@ -50,6 +51,10 @@ class AsyncCollection:
         mongodb_dialect_resolution: MongoDialectResolution | None = None,
         pymongo_profile: PyMongoProfile | str | None = None,
         pymongo_profile_resolution: PyMongoProfileResolution | None = None,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
     ):
         self._engine = engine
         self._db_name = db_name
@@ -66,6 +71,32 @@ class AsyncCollection:
             else resolve_pymongo_profile_resolution(pymongo_profile)
         )
         self._pymongo_profile = self._pymongo_profile_resolution.resolved_profile
+        self._write_concern = normalize_write_concern(write_concern)
+        self._read_concern = normalize_read_concern(read_concern)
+        self._read_preference = normalize_read_preference(read_preference)
+        self._codec_options = normalize_codec_options(codec_options)
+
+    def with_options(
+        self,
+        *,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+    ) -> "AsyncCollection":
+        return type(self)(
+            self._engine,
+            self._db_name,
+            self._collection_name,
+            mongodb_dialect=self._mongodb_dialect,
+            mongodb_dialect_resolution=self._mongodb_dialect_resolution,
+            pymongo_profile=self._pymongo_profile,
+            pymongo_profile_resolution=self._pymongo_profile_resolution,
+            write_concern=self._write_concern if write_concern is None else write_concern,
+            read_concern=self._read_concern if read_concern is None else read_concern,
+            read_preference=self._read_preference if read_preference is None else read_preference,
+            codec_options=self._codec_options if codec_options is None else codec_options,
+        )
 
     @staticmethod
     def _require_document(document: object) -> Document:
@@ -1259,3 +1290,19 @@ class AsyncCollection:
     @property
     def pymongo_profile_resolution(self) -> PyMongoProfileResolution:
         return self._pymongo_profile_resolution
+
+    @property
+    def write_concern(self) -> WriteConcern:
+        return self._write_concern
+
+    @property
+    def read_concern(self) -> ReadConcern:
+        return self._read_concern
+
+    @property
+    def read_preference(self) -> ReadPreference:
+        return self._read_preference
+
+    @property
+    def codec_options(self) -> CodecOptions:
+        return self._codec_options

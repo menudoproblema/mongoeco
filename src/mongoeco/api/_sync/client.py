@@ -12,7 +12,14 @@ from mongoeco.session import ClientSession
 from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.api._sync.collection import Collection
 from mongoeco.api._sync.listing_cursor import ListingCursor
-from mongoeco.types import Filter
+from mongoeco.types import (
+    CodecOptions,
+    Filter,
+    ReadConcern,
+    ReadPreference,
+    TransactionOptions,
+    WriteConcern,
+)
 
 
 class _SyncRunner:
@@ -93,9 +100,40 @@ class _SyncRunner:
 class Database:
     """Representa una base de datos de MongoDB."""
 
-    def __init__(self, client: "MongoClient", name: str):
+    def __init__(
+        self,
+        client: "MongoClient",
+        name: str,
+        *,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+    ):
         self._client = client
         self._name = name
+        self._write_concern = (
+            client.write_concern if write_concern is None else write_concern
+        )
+        self._read_concern = (
+            client.read_concern if read_concern is None else read_concern
+        )
+        self._read_preference = (
+            client.read_preference if read_preference is None else read_preference
+        )
+        self._codec_options = (
+            client.codec_options if codec_options is None else codec_options
+        )
+
+    def _async_database(self):
+        self._client._ensure_connected()
+        return self._client._async_client.get_database(
+            self._name,
+            write_concern=self._write_concern,
+            read_concern=self._read_concern,
+            read_preference=self._read_preference,
+            codec_options=self._codec_options,
+        )
 
     def __getattr__(self, name: str) -> Collection:
         return self.get_collection(name)
@@ -103,8 +141,41 @@ class Database:
     def __getitem__(self, name: str) -> Collection:
         return self.get_collection(name)
 
-    def get_collection(self, name: str) -> Collection:
-        return Collection(self._client, self._name, name)
+    def get_collection(
+        self,
+        name: str,
+        *,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+    ) -> Collection:
+        return Collection(
+            self._client,
+            self._name,
+            name,
+            write_concern=self._write_concern if write_concern is None else write_concern,
+            read_concern=self._read_concern if read_concern is None else read_concern,
+            read_preference=self._read_preference if read_preference is None else read_preference,
+            codec_options=self._codec_options if codec_options is None else codec_options,
+        )
+
+    def with_options(
+        self,
+        *,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+    ) -> "Database":
+        return type(self)(
+            self._client,
+            self._name,
+            write_concern=self._write_concern if write_concern is None else write_concern,
+            read_concern=self._read_concern if read_concern is None else read_concern,
+            read_preference=self._read_preference if read_preference is None else read_preference,
+            codec_options=self._codec_options if codec_options is None else codec_options,
+        )
 
     def list_collection_names(
         self,
@@ -112,8 +183,7 @@ class Database:
         *,
         session: ClientSession | None = None,
     ) -> list[str]:
-        self._client._ensure_connected()
-        async_database = self._client._async_client.get_database(self._name)
+        async_database = self._async_database()
         return self._client._run(
             async_database.list_collection_names(filter_spec, session=session)
         )
@@ -124,8 +194,7 @@ class Database:
         *,
         session: ClientSession | None = None,
     ) -> ListingCursor:
-        self._client._ensure_connected()
-        async_database = self._client._async_client.get_database(self._name)
+        async_database = self._async_database()
         return ListingCursor(
             self._client,
             async_database.list_collections(filter_spec, session=session),
@@ -138,16 +207,14 @@ class Database:
         session: ClientSession | None = None,
         **options: object,
     ) -> Collection:
-        self._client._ensure_connected()
-        async_database = self._client._async_client.get_database(self._name)
+        async_database = self._async_database()
         return self._client._run_resource(
             async_database.create_collection(name, session=session, **options),
             lambda: self.get_collection(name),
         )
 
     def drop_collection(self, name: str, *, session: ClientSession | None = None) -> None:
-        self._client._ensure_connected()
-        async_database = self._client._async_client.get_database(self._name)
+        async_database = self._async_database()
         self._client._run(async_database.drop_collection(name, session=session))
 
     def command(
@@ -157,8 +224,7 @@ class Database:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> dict[str, object]:
-        self._client._ensure_connected()
-        async_database = self._client._async_client.get_database(self._name)
+        async_database = self._async_database()
         return self._client._run(
             async_database.command(command, session=session, **kwargs)
         )
@@ -179,6 +245,22 @@ class Database:
     def pymongo_profile_resolution(self) -> PyMongoProfileResolution:
         return self._client.pymongo_profile_resolution
 
+    @property
+    def write_concern(self) -> WriteConcern:
+        return self._write_concern
+
+    @property
+    def read_concern(self) -> ReadConcern:
+        return self._read_concern
+
+    @property
+    def read_preference(self) -> ReadPreference:
+        return self._read_preference
+
+    @property
+    def codec_options(self) -> CodecOptions:
+        return self._codec_options
+
 
 class MongoClient:
     """Cliente sincronico que adapta la implementacion async."""
@@ -189,11 +271,21 @@ class MongoClient:
         *,
         mongodb_dialect: MongoDialect | str | None = None,
         pymongo_profile: PyMongoProfile | str | None = None,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+        transaction_options: TransactionOptions | None = None,
     ):
         self._async_client = AsyncMongoClient(
             engine,
             mongodb_dialect=mongodb_dialect,
             pymongo_profile=pymongo_profile,
+            write_concern=write_concern,
+            read_concern=read_concern,
+            read_preference=read_preference,
+            codec_options=codec_options,
+            transaction_options=transaction_options,
         )
         self._runner = _SyncRunner()
         self._connected = False
@@ -257,8 +349,23 @@ class MongoClient:
     def __getitem__(self, name: str) -> Database:
         return self.get_database(name)
 
-    def get_database(self, name: str) -> Database:
-        return Database(self, name)
+    def get_database(
+        self,
+        name: str,
+        *,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+    ) -> Database:
+        return Database(
+            self,
+            name,
+            write_concern=write_concern,
+            read_concern=read_concern,
+            read_preference=read_preference,
+            codec_options=codec_options,
+        )
 
     def start_session(self) -> ClientSession:
         return self._async_client.start_session()
@@ -286,3 +393,23 @@ class MongoClient:
     @property
     def pymongo_profile_resolution(self) -> PyMongoProfileResolution:
         return self._async_client.pymongo_profile_resolution
+
+    @property
+    def write_concern(self) -> WriteConcern:
+        return self._async_client.write_concern
+
+    @property
+    def read_concern(self) -> ReadConcern:
+        return self._async_client.read_concern
+
+    @property
+    def read_preference(self) -> ReadPreference:
+        return self._async_client.read_preference
+
+    @property
+    def codec_options(self) -> CodecOptions:
+        return self._async_client.codec_options
+
+    @property
+    def transaction_options(self) -> TransactionOptions:
+        return self._async_client.transaction_options

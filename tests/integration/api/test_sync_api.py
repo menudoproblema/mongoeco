@@ -3,6 +3,7 @@ import threading
 import unittest
 
 from mongoeco import (
+    CodecOptions,
     ClientSession,
     DeleteMany,
     DeleteOne,
@@ -10,10 +11,15 @@ from mongoeco import (
     InsertOne,
     MongoClient,
     ObjectId,
+    ReadConcern,
+    ReadPreference,
+    ReadPreferenceMode,
     ReplaceOne,
     ReturnDocument,
+    TransactionOptions,
     UpdateMany,
     UpdateOne,
+    WriteConcern,
 )
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
@@ -218,6 +224,64 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 client.alpha.events.rename("logs")
             with self.assertRaises(CollectionInvalid):
                 client.alpha.events.rename("events")
+
+    def test_client_database_and_collection_expose_configured_pymongo_options(self):
+        write_concern = WriteConcern("majority", j=True)
+        read_concern = ReadConcern("majority")
+        read_preference = ReadPreference(ReadPreferenceMode.SECONDARY)
+        codec_options = CodecOptions(dict, tz_aware=True)
+        transaction_options = TransactionOptions(
+            write_concern=write_concern,
+            read_concern=read_concern,
+            read_preference=read_preference,
+            max_commit_time_ms=250,
+        )
+
+        with MongoClient(
+            MemoryEngine(),
+            write_concern=write_concern,
+            read_concern=read_concern,
+            read_preference=read_preference,
+            codec_options=codec_options,
+            transaction_options=transaction_options,
+        ) as client:
+            database = client.get_database("alpha")
+            collection = database.get_collection("events")
+
+            self.assertIs(client.write_concern, write_concern)
+            self.assertIs(client.read_concern, read_concern)
+            self.assertIs(client.read_preference, read_preference)
+            self.assertIs(client.codec_options, codec_options)
+            self.assertIs(client.transaction_options, transaction_options)
+            self.assertIs(database.write_concern, write_concern)
+            self.assertIs(database.read_concern, read_concern)
+            self.assertIs(database.read_preference, read_preference)
+            self.assertIs(database.codec_options, codec_options)
+            self.assertIs(collection.write_concern, write_concern)
+            self.assertIs(collection.read_concern, read_concern)
+            self.assertIs(collection.read_preference, read_preference)
+            self.assertIs(collection.codec_options, codec_options)
+
+    def test_with_options_clones_database_and_collection_without_mutating_parent(self):
+        with MongoClient(MemoryEngine()) as client:
+            base_database = client.get_database("alpha")
+            tuned_database = base_database.with_options(
+                write_concern=WriteConcern(1),
+                read_concern=ReadConcern("local"),
+            )
+            base_collection = tuned_database.get_collection("events")
+            tuned_collection = base_collection.with_options(
+                read_preference=ReadPreference(ReadPreferenceMode.SECONDARY_PREFERRED),
+                codec_options=CodecOptions(dict, tz_aware=True),
+            )
+
+            self.assertEqual(base_database.write_concern, WriteConcern())
+            self.assertEqual(base_database.read_concern, ReadConcern())
+            self.assertEqual(tuned_database.write_concern, WriteConcern(1))
+            self.assertEqual(tuned_database.read_concern, ReadConcern("local"))
+            self.assertEqual(base_collection.read_preference, ReadPreference())
+            self.assertEqual(tuned_collection.read_preference, ReadPreference(ReadPreferenceMode.SECONDARY_PREFERRED))
+            self.assertEqual(tuned_collection.codec_options, CodecOptions(dict, tz_aware=True))
 
     def test_duplicate_id_raises(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

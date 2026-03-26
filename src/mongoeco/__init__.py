@@ -47,8 +47,9 @@ from mongoeco.compat import (
 )
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    BulkWriteResult, DeleteMany, DeleteOne, IndexDefinition, IndexModel, InsertOne, ObjectId,
-    ReplaceOne, ReturnDocument, UNDEFINED, UndefinedType, UpdateMany, UpdateOne,
+    BulkWriteResult, CodecOptions, DeleteMany, DeleteOne, IndexDefinition, IndexModel, InsertOne, ObjectId,
+    ReadConcern, ReadPreference, ReadPreferenceMode, ReplaceOne, ReturnDocument, TransactionOptions,
+    UNDEFINED, UndefinedType, UpdateMany, UpdateOne, WriteConcern,
 )
 
 __all__ = [
@@ -107,6 +108,12 @@ __all__ = [
     "IndexDefinition",
     "IndexModel",
     "BulkWriteResult",
+    "WriteConcern",
+    "ReadConcern",
+    "ReadPreference",
+    "ReadPreferenceMode",
+    "CodecOptions",
+    "TransactionOptions",
     "ObjectId",
     "ReturnDocument",
     "UndefinedType",

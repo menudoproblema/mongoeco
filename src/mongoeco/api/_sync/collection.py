@@ -11,23 +11,75 @@ from mongoeco.compat import (
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    BulkWriteResult, DeleteResult, Document, DocumentId, Filter, InsertManyResult,
-    IndexInformation, IndexModel, IndexKeySpec, InsertOneResult, Projection, ReturnDocument, SortSpec, Update,
-    UpdateResult, WriteModel,
+    BulkWriteResult, CodecOptions, DeleteResult, Document, DocumentId, Filter, InsertManyResult,
+    IndexInformation, IndexModel, IndexKeySpec, InsertOneResult, Projection, ReadConcern, ReadPreference,
+    ReturnDocument, SortSpec, Update, UpdateResult, WriteConcern, WriteModel,
 )
 
 
 class Collection:
     """Adaptador sincronico sobre AsyncCollection."""
 
-    def __init__(self, client, db_name: str, collection_name: str):
+    def __init__(
+        self,
+        client,
+        db_name: str,
+        collection_name: str,
+        *,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+    ):
         self._client = client
         self._db_name = db_name
         self._collection_name = collection_name
+        self._write_concern = (
+            client.write_concern if write_concern is None else write_concern
+        )
+        self._read_concern = (
+            client.read_concern if read_concern is None else read_concern
+        )
+        self._read_preference = (
+            client.read_preference if read_preference is None else read_preference
+        )
+        self._codec_options = (
+            client.codec_options if codec_options is None else codec_options
+        )
 
     def _async_collection(self):
         self._client._ensure_connected()
-        return self._client._async_client.get_database(self._db_name).get_collection(self._collection_name)
+        return self._client._async_client.get_database(
+            self._db_name,
+            write_concern=self._write_concern,
+            read_concern=self._read_concern,
+            read_preference=self._read_preference,
+            codec_options=self._codec_options,
+        ).get_collection(
+            self._collection_name,
+            write_concern=self._write_concern,
+            read_concern=self._read_concern,
+            read_preference=self._read_preference,
+            codec_options=self._codec_options,
+        )
+
+    def with_options(
+        self,
+        *,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+    ) -> "Collection":
+        return type(self)(
+            self._client,
+            self._db_name,
+            self._collection_name,
+            write_concern=self._write_concern if write_concern is None else write_concern,
+            read_concern=self._read_concern if read_concern is None else read_concern,
+            read_preference=self._read_preference if read_preference is None else read_preference,
+            codec_options=self._codec_options if codec_options is None else codec_options,
+        )
 
     def insert_one(self, document: Document, *, session: ClientSession | None = None) -> InsertOneResult[DocumentId]:
         return self._client._run(self._async_collection().insert_one(document, session=session))
@@ -443,3 +495,19 @@ class Collection:
     @property
     def pymongo_profile_resolution(self) -> PyMongoProfileResolution:
         return self._client.pymongo_profile_resolution
+
+    @property
+    def write_concern(self) -> WriteConcern:
+        return self._write_concern
+
+    @property
+    def read_concern(self) -> ReadConcern:
+        return self._read_concern
+
+    @property
+    def read_preference(self) -> ReadPreference:
+        return self._read_preference
+
+    @property
+    def codec_options(self) -> CodecOptions:
+        return self._codec_options
