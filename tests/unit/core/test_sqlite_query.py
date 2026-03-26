@@ -23,6 +23,7 @@ from mongoeco.core.query_plan import (
     QueryNode,
     RegexCondition,
     SizeCondition,
+    TypeCondition,
 )
 from mongoeco.engines.sqlite_query import (
     _comparison_type_order,
@@ -151,6 +152,16 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
             translate_query_plan(ExistsCondition("profile.name", False)),
             ("json_type(document, '$.profile.name') IS NULL", []),
         )
+
+    def test_translate_type_and_bitwise_conditions(self):
+        sql, params = translate_query_plan(TypeCondition("value", ("number", "string")))
+        self.assertIn("json_type(document, '$.value') IN ('integer', 'real')", sql)
+        self.assertIn("json_type(document, '$.value') = 'text'", sql)
+        self.assertEqual(params, [])
+
+        sql, params = translate_query_plan(TypeCondition("value", ("array",)))
+        self.assertEqual(sql, "(json_type(document, '$.value') = 'array')")
+        self.assertEqual(params, [])
 
     def test_internal_translation_helpers_cover_string_and_error_branches(self):
         self.assertEqual(_normalize_comparable_value("Ada"), ("string", "Ada"))

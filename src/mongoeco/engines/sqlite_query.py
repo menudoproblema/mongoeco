@@ -24,6 +24,7 @@ from mongoeco.core.query_plan import (
     QueryNode,
     RegexCondition,
     SizeCondition,
+    TypeCondition,
 )
 from mongoeco.types import SortSpec, Update
 
@@ -446,6 +447,152 @@ def _translate_membership(
     return wrapped, params
 
 
+def _translate_type_condition(plan: TypeCondition) -> SqlFragment:
+    path = _path_literal(plan.field)
+    tagged_type_sql = type_expression_sql(plan.field)
+    tagged_value_sql = value_expression_sql(plan.field)
+    scalar_clauses: list[str] = []
+    array_clauses: list[str] = []
+    params: list[object] = []
+
+    for spec in plan.values:
+        if isinstance(spec, bool):
+            raise NotImplementedError("Unsupported $type spec for SQL translation")
+        if isinstance(spec, int):
+            if spec == 1:
+                scalar_clauses.append(f"json_type(document, {path}) = 'real'")
+                array_clauses.append(
+                    f"EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE json_each.type = 'real')"
+                )
+            elif spec in {2}:
+                scalar_clauses.append(f"json_type(document, {path}) = 'text'")
+                array_clauses.append(
+                    f"EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE json_each.type = 'text')"
+                )
+            elif spec == 3:
+                scalar_clauses.append(
+                    f"(json_type(document, {path}) = 'object' AND {tagged_type_sql} = '')"
+                )
+                array_clauses.append(
+                    f"EXISTS (SELECT 1 FROM json_each(document, {path}) "
+                    f"WHERE json_each.type = 'object' AND COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') = '')"
+                )
+            elif spec == 4:
+                scalar_clauses.append(f"json_type(document, {path}) = 'array'")
+            elif spec == 5:
+                scalar_clauses.append(f"{tagged_type_sql} IN ('bytes', 'uuid')")
+            elif spec == 7:
+                scalar_clauses.append(f"{tagged_type_sql} = 'objectid'")
+            elif spec == 8:
+                scalar_clauses.append(f"json_type(document, {path}) IN ('true', 'false')")
+                array_clauses.append(
+                    f"EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE json_each.type IN ('true', 'false'))"
+                )
+            elif spec == 9:
+                scalar_clauses.append(f"{tagged_type_sql} = 'datetime'")
+            elif spec == 10:
+                scalar_clauses.append(f"json_type(document, {path}) = 'null'")
+                array_clauses.append(
+                    f"EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE json_each.type = 'null')"
+                )
+            elif spec == 11:
+                raise NotImplementedError("Regex $type is not translatable to SQLite")
+            elif spec == 16:
+                scalar_clauses.append(
+                    f"(json_type(document, {path}) = 'integer' AND json_extract(document, {path}) BETWEEN -2147483648 AND 2147483647)"
+                )
+                array_clauses.append(
+                    f"EXISTS (SELECT 1 FROM json_each(document, {path}) "
+                    f"WHERE json_each.type = 'integer' AND json_each.value BETWEEN -2147483648 AND 2147483647)"
+                )
+            elif spec == 18:
+                scalar_clauses.append(
+                    f"(json_type(document, {path}) = 'integer' AND (json_extract(document, {path}) < -2147483648 OR json_extract(document, {path}) > 2147483647))"
+                )
+                array_clauses.append(
+                    f"EXISTS (SELECT 1 FROM json_each(document, {path}) "
+                    f"WHERE json_each.type = 'integer' AND (json_each.value < -2147483648 OR json_each.value > 2147483647))"
+                )
+            else:
+                raise NotImplementedError("Unsupported numeric $type code for SQL translation")
+            continue
+
+        if not isinstance(spec, str):
+            raise NotImplementedError("Unsupported $type spec for SQL translation")
+        normalized = spec.strip()
+        if normalized == "number":
+            scalar_clauses.append(f"json_type(document, {path}) IN ('integer', 'real')")
+            array_clauses.append(
+                f"EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE json_each.type IN ('integer', 'real'))"
+            )
+        elif normalized == "double":
+            scalar_clauses.append(f"json_type(document, {path}) = 'real'")
+            array_clauses.append(
+                f"EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE json_each.type = 'real')"
+            )
+        elif normalized == "string":
+            scalar_clauses.append(f"json_type(document, {path}) = 'text'")
+            array_clauses.append(
+                f"EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE json_each.type = 'text')"
+            )
+        elif normalized == "object":
+            scalar_clauses.append(
+                f"(json_type(document, {path}) = 'object' AND {tagged_type_sql} = '')"
+            )
+            array_clauses.append(
+                f"EXISTS (SELECT 1 FROM json_each(document, {path}) "
+                f"WHERE json_each.type = 'object' AND COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') = '')"
+            )
+        elif normalized == "array":
+            scalar_clauses.append(f"json_type(document, {path}) = 'array'")
+        elif normalized == "binData":
+            scalar_clauses.append(f"{tagged_type_sql} IN ('bytes', 'uuid')")
+        elif normalized == "objectId":
+            scalar_clauses.append(f"{tagged_type_sql} = 'objectid'")
+        elif normalized == "bool":
+            scalar_clauses.append(f"json_type(document, {path}) IN ('true', 'false')")
+            array_clauses.append(
+                f"EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE json_each.type IN ('true', 'false'))"
+            )
+        elif normalized == "date":
+            scalar_clauses.append(f"{tagged_type_sql} = 'datetime'")
+        elif normalized == "null":
+            scalar_clauses.append(f"json_type(document, {path}) = 'null'")
+            array_clauses.append(
+                f"EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE json_each.type = 'null')"
+            )
+        elif normalized == "int":
+            scalar_clauses.append(
+                f"(json_type(document, {path}) = 'integer' AND json_extract(document, {path}) BETWEEN -2147483648 AND 2147483647)"
+            )
+            array_clauses.append(
+                f"EXISTS (SELECT 1 FROM json_each(document, {path}) "
+                f"WHERE json_each.type = 'integer' AND json_each.value BETWEEN -2147483648 AND 2147483647)"
+            )
+        elif normalized == "long":
+            scalar_clauses.append(
+                f"(json_type(document, {path}) = 'integer' AND (json_extract(document, {path}) < -2147483648 OR json_extract(document, {path}) > 2147483647))"
+            )
+            array_clauses.append(
+                f"EXISTS (SELECT 1 FROM json_each(document, {path}) "
+                f"WHERE json_each.type = 'integer' AND (json_each.value < -2147483648 OR json_each.value > 2147483647))"
+            )
+        elif normalized == "undefined":
+            scalar_clauses.append(f"{tagged_type_sql} = 'undefined'")
+        elif normalized == "regex":
+            raise NotImplementedError("Regex $type is not translatable to SQLite")
+        else:
+            raise NotImplementedError("Unsupported $type alias for SQL translation")
+
+    clauses = [f"({clause})" for clause in scalar_clauses]
+    if array_clauses:
+        clauses.extend(
+            f"(json_type(document, {path}) = 'array' AND ({clause}))"
+            for clause in array_clauses
+        )
+    return " OR ".join(clauses), params
+
+
 def translate_sort_spec(sort: SortSpec | None) -> str:
     if not sort:
         return ""
@@ -536,6 +683,8 @@ def translate_query_plan(plan: QueryNode) -> SqlFragment:
             f"json_type(document, {path}) IS NOT NULL" if plan.value else f"json_type(document, {path}) IS NULL",
             [],
         )
+    if isinstance(plan, TypeCondition):
+        return _translate_type_condition(plan)
     if isinstance(plan, NotCondition):
         clause_sql, clause_params = translate_query_plan(plan.clause)
         return f"NOT COALESCE(({clause_sql}), 0)", clause_params
