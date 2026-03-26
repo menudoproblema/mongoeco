@@ -1512,11 +1512,13 @@ class SQLiteEngine(AsyncStorageEngine):
         keys: IndexKeySpec,
         unique: bool,
         name: str | None,
+        max_time_ms: int | None,
         context: ClientSession | None,
     ) -> str:
         normalized_keys = normalize_index_keys(keys)
         fields = index_fields(normalized_keys)
         index_name = name or default_index_name(normalized_keys)
+        deadline = operation_deadline(max_time_ms)
         if self._is_builtin_id_index(normalized_keys):
             if name not in (None, "_id_"):
                 raise OperationFailure("Conflicting index definition for '_id_'")
@@ -1529,8 +1531,10 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
+                enforce_deadline(deadline)
                 indexes = self._load_indexes(db_name, coll_name)
                 for index in indexes:
+                    enforce_deadline(deadline)
                     if index["name"] == index_name:
                         if index["key"] != normalized_keys or index["unique"] != unique:
                             raise OperationFailure(f"Conflicting index definition for '{index_name}'")
@@ -1559,12 +1563,14 @@ class SQLiteEngine(AsyncStorageEngine):
                 )
                 unique_sql = "UNIQUE " if unique else ""
                 try:
+                    enforce_deadline(deadline)
                     self._begin_write(conn, context)
                     conn.execute(
                         f"CREATE {unique_sql}INDEX {self._quote_identifier(physical_name)} "
                         f"ON documents ({expressions})"
                     )
                     if multikey:
+                        enforce_deadline(deadline)
                         conn.execute(
                             f"CREATE INDEX {self._quote_identifier(multikey_physical_name)} "
                             "ON multikey_entries (db_name, coll_name, index_name, element_type, element_key, storage_key)"
@@ -1589,6 +1595,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         ),
                     )
                     if multikey:
+                        enforce_deadline(deadline)
                         index_metadata = {
                             "name": index_name,
                             "fields": fields,
@@ -1598,6 +1605,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             "multikey_physical_name": multikey_physical_name,
                         }
                         for storage_key, document in self._load_documents(db_name, coll_name):
+                            enforce_deadline(deadline)
                             self._replace_multikey_entries_for_index_for_document(
                                 conn,
                                 db_name,
@@ -1606,6 +1614,7 @@ class SQLiteEngine(AsyncStorageEngine):
                                 document,
                                 index_metadata,
                             )
+                    enforce_deadline(deadline)
                     self._commit_write(conn, context)
                     return index_name
                 except sqlite3.IntegrityError as exc:
@@ -2039,9 +2048,19 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         unique: bool = False,
         name: str | None = None,
+        max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> str:
-        return await asyncio.to_thread(self._create_index_sync, db_name, coll_name, keys, unique, name, context)
+        return await asyncio.to_thread(
+            self._create_index_sync,
+            db_name,
+            coll_name,
+            keys,
+            unique,
+            name,
+            max_time_ms,
+            context,
+        )
 
     @override
     async def list_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> list[IndexDocument]:

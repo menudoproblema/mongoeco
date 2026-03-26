@@ -1,5 +1,6 @@
 from collections.abc import Iterable, Sequence
 from copy import deepcopy
+import time
 
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api._async.cursor import (
@@ -22,6 +23,7 @@ from mongoeco.compat import (
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operators import UpdateEngine
+from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.engines.base import AsyncStorageEngine
@@ -1219,13 +1221,14 @@ class AsyncCollection:
         session: ClientSession | None = None,
     ) -> str:
         normalized_keys = self._normalize_index_keys(keys)
-        self._normalize_max_time_ms(max_time_ms)
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
         created_name = await self._engine.create_index(
             self._db_name,
             self._collection_name,
             normalized_keys,
             unique=unique,
             name=name,
+            max_time_ms=max_time_ms,
             context=session,
         )
         self._record_operation_metadata(
@@ -1245,7 +1248,8 @@ class AsyncCollection:
         session: ClientSession | None = None,
     ) -> list[str]:
         models = self._normalize_index_models(indexes)
-        self._normalize_max_time_ms(max_time_ms)
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
+        deadline = operation_deadline(max_time_ms)
         existing = await self._engine.index_information(
             self._db_name,
             self._collection_name,
@@ -1255,12 +1259,17 @@ class AsyncCollection:
         created_names: list[str] = []
         for index in models:
             try:
+                enforce_deadline(deadline)
                 name = await self._engine.create_index(
                     self._db_name,
                     self._collection_name,
                     index.keys,
                     unique=index.unique,
                     name=index.name,
+                    max_time_ms=None if deadline is None else max(
+                        1,
+                        int((deadline - time.monotonic()) * 1000),
+                    ),
                     context=session,
                 )
             except Exception:

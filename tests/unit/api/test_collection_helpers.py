@@ -1344,7 +1344,7 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         )
         self.assertEqual(
             engine.create_index_kwargs,
-            {"unique": True, "name": "idx_email", "context": None},
+            {"unique": True, "name": "idx_email", "max_time_ms": None, "context": None},
         )
         self.assertEqual(indexes, [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}])
         self.assertEqual(info, {"_id_": {"key": [("_id", 1)], "unique": True}})
@@ -1463,14 +1463,58 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             [
                 (
                     ("db", "coll", [("email", 1)]),
-                    {"unique": True, "name": None, "context": None},
+                    {"unique": True, "name": None, "max_time_ms": None, "context": None},
                 ),
                 (
                     ("db", "coll", [("tenant", 1), ("created_at", -1)]),
-                    {"unique": False, "name": "tenant_created", "context": None},
+                    {"unique": False, "name": "tenant_created", "max_time_ms": None, "context": None},
                 ),
             ],
         )
+
+    def test_create_index_forwards_max_time_ms(self):
+        class EngineStub:
+            async def create_index(self, *args, **kwargs):
+                self.kwargs = kwargs
+                return "idx"
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        asyncio.run(collection.create_index([("email", 1)], max_time_ms=25))
+
+        self.assertEqual(engine.kwargs["max_time_ms"], 25)
+
+    def test_create_indexes_shares_batch_deadline_across_calls(self):
+        class EngineStub:
+            def __init__(self):
+                self.calls = []
+
+            async def create_index(self, *args, **kwargs):
+                self.calls.append(kwargs["max_time_ms"])
+                return kwargs["name"] or "idx"
+
+            async def index_information(self, *args, **kwargs):
+                return {"_id_": {"key": [("_id", 1)], "unique": True}}
+
+            async def drop_index(self, *args, **kwargs):
+                return None
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        asyncio.run(
+            collection.create_indexes(
+                [
+                    IndexModel([("email", 1)]),
+                    IndexModel([("tenant", 1)], name="tenant_idx"),
+                ],
+                max_time_ms=50,
+            )
+        )
+
+        self.assertEqual(len(engine.calls), 2)
+        self.assertTrue(all(isinstance(value, int) and value > 0 for value in engine.calls))
 
     def test_update_one_sort_is_rejected_by_older_pymongo_profile(self):
         collection = AsyncCollection(

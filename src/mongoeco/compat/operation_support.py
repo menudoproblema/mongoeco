@@ -89,11 +89,11 @@ def _build_operation_option_support() -> MappingProxyType[str, MappingProxyType[
         },
         "create_index": {
             "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for index administration."),
-            "max_time_ms": OperationOptionSupport(accepted_noop, "Validated, but local index builds are still serialized inside the engine."),
+            "max_time_ms": OperationOptionSupport(effective, "Enforced as a local deadline during index build and multikey backfill."),
         },
         "create_indexes": {
             "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for index administration."),
-            "max_time_ms": OperationOptionSupport(accepted_noop, "Validated, but local index builds are still serialized inside the engine."),
+            "max_time_ms": OperationOptionSupport(effective, "Enforced as a local deadline across the whole index batch."),
         },
         "drop_index": {
             "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for index administration."),

@@ -465,10 +465,21 @@ class MemoryEngine(AsyncStorageEngine):
             )
 
     @override
-    async def create_index(self, db_name: str, coll_name: str, keys: IndexKeySpec, *, unique: bool = False, name: str | None = None, context: ClientSession | None = None) -> str:
+    async def create_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        keys: IndexKeySpec,
+        *,
+        unique: bool = False,
+        name: str | None = None,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> str:
         normalized_keys = normalize_index_keys(keys)
         fields = index_fields(normalized_keys)
         index_name = name or default_index_name(normalized_keys)
+        deadline = operation_deadline(max_time_ms)
         if self._is_builtin_id_index(normalized_keys):
             if name not in (None, "_id_"):
                 raise OperationFailure("Conflicting index definition for '_id_'")
@@ -476,12 +487,14 @@ class MemoryEngine(AsyncStorageEngine):
         if index_name == "_id_":
             raise OperationFailure("Conflicting index definition for '_id_'")
         async with self._get_lock(db_name, coll_name):
+            enforce_deadline(deadline)
             with self._meta_lock:
                 db_indexes = self._indexes.setdefault(db_name, {})
                 coll_indexes = db_indexes.setdefault(coll_name, [])
                 self._register_collection_locked(db_name, coll_name)
 
             for index in coll_indexes:
+                enforce_deadline(deadline)
                 if index["name"] == index_name:
                     if index["key"] != normalized_keys or index["unique"] != unique:
                         raise OperationFailure(
@@ -499,6 +512,7 @@ class MemoryEngine(AsyncStorageEngine):
                 seen: set[tuple[Any, ...]] = set()
                 coll = self._storage.get(db_name, {}).get(coll_name, {})
                 for data in coll.values():
+                    enforce_deadline(deadline)
                     document = self._codec.decode(data)
                     key = self._index_key(document, fields)
                     if key in seen:
@@ -507,6 +521,7 @@ class MemoryEngine(AsyncStorageEngine):
                         )
                     seen.add(key)
 
+            enforce_deadline(deadline)
             coll_indexes.append(
                 {
                     "name": index_name,

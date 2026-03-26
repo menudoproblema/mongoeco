@@ -65,6 +65,26 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_create_index_enforces_max_time_ms_deadline(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+            with patch(
+                "mongoeco.engines.sqlite.enforce_deadline",
+                side_effect=ExecutionTimeout("operation exceeded time limit"),
+            ):
+                with self.assertRaises(ExecutionTimeout):
+                    await engine.create_index(
+                        "db",
+                        "coll",
+                        ["email"],
+                        unique=True,
+                        max_time_ms=1,
+                    )
+        finally:
+            await engine.disconnect()
+
     def test_delete_matching_document_sync_falls_back_for_custom_dialect(self):
         class CustomDialect(MongoDialect70):
             pass
