@@ -91,7 +91,7 @@ class _AsyncAggregationCursorStub:
 
 
 class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
-    async def test_collect_lookup_names_skips_invalid_stages_and_recurses_nested_lookup_pipelines(self):
+    async def test_collect_lookup_names_skips_invalid_stages_and_recurses_nested_pipelines(self):
         cursor = AsyncAggregationCursor(
             _FakeCollection([]),
             [],
@@ -110,11 +110,29 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                         "as": "users",
                     }
                 },
+                {"$unionWith": "archive"},
+                {"$unionWith": {"coll": "audits", "pipeline": [{"$lookup": {"from": "teams", "localField": "team_id", "foreignField": "_id", "as": "teams"}}]}},
                 {"$facet": {"nested": [{"$lookup": {"from": "teams", "localField": "team_id", "foreignField": "_id", "as": "teams"}}]}},
             ]
         )
 
-        self.assertEqual(names, {"users", "roles", "teams"})
+        self.assertEqual(names, {"users", "roles", "teams", "archive", "audits"})
+
+    async def test_collect_lookup_names_skips_invalid_union_with_payloads(self):
+        cursor = AsyncAggregationCursor(
+            _FakeCollection([]),
+            [],
+        )
+
+        names = cursor._collect_lookup_names(
+            [
+                {"$unionWith": []},
+                {"$unionWith": {"pipeline": []}},
+                {"$unionWith": {"coll": "archive"}},
+            ]
+        )
+
+        self.assertEqual(names, {"archive"})
 
     async def test_materialize_pushes_safe_prefix_to_find(self):
         collection = _FakeCollection(

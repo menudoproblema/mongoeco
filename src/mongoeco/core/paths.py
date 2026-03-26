@@ -1,3 +1,4 @@
+import math
 from typing import Any
 
 from mongoeco.errors import OperationFailure
@@ -34,6 +35,8 @@ def _same_value_for_update(left: Any, right: Any) -> bool:
         if len(left) != len(right):
             return False
         return all(_same_value_for_update(left_item, right_item) for left_item, right_item in zip(left, right))
+    if isinstance(left, float):
+        return math.isnan(left) and math.isnan(right) if isinstance(right, float) else False
     return left == right
 
 

@@ -113,19 +113,73 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(evaluate_expression({"value": float("nan")}, {"$toString": "$value"}), "NaN")
         self.assertEqual(evaluate_expression({"value": float("inf")}, {"$toString": "$value"}), "Infinity")
         self.assertEqual(evaluate_expression({"value": float("-inf")}, {"$toString": "$value"}), "-Infinity")
+        self.assertEqual(evaluate_expression({"value": b"hello"}, {"$toString": "$value"}), "aGVsbG8=")
         self.assertEqual(
             evaluate_expression(document, {"$let": {"vars": {"extra": 5}, "in": {"$add": ["$score", "$$extra"]}}}),
             15,
         )
         self.assertEqual(evaluate_expression(document, {"$first": "$tags"}), "a")
         self.assertEqual(evaluate_expression(document, {"$first": "$score"}), 10)
+        self.assertEqual(evaluate_expression(document, {"$concat": ["$tags.0", "-", "$tags.1"]}), "a-b")
+        self.assertEqual(evaluate_expression({"text": "Ada Lovelace"}, {"$toLower": "$text"}), "ada lovelace")
+        self.assertEqual(evaluate_expression({"text": "Ada Lovelace"}, {"$toUpper": "$text"}), "ADA LOVELACE")
+        self.assertEqual(evaluate_expression({"text": "  Ada  "}, {"$trim": {"input": "$text"}}), "Ada")
+        self.assertEqual(evaluate_expression({"text": "\x00 Ada \x00"}, {"$trim": {"input": "$text"}}), "Ada")
+        self.assertEqual(evaluate_expression({"text": "\u00a0Ada\u00a0"}, {"$trim": {"input": "$text"}}), "Ada")
+        self.assertEqual(evaluate_expression({"text": "..Ada"}, {"$ltrim": {"input": "$text", "chars": "."}}), "Ada")
+        self.assertEqual(evaluate_expression({"text": "Ada.."}, {"$rtrim": {"input": "$text", "chars": "."}}), "Ada")
+        self.assertEqual(evaluate_expression({"text": "..Ada.."}, {"$trim": {"input": "$text", "chars": "."}}), "Ada")
+        self.assertEqual(
+            evaluate_expression({"text": "Ada Lovelace"}, {"$replaceOne": {"input": "$text", "find": "a", "replacement": "A"}}),
+            "AdA Lovelace",
+        )
+        self.assertEqual(
+            evaluate_expression({"text": "banana"}, {"$replaceAll": {"input": "$text", "find": "a", "replacement": "A"}}),
+            "bAnAnA",
+        )
+        self.assertEqual(evaluate_expression({"left": "A", "right": "a"}, {"$strcasecmp": ["$left", "$right"]}), 0)
+        self.assertEqual(evaluate_expression({"left": "beta", "right": "Alpha"}, {"$strcasecmp": ["$left", "$right"]}), 1)
+        self.assertEqual(evaluate_expression({"left": "Alpha", "right": "beta"}, {"$strcasecmp": ["$left", "$right"]}), -1)
+        self.assertEqual(evaluate_expression({"text": "Ada Lovelace"}, {"$substr": ["$text", 4, 4]}), "Love")
+        self.assertEqual(evaluate_expression({"text": "Ada Lovelace"}, {"$substr": ["$text", -1, 3]}), "")
+        self.assertEqual(evaluate_expression({"text": "Ada Lovelace"}, {"$substr": ["$text", 4, -1]}), "Lovelace")
+        self.assertEqual(evaluate_expression({"text": "Ada"}, {"$substr": ["$text", 99, 2]}), "")
+        self.assertEqual(evaluate_expression({"text": "cafétéria"}, {"$substr": ["$text", 0, 3]}), "caf")
+        self.assertEqual(evaluate_expression({"text": "cafétéria"}, {"$substr": ["$text", 3, 2]}), "é")
+        self.assertEqual(evaluate_expression({"text": "Ada Lovelace"}, {"$split": ["$text", " "]}), ["Ada", "Lovelace"])
+        self.assertEqual(evaluate_expression({"start": 0, "end": 5, "step": 2}, {"$range": ["$start", "$end", "$step"]}), [0, 2, 4])
         self.assertEqual(evaluate_expression(document, {"$concatArrays": ["$tags", "$other_tags"]}), ["a", "b", "c", "b", "d"])
+        self.assertEqual(evaluate_expression(document, {"$reverseArray": "$tags"}), ["c", "b", "a"])
+        self.assertTrue(evaluate_expression({"values": ["x", []]}, {"$allElementsTrue": "$values"}))
+        self.assertTrue(evaluate_expression({"values": [0, [], False]}, {"$anyElementTrue": "$values"}))
         self.assertEqual(evaluate_expression(document, {"$setUnion": ["$tags", "$other_tags"]}), ["a", "b", "c", "d"])
+        self.assertEqual(evaluate_expression(document, {"$setDifference": ["$tags", "$other_tags"]}), ["a", "c"])
+        self.assertEqual(evaluate_expression(document, {"$setIntersection": ["$tags", "$other_tags"]}), ["b"])
+        self.assertTrue(evaluate_expression(document, {"$setEquals": [["a", "b", "b"], ["b", "a"]]}))
+        self.assertTrue(evaluate_expression(document, {"$setIsSubset": [["a", "b"], ["b", "c", "a"]]}))
+        self.assertIsNone(evaluate_expression(document, {"$concat": ["$tags.0", "$missing"]}))
+        self.assertIsNone(evaluate_expression(document, {"$trim": {"input": "$missing"}}))
+        self.assertIsNone(evaluate_expression(document, {"$replaceOne": {"input": "$missing", "find": "a", "replacement": "A"}}))
+        self.assertIsNone(evaluate_expression(document, {"$strcasecmp": ["$missing", "A"]}))
+        self.assertEqual(evaluate_expression(document, {"$substr": ["$missing", 0, 2]}), "")
+        self.assertEqual(evaluate_expression(document, {"$toLower": "$missing"}), "")
+        self.assertEqual(evaluate_expression(document, {"$toUpper": "$missing"}), "")
+        self.assertIsNone(evaluate_expression(document, {"$split": ["$missing", " "]}))
         self.assertIsNone(evaluate_expression(document, {"$concatArrays": ["$tags", "$missing"]}))
         self.assertIsNone(evaluate_expression(document, {"$setUnion": ["$tags", "$missing"]}))
         self.assertEqual(
             evaluate_expression(document, {"$map": {"input": "$tags", "as": "tag", "in": {"$toString": "$$tag"}}}),
             ["a", "b", "c"],
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$map": {"input": "$tags", "in": "$$this"}}),
+            ["a", "b", "c"],
+        )
+        self.assertIsNone(
+            evaluate_expression(
+                document,
+                {"$map": {"input": "$tags", "as": "tag", "in": "$$this"}},
+            )[0]
         )
         self.assertEqual(
             evaluate_expression(document, {"$filter": {"input": "$tags", "as": "tag", "cond": {"$in": ["$$tag", ["a", "c"]]}}}),
@@ -159,6 +213,61 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(evaluate_expression(document, {"literal": "$score"}), {"literal": 10})
         self.assertEqual(evaluate_expression(document, ["$score", "$bonus"]), [10, 2])
         self.assertEqual(evaluate_expression(document, {"$literal": "$score"}), "$score")
+
+    def test_evaluate_expression_supports_date_arithmetic(self):
+        created_at = datetime.datetime(2024, 1, 1, 12, 0, 0)
+        updated_at = datetime.datetime(2024, 1, 1, 12, 0, 5)
+
+        self.assertEqual(
+            evaluate_expression({"created_at": created_at}, {"$add": ["$created_at", 1500]}),
+            datetime.datetime(2024, 1, 1, 12, 0, 1, 500000),
+        )
+        self.assertEqual(
+            evaluate_expression({"updated_at": updated_at}, {"$subtract": ["$updated_at", 500]}),
+            datetime.datetime(2024, 1, 1, 12, 0, 4, 500000),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                {"created_at": created_at, "updated_at": updated_at},
+                {"$subtract": ["$updated_at", "$created_at"]},
+            ),
+            5000,
+        )
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(
+                {"created_at": created_at, "updated_at": updated_at},
+                {"$add": ["$created_at", "$updated_at"]},
+            )
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(
+                {"created_at": created_at},
+                {"$subtract": [5, "$created_at"]},
+            )
+
+    def test_evaluate_expression_date_trunc_evaluates_dynamic_parameters(self):
+        document = {
+            "created_at": datetime.datetime(2026, 3, 24, 10, 37, 52),
+            "unit": "day",
+            "bin": 2,
+            "start": "monday",
+        }
+
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {
+                    "$dateTrunc": {
+                        "date": "$created_at",
+                        "unit": "$unit",
+                        "binSize": "$bin",
+                        "startOfWeek": "$start",
+                    }
+                },
+            ),
+            datetime.datetime(2026, 3, 24, 0, 0, 0),
+        )
 
     def test_evaluate_expression_uses_mongo_truthiness_rules(self):
         document = {
@@ -420,8 +529,6 @@ class AggregationTests(unittest.TestCase):
             {"$round": ["$value", 0]},
             {"$sqrt": 4},
             {"$trunc": ["$value", 0]},
-            {"$range": [0, 3]},
-            {"$reverseArray": "$items"},
             {"$objectToArray": {"a": 1}},
             {"$zip": {"inputs": [["a"], ["b"]]}},
             {"$bitAnd": [7, 3]},
@@ -442,26 +549,9 @@ class AggregationTests(unittest.TestCase):
             {"$week": "$created_at"},
             {"$isoWeek": "$created_at"},
             {"$isoWeekYear": "$created_at"},
-            {"$allElementsTrue": [["a", "b"]]},
-            {"$anyElementTrue": [[0, 1]]},
-            {"$setDifference": [["a"], ["b"]]},
-            {"$setEquals": [["a"], ["a"]]},
-            {"$setIntersection": [["a"], ["b"]]},
-            {"$setIsSubset": [["a"], ["a", "b"]]},
-            {"$concat": ["$text", " Lovelace"]},
-            {"$ltrim": {"input": "$text"}},
             {"$regexFind": {"input": "$text", "regex": "A"}},
             {"$regexFindAll": {"input": "$text", "regex": "A"}},
             {"$regexMatch": {"input": "$text", "regex": "A"}},
-            {"$replaceOne": {"input": "$text", "find": "A", "replacement": "a"}},
-            {"$replaceAll": {"input": "$text", "find": "A", "replacement": "a"}},
-            {"$rtrim": {"input": "$text"}},
-            {"$split": ["$text", "d"]},
-            {"$strcasecmp": ["A", "a"]},
-            {"$substr": ["$text", 0, 1]},
-            {"$toLower": "$text"},
-            {"$toUpper": "$text"},
-            {"$trim": {"input": "$text"}},
             {"$rand": {}},
             {"$sampleRate": 0.5},
             {"$toHashedIndexKey": "$text"},
@@ -485,8 +575,8 @@ class AggregationTests(unittest.TestCase):
         documents = [{"_id": "1", "group": "a", "value": 10}]
 
         unsupported_group_accumulators = [
-            "$addToSet", "$bottom", "$bottomN", "$count", "$firstN", "$last", "$lastN",
-            "$maxN", "$median", "$mergeObjects", "$minN", "$percentile", "$stdDevPop",
+            "$bottom", "$bottomN", "$firstN", "$lastN",
+            "$maxN", "$median", "$minN", "$percentile", "$stdDevPop",
             "$stdDevSamp", "$top", "$topN",
         ]
         for operator in unsupported_group_accumulators:
@@ -495,9 +585,9 @@ class AggregationTests(unittest.TestCase):
                     apply_pipeline(documents, [{"$group": {"_id": "$group", "result": {operator: "$value"}}}])
 
         unsupported_window_operators = [
-            "$addToSet", "$bottom", "$bottomN", "$count", "$covariancePop", "$covarianceSamp",
+            "$bottom", "$bottomN", "$covariancePop", "$covarianceSamp",
             "$denseRank", "$derivative", "$documentNumber", "$expMovingAvg", "$integral",
-            "$last", "$linearFill", "$locf", "$minN", "$rank", "$shift", "$stdDevPop",
+            "$linearFill", "$locf", "$minN", "$rank", "$shift", "$stdDevPop",
             "$stdDevSamp", "$top", "$topN",
         ]
         for operator in unsupported_window_operators:
@@ -664,6 +754,60 @@ class AggregationTests(unittest.TestCase):
             [],
         )
 
+    def test_evaluate_expression_rejects_invalid_string_operator_arguments(self):
+        document = {"text": "Ada", "number": 7}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$concat": ["$text", "$number"]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toLower": "$number"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toUpper": "$number"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$split": ["$text", "$number"]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$split": ["$text", ""]})
+
+    def test_evaluate_expression_covers_string_array_and_set_edge_cases(self):
+        document = {
+            "text": "Ada",
+            "tags": ["a", "b"],
+            "none_chars": None,
+            "number": 7,
+        }
+
+        self.assertIsNone(evaluate_expression(document, {"$reverseArray": "$missing"}))
+        self.assertIsNone(evaluate_expression(document, {"$allElementsTrue": "$missing"}))
+        self.assertIsNone(evaluate_expression(document, {"$setDifference": ["$tags", "$missing"]}))
+        self.assertIsNone(evaluate_expression(document, {"$setEquals": ["$tags", "$missing"]}))
+        self.assertFalse(evaluate_expression(document, {"$setEquals": [["a"], ["a", "b"]]}))
+        self.assertFalse(evaluate_expression(document, {"$setEquals": [["a", "c"], ["a", "b"]]}))
+        self.assertFalse(evaluate_expression(document, {"$setIsSubset": [["a", "z"], ["a", "b"]]}))
+        self.assertIsNone(evaluate_expression(document, {"$trim": {"input": "$text", "chars": "$none_chars"}}))
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$setIsSubset": [["a"], ["a", "b"], ["a"]]})
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$range": ["$number", 5, 0]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$range": [0, 5, 1.5]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$trim": {}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$trim": {"input": "$number"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$trim": {"input": "$text", "chars": "$number"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$replaceOne": {"input": "$text", "find": "a"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$replaceAll": {"input": "$text", "find": "$text", "replacement": "$number"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression({"text": "cafétéria"}, {"$substr": ["$text", 3, 1]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$substr": ["$text", True, 1]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$substr": ["$text", 0, True]})
+
     def test_evaluate_expression_supports_cond_object_and_if_null_fallback_to_none(self):
         document = {"score": 2, "bonus": None}
 
@@ -772,6 +916,82 @@ class AggregationTests(unittest.TestCase):
             [{"rank": 1, "name": "a"}, {"rank": 2, "name": "b"}, {"rank": 3, "name": "c"}],
         )
         self.assertIsNone(evaluate_expression(document, {"$sortArray": {"input": "$missing", "sortBy": 1}}))
+
+    def test_group_bucket_and_window_support_last_and_add_to_set_accumulators(self):
+        documents = [
+            {"_id": "1", "group": "a", "value": 1, "tag": "x"},
+            {"_id": "2", "group": "a", "value": 3, "tag": "x"},
+            {"_id": "3", "group": "a", "value": 5, "tag": "y"},
+            {"_id": "4", "group": "b", "value": 2, "tag": "z"},
+        ]
+
+        grouped = apply_pipeline(
+            documents,
+            [
+                {
+                    "$group": {
+                        "_id": "$group",
+                        "lastValue": {"$last": "$value"},
+                        "uniqueTags": {"$addToSet": "$tag"},
+                    }
+                }
+            ],
+        )
+        self.assertEqual(
+            grouped,
+            [
+                {"_id": "a", "lastValue": 5, "uniqueTags": ["x", "y"]},
+                {"_id": "b", "lastValue": 2, "uniqueTags": ["z"]},
+            ],
+        )
+
+        bucketed = apply_pipeline(
+            documents,
+            [
+                {
+                    "$bucket": {
+                        "groupBy": "$value",
+                        "boundaries": [0, 4, 10],
+                        "output": {
+                            "lastTag": {"$last": "$tag"},
+                            "uniqueTags": {"$addToSet": "$tag"},
+                        },
+                    }
+                }
+            ],
+        )
+        self.assertEqual(
+            bucketed,
+            [
+                {"_id": 0, "lastTag": "z", "uniqueTags": ["x", "z"]},
+                {"_id": 4, "lastTag": "y", "uniqueTags": ["y"]},
+            ],
+        )
+
+        windowed = apply_pipeline(
+            documents,
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"value": 1},
+                        "output": {
+                            "lastSeen": {"$last": "$tag", "window": {"documents": ["unbounded", "current"]}},
+                            "seenTags": {"$addToSet": "$tag", "window": {"documents": ["unbounded", "current"]}},
+                        },
+                    }
+                }
+            ],
+        )
+        self.assertEqual(
+            windowed,
+            [
+                {"_id": "1", "group": "a", "value": 1, "tag": "x", "lastSeen": "x", "seenTags": ["x"]},
+                {"_id": "2", "group": "a", "value": 3, "tag": "x", "lastSeen": "x", "seenTags": ["x"]},
+                {"_id": "3", "group": "a", "value": 5, "tag": "y", "lastSeen": "y", "seenTags": ["x", "y"]},
+                {"_id": "4", "group": "b", "value": 2, "tag": "z", "lastSeen": "z", "seenTags": ["z"]},
+            ],
+        )
         self.assertEqual(
             evaluate_expression(
                 {"created_at": datetime.datetime(2026, 3, 24, 10, 37, 52)},
@@ -786,6 +1006,149 @@ class AggregationTests(unittest.TestCase):
             ),
             datetime.datetime(2026, 3, 24, 10, 30, 0),
         )
+
+    def test_group_bucket_and_window_support_count_and_merge_objects_accumulators(self):
+        documents = [
+            {"_id": "1", "group": "a", "score": 1, "meta": {"x": 1}},
+            {"_id": "2", "group": "a", "score": 2, "meta": {"y": 2}},
+            {"_id": "3", "group": "b", "score": 3, "meta": None},
+        ]
+
+        grouped = apply_pipeline(
+            documents,
+            [
+                {
+                    "$group": {
+                        "_id": "$group",
+                        "count": {"$count": {}},
+                        "merged": {"$mergeObjects": "$meta"},
+                    }
+                }
+            ],
+        )
+        self.assertEqual(
+            grouped,
+            [
+                {"_id": "a", "count": 2, "merged": {"x": 1, "y": 2}},
+                {"_id": "b", "count": 1, "merged": {}},
+            ],
+        )
+
+        bucketed = apply_pipeline(
+            documents,
+            [
+                {
+                    "$bucketAuto": {
+                        "groupBy": "$score",
+                        "buckets": 2,
+                        "output": {
+                            "count": {"$count": {}},
+                            "merged": {"$mergeObjects": "$meta"},
+                        },
+                    }
+                }
+            ],
+        )
+        self.assertEqual(
+            bucketed,
+            [
+                {"_id": {"min": 1, "max": 3}, "count": 2, "merged": {"x": 1, "y": 2}},
+                {"_id": {"min": 3, "max": 3}, "count": 1, "merged": {}},
+            ],
+        )
+
+        windowed = apply_pipeline(
+            documents,
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"score": 1},
+                        "output": {
+                            "runningCount": {"$count": {}, "window": {"documents": ["unbounded", "current"]}},
+                        },
+                    }
+                }
+            ],
+        )
+        self.assertEqual(
+            windowed,
+            [
+                {"_id": "1", "group": "a", "score": 1, "meta": {"x": 1}, "runningCount": 1},
+                {"_id": "2", "group": "a", "score": 2, "meta": {"y": 2}, "runningCount": 2},
+                {"_id": "3", "group": "b", "score": 3, "meta": None, "runningCount": 1},
+            ],
+        )
+
+    def test_set_window_fields_uses_window_support_hook_when_initializing_state(self):
+        class _WindowOnlyLastDialect(MongoDialect):
+            def supports_group_accumulator(self, name: str) -> bool:
+                return False if name == "$last" else super().supports_group_accumulator(name)
+
+            def supports_window_accumulator(self, name: str) -> bool:
+                return True if name == "$last" else super().supports_window_accumulator(name)
+
+        result = apply_pipeline(
+            [{"_id": "1", "group": "a", "value": 1}, {"_id": "2", "group": "a", "value": 2}],
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"value": 1},
+                        "output": {
+                            "lastSeen": {"$last": "$value", "window": {"documents": ["unbounded", "current"]}},
+                        },
+                    }
+                }
+            ],
+            dialect=_WindowOnlyLastDialect(
+                key="test",
+                server_version="test",
+                label="Window Only Last",
+            ),
+        )
+
+    def test_require_projection_rejects_mixed_exclusion_with_id_inclusion(self):
+        with self.assertRaises(OperationFailure):
+            _require_projection({"_id": 1, "age": 0})
+
+    def test_apply_unwind_keeps_null_include_array_index_for_scalar_values(self):
+        result = apply_pipeline(
+            [{"_id": "1", "value": "scalar"}],
+            [{"$unwind": {"path": "$value", "includeArrayIndex": "idx"}}],
+        )
+
+        self.assertEqual(result, [{"_id": "1", "value": "scalar", "idx": None}])
+
+    def test_accumulators_reject_invalid_count_and_merge_objects_operands(self):
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"value": 1}],
+                [{"$group": {"_id": None, "count": {"$count": 1}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"value": 1}],
+                [{"$group": {"_id": None, "merged": {"$mergeObjects": "$value"}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [],
+                [{"$group": {"_id": None, "median": {"$median": "$value"}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"value": 1}],
+                [{"$bucketAuto": {"groupBy": "$value", "buckets": 1, "output": {"merged": {"$mergeObjects": "$value"}}}}],
+            )
+
+    def test_sum_accumulator_sums_numeric_array_elements(self):
+        result = apply_pipeline(
+            [{"scores": [10, 20, 30]}, {"scores": [5, "x"]}],
+            [{"$group": {"_id": None, "total": {"$sum": "$scores"}}}],
+        )
+
+        self.assertEqual(result, [{"_id": None, "total": 65}])
 
     def test_evaluate_expression_supports_date_trunc_across_units(self):
         value = datetime.datetime(2026, 3, 24, 10, 37, 52, 123456)
@@ -938,6 +1301,14 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$sortArray": {"input": "$tags", "sortBy": {"rank": True}}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$sortArray": {"input": "$tags", "sortBy": {1: 1}}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$strcasecmp": [1, "a"]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$substr": [1, 0, 1]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$substr": ["$tags", "0", 1]})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$substr": ["$tags", 0, "1"]})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$dateTrunc": {}})
         with self.assertRaises(OperationFailure):
@@ -1286,6 +1657,33 @@ class AggregationTests(unittest.TestCase):
         )
         self.assertEqual(replaced, [{"name": "Ada"}])
 
+    def test_pipeline_supports_union_with_pipeline_only_using_current_collection(self):
+        documents = [
+            {"_id": "1", "kind": "event", "rank": 2},
+            {"_id": "2", "kind": "event", "rank": 1},
+            {"_id": "3", "kind": "archive", "rank": 0},
+        ]
+
+        result = apply_pipeline(
+            documents,
+            [
+                {"$match": {"kind": "event"}},
+                {"$unionWith": {"pipeline": [{"$match": {"kind": "archive"}}]}},
+                {"$sort": {"rank": 1}},
+                {"$project": {"_id": 1, "kind": 1}},
+            ],
+            collection_resolver=lambda name: documents if name == "__mongoeco_current_collection__" else None,
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {"_id": "3", "kind": "archive"},
+                {"_id": "2", "kind": "event"},
+                {"_id": "1", "kind": "event"},
+            ],
+        )
+
     def test_pipeline_supports_lookup_with_multiple_and_missing_matches(self):
         documents = [
             {"_id": "1", "tenant": "a"},
@@ -1436,6 +1834,17 @@ class AggregationTests(unittest.TestCase):
         )
 
         self.assertEqual(result, [{"_id": "1", "tenant": "a", "users": []}])
+
+    def test_pipeline_lookup_without_filters_does_not_alias_joined_arrays(self):
+        result = apply_pipeline(
+            [{"_id": "1"}, {"_id": "2"}],
+            [{"$lookup": {"from": "users", "as": "users", "pipeline": [], "let": {}}}],
+            collection_resolver=lambda name: [{"_id": "u1", "name": "Ada"}] if name == "users" else None,
+        )
+
+        result[0]["users"][0]["name"] = "Changed"
+
+        self.assertEqual(result[1]["users"], [{"_id": "u1", "name": "Ada"}])
 
     def test_pipeline_supports_nested_lookup_inside_lookup_pipeline(self):
         documents = [{"_id": "1", "tenant": "a"}]
@@ -2301,6 +2710,10 @@ class AggregationTests(unittest.TestCase):
     def test_pipeline_count_returns_empty_result_for_empty_input(self):
         self.assertEqual(apply_pipeline([], [{"$count": "total"}]), [{"total": 0}])
 
+    def test_pipeline_rejects_count_field_names_with_dots(self):
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$count": "a.b"}])
+
     def test_expression_and_or_accept_empty_arrays(self):
         document = {"_id": "1"}
 
@@ -2314,6 +2727,24 @@ class AggregationTests(unittest.TestCase):
         )
 
         self.assertEqual(result, [{"_id": None, "firstPayload": {"total": 5, "count": 2}}])
+
+    def test_pipeline_union_with_current_collection_keeps_empty_resolved_collection_empty(self):
+        result = apply_pipeline(
+            [{"_id": "seed"}],
+            [{"$unionWith": {"pipeline": []}}],
+            collection_resolver=lambda name: [] if name == "__mongoeco_current_collection__" else None,
+        )
+
+        self.assertEqual(result, [{"_id": "seed"}])
+
+    def test_pipeline_union_with_current_collection_falls_back_to_input_when_resolver_returns_none(self):
+        result = apply_pipeline(
+            [{"_id": "seed"}],
+            [{"$unionWith": {"pipeline": []}}],
+            collection_resolver=lambda name: None,
+        )
+
+        self.assertEqual(result, [{"_id": "seed"}, {"_id": "seed"}])
 
     def test_pipeline_set_window_fields_preserves_user_document_that_looks_like_avg_state(self):
         result = apply_pipeline(
@@ -2445,6 +2876,26 @@ class AggregationTests(unittest.TestCase):
             apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": 1}}])
 
         with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "", "localField": "x", "foreignField": "_id", "as": "user"}}])
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "$users", "localField": "x", "foreignField": "_id", "as": "user"}}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "", "foreignField": "_id", "as": "user"}}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": ""}}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "$x", "foreignField": "_id", "as": "user"}}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "$_id", "as": "user"}}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": "$user"}}])
+
+        with self.assertRaises(OperationFailure):
             apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "as": "user", "pipeline": [], "let": []}}])
 
         with self.assertRaises(OperationFailure):
@@ -2474,6 +2925,12 @@ class AggregationTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             apply_pipeline(
                 [{"_id": "1"}],
+                [{"$lookup": {"from": "users", "as": "user", "pipeline": [], "localField": "$x", "foreignField": "_id"}}],
+            )
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1"}],
                 [{"$lookup": {"from": "users", "as": "user", "pipeline": [], "foreignField": "_id"}}],
             )
 
@@ -2491,6 +2948,8 @@ class AggregationTests(unittest.TestCase):
 
         with self.assertRaises(OperationFailure):
             apply_pipeline([{"_id": "1"}], [{"$unionWith": {"coll": "", "pipeline": []}}])
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$unionWith": {"coll": "$users", "pipeline": []}}])
 
         with self.assertRaises(OperationFailure):
             apply_pipeline([{"_id": "1"}], [{"$unionWith": ""}])
@@ -2538,12 +2997,6 @@ class AggregationTests(unittest.TestCase):
             apply_pipeline([{"score": 50}], [{"$bucket": {"groupBy": "$score", "boundaries": [0, 10]}}])
 
         with self.assertRaises(OperationFailure):
-            apply_pipeline(
-                [{"score": 5}],
-                [{"$bucket": {"groupBy": "$score", "boundaries": [0, 10], "output": {"last": {"$last": "$score"}}}}],
-            )
-
-        with self.assertRaises(OperationFailure):
             apply_pipeline([{"score": 1}], [{"$bucketAuto": []}])
 
         with self.assertRaises(OperationFailure):
@@ -2563,9 +3016,6 @@ class AggregationTests(unittest.TestCase):
 
         with self.assertRaises(OperationFailure):
             apply_pipeline([{"_id": "1"}], [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"x": {"$sum": 1, "window": []}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$setWindowFields": {"output": {"x": {"$last": 1}}}}])
 
         with self.assertRaises(OperationFailure):
             apply_pipeline([{"_id": "1"}], [{"$setWindowFields": {"output": {1: {"$sum": 1}}}}])

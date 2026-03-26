@@ -66,7 +66,7 @@ def apply_projection(
                 _delete_projection_value(result, path)
 
     if include_id and "_id" in doc:
-        result["_id"] = doc["_id"]
+        result["_id"] = deepcopy(doc["_id"])
     elif not include_id and "_id" in result:
         del result["_id"]
 
@@ -80,20 +80,19 @@ def _set_projection_value(target: Document, source: Document, path: str) -> None
             if isinstance(item, dict):
                 projected_item: Document = {}
                 _set_projection_value(projected_item, item, path)
-                projected_items.append(projected_item)
+                if projected_item:
+                    projected_items.append(projected_item)
             elif isinstance(item, list):
                 projected_item = []
                 _set_projection_value(projected_item, item, path)
                 projected_items.append(projected_item)
-            else:
-                projected_items.append({})
         if isinstance(target, list):
             target.extend(projected_items)
         return
 
     if "." not in path:
         if path in source:
-            target[path] = source[path]
+            target[path] = deepcopy(source[path])
         return
 
     first, rest = path.split(".", 1)

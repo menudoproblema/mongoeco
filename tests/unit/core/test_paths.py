@@ -1,4 +1,5 @@
 import unittest
+import math
 
 import mongoeco.core.paths as paths_module
 from mongoeco.core.paths import delete_document_value, get_document_value, set_document_value
@@ -76,6 +77,15 @@ class PathHelpersTests(unittest.TestCase):
         self.assertFalse(changed_dict)
         self.assertFalse(changed_list)
         self.assertFalse(changed_whole_list)
+
+    def test_set_document_value_treats_nan_as_unchanged(self):
+        document = {"value": math.nan, "items": [math.nan]}
+
+        changed_scalar = set_document_value(document, "value", math.nan)
+        changed_list = set_document_value(document["items"], "0", math.nan)
+
+        self.assertFalse(changed_scalar)
+        self.assertFalse(changed_list)
 
     def test_set_document_value_returns_false_for_non_numeric_nested_list_segment(self):
         document = []

@@ -39,7 +39,10 @@ from mongoeco.compat import (
     SUPPORTED_PYMONGO_MAJORS,
 )
 from mongoeco.session import ClientSession
-from mongoeco.types import ObjectId, ReturnDocument, UNDEFINED, UndefinedType
+from mongoeco.types import (
+    BulkWriteResult, DeleteMany, DeleteOne, InsertOne, ObjectId, ReplaceOne,
+    ReturnDocument, UNDEFINED, UndefinedType, UpdateMany, UpdateOne,
+)
 
 __all__ = [
     "AsyncMongoClient",
@@ -81,6 +84,13 @@ __all__ = [
     "detect_installed_pymongo_profile",
     "detect_installed_pymongo_profile_resolution",
     "ClientSession",
+    "InsertOne",
+    "UpdateOne",
+    "UpdateMany",
+    "ReplaceOne",
+    "DeleteOne",
+    "DeleteMany",
+    "BulkWriteResult",
     "ObjectId",
     "ReturnDocument",
     "UndefinedType",

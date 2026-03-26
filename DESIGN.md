@@ -350,6 +350,8 @@ Esto implica:
 ### Fase 3: Ampliación Funcional Avanzada
 La Fase 3 pasa a priorizar funcionalidad visible y útil que ya supera el baseline actual, sin mezclar todavía el cierre completo de la historia transaccional.
 
+Estado actual: **Completada**.
+
 Objetivos principales:
 * **Agregación avanzada**:
   * ampliar `aggregate()` desde el subconjunto amplio actual hacia operadores más costosos o especializados
@@ -377,6 +379,34 @@ Criterio de foco:
 * la prioridad es aumentar el valor funcional visible sin perder coherencia arquitectónica
 * aggregation mínima útil se considera más prioritaria que transacciones reales, porque abre más casos de uso inmediatos con menor coste estructural
 
+### Perímetro de Cierre de Fase 3
+La Fase 3 se considera cerrada con este alcance ya implementado y verificado:
+* **Ampliación de escrituras y helpers de colección**:
+  * `insert_many`
+  * `update_many`
+  * `delete_many`
+  * `replace_one`
+  * familia `find_one_and_*`
+  * `bulk_write`
+  * `distinct`
+  * `estimated_document_count`
+  * `drop`, `drop_collection` y `drop_database`
+* **Agregación ensanchada con retorno práctico**:
+  * stages adicionales: `"$unset"`, `"$sample"`, `"$unionWith"`
+  * expresiones string adicionales: `"$concat"`, `"$toLower"`, `"$toUpper"`, `"$split"`, `"$strcasecmp"`, `"$substr"`
+  * acumuladores adicionales: `"$last"`, `"$addToSet"`, `"$count"`, `"$mergeObjects"`
+  * endurecimiento adicional de `"$lookup"`, `"$setWindowFields"` y validaciones asociadas
+* **Índices multikey reales en SQLite para membresía sobre arrays**:
+  * tabla auxiliar de entradas indexadas por elemento
+  * mantenimiento automático en `insert`, `update`, `delete`, `overwrite` y `drop`
+  * uso efectivo desde la ruta SQL para igualdad y `"$in"` sobre campos array indexados
+  * verificación explícita mediante `EXPLAIN QUERY PLAN`
+* **Consistencia reforzada entre engines**:
+  * más paridad observable entre `MemoryEngine` y `SQLiteEngine` en filtros, escrituras y agregación
+* **Verificación ejecutable del cierre**:
+  * snapshot actual de referencia: `831` tests en `unittest`, `831 passed` y `455 subtests passed` en `pytest`
+  * cobertura actual de referencia: `100%` sobre `src/mongoeco`
+
 ### Fase 4: Robustez Transaccional y Superficie Avanzada
 La Fase 4 queda reservada para cerrar la parte más costosa del backend y seguir ampliando superficie avanzada una vez que Fase 3 haya ensanchado el uso práctico de la librería.
 
@@ -389,8 +419,6 @@ Objetivos principales:
   * cerrar bien la interacción entre sesiones, engine y cierre de recursos
   * reducir huecos entre rutas SQL nativas y fallbacks en Python
 * **Ampliar la superficie de colección y escritura avanzada**:
-  * `bulk_write`
-  * completar la familia `find_one_and_*` si no se cerró antes
   * más clases de resultados y errores de escritura
 * **Ampliar operadores de update**:
   * `$rename`

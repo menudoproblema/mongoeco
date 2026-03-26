@@ -13,7 +13,7 @@ from mongoeco.core.projections import apply_projection
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import MatchAll, QueryNode, ensure_query_plan
 from mongoeco.core.sorting import sort_documents
-from mongoeco.errors import DuplicateKeyError
+from mongoeco.errors import DuplicateKeyError, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import DeleteResult, Document, DocumentId, Filter, Projection, SortSpec, Update, UpdateResult, ObjectId
 
@@ -335,7 +335,7 @@ class MemoryEngine(AsyncStorageEngine):
             for index in coll_indexes:
                 if index["name"] == index_name:
                     if index["fields"] != fields or index["unique"] != unique:
-                        raise DuplicateKeyError(
+                        raise OperationFailure(
                             f"Conflicting index definition for '{index_name}'"
                         )
                     return index_name
@@ -378,7 +378,13 @@ class MemoryEngine(AsyncStorageEngine):
             return list(self._storage.get(db_name, {}).keys())
 
     @override
-    async def drop_collection(self, db_name: str, coll_name: str) -> None:
+    async def drop_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> None:
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
                 if db_name in self._storage and coll_name in self._storage[db_name]:
@@ -389,5 +395,4 @@ class MemoryEngine(AsyncStorageEngine):
                     del self._indexes[db_name][coll_name]
                     if not self._indexes[db_name]:
                         del self._indexes[db_name]
-        with self._meta_lock:
-            self._locks.pop(self._lock_key(db_name, coll_name), None)
+                self._locks.pop(self._lock_key(db_name, coll_name), None)

@@ -1,10 +1,11 @@
 import re
+from copy import deepcopy
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.errors import OperationFailure
-from mongoeco.core.paths import delete_document_value, get_document_value, set_document_value
+from mongoeco.core.paths import _same_value_for_update, delete_document_value, get_document_value, set_document_value
 
 
 class UpdateEngine:
@@ -150,13 +151,13 @@ class UpdateEngine:
     @staticmethod
     def _expand_array_update_values(operator: str, value: Any) -> list[Any]:
         if not isinstance(value, dict) or "$each" not in value:
-            return [value]
+            return [deepcopy(value)]
         if set(value) != {"$each"}:
             raise OperationFailure(f"{operator} only supports the $each modifier")
         each = value["$each"]
         if not isinstance(each, list):
             raise OperationFailure(f"{operator} $each requires an array")
-        return list(each)
+        return deepcopy(each)
 
     @staticmethod
     def _apply_push(
@@ -256,7 +257,7 @@ class UpdateEngine:
                     for candidate in current
                     if not QueryEngine._values_equal(candidate, value, dialect=dialect)
                 ]
-            if filtered != current:
+            if not _same_value_for_update(filtered, current):
                 if set_document_value(doc, path, filtered):
                     modified = True
         return modified

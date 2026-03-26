@@ -123,6 +123,47 @@ class ReturnDocument(Enum):
 
 
 @dataclass(frozen=True, slots=True)
+class InsertOne:
+    document: Document
+
+
+@dataclass(frozen=True, slots=True)
+class UpdateOne:
+    filter: Filter
+    update: Update
+    upsert: bool = False
+    sort: SortSpec | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class UpdateMany:
+    filter: Filter
+    update: Update
+    upsert: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class ReplaceOne:
+    filter: Filter
+    replacement: Document
+    upsert: bool = False
+    sort: SortSpec | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class DeleteOne:
+    filter: Filter
+
+
+@dataclass(frozen=True, slots=True)
+class DeleteMany:
+    filter: Filter
+
+
+type WriteModel = InsertOne | UpdateOne | UpdateMany | ReplaceOne | DeleteOne | DeleteMany
+
+
+@dataclass(frozen=True, slots=True)
 class InsertOneResult[T]:
     inserted_id: T
     acknowledged: bool = True
@@ -145,4 +186,15 @@ class UpdateResult[T]:
 @dataclass(frozen=True, slots=True)
 class DeleteResult:
     deleted_count: int
+    acknowledged: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class BulkWriteResult[T]:
+    inserted_count: int
+    matched_count: int
+    modified_count: int
+    deleted_count: int
+    upserted_count: int
+    upserted_ids: dict[int, T]
     acknowledged: bool = True

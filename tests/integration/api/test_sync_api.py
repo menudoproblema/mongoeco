@@ -1,13 +1,24 @@
-import threading
 import datetime
+import threading
 import unittest
 
-from mongoeco import ClientSession, MongoClient, ObjectId, ReturnDocument
+from mongoeco import (
+    ClientSession,
+    DeleteMany,
+    DeleteOne,
+    InsertOne,
+    MongoClient,
+    ObjectId,
+    ReplaceOne,
+    ReturnDocument,
+    UpdateMany,
+    UpdateOne,
+)
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import DuplicateKeyError, InvalidOperation, OperationFailure
+from mongoeco.errors import BulkWriteError, DuplicateKeyError, InvalidOperation, OperationFailure
 SYNC_ENGINE_FACTORIES = {
     "memory": MemoryEngine,
     "sqlite": SQLiteEngine,
@@ -72,6 +83,54 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(updated.modified_count, 2)
                     self.assertEqual(deleted.deleted_count, 2)
                     self.assertEqual(remaining, [{"_id": "3", "kind": "click", "done": False}])
+
+    def test_bulk_write_supports_ordered_and_unordered_execution(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory(), pymongo_profile="4.11") as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "seed", "kind": "view", "rank": 2, "done": False})
+                    collection.insert_one({"_id": "other", "kind": "view", "rank": 1, "done": False})
+
+                    success = collection.bulk_write(
+                        [
+                            InsertOne({"_id": "new", "kind": "click"}),
+                            UpdateOne({"kind": "view"}, {"$set": {"done": True}}, sort=[("rank", 1)]),
+                            UpdateMany({"kind": "view"}, {"$set": {"tag": "seen"}}),
+                            ReplaceOne({"_id": "new"}, {"kind": "click", "done": True}),
+                            DeleteOne({"_id": "seed"}),
+                            DeleteMany({"kind": "view"}),
+                        ]
+                    )
+
+                    self.assertEqual(success.inserted_count, 1)
+                    self.assertEqual(success.matched_count, 4)
+                    self.assertEqual(success.modified_count, 4)
+                    self.assertEqual(success.deleted_count, 2)
+                    self.assertEqual(success.upserted_count, 0)
+                    self.assertEqual(
+                        collection.find({}, sort=[("_id", 1)]).to_list(),
+                        [{"_id": "new", "kind": "click", "done": True}],
+                    )
+
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "dup", "done": False})
+
+                    with self.assertRaises(BulkWriteError) as ctx:
+                        collection.bulk_write(
+                            [
+                                InsertOne({"_id": "dup"}),
+                                UpdateOne({"_id": "dup"}, {"$set": {"done": True}}),
+                                DeleteOne({"_id": "dup"}),
+                            ],
+                            ordered=False,
+                        )
+
+                    self.assertEqual(ctx.exception.details["writeErrors"][0]["index"], 0)
+                    self.assertEqual(ctx.exception.details["nModified"], 1)
+                    self.assertEqual(ctx.exception.details["nRemoved"], 1)
+                    self.assertEqual(collection.find({}).to_list(), [])
 
     def test_replace_one_and_find_one_and_family(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -187,6 +246,46 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     documents = collection.find({}, sort=[("rank", 1)], skip=1, limit=1).to_list()
 
                     self.assertEqual(documents, [{"_id": "3", "rank": 2}])
+
+    def test_estimated_document_count_and_drop_collection_and_database(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    users = client.alpha.users
+                    logs = client.alpha.logs
+                    users.insert_one({"_id": "1", "name": "Ada"})
+                    logs.insert_one({"_id": "1", "kind": "view"})
+
+                    self.assertEqual(users.estimated_document_count(), 1)
+                    client.alpha.drop_collection("logs")
+                    self.assertEqual(client.alpha.list_collection_names(), ["users"])
+
+                    users.drop()
+                    self.assertEqual(client.alpha.list_collection_names(), [])
+
+                    client.drop_database("alpha")
+                    self.assertNotIn("alpha", client.list_database_names())
+
+    def test_drop_operations_on_missing_targets_are_noops(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.alpha.drop_collection("missing")
+                    client.alpha.users.drop()
+                    client.drop_database("missing")
+                    self.assertEqual(client.list_database_names(), [])
+
+    def test_drop_database_removes_sqlite_database_with_only_index_metadata(self):
+        with MongoClient(SQLiteEngine()) as client:
+            client.alpha.users.create_index(["email"], unique=False)
+
+            self.assertIn("alpha", client.list_database_names())
+            self.assertEqual(client.alpha.list_collection_names(), ["users"])
+
+            client.drop_database("alpha")
+
+            self.assertNotIn("alpha", client.list_database_names())
+            self.assertEqual(client.alpha.list_collection_names(), [])
 
     def test_find_supports_first_call_without_prior_connection(self):
         client = MongoClient()
@@ -954,6 +1053,72 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_aggregate_supports_union_with_and_union_with_inside_facet(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    events = client.analytics.events
+                    archived = client.analytics.archived_events
+                    events.insert_many(
+                        [
+                            {"_id": "e1", "kind": "event", "rank": 2},
+                            {"_id": "e2", "kind": "event", "rank": 1},
+                        ]
+                    )
+                    archived.insert_many(
+                        [
+                            {"_id": "a1", "kind": "archive", "rank": 3},
+                            {"_id": "a2", "kind": "archive", "rank": 0},
+                        ]
+                    )
+
+                    unioned = events.aggregate(
+                        [
+                            {"$unionWith": {"coll": "archived_events", "pipeline": [{"$sort": {"rank": 1}}]}},
+                            {"$project": {"_id": 1, "kind": 1, "rank": 1}},
+                        ]
+                    ).to_list()
+                    faceted = events.aggregate(
+                        [
+                            {
+                                "$facet": {
+                                    "combined": [
+                                        {"$unionWith": "archived_events"},
+                                        {"$sort": {"rank": 1}},
+                                        {"$project": {"_id": 1}},
+                                    ]
+                                }
+                            }
+                        ]
+                    ).to_list()
+                    events.insert_one({"_id": "e3", "kind": "archive", "rank": 0})
+                    current_only = events.aggregate(
+                        [
+                            {"$match": {"kind": "event"}},
+                            {"$unionWith": {"pipeline": [{"$match": {"kind": "archive"}}]}},
+                            {"$sort": {"rank": 1}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        unioned,
+                        [
+                            {"_id": "e1", "kind": "event", "rank": 2},
+                            {"_id": "e2", "kind": "event", "rank": 1},
+                            {"_id": "a2", "kind": "archive", "rank": 0},
+                            {"_id": "a1", "kind": "archive", "rank": 3},
+                        ],
+                    )
+                    self.assertEqual(
+                        faceted,
+                        [{"combined": [{"_id": "a2"}, {"_id": "e2"}, {"_id": "e1"}, {"_id": "a1"}]}],
+                    )
+                    self.assertEqual(
+                        current_only,
+                        [{"_id": "e3"}, {"_id": "e2"}, {"_id": "e1"}],
+                    )
+
     def test_aggregate_supports_bucket(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -1042,6 +1207,93 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"tenant": "a", "rank": 2, "runningTotal": 12},
                             {"tenant": "b", "rank": 1, "runningTotal": 3},
                             {"tenant": "b", "rank": 2, "runningTotal": 12},
+                        ],
+                    )
+
+    def test_aggregate_supports_string_expressions_last_and_add_to_set(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.analytics.events
+                    collection.insert_one({"_id": "1", "tenant": "a", "rank": 1, "kind": "view", "label": "Ada"})
+                    collection.insert_one({"_id": "2", "tenant": "a", "rank": 2, "kind": "view", "label": "Lovelace"})
+                    collection.insert_one({"_id": "3", "tenant": "a", "rank": 3, "kind": "click", "label": "Analytical"})
+
+                    projected = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 0,
+                                    "full": {"$concat": ["$label", "-", "$kind"]},
+                                    "lower": {"$toLower": "$label"},
+                                    "upper": {"$toUpper": "$kind"},
+                                    "prefix": {"$substr": ["$label", 0, 3]},
+                                    "compare": {"$strcasecmp": ["$kind", "VIEW"]},
+                                }
+                            },
+                            {"$sort": {"full": 1}},
+                        ]
+                    ).to_list()
+                    grouped = collection.aggregate(
+                        [
+                            {"$sort": {"rank": 1}},
+                            {
+                                "$group": {
+                                    "_id": "$tenant",
+                                    "lastKind": {"$last": "$kind"},
+                                    "kinds": {"$addToSet": "$kind"},
+                                }
+                            },
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        projected,
+                        [
+                            {"full": "Ada-view", "lower": "ada", "upper": "VIEW", "prefix": "Ada", "compare": 0},
+                            {"full": "Analytical-click", "lower": "analytical", "upper": "CLICK", "prefix": "Ana", "compare": -1},
+                            {"full": "Lovelace-view", "lower": "lovelace", "upper": "VIEW", "prefix": "Lov", "compare": 0},
+                        ],
+                    )
+                    self.assertEqual(
+                        grouped,
+                        [{"_id": "a", "lastKind": "click", "kinds": ["view", "click"]}],
+                    )
+
+    def test_aggregate_supports_split_count_and_merge_objects(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.analytics.events
+                    collection.insert_one({"_id": "1", "tenant": "a", "text": "Ada Lovelace", "meta": {"x": 1}})
+                    collection.insert_one({"_id": "2", "tenant": "a", "text": "Grace Hopper", "meta": {"y": 2}})
+                    collection.insert_one({"_id": "3", "tenant": "b", "text": "Alan Turing", "meta": None})
+
+                    projected = collection.aggregate(
+                        [
+                            {"$project": {"_id": 0, "parts": {"$split": ["$text", " "]}}},
+                            {"$limit": 1},
+                        ]
+                    ).to_list()
+                    grouped = collection.aggregate(
+                        [
+                            {
+                                "$group": {
+                                    "_id": "$tenant",
+                                    "count": {"$count": {}},
+                                    "merged": {"$mergeObjects": "$meta"},
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(projected, [{"parts": ["Ada", "Lovelace"]}])
+                    self.assertEqual(
+                        grouped,
+                        [
+                            {"_id": "a", "count": 2, "merged": {"x": 1, "y": 2}},
+                            {"_id": "b", "count": 1, "merged": {}},
                         ],
                     )
 

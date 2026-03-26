@@ -1,8 +1,9 @@
+import base64
 import datetime
 import math
 import random
 import uuid
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import cmp_to_key
@@ -23,6 +24,7 @@ type PipelineStage = dict[str, Any]
 type Pipeline = list[PipelineStage]
 
 _ACCUMULATOR_FLAGS_KEY = ("__mongoeco_internal__", "accumulator_flags")
+_CURRENT_COLLECTION_RESOLVER_KEY = "__mongoeco_current_collection__"
 
 
 def _aggregation_key(value: Any) -> Any:
@@ -111,11 +113,14 @@ def _require_projection_for_dialect(
             if key != "_id":
                 computed_fields_present = True
             continue
-        if key != "_id":
+        if key == "_id":
             if flag == 1:
                 include_flags.append(flag)
-            else:
-                exclude_flags.append(flag)
+            continue
+        if flag == 1:
+            include_flags.append(flag)
+        else:
+            exclude_flags.append(flag)
     if include_flags and exclude_flags:
         raise OperationFailure("cannot mix inclusion and exclusion in $project")
     if exclude_flags and computed_fields_present:
@@ -216,8 +221,12 @@ def _require_lookup_spec(spec: object) -> dict[str, Any]:
         raise OperationFailure("$lookup requires from and as")
     from_collection = spec["from"]
     output_field = spec["as"]
-    if not all(isinstance(value, str) for value in (from_collection, output_field)):
-        raise OperationFailure("$lookup fields must be strings")
+    if not all(isinstance(value, str) and value for value in (from_collection, output_field)):
+        raise OperationFailure("$lookup from and as must be non-empty strings")
+    if from_collection.startswith("$"):
+        raise OperationFailure("$lookup from must be a collection name, not a path expression")
+    if output_field.startswith("$"):
+        raise OperationFailure("$lookup as must be a field name, not a path expression")
 
     if "pipeline" in spec:
         let_spec = spec.get("let", {})
@@ -236,8 +245,10 @@ def _require_lookup_spec(spec: object) -> dict[str, Any]:
         if has_local:
             local_field = spec["localField"]
             foreign_field = spec["foreignField"]
-            if not all(isinstance(value, str) for value in (local_field, foreign_field)):
-                raise OperationFailure("$lookup fields must be strings")
+            if not all(isinstance(value, str) and value for value in (local_field, foreign_field)):
+                raise OperationFailure("$lookup fields must be non-empty strings")
+            if local_field.startswith("$") or foreign_field.startswith("$"):
+                raise OperationFailure("$lookup localField and foreignField must be field paths, not path expressions")
             lookup["localField"] = local_field
             lookup["foreignField"] = foreign_field
         return lookup
@@ -249,8 +260,10 @@ def _require_lookup_spec(spec: object) -> dict[str, Any]:
         raise OperationFailure("$lookup let requires pipeline form")
     local_field = spec["localField"]
     foreign_field = spec["foreignField"]
-    if not all(isinstance(value, str) for value in (local_field, foreign_field)):
-        raise OperationFailure("$lookup fields must be strings")
+    if not all(isinstance(value, str) and value for value in (local_field, foreign_field)):
+        raise OperationFailure("$lookup fields must be non-empty strings")
+    if local_field.startswith("$") or foreign_field.startswith("$"):
+        raise OperationFailure("$lookup localField and foreignField must be field paths, not path expressions")
     return {
         "from": from_collection,
         "as": output_field,
@@ -266,14 +279,17 @@ def _require_union_with_spec(spec: object) -> dict[str, Any]:
         return {"coll": spec, "pipeline": []}
     if not isinstance(spec, dict):
         raise OperationFailure("$unionWith requires a collection name string or a document specification")
-    if "coll" not in spec:
-        raise OperationFailure("$unionWith currently requires a coll field")
-    coll = spec["coll"]
-    if not isinstance(coll, str) or not coll:
-        raise OperationFailure("$unionWith coll must be a non-empty string")
     pipeline = spec.get("pipeline", [])
     if "pipeline" in spec:
         pipeline = _require_pipeline_spec("$unionWith", pipeline)
+    coll = spec.get("coll")
+    if coll is not None:
+        if not isinstance(coll, str) or not coll:
+            raise OperationFailure("$unionWith coll must be a non-empty string")
+        if coll.startswith("$"):
+            raise OperationFailure("$unionWith coll must be a collection name, not a path expression")
+    elif "pipeline" not in spec:
+        raise OperationFailure("$unionWith requires coll or pipeline")
     if set(spec) - {"coll", "pipeline"}:
         raise OperationFailure("$unionWith only supports coll and pipeline")
     return {"coll": coll, "pipeline": pipeline}
@@ -369,6 +385,12 @@ def _require_expression_args(operator: str, spec: object, *, min_args: int, max_
     return spec
 
 
+def _validate_accumulator_expression(operator: str, expression: object) -> None:
+    if operator == "$count":
+        if not isinstance(expression, dict) or expression:
+            raise OperationFailure("$count accumulator requires an empty document")
+
+
 def _compare_values(
     left: Any,
     right: Any,
@@ -397,6 +419,14 @@ def _require_numeric(operator: str, value: object) -> int | float:
 
 def _is_numeric(value: object) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _sum_accumulator_operand(value: Any) -> int | float | None:
+    if _is_numeric(value):
+        return value
+    if isinstance(value, list):
+        return sum(item for item in value if _is_numeric(item))
+    return None
 
 
 def _require_array(operator: str, value: object) -> list[Any]:
@@ -577,7 +607,73 @@ def _stringify_aggregation_value(value: Any) -> str:
     if isinstance(value, datetime.datetime):
         normalized = value.astimezone(datetime.UTC) if value.tzinfo is not None else value
         return normalized.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    if isinstance(value, (bytes, bytearray)):
+        return base64.b64encode(bytes(value)).decode("ascii")
     return str(value)
+
+
+def _compare_strings_case_insensitive(left: str, right: str) -> int:
+    normalized_left = left.lower()
+    normalized_right = right.lower()
+    if normalized_left < normalized_right:
+        return -1
+    if normalized_left > normalized_right:
+        return 1
+    return 0
+
+
+def _substr_string(value: str, start: int, length: int) -> str:
+    if start < 0:
+        return ""
+    raw = value.encode("utf-8")
+    if start > len(raw):
+        return ""
+    end = len(raw) if length < 0 else min(len(raw), start + length)
+
+    boundaries = {0, len(raw)}
+    offset = 0
+    for char in value:
+        boundaries.add(offset)
+        offset += len(char.encode("utf-8"))
+        boundaries.add(offset)
+
+    if start not in boundaries or end not in boundaries:
+        raise OperationFailure("$substr byte offsets must align with UTF-8 code point boundaries")
+    return raw[start:end].decode("utf-8")
+
+
+def _add_milliseconds(value: datetime.datetime, milliseconds: int | float) -> datetime.datetime:
+    return value + datetime.timedelta(milliseconds=milliseconds)
+
+
+def _subtract_values(left: Any, right: Any) -> Any:
+    if isinstance(left, datetime.datetime):
+        if isinstance(right, datetime.datetime):
+            delta = left - right
+            return int(delta.total_seconds() * 1000)
+        if isinstance(right, (int, float)) and not isinstance(right, bool):
+            return _add_milliseconds(left, -right)
+    if isinstance(right, datetime.datetime):
+        raise OperationFailure("$subtract only supports number-number, date-date, or date-number")
+    return _require_numeric("$subtract", left) - _require_numeric("$subtract", right)
+
+
+def _trim_string(value: str, chars: str | None, *, mode: str) -> str:
+    if chars is None:
+        start = 0
+        end = len(value)
+        if mode in {"left", "both"}:
+            while start < end and (value[start].isspace() or value[start] == "\x00"):
+                start += 1
+        if mode in {"right", "both"}:
+            while end > start and (value[end - 1].isspace() or value[end - 1] == "\x00"):
+                end -= 1
+        return value[start:end]
+    if mode == "left":
+        return value.lstrip(chars)
+    if mode == "right":
+        return value.rstrip(chars)
+    return value.strip(chars)
 
 
 def evaluate_expression(
@@ -686,6 +782,20 @@ def evaluate_expression(
                 ]
                 if any(value is None for value in raw_values):
                     return None
+                if operator == "$add":
+                    date_values = [
+                        value for value in raw_values
+                        if isinstance(value, datetime.datetime)
+                    ]
+                    if date_values:
+                        if len(date_values) != 1:
+                            raise OperationFailure("$add only supports a single date argument")
+                        result = date_values[0]
+                        for value in raw_values:
+                            if isinstance(value, datetime.datetime):
+                                continue
+                            result = _add_milliseconds(result, _require_numeric(operator, value))
+                        return result
                 values = [_require_numeric(operator, value) for value in raw_values]
                 result = values[0]
                 for value in values[1:]:
@@ -697,10 +807,10 @@ def evaluate_expression(
                 right_raw = evaluate_expression(document, args[1], variables, dialect=dialect)
                 if left_raw is None or right_raw is None:
                     return None
+                if operator == "$subtract":
+                    return _subtract_values(left_raw, right_raw)
                 left = _require_numeric(operator, left_raw)
                 right = _require_numeric(operator, right_raw)
-                if operator == "$subtract":
-                    return left - right
                 if operator == "$divide":
                     if right == 0:
                         raise OperationFailure("$divide cannot divide by zero")
@@ -720,6 +830,16 @@ def evaluate_expression(
                 if operator == "$floor":
                     return integer if integer <= value else integer - 1
                 return integer if integer >= value else integer + 1
+            if operator == "$range":
+                args = _require_expression_args(operator, spec, min_args=2, max_args=3)
+                start = evaluate_expression(document, args[0], variables, dialect=dialect)
+                end = evaluate_expression(document, args[1], variables, dialect=dialect)
+                step = evaluate_expression(document, args[2], variables, dialect=dialect) if len(args) == 3 else 1
+                if not all(isinstance(value, int) and not isinstance(value, bool) for value in (start, end, step)):
+                    raise OperationFailure("$range requires integer arguments")
+                if step == 0:
+                    raise OperationFailure("$range step cannot be zero")
+                return list(range(start, end, step))
             if operator == "$size":
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
                 value = evaluate_expression(document, args[0], variables, dialect=dialect)
@@ -767,6 +887,87 @@ def evaluate_expression(
                 if isinstance(value, list):
                     return value[0] if value else None
                 return value
+            if operator == "$concat":
+                args = _require_expression_args(operator, spec, min_args=1)
+                parts: list[str] = []
+                for item in args:
+                    value = evaluate_expression(document, item, variables, dialect=dialect)
+                    if value is None:
+                        return None
+                    if not isinstance(value, str):
+                        raise OperationFailure("$concat requires string arguments")
+                    parts.append(value)
+                return "".join(parts)
+            if operator in {"$trim", "$ltrim", "$rtrim"}:
+                if not isinstance(spec, dict) or "input" not in spec:
+                    raise OperationFailure(f"{operator} requires an input field")
+                value = evaluate_expression(document, spec["input"], variables, dialect=dialect)
+                if value is None:
+                    return None
+                if not isinstance(value, str):
+                    raise OperationFailure(f"{operator} requires a string input")
+                chars = spec.get("chars")
+                if chars is not None:
+                    chars = evaluate_expression(document, chars, variables, dialect=dialect)
+                    if chars is None:
+                        return None
+                    if not isinstance(chars, str):
+                        raise OperationFailure(f"{operator} chars must evaluate to a string")
+                mode = {"$trim": "both", "$ltrim": "left", "$rtrim": "right"}[operator]
+                return _trim_string(value, chars, mode=mode)
+            if operator in {"$replaceOne", "$replaceAll"}:
+                if not isinstance(spec, dict) or not {"input", "find", "replacement"} <= set(spec):
+                    raise OperationFailure(f"{operator} requires input, find and replacement")
+                source = evaluate_expression(document, spec["input"], variables, dialect=dialect)
+                find = evaluate_expression(document, spec["find"], variables, dialect=dialect)
+                replacement = evaluate_expression(document, spec["replacement"], variables, dialect=dialect)
+                if source is None or find is None or replacement is None:
+                    return None
+                if not isinstance(source, str) or not isinstance(find, str) or not isinstance(replacement, str):
+                    raise OperationFailure(f"{operator} requires string input, find and replacement")
+                return source.replace(find, replacement, 1 if operator == "$replaceOne" else -1)
+            if operator == "$strcasecmp":
+                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
+                left = evaluate_expression(document, args[0], variables, dialect=dialect)
+                right = evaluate_expression(document, args[1], variables, dialect=dialect)
+                if left is None or right is None:
+                    return None
+                if not isinstance(left, str) or not isinstance(right, str):
+                    raise OperationFailure("$strcasecmp requires string arguments")
+                return _compare_strings_case_insensitive(left, right)
+            if operator == "$substr":
+                args = _require_expression_args(operator, spec, min_args=3, max_args=3)
+                source = evaluate_expression(document, args[0], variables, dialect=dialect)
+                start = evaluate_expression(document, args[1], variables, dialect=dialect)
+                length = evaluate_expression(document, args[2], variables, dialect=dialect)
+                if source is None:
+                    return ""
+                if not isinstance(source, str):
+                    raise OperationFailure("$substr requires the first argument to evaluate to a string")
+                if not isinstance(start, int) or isinstance(start, bool):
+                    raise OperationFailure("$substr start must be an integer")
+                if not isinstance(length, int) or isinstance(length, bool):
+                    raise OperationFailure("$substr length must be an integer")
+                return _substr_string(source, start, length)
+            if operator in {"$toLower", "$toUpper"}:
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                value = evaluate_expression(document, args[0], variables, dialect=dialect)
+                if value is None:
+                    return ""
+                if not isinstance(value, str):
+                    raise OperationFailure(f"{operator} requires a string argument")
+                return value.lower() if operator == "$toLower" else value.upper()
+            if operator == "$split":
+                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
+                source = evaluate_expression(document, args[0], variables, dialect=dialect)
+                delimiter = evaluate_expression(document, args[1], variables, dialect=dialect)
+                if source is None or delimiter is None:
+                    return None
+                if not isinstance(source, str) or not isinstance(delimiter, str):
+                    raise OperationFailure("$split requires string arguments")
+                if delimiter == "":
+                    raise OperationFailure("$split delimiter must not be an empty string")
+                return source.split(delimiter)
             if operator == "$concatArrays":
                 args = _require_expression_args(operator, spec, min_args=1)
                 result: list[Any] = []
@@ -776,6 +977,20 @@ def evaluate_expression(
                         return None
                     result.extend(deepcopy(_require_array(operator, value)))
                 return result
+            if operator == "$reverseArray":
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                value = evaluate_expression(document, args[0], variables, dialect=dialect)
+                if value is None:
+                    return None
+                return list(reversed(deepcopy(_require_array(operator, value))))
+            if operator in {"$allElementsTrue", "$anyElementTrue"}:
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                value = evaluate_expression(document, args[0], variables, dialect=dialect)
+                if value is None:
+                    return None
+                values = _require_array(operator, value)
+                predicate = all if operator == "$allElementsTrue" else any
+                return predicate(_expression_truthy(item, dialect=dialect) for item in values)
             if operator == "$setUnion":
                 args = _require_expression_args(operator, spec, min_args=1)
                 result: list[Any] = []
@@ -789,6 +1004,59 @@ def evaluate_expression(
                         dialect=dialect,
                     )
                 return result
+            if operator in {"$setDifference", "$setIntersection"}:
+                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
+                left = evaluate_expression(document, args[0], variables, dialect=dialect)
+                right = evaluate_expression(document, args[1], variables, dialect=dialect)
+                if left is None or right is None:
+                    return None
+                left_values = _require_array(operator, left)
+                right_values = _require_array(operator, right)
+                left_unique: list[Any] = []
+                right_unique: list[Any] = []
+                _append_unique_values(left_unique, left_values, dialect=dialect)
+                _append_unique_values(right_unique, right_values, dialect=dialect)
+                result: list[Any] = []
+                for item in left_unique:
+                    in_right = any(QueryEngine._values_equal(item, candidate, dialect=dialect) for candidate in right_unique)
+                    if operator == "$setDifference" and not in_right:
+                        result.append(deepcopy(item))
+                    if operator == "$setIntersection" and in_right:
+                        result.append(deepcopy(item))
+                return result
+            if operator in {"$setEquals", "$setIsSubset"}:
+                args = _require_expression_args(
+                    operator,
+                    spec,
+                    min_args=2,
+                    max_args=2 if operator == "$setIsSubset" else None,
+                )
+                sets: list[list[Any]] = []
+                for item in args:
+                    value = evaluate_expression(document, item, variables, dialect=dialect)
+                    if value is None:
+                        return None
+                    normalized: list[Any] = []
+                    _append_unique_values(normalized, _require_array(operator, value), dialect=dialect)
+                    sets.append(normalized)
+                base = sets[0]
+                if operator == "$setEquals":
+                    for candidate in sets[1:]:
+                        if len(base) != len(candidate):
+                            return False
+                        if any(
+                            not any(QueryEngine._values_equal(item, other, dialect=dialect) for other in candidate)
+                            for item in base
+                        ):
+                            return False
+                    return True
+                for candidate in sets[1:]:
+                    if any(
+                        not any(QueryEngine._values_equal(item, other, dialect=dialect) for other in candidate)
+                        for item in base
+                    ):
+                        return False
+                return True
             if operator == "$map":
                 if not isinstance(spec, dict) or "input" not in spec or "in" not in spec:
                     raise OperationFailure("$map requires input and in")
@@ -802,8 +1070,12 @@ def evaluate_expression(
                 result = []
                 for item in source:
                     scoped = dict(variables)
-                    scoped[alias] = item
-                    scoped["this"] = item
+                    scoped_item = deepcopy(item)
+                    scoped[alias] = scoped_item
+                    if alias == "this":
+                        scoped["this"] = scoped_item
+                    else:
+                        scoped.pop("this", None)
                     result.append(evaluate_expression(document, spec["in"], scoped, dialect=dialect))
                 return result
             if operator == "$filter":
@@ -908,16 +1180,28 @@ def evaluate_expression(
                     return None
                 if not isinstance(value, datetime.datetime):
                     raise OperationFailure("$dateTrunc requires a datetime value")
-                unit = spec["unit"]
+                unit = evaluate_expression(document, spec["unit"], variables, dialect=dialect)
                 if not isinstance(unit, str):
                     raise OperationFailure("$dateTrunc unit must be a string")
-                bin_size = spec.get("binSize", 1)
+                bin_size = (
+                    evaluate_expression(document, spec["binSize"], variables, dialect=dialect)
+                    if "binSize" in spec
+                    else 1
+                )
                 if not isinstance(bin_size, int) or isinstance(bin_size, bool):
                     raise OperationFailure("$dateTrunc binSize must be an integer")
-                timezone = spec.get("timezone")
+                timezone = (
+                    evaluate_expression(document, spec["timezone"], variables, dialect=dialect)
+                    if "timezone" in spec
+                    else None
+                )
                 if timezone not in (None, "UTC"):
                     raise OperationFailure("$dateTrunc timezone is not supported")
-                start_of_week = spec.get("startOfWeek", "sunday")
+                start_of_week = (
+                    evaluate_expression(document, spec["startOfWeek"], variables, dialect=dialect)
+                    if "startOfWeek" in spec
+                    else "sunday"
+                )
                 if not isinstance(start_of_week, str):
                     raise OperationFailure("$dateTrunc startOfWeek must be a string")
                 return _truncate_datetime(value, unit, bin_size, start_of_week)
@@ -1120,43 +1404,40 @@ def _apply_group(
         raise OperationFailure("$group requires a document specification with _id")
 
     accumulator_specs = {key: value for key, value in spec.items() if key != "_id"}
+    _initialize_accumulators(
+        accumulator_specs,
+        dialect=dialect,
+        support_checker=dialect.supports_group_accumulator,
+        unsupported_message="Unsupported $group accumulator",
+    )
     groups: dict[Any, dict[object, Any]] = {}
 
     for document in documents:
         group_id = evaluate_expression(document, spec["_id"], variables, dialect=dialect)
         group_key = _aggregation_key(group_id)
         if group_key not in groups:
-            groups[group_key] = {"_id": deepcopy(group_id), _ACCUMULATOR_FLAGS_KEY: {}}
-            flags = _accumulator_flags(groups[group_key])
-            for field, accumulator in accumulator_specs.items():
-                if not isinstance(accumulator, dict) or len(accumulator) != 1:
-                    raise OperationFailure("$group accumulator must be a single-key document")
-                operator, _ = next(iter(accumulator.items()))
-                if not dialect.supports_group_accumulator(operator):
-                    raise OperationFailure(f"Unsupported $group accumulator: {operator}")
-                if operator == "$sum":
-                    groups[group_key][field] = 0
-                elif operator in {"$min", "$max", "$first"}:
-                    groups[group_key][field] = None
-                    flags[field] = False
-                elif operator == "$avg":
-                    groups[group_key][field] = _AverageAccumulator()
-                elif operator == "$push":
-                    groups[group_key][field] = []
-                else:
-                    raise OperationFailure(f"Unsupported $group accumulator: {operator}")
+            groups[group_key] = {"_id": deepcopy(group_id), **_initialize_accumulators(
+                accumulator_specs,
+                dialect=dialect,
+                support_checker=dialect.supports_group_accumulator,
+                unsupported_message="Unsupported $group accumulator",
+            )}
 
         bucket = groups[group_key]
         flags = _accumulator_flags(bucket)
         for field, accumulator in accumulator_specs.items():
             operator, expression = next(iter(accumulator.items()))
-            value = evaluate_expression(document, expression, variables, dialect=dialect)
-            if operator == "$sum":
+            value = None if operator == "$count" else evaluate_expression(document, expression, variables, dialect=dialect)
+            if operator in {"$sum", "$count"}:
+                if operator == "$count":
+                    bucket[field] += 1
+                    continue
                 if value is None:
                     continue
-                if not _is_numeric(value):
+                numeric_value = _sum_accumulator_operand(value)
+                if numeric_value is None:
                     continue
-                bucket[field] += value
+                bucket[field] += numeric_value
             elif operator == "$min":
                 if value is None:
                     continue
@@ -1178,10 +1459,25 @@ def _apply_group(
                 bucket[field].count += 1
             elif operator == "$push":
                 bucket[field].append(deepcopy(value))
+            elif operator == "$addToSet":
+                _append_unique_values(
+                    bucket[field],
+                    [value],
+                    dialect=dialect,
+                )
+            elif operator == "$mergeObjects":
+                if value is None:
+                    continue
+                if not isinstance(value, dict):
+                    raise OperationFailure("$mergeObjects accumulator requires document operands")
+                bucket[field].update(deepcopy(value))
             elif operator == "$first":
                 if not flags[field]:
                     bucket[field] = deepcopy(value)
                     flags[field] = True
+            elif operator == "$last":
+                bucket[field] = deepcopy(value)
+                flags[field] = True
 
     result: list[Document] = []
     for bucket in groups.values():
@@ -1202,27 +1498,34 @@ def _initialize_accumulators(
     *,
     default_sum: bool = False,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    support_checker: Callable[[str], bool] | None = None,
+    unsupported_message: str = "Unsupported accumulator",
 ) -> dict[str, Any]:
     initialized: dict[object, Any] = {_ACCUMULATOR_FLAGS_KEY: {}}
     flags = _accumulator_flags(initialized)
     specs = {"count": {"$sum": 1}} if accumulator_specs is None and default_sum else (accumulator_specs or {})
+    if support_checker is None:
+        support_checker = dialect.supports_group_accumulator
     for field, accumulator in specs.items():
         if not isinstance(accumulator, dict) or len(accumulator) != 1:
             raise OperationFailure("Accumulator must be a single-key document")
         operator, _ = next(iter(accumulator.items()))
-        if not dialect.supports_group_accumulator(operator):
-            raise OperationFailure(f"Unsupported accumulator: {operator}")
-        if operator == "$sum":
+        if not support_checker(operator):
+            raise OperationFailure(f"{unsupported_message}: {operator}")
+        _validate_accumulator_expression(operator, accumulator[operator])
+        if operator in {"$sum", "$count"}:
             initialized[field] = 0
-        elif operator in {"$min", "$max", "$first"}:
+        elif operator in {"$min", "$max", "$first", "$last"}:
             initialized[field] = None
             flags[field] = False
         elif operator == "$avg":
             initialized[field] = _AverageAccumulator()
-        elif operator == "$push":
+        elif operator in {"$push", "$addToSet"}:
             initialized[field] = []
+        elif operator == "$mergeObjects":
+            initialized[field] = {}
         else:
-            raise OperationFailure(f"Unsupported accumulator: {operator}")
+            raise OperationFailure(f"{unsupported_message}: {operator}")
     return initialized  # type: ignore[return-value]
 
 
@@ -1238,13 +1541,17 @@ def _apply_accumulators(
     flags = _accumulator_flags(bucket)
     for field, accumulator in specs.items():
         operator, expression = next(iter(accumulator.items()))
-        value = evaluate_expression(document, expression, variables, dialect=dialect)
-        if operator == "$sum":
+        value = None if operator == "$count" else evaluate_expression(document, expression, variables, dialect=dialect)
+        if operator in {"$sum", "$count"}:
+            if operator == "$count":
+                bucket[field] += 1
+                continue
             if value is None:
                 continue
-            if not _is_numeric(value):
+            numeric_value = _sum_accumulator_operand(value)
+            if numeric_value is None:
                 continue
-            bucket[field] += value
+            bucket[field] += numeric_value
         elif operator == "$min":
             if value is None:
                 continue
@@ -1266,10 +1573,25 @@ def _apply_accumulators(
             bucket[field].count += 1
         elif operator == "$push":
             bucket[field].append(deepcopy(value))
+        elif operator == "$addToSet":
+            _append_unique_values(
+                bucket[field],
+                [value],
+                dialect=dialect,
+            )
+        elif operator == "$mergeObjects":
+            if value is None:
+                continue
+            if not isinstance(value, dict):
+                raise OperationFailure("$mergeObjects accumulator requires document operands")
+            bucket[field].update(deepcopy(value))
         elif operator == "$first":
             if not flags[field]:
                 bucket[field] = deepcopy(value)
                 flags[field] = True
+        elif operator == "$last":
+            bucket[field] = deepcopy(value)
+            flags[field] = True
 
 
 def _finalize_accumulators(bucket: dict[str, Any]) -> Document:
@@ -1500,8 +1822,6 @@ def _apply_set_window_fields(
                 operator, expression, window = _require_window_output_spec(field_spec)
                 if not dialect.supports_window_accumulator(operator):
                     raise OperationFailure(f"Unsupported $setWindowFields accumulator: {operator}")
-                if operator not in {"$sum", "$min", "$max", "$avg", "$push", "$first"}:
-                    raise OperationFailure(f"Unsupported $setWindowFields accumulator: {operator}")
                 if window is None:
                     start = 0
                     end = last_index
@@ -1545,6 +1865,8 @@ def _apply_set_window_fields(
                 state = _initialize_accumulators(
                     {field: {operator: expression}},
                     dialect=dialect,
+                    support_checker=dialect.supports_window_accumulator,
+                    unsupported_message="Unsupported $setWindowFields accumulator",
                 )
                 for window_document in window_documents:
                     _apply_accumulators(
@@ -1606,7 +1928,7 @@ def _apply_lookup(
         else:
             matches = candidate_documents
         joined = deepcopy(document)
-        joined[lookup["as"]] = matches
+        joined[lookup["as"]] = deepcopy(matches)
         result.append(joined)
     return result
 
@@ -1623,7 +1945,14 @@ def _apply_union_with(
     if collection_resolver is None:
         raise OperationFailure("$unionWith requires collection resolver support")
 
-    resolved_foreign_documents = collection_resolver(union_with["coll"]) or []
+    resolver_key = (
+        union_with["coll"]
+        if union_with["coll"] is not None
+        else _CURRENT_COLLECTION_RESOLVER_KEY
+    )
+    resolved_foreign_documents = collection_resolver(resolver_key)
+    if resolved_foreign_documents is None:
+        resolved_foreign_documents = [deepcopy(document) for document in documents]
     foreign_documents = [deepcopy(document) for document in resolved_foreign_documents]
     if union_with["pipeline"]:
         foreign_documents = apply_pipeline(
@@ -1679,7 +2008,12 @@ def _apply_facet(
 
 
 def _apply_count(documents: list[Document], spec: object) -> list[Document]:
-    if not isinstance(spec, str) or not spec or spec.startswith("$"):
+    if (
+        not isinstance(spec, str)
+        or not spec
+        or spec.startswith("$")
+        or "." in spec
+    ):
         raise OperationFailure("$count requires a non-empty field name")
     return [{spec: len(documents)}]
 

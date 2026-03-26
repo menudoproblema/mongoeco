@@ -7,7 +7,7 @@ from mongoeco.compat import MONGODB_DIALECT_80
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.engines.memory import MemoryEngine
-from mongoeco.errors import DuplicateKeyError
+from mongoeco.errors import DuplicateKeyError, OperationFailure
 from mongoeco.types import UNDEFINED
 
 
@@ -215,10 +215,10 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         try:
             await engine.create_index("db", "coll", ["kind"], unique=False, name="idx")
 
-            with self.assertRaises(DuplicateKeyError):
+            with self.assertRaises(OperationFailure):
                 await engine.create_index("db", "coll", ["kind"], unique=True, name="idx")
 
-            with self.assertRaises(DuplicateKeyError):
+            with self.assertRaises(OperationFailure):
                 await engine.create_index("db", "coll", ["other"], unique=False, name="idx")
         finally:
             await engine.disconnect()
@@ -361,6 +361,21 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertNotIn("db.coll", engine._locks)
+
+    async def test_drop_collection_removes_lock_entry_before_other_callers_can_observe_new_lock(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1"})
+            original_lock = engine._get_lock("db", "coll")
+
+            await engine.drop_collection("db", "coll")
+
+            recreated_lock = engine._get_lock("db", "coll")
+            self.assertIsNot(original_lock, recreated_lock)
+            self.assertIs(engine._locks["db.coll"], recreated_lock)
+        finally:
+            await engine.disconnect()
 
     async def test_index_value_returns_none_when_field_is_missing(self):
         engine = MemoryEngine()

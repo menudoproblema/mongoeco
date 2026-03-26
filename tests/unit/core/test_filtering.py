@@ -166,6 +166,14 @@ class QueryEngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             QueryEngine.match({"a": 1}, {"a": {"$nin": 1}})
 
+    def test_query_engine_mod_handles_large_integers_without_float_precision_loss(self):
+        self.assertTrue(
+            QueryEngine.match(
+                {"value": 10**20},
+                {"value": {"$mod": [3, 1]}},
+            )
+        )
+
     def test_query_engine_rejects_unknown_operator(self):
         with self.assertRaises(OperationFailure):
             QueryEngine.match({"a": 1}, {"a": {"$unknown": 1}})

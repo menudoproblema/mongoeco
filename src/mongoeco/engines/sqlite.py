@@ -1,10 +1,12 @@
 import asyncio
 import hashlib
 import json
+import math
 import queue
 import sqlite3
 import threading
 from copy import deepcopy
+from decimal import Decimal
 from typing import Any, AsyncIterable, override
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect, MongoDialect70, MongoDialect80
@@ -16,8 +18,10 @@ from mongoeco.core.paths import get_document_value
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import (
     AndCondition,
+    EqualsCondition,
     GreaterThanCondition,
     GreaterThanOrEqualCondition,
+    InCondition,
     LessThanCondition,
     LessThanOrEqualCondition,
     MatchAll,
@@ -29,6 +33,7 @@ from mongoeco.core.query_plan import (
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.sqlite_query import (
+    _translate_scalar_equals,
     index_expressions_sql,
     json_path_for_field,
     path_array_prefixes,
@@ -93,6 +98,10 @@ class SQLiteEngine(AsyncStorageEngine):
         digest = hashlib.sha1(f"{db_name}:{coll_name}:{index_name}".encode("utf-8")).hexdigest()[:16]
         return f"idx_{digest}"
 
+    def _physical_multikey_index_name(self, db_name: str, coll_name: str, index_name: str) -> str:
+        digest = hashlib.sha1(f"{db_name}:{coll_name}:{index_name}:multikey".encode("utf-8")).hexdigest()[:16]
+        return f"mkidx_{digest}"
+
     def _serialize_document(self, document: Document) -> str:
         return json.dumps(self._codec.encode(document), separators=(",", ":"), sort_keys=False)
 
@@ -126,7 +135,7 @@ class SQLiteEngine(AsyncStorageEngine):
         skip: int = 0,
         limit: int | None = None,
     ) -> tuple[str, list[object]]:
-        where_sql, params = translate_query_plan(plan)
+        where_sql, params = self._translate_query_plan_with_multikey(db_name, coll_name, plan)
         order_sql = translate_sort_spec(sort)
         sql = f"""
             SELECT {select_clause}
@@ -144,6 +153,186 @@ class SQLiteEngine(AsyncStorageEngine):
             sql += " OFFSET ?"
             sql_params.append(skip)
         return sql, sql_params
+
+    @staticmethod
+    def _normalize_multikey_number(value: int | float) -> str:
+        if isinstance(value, float):
+            if math.isnan(value) or math.isinf(value):
+                raise NotImplementedError("NaN and infinity are not supported in SQLite multikey indexes")
+        decimal = Decimal(str(value)).normalize()
+        if decimal == decimal.to_integral():
+            return format(decimal.quantize(Decimal(1)), "f")
+        text = format(decimal, "f")
+        if "." in text:
+            text = text.rstrip("0").rstrip(".")
+        return text or "0"
+
+    @staticmethod
+    def _multikey_value_signature(value: object) -> tuple[str, str] | None:
+        if value is None:
+            return ("null", "")
+        if isinstance(value, bool):
+            return ("bool", "1" if value else "0")
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return ("number", SQLiteEngine._normalize_multikey_number(value))
+        if isinstance(value, str):
+            return ("string", value)
+
+        encoded = DocumentCodec.encode(value)
+        if not DocumentCodec._is_tagged_value(encoded):
+            return None
+        payload = encoded[DocumentCodec._MARKER]
+        value_type = payload[DocumentCodec._TYPE]
+        raw_value = payload[DocumentCodec._VALUE]
+        if value_type in {"datetime", "uuid", "objectid", "bytes"}:
+            return (value_type, str(raw_value))
+        if value_type == "undefined":
+            return ("undefined", "1")
+        return None
+
+    @classmethod
+    def _multikey_signatures_for_query_value(
+        cls,
+        value: object,
+        *,
+        null_matches_undefined: bool = False,
+    ) -> tuple[tuple[str, str], ...]:
+        signature = cls._multikey_value_signature(value)
+        if signature is None:
+            raise NotImplementedError("Unsupported multikey query value")
+        if value is None and null_matches_undefined:
+            return (("null", ""), ("undefined", "1"))
+        return (signature,)
+
+    @classmethod
+    def _extract_multikey_entries(cls, document: Document, field: str) -> set[tuple[str, str]]:
+        found, value = get_document_value(document, field)
+        if not found or not isinstance(value, list):
+            return set()
+        entries: set[tuple[str, str]] = set()
+        for item in value:
+            signature = cls._multikey_value_signature(item)
+            if signature is not None:
+                entries.add(signature)
+        return entries
+
+    @staticmethod
+    def _supports_multikey_index(fields: list[str], unique: bool) -> bool:
+        return not unique and len(fields) == 1 and not path_array_prefixes(fields[0])
+
+    def _find_multikey_index(self, db_name: str, coll_name: str, field: str) -> dict[str, object] | None:
+        for index in self._load_indexes(db_name, coll_name):
+            if not index.get("multikey"):
+                continue
+            if index["fields"] == [field]:
+                return index
+        return None
+
+    def _translate_multikey_exists_clause(
+        self,
+        db_name: str,
+        coll_name: str,
+        index: dict[str, object],
+        signatures: tuple[tuple[str, str], ...],
+    ) -> tuple[str, list[object]]:
+        physical_name = self._quote_identifier(str(index["multikey_physical_name"]))
+        clauses: list[str] = []
+        params: list[object] = []
+        for element_type, element_key in signatures:
+            clauses.append(
+                "EXISTS ("
+                f"SELECT 1 FROM multikey_entries INDEXED BY {physical_name} "
+                "WHERE db_name = ? AND coll_name = ? AND index_name = ? "
+                "AND storage_key = documents.storage_key "
+                "AND element_type = ? AND element_key = ?)"
+            )
+            params.extend([db_name, coll_name, index["name"], element_type, element_key])
+        return "(" + " OR ".join(clauses) + ")", params
+
+    def _translate_equals_with_multikey(
+        self,
+        db_name: str,
+        coll_name: str,
+        plan: EqualsCondition,
+        index: dict[str, object],
+    ) -> tuple[str, list[object]]:
+        scalar_sql, scalar_params = _translate_scalar_equals(
+            plan.field,
+            plan.value,
+            null_matches_undefined=plan.null_matches_undefined,
+        )
+        array_signatures = self._multikey_signatures_for_query_value(
+            plan.value,
+            null_matches_undefined=plan.null_matches_undefined,
+        )
+        array_sql, array_params = self._translate_multikey_exists_clause(
+            db_name,
+            coll_name,
+            index,
+            array_signatures,
+        )
+        return f"(({scalar_sql}) OR {array_sql})", [*scalar_params, *array_params]
+
+    def _translate_in_with_multikey(
+        self,
+        db_name: str,
+        coll_name: str,
+        plan: InCondition,
+        index: dict[str, object],
+    ) -> tuple[str, list[object]]:
+        clauses: list[str] = []
+        params: list[object] = []
+        for value in plan.values:
+            eq_sql, eq_params = self._translate_equals_with_multikey(
+                db_name,
+                coll_name,
+                EqualsCondition(
+                    plan.field,
+                    value,
+                    null_matches_undefined=plan.null_matches_undefined,
+                ),
+                index,
+            )
+            clauses.append(eq_sql)
+            params.extend(eq_params)
+        return " OR ".join(clauses), params
+
+    def _translate_query_plan_with_multikey(
+        self,
+        db_name: str,
+        coll_name: str,
+        plan: QueryNode,
+    ) -> tuple[str, list[object]]:
+        if isinstance(plan, MatchAll):
+            return "1 = 1", []
+        if isinstance(plan, EqualsCondition):
+            index = self._find_multikey_index(db_name, coll_name, plan.field)
+            if index is None:
+                return translate_query_plan(plan)
+            return self._translate_equals_with_multikey(db_name, coll_name, plan, index)
+        if isinstance(plan, InCondition):
+            index = self._find_multikey_index(db_name, coll_name, plan.field)
+            if index is None:
+                return translate_query_plan(plan)
+            return self._translate_in_with_multikey(db_name, coll_name, plan, index)
+        if isinstance(plan, AndCondition):
+            fragments = [self._translate_query_plan_with_multikey(db_name, coll_name, clause) for clause in plan.clauses]
+            sql = " AND ".join(f"({fragment_sql})" for fragment_sql, _ in fragments)
+            params: list[object] = []
+            for _, fragment_params in fragments:
+                params.extend(fragment_params)
+            return sql, params
+        if isinstance(plan, OrCondition):
+            fragments = [self._translate_query_plan_with_multikey(db_name, coll_name, clause) for clause in plan.clauses]
+            sql = " OR ".join(f"({fragment_sql})" for fragment_sql, _ in fragments)
+            params: list[object] = []
+            for _, fragment_params in fragments:
+                params.extend(fragment_params)
+            return sql, params
+        if isinstance(plan, NotCondition):
+            clause_sql, clause_params = self._translate_query_plan_with_multikey(db_name, coll_name, plan.clause)
+            return f"NOT COALESCE(({clause_sql}), 0)", clause_params
+        return translate_query_plan(plan)
 
     def _sort_requires_python(self, db_name: str, coll_name: str, plan: QueryNode, sort: SortSpec | None) -> bool:
         if not sort:
@@ -379,7 +568,7 @@ class SQLiteEngine(AsyncStorageEngine):
         conn = self._require_connection()
         cursor = conn.execute(
             """
-            SELECT name, physical_name, fields, unique_flag
+            SELECT name, physical_name, fields, unique_flag, multikey_flag, multikey_physical_name
             FROM indexes
             WHERE db_name = ? AND coll_name = ?
             ORDER BY name
@@ -387,7 +576,7 @@ class SQLiteEngine(AsyncStorageEngine):
             (db_name, coll_name),
         )
         indexes: list[dict[str, object]] = []
-        for name, physical_name, fields, unique_flag in cursor.fetchall():
+        for name, physical_name, fields, unique_flag, multikey_flag, multikey_physical_name in cursor.fetchall():
             try:
                 parsed_fields = json.loads(fields)
             except json.JSONDecodeError as exc:
@@ -404,9 +593,87 @@ class SQLiteEngine(AsyncStorageEngine):
                     "physical_name": physical_name or self._physical_index_name(db_name, coll_name, name),
                     "fields": parsed_fields,
                     "unique": bool(unique_flag),
+                    "multikey": bool(multikey_flag),
+                    "multikey_physical_name": multikey_physical_name
+                    or self._physical_multikey_index_name(db_name, coll_name, name),
                 }
             )
         return indexes
+
+    def _delete_multikey_entries_for_storage_key(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        storage_key: str,
+    ) -> None:
+        conn.execute(
+            """
+            DELETE FROM multikey_entries
+            WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+            """,
+            (db_name, coll_name, storage_key),
+        )
+
+    def _rebuild_multikey_entries_for_document(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        storage_key: str,
+        document: Document,
+        indexes: list[dict[str, object]],
+    ) -> None:
+        self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+        rows: list[tuple[str, str, str, str, str, str]] = []
+        for index in indexes:
+            if not index.get("multikey"):
+                continue
+            field = index["fields"][0]
+            for element_type, element_key in self._extract_multikey_entries(document, field):
+                rows.append((db_name, coll_name, index["name"], storage_key, element_type, element_key))
+        if rows:
+            conn.executemany(
+                """
+                INSERT OR IGNORE INTO multikey_entries (
+                    db_name, coll_name, index_name, storage_key, element_type, element_key
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
+
+    def _replace_multikey_entries_for_index_for_document(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        storage_key: str,
+        document: Document,
+        index: dict[str, object],
+    ) -> None:
+        conn.execute(
+            """
+            DELETE FROM multikey_entries
+            WHERE db_name = ? AND coll_name = ? AND storage_key = ? AND index_name = ?
+            """,
+            (db_name, coll_name, storage_key, index["name"]),
+        )
+        if not index.get("multikey"):
+            return
+        field = index["fields"][0]
+        rows = [
+            (db_name, coll_name, index["name"], storage_key, element_type, element_key)
+            for element_type, element_key in self._extract_multikey_entries(document, field)
+        ]
+        if rows:
+            conn.executemany(
+                """
+                INSERT OR IGNORE INTO multikey_entries (
+                    db_name, coll_name, index_name, storage_key, element_type, element_key
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
 
     def _connect_sync(self) -> None:
         with self._lock:
@@ -432,7 +699,21 @@ class SQLiteEngine(AsyncStorageEngine):
                         physical_name TEXT,
                         fields TEXT NOT NULL,
                         unique_flag INTEGER NOT NULL,
+                        multikey_flag INTEGER NOT NULL DEFAULT 0,
+                        multikey_physical_name TEXT,
                         PRIMARY KEY (db_name, coll_name, name)
+                    )
+                    """
+                )
+                connection.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS multikey_entries (
+                        db_name TEXT NOT NULL,
+                        coll_name TEXT NOT NULL,
+                        index_name TEXT NOT NULL,
+                        storage_key TEXT NOT NULL,
+                        element_type TEXT NOT NULL,
+                        element_key TEXT NOT NULL
                     )
                     """
                 )
@@ -442,6 +723,10 @@ class SQLiteEngine(AsyncStorageEngine):
                 }
                 if "physical_name" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN physical_name TEXT")
+                if "multikey_flag" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN multikey_flag INTEGER NOT NULL DEFAULT 0")
+                if "multikey_physical_name" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN multikey_physical_name TEXT")
                 connection.commit()
                 self._connection = connection
             self._connection_count += 1
@@ -466,9 +751,11 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection()
             storage_key = self._storage_key(document.get("_id"))
+            indexes = self._load_indexes(db_name, coll_name)
             try:
                 self._validate_document_against_unique_indexes(db_name, coll_name, document)
                 if overwrite:
+                    conn.execute("BEGIN")
                     conn.execute(
                         """
                         INSERT INTO documents (db_name, coll_name, storage_key, document)
@@ -478,7 +765,16 @@ class SQLiteEngine(AsyncStorageEngine):
                         """,
                         (db_name, coll_name, storage_key, self._serialize_document(document)),
                     )
+                    self._rebuild_multikey_entries_for_document(
+                        conn,
+                        db_name,
+                        coll_name,
+                        storage_key,
+                        document,
+                        indexes,
+                    )
                 else:
+                    conn.execute("BEGIN")
                     cursor = conn.execute(
                         """
                         INSERT INTO documents (db_name, coll_name, storage_key, document)
@@ -488,7 +784,16 @@ class SQLiteEngine(AsyncStorageEngine):
                         (db_name, coll_name, storage_key, self._serialize_document(document)),
                     )
                     if cursor.rowcount == 0:
+                        conn.rollback()
                         return False
+                    self._rebuild_multikey_entries_for_document(
+                        conn,
+                        db_name,
+                        coll_name,
+                        storage_key,
+                        document,
+                        indexes,
+                    )
                 conn.commit()
                 return True
             except sqlite3.IntegrityError as exc:
@@ -520,15 +825,22 @@ class SQLiteEngine(AsyncStorageEngine):
     def _delete_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, context: ClientSession | None) -> bool:
         with self._lock:
             conn = self._require_connection()
-            cursor = conn.execute(
-                """
-                DELETE FROM documents
-                WHERE db_name = ? AND coll_name = ? AND storage_key = ?
-                """,
-                (db_name, coll_name, self._storage_key(doc_id)),
-            )
-            conn.commit()
-            return cursor.rowcount > 0
+            storage_key = self._storage_key(doc_id)
+            try:
+                conn.execute("BEGIN")
+                cursor = conn.execute(
+                    """
+                    DELETE FROM documents
+                    WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                    """,
+                    (db_name, coll_name, storage_key),
+                )
+                self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+                conn.commit()
+                return cursor.rowcount > 0
+            except Exception:
+                conn.rollback()
+                raise
 
     def _iter_scan_documents_sync(
         self,
@@ -694,11 +1006,13 @@ class SQLiteEngine(AsyncStorageEngine):
                 if not modified:
                     return UpdateResult(matched_count=1, modified_count=0)
                 self._validate_document_against_unique_indexes(db_name, coll_name, document)
+                indexes = self._load_indexes(db_name, coll_name)
 
                 try:
                     if self._dialect_requires_python_fallback(effective_dialect):
                         raise NotImplementedError("Custom dialect requires Python fallback")
                     update_sql, update_params = translate_update_spec(update_spec, current_document=original_document)
+                    conn.execute("BEGIN")
                     conn.execute(
                         f"""
                         UPDATE documents
@@ -707,15 +1021,25 @@ class SQLiteEngine(AsyncStorageEngine):
                         """,
                         (*update_params, db_name, coll_name, storage_key),
                     )
+                    self._rebuild_multikey_entries_for_document(
+                        conn,
+                        db_name,
+                        coll_name,
+                        storage_key,
+                        document,
+                        indexes,
+                    )
                     conn.commit()
                     return UpdateResult(matched_count=1, modified_count=1)
                 except (NotImplementedError, TypeError):
+                    conn.rollback()
                     pass
                 except sqlite3.IntegrityError as exc:
                     conn.rollback()
                     raise DuplicateKeyError(str(exc)) from exc
 
                 try:
+                    conn.execute("BEGIN")
                     conn.execute(
                         """
                         UPDATE documents
@@ -723,6 +1047,14 @@ class SQLiteEngine(AsyncStorageEngine):
                         WHERE db_name = ? AND coll_name = ? AND storage_key = ?
                         """,
                         (self._serialize_document(document), db_name, coll_name, storage_key),
+                    )
+                    self._rebuild_multikey_entries_for_document(
+                        conn,
+                        db_name,
+                        coll_name,
+                        storage_key,
+                        document,
+                        indexes,
                     )
                     conn.commit()
                     return UpdateResult(matched_count=1, modified_count=1)
@@ -740,13 +1072,23 @@ class SQLiteEngine(AsyncStorageEngine):
             self._validate_document_against_unique_indexes(db_name, coll_name, new_doc)
 
             storage_key = self._storage_key(new_doc["_id"])
+            indexes = self._load_indexes(db_name, coll_name)
             try:
+                conn.execute("BEGIN")
                 conn.execute(
                     """
                     INSERT INTO documents (db_name, coll_name, storage_key, document)
                     VALUES (?, ?, ?, ?)
                     """,
                     (db_name, coll_name, storage_key, self._serialize_document(new_doc)),
+                )
+                self._rebuild_multikey_entries_for_document(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    new_doc,
+                    indexes,
                 )
                 conn.commit()
                 return UpdateResult(matched_count=0, modified_count=0, upserted_id=new_doc["_id"])
@@ -770,36 +1112,11 @@ class SQLiteEngine(AsyncStorageEngine):
             try:
                 if self._dialect_requires_python_fallback(effective_dialect):
                     raise NotImplementedError("Custom dialect requires Python fallback")
-                if self._plan_has_array_traversing_paths(db_name, coll_name, plan):
-                    raise NotImplementedError("Array traversal requires Python fallback")
-                if self._plan_requires_python_for_array_comparisons(db_name, coll_name, plan):
-                    raise NotImplementedError("Top-level array comparisons require Python fallback")
-                if self._plan_requires_python_for_bytes(db_name, coll_name, plan):
-                    raise NotImplementedError("Tagged bytes require Python fallback")
-                if self._plan_requires_python_for_undefined(db_name, coll_name, plan):
-                    raise NotImplementedError("Tagged undefined requires Python fallback")
-                select_sql, params = self._build_select_sql(
-                    db_name,
-                    coll_name,
-                    plan,
-                    select_clause="rowid",
-                    limit=1,
-                )
-                cursor = conn.execute(
-                    f"""
-                    DELETE FROM documents
-                    WHERE rowid IN ({select_sql})
-                    """,
-                    tuple(params),
-                )
-                conn.commit()
-                return DeleteResult(deleted_count=1 if cursor.rowcount > 0 else 0)
-            except (NotImplementedError, TypeError):
-                pass
-
-            for storage_key, document in self._load_documents(db_name, coll_name):
-                if not QueryEngine.match_plan(document, plan, dialect=effective_dialect):
-                    continue
+                selected = self._select_first_document_for_plan(db_name, coll_name, plan)
+                if selected is None:
+                    return DeleteResult(deleted_count=0)
+                storage_key, _document = selected
+                conn.execute("BEGIN")
                 conn.execute(
                     """
                     DELETE FROM documents
@@ -807,6 +1124,25 @@ class SQLiteEngine(AsyncStorageEngine):
                     """,
                     (db_name, coll_name, storage_key),
                 )
+                self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+                conn.commit()
+                return DeleteResult(deleted_count=1)
+            except (NotImplementedError, TypeError):
+                conn.rollback()
+                pass
+
+            for storage_key, document in self._load_documents(db_name, coll_name):
+                if not QueryEngine.match_plan(document, plan, dialect=effective_dialect):
+                    continue
+                conn.execute("BEGIN")
+                conn.execute(
+                    """
+                    DELETE FROM documents
+                    WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                    """,
+                    (db_name, coll_name, storage_key),
+                )
+                self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
                 conn.commit()
                 return DeleteResult(deleted_count=1)
             return DeleteResult(deleted_count=0)
@@ -832,7 +1168,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     raise NotImplementedError("Top-level array comparisons require Python fallback")
                 if self._plan_requires_python_for_undefined(db_name, coll_name, plan):
                     raise NotImplementedError("Tagged undefined requires Python fallback")
-                where_sql, params = translate_query_plan(plan)
+                where_sql, params = self._translate_query_plan_with_multikey(db_name, coll_name, plan)
                 conn = self._require_connection()
                 if self._plan_requires_python_for_bytes(db_name, coll_name, plan):
                     raise NotImplementedError("Tagged bytes require Python fallback")
@@ -863,13 +1199,15 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> str:
         index_name = name or "_".join(f"{field}_1" for field in fields)
         physical_name = self._physical_index_name(db_name, coll_name, index_name)
+        multikey = self._supports_multikey_index(fields, unique)
+        multikey_physical_name = self._physical_multikey_index_name(db_name, coll_name, index_name)
         with self._lock:
             conn = self._require_connection()
             indexes = self._load_indexes(db_name, coll_name)
             for index in indexes:
                 if index["name"] == index_name:
                     if index["fields"] != fields or index["unique"] != unique:
-                        raise DuplicateKeyError(f"Conflicting index definition for '{index_name}'")
+                        raise OperationFailure(f"Conflicting index definition for '{index_name}'")
                     return index_name
 
             if unique:
@@ -881,17 +1219,51 @@ class SQLiteEngine(AsyncStorageEngine):
             )
             unique_sql = "UNIQUE " if unique else ""
             try:
+                conn.execute("BEGIN")
                 conn.execute(
                     f"CREATE {unique_sql}INDEX {self._quote_identifier(physical_name)} "
                     f"ON documents ({expressions})"
                 )
+                if multikey:
+                    conn.execute(
+                        f"CREATE INDEX {self._quote_identifier(multikey_physical_name)} "
+                        "ON multikey_entries (db_name, coll_name, index_name, element_type, element_key, storage_key)"
+                    )
                 conn.execute(
                     """
-                    INSERT INTO indexes (db_name, coll_name, name, physical_name, fields, unique_flag)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT INTO indexes (
+                        db_name, coll_name, name, physical_name, fields, unique_flag, multikey_flag, multikey_physical_name
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (db_name, coll_name, index_name, physical_name, json.dumps(fields), 1 if unique else 0),
+                    (
+                        db_name,
+                        coll_name,
+                        index_name,
+                        physical_name,
+                        json.dumps(fields),
+                        1 if unique else 0,
+                        1 if multikey else 0,
+                        multikey_physical_name if multikey else None,
+                    ),
                 )
+                if multikey:
+                    index_metadata = {
+                        "name": index_name,
+                        "fields": fields,
+                        "unique": unique,
+                        "multikey": True,
+                        "multikey_physical_name": multikey_physical_name,
+                    }
+                    for storage_key, document in self._load_documents(db_name, coll_name):
+                        self._replace_multikey_entries_for_index_for_document(
+                            conn,
+                            db_name,
+                            coll_name,
+                            storage_key,
+                            document,
+                            index_metadata,
+                        )
                 conn.commit()
                 return index_name
             except sqlite3.IntegrityError as exc:
@@ -915,8 +1287,11 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection()
             cursor = conn.execute(
                 """
-                SELECT DISTINCT db_name
+                SELECT db_name
                 FROM documents
+                UNION
+                SELECT db_name
+                FROM indexes
                 ORDER BY db_name
                 """
             )
@@ -927,12 +1302,16 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection()
             cursor = conn.execute(
                 """
-                SELECT DISTINCT coll_name
+                SELECT coll_name
                 FROM documents
+                WHERE db_name = ?
+                UNION
+                SELECT coll_name
+                FROM indexes
                 WHERE db_name = ?
                 ORDER BY coll_name
                 """,
-                (db_name,),
+                (db_name, db_name),
             )
             return [row[0] for row in cursor.fetchall()]
 
@@ -944,9 +1323,20 @@ class SQLiteEngine(AsyncStorageEngine):
                 conn.execute("BEGIN")
                 for index in indexes:
                     conn.execute(f"DROP INDEX IF EXISTS {self._quote_identifier(index['physical_name'])}")
+                    if index.get("multikey"):
+                        conn.execute(
+                            f"DROP INDEX IF EXISTS {self._quote_identifier(index['multikey_physical_name'])}"
+                        )
                 conn.execute(
                     """
                     DELETE FROM documents
+                    WHERE db_name = ? AND coll_name = ?
+                    """,
+                    (db_name, coll_name),
+                )
+                conn.execute(
+                    """
+                    DELETE FROM multikey_entries
                     WHERE db_name = ? AND coll_name = ?
                     """,
                     (db_name, coll_name),
@@ -1123,5 +1513,11 @@ class SQLiteEngine(AsyncStorageEngine):
         return await asyncio.to_thread(self._list_collections_sync, db_name)
 
     @override
-    async def drop_collection(self, db_name: str, coll_name: str) -> None:
+    async def drop_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> None:
         await asyncio.to_thread(self._drop_collection_sync, db_name, coll_name)

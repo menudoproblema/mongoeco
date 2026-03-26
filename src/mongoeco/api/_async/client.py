@@ -59,6 +59,9 @@ class AsyncDatabase:
     async def list_collection_names(self) -> list[str]:
         return await self._engine.list_collections(self._db_name)
 
+    async def drop_collection(self, name: str) -> None:
+        await self._engine.drop_collection(self._db_name, name)
+
     @property
     def mongodb_dialect(self) -> MongoDialect:
         return self._mongodb_dialect
@@ -134,6 +137,11 @@ class AsyncMongoClient:
 
     async def list_database_names(self) -> list[str]:
         return await self._engine.list_databases()
+
+    async def drop_database(self, name: str) -> None:
+        collection_names = await self._engine.list_collections(name)
+        for collection_name in collection_names:
+            await self._engine.drop_collection(name, collection_name)
 
     @property
     def mongodb_dialect(self) -> MongoDialect:

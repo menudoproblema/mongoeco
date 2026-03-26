@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from copy import deepcopy
 
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
@@ -12,6 +13,7 @@ from mongoeco.compat import (
 )
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.operators import UpdateEngine
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.engines.base import AsyncStorageEngine
@@ -19,9 +21,11 @@ from mongoeco.core.upserts import seed_upsert_document
 from mongoeco.core.validation import is_document, is_filter, is_projection, is_update
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    ObjectId, Document, DocumentId, Filter, Update, Projection, InsertManyResult, InsertOneResult, ReturnDocument, UpdateResult, DeleteResult, SortSpec
+    ObjectId, Document, DocumentId, Filter, Update, Projection, InsertManyResult, InsertOneResult,
+    ReturnDocument, UpdateResult, DeleteResult, SortSpec, BulkWriteResult, WriteModel,
+    InsertOne, UpdateOne, UpdateMany, ReplaceOne, DeleteOne, DeleteMany,
 )
-from mongoeco.errors import DuplicateKeyError, OperationFailure
+from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure, WriteError
 
 
 class AsyncCollection:
@@ -67,6 +71,18 @@ class AsyncCollection:
         if not documents:
             raise ValueError("documents must not be empty")
         return [cls._require_document(document) for document in documents]
+
+    @staticmethod
+    def _require_write_requests(requests: object) -> list[WriteModel]:
+        if not isinstance(requests, Sequence) or isinstance(requests, (str, bytes, bytearray, dict)):
+            raise TypeError("requests must be a sequence of write models")
+        normalized = list(requests)
+        if not normalized:
+            raise ValueError("requests must not be empty")
+        supported = (InsertOne, UpdateOne, UpdateMany, ReplaceOne, DeleteOne, DeleteMany)
+        if not all(isinstance(request, supported) for request in normalized):
+            raise TypeError("bulk_write requests must be write model instances")
+        return normalized
 
     @staticmethod
     def _normalize_filter(filter_spec: object | None) -> Filter:
@@ -169,16 +185,42 @@ class AsyncCollection:
     ) -> Document:
         seeded: Document = {}
         seed_upsert_document(seeded, filter_spec)
+        if "_id" in seeded and "_id" in replacement:
+            if not self._mongodb_dialect.values_equal(seeded["_id"], replacement["_id"]):
+                raise OperationFailure("The _id field cannot conflict with the replacement filter during upsert")
         document = deepcopy(seeded)
         document.update(deepcopy(replacement))
         if "_id" not in document:
             document["_id"] = ObjectId()
         return document
 
+    @staticmethod
+    def _materialize_replacement_document(selected: Document, replacement: Document) -> Document:
+        if "_id" in replacement:
+            return deepcopy(replacement)
+
+        replacement_items = [(key, deepcopy(value)) for key, value in replacement.items()]
+        replacement_document: Document = {}
+        inserted_id = False
+        id_position = list(selected).index("_id") if "_id" in selected else 0
+
+        for index in range(len(replacement_items) + 1):
+            if index == id_position and not inserted_id:
+                replacement_document["_id"] = deepcopy(selected["_id"])
+                inserted_id = True
+            if index < len(replacement_items):
+                key, value = replacement_items[index]
+                replacement_document[key] = value
+
+        if not inserted_id:
+            replacement_document["_id"] = deepcopy(selected["_id"])
+        return replacement_document
+
     async def insert_one(self, document: Document, *, session: ClientSession | None = None) -> InsertOneResult[DocumentId]:
-        doc = self._require_document(document).copy()
-        if "_id" not in doc:
-            doc["_id"] = ObjectId()
+        original = self._require_document(document)
+        if "_id" not in original:
+            original["_id"] = ObjectId()
+        doc = deepcopy(original)
         
         success = await self._engine.put_document(
             self._db_name, self._collection_name, doc, overwrite=False, context=session
@@ -196,9 +238,9 @@ class AsyncCollection:
     ) -> InsertManyResult[DocumentId]:
         inserted_ids: list[DocumentId] = []
         for original in self._require_documents(documents):
-            doc = original.copy()
-            if "_id" not in doc:
-                doc["_id"] = ObjectId()
+            if "_id" not in original:
+                original["_id"] = ObjectId()
+            doc = deepcopy(original)
 
             success = await self._engine.put_document(
                 self._db_name,
@@ -212,6 +254,108 @@ class AsyncCollection:
             inserted_ids.append(doc["_id"])
 
         return InsertManyResult(inserted_ids=inserted_ids)
+
+    async def bulk_write(
+        self,
+        requests: list[WriteModel],
+        *,
+        ordered: bool = True,
+        session: ClientSession | None = None,
+    ) -> BulkWriteResult[DocumentId]:
+        requests = self._require_write_requests(requests)
+        if not isinstance(ordered, bool):
+            raise TypeError("ordered must be a bool")
+
+        inserted_count = 0
+        matched_count = 0
+        modified_count = 0
+        deleted_count = 0
+        upserted_ids: dict[int, DocumentId] = {}
+        write_errors: list[dict[str, object]] = []
+
+        for index, request in enumerate(requests):
+            try:
+                if isinstance(request, InsertOne):
+                    await self.insert_one(request.document, session=session)
+                    inserted_count += 1
+                elif isinstance(request, UpdateOne):
+                    result = await self.update_one(
+                        request.filter,
+                        request.update,
+                        request.upsert,
+                        sort=request.sort,
+                        session=session,
+                    )
+                    matched_count += result.matched_count
+                    modified_count += result.modified_count
+                    if result.upserted_id is not None:
+                        upserted_ids[index] = result.upserted_id
+                elif isinstance(request, UpdateMany):
+                    result = await self.update_many(
+                        request.filter,
+                        request.update,
+                        request.upsert,
+                        session=session,
+                    )
+                    matched_count += result.matched_count
+                    modified_count += result.modified_count
+                    if result.upserted_id is not None:
+                        upserted_ids[index] = result.upserted_id
+                elif isinstance(request, ReplaceOne):
+                    result = await self.replace_one(
+                        request.filter,
+                        request.replacement,
+                        request.upsert,
+                        sort=request.sort,
+                        session=session,
+                    )
+                    matched_count += result.matched_count
+                    modified_count += result.modified_count
+                    if result.upserted_id is not None:
+                        upserted_ids[index] = result.upserted_id
+                elif isinstance(request, DeleteOne):
+                    result = await self.delete_one(request.filter, session=session)
+                    deleted_count += result.deleted_count
+                elif isinstance(request, DeleteMany):
+                    result = await self.delete_many(request.filter, session=session)
+                    deleted_count += result.deleted_count
+            except (WriteError, OperationFailure, TypeError, ValueError) as exc:
+                write_errors.append(
+                    {
+                        "index": index,
+                        "code": getattr(exc, "code", None),
+                        "errmsg": str(exc),
+                        "op": request.__class__.__name__,
+                    }
+                )
+                if ordered:
+                    break
+
+        result = BulkWriteResult(
+            inserted_count=inserted_count,
+            matched_count=matched_count,
+            modified_count=modified_count,
+            deleted_count=deleted_count,
+            upserted_count=len(upserted_ids),
+            upserted_ids=upserted_ids,
+        )
+        if write_errors:
+            raise BulkWriteError(
+                "bulk write failed",
+                details={
+                    "writeErrors": write_errors,
+                    "nInserted": result.inserted_count,
+                    "nMatched": result.matched_count,
+                    "nModified": result.modified_count,
+                    "nRemoved": result.deleted_count,
+                    "nUpserted": result.upserted_count,
+                    "upserted": [
+                        {"index": op_index, "_id": upserted_id}
+                        for op_index, upserted_id in upserted_ids.items()
+                    ],
+                },
+            )
+        return result
 
     async def find_one(self, filter_spec: Filter | None = None, projection: Projection | None = None, *, session: ClientSession | None = None) -> Document | None:
         filter_spec = self._normalize_filter(filter_spec)
@@ -241,11 +385,7 @@ class AsyncCollection:
                 doc = d
                 break
 
-        return (
-            apply_projection(doc, projection, dialect=self._mongodb_dialect)
-            if doc is not None
-            else None
-        )
+        return doc
 
     def find(
         self,
@@ -259,6 +399,7 @@ class AsyncCollection:
     ):
         filter_spec = self._normalize_filter(filter_spec)
         projection = self._normalize_projection(projection)
+        sort = self._normalize_sort(sort)
         plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
         return AsyncCursor(
             self,
@@ -315,6 +456,11 @@ class AsyncCollection:
                     dialect=self._mongodb_dialect,
                     context=session,
                 )
+            return await self._perform_upsert_update(
+                filter_spec,
+                update_spec,
+                session=session,
+            )
         plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
         upsert_seed = None
         if upsert:
@@ -331,6 +477,25 @@ class AsyncCollection:
             plan=plan,
             dialect=self._mongodb_dialect,
             context=session,
+        )
+
+    async def _perform_upsert_update(
+        self,
+        filter_spec: Filter,
+        update_spec: Update,
+        *,
+        session: ClientSession | None = None,
+    ) -> UpdateResult[DocumentId]:
+        new_doc: Document = {}
+        seed_upsert_document(new_doc, filter_spec)
+        UpdateEngine.apply_update(new_doc, update_spec, dialect=self._mongodb_dialect)
+        if "_id" not in new_doc:
+            new_doc["_id"] = ObjectId()
+        await self._put_replacement_document(new_doc, overwrite=False, session=session)
+        return UpdateResult(
+            matched_count=0,
+            modified_count=0,
+            upserted_id=new_doc["_id"],
         )
 
     async def update_many(
@@ -413,10 +578,9 @@ class AsyncCollection:
                 upserted_id=document["_id"],
             )
 
-        document = deepcopy(replacement)
-        if "_id" in document and not self._mongodb_dialect.values_equal(document["_id"], selected["_id"]):
+        if "_id" in replacement and not self._mongodb_dialect.values_equal(replacement["_id"], selected["_id"]):
             raise OperationFailure("The _id field cannot be changed in a replacement document")
-        document.setdefault("_id", selected["_id"])
+        document = self._materialize_replacement_document(selected, replacement)
         modified_count = 0 if self._mongodb_dialect.values_equal(selected, document) else 1
         await self._put_replacement_document(document, overwrite=True, session=session)
         return UpdateResult(matched_count=1, modified_count=modified_count)
@@ -446,6 +610,7 @@ class AsyncCollection:
                 filter_spec,
                 update_spec,
                 upsert=True,
+                sort=sort,
                 session=session,
             )
             if return_document is ReturnDocument.BEFORE:
@@ -578,6 +743,20 @@ class AsyncCollection:
             context=session,
         )
 
+    async def estimated_document_count(
+        self,
+        *,
+        session: ClientSession | None = None,
+    ) -> int:
+        return await self._engine.count_matching_documents(
+            self._db_name,
+            self._collection_name,
+            {},
+            plan=compile_filter({}, dialect=self._mongodb_dialect),
+            dialect=self._mongodb_dialect,
+            context=session,
+        )
+
     async def distinct(
         self,
         key: str,
@@ -592,7 +771,13 @@ class AsyncCollection:
         async for document in self.find(filter_spec, session=session):
             values = QueryEngine.extract_values(document, key)
             if not values:
-                continue
+                found, value = QueryEngine._get_field_value(document, key)
+                if not found:
+                    values = [None]
+                elif isinstance(value, list):
+                    continue
+                else:
+                    values = [value]
             candidates = values[1:] if isinstance(values[0], list) else values
             for candidate in candidates:
                 if not any(
@@ -614,6 +799,13 @@ class AsyncCollection:
 
     async def list_indexes(self, *, session: ClientSession | None = None) -> list[dict[str, object]]:
         return await self._engine.list_indexes(self._db_name, self._collection_name, context=session)
+
+    async def drop(self, *, session: ClientSession | None = None) -> None:
+        await self._engine.drop_collection(
+            self._db_name,
+            self._collection_name,
+            context=session,
+        )
 
     @property
     def mongodb_dialect(self) -> MongoDialect:

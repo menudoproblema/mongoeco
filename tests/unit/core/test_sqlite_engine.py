@@ -7,6 +7,7 @@ import uuid
 from unittest.mock import Mock, patch
 
 from mongoeco.compat import MongoDialect70
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.core.sorting import sort_documents
@@ -36,7 +37,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(result.deleted_count, 1)
-        fake_connection.execute.assert_called_once()
+        self.assertGreaterEqual(fake_connection.execute.call_count, 2)
+        fake_connection.commit.assert_called_once()
 
     def test_count_matching_documents_sync_falls_back_for_custom_dialect(self):
         class CustomDialect(MongoDialect70):
@@ -60,6 +62,58 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(count, 1)
+
+    def test_multikey_helpers_cover_supported_unsupported_and_logical_translation_paths(self):
+        engine = SQLiteEngine()
+
+        self.assertEqual(SQLiteEngine._normalize_multikey_number(1), "1")
+        self.assertEqual(SQLiteEngine._normalize_multikey_number(1.0), "1")
+        self.assertEqual(SQLiteEngine._normalize_multikey_number(1.5), "1.5")
+        self.assertEqual(SQLiteEngine._multikey_value_signature(None), ("null", ""))
+        self.assertEqual(SQLiteEngine._multikey_value_signature(True), ("bool", "1"))
+        self.assertEqual(SQLiteEngine._multikey_value_signature(7), ("number", "7"))
+        self.assertEqual(SQLiteEngine._multikey_value_signature("Ada"), ("string", "Ada"))
+        self.assertEqual(SQLiteEngine._multikey_value_signature(uuid.UUID("12345678-1234-5678-1234-567812345678")), ("uuid", "12345678-1234-5678-1234-567812345678"))
+        self.assertEqual(SQLiteEngine._multikey_value_signature(UNDEFINED), ("undefined", "1"))
+        self.assertEqual(SQLiteEngine._multikey_signatures_for_query_value(None, null_matches_undefined=True), (("null", ""), ("undefined", "1")))
+        self.assertIsNone(SQLiteEngine._multikey_value_signature({"x": 1}))
+        self.assertIsNone(SQLiteEngine._multikey_value_signature(DocumentCodec._tagged_value("dict", {})))
+
+        with self.assertRaises(NotImplementedError):
+            SQLiteEngine._normalize_multikey_number(float("nan"))
+        with self.assertRaises(NotImplementedError):
+            SQLiteEngine._multikey_signatures_for_query_value({"x": 1})
+
+        engine._find_multikey_index = Mock(return_value={"name": "idx_tags", "multikey_physical_name": "mkidx_test"})
+        eq_sql, _ = engine._translate_query_plan_with_multikey(
+            "db",
+            "coll",
+            compile_filter({"tags": "python"}),
+        )
+        self.assertIn("multikey_entries", eq_sql)
+
+        in_sql, _ = engine._translate_query_plan_with_multikey(
+            "db",
+            "coll",
+            compile_filter({"tags": {"$in": ["python", "sqlite"]}}),
+        )
+        self.assertIn("multikey_entries", in_sql)
+        self.assertIn(" OR ", in_sql)
+
+        engine._find_multikey_index = Mock(return_value=None)
+        fallback_sql, _ = engine._translate_query_plan_with_multikey(
+            "db",
+            "coll",
+            compile_filter({"tags": {"$in": ["python"]}}),
+        )
+        self.assertIn("json_each", fallback_sql)
+
+        logical_sql, _ = engine._translate_query_plan_with_multikey(
+            "db",
+            "coll",
+            compile_filter({"$and": [{"tags": "python"}, {"kind": "view"}]}),
+        )
+        self.assertIn(" AND ", logical_sql)
 
     def test_require_connection_raises_when_disconnected(self):
         engine = SQLiteEngine()
@@ -223,6 +277,33 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertEqual(found, document)
+
+    def test_delete_document_sync_rolls_back_on_failure(self):
+        engine = SQLiteEngine()
+        fake_connection = Mock()
+        fake_connection.execute.side_effect = [None, sqlite3.OperationalError("boom")]
+        engine._require_connection = Mock(return_value=fake_connection)
+
+        with self.assertRaises(sqlite3.OperationalError):
+            engine._delete_document_sync("db", "coll", "1", None)
+
+        fake_connection.rollback.assert_called_once()
+
+    def test_replace_multikey_entries_for_non_multikey_index_only_clears_existing_rows(self):
+        engine = SQLiteEngine()
+        connection = Mock()
+
+        engine._replace_multikey_entries_for_index_for_document(
+            connection,
+            "db",
+            "coll",
+            "storage",
+            {"tags": ["python"]},
+            {"name": "idx_plain", "fields": ["tags"], "multikey": False},
+        )
+
+        connection.execute.assert_called_once()
+        connection.executemany.assert_not_called()
 
     async def test_select_first_document_for_plan_rejects_array_traversing_paths(self):
         engine = SQLiteEngine()
@@ -475,7 +556,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             same_name = await engine.create_index("db", "coll", ["email"], unique=False, name="idx")
             self.assertEqual(name, same_name)
 
-            with self.assertRaises(DuplicateKeyError):
+            with self.assertRaises(OperationFailure):
                 await engine.create_index("db", "coll", ["other"], unique=False, name="idx")
 
             await engine.put_document("db", "dups", {"_id": "1", "email": "dup@example.com"})
@@ -549,6 +630,20 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertTrue(any("idx_" in detail for detail in details))
+
+    async def test_explain_query_plan_uses_multikey_index_for_array_membership(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "tags": ["python", "mongodb"]})
+            await engine.put_document("db", "coll", {"_id": "2", "tags": ["sqlite"]})
+            await engine.create_index("db", "coll", ["tags"], unique=False, name="idx_tags")
+
+            details = engine._explain_query_plan_sync("db", "coll", {"tags": "python"})
+        finally:
+            await engine.disconnect()
+
+        self.assertTrue(any("mkidx_" in detail for detail in details))
 
     async def test_explain_query_plan_rejects_array_traversing_paths(self):
         engine = SQLiteEngine()
@@ -645,6 +740,98 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(replaced)
         self.assertEqual(found, {"_id": "2", "email": "c@example.com"})
 
+    async def test_multikey_entries_track_insert_update_delete_and_drop_collection(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "tags": ["python", "mongodb"]})
+            await engine.create_index("db", "coll", ["tags"], unique=False, name="idx_tags")
+
+            conn = engine._require_connection()
+            rows = conn.execute(
+                """
+                SELECT element_type, element_key
+                FROM multikey_entries
+                WHERE db_name = ? AND coll_name = ? AND index_name = ?
+                ORDER BY element_key
+                """,
+                ("db", "coll", "idx_tags"),
+            ).fetchall()
+            self.assertEqual(rows, [("string", "mongodb"), ("string", "python")])
+
+            await engine.update_matching_document(
+                "db",
+                "coll",
+                {"_id": "1"},
+                {"$set": {"tags": ["sqlite"]}},
+            )
+            rows = conn.execute(
+                """
+                SELECT element_type, element_key
+                FROM multikey_entries
+                WHERE db_name = ? AND coll_name = ? AND index_name = ?
+                ORDER BY element_key
+                """,
+                ("db", "coll", "idx_tags"),
+            ).fetchall()
+            self.assertEqual(rows, [("string", "sqlite")])
+
+            deleted = await engine.delete_matching_document("db", "coll", {"tags": "sqlite"})
+            self.assertEqual(deleted.deleted_count, 1)
+            remaining = conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM multikey_entries
+                WHERE db_name = ? AND coll_name = ? AND index_name = ?
+                """,
+                ("db", "coll", "idx_tags"),
+            ).fetchone()
+            self.assertEqual(remaining[0], 0)
+
+            await engine.put_document("db", "coll", {"_id": "2", "tags": ["python"]})
+            await engine.drop_collection("db", "coll")
+            leftover = conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM multikey_entries
+                WHERE db_name = ? AND coll_name = ?
+                """,
+                ("db", "coll"),
+            ).fetchone()
+            self.assertEqual(leftover[0], 0)
+        finally:
+            await engine.disconnect()
+
+    async def test_creating_second_multikey_index_preserves_existing_multikey_entries(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "1", "tags": ["python"], "cats": ["backend"]},
+            )
+            await engine.create_index("db", "coll", ["tags"], unique=False, name="idx_tags")
+            await engine.create_index("db", "coll", ["cats"], unique=False, name="idx_cats")
+
+            count_tags = await engine.count_matching_documents("db", "coll", {"tags": "python"})
+            count_cats = await engine.count_matching_documents("db", "coll", {"cats": "backend"})
+            rows = engine._require_connection().execute(
+                """
+                SELECT index_name, element_key
+                FROM multikey_entries
+                WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                ORDER BY index_name, element_key
+                """,
+                ("db", "coll", engine._storage_key("1")),
+            ).fetchall()
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(count_tags, 1)
+        self.assertEqual(count_cats, 1)
+        self.assertEqual(rows, [("idx_cats", "backend"), ("idx_tags", "python")])
+
     async def test_put_document_without_overwrite_uses_sql_do_nothing(self):
         engine = SQLiteEngine()
         await engine.connect()
@@ -730,7 +917,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         fake_connection = Mock()
         fake_connection.execute.return_value.rowcount = 1
         engine._require_connection = Mock(return_value=fake_connection)
-        engine._select_first_document_for_plan = Mock(return_value=None)
+        engine._select_first_document_for_plan = Mock(side_effect=NotImplementedError("fallback"))
         engine._load_documents = Mock(
             return_value=[
                 ("1", {"kind": "skip"}),
@@ -741,7 +928,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         result = engine._delete_matching_document_sync("db", "coll", {"kind": "match"}, None, None)
 
         self.assertEqual(result.deleted_count, 1)
-        fake_connection.execute.assert_called_once()
+        self.assertGreaterEqual(fake_connection.execute.call_count, 2)
         fake_connection.commit.assert_called_once()
 
     def test_delete_matching_document_sync_returns_zero_when_fallback_finds_nothing(self):

@@ -8,7 +8,10 @@ from mongoeco.compat import (
 )
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.session import ClientSession
-from mongoeco.types import DeleteResult, Document, DocumentId, Filter, InsertManyResult, InsertOneResult, Projection, ReturnDocument, SortSpec, Update, UpdateResult
+from mongoeco.types import (
+    BulkWriteResult, DeleteResult, Document, DocumentId, Filter, InsertManyResult,
+    InsertOneResult, Projection, ReturnDocument, SortSpec, Update, UpdateResult, WriteModel,
+)
 
 
 class Collection:
@@ -36,6 +39,21 @@ class Collection:
 
     def find_one(self, filter_spec: Filter | None = None, projection: Projection | None = None, *, session: ClientSession | None = None) -> Document | None:
         return self._client._run(self._async_collection().find_one(filter_spec, projection, session=session))
+
+    def bulk_write(
+        self,
+        requests: list[WriteModel],
+        *,
+        ordered: bool = True,
+        session: ClientSession | None = None,
+    ) -> BulkWriteResult[DocumentId]:
+        return self._client._run(
+            self._async_collection().bulk_write(
+                requests,
+                ordered=ordered,
+                session=session,
+            )
+        )
 
     def find(
         self,
@@ -189,6 +207,9 @@ class Collection:
     def count_documents(self, filter_spec: Filter, *, session: ClientSession | None = None) -> int:
         return self._client._run(self._async_collection().count_documents(filter_spec, session=session))
 
+    def estimated_document_count(self, *, session: ClientSession | None = None) -> int:
+        return self._client._run(self._async_collection().estimated_document_count(session=session))
+
     def distinct(
         self,
         key: str,
@@ -203,6 +224,9 @@ class Collection:
 
     def list_indexes(self, *, session: ClientSession | None = None) -> list[dict[str, object]]:
         return self._client._run(self._async_collection().list_indexes(session=session))
+
+    def drop(self, *, session: ClientSession | None = None) -> None:
+        self._client._run(self._async_collection().drop(session=session))
 
     @property
     def mongodb_dialect(self) -> MongoDialect:

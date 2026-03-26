@@ -54,8 +54,24 @@ class ProjectionTests(unittest.TestCase):
 
         self.assertEqual(
             apply_projection(doc, {"a.b": 1}),
-            {"_id": 1, "a": [{"b": 1}, {}, {"b": 2}]},
+            {"_id": 1, "a": [{"b": 1}, {"b": 2}]},
         )
+
+    def test_inclusion_projection_does_not_alias_nested_values(self):
+        doc = {"_id": 1, "profile": {"city": "Madrid"}}
+
+        projected = apply_projection(doc, {"profile": 1})
+        projected["profile"]["city"] = "Berlin"
+
+        self.assertEqual(doc, {"_id": 1, "profile": {"city": "Madrid"}})
+
+    def test_exclusion_projection_keeps_deepcopied_id_value(self):
+        doc = {"_id": {"tenant": "a"}, "name": "Ada"}
+
+        projected = apply_projection(doc, {"name": 0})
+        projected["_id"]["tenant"] = "b"
+
+        self.assertEqual(doc, {"_id": {"tenant": "a"}, "name": "Ada"})
 
     def test_exclusion_projection(self):
         doc = {"_id": 1, "name": "Val", "age": 30, "profile": {"city": "Madrid", "job": "Dev"}}

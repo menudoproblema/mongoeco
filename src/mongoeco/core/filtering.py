@@ -426,9 +426,24 @@ class QueryEngine:
             and math.isfinite(value)
             and math.isfinite(divisor)
             and divisor != 0
-            and (value - divisor * int(value / divisor)) == remainder
+            and QueryEngine._mongo_remainder(value, divisor) == remainder
             for value in values
         )
+
+    @staticmethod
+    def _mongo_remainder(value: int | float, divisor: int | float) -> int | float:
+        if (
+            isinstance(value, int)
+            and not isinstance(value, bool)
+            and isinstance(divisor, int)
+            and not isinstance(divisor, bool)
+        ):
+            quotient = abs(value) // abs(divisor)
+            if (value < 0) != (divisor < 0):
+                quotient = -quotient
+            return value - divisor * quotient
+        quotient = math.trunc(value / divisor)
+        return value - divisor * quotient
 
     @staticmethod
     def _evaluate_regex(doc: dict[str, Any], field: str, pattern: str, options: str) -> bool:

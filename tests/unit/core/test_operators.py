@@ -1,5 +1,6 @@
 import unittest
 import re
+import math
 
 from mongoeco.compat import MongoDialect
 from mongoeco.core.operators import UpdateEngine
@@ -193,6 +194,18 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertTrue(pulled)
         self.assertEqual(document, {"tags": ["python", "sqlite"]})
 
+    def test_push_and_add_to_set_detach_inserted_values_from_update_spec(self):
+        push_value = {"kind": "a"}
+        add_value = {"kind": "b"}
+        document = {"items": []}
+
+        UpdateEngine.apply_update(document, {"$push": {"items": push_value}})
+        UpdateEngine.apply_update(document, {"$addToSet": {"items": add_value}})
+        push_value["kind"] = "changed"
+        add_value["kind"] = "changed"
+
+        self.assertEqual(document, {"items": [{"kind": "a"}, {"kind": "b"}]})
+
     def test_add_to_set_and_pull_support_embedded_documents(self):
         document = {"items": [{"kind": "a"}]}
 
@@ -292,6 +305,15 @@ class UpdateEngineTests(unittest.TestCase):
 
         self.assertTrue(modified)
         self.assertEqual(document, {"items": [{"kind": "a", "qty": 1}, {"kind": "b"}]})
+
+    def test_pull_does_not_report_modification_when_nan_array_is_unchanged(self):
+        document = {"values": [math.nan]}
+
+        modified = UpdateEngine.apply_update(document, {"$pull": {"values": 1}})
+
+        self.assertFalse(modified)
+        self.assertEqual(len(document["values"]), 1)
+        self.assertTrue(math.isnan(document["values"][0]))
 
     def test_add_to_set_treats_embedded_documents_with_different_key_order_as_distinct(self):
         document = {"items": [{"kind": "a", "qty": 1}]}

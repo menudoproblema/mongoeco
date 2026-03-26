@@ -44,7 +44,10 @@ from .compat import (
     SUPPORTED_PYMONGO_MAJORS,
 )
 from .session import ClientSession
-from .types import ObjectId, ReturnDocument, UNDEFINED, UndefinedType
+from .types import (
+    BulkWriteResult, DeleteMany, DeleteOne, InsertOne, ObjectId, ReplaceOne,
+    ReturnDocument, UNDEFINED, UndefinedType, UpdateMany, UpdateOne,
+)
 
 __all__ = [
     "AsyncMongoClient",
@@ -86,6 +89,13 @@ __all__ = [
     "detect_installed_pymongo_profile",
     "detect_installed_pymongo_profile_resolution",
     "ClientSession",
+    "InsertOne",
+    "UpdateOne",
+    "UpdateMany",
+    "ReplaceOne",
+    "DeleteOne",
+    "DeleteMany",
+    "BulkWriteResult",
     "ObjectId",
     "ReturnDocument",
     "UndefinedType",

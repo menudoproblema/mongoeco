@@ -109,6 +109,11 @@ class Database:
         async_database = self._client._async_client.get_database(self._name)
         return self._client._run(async_database.list_collection_names())
 
+    def drop_collection(self, name: str) -> None:
+        self._client._ensure_connected()
+        async_database = self._client._async_client.get_database(self._name)
+        self._client._run(async_database.drop_collection(name))
+
     @property
     def mongodb_dialect(self) -> MongoDialect:
         return self._client.mongodb_dialect
@@ -208,6 +213,10 @@ class MongoClient:
     def list_database_names(self) -> list[str]:
         self._ensure_connected()
         return self._run(self._async_client.list_database_names())
+
+    def drop_database(self, name: str) -> None:
+        self._ensure_connected()
+        self._run(self._async_client.drop_database(name))
 
     @property
     def mongodb_dialect(self) -> MongoDialect:
