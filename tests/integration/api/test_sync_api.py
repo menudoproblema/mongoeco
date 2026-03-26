@@ -608,6 +608,46 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertNotIn("created_at", first)
                     self.assertEqual(second["created_at"], "seeded")
 
+    def test_array_filters_and_all_positional_updates_are_observable_via_api(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "items": [{"qty": 1}, {"qty": 3}]})
+
+                    update_one_result = collection.update_one(
+                        {"_id": "1"},
+                        {"$inc": {"items.$[high].qty": 2}},
+                        array_filters=[{"high.qty": {"$gte": 2}}],
+                    )
+                    update_many_result = collection.update_many(
+                        {"_id": "1"},
+                        {"$set": {"items.$[].flag": True}},
+                    )
+                    bulk_result = collection.bulk_write(
+                        [
+                            UpdateOne(
+                                {"_id": "1"},
+                                {"$max": {"items.$[high].qty": 10}},
+                                array_filters=[{"high.qty": {"$gte": 5}}],
+                            )
+                        ]
+                    )
+                    updated = collection.find_one_and_update(
+                        {"_id": "1"},
+                        {"$min": {"items.$[flagged].qty": 8}},
+                        array_filters=[{"flagged.flag": True}],
+                        return_document=ReturnDocument.AFTER,
+                    )
+
+                    self.assertEqual(update_one_result.modified_count, 1)
+                    self.assertEqual(update_many_result.modified_count, 1)
+                    self.assertEqual(bulk_result.modified_count, 1)
+                    self.assertEqual(
+                        updated["items"],
+                        [{"qty": 1, "flag": True}, {"qty": 8, "flag": True}],
+                    )
+
     def test_distinct_supports_scalars_arrays_nested_paths_and_filter(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

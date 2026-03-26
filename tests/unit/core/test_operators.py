@@ -98,13 +98,11 @@ class UpdateEngineTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"_id": "old", "name": "Ada"}, {"$unset": {"_id": ""}})
 
-    def test_update_rejects_unsupported_positional_and_array_filter_paths(self):
+    def test_update_rejects_legacy_positional_and_missing_array_filter_paths(self):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"items": [{"qty": 1}]}, {"$set": {"items.$.qty": 2}})
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"items": [{"qty": 1}]}, {"$set": {"items.$[i].qty": 2}})
-        with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({"items": [{"qty": 1}]}, {"$set": {"items.$[].qty": 2}})
 
     def test_set_same_value_is_noop(self):
         document = {"field": 1}
@@ -291,6 +289,75 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(existing, {"name": "Ada"})
         self.assertTrue(modified_insert)
         self.assertEqual(inserted, {"name": "Ada", "created_at": 1})
+
+    def test_array_filters_and_all_positional_updates_are_applied_to_matching_elements(self):
+        document = {
+            "items": [{"qty": 1}, {"qty": 3}],
+            "scores": [1, 2, 3],
+        }
+
+        inc_modified = UpdateEngine.apply_update(
+            document,
+            {"$inc": {"items.$[high].qty": 2}},
+            array_filters=[{"high.qty": {"$gte": 2}}],
+        )
+        set_modified = UpdateEngine.apply_update(
+            document,
+            {"$set": {"items.$[].flag": True}},
+        )
+        max_modified = UpdateEngine.apply_update(
+            document,
+            {"$max": {"scores.$[score]": 5}},
+            array_filters=[{"score": {"$gte": 2}}],
+        )
+
+        self.assertTrue(inc_modified)
+        self.assertTrue(set_modified)
+        self.assertTrue(max_modified)
+        self.assertEqual(
+            document,
+            {
+                "items": [{"qty": 1, "flag": True}, {"qty": 5, "flag": True}],
+                "scores": [1, 5, 5],
+            },
+        )
+
+    def test_array_filters_validate_identifiers_and_reject_legacy_positional_paths(self):
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$[item].flag": True}},
+            )
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$[item].flag": True}},
+                array_filters=[{"other.qty": {"$gte": 1}}],
+            )
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$[item].flag": True}},
+                array_filters=[{"item.qty": {"$gte": 1}, "other.qty": {"$gte": 2}}],
+            )
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$[item].flag": True}},
+                array_filters=[{"item.qty": {"$gte": 1}}, {"item.flag": True}],
+            )
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$[].flag": True}},
+                array_filters=[{"item.qty": {"$gte": 1}}],
+            )
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$.flag": True}},
+                array_filters=[{"item.qty": {"$gte": 1}}],
+            )
 
     def test_push_add_to_set_and_pull_support_array_mutation(self):
         document = {"tags": ["python"]}

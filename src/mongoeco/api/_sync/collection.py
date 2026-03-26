@@ -11,7 +11,7 @@ from mongoeco.compat import (
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    BulkWriteResult, CodecOptions, DeleteResult, Document, DocumentId, Filter, InsertManyResult,
+    ArrayFilters, BulkWriteResult, CodecOptions, DeleteResult, Document, DocumentId, Filter, InsertManyResult,
     IndexInformation, IndexModel, IndexKeySpec, InsertOneResult, Projection, ReadConcern, ReadPreference,
     ReturnDocument, SortSpec, Update, UpdateResult, WriteConcern, WriteModel,
 )
@@ -175,6 +175,7 @@ class Collection:
         upsert: bool = False,
         *,
         sort: SortSpec | None = None,
+        array_filters: ArrayFilters | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
@@ -186,6 +187,7 @@ class Collection:
                 update_spec,
                 upsert,
                 sort=sort,
+                array_filters=array_filters,
                 hint=hint,
                 comment=comment,
                 let=let,
@@ -227,6 +229,7 @@ class Collection:
         sort: SortSpec | None = None,
         upsert: bool = False,
         return_document: ReturnDocument | None = None,
+        array_filters: ArrayFilters | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
@@ -241,6 +244,7 @@ class Collection:
                 sort=sort,
                 upsert=upsert,
                 return_document=return_document,
+                array_filters=array_filters,
                 hint=hint,
                 comment=comment,
                 max_time_ms=max_time_ms,
@@ -330,6 +334,7 @@ class Collection:
         update_spec: Update,
         upsert: bool = False,
         *,
+        array_filters: ArrayFilters | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
@@ -340,6 +345,7 @@ class Collection:
                 filter_spec,
                 update_spec,
                 upsert,
+                array_filters=array_filters,
                 hint=hint,
                 comment=comment,
                 let=let,

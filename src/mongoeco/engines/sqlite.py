@@ -48,6 +48,7 @@ from mongoeco.engines.sqlite_query import (
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
+    ArrayFilters,
     DeleteResult,
     Document,
     DocumentId,
@@ -1279,6 +1280,7 @@ class SQLiteEngine(AsyncStorageEngine):
         update_spec: Update,
         upsert: bool,
         upsert_seed: Document | None,
+        array_filters: ArrayFilters | None,
         plan: QueryNode | None,
         context: ClientSession | None,
         dialect: MongoDialect | None = None,
@@ -1312,6 +1314,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         document,
                         update_spec,
                         dialect=effective_dialect,
+                        array_filters=array_filters,
                     )
                     if not modified:
                         return UpdateResult(matched_count=1, modified_count=0)
@@ -1321,6 +1324,8 @@ class SQLiteEngine(AsyncStorageEngine):
                     try:
                         if self._dialect_requires_python_fallback(effective_dialect):
                             raise NotImplementedError("Custom dialect requires Python fallback")
+                        if array_filters is not None:
+                            raise NotImplementedError("array_filters require Python update fallback")
                         update_sql, update_params = translate_update_spec(update_spec, current_document=original_document)
                         self._begin_write(conn, context)
                         conn.execute(
@@ -1380,6 +1385,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     new_doc,
                     update_spec,
                     dialect=effective_dialect,
+                    array_filters=array_filters,
                     is_upsert_insert=True,
                 )
                 if "_id" not in new_doc:
@@ -2003,6 +2009,7 @@ class SQLiteEngine(AsyncStorageEngine):
         upsert: bool = False,
         upsert_seed: Document | None = None,
         *,
+        array_filters: ArrayFilters | None = None,
         plan: QueryNode | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
@@ -2015,6 +2022,7 @@ class SQLiteEngine(AsyncStorageEngine):
             update_spec,
             upsert,
             upsert_seed,
+            array_filters,
             plan,
             context,
             dialect,

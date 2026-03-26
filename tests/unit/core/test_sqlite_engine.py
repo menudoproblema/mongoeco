@@ -1152,6 +1152,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 {"_id": "seeded", "kind": "view"},
                 None,
                 None,
+                None,
             )
             found = engine._get_document_sync("db", "coll", "seeded", None, None)
         finally:

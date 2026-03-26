@@ -33,12 +33,14 @@ def _build_operation_option_support() -> MappingProxyType[str, MappingProxyType[
             "let": OperationOptionSupport(effective, "Propagated into aggregate expression evaluation and subpipelines."),
         },
         "update_one": {
+            "array_filters": OperationOptionSupport(effective, "Applied during update execution for supported filtered positional paths."),
             "hint": OperationOptionSupport(effective, "Applied through hinted document selection before single-document update execution."),
             "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for the write operation."),
             "let": OperationOptionSupport(effective, "Command-level let variables are available through $expr in write filters and selection paths."),
             "sort": OperationOptionSupport(effective, "Implemented with profile-aware validation since PyMongo 4.11."),
         },
         "update_many": {
+            "array_filters": OperationOptionSupport(effective, "Applied during per-document update execution for supported filtered positional paths."),
             "hint": OperationOptionSupport(effective, "Applied through hinted _id preselection before per-document updates."),
             "comment": OperationOptionSupport(effective, "Recorded in engine session metadata for the write operation."),
             "let": OperationOptionSupport(effective, "Command-level let variables are available through $expr in write filters and selection paths."),
@@ -60,6 +62,7 @@ def _build_operation_option_support() -> MappingProxyType[str, MappingProxyType[
             "let": OperationOptionSupport(effective, "Command-level let variables are available through $expr in write filters and selection paths."),
         },
         "find_one_and_update": {
+            "array_filters": OperationOptionSupport(effective, "Propagated to the underlying update_one() execution for supported filtered positional paths."),
             "hint": OperationOptionSupport(effective, "Applied through hinted document selection and post-update fetch."),
             "comment": OperationOptionSupport(effective, "Propagated through the underlying read selection path and session metadata."),
             "max_time_ms": OperationOptionSupport(effective, "Propagated through the underlying read selection path and enforced there."),

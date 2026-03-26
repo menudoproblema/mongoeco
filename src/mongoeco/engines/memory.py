@@ -19,7 +19,7 @@ from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    DeleteResult, Document, DocumentId, Filter, IndexInformation, IndexDocument, IndexKeySpec, ObjectId,
+    ArrayFilters, DeleteResult, Document, DocumentId, Filter, IndexInformation, IndexDocument, IndexKeySpec, ObjectId,
     Projection, SortSpec, Update, UpdateResult, default_index_name,
     default_id_index_definition, default_id_index_document, default_id_index_information, index_fields,
     IndexDefinition, normalize_index_keys,
@@ -378,7 +378,7 @@ class MemoryEngine(AsyncStorageEngine):
         return _scan()
 
     @override
-    async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> UpdateResult[DocumentId]:
+    async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, array_filters: ArrayFilters | None = None, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> UpdateResult[DocumentId]:
         effective_dialect = dialect or MONGODB_DIALECT_70
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
@@ -396,6 +396,7 @@ class MemoryEngine(AsyncStorageEngine):
                     document,
                     update_spec,
                     dialect=effective_dialect,
+                    array_filters=array_filters,
                 )
                 self._ensure_unique_indexes(
                     db_name,
@@ -417,6 +418,7 @@ class MemoryEngine(AsyncStorageEngine):
                 new_doc,
                 update_spec,
                 dialect=effective_dialect,
+                array_filters=array_filters,
                 is_upsert_insert=True,
             )
             if "_id" not in new_doc:

@@ -483,6 +483,7 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                     "update_one",
                     {
                         "sort": None,
+                        "array_filters": None,
                         "hint": "req_hint",
                         "comment": "req_comment",
                         "let": {"scope": "request"},
@@ -492,6 +493,7 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                 (
                     "update_many",
                     {
+                        "array_filters": None,
                         "hint": None,
                         "comment": "bulk_comment",
                         "let": {"scope": "bulk"},
@@ -528,6 +530,14 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                 ),
             ],
         )
+
+    def test_update_methods_reject_invalid_array_filters_shapes(self):
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.update_one({}, {"$set": {"done": True}}, array_filters="bad"))  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.update_many({}, {"$set": {"done": True}}, array_filters=[1]))  # type: ignore[list-item]
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.find_one_and_update({}, {"$set": {"done": True}}, array_filters="bad"))  # type: ignore[arg-type]
 
     def test_distinct_includes_null_once_for_missing_fields(self):
         async def _exercise():

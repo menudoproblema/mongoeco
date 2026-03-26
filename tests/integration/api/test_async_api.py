@@ -649,6 +649,46 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertNotIn("created_at", first)
                     self.assertEqual(second["created_at"], "seeded")
 
+    async def test_array_filters_and_all_positional_updates_are_observable_via_api(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.users
+                    await collection.insert_one({"_id": "1", "items": [{"qty": 1}, {"qty": 3}]})
+
+                    update_one_result = await collection.update_one(
+                        {"_id": "1"},
+                        {"$inc": {"items.$[high].qty": 2}},
+                        array_filters=[{"high.qty": {"$gte": 2}}],
+                    )
+                    update_many_result = await collection.update_many(
+                        {"_id": "1"},
+                        {"$set": {"items.$[].flag": True}},
+                    )
+                    bulk_result = await collection.bulk_write(
+                        [
+                            UpdateOne(
+                                {"_id": "1"},
+                                {"$max": {"items.$[high].qty": 10}},
+                                array_filters=[{"high.qty": {"$gte": 5}}],
+                            )
+                        ]
+                    )
+                    updated = await collection.find_one_and_update(
+                        {"_id": "1"},
+                        {"$min": {"items.$[flagged].qty": 8}},
+                        array_filters=[{"flagged.flag": True}],
+                        return_document=ReturnDocument.AFTER,
+                    )
+
+                    self.assertEqual(update_one_result.modified_count, 1)
+                    self.assertEqual(update_many_result.modified_count, 1)
+                    self.assertEqual(bulk_result.modified_count, 1)
+                    self.assertEqual(
+                        updated["items"],
+                        [{"qty": 1, "flag": True}, {"qty": 8, "flag": True}],
+                    )
+
     async def test_delete_many_deletes_all_matching_documents(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

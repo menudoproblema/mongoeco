@@ -7,7 +7,8 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.core.paths import _same_value_for_update, delete_document_value, get_document_value, set_document_value
-from mongoeco.core.update_paths import parse_update_path
+from mongoeco.core.update_paths import expand_positional_update_paths, is_valid_array_filter_identifier, parse_update_path
+from mongoeco.types import ArrayFilters
 
 
 class UpdateEngine:
@@ -19,6 +20,7 @@ class UpdateEngine:
         update_spec: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        array_filters: ArrayFilters | None = None,
         is_upsert_insert: bool = False,
     ) -> bool:
         """
@@ -27,7 +29,8 @@ class UpdateEngine:
         """
         if not isinstance(update_spec, dict) or not update_spec:
             raise OperationFailure("update specification must be a non-empty document")
-        UpdateEngine._validate_update_paths(update_spec)
+        compiled_array_filters = UpdateEngine._compile_array_filters(array_filters)
+        UpdateEngine._validate_update_paths(update_spec, compiled_array_filters)
         modified = False
 
         # Si el update no empieza con $, se trata como un reemplazo completo (Mongo behavior)
@@ -38,34 +41,35 @@ class UpdateEngine:
             if not isinstance(params, dict):
                 raise OperationFailure(f"{op} requires a document specification")
             if op == "$set":
-                if UpdateEngine._apply_set(doc, params, dialect=dialect):
+                if UpdateEngine._apply_set(doc, params, dialect=dialect, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$unset":
-                if UpdateEngine._apply_unset(doc, params, dialect=dialect):
+                if UpdateEngine._apply_unset(doc, params, dialect=dialect, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$inc":
-                if UpdateEngine._apply_inc(doc, params, dialect=dialect):
+                if UpdateEngine._apply_inc(doc, params, dialect=dialect, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$min":
-                if UpdateEngine._apply_min(doc, params, dialect=dialect):
+                if UpdateEngine._apply_min(doc, params, dialect=dialect, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$max":
-                if UpdateEngine._apply_max(doc, params, dialect=dialect):
+                if UpdateEngine._apply_max(doc, params, dialect=dialect, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$mul":
-                if UpdateEngine._apply_mul(doc, params, dialect=dialect):
+                if UpdateEngine._apply_mul(doc, params, dialect=dialect, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$rename":
                 if UpdateEngine._apply_rename(doc, params, dialect=dialect):
                     modified = True
             elif op == "$currentDate":
-                if UpdateEngine._apply_current_date(doc, params, dialect=dialect):
+                if UpdateEngine._apply_current_date(doc, params, dialect=dialect, array_filters=compiled_array_filters):
                     modified = True
             elif op == "$setOnInsert":
                 if UpdateEngine._apply_set_on_insert(
                     doc,
                     params,
                     dialect=dialect,
+                    array_filters=compiled_array_filters,
                     is_upsert_insert=is_upsert_insert,
                 ):
                     modified = True
@@ -87,19 +91,113 @@ class UpdateEngine:
         return modified
 
     @staticmethod
-    def _validate_update_paths(update_spec: dict[str, Any]) -> None:
+    def _validate_update_paths(
+        update_spec: dict[str, Any],
+        array_filters: dict[str, dict[str, Any]],
+    ) -> None:
         seen_paths: list[str] = []
+        referenced_identifiers: set[str] = set()
         for operator, params in update_spec.items():
             if not isinstance(params, dict):
                 continue
             for path, value in params.items():
                 if not isinstance(path, str):
                     raise OperationFailure("update field names must be strings")
+                for segment in parse_update_path(path):
+                    if segment.kind == "positional":
+                        raise OperationFailure("Legacy positional '$' update paths are not supported")
+                    if segment.kind == "filtered_positional":
+                        if segment.identifier is None or segment.identifier not in array_filters:
+                            raise OperationFailure("No array filter found for identifier used in update path")
+                        referenced_identifiers.add(segment.identifier)
                 UpdateEngine._register_update_path(seen_paths, path)
                 if operator == "$rename":
                     if not isinstance(value, str):
                         raise OperationFailure("$rename requires string target paths")
                     UpdateEngine._register_update_path(seen_paths, value)
+        unused_identifiers = set(array_filters) - referenced_identifiers
+        if unused_identifiers:
+            raise OperationFailure("array_filters contains identifiers that are not used in the update document")
+
+    @staticmethod
+    def _compile_array_filters(array_filters: ArrayFilters | None) -> dict[str, dict[str, Any]]:
+        if array_filters is None:
+            return {}
+        compiled: dict[str, dict[str, Any]] = {}
+        for item in array_filters:
+            if not isinstance(item, dict) or not item:
+                raise OperationFailure("array_filters entries must be non-empty documents")
+            identifier: str | None = None
+            normalized: dict[str, Any] = {}
+            for key, value in item.items():
+                if not isinstance(key, str):
+                    raise OperationFailure("array_filters field names must be strings")
+                if key.startswith("$"):
+                    raise OperationFailure("Top-level operators in array_filters are not supported")
+                root, dot, rest = key.partition(".")
+                if not is_valid_array_filter_identifier(root):
+                    raise OperationFailure("array filter identifiers must begin with a lowercase letter and contain only alphanumerics")
+                if identifier is None:
+                    identifier = root
+                elif root != identifier:
+                    raise OperationFailure("each array filter document must reference exactly one identifier")
+                normalized[rest if dot else ""] = value
+            assert identifier is not None
+            if identifier in compiled:
+                raise OperationFailure("duplicate array filter identifiers are not allowed")
+            compiled[identifier] = normalized
+        return compiled
+
+    @staticmethod
+    def _array_filter_matches(
+        identifier: str,
+        candidate: Any,
+        *,
+        array_filters: dict[str, dict[str, Any]],
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
+        filter_spec = array_filters.get(identifier)
+        if filter_spec is None:
+            return False
+        for path, condition in filter_spec.items():
+            if path == "":
+                if not QueryEngine._match_elem_match_candidate(candidate, condition, dialect=dialect):
+                    return False
+                continue
+            if not isinstance(candidate, dict):
+                return False
+            if not QueryEngine.match(candidate, {path: condition}, dialect=dialect):
+                return False
+        return True
+
+    @staticmethod
+    def _expand_update_targets(
+        doc: dict[str, Any],
+        path: str,
+        *,
+        array_filters: dict[str, dict[str, Any]],
+        allow_positional: bool,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> list[str]:
+        segments = parse_update_path(path)
+        if segments[0].raw == "_id":
+            raise OperationFailure("Modifying the immutable field '_id' is not allowed")
+        if not allow_positional and any(
+            segment.kind in {"positional", "all_positional", "filtered_positional"}
+            for segment in segments
+        ):
+            raise OperationFailure("Positional and array-filter update paths are not supported")
+        concrete_paths = expand_positional_update_paths(
+            doc,
+            path,
+            filtered_matcher=lambda identifier, candidate: UpdateEngine._array_filter_matches(
+                identifier,
+                candidate,
+                array_filters=array_filters,
+                dialect=dialect,
+            ),
+        )
+        return list(dict.fromkeys(concrete_paths))
 
     @staticmethod
     def _register_update_path(seen_paths: list[str], path: str) -> None:
@@ -151,12 +249,19 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
         for path, value in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
-            UpdateEngine._assert_mutable_path(path)
-            if set_document_value(doc, path, deepcopy(value)):
-                modified = True
+            for concrete_path in UpdateEngine._expand_update_targets(
+                doc,
+                path,
+                array_filters=array_filters or {},
+                allow_positional=True,
+                dialect=dialect,
+            ):
+                if set_document_value(doc, concrete_path, deepcopy(value)):
+                    modified = True
         return modified
 
     @staticmethod
@@ -165,12 +270,19 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
         for path, _ in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
-            UpdateEngine._assert_mutable_path(path)
-            if delete_document_value(doc, path):
-                modified = True
+            for concrete_path in UpdateEngine._expand_update_targets(
+                doc,
+                path,
+                array_filters=array_filters or {},
+                allow_positional=True,
+                dialect=dialect,
+            ):
+                if delete_document_value(doc, concrete_path):
+                    modified = True
         return modified
 
     @staticmethod
@@ -179,21 +291,28 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
         for path, increment in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
-            UpdateEngine._assert_mutable_path(path)
             if not UpdateEngine._is_numeric(increment):
                 raise OperationFailure("$inc requires numeric values")
-            found, current = get_document_value(doc, path)
-            if not found:
-                if set_document_value(doc, path, increment):
+            for concrete_path in UpdateEngine._expand_update_targets(
+                doc,
+                path,
+                array_filters=array_filters or {},
+                allow_positional=True,
+                dialect=dialect,
+            ):
+                found, current = get_document_value(doc, concrete_path)
+                if not found:
+                    if set_document_value(doc, concrete_path, increment):
+                        modified = True
+                    continue
+                if not UpdateEngine._is_numeric(current):
+                    raise OperationFailure("$inc requires the target field to be numeric")
+                if set_document_value(doc, concrete_path, current + increment):
                     modified = True
-                continue
-            if not UpdateEngine._is_numeric(current):
-                raise OperationFailure("$inc requires the target field to be numeric")
-            if set_document_value(doc, path, current + increment):
-                modified = True
         return modified
 
     @staticmethod
@@ -202,14 +321,21 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
         for path, value in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
-            UpdateEngine._assert_mutable_path(path)
-            found, current = get_document_value(doc, path)
-            if not found or dialect.compare_values(current, value) > 0:
-                if set_document_value(doc, path, deepcopy(value)):
-                    modified = True
+            for concrete_path in UpdateEngine._expand_update_targets(
+                doc,
+                path,
+                array_filters=array_filters or {},
+                allow_positional=True,
+                dialect=dialect,
+            ):
+                found, current = get_document_value(doc, concrete_path)
+                if not found or dialect.compare_values(current, value) > 0:
+                    if set_document_value(doc, concrete_path, deepcopy(value)):
+                        modified = True
         return modified
 
     @staticmethod
@@ -218,14 +344,21 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
         for path, value in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
-            UpdateEngine._assert_mutable_path(path)
-            found, current = get_document_value(doc, path)
-            if not found or dialect.compare_values(current, value) < 0:
-                if set_document_value(doc, path, deepcopy(value)):
-                    modified = True
+            for concrete_path in UpdateEngine._expand_update_targets(
+                doc,
+                path,
+                array_filters=array_filters or {},
+                allow_positional=True,
+                dialect=dialect,
+            ):
+                found, current = get_document_value(doc, concrete_path)
+                if not found or dialect.compare_values(current, value) < 0:
+                    if set_document_value(doc, concrete_path, deepcopy(value)):
+                        modified = True
         return modified
 
     @staticmethod
@@ -234,22 +367,29 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
         for path, factor in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
-            UpdateEngine._assert_mutable_path(path)
             if not UpdateEngine._is_numeric(factor):
                 raise OperationFailure("$mul requires numeric values")
-            found, current = get_document_value(doc, path)
-            if not found:
-                missing_value: int | float = 0.0 if isinstance(factor, float) else 0
-                if set_document_value(doc, path, missing_value):
+            for concrete_path in UpdateEngine._expand_update_targets(
+                doc,
+                path,
+                array_filters=array_filters or {},
+                allow_positional=True,
+                dialect=dialect,
+            ):
+                found, current = get_document_value(doc, concrete_path)
+                if not found:
+                    missing_value: int | float = 0.0 if isinstance(factor, float) else 0
+                    if set_document_value(doc, concrete_path, missing_value):
+                        modified = True
+                    continue
+                if not UpdateEngine._is_numeric(current):
+                    raise OperationFailure("$mul requires the target field to be numeric")
+                if set_document_value(doc, concrete_path, current * factor):
                     modified = True
-                continue
-            if not UpdateEngine._is_numeric(current):
-                raise OperationFailure("$mul requires the target field to be numeric")
-            if set_document_value(doc, path, current * factor):
-                modified = True
         return modified
 
     @staticmethod
@@ -280,19 +420,26 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        array_filters: dict[str, dict[str, Any]] | None = None,
     ) -> bool:
         modified = False
         now = datetime.now(UTC).replace(tzinfo=None)
         for path, value in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
-            UpdateEngine._assert_mutable_path(path)
             if value is True:
                 replacement = now
             elif isinstance(value, dict) and set(value) == {"$type"} and value["$type"] == "date":
                 replacement = now
             else:
                 raise OperationFailure("$currentDate only supports True or {$type: 'date'}")
-            if set_document_value(doc, path, replacement):
-                modified = True
+            for concrete_path in UpdateEngine._expand_update_targets(
+                doc,
+                path,
+                array_filters=array_filters or {},
+                allow_positional=True,
+                dialect=dialect,
+            ):
+                if set_document_value(doc, concrete_path, replacement):
+                    modified = True
         return modified
 
     @staticmethod
@@ -301,11 +448,12 @@ class UpdateEngine:
         params: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        array_filters: dict[str, dict[str, Any]] | None = None,
         is_upsert_insert: bool = False,
     ) -> bool:
         if not is_upsert_insert:
             return False
-        return UpdateEngine._apply_set(doc, params, dialect=dialect)
+        return UpdateEngine._apply_set(doc, params, dialect=dialect, array_filters=array_filters)
 
     @staticmethod
     def _expand_array_update_values(operator: str, value: Any) -> list[Any]:

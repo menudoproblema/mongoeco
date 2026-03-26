@@ -31,7 +31,7 @@ from mongoeco.core.upserts import seed_upsert_document
 from mongoeco.core.validation import is_document, is_filter, is_projection, is_update
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    CodecOptions, ObjectId, Document, DocumentId, Filter, Update, Projection, InsertManyResult, InsertOneResult,
+    ArrayFilters, CodecOptions, ObjectId, Document, DocumentId, Filter, Update, Projection, InsertManyResult, InsertOneResult,
     ReadConcern, ReadPreference, ReturnDocument, UpdateResult, DeleteResult, SortSpec, BulkWriteResult, WriteModel,
     WriteConcern, InsertOne, UpdateOne, UpdateMany, ReplaceOne, DeleteOne, DeleteMany,
     IndexInformation, IndexKeySpec, IndexModel, normalize_codec_options, normalize_index_keys,
@@ -202,6 +202,16 @@ class AsyncCollection:
         if not isinstance(let, dict):
             raise TypeError("let must be a dict")
         return let
+
+    @staticmethod
+    def _normalize_array_filters(array_filters: object | None) -> ArrayFilters | None:
+        if array_filters is None:
+            return None
+        if not isinstance(array_filters, list):
+            raise TypeError("array_filters must be a list of dicts")
+        if not all(is_filter(item) for item in array_filters):
+            raise TypeError("array_filters must be a list of dicts")
+        return array_filters
 
     @staticmethod
     def _normalize_index_keys(keys: object) -> IndexKeySpec:
@@ -454,6 +464,7 @@ class AsyncCollection:
                         request.update,
                         request.upsert,
                         sort=request.sort,
+                        array_filters=request.array_filters,
                         hint=request.hint,
                         comment=request.comment if request.comment is not None else comment,
                         let=request.let if request.let is not None else let,
@@ -468,6 +479,7 @@ class AsyncCollection:
                         request.filter,
                         request.update,
                         request.upsert,
+                        array_filters=request.array_filters,
                         hint=request.hint,
                         comment=request.comment if request.comment is not None else comment,
                         let=request.let if request.let is not None else let,
@@ -653,6 +665,7 @@ class AsyncCollection:
         upsert: bool = False,
         *,
         sort: SortSpec | None = None,
+        array_filters: ArrayFilters | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
@@ -661,6 +674,7 @@ class AsyncCollection:
         filter_spec = self._normalize_filter(filter_spec)
         update_spec = self._require_update(update_spec)
         sort = self._normalize_sort(sort)
+        array_filters = self._normalize_array_filters(array_filters)
         hint = self._normalize_hint(hint)
         let = self._normalize_let(let)
         if sort is not None and not self._pymongo_profile.supports_update_one_sort():
@@ -691,6 +705,7 @@ class AsyncCollection:
                     identity_filter,
                     update_spec,
                     upsert=False,
+                    array_filters=array_filters,
                     plan=identity_plan,
                     dialect=self._mongodb_dialect,
                     context=session,
@@ -706,6 +721,7 @@ class AsyncCollection:
                 filter_spec,
                 update_spec,
                 session=session,
+                array_filters=array_filters,
             )
         if hint is not None:
             selected = await self._build_cursor(
@@ -723,6 +739,7 @@ class AsyncCollection:
                         filter_spec,
                         update_spec,
                         session=session,
+                        array_filters=array_filters,
                     )
                 return UpdateResult(matched_count=0, modified_count=0)
             identity_filter = {"_id": selected["_id"]}
@@ -731,11 +748,12 @@ class AsyncCollection:
                 self._db_name,
                 self._collection_name,
                 identity_filter,
-                update_spec,
-                upsert=False,
-                plan=identity_plan,
-                dialect=self._mongodb_dialect,
-                context=session,
+                    update_spec,
+                    upsert=False,
+                    array_filters=array_filters,
+                    plan=identity_plan,
+                    dialect=self._mongodb_dialect,
+                    context=session,
             )
             self._record_operation_metadata(
                 operation="update_one",
@@ -756,6 +774,7 @@ class AsyncCollection:
             update_spec,
             upsert=upsert,
             upsert_seed=upsert_seed,
+            array_filters=array_filters,
             plan=plan,
             dialect=self._mongodb_dialect,
             context=session,
@@ -774,6 +793,7 @@ class AsyncCollection:
         update_spec: Update,
         *,
         session: ClientSession | None = None,
+        array_filters: ArrayFilters | None = None,
     ) -> UpdateResult[DocumentId]:
         new_doc: Document = {}
         seed_upsert_document(new_doc, filter_spec)
@@ -781,6 +801,7 @@ class AsyncCollection:
             new_doc,
             update_spec,
             dialect=self._mongodb_dialect,
+            array_filters=array_filters,
             is_upsert_insert=True,
         )
         if "_id" not in new_doc:
@@ -798,6 +819,7 @@ class AsyncCollection:
         update_spec: Update,
         upsert: bool = False,
         *,
+        array_filters: ArrayFilters | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
@@ -805,6 +827,7 @@ class AsyncCollection:
     ) -> UpdateResult[DocumentId]:
         filter_spec = self._normalize_filter(filter_spec)
         update_spec = self._require_update(update_spec)
+        array_filters = self._normalize_array_filters(array_filters)
         hint = self._normalize_hint(hint)
         let = self._normalize_let(let)
         plan = compile_filter(filter_spec, dialect=self._mongodb_dialect, variables=let)
@@ -822,6 +845,7 @@ class AsyncCollection:
                     filter_spec,
                     update_spec,
                     upsert=True,
+                    array_filters=array_filters,
                     hint=hint,
                     comment=comment,
                     let=let,
@@ -839,6 +863,7 @@ class AsyncCollection:
                 identity_filter,
                 update_spec,
                 upsert=False,
+                array_filters=array_filters,
                 plan=identity_plan,
                 dialect=self._mongodb_dialect,
                 context=session,
@@ -927,6 +952,7 @@ class AsyncCollection:
         sort: SortSpec | None = None,
         upsert: bool = False,
         return_document: ReturnDocument | None = None,
+        array_filters: ArrayFilters | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
@@ -937,6 +963,7 @@ class AsyncCollection:
         projection = self._normalize_projection(projection)
         update_spec = self._require_update(update_spec)
         sort = self._normalize_sort(sort)
+        array_filters = self._normalize_array_filters(array_filters)
         hint = self._normalize_hint(hint)
         max_time_ms = self._normalize_max_time_ms(max_time_ms)
         let = self._normalize_let(let)
@@ -960,6 +987,7 @@ class AsyncCollection:
                 update_spec,
                 upsert=True,
                 sort=sort,
+                array_filters=array_filters,
                 hint=hint,
                 comment=comment,
                 let=let,
@@ -985,6 +1013,7 @@ class AsyncCollection:
             identity_filter,
             update_spec,
             upsert=False,
+            array_filters=array_filters,
             plan=identity_plan,
             dialect=self._mongodb_dialect,
             context=session,

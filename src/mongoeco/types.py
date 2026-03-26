@@ -111,6 +111,7 @@ class ObjectId:
 type Document = dict[str, Any]
 type Filter = dict[str, Any]
 type Update = dict[str, Any]
+type ArrayFilters = list[Filter]
 type Projection = dict[str, Any]
 type SortDirection = Literal[1, -1]
 type SortSpec = list[tuple[str, SortDirection]]
@@ -532,6 +533,7 @@ class UpdateOne:
     update: Update
     upsert: bool = False
     sort: SortSpec | None = None
+    array_filters: ArrayFilters | None = None
     hint: str | SortSpec | None = None
     comment: Any | None = None
     let: dict[str, Any] | None = None
@@ -542,6 +544,7 @@ class UpdateMany:
     filter: Filter
     update: Update
     upsert: bool = False
+    array_filters: ArrayFilters | None = None
     hint: str | SortSpec | None = None
     comment: Any | None = None
     let: dict[str, Any] | None = None
