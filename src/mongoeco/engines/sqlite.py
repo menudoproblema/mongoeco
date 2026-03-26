@@ -45,7 +45,7 @@ from mongoeco.engines.sqlite_query import (
     translate_sort_spec,
     translate_update_spec,
 )
-from mongoeco.errors import DuplicateKeyError, InvalidOperation, OperationFailure
+from mongoeco.errors import CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     DeleteResult,
@@ -883,6 +883,15 @@ class SQLiteEngine(AsyncStorageEngine):
                 connection = sqlite3.connect(self._path, check_same_thread=False)
                 connection.execute(
                     """
+                    CREATE TABLE IF NOT EXISTS collections (
+                        db_name TEXT NOT NULL,
+                        coll_name TEXT NOT NULL,
+                        PRIMARY KEY (db_name, coll_name)
+                    )
+                    """
+                )
+                connection.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS documents (
                         db_name TEXT NOT NULL,
                         coll_name TEXT NOT NULL,
@@ -932,9 +941,46 @@ class SQLiteEngine(AsyncStorageEngine):
                     connection.execute("ALTER TABLE indexes ADD COLUMN multikey_flag INTEGER NOT NULL DEFAULT 0")
                 if "multikey_physical_name" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN multikey_physical_name TEXT")
+                connection.execute(
+                    """
+                    INSERT OR IGNORE INTO collections (db_name, coll_name)
+                    SELECT db_name, coll_name FROM documents
+                    UNION
+                    SELECT db_name, coll_name FROM indexes
+                    """
+                )
                 connection.commit()
                 self._connection = connection
             self._connection_count += 1
+
+    def _ensure_collection_row(self, conn: sqlite3.Connection, db_name: str, coll_name: str) -> None:
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO collections (db_name, coll_name)
+            VALUES (?, ?)
+            """,
+            (db_name, coll_name),
+        )
+
+    def _collection_exists_sync(self, conn: sqlite3.Connection, db_name: str, coll_name: str) -> bool:
+        row = conn.execute(
+            """
+            SELECT 1
+            FROM collections
+            WHERE db_name = ? AND coll_name = ?
+            UNION
+            SELECT 1
+            FROM documents
+            WHERE db_name = ? AND coll_name = ?
+            UNION
+            SELECT 1
+            FROM indexes
+            WHERE db_name = ? AND coll_name = ?
+            LIMIT 1
+            """,
+            (db_name, coll_name, db_name, coll_name, db_name, coll_name),
+        ).fetchone()
+        return row is not None
 
     def _disconnect_sync(self) -> None:
         connection: sqlite3.Connection | None = None
@@ -963,6 +1009,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     self._validate_document_against_unique_indexes(db_name, coll_name, document)
                     if overwrite:
                         self._begin_write(conn, context)
+                        self._ensure_collection_row(conn, db_name, coll_name)
                         conn.execute(
                             """
                             INSERT INTO documents (db_name, coll_name, storage_key, document)
@@ -982,6 +1029,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         )
                     else:
                         self._begin_write(conn, context)
+                        self._ensure_collection_row(conn, db_name, coll_name)
                         cursor = conn.execute(
                             """
                             INSERT INTO documents (db_name, coll_name, storage_key, document)
@@ -1299,6 +1347,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 indexes = self._load_indexes(db_name, coll_name)
                 try:
                     self._begin_write(conn, context)
+                    self._ensure_collection_row(conn, db_name, coll_name)
                     conn.execute(
                         """
                         INSERT INTO documents (db_name, coll_name, storage_key, document)
@@ -1667,6 +1716,9 @@ class SQLiteEngine(AsyncStorageEngine):
             cursor = conn.execute(
                 """
                 SELECT db_name
+                FROM collections
+                UNION
+                SELECT db_name
                 FROM documents
                 UNION
                 SELECT db_name
@@ -1682,6 +1734,10 @@ class SQLiteEngine(AsyncStorageEngine):
             cursor = conn.execute(
                 """
                 SELECT coll_name
+                FROM collections
+                WHERE db_name = ?
+                UNION
+                SELECT coll_name
                 FROM documents
                 WHERE db_name = ?
                 UNION
@@ -1690,9 +1746,27 @@ class SQLiteEngine(AsyncStorageEngine):
                 WHERE db_name = ?
                 ORDER BY coll_name
                 """,
-                (db_name, db_name),
+                (db_name, db_name, db_name),
             )
             return [row[0] for row in cursor.fetchall()]
+
+    def _create_collection_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        context: ClientSession | None = None,
+    ) -> None:
+        with self._lock:
+            conn = self._require_connection(context)
+            try:
+                self._begin_write(conn, context)
+                if self._collection_exists_sync(conn, db_name, coll_name):
+                    raise CollectionInvalid(f"collection '{coll_name}' already exists")
+                self._ensure_collection_row(conn, db_name, coll_name)
+                self._commit_write(conn, context)
+            except Exception:
+                self._rollback_write(conn, context)
+                raise
 
     def _drop_collection_sync(self, db_name: str, coll_name: str, context: ClientSession | None = None) -> None:
         with self._lock:
@@ -1724,6 +1798,13 @@ class SQLiteEngine(AsyncStorageEngine):
                     conn.execute(
                         """
                         DELETE FROM indexes
+                        WHERE db_name = ? AND coll_name = ?
+                        """,
+                        (db_name, coll_name),
+                    )
+                    conn.execute(
+                        """
+                        DELETE FROM collections
                         WHERE db_name = ? AND coll_name = ?
                         """,
                         (db_name, coll_name),
@@ -1985,6 +2066,16 @@ class SQLiteEngine(AsyncStorageEngine):
     @override
     async def list_collections(self, db_name: str) -> list[str]:
         return await asyncio.to_thread(self._list_collections_sync, db_name)
+
+    @override
+    async def create_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> None:
+        await asyncio.to_thread(self._create_collection_sync, db_name, coll_name, context)
 
     @override
     async def drop_collection(

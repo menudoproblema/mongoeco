@@ -15,7 +15,7 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import MatchAll, QueryNode, ensure_query_plan
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.sorting import sort_documents
-from mongoeco.errors import DuplicateKeyError, OperationFailure
+from mongoeco.errors import CollectionInvalid, DuplicateKeyError, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     DeleteResult, Document, DocumentId, Filter, IndexInformation, IndexDocument, IndexKeySpec, ObjectId,
@@ -47,6 +47,7 @@ class MemoryEngine(AsyncStorageEngine):
         self._storage: dict[str, dict[str, dict[Any, Any]]] = {}
         self._locks: dict[str, _AsyncThreadLock] = {}
         self._indexes: dict[str, dict[str, list[dict[str, object]]]] = {}
+        self._collections: dict[str, set[str]] = {}
         self._meta_lock = threading.Lock()
         self._connection_count = 0
         self._codec = codec
@@ -135,6 +136,17 @@ class MemoryEngine(AsyncStorageEngine):
 
     def _storage_key(self, value: Any) -> Any:
         return self._typed_engine_key(value)
+
+    def _register_collection_locked(self, db_name: str, coll_name: str) -> None:
+        self._collections.setdefault(db_name, set()).add(coll_name)
+
+    def _prune_collection_registry_locked(self, db_name: str, coll_name: str) -> None:
+        collections = self._collections.get(db_name)
+        if collections is None:
+            return
+        collections.discard(coll_name)
+        if not collections:
+            del self._collections[db_name]
 
     def _typed_engine_key(self, value: Any) -> Any:
         if value is None:
@@ -225,6 +237,7 @@ class MemoryEngine(AsyncStorageEngine):
                 return
             self._storage.clear()
             self._indexes.clear()
+            self._collections.clear()
             self._locks.clear()
 
     @override
@@ -233,6 +246,7 @@ class MemoryEngine(AsyncStorageEngine):
             with self._meta_lock:
                 db = self._storage.setdefault(db_name, {})
                 coll = db.setdefault(coll_name, {})
+                self._register_collection_locked(db_name, coll_name)
 
             doc_id = document.get("_id")
             storage_key = self._storage_key(doc_id)
@@ -346,8 +360,9 @@ class MemoryEngine(AsyncStorageEngine):
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
-                db = self._storage.setdefault(db_name, {})
-                coll = db.setdefault(coll_name, {})
+                coll = self._storage.get(db_name, {}).get(coll_name)
+            if coll is None:
+                coll = {}
 
             for storage_key, data in list(coll.items()):
                 document = self._codec.decode(data)
@@ -378,6 +393,11 @@ class MemoryEngine(AsyncStorageEngine):
             UpdateEngine.apply_update(new_doc, update_spec, dialect=effective_dialect)
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
+
+            with self._meta_lock:
+                db = self._storage.setdefault(db_name, {})
+                coll = db.setdefault(coll_name, {})
+                self._register_collection_locked(db_name, coll_name)
 
             storage_key = self._storage_key(new_doc["_id"])
             if storage_key in coll:
@@ -436,6 +456,7 @@ class MemoryEngine(AsyncStorageEngine):
             with self._meta_lock:
                 db_indexes = self._indexes.setdefault(db_name, {})
                 coll_indexes = db_indexes.setdefault(coll_name, [])
+                self._register_collection_locked(db_name, coll_name)
 
             for index in coll_indexes:
                 if index["name"] == index_name:
@@ -608,7 +629,11 @@ class MemoryEngine(AsyncStorageEngine):
     @override
     async def list_databases(self) -> list[str]:
         with self._meta_lock:
-            return sorted(set(self._storage.keys()) | set(self._indexes.keys()))
+            return sorted(
+                set(self._storage.keys())
+                | set(self._indexes.keys())
+                | set(self._collections.keys())
+            )
 
     @override
     async def list_collections(self, db_name: str) -> list[str]:
@@ -616,7 +641,27 @@ class MemoryEngine(AsyncStorageEngine):
             return sorted(
                 set(self._storage.get(db_name, {}).keys())
                 | set(self._indexes.get(db_name, {}).keys())
+                | set(self._collections.get(db_name, set()))
             )
+
+    @override
+    async def create_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> None:
+        async with self._get_lock(db_name, coll_name):
+            with self._meta_lock:
+                exists = (
+                    coll_name in self._collections.get(db_name, set())
+                    or coll_name in self._storage.get(db_name, {})
+                    or coll_name in self._indexes.get(db_name, {})
+                )
+                if exists:
+                    raise CollectionInvalid(f"collection '{coll_name}' already exists")
+                self._register_collection_locked(db_name, coll_name)
 
     @override
     async def drop_collection(
@@ -628,6 +673,7 @@ class MemoryEngine(AsyncStorageEngine):
     ) -> None:
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
+                self._prune_collection_registry_locked(db_name, coll_name)
                 if db_name in self._storage and coll_name in self._storage[db_name]:
                     del self._storage[db_name][coll_name]
                     if not self._storage[db_name]:

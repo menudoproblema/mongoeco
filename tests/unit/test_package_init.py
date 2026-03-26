@@ -13,4 +13,5 @@ class PackageInitTests(unittest.TestCase):
         spec.loader.exec_module(module)
 
         self.assertIn("AsyncMongoClient", module.__all__)
+        self.assertIn("CollectionInvalid", module.__all__)
         self.assertIn("__version__", module.__all__)

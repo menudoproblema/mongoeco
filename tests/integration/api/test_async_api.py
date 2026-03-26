@@ -23,7 +23,7 @@ from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api._async.cursor import AsyncCursor
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import BulkWriteError, DuplicateKeyError, InvalidOperation, OperationFailure
+from mongoeco.errors import BulkWriteError, CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure
 from tests.support import ENGINE_FACTORIES, open_client
 
 
@@ -63,6 +63,19 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     self.assertEqual(found, {"_id": "1", "name": "Ada"})
                     self.assertEqual(collections, ["users"])
+
+    async def test_create_collection_registers_empty_namespace_and_rejects_duplicates(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    created = await client.alpha.create_collection("events")
+
+                    self.assertEqual(created.name, "events")
+                    self.assertEqual(await client.alpha.list_collection_names(), ["events"])
+                    self.assertIn("alpha", await client.list_database_names())
+
+                    with self.assertRaises(CollectionInvalid):
+                        await client.alpha.create_collection("events")
 
     async def test_find_one_without_filter_returns_first_document(self):
         for engine_name in ENGINE_FACTORIES:
@@ -462,6 +475,15 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     await client.alpha.users.drop()
                     await client.drop_database("missing")
                     self.assertEqual(await client.list_database_names(), [])
+
+    async def test_delete_last_document_keeps_collection_visible_until_drop(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    await client.alpha.events.insert_one({"_id": "1"})
+                    await client.alpha.events.delete_one({"_id": "1"})
+
+                    self.assertEqual(await client.alpha.list_collection_names(), ["events"])
 
     async def test_drop_database_removes_sqlite_database_with_only_index_metadata(self):
         async with AsyncMongoClient(SQLiteEngine()) as client:

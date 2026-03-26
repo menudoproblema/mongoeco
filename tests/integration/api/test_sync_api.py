@@ -19,7 +19,7 @@ from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import BulkWriteError, DuplicateKeyError, InvalidOperation, OperationFailure
+from mongoeco.errors import BulkWriteError, CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure
 SYNC_ENGINE_FACTORIES = {
     "memory": MemoryEngine,
     "sqlite": SQLiteEngine,
@@ -54,6 +54,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(set(client.list_database_names()), {"test"})
                     self.assertEqual(client.test.list_collection_names(), ["users"])
 
+    def test_create_collection_registers_empty_namespace_and_rejects_duplicates(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    created = client.alpha.create_collection("events")
+
+                    self.assertEqual(created.name, "events")
+                    self.assertEqual(client.alpha.list_collection_names(), ["events"])
+                    self.assertIn("alpha", client.list_database_names())
+
+                    with self.assertRaises(CollectionInvalid):
+                        client.alpha.create_collection("events")
+
     def test_duplicate_id_raises(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -84,6 +97,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(updated.modified_count, 2)
                     self.assertEqual(deleted.deleted_count, 2)
                     self.assertEqual(remaining, [{"_id": "3", "kind": "click", "done": False}])
+
+    def test_delete_last_document_keeps_collection_visible_until_drop(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.alpha.events.insert_one({"_id": "1"})
+                    client.alpha.events.delete_one({"_id": "1"})
+
+                    self.assertEqual(client.alpha.list_collection_names(), ["events"])
 
     def test_bulk_write_supports_ordered_and_unordered_execution(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

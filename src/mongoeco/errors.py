@@ -16,6 +16,11 @@ class InvalidOperation(PyMongoError):
     """Se produce cuando se intenta una operación no válida."""
     pass
 
+
+class CollectionInvalid(PyMongoError):
+    """Se produce cuando una colección no puede crearse o administrarse."""
+    pass
+
 class WriteError(PyMongoError):
     """Se produce cuando una operación de escritura falla."""
 

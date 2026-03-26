@@ -411,6 +411,10 @@ class Collection:
         self._client._run(self._async_collection().drop(session=session))
 
     @property
+    def name(self) -> str:
+        return self._collection_name
+
+    @property
     def mongodb_dialect(self) -> MongoDialect:
         return self._client.mongodb_dialect
 

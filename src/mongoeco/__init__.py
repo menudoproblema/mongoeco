@@ -1,5 +1,6 @@
 from mongoeco.api import AsyncMongoClient, MongoClient
 from mongoeco._version import __version__
+from mongoeco.errors import CollectionInvalid
 from mongoeco.compat import (
     AUTO_INSTALLED_PYMONGO_PROFILE,
     DEFAULT_MONGODB_DIALECT,
@@ -96,6 +97,7 @@ __all__ = [
     "detect_installed_pymongo_profile",
     "detect_installed_pymongo_profile_resolution",
     "ClientSession",
+    "CollectionInvalid",
     "InsertOne",
     "UpdateOne",
     "UpdateMany",

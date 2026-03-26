@@ -166,6 +166,15 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                     self.assertIsNone(await engine.get_document(db, coll, "1"))
                     self.assertNotIn(coll, await engine.list_collections(db))
 
+    async def test_create_collection_registers_empty_namespace(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_engine(engine_name) as engine:
+                    await engine.create_collection("db", "empty")
+
+                    self.assertIn("db", await engine.list_databases())
+                    self.assertEqual(await engine.list_collections("db"), ["empty"])
+
     async def test_embedded_document_comparison_does_not_crash(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

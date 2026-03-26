@@ -109,6 +109,11 @@ class Database:
         async_database = self._client._async_client.get_database(self._name)
         return self._client._run(async_database.list_collection_names())
 
+    def create_collection(self, name: str) -> Collection:
+        self._client._ensure_connected()
+        async_database = self._client._async_client.get_database(self._name)
+        return self._client._run(async_database.create_collection(name))
+
     def drop_collection(self, name: str) -> None:
         self._client._ensure_connected()
         async_database = self._client._async_client.get_database(self._name)

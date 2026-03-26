@@ -59,6 +59,10 @@ class AsyncDatabase:
     async def list_collection_names(self) -> list[str]:
         return await self._engine.list_collections(self._db_name)
 
+    async def create_collection(self, name: str) -> AsyncCollection:
+        await self._engine.create_collection(self._db_name, name)
+        return self.get_collection(name)
+
     async def drop_collection(self, name: str) -> None:
         await self._engine.drop_collection(self._db_name, name)
 

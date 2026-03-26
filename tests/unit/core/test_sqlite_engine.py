@@ -12,7 +12,7 @@ from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import DuplicateKeyError, ExecutionTimeout, OperationFailure
+from mongoeco.errors import CollectionInvalid, DuplicateKeyError, ExecutionTimeout, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import ObjectId, UNDEFINED
 
@@ -1010,6 +1010,28 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertIsNone(row)
+
+    async def test_create_collection_registers_empty_namespace_and_rejects_duplicates(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_collection("db", "empty")
+            self.assertEqual(await engine.list_databases(), ["db"])
+            self.assertEqual(await engine.list_collections("db"), ["empty"])
+            with self.assertRaises(CollectionInvalid):
+                await engine.create_collection("db", "empty")
+        finally:
+            await engine.disconnect()
+
+    async def test_delete_last_document_does_not_remove_collection_metadata(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1"}, overwrite=True)
+            await engine.delete_document("db", "coll", "1")
+            self.assertEqual(await engine.list_collections("db"), ["coll"])
+        finally:
+            await engine.disconnect()
 
     def test_drop_collection_rolls_back_if_metadata_delete_fails(self):
         engine = SQLiteEngine()

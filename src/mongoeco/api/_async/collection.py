@@ -1210,6 +1210,10 @@ class AsyncCollection:
         )
 
     @property
+    def name(self) -> str:
+        return self._collection_name
+
+    @property
     def mongodb_dialect(self) -> MongoDialect:
         return self._mongodb_dialect
 

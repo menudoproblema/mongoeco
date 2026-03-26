@@ -7,7 +7,7 @@ from mongoeco.compat import MONGODB_DIALECT_80
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.engines.memory import MemoryEngine
-from mongoeco.errors import DuplicateKeyError, ExecutionTimeout, OperationFailure
+from mongoeco.errors import CollectionInvalid, DuplicateKeyError, ExecutionTimeout, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import UNDEFINED
 
@@ -602,6 +602,39 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index("db", "empty", ["email"])
             self.assertEqual(await engine.list_databases(), ["db"])
             self.assertEqual(await engine.list_collections("db"), ["empty"])
+        finally:
+            await engine.disconnect()
+
+    async def test_create_collection_registers_empty_namespace_and_rejects_duplicates(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_collection("db", "empty")
+            self.assertEqual(await engine.list_databases(), ["db"])
+            self.assertEqual(await engine.list_collections("db"), ["empty"])
+            with self.assertRaises(CollectionInvalid):
+                await engine.create_collection("db", "empty")
+        finally:
+            await engine.disconnect()
+
+    async def test_delete_last_document_does_not_remove_collection_metadata(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1"})
+            await engine.delete_document("db", "coll", "1")
+            self.assertEqual(await engine.list_collections("db"), ["coll"])
+        finally:
+            await engine.disconnect()
+
+    async def test_update_without_match_and_without_upsert_does_not_create_collection(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            result = await engine.update_matching_document("db", "ghosts", {"_id": "1"}, {"$set": {"v": 1}})
+            self.assertEqual(result.matched_count, 0)
+            self.assertEqual(await engine.list_databases(), [])
+            self.assertEqual(await engine.list_collections("db"), [])
         finally:
             await engine.disconnect()
 
