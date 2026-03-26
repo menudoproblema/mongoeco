@@ -649,11 +649,14 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * `where`
   * bitwise
 * update operators adicionales:
-  * `$rename`
-  * `$currentDate`
-  * `$min`
-  * `$max`
-  * `$mul`
+  * ya implementados en esta fase:
+    * `$rename`
+    * `$currentDate`
+    * `$setOnInsert`
+    * `$min`
+    * `$max`
+    * `$mul`
+  * siguiente bloque prioritario:
   * `$bit`
   * positional operators
   * `array_filters`
