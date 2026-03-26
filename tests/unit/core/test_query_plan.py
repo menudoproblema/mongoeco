@@ -230,7 +230,6 @@ class QueryPlanTests(unittest.TestCase):
 
     def test_compile_filter_rejects_unsupported_field_level_query_operators_explicitly(self):
         unsupported_filters = [
-            {"value": {"$type": "string"}},
             {"value": {"$bitsAllClear": 1}},
             {"value": {"$bitsAllSet": 1}},
             {"value": {"$bitsAnyClear": 1}},

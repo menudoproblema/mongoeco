@@ -723,6 +723,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(tags, ["a", "b", "c"])
                     self.assertEqual(cities, ["Madrid", "Sevilla"])
 
+    def test_find_supports_type_query_operator(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "value": 7},
+                            {"_id": "2", "value": "7"},
+                            {"_id": "3", "value": [1, "x"]},
+                        ]
+                    )
+
+                    numbers = [doc["_id"] for doc in collection.find({"value": {"$type": "number"}})]
+                    arrays = [doc["_id"] for doc in collection.find({"value": {"$type": "array"}})]
+                    strings_in_arrays = [doc["_id"] for doc in collection.find({"value": {"$type": "string"}})]
+
+                    self.assertEqual(numbers, ["1", "3"])
+                    self.assertEqual(arrays, ["3"])
+                    self.assertEqual(strings_in_arrays, ["2", "3"])
+
     def test_update_and_projection(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

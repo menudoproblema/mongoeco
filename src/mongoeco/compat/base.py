@@ -26,6 +26,7 @@ SUPPORTED_QUERY_FIELD_OPERATORS = frozenset(
         '$not',
         '$elemMatch',
         '$exists',
+        '$type',
     }
 )
 

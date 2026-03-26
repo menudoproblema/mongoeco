@@ -1,4 +1,6 @@
+import datetime
 import math
+import re
 import unittest
 import uuid
 
@@ -211,6 +213,43 @@ class QueryEngineTests(unittest.TestCase):
     def test_query_engine_rejects_unknown_operator(self):
         with self.assertRaises(OperationFailure):
             QueryEngine.match({"a": 1}, {"a": {"$unknown": 1}})
+
+    def test_query_engine_supports_type_aliases_codes_and_array_semantics(self):
+        document = {
+            "name": "Ada",
+            "score": 7,
+            "ratio": 1.5,
+            "tags": ["python", 5],
+            "payload": {"active": True},
+            "blob": b"abc",
+            "oid": ObjectId(),
+            "created_at": datetime.datetime(2024, 1, 1),
+            "pattern": re.compile("^A"),
+            "missing_like": UNDEFINED,
+        }
+
+        self.assertTrue(QueryEngine.match(document, {"name": {"$type": "string"}}))
+        self.assertTrue(QueryEngine.match(document, {"score": {"$type": 16}}))
+        self.assertTrue(QueryEngine.match(document, {"ratio": {"$type": "number"}}))
+        self.assertTrue(QueryEngine.match(document, {"tags": {"$type": "array"}}))
+        self.assertTrue(QueryEngine.match(document, {"tags": {"$type": "int"}}))
+        self.assertTrue(QueryEngine.match(document, {"blob": {"$type": 5}}))
+        self.assertTrue(QueryEngine.match(document, {"oid": {"$type": "objectId"}}))
+        self.assertTrue(QueryEngine.match(document, {"created_at": {"$type": "date"}}))
+        self.assertTrue(QueryEngine.match(document, {"pattern": {"$type": "regex"}}))
+        self.assertTrue(QueryEngine.match(document, {"missing_like": {"$type": "undefined"}}))
+        self.assertFalse(QueryEngine.match(document, {"score": {"$type": "string"}}))
+        self.assertFalse(QueryEngine.match(document, {"missing": {"$type": "null"}}))
+
+    def test_query_engine_type_rejects_unsupported_or_invalid_type_specs(self):
+        with self.assertRaises(ValueError):
+            QueryEngine.match({"score": 7}, {"score": {"$type": []}})
+        with self.assertRaises(ValueError):
+            QueryEngine.match({"score": 7}, {"score": {"$type": "decimal"}})
+        with self.assertRaises(ValueError):
+            QueryEngine.match({"score": 7}, {"score": {"$type": 19}})
+        with self.assertRaises(ValueError):
+            QueryEngine.match({"score": 7}, {"score": {"$type": True}})
 
     def test_query_engine_supports_all_operator(self):
         document = {"tags": ["python", "mongodb", "sqlite"]}

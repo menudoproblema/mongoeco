@@ -640,14 +640,16 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
 
 #### Fase 5
 * query operators adicionales:
-  * `regex`
-  * `not`
-  * `all`
-  * `elemMatch`
-  * `size`
-  * `type`
-  * `where`
-  * bitwise
+  * ya implementados en esta fase:
+    * `regex`
+    * `not`
+    * `all`
+    * `elemMatch`
+    * `size`
+    * `type`
+  * siguiente bloque prioritario:
+    * `where`
+    * bitwise
 * update operators adicionales:
   * ya implementados en esta fase:
     * `$rename`

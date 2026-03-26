@@ -29,6 +29,7 @@ from mongoeco.core.query_plan import (
     QueryNode,
     RegexCondition,
     SizeCondition,
+    TypeCondition,
     compile_filter,
 )
 
@@ -155,6 +156,8 @@ class QueryEngine:
             return QueryEngine._evaluate_elem_match(document, plan.field, plan.condition, dialect=plan.dialect)
         if isinstance(plan, ExistsCondition):
             return QueryEngine._evaluate_exists(document, plan.field, plan.value)
+        if isinstance(plan, TypeCondition):
+            return QueryEngine._evaluate_type(document, plan.field, plan.values)
         if isinstance(plan, ExprCondition):
             from mongoeco.core.aggregation import _expression_truthy, evaluate_expression
 
@@ -390,6 +393,96 @@ class QueryEngine:
         values = QueryEngine._extract_values(doc, field)
         exists = bool(values)
         return exists == expected
+
+    @staticmethod
+    def _normalize_type_specifier(type_spec: Any) -> tuple[str, ...]:
+        if isinstance(type_spec, bool):
+            raise ValueError("$type no acepta booleanos como identificadores de tipo")
+        if isinstance(type_spec, int):
+            numeric_mapping = {
+                1: ("double",),
+                2: ("string",),
+                3: ("object",),
+                4: ("array",),
+                5: ("binData",),
+                7: ("objectId",),
+                8: ("bool",),
+                9: ("date",),
+                10: ("null",),
+                11: ("regex",),
+                16: ("int",),
+                18: ("long",),
+            }
+            if type_spec not in numeric_mapping:
+                raise ValueError("$type usa un codigo BSON no soportado")
+            return numeric_mapping[type_spec]
+        if not isinstance(type_spec, str):
+            raise ValueError("$type necesita alias string o codigo entero BSON")
+        alias_mapping = {
+            "double": ("double",),
+            "string": ("string",),
+            "object": ("object",),
+            "array": ("array",),
+            "binData": ("binData",),
+            "objectId": ("objectId",),
+            "bool": ("bool",),
+            "date": ("date",),
+            "null": ("null",),
+            "regex": ("regex",),
+            "int": ("int",),
+            "long": ("long",),
+            "undefined": ("undefined",),
+            "number": ("double", "int", "long"),
+        }
+        normalized = type_spec.strip()
+        if normalized not in alias_mapping:
+            raise ValueError("$type usa un alias BSON no soportado")
+        return alias_mapping[normalized]
+
+    @staticmethod
+    def _matches_bson_type(candidate: Any, alias: str) -> bool:
+        if alias == "double":
+            return isinstance(candidate, float) and not isinstance(candidate, bool)
+        if alias in {"int", "long"}:
+            return isinstance(candidate, int) and not isinstance(candidate, bool)
+        if alias == "string":
+            return isinstance(candidate, str)
+        if alias == "object":
+            return isinstance(candidate, dict)
+        if alias == "array":
+            return isinstance(candidate, list)
+        if alias == "binData":
+            return isinstance(candidate, (bytes, uuid.UUID))
+        if alias == "objectId":
+            return isinstance(candidate, ObjectId)
+        if alias == "bool":
+            return isinstance(candidate, bool)
+        if alias == "date":
+            return isinstance(candidate, datetime.datetime)
+        if alias == "null":
+            return candidate is None
+        if alias == "regex":
+            return isinstance(candidate, re.Pattern)
+        if alias == "undefined":
+            return isinstance(candidate, UndefinedType)
+        return False
+
+    @staticmethod
+    def _evaluate_type(
+        doc: dict[str, Any],
+        field: str,
+        type_specs: tuple[Any, ...],
+    ) -> bool:
+        values = QueryEngine._extract_values(doc, field)
+        if not values:
+            return False
+        aliases: set[str] = set()
+        for type_spec in type_specs:
+            aliases.update(QueryEngine._normalize_type_specifier(type_spec))
+        return any(
+            any(QueryEngine._matches_bson_type(candidate, alias) for alias in aliases)
+            for candidate in values
+        )
 
     @staticmethod
     def _evaluate_all(

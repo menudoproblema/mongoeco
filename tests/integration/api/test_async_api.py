@@ -844,6 +844,27 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(tags, ["a", "b", "c"])
                     self.assertEqual(cities, ["Madrid", "Sevilla"])
 
+    async def test_find_supports_type_query_operator(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.users
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "value": 7},
+                            {"_id": "2", "value": "7"},
+                            {"_id": "3", "value": [1, "x"]},
+                        ]
+                    )
+
+                    numbers = [doc["_id"] async for doc in collection.find({"value": {"$type": "number"}})]
+                    arrays = [doc["_id"] async for doc in collection.find({"value": {"$type": "array"}})]
+                    strings_in_arrays = [doc["_id"] async for doc in collection.find({"value": {"$type": "string"}})]
+
+                    self.assertEqual(numbers, ["1", "3"])
+                    self.assertEqual(arrays, ["3"])
+                    self.assertEqual(strings_in_arrays, ["2", "3"])
+
     async def test_find_one_projection_supports_inclusion_and_id_exclusion(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

@@ -110,6 +110,12 @@ class ExistsCondition(QueryNode):
 
 
 @dataclass(frozen=True)
+class TypeCondition(QueryNode):
+    field: str
+    values: tuple[Any, ...]
+
+
+@dataclass(frozen=True)
 class ExprCondition(QueryNode):
     expression: Any
     variables: dict[str, Any]
@@ -212,6 +218,13 @@ def _compile_field_condition(
             clauses.append(ElemMatchCondition(field, value, dialect=dialect))
         elif operator == "$exists":
             clauses.append(ExistsCondition(field, bool(value)))
+        elif operator == "$type":
+            if isinstance(value, (list, tuple)):
+                if not value:
+                    raise ValueError("$type necesita al menos un tipo")
+                clauses.append(TypeCondition(field, tuple(value)))
+            else:
+                clauses.append(TypeCondition(field, (value,)))
         else:
             raise OperationFailure(f"Unsupported query operator: {operator}")
 
