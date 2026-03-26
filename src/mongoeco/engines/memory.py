@@ -18,8 +18,8 @@ from mongoeco.session import ClientSession
 from mongoeco.types import (
     DeleteResult, Document, DocumentId, Filter, IndexKeySpec, ObjectId,
     Projection, SortSpec, Update, UpdateResult, default_index_name,
-    default_id_index_document, default_id_index_information, index_fields,
-    index_key_document, normalize_index_keys,
+    default_id_index_definition, default_id_index_document, default_id_index_information, index_fields,
+    IndexDefinition, normalize_index_keys,
 )
 
 
@@ -392,14 +392,13 @@ class MemoryEngine(AsyncStorageEngine):
     async def list_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> list[dict[str, object]]:
         async with self._get_lock(db_name, coll_name):
             indexes = self._indexes.get(db_name, {}).get(coll_name, [])
-        result = [default_id_index_document()]
+        result = [default_id_index_definition().to_list_document()]
         result.extend(
-            {
-                "name": index["name"],
-                "fields": deepcopy(index["fields"]),
-                "key": index_key_document(deepcopy(index["key"])),
-                "unique": index["unique"],
-            }
+            IndexDefinition(
+                deepcopy(index["key"]),
+                name=str(index["name"]),
+                unique=bool(index["unique"]),
+            ).to_list_document()
             for index in deepcopy(indexes)
         )
         return result
@@ -411,10 +410,11 @@ class MemoryEngine(AsyncStorageEngine):
         result = default_id_index_information()
         result.update(
             {
-                index["name"]: {
-                    "key": deepcopy(index["key"]),
-                    **({"unique": True} if index["unique"] else {}),
-                }
+                str(index["name"]): IndexDefinition(
+                    deepcopy(index["key"]),
+                    name=str(index["name"]),
+                    unique=bool(index["unique"]),
+                ).to_information_entry()
                 for index in indexes
             }
         )

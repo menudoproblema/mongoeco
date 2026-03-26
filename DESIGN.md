@@ -90,6 +90,49 @@ Estos puntos quedan explícitamente fuera del cierre de Fase 1:
 * **Cero Acoplamiento**: La API no sabe cómo se guardan los datos, solo sabe hablar con el protocolo del motor.
 * **Perímetro Explícito**: El documento distingue entre lo ya consolidado en Fase 1 y la deuda diferida a Fase 2+, evitando cerrar en falso sobre promesas no implementadas.
 
+## 4.1 Riesgos Arquitectónicos y Mitigaciones
+La arquitectura actual es útil y ya produce valor real, pero conviene dejar explícitos sus puntos débiles para no disfrazar límites locales como si fueran paridad completa con MongoDB/PyMongo.
+
+* **SQLite mezcla pushdown útil con fallback Python costoso**
+  * riesgo:
+    * consultas complejas pueden materializar demasiados documentos
+    * la traducción SQL para orden BSON sigue siendo estructuralmente compleja
+  * mitigación actual:
+    * el fallback está explícito y testeado
+    * `EXPLAIN QUERY PLAN` ya forma parte del contrato
+
+* **La asincronía de SQLite no equivale a paralelismo alto**
+  * riesgo:
+    * la conexión y el lock global siguen serializando gran parte del trabajo
+    * una transacción activa monopoliza la conexión del motor
+  * mitigación actual:
+    * el límite queda asumido como diseño local, no como comportamiento de driver de red
+
+* **La paridad por opción no es homogénea**
+  * riesgo:
+    * aceptar una opción sin efecto real puede inducir a error
+  * mitigación actual:
+    * el proyecto mantiene ya una matriz explícita de soporte por operación/opción
+    * se distingue entre `effective` y `accepted-noop`
+
+* **El protocolo de engine tiende a crecer**
+  * riesgo:
+    * CRUD, índices, administración, explain y sesión pueden quedar demasiado acoplados
+  * mitigación actual:
+    * el protocolo principal ya está factorizado en subcontratos menores (`Session`, `Lifecycle`, `CRUD`, `IndexAdmin`, `Explain`, `Admin`)
+
+* **La metadata administrativa puede divergir entre engines**
+  * riesgo:
+    * `list_indexes()` e `index_information()` podían acabar devolviendo formas distintas
+  * mitigación actual:
+    * la metadata pública de índices ya sale de un tipo compartido (`IndexDefinition`)
+
+* **La capa sync sigue siendo un adaptador**
+  * riesgo:
+    * no conviene leerla como historia fuerte para servidores concurrentes
+  * mitigación actual:
+    * el diseño la mantiene explícitamente como adaptador práctico sobre la implementación async
+
 
 ---
 

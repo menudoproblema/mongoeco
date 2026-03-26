@@ -7,12 +7,18 @@ from mongoeco.types import DeleteResult, Document, DocumentId, Filter, IndexKeyS
 
 
 @runtime_checkable
-class AsyncStorageEngine(Protocol):
-    """Protocolo Delgado (Thin Protocol) de Almacenamiento."""
-
+class AsyncSessionEngine(Protocol):
     def create_session_state(self, session: ClientSession) -> None: ...
+
+
+@runtime_checkable
+class AsyncLifecycleEngine(Protocol):
     async def connect(self) -> None: ...
     async def disconnect(self) -> None: ...
+
+
+@runtime_checkable
+class AsyncCrudEngine(Protocol):
     async def put_document(self, db_name: str, coll_name: str, document: Document, overwrite: bool = True, *, context: ClientSession | None = None) -> bool: ...
     async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None: ...
     async def delete_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, context: ClientSession | None = None) -> bool: ...
@@ -20,12 +26,37 @@ class AsyncStorageEngine(Protocol):
     async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> UpdateResult[DocumentId]: ...
     async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult: ...
     async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int: ...
+
+
+@runtime_checkable
+class AsyncIndexAdminEngine(Protocol):
     async def create_index(self, db_name: str, coll_name: str, keys: IndexKeySpec, *, unique: bool = False, name: str | None = None, context: ClientSession | None = None) -> str: ...
     async def list_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> list[dict[str, object]]: ...
     async def index_information(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> dict[str, dict[str, object]]: ...
     async def drop_index(self, db_name: str, coll_name: str, index_or_name: str | IndexKeySpec, *, context: ClientSession | None = None) -> None: ...
     async def drop_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> None: ...
+
+
+@runtime_checkable
+class AsyncExplainEngine(Protocol):
     async def explain_query_plan(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> dict[str, object]: ...
+
+
+@runtime_checkable
+class AsyncAdminEngine(Protocol):
     async def list_databases(self) -> list[str]: ...
     async def list_collections(self, db_name: str) -> list[str]: ...
     async def drop_collection(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> None: ...
+
+
+@runtime_checkable
+class AsyncStorageEngine(
+    AsyncSessionEngine,
+    AsyncLifecycleEngine,
+    AsyncCrudEngine,
+    AsyncIndexAdminEngine,
+    AsyncExplainEngine,
+    AsyncAdminEngine,
+    Protocol,
+):
+    """Protocolo Delgado (Thin Protocol) de Almacenamiento."""

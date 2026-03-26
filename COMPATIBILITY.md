@@ -258,6 +258,51 @@ Matriz ya verificada:
 * baseline común en `4.9/4.11/4.13`:
   * `hint`, `comment` y `let` en `update_*`, `replace_one`, `delete_*`
   * `comment` y `let` en `bulk_write`
+
+## 9. Superficie aceptada frente a semántica efectiva
+
+No toda opción aceptada por la API pública tiene ya un efecto real en los
+engines locales.
+
+El proyecto distingue ahora entre:
+
+* `effective`
+  * la opción ya participa en la semántica observable
+* `accepted-noop`
+  * la opción se acepta y valida por compatibilidad, pero todavía no cambia el
+    comportamiento real del motor
+
+API pública disponible:
+
+```python
+from mongoeco import (
+    OPERATION_OPTION_SUPPORT,
+    OptionSupportStatus,
+    get_operation_option_support,
+    is_operation_option_effective,
+)
+
+support = get_operation_option_support("aggregate", "let")
+assert support is not None
+assert support.status is OptionSupportStatus.EFFECTIVE
+
+assert not is_operation_option_effective("find", "hint")
+```
+
+Casos relevantes hoy:
+
+* `aggregate(let=...)` -> `effective`
+* `find(hint=...)` -> `accepted-noop`
+* `find(comment=...)` -> `accepted-noop`
+* `find(max_time_ms=...)` -> `accepted-noop`
+* `update_one(let=...)` -> `accepted-noop`
+* `replace_one(let=...)` -> `accepted-noop`
+* `bulk_write(comment=...)` -> `accepted-noop`
+
+Regla de mantenimiento:
+
+* no se debe promocionar una opción a `effective` sin test observable
+* no se debe aceptar una opción nueva sin registrarla en esta matriz
   * `max_time_ms` en `find_one_and_*`
   * `hint`, `comment`, `let`, `batchSize/maxTimeMS` en `aggregate`
 * delta real desde `4.11+`:

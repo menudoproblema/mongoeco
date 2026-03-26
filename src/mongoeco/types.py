@@ -184,21 +184,53 @@ def index_key_document(keys: IndexKeySpec) -> dict[str, SortDirection]:
 
 
 def default_id_index_information() -> dict[str, dict[str, object]]:
-    return {
-        "_id_": {
-            "key": [("_id", 1)],
-            "unique": True,
-        }
-    }
+    return default_id_index_definition().to_information_entry_map()
 
 
 def default_id_index_document() -> dict[str, object]:
-    return {
-        "name": "_id_",
-        "key": {"_id": 1},
-        "fields": ["_id"],
-        "unique": True,
-    }
+    return default_id_index_definition().to_list_document()
+
+
+@dataclass(frozen=True, slots=True)
+class IndexDefinition:
+    keys: IndexKeySpec
+    name: str
+    unique: bool = False
+
+    def __init__(self, keys: object, *, name: str, unique: bool = False):
+        normalized = normalize_index_keys(keys)
+        if not isinstance(name, str) or not name:
+            raise ValueError("name must be a non-empty string")
+        if not isinstance(unique, bool):
+            raise TypeError("unique must be a bool")
+        object.__setattr__(self, "keys", normalized)
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "unique", unique)
+
+    @property
+    def fields(self) -> list[str]:
+        return index_fields(self.keys)
+
+    def to_list_document(self) -> dict[str, object]:
+        return {
+            "name": self.name,
+            "key": index_key_document(self.keys),
+            "fields": self.fields,
+            "unique": self.unique,
+        }
+
+    def to_information_entry(self) -> dict[str, object]:
+        entry: dict[str, object] = {"key": list(self.keys)}
+        if self.unique:
+            entry["unique"] = True
+        return entry
+
+    def to_information_entry_map(self) -> dict[str, dict[str, object]]:
+        return {self.name: self.to_information_entry()}
+
+
+def default_id_index_definition() -> IndexDefinition:
+    return IndexDefinition([("_id", 1)], name="_id_", unique=True)
 
 
 @dataclass(frozen=True, slots=True)

@@ -24,6 +24,13 @@ from mongoeco.compat.base import (
     SUPPORTED_MONGODB_MAJORS,
     SUPPORTED_PYMONGO_MAJORS,
 )
+from mongoeco.compat.operation_support import (
+    get_operation_option_support,
+    is_operation_option_effective,
+    OPERATION_OPTION_SUPPORT,
+    OperationOptionSupport,
+    OptionSupportStatus,
+)
 from mongoeco.compat.registry import (
     AUTO_INSTALLED_PYMONGO_PROFILE,
     DEFAULT_MONGODB_DIALECT,
@@ -69,6 +76,11 @@ __all__ = [
     'AUTO_INSTALLED_PYMONGO_PROFILE',
     'STRICT_AUTO_INSTALLED_PYMONGO_PROFILE',
     'MongoDialectResolution',
+    'OptionSupportStatus',
+    'OperationOptionSupport',
+    'OPERATION_OPTION_SUPPORT',
+    'get_operation_option_support',
+    'is_operation_option_effective',
     'resolve_mongodb_dialect',
     'resolve_mongodb_dialect_resolution',
     'resolve_pymongo_profile',

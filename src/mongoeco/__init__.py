@@ -30,6 +30,11 @@ from mongoeco.compat import (
     PyMongoProfile411,
     PyMongoProfile413,
     PyMongoProfileResolution,
+    get_operation_option_support,
+    is_operation_option_effective,
+    OPERATION_OPTION_SUPPORT,
+    OperationOptionSupport,
+    OptionSupportStatus,
     resolve_mongodb_dialect_resolution,
     resolve_mongodb_dialect,
     resolve_pymongo_profile,
@@ -40,7 +45,7 @@ from mongoeco.compat import (
 )
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    BulkWriteResult, DeleteMany, DeleteOne, IndexModel, InsertOne, ObjectId,
+    BulkWriteResult, DeleteMany, DeleteOne, IndexDefinition, IndexModel, InsertOne, ObjectId,
     ReplaceOne, ReturnDocument, UNDEFINED, UndefinedType, UpdateMany, UpdateOne,
 )
 
@@ -75,6 +80,11 @@ __all__ = [
     "PyMongoProfile411",
     "PyMongoProfile413",
     "PyMongoProfileResolution",
+    "OptionSupportStatus",
+    "OperationOptionSupport",
+    "OPERATION_OPTION_SUPPORT",
+    "get_operation_option_support",
+    "is_operation_option_effective",
     "SUPPORTED_MONGODB_MAJORS",
     "SUPPORTED_PYMONGO_MAJORS",
     "resolve_mongodb_dialect_resolution",
@@ -90,6 +100,7 @@ __all__ = [
     "ReplaceOne",
     "DeleteOne",
     "DeleteMany",
+    "IndexDefinition",
     "IndexModel",
     "BulkWriteResult",
     "ObjectId",

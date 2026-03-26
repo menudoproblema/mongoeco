@@ -56,11 +56,12 @@ from mongoeco.types import (
     SortSpec,
     Update,
     UpdateResult,
+    default_id_index_definition,
     default_id_index_document,
     default_id_index_information,
     default_index_name,
     index_fields,
-    index_key_document,
+    IndexDefinition,
     normalize_index_keys,
 )
 
@@ -1436,14 +1437,13 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 indexes = deepcopy(self._load_indexes(db_name, coll_name))
-        result = [default_id_index_document()]
+        result = [default_id_index_definition().to_list_document()]
         result.extend(
-            {
-                "name": index["name"],
-                "fields": deepcopy(index["fields"]),
-                "key": index_key_document(deepcopy(index["key"])),
-                "unique": index["unique"],
-            }
+            IndexDefinition(
+                deepcopy(index["key"]),
+                name=str(index["name"]),
+                unique=bool(index["unique"]),
+            ).to_list_document()
             for index in indexes
         )
         return result
@@ -1461,10 +1461,11 @@ class SQLiteEngine(AsyncStorageEngine):
         return {
             **default_id_index_information(),
             **{
-                str(index["name"]): {
-                    "key": deepcopy(index["key"]),
-                    **({"unique": True} if index["unique"] else {}),
-                }
+                str(index["name"]): IndexDefinition(
+                    deepcopy(index["key"]),
+                    name=str(index["name"]),
+                    unique=bool(index["unique"]),
+                ).to_information_entry()
                 for index in indexes
             },
         }
