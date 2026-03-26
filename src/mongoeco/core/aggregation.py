@@ -1,4 +1,5 @@
 import base64
+import calendar
 import datetime
 import math
 import random
@@ -9,6 +10,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from functools import cmp_to_key
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.filtering import BSONComparator
@@ -813,6 +815,114 @@ def _convert_aggregation_scalar(operator: str, value: Any, target: str) -> Any:
     raise OperationFailure(f"Unsupported conversion target for {operator}")
 
 
+def _resolve_timezone(operator: str, timezone_value: Any) -> datetime.tzinfo:
+    if timezone_value is None:
+        return datetime.UTC
+    if not isinstance(timezone_value, str):
+        raise OperationFailure(f"{operator} timezone must evaluate to a string")
+    normalized = timezone_value.strip()
+    if normalized in {"UTC", "GMT", "Z"}:
+        return datetime.UTC
+    offset_match = re.fullmatch(r"([+-])(\d{2})(?::?(\d{2}))?", normalized)
+    if offset_match:
+        sign, hours_text, minutes_text = offset_match.groups()
+        hours = int(hours_text)
+        minutes = int(minutes_text or "0")
+        delta = datetime.timedelta(hours=hours, minutes=minutes)
+        if sign == "-":
+            delta = -delta
+        return datetime.timezone(delta)
+    try:
+        return ZoneInfo(normalized)
+    except Exception as exc:
+        raise OperationFailure(f"{operator} timezone is invalid") from exc
+
+
+def _localize_datetime(value: datetime.datetime, timezone: datetime.tzinfo) -> datetime.datetime:
+    aware_utc = value.astimezone(datetime.UTC) if value.tzinfo is not None else value.replace(tzinfo=datetime.UTC)
+    return aware_utc.astimezone(timezone)
+
+
+def _restore_datetime_timezone(
+    value: datetime.datetime,
+    original: datetime.datetime,
+) -> datetime.datetime:
+    utc_value = value.astimezone(datetime.UTC)
+    if original.tzinfo is None:
+        return utc_value.replace(tzinfo=None)
+    return utc_value.astimezone(original.tzinfo)
+
+
+def _add_calendar_months(value: datetime.datetime, months: int) -> datetime.datetime:
+    month_index = value.month - 1 + months
+    year = value.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(value.day, calendar.monthrange(year, month)[1])
+    return value.replace(year=year, month=month, day=day)
+
+
+def _add_date_unit(value: datetime.datetime, unit: str, amount: int) -> datetime.datetime:
+    if unit == "millisecond":
+        return value + datetime.timedelta(milliseconds=amount)
+    if unit == "second":
+        return value + datetime.timedelta(seconds=amount)
+    if unit == "minute":
+        return value + datetime.timedelta(minutes=amount)
+    if unit == "hour":
+        return value + datetime.timedelta(hours=amount)
+    if unit == "day":
+        return value + datetime.timedelta(days=amount)
+    if unit == "week":
+        return value + datetime.timedelta(weeks=amount)
+    if unit == "month":
+        return _add_calendar_months(value, amount)
+    if unit == "quarter":
+        return _add_calendar_months(value, amount * 3)
+    if unit == "year":
+        return _add_calendar_months(value, amount * 12)
+    raise OperationFailure(f"Unsupported date unit: {unit}")
+
+
+def _require_date_unit(operator: str, unit: Any) -> str:
+    if not isinstance(unit, str):
+        raise OperationFailure(f"{operator} unit must evaluate to a string")
+    if unit not in {"year", "quarter", "month", "week", "day", "hour", "minute", "second", "millisecond"}:
+        raise OperationFailure(f"{operator} unit is invalid")
+    return unit
+
+
+def _month_difference(start: datetime.datetime, end: datetime.datetime) -> int:
+    return (end.year - start.year) * 12 + (end.month - start.month)
+
+
+def _date_diff_units(
+    start: datetime.datetime,
+    end: datetime.datetime,
+    unit: str,
+    *,
+    start_of_week: str,
+) -> int:
+    if unit == "millisecond":
+        return int((end - start).total_seconds() * 1000)
+    if unit == "second":
+        return int(( _truncate_datetime(end, "second", 1, start_of_week) - _truncate_datetime(start, "second", 1, start_of_week)).total_seconds())
+    if unit == "minute":
+        return int(( _truncate_datetime(end, "minute", 1, start_of_week) - _truncate_datetime(start, "minute", 1, start_of_week)).total_seconds() // 60)
+    if unit == "hour":
+        return int(( _truncate_datetime(end, "hour", 1, start_of_week) - _truncate_datetime(start, "hour", 1, start_of_week)).total_seconds() // 3600)
+    if unit == "day":
+        return (_truncate_datetime(end, "day", 1, start_of_week) - _truncate_datetime(start, "day", 1, start_of_week)).days
+    if unit == "week":
+        return (_truncate_datetime(end, "week", 1, start_of_week) - _truncate_datetime(start, "week", 1, start_of_week)).days // 7
+    if unit == "month":
+        return _month_difference(_truncate_datetime(start, "month", 1, start_of_week), _truncate_datetime(end, "month", 1, start_of_week))
+    if unit == "quarter":
+        return _month_difference(_truncate_datetime(start, "quarter", 1, start_of_week), _truncate_datetime(end, "quarter", 1, start_of_week)) // 3
+    if unit == "year":
+        return _truncate_datetime(end, "year", 1, start_of_week).year - _truncate_datetime(start, "year", 1, start_of_week).year
+    raise OperationFailure("$dateDiff unit is invalid")
+
+
 def evaluate_expression(
     document: Document,
     expression: object,
@@ -1360,6 +1470,62 @@ def evaluate_expression(
                 if not isinstance(start_of_week, str):
                     raise OperationFailure("$dateTrunc startOfWeek must be a string")
                 return _truncate_datetime(value, unit, bin_size, start_of_week)
+            if operator in {"$dateAdd", "$dateSubtract"}:
+                if not isinstance(spec, dict) or not {"startDate", "unit", "amount"} <= set(spec):
+                    raise OperationFailure(f"{operator} requires startDate, unit and amount")
+                value = evaluate_expression(document, spec["startDate"], variables, dialect=dialect)
+                if value is None:
+                    return None
+                if not isinstance(value, datetime.datetime):
+                    raise OperationFailure(f"{operator} requires a datetime startDate")
+                unit = _require_date_unit(
+                    operator,
+                    evaluate_expression(document, spec["unit"], variables, dialect=dialect),
+                )
+                amount = evaluate_expression(document, spec["amount"], variables, dialect=dialect)
+                if amount is None:
+                    return None
+                if not isinstance(amount, int) or isinstance(amount, bool):
+                    raise OperationFailure(f"{operator} amount must evaluate to an integer")
+                timezone = _resolve_timezone(
+                    operator,
+                    evaluate_expression(document, spec["timezone"], variables, dialect=dialect)
+                    if "timezone" in spec
+                    else None,
+                )
+                localized = _localize_datetime(value, timezone)
+                signed_amount = amount if operator == "$dateAdd" else -amount
+                updated = _add_date_unit(localized, unit, signed_amount)
+                return _restore_datetime_timezone(updated, value)
+            if operator == "$dateDiff":
+                if not isinstance(spec, dict) or not {"startDate", "endDate", "unit"} <= set(spec):
+                    raise OperationFailure("$dateDiff requires startDate, endDate and unit")
+                start_date = evaluate_expression(document, spec["startDate"], variables, dialect=dialect)
+                end_date = evaluate_expression(document, spec["endDate"], variables, dialect=dialect)
+                if start_date is None or end_date is None:
+                    return None
+                if not isinstance(start_date, datetime.datetime) or not isinstance(end_date, datetime.datetime):
+                    raise OperationFailure("$dateDiff requires datetime startDate and endDate")
+                unit = _require_date_unit(
+                    operator,
+                    evaluate_expression(document, spec["unit"], variables, dialect=dialect),
+                )
+                timezone = _resolve_timezone(
+                    operator,
+                    evaluate_expression(document, spec["timezone"], variables, dialect=dialect)
+                    if "timezone" in spec
+                    else None,
+                )
+                start_of_week = (
+                    evaluate_expression(document, spec["startOfWeek"], variables, dialect=dialect)
+                    if "startOfWeek" in spec
+                    else "sunday"
+                )
+                if not isinstance(start_of_week, str):
+                    raise OperationFailure("$dateDiff startOfWeek must be a string")
+                localized_start = _localize_datetime(start_date, timezone)
+                localized_end = _localize_datetime(end_date, timezone)
+                return _date_diff_units(localized_start, localized_end, unit, start_of_week=start_of_week)
             if operator == "$mergeObjects":
                 args = _require_expression_args(operator, spec, min_args=1)
                 merged: dict[str, Any] = {}

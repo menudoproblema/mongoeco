@@ -537,11 +537,8 @@ class AggregationTests(unittest.TestCase):
             {"$switch": {"branches": [], "default": 0}},
             {"$binarySize": "$text"},
             {"$bsonSize": "$$ROOT"},
-            {"$dateAdd": {"startDate": "$created_at", "unit": "day", "amount": 1}},
-            {"$dateDiff": {"startDate": "$created_at", "endDate": "$created_at", "unit": "day"}},
             {"$dateFromParts": {"year": 2026}},
             {"$dateFromString": {"dateString": "2026-03-25T10:00:00Z"}},
-            {"$dateSubtract": {"startDate": "$created_at", "unit": "day", "amount": 1}},
             {"$dateToParts": {"date": "$created_at"}},
             {"$dateToString": {"date": "$created_at"}},
             {"$toDate": "$text"},
@@ -625,6 +622,96 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$toLong": "$huge"})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$toDouble": "$array_value"})
+
+    def test_evaluate_expression_supports_date_add_subtract_and_diff(self):
+        document = {
+            "start": datetime.datetime(2026, 3, 25, 10, 0, 0),
+            "end": datetime.datetime(2026, 3, 27, 9, 0, 0),
+            "month_end": datetime.datetime(2026, 1, 31, 12, 0, 0),
+        }
+
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateAdd": {"startDate": "$start", "unit": "day", "amount": 2}},
+            ),
+            datetime.datetime(2026, 3, 27, 10, 0, 0),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateSubtract": {"startDate": "$start", "unit": "hour", "amount": 3}},
+            ),
+            datetime.datetime(2026, 3, 25, 7, 0, 0),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateAdd": {"startDate": "$month_end", "unit": "month", "amount": 1}},
+            ),
+            datetime.datetime(2026, 2, 28, 12, 0, 0),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "day"}},
+            ),
+            2,
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "hour"}},
+            ),
+            47,
+        )
+
+    def test_evaluate_expression_date_math_supports_timezone_and_week_diff(self):
+        document = {
+            "start": datetime.datetime(2026, 3, 29, 0, 30, 0),
+            "end": datetime.datetime(2026, 4, 5, 0, 30, 0),
+        }
+
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {
+                    "$dateAdd": {
+                        "startDate": "$start",
+                        "unit": "day",
+                        "amount": 1,
+                        "timezone": "+02:00",
+                    }
+                },
+            ),
+            datetime.datetime(2026, 3, 30, 0, 30, 0),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {
+                    "$dateDiff": {
+                        "startDate": "$start",
+                        "endDate": "$end",
+                        "unit": "week",
+                        "startOfWeek": "sunday",
+                    }
+                },
+            ),
+            1,
+        )
+
+    def test_evaluate_expression_date_math_rejects_invalid_shapes(self):
+        document = {"start": datetime.datetime(2026, 3, 25, 10, 0, 0)}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateAdd": {"startDate": "$start", "unit": "day"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateAdd": {"startDate": "$start", "unit": "day", "amount": 1.5}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateSubtract": {"startDate": "$start", "unit": "century", "amount": 1}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateDiff": {"startDate": "$start", "endDate": "$start", "unit": "week", "startOfWeek": 1}})
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]

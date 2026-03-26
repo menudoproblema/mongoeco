@@ -1184,6 +1184,44 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [{"_id": "1", "as_int": 42, "as_double": 3.5, "as_bool": True, "zero_bool": False}],
                     )
 
+    async def test_aggregate_supports_date_math_expressions(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one(
+                        {
+                            "_id": "1",
+                            "start": datetime.datetime(2026, 3, 25, 10, 0, 0),
+                            "end": datetime.datetime(2026, 3, 27, 9, 0, 0),
+                        }
+                    )
+
+                    documents = await collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "added": {"$dateAdd": {"startDate": "$start", "unit": "day", "amount": 2}},
+                                    "subtracted": {"$dateSubtract": {"startDate": "$start", "unit": "hour", "amount": 3}},
+                                    "diff_days": {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "day"}},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {
+                                "_id": "1",
+                                "added": datetime.datetime(2026, 3, 27, 10, 0, 0),
+                                "subtracted": datetime.datetime(2026, 3, 25, 7, 0, 0),
+                                "diff_days": 2,
+                            }
+                        ],
+                    )
+
     async def test_aggregate_supports_async_iteration_and_validates_pipeline_type(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

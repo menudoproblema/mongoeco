@@ -670,6 +670,9 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$toInt`
     * `$toDouble`
     * `$toLong`
+    * `$dateAdd`
+    * `$dateSubtract`
+    * `$dateDiff`
   * más stages
   * más acumuladores
   * más expresiones
