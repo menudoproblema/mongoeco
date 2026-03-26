@@ -18,6 +18,19 @@ Esta guía resume cómo configurar `mongoeco` cuando quieres controlar:
 
 La versión instalada de `pymongo` **no** decide la semántica del servidor MongoDB.
 
+## 1.1 Baseline soportado
+
+`mongoeco` no persigue compatibilidad hacia atrás por debajo de estos mínimos:
+
+* MongoDB `7.0`
+* PyMongo `4.9`
+
+Consecuencias prácticas:
+
+* no se aceptan como objetivo de diseño semánticas específicas de MongoDB `6.x` o anteriores
+* no se aceptan como objetivo de diseño firmas o comportamientos específicos de PyMongo anteriores a `4.9`
+* cuando se amplía superficie pública o semántica, la referencia es siempre PyMongo `4.9+` sobre dialectos MongoDB `7.0+`
+
 ## 2. Configuración explícita recomendada
 
 La forma más estable y reproducible es fijar ambos ejes explícitamente:
@@ -57,6 +70,7 @@ Regla práctica:
 * `7.0` es la baseline de desarrollo
 * `8.0` se trata como compatibilidad adicional con deltas explícitos
 * la selección del dialecto es explícita; `mongoeco` no autodetecta servidor en el flujo normal
+* no existe catálogo oficial para versiones anteriores a `7.0`
 
 ## 3.1 Resolución del dialecto MongoDB
 
@@ -98,6 +112,7 @@ Regla práctica:
 * `4.9` es la baseline de API pública
 * `4.11` activa el primer delta real: `update_one(sort=...)`
 * `4.13` queda disponible como perfil posterior compatible
+* no existe catálogo oficial para perfiles anteriores a `4.9`
 
 ## 5. Autodetección de PyMongo instalada
 

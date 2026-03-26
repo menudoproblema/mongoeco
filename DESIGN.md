@@ -19,6 +19,10 @@ Este documento define la visión técnica para la reescritura de **mongoeco**, e
     * **Python 3.13+**: La base de código adopta sintaxis y tipado modernos de Python 3.13 (`PEP 695`, `@override`, aliases `type`, `TypeIs`, etc.) como decisión explícita de Fase 1.
     * **MongoDB 7.0 Parity**: El Core persigue la semántica de la v7.0 dentro del perímetro explícito de Fase 1.
     * **PyMongo Profile Compatibility**: La API pública ya modela perfiles reales `4.9`, `4.11` y `4.13`, manteniendo `4.9` como baseline y activando el primer delta público observable en `4.11` (`update_one(sort=...)`).
+* **Baseline de Compatibilidad Explícito**:
+    * no se acepta trabajo orientado a compatibilidad con MongoDB `< 7.0`
+    * no se acepta trabajo orientado a compatibilidad con PyMongo `< 4.9`
+    * toda ampliación futura de superficie, semántica o firmas se evalúa exclusivamente contra MongoDB `7.0+` y PyMongo `4.9+`
 
 ---
 
@@ -407,22 +411,45 @@ La Fase 3 se considera cerrada con este alcance ya implementado y verificado:
   * snapshot actual de referencia: `831` tests en `unittest`, `831 passed` y `455 subtests passed` en `pytest`
   * cobertura actual de referencia: `100%` sobre `src/mongoeco`
 
-### Fase 4: Robustez Transaccional y Superficie Avanzada
-La Fase 4 queda reservada para cerrar la parte más costosa del backend y seguir ampliando superficie avanzada una vez que Fase 3 haya ensanchado el uso práctico de la librería.
+### Fase 4: Transacciones, Ergonomía PyMongo y Administración Local
+La Fase 4 se centra en cerrar primero la base que más condiciona el crecimiento posterior: sesiones reales, robustez de escritura y la primera gran ampliación de ergonomía PyMongo sobre la arquitectura local ya consolidada.
+
+Estado actual: **En curso**.
 
 Objetivos principales:
 * **Sesiones transaccionales reales en SQLite**:
   * introducir `BEGIN`, `COMMIT` y `ROLLBACK`
   * anclar el estado transaccional a `ClientSession`
-  * definir una historia pública mínima de transacción
+  * definir una historia pública mínima de transacción (`start_transaction`, `commit_transaction`, `abort_transaction`, `with_transaction`)
+  * fijar ownership de conexión y lifecycle transaccional
 * **Atomicidad y lifecycle de escritura más fuertes**:
   * cerrar bien la interacción entre sesiones, engine y cierre de recursos
   * reducir huecos entre rutas SQL nativas y fallbacks en Python
-* **Ampliar la superficie de colección y escritura avanzada**:
-  * más clases de resultados y errores de escritura
-* **Ampliar operadores de update**:
-  * `$rename`
-  * otros operadores de mutación menos prioritarios o más complejos
+  * endurecer invariantes de `bulk_write`, resultados y errores de escritura
+* **Ergonomía PyMongo de colección y cursor con alto retorno**:
+  * aceptar más parámetros ya comunes en aplicaciones reales: `hint`, `comment`, `max_time_ms`, `let`, `batch_size`
+  * extender el cursor hacia métodos y estado prácticos (`batch_size`, `hint`, `comment`, `max_time_ms`, `rewind`, `clone`, `alive`, `explain`)
+  * ampliar `find`, `aggregate`, `update_*` y `find_one_and_*` con firmas más cercanas a PyMongo
+* **Administración local de índices y colecciones**:
+  * `IndexModel`
+  * `create_indexes`
+  * `drop_index`
+  * `drop_indexes`
+  * `index_information`
+  * `rename`, `options`, `with_options`, `create_collection`, `list_collections`
+* **Primer bloque de configuración estructural del driver local**:
+  * `WriteConcern`, `ReadConcern`, `ReadPreference`, `CodecOptions`, `TransactionOptions`
+  * soporte inicial como configuración local explícita, aunque no toda su semántica tenga efecto real inmediato en todos los engines
+
+Criterio de foco:
+* Fase 4 prioriza lo que habilita mejor el resto del roadmap: transacciones, opciones públicas estables y metadatos/administración con forma PyMongo.
+* La regla es no abrir todavía grandes familias nuevas de semántica si antes no queda bien fijado el contrato de sesiones, cursores y opciones.
+* Ningún bloque de Fase 4 se justifica por compatibilidad con MongoDB `< 7.0` o PyMongo `< 4.9`.
+
+### Fase 5: Breadth Semántico de Query, Update y Aggregation
+La Fase 5 ya se dedica a ensanchar de verdad la compatibilidad funcional del lenguaje MongoDB/PyMongo sobre la base transaccional y de ergonomía construida en Fase 4.
+
+Objetivos principales:
 * **Ampliar operadores de query**:
   * `regex`
   * `not`
@@ -430,22 +457,195 @@ Objetivos principales:
   * `elemMatch`
   * `size`
   * `type`
-  * semántica más fina sobre arrays
-* **Extender aggregation**:
-  * más etapas y semántica más cercana a MongoDB sobre la base mínima de Fase 3
-* **Compatibilidad de firmas más amplia**:
-  * aceptar más parámetros de PyMongo, aunque algunos sean inicialmente no-op controlados
-  * acercar la ergonomía del cursor y de los resultados al uso real esperado por aplicaciones y suites de tests
+  * operadores bitwise y semántica más fina sobre arrays
+  * primeras familias de geospatial, text search y JSON Schema solo si su coste encaja con la arquitectura
+* **Ampliar operadores de update**:
+  * `$rename`
+  * `$currentDate`
+  * `$min`
+  * `$max`
+  * `$mul`
+  * `$bit`
+  * positional operators y `array_filters`
+* **Ensanchar aggregation con foco en uso real**:
+  * más stages
+  * más acumuladores
+  * más expresiones
+  * más profundidad en `"$setWindowFields"`, `"$bucketAuto"`, `"$lookup"` y familias analíticas
+* **Completar más opciones por método**:
+  * `collation`
+  * `allow_disk_use`
+  * `bypass_document_validation`
+  * variantes más finas en `bulk_write`, resultados y errores
+* **Cursor y lectura avanzada**:
+  * `find_raw_batches`
+  * `aggregate_raw_batches`
+  * más semántica incremental y menos materialización estructural donde sea razonable
 
 Criterio de foco:
-* Fase 4 mezcla dos tipos de trabajo ya más costosos: robustez transaccional real y amplitud avanzada de superficie
-* la prioridad aquí ya no es abrir casos de uso básicos, sino cerrar capacidades profundas y bordes de compatibilidad
+* Fase 5 ya no persigue solo infraestructura, sino cerrar el mayor hueco actual frente a PyMongo: la anchura semántica del lenguaje y de las combinaciones reales de uso.
+* La prioridad se decide por frecuencia de uso y por cuánto reduce fricción al portar suites existentes.
+
+### Fase 6: Superficie Administrativa, Observabilidad y Compatibilidad de Ecosistema
+La Fase 6 agrupa la superficie PyMongo que aporta valor de compatibilidad, pero que no debería contaminar las fases anteriores ni bloquear el núcleo local.
+
+Objetivos principales:
+* **API administrativa y de metadata más ancha**:
+  * `Database.command`
+  * `server_info`
+  * listados enriquecidos de bases y colecciones
+  * más clases de resultados, errores y detalles de escritura
+* **Search y APIs adyacentes de administración**:
+  * `create_search_index`
+  * `create_search_indexes`
+  * `list_search_indexes`
+  * `update_search_index`
+  * `drop_search_index`
+* **Change streams y superficies observables avanzadas**:
+  * `watch` en cliente, base de datos y colección
+  * solo si existe una historia interna coherente para eventos; en caso contrario, rechazo explícito documentado
+* **Mejor alineación con el stack `bson`/PyMongo**:
+  * más tipos
+  * más utilidades de codec
+  * mayor precisión en firmas, mensajes de error y clases públicas
+
+Criterio de foco:
+* Esta fase existe para recoger breadth útil del ecosistema PyMongo sin mezclarlo con el trabajo estructural de transacciones ni con el breadth semántico del lenguaje.
+* Si una pieza es útil para portabilidad pero no cambia el núcleo de ejecución, suele pertenecer antes a Fase 6 que a Fase 4 o 5.
+
+### Fase 7: Topología Real y Compatibilidad Driver-Adjacente
+Esta fase es deliberadamente opcional y de baja prioridad relativa. Reúne aquello que PyMongo tiene como driver real de red, pero que no forma parte del corazón de `mongoeco` como mock local async-first.
+
+Objetivos principales:
+* **Conexión real a MongoDB**:
+  * URI parsing completo
+  * auth
+  * TLS
+  * SRV
+  * replica sets
+  * sharding
+  * pooling
+  * selección de servidor
+* **Semántica completa de concerns y preferencias**:
+  * `read_preference`
+  * `write_concern`
+  * `read_concern`
+  * timeouts, retries y políticas de selección
+* **Compatibilidad de monitoring y comportamiento de driver de red**
+
+Criterio de foco:
+* Nada de esta fase debe bloquear el crecimiento del mock local.
+* Solo se aborda si el proyecto decide evolucionar explícitamente desde “mock compatible” hacia “driver local con ambición de paridad de cliente”.
 
 ### Regla de Corte Entre Fases
 Para evitar mezclar objetivos y perder foco:
-* **Fase 3**: aggregation mínima, ampliación funcional útil, operaciones de escritura de alto valor y más operadores con retorno práctico inmediato
-* **Fase 4**: transacciones reales, robustez profunda del backend y superficie avanzada adicional
+* **Fase 3**: ampliación funcional visible, agregación útil, escrituras de alto valor y multikey real en SQLite
+* **Fase 4**: transacciones reales, administración local, cursores más ergonómicos y primeras opciones PyMongo estructurales
+* **Fase 5**: breadth semántico de query, update y aggregation
+* **Fase 6**: API administrativa ancha, observabilidad y compatibilidad de ecosistema
+* **Fase 7**: topología y semántica propia de driver de red real
 
 Regla práctica:
-* si una funcionalidad abre muchos casos de uso con coste estructural moderado, debe evaluarse primero para Fase 3
-* si una funcionalidad exige coordinación transaccional profunda o cierra bordes avanzados de compatibilidad, debe evaluarse primero para Fase 4
+* si una funcionalidad habilita correctamente otras diez y reduce deuda estructural, debe ir antes aunque no sea la más vistosa
+* si una funcionalidad ensancha mucho la compatibilidad semántica del lenguaje, debe evaluarse para Fase 5
+* si una funcionalidad es principalmente administrativa, observable o de ecosistema, debe evaluarse para Fase 6
+* si una funcionalidad exige comportarse como driver de red real, debe evaluarse para Fase 7 y no contaminar el roadmap principal del mock local
+
+### Mapa de Superficie PyMongo Pendiente por Fase
+Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este es el backlog de alto nivel ya repartido por crecimiento esperado.
+
+#### Fase 4
+* transacciones reales (`start_transaction`, `commit_transaction`, `abort_transaction`, `with_transaction`)
+* opciones estructurales en cliente, base de datos, colección y cursor:
+  * `hint`
+  * `comment`
+  * `max_time_ms`
+  * `let`
+  * `batch_size`
+* cursores con más ergonomía:
+  * `rewind`
+  * `clone`
+  * `alive`
+  * `explain`
+* administración local:
+  * `IndexModel`
+  * `create_indexes`
+  * `drop_index`
+  * `drop_indexes`
+  * `index_information`
+  * `rename`
+  * `options`
+  * `with_options`
+  * `create_collection`
+  * `list_collections`
+* configuración base del stack PyMongo:
+  * `WriteConcern`
+  * `ReadConcern`
+  * `ReadPreference`
+  * `CodecOptions`
+  * `TransactionOptions`
+
+#### Fase 5
+* query operators adicionales:
+  * `regex`
+  * `not`
+  * `all`
+  * `elemMatch`
+  * `size`
+  * `type`
+  * `where`
+  * bitwise
+* update operators adicionales:
+  * `$rename`
+  * `$currentDate`
+  * `$min`
+  * `$max`
+  * `$mul`
+  * `$bit`
+  * positional operators
+  * `array_filters`
+* aggregation adicional:
+  * más stages
+  * más acumuladores
+  * más expresiones
+  * más profundidad en ventanas, buckets y lookups
+* raw batches:
+  * `find_raw_batches`
+  * `aggregate_raw_batches`
+* opciones avanzadas por método:
+  * `collation`
+  * `allow_disk_use`
+  * `bypass_document_validation`
+
+#### Fase 6
+* API administrativa y de metadata:
+  * `Database.command`
+  * `server_info`
+  * `validate_collection`
+  * listados enriquecidos de bases de datos y colecciones
+  * más resultados, errores y detalles de escritura
+* search indexes:
+  * `create_search_index`
+  * `create_search_indexes`
+  * `list_search_indexes`
+  * `update_search_index`
+  * `drop_search_index`
+* observabilidad:
+  * `watch` en cliente, base de datos y colección
+* mejor alineación con `bson` y clases públicas asociadas
+
+#### Fase 7
+* topología real de red:
+  * parsing completo de URI
+  * auth
+  * TLS
+  * SRV
+  * replica sets
+  * sharding
+  * pooling
+  * selección de servidor
+* concerns y preferencias con semántica de driver real:
+  * timeouts
+  * retries
+  * selección de lectura/escritura
+* monitoring y comportamiento propio de un cliente de red completo
