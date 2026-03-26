@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from copy import deepcopy
 
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
@@ -75,16 +75,20 @@ class AsyncCollection:
 
     @classmethod
     def _require_documents(cls, documents: object) -> list[Document]:
-        if not isinstance(documents, list):
-            raise TypeError("documents must be a list")
-        if not documents:
+        if (
+            not isinstance(documents, Iterable)
+            or isinstance(documents, (str, bytes, bytearray, dict))
+        ):
+            raise TypeError("documents must be a non-empty iterable of documents")
+        normalized = list(documents)
+        if not normalized:
             raise ValueError("documents must not be empty")
-        return [cls._require_document(document) for document in documents]
+        return [cls._require_document(document) for document in normalized]
 
     @staticmethod
     def _require_write_requests(requests: object) -> list[WriteModel]:
-        if not isinstance(requests, Sequence) or isinstance(requests, (str, bytes, bytearray, dict)):
-            raise TypeError("requests must be a sequence of write models")
+        if not isinstance(requests, list):
+            raise TypeError("requests must be a list of write models")
         normalized = list(requests)
         if not normalized:
             raise ValueError("requests must not be empty")
@@ -172,8 +176,8 @@ class AsyncCollection:
 
     @classmethod
     def _normalize_index_models(cls, indexes: object) -> list[IndexModel]:
-        if not isinstance(indexes, Sequence) or isinstance(indexes, (str, bytes, bytearray, dict)):
-            raise TypeError("indexes must be a sequence of IndexModel instances")
+        if not isinstance(indexes, list):
+            raise TypeError("indexes must be a list of IndexModel instances")
         normalized = list(indexes)
         if not normalized:
             raise ValueError("indexes must not be empty")

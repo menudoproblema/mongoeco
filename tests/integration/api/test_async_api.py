@@ -475,6 +475,18 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertNotIn("alpha", await client.list_database_names())
             self.assertEqual(await client.alpha.list_collection_names(), [])
 
+    async def test_drop_database_removes_memory_database_with_only_index_metadata(self):
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            await client.alpha.users.create_index(["email"], unique=False)
+
+            self.assertIn("alpha", await client.list_database_names())
+            self.assertEqual(await client.alpha.list_collection_names(), ["users"])
+
+            await client.drop_database("alpha")
+
+            self.assertNotIn("alpha", await client.list_database_names())
+            self.assertEqual(await client.alpha.list_collection_names(), [])
+
     async def test_find_supports_iteration_with_sort_skip_and_limit(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

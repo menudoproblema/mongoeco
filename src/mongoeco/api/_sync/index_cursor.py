@@ -27,8 +27,10 @@ class IndexCursor:
         return self._load()
 
     def first(self) -> dict[str, object] | None:
-        documents = self._load()
-        return documents[0] if documents else None
+        self._ensure_open()
+        if self._cache is not None:
+            return self._cache[0] if self._cache else None
+        return self._client._run(self._async_index_cursor.first())
 
     def rewind(self) -> "IndexCursor":
         self._ensure_open()

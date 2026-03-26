@@ -500,12 +500,15 @@ class MemoryEngine(AsyncStorageEngine):
     @override
     async def list_databases(self) -> list[str]:
         with self._meta_lock:
-            return list(self._storage.keys())
+            return sorted(set(self._storage.keys()) | set(self._indexes.keys()))
 
     @override
     async def list_collections(self, db_name: str) -> list[str]:
         with self._meta_lock:
-            return list(self._storage.get(db_name, {}).keys())
+            return sorted(
+                set(self._storage.get(db_name, {}).keys())
+                | set(self._indexes.get(db_name, {}).keys())
+            )
 
     @override
     async def drop_collection(
@@ -525,4 +528,3 @@ class MemoryEngine(AsyncStorageEngine):
                     del self._indexes[db_name][coll_name]
                     if not self._indexes[db_name]:
                         del self._indexes[db_name]
-                self._locks.pop(self._lock_key(db_name, coll_name), None)

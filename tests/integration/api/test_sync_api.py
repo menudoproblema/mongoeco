@@ -288,6 +288,18 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertNotIn("alpha", client.list_database_names())
             self.assertEqual(client.alpha.list_collection_names(), [])
 
+    def test_drop_database_removes_memory_database_with_only_index_metadata(self):
+        with MongoClient(MemoryEngine()) as client:
+            client.alpha.users.create_index(["email"], unique=False)
+
+            self.assertIn("alpha", client.list_database_names())
+            self.assertEqual(client.alpha.list_collection_names(), ["users"])
+
+            client.drop_database("alpha")
+
+            self.assertNotIn("alpha", client.list_database_names())
+            self.assertEqual(client.alpha.list_collection_names(), [])
+
     def test_find_supports_first_call_without_prior_connection(self):
         client = MongoClient()
         try:

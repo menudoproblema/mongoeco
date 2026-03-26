@@ -389,20 +389,20 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("encode", calls)
         self.assertIn("decode", calls)
 
-    async def test_drop_collection_releases_collection_lock_entry(self):
+    async def test_drop_collection_preserves_collection_lock_entry(self):
         engine = MemoryEngine()
         await engine.connect()
         try:
             await engine.put_document("db", "coll", {"_id": "1"})
+            original_lock = engine._locks["db.coll"]
             self.assertIn("db.coll", engine._locks)
 
             await engine.drop_collection("db", "coll")
+            self.assertIs(engine._locks["db.coll"], original_lock)
         finally:
             await engine.disconnect()
 
-        self.assertNotIn("db.coll", engine._locks)
-
-    async def test_drop_collection_removes_lock_entry_before_other_callers_can_observe_new_lock(self):
+    async def test_drop_collection_keeps_same_lock_for_future_callers(self):
         engine = MemoryEngine()
         await engine.connect()
         try:
@@ -412,7 +412,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.drop_collection("db", "coll")
 
             recreated_lock = engine._get_lock("db", "coll")
-            self.assertIsNot(original_lock, recreated_lock)
+            self.assertIs(original_lock, recreated_lock)
             self.assertIs(engine._locks["db.coll"], recreated_lock)
         finally:
             await engine.disconnect()
@@ -544,6 +544,16 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.drop_collection("db1", "coll2")
 
             self.assertEqual(set(await engine.list_collections("db1")), {"coll1"})
+        finally:
+            await engine.disconnect()
+
+    async def test_list_databases_and_collections_include_index_only_namespaces(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "empty", ["email"])
+            self.assertEqual(await engine.list_databases(), ["db"])
+            self.assertEqual(await engine.list_collections("db"), ["empty"])
         finally:
             await engine.disconnect()
 

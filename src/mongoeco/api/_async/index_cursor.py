@@ -17,11 +17,12 @@ class AsyncIndexCursor:
         if self._closed:
             raise InvalidOperation("cannot use index cursor after it has been closed")
 
-    async def _materialize(self) -> list[dict[str, object]]:
+    async def _materialize(self, *, exhaust: bool = True) -> list[dict[str, object]]:
         self._ensure_open()
         self._started = True
         if self._cache is None:
             self._cache = await self._loader()
+        if exhaust:
             self._exhausted = True
         return list(self._cache)
 
@@ -29,7 +30,7 @@ class AsyncIndexCursor:
         return await self._materialize()
 
     async def first(self) -> dict[str, object] | None:
-        documents = await self._materialize()
+        documents = await self._materialize(exhaust=False)
         return documents[0] if documents else None
 
     def __aiter__(self) -> AsyncIterator[dict[str, object]]:

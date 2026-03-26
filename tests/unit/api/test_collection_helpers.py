@@ -196,19 +196,18 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             asyncio.run(self.collection.bulk_write([InsertOne({"name": "Ada"})], ordered=1))  # type: ignore[arg-type]
 
-    def test_bulk_write_accepts_non_list_sequences(self):
+    def test_bulk_write_requires_list_requests(self):
         async def _exercise():
             engine = MemoryEngine()
             await engine.connect()
             try:
                 collection = AsyncCollection(engine, "db", "coll")
-                return await collection.bulk_write((InsertOne({"_id": "1"}),))
+                return await collection.bulk_write((InsertOne({"_id": "1"}),))  # type: ignore[arg-type]
             finally:
                 await engine.disconnect()
 
-        result = asyncio.run(_exercise())
-
-        self.assertEqual(result.inserted_count, 1)
+        with self.assertRaises(TypeError):
+            asyncio.run(_exercise())
 
     def test_update_one_with_sort_and_upsert_does_not_call_engine_update_path_twice(self):
         class EngineStub(MemoryEngine):
@@ -1367,8 +1366,30 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             asyncio.run(collection.create_indexes([{"name": "idx"}]))
 
+        with self.assertRaises(TypeError):
+            asyncio.run(collection.create_indexes((IndexModel([("email", 1)]),)))  # type: ignore[arg-type]
+
         with self.assertRaises(ValueError):
             asyncio.run(collection.create_indexes([]))
+
+    def test_insert_many_accepts_iterable_but_rejects_mappings_and_empty_iterables(self):
+        collection = AsyncCollection(MemoryEngine(), "db", "coll")
+
+        async def _insert_generator():
+            return await collection.insert_many(({"name": name} for name in ("Ada", "Grace")))
+
+        result = asyncio.run(_insert_generator())
+
+        self.assertEqual(len(result.inserted_ids), 2)
+
+        with self.assertRaises(TypeError):
+            asyncio.run(collection.insert_many({"name": "Ada"}))  # type: ignore[arg-type]
+
+        async def _empty_insert():
+            return await collection.insert_many(iter(()))
+
+        with self.assertRaises(ValueError):
+            asyncio.run(_empty_insert())
 
     def test_create_index_accepts_ordered_mapping_key_spec(self):
         class EngineStub:

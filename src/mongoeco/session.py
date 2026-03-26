@@ -78,21 +78,26 @@ class ClientSession:
             self._run_transaction_hooks("start")
         except Exception:
             self.transaction_active = False
+            self.transaction_number -= 1
             raise
 
     def commit_transaction(self) -> None:
         self.ensure_active()
         if not self.transaction_active:
             raise InvalidOperation("No hay una transaccion activa en esta sesion")
-        self._run_transaction_hooks("commit")
-        self.transaction_active = False
+        try:
+            self._run_transaction_hooks("commit")
+        finally:
+            self.transaction_active = False
 
     def abort_transaction(self) -> None:
         self.ensure_active()
         if not self.transaction_active:
             raise InvalidOperation("No hay una transaccion activa en esta sesion")
-        self._run_transaction_hooks("abort")
-        self.transaction_active = False
+        try:
+            self._run_transaction_hooks("abort")
+        finally:
+            self.transaction_active = False
 
     def end_transaction(self) -> None:
         self.commit_transaction()
@@ -107,6 +112,8 @@ class ClientSession:
             raise
         if inspect.isawaitable(result):
             return self._wrap_async_transaction(result)
+        if not self.in_transaction:
+            return result
         self.commit_transaction()
         return result
 
@@ -116,20 +123,27 @@ class ClientSession:
         except Exception:
             self.abort_transaction()
             raise
+        if not self.in_transaction:
+            return result
         self.commit_transaction()
         return result
 
     def close(self) -> None:
         if not self.active:
             return
+        abort_error: Exception | None = None
         if self.transaction_active:
             try:
                 self._run_transaction_hooks("abort")
+            except Exception as exc:
+                abort_error = exc
             finally:
                 self.transaction_active = False
         self._transaction_hooks.clear()
         self.engine_state.clear()
         self.active = False
+        if abort_error is not None:
+            raise abort_error
 
     def __enter__(self) -> "ClientSession":
         return self

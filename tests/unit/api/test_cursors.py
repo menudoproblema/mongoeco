@@ -132,7 +132,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(cursor.alive)
         self.assertEqual(await cursor.first(), {"name": "_id_", "key": {"_id": 1}})
-        self.assertFalse(cursor.alive)
+        self.assertTrue(cursor.alive)
         cursor.rewind()
         self.assertTrue(cursor.alive)
         clone = cursor.clone()
@@ -141,6 +141,26 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(cursor.alive)
         with self.assertRaises(InvalidOperation):
             await cursor.to_list()
+
+    async def test_async_index_cursor_first_does_not_exhaust_cursor(self):
+        cursor = AsyncIndexCursor(
+            lambda: self._load_indexes_async(
+                [
+                    {"name": "_id_", "key": {"_id": 1}},
+                    {"name": "email_1", "key": {"email": 1}},
+                ]
+            )
+        )
+
+        self.assertEqual(await cursor.first(), {"name": "_id_", "key": {"_id": 1}})
+        self.assertTrue(cursor.alive)
+        self.assertEqual(
+            await cursor.to_list(),
+            [
+                {"name": "_id_", "key": {"_id": 1}},
+                {"name": "email_1", "key": {"email": 1}},
+            ],
+        )
 
     async def test_async_cursor_rejects_negative_skip_and_limit_and_returns_none_first(self):
         cursor = AsyncCursor(_AsyncCollectionStub([]), {}, MatchAll(), None)
@@ -511,7 +531,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(cursor.alive)
         self.assertEqual(cursor.first(), {"name": "_id_", "key": {"_id": 1}})
-        self.assertFalse(cursor.alive)
+        self.assertTrue(cursor.alive)
         cursor.rewind()
         self.assertTrue(cursor.alive)
         clone = cursor.clone()
@@ -520,6 +540,27 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(cursor.alive)
         with self.assertRaises(InvalidOperation):
             cursor.to_list()
+
+    def test_sync_index_cursor_first_does_not_exhaust_cursor(self):
+        async_cursor = AsyncIndexCursor(
+            lambda: self._load_indexes_async(
+                [
+                    {"name": "_id_", "key": {"_id": 1}},
+                    {"name": "email_1", "key": {"email": 1}},
+                ]
+            )
+        )
+        cursor = IndexCursor(_SyncClientStub(), async_cursor)
+
+        self.assertEqual(cursor.first(), {"name": "_id_", "key": {"_id": 1}})
+        self.assertTrue(cursor.alive)
+        self.assertEqual(
+            cursor.to_list(),
+            [
+                {"name": "_id_", "key": {"_id": 1}},
+                {"name": "email_1", "key": {"email": 1}},
+            ],
+        )
 
     async def _load_indexes_async(self, indexes):
         return indexes

@@ -124,6 +124,16 @@ class ClientSessionTests(unittest.TestCase):
         self.assertFalse(session.in_transaction)
         self.assertEqual(session.transaction_number, 1)
 
+    def test_session_with_transaction_respects_callback_committing_early(self):
+        session = ClientSession()
+
+        def _run(active: ClientSession):
+            active.commit_transaction()
+            return "done"
+
+        self.assertEqual(session.with_transaction(_run), "done")
+        self.assertFalse(session.in_transaction)
+
     def test_session_with_transaction_aborts_on_error(self):
         session = ClientSession()
 
@@ -132,6 +142,18 @@ class ClientSessionTests(unittest.TestCase):
 
         self.assertFalse(session.in_transaction)
         self.assertEqual(session.transaction_number, 1)
+
+    def test_async_session_with_transaction_respects_callback_ending_transaction(self):
+        session = ClientSession()
+
+        async def _run(active: ClientSession):
+            active.abort_transaction()
+            return "done"
+
+        import asyncio
+
+        self.assertEqual(asyncio.run(session.with_transaction(_run)), "done")
+        self.assertFalse(session.in_transaction)
 
     def test_session_close_aborts_active_transaction(self):
         session = ClientSession()
@@ -144,3 +166,40 @@ class ClientSessionTests(unittest.TestCase):
         self.assertEqual(phases, [session.session_id])
         self.assertFalse(session.active)
         self.assertFalse(session.in_transaction)
+
+    def test_start_transaction_rolls_back_counter_if_hook_fails(self):
+        session = ClientSession()
+        session.register_transaction_hooks("memory", start=lambda active: (_ for _ in ()).throw(RuntimeError("boom")))
+
+        with self.assertRaisesRegex(RuntimeError, "boom"):
+            session.start_transaction()
+
+        self.assertEqual(session.transaction_number, 0)
+        self.assertFalse(session.in_transaction)
+
+    def test_commit_and_abort_clear_transaction_even_if_hook_fails(self):
+        for phase in ("commit", "abort"):
+            with self.subTest(phase=phase):
+                session = ClientSession()
+                session.register_transaction_hooks(
+                    "memory",
+                    **{phase: lambda active: (_ for _ in ()).throw(RuntimeError(phase))},
+                )
+                session.start_transaction()
+
+                with self.assertRaisesRegex(RuntimeError, phase):
+                    getattr(session, f"{phase}_transaction")()
+
+                self.assertFalse(session.in_transaction)
+
+    def test_close_marks_session_closed_even_if_abort_hook_fails(self):
+        session = ClientSession()
+        session.register_transaction_hooks("memory", abort=lambda active: (_ for _ in ()).throw(RuntimeError("abort")))
+        session.start_transaction()
+
+        with self.assertRaisesRegex(RuntimeError, "abort"):
+            session.close()
+
+        self.assertTrue(session.has_ended)
+        self.assertFalse(session.in_transaction)
+        self.assertEqual(session.engine_state, {})
