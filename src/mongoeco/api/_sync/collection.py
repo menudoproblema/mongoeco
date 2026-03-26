@@ -410,6 +410,15 @@ class Collection:
     def drop(self, *, session: ClientSession | None = None) -> None:
         self._client._run(self._async_collection().drop(session=session))
 
+    def rename(
+        self,
+        new_name: str,
+        *,
+        session: ClientSession | None = None,
+    ) -> "Collection":
+        self._client._run(self._async_collection().rename(new_name, session=session))
+        return type(self)(self._client, self._db_name, new_name)
+
     @property
     def name(self) -> str:
         return self._collection_name

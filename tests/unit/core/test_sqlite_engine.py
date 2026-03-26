@@ -1033,6 +1033,21 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_rename_collection_moves_namespace_metadata(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "events", {"_id": "1"}, overwrite=True)
+            await engine.create_index("db", "events", ["kind"], name="kind_idx")
+
+            await engine.rename_collection("db", "events", "archived")
+
+            self.assertEqual(await engine.list_collections("db"), ["archived"])
+            self.assertEqual(await engine.get_document("db", "archived", "1"), {"_id": "1"})
+            self.assertIn("kind_idx", await engine.index_information("db", "archived"))
+        finally:
+            await engine.disconnect()
+
     def test_drop_collection_rolls_back_if_metadata_delete_fails(self):
         engine = SQLiteEngine()
         fake_connection = Mock()

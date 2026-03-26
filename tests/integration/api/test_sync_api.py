@@ -114,6 +114,31 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertEqual(client.list_database_names(), [])
             self.assertEqual(client.alpha.list_collection_names(), [])
 
+    def test_collection_rename_moves_documents_and_indexes(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.alpha.events
+                    collection.insert_one({"_id": "1", "kind": "view"})
+                    collection.create_index([("kind", 1)], name="kind_idx")
+
+                    renamed = collection.rename("archived")
+
+                    self.assertEqual(renamed.name, "archived")
+                    self.assertEqual(client.alpha.list_collection_names(), ["archived"])
+                    self.assertEqual(renamed.find_one({"_id": "1"}), {"_id": "1", "kind": "view"})
+                    self.assertIn("kind_idx", renamed.index_information())
+
+    def test_collection_rename_rejects_conflicting_or_identical_names(self):
+        with MongoClient(MemoryEngine()) as client:
+            client.alpha.events.insert_one({"_id": "1"})
+            client.alpha.logs.insert_one({"_id": "2"})
+
+            with self.assertRaises(CollectionInvalid):
+                client.alpha.events.rename("logs")
+            with self.assertRaises(CollectionInvalid):
+                client.alpha.events.rename("events")
+
     def test_duplicate_id_raises(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

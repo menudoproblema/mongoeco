@@ -1768,6 +1768,37 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._rollback_write(conn, context)
                 raise
 
+    def _rename_collection_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        new_name: str,
+        context: ClientSession | None = None,
+    ) -> None:
+        if coll_name == new_name:
+            raise CollectionInvalid("collection names must differ")
+        with self._lock:
+            conn = self._require_connection(context)
+            try:
+                self._begin_write(conn, context)
+                if not self._collection_exists_sync(conn, db_name, coll_name):
+                    raise CollectionInvalid(f"collection '{coll_name}' does not exist")
+                if self._collection_exists_sync(conn, db_name, new_name):
+                    raise CollectionInvalid(f"collection '{new_name}' already exists")
+                for table_name in ("collections", "documents", "indexes", "multikey_entries"):
+                    conn.execute(
+                        f"""
+                        UPDATE {table_name}
+                        SET coll_name = ?
+                        WHERE db_name = ? AND coll_name = ?
+                        """,
+                        (new_name, db_name, coll_name),
+                    )
+                self._commit_write(conn, context)
+            except Exception:
+                self._rollback_write(conn, context)
+                raise
+
     def _drop_collection_sync(self, db_name: str, coll_name: str, context: ClientSession | None = None) -> None:
         with self._lock:
             conn = self._require_connection(context)
@@ -2076,6 +2107,23 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> None:
         await asyncio.to_thread(self._create_collection_sync, db_name, coll_name, context)
+
+    @override
+    async def rename_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        new_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> None:
+        await asyncio.to_thread(
+            self._rename_collection_sync,
+            db_name,
+            coll_name,
+            new_name,
+            context,
+        )
 
     @override
     async def drop_collection(

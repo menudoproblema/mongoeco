@@ -124,6 +124,31 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(await client.list_database_names(), [])
             self.assertEqual(await client.alpha.list_collection_names(), [])
 
+    async def test_collection_rename_moves_documents_and_indexes(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.alpha.events
+                    await collection.insert_one({"_id": "1", "kind": "view"})
+                    await collection.create_index([("kind", 1)], name="kind_idx")
+
+                    renamed = await collection.rename("archived")
+
+                    self.assertEqual(renamed.name, "archived")
+                    self.assertEqual(await client.alpha.list_collection_names(), ["archived"])
+                    self.assertEqual(await renamed.find_one({"_id": "1"}), {"_id": "1", "kind": "view"})
+                    self.assertIn("kind_idx", await renamed.index_information())
+
+    async def test_collection_rename_rejects_conflicting_or_identical_names(self):
+        async with open_client("memory") as client:
+            await client.alpha.events.insert_one({"_id": "1"})
+            await client.alpha.logs.insert_one({"_id": "2"})
+
+            with self.assertRaises(CollectionInvalid):
+                await client.alpha.events.rename("logs")
+            with self.assertRaises(CollectionInvalid):
+                await client.alpha.events.rename("events")
+
     async def test_find_one_without_filter_returns_first_document(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

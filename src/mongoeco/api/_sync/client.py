@@ -139,7 +139,8 @@ class Database:
     ) -> Collection:
         self._client._ensure_connected()
         async_database = self._client._async_client.get_database(self._name)
-        return self._client._run(async_database.create_collection(name, session=session))
+        self._client._run(async_database.create_collection(name, session=session))
+        return self.get_collection(name)
 
     def drop_collection(self, name: str, *, session: ClientSession | None = None) -> None:
         self._client._ensure_connected()

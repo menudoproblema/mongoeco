@@ -1209,6 +1209,30 @@ class AsyncCollection:
             context=session,
         )
 
+    async def rename(
+        self,
+        new_name: str,
+        *,
+        session: ClientSession | None = None,
+    ) -> "AsyncCollection":
+        if not isinstance(new_name, str) or not new_name:
+            raise TypeError("new_name must be a non-empty string")
+        await self._engine.rename_collection(
+            self._db_name,
+            self._collection_name,
+            new_name,
+            context=session,
+        )
+        return type(self)(
+            self._engine,
+            self._db_name,
+            new_name,
+            mongodb_dialect=self._mongodb_dialect,
+            mongodb_dialect_resolution=self._mongodb_dialect_resolution,
+            pymongo_profile=self._pymongo_profile,
+            pymongo_profile_resolution=self._pymongo_profile_resolution,
+        )
+
     @property
     def name(self) -> str:
         return self._collection_name

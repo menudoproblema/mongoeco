@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import AsyncExitStack
 import datetime
 import threading
 import time
@@ -147,6 +148,13 @@ class MemoryEngine(AsyncStorageEngine):
         collections.discard(coll_name)
         if not collections:
             del self._collections[db_name]
+
+    def _namespace_exists_locked(self, db_name: str, coll_name: str) -> bool:
+        return (
+            coll_name in self._collections.get(db_name, set())
+            or coll_name in self._storage.get(db_name, {})
+            or coll_name in self._indexes.get(db_name, {})
+        )
 
     def _typed_engine_key(self, value: Any) -> Any:
         if value is None:
@@ -654,14 +662,41 @@ class MemoryEngine(AsyncStorageEngine):
     ) -> None:
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
-                exists = (
-                    coll_name in self._collections.get(db_name, set())
-                    or coll_name in self._storage.get(db_name, {})
-                    or coll_name in self._indexes.get(db_name, {})
-                )
-                if exists:
+                if self._namespace_exists_locked(db_name, coll_name):
                     raise CollectionInvalid(f"collection '{coll_name}' already exists")
                 self._register_collection_locked(db_name, coll_name)
+
+    @override
+    async def rename_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        new_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> None:
+        if coll_name == new_name:
+            raise CollectionInvalid("collection names must differ")
+        lock_names = sorted({coll_name, new_name})
+        async with AsyncExitStack() as stack:
+            for name in lock_names:
+                await stack.enter_async_context(self._get_lock(db_name, name))
+            with self._meta_lock:
+                if not self._namespace_exists_locked(db_name, coll_name):
+                    raise CollectionInvalid(f"collection '{coll_name}' does not exist")
+                if self._namespace_exists_locked(db_name, new_name):
+                    raise CollectionInvalid(f"collection '{new_name}' already exists")
+
+                storage = self._storage.get(db_name)
+                if storage is not None and coll_name in storage:
+                    storage[new_name] = storage.pop(coll_name)
+
+                indexes = self._indexes.get(db_name)
+                if indexes is not None and coll_name in indexes:
+                    indexes[new_name] = indexes.pop(coll_name)
+
+                self._prune_collection_registry_locked(db_name, coll_name)
+                self._register_collection_locked(db_name, new_name)
 
     @override
     async def drop_collection(

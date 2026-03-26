@@ -638,6 +638,21 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_rename_collection_moves_namespace_metadata(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "events", {"_id": "1"})
+            await engine.create_index("db", "events", ["kind"], name="kind_idx")
+
+            await engine.rename_collection("db", "events", "archived")
+
+            self.assertEqual(await engine.list_collections("db"), ["archived"])
+            self.assertEqual(await engine.get_document("db", "archived", "1"), {"_id": "1"})
+            self.assertIn("kind_idx", await engine.index_information("db", "archived"))
+        finally:
+            await engine.disconnect()
+
     async def test_scan_and_count_prefer_explicit_plan_over_conflicting_filter(self):
         engine = MemoryEngine()
         await engine.connect()
