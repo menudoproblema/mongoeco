@@ -560,8 +560,6 @@ class AggregationTests(unittest.TestCase):
             {"$toDouble": "$text"},
             {"$toLong": "$text"},
             {"$toObjectId": "$text"},
-            {"$isNumber": "$value"},
-            {"$type": "$value"},
             {"$function": {"body": "function() { return 1; }", "args": [], "lang": "js"}},
             {"$accumulator": {"init": "function(){}", "accumulate": "function(){}", "accumulateArgs": [], "merge": "function(){}", "finalize": "function(x){return x;}", "lang": "js"}},
         ]
@@ -570,6 +568,29 @@ class AggregationTests(unittest.TestCase):
             with self.subTest(spec=spec):
                 with self.assertRaises(OperationFailure):
                     evaluate_expression(document, spec)
+
+    def test_evaluate_expression_supports_is_number_and_type(self):
+        document = {
+            "value": 10,
+            "ratio": 1.5,
+            "text": "Ada",
+            "items": [1, "x"],
+            "blob": b"abc",
+            "created_at": datetime.datetime(2026, 3, 25, 10, 0, 0),
+            "legacy": UNDEFINED,
+        }
+
+        self.assertTrue(evaluate_expression(document, {"$isNumber": "$value"}))
+        self.assertTrue(evaluate_expression(document, {"$isNumber": "$ratio"}))
+        self.assertFalse(evaluate_expression(document, {"$isNumber": "$text"}))
+        self.assertFalse(evaluate_expression(document, {"$isNumber": "$missing"}))
+        self.assertEqual(evaluate_expression(document, {"$type": "$value"}), "int")
+        self.assertEqual(evaluate_expression(document, {"$type": "$ratio"}), "double")
+        self.assertEqual(evaluate_expression(document, {"$type": "$items"}), "array")
+        self.assertEqual(evaluate_expression(document, {"$type": "$blob"}), "binData")
+        self.assertEqual(evaluate_expression(document, {"$type": "$created_at"}), "date")
+        self.assertEqual(evaluate_expression(document, {"$type": "$legacy"}), "undefined")
+        self.assertEqual(evaluate_expression(document, {"$type": "$missing"}), "missing")
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]

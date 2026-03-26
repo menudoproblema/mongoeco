@@ -2,6 +2,7 @@ import base64
 import datetime
 import math
 import random
+import re
 import uuid
 from collections.abc import Callable, Iterable
 from copy import deepcopy
@@ -676,6 +677,51 @@ def _trim_string(value: str, chars: str | None, *, mode: str) -> str:
     return value.strip(chars)
 
 
+def _evaluate_expression_with_missing(
+    document: Document,
+    expression: object,
+    variables: dict[str, Any],
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> Any:
+    if isinstance(expression, str):
+        if expression.startswith("$$"):
+            return _resolve_variable_expression(expression, variables)
+        if expression.startswith("$"):
+            return _resolve_aggregation_field_path(document, expression[1:])
+    return evaluate_expression(document, expression, variables, dialect=dialect)
+
+
+def _aggregation_type_name(value: Any) -> str:
+    if value is _MISSING:
+        return "missing"
+    if isinstance(value, UndefinedType):
+        return "undefined"
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "bool"
+    if isinstance(value, int):
+        return "long" if value < -(1 << 31) or value > (1 << 31) - 1 else "int"
+    if isinstance(value, float):
+        return "double"
+    if isinstance(value, str):
+        return "string"
+    if isinstance(value, dict):
+        return "object"
+    if isinstance(value, list):
+        return "array"
+    if isinstance(value, (bytes, bytearray, uuid.UUID)):
+        return "binData"
+    if isinstance(value, ObjectId):
+        return "objectId"
+    if isinstance(value, datetime.datetime):
+        return "date"
+    if isinstance(value, re.Pattern):
+        return "regex"
+    return type(value).__name__
+
+
 def evaluate_expression(
     document: Document,
     expression: object,
@@ -865,6 +911,14 @@ def evaluate_expression(
                 if index < 0 or index >= len(values):
                     return None
                 return values[index]
+            if operator == "$isNumber":
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
+                return isinstance(value, (int, float)) and not isinstance(value, bool)
+            if operator == "$type":
+                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
+                value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
+                return _aggregation_type_name(value)
             if operator == "$toString":
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
                 value = evaluate_expression(document, args[0], variables, dialect=dialect)

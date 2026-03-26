@@ -1021,6 +1021,36 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"_id": "2", "kind": "click", "rank": 1, "payload": {"city": "Madrid"}},
                     )
 
+    def test_aggregate_supports_is_number_and_type_expressions(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "value": 7, "text": "Ada"})
+                    collection.insert_one({"_id": "2", "value": "7"})
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "value_type": {"$type": "$value"},
+                                    "value_is_number": {"$isNumber": "$value"},
+                                    "missing_type": {"$type": "$missing"},
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {"_id": "1", "value_type": "int", "value_is_number": True, "missing_type": "missing"},
+                            {"_id": "2", "value_type": "string", "value_is_number": False, "missing_type": "missing"},
+                        ],
+                    )
+
     def test_aggregate_supports_sync_iteration(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

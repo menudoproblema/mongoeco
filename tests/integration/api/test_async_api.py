@@ -1128,6 +1128,36 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         {"_id": "2", "kind": "click", "rank": 1, "payload": {"city": "Madrid"}},
                     )
 
+    async def test_aggregate_supports_is_number_and_type_expressions(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "value": 7, "text": "Ada"})
+                    await collection.insert_one({"_id": "2", "value": "7"})
+
+                    documents = await collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "value_type": {"$type": "$value"},
+                                    "value_is_number": {"$isNumber": "$value"},
+                                    "missing_type": {"$type": "$missing"},
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {"_id": "1", "value_type": "int", "value_is_number": True, "missing_type": "missing"},
+                            {"_id": "2", "value_type": "string", "value_is_number": False, "missing_type": "missing"},
+                        ],
+                    )
+
     async def test_aggregate_supports_async_iteration_and_validates_pipeline_type(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

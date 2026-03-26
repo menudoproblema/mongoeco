@@ -112,6 +112,8 @@ SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
         '$dateTrunc',
         '$mergeObjects',
         '$getField',
+        '$isNumber',
+        '$type',
     }
 )
 
