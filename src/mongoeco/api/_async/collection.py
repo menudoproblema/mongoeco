@@ -32,7 +32,7 @@ from mongoeco.types import (
     ObjectId, Document, DocumentId, Filter, Update, Projection, InsertManyResult, InsertOneResult,
     ReturnDocument, UpdateResult, DeleteResult, SortSpec, BulkWriteResult, WriteModel,
     InsertOne, UpdateOne, UpdateMany, ReplaceOne, DeleteOne, DeleteMany,
-    IndexKeySpec, IndexModel, normalize_index_keys,
+    IndexInformation, IndexKeySpec, IndexModel, normalize_index_keys,
 )
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure, WriteError
 
@@ -601,6 +601,35 @@ class AsyncCollection:
                 update_spec,
                 session=session,
             )
+        if hint is not None:
+            selected = await self.find(
+                filter_spec,
+                {"_id": 1},
+                limit=1,
+                hint=hint,
+                comment=comment,
+                session=session,
+            ).first()
+            if selected is None:
+                if upsert:
+                    return await self._perform_upsert_update(
+                        filter_spec,
+                        update_spec,
+                        session=session,
+                    )
+                return UpdateResult(matched_count=0, modified_count=0)
+            identity_filter = {"_id": selected["_id"]}
+            identity_plan = compile_filter(identity_filter, dialect=self._mongodb_dialect)
+            return await self._engine.update_matching_document(
+                self._db_name,
+                self._collection_name,
+                identity_filter,
+                update_spec,
+                upsert=False,
+                plan=identity_plan,
+                dialect=self._mongodb_dialect,
+                context=session,
+            )
         plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
         upsert_seed = None
         if upsert:
@@ -782,6 +811,9 @@ class AsyncCollection:
                 update_spec,
                 upsert=True,
                 sort=sort,
+                hint=hint,
+                comment=comment,
+                let=let,
                 session=session,
             )
             if return_document is ReturnDocument.BEFORE:
@@ -860,6 +892,9 @@ class AsyncCollection:
                 replacement,
                 upsert=True,
                 sort=sort,
+                hint=hint,
+                comment=comment,
+                let=let,
                 session=session,
             )
             if return_document is ReturnDocument.BEFORE:
@@ -943,6 +978,24 @@ class AsyncCollection:
         filter_spec = self._normalize_filter(filter_spec)
         hint = self._normalize_hint(hint)
         let = self._normalize_let(let)
+        if hint is not None:
+            selected = await self.find(
+                filter_spec,
+                {"_id": 1},
+                limit=1,
+                hint=hint,
+                comment=comment,
+                session=session,
+            ).first()
+            if selected is None:
+                return DeleteResult(deleted_count=0)
+            deleted = await self._engine.delete_document(
+                self._db_name,
+                self._collection_name,
+                selected["_id"],
+                context=session,
+            )
+            return DeleteResult(deleted_count=1 if deleted else 0)
         plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
         return await self._engine.delete_matching_document(
             self._db_name,
@@ -1124,7 +1177,7 @@ class AsyncCollection:
         *,
         comment: object | None = None,
         session: ClientSession | None = None,
-    ) -> dict[str, dict[str, object]]:
+    ) -> IndexInformation:
         return await self._engine.index_information(self._db_name, self._collection_name, context=session)
 
     async def drop_index(

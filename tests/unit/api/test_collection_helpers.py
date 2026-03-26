@@ -968,11 +968,12 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             try:
                 collection = AsyncCollection(engine, "db", "coll", pymongo_profile="4.11")
                 await collection.insert_one({"_id": "1", "name": "Ada", "done": False})
+                await collection.create_index([("name", 1)])
                 updated = await collection.find_one_and_update(
                     {"_id": "1"},
                     {"$set": {"done": True}},
                     return_document=ReturnDocument.AFTER,
-                    hint="_id_1",
+                    hint="_id_",
                     comment="trace",
                     max_time_ms=5,
                     let={"tenant": "a"},
@@ -981,14 +982,14 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                     {"_id": "1"},
                     {"name": "Ada", "done": False},
                     return_document=ReturnDocument.AFTER,
-                    hint="_id_1",
+                    hint="_id_",
                     comment="trace",
                     max_time_ms=5,
                     let={"tenant": "a"},
                 )
                 deleted = await collection.find_one_and_delete(
                     {"_id": "1"},
-                    hint="_id_1",
+                    hint="_id_",
                     comment="trace",
                     max_time_ms=5,
                     let={"tenant": "a"},
@@ -1017,6 +1018,8 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                         {"_id": "4", "kind": "delete"},
                     ]
                 )
+                await collection.create_index([("kind", 1), ("rank", 1)], name="kind_rank_idx")
+                await collection.create_index([("kind", 1)], name="kind_idx")
 
                 recorded_find: list[dict[str, object | None]] = []
                 recorded_select: list[dict[str, object | None]] = []
@@ -1062,7 +1065,7 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                 replace_one_result = await collection.replace_one(
                     {"kind": "replace"},
                     {"kind": "replace", "done": True},
-                    hint="replace_idx",
+                    hint="kind_idx",
                     comment="trace-replace",
                     let={"tenant": "a"},
                 )
@@ -1110,16 +1113,31 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             [
                 {"hint": "kind_rank_idx", "comment": "trace-update-one"},
                 {"hint": "kind_idx", "comment": "trace-update-many"},
-                {"hint": "replace_idx", "comment": "trace-replace"},
+                {"hint": "kind_idx", "comment": "trace-replace"},
+                {"hint": "_id_", "comment": "trace-delete-one"},
                 {"hint": "kind_idx", "comment": "trace-delete-many"},
             ],
         )
         self.assertEqual(
             recorded_select,
             [
-                {"hint": "replace_idx", "comment": "trace-replace"},
+                {"hint": "kind_idx", "comment": "trace-replace"},
             ],
         )
+
+    def test_find_rejects_missing_hint_index(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                await collection.insert_one({"_id": "1", "kind": "view"})
+                with self.assertRaises(OperationFailure):
+                    await collection.find({"kind": "view"}, hint="missing_idx").to_list()
+            finally:
+                await engine.disconnect()
+
+        asyncio.run(_exercise())
 
     def test_distinct_rejects_non_string_key(self):
         with self.assertRaises(TypeError):

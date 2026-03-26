@@ -16,7 +16,7 @@ from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import DuplicateKeyError, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    DeleteResult, Document, DocumentId, Filter, IndexKeySpec, ObjectId,
+    DeleteResult, Document, DocumentId, Filter, IndexInformation, IndexDocument, IndexKeySpec, ObjectId,
     Projection, SortSpec, Update, UpdateResult, default_index_name,
     default_id_index_definition, default_id_index_document, default_id_index_information, index_fields,
     IndexDefinition, normalize_index_keys,
@@ -68,6 +68,46 @@ class MemoryEngine(AsyncStorageEngine):
         key = f"{db}.{coll}"
         with self._meta_lock:
             return self._locks.setdefault(key, _AsyncThreadLock())
+
+    def _resolve_hint_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        hint: str | IndexKeySpec | None,
+        *,
+        indexes: list[dict[str, object]] | None = None,
+    ) -> dict[str, object] | None:
+        if hint is None:
+            return None
+
+        if isinstance(hint, str):
+            if hint == "_id_":
+                return default_id_index_definition().to_list_document()
+        else:
+            normalized_hint = normalize_index_keys(hint)
+            if self._is_builtin_id_index(normalized_hint):
+                return default_id_index_definition().to_list_document()
+
+        if indexes is None:
+            indexes = deepcopy(self._indexes.get(db_name, {}).get(coll_name, []))
+
+        for index in indexes:
+            if isinstance(hint, str):
+                if index["name"] == hint:
+                    return IndexDefinition(
+                        deepcopy(index["key"]),
+                        name=str(index["name"]),
+                        unique=bool(index["unique"]),
+                    ).to_list_document()
+            else:
+                if index["key"] == normalized_hint:
+                    return IndexDefinition(
+                        deepcopy(index["key"]),
+                        name=str(index["name"]),
+                        unique=bool(index["unique"]),
+                    ).to_list_document()
+
+        raise OperationFailure("hint does not correspond to an existing index")
 
     def _storage_key(self, value: Any) -> Any:
         return self._typed_engine_key(value)
@@ -212,7 +252,7 @@ class MemoryEngine(AsyncStorageEngine):
             return False
 
     @override
-    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
+    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, hint: str | IndexKeySpec | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
         async def _scan():
             effective_dialect = dialect or MONGODB_DIALECT_70
             if skip < 0:
@@ -223,6 +263,13 @@ class MemoryEngine(AsyncStorageEngine):
 
             async with self._get_lock(db_name, coll_name):
                 coll = self._storage.get(db_name, {}).get(coll_name, {})
+                indexes = deepcopy(self._indexes.get(db_name, {}).get(coll_name, []))
+                self._resolve_hint_index(
+                    db_name,
+                    coll_name,
+                    hint,
+                    indexes=indexes,
+                )
                 documents = [
                     self._codec.decode(data)
                     for data in list(coll.values())
@@ -389,7 +436,7 @@ class MemoryEngine(AsyncStorageEngine):
         return index_name
 
     @override
-    async def list_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> list[dict[str, object]]:
+    async def list_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> list[IndexDocument]:
         async with self._get_lock(db_name, coll_name):
             indexes = self._indexes.get(db_name, {}).get(coll_name, [])
         result = [default_id_index_definition().to_list_document()]
@@ -404,7 +451,7 @@ class MemoryEngine(AsyncStorageEngine):
         return result
 
     @override
-    async def index_information(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> dict[str, dict[str, object]]:
+    async def index_information(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> IndexInformation:
         async with self._get_lock(db_name, coll_name):
             indexes = deepcopy(self._indexes.get(db_name, {}).get(coll_name, []))
         result = default_id_index_information()
@@ -480,6 +527,7 @@ class MemoryEngine(AsyncStorageEngine):
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
+        hint: str | IndexKeySpec | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> dict[str, object]:
@@ -487,6 +535,12 @@ class MemoryEngine(AsyncStorageEngine):
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
             indexes = deepcopy(self._indexes.get(db_name, {}).get(coll_name, []))
+        hinted_index = self._resolve_hint_index(
+            db_name,
+            coll_name,
+            hint,
+            indexes=indexes,
+        )
         return {
             "engine": "memory",
             "strategy": "python",
@@ -494,6 +548,8 @@ class MemoryEngine(AsyncStorageEngine):
             "sort": sort,
             "skip": skip,
             "limit": limit,
+            "hint": hint,
+            "hinted_index": None if hinted_index is None else hinted_index["name"],
             "indexes": indexes,
         }
 

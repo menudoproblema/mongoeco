@@ -30,6 +30,7 @@ from mongoeco.compat.operation_support import (
     OPERATION_OPTION_SUPPORT,
     OperationOptionSupport,
     OptionSupportStatus,
+    UNSUPPORTED_OPERATION_OPTION,
 )
 from mongoeco.compat.registry import (
     AUTO_INSTALLED_PYMONGO_PROFILE,
@@ -79,6 +80,7 @@ __all__ = [
     'OptionSupportStatus',
     'OperationOptionSupport',
     'OPERATION_OPTION_SUPPORT',
+    'UNSUPPORTED_OPERATION_OPTION',
     'get_operation_option_support',
     'is_operation_option_effective',
     'resolve_mongodb_dialect',

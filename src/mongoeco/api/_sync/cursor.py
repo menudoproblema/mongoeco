@@ -281,6 +281,7 @@ class Cursor:
                 sort=self._sort,
                 skip=self._skip,
                 limit=self._limit,
+                hint=self._hint,
                 dialect=dialect,
                 context=self._session,
             )

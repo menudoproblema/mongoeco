@@ -1753,6 +1753,42 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
                     )
 
+    async def test_hint_requires_existing_index_and_is_reflected_in_explain(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "kind": "view", "rank": 2},
+                            {"_id": "2", "kind": "view", "rank": 1},
+                        ]
+                    )
+                    await collection.create_index([("kind", 1)], name="kind_idx")
+
+                    documents = await collection.find(
+                        {"kind": "view"},
+                        sort=[("rank", 1)],
+                        hint="kind_idx",
+                    ).to_list()
+                    explanation = await collection.find(
+                        {"kind": "view"},
+                        hint="kind_idx",
+                    ).explain()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {"_id": "2", "kind": "view", "rank": 1},
+                            {"_id": "1", "kind": "view", "rank": 2},
+                        ],
+                    )
+                    self.assertEqual(explanation["hint"], "kind_idx")
+                    self.assertEqual(explanation["hinted_index"], "kind_idx")
+
+                    with self.assertRaises(OperationFailure):
+                        await collection.find({"kind": "view"}, hint="missing_idx").to_list()
+
     async def test_create_indexes_rolls_back_batch_on_failure(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

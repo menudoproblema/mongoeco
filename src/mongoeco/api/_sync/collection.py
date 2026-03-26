@@ -12,7 +12,7 @@ from mongoeco.core.aggregation import Pipeline
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     BulkWriteResult, DeleteResult, Document, DocumentId, Filter, InsertManyResult,
-    IndexModel, IndexKeySpec, InsertOneResult, Projection, ReturnDocument, SortSpec, Update,
+    IndexInformation, IndexModel, IndexKeySpec, InsertOneResult, Projection, ReturnDocument, SortSpec, Update,
     UpdateResult, WriteModel,
 )
 
@@ -383,7 +383,7 @@ class Collection:
         *,
         comment: object | None = None,
         session: ClientSession | None = None,
-    ) -> dict[str, dict[str, object]]:
+    ) -> IndexInformation:
         return self._client._run(
             self._async_collection().index_information(comment=comment, session=session)
         )

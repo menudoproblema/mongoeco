@@ -181,6 +181,7 @@ class AsyncAggregationCursor:
                 sort=pushdown.sort,
                 skip=pushdown.skip,
                 limit=pushdown.limit,
+                hint=self._hint,
                 dialect=dialect,
                 context=self._session,
             ),

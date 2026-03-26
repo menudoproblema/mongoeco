@@ -264,6 +264,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(await cursor.explain(), {"engine": "stub", "details": ["COLLSCAN"]})
         self.assertEqual(collection._engine.explain_calls[0][1]["sort"], [("_id", 1)])
+        self.assertEqual(collection._engine.explain_calls[0][1]["hint"], "name_1")
 
 
     def test_sync_cursor_rejects_negative_skip_and_limit_and_supports_iteration(self):
@@ -495,6 +496,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(cursor.alive)
         self.assertEqual(cursor.first(), {"_id": "1"})
         self.assertEqual(cursor.explain(), {"engine": "stub", "details": ["COLLSCAN"]})
+        self.assertEqual(collection._engine.explain_calls[0][1]["hint"], "name_1")
 
     def test_sync_index_cursor_supports_first_to_list_and_close(self):
         async_cursor = AsyncIndexCursor(

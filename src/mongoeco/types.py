@@ -115,6 +115,9 @@ type Projection = dict[str, Any]
 type SortDirection = Literal[1, -1]
 type SortSpec = list[tuple[str, SortDirection]]
 type IndexKeySpec = SortSpec
+type IndexDocument = dict[str, object]
+type IndexInformationEntry = dict[str, object]
+type IndexInformation = dict[str, IndexInformationEntry]
 type DocumentScalarId = ObjectId | str | bytes | int | float | bool | None | UndefinedType
 type DocumentId = DocumentScalarId | list[DocumentId] | dict[str, DocumentId]
 
@@ -183,11 +186,11 @@ def index_key_document(keys: IndexKeySpec) -> dict[str, SortDirection]:
     return {field: direction for field, direction in keys}
 
 
-def default_id_index_information() -> dict[str, dict[str, object]]:
+def default_id_index_information() -> IndexInformation:
     return default_id_index_definition().to_information_entry_map()
 
 
-def default_id_index_document() -> dict[str, object]:
+def default_id_index_document() -> IndexDocument:
     return default_id_index_definition().to_list_document()
 
 
@@ -211,7 +214,7 @@ class IndexDefinition:
     def fields(self) -> list[str]:
         return index_fields(self.keys)
 
-    def to_list_document(self) -> dict[str, object]:
+    def to_list_document(self) -> IndexDocument:
         return {
             "name": self.name,
             "key": index_key_document(self.keys),
@@ -219,13 +222,22 @@ class IndexDefinition:
             "unique": self.unique,
         }
 
-    def to_information_entry(self) -> dict[str, object]:
-        entry: dict[str, object] = {"key": list(self.keys)}
+    def to_model_document(self) -> IndexDocument:
+        document: IndexDocument = {
+            "name": self.name,
+            "key": index_key_document(self.keys),
+        }
+        if self.unique:
+            document["unique"] = True
+        return document
+
+    def to_information_entry(self) -> IndexInformationEntry:
+        entry: IndexInformationEntry = {"key": list(self.keys)}
         if self.unique:
             entry["unique"] = True
         return entry
 
-    def to_information_entry_map(self) -> dict[str, dict[str, object]]:
+    def to_information_entry_map(self) -> IndexInformation:
         return {self.name: self.to_information_entry()}
 
 
@@ -259,14 +271,12 @@ class IndexModel:
         return self.name or default_index_name(self.keys)
 
     @property
-    def document(self) -> dict[str, Any]:
-        document: dict[str, Any] = {
-            "name": self.resolved_name,
-            "key": index_key_document(self.keys),
-        }
-        if self.unique:
-            document["unique"] = True
-        return document
+    def definition(self) -> IndexDefinition:
+        return IndexDefinition(self.keys, name=self.resolved_name, unique=self.unique)
+
+    @property
+    def document(self) -> IndexDocument:
+        return self.definition.to_model_document()
 
 
 @dataclass(frozen=True, slots=True)

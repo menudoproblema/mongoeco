@@ -50,6 +50,8 @@ from mongoeco.types import (
     Document,
     DocumentId,
     Filter,
+    IndexDocument,
+    IndexInformation,
     IndexKeySpec,
     ObjectId,
     Projection,
@@ -210,6 +212,49 @@ class SQLiteEngine(AsyncStorageEngine):
     def _is_builtin_id_index(keys: IndexKeySpec) -> bool:
         return keys == [("_id", 1)]
 
+    def _builtin_id_hint_index(self) -> dict[str, object]:
+        return {
+            "name": "_id_",
+            "physical_name": None,
+            "fields": ["_id"],
+            "key": [("_id", 1)],
+            "unique": True,
+            "multikey": False,
+            "multikey_physical_name": None,
+        }
+
+    def _resolve_hint_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        hint: str | IndexKeySpec | None,
+        *,
+        indexes: list[dict[str, object]] | None = None,
+    ) -> dict[str, object] | None:
+        if hint is None:
+            return None
+
+        if isinstance(hint, str):
+            if hint == "_id_":
+                return self._builtin_id_hint_index()
+        else:
+            normalized_hint = normalize_index_keys(hint)
+            if self._is_builtin_id_index(normalized_hint):
+                return self._builtin_id_hint_index()
+
+        if indexes is None:
+            indexes = self._load_indexes(db_name, coll_name)
+
+        for index in indexes:
+            if isinstance(hint, str):
+                if index["name"] == hint:
+                    return deepcopy(index)
+            else:
+                if index["key"] == normalized_hint:
+                    return deepcopy(index)
+
+        raise OperationFailure("hint does not correspond to an existing index")
+
     def _serialize_document(self, document: Document) -> str:
         return json.dumps(self._codec.encode(document), separators=(",", ":"), sort_keys=False)
 
@@ -242,12 +287,20 @@ class SQLiteEngine(AsyncStorageEngine):
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
+        hint: str | IndexKeySpec | None = None,
     ) -> tuple[str, list[object]]:
+        hinted_index = self._resolve_hint_index(db_name, coll_name, hint)
         where_sql, params = self._translate_query_plan_with_multikey(db_name, coll_name, plan)
         order_sql = translate_sort_spec(sort)
+        from_clause = "documents"
+        if hinted_index is not None and hinted_index.get("physical_name") is not None:
+            from_clause = (
+                "documents INDEXED BY "
+                f"{self._quote_identifier(str(hinted_index['physical_name']))}"
+            )
         sql = f"""
             SELECT {select_clause}
-            FROM documents
+            FROM {from_clause}
             WHERE db_name = ? AND coll_name = ? AND ({where_sql})
             {order_sql}
         """
@@ -616,7 +669,7 @@ class SQLiteEngine(AsyncStorageEngine):
             if any(self._document_traverses_array_on_field(document, field) for field in fields):
                 raise OperationFailure("SQLite unique indexes do not support paths that traverse arrays")
 
-    def _select_first_document_for_plan(self, db_name: str, coll_name: str, plan: QueryNode) -> tuple[str, Document] | None:
+    def _select_first_document_for_plan(self, db_name: str, coll_name: str, plan: QueryNode, *, hint: str | IndexKeySpec | None = None) -> tuple[str, Document] | None:
         conn = self._require_connection()
         if self._plan_has_array_traversing_paths(db_name, coll_name, plan):
             raise NotImplementedError("Array traversal requires Python fallback")
@@ -632,6 +685,7 @@ class SQLiteEngine(AsyncStorageEngine):
             plan,
             select_clause="storage_key, document",
             limit=1,
+            hint=hint,
         )
         row = conn.execute(sql, tuple(params)).fetchone()
         if row is None:
@@ -648,6 +702,7 @@ class SQLiteEngine(AsyncStorageEngine):
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
+        hint: str | IndexKeySpec | None = None,
     ) -> list[str]:
         with self._lock:
             conn = self._require_connection()
@@ -668,6 +723,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 sort=sort,
                 skip=skip,
                 limit=limit,
+                hint=hint,
             )
             rows = conn.execute(f"EXPLAIN QUERY PLAN {sql}", tuple(params)).fetchall()
         return [str(row[3]) for row in rows]
@@ -980,6 +1036,8 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
         stop_event: threading.Event | None = None,
         dialect: MongoDialect | None = None,
+        *,
+        hint: str | IndexKeySpec | None = None,
     ):
         effective_dialect = dialect or MONGODB_DIALECT_70
         if skip < 0:
@@ -1012,6 +1070,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         sort=sort,
                         skip=skip,
                         limit=limit,
+                        hint=hint,
                     )
                     if conn is None:
                         conn = self._require_connection(context)
@@ -1432,7 +1491,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     self._rollback_write(conn, context)
                     raise DuplicateKeyError(str(exc)) from exc
 
-    def _list_indexes_sync(self, db_name: str, coll_name: str, context: ClientSession | None) -> list[dict[str, object]]:
+    def _list_indexes_sync(self, db_name: str, coll_name: str, context: ClientSession | None) -> list[IndexDocument]:
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -1453,7 +1512,7 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
         context: ClientSession | None,
-    ) -> dict[str, dict[str, object]]:
+    ) -> IndexInformation:
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -1672,6 +1731,7 @@ class SQLiteEngine(AsyncStorageEngine):
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
+        hint: str | IndexKeySpec | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> AsyncIterable[Document]:
@@ -1693,7 +1753,8 @@ class SQLiteEngine(AsyncStorageEngine):
                         sort,
                         skip,
                         limit,
-                        context=context,
+                        context,
+                        hint=hint,
                         stop_event=stop_event,
                         dialect=dialect,
                     ):
@@ -1788,11 +1849,11 @@ class SQLiteEngine(AsyncStorageEngine):
         return await asyncio.to_thread(self._create_index_sync, db_name, coll_name, keys, unique, name, context)
 
     @override
-    async def list_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> list[dict[str, object]]:
+    async def list_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> list[IndexDocument]:
         return await asyncio.to_thread(self._list_indexes_sync, db_name, coll_name, context)
 
     @override
-    async def index_information(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> dict[str, dict[str, object]]:
+    async def index_information(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> IndexInformation:
         return await asyncio.to_thread(self._index_information_sync, db_name, coll_name, context)
 
     @override
@@ -1827,11 +1888,18 @@ class SQLiteEngine(AsyncStorageEngine):
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
+        hint: str | IndexKeySpec | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> dict[str, object]:
         effective_dialect = dialect or MONGODB_DIALECT_70
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
+        hinted_index = await asyncio.to_thread(
+            self._resolve_hint_index,
+            db_name,
+            coll_name,
+            hint,
+        )
         details = await asyncio.to_thread(
             self._explain_query_plan_sync,
             db_name,
@@ -1840,6 +1908,7 @@ class SQLiteEngine(AsyncStorageEngine):
             sort=sort,
             skip=skip,
             limit=limit,
+            hint=hint,
         )
         return {
             "engine": "sqlite",
@@ -1849,6 +1918,8 @@ class SQLiteEngine(AsyncStorageEngine):
             "sort": sort,
             "skip": skip,
             "limit": limit,
+            "hint": hint,
+            "hinted_index": None if hinted_index is None else hinted_index["name"],
         }
 
     @override

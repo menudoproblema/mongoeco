@@ -20,61 +20,62 @@ def _build_operation_option_support() -> MappingProxyType[str, MappingProxyType[
     effective = OptionSupportStatus.EFFECTIVE
     matrix = {
         "find": {
-            "hint": OperationOptionSupport(accepted_noop, "Accepted by the API, but engines do not yet force plan selection."),
+            "hint": OperationOptionSupport(effective, "Validated against existing indexes and applied to read planning/explain where engines can honor it."),
             "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only; no profiler or command envelope consumes it yet."),
             "max_time_ms": OperationOptionSupport(accepted_noop, "Validated, but no local timeout enforcement exists yet."),
             "batch_size": OperationOptionSupport(accepted_noop, "Cursor shape supports it, but local engines still materialize without real batching."),
         },
         "aggregate": {
-            "hint": OperationOptionSupport(accepted_noop, "Accepted and forwarded to pushdown find(), but no engine enforces index selection yet."),
+            "hint": OperationOptionSupport(effective, "Applied through the pushdown find() path used by aggregate() and surfaced in explain()."),
             "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
             "max_time_ms": OperationOptionSupport(accepted_noop, "Validated, but no local timeout enforcement exists yet."),
             "batch_size": OperationOptionSupport(accepted_noop, "Cursor shape supports it, but aggregation remains materialized."),
             "let": OperationOptionSupport(effective, "Propagated into aggregate expression evaluation and subpipelines."),
         },
         "update_one": {
-            "hint": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but engines do not yet select indexes from hints."),
+            "hint": OperationOptionSupport(effective, "Applied through hinted document selection before single-document update execution."),
             "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but update paths do not yet consume command-level let variables."),
             "sort": OperationOptionSupport(effective, "Implemented with profile-aware validation since PyMongo 4.11."),
         },
         "update_many": {
-            "hint": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but engines do not yet select indexes from hints."),
+            "hint": OperationOptionSupport(effective, "Applied through hinted _id preselection before per-document updates."),
             "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but update paths do not yet consume command-level let variables."),
         },
         "replace_one": {
-            "hint": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but engines do not yet select indexes from hints."),
+            "hint": OperationOptionSupport(effective, "Applied through hinted document selection before replacement."),
             "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but replacement paths do not yet consume command-level let variables."),
             "sort": OperationOptionSupport(effective, "Implemented with profile-aware validation since PyMongo 4.11."),
         },
         "delete_one": {
-            "hint": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but engines do not yet select indexes from hints."),
+            "hint": OperationOptionSupport(effective, "Applied through hinted document selection before delete."),
             "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but delete paths do not yet consume command-level let variables."),
         },
         "delete_many": {
-            "hint": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but engines do not yet select indexes from hints."),
+            "hint": OperationOptionSupport(effective, "Applied through hinted _id preselection before per-document deletes."),
             "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but delete paths do not yet consume command-level let variables."),
         },
         "find_one_and_update": {
-            "hint": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but engines do not yet select indexes from hints."),
+            "hint": OperationOptionSupport(effective, "Applied through hinted document selection and post-update fetch."),
             "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
             "max_time_ms": OperationOptionSupport(accepted_noop, "Validated, but no local timeout enforcement exists yet."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but update paths do not yet consume command-level let variables."),
             "sort": OperationOptionSupport(effective, "Implemented through update_one()/find semantics with profile-aware validation."),
         },
         "find_one_and_replace": {
-            "hint": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but engines do not yet select indexes from hints."),
+            "hint": OperationOptionSupport(effective, "Applied through hinted document selection and post-replacement fetch."),
             "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
             "max_time_ms": OperationOptionSupport(accepted_noop, "Validated, but no local timeout enforcement exists yet."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but replacement paths do not yet consume command-level let variables."),
             "sort": OperationOptionSupport(effective, "Implemented through replace_one()/find semantics with profile-aware validation."),
         },
         "find_one_and_delete": {
-            "hint": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but engines do not yet select indexes from hints."),
+            "sort": OperationOptionSupport(effective, "Implemented through find() selection semantics before delete."),
+            "hint": OperationOptionSupport(effective, "Applied through hinted document selection before delete."),
             "comment": OperationOptionSupport(accepted_noop, "Accepted for compatibility only."),
             "max_time_ms": OperationOptionSupport(accepted_noop, "Validated, but no local timeout enforcement exists yet."),
             "let": OperationOptionSupport(accepted_noop, "Accepted for compatibility, but delete paths do not yet consume command-level let variables."),
@@ -110,13 +111,30 @@ def _build_operation_option_support() -> MappingProxyType[str, MappingProxyType[
 
 
 OPERATION_OPTION_SUPPORT = _build_operation_option_support()
+MANAGED_OPERATION_OPTION_NAMES = frozenset(
+    option
+    for options in OPERATION_OPTION_SUPPORT.values()
+    for option in options
+)
+OPERATION_OPTION_SIGNATURE_EXCLUSIONS = MappingProxyType(
+    {
+        "find": frozenset({"sort"}),
+    }
+)
+UNSUPPORTED_OPERATION_OPTION = OperationOptionSupport(
+    OptionSupportStatus.UNSUPPORTED,
+    "Option is not part of the public contract for this operation.",
+)
 
 
 def get_operation_option_support(
     operation: str,
     option: str,
-) -> OperationOptionSupport | None:
-    return OPERATION_OPTION_SUPPORT.get(operation, {}).get(option)
+) -> OperationOptionSupport:
+    return OPERATION_OPTION_SUPPORT.get(operation, {}).get(
+        option,
+        UNSUPPORTED_OPERATION_OPTION,
+    )
 
 
 def is_operation_option_effective(operation: str, option: str) -> bool:

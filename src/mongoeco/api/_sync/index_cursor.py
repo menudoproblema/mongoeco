@@ -1,4 +1,5 @@
 from mongoeco.errors import InvalidOperation
+from mongoeco.types import IndexDocument
 
 
 class IndexCursor:
@@ -7,14 +8,14 @@ class IndexCursor:
     def __init__(self, client, async_index_cursor):
         self._client = client
         self._async_index_cursor = async_index_cursor
-        self._cache: list[dict[str, object]] | None = None
+        self._cache: list[IndexDocument] | None = None
         self._closed = False
 
     def _ensure_open(self) -> None:
         if self._closed:
             raise InvalidOperation("cannot use index cursor after it has been closed")
 
-    def _load(self) -> list[dict[str, object]]:
+    def _load(self) -> list[IndexDocument]:
         self._ensure_open()
         if self._cache is None:
             self._cache = self._client._run(self._async_index_cursor.to_list())
@@ -23,10 +24,10 @@ class IndexCursor:
     def __iter__(self):
         return iter(self._load())
 
-    def to_list(self) -> list[dict[str, object]]:
+    def to_list(self) -> list[IndexDocument]:
         return self._load()
 
-    def first(self) -> dict[str, object] | None:
+    def first(self) -> IndexDocument | None:
         self._ensure_open()
         if self._cache is not None:
             return self._cache[0] if self._cache else None

@@ -1468,6 +1468,42 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
                     )
 
+    def test_hint_requires_existing_index_and_is_reflected_in_explain(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "kind": "view", "rank": 2},
+                            {"_id": "2", "kind": "view", "rank": 1},
+                        ]
+                    )
+                    collection.create_index([("kind", 1)], name="kind_idx")
+
+                    documents = collection.find(
+                        {"kind": "view"},
+                        sort=[("rank", 1)],
+                        hint="kind_idx",
+                    ).to_list()
+                    explanation = collection.find(
+                        {"kind": "view"},
+                        hint="kind_idx",
+                    ).explain()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {"_id": "2", "kind": "view", "rank": 1},
+                            {"_id": "1", "kind": "view", "rank": 2},
+                        ],
+                    )
+                    self.assertEqual(explanation["hint"], "kind_idx")
+                    self.assertEqual(explanation["hinted_index"], "kind_idx")
+
+                    with self.assertRaises(OperationFailure):
+                        collection.find({"kind": "view"}, hint="missing_idx").to_list()
+
     def test_create_indexes_rolls_back_batch_on_failure(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
