@@ -98,7 +98,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 
 ## 5. Motor de Updates Formal Basado en Paths Compilados
 
-- `Estado`: `En progreso`
+- `Estado`: `Aplicado`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Medio-Alto`
 - `Descripción`: separar formalmente parsing de rutas, binding posicional, resolución de `arrayFilters` y aplicación de operadores de update sobre paths compilados.
@@ -111,9 +111,8 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `5a7fc5a` `refactor: add explicit update execution context`
   - `c06860b` `refactor: compile reusable update plans in engines`
   - `b28b28d` `refactor: resolve update applications before mutation`
-- `Pendiente para cerrar de verdad`:
-  - separar más claramente validación, resolución y aplicación final en operadores complejos de arrays
-  - formalizar mejor el estado de ejecución de un update complejo
+  - `a5ba59b` `refactor: finalize array update execution plans`
+- `Cierre`: los updates ya siguen un flujo formal de paths compilados, contexto explícito, planes reutilizables y aplicaciones resueltas antes de mutar también en operadores de arrays y rutas posicionales complejas; la semántica de ejecución ya no depende de caminos especiales fuera de ese pipeline.
 
 ## 6. Compatibilidad y Tooling Derivados Automáticamente
 
