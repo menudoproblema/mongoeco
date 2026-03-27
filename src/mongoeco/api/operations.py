@@ -8,6 +8,7 @@ from mongoeco.api._async.cursor import (
     _validate_sort_spec,
 )
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.aggregation import Pipeline
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.types import ArrayFilters, Filter, Projection, SortSpec
@@ -42,6 +43,19 @@ class UpdateOperation:
     let: dict[str, object] | None = None
 
     def with_overrides(self, **changes: object) -> "UpdateOperation":
+        return replace(self, **changes)
+
+
+@dataclass(frozen=True, slots=True)
+class AggregateOperation:
+    pipeline: Pipeline
+    hint: HintSpec | None = None
+    comment: object | None = None
+    max_time_ms: int | None = None
+    batch_size: int | None = None
+    let: dict[str, object] | None = None
+
+    def with_overrides(self, **changes: object) -> "AggregateOperation":
         return replace(self, **changes)
 
 
@@ -117,6 +131,27 @@ def compile_update_operation(
         comment=comment,
         max_time_ms=normalized_max_time_ms,
         let=normalized_let,
+    )
+
+
+def compile_aggregate_operation(
+    pipeline: object,
+    *,
+    hint: object | None = None,
+    comment: object | None = None,
+    max_time_ms: object | None = None,
+    batch_size: object | None = None,
+    let: object | None = None,
+) -> AggregateOperation:
+    if not isinstance(pipeline, list):
+        raise TypeError("pipeline must be a list")
+    return AggregateOperation(
+        pipeline=pipeline,
+        hint=_normalize_hint(hint),
+        comment=comment,
+        max_time_ms=_normalize_max_time_ms(max_time_ms),
+        batch_size=_normalize_batch_size(batch_size),
+        let=_normalize_let(let),
     )
 
 

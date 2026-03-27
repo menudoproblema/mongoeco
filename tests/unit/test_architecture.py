@@ -12,8 +12,10 @@ from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.api._async._materialized_cursor import AsyncMaterializedCursor
 from mongoeco.api.operations import (
+    AggregateOperation,
     FindOperation,
     UpdateOperation,
+    compile_aggregate_operation,
     compile_find_operation,
     compile_update_operation,
 )
@@ -137,6 +139,28 @@ class ArchitectureUnitTests(unittest.TestCase):
     def test_update_operation_rejects_invalid_array_filters(self):
         with self.assertRaises(TypeError):
             compile_update_operation({"name": "Ada"}, array_filters=[1])
+
+    def test_aggregate_operation_compiles_normalized_pipeline_plan(self):
+        operation = compile_aggregate_operation(
+            [{"$match": {"name": "Ada"}}],
+            hint=[("name", 1)],
+            comment="agg",
+            max_time_ms=25,
+            batch_size=10,
+            let={"target": "Ada"},
+        )
+
+        self.assertIsInstance(operation, AggregateOperation)
+        self.assertEqual(operation.pipeline, [{"$match": {"name": "Ada"}}])
+        self.assertEqual(operation.hint, [("name", 1)])
+        self.assertEqual(operation.comment, "agg")
+        self.assertEqual(operation.max_time_ms, 25)
+        self.assertEqual(operation.batch_size, 10)
+        self.assertEqual(operation.let, {"target": "Ada"})
+
+    def test_aggregate_operation_rejects_invalid_pipeline(self):
+        with self.assertRaises(TypeError):
+            compile_aggregate_operation({"$match": {"name": "Ada"}})
 
     def test_admin_cursors_share_materialized_base_classes(self):
         self.assertTrue(issubclass(AsyncIndexCursor, AsyncMaterializedCursor))

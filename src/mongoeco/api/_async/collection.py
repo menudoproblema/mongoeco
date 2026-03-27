@@ -4,8 +4,10 @@ import time
 
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api.operations import (
+    AggregateOperation,
     FindOperation,
     UpdateOperation,
+    compile_aggregate_operation,
     compile_find_operation,
     compile_update_operation,
 )
@@ -677,20 +679,25 @@ class AsyncCollection:
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> AsyncAggregationCursor:
-        if not isinstance(pipeline, list):
-            raise TypeError("pipeline must be a list")
-        hint = self._normalize_hint(hint)
-        max_time_ms = self._normalize_max_time_ms(max_time_ms)
-        batch_size = self._normalize_batch_size(batch_size)
-        let = self._normalize_let(let)
-        return AsyncAggregationCursor(
-            self,
+        operation = compile_aggregate_operation(
             pipeline,
             hint=hint,
             comment=comment,
             max_time_ms=max_time_ms,
             batch_size=batch_size,
             let=let,
+        )
+        return self._build_aggregation_cursor(operation, session=session)
+
+    def _build_aggregation_cursor(
+        self,
+        operation: AggregateOperation,
+        *,
+        session: ClientSession | None = None,
+    ) -> AsyncAggregationCursor:
+        return AsyncAggregationCursor(
+            self,
+            operation,
             session=session,
         )
 

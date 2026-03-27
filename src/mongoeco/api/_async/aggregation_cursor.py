@@ -1,6 +1,7 @@
 from collections.abc import AsyncIterator
 
 from mongoeco.api._async.cursor import HintSpec
+from mongoeco.api.operations import AggregateOperation, compile_aggregate_operation
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.aggregation import (
@@ -19,7 +20,7 @@ class AsyncAggregationCursor:
     def __init__(
         self,
         collection,
-        pipeline: Pipeline,
+        operation: AggregateOperation | Pipeline,
         *,
         hint: HintSpec | None = None,
         comment: object | None = None,
@@ -29,12 +30,22 @@ class AsyncAggregationCursor:
         session: ClientSession | None = None,
     ):
         self._collection = collection
-        self._pipeline = pipeline
-        self._hint = hint
-        self._comment = comment
-        self._max_time_ms = max_time_ms
-        self._batch_size = batch_size
-        self._let = let
+        if not isinstance(operation, AggregateOperation):
+            operation = compile_aggregate_operation(
+                operation,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                batch_size=batch_size,
+                let=let,
+            )
+        self._operation = operation
+        self._pipeline = operation.pipeline
+        self._hint = operation.hint
+        self._comment = operation.comment
+        self._max_time_ms = operation.max_time_ms
+        self._batch_size = operation.batch_size
+        self._let = operation.let
         self._session = session
 
     @staticmethod

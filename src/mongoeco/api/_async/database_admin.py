@@ -6,6 +6,7 @@ from mongoeco.api._async.cursor import (
     _validate_max_time_ms,
     _validate_sort_spec,
 )
+from mongoeco.api.operations import compile_aggregate_operation
 from mongoeco.api._async.database_commands import AsyncDatabaseCommandService
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.core.aggregation import _bson_document_size
@@ -869,18 +870,18 @@ class AsyncDatabaseAdminService:
         batch_size = self._normalize_batch_size_from_command(
             cursor_spec.get("batchSize")
         )
-        hint = self._normalize_hint_from_command(spec.get("hint"))
-        max_time_ms = self._normalize_max_time_ms_from_command(spec.get("maxTimeMS"))
-        let = spec.get("let")
-        if let is not None and not isinstance(let, dict):
-            raise TypeError("let must be a dict")
-        first_batch = await self._database.get_collection(collection_name).aggregate(
+        operation = compile_aggregate_operation(
             pipeline,
-            hint=hint,
+            hint=self._normalize_hint_from_command(spec.get("hint")),
             comment=spec.get("comment"),
-            max_time_ms=max_time_ms,
+            max_time_ms=self._normalize_max_time_ms_from_command(spec.get("maxTimeMS")),
             batch_size=batch_size,
-            let=let,
+            let=spec.get("let"),
+        )
+        first_batch = await self._database.get_collection(
+            collection_name
+        )._build_aggregation_cursor(
+            operation,
             session=session,
         ).to_list()
         return {
@@ -956,23 +957,22 @@ class AsyncDatabaseAdminService:
             cursor_spec = explain_spec.get("cursor", {})
             if not isinstance(cursor_spec, dict):
                 raise TypeError("cursor must be a document")
-            batch_size = self._normalize_batch_size_from_command(
-                cursor_spec.get("batchSize")
-            )
-            hint = self._normalize_hint_from_command(explain_spec.get("hint"))
-            max_time_ms = self._normalize_max_time_ms_from_command(
-                explain_spec.get("maxTimeMS")
-            )
-            let = explain_spec.get("let")
-            if let is not None and not isinstance(let, dict):
-                raise TypeError("let must be a dict")
-            explanation = await self._database.get_collection(collection_name).aggregate(
+            operation = compile_aggregate_operation(
                 pipeline,
-                hint=hint,
+                hint=self._normalize_hint_from_command(explain_spec.get("hint")),
                 comment=explain_spec.get("comment"),
-                max_time_ms=max_time_ms,
-                batch_size=batch_size,
-                let=let,
+                max_time_ms=self._normalize_max_time_ms_from_command(
+                    explain_spec.get("maxTimeMS")
+                ),
+                batch_size=self._normalize_batch_size_from_command(
+                    cursor_spec.get("batchSize")
+                ),
+                let=explain_spec.get("let"),
+            )
+            explanation = await self._database.get_collection(
+                collection_name
+            )._build_aggregation_cursor(
+                operation,
                 session=session,
             ).explain()
             result = dict(explanation)
