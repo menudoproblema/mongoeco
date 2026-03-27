@@ -39,6 +39,8 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `75444e7` `refactor: add sync database admin service`
   - `1681e98` `refactor: parse typed admin commands before execution`
   - `4484998` `refactor: add sync database command service`
+  - `fd11f01` `refactor: unify admin command document execution`
+  - `bfbecee` `refactor: type admin listing metadata snapshots`
 - `Pendiente para cerrar de verdad`:
   - reducir todavía más lógica administrativa residual en `Database`
   - separar mejor ejecución interna y serialización pública de comandos
@@ -57,6 +59,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `33caa69` `refactor: type admin command metadata internals`
   - `cee0689` `refactor: type internal admin command results`
   - `0f399ff` `refactor: type explain payloads internally`
+  - `bfbecee` `refactor: type admin listing metadata snapshots`
 - `Pendiente para cerrar de verdad`:
   - reducir más `dict[str, object]` internos en la capa admin
   - extender el mismo patrón tipado a más payloads internos fuera de admin/explain
@@ -74,6 +77,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `f1640a4` `refactor: compile write operations in api layer`
   - `1681e98` `refactor: parse typed admin commands before execution`
   - `8ce97aa` `refactor: compile aggregate operations before execution`
+  - `5770e05` `refactor: route compiled operations into engines`
 - `Pendiente para cerrar de verdad`:
   - extender la frontera planificada hasta más rutas de engine
   - consolidar mejor explain/admin sobre operaciones ya compiladas
@@ -90,6 +94,8 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `a41ca5b` `refactor: compile update paths explicitly`
   - `1e4b40e` `refactor: separate update target resolution from mutation`
   - `58e7bbc` `refactor: compile update operator instructions`
+  - `5a7fc5a` `refactor: add explicit update execution context`
+  - `c06860b` `refactor: compile reusable update plans in engines`
 - `Pendiente para cerrar de verdad`:
   - separar más claramente validación, resolución y aplicación final
   - formalizar mejor el estado de ejecución de un update complejo
@@ -106,6 +112,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - exports públicos de compatibilidad desde `src/mongoeco/compat/catalog.py`
   - tests de snapshot/consistencia en `tests/unit/test_compat.py` y `tests/unit/test_architecture.py`
   - `53dbc90` `refactor: export versioned compatibility artifacts`
+  - `fc4c6e0` `refactor: derive runtime compatibility hooks from catalog`
 - `Pendiente para cerrar de verdad`:
   - derivar más helpers de runtime desde el catálogo maestro
   - publicar snapshots o artefactos versionados para tooling externo
@@ -153,6 +160,8 @@ Para ejecutar lo pendiente sin perder el estado verde ni reabrir semántica a lo
 
 ### Iteración 1. Frontera API → Engine
 
+- `Estado`: `Aplicado`
+
 - `Objetivo`: que `FindOperation`, `UpdateOperation` y `AggregateOperation` no se queden solo en la API y empiecen a cruzar la frontera con los engines de forma explícita.
 - `Criterio de hecho`:
   - los engines aceptan operaciones compiladas en más rutas de lectura/escritura;
@@ -161,6 +170,8 @@ Para ejecutar lo pendiente sin perder el estado verde ni reabrir semántica a lo
 - `Commit esperado`: `refactor: route compiled operations into engines`
 
 ### Iteración 2. Estado Explícito de Updates
+
+- `Estado`: `Aplicado`
 
 - `Objetivo`: introducir un estado/contexto de ejecución de updates más formal para que validación, resolución de targets y aplicación final no dependan de una larga lista de argumentos.
 - `Criterio de hecho`:
@@ -171,6 +182,8 @@ Para ejecutar lo pendiente sin perder el estado verde ni reabrir semántica a lo
 
 ### Iteración 3. Runtime Derivado del Catálogo
 
+- `Estado`: `Aplicado`
+
 - `Objetivo`: seguir moviendo decisiones de runtime que aún dependen de overrides manuales hacia el catálogo de compatibilidad.
 - `Criterio de hecho`:
   - hooks/version flags relevantes salen del catálogo;
@@ -179,6 +192,8 @@ Para ejecutar lo pendiente sin perder el estado verde ni reabrir semántica a lo
 - `Commit esperado`: `refactor: derive runtime compatibility hooks from catalog`
 
 ### Iteración 4. Dispatcher Admin Más Homogéneo
+
+- `Estado`: `Aplicado`
 
 - `Objetivo`: cerrar mejor la separación entre parseo, ejecución y serialización pública de comandos admin, evitando caminos ligeramente distintos entre async y sync.
 - `Criterio de hecho`:
