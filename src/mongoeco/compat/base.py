@@ -7,244 +7,25 @@ from types import MappingProxyType
 from typing import Any
 import uuid
 
+from mongoeco.compat.catalog import (
+    DEFAULT_BSON_TYPE_ORDER,
+    MONGODB_DIALECT_ALIASES,
+    MONGODB_DIALECT_CATALOG,
+    MONGODB_DIALECT_HOOK_NAMES,
+    PYMONGO_PROFILE_ALIASES,
+    PYMONGO_PROFILE_CATALOG,
+    PYMONGO_PROFILE_HOOK_NAMES,
+    SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS,
+    SUPPORTED_AGGREGATION_STAGES,
+    SUPPORTED_GROUP_ACCUMULATORS,
+    SUPPORTED_MONGODB_MAJORS,
+    SUPPORTED_PYMONGO_MAJORS,
+    SUPPORTED_QUERY_FIELD_OPERATORS,
+    SUPPORTED_QUERY_TOP_LEVEL_OPERATORS,
+    SUPPORTED_UPDATE_OPERATORS,
+    SUPPORTED_WINDOW_ACCUMULATORS,
+)
 from mongoeco.types import ObjectId, UndefinedType
-
-SUPPORTED_QUERY_FIELD_OPERATORS = frozenset(
-    {
-        '$eq',
-        '$cmp',
-        '$ne',
-        '$gt',
-        '$gte',
-        '$lt',
-        '$lte',
-        '$in',
-        '$nin',
-        '$all',
-        '$size',
-        '$mod',
-        '$regex',
-        '$options',
-        '$not',
-        '$elemMatch',
-        '$exists',
-        '$type',
-        '$bitsAllSet',
-        '$bitsAnySet',
-        '$bitsAllClear',
-        '$bitsAnyClear',
-    }
-)
-
-SUPPORTED_QUERY_TOP_LEVEL_OPERATORS = frozenset({'$and', '$or', '$nor', '$expr'})
-
-SUPPORTED_UPDATE_OPERATORS = frozenset(
-    {
-        '$set',
-        '$unset',
-        '$inc',
-        '$min',
-        '$max',
-        '$mul',
-        '$bit',
-        '$rename',
-        '$currentDate',
-        '$setOnInsert',
-        '$push',
-        '$addToSet',
-        '$pull',
-        '$pullAll',
-        '$pop',
-    }
-)
-
-SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
-    {
-        '$literal',
-        '$convert',
-        '$eq',
-        '$cmp',
-        '$ne',
-        '$gt',
-        '$gte',
-        '$lt',
-        '$lte',
-        '$and',
-        '$or',
-        '$in',
-        '$ifNull',
-        '$cond',
-        '$switch',
-        '$abs',
-        '$add',
-        '$multiply',
-        '$subtract',
-        '$divide',
-        '$mod',
-        '$exp',
-        '$ln',
-        '$log',
-        '$log10',
-        '$pow',
-        '$round',
-        '$sqrt',
-        '$stdDevPop',
-        '$stdDevSamp',
-        '$median',
-        '$percentile',
-        '$floor',
-        '$ceil',
-        '$trunc',
-        '$range',
-        '$slice',
-        '$firstN',
-        '$lastN',
-        '$maxN',
-        '$minN',
-        '$size',
-        '$arrayElemAt',
-        '$allElementsTrue',
-        '$anyElementTrue',
-        '$objectToArray',
-        '$zip',
-        '$isArray',
-        '$bitAnd',
-        '$bitNot',
-        '$bitOr',
-        '$bitXor',
-        '$bsonSize',
-        '$concat',
-        '$ltrim',
-        '$replaceOne',
-        '$replaceAll',
-        '$reverseArray',
-        '$rtrim',
-        '$setDifference',
-        '$setEquals',
-        '$setIntersection',
-        '$setIsSubset',
-        '$strcasecmp',
-        '$substr',
-        '$substrBytes',
-        '$substrCP',
-        '$strLenBytes',
-        '$strLenCP',
-        '$trim',
-        '$split',
-        '$toBool',
-        '$toDate',
-        '$toDecimal',
-        '$toInt',
-        '$toDouble',
-        '$toLong',
-        '$toObjectId',
-        '$toUUID',
-        '$toLower',
-        '$toUpper',
-        '$toString',
-        '$let',
-        '$first',
-        '$concatArrays',
-        '$setUnion',
-        '$map',
-        '$filter',
-        '$reduce',
-        '$arrayToObject',
-        '$indexOfArray',
-        '$indexOfBytes',
-        '$indexOfCP',
-        '$regexMatch',
-        '$regexFind',
-        '$regexFindAll',
-        '$sortArray',
-        '$dateTrunc',
-        '$dateAdd',
-        '$dateSubtract',
-        '$dateDiff',
-        '$dateFromString',
-        '$dateFromParts',
-        '$dateToParts',
-        '$dateToString',
-        '$year',
-        '$month',
-        '$dayOfMonth',
-        '$dayOfWeek',
-        '$dayOfYear',
-        '$hour',
-        '$minute',
-        '$second',
-        '$millisecond',
-        '$isoDayOfWeek',
-        '$rand',
-        '$setField',
-        '$unsetField',
-        '$week',
-        '$isoWeek',
-        '$isoWeekYear',
-        '$mergeObjects',
-        '$getField',
-        '$isNumber',
-        '$type',
-        '$binarySize',
-    }
-)
-
-SUPPORTED_AGGREGATION_STAGES = frozenset(
-    {
-        '$match',
-        '$project',
-        '$unset',
-        '$sample',
-        '$sort',
-        '$skip',
-        '$limit',
-        '$addFields',
-        '$set',
-        '$unwind',
-        '$group',
-        '$bucket',
-        '$bucketAuto',
-        '$lookup',
-        '$unionWith',
-        '$replaceRoot',
-        '$replaceWith',
-        '$facet',
-        '$count',
-        '$sortByCount',
-        '$setWindowFields',
-        '$documents',
-    }
-)
-
-SUPPORTED_GROUP_ACCUMULATORS = frozenset({'$sum', '$count', '$min', '$max', '$first', '$last', '$firstN', '$lastN', '$maxN', '$minN', '$top', '$bottom', '$topN', '$bottomN', '$avg', '$push', '$addToSet', '$mergeObjects', '$stdDevPop', '$stdDevSamp', '$median', '$percentile'})
-
-SUPPORTED_WINDOW_ACCUMULATORS = frozenset({'$sum', '$count', '$min', '$max', '$avg', '$push', '$first', '$last', '$firstN', '$lastN', '$maxN', '$minN', '$top', '$bottom', '$topN', '$bottomN', '$addToSet', '$stdDevPop', '$stdDevSamp', '$median', '$percentile', '$rank', '$denseRank', '$documentNumber'})
-
-DEFAULT_BSON_TYPE_ORDER = MappingProxyType(
-    {
-        type(None): 1,
-        UndefinedType: 1,
-        int: 2,
-        float: 2,
-        decimal.Decimal: 2,
-        str: 3,
-        dict: 4,
-        list: 5,
-        bytes: 6,
-        uuid.UUID: 6,
-        ObjectId: 7,
-        bool: 8,
-        datetime.datetime: 9,
-    }
-)
-
-MONGODB_DIALECT_HOOK_NAMES = (
-    'null_query_matches_undefined',
-)
-
-PYMONGO_PROFILE_HOOK_NAMES = (
-    'supports_update_one_sort',
-)
 
 
 def _build_behavior_flags(instance: object, hook_names: Sequence[str]) -> MappingProxyType:
@@ -543,15 +324,6 @@ MONGODB_DIALECTS = MappingProxyType(
     }
 )
 
-MONGODB_DIALECT_ALIASES = MappingProxyType(
-    {
-        '7': MONGODB_DIALECT_70.key,
-        '7.0': MONGODB_DIALECT_70.key,
-        '8': MONGODB_DIALECT_80.key,
-        '8.0': MONGODB_DIALECT_80.key,
-    }
-)
-
 MONGODB_DIALECT_CAPABILITIES = _build_capability_catalog(MONGODB_DIALECTS)
 
 MONGODB_DIALECT_BEHAVIOR_FLAGS = _build_behavior_flag_catalog(
@@ -567,15 +339,6 @@ PYMONGO_PROFILES = MappingProxyType(
     }
 )
 
-PYMONGO_PROFILE_ALIASES = MappingProxyType(
-    {
-        '4': PYMONGO_PROFILE_49.key,
-        '4.9': PYMONGO_PROFILE_49.key,
-        '4.11': PYMONGO_PROFILE_411.key,
-        '4.13': PYMONGO_PROFILE_413.key,
-    }
-)
-
 PYMONGO_PROFILE_CAPABILITIES = _build_capability_catalog(PYMONGO_PROFILES)
 
 PYMONGO_PROFILE_BEHAVIOR_FLAGS = _build_behavior_flag_catalog(
@@ -583,12 +346,5 @@ PYMONGO_PROFILE_BEHAVIOR_FLAGS = _build_behavior_flag_catalog(
     PYMONGO_PROFILE_HOOK_NAMES,
 )
 
-SUPPORTED_MONGODB_MAJORS = frozenset(
-    int(key.split('.', 1)[0])
-    for key in MONGODB_DIALECTS
-)
-
-SUPPORTED_PYMONGO_MAJORS = frozenset(
-    int(key.split('.', 1)[0])
-    for key in PYMONGO_PROFILES
-)
+assert tuple(MONGODB_DIALECTS) == tuple(MONGODB_DIALECT_CATALOG)
+assert tuple(PYMONGO_PROFILES) == tuple(PYMONGO_PROFILE_CATALOG)

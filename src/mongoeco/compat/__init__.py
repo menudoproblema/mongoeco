@@ -24,6 +24,12 @@ from mongoeco.compat.base import (
     SUPPORTED_MONGODB_MAJORS,
     SUPPORTED_PYMONGO_MAJORS,
 )
+from mongoeco.compat.catalog import (
+    export_full_compat_catalog,
+    export_mongodb_dialect_catalog,
+    export_operation_option_catalog,
+    export_pymongo_profile_catalog,
+)
 from mongoeco.compat.operation_support import (
     get_operation_option_support,
     is_operation_option_effective,
@@ -80,6 +86,10 @@ __all__ = [
     'OptionSupportStatus',
     'OperationOptionSupport',
     'OPERATION_OPTION_SUPPORT',
+    'export_mongodb_dialect_catalog',
+    'export_pymongo_profile_catalog',
+    'export_operation_option_catalog',
+    'export_full_compat_catalog',
     'UNSUPPORTED_OPERATION_OPTION',
     'get_operation_option_support',
     'is_operation_option_effective',

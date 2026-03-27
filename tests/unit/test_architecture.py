@@ -12,6 +12,7 @@ from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.compat import (
     OPERATION_OPTION_SUPPORT,
     OptionSupportStatus,
+    export_full_compat_catalog,
     get_operation_option_support,
     is_operation_option_effective,
 )
@@ -133,6 +134,18 @@ class ArchitectureUnitTests(unittest.TestCase):
                     params & MANAGED_OPERATION_OPTION_NAMES
                 ) - OPERATION_OPTION_SIGNATURE_EXCLUSIONS.get(operation, frozenset())
                 self.assertEqual(set(options), managed)
+
+    def test_exported_full_catalog_tracks_public_operation_support_matrix(self):
+        exported = export_full_compat_catalog()
+
+        self.assertEqual(
+            exported["operation_options"]["find"]["hint"]["status"],
+            OptionSupportStatus.EFFECTIVE.value,
+        )
+        self.assertEqual(
+            set(exported["operation_options"]),
+            set(OPERATION_OPTION_SUPPORT),
+        )
 
     def test_index_model_reuses_index_definition_contract(self):
         from mongoeco.types import IndexModel

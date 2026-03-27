@@ -37,6 +37,10 @@ from mongoeco.compat import (
     resolve_pymongo_profile,
     resolve_pymongo_profile_resolution,
     STRICT_AUTO_INSTALLED_PYMONGO_PROFILE,
+    export_full_compat_catalog,
+    export_mongodb_dialect_catalog,
+    export_operation_option_catalog,
+    export_pymongo_profile_catalog,
 )
 
 
@@ -105,6 +109,25 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertIn('$eq', MongoDialect70().query_field_operators)
         self.assertTrue(MongoDialect70().supports_query_field_operator('$eq'))
         self.assertFalse(MongoDialect70().supports_query_field_operator('$unknown'))
+
+    def test_exported_catalog_matches_public_runtime_catalogs(self):
+        mongodb_catalog = export_mongodb_dialect_catalog()
+        pymongo_catalog = export_pymongo_profile_catalog()
+        operation_catalog = export_operation_option_catalog()
+        full_catalog = export_full_compat_catalog()
+
+        self.assertEqual(set(mongodb_catalog), set(MONGODB_DIALECTS))
+        self.assertEqual(set(pymongo_catalog), set(PYMONGO_PROFILES))
+        self.assertEqual(full_catalog['defaults']['mongodb_dialect'], DEFAULT_MONGODB_DIALECT)
+        self.assertEqual(full_catalog['defaults']['pymongo_profile'], DEFAULT_PYMONGO_PROFILE)
+        self.assertEqual(full_catalog['mongodb_dialects'], mongodb_catalog)
+        self.assertEqual(full_catalog['pymongo_profiles'], pymongo_catalog)
+        self.assertEqual(full_catalog['operation_options'], operation_catalog)
+        self.assertIn('query_field_operators', mongodb_catalog['7.0'])
+        self.assertEqual(
+            operation_catalog['find']['hint']['status'],
+            'effective',
+        )
 
     def test_resolve_mongodb_dialect_uses_baseline_by_default(self):
         self.assertIs(resolve_mongodb_dialect(), MONGODB_DIALECT_70)

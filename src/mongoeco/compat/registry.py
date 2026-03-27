@@ -1,15 +1,21 @@
 import importlib.metadata as importlib_metadata
 from dataclasses import dataclass
 
+from mongoeco.compat.catalog import (
+    AUTO_INSTALLED_PYMONGO_PROFILE,
+    DEFAULT_MONGODB_DIALECT,
+    DEFAULT_PYMONGO_PROFILE,
+    MONGODB_DIALECT_ALIASES,
+    PYMONGO_PROFILE_ALIASES,
+    STRICT_AUTO_INSTALLED_PYMONGO_PROFILE,
+)
 from mongoeco.compat.base import (
     MongoDialect,
-    MONGODB_DIALECT_ALIASES,
     MONGODB_DIALECTS,
     PyMongoProfile,
     PYMONGO_PROFILE_49,
     PYMONGO_PROFILE_411,
     PYMONGO_PROFILE_413,
-    PYMONGO_PROFILE_ALIASES,
     PYMONGO_PROFILES,
     SUPPORTED_MONGODB_MAJORS,
     SUPPORTED_PYMONGO_MAJORS,
@@ -18,11 +24,6 @@ from mongoeco.compat.base import (
 
 MongoDialectInput = MongoDialect | str | None
 PyMongoProfileInput = PyMongoProfile | str | None
-
-DEFAULT_MONGODB_DIALECT = '7.0'
-DEFAULT_PYMONGO_PROFILE = '4.9'
-AUTO_INSTALLED_PYMONGO_PROFILE = 'auto-installed'
-STRICT_AUTO_INSTALLED_PYMONGO_PROFILE = 'strict-auto-installed'
 
 _KNOWN_PYMONGO_PROFILE_VERSIONS = {
     tuple(map(int, profile.key.split('.', 1))): profile
