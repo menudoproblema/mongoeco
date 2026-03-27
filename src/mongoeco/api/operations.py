@@ -10,7 +10,7 @@ from mongoeco.api._async.cursor import (
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.core.validation import is_filter, is_projection
-from mongoeco.types import Filter, Projection, SortSpec
+from mongoeco.types import ArrayFilters, Filter, Projection, SortSpec
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +27,21 @@ class FindOperation:
     batch_size: int | None = None
 
     def with_overrides(self, **changes: object) -> "FindOperation":
+        return replace(self, **changes)
+
+
+@dataclass(frozen=True, slots=True)
+class UpdateOperation:
+    filter_spec: Filter
+    plan: QueryNode
+    sort: SortSpec | None = None
+    array_filters: ArrayFilters | None = None
+    hint: HintSpec | None = None
+    comment: object | None = None
+    max_time_ms: int | None = None
+    let: dict[str, object] | None = None
+
+    def with_overrides(self, **changes: object) -> "UpdateOperation":
         return replace(self, **changes)
 
 
@@ -69,6 +84,42 @@ def compile_find_operation(
     )
 
 
+def compile_update_operation(
+    filter_spec: object | None = None,
+    *,
+    sort: object | None = None,
+    array_filters: object | None = None,
+    hint: object | None = None,
+    comment: object | None = None,
+    max_time_ms: object | None = None,
+    let: object | None = None,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+    plan: QueryNode | None = None,
+) -> UpdateOperation:
+    normalized_filter = _normalize_filter(filter_spec)
+    normalized_sort = _normalize_sort(sort)
+    normalized_array_filters = _normalize_array_filters(array_filters)
+    normalized_hint = _normalize_hint(hint)
+    normalized_max_time_ms = _normalize_max_time_ms(max_time_ms)
+    normalized_let = _normalize_let(let)
+    return UpdateOperation(
+        filter_spec=normalized_filter,
+        plan=compile_filter(
+            normalized_filter,
+            dialect=dialect,
+            variables=normalized_let,
+        )
+        if plan is None
+        else plan,
+        sort=normalized_sort,
+        array_filters=normalized_array_filters,
+        hint=normalized_hint,
+        comment=comment,
+        max_time_ms=normalized_max_time_ms,
+        let=normalized_let,
+    )
+
+
 def _normalize_filter(filter_spec: object | None) -> Filter:
     if filter_spec is None:
         return {}
@@ -97,6 +148,24 @@ def _normalize_hint(hint: object | None) -> HintSpec | None:
         return None
     _validate_hint_spec(hint)
     return hint
+
+
+def _normalize_array_filters(array_filters: object | None) -> ArrayFilters | None:
+    if array_filters is None:
+        return None
+    if not isinstance(array_filters, list):
+        raise TypeError("array_filters must be a list of dicts")
+    if not all(is_filter(item) for item in array_filters):
+        raise TypeError("array_filters must be a list of dicts")
+    return array_filters
+
+
+def _normalize_let(let: object | None) -> dict[str, object] | None:
+    if let is None:
+        return None
+    if not isinstance(let, dict):
+        raise TypeError("let must be a dict")
+    return let
 
 
 def _normalize_batch_size(batch_size: object | None) -> int | None:

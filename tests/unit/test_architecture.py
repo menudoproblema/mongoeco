@@ -7,7 +7,12 @@ from mongoeco.api._async.database_commands import AsyncDatabaseCommandService
 from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.api._async._materialized_cursor import AsyncMaterializedCursor
-from mongoeco.api.operations import FindOperation, compile_find_operation
+from mongoeco.api.operations import (
+    FindOperation,
+    UpdateOperation,
+    compile_find_operation,
+    compile_update_operation,
+)
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.api._sync.collection import Collection
@@ -103,6 +108,30 @@ class ArchitectureUnitTests(unittest.TestCase):
     def test_find_operation_rejects_invalid_skip(self):
         with self.assertRaises(TypeError):
             compile_find_operation({"name": "Ada"}, skip=-1)
+
+    def test_update_operation_compiles_normalized_write_plan(self):
+        operation = compile_update_operation(
+            {"name": "Ada"},
+            sort=[("rank", 1)],
+            array_filters=[{"item.score": {"$gte": 10}}],
+            hint=[("name", 1)],
+            comment="write",
+            max_time_ms=25,
+            let={"target": "Ada"},
+        )
+
+        self.assertIsInstance(operation, UpdateOperation)
+        self.assertEqual(operation.filter_spec, {"name": "Ada"})
+        self.assertEqual(operation.sort, [("rank", 1)])
+        self.assertEqual(operation.array_filters, [{"item.score": {"$gte": 10}}])
+        self.assertEqual(operation.hint, [("name", 1)])
+        self.assertEqual(operation.comment, "write")
+        self.assertEqual(operation.max_time_ms, 25)
+        self.assertEqual(operation.let, {"target": "Ada"})
+
+    def test_update_operation_rejects_invalid_array_filters(self):
+        with self.assertRaises(TypeError):
+            compile_update_operation({"name": "Ada"}, array_filters=[1])
 
     def test_admin_cursors_share_materialized_base_classes(self):
         self.assertTrue(issubclass(AsyncIndexCursor, AsyncMaterializedCursor))
