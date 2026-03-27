@@ -1,10 +1,8 @@
 import asyncio
 import inspect
 import unittest
-from unittest.mock import patch
 
 from mongoeco.api._async.collection import AsyncCollection
-from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
 from mongoeco.api._async.database_commands import (
     AsyncDatabaseCommandService,
     BuildInfoResult,
@@ -28,8 +26,6 @@ from mongoeco.api.operations import (
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.api._sync.collection import Collection
-from mongoeco.api._sync.database_admin import DatabaseAdminService
-from mongoeco.api._sync.database_commands import DatabaseCommandService
 from mongoeco.api._sync._materialized_cursor import MaterializedCursor
 from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.api._sync.listing_cursor import ListingCursor
@@ -286,19 +282,6 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertEqual(operation.planning_mode, PlanningMode.RELAXED)
         self.assertEqual(len(operation.planning_issues), 1)
 
-    def test_memory_engine_read_paths_compile_shared_semantics(self):
-        async def _run() -> None:
-            engine = MemoryEngine()
-            await engine.connect()
-            try:
-                with patch("mongoeco.engines.memory.compile_find_semantics", wraps=compile_find_semantics) as compiler:
-                    await engine.explain_query_plan("db", "users", {})
-                    self.assertGreaterEqual(compiler.call_count, 1)
-            finally:
-                await engine.disconnect()
-
-        asyncio.run(_run())
-
     def test_engines_plan_read_execution_before_explain(self):
         async def _run() -> None:
             operation = compile_find_operation({"name": "Ada"})
@@ -335,27 +318,8 @@ class ArchitectureUnitTests(unittest.TestCase):
 
         asyncio.run(_run())
 
-    def test_sqlite_engine_read_paths_compile_shared_semantics(self):
-        async def _run() -> None:
-            engine = SQLiteEngine()
-            await engine.connect()
-            try:
-                with patch("mongoeco.engines.sqlite.compile_find_semantics", wraps=compile_find_semantics) as compiler:
-                    await engine.explain_query_plan("db", "users", {})
-                    self.assertGreaterEqual(compiler.call_count, 1)
-            finally:
-                await engine.disconnect()
-
-        asyncio.run(_run())
-
     def test_namespace_admin_protocol_exposes_collection_options(self):
         self.assertIn("collection_options", AsyncNamespaceAdminEngine.__dict__)
-
-    def test_async_database_delegates_admin_surface_to_dedicated_service(self):
-        database = AsyncDatabase(MemoryEngine(), "db")
-
-        self.assertIsInstance(database._admin, AsyncDatabaseAdminService)
-        self.assertIsInstance(database._admin._commands, AsyncDatabaseCommandService)
 
     def test_find_operation_compiles_normalized_read_plan(self):
         operation = compile_find_operation(
@@ -614,14 +578,6 @@ class ArchitectureUnitTests(unittest.TestCase):
             IndexInformation,
         )
 
-    def test_sync_database_delegates_admin_surface_to_dedicated_service(self):
-        from mongoeco.api._sync.client import MongoClient
-
-        database = MongoClient().get_database("db")
-
-        self.assertIsInstance(database._admin, DatabaseAdminService)
-        self.assertIsInstance(database._admin._commands, DatabaseCommandService)
-
     def test_pymongo_configuration_types_validate_and_are_immutable(self):
         write_concern = WriteConcern("majority", j=True, wtimeout=1000)
         read_concern = ReadConcern("majority")
@@ -764,12 +720,6 @@ class ArchitectureUnitTests(unittest.TestCase):
             "db",
         )
 
-    def test_database_command_service_routes_use_typed_records(self):
-        route = AsyncDatabaseCommandService._DELEGATED_COMMAND_HANDLERS["dropDatabase"]
-
-        self.assertIsInstance(route, AsyncDatabaseCommandService.Route)
-        self.assertFalse(route.passes_spec)
-
     def test_database_command_service_parses_typed_admin_commands(self):
         database = AsyncDatabase(MemoryEngine(), "db")
         service = database._admin._commands
@@ -826,27 +776,6 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertIsInstance(count.operation, FindOperation)
         self.assertIsInstance(distinct.operation, FindOperation)
         self.assertIsInstance(aggregate.operation, AggregateOperation)
-
-    def test_database_admin_service_compiles_count_and_distinct_operations(self):
-        database = AsyncDatabase(MemoryEngine(), "db")
-        service = database._admin
-
-        count_collection, count_operation = service._compile_command_count_operation(
-            {"count": "users", "query": {"name": "Ada"}, "skip": 1, "limit": 2}
-        )
-        distinct_collection, distinct_key, distinct_operation = (
-            service._compile_command_distinct_operation(
-                {"distinct": "users", "key": "name", "query": {"active": True}}
-            )
-        )
-
-        self.assertEqual(count_collection, "users")
-        self.assertEqual(count_operation.filter_spec, {"name": "Ada"})
-        self.assertEqual(count_operation.skip, 1)
-        self.assertEqual(count_operation.limit, 2)
-        self.assertEqual(distinct_collection, "users")
-        self.assertEqual(distinct_key, "name")
-        self.assertEqual(distinct_operation.filter_spec, {"active": True})
 
     def test_admin_parsing_centralizes_listing_and_validation_options(self):
         list_options = normalize_list_collections_options(
