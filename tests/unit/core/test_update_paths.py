@@ -3,6 +3,8 @@ import unittest
 from mongoeco.core.update_paths import (
     compile_update_path,
     parse_update_path,
+    ResolvedUpdatePath,
+    resolve_positional_update_paths,
     update_path_has_numeric_segment,
     update_path_has_positional_segment,
 )
@@ -44,6 +46,27 @@ class UpdatePathParsingTests(unittest.TestCase):
         self.assertTrue(update_path_has_positional_segment("items.$[].name"))
         self.assertTrue(update_path_has_positional_segment(compiled))
         self.assertFalse(update_path_has_positional_segment("items.0.name"))
+
+    def test_resolve_positional_update_paths_returns_typed_targets(self):
+        resolved = resolve_positional_update_paths(
+            {"items": [{"name": "Ada"}, {"name": "Linus"}]},
+            "items.$[].name",
+            filtered_matcher=lambda _identifier, _candidate: True,
+        )
+
+        self.assertEqual(
+            resolved,
+            [
+                ResolvedUpdatePath(
+                    requested=compile_update_path("items.$[].name"),
+                    concrete_path="items.0.name",
+                ),
+                ResolvedUpdatePath(
+                    requested=compile_update_path("items.$[].name"),
+                    concrete_path="items.1.name",
+                ),
+            ],
+        )
 
     def test_parse_update_path_rejects_empty_segments_and_invalid_identifiers(self):
         with self.assertRaises(OperationFailure):

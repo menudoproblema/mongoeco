@@ -12,8 +12,9 @@ from mongoeco.core.sorting import sort_documents
 from mongoeco.core.update_paths import (
     CompiledUpdatePath,
     compile_update_path,
-    expand_positional_update_paths,
     is_valid_array_filter_identifier,
+    ResolvedUpdatePath,
+    resolve_positional_update_paths,
 )
 from mongoeco.types import ArrayFilters, Filter, SortSpec
 
@@ -185,7 +186,7 @@ class UpdateEngine:
         return True
 
     @staticmethod
-    def _expand_update_targets(
+    def _resolve_update_targets(
         doc: dict[str, Any],
         path: str,
         *,
@@ -193,7 +194,7 @@ class UpdateEngine:
         array_filters: dict[str, dict[str, Any]],
         allow_positional: bool,
         dialect: MongoDialect = MONGODB_DIALECT_70,
-    ) -> list[str]:
+    ) -> list[ResolvedUpdatePath]:
         compiled_path = compile_update_path(path)
         segments = compiled_path.segments
         if segments[0].raw == "_id":
@@ -214,7 +215,7 @@ class UpdateEngine:
                     dialect=dialect,
                 )
             ]
-        concrete_paths = expand_positional_update_paths(
+        concrete_paths = resolve_positional_update_paths(
             doc,
             compiled_path,
             filtered_matcher=lambda identifier, candidate: UpdateEngine._array_filter_matches(
@@ -224,7 +225,14 @@ class UpdateEngine:
                 dialect=dialect,
             ),
         )
-        return list(dict.fromkeys(concrete_paths))
+        deduplicated: list[ResolvedUpdatePath] = []
+        seen_paths: set[str] = set()
+        for target in concrete_paths:
+            if target.concrete_path in seen_paths:
+                continue
+            deduplicated.append(target)
+            seen_paths.add(target.concrete_path)
+        return deduplicated
 
     @staticmethod
     def _resolve_legacy_positional_path(
@@ -233,7 +241,7 @@ class UpdateEngine:
         selector_filter: Filter,
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
-    ) -> str:
+    ) -> ResolvedUpdatePath:
         compiled_path = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
         segments = compiled_path.segments
         positional_indexes = [index for index, segment in enumerate(segments) if segment.kind == "positional"]
@@ -256,7 +264,10 @@ class UpdateEngine:
                 parts = [array_prefix, str(item_index)]
                 if suffix:
                     parts.append(suffix)
-                return ".".join(parts)
+                return ResolvedUpdatePath(
+                    requested=compiled_path,
+                    concrete_path=".".join(parts),
+                )
         raise OperationFailure("The positional operator did not find the match needed from the query")
 
     @staticmethod
@@ -369,7 +380,7 @@ class UpdateEngine:
     ) -> bool:
         modified = False
         for path, value in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
-            for concrete_path in UpdateEngine._expand_update_targets(
+            for target in UpdateEngine._resolve_update_targets(
                 doc,
                 path,
                 selector_filter=selector_filter,
@@ -377,7 +388,7 @@ class UpdateEngine:
                 allow_positional=True,
                 dialect=dialect,
             ):
-                if set_document_value(doc, concrete_path, deepcopy(value)):
+                if set_document_value(doc, target.concrete_path, deepcopy(value)):
                     modified = True
         return modified
 
@@ -392,7 +403,7 @@ class UpdateEngine:
     ) -> bool:
         modified = False
         for path, _ in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
-            for concrete_path in UpdateEngine._expand_update_targets(
+            for target in UpdateEngine._resolve_update_targets(
                 doc,
                 path,
                 selector_filter=selector_filter,
@@ -400,7 +411,7 @@ class UpdateEngine:
                 allow_positional=True,
                 dialect=dialect,
             ):
-                if delete_document_value(doc, concrete_path):
+                if delete_document_value(doc, target.concrete_path):
                     modified = True
         return modified
 
@@ -417,7 +428,7 @@ class UpdateEngine:
         for path, increment in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
             if not UpdateEngine._is_numeric(increment):
                 raise OperationFailure("$inc requires numeric values")
-            for concrete_path in UpdateEngine._expand_update_targets(
+            for target in UpdateEngine._resolve_update_targets(
                 doc,
                 path,
                 selector_filter=selector_filter,
@@ -425,14 +436,14 @@ class UpdateEngine:
                 allow_positional=True,
                 dialect=dialect,
             ):
-                found, current = get_document_value(doc, concrete_path)
+                found, current = get_document_value(doc, target.concrete_path)
                 if not found:
-                    if set_document_value(doc, concrete_path, increment):
+                    if set_document_value(doc, target.concrete_path, increment):
                         modified = True
                     continue
                 if not UpdateEngine._is_numeric(current):
                     raise OperationFailure("$inc requires the target field to be numeric")
-                if set_document_value(doc, concrete_path, current + increment):
+                if set_document_value(doc, target.concrete_path, current + increment):
                     modified = True
         return modified
 
@@ -447,7 +458,7 @@ class UpdateEngine:
     ) -> bool:
         modified = False
         for path, value in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
-            for concrete_path in UpdateEngine._expand_update_targets(
+            for target in UpdateEngine._resolve_update_targets(
                 doc,
                 path,
                 selector_filter=selector_filter,
@@ -455,9 +466,9 @@ class UpdateEngine:
                 allow_positional=True,
                 dialect=dialect,
             ):
-                found, current = get_document_value(doc, concrete_path)
+                found, current = get_document_value(doc, target.concrete_path)
                 if not found or dialect.compare_values(current, value) > 0:
-                    if set_document_value(doc, concrete_path, deepcopy(value)):
+                    if set_document_value(doc, target.concrete_path, deepcopy(value)):
                         modified = True
         return modified
 
@@ -472,7 +483,7 @@ class UpdateEngine:
     ) -> bool:
         modified = False
         for path, value in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
-            for concrete_path in UpdateEngine._expand_update_targets(
+            for target in UpdateEngine._resolve_update_targets(
                 doc,
                 path,
                 selector_filter=selector_filter,
@@ -480,9 +491,9 @@ class UpdateEngine:
                 allow_positional=True,
                 dialect=dialect,
             ):
-                found, current = get_document_value(doc, concrete_path)
+                found, current = get_document_value(doc, target.concrete_path)
                 if not found or dialect.compare_values(current, value) < 0:
-                    if set_document_value(doc, concrete_path, deepcopy(value)):
+                    if set_document_value(doc, target.concrete_path, deepcopy(value)):
                         modified = True
         return modified
 
@@ -499,7 +510,7 @@ class UpdateEngine:
         for path, factor in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
             if not UpdateEngine._is_numeric(factor):
                 raise OperationFailure("$mul requires numeric values")
-            for concrete_path in UpdateEngine._expand_update_targets(
+            for target in UpdateEngine._resolve_update_targets(
                 doc,
                 path,
                 selector_filter=selector_filter,
@@ -507,15 +518,15 @@ class UpdateEngine:
                 allow_positional=True,
                 dialect=dialect,
             ):
-                found, current = get_document_value(doc, concrete_path)
+                found, current = get_document_value(doc, target.concrete_path)
                 if not found:
                     missing_value: int | float = 0.0 if isinstance(factor, float) else 0
-                    if set_document_value(doc, concrete_path, missing_value):
+                    if set_document_value(doc, target.concrete_path, missing_value):
                         modified = True
                     continue
                 if not UpdateEngine._is_numeric(current):
                     raise OperationFailure("$mul requires the target field to be numeric")
-                if set_document_value(doc, concrete_path, current * factor):
+                if set_document_value(doc, target.concrete_path, current * factor):
                     modified = True
         return modified
 
@@ -541,7 +552,7 @@ class UpdateEngine:
                 raise OperationFailure("$bit only supports and, or, and xor")
             if not UpdateEngine._is_integral(operand):
                 raise OperationFailure("$bit requires integer operands")
-            for concrete_path in UpdateEngine._expand_update_targets(
+            for target in UpdateEngine._resolve_update_targets(
                 doc,
                 path,
                 selector_filter=selector_filter,
@@ -549,7 +560,7 @@ class UpdateEngine:
                 allow_positional=True,
                 dialect=dialect,
             ):
-                found, current = get_document_value(doc, concrete_path)
+                found, current = get_document_value(doc, target.concrete_path)
                 if not found:
                     raise OperationFailure("$bit requires the target field to exist and be an integer")
                 if not UpdateEngine._is_integral(current):
@@ -560,7 +571,7 @@ class UpdateEngine:
                     replacement = current | operand
                 else:
                     replacement = current ^ operand
-                if set_document_value(doc, concrete_path, replacement):
+                if set_document_value(doc, target.concrete_path, replacement):
                     modified = True
         return modified
 
@@ -604,7 +615,7 @@ class UpdateEngine:
                 replacement = now
             else:
                 raise OperationFailure("$currentDate only supports True or {$type: 'date'}")
-            for concrete_path in UpdateEngine._expand_update_targets(
+            for target in UpdateEngine._resolve_update_targets(
                 doc,
                 path,
                 selector_filter=selector_filter,
@@ -612,7 +623,7 @@ class UpdateEngine:
                 allow_positional=True,
                 dialect=dialect,
             ):
-                if set_document_value(doc, concrete_path, replacement):
+                if set_document_value(doc, target.concrete_path, replacement):
                     modified = True
         return modified
 

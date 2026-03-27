@@ -23,6 +23,12 @@ class CompiledUpdatePath:
     segments: tuple[UpdatePathSegment, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class ResolvedUpdatePath:
+    requested: CompiledUpdatePath
+    concrete_path: str
+
+
 def compile_update_path(path: str) -> CompiledUpdatePath:
     if not isinstance(path, str):
         raise OperationFailure("update field names must be strings")
@@ -144,3 +150,20 @@ def expand_positional_update_paths(
 
     _walk(doc, 0, [])
     return expanded
+
+
+def resolve_positional_update_paths(
+    doc: object,
+    path: str | CompiledUpdatePath,
+    *,
+    filtered_matcher: Callable[[str, object], bool],
+) -> list[ResolvedUpdatePath]:
+    compiled = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
+    return [
+        ResolvedUpdatePath(requested=compiled, concrete_path=concrete_path)
+        for concrete_path in expand_positional_update_paths(
+            doc,
+            compiled,
+            filtered_matcher=filtered_matcher,
+        )
+    ]

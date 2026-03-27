@@ -103,6 +103,16 @@ class UpdateEngineTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"items": [{"qty": 1}]}, {"$set": {"items.$[i].qty": 2}})
 
+    def test_update_engine_resolves_targets_before_applying_mutation(self):
+        targets = UpdateEngine._resolve_update_targets(
+            {"items": [{"qty": 1}, {"qty": 2}]},
+            "items.$[].qty",
+            array_filters={},
+            allow_positional=True,
+        )
+
+        self.assertEqual([target.concrete_path for target in targets], ["items.0.qty", "items.1.qty"])
+
     def test_set_same_value_is_noop(self):
         document = {"field": 1}
 
