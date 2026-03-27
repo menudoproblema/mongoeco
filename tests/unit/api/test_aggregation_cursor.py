@@ -69,11 +69,16 @@ class _FakeCollection:
 class _FakeEngine:
     def __init__(self):
         self.explain_calls = []
+        self.explain_find_calls = []
         self.scan_operation_calls = []
 
     async def explain_query_plan(self, *args, **kwargs):
         self.explain_calls.append((args, kwargs))
         return {"engine": "fake", "details": ["SCAN"]}
+
+    async def explain_find_operation(self, db_name, coll_name, operation, **kwargs):
+        self.explain_find_calls.append((db_name, coll_name, operation, kwargs))
+        return {"engine": "fake", "details": ["IXSCAN"]}
 
     def scan_find_operation(self, db_name, coll_name, operation, **kwargs):
         self.scan_operation_calls.append((db_name, coll_name, operation, kwargs))
@@ -384,13 +389,17 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         explanation = await cursor.explain()
 
-        self.assertEqual(explanation["engine_plan"], {"engine": "fake", "details": ["SCAN"]})
+        self.assertEqual(explanation["engine_plan"], {"engine": "fake", "details": ["IXSCAN"]})
         self.assertEqual(explanation["hint"], "kind_1")
         self.assertEqual(explanation["comment"], "trace")
         self.assertEqual(explanation["max_time_ms"], 5)
         self.assertEqual(explanation["batch_size"], 10)
         self.assertEqual(explanation["let"], {"tenant": "a"})
         self.assertTrue(explanation["streaming_batch_execution"])
+        explain_operation = collection._engine.explain_find_calls[0][2]
+        self.assertEqual(explain_operation.hint, "kind_1")
+        self.assertEqual(explain_operation.comment, "trace")
+        self.assertEqual(explain_operation.max_time_ms, 5)
 
     async def test_materialize_enforces_max_time_deadline(self):
         collection = _FakeCollection([{"_id": "1", "kind": "view"}])

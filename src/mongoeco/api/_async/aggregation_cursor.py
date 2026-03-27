@@ -236,6 +236,25 @@ class AsyncAggregationCursor:
         enforce_deadline(deadline)
         return result
 
+    def _pushdown_find_operation(self, *, batch_size: int | None = None) -> FindOperation:
+        dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
+        pushdown = split_pushdown_pipeline(
+            self._pipeline,
+            dialect=dialect,
+        )
+        return compile_find_operation(
+            pushdown.filter_spec,
+            projection=pushdown.projection,
+            sort=pushdown.sort,
+            skip=pushdown.skip,
+            limit=pushdown.limit,
+            hint=self._hint,
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
+            batch_size=batch_size if batch_size is not None else self._batch_size,
+            dialect=dialect,
+        )
+
     async def _stream_batches(self) -> AsyncIterator[Document]:
         if self._batch_size in (None, 0):
             for document in await self._materialize():
@@ -325,36 +344,37 @@ class AsyncAggregationCursor:
             self._pipeline,
             dialect=dialect,
         )
-        plan = getattr(
-            self._collection.find(
-                pushdown.filter_spec,
-                pushdown.projection,
-                sort=pushdown.sort,
-                skip=pushdown.skip,
-                limit=pushdown.limit,
-                hint=self._hint,
-                comment=self._comment,
-                max_time_ms=self._max_time_ms,
-                batch_size=self._batch_size,
-                session=self._session,
-            ),
-            "_plan",
+        operation = self._pushdown_find_operation()
+        explain_find_operation = getattr(
+            self._collection._engine,
+            "explain_find_operation",
+            None,
         )
-        return AggregateExplanation(
-            engine_plan=await self._collection._engine.explain_query_plan(
+        if callable(explain_find_operation):
+            engine_plan = await explain_find_operation(
                 self._collection._db_name,
                 self._collection._collection_name,
-                pushdown.filter_spec,
-                plan=plan,
-                sort=pushdown.sort,
-                skip=pushdown.skip,
-                limit=pushdown.limit,
-                hint=self._hint,
-                comment=self._comment,
-                max_time_ms=self._max_time_ms,
+                operation,
                 dialect=dialect,
                 context=self._session,
-            ),
+            )
+        else:
+            engine_plan = await self._collection._engine.explain_query_plan(
+                self._collection._db_name,
+                self._collection._collection_name,
+                operation.filter_spec,
+                plan=operation.plan,
+                sort=operation.sort,
+                skip=operation.skip,
+                limit=operation.limit,
+                hint=operation.hint,
+                comment=operation.comment,
+                max_time_ms=operation.max_time_ms,
+                dialect=dialect,
+                context=self._session,
+            )
+        return AggregateExplanation(
+            engine_plan=engine_plan,
             remaining_pipeline=pushdown.remaining_pipeline,
             hint=self._hint,
             comment=self._comment,
