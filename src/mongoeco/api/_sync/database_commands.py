@@ -22,7 +22,7 @@ class DatabaseCommandService:
         self,
         command: object,
         **kwargs: object,
-    ) -> AsyncDatabaseCommandService.AdminCommand[dict[str, object]]:
+    ) -> AsyncDatabaseCommandService.AdminCommand[object]:
         return self._async_command_service().parse_raw_command(command, **kwargs)
 
     def command(

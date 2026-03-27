@@ -536,6 +536,16 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertIsInstance(result, BuildInfoResult)
         self.assertEqual(result.to_document()["gitVersion"], "mongoeco")
 
+    def test_database_command_service_executes_typed_delegated_results_before_serialization(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin._commands
+        command = service.parse_raw_command({"listDatabases": 1})
+
+        result = asyncio.run(service.execute(command))
+
+        self.assertIsInstance(result, ListDatabasesCommandResult)
+        self.assertEqual(result.to_document()["databases"], [])
+
     def test_database_command_service_can_execute_and_serialize_in_one_step(self):
         database = AsyncDatabase(MemoryEngine(), "db")
         service = database._admin._commands

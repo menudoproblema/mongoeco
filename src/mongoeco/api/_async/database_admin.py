@@ -454,14 +454,14 @@ class AsyncDatabaseAdminService:
         return CommandCursorResult(
             namespace=f"{self._db_name}.$cmd.listCollections",
             first_batch=first_batch,
-        ).to_document()
+        )
 
     async def _command_list_databases(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         options = normalize_list_databases_options(spec)
         databases = [
             snapshot.to_document()
@@ -482,14 +482,14 @@ class AsyncDatabaseAdminService:
         return ListDatabasesCommandResult(
             databases=filtered,
             total_size=total_size,
-        ).to_document()
+        )
 
     async def _command_create(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         collection_name = self._require_collection_name(spec.get("create"), "create")
         options = {
             key: value
@@ -501,26 +501,26 @@ class AsyncDatabaseAdminService:
             session=session,
             **options,
         )
-        return OkResult().to_document()
+        return OkResult()
 
     async def _command_drop(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         collection_name = self._require_collection_name(spec.get("drop"), "drop")
         await self.drop_collection(collection_name, session=session)
         return NamespaceOkResult(
             namespace=f"{self._db_name}.{collection_name}",
-        ).to_document()
+        )
 
     async def _command_rename_collection(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         source_db, source_name = self._normalize_namespace(
             spec.get("renameCollection"),
             "renameCollection",
@@ -541,14 +541,14 @@ class AsyncDatabaseAdminService:
             if target_name in target_names:
                 await self.drop_collection(target_name, session=session)
         await self._database.get_collection(source_name).rename(target_name, session=session)
-        return OkResult().to_document()
+        return OkResult()
 
     async def _command_count(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         collection_name, operation = self._compile_command_find_operation(
             {
                 "count": spec.get("count"),
@@ -570,14 +570,14 @@ class AsyncDatabaseAdminService:
             operation,
             session=session,
         )
-        return CountCommandResult(count=count).to_document()
+        return CountCommandResult(count=count)
 
     async def _command_distinct(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         collection_name = self._require_collection_name(
             spec.get("distinct"),
             "distinct",
@@ -613,14 +613,14 @@ class AsyncDatabaseAdminService:
                     for existing in distinct_values
                 ):
                     distinct_values.append(candidate)
-        return DistinctCommandResult(values=distinct_values).to_document()
+        return DistinctCommandResult(values=distinct_values)
 
     async def _command_insert(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         collection_name = self._require_collection_name(spec.get("insert"), "insert")
         documents = self._normalize_insert_documents(spec.get("documents"))
         ordered = self._normalize_ordered_from_command(spec.get("ordered"))
@@ -648,14 +648,14 @@ class AsyncDatabaseAdminService:
                     "n": inserted,
                 },
             )
-        return WriteCommandResult(count=inserted).to_document()
+        return WriteCommandResult(count=inserted)
 
     async def _command_update(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         collection_name = self._require_collection_name(spec.get("update"), "update")
         updates = self._normalize_update_specs(spec.get("updates"))
         ordered = self._normalize_ordered_from_command(spec.get("ordered"))
@@ -752,14 +752,14 @@ class AsyncDatabaseAdminService:
             count=matched,
             modified_count=modified,
             upserted=upserted or None,
-        ).to_document()
+        )
 
     async def _command_delete(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         collection_name = self._require_collection_name(spec.get("delete"), "delete")
         deletes = self._normalize_delete_specs(spec.get("deletes"))
         ordered = self._normalize_ordered_from_command(spec.get("ordered"))
@@ -810,14 +810,14 @@ class AsyncDatabaseAdminService:
                     "n": deleted,
                 },
             )
-        return WriteCommandResult(count=deleted).to_document()
+        return WriteCommandResult(count=deleted)
 
     async def _command_find(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         collection_name, operation = self._compile_command_find_operation(
             spec,
             collection_field="find",
@@ -829,14 +829,14 @@ class AsyncDatabaseAdminService:
         return CommandCursorResult(
             namespace=f"{self._db_name}.{collection_name}",
             first_batch=first_batch,
-        ).to_document()
+        )
 
     async def _command_aggregate(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         collection_name = self._require_collection_name(
             spec.get("aggregate"),
             "aggregate",
@@ -867,14 +867,14 @@ class AsyncDatabaseAdminService:
         return CommandCursorResult(
             namespace=f"{self._db_name}.{collection_name}",
             first_batch=first_batch,
-        ).to_document()
+        )
 
     async def _command_explain(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         explain_spec = spec.get("explain")
         if not isinstance(explain_spec, dict) or not explain_spec:
             raise TypeError("explain must be a non-empty document")
@@ -1058,7 +1058,7 @@ class AsyncDatabaseAdminService:
                     count=0 if before is None else 1,
                 ),
                 value=before,
-            ).to_document()
+            )
 
         if update_spec is None:
             raise OperationFailure("findAndModify requires either remove or update")
@@ -1105,7 +1105,7 @@ class AsyncDatabaseAdminService:
                         upserted_id=result.upserted_id,
                     ),
                     value=value,
-                ).to_document()
+                )
             value = await collection.find_one_and_update(
                 query,
                 update_spec,
@@ -1126,7 +1126,7 @@ class AsyncDatabaseAdminService:
                     updated_existing=before_full is not None,
                 ),
                 value=value,
-            ).to_document()
+            )
 
         if not isinstance(update_spec, dict):
             raise TypeError("update must be a document")
@@ -1157,7 +1157,7 @@ class AsyncDatabaseAdminService:
                     upserted_id=result.upserted_id,
                 ),
                 value=value,
-            ).to_document()
+            )
 
         value = await collection.find_one_and_replace(
             query,
@@ -1178,14 +1178,14 @@ class AsyncDatabaseAdminService:
                 updated_existing=before_full is not None,
             ),
             value=value,
-        ).to_document()
+        )
 
     async def _command_list_indexes(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         collection_name = self._require_collection_name(
             spec.get("listIndexes"),
             "listIndexes",
@@ -1197,14 +1197,14 @@ class AsyncDatabaseAdminService:
         return CommandCursorResult(
             namespace=f"{self._db_name}.{collection_name}",
             first_batch=first_batch,
-        ).to_document()
+        )
 
     async def _command_create_indexes(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         collection_name = self._require_collection_name(
             spec.get("createIndexes"),
             "createIndexes",
@@ -1228,14 +1228,14 @@ class AsyncDatabaseAdminService:
             num_indexes_after=len(info_after),
             created_collection_automatically=collection_name not in collection_names_before,
             note="all indexes already exist" if len(info_before) == len(info_after) else None,
-        ).to_document()
+        )
 
     async def _command_drop_indexes(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         collection_name = self._require_collection_name(
             spec.get("dropIndexes"),
             "dropIndexes",
@@ -1256,13 +1256,13 @@ class AsyncDatabaseAdminService:
                 if target == "*"
                 else None
             ),
-        ).to_document()
+        )
 
     async def _command_drop_database(
         self,
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> object:
         collection_names = await self._engine.list_collections(
             self._db_name,
             context=session,
@@ -1273,4 +1273,4 @@ class AsyncDatabaseAdminService:
                 collection_name,
                 context=session,
             )
-        return DropDatabaseCommandResult(database_name=self._db_name).to_document()
+        return DropDatabaseCommandResult(database_name=self._db_name)

@@ -394,7 +394,7 @@ class AsyncDatabaseCommandService:
         background: bool | None = None
 
     @dataclass(frozen=True, slots=True)
-    class DelegatedAdminCommand(AdminCommand[dict[str, object]]):
+    class DelegatedAdminCommand(AdminCommand[object]):
         route: "AsyncDatabaseCommandService.Route | None" = None
 
     @dataclass(frozen=True, slots=True)
@@ -438,7 +438,7 @@ class AsyncDatabaseCommandService:
         self,
         command: object,
         **kwargs: object,
-    ) -> "AsyncDatabaseCommandService.AdminCommand[dict[str, object]]":
+    ) -> "AsyncDatabaseCommandService.AdminCommand[object]":
         spec = normalize_command_document(command, kwargs)
         command_name = next(iter(spec))
         if not isinstance(command_name, str):
