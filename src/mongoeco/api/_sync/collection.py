@@ -2,6 +2,8 @@ from mongoeco.api._async.cursor import HintSpec
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
 from mongoeco.api._sync.index_cursor import IndexCursor
+from mongoeco.api._sync.search_index_cursor import SearchIndexCursor
+from mongoeco.change_streams import ChangeStreamCursor
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,
@@ -13,7 +15,7 @@ from mongoeco.session import ClientSession
 from mongoeco.types import (
     ArrayFilters, BulkWriteResult, CodecOptions, DeleteResult, Document, DocumentId, Filter, InsertManyResult,
     IndexInformation, IndexModel, IndexKeySpec, InsertOneResult, Projection, ReadConcern, ReadPreference,
-    PlanningMode, ReturnDocument, SortSpec, Update, UpdateResult, WriteConcern, WriteModel,
+    PlanningMode, ReturnDocument, SearchIndexModel, SortSpec, Update, UpdateResult, WriteConcern, WriteModel,
 )
 
 
@@ -519,6 +521,92 @@ class Collection:
     ) -> None:
         self._client._run(self._async_collection().drop_indexes(comment=comment, session=session))
 
+    def create_search_index(
+        self,
+        model: SearchIndexModel | dict[str, object],
+        *,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> str:
+        return self._client._run(
+            self._async_collection().create_search_index(
+                model,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                session=session,
+            )
+        )
+
+    def create_search_indexes(
+        self,
+        indexes: list[SearchIndexModel | dict[str, object]],
+        *,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> list[str]:
+        return self._client._run(
+            self._async_collection().create_search_indexes(
+                indexes,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                session=session,
+            )
+        )
+
+    def list_search_indexes(
+        self,
+        name: str | None = None,
+        *,
+        comment: object | None = None,
+        session: ClientSession | None = None,
+    ) -> SearchIndexCursor:
+        return SearchIndexCursor(
+            self._client,
+            self._async_collection().list_search_indexes(
+                name=name,
+                comment=comment,
+                session=session,
+            ),
+        )
+
+    def update_search_index(
+        self,
+        name: str,
+        definition: Document,
+        *,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> None:
+        self._client._run(
+            self._async_collection().update_search_index(
+                name,
+                definition,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                session=session,
+            )
+        )
+
+    def drop_search_index(
+        self,
+        name: str,
+        *,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> None:
+        self._client._run(
+            self._async_collection().drop_search_index(
+                name,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                session=session,
+            )
+        )
+
     def drop(self, *, session: ClientSession | None = None) -> None:
         self._client._run(self._async_collection().drop(session=session))
 
@@ -535,6 +623,22 @@ class Collection:
 
     def options(self, *, session: ClientSession | None = None) -> dict[str, object]:
         return self._client._run(self._async_collection().options(session=session))
+
+    def watch(
+        self,
+        pipeline: object | None = None,
+        *,
+        max_await_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> ChangeStreamCursor:
+        return ChangeStreamCursor(
+            self._client,
+            self._async_collection().watch(
+                pipeline,
+                max_await_time_ms=max_await_time_ms,
+                session=session,
+            ),
+        )
 
     @property
     def name(self) -> str:

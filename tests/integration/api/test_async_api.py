@@ -23,6 +23,7 @@ from mongoeco import (
     ReadPreferenceMode,
     ReplaceOne,
     ReturnDocument,
+    SearchIndexModel,
     TransactionOptions,
     UpdateMany,
     UpdateOne,
@@ -69,6 +70,80 @@ from tests.support import ENGINE_FACTORIES, open_client
 
 
 class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_collection_search_index_lifecycle(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.search.get_collection("docs")
+
+                    created = await collection.create_search_index({"mappings": {"dynamic": False}})
+                    self.assertEqual(created, "default")
+
+                    created_many = await collection.create_search_indexes(
+                        [
+                            SearchIndexModel({"mappings": {"dynamic": True}}, name="by_text"),
+                            SearchIndexModel({"analyzer": "keyword"}, name="by_keyword", type="vectorSearch"),
+                        ]
+                    )
+                    self.assertEqual(created_many, ["by_text", "by_keyword"])
+
+                    listed = await collection.list_search_indexes().to_list()
+                    self.assertEqual(
+                        [document["name"] for document in listed],
+                        ["by_keyword", "by_text", "default"],
+                    )
+
+                    only_default = await collection.list_search_indexes("default").to_list()
+                    self.assertEqual(len(only_default), 1)
+                    self.assertEqual(only_default[0]["name"], "default")
+
+                    await collection.update_search_index("default", {"mappings": {"dynamic": True}})
+                    updated = await collection.list_search_indexes("default").first()
+                    self.assertEqual(updated["latestDefinition"], {"mappings": {"dynamic": True}})
+
+                    await collection.drop_search_index("by_keyword")
+                    remaining = await collection.list_search_indexes().to_list()
+                    self.assertEqual([document["name"] for document in remaining], ["by_text", "default"])
+
+    async def test_watch_surfaces_client_database_and_collection_scopes(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.observe.get_collection("items")
+                    other = client.observe.get_collection("other")
+                    client_stream = client.watch(max_await_time_ms=100)
+                    database_stream = client.observe.watch(max_await_time_ms=100)
+                    collection_stream = collection.watch(
+                        [{"$match": {"operationType": "insert"}}],
+                        max_await_time_ms=100,
+                    )
+
+                    await collection.insert_one({"_id": 1, "name": "Ada"})
+                    await other.insert_one({"_id": 2, "name": "Bob"})
+
+                    collection_event = await collection_stream.try_next()
+                    self.assertIsNotNone(collection_event)
+                    self.assertEqual(collection_event["operationType"], "insert")
+                    self.assertEqual(collection_event["ns"], {"db": "observe", "coll": "items"})
+
+                    database_event = await database_stream.try_next()
+                    self.assertIsNotNone(database_event)
+                    self.assertEqual(database_event["ns"]["db"], "observe")
+
+                    client_event = await client_stream.try_next()
+                    self.assertIsNotNone(client_event)
+                    self.assertIn(client_event["ns"]["coll"], {"items", "other"})
+                    second_insert = await client_stream.try_next()
+                    self.assertIsNotNone(second_insert)
+                    self.assertEqual(second_insert["operationType"], "insert")
+
+                    await collection.update_one({"_id": 1}, {"$set": {"name": "Ada Lovelace"}})
+                    await collection.delete_one({"_id": 1})
+                    update_event = await client_stream.try_next()
+                    delete_event = await client_stream.try_next()
+                    self.assertEqual(update_event["operationType"], "update")
+                    self.assertEqual(delete_event["operationType"], "delete")
+
     async def test_collection_json_schema_validator_rejects_invalid_inserts_and_updates(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

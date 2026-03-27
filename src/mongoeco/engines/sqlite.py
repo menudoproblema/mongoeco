@@ -89,6 +89,8 @@ from mongoeco.types import (
     ProfilingCommandResult,
     Projection,
     QueryPlanExplanation,
+    SearchIndexDefinition,
+    SearchIndexDocument,
     SortSpec,
     Update,
     UpdateResult,
@@ -991,6 +993,29 @@ class SQLiteEngine(AsyncStorageEngine):
             )
         return indexes
 
+    def _load_search_indexes(self, db_name: str, coll_name: str) -> list[SearchIndexDefinition]:
+        conn = self._require_connection()
+        cursor = conn.execute(
+            """
+            SELECT name, index_type, definition_json
+            FROM search_indexes
+            WHERE db_name = ? AND coll_name = ?
+            ORDER BY name
+            """,
+            (db_name, coll_name),
+        )
+        try:
+            return [
+                SearchIndexDefinition(
+                    json.loads(definition_json),
+                    name=name,
+                    index_type=index_type,
+                )
+                for name, index_type, definition_json in cursor.fetchall()
+            ]
+        finally:
+            cursor.close()
+
     def _delete_multikey_entries_for_storage_key(
         self,
         conn: sqlite3.Connection,
@@ -1113,6 +1138,18 @@ class SQLiteEngine(AsyncStorageEngine):
                 )
                 connection.execute(
                     """
+                    CREATE TABLE IF NOT EXISTS search_indexes (
+                        db_name TEXT NOT NULL,
+                        coll_name TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        index_type TEXT NOT NULL,
+                        definition_json TEXT NOT NULL,
+                        PRIMARY KEY (db_name, coll_name, name)
+                    )
+                    """
+                )
+                connection.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS multikey_entries (
                         db_name TEXT NOT NULL,
                         coll_name TEXT NOT NULL,
@@ -1153,6 +1190,8 @@ class SQLiteEngine(AsyncStorageEngine):
                     SELECT db_name, coll_name, '{}' FROM documents
                     UNION
                     SELECT db_name, coll_name, '{}' FROM indexes
+                    UNION
+                    SELECT db_name, coll_name, '{}' FROM search_indexes
                     """
                 )
                 connection.commit()
@@ -1189,9 +1228,13 @@ class SQLiteEngine(AsyncStorageEngine):
             SELECT 1
             FROM indexes
             WHERE db_name = ? AND coll_name = ?
+            UNION
+            SELECT 1
+            FROM search_indexes
+            WHERE db_name = ? AND coll_name = ?
             LIMIT 1
             """,
-            (db_name, coll_name, db_name, coll_name, db_name, coll_name),
+            (db_name, coll_name, db_name, coll_name, db_name, coll_name, db_name, coll_name),
         ).fetchone()
         return row is not None
 
@@ -1904,6 +1947,148 @@ class SQLiteEngine(AsyncStorageEngine):
                     self._rollback_write(conn, context)
                     raise
 
+    def _create_search_index_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        definition: SearchIndexDefinition,
+        max_time_ms: int | None,
+        context: ClientSession | None,
+    ) -> str:
+        deadline = operation_deadline(max_time_ms)
+        with self._lock:
+            conn = self._require_connection(context)
+            try:
+                self._begin_write(conn, context)
+                self._ensure_collection_row(conn, db_name, coll_name)
+                row = conn.execute(
+                    """
+                    SELECT index_type, definition_json
+                    FROM search_indexes
+                    WHERE db_name = ? AND coll_name = ? AND name = ?
+                    """,
+                    (db_name, coll_name, definition.name),
+                ).fetchone()
+                if row is not None:
+                    existing = SearchIndexDefinition(
+                        json.loads(row[1]),
+                        name=definition.name,
+                        index_type=row[0],
+                    )
+                    if existing != definition:
+                        raise OperationFailure(
+                            f"Conflicting search index definition for '{definition.name}'"
+                        )
+                    self._commit_write(conn, context)
+                    return definition.name
+                enforce_deadline(deadline)
+                conn.execute(
+                    """
+                    INSERT INTO search_indexes (
+                        db_name, coll_name, name, index_type, definition_json
+                    ) VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (
+                        db_name,
+                        coll_name,
+                        definition.name,
+                        definition.index_type,
+                        json.dumps(definition.definition, separators=(",", ":"), sort_keys=True),
+                    ),
+                )
+                self._commit_write(conn, context)
+                return definition.name
+            except Exception:
+                self._rollback_write(conn, context)
+                raise
+
+    def _list_search_indexes_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        name: str | None,
+        context: ClientSession | None,
+    ) -> list[SearchIndexDocument]:
+        with self._lock:
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
+                indexes = self._load_search_indexes(db_name, coll_name)
+        documents = [index.to_document() for index in indexes]
+        if name is None:
+            return documents
+        return [document for document in documents if document["name"] == name]
+
+    def _update_search_index_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        name: str,
+        definition: Document,
+        max_time_ms: int | None,
+        context: ClientSession | None,
+    ) -> None:
+        deadline = operation_deadline(max_time_ms)
+        with self._lock:
+            conn = self._require_connection(context)
+            try:
+                self._begin_write(conn, context)
+                row = conn.execute(
+                    """
+                    SELECT index_type
+                    FROM search_indexes
+                    WHERE db_name = ? AND coll_name = ? AND name = ?
+                    """,
+                    (db_name, coll_name, name),
+                ).fetchone()
+                if row is None:
+                    raise OperationFailure(f"search index not found with name [{name}]")
+                enforce_deadline(deadline)
+                conn.execute(
+                    """
+                    UPDATE search_indexes
+                    SET definition_json = ?
+                    WHERE db_name = ? AND coll_name = ? AND name = ?
+                    """,
+                    (
+                        json.dumps(definition, separators=(",", ":"), sort_keys=True),
+                        db_name,
+                        coll_name,
+                        name,
+                    ),
+                )
+                self._commit_write(conn, context)
+            except Exception:
+                self._rollback_write(conn, context)
+                raise
+
+    def _drop_search_index_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        name: str,
+        max_time_ms: int | None,
+        context: ClientSession | None,
+    ) -> None:
+        deadline = operation_deadline(max_time_ms)
+        with self._lock:
+            conn = self._require_connection(context)
+            try:
+                self._begin_write(conn, context)
+                enforce_deadline(deadline)
+                cursor = conn.execute(
+                    """
+                    DELETE FROM search_indexes
+                    WHERE db_name = ? AND coll_name = ? AND name = ?
+                    """,
+                    (db_name, coll_name, name),
+                )
+                if cursor.rowcount == 0:
+                    raise OperationFailure(f"search index not found with name [{name}]")
+                self._commit_write(conn, context)
+            except Exception:
+                self._rollback_write(conn, context)
+                raise
+
     def _list_databases_sync(self, context: ClientSession | None = None) -> list[str]:
         with self._lock:
             conn = self._require_connection(context)
@@ -1917,6 +2102,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 UNION
                 SELECT db_name
                 FROM indexes
+                UNION
+                SELECT db_name
+                FROM search_indexes
                 ORDER BY db_name
                 """
             )
@@ -1942,9 +2130,13 @@ class SQLiteEngine(AsyncStorageEngine):
                 SELECT coll_name
                 FROM indexes
                 WHERE db_name = ?
+                UNION
+                SELECT coll_name
+                FROM search_indexes
+                WHERE db_name = ?
                 ORDER BY coll_name
                 """,
-                (db_name, db_name, db_name),
+                (db_name, db_name, db_name, db_name),
             )
             names = [row[0] for row in cursor.fetchall()]
         if self._profiler.namespace_visible(db_name):
@@ -1987,7 +2179,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     raise CollectionInvalid(f"collection '{coll_name}' does not exist")
                 if self._collection_exists_sync(conn, db_name, new_name):
                     raise CollectionInvalid(f"collection '{new_name}' already exists")
-                for table_name in ("collections", "documents", "indexes", "multikey_entries"):
+                for table_name in ("collections", "documents", "indexes", "search_indexes", "multikey_entries"):
                     conn.execute(
                         f"""
                         UPDATE {table_name}
@@ -2034,6 +2226,13 @@ class SQLiteEngine(AsyncStorageEngine):
                     conn.execute(
                         """
                         DELETE FROM indexes
+                        WHERE db_name = ? AND coll_name = ?
+                        """,
+                        (db_name, coll_name),
+                    )
+                    conn.execute(
+                        """
+                        DELETE FROM search_indexes
                         WHERE db_name = ? AND coll_name = ?
                         """,
                         (db_name, coll_name),
@@ -2531,6 +2730,82 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> None:
         await asyncio.to_thread(self._drop_indexes_sync, db_name, coll_name, context)
+
+    @override
+    async def create_search_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        definition: SearchIndexDefinition,
+        *,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> str:
+        return await asyncio.to_thread(
+            self._create_search_index_sync,
+            db_name,
+            coll_name,
+            definition,
+            max_time_ms,
+            context,
+        )
+
+    @override
+    async def list_search_indexes(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        name: str | None = None,
+        context: ClientSession | None = None,
+    ) -> list[SearchIndexDocument]:
+        return await asyncio.to_thread(
+            self._list_search_indexes_sync,
+            db_name,
+            coll_name,
+            name,
+            context,
+        )
+
+    @override
+    async def update_search_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        name: str,
+        definition: Document,
+        *,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> None:
+        await asyncio.to_thread(
+            self._update_search_index_sync,
+            db_name,
+            coll_name,
+            name,
+            definition,
+            max_time_ms,
+            context,
+        )
+
+    @override
+    async def drop_search_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        name: str,
+        *,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> None:
+        await asyncio.to_thread(
+            self._drop_search_index_sync,
+            db_name,
+            coll_name,
+            name,
+            max_time_ms,
+            context,
+        )
 
     @override
     async def explain_query_plan(

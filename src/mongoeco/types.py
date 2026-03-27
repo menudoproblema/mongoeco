@@ -120,6 +120,7 @@ type IndexKeySpec = SortSpec
 type IndexDocument = dict[str, object]
 type IndexInformationEntry = dict[str, object]
 type IndexInformation = dict[str, IndexInformationEntry]
+type SearchIndexDocument = dict[str, object]
 type CollectionOptionsDocument = dict[str, object]
 type DocumentScalarId = ObjectId | str | bytes | int | float | bool | None | UndefinedType
 type DocumentId = DocumentScalarId | list[DocumentId] | dict[str, DocumentId]
@@ -162,6 +163,25 @@ class ProfileEntryDocument(TypedDict, total=False):
     fallbackReason: str
     ok: float
     errmsg: str
+
+
+class ChangeNamespaceDocument(TypedDict):
+    db: str
+    coll: str
+
+
+class ResumeTokenDocument(TypedDict):
+    _data: str
+
+
+class ChangeEventDocument(TypedDict, total=False):
+    _id: ResumeTokenDocument
+    operationType: str
+    ns: ChangeNamespaceDocument
+    documentKey: Document
+    fullDocument: Document
+    clusterTime: int
+    updateDescription: dict[str, object]
 
 
 @dataclass(frozen=True, slots=True)
@@ -247,6 +267,31 @@ class ProfileEntrySnapshot:
             document["fallbackReason"] = self.fallback_reason
         if self.errmsg is not None:
             document["errmsg"] = self.errmsg
+        return document
+
+
+@dataclass(frozen=True, slots=True)
+class ChangeEventSnapshot:
+    token: int
+    operation_type: str
+    db_name: str
+    coll_name: str
+    document_key: Document
+    full_document: Document | None = None
+    update_description: dict[str, object] | None = None
+
+    def to_document(self) -> ChangeEventDocument:
+        document: ChangeEventDocument = {
+            "_id": {"_data": str(self.token)},
+            "operationType": self.operation_type,
+            "ns": {"db": self.db_name, "coll": self.coll_name},
+            "documentKey": deepcopy(self.document_key),
+            "clusterTime": self.token,
+        }
+        if self.full_document is not None:
+            document["fullDocument"] = deepcopy(self.full_document)
+        if self.update_description is not None:
+            document["updateDescription"] = deepcopy(self.update_description)
         return document
 
 
@@ -1318,6 +1363,75 @@ class IndexModel:
     @property
     def document(self) -> IndexDocument:
         return self.definition.to_model_document()
+
+
+@dataclass(frozen=True, slots=True)
+class SearchIndexDefinition:
+    definition: Document
+    name: str
+    index_type: str = "search"
+
+    def __init__(
+        self,
+        definition: Document,
+        *,
+        name: str,
+        index_type: str = "search",
+    ):
+        if not isinstance(definition, dict):
+            raise TypeError("definition must be a dict")
+        if not isinstance(name, str) or not name:
+            raise ValueError("name must be a non-empty string")
+        if not isinstance(index_type, str) or not index_type:
+            raise ValueError("index_type must be a non-empty string")
+        object.__setattr__(self, "definition", deepcopy(definition))
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "index_type", index_type)
+
+    def to_document(self) -> SearchIndexDocument:
+        return {
+            "name": self.name,
+            "type": self.index_type,
+            "definition": deepcopy(self.definition),
+            "latestDefinition": deepcopy(self.definition),
+            "queryable": True,
+            "status": "READY",
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class SearchIndexModel:
+    definition: Document
+    name: str | None = None
+    index_type: str = "search"
+
+    def __init__(self, definition: Document, **kwargs: Any):
+        if not isinstance(definition, dict):
+            raise TypeError("definition must be a dict")
+        name = kwargs.pop("name", None)
+        index_type = kwargs.pop("type", kwargs.pop("index_type", "search"))
+        if name is not None and (not isinstance(name, str) or not name):
+            raise ValueError("name must be a non-empty string")
+        if not isinstance(index_type, str) or not index_type:
+            raise ValueError("index_type must be a non-empty string")
+        if kwargs:
+            unsupported = ", ".join(sorted(kwargs))
+            raise TypeError(f"unsupported SearchIndexModel options: {unsupported}")
+        object.__setattr__(self, "definition", deepcopy(definition))
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "index_type", index_type)
+
+    @property
+    def resolved_name(self) -> str:
+        return self.name or "default"
+
+    @property
+    def definition_snapshot(self) -> SearchIndexDefinition:
+        return SearchIndexDefinition(
+            self.definition,
+            name=self.resolved_name,
+            index_type=self.index_type,
+        )
 
 
 @dataclass(frozen=True, slots=True)

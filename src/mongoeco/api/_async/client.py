@@ -1,6 +1,7 @@
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
 from mongoeco.api._async.database_commands import build_info_document
+from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub, ChangeStreamScope
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,
@@ -45,6 +46,7 @@ class AsyncDatabase:
         read_concern: ReadConcern | None = None,
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
+        change_hub: ChangeStreamHub | None = None,
     ):
         self._engine = engine
         self._db_name = db_name
@@ -64,6 +66,7 @@ class AsyncDatabase:
         self._read_concern = normalize_read_concern(read_concern)
         self._read_preference = normalize_read_preference(read_preference)
         self._codec_options = normalize_codec_options(codec_options)
+        self._change_hub = change_hub
         self._admin = AsyncDatabaseAdminService(self)
 
     def __getattr__(self, name: str) -> AsyncCollection:
@@ -93,6 +96,7 @@ class AsyncDatabase:
             read_concern=self._read_concern if read_concern is None else read_concern,
             read_preference=self._read_preference if read_preference is None else read_preference,
             codec_options=self._codec_options if codec_options is None else codec_options,
+            change_hub=self._change_hub,
         )
 
     def with_options(
@@ -114,6 +118,7 @@ class AsyncDatabase:
             read_concern=self._read_concern if read_concern is None else read_concern,
             read_preference=self._read_preference if read_preference is None else read_preference,
             codec_options=self._codec_options if codec_options is None else codec_options,
+            change_hub=self._change_hub,
         )
 
     async def list_collection_names(
@@ -176,6 +181,27 @@ class AsyncDatabase:
         **kwargs: object,
     ) -> dict[str, object]:
         return await self._admin.command(command, session=session, **kwargs)
+
+    def watch(
+        self,
+        pipeline: object | None = None,
+        *,
+        max_await_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> AsyncChangeStreamCursor:
+        del session
+        if max_await_time_ms is not None and (
+            not isinstance(max_await_time_ms, int)
+            or isinstance(max_await_time_ms, bool)
+            or max_await_time_ms < 0
+        ):
+            raise TypeError("max_await_time_ms must be a non-negative integer")
+        return AsyncChangeStreamCursor(
+            self._change_hub or ChangeStreamHub(),
+            scope=ChangeStreamScope(db_name=self._db_name),
+            pipeline=pipeline,
+            max_await_time_ms=max_await_time_ms,
+        )
 
     @property
     def mongodb_dialect(self) -> MongoDialect:
@@ -241,6 +267,7 @@ class AsyncMongoClient:
         self._read_preference = normalize_read_preference(read_preference)
         self._codec_options = normalize_codec_options(codec_options)
         self._transaction_options = normalize_transaction_options(transaction_options)
+        self._change_hub = ChangeStreamHub()
 
     @staticmethod
     def _create_default_engine() -> AsyncStorageEngine:
@@ -305,6 +332,7 @@ class AsyncMongoClient:
             read_concern=self._read_concern if read_concern is None else read_concern,
             read_preference=self._read_preference if read_preference is None else read_preference,
             codec_options=self._codec_options if codec_options is None else codec_options,
+            change_hub=self._change_hub,
         )
 
     def start_session(
@@ -341,6 +369,27 @@ class AsyncMongoClient:
 
     async def server_info(self) -> BuildInfoDocument:
         return build_info_document(self._mongodb_dialect)
+
+    def watch(
+        self,
+        pipeline: object | None = None,
+        *,
+        max_await_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> AsyncChangeStreamCursor:
+        del session
+        if max_await_time_ms is not None and (
+            not isinstance(max_await_time_ms, int)
+            or isinstance(max_await_time_ms, bool)
+            or max_await_time_ms < 0
+        ):
+            raise TypeError("max_await_time_ms must be a non-negative integer")
+        return AsyncChangeStreamCursor(
+            self._change_hub,
+            scope=ChangeStreamScope(),
+            pipeline=pipeline,
+            max_await_time_ms=max_await_time_ms,
+        )
 
     @property
     def mongodb_dialect(self) -> MongoDialect:

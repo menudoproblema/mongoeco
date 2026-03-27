@@ -42,7 +42,7 @@ from mongoeco.types import (
     ProfilingCommandResult,
     Projection, QueryPlanExplanation, SortSpec, Update, UpdateResult, default_index_name,
     default_id_index_definition, default_id_index_document, default_id_index_information, index_fields,
-    EngineIndexRecord, normalize_index_keys,
+    EngineIndexRecord, SearchIndexDefinition, SearchIndexDocument, normalize_index_keys,
 )
 
 
@@ -75,6 +75,7 @@ class MemoryEngine(AsyncStorageEngine):
         self._storage: dict[str, dict[str, dict[Any, Any]]] = {}
         self._locks: dict[str, _AsyncThreadLock] = {}
         self._indexes: dict[str, dict[str, list[EngineIndexRecord]]] = {}
+        self._search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]] = {}
         self._collections: dict[str, set[str]] = {}
         self._collection_options: dict[str, dict[str, Document]] = {}
         self._meta_lock = threading.Lock()
@@ -147,6 +148,7 @@ class MemoryEngine(AsyncStorageEngine):
                 snapshot_version=self._mvcc_version,
                 storage=self._storage,
                 indexes=self._indexes,
+                search_indexes=self._search_indexes,
                 collections=self._collections,
                 collection_options=self._collection_options,
             )
@@ -163,6 +165,7 @@ class MemoryEngine(AsyncStorageEngine):
             if snapshot is not None:
                 self._storage = snapshot.storage
                 self._indexes = snapshot.indexes
+                self._search_indexes = snapshot.search_indexes
                 self._collections = snapshot.collections
                 self._collection_options = snapshot.collection_options
                 self._mvcc_version += 1
@@ -197,6 +200,10 @@ class MemoryEngine(AsyncStorageEngine):
     def _collections_view(self, context: ClientSession | None) -> dict[str, set[str]]:
         state = self._active_mvcc_state(context)
         return self._collections if state is None else state.collections
+
+    def _search_indexes_view(self, context: ClientSession | None) -> dict[str, dict[str, list[SearchIndexDefinition]]]:
+        state = self._active_mvcc_state(context)
+        return self._search_indexes if state is None else state.search_indexes
 
     def _collection_options_view(self, context: ClientSession | None) -> dict[str, dict[str, Document]]:
         state = self._active_mvcc_state(context)
@@ -463,6 +470,7 @@ class MemoryEngine(AsyncStorageEngine):
                 return
             self._storage.clear()
             self._indexes.clear()
+            self._search_indexes.clear()
             self._collections.clear()
             self._collection_options.clear()
             self._locks.clear()
@@ -1009,6 +1017,110 @@ class MemoryEngine(AsyncStorageEngine):
                     del indexes_view[db_name]
 
     @override
+    async def create_search_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        definition: SearchIndexDefinition,
+        *,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> str:
+        deadline = operation_deadline(max_time_ms)
+        async with self._get_lock(db_name, coll_name):
+            search_indexes = self._search_indexes_view(context)
+            collections = self._collections_view(context)
+            option_store = self._collection_options_view(context)
+            enforce_deadline(deadline)
+            with self._meta_lock:
+                self._register_collection_locked(
+                    db_name,
+                    coll_name,
+                    collections=collections,
+                    collection_options=option_store,
+                )
+                db_search_indexes = search_indexes.setdefault(db_name, {})
+                coll_search_indexes = db_search_indexes.setdefault(coll_name, [])
+                for existing in coll_search_indexes:
+                    if existing.name == definition.name:
+                        if existing != definition:
+                            raise OperationFailure(
+                                f"Conflicting search index definition for '{definition.name}'"
+                            )
+                        return definition.name
+                coll_search_indexes.append(definition)
+        return definition.name
+
+    @override
+    async def list_search_indexes(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        name: str | None = None,
+        context: ClientSession | None = None,
+    ) -> list[SearchIndexDocument]:
+        async with self._get_lock(db_name, coll_name):
+            indexes = deepcopy(
+                self._search_indexes_view(context).get(db_name, {}).get(coll_name, [])
+            )
+        documents = [index.to_document() for index in sorted(indexes, key=lambda item: item.name)]
+        if name is None:
+            return documents
+        return [document for document in documents if document["name"] == name]
+
+    @override
+    async def update_search_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        name: str,
+        definition: Document,
+        *,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> None:
+        deadline = operation_deadline(max_time_ms)
+        async with self._get_lock(db_name, coll_name):
+            search_indexes = self._search_indexes_view(context)
+            coll_search_indexes = search_indexes.get(db_name, {}).get(coll_name, [])
+            enforce_deadline(deadline)
+            for idx, existing in enumerate(coll_search_indexes):
+                if existing.name == name:
+                    coll_search_indexes[idx] = SearchIndexDefinition(
+                        definition,
+                        name=name,
+                        index_type=existing.index_type,
+                    )
+                    return
+        raise OperationFailure(f"search index not found with name [{name}]")
+
+    @override
+    async def drop_search_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        name: str,
+        *,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> None:
+        deadline = operation_deadline(max_time_ms)
+        async with self._get_lock(db_name, coll_name):
+            search_indexes = self._search_indexes_view(context)
+            coll_search_indexes = search_indexes.get(db_name, {}).get(coll_name, [])
+            enforce_deadline(deadline)
+            for idx, existing in enumerate(coll_search_indexes):
+                if existing.name == name:
+                    del coll_search_indexes[idx]
+                    if not coll_search_indexes:
+                        del search_indexes[db_name][coll_name]
+                        if not search_indexes[db_name]:
+                            del search_indexes[db_name]
+                    return
+        raise OperationFailure(f"search index not found with name [{name}]")
+
+    @override
     async def explain_query_plan(
         self,
         db_name: str,
@@ -1156,12 +1268,14 @@ class MemoryEngine(AsyncStorageEngine):
     async def list_databases(self, *, context: ClientSession | None = None) -> list[str]:
         storage = self._storage_view(context)
         indexes = self._indexes_view(context)
+        search_indexes = self._search_indexes_view(context)
         collections = self._collections_view(context)
         options = self._collection_options_view(context)
         with self._meta_lock:
             names = sorted(
                 set(storage.keys())
                 | set(indexes.keys())
+                | set(search_indexes.keys())
                 | set(collections.keys())
                 | set(options.keys())
             )
@@ -1174,11 +1288,13 @@ class MemoryEngine(AsyncStorageEngine):
     async def list_collections(self, db_name: str, *, context: ClientSession | None = None) -> list[str]:
         storage = self._storage_view(context)
         indexes = self._indexes_view(context)
+        search_indexes = self._search_indexes_view(context)
         collections = self._collections_view(context)
         with self._meta_lock:
             names = sorted(
                 set(storage.get(db_name, {}).keys())
                 | set(indexes.get(db_name, {}).keys())
+                | set(search_indexes.get(db_name, {}).keys())
                 | set(collections.get(db_name, set()))
             )
         if self._profiler.namespace_visible(db_name):
@@ -1198,12 +1314,14 @@ class MemoryEngine(AsyncStorageEngine):
         collections = self._collections_view(context)
         storage = self._storage_view(context)
         indexes = self._indexes_view(context)
+        search_indexes = self._search_indexes_view(context)
         options = self._collection_options_view(context)
         with self._meta_lock:
             if not (
                 coll_name in collections.get(db_name, set())
                 or coll_name in storage.get(db_name, {})
                 or coll_name in indexes.get(db_name, {})
+                or coll_name in search_indexes.get(db_name, {})
             ):
                 raise CollectionInvalid(f"collection '{coll_name}' does not exist")
             return deepcopy(options.get(db_name, {}).get(coll_name, {}))
@@ -1221,12 +1339,14 @@ class MemoryEngine(AsyncStorageEngine):
             collections = self._collections_view(context)
             storage = self._storage_view(context)
             indexes = self._indexes_view(context)
+            search_indexes = self._search_indexes_view(context)
             option_store = self._collection_options_view(context)
             with self._meta_lock:
                 if (
                     coll_name in collections.get(db_name, set())
                     or coll_name in storage.get(db_name, {})
                     or coll_name in indexes.get(db_name, {})
+                    or coll_name in search_indexes.get(db_name, {})
                 ):
                     raise CollectionInvalid(f"collection '{coll_name}' already exists")
                 self._register_collection_locked(
@@ -1254,6 +1374,7 @@ class MemoryEngine(AsyncStorageEngine):
                 await stack.enter_async_context(self._get_lock(db_name, name))
             storage = self._storage_view(context)
             indexes = self._indexes_view(context)
+            search_indexes = self._search_indexes_view(context)
             collections = self._collections_view(context)
             option_store = self._collection_options_view(context)
             with self._meta_lock:
@@ -1261,12 +1382,14 @@ class MemoryEngine(AsyncStorageEngine):
                     coll_name not in collections.get(db_name, set())
                     and coll_name not in storage.get(db_name, {})
                     and coll_name not in indexes.get(db_name, {})
+                    and coll_name not in search_indexes.get(db_name, {})
                 ):
                     raise CollectionInvalid(f"collection '{coll_name}' does not exist")
                 if (
                     new_name in collections.get(db_name, set())
                     or new_name in storage.get(db_name, {})
                     or new_name in indexes.get(db_name, {})
+                    or new_name in search_indexes.get(db_name, {})
                 ):
                     raise CollectionInvalid(f"collection '{new_name}' already exists")
 
@@ -1277,6 +1400,10 @@ class MemoryEngine(AsyncStorageEngine):
                 db_indexes = indexes.get(db_name)
                 if db_indexes is not None and coll_name in db_indexes:
                     db_indexes[new_name] = db_indexes.pop(coll_name)
+
+                db_search_indexes = search_indexes.get(db_name)
+                if db_search_indexes is not None and coll_name in db_search_indexes:
+                    db_search_indexes[new_name] = db_search_indexes.pop(coll_name)
 
                 db_options = option_store.get(db_name)
                 if db_options is not None and coll_name in db_options:
@@ -1312,6 +1439,7 @@ class MemoryEngine(AsyncStorageEngine):
         async with self._get_lock(db_name, coll_name):
             storage = self._storage_view(context)
             indexes = self._indexes_view(context)
+            search_indexes = self._search_indexes_view(context)
             collections = self._collections_view(context)
             option_store = self._collection_options_view(context)
             with self._meta_lock:
@@ -1329,3 +1457,7 @@ class MemoryEngine(AsyncStorageEngine):
                     del indexes[db_name][coll_name]
                     if not indexes[db_name]:
                         del indexes[db_name]
+                if db_name in search_indexes and coll_name in search_indexes[db_name]:
+                    del search_indexes[db_name][coll_name]
+                    if not search_indexes[db_name]:
+                        del search_indexes[db_name]

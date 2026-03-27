@@ -4,7 +4,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any
 
-from mongoeco.types import Document, EngineIndexRecord
+from mongoeco.types import Document, EngineIndexRecord, SearchIndexDefinition
 
 
 @dataclass(slots=True)
@@ -12,6 +12,7 @@ class MemoryMvccState:
     snapshot_version: int
     storage: dict[str, dict[str, dict[Any, Any]]]
     indexes: dict[str, dict[str, list[EngineIndexRecord]]]
+    search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]]
     collections: dict[str, set[str]]
     collection_options: dict[str, dict[str, Document]]
 
@@ -22,6 +23,7 @@ class MemoryMvccState:
         snapshot_version: int,
         storage: dict[str, dict[str, dict[Any, Any]]],
         indexes: dict[str, dict[str, list[EngineIndexRecord]]],
+        search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]],
         collections: dict[str, set[str]],
         collection_options: dict[str, dict[str, Document]],
     ) -> "MemoryMvccState":
@@ -29,6 +31,7 @@ class MemoryMvccState:
             snapshot_version=snapshot_version,
             storage=deepcopy(storage),
             indexes=deepcopy(indexes),
+            search_indexes=deepcopy(search_indexes),
             collections=deepcopy(collections),
             collection_options=deepcopy(collection_options),
         )

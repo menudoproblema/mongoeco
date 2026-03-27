@@ -17,6 +17,8 @@ from mongoeco.types import (
     ProfilingCommandResult,
     Projection,
     QueryPlanExplanation,
+    SearchIndexDefinition,
+    SearchIndexDocument,
     SortSpec,
     Update,
     UpdateResult,
@@ -56,6 +58,46 @@ class AsyncIndexAdminEngine(Protocol):
     async def index_information(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> IndexInformation: ...
     async def drop_index(self, db_name: str, coll_name: str, index_or_name: str | IndexKeySpec, *, context: ClientSession | None = None) -> None: ...
     async def drop_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> None: ...
+
+
+@runtime_checkable
+class AsyncSearchIndexAdminEngine(Protocol):
+    async def create_search_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        definition: SearchIndexDefinition,
+        *,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> str: ...
+    async def list_search_indexes(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        name: str | None = None,
+        context: ClientSession | None = None,
+    ) -> list[SearchIndexDocument]: ...
+    async def update_search_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        name: str,
+        definition: Document,
+        *,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> None: ...
+    async def drop_search_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        name: str,
+        *,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> None: ...
 
 
 @runtime_checkable
@@ -118,6 +160,7 @@ class AsyncStorageEngine(
     AsyncLifecycleEngine,
     AsyncCrudEngine,
     AsyncIndexAdminEngine,
+    AsyncSearchIndexAdminEngine,
     AsyncReadPlanningEngine,
     AsyncExplainEngine,
     AsyncAdminEngine,

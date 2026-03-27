@@ -1,5 +1,6 @@
 import asyncio
 
+from mongoeco.change_streams import ChangeStreamCursor
 from mongoeco.api._sync.database_admin import DatabaseAdminService
 from mongoeco.compat import (
     MongoDialect,
@@ -237,6 +238,22 @@ class Database:
     ) -> dict[str, object]:
         return self._admin.command(command, session=session, **kwargs)
 
+    def watch(
+        self,
+        pipeline: object | None = None,
+        *,
+        max_await_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> ChangeStreamCursor:
+        return ChangeStreamCursor(
+            self._client,
+            self._async_database().watch(
+                pipeline,
+                max_await_time_ms=max_await_time_ms,
+                session=session,
+            ),
+        )
+
     @property
     def mongodb_dialect(self) -> MongoDialect:
         return self._client.mongodb_dialect
@@ -419,6 +436,23 @@ class MongoClient:
     def server_info(self) -> BuildInfoDocument:
         self._ensure_connected()
         return self._run(self._async_client.server_info())
+
+    def watch(
+        self,
+        pipeline: object | None = None,
+        *,
+        max_await_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> ChangeStreamCursor:
+        self._ensure_connected()
+        return ChangeStreamCursor(
+            self,
+            self._async_client.watch(
+                pipeline,
+                max_await_time_ms=max_await_time_ms,
+                session=session,
+            ),
+        )
 
     @property
     def mongodb_dialect(self) -> MongoDialect:

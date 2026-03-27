@@ -779,13 +779,13 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * `distinct` ya soporta `hint`, `comment` y `max_time_ms`
   * `estimated_document_count` ya soporta `comment` y `max_time_ms`
 * search indexes:
-  * `create_search_index`
-  * `create_search_indexes`
-  * `list_search_indexes`
-  * `update_search_index`
-  * `drop_search_index`
+  * ya soporta `create_search_index`
+  * ya soporta `create_search_indexes`
+  * ya soporta `list_search_indexes`
+  * ya soporta `update_search_index`
+  * ya soporta `drop_search_index`
 * observabilidad:
-  * `watch` en cliente, base de datos y colección
+  * ya soporta `watch` en cliente, base de datos y colección mediante un bus interno de eventos y scoping local explícito
 * mejor alineación con `bson` y clases públicas asociadas
 
 #### Fase 7
@@ -808,7 +808,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
 
 ## 7. Estado Arquitectónico Consolidado y Punto de Reentrada
 
-Esta sección resume el estado real del refactor arquitectónico después de cerrar la base del proyecto, el bloque de compatibilidad, la capa wire y la evolución posterior de BSON, observabilidad, MVCC e indexación virtual. El detalle histórico sigue viviendo en [MEJORAS.md](/Users/uve/Proyectos/mongoeco2/MEJORAS.md), pero `DESIGN.md` pasa a ser el documento principal de referencia.
+Esta sección resume el estado real del refactor arquitectónico después de cerrar la base del proyecto, el bloque de compatibilidad, la capa wire y la evolución posterior de BSON, observabilidad, MVCC e indexación virtual. `DESIGN.md` es ya el documento principal de referencia y de reentrada.
 
 ### 7.1 Bloques Arquitectónicos Ya Consolidados
 
@@ -841,6 +841,10 @@ Estos bloques se consideran ya estructuralmente aplicados:
   * lineage de ejecución;
   * paridad diferencial declarativa contra MongoDB real;
   * catálogo formal de errores con `code`, `codeName` y `errorLabels`.
+* **Superficie de ecosistema de Fase 6**:
+  * search indexes locales tipados y persistidos por engine;
+  * `watch()` en cliente, base de datos y colección sobre un bus interno de change streams con scoping explícito;
+  * compatibilidad observable suficiente para crecer esa superficie sin contaminar CRUD ni el core semántico.
 * **Extensibilidad**:
   * SDK de extensión para operadores de expresión y stages de agregación.
 * **Proxy wire**:
@@ -900,5 +904,4 @@ La recomendación actual es **no reabrir ahora mismo la arquitectura base** salv
 Mientras no aparezca una de esas señales, el criterio recomendado es:
 
 1. mantener `DESIGN.md` como visión consolidada;
-2. usar [MEJORAS.md](/Users/uve/Proyectos/mongoeco2/MEJORAS.md) como detalle de seguimiento fino;
-3. dedicar el siguiente esfuerzo principalmente a **superficie funcional, cobertura y paridad observable**, no a reabrir otra gran ola de refactor.
+2. dedicar el siguiente esfuerzo principalmente a **superficie funcional, cobertura y paridad observable**, no a reabrir otra gran ola de refactor.

@@ -3,6 +3,7 @@ from copy import deepcopy
 import time
 
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
+from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub, ChangeStreamScope
 from mongoeco.api.operations import (
     AggregateOperation,
     FindOperation,
@@ -21,6 +22,7 @@ from mongoeco.api._async.cursor import (
     _validate_sort_spec,
 )
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
+from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,
@@ -42,7 +44,8 @@ from mongoeco.session import ClientSession
 from mongoeco.types import (
     ArrayFilters, BulkWriteErrorDetails, BulkWriteResult, CodecOptions, DeleteResult, Document, DocumentId, Filter,
     IndexInformation, IndexKeySpec, IndexModel, InsertManyResult, InsertOne, InsertOneResult, ObjectId, Projection,
-    PlanningMode, ReadConcern, ReadPreference, ReplaceOne, ReturnDocument, SortSpec, Update, UpdateMany, UpdateOne, UpdateResult,
+    PlanningMode, ReadConcern, ReadPreference, ReplaceOne, ReturnDocument, SearchIndexDefinition, SearchIndexDocument,
+    SearchIndexModel, SortSpec, Update, UpdateMany, UpdateOne, UpdateResult,
     UpsertedWriteEntry, WriteConcern, WriteErrorEntry, WriteModel, DeleteOne, DeleteMany,
     normalize_codec_options, normalize_index_keys,
     normalize_read_concern, normalize_read_preference, normalize_write_concern,
@@ -68,6 +71,7 @@ class AsyncCollection:
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
         planning_mode: PlanningMode = PlanningMode.STRICT,
+        change_hub: ChangeStreamHub | None = None,
     ):
         self._engine = engine
         self._db_name = db_name
@@ -89,6 +93,7 @@ class AsyncCollection:
         self._read_preference = normalize_read_preference(read_preference)
         self._codec_options = normalize_codec_options(codec_options)
         self._planning_mode = planning_mode
+        self._change_hub = change_hub
 
     def with_options(
         self,
@@ -112,6 +117,7 @@ class AsyncCollection:
             read_preference=self._read_preference if read_preference is None else read_preference,
             codec_options=self._codec_options if codec_options is None else codec_options,
             planning_mode=self._planning_mode if planning_mode is None else planning_mode,
+            change_hub=self._change_hub,
         )
 
     @property
@@ -247,6 +253,29 @@ class AsyncCollection:
         return normalized
 
     @staticmethod
+    def _normalize_search_index_model(model: object) -> SearchIndexModel:
+        if isinstance(model, SearchIndexModel):
+            return model
+        if isinstance(model, dict):
+            return SearchIndexModel(model)
+        raise TypeError("model must be a SearchIndexModel or a dict definition")
+
+    @classmethod
+    def _normalize_search_index_models(cls, indexes: object) -> list[SearchIndexModel]:
+        if not isinstance(indexes, list):
+            raise TypeError("indexes must be a list of SearchIndexModel instances")
+        normalized = [cls._normalize_search_index_model(index) for index in indexes]
+        if not normalized:
+            raise ValueError("indexes must not be empty")
+        return normalized
+
+    @staticmethod
+    def _normalize_search_index_name(name: object) -> str:
+        if not isinstance(name, str) or not name:
+            raise TypeError("name must be a non-empty string")
+        return name
+
+    @staticmethod
     def _normalize_return_document(value: object | None) -> ReturnDocument:
         if value is None:
             return ReturnDocument.BEFORE
@@ -316,6 +345,39 @@ class AsyncCollection:
             fallback_reason=fallback_reason,
             ok=0.0 if errmsg is not None else 1.0,
             errmsg=errmsg,
+        )
+
+    async def _document_by_id(
+        self,
+        document_id: DocumentId,
+        *,
+        session: ClientSession | None = None,
+    ) -> Document | None:
+        return await self._engine.get_document(
+            self._db_name,
+            self._collection_name,
+            document_id,
+            dialect=self._mongodb_dialect,
+            context=session,
+        )
+
+    def _publish_change_event(
+        self,
+        *,
+        operation_type: str,
+        document_key: Document,
+        full_document: Document | None = None,
+        update_description: dict[str, object] | None = None,
+    ) -> None:
+        if self._change_hub is None:
+            return
+        self._change_hub.publish(
+            operation_type=operation_type,
+            db_name=self._db_name,
+            coll_name=self._collection_name,
+            document_key=document_key,
+            full_document=full_document,
+            update_description=update_description,
         )
 
     async def _engine_update_with_operation(
@@ -647,6 +709,11 @@ class AsyncCollection:
             command={"insert": self._collection_name, "documents": [deepcopy(doc)]},
             duration_ns=time.perf_counter_ns() - started_at,
         )
+        self._publish_change_event(
+            operation_type="insert",
+            document_key={"_id": deepcopy(doc["_id"])},
+            full_document=deepcopy(doc),
+        )
         return InsertOneResult(inserted_id=doc["_id"])
 
     async def insert_many(
@@ -689,6 +756,12 @@ class AsyncCollection:
             command={"insert": self._collection_name, "documents": command_documents},
             duration_ns=time.perf_counter_ns() - started_at,
         )
+        for inserted in command_documents:
+            self._publish_change_event(
+                operation_type="insert",
+                document_key={"_id": deepcopy(inserted["_id"])},
+                full_document=deepcopy(inserted),
+            )
         return InsertManyResult(inserted_ids=inserted_ids)
 
     async def bulk_write(
@@ -960,6 +1033,18 @@ class AsyncCollection:
             planning_mode=self._planning_mode,
         )
         update_spec = self._require_update(update_spec)
+        event_selected_id: DocumentId | None = None
+        if self._change_hub is not None and operation.sort is None and operation.hint is None:
+            selected = await self._build_cursor(
+                compile_find_selection_from_update_operation(
+                    operation,
+                    projection={"_id": 1},
+                    limit=1,
+                ),
+                session=session,
+            ).first()
+            if selected is not None:
+                event_selected_id = selected["_id"]
         if operation.sort is not None and not self._pymongo_profile.supports_update_one_sort():
             raise TypeError(
                 f"sort is not supported by PyMongo profile {self._pymongo_profile.key} "
@@ -992,6 +1077,13 @@ class AsyncCollection:
                     hint=operation.hint,
                     session=session,
                 )
+                updated = await self._document_by_id(selected["_id"], session=session)
+                if updated is not None:
+                    self._publish_change_event(
+                        operation_type="update",
+                        document_key={"_id": deepcopy(selected["_id"])},
+                        full_document=deepcopy(updated),
+                    )
                 return result
             return await self._perform_upsert_update(
                 operation.filter_spec,
@@ -1035,6 +1127,13 @@ class AsyncCollection:
                 hint=operation.hint,
                 session=session,
             )
+            updated = await self._document_by_id(selected["_id"], session=session)
+            if updated is not None:
+                self._publish_change_event(
+                    operation_type="update",
+                    document_key={"_id": deepcopy(selected["_id"])},
+                    full_document=deepcopy(updated),
+                )
             return result
         upsert_seed = None
         if upsert:
@@ -1054,6 +1153,22 @@ class AsyncCollection:
             hint=operation.hint,
             session=session,
         )
+        if result.upserted_id is not None:
+            inserted = await self._document_by_id(result.upserted_id, session=session)
+            if inserted is not None:
+                self._publish_change_event(
+                    operation_type="insert",
+                    document_key={"_id": deepcopy(result.upserted_id)},
+                    full_document=deepcopy(inserted),
+                )
+        elif event_selected_id is not None:
+            updated = await self._document_by_id(event_selected_id, session=session)
+            if updated is not None:
+                self._publish_change_event(
+                    operation_type="update",
+                    document_key={"_id": deepcopy(event_selected_id)},
+                    full_document=deepcopy(updated),
+                )
         return result
 
     async def _perform_upsert_update(
@@ -1076,6 +1191,11 @@ class AsyncCollection:
         if "_id" not in new_doc:
             new_doc["_id"] = ObjectId()
         await self._put_replacement_document(new_doc, overwrite=False, session=session)
+        self._publish_change_event(
+            operation_type="insert",
+            document_key={"_id": deepcopy(new_doc["_id"])},
+            full_document=deepcopy(new_doc),
+        )
         return UpdateResult(
             matched_count=0,
             modified_count=0,
@@ -1141,6 +1261,13 @@ class AsyncCollection:
                 session=session,
             )
             modified_count += result.modified_count
+            updated = await self._document_by_id(matched["_id"], session=session)
+            if updated is not None:
+                self._publish_change_event(
+                    operation_type="update",
+                    document_key={"_id": deepcopy(matched["_id"])},
+                    full_document=deepcopy(updated),
+                )
 
         self._record_operation_metadata(
             operation="update_many",
@@ -1199,6 +1326,11 @@ class AsyncCollection:
                 hint=operation.hint,
                 session=session,
             )
+            self._publish_change_event(
+                operation_type="insert",
+                document_key={"_id": deepcopy(document["_id"])},
+                full_document=deepcopy(document),
+            )
             return UpdateResult(
                 matched_count=0,
                 modified_count=0,
@@ -1215,6 +1347,11 @@ class AsyncCollection:
             comment=operation.comment,
             hint=operation.hint,
             session=session,
+        )
+        self._publish_change_event(
+            operation_type="replace",
+            document_key={"_id": deepcopy(document["_id"])},
+            full_document=deepcopy(document),
         )
         return UpdateResult(matched_count=1, modified_count=modified_count)
 
@@ -1298,6 +1435,13 @@ class AsyncCollection:
             selector_filter=operation.filter_spec,
             session=session,
         )
+        after = await self._document_by_id(before["_id"], session=session)
+        if after is not None:
+            self._publish_change_event(
+                operation_type="update",
+                document_key={"_id": deepcopy(before["_id"])},
+                full_document=deepcopy(after),
+            )
         if return_document is ReturnDocument.BEFORE:
             return apply_projection(before, projection, dialect=self._mongodb_dialect)
         return await self.find(
@@ -1434,6 +1578,10 @@ class AsyncCollection:
             before["_id"],
             context=session,
         )
+        self._publish_change_event(
+            operation_type="delete",
+            document_key={"_id": deepcopy(before["_id"])},
+        )
         return apply_projection(before, projection, dialect=self._mongodb_dialect)
 
     async def delete_one(
@@ -1453,6 +1601,18 @@ class AsyncCollection:
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
+        event_selected_id: DocumentId | None = None
+        if self._change_hub is not None and operation.hint is None:
+            selected_for_event = await self._build_cursor(
+                compile_find_selection_from_update_operation(
+                    operation,
+                    projection={"_id": 1},
+                    limit=1,
+                ),
+                session=session,
+            ).first()
+            if selected_for_event is not None:
+                event_selected_id = selected_for_event["_id"]
         if operation.hint is not None:
             selected = await self._build_cursor(
                 compile_find_selection_from_update_operation(
@@ -1476,6 +1636,11 @@ class AsyncCollection:
                 hint=operation.hint,
                 session=session,
             )
+            if deleted:
+                self._publish_change_event(
+                    operation_type="delete",
+                    document_key={"_id": deepcopy(selected["_id"])},
+                )
             return DeleteResult(deleted_count=1 if deleted else 0)
         result = await self._engine_delete_with_operation(operation, session=session)
         self._record_operation_metadata(
@@ -1484,6 +1649,11 @@ class AsyncCollection:
             hint=operation.hint,
             session=session,
         )
+        if result.deleted_count and event_selected_id is not None:
+            self._publish_change_event(
+                operation_type="delete",
+                document_key={"_id": deepcopy(event_selected_id)},
+            )
         return result
 
     async def delete_many(
@@ -1520,6 +1690,10 @@ class AsyncCollection:
             )
             if deleted:
                 deleted_count += 1
+                self._publish_change_event(
+                    operation_type="delete",
+                    document_key={"_id": deepcopy(matched["_id"])},
+                )
         self._record_operation_metadata(
             operation="delete_many",
             comment=operation.comment,
@@ -1797,6 +1971,136 @@ class AsyncCollection:
             session=session,
         )
 
+    async def create_search_index(
+        self,
+        model: object,
+        *,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> str:
+        normalized_model = self._normalize_search_index_model(model)
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
+        created_name = await self._engine.create_search_index(
+            self._db_name,
+            self._collection_name,
+            normalized_model.definition_snapshot,
+            max_time_ms=max_time_ms,
+            context=session,
+        )
+        self._record_operation_metadata(
+            operation="create_search_index",
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+        )
+        return created_name
+
+    async def create_search_indexes(
+        self,
+        indexes: object,
+        *,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> list[str]:
+        models = self._normalize_search_index_models(indexes)
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
+        deadline = operation_deadline(max_time_ms)
+        names: list[str] = []
+        for model in models:
+            enforce_deadline(deadline)
+            remaining = None if deadline is None else max(1, int((deadline - time.monotonic()) * 1000))
+            name = await self._engine.create_search_index(
+                self._db_name,
+                self._collection_name,
+                model.definition_snapshot,
+                max_time_ms=remaining,
+                context=session,
+            )
+            names.append(name)
+        self._record_operation_metadata(
+            operation="create_search_indexes",
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+        )
+        return names
+
+    def list_search_indexes(
+        self,
+        name: str | None = None,
+        *,
+        comment: object | None = None,
+        session: ClientSession | None = None,
+    ) -> AsyncSearchIndexCursor:
+        if name is not None:
+            name = self._normalize_search_index_name(name)
+        self._record_operation_metadata(
+            operation="list_search_indexes",
+            comment=comment,
+            session=session,
+        )
+        return AsyncSearchIndexCursor(
+            lambda: self._engine.list_search_indexes(
+                self._db_name,
+                self._collection_name,
+                name=name,
+                context=session,
+            )
+        )
+
+    async def update_search_index(
+        self,
+        name: str,
+        definition: Document,
+        *,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> None:
+        name = self._normalize_search_index_name(name)
+        definition = self._require_document(definition)
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
+        await self._engine.update_search_index(
+            self._db_name,
+            self._collection_name,
+            name,
+            definition,
+            max_time_ms=max_time_ms,
+            context=session,
+        )
+        self._record_operation_metadata(
+            operation="update_search_index",
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+        )
+
+    async def drop_search_index(
+        self,
+        name: str,
+        *,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> None:
+        name = self._normalize_search_index_name(name)
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
+        await self._engine.drop_search_index(
+            self._db_name,
+            self._collection_name,
+            name,
+            max_time_ms=max_time_ms,
+            context=session,
+        )
+        self._record_operation_metadata(
+            operation="drop_search_index",
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+        )
+
     async def drop(self, *, session: ClientSession | None = None) -> None:
         await self._engine.drop_collection(
             self._db_name,
@@ -1833,6 +2137,27 @@ class AsyncCollection:
             self._db_name,
             self._collection_name,
             context=session,
+        )
+
+    def watch(
+        self,
+        pipeline: object | None = None,
+        *,
+        max_await_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> AsyncChangeStreamCursor:
+        del session
+        if max_await_time_ms is not None and (
+            not isinstance(max_await_time_ms, int)
+            or isinstance(max_await_time_ms, bool)
+            or max_await_time_ms < 0
+        ):
+            raise TypeError("max_await_time_ms must be a non-negative integer")
+        return AsyncChangeStreamCursor(
+            self._change_hub or ChangeStreamHub(),
+            scope=ChangeStreamScope(db_name=self._db_name, coll_name=self._collection_name),
+            pipeline=pipeline,
+            max_await_time_ms=max_await_time_ms,
         )
 
     @property
