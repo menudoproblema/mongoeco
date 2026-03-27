@@ -330,6 +330,40 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_sparse_unique_index_ignores_missing_values_but_rejects_duplicates(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["email"], unique=True, sparse=True)
+            await engine.put_document("db", "coll", {"_id": "1"})
+            await engine.put_document("db", "coll", {"_id": "2"})
+            await engine.put_document("db", "coll", {"_id": "3", "email": "a@example.com"})
+
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "coll", {"_id": "4", "email": "a@example.com"})
+        finally:
+            await engine.disconnect()
+
+    async def test_partial_unique_index_allows_duplicates_outside_filter(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index(
+                "db",
+                "coll",
+                ["email"],
+                unique=True,
+                partial_filter_expression={"active": True},
+            )
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com", "active": False})
+            await engine.put_document("db", "coll", {"_id": "2", "email": "a@example.com", "active": False})
+            await engine.put_document("db", "coll", {"_id": "3", "email": "a@example.com", "active": True})
+
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "coll", {"_id": "4", "email": "a@example.com", "active": True})
+        finally:
+            await engine.disconnect()
+
     async def test_unique_index_distinguishes_bool_and_int_values(self):
         engine = MemoryEngine()
         await engine.connect()
@@ -413,6 +447,64 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             },
         )
         self.assertEqual(indexes, [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}])
+
+    async def test_list_indexes_and_index_information_include_virtual_index_metadata(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index(
+                "db",
+                "coll",
+                ["email"],
+                sparse=True,
+                partial_filter_expression={"active": True},
+            )
+            indexes = await engine.list_indexes("db", "coll")
+            info = await engine.index_information("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(
+            indexes[1],
+            {
+                "name": "email_1",
+                "fields": ["email"],
+                "key": {"email": 1},
+                "unique": False,
+                "sparse": True,
+                "partialFilterExpression": {"active": True},
+            },
+        )
+        self.assertEqual(
+            info["email_1"],
+            {
+                "key": [("email", 1)],
+                "sparse": True,
+                "partialFilterExpression": {"active": True},
+            },
+        )
+
+    async def test_hint_rejects_partial_index_when_query_does_not_imply_filter(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com", "active": False})
+            await engine.create_index(
+                "db",
+                "coll",
+                ["email"],
+                partial_filter_expression={"active": True},
+                name="idx_email_active",
+            )
+            with self.assertRaises(OperationFailure):
+                await engine.explain_query_plan(
+                    "db",
+                    "coll",
+                    {"email": "a@example.com"},
+                    hint="idx_email_active",
+                )
+        finally:
+            await engine.disconnect()
 
     async def test_builtin_id_index_cannot_be_dropped(self):
         engine = MemoryEngine()

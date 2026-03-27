@@ -977,6 +977,112 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             },
         )
 
+    async def test_sparse_and_partial_index_metadata_round_trips(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index(
+                "db",
+                "coll",
+                ["email"],
+                sparse=True,
+                partial_filter_expression={"active": True},
+            )
+            indexes = await engine.list_indexes("db", "coll")
+            info = await engine.index_information("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(
+            indexes[1],
+            {
+                "name": "email_1",
+                "fields": ["email"],
+                "key": {"email": 1},
+                "unique": False,
+                "sparse": True,
+                "partialFilterExpression": {"active": True},
+            },
+        )
+        self.assertEqual(
+            info["email_1"],
+            {
+                "key": [("email", 1)],
+                "sparse": True,
+                "partialFilterExpression": {"active": True},
+            },
+        )
+
+    async def test_virtual_unique_indexes_enforce_sparse_and_partial_semantics(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "sparse", ["email"], unique=True, sparse=True)
+            await engine.put_document("db", "sparse", {"_id": "1"})
+            await engine.put_document("db", "sparse", {"_id": "2"})
+            await engine.put_document("db", "sparse", {"_id": "3", "email": "a@example.com"})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "sparse", {"_id": "4", "email": "a@example.com"})
+
+            await engine.create_index(
+                "db",
+                "partial",
+                ["email"],
+                unique=True,
+                partial_filter_expression={"active": True},
+            )
+            await engine.put_document("db", "partial", {"_id": "1", "email": "a@example.com", "active": False})
+            await engine.put_document("db", "partial", {"_id": "2", "email": "a@example.com", "active": False})
+            await engine.put_document("db", "partial", {"_id": "3", "email": "a@example.com", "active": True})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "partial", {"_id": "4", "email": "a@example.com", "active": True})
+        finally:
+            await engine.disconnect()
+
+    async def test_hint_rejects_partial_index_when_query_does_not_imply_filter(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com", "active": False})
+            await engine.create_index(
+                "db",
+                "coll",
+                ["email"],
+                partial_filter_expression={"active": True},
+                name="idx_email_active",
+            )
+            with self.assertRaises(OperationFailure):
+                await engine.explain_query_plan(
+                    "db",
+                    "coll",
+                    {"email": "a@example.com"},
+                    hint="idx_email_active",
+                )
+        finally:
+            await engine.disconnect()
+
+    async def test_hint_rejects_sparse_index_when_query_does_not_imply_field_presence(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1"})
+            await engine.create_index(
+                "db",
+                "coll",
+                ["email"],
+                sparse=True,
+                name="idx_email_sparse",
+            )
+            with self.assertRaises(OperationFailure):
+                await engine.explain_query_plan(
+                    "db",
+                    "coll",
+                    {},
+                    hint="idx_email_sparse",
+                )
+        finally:
+            await engine.disconnect()
+
     async def test_drop_index_and_drop_indexes_preserve_builtin_id_index(self):
         engine = SQLiteEngine()
         await engine.connect()

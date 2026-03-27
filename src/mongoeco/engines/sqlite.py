@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import contextmanager, nullcontext
+import datetime
 import hashlib
 import json
 import math
@@ -7,6 +8,7 @@ import queue
 import sqlite3
 import threading
 import time
+import uuid
 from copy import deepcopy
 from decimal import Decimal
 from typing import Any, AsyncIterable, override
@@ -53,6 +55,11 @@ from mongoeco.engines.sqlite_planner import (
     SQLiteReadExecutionPlan,
     compile_sqlite_read_execution_plan,
 )
+from mongoeco.engines.virtual_indexes import (
+    document_in_virtual_index,
+    normalize_partial_filter_expression,
+    query_can_use_index,
+)
 from mongoeco.engines.sqlite_query import (
     _translate_scalar_equals,
     index_expressions_sql,
@@ -89,7 +96,6 @@ from mongoeco.types import (
     default_id_index_information,
     default_index_name,
     index_fields,
-    IndexDefinition,
     normalize_index_keys,
 )
 
@@ -312,6 +318,7 @@ class SQLiteEngine(AsyncStorageEngine):
         hint: str | IndexKeySpec | None,
         *,
         indexes: list[EngineIndexRecord] | None = None,
+        plan: QueryNode | None = None,
     ) -> EngineIndexRecord | None:
         if hint is None:
             return None
@@ -330,9 +337,13 @@ class SQLiteEngine(AsyncStorageEngine):
         for index in indexes:
             if isinstance(hint, str):
                 if index["name"] == hint:
+                    if plan is not None and not query_can_use_index(index, plan):
+                        raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
             else:
                 if index["key"] == normalized_hint:
+                    if plan is not None and not query_can_use_index(index, plan):
+                        raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
 
         raise OperationFailure("hint does not correspond to an existing index")
@@ -371,7 +382,7 @@ class SQLiteEngine(AsyncStorageEngine):
         limit: int | None = None,
         hint: str | IndexKeySpec | None = None,
     ) -> tuple[str, list[object]]:
-        hinted_index = self._resolve_hint_index(db_name, coll_name, hint)
+        hinted_index = self._resolve_hint_index(db_name, coll_name, hint, plan=plan)
         where_sql, params = self._translate_query_plan_with_multikey(db_name, coll_name, plan)
         order_sql = translate_sort_spec(sort)
         from_clause = "documents"
@@ -738,18 +749,69 @@ class SQLiteEngine(AsyncStorageEngine):
                 return True
         return False
 
+    @staticmethod
+    def _typed_engine_key(value: Any) -> Any:
+        if value is None:
+            return ("none", None)
+        if isinstance(value, bool):
+            return ("bool", value)
+        if isinstance(value, int):
+            return ("int", value)
+        if isinstance(value, float):
+            return ("float", value)
+        if isinstance(value, str):
+            return ("str", value)
+        if isinstance(value, bytes):
+            return ("bytes", value)
+        if isinstance(value, uuid.UUID):
+            return ("uuid", value)
+        if isinstance(value, ObjectId):
+            return ("objectid", value)
+        if isinstance(value, datetime.datetime):
+            return ("datetime", value)
+        if isinstance(value, dict):
+            return ("dict", tuple((key, SQLiteEngine._typed_engine_key(item)) for key, item in value.items()))
+        if isinstance(value, list):
+            return ("list", tuple(SQLiteEngine._typed_engine_key(item) for item in value))
+        try:
+            hash(value)
+            return (value.__class__, value)
+        except TypeError:
+            return ("repr", repr(value))
+
     def _validate_document_against_unique_indexes(
         self,
         db_name: str,
         coll_name: str,
         document: Document,
+        *,
+        exclude_storage_key: str | None = None,
     ) -> None:
         for index in self._load_indexes(db_name, coll_name):
             if not index["unique"]:
                 continue
+            if not document_in_virtual_index(document, index):
+                continue
             fields = index["fields"]
             if any(self._document_traverses_array_on_field(document, field) for field in fields):
                 raise OperationFailure("SQLite unique indexes do not support paths that traverse arrays")
+            key = tuple(self._index_value(document, field) for field in fields)
+            for storage_key, existing_document in self._load_documents(db_name, coll_name):
+                if exclude_storage_key is not None and storage_key == exclude_storage_key:
+                    continue
+                if not document_in_virtual_index(existing_document, index):
+                    continue
+                existing_key = tuple(self._index_value(existing_document, field) for field in fields)
+                if existing_key == key:
+                    raise DuplicateKeyError(
+                        f"Duplicate key for unique index '{index['name']}': {fields}={key!r}"
+                    )
+
+    def _index_value(self, document: Document, field: str) -> Any:
+        values = QueryEngine.extract_values(document, field)
+        if not values:
+            return self._typed_engine_key(None)
+        return self._typed_engine_key(values[0])
 
     def _select_first_document_for_plan(self, db_name: str, coll_name: str, plan: QueryNode, *, hint: str | IndexKeySpec | None = None) -> tuple[str, Document] | None:
         conn = self._require_connection()
@@ -867,7 +929,7 @@ class SQLiteEngine(AsyncStorageEngine):
         conn = self._require_connection()
         cursor = conn.execute(
             """
-            SELECT name, physical_name, fields, keys, unique_flag, multikey_flag, multikey_physical_name
+            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, partial_filter_json, multikey_flag, multikey_physical_name
             FROM indexes
             WHERE db_name = ? AND coll_name = ?
             ORDER BY name
@@ -875,7 +937,7 @@ class SQLiteEngine(AsyncStorageEngine):
             (db_name, coll_name),
         )
         indexes: list[EngineIndexRecord] = []
-        for name, physical_name, fields, keys, unique_flag, multikey_flag, multikey_physical_name in cursor.fetchall():
+        for name, physical_name, fields, keys, unique_flag, sparse_flag, partial_filter_json, multikey_flag, multikey_physical_name in cursor.fetchall():
             try:
                 parsed_fields = json.loads(fields)
             except json.JSONDecodeError as exc:
@@ -895,6 +957,14 @@ class SQLiteEngine(AsyncStorageEngine):
                     raise OperationFailure(
                         f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
                     ) from exc
+            partial_filter_expression: Filter | None = None
+            if partial_filter_json is not None:
+                try:
+                    partial_filter_expression = normalize_partial_filter_expression(json.loads(partial_filter_json))
+                except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                    raise OperationFailure(
+                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                    ) from exc
             indexes.append(
                 EngineIndexRecord(
                     name=name,
@@ -902,6 +972,8 @@ class SQLiteEngine(AsyncStorageEngine):
                     fields=parsed_fields,
                     key=parsed_keys,
                     unique=bool(unique_flag),
+                    sparse=bool(sparse_flag),
+                    partial_filter_expression=partial_filter_expression,
                     multikey=bool(multikey_flag),
                     multikey_physical_name=multikey_physical_name
                     or self._physical_multikey_index_name(db_name, coll_name, name),
@@ -967,6 +1039,8 @@ class SQLiteEngine(AsyncStorageEngine):
             """,
             (db_name, coll_name, storage_key, index["name"]),
         )
+        if not document_in_virtual_index(document, index):
+            return
         if not index.get("multikey"):
             return
         field = index["fields"][0]
@@ -1019,6 +1093,8 @@ class SQLiteEngine(AsyncStorageEngine):
                         fields TEXT NOT NULL,
                         keys TEXT,
                         unique_flag INTEGER NOT NULL,
+                        sparse_flag INTEGER NOT NULL DEFAULT 0,
+                        partial_filter_json TEXT,
                         multikey_flag INTEGER NOT NULL DEFAULT 0,
                         multikey_physical_name TEXT,
                         PRIMARY KEY (db_name, coll_name, name)
@@ -1053,6 +1129,10 @@ class SQLiteEngine(AsyncStorageEngine):
                     connection.execute("ALTER TABLE indexes ADD COLUMN physical_name TEXT")
                 if "keys" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN keys TEXT")
+                if "sparse_flag" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN sparse_flag INTEGER NOT NULL DEFAULT 0")
+                if "partial_filter_json" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN partial_filter_json TEXT")
                 if "multikey_flag" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN multikey_flag INTEGER NOT NULL DEFAULT 0")
                 if "multikey_physical_name" not in columns:
@@ -1197,7 +1277,12 @@ class SQLiteEngine(AsyncStorageEngine):
                         original_document=original_document,
                         dialect=MONGODB_DIALECT_70,
                     )
-                    self._validate_document_against_unique_indexes(db_name, coll_name, document)
+                    self._validate_document_against_unique_indexes(
+                        db_name,
+                        coll_name,
+                        document,
+                        exclude_storage_key=storage_key if overwrite else None,
+                    )
                     if overwrite:
                         self._begin_write(conn, context)
                         self._ensure_collection_row(conn, db_name, coll_name)
@@ -1478,7 +1563,12 @@ class SQLiteEngine(AsyncStorageEngine):
                         original_document=original_document,
                         dialect=effective_dialect,
                     )
-                    self._validate_document_against_unique_indexes(db_name, coll_name, document)
+                    self._validate_document_against_unique_indexes(
+                        db_name,
+                        coll_name,
+                        document,
+                        exclude_storage_key=storage_key,
+                    )
                     indexes = self._load_indexes(db_name, coll_name)
 
                     try:
@@ -1694,15 +1784,18 @@ class SQLiteEngine(AsyncStorageEngine):
         keys: IndexKeySpec,
         unique: bool,
         name: str | None,
+        sparse: bool,
+        partial_filter_expression: Filter | None,
         max_time_ms: int | None,
         context: ClientSession | None,
     ) -> str:
         normalized_keys = normalize_index_keys(keys)
+        partial_filter_expression = normalize_partial_filter_expression(partial_filter_expression)
         fields = index_fields(normalized_keys)
         index_name = name or default_index_name(normalized_keys)
         deadline = operation_deadline(max_time_ms)
         if self._is_builtin_id_index(normalized_keys):
-            if name not in (None, "_id_"):
+            if name not in (None, "_id_") or sparse or partial_filter_expression is not None or not unique:
                 raise OperationFailure("Conflicting index definition for '_id_'")
             return "_id_"
         if index_name == "_id_":
@@ -1718,11 +1811,20 @@ class SQLiteEngine(AsyncStorageEngine):
                 for index in indexes:
                     enforce_deadline(deadline)
                     if index["name"] == index_name:
-                        if index["key"] != normalized_keys or index["unique"] != unique:
+                        if (
+                            index["key"] != normalized_keys
+                            or index["unique"] != unique
+                            or index.get("sparse") != sparse
+                            or index.get("partial_filter_expression") != partial_filter_expression
+                        ):
                             raise OperationFailure(f"Conflicting index definition for '{index_name}'")
                         return index_name
                     if index["key"] == normalized_keys:
-                        if index["unique"] != unique:
+                        if (
+                            index["unique"] != unique
+                            or index.get("sparse") != sparse
+                            or index.get("partial_filter_expression") != partial_filter_expression
+                        ):
                             raise OperationFailure(
                                 f"Conflicting index definition for key pattern '{normalized_keys!r}'"
                             )
@@ -1743,7 +1845,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         ],
                     ]
                 )
-                unique_sql = "UNIQUE " if unique else ""
+                unique_sql = "UNIQUE " if unique and not (sparse or partial_filter_expression is not None) else ""
                 try:
                     enforce_deadline(deadline)
                     self._begin_write(conn, context)
@@ -1760,9 +1862,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     conn.execute(
                         """
                         INSERT INTO indexes (
-                            db_name, coll_name, name, physical_name, fields, keys, unique_flag, multikey_flag, multikey_physical_name
+                            db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, partial_filter_json, multikey_flag, multikey_physical_name
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             db_name,
@@ -1772,20 +1874,25 @@ class SQLiteEngine(AsyncStorageEngine):
                             json.dumps(fields),
                             json.dumps(normalized_keys),
                             1 if unique else 0,
+                            1 if sparse else 0,
+                            json.dumps(partial_filter_expression) if partial_filter_expression is not None else None,
                             1 if multikey else 0,
                             multikey_physical_name if multikey else None,
                         ),
                     )
                     if multikey:
                         enforce_deadline(deadline)
-                        index_metadata = {
-                            "name": index_name,
-                            "fields": fields,
-                            "key": normalized_keys,
-                            "unique": unique,
-                            "multikey": True,
-                            "multikey_physical_name": multikey_physical_name,
-                        }
+                        index_metadata = EngineIndexRecord(
+                            name=index_name,
+                            physical_name=physical_name,
+                            fields=fields,
+                            key=normalized_keys,
+                            unique=unique,
+                            sparse=sparse,
+                            partial_filter_expression=deepcopy(partial_filter_expression),
+                            multikey=True,
+                            multikey_physical_name=multikey_physical_name,
+                        )
                         for storage_key, document in self._load_documents(db_name, coll_name):
                             enforce_deadline(deadline)
                             self._replace_multikey_entries_for_index_for_document(
@@ -1810,11 +1917,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 indexes = deepcopy(self._load_indexes(db_name, coll_name))
         result = [default_id_index_definition().to_list_document()]
         result.extend(
-            IndexDefinition(
-                deepcopy(index["key"]),
-                name=str(index["name"]),
-                unique=bool(index["unique"]),
-            ).to_list_document()
+            index.to_definition().to_list_document()
             for index in indexes
         )
         return result
@@ -1832,11 +1935,7 @@ class SQLiteEngine(AsyncStorageEngine):
         return {
             **default_id_index_information(),
             **{
-                str(index["name"]): IndexDefinition(
-                    deepcopy(index["key"]),
-                    name=str(index["name"]),
-                    unique=bool(index["unique"]),
-                ).to_information_entry()
+                str(index["name"]): index.to_definition().to_information_entry()
                 for index in indexes
             },
         }
@@ -2335,7 +2434,12 @@ class SQLiteEngine(AsyncStorageEngine):
                         original_document=original_document,
                         dialect=semantics.dialect,
                     )
-                    self._validate_document_against_unique_indexes(db_name, coll_name, document)
+                    self._validate_document_against_unique_indexes(
+                        db_name,
+                        coll_name,
+                        document,
+                        exclude_storage_key=storage_key,
+                    )
                     indexes = self._load_indexes(db_name, coll_name)
 
                     try:
@@ -2515,6 +2619,8 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         unique: bool = False,
         name: str | None = None,
+        sparse: bool = False,
+        partial_filter_expression: Filter | None = None,
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> str:
@@ -2525,6 +2631,8 @@ class SQLiteEngine(AsyncStorageEngine):
             keys,
             unique,
             name,
+            sparse,
+            partial_filter_expression,
             max_time_ms,
             context,
         )

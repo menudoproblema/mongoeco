@@ -310,3 +310,38 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                         indexes_after_drop,
                         [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
                     )
+
+    async def test_engine_preserves_virtual_index_metadata(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_engine(engine_name) as engine:
+                    await engine.create_index(
+                        "test_db",
+                        "test_coll",
+                        ["email"],
+                        sparse=True,
+                        partial_filter_expression={"active": True},
+                    )
+
+                    indexes = await engine.list_indexes("test_db", "test_coll")
+                    info = await engine.index_information("test_db", "test_coll")
+
+                    self.assertEqual(
+                        indexes[1],
+                        {
+                            "name": "email_1",
+                            "fields": ["email"],
+                            "key": {"email": 1},
+                            "unique": False,
+                            "sparse": True,
+                            "partialFilterExpression": {"active": True},
+                        },
+                    )
+                    self.assertEqual(
+                        info["email_1"],
+                        {
+                            "key": [("email", 1)],
+                            "sparse": True,
+                            "partialFilterExpression": {"active": True},
+                        },
+                    )

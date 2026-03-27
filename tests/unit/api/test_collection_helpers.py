@@ -1378,7 +1378,14 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         )
         self.assertEqual(
             engine.create_index_kwargs,
-            {"unique": True, "name": "idx_email", "max_time_ms": None, "context": None},
+            {
+                "unique": True,
+                "name": "idx_email",
+                "sparse": False,
+                "partial_filter_expression": None,
+                "max_time_ms": None,
+                "context": None,
+            },
         )
         self.assertEqual(indexes, [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}])
         self.assertEqual(info, {"_id_": {"key": [("_id", 1)], "unique": True}})
@@ -1497,13 +1504,56 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             [
                 (
                     ("db", "coll", [("email", 1)]),
-                    {"unique": True, "name": None, "max_time_ms": None, "context": None},
+                    {
+                        "unique": True,
+                        "name": None,
+                        "sparse": False,
+                        "partial_filter_expression": None,
+                        "max_time_ms": None,
+                        "context": None,
+                    },
                 ),
                 (
                     ("db", "coll", [("tenant", 1), ("created_at", -1)]),
-                    {"unique": False, "name": "tenant_created", "max_time_ms": None, "context": None},
+                    {
+                        "unique": False,
+                        "name": "tenant_created",
+                        "sparse": False,
+                        "partial_filter_expression": None,
+                        "max_time_ms": None,
+                        "context": None,
+                    },
                 ),
             ],
+        )
+
+    def test_create_index_forwards_sparse_and_partial_filter_expression(self):
+        class EngineStub:
+            async def create_index(self, *args, **kwargs):
+                self.kwargs = kwargs
+                return "idx"
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        asyncio.run(
+            collection.create_index(
+                [("email", 1)],
+                sparse=True,
+                partial_filter_expression={"active": True},
+            )
+        )
+
+        self.assertEqual(
+            engine.kwargs,
+            {
+                "unique": False,
+                "name": None,
+                "sparse": True,
+                "partial_filter_expression": {"active": True},
+                "max_time_ms": None,
+                "context": None,
+            },
         )
 
     def test_create_index_forwards_max_time_ms(self):

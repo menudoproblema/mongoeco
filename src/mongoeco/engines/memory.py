@@ -21,6 +21,11 @@ from mongoeco.engines.semantic_core import (
     filter_documents,
     finalize_documents,
 )
+from mongoeco.engines.virtual_indexes import (
+    document_in_virtual_index,
+    normalize_partial_filter_expression,
+    query_can_use_index,
+)
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operators import UpdateEngine
 from mongoeco.core.projections import apply_projection
@@ -35,7 +40,7 @@ from mongoeco.types import (
     ProfilingCommandResult,
     Projection, QueryPlanExplanation, SortSpec, Update, UpdateResult, default_index_name,
     default_id_index_definition, default_id_index_document, default_id_index_information, index_fields,
-    EngineIndexRecord, IndexDefinition, normalize_index_keys,
+    EngineIndexRecord, normalize_index_keys,
 )
 
 
@@ -238,6 +243,7 @@ class MemoryEngine(AsyncStorageEngine):
         hint: str | IndexKeySpec | None,
         *,
         indexes: list[EngineIndexRecord] | None = None,
+        plan: QueryNode | None = None,
     ) -> EngineIndexRecord | None:
         if hint is None:
             return None
@@ -268,9 +274,13 @@ class MemoryEngine(AsyncStorageEngine):
         for index in indexes:
             if isinstance(hint, str):
                 if index["name"] == hint:
+                    if plan is not None and not query_can_use_index(index, plan):
+                        raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
             else:
                 if index["key"] == normalized_hint:
+                    if plan is not None and not query_can_use_index(index, plan):
+                        raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
 
         raise OperationFailure("hint does not correspond to an existing index")
@@ -395,6 +405,8 @@ class MemoryEngine(AsyncStorageEngine):
         for index in indexes:
             if not index.get("unique"):
                 continue
+            if not document_in_virtual_index(candidate, index):
+                continue
 
             fields = index["fields"]
             candidate_key = self._index_key(candidate, fields)
@@ -402,6 +414,8 @@ class MemoryEngine(AsyncStorageEngine):
                 if normalized_exclude is not None and storage_key == normalized_exclude:
                     continue
                 existing = self._codec.decode(data)
+                if not document_in_virtual_index(existing, index):
+                    continue
                 existing_key = self._index_key(existing, fields)
                 if existing_key == candidate_key:
                     raise DuplicateKeyError(
@@ -563,6 +577,7 @@ class MemoryEngine(AsyncStorageEngine):
                     coll_name,
                     hint,
                     indexes=indexes,
+                    plan=semantics.query_plan,
                 )
                 enforce_deadline(deadline)
                 documents = [
@@ -880,15 +895,18 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         unique: bool = False,
         name: str | None = None,
+        sparse: bool = False,
+        partial_filter_expression: Filter | None = None,
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> str:
         normalized_keys = normalize_index_keys(keys)
+        partial_filter_expression = normalize_partial_filter_expression(partial_filter_expression)
         fields = index_fields(normalized_keys)
         index_name = name or default_index_name(normalized_keys)
         deadline = operation_deadline(max_time_ms)
         if self._is_builtin_id_index(normalized_keys):
-            if name not in (None, "_id_"):
+            if name not in (None, "_id_") or sparse or partial_filter_expression is not None or not unique:
                 raise OperationFailure("Conflicting index definition for '_id_'")
             return "_id_"
         if index_name == "_id_":
@@ -912,13 +930,22 @@ class MemoryEngine(AsyncStorageEngine):
             for index in coll_indexes:
                 enforce_deadline(deadline)
                 if index["name"] == index_name:
-                    if index["key"] != normalized_keys or index["unique"] != unique:
+                    if (
+                        index["key"] != normalized_keys
+                        or index["unique"] != unique
+                        or index.get("sparse") != sparse
+                        or index.get("partial_filter_expression") != partial_filter_expression
+                    ):
                         raise OperationFailure(
                             f"Conflicting index definition for '{index_name}'"
                         )
                     return index_name
                 if index["key"] == normalized_keys:
-                    if index["unique"] != unique:
+                    if (
+                        index["unique"] != unique
+                        or index.get("sparse") != sparse
+                        or index.get("partial_filter_expression") != partial_filter_expression
+                    ):
                         raise OperationFailure(
                             f"Conflicting index definition for key pattern '{normalized_keys!r}'"
                         )
@@ -927,9 +954,19 @@ class MemoryEngine(AsyncStorageEngine):
             if unique:
                 seen: set[tuple[Any, ...]] = set()
                 coll = storage_view.get(db_name, {}).get(coll_name, {})
+                candidate_index = EngineIndexRecord(
+                    name=index_name,
+                    fields=fields.copy(),
+                    key=deepcopy(normalized_keys),
+                    unique=unique,
+                    sparse=sparse,
+                    partial_filter_expression=deepcopy(partial_filter_expression),
+                )
                 for data in coll.values():
                     enforce_deadline(deadline)
                     document = self._codec.decode(data)
+                    if not document_in_virtual_index(document, candidate_index):
+                        continue
                     key = self._index_key(document, fields)
                     if key in seen:
                         raise DuplicateKeyError(
@@ -944,6 +981,8 @@ class MemoryEngine(AsyncStorageEngine):
                     fields=fields.copy(),
                     key=deepcopy(normalized_keys),
                     unique=unique,
+                    sparse=sparse,
+                    partial_filter_expression=deepcopy(partial_filter_expression),
                 )
             )
         return index_name
@@ -1067,6 +1106,7 @@ class MemoryEngine(AsyncStorageEngine):
             coll_name,
             hint,
             indexes=indexes,
+            plan=semantics.query_plan,
         )
         enforce_deadline(deadline)
         execution_plan = await self.plan_find_execution(

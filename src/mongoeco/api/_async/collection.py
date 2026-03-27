@@ -1683,6 +1683,8 @@ class AsyncCollection:
         *,
         unique: bool = False,
         name: str | None = None,
+        sparse: bool = False,
+        partial_filter_expression: dict[str, object] | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
@@ -1695,6 +1697,8 @@ class AsyncCollection:
             normalized_keys,
             unique=unique,
             name=name,
+            sparse=sparse,
+            partial_filter_expression=partial_filter_expression,
             max_time_ms=max_time_ms,
             context=session,
         )
@@ -1733,6 +1737,8 @@ class AsyncCollection:
                     index.keys,
                     unique=index.unique,
                     name=index.name,
+                    sparse=index.sparse,
+                    partial_filter_expression=index.partial_filter_expression,
                     max_time_ms=None if deadline is None else max(
                         1,
                         int((deadline - time.monotonic()) * 1000),

@@ -290,6 +290,8 @@ class EngineIndexRecord:
     key: IndexKeySpec
     unique: bool
     physical_name: str | None = None
+    sparse: bool = False
+    partial_filter_expression: Filter | None = None
     multikey: bool = False
     multikey_physical_name: str | None = None
 
@@ -304,6 +306,8 @@ class EngineIndexRecord:
             deepcopy(self.key),
             name=self.name,
             unique=self.unique,
+            sparse=self.sparse,
+            partial_filter_expression=deepcopy(self.partial_filter_expression),
         )
 
 
@@ -1186,28 +1190,49 @@ class IndexDefinition:
     keys: IndexKeySpec
     name: str
     unique: bool = False
+    sparse: bool = False
+    partial_filter_expression: Filter | None = None
 
-    def __init__(self, keys: object, *, name: str, unique: bool = False):
+    def __init__(
+        self,
+        keys: object,
+        *,
+        name: str,
+        unique: bool = False,
+        sparse: bool = False,
+        partial_filter_expression: Filter | None = None,
+    ):
         normalized = normalize_index_keys(keys)
         if not isinstance(name, str) or not name:
             raise ValueError("name must be a non-empty string")
         if not isinstance(unique, bool):
             raise TypeError("unique must be a bool")
+        if not isinstance(sparse, bool):
+            raise TypeError("sparse must be a bool")
+        if partial_filter_expression is not None and not isinstance(partial_filter_expression, dict):
+            raise TypeError("partial_filter_expression must be a dict or None")
         object.__setattr__(self, "keys", normalized)
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "unique", unique)
+        object.__setattr__(self, "sparse", sparse)
+        object.__setattr__(self, "partial_filter_expression", deepcopy(partial_filter_expression))
 
     @property
     def fields(self) -> list[str]:
         return index_fields(self.keys)
 
     def to_list_document(self) -> IndexDocument:
-        return {
+        document: IndexDocument = {
             "name": self.name,
             "key": index_key_document(self.keys),
             "fields": self.fields,
             "unique": self.unique,
         }
+        if self.sparse:
+            document["sparse"] = True
+        if self.partial_filter_expression is not None:
+            document["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
+        return document
 
     def to_model_document(self) -> IndexDocument:
         document: IndexDocument = {
@@ -1216,12 +1241,20 @@ class IndexDefinition:
         }
         if self.unique:
             document["unique"] = True
+        if self.sparse:
+            document["sparse"] = True
+        if self.partial_filter_expression is not None:
+            document["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
         return document
 
     def to_information_entry(self) -> IndexInformationEntry:
         entry: IndexInformationEntry = {"key": list(self.keys)}
         if self.unique:
             entry["unique"] = True
+        if self.sparse:
+            entry["sparse"] = True
+        if self.partial_filter_expression is not None:
+            entry["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
         return entry
 
     def to_information_entry_map(self) -> IndexInformation:
@@ -1237,21 +1270,33 @@ class IndexModel:
     keys: IndexKeySpec
     name: str | None = None
     unique: bool = False
+    sparse: bool = False
+    partial_filter_expression: Filter | None = None
 
     def __init__(self, keys: object, **kwargs: Any):
         normalized = normalize_index_keys(keys)
         name = kwargs.pop("name", None)
         unique = kwargs.pop("unique", False)
+        sparse = kwargs.pop("sparse", False)
+        partial_filter_expression = kwargs.pop("partialFilterExpression", None)
+        if partial_filter_expression is None:
+            partial_filter_expression = kwargs.pop("partial_filter_expression", None)
         if name is not None and (not isinstance(name, str) or not name):
             raise ValueError("name must be a non-empty string")
         if not isinstance(unique, bool):
             raise TypeError("unique must be a bool")
+        if not isinstance(sparse, bool):
+            raise TypeError("sparse must be a bool")
+        if partial_filter_expression is not None and not isinstance(partial_filter_expression, dict):
+            raise TypeError("partial_filter_expression must be a dict or None")
         if kwargs:
             unsupported = ", ".join(sorted(kwargs))
             raise TypeError(f"unsupported IndexModel options: {unsupported}")
         object.__setattr__(self, "keys", normalized)
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "unique", unique)
+        object.__setattr__(self, "sparse", sparse)
+        object.__setattr__(self, "partial_filter_expression", deepcopy(partial_filter_expression))
 
     @property
     def resolved_name(self) -> str:
@@ -1259,7 +1304,13 @@ class IndexModel:
 
     @property
     def definition(self) -> IndexDefinition:
-        return IndexDefinition(self.keys, name=self.resolved_name, unique=self.unique)
+        return IndexDefinition(
+            self.keys,
+            name=self.resolved_name,
+            unique=self.unique,
+            sparse=self.sparse,
+            partial_filter_expression=self.partial_filter_expression,
+        )
 
     @property
     def document(self) -> IndexDocument:
