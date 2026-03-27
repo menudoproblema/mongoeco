@@ -19,6 +19,7 @@ from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, OperationFailure
 from mongoeco.session import ClientSession
+from mongoeco.session import EngineTransactionContext
 from mongoeco.types import (
     ArrayFilters, DeleteResult, Document, DocumentId, Filter, IndexInformation, IndexDocument, IndexKeySpec, ObjectId,
     Projection, QueryPlanExplanation, SortSpec, Update, UpdateResult, default_index_name,
@@ -58,12 +59,12 @@ class MemoryEngine(AsyncStorageEngine):
     @override
     def create_session_state(self, session: ClientSession) -> None:
         engine_key = f"memory:{id(self)}"
-        session.bind_engine_state(
-            engine_key,
-            {
-                "connected": self._connection_count > 0,
-                "supports_transactions": False,
-            },
+        session.bind_engine_context(
+            EngineTransactionContext(
+                engine_key=engine_key,
+                connected=self._connection_count > 0,
+                supports_transactions=False,
+            )
         )
         session.register_transaction_hooks(engine_key)
 

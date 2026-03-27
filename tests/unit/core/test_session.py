@@ -5,6 +5,7 @@ from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
+from mongoeco.session import EngineTransactionContext, SessionState, TransactionState
 from mongoeco.types import (
     ReadConcern,
     ReadPreference,
@@ -15,6 +16,36 @@ from mongoeco.types import (
 
 
 class ClientSessionTests(unittest.TestCase):
+    def test_session_uses_explicit_internal_state_records(self):
+        session = ClientSession()
+
+        self.assertIsInstance(session._state, SessionState)
+        self.assertIsInstance(session._state.transaction, TransactionState)
+
+    def test_engine_context_round_trips_between_internal_and_public_state(self):
+        session = ClientSession()
+        session.bind_engine_context(
+            EngineTransactionContext(
+                engine_key="sqlite:test",
+                connected=True,
+                supports_transactions=True,
+                metadata={"path": ":memory:"},
+            )
+        )
+
+        internal = session.get_engine_context("sqlite:test")
+
+        self.assertIsNotNone(internal)
+        self.assertTrue(internal.connected)
+        self.assertEqual(
+            session.get_engine_state("sqlite:test"),
+            {
+                "connected": True,
+                "supports_transactions": True,
+                "path": ":memory:",
+            },
+        )
+
     def test_session_can_bind_engine_state_and_track_transaction(self):
         session = ClientSession()
 

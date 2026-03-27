@@ -48,6 +48,7 @@ from mongoeco.engines.sqlite_query import (
 )
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
+from mongoeco.session import EngineTransactionContext
 from mongoeco.types import (
     ArrayFilters,
     DeleteResult,
@@ -116,14 +117,14 @@ class SQLiteEngine(AsyncStorageEngine):
     @override
     def create_session_state(self, session: ClientSession) -> None:
         engine_key = self._engine_key()
-        session.bind_engine_state(
-            engine_key,
-            {
-                "connected": self._connection is not None,
-                "path": self._path,
-                "supports_transactions": True,
-                "transaction_active": False,
-            },
+        session.bind_engine_context(
+            EngineTransactionContext(
+                engine_key=engine_key,
+                connected=self._connection is not None,
+                supports_transactions=True,
+                transaction_active=False,
+                metadata={"path": self._path},
+            )
         )
         session.register_transaction_hooks(
             engine_key,
@@ -138,12 +139,12 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         transaction_active: bool | None = None,
     ) -> None:
-        state = session.get_engine_state(self._engine_key())
-        if not isinstance(state, dict):
+        state = session.get_engine_context(self._engine_key())
+        if state is None:
             return
-        state["connected"] = self._connection is not None
+        state.connected = self._connection is not None
         if transaction_active is not None:
-            state["transaction_active"] = transaction_active
+            state.transaction_active = transaction_active
 
     def _start_session_transaction(self, session: ClientSession) -> None:
         with self._lock:

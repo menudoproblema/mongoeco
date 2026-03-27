@@ -27,16 +27,90 @@ class _TransactionHooks:
 
 
 @dataclass
+class TransactionState:
+    active: bool = False
+    number: int = 0
+    options: TransactionOptions | None = None
+
+
+@dataclass
+class EngineTransactionContext:
+    engine_key: str
+    connected: bool | None = None
+    supports_transactions: bool | None = None
+    transaction_active: bool | None = None
+    metadata: dict[str, object] = field(default_factory=dict)
+
+    @classmethod
+    def from_document(
+        cls,
+        engine_key: str,
+        state: object,
+    ) -> "EngineTransactionContext":
+        if isinstance(state, EngineTransactionContext):
+            return state
+        if not isinstance(state, dict):
+            return cls(engine_key=engine_key)
+        return cls(
+            engine_key=engine_key,
+            connected=(
+                bool(state["connected"])
+                if "connected" in state
+                else None
+            ),
+            supports_transactions=(
+                bool(state["supports_transactions"])
+                if "supports_transactions" in state
+                else None
+            ),
+            transaction_active=(
+                bool(state["transaction_active"])
+                if "transaction_active" in state
+                else None
+            ),
+            metadata={
+                key: value
+                for key, value in state.items()
+                if key not in {"connected", "supports_transactions", "transaction_active"}
+            },
+        )
+
+    def update(self, **updates: object) -> None:
+        for key, value in updates.items():
+            if key == "connected":
+                self.connected = bool(value)
+            elif key == "supports_transactions":
+                self.supports_transactions = bool(value)
+            elif key == "transaction_active":
+                self.transaction_active = bool(value)
+            else:
+                self.metadata[key] = value
+
+    def to_document(self) -> dict[str, object]:
+        document = dict(self.metadata)
+        if self.connected is not None:
+            document["connected"] = self.connected
+        if self.supports_transactions is not None:
+            document["supports_transactions"] = self.supports_transactions
+        if self.transaction_active is not None:
+            document["transaction_active"] = self.transaction_active
+        return document
+
+
+@dataclass
+class SessionState:
+    active: bool = True
+    transaction: TransactionState = field(default_factory=TransactionState)
+    engine_contexts: dict[str, EngineTransactionContext] = field(default_factory=dict)
+
+
+@dataclass
 class ClientSession:
     """Contexto de sesion compartido entre cliente y engine."""
 
     session_id: str = field(default_factory=lambda: uuid.uuid4().hex)
-    active: bool = True
-    transaction_active: bool = False
-    transaction_number: int = 0
     default_transaction_options: TransactionOptions = field(default_factory=TransactionOptions)
-    engine_state: dict[str, object] = field(default_factory=dict)
-    _current_transaction_options: TransactionOptions | None = field(default=None, repr=False)
+    _state: SessionState = field(default_factory=SessionState, repr=False)
     _transaction_hooks: dict[str, _TransactionHooks] = field(default_factory=dict, repr=False)
 
     def ensure_active(self) -> None:
@@ -44,30 +118,67 @@ class ClientSession:
             raise InvalidOperation("La sesion ya esta cerrada")
 
     @property
+    def active(self) -> bool:
+        return self._state.active
+
+    @property
     def has_ended(self) -> bool:
         return not self.active
 
     @property
     def in_transaction(self) -> bool:
-        return self.transaction_active
+        return self._state.transaction.active
+
+    @property
+    def transaction_active(self) -> bool:
+        return self._state.transaction.active
+
+    @property
+    def transaction_number(self) -> int:
+        return self._state.transaction.number
 
     @property
     def transaction_options(self) -> TransactionOptions | None:
-        return self._current_transaction_options
+        return self._state.transaction.options
+
+    @property
+    def engine_state(self) -> dict[str, dict[str, object]]:
+        return {
+            engine_key: context.to_document()
+            for engine_key, context in self._state.engine_contexts.items()
+        }
 
     def bind_engine_state(self, engine_key: str, state: object) -> None:
         self.ensure_active()
-        self.engine_state[engine_key] = state
+        self._state.engine_contexts[engine_key] = EngineTransactionContext.from_document(
+            engine_key,
+            state,
+        )
+
+    def bind_engine_context(
+        self,
+        context: EngineTransactionContext,
+    ) -> None:
+        self.ensure_active()
+        self._state.engine_contexts[context.engine_key] = context
 
     def get_engine_state(self, engine_key: str) -> object | None:
         self.ensure_active()
-        return self.engine_state.get(engine_key)
+        context = self._state.engine_contexts.get(engine_key)
+        return None if context is None else context.to_document()
+
+    def get_engine_context(
+        self,
+        engine_key: str,
+    ) -> EngineTransactionContext | None:
+        self.ensure_active()
+        return self._state.engine_contexts.get(engine_key)
 
     def update_engine_state(self, engine_key: str, **updates: object) -> None:
         self.ensure_active()
-        state = self.engine_state.get(engine_key)
-        if isinstance(state, dict):
-            state.update(updates)
+        context = self._state.engine_contexts.get(engine_key)
+        if context is not None:
+            context.update(**updates)
 
     def register_transaction_hooks(
         self,
@@ -121,9 +232,9 @@ class ClientSession:
             if max_commit_time_ms is None
             else max_commit_time_ms
         )
-        self.transaction_number += 1
-        self.transaction_active = True
-        self._current_transaction_options = TransactionOptions(
+        self._state.transaction.number += 1
+        self._state.transaction.active = True
+        self._state.transaction.options = TransactionOptions(
             read_concern=resolved_read_concern,
             write_concern=resolved_write_concern,
             read_preference=resolved_read_preference,
@@ -132,9 +243,9 @@ class ClientSession:
         try:
             self._run_transaction_hooks("start")
         except Exception:
-            self.transaction_active = False
-            self.transaction_number -= 1
-            self._current_transaction_options = None
+            self._state.transaction.active = False
+            self._state.transaction.number -= 1
+            self._state.transaction.options = None
             raise
 
     def commit_transaction(self) -> None:
@@ -144,8 +255,8 @@ class ClientSession:
         try:
             self._run_transaction_hooks("commit")
         finally:
-            self.transaction_active = False
-            self._current_transaction_options = None
+            self._state.transaction.active = False
+            self._state.transaction.options = None
 
     def abort_transaction(self) -> None:
         self.ensure_active()
@@ -154,8 +265,8 @@ class ClientSession:
         try:
             self._run_transaction_hooks("abort")
         finally:
-            self.transaction_active = False
-            self._current_transaction_options = None
+            self._state.transaction.active = False
+            self._state.transaction.options = None
 
     def end_transaction(self) -> None:
         self.commit_transaction()
@@ -210,11 +321,11 @@ class ClientSession:
             except Exception as exc:
                 abort_error = exc
             finally:
-                self.transaction_active = False
-                self._current_transaction_options = None
+                self._state.transaction.active = False
+                self._state.transaction.options = None
         self._transaction_hooks.clear()
-        self.engine_state.clear()
-        self.active = False
+        self._state.engine_contexts.clear()
+        self._state.active = False
         if abort_error is not None:
             raise abort_error
 
