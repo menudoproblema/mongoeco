@@ -803,3 +803,102 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * retries
   * selección de lectura/escritura
 * monitoring y comportamiento propio de un cliente de red completo
+
+---
+
+## 7. Estado Arquitectónico Consolidado y Punto de Reentrada
+
+Esta sección resume el estado real del refactor arquitectónico después de cerrar la base del proyecto, el bloque de compatibilidad, la capa wire y la evolución posterior de BSON, observabilidad, MVCC e indexación virtual. El detalle histórico sigue viviendo en [MEJORAS.md](/Users/uve/Proyectos/mongoeco2/MEJORAS.md), pero `DESIGN.md` pasa a ser el documento principal de referencia.
+
+### 7.1 Bloques Arquitectónicos Ya Consolidados
+
+Estos bloques se consideran ya estructuralmente aplicados:
+
+* **Compatibilidad declarativa**:
+  * catálogo único para dialectos MongoDB, perfiles PyMongo, operadores, stages, acumuladores y opciones;
+  * exports y tooling derivados desde el catálogo;
+  * políticas de comportamiento oficiales ya derivadas desde `policy_spec`.
+* **Administración y comandos**:
+  * subsistema separado de CRUD;
+  * parseo, ejecución y serialización desacoplados;
+  * `Database.command(...)` ya apoyado en servicios y resultados tipados.
+* **Tipado interno**:
+  * snapshots, explain, resultados administrativos, writes complejos e índices internos ya no dependen de `dict` ad hoc como contrato principal.
+* **Planes de operación**:
+  * lectura, agregación, explain, rutas admin y writes propios viajan por operaciones compiladas;
+  * los engines ejecutan sobre IR interna, no sobre argumentos crudos dispersos.
+* **Update engine formal**:
+  * paths compilados, contexto explícito, aplicaciones resueltas y planes reutilizables;
+  * arrays y rutas posicionales ya siguen el mismo flujo base.
+* **Semántica compartida entre engines**:
+  * lectura y explain descansan ya sobre un núcleo semántico común;
+  * `MemoryEngine` y `SQLiteEngine` se diferencian más por estrategia física que por reglas de lenguaje.
+* **Estado transaccional y MVCC**:
+  * estado explícito por sesión/engine;
+  * snapshots y contexto MVCC formales para memoria y SQLite.
+* **Observabilidad y paridad**:
+  * `system.profile`;
+  * lineage de ejecución;
+  * paridad diferencial declarativa contra MongoDB real;
+  * catálogo formal de errores con `code`, `codeName` y `errorLabels`.
+* **Extensibilidad**:
+  * SDK de extensión para operadores de expresión y stages de agregación.
+* **Proxy wire**:
+  * `WireSurface` declarativa;
+  * handshake separado;
+  * contextos de conexión y petición;
+  * store de cursores y sesiones;
+  * executor desacoplado del adaptador TCP;
+  * compatibilidad real con `pymongo.MongoClient` sobre `OP_MSG` y handshake legacy.
+
+### 7.2 Bloques Aplicados con Matices
+
+Estos bloques ya tienen la arquitectura correcta, pero todavía no deben venderse como fidelidad total frente a MongoDB real:
+
+* **Separación core semántico vs engine**:
+  * el corte principal ya existe;
+  * siguen quedando rutas físicas específicas del backend que todavía aportan parte del comportamiento observable.
+* **Políticas de comportamiento derivadas del catálogo**:
+  * la fundación declarativa está cerrada;
+  * la ganancia máxima llegará al versionar más deltas semánticos finos en el propio catálogo.
+* **MVCC virtual**:
+  * existe estado explícito y snapshots reales;
+  * no pretende todavía igualar semántica distribuida completa de MongoDB real.
+* **Spill-to-disk de agregación**:
+  * `allowDiskUse` y la política de spill ya son parte del contrato;
+  * la implementación actual no persigue todavía streaming fino ni minimización agresiva de memoria.
+* **Fidelidad BSON escalar**:
+  * wrappers internos, codec BSON-aware y helpers numéricos ya cubren lectura, updates y una parte importante de aggregation;
+  * siguen faltando matices para hablar de fidelidad BSON total.
+* **Motor de indexación virtual**:
+  * ya cubre semántica `sparse` y `partialFilterExpression`, hints, unicidad, persistencia y `explain`;
+  * el salto final exigiría una historia más ambiciosa para multikey avanzado y planificación automática.
+
+### 7.3 Bloques Reabiertos o Deliberadamente No Cerrados del Todo
+
+Estos son los puntos donde conviene volver si el objetivo vuelve a ser arquitectura, no solo superficie funcional:
+
+* **Descomposición final de agregación**:
+  * `mongoeco.core.aggregation` ya es un paquete y el runtime se ha troceado mucho;
+  * aun así, el área de agregación sigue siendo la más compleja del core y sigue mereciendo vigilancia continua.
+* **Pushdown/planificación avanzada y spill más fino**:
+  * el diseño base ya existe;
+  * el siguiente salto sería más de comportamiento y rendimiento que de refactor básico.
+* **Fidelidad BSON total**:
+  * la frontera arquitectónica ya es la correcta;
+  * falta ampliar cobertura semántica y cerrar casos más raros de tipos/overflow/conversiones.
+
+### 7.4 Cuándo Volver a Abrir Estos Puntos
+
+La recomendación actual es **no reabrir ahora mismo la arquitectura base** salvo que aparezca una de estas señales:
+
+* una nueva versión de MongoDB o PyMongo obliga a introducir semántica difícil de modelar con el catálogo/policies actuales;
+* ampliar aggregation o índices empieza a producir fricción estructural real en vez de solo trabajo funcional;
+* la fidelidad BSON pasa a ser requisito contractual fuerte frente a MongoDB real y ya no basta con el nivel actual;
+* el crecimiento del proxy wire exige más superficie de servidor que ya no encaja limpiamente con la `WireSurface` y el executor actuales.
+
+Mientras no aparezca una de esas señales, el criterio recomendado es:
+
+1. mantener `DESIGN.md` como visión consolidada;
+2. usar [MEJORAS.md](/Users/uve/Proyectos/mongoeco2/MEJORAS.md) como detalle de seguimiento fino;
+3. dedicar el siguiente esfuerzo principalmente a **superficie funcional, cobertura y paridad observable**, no a reabrir otra gran ola de refactor.
