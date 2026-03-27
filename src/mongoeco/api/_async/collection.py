@@ -39,10 +39,11 @@ from mongoeco.core.upserts import seed_upsert_document
 from mongoeco.core.validation import is_document, is_filter, is_projection, is_update
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    ArrayFilters, CodecOptions, ObjectId, Document, DocumentId, Filter, Update, Projection, InsertManyResult, InsertOneResult,
-    ReadConcern, ReadPreference, ReturnDocument, UpdateResult, DeleteResult, SortSpec, BulkWriteResult, WriteModel,
-    WriteConcern, InsertOne, UpdateOne, UpdateMany, ReplaceOne, DeleteOne, DeleteMany,
-    IndexInformation, IndexKeySpec, IndexModel, normalize_codec_options, normalize_index_keys,
+    ArrayFilters, BulkWriteErrorDetails, BulkWriteResult, CodecOptions, DeleteResult, Document, DocumentId, Filter,
+    IndexInformation, IndexKeySpec, IndexModel, InsertManyResult, InsertOne, InsertOneResult, ObjectId, Projection,
+    ReadConcern, ReadPreference, ReplaceOne, ReturnDocument, SortSpec, Update, UpdateMany, UpdateOne, UpdateResult,
+    UpsertedWriteEntry, WriteConcern, WriteErrorEntry, WriteModel, DeleteOne, DeleteMany,
+    normalize_codec_options, normalize_index_keys,
     normalize_read_concern, normalize_read_preference, normalize_write_concern,
 )
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure, WriteError
@@ -596,7 +597,7 @@ class AsyncCollection:
         modified_count = 0
         deleted_count = 0
         upserted_ids: dict[int, DocumentId] = {}
-        write_errors: list[dict[str, object]] = []
+        write_errors: list[WriteErrorEntry] = []
 
         for index, request in enumerate(requests):
             self._validate_bulk_write_request_against_profile(request)
@@ -670,12 +671,12 @@ class AsyncCollection:
                     deleted_count += result.deleted_count
             except (WriteError, OperationFailure, TypeError, ValueError) as exc:
                 write_errors.append(
-                    {
-                        "index": index,
-                        "code": getattr(exc, "code", None),
-                        "errmsg": str(exc),
-                        "op": request.__class__.__name__,
-                    }
+                    WriteErrorEntry(
+                        index=index,
+                        code=getattr(exc, "code", None),
+                        errmsg=str(exc),
+                        operation=request.__class__.__name__,
+                    )
                 )
                 if ordered:
                     break
@@ -691,18 +692,17 @@ class AsyncCollection:
         if write_errors:
             raise BulkWriteError(
                 "bulk write failed",
-                details={
-                    "writeErrors": write_errors,
-                    "nInserted": result.inserted_count,
-                    "nMatched": result.matched_count,
-                    "nModified": result.modified_count,
-                    "nRemoved": result.deleted_count,
-                    "nUpserted": result.upserted_count,
-                    "upserted": [
-                        {"index": op_index, "_id": upserted_id}
+                details=BulkWriteErrorDetails(
+                    write_errors=write_errors,
+                    inserted_count=result.inserted_count,
+                    matched_count=result.matched_count,
+                    modified_count=result.modified_count,
+                    removed_count=result.deleted_count,
+                    upserted=[
+                        UpsertedWriteEntry(index=op_index, document_id=upserted_id)
                         for op_index, upserted_id in upserted_ids.items()
                     ],
-                },
+                ).to_document(),
             )
         self._record_operation_metadata(
             operation="bulk_write",

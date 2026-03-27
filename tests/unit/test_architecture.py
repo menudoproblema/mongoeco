@@ -57,6 +57,7 @@ from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.types import IndexDefinition, IndexInformation, default_id_index_definition
 from mongoeco.types import (
+    BulkWriteErrorDetails,
     CodecOptions,
     QueryPlanExplanation,
     ReadConcern,
@@ -82,6 +83,8 @@ from mongoeco.types import (
     ListDatabasesCommandResult,
     NamespaceOkResult,
     OkResult,
+    UpsertedWriteEntry,
+    WriteErrorEntry,
     WriteCommandResult,
 )
 
@@ -442,10 +445,33 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertEqual(DistinctCommandResult(["Ada"]).to_document()["values"], ["Ada"])
         self.assertEqual(OkResult().to_document()["ok"], 1.0)
         self.assertEqual(
+            WriteErrorEntry(index=1, errmsg="boom", code=42, operation="UpdateOne").to_document(),
+            {"index": 1, "errmsg": "boom", "code": 42, "op": "UpdateOne"},
+        )
+        self.assertEqual(
+            UpsertedWriteEntry(index=2, document_id="id-2").to_document(),
+            {"index": 2, "_id": "id-2"},
+        )
+        self.assertEqual(
+            BulkWriteErrorDetails(
+                write_errors=[WriteErrorEntry(index=0, errmsg="dup")],
+                inserted_count=1,
+                upserted=[UpsertedWriteEntry(index=1, document_id="new-id")],
+            ).to_document()["upserted"][0]["_id"],
+            "new-id",
+        )
+        self.assertEqual(
             NamespaceOkResult("db.users").to_document()["ns"],
             "db.users",
         )
-        self.assertEqual(WriteCommandResult(2, modified_count=1).to_document()["nModified"], 1)
+        self.assertEqual(
+            WriteCommandResult(
+                2,
+                modified_count=1,
+                upserted=[UpsertedWriteEntry(index=0, document_id="seed")],
+            ).to_document()["upserted"][0]["_id"],
+            "seed",
+        )
         self.assertFalse(
             FindAndModifyCommandResult(
                 last_error_object=FindAndModifyLastErrorObject(

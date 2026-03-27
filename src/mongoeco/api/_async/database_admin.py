@@ -36,6 +36,7 @@ from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
+    BulkWriteErrorDetails,
     CollectionStatsSnapshot,
     CollectionListingDocument,
     CollectionListingSnapshot,
@@ -62,6 +63,8 @@ from mongoeco.types import (
     OkResult,
     Projection,
     ReturnDocument,
+    UpsertedWriteEntry,
+    WriteErrorEntry,
     WriteCommandResult,
 )
 
@@ -737,27 +740,27 @@ class AsyncDatabaseAdminService:
         ordered = self._normalize_ordered_from_command(spec.get("ordered"))
         collection = self._database.get_collection(collection_name)
         inserted = 0
-        write_errors: list[dict[str, object]] = []
+        write_errors: list[WriteErrorEntry] = []
         for index, document in enumerate(documents):
             try:
                 await collection.insert_one(document, session=session)
                 inserted += 1
             except Exception as exc:
                 write_errors.append(
-                    {
-                        "index": index,
-                        "errmsg": str(exc),
-                    }
+                    WriteErrorEntry(
+                        index=index,
+                        errmsg=str(exc),
+                    )
                 )
                 if ordered:
                     break
         if write_errors:
             raise BulkWriteError(
                 "insert command failed",
-                details={
-                    "writeErrors": write_errors,
-                    "n": inserted,
-                },
+                details=BulkWriteErrorDetails(
+                    write_errors=write_errors,
+                    inserted_count=inserted,
+                ).to_document(),
             )
         return WriteCommandResult(count=inserted)
 
@@ -773,8 +776,8 @@ class AsyncDatabaseAdminService:
         collection = self._database.get_collection(collection_name)
         matched = 0
         modified = 0
-        upserted: list[dict[str, object]] = []
-        write_errors: list[dict[str, object]] = []
+        upserted: list[UpsertedWriteEntry] = []
+        write_errors: list[WriteErrorEntry] = []
         for index, update_spec in enumerate(updates):
             try:
                 query = self._normalize_filter(update_spec.get("q"))
@@ -839,25 +842,27 @@ class AsyncDatabaseAdminService:
                 matched += result.matched_count
                 modified += result.modified_count
                 if result.upserted_id is not None:
-                    upserted.append({"index": index, "_id": result.upserted_id})
+                    upserted.append(
+                        UpsertedWriteEntry(index=index, document_id=result.upserted_id)
+                    )
             except Exception as exc:
                 write_errors.append(
-                    {
-                        "index": index,
-                        "errmsg": str(exc),
-                    }
+                    WriteErrorEntry(
+                        index=index,
+                        errmsg=str(exc),
+                    )
                 )
                 if ordered:
                     break
         if write_errors:
             raise BulkWriteError(
                 "update command failed",
-                details={
-                    "writeErrors": write_errors,
-                    "n": matched,
-                    "nModified": modified,
-                    "upserted": upserted,
-                },
+                details=BulkWriteErrorDetails(
+                    write_errors=write_errors,
+                    matched_count=matched,
+                    modified_count=modified,
+                    upserted=upserted,
+                ).to_document(),
             )
         return WriteCommandResult(
             count=matched,
@@ -876,7 +881,7 @@ class AsyncDatabaseAdminService:
         ordered = self._normalize_ordered_from_command(spec.get("ordered"))
         collection = self._database.get_collection(collection_name)
         deleted = 0
-        write_errors: list[dict[str, object]] = []
+        write_errors: list[WriteErrorEntry] = []
         for index, delete_spec in enumerate(deletes):
             try:
                 query = self._normalize_filter(delete_spec.get("q"))
@@ -906,20 +911,20 @@ class AsyncDatabaseAdminService:
                 deleted += result.deleted_count
             except Exception as exc:
                 write_errors.append(
-                    {
-                        "index": index,
-                        "errmsg": str(exc),
-                    }
+                    WriteErrorEntry(
+                        index=index,
+                        errmsg=str(exc),
+                    )
                 )
                 if ordered:
                     break
         if write_errors:
             raise BulkWriteError(
                 "delete command failed",
-                details={
-                    "writeErrors": write_errors,
-                    "n": deleted,
-                },
+                details=BulkWriteErrorDetails(
+                    write_errors=write_errors,
+                    removed_count=deleted,
+                ).to_document(),
             )
         return WriteCommandResult(count=deleted)
 

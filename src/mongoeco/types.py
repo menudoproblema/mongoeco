@@ -268,17 +268,69 @@ class DistinctCommandResult:
 
 
 @dataclass(frozen=True, slots=True)
+class WriteErrorEntry:
+    index: int
+    errmsg: str
+    code: int | None = None
+    operation: str | None = None
+
+    def to_document(self) -> dict[str, object]:
+        document: dict[str, object] = {
+            "index": self.index,
+            "errmsg": self.errmsg,
+        }
+        if self.code is not None:
+            document["code"] = self.code
+        if self.operation is not None:
+            document["op"] = self.operation
+        return document
+
+
+@dataclass(frozen=True, slots=True)
+class UpsertedWriteEntry:
+    index: int
+    document_id: object
+
+    def to_document(self) -> dict[str, object]:
+        return {
+            "index": self.index,
+            "_id": self.document_id,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class BulkWriteErrorDetails:
+    write_errors: list[WriteErrorEntry]
+    inserted_count: int = 0
+    matched_count: int = 0
+    modified_count: int = 0
+    removed_count: int = 0
+    upserted: list[UpsertedWriteEntry] = field(default_factory=list)
+
+    def to_document(self) -> dict[str, object]:
+        return {
+            "writeErrors": [entry.to_document() for entry in self.write_errors],
+            "nInserted": self.inserted_count,
+            "nMatched": self.matched_count,
+            "nModified": self.modified_count,
+            "nRemoved": self.removed_count,
+            "nUpserted": len(self.upserted),
+            "upserted": [entry.to_document() for entry in self.upserted],
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class WriteCommandResult:
     count: int
     modified_count: int | None = None
-    upserted: list[dict[str, object]] | None = None
+    upserted: list[UpsertedWriteEntry] | None = None
 
     def to_document(self) -> dict[str, object]:
         document: dict[str, object] = {"n": self.count, "ok": 1.0}
         if self.modified_count is not None:
             document["nModified"] = self.modified_count
         if self.upserted:
-            document["upserted"] = self.upserted
+            document["upserted"] = [entry.to_document() for entry in self.upserted]
         return document
 
 
