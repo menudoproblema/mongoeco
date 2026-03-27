@@ -399,6 +399,33 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"ns": "alpha.events", "ok": 1.0},
                     )
 
+    def test_database_command_count_supports_skip_limit_hint_and_comment(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.alpha.events.insert_many(
+                        [
+                            {"_id": "1", "kind": "view", "rank": 1},
+                            {"_id": "2", "kind": "view", "rank": 2},
+                            {"_id": "3", "kind": "view", "rank": 3},
+                        ]
+                    )
+                    client.alpha.events.create_index([("kind", 1)], name="kind_idx")
+
+                    counted = client.alpha.command(
+                        {
+                            "count": "events",
+                            "query": {"kind": "view"},
+                            "skip": 1,
+                            "limit": 1,
+                            "hint": "kind_idx",
+                            "comment": "count command",
+                            "maxTimeMS": 50,
+                        }
+                    )
+
+                    self.assertEqual(counted, {"n": 1, "ok": 1.0})
+
     def test_database_command_supports_rename_collection_within_current_database(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -769,6 +796,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 client.alpha.command("listCollections", nameOnly=1)  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 client.alpha.command("listCollections", authorizedCollections=1)  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command({"count": "events", "skip": -1})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command({"count": "events", "limit": -1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 client.alpha.command({"insert": "events", "documents": {}})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):

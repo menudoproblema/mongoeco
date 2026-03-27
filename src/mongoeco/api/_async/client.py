@@ -626,9 +626,27 @@ class AsyncDatabase:
         if command_name == "count":
             collection_name = self._require_collection_name(spec.get("count"), "count")
             query = self._normalize_filter(spec.get("query"))
-            count = await self.get_collection(collection_name).count_documents(
-                query,
-                session=session,
+            skip = spec.get("skip", 0)
+            if not isinstance(skip, int) or isinstance(skip, bool) or skip < 0:
+                raise TypeError("skip must be a non-negative integer")
+            limit = spec.get("limit")
+            if limit is not None and (
+                not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
+            ):
+                raise TypeError("limit must be a non-negative integer")
+            hint = self._normalize_hint_from_command(spec.get("hint"))
+            max_time_ms = self._normalize_max_time_ms_from_command(spec.get("maxTimeMS"))
+            count = len(
+                await self.get_collection(collection_name).find(
+                    query,
+                    {"_id": 1},
+                    skip=skip,
+                    limit=limit,
+                    hint=hint,
+                    comment=spec.get("comment"),
+                    max_time_ms=max_time_ms,
+                    session=session,
+                ).to_list()
             )
             return {"n": count, "ok": 1.0}
 

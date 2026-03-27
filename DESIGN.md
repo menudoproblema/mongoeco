@@ -753,6 +753,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `listCollections` ya soporta `nameOnly`
     * ya soporta también `serverStatus` con metadata local honesta
     * ya soporta también `hostInfo`, `whatsmyuri` y `getCmdLineOpts`
+    * `count` ya soporta `skip`, `limit`, `hint`, `comment` y `maxTimeMS`
   * `server_info`
   * `validate_collection`
   * listados enriquecidos de bases de datos y colecciones
