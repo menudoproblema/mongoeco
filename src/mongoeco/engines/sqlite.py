@@ -1295,6 +1295,12 @@ class SQLiteEngine(AsyncStorageEngine):
             with self._bind_connection(conn):
                 selected: tuple[str, Document] | None = None
                 sql_selection_supported = False
+                update_plan = UpdateEngine.compile_update_plan(
+                    update_spec,
+                    dialect=effective_dialect,
+                    selector_filter=selector_filter or filter_spec,
+                    array_filters=array_filters,
+                )
                 try:
                     if self._dialect_requires_python_fallback(effective_dialect):
                         raise NotImplementedError("Custom dialect requires Python fallback")
@@ -1313,13 +1319,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 if selected is not None:
                     storage_key, original_document = selected
                     document = deepcopy(original_document)
-                    modified = UpdateEngine.apply_update(
-                        document,
-                        update_spec,
-                        dialect=effective_dialect,
-                        selector_filter=selector_filter or filter_spec,
-                        array_filters=array_filters,
-                    )
+                    modified = UpdateEngine.apply_compiled_update(document, update_plan)
                     if not modified:
                         return UpdateResult(matched_count=1, modified_count=0)
                     self._validate_document_against_unique_indexes(db_name, coll_name, document)
@@ -1385,14 +1385,14 @@ class SQLiteEngine(AsyncStorageEngine):
                     return UpdateResult(matched_count=0, modified_count=0)
 
                 new_doc = deepcopy(upsert_seed or {})
-                UpdateEngine.apply_update(
-                    new_doc,
+                upsert_plan = UpdateEngine.compile_update_plan(
                     update_spec,
                     dialect=effective_dialect,
                     selector_filter=selector_filter or filter_spec,
                     array_filters=array_filters,
                     is_upsert_insert=True,
                 )
+                UpdateEngine.apply_compiled_update(new_doc, upsert_plan)
                 if "_id" not in new_doc:
                     new_doc["_id"] = ObjectId()
                 self._validate_document_against_unique_indexes(db_name, coll_name, new_doc)

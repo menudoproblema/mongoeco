@@ -36,6 +36,13 @@ class UpdateExecutionContext:
     is_upsert_insert: bool = False
 
 
+@dataclass(frozen=True, slots=True)
+class CompiledUpdatePlan:
+    update_spec: dict[str, Any]
+    compiled_operators: tuple[CompiledUpdateOperator, ...]
+    context: UpdateExecutionContext
+
+
 class UpdateEngine:
     """Motor central para aplicar operadores de actualización de MongoDB."""
 
@@ -56,22 +63,57 @@ class UpdateEngine:
         """
         if not isinstance(update_spec, dict) or not update_spec:
             raise OperationFailure("update specification must be a non-empty document")
+        return UpdateEngine.apply_compiled_update(
+            doc,
+            UpdateEngine.compile_update_plan(
+                update_spec,
+                dialect=dialect,
+                selector_filter=selector_filter,
+                array_filters=array_filters,
+                is_upsert_insert=is_upsert_insert,
+                context=context,
+            ),
+        )
+
+    @staticmethod
+    def compile_update_plan(
+        update_spec: dict[str, Any],
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+        selector_filter: Filter | None = None,
+        array_filters: ArrayFilters | None = None,
+        is_upsert_insert: bool = False,
+        context: UpdateExecutionContext | None = None,
+    ) -> CompiledUpdatePlan:
+        if not isinstance(update_spec, dict) or not update_spec:
+            raise OperationFailure("update specification must be a non-empty document")
         execution = context or UpdateEngine.build_execution_context(
             dialect=dialect,
             selector_filter=selector_filter,
             array_filters=array_filters,
             is_upsert_insert=is_upsert_insert,
         )
-        compiled_operators = UpdateEngine._compile_update_spec(
-            update_spec,
-            execution.compiled_array_filters,
-            dialect=execution.dialect,
+        return CompiledUpdatePlan(
+            update_spec=update_spec,
+            compiled_operators=UpdateEngine._compile_update_spec(
+                update_spec,
+                execution.compiled_array_filters,
+                dialect=execution.dialect,
+            ),
+            context=execution,
         )
+
+    @staticmethod
+    def apply_compiled_update(
+        doc: dict[str, Any],
+        plan: CompiledUpdatePlan,
+    ) -> bool:
         modified = False
+        execution = plan.context
 
         # Si el update no empieza con $, se trata como un reemplazo completo (Mongo behavior)
         # Pero en update_one normalmente se requieren operadores. Aquí forzamos operadores.
-        for compiled_operator in compiled_operators:
+        for compiled_operator in plan.compiled_operators:
             op = compiled_operator.operator
             instructions = compiled_operator.instructions
             if op == "$set":

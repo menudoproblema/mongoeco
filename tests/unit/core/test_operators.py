@@ -144,6 +144,20 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(context.compiled_array_filters, {"item": {"qty": {"$gt": 1}}})
         self.assertTrue(context.is_upsert_insert)
 
+    def test_update_engine_can_compile_and_reuse_update_plan(self):
+        plan = UpdateEngine.compile_update_plan(
+            {"$set": {"profile.name": "Ada"}},
+            selector_filter={"_id": "user-1"},
+        )
+        document = {"_id": "user-1", "profile": {}}
+
+        modified = UpdateEngine.apply_compiled_update(document, plan)
+
+        self.assertTrue(modified)
+        self.assertEqual(document["profile"], {"name": "Ada"})
+        self.assertEqual(plan.context.selector_filter, {"_id": "user-1"})
+        self.assertEqual(plan.compiled_operators[0].operator, "$set")
+
     def test_set_same_value_is_noop(self):
         document = {"field": 1}
 

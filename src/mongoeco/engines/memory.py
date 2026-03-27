@@ -413,19 +413,19 @@ class MemoryEngine(AsyncStorageEngine):
                 coll = self._storage.get(db_name, {}).get(coll_name)
             if coll is None:
                 coll = {}
+            update_plan = UpdateEngine.compile_update_plan(
+                update_spec,
+                dialect=effective_dialect,
+                selector_filter=selector_filter or filter_spec,
+                array_filters=array_filters,
+            )
 
             for storage_key, data in list(coll.items()):
                 document = self._codec.decode(data)
                 if not QueryEngine.match_plan(document, query_plan, dialect=effective_dialect):
                     continue
 
-                modified = UpdateEngine.apply_update(
-                    document,
-                    update_spec,
-                    dialect=effective_dialect,
-                    selector_filter=selector_filter or filter_spec,
-                    array_filters=array_filters,
-                )
+                modified = UpdateEngine.apply_compiled_update(document, update_plan)
                 self._ensure_unique_indexes(
                     db_name,
                     coll_name,
@@ -442,14 +442,14 @@ class MemoryEngine(AsyncStorageEngine):
                 return UpdateResult(matched_count=0, modified_count=0)
 
             new_doc = deepcopy(upsert_seed or {})
-            UpdateEngine.apply_update(
-                new_doc,
+            upsert_plan = UpdateEngine.compile_update_plan(
                 update_spec,
                 dialect=effective_dialect,
                 selector_filter=selector_filter or filter_spec,
                 array_filters=array_filters,
                 is_upsert_insert=True,
             )
+            UpdateEngine.apply_compiled_update(new_doc, upsert_plan)
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
 
