@@ -55,7 +55,7 @@ from mongoeco.engines.base import (
 )
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.types import IndexDefinition, IndexInformation, default_id_index_definition
+from mongoeco.types import EngineIndexRecord, IndexDefinition, IndexInformation, default_id_index_definition
 from mongoeco.types import (
     BulkWriteErrorDetails,
     CodecOptions,
@@ -233,6 +233,22 @@ class ArchitectureUnitTests(unittest.TestCase):
             },
         )
         self.assertEqual(default_id_index_definition().name, "_id_")
+
+    def test_engine_index_record_wraps_typed_internal_index_metadata(self):
+        record = EngineIndexRecord(
+            name="email_idx",
+            physical_name="idx_email",
+            fields=["email"],
+            key=[("email", 1)],
+            unique=True,
+        )
+
+        self.assertEqual(record["name"], "email_idx")
+        self.assertEqual(record.get("physical_name"), "idx_email")
+        self.assertEqual(
+            record.to_definition().to_list_document()["key"],
+            {"email": 1},
+        )
 
     def test_operation_option_support_exposes_effective_and_noop_statuses(self):
         self.assertEqual(

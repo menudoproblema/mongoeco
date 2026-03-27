@@ -3,6 +3,7 @@ import os
 import threading
 import time
 from collections.abc import Sequence
+from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Literal, NotRequired, Self, TypedDict
@@ -202,6 +203,30 @@ class CollectionValidationDocument(TypedDict):
     keysPerIndex: dict[str, int]
     warnings: list[object]
     ok: float
+
+
+@dataclass(frozen=True, slots=True)
+class EngineIndexRecord:
+    name: str
+    fields: list[str]
+    key: IndexKeySpec
+    unique: bool
+    physical_name: str | None = None
+    multikey: bool = False
+    multikey_physical_name: str | None = None
+
+    def __getitem__(self, key: str) -> object:
+        return getattr(self, key)
+
+    def get(self, key: str, default: object | None = None) -> object | None:
+        return getattr(self, key, default)
+
+    def to_definition(self) -> "IndexDefinition":
+        return IndexDefinition(
+            deepcopy(self.key),
+            name=self.name,
+            unique=self.unique,
+        )
 
 
 @dataclass(frozen=True, slots=True)

@@ -53,6 +53,7 @@ from mongoeco.types import (
     DeleteResult,
     Document,
     DocumentId,
+    EngineIndexRecord,
     Filter,
     IndexDocument,
     IndexInformation,
@@ -239,16 +240,16 @@ class SQLiteEngine(AsyncStorageEngine):
     def _is_builtin_id_index(keys: IndexKeySpec) -> bool:
         return keys == [("_id", 1)]
 
-    def _builtin_id_hint_index(self) -> dict[str, object]:
-        return {
-            "name": "_id_",
-            "physical_name": None,
-            "fields": ["_id"],
-            "key": [("_id", 1)],
-            "unique": True,
-            "multikey": False,
-            "multikey_physical_name": None,
-        }
+    def _builtin_id_hint_index(self) -> EngineIndexRecord:
+        return EngineIndexRecord(
+            name="_id_",
+            physical_name=None,
+            fields=["_id"],
+            key=[("_id", 1)],
+            unique=True,
+            multikey=False,
+            multikey_physical_name=None,
+        )
 
     def _resolve_hint_index(
         self,
@@ -256,8 +257,8 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         hint: str | IndexKeySpec | None,
         *,
-        indexes: list[dict[str, object]] | None = None,
-    ) -> dict[str, object] | None:
+        indexes: list[EngineIndexRecord] | None = None,
+    ) -> EngineIndexRecord | None:
         if hint is None:
             return None
 
@@ -408,7 +409,7 @@ class SQLiteEngine(AsyncStorageEngine):
     def _supports_multikey_index(fields: list[str], unique: bool) -> bool:
         return not unique and len(fields) == 1 and not path_array_prefixes(fields[0])
 
-    def _find_multikey_index(self, db_name: str, coll_name: str, field: str) -> dict[str, object] | None:
+    def _find_multikey_index(self, db_name: str, coll_name: str, field: str) -> EngineIndexRecord | None:
         for index in self._load_indexes(db_name, coll_name):
             if not index.get("multikey"):
                 continue
@@ -420,7 +421,7 @@ class SQLiteEngine(AsyncStorageEngine):
         self,
         db_name: str,
         coll_name: str,
-        index: dict[str, object],
+        index: EngineIndexRecord,
         signatures: tuple[tuple[str, str], ...],
     ) -> tuple[str, list[object]]:
         physical_name = self._quote_identifier(str(index["multikey_physical_name"]))
@@ -442,7 +443,7 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
         plan: EqualsCondition,
-        index: dict[str, object],
+        index: EngineIndexRecord,
     ) -> tuple[str, list[object]]:
         scalar_sql, scalar_params = _translate_scalar_equals(
             plan.field,
@@ -466,7 +467,7 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
         plan: InCondition,
-        index: dict[str, object],
+        index: EngineIndexRecord,
     ) -> tuple[str, list[object]]:
         clauses: list[str] = []
         params: list[object] = []
@@ -759,7 +760,7 @@ class SQLiteEngine(AsyncStorageEngine):
         enforce_deadline(deadline)
         return [str(row[3]) for row in rows]
 
-    def _load_indexes(self, db_name: str, coll_name: str) -> list[dict[str, object]]:
+    def _load_indexes(self, db_name: str, coll_name: str) -> list[EngineIndexRecord]:
         conn = self._require_connection()
         cursor = conn.execute(
             """
@@ -770,7 +771,7 @@ class SQLiteEngine(AsyncStorageEngine):
             """,
             (db_name, coll_name),
         )
-        indexes: list[dict[str, object]] = []
+        indexes: list[EngineIndexRecord] = []
         for name, physical_name, fields, keys, unique_flag, multikey_flag, multikey_physical_name in cursor.fetchall():
             try:
                 parsed_fields = json.loads(fields)
@@ -792,16 +793,16 @@ class SQLiteEngine(AsyncStorageEngine):
                         f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
                     ) from exc
             indexes.append(
-                {
-                    "name": name,
-                    "physical_name": physical_name or self._physical_index_name(db_name, coll_name, name),
-                    "fields": parsed_fields,
-                    "key": parsed_keys,
-                    "unique": bool(unique_flag),
-                    "multikey": bool(multikey_flag),
-                    "multikey_physical_name": multikey_physical_name
+                EngineIndexRecord(
+                    name=name,
+                    physical_name=physical_name or self._physical_index_name(db_name, coll_name, name),
+                    fields=parsed_fields,
+                    key=parsed_keys,
+                    unique=bool(unique_flag),
+                    multikey=bool(multikey_flag),
+                    multikey_physical_name=multikey_physical_name
                     or self._physical_multikey_index_name(db_name, coll_name, name),
-                }
+                )
             )
         return indexes
 
@@ -827,7 +828,7 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         storage_key: str,
         document: Document,
-        indexes: list[dict[str, object]],
+        indexes: list[EngineIndexRecord],
     ) -> None:
         self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
         rows: list[tuple[str, str, str, str, str, str]] = []
@@ -854,7 +855,7 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         storage_key: str,
         document: Document,
-        index: dict[str, object],
+        index: EngineIndexRecord,
     ) -> None:
         conn.execute(
             """
@@ -1697,7 +1698,7 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 indexes = self._load_indexes(db_name, coll_name)
-                target: dict[str, object] | None = None
+                target: EngineIndexRecord | None = None
                 for index in indexes:
                     if index["name"] == target_name:
                         target = index

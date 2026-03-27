@@ -23,7 +23,7 @@ from mongoeco.types import (
     ArrayFilters, DeleteResult, Document, DocumentId, Filter, IndexInformation, IndexDocument, IndexKeySpec, ObjectId,
     Projection, QueryPlanExplanation, SortSpec, Update, UpdateResult, default_index_name,
     default_id_index_definition, default_id_index_document, default_id_index_information, index_fields,
-    IndexDefinition, normalize_index_keys,
+    EngineIndexRecord, IndexDefinition, normalize_index_keys,
 )
 
 
@@ -48,7 +48,7 @@ class MemoryEngine(AsyncStorageEngine):
     def __init__(self, codec: type[DocumentCodec] = DocumentCodec):
         self._storage: dict[str, dict[str, dict[Any, Any]]] = {}
         self._locks: dict[str, _AsyncThreadLock] = {}
-        self._indexes: dict[str, dict[str, list[dict[str, object]]]] = {}
+        self._indexes: dict[str, dict[str, list[EngineIndexRecord]]] = {}
         self._collections: dict[str, set[str]] = {}
         self._collection_options: dict[str, dict[str, Document]] = {}
         self._meta_lock = threading.Lock()
@@ -103,18 +103,30 @@ class MemoryEngine(AsyncStorageEngine):
         coll_name: str,
         hint: str | IndexKeySpec | None,
         *,
-        indexes: list[dict[str, object]] | None = None,
-    ) -> dict[str, object] | None:
+        indexes: list[EngineIndexRecord] | None = None,
+    ) -> EngineIndexRecord | None:
         if hint is None:
             return None
 
         if isinstance(hint, str):
             if hint == "_id_":
-                return default_id_index_definition().to_list_document()
+                return EngineIndexRecord(
+                    name="_id_",
+                    physical_name=None,
+                    fields=["_id"],
+                    key=[("_id", 1)],
+                    unique=True,
+                )
         else:
             normalized_hint = normalize_index_keys(hint)
             if self._is_builtin_id_index(normalized_hint):
-                return default_id_index_definition().to_list_document()
+                return EngineIndexRecord(
+                    name="_id_",
+                    physical_name=None,
+                    fields=["_id"],
+                    key=[("_id", 1)],
+                    unique=True,
+                )
 
         if indexes is None:
             indexes = deepcopy(self._indexes.get(db_name, {}).get(coll_name, []))
@@ -122,18 +134,10 @@ class MemoryEngine(AsyncStorageEngine):
         for index in indexes:
             if isinstance(hint, str):
                 if index["name"] == hint:
-                    return IndexDefinition(
-                        deepcopy(index["key"]),
-                        name=str(index["name"]),
-                        unique=bool(index["unique"]),
-                    ).to_list_document()
+                    return deepcopy(index)
             else:
                 if index["key"] == normalized_hint:
-                    return IndexDefinition(
-                        deepcopy(index["key"]),
-                        name=str(index["name"]),
-                        unique=bool(index["unique"]),
-                    ).to_list_document()
+                    return deepcopy(index)
 
         raise OperationFailure("hint does not correspond to an existing index")
 
@@ -627,12 +631,12 @@ class MemoryEngine(AsyncStorageEngine):
 
             enforce_deadline(deadline)
             coll_indexes.append(
-                {
-                    "name": index_name,
-                    "fields": fields.copy(),
-                    "key": deepcopy(normalized_keys),
-                    "unique": unique,
-                }
+                EngineIndexRecord(
+                    name=index_name,
+                    fields=fields.copy(),
+                    key=deepcopy(normalized_keys),
+                    unique=unique,
+                )
             )
         return index_name
 
@@ -642,11 +646,7 @@ class MemoryEngine(AsyncStorageEngine):
             indexes = self._indexes.get(db_name, {}).get(coll_name, [])
         result = [default_id_index_definition().to_list_document()]
         result.extend(
-            IndexDefinition(
-                deepcopy(index["key"]),
-                name=str(index["name"]),
-                unique=bool(index["unique"]),
-            ).to_list_document()
+            index.to_definition().to_list_document()
             for index in deepcopy(indexes)
         )
         return result
@@ -658,11 +658,7 @@ class MemoryEngine(AsyncStorageEngine):
         result = default_id_index_information()
         result.update(
             {
-                str(index["name"]): IndexDefinition(
-                    deepcopy(index["key"]),
-                    name=str(index["name"]),
-                    unique=bool(index["unique"]),
-                ).to_information_entry()
+                index.name: index.to_definition().to_information_entry()
                 for index in indexes
             }
         )
