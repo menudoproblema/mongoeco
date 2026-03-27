@@ -478,6 +478,40 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         {"ns": "alpha.events", "ok": 1.0},
                     )
 
+    async def test_database_command_index_commands_support_comment_and_max_time(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    await client.alpha.events.insert_one({"_id": "1", "kind": "view"})
+
+                    created = await client.alpha.command(
+                        {
+                            "createIndexes": "events",
+                            "indexes": [{"key": {"kind": 1}, "name": "kind_idx"}],
+                            "comment": "create indexes command",
+                            "maxTimeMS": 50,
+                        }
+                    )
+                    listed = await client.alpha.command(
+                        {
+                            "listIndexes": "events",
+                            "comment": "list indexes command",
+                        }
+                    )
+                    dropped = await client.alpha.command(
+                        {
+                            "dropIndexes": "events",
+                            "index": "kind_idx",
+                            "comment": "drop indexes command",
+                        }
+                    )
+
+                    self.assertEqual(created["numIndexesBefore"], 1)
+                    self.assertEqual(created["numIndexesAfter"], 2)
+                    self.assertEqual(created["ok"], 1.0)
+                    self.assertEqual(listed["cursor"]["firstBatch"][1]["name"], "kind_idx")
+                    self.assertEqual(dropped, {"nIndexesWas": 2, "ok": 1.0})
+
     async def test_database_command_count_supports_skip_limit_hint_and_comment(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

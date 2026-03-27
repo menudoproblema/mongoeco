@@ -1283,6 +1283,7 @@ class AsyncDatabase:
                 "listIndexes",
             )
             first_batch = await self.get_collection(collection_name).list_indexes(
+                comment=spec.get("comment"),
                 session=session,
             ).to_list()
             return {
@@ -1300,12 +1301,18 @@ class AsyncDatabase:
                 "createIndexes",
             )
             indexes = self._normalize_index_models_from_command(spec.get("indexes"))
+            max_time_ms = self._normalize_max_time_ms_from_command(spec.get("maxTimeMS"))
             collection_names_before = set(
                 await self._engine.list_collections(self._db_name, context=session)
             )
             collection = self.get_collection(collection_name)
             info_before = await collection.index_information(session=session)
-            await collection.create_indexes(indexes, session=session)
+            await collection.create_indexes(
+                indexes,
+                comment=spec.get("comment"),
+                max_time_ms=max_time_ms,
+                session=session,
+            )
             info_after = await collection.index_information(session=session)
             result: dict[str, object] = {
                 "numIndexesBefore": len(info_before),
@@ -1326,9 +1333,9 @@ class AsyncDatabase:
             collection = self.get_collection(collection_name)
             info_before = await collection.index_information(session=session)
             if target == "*":
-                await collection.drop_indexes(session=session)
+                await collection.drop_indexes(comment=spec.get("comment"), session=session)
             elif isinstance(target, (str, list, tuple, dict)):
-                await collection.drop_index(target, session=session)
+                await collection.drop_index(target, comment=spec.get("comment"), session=session)
             else:
                 raise TypeError("index must be '*', a name, or a key specification")
             info_after = await collection.index_information(session=session)

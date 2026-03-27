@@ -756,6 +756,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `count` ya soporta `skip`, `limit`, `hint`, `comment` y `maxTimeMS`
     * `distinct` ya soporta `hint`, `comment` y `maxTimeMS`
     * `collStats` y `dbStats` ya soportan `scale`
+    * comandos de índices ya propagan `comment` y `maxTimeMS` donde aplica
   * `server_info`
   * `validate_collection`
   * listados enriquecidos de bases de datos y colecciones
