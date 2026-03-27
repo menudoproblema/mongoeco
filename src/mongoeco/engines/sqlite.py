@@ -45,6 +45,10 @@ from mongoeco.engines.semantic_core import (
     iter_filtered_documents,
     stream_finalize_documents,
 )
+from mongoeco.engines.sqlite_planner import (
+    SQLiteReadExecutionPlan,
+    compile_sqlite_read_execution_plan,
+)
 from mongoeco.engines.sqlite_query import (
     _translate_scalar_equals,
     index_expressions_sql,
@@ -709,27 +713,43 @@ class SQLiteEngine(AsyncStorageEngine):
 
     def _select_first_document_for_plan(self, db_name: str, coll_name: str, plan: QueryNode, *, hint: str | IndexKeySpec | None = None) -> tuple[str, Document] | None:
         conn = self._require_connection()
-        if self._plan_has_array_traversing_paths(db_name, coll_name, plan):
-            raise NotImplementedError("Array traversal requires Python fallback")
-        if self._plan_requires_python_for_array_comparisons(db_name, coll_name, plan):
-            raise NotImplementedError("Top-level array comparisons require Python fallback")
-        if self._plan_requires_python_for_bytes(db_name, coll_name, plan):
-            raise NotImplementedError("Tagged bytes require Python fallback")
-        if self._plan_requires_python_for_undefined(db_name, coll_name, plan):
-            raise NotImplementedError("Tagged undefined values require Python fallback")
-        sql, params = self._build_select_sql(
+        execution_plan = self._compile_read_execution_plan(
             db_name,
             coll_name,
-            plan,
+            compile_find_semantics({}, plan=plan, limit=1),
             select_clause="storage_key, document",
-            limit=1,
             hint=hint,
         )
+        sql, params = execution_plan.require_sql()
         row = conn.execute(sql, tuple(params)).fetchone()
         if row is None:
             return None
         storage_key, document = row
         return storage_key, self._deserialize_document(document)
+
+    def _compile_read_execution_plan(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        select_clause: str = "document",
+        hint: str | IndexKeySpec | None = None,
+    ) -> SQLiteReadExecutionPlan:
+        return compile_sqlite_read_execution_plan(
+            db_name=db_name,
+            coll_name=coll_name,
+            semantics=semantics,
+            select_clause=select_clause,
+            hint=hint,
+            dialect_requires_python_fallback=self._dialect_requires_python_fallback,
+            plan_has_array_traversing_paths=self._plan_has_array_traversing_paths,
+            plan_requires_python_for_array_comparisons=self._plan_requires_python_for_array_comparisons,
+            plan_requires_python_for_undefined=self._plan_requires_python_for_undefined,
+            plan_requires_python_for_bytes=self._plan_requires_python_for_bytes,
+            sort_requires_python=self._sort_requires_python,
+            build_select_sql=self._build_select_sql,
+        )
 
     def _explain_query_plan_sync(
         self,
@@ -763,24 +783,13 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection()
             enforce_deadline(deadline)
-            if self._plan_has_array_traversing_paths(db_name, coll_name, semantics.query_plan):
-                raise NotImplementedError("Array traversal requires Python fallback")
-            if self._plan_requires_python_for_array_comparisons(db_name, coll_name, semantics.query_plan):
-                raise NotImplementedError("Top-level array comparisons require Python fallback")
-            if self._plan_requires_python_for_bytes(db_name, coll_name, semantics.query_plan):
-                raise NotImplementedError("Tagged bytes require Python fallback")
-            if self._plan_requires_python_for_undefined(db_name, coll_name, semantics.query_plan):
-                raise NotImplementedError("Tagged undefined values require Python fallback")
-            sql, params = self._build_select_sql(
+            execution_plan = self._compile_read_execution_plan(
                 db_name,
                 coll_name,
-                semantics.query_plan,
-                select_clause="document",
-                sort=semantics.sort,
-                skip=semantics.skip,
-                limit=semantics.limit,
+                semantics,
                 hint=hint,
             )
+            sql, params = execution_plan.require_sql()
             rows = conn.execute(f"EXPLAIN QUERY PLAN {sql}", tuple(params)).fetchall()
         enforce_deadline(deadline)
         return [str(row[3]) for row in rows]
@@ -1206,26 +1215,13 @@ class SQLiteEngine(AsyncStorageEngine):
             with self._bind_connection(conn) if conn is not None else nullcontext():
                 try:
                     enforce_deadline(deadline)
-                    if self._dialect_requires_python_fallback(semantics.dialect):
-                        raise NotImplementedError("Custom dialect requires Python fallback")
-                    if self._plan_has_array_traversing_paths(db_name, coll_name, semantics.query_plan):
-                        raise NotImplementedError("Array traversal requires Python fallback")
-                    if self._plan_requires_python_for_array_comparisons(db_name, coll_name, semantics.query_plan):
-                        raise NotImplementedError("Top-level array comparisons require Python fallback")
-                    if self._plan_requires_python_for_undefined(db_name, coll_name, semantics.query_plan):
-                        raise NotImplementedError("Tagged undefined requires Python fallback")
-                    if self._sort_requires_python(db_name, coll_name, semantics.query_plan, semantics.sort):
-                        raise NotImplementedError("Sort requires Python fallback")
-                    sql, sql_params = self._build_select_sql(
+                    execution_plan = self._compile_read_execution_plan(
                         db_name,
                         coll_name,
-                        semantics.query_plan,
-                        select_clause="document",
-                        sort=semantics.sort,
-                        skip=semantics.skip,
-                        limit=semantics.limit,
+                        semantics,
                         hint=hint,
                     )
+                    sql, sql_params = execution_plan.require_sql()
                     if conn is None:
                         conn = self._require_connection(context)
                     cursor = conn.execute(sql, tuple(sql_params))
@@ -1440,13 +1436,20 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> DeleteResult:
         effective_dialect = dialect or MONGODB_DIALECT_70
         plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
+        semantics = compile_find_semantics(
+            filter_spec,
+            plan=plan,
+            dialect=effective_dialect,
+        )
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 try:
-                    if self._dialect_requires_python_fallback(effective_dialect):
-                        raise NotImplementedError("Custom dialect requires Python fallback")
-                    selected = self._select_first_document_for_plan(db_name, coll_name, plan)
+                    selected = self._select_first_document_for_plan(
+                        db_name,
+                        coll_name,
+                        semantics.query_plan,
+                    )
                     if selected is None:
                         return DeleteResult(deleted_count=0)
                     storage_key, _document = selected
@@ -1466,7 +1469,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     pass
 
                 for storage_key, document in self._load_documents(db_name, coll_name):
-                    if not QueryEngine.match_plan(document, plan, dialect=effective_dialect):
+                    if not QueryEngine.match_plan(document, semantics.query_plan, dialect=effective_dialect):
                         continue
                     self._begin_write(conn, context)
                     conn.execute(
@@ -1492,39 +1495,35 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> int:
         effective_dialect = dialect or MONGODB_DIALECT_70
         plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
+        semantics = compile_find_semantics(
+            filter_spec,
+            plan=plan,
+            dialect=effective_dialect,
+        )
         with self._lock:
             conn: sqlite3.Connection | None = None
             if self._session_owns_transaction(context):
                 conn = self._require_connection(context)
             with self._bind_connection(conn) if conn is not None else nullcontext():
                 try:
-                    if self._dialect_requires_python_fallback(effective_dialect):
-                        raise NotImplementedError("Custom dialect requires Python fallback")
-                    if self._plan_has_array_traversing_paths(db_name, coll_name, plan):
-                        raise NotImplementedError("Array traversal requires Python fallback")
-                    if self._plan_requires_python_for_array_comparisons(db_name, coll_name, plan):
-                        raise NotImplementedError("Top-level array comparisons require Python fallback")
-                    if self._plan_requires_python_for_undefined(db_name, coll_name, plan):
-                        raise NotImplementedError("Tagged undefined requires Python fallback")
-                    where_sql, params = self._translate_query_plan_with_multikey(db_name, coll_name, plan)
+                    execution_plan = self._compile_read_execution_plan(
+                        db_name,
+                        coll_name,
+                        semantics,
+                    )
+                    sql, params = execution_plan.require_sql()
                     if conn is None:
                         conn = self._require_connection(context)
-                    if self._plan_requires_python_for_bytes(db_name, coll_name, plan):
-                        raise NotImplementedError("Tagged bytes require Python fallback")
                     row = conn.execute(
-                        f"""
-                        SELECT COUNT(*)
-                        FROM documents
-                        WHERE db_name = ? AND coll_name = ? AND ({where_sql})
-                        """,
-                        (db_name, coll_name, *params),
+                        f"SELECT COUNT(*) FROM ({sql})",
+                        tuple(params),
                     ).fetchone()
                     return int(row[0])
                 except (NotImplementedError, TypeError):
                     return sum(
                         1
                         for _, document in self._load_documents(db_name, coll_name)
-                        if QueryEngine.match_plan(document, plan, dialect=effective_dialect)
+                        if QueryEngine.match_plan(document, semantics.query_plan, dialect=effective_dialect)
                     )
 
     def _create_index_sync(
