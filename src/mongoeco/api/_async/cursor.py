@@ -140,18 +140,29 @@ class AsyncCursor:
 
     def _scan(self, *, limit: int | None = None):
         self._started = True
-        return self._collection._engine.scan_collection(
+        engine = self._collection._engine
+        operation = self.clone().limit(self._limit if limit is None else limit)._as_operation()
+        scan_find_operation = getattr(engine, "scan_find_operation", None)
+        if callable(scan_find_operation):
+            return scan_find_operation(
+                self._collection._db_name,
+                self._collection._collection_name,
+                operation,
+                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+                context=self._session,
+            )
+        return engine.scan_collection(
             self._collection._db_name,
             self._collection._collection_name,
-            self._filter_spec,
-            plan=self._plan,
-            projection=self._projection,
-            sort=self._sort,
-            skip=self._skip,
-            limit=self._limit if limit is None else limit,
-            hint=self._hint,
-            comment=self._comment,
-            max_time_ms=self._max_time_ms,
+            operation.filter_spec,
+            plan=operation.plan,
+            projection=operation.projection,
+            sort=operation.sort,
+            skip=operation.skip,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
             dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
             context=self._session,
         )
@@ -164,24 +175,34 @@ class AsyncCursor:
             if remaining <= 0:
                 return []
             effective_limit = min(batch_size, remaining)
-        return [
-            document
-            async for document in self._collection._engine.scan_collection(
+        operation = self.clone().skip(effective_skip).limit(effective_limit)._as_operation()
+        engine = self._collection._engine
+        scan_find_operation = getattr(engine, "scan_find_operation", None)
+        if callable(scan_find_operation):
+            iterable = scan_find_operation(
                 self._collection._db_name,
                 self._collection._collection_name,
-                self._filter_spec,
-                plan=self._plan,
-                projection=self._projection,
-                sort=self._sort,
-                skip=effective_skip,
-                limit=effective_limit,
-                hint=self._hint,
-                comment=self._comment,
-                max_time_ms=self._max_time_ms,
+                operation,
                 dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
                 context=self._session,
             )
-        ]
+        else:
+            iterable = engine.scan_collection(
+                self._collection._db_name,
+                self._collection._collection_name,
+                operation.filter_spec,
+                plan=operation.plan,
+                projection=operation.projection,
+                sort=operation.sort,
+                skip=operation.skip,
+                limit=operation.limit,
+                hint=operation.hint,
+                comment=operation.comment,
+                max_time_ms=operation.max_time_ms,
+                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+                context=self._session,
+            )
+        return [document async for document in iterable]
 
     def _iter(self, *, limit: int | None = None, enforce_ownership: bool = True) -> _AsyncCursorIterator:
         self._started = True
@@ -285,24 +306,52 @@ class AsyncCursor:
             session=self._session,
         )
 
-    @property
-    def alive(self) -> bool:
-        return not self._exhausted
+    def _as_operation(self):
+        from mongoeco.api.operations import FindOperation
 
-    async def explain(self) -> dict[str, object]:
-        return _serialize_explanation(
-            await self._collection._engine.explain_query_plan(
-            self._collection._db_name,
-            self._collection._collection_name,
-            self._filter_spec,
+        return FindOperation(
+            filter_spec=self._filter_spec,
             plan=self._plan,
+            projection=self._projection,
             sort=self._sort,
             skip=self._skip,
             limit=self._limit,
             hint=self._hint,
             comment=self._comment,
             max_time_ms=self._max_time_ms,
-            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-            context=self._session,
+            batch_size=self._batch_size,
+        )
+
+    @property
+    def alive(self) -> bool:
+        return not self._exhausted
+
+    async def explain(self) -> dict[str, object]:
+        engine = self._collection._engine
+        explain_find_operation = getattr(engine, "explain_find_operation", None)
+        if callable(explain_find_operation):
+            result = await explain_find_operation(
+                self._collection._db_name,
+                self._collection._collection_name,
+                self._as_operation(),
+                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+                context=self._session,
             )
+        else:
+            result = await engine.explain_query_plan(
+                self._collection._db_name,
+                self._collection._collection_name,
+                self._filter_spec,
+                plan=self._plan,
+                sort=self._sort,
+                skip=self._skip,
+                limit=self._limit,
+                hint=self._hint,
+                comment=self._comment,
+                max_time_ms=self._max_time_ms,
+                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+                context=self._session,
+            )
+        return _serialize_explanation(
+            result
         )

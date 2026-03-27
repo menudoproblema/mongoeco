@@ -7,6 +7,7 @@ import uuid
 from copy import deepcopy
 from typing import Any, AsyncIterable, override
 
+from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.core.filtering import QueryEngine
@@ -378,6 +379,32 @@ class MemoryEngine(AsyncStorageEngine):
         return _scan()
 
     @override
+    def scan_find_operation(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: FindOperation,
+        *,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> AsyncIterable[Document]:
+        return self.scan_collection(
+            db_name,
+            coll_name,
+            operation.filter_spec,
+            plan=operation.plan,
+            projection=operation.projection,
+            sort=operation.sort,
+            skip=operation.skip,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
+            dialect=dialect,
+            context=context,
+        )
+
+    @override
     async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, selector_filter: Filter | None = None, array_filters: ArrayFilters | None = None, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> UpdateResult[DocumentId]:
         effective_dialect = dialect or MONGODB_DIALECT_70
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
@@ -444,6 +471,34 @@ class MemoryEngine(AsyncStorageEngine):
             )
 
     @override
+    async def update_with_operation(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: UpdateOperation,
+        update_spec: Update,
+        upsert: bool = False,
+        upsert_seed: Document | None = None,
+        *,
+        selector_filter: Filter | None = None,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> UpdateResult[DocumentId]:
+        return await self.update_matching_document(
+            db_name,
+            coll_name,
+            operation.filter_spec,
+            update_spec,
+            upsert=upsert,
+            upsert_seed=upsert_seed,
+            selector_filter=selector_filter,
+            array_filters=operation.array_filters,
+            plan=operation.plan,
+            dialect=dialect,
+            context=context,
+        )
+
+    @override
     async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult:
         effective_dialect = dialect or MONGODB_DIALECT_70
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
@@ -456,6 +511,25 @@ class MemoryEngine(AsyncStorageEngine):
                 del coll[storage_key]
                 return DeleteResult(deleted_count=1)
             return DeleteResult(deleted_count=0)
+
+    @override
+    async def delete_with_operation(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: UpdateOperation,
+        *,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> DeleteResult:
+        return await self.delete_matching_document(
+            db_name,
+            coll_name,
+            operation.filter_spec,
+            plan=operation.plan,
+            dialect=dialect,
+            context=context,
+        )
 
     @override
     async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int:
@@ -472,6 +546,27 @@ class MemoryEngine(AsyncStorageEngine):
                     dialect=effective_dialect,
                 )
             )
+
+    @override
+    async def count_find_operation(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: FindOperation,
+        *,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> int:
+        count = 0
+        async for _ in self.scan_find_operation(
+            db_name,
+            coll_name,
+            operation,
+            dialect=dialect,
+            context=context,
+        ):
+            count += 1
+        return count
 
     @override
     async def create_index(
@@ -671,6 +766,31 @@ class MemoryEngine(AsyncStorageEngine):
             comment=comment,
             max_time_ms=max_time_ms,
             indexes=indexes,
+        )
+
+    @override
+    async def explain_find_operation(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: FindOperation,
+        *,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> QueryPlanExplanation:
+        return await self.explain_query_plan(
+            db_name,
+            coll_name,
+            operation.filter_spec,
+            plan=operation.plan,
+            sort=operation.sort,
+            skip=operation.skip,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
+            dialect=dialect,
+            context=context,
         )
 
     @override

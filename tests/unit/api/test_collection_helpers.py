@@ -1319,17 +1319,15 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         asyncio.run(collection.count_documents({"name": "Ada"}))
 
         self.assertEqual(type(engine.scan_plans[0]).__name__, "EqualsCondition")
-        self.assertEqual(type(engine.scan_plans[1]).__name__, "EqualsCondition")
         self.assertEqual(type(engine.update_plan).__name__, "EqualsCondition")
         self.assertEqual(type(engine.delete_plan).__name__, "EqualsCondition")
-        self.assertIsNone(engine.count_plan)
+        self.assertEqual(type(engine.count_plan).__name__, "EqualsCondition")
         self.assertNotIsInstance(engine.scan_plans[0], MatchAll)
-        self.assertNotIsInstance(engine.scan_plans[1], MatchAll)
+        self.assertNotIsInstance(engine.count_plan, MatchAll)
         self.assertIs(engine.scan_dialects[0], collection.mongodb_dialect)
-        self.assertIs(engine.scan_dialects[1], collection.mongodb_dialect)
         self.assertIs(engine.update_dialect, collection.mongodb_dialect)
         self.assertIs(engine.delete_dialect, collection.mongodb_dialect)
-        self.assertIsNone(engine.count_dialect)
+        self.assertIs(engine.count_dialect, collection.mongodb_dialect)
 
     def test_index_helpers_normalize_and_forward_arguments(self):
         class EngineStub:

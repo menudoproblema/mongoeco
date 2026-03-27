@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Sequence
+from collections.abc import AsyncIterable, Iterable, Sequence
 from copy import deepcopy
 import time
 
@@ -264,6 +264,122 @@ class AsyncCollection:
                 max_time_ms=max_time_ms,
                 hint=hint,
             )
+
+    async def _engine_update_with_operation(
+        self,
+        operation: UpdateOperation,
+        update_spec: Update,
+        *,
+        upsert: bool = False,
+        upsert_seed: Document | None = None,
+        selector_filter: Filter | None = None,
+        session: ClientSession | None = None,
+    ) -> UpdateResult[DocumentId]:
+        method = getattr(self._engine, "update_with_operation", None)
+        if callable(method):
+            return await method(
+                self._db_name,
+                self._collection_name,
+                operation,
+                update_spec,
+                upsert=upsert,
+                upsert_seed=upsert_seed,
+                selector_filter=selector_filter,
+                dialect=self._mongodb_dialect,
+                context=session,
+            )
+        return await self._engine.update_matching_document(
+            self._db_name,
+            self._collection_name,
+            operation.filter_spec,
+            update_spec,
+            upsert=upsert,
+            upsert_seed=upsert_seed,
+            selector_filter=selector_filter,
+            array_filters=operation.array_filters,
+            plan=operation.plan,
+            dialect=self._mongodb_dialect,
+            context=session,
+        )
+
+    def _engine_scan_with_operation(
+        self,
+        operation: FindOperation,
+        *,
+        session: ClientSession | None = None,
+    ) -> AsyncIterable[Document]:
+        method = getattr(self._engine, "scan_find_operation", None)
+        if callable(method):
+            return method(
+                self._db_name,
+                self._collection_name,
+                operation,
+                dialect=self._mongodb_dialect,
+                context=session,
+            )
+        return self._engine.scan_collection(
+            self._db_name,
+            self._collection_name,
+            operation.filter_spec,
+            plan=operation.plan,
+            projection=operation.projection,
+            sort=operation.sort,
+            skip=operation.skip,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
+            dialect=self._mongodb_dialect,
+            context=session,
+        )
+
+    async def _engine_delete_with_operation(
+        self,
+        operation: UpdateOperation,
+        *,
+        session: ClientSession | None = None,
+    ) -> DeleteResult:
+        method = getattr(self._engine, "delete_with_operation", None)
+        if callable(method):
+            return await method(
+                self._db_name,
+                self._collection_name,
+                operation,
+                dialect=self._mongodb_dialect,
+                context=session,
+            )
+        return await self._engine.delete_matching_document(
+            self._db_name,
+            self._collection_name,
+            operation.filter_spec,
+            plan=operation.plan,
+            dialect=self._mongodb_dialect,
+            context=session,
+        )
+
+    async def _engine_count_with_operation(
+        self,
+        operation: FindOperation,
+        *,
+        session: ClientSession | None = None,
+    ) -> int:
+        method = getattr(self._engine, "count_find_operation", None)
+        if callable(method):
+            return await method(
+                self._db_name,
+                self._collection_name,
+                operation,
+                dialect=self._mongodb_dialect,
+                context=session,
+            )
+        return await self._engine.count_matching_documents(
+            self._db_name,
+            self._collection_name,
+            operation.filter_spec,
+            plan=operation.plan,
+            dialect=self._mongodb_dialect,
+            context=session,
+        )
 
     @staticmethod
     def _can_use_direct_id_lookup(filter_spec: Filter) -> bool:
@@ -614,15 +730,7 @@ class AsyncCollection:
             )
         else:
             operation = operation.with_overrides(limit=1)
-            async for d in self._engine.scan_collection(
-                self._db_name,
-                self._collection_name,
-                operation.filter_spec,
-                plan=operation.plan,
-                projection=operation.projection,
-                dialect=self._mongodb_dialect,
-                context=session,
-            ):
+            async for d in self._engine_scan_with_operation(operation, session=session):
                 doc = d
                 break
 
@@ -745,17 +853,17 @@ class AsyncCollection:
             if selected is not None:
                 identity_filter = {'_id': selected['_id']}
                 identity_plan = compile_filter(identity_filter, dialect=self._mongodb_dialect)
-                result = await self._engine.update_matching_document(
-                    self._db_name,
-                    self._collection_name,
-                    identity_filter,
+                result = await self._engine_update_with_operation(
+                    operation.with_overrides(
+                        filter_spec=identity_filter,
+                        plan=identity_plan,
+                        sort=None,
+                        hint=None,
+                    ),
                     update_spec,
                     upsert=False,
                     selector_filter=operation.filter_spec,
-                    array_filters=operation.array_filters,
-                    plan=identity_plan,
-                    dialect=self._mongodb_dialect,
-                    context=session,
+                    session=session,
                 )
                 self._record_operation_metadata(
                     operation="update_one",
@@ -791,17 +899,16 @@ class AsyncCollection:
                 return UpdateResult(matched_count=0, modified_count=0)
             identity_filter = {"_id": selected["_id"]}
             identity_plan = compile_filter(identity_filter, dialect=self._mongodb_dialect)
-            result = await self._engine.update_matching_document(
-                self._db_name,
-                self._collection_name,
-                identity_filter,
+            result = await self._engine_update_with_operation(
+                operation.with_overrides(
+                    filter_spec=identity_filter,
+                    plan=identity_plan,
+                    hint=None,
+                ),
                 update_spec,
                 upsert=False,
                 selector_filter=operation.filter_spec,
-                array_filters=operation.array_filters,
-                plan=identity_plan,
-                dialect=self._mongodb_dialect,
-                context=session,
+                session=session,
             )
             self._record_operation_metadata(
                 operation="update_one",
@@ -815,18 +922,13 @@ class AsyncCollection:
             upsert_seed = {}
             seed_upsert_document(upsert_seed, operation.filter_spec)
 
-        result = await self._engine.update_matching_document(
-            self._db_name,
-            self._collection_name,
-            operation.filter_spec,
+        result = await self._engine_update_with_operation(
+            operation,
             update_spec,
             upsert=upsert,
             upsert_seed=upsert_seed,
             selector_filter=operation.filter_spec,
-            array_filters=operation.array_filters,
-            plan=operation.plan,
-            dialect=self._mongodb_dialect,
-            context=session,
+            session=session,
         )
         self._record_operation_metadata(
             operation="update_one",
@@ -909,17 +1011,16 @@ class AsyncCollection:
         for matched in matched_documents:
             identity_filter = {"_id": matched["_id"]}
             identity_plan = compile_filter(identity_filter, dialect=self._mongodb_dialect)
-            result = await self._engine.update_matching_document(
-                self._db_name,
-                self._collection_name,
-                identity_filter,
+            result = await self._engine_update_with_operation(
+                operation.with_overrides(
+                    filter_spec=identity_filter,
+                    plan=identity_plan,
+                    hint=None,
+                ),
                 update_spec,
                 upsert=False,
                 selector_filter=operation.filter_spec,
-                array_filters=operation.array_filters,
-                plan=identity_plan,
-                dialect=self._mongodb_dialect,
-                context=session,
+                session=session,
             )
             modified_count += result.modified_count
 
@@ -1065,17 +1166,17 @@ class AsyncCollection:
 
         identity_filter = {"_id": before["_id"]}
         identity_plan = compile_filter(identity_filter, dialect=self._mongodb_dialect)
-        await self._engine.update_matching_document(
-            self._db_name,
-            self._collection_name,
-            identity_filter,
+        await self._engine_update_with_operation(
+            operation.with_overrides(
+                filter_spec=identity_filter,
+                plan=identity_plan,
+                sort=None,
+                hint=None,
+            ),
             update_spec,
             upsert=False,
             selector_filter=operation.filter_spec,
-            array_filters=operation.array_filters,
-            plan=identity_plan,
-            dialect=self._mongodb_dialect,
-            context=session,
+            session=session,
         )
         if return_document is ReturnDocument.BEFORE:
             return apply_projection(before, projection, dialect=self._mongodb_dialect)
@@ -1254,14 +1355,7 @@ class AsyncCollection:
                 session=session,
             )
             return DeleteResult(deleted_count=1 if deleted else 0)
-        result = await self._engine.delete_matching_document(
-            self._db_name,
-            self._collection_name,
-            operation.filter_spec,
-            plan=operation.plan,
-            dialect=self._mongodb_dialect,
-            context=session,
-        )
+        result = await self._engine_delete_with_operation(operation, session=session)
         self._record_operation_metadata(
             operation="delete_one",
             comment=operation.comment,
@@ -1332,18 +1426,25 @@ class AsyncCollection:
             not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
         ):
             raise TypeError("limit must be a non-negative integer")
-        return len(
-            await self.find(
-                filter_spec,
-                {"_id": 1},
-                skip=skip,
-                limit=limit,
-                hint=hint,
-                comment=comment,
-                max_time_ms=max_time_ms,
-                session=session,
-            ).to_list()
+        operation = compile_find_operation(
+            filter_spec,
+            projection={"_id": 1},
+            skip=skip,
+            limit=limit,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            dialect=self._mongodb_dialect,
         )
+        count = await self._engine_count_with_operation(operation, session=session)
+        self._record_operation_metadata(
+            operation="count_documents",
+            comment=operation.comment,
+            hint=operation.hint,
+            max_time_ms=operation.max_time_ms,
+            session=session,
+        )
+        return count
 
     async def estimated_document_count(
         self,

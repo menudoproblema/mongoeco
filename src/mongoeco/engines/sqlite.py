@@ -11,6 +11,7 @@ from copy import deepcopy
 from decimal import Decimal
 from typing import Any, AsyncIterable, override
 
+from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect, MongoDialect70, MongoDialect80
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.filtering import QueryEngine
@@ -2004,6 +2005,32 @@ class SQLiteEngine(AsyncStorageEngine):
         return _scan()
 
     @override
+    def scan_find_operation(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: FindOperation,
+        *,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> AsyncIterable[Document]:
+        return self.scan_collection(
+            db_name,
+            coll_name,
+            operation.filter_spec,
+            plan=operation.plan,
+            projection=operation.projection,
+            sort=operation.sort,
+            skip=operation.skip,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
+            dialect=dialect,
+            context=context,
+        )
+
+    @override
     async def update_matching_document(
         self,
         db_name: str,
@@ -2035,6 +2062,34 @@ class SQLiteEngine(AsyncStorageEngine):
         )
 
     @override
+    async def update_with_operation(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: UpdateOperation,
+        update_spec: Update,
+        upsert: bool = False,
+        upsert_seed: Document | None = None,
+        *,
+        selector_filter: Filter | None = None,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> UpdateResult[DocumentId]:
+        return await self.update_matching_document(
+            db_name,
+            coll_name,
+            operation.filter_spec,
+            update_spec,
+            upsert=upsert,
+            upsert_seed=upsert_seed,
+            selector_filter=selector_filter,
+            array_filters=operation.array_filters,
+            plan=operation.plan,
+            dialect=dialect,
+            context=context,
+        )
+
+    @override
     async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult:
         return await asyncio.to_thread(
             self._delete_matching_document_sync,
@@ -2044,6 +2099,25 @@ class SQLiteEngine(AsyncStorageEngine):
             plan,
             context,
             dialect,
+        )
+
+    @override
+    async def delete_with_operation(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: UpdateOperation,
+        *,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> DeleteResult:
+        return await self.delete_matching_document(
+            db_name,
+            coll_name,
+            operation.filter_spec,
+            plan=operation.plan,
+            dialect=dialect,
+            context=context,
         )
 
     @override
@@ -2057,6 +2131,27 @@ class SQLiteEngine(AsyncStorageEngine):
             context,
             dialect,
         )
+
+    @override
+    async def count_find_operation(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: FindOperation,
+        *,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> int:
+        count = 0
+        async for _ in self.scan_find_operation(
+            db_name,
+            coll_name,
+            operation,
+            dialect=dialect,
+            context=context,
+        ):
+            count += 1
+        return count
 
     @override
     async def create_index(
@@ -2165,6 +2260,31 @@ class SQLiteEngine(AsyncStorageEngine):
             hinted_index=None if hinted_index is None else hinted_index["name"],
             comment=comment,
             max_time_ms=max_time_ms,
+        )
+
+    @override
+    async def explain_find_operation(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: FindOperation,
+        *,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> QueryPlanExplanation:
+        return await self.explain_query_plan(
+            db_name,
+            coll_name,
+            operation.filter_spec,
+            plan=operation.plan,
+            sort=operation.sort,
+            skip=operation.skip,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
+            dialect=dialect,
+            context=context,
         )
 
     @override
