@@ -26,6 +26,7 @@ from mongoeco.compat.base import (
 )
 from mongoeco.compat.catalog import (
     export_full_compat_catalog,
+    export_full_compat_catalog_markdown,
     export_mongodb_dialect_catalog,
     export_operation_option_catalog,
     export_pymongo_profile_catalog,
@@ -90,6 +91,7 @@ __all__ = [
     'export_pymongo_profile_catalog',
     'export_operation_option_catalog',
     'export_full_compat_catalog',
+    'export_full_compat_catalog_markdown',
     'UNSUPPORTED_OPERATION_OPTION',
     'get_operation_option_support',
     'is_operation_option_effective',

@@ -40,6 +40,7 @@ from mongoeco.compat import (
     resolve_pymongo_profile_resolution,
     STRICT_AUTO_INSTALLED_PYMONGO_PROFILE,
     export_full_compat_catalog,
+    export_full_compat_catalog_markdown,
     export_mongodb_dialect_catalog,
     export_operation_option_catalog,
     export_pymongo_profile_catalog,
@@ -52,6 +53,12 @@ class CompatResolutionTests(unittest.TestCase):
         expected = json.loads(snapshot_path.read_text(encoding="utf-8"))
 
         self.assertEqual(export_full_compat_catalog(), expected)
+
+    def test_exported_markdown_catalog_matches_snapshot_fixture(self):
+        snapshot_path = Path("tests/fixtures/compat_catalog_snapshot.md")
+        expected = snapshot_path.read_text(encoding="utf-8")
+
+        self.assertEqual(export_full_compat_catalog_markdown(), expected)
 
     def test_catalog_is_exposed_as_immutable_global_data(self):
         self.assertIsInstance(MONGODB_DIALECTS, MappingProxyType)
@@ -117,6 +124,8 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertIn('$eq', MongoDialect70().query_field_operators)
         self.assertTrue(MongoDialect70().supports_query_field_operator('$eq'))
         self.assertFalse(MongoDialect70().supports_query_field_operator('$unknown'))
+        self.assertTrue(MongoDialect70().behavior_flag('null_query_matches_undefined'))
+        self.assertFalse(MongoDialect80().behavior_flag('null_query_matches_undefined'))
 
     def test_exported_catalog_matches_public_runtime_catalogs(self):
         mongodb_catalog = export_mongodb_dialect_catalog()
@@ -140,6 +149,8 @@ class CompatResolutionTests(unittest.TestCase):
             operation_catalog['find']['hint']['status'],
             'effective',
         )
+        self.assertTrue(PYMONGO_PROFILE_411.has_capability('update_one.sort'))
+        self.assertFalse(PYMONGO_PROFILE_49.has_capability('update_one.sort'))
 
     def test_resolve_mongodb_dialect_uses_baseline_by_default(self):
         self.assertIs(resolve_mongodb_dialect(), MONGODB_DIALECT_70)

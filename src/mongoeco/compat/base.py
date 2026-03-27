@@ -103,12 +103,15 @@ class MongoDialect:
     server_version: str
     label: str
 
+    def behavior_flag(self, name: str, default: bool | None = None) -> bool | None:
+        return _dialect_catalog_behavior_flag(self.key, name) if name in MONGODB_DIALECT_HOOK_NAMES else default
+
+    def has_capability(self, name: str) -> bool:
+        return name in self.capabilities
+
     def null_query_matches_undefined(self) -> bool:
         """Controla si `null` en query iguala el BSON `undefined` legado."""
-        catalog_value = _dialect_catalog_behavior_flag(
-            self.key,
-            "null_query_matches_undefined",
-        )
+        catalog_value = self.behavior_flag("null_query_matches_undefined")
         if catalog_value is not None:
             return catalog_value
         return True
@@ -306,11 +309,14 @@ class PyMongoProfile:
     driver_series: str
     label: str
 
+    def behavior_flag(self, name: str, default: bool | None = None) -> bool | None:
+        return _pymongo_catalog_behavior_flag(self.key, name) if name in PYMONGO_PROFILE_HOOK_NAMES else default
+
+    def has_capability(self, name: str) -> bool:
+        return name in self.capabilities
+
     def supports_update_one_sort(self) -> bool:
-        catalog_value = _pymongo_catalog_behavior_flag(
-            self.key,
-            "supports_update_one_sort",
-        )
+        catalog_value = self.behavior_flag("supports_update_one_sort")
         if catalog_value is not None:
             return catalog_value
         return False
