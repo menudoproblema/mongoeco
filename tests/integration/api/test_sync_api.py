@@ -380,6 +380,60 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         },
                     )
 
+    def test_database_command_supports_explain_for_find_and_aggregate(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.alpha.events.insert_many(
+                        [
+                            {"_id": "1", "kind": "view", "rank": 2},
+                            {"_id": "2", "kind": "view", "rank": 1},
+                        ]
+                    )
+                    client.alpha.events.create_index(
+                        [("kind", 1)],
+                        name="kind_idx",
+                    )
+
+                    find_explain = client.alpha.command(
+                        {
+                            "explain": {
+                                "find": "events",
+                                "filter": {"kind": "view"},
+                                "sort": {"rank": 1},
+                                "hint": "kind_idx",
+                                "comment": "find explain",
+                                "maxTimeMS": 50,
+                                "batchSize": 1,
+                            },
+                            "verbosity": "queryPlanner",
+                        }
+                    )
+                    aggregate_explain = client.alpha.command(
+                        {
+                            "explain": {
+                                "aggregate": "events",
+                                "pipeline": [{"$match": {"kind": "view"}}],
+                                "cursor": {"batchSize": 1},
+                                "hint": "kind_idx",
+                                "comment": "agg explain",
+                                "maxTimeMS": 50,
+                            }
+                        }
+                    )
+
+                    self.assertEqual(find_explain["verbosity"], "queryPlanner")
+                    self.assertEqual(find_explain["hint"], "kind_idx")
+                    self.assertEqual(find_explain["comment"], "find explain")
+                    self.assertEqual(find_explain["max_time_ms"], 50)
+                    self.assertEqual(find_explain["batch_size"], 1)
+                    self.assertEqual(find_explain["ok"], 1.0)
+                    self.assertEqual(aggregate_explain["hint"], "kind_idx")
+                    self.assertEqual(aggregate_explain["comment"], "agg explain")
+                    self.assertEqual(aggregate_explain["max_time_ms"], 50)
+                    self.assertEqual(aggregate_explain["batch_size"], 1)
+                    self.assertEqual(aggregate_explain["ok"], 1.0)
+
     def test_database_command_supports_insert_update_and_delete(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -554,8 +608,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 client.alpha.command({"find": "events", "batchSize": -1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 client.alpha.command({"aggregate": "events", "pipeline": [], "cursor": 1})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command({"explain": 1})  # type: ignore[arg-type]
             with self.assertRaises(OperationFailure):
                 client.alpha.command({"findAndModify": "events"})
+            with self.assertRaises(OperationFailure):
+                client.alpha.command({"explain": {"count": "events"}})
 
     def test_validate_collection_returns_metadata_and_rejects_missing_namespace(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

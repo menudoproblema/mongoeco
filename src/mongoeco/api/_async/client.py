@@ -818,6 +818,95 @@ class AsyncDatabase:
                 "ok": 1.0,
             }
 
+        if command_name == "explain":
+            explain_spec = spec.get("explain")
+            if not isinstance(explain_spec, dict) or not explain_spec:
+                raise TypeError("explain must be a non-empty document")
+            verbosity = spec.get("verbosity")
+            if verbosity is not None and not isinstance(verbosity, str):
+                raise TypeError("verbosity must be a string")
+
+            explained_command_name = next(iter(explain_spec))
+            if explained_command_name == "find":
+                collection_name = self._require_collection_name(
+                    explain_spec.get("find"),
+                    "find",
+                )
+                query = self._normalize_filter(explain_spec.get("filter"))
+                projection = self._normalize_projection_from_command(
+                    explain_spec.get("projection")
+                )
+                sort = self._normalize_sort_document(explain_spec.get("sort"))
+                hint = self._normalize_hint_from_command(explain_spec.get("hint"))
+                max_time_ms = self._normalize_max_time_ms_from_command(
+                    explain_spec.get("maxTimeMS")
+                )
+                skip = explain_spec.get("skip", 0)
+                if not isinstance(skip, int) or isinstance(skip, bool) or skip < 0:
+                    raise TypeError("skip must be a non-negative integer")
+                limit = explain_spec.get("limit")
+                if limit is not None and (
+                    not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
+                ):
+                    raise TypeError("limit must be a non-negative integer")
+                batch_size = self._normalize_batch_size_from_command(
+                    explain_spec.get("batchSize")
+                )
+                explanation = await self.get_collection(collection_name).find(
+                    query,
+                    projection,
+                    sort=sort,
+                    skip=skip,
+                    limit=limit,
+                    hint=hint,
+                    comment=explain_spec.get("comment"),
+                    max_time_ms=max_time_ms,
+                    batch_size=batch_size,
+                    session=session,
+                ).explain()
+                result = dict(explanation)
+                result["batch_size"] = batch_size
+            elif explained_command_name == "aggregate":
+                collection_name = self._require_collection_name(
+                    explain_spec.get("aggregate"),
+                    "aggregate",
+                )
+                pipeline = explain_spec.get("pipeline")
+                if not isinstance(pipeline, list):
+                    raise TypeError("pipeline must be a list")
+                cursor_spec = explain_spec.get("cursor", {})
+                if not isinstance(cursor_spec, dict):
+                    raise TypeError("cursor must be a document")
+                batch_size = self._normalize_batch_size_from_command(
+                    cursor_spec.get("batchSize")
+                )
+                hint = self._normalize_hint_from_command(explain_spec.get("hint"))
+                max_time_ms = self._normalize_max_time_ms_from_command(
+                    explain_spec.get("maxTimeMS")
+                )
+                let = explain_spec.get("let")
+                if let is not None and not isinstance(let, dict):
+                    raise TypeError("let must be a dict")
+                explanation = await self.get_collection(collection_name).aggregate(
+                    pipeline,
+                    hint=hint,
+                    comment=explain_spec.get("comment"),
+                    max_time_ms=max_time_ms,
+                    batch_size=batch_size,
+                    let=let,
+                    session=session,
+                ).explain()
+                result = dict(explanation)
+            else:
+                raise OperationFailure(
+                    f"Unsupported explain command: {explained_command_name}"
+                )
+
+            result.setdefault("ok", 1.0)
+            if verbosity is not None:
+                result["verbosity"] = verbosity
+            return result
+
         if command_name == "findAndModify":
             collection_name = self._require_collection_name(
                 spec.get("findAndModify"),

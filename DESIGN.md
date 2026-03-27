@@ -746,6 +746,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
 #### Fase 6
 * API administrativa y de metadata:
   * `Database.command`
+    * ya soporta también `explain` para `find` y `aggregate`
   * `server_info`
   * `validate_collection`
   * listados enriquecidos de bases de datos y colecciones
