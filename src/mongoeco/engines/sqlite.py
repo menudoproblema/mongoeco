@@ -56,6 +56,7 @@ from mongoeco.engines.sqlite_planner import (
     compile_sqlite_read_execution_plan,
 )
 from mongoeco.engines.virtual_indexes import (
+    describe_virtual_index_usage,
     document_in_virtual_index,
     normalize_partial_filter_expression,
     query_can_use_index,
@@ -2601,6 +2602,16 @@ class SQLiteEngine(AsyncStorageEngine):
             )
         else:
             details = {"fallback_reason": execution_plan.fallback_reason}
+        virtual_details = describe_virtual_index_usage(
+            await asyncio.to_thread(self._list_indexes_sync, db_name, coll_name, context),
+            semantics.query_plan,
+            hinted_index_name=None if hinted_index is None else hinted_index["name"],
+        )
+        if virtual_details is not None:
+            if isinstance(details, dict):
+                details = {**details, **virtual_details}
+            else:
+                details = {"engine_details": details, **virtual_details}
         return build_query_plan_explanation(
             engine="sqlite",
             strategy=execution_plan.strategy,

@@ -22,6 +22,7 @@ from mongoeco.engines.semantic_core import (
     finalize_documents,
 )
 from mongoeco.engines.virtual_indexes import (
+    describe_virtual_index_usage,
     document_in_virtual_index,
     normalize_partial_filter_expression,
     query_can_use_index,
@@ -1072,10 +1073,16 @@ class MemoryEngine(AsyncStorageEngine):
             dialect=dialect,
             context=context,
         )
+        details = describe_virtual_index_usage(
+            indexes,
+            semantics.query_plan,
+            hinted_index_name=None if hinted_index is None else hinted_index["name"],
+        )
         return build_query_plan_explanation(
             engine="memory",
             strategy=execution_plan.strategy,
             semantics=semantics,
+            details=details,
             hinted_index=None if hinted_index is None else hinted_index["name"],
             indexes=indexes,
             execution_lineage=execution_plan.execution_lineage,

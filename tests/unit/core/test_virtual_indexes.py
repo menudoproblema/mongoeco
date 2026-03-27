@@ -1,7 +1,15 @@
 import unittest
 
-from mongoeco.core.query_plan import AndCondition, EqualsCondition, MatchAll, compile_filter
+from mongoeco.core.query_plan import (
+    AndCondition,
+    EqualsCondition,
+    InCondition,
+    MatchAll,
+    compile_filter,
+)
 from mongoeco.engines.virtual_indexes import (
+    collect_usable_virtual_index_names,
+    describe_virtual_index_usage,
     document_in_virtual_index,
     is_virtual_index,
     normalize_partial_filter_expression,
@@ -71,6 +79,8 @@ class VirtualIndexTests(unittest.TestCase):
 
         self.assertFalse(query_can_use_index(sparse_index, MatchAll()))
         self.assertTrue(query_can_use_index(sparse_index, compile_filter({"email": "a@example.com"})))
+        self.assertFalse(query_can_use_index(sparse_index, compile_filter({"email": None})))
+        self.assertTrue(query_can_use_index(sparse_index, compile_filter({"email": {"$in": ["a@example.com"]}})))
         self.assertFalse(query_can_use_index(partial_index, compile_filter({"email": "a@example.com"})))
         self.assertTrue(
             query_can_use_index(
@@ -82,4 +92,49 @@ class VirtualIndexTests(unittest.TestCase):
                     )
                 ),
             )
+        )
+
+    def test_partial_index_implication_handles_subsets_and_ranges(self):
+        partial_index = EngineIndexRecord(
+            name="score_active_idx",
+            fields=["score"],
+            key=[("score", 1)],
+            unique=False,
+            partial_filter_expression={"score": {"$gte": 10}},
+        )
+
+        self.assertTrue(query_can_use_index(partial_index, compile_filter({"score": {"$gt": 20}})))
+        self.assertTrue(query_can_use_index(partial_index, InCondition("score", (10, 12, 15))))
+        self.assertFalse(query_can_use_index(partial_index, compile_filter({"score": {"$lt": 20}})))
+
+    def test_virtual_index_usage_description_surfaces_usable_and_hinted_indexes(self):
+        indexes = [
+            EngineIndexRecord(
+                name="email_sparse",
+                fields=["email"],
+                key=[("email", 1)],
+                unique=False,
+                sparse=True,
+            ),
+            EngineIndexRecord(
+                name="active_partial",
+                fields=["email"],
+                key=[("email", 1)],
+                unique=False,
+                partial_filter_expression={"active": True},
+            ),
+        ]
+
+        plan = compile_filter({"active": True, "email": {"$in": ["a@example.com"]}})
+
+        self.assertEqual(
+            collect_usable_virtual_index_names(indexes, plan),
+            ["email_sparse", "active_partial"],
+        )
+        self.assertEqual(
+            describe_virtual_index_usage(indexes, plan, hinted_index_name="active_partial"),
+            {
+                "usableVirtualIndexes": ["email_sparse", "active_partial"],
+                "hintedIndexIsVirtual": True,
+            },
         )
