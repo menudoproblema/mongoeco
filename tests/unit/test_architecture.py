@@ -429,3 +429,22 @@ class ArchitectureUnitTests(unittest.TestCase):
 
         self.assertIsInstance(result, BuildInfoResult)
         self.assertEqual(result.to_document()["gitVersion"], "mongoeco")
+
+    def test_database_command_service_can_execute_and_serialize_in_one_step(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin._commands
+
+        result = asyncio.run(service.execute_document("buildInfo"))
+
+        self.assertEqual(result["gitVersion"], "mongoeco")
+        self.assertEqual(result["ok"], 1.0)
+
+    def test_sync_database_command_service_reuses_async_document_execution(self):
+        from mongoeco.api._sync.client import MongoClient
+
+        database = MongoClient().get_database("db")
+
+        result = database._admin._commands.command("buildInfo")
+
+        self.assertEqual(result["gitVersion"], "mongoeco")
+        self.assertEqual(result["ok"], 1.0)

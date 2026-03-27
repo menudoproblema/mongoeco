@@ -32,7 +32,10 @@ class DatabaseCommandService:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> dict[str, object]:
-        async_commands = self._async_command_service()
-        parsed = async_commands.parse_raw_command(command, **kwargs)
-        result = self._client._run(async_commands.execute(parsed, session=session))
-        return async_commands._serialize_result(result)
+        return self._client._run(
+            self._async_command_service().execute_document(
+                command,
+                session=session,
+                **kwargs,
+            )
+        )

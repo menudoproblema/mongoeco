@@ -579,13 +579,27 @@ class AsyncDatabaseCommandService:
         raise AssertionError(f"Unexpected static admin command: {command.command_name}")
 
     @staticmethod
-    def _serialize_result(result: object) -> dict[str, object]:
+    def serialize_result(result: object) -> dict[str, object]:
         to_document = getattr(result, "to_document", None)
         if callable(to_document):
             return to_document()
         if isinstance(result, dict):
             return result
         raise TypeError(f"Unsupported admin command result type: {type(result)!r}")
+
+    async def execute_document(
+        self,
+        command: object | "AsyncDatabaseCommandService.AdminCommand[object]",
+        *,
+        session: ClientSession | None = None,
+        **kwargs: object,
+    ) -> dict[str, object]:
+        parsed = (
+            command
+            if isinstance(command, self.AdminCommand)
+            else self.parse_raw_command(command, **kwargs)
+        )
+        return self.serialize_result(await self.execute(parsed, session=session))
 
     async def command(
         self,
@@ -594,5 +608,8 @@ class AsyncDatabaseCommandService:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> dict[str, object]:
-        parsed = self.parse_raw_command(command, **kwargs)
-        return self._serialize_result(await self.execute(parsed, session=session))
+        return await self.execute_document(
+            command,
+            session=session,
+            **kwargs,
+        )
