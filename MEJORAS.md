@@ -219,6 +219,26 @@ Lo siguiente ya no pertenece a esta hoja de refactor base, sino a evolución fut
 - `Aplicado ya`:
   - `e2314a8` `refactor: formalize mongo error descriptors`
 
+### 19. Spill-to-Disk Formal para Agregación Bloqueante
+
+- `Estado`: `Aplicado con matices`
+- `Impacto`: `Medio-Alto`
+- `Esfuerzo`: `Medio`
+- `Descripción`: introducir una política explícita de spill para stages bloqueantes de agregación, desacoplada del engine y propagada también a pipelines anidados.
+- `Motivación`: la agregación en memoria necesitaba un subsistema formal para poder descargar resultados intermedios sin mezclar esa lógica con cada stage o cursor.
+- `Aporte real`: existe ya una frontera clara de spill (`AggregationSpillPolicy`) y la agregación puede usarla de forma uniforme en stages bloqueantes y facets/joins anidados.
+- `Cierre`: queda con matices porque el backend actual hace round-trip temporal a disco pero no persigue aún una reducción agresiva de memoria por streaming fino; la arquitectura ya está preparada para evolucionar ahí sin reabrir el core.
+
+### 20. Fidelidad BSON Escalar en Decodificación Interna y Updates
+
+- `Estado`: `Aplicado con matices`
+- `Impacto`: `Alto`
+- `Esfuerzo`: `Medio-Alto`
+- `Descripción`: conservar wrappers BSON en la rehidratación interna de documentos y usar helpers aritméticos BSON-aware en updates numéricos, degradando a tipos públicos solo en el borde de salida.
+- `Motivación`: la fidelidad BSON no debía depender de que todo el core trabajase siempre con `int`/`float` nativos, pero tampoco convenía exponer wrappers al usuario.
+- `Aporte real`: engines, codec y updates numéricos ya distinguen mejor entre representación interna BSON y representación pública Python.
+- `Cierre`: queda con matices porque la fidelidad total todavía requiere seguir llevando esta lógica a más rutas numéricas y de agregación, pero la frontera arquitectónica correcta ya existe.
+
 ## Correcciones de Cierre por Revisión Estricta
 
 Estas líneas no sustituyen al refactor base ya hecho, pero sí corrigen el exceso de optimismo de cierres previos cuando se usa un listón arquitectónico más exigente.
