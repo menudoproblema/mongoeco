@@ -272,6 +272,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     await client.alpha.create_collection("events", capped=True)
+                    await client.beta.create_collection("logs")
 
                     self.assertEqual(await client.alpha.command("ping"), {"ok": 1.0})
                     self.assertEqual(
@@ -289,6 +290,28 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                     }
                                 ],
                             },
+                            "ok": 1.0,
+                        },
+                    )
+                    self.assertEqual(
+                        await client.alpha.command("listDatabases", filter={"name": "alpha"}),
+                        {
+                            "databases": [
+                                {
+                                    "name": "alpha",
+                                    "sizeOnDisk": 0,
+                                    "empty": False,
+                                }
+                            ],
+                            "totalSize": 0,
+                            "ok": 1.0,
+                        },
+                    )
+                    self.assertEqual(
+                        await client.alpha.command("listDatabases", nameOnly=True),
+                        {
+                            "databases": [{"name": "alpha"}, {"name": "beta"}],
+                            "totalSize": 0,
                             "ok": 1.0,
                         },
                     )
@@ -398,6 +421,8 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await client.alpha.command({"distinct": "events", "key": 1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 await client.alpha.command({"dropIndexes": "events", "index": 1.5})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                await client.alpha.command("listDatabases", nameOnly=1)  # type: ignore[arg-type]
 
     async def test_validate_collection_returns_metadata_and_rejects_missing_namespace(self):
         for engine_name in ENGINE_FACTORIES:

@@ -297,6 +297,39 @@ class AsyncDatabase:
             "ok": 1.0,
         }
 
+    async def _list_database_documents(
+        self,
+        *,
+        session: ClientSession | None = None,
+    ) -> list[Document]:
+        database_names = await self._engine.list_databases(context=session)
+        documents: list[Document] = []
+        for database_name in database_names:
+            database = type(self)(
+                self._engine,
+                database_name,
+                mongodb_dialect=self._mongodb_dialect,
+                mongodb_dialect_resolution=self._mongodb_dialect_resolution,
+                pymongo_profile=self._pymongo_profile,
+                pymongo_profile_resolution=self._pymongo_profile_resolution,
+                write_concern=self._write_concern,
+                read_concern=self._read_concern,
+                read_preference=self._read_preference,
+                codec_options=self._codec_options,
+            )
+            stats = await database._database_stats(session=session)
+            documents.append(
+                {
+                    "name": database_name,
+                    "sizeOnDisk": stats["storageSize"],
+                    "empty": (
+                        int(stats["collections"]) == 0
+                        and int(stats["objects"]) == 0
+                    ),
+                }
+            )
+        return documents
+
     async def validate_collection(
         self,
         name_or_collection: object,
@@ -371,6 +404,30 @@ class AsyncDatabase:
                     "ns": f"{self._db_name}.$cmd.listCollections",
                     "firstBatch": first_batch,
                 },
+                "ok": 1.0,
+            }
+
+        if command_name == "listDatabases":
+            name_only = spec.get("nameOnly", False)
+            if not isinstance(name_only, bool):
+                raise TypeError("nameOnly must be a bool")
+            filter_spec = self._normalize_filter(spec.get("filter"))
+            databases = await self._list_database_documents(session=session)
+            filtered = [
+                document
+                for document in databases
+                if QueryEngine.match(
+                    document,
+                    filter_spec,
+                    dialect=self._mongodb_dialect,
+                )
+            ]
+            total_size = sum(int(document.get("sizeOnDisk", 0)) for document in filtered)
+            if name_only:
+                filtered = [{"name": str(document["name"])} for document in filtered]
+            return {
+                "databases": filtered,
+                "totalSize": total_size,
                 "ok": 1.0,
             }
 

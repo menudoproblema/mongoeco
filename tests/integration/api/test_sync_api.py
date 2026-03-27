@@ -192,6 +192,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     client.alpha.create_collection("events", capped=True)
+                    client.beta.create_collection("logs")
 
                     self.assertEqual(client.alpha.command("ping"), {"ok": 1.0})
                     self.assertEqual(
@@ -209,6 +210,28 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     }
                                 ],
                             },
+                            "ok": 1.0,
+                        },
+                    )
+                    self.assertEqual(
+                        client.alpha.command("listDatabases", filter={"name": "alpha"}),
+                        {
+                            "databases": [
+                                {
+                                    "name": "alpha",
+                                    "sizeOnDisk": 0,
+                                    "empty": False,
+                                }
+                            ],
+                            "totalSize": 0,
+                            "ok": 1.0,
+                        },
+                    )
+                    self.assertEqual(
+                        client.alpha.command("listDatabases", nameOnly=True),
+                        {
+                            "databases": [{"name": "alpha"}, {"name": "beta"}],
+                            "totalSize": 0,
                             "ok": 1.0,
                         },
                     )
@@ -318,6 +341,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 client.alpha.command({"distinct": "events", "key": 1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 client.alpha.command({"dropIndexes": "events", "index": 1.5})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command("listDatabases", nameOnly=1)  # type: ignore[arg-type]
 
     def test_validate_collection_returns_metadata_and_rejects_missing_namespace(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
