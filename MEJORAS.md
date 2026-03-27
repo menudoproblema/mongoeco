@@ -41,6 +41,8 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `4484998` `refactor: add sync database command service`
   - `fd11f01` `refactor: unify admin command document execution`
   - `bfbecee` `refactor: type admin listing metadata snapshots`
+  - `dcf0cab` `refactor: unify admin listing snapshot loaders`
+  - `56af815` `refactor: extract shared admin command parsing`
 - `Pendiente para cerrar de verdad`:
   - reducir todavía más lógica administrativa residual en `Database`
   - separar mejor ejecución interna y serialización pública de comandos
@@ -78,6 +80,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `1681e98` `refactor: parse typed admin commands before execution`
   - `8ce97aa` `refactor: compile aggregate operations before execution`
   - `5770e05` `refactor: route compiled operations into engines`
+  - `1429e9f` `refactor: route aggregate source loads through operations`
 - `Pendiente para cerrar de verdad`:
   - extender la frontera planificada hasta más rutas de engine
   - consolidar mejor explain/admin sobre operaciones ya compiladas
