@@ -72,6 +72,26 @@ class AsyncDatabaseAdminService:
         documents = await self.list_collections(filter_spec, session=session).to_list()
         return [str(document["name"]) for document in documents]
 
+    async def _list_collection_snapshots(
+        self,
+        *,
+        session: ClientSession | None = None,
+    ) -> list[CollectionListingSnapshot]:
+        names = await self._engine.list_collections(self._db_name, context=session)
+        snapshots: list[CollectionListingSnapshot] = []
+        for name in names:
+            snapshots.append(
+                CollectionListingSnapshot(
+                    name=name,
+                    options=await self._engine.collection_options(
+                        self._db_name,
+                        name,
+                        context=session,
+                    ),
+                )
+            )
+        return snapshots
+
     def list_collections(
         self,
         filter_spec: Filter | None = None,
@@ -81,19 +101,10 @@ class AsyncDatabaseAdminService:
         normalized_filter = self._normalize_filter(filter_spec)
 
         async def _load() -> list[CollectionListingDocument]:
-            names = await self._engine.list_collections(self._db_name, context=session)
-            documents: list[CollectionListingDocument] = []
-            for name in names:
-                documents.append(
-                    CollectionListingSnapshot(
-                        name=name,
-                        options=await self._engine.collection_options(
-                            self._db_name,
-                            name,
-                            context=session,
-                        ),
-                    ).to_document()
-                )
+            documents = [
+                snapshot.to_document()
+                for snapshot in await self._list_collection_snapshots(session=session)
+            ]
             return [
                 document
                 for document in documents
@@ -316,13 +327,13 @@ class AsyncDatabaseAdminService:
             scale=scale,
         ).to_document()
 
-    async def _list_database_documents(
+    async def _list_database_snapshots(
         self,
         *,
         session: ClientSession | None = None,
-    ) -> list[DatabaseListingDocument]:
+    ) -> list[DatabaseListingSnapshot]:
         database_names = await self._engine.list_databases(context=session)
-        documents: list[DatabaseListingDocument] = []
+        snapshots: list[DatabaseListingSnapshot] = []
         for database_name in database_names:
             database = type(self._database)(
                 self._engine,
@@ -337,7 +348,7 @@ class AsyncDatabaseAdminService:
                 codec_options=self._database._codec_options,
             )
             stats = await database._admin._database_stats(session=session)
-            documents.append(
+            snapshots.append(
                 DatabaseListingSnapshot(
                     name=database_name,
                     size_on_disk=stats["storageSize"],
@@ -345,9 +356,19 @@ class AsyncDatabaseAdminService:
                         int(stats["collections"]) == 0
                         and int(stats["objects"]) == 0
                     ),
-                ).to_document()
+                )
             )
-        return documents
+        return snapshots
+
+    async def _list_database_documents(
+        self,
+        *,
+        session: ClientSession | None = None,
+    ) -> list[DatabaseListingDocument]:
+        return [
+            snapshot.to_document()
+            for snapshot in await self._list_database_snapshots(session=session)
+        ]
 
     async def validate_collection(
         self,
@@ -436,10 +457,17 @@ class AsyncDatabaseAdminService:
                 )
             ]
         else:
-            first_batch = await self.list_collections(
-                filter_spec,
-                session=session,
-            ).to_list()
+            snapshots = await self._list_collection_snapshots(session=session)
+            first_batch = [snapshot.to_document() for snapshot in snapshots]
+            first_batch = [
+                document
+                for document in first_batch
+                if QueryEngine.match(
+                    document,
+                    filter_spec,
+                    dialect=self._mongodb_dialect,
+                )
+            ]
         return {
             "cursor": {
                 "id": 0,
@@ -459,7 +487,10 @@ class AsyncDatabaseAdminService:
         if not isinstance(name_only, bool):
             raise TypeError("nameOnly must be a bool")
         filter_spec = self._normalize_filter(spec.get("filter"))
-        databases = await self._list_database_documents(session=session)
+        databases = [
+            snapshot.to_document()
+            for snapshot in await self._list_database_snapshots(session=session)
+        ]
         filtered = [
             document
             for document in databases

@@ -403,6 +403,10 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertEqual(collection_snapshot.to_document()["size"], 20)
         self.assertEqual(database_snapshot.to_document()["dataSize"], 20)
 
+    def test_database_admin_service_exposes_typed_listing_snapshot_loaders(self):
+        self.assertIn("_list_collection_snapshots", AsyncDatabaseAdminService.__dict__)
+        self.assertIn("_list_database_snapshots", AsyncDatabaseAdminService.__dict__)
+
     def test_database_command_service_routes_use_typed_records(self):
         route = AsyncDatabaseCommandService._DELEGATED_COMMAND_HANDLERS["dropDatabase"]
 
