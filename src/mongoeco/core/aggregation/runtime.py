@@ -2,7 +2,6 @@ import base64
 import datetime
 import decimal
 import math
-import random
 import re
 import uuid
 from collections.abc import Callable, Iterable
@@ -14,17 +13,15 @@ from typing import Any
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation.date_expressions import (
     DATE_EXPRESSION_OPERATORS,
-    _to_utc_naive,
     evaluate_date_expression,
 )
+from mongoeco.core.aggregation.scalar_expressions import (
+    SCALAR_EXPRESSION_OPERATORS,
+    evaluate_scalar_expression,
+)
 from mongoeco.core.bson_scalars import (
-    INT32_MAX,
-    INT32_MIN,
-    INT64_MAX,
-    INT64_MIN,
     bson_numeric_alias,
     is_bson_numeric,
-    validate_bson_value,
 )
 from mongoeco.core.filtering import BSONComparator
 from mongoeco.core.filtering import QueryEngine
@@ -1065,205 +1062,6 @@ def _evaluate_expression_with_missing(
     return evaluate_expression(document, expression, variables, dialect=dialect)
 
 
-def _aggregation_type_name(value: Any) -> str:
-    if value is _MISSING:
-        return "missing"
-    if isinstance(value, UndefinedType):
-        return "undefined"
-    if value is None:
-        return "null"
-    if isinstance(value, bool):
-        return "bool"
-    if isinstance(value, int):
-        return "long" if value < -(1 << 31) or value > (1 << 31) - 1 else "int"
-    if isinstance(value, float):
-        return "double"
-    if isinstance(value, decimal.Decimal):
-        return "decimal"
-    if isinstance(value, str):
-        return "string"
-    if isinstance(value, dict):
-        return "object"
-    if isinstance(value, list):
-        return "array"
-    if isinstance(value, (bytes, bytearray, uuid.UUID)):
-        return "binData"
-    if isinstance(value, ObjectId):
-        return "objectId"
-    if isinstance(value, datetime.datetime):
-        return "date"
-    if isinstance(value, re.Pattern):
-        return "regex"
-    return type(value).__name__
-
-
-def _datetime_to_epoch_millis(value: datetime.datetime) -> int:
-    normalized = value.astimezone(datetime.UTC) if value.tzinfo is not None else value.replace(tzinfo=datetime.UTC)
-    return int(normalized.timestamp() * 1000)
-
-
-def _parse_base10_int_string(operator: str, value: str) -> int:
-    text = value.strip()
-    if not text or not re.fullmatch(r"[+-]?\d+", text):
-        raise OperationFailure(f"{operator} cannot convert the string value")
-    return int(text, 10)
-
-
-def _convert_aggregation_scalar(operator: str, value: Any, target: str) -> Any:
-    if value is _MISSING or value is None:
-        return None
-    if isinstance(value, UndefinedType):
-        return None
-
-    if target == "bool":
-        if isinstance(value, bool):
-            return value
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
-            return value != 0
-        if isinstance(value, (str, list, dict, bytes, bytearray, uuid.UUID, ObjectId, datetime.datetime)):
-            return True
-        raise OperationFailure(f"{operator} cannot convert the value")
-
-    if target == "int":
-        if isinstance(value, bool):
-            return int(value)
-        if isinstance(value, int):
-            if value < INT32_MIN or value > INT32_MAX:
-                raise OperationFailure(f"{operator} overflow")
-            return value
-        if isinstance(value, float):
-            if not math.isfinite(value) or not value.is_integer():
-                raise OperationFailure(f"{operator} cannot convert the value")
-            integer = int(value)
-            if integer < INT32_MIN or integer > INT32_MAX:
-                raise OperationFailure(f"{operator} overflow")
-            return integer
-        if isinstance(value, str):
-            integer = _parse_base10_int_string(operator, value)
-            if integer < INT32_MIN or integer > INT32_MAX:
-                raise OperationFailure(f"{operator} overflow")
-            return integer
-        raise OperationFailure(f"{operator} cannot convert the value")
-
-    if target == "long":
-        if isinstance(value, bool):
-            return int(value)
-        if isinstance(value, int):
-            if value < INT64_MIN or value > INT64_MAX:
-                raise OperationFailure(f"{operator} overflow")
-            return value
-        if isinstance(value, float):
-            if not math.isfinite(value) or not value.is_integer():
-                raise OperationFailure(f"{operator} cannot convert the value")
-            integer = int(value)
-            if integer < INT64_MIN or integer > INT64_MAX:
-                raise OperationFailure(f"{operator} overflow")
-            return integer
-        if isinstance(value, str):
-            integer = _parse_base10_int_string(operator, value)
-            if integer < INT64_MIN or integer > INT64_MAX:
-                raise OperationFailure(f"{operator} overflow")
-            return integer
-        if isinstance(value, datetime.datetime):
-            return _datetime_to_epoch_millis(value)
-        raise OperationFailure(f"{operator} cannot convert the value")
-
-    if target == "double":
-        if isinstance(value, bool):
-            return 1.0 if value else 0.0
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
-            return float(value)
-        if isinstance(value, str):
-            text = value.strip()
-            if not text:
-                raise OperationFailure(f"{operator} cannot convert the string value")
-            try:
-                return float(text)
-            except ValueError as exc:
-                raise OperationFailure(f"{operator} cannot convert the string value") from exc
-        if isinstance(value, datetime.datetime):
-            return float(_datetime_to_epoch_millis(value))
-        raise OperationFailure(f"{operator} cannot convert the value")
-
-    if target == "date":
-        if isinstance(value, datetime.datetime):
-            return _to_utc_naive(value)
-        if isinstance(value, ObjectId):
-            return datetime.datetime.fromtimestamp(value.generation_time, tz=datetime.UTC).replace(tzinfo=None)
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
-            if not math.isfinite(value):
-                raise OperationFailure(f"{operator} cannot convert the value")
-            return datetime.datetime.fromtimestamp(value / 1000, tz=datetime.UTC).replace(tzinfo=None)
-        if isinstance(value, str):
-            try:
-                return _to_utc_naive(datetime.datetime.fromisoformat(value.replace("Z", "+00:00")))
-            except Exception as exc:
-                raise OperationFailure(f"{operator} cannot convert the string value") from exc
-        raise OperationFailure(f"{operator} cannot convert the value")
-
-    if target == "objectId":
-        if isinstance(value, ObjectId):
-            return value
-        if isinstance(value, str):
-            try:
-                return ObjectId(value)
-            except Exception as exc:
-                raise OperationFailure(f"{operator} cannot convert the string value") from exc
-        raise OperationFailure(f"{operator} cannot convert the value")
-
-    if target == "uuid":
-        if isinstance(value, uuid.UUID):
-            return value
-        if isinstance(value, (bytes, bytearray)):
-            if len(value) != 16:
-                raise OperationFailure(f"{operator} cannot convert the value")
-            try:
-                return uuid.UUID(bytes=bytes(value))
-            except Exception as exc:
-                raise OperationFailure(f"{operator} cannot convert the value") from exc
-        if isinstance(value, str):
-            try:
-                return uuid.UUID(value)
-            except Exception as exc:
-                raise OperationFailure(f"{operator} cannot convert the string value") from exc
-        raise OperationFailure(f"{operator} cannot convert the value")
-
-    if target == "decimal":
-        if isinstance(value, bool):
-            result = decimal.Decimal(int(value))
-            validate_bson_value(result)
-            return result
-        if isinstance(value, int):
-            result = decimal.Decimal(value)
-            validate_bson_value(result)
-            return result
-        if isinstance(value, float):
-            if not math.isfinite(value):
-                raise OperationFailure(f"{operator} cannot convert the value")
-            result = decimal.Decimal(str(value))
-            validate_bson_value(result)
-            return result
-        if isinstance(value, decimal.Decimal):
-            validate_bson_value(value)
-            return value
-        if isinstance(value, str):
-            text = value.strip()
-            if not text:
-                raise OperationFailure(f"{operator} cannot convert the string value")
-            try:
-                result = decimal.Decimal(text)
-                validate_bson_value(result)
-                return result
-            except Exception as exc:
-                raise OperationFailure(f"{operator} cannot convert the string value") from exc
-        raise OperationFailure(f"{operator} cannot convert the value")
-
-    if target == "string":
-        return _stringify_aggregation_value(value)
-
-    raise OperationFailure(f"Unsupported conversion target for {operator}")
-
-
 def evaluate_expression(
     document: Document,
     expression: object,
@@ -1300,46 +1098,35 @@ def evaluate_expression(
                 raise OperationFailure(f"Unsupported aggregation expression: {operator}")
             if operator == "$literal":
                 return deepcopy(spec)
-            if operator == "$rand":
-                if spec != {}:
-                    raise OperationFailure("$rand does not accept arguments")
-                return random.random()
-            if operator == "$convert":
-                if not isinstance(spec, dict) or "input" not in spec or "to" not in spec:
-                    raise OperationFailure("$convert requires input and to")
-                value = _evaluate_expression_with_missing(document, spec["input"], variables, dialect=dialect)
-                if value is _MISSING or value is None:
-                    return evaluate_expression(document, spec["onNull"], variables, dialect=dialect) if "onNull" in spec else None
-                target = evaluate_expression(document, spec["to"], variables, dialect=dialect)
-                if isinstance(target, dict):
-                    target = target.get("type")
-                if not isinstance(target, str):
-                    raise OperationFailure("$convert to must resolve to a string")
-                aliases = {
-                    "bool": "bool",
-                    "int": "int",
-                    "long": "long",
-                    "double": "double",
-                    "date": "date",
-                    "objectId": "objectId",
-                    "string": "string",
-                }
-                try:
-                    if target not in aliases:
-                        raise OperationFailure("$convert target type is not supported")
-                    return _convert_aggregation_scalar(operator, value, aliases[target])
-                except OperationFailure:
-                    if "onError" in spec:
-                        return evaluate_expression(document, spec["onError"], variables, dialect=dialect)
-                    raise
-            if operator == "$bsonSize":
-                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
-                value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
-                if value is _MISSING or value is None:
-                    return None
-                if not isinstance(value, dict):
-                    raise OperationFailure("$bsonSize requires an object input")
-                return _bson_document_size(value)
+            if operator in SCALAR_EXPRESSION_OPERATORS:
+                return evaluate_scalar_expression(
+                    operator,
+                    document,
+                    spec,
+                    variables,
+                    dialect=dialect,
+                    evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
+                        current_document,
+                        current_expression,
+                        current_variables,
+                        dialect=dialect,
+                    ),
+                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
+                        current_document,
+                        current_expression,
+                        current_variables,
+                        dialect=dialect,
+                    ),
+                    require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: _require_expression_args(
+                        current_operator,
+                        current_spec,
+                        min_args=current_min_args,
+                        max_args=current_max_args,
+                    ),
+                    stringify_value=_stringify_aggregation_value,
+                    bson_document_size=_bson_document_size,
+                    missing_sentinel=_MISSING,
+                )
             if operator in {"$eq", "$ne", "$gt", "$gte", "$lt", "$lte"}:
                 args = _require_expression_args(operator, spec, min_args=2, max_args=2)
                 left = evaluate_expression(document, args[0], variables, dialect=dialect)
@@ -1628,18 +1415,6 @@ def evaluate_expression(
                 if index < 0 or index >= len(values):
                     return None
                 return values[index]
-            if operator == "$isNumber":
-                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
-                value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
-                return isinstance(value, (int, float)) and not isinstance(value, bool)
-            if operator == "$type":
-                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
-                value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
-                return _aggregation_type_name(value)
-            if operator == "$toString":
-                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
-                value = evaluate_expression(document, args[0], variables, dialect=dialect)
-                return None if value is None else _stringify_aggregation_value(value)
             if operator == "$let":
                 if not isinstance(spec, dict) or "vars" not in spec or "in" not in spec or not isinstance(spec["vars"], dict):
                     raise OperationFailure("$let requires vars and in")
@@ -1730,20 +1505,6 @@ def evaluate_expression(
                 if not isinstance(value, str):
                     raise OperationFailure(f"{operator} requires a string argument")
                 return len(value.encode("utf-8")) if operator == "$strLenBytes" else len(value)
-            if operator in {"$toBool", "$toDate", "$toInt", "$toDouble", "$toLong", "$toObjectId", "$toUUID", "$toDecimal"}:
-                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
-                value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
-                target = {
-                    "$toBool": "bool",
-                    "$toDate": "date",
-                    "$toDecimal": "decimal",
-                    "$toInt": "int",
-                    "$toDouble": "double",
-                    "$toLong": "long",
-                    "$toObjectId": "objectId",
-                    "$toUUID": "uuid",
-                }[operator]
-                return _convert_aggregation_scalar(operator, value, target)
             if operator in {"$toLower", "$toUpper"}:
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
                 value = evaluate_expression(document, args[0], variables, dialect=dialect)
@@ -1886,25 +1647,6 @@ def evaluate_expression(
                 if operator == "$firstN":
                     return deepcopy(values[:size])
                 return deepcopy(values[-size:])
-            if operator == "$isArray":
-                args = _require_expression_args(
-                    operator,
-                    [spec] if not isinstance(spec, list) else spec,
-                    min_args=1,
-                    max_args=1,
-                )
-                value = evaluate_expression(document, args[0], variables, dialect=dialect)
-                return isinstance(value, list)
-            if operator == "$cmp":
-                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
-                left = evaluate_expression(document, args[0], variables, dialect=dialect)
-                right = evaluate_expression(document, args[1], variables, dialect=dialect)
-                comparison = dialect.policy.compare_values(left, right)
-                if comparison < 0:
-                    return -1
-                if comparison > 0:
-                    return 1
-                return 0
             if operator == "$map":
                 if not isinstance(spec, dict) or "input" not in spec or "in" not in spec:
                     raise OperationFailure("$map requires input and in")
@@ -2077,16 +1819,6 @@ def evaluate_expression(
                 if start_index > end_index:
                     return -1
                 return source.find(substring, start_index, end_index)
-            if operator == "$binarySize":
-                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
-                value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
-                if value is _MISSING or value is None:
-                    return None
-                if isinstance(value, (bytes, bytearray)):
-                    return len(value)
-                if isinstance(value, uuid.UUID):
-                    return len(value.bytes)
-                raise OperationFailure("$binarySize requires a BinData argument")
             if operator in {"$regexMatch", "$regexFind", "$regexFindAll"}:
                 if not isinstance(spec, dict) or "input" not in spec or "regex" not in spec:
                     raise OperationFailure(f"{operator} requires input and regex")
