@@ -29,6 +29,14 @@ class ResolvedUpdatePath:
     concrete_path: str
 
 
+@dataclass(frozen=True, slots=True)
+class CompiledUpdateInstruction:
+    operator: str
+    path: CompiledUpdatePath
+    value: object
+    target_path: CompiledUpdatePath | None = None
+
+
 def compile_update_path(path: str) -> CompiledUpdatePath:
     if not isinstance(path, str):
         raise OperationFailure("update field names must be strings")

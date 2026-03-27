@@ -113,6 +113,25 @@ class UpdateEngineTests(unittest.TestCase):
 
         self.assertEqual([target.concrete_path for target in targets], ["items.0.qty", "items.1.qty"])
 
+    def test_update_engine_compiles_ordered_operator_instructions(self):
+        compiled = UpdateEngine._compile_update_spec(
+            {
+                "$set": {"b": 1, "a": 2},
+                "$rename": {"profile.name": "profile.alias"},
+                "$pull": {"tags": "legacy"},
+            },
+            {},
+        )
+
+        self.assertEqual([operator.operator for operator in compiled], ["$set", "$rename", "$pull"])
+        self.assertEqual(
+            [instruction.path.raw for instruction in compiled[0].instructions],
+            ["a", "b"],
+        )
+        self.assertEqual(compiled[1].instructions[0].path.raw, "profile.name")
+        self.assertEqual(compiled[1].instructions[0].target_path.raw, "profile.alias")
+        self.assertEqual(compiled[2].instructions[0].path.raw, "tags")
+
     def test_set_same_value_is_noop(self):
         document = {"field": 1}
 
