@@ -102,6 +102,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
             )
             self.assertEqual(connection_status["ok"], 1.0)
 
+    def test_server_status_command_returns_local_runtime_metadata(self):
+        with MongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
+            status = client.alpha.command("serverStatus")
+
+            self.assertEqual(status["process"], "mongod")
+            self.assertEqual(status["version"], "8.0.0")
+            self.assertIsInstance(status["pid"], int)
+            self.assertGreaterEqual(status["uptime"], 0)
+            self.assertGreaterEqual(status["uptimeMillis"], 0)
+            self.assertEqual(status["connections"]["current"], 1)
+            self.assertEqual(status["storageEngine"]["name"], "memory")
+            self.assertEqual(status["ok"], 1.0)
+
     def test_list_collections_command_supports_name_only(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -663,7 +676,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
     def test_database_command_rejects_unsupported_commands(self):
         with MongoClient(MemoryEngine()) as client:
             with self.assertRaises(OperationFailure):
-                client.alpha.command("serverStatus")
+                client.alpha.command("top")
 
     def test_database_command_rejects_invalid_command_shapes(self):
         with MongoClient(MemoryEngine()) as client:

@@ -751,6 +751,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * ya soporta también `listCommands` y `connectionStatus`
     * ya soporta también `renameCollection` dentro del mismo `db`
     * `listCollections` ya soporta `nameOnly`
+    * ya soporta también `serverStatus` con metadata local honesta
   * `server_info`
   * `validate_collection`
   * listados enriquecidos de bases de datos y colecciones

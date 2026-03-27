@@ -1,4 +1,6 @@
 import datetime
+import os
+import socket
 
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
@@ -482,6 +484,12 @@ class AsyncDatabase:
 
         if command_name == "buildInfo":
             return _build_info_document(self._mongodb_dialect)
+
+        if command_name == "serverStatus":
+            return _server_status_document(
+                self._mongodb_dialect,
+                engine=self._engine,
+            )
 
         if command_name in {"hello", "isMaster", "ismaster"}:
             return _hello_document(self._mongodb_dialect, legacy_name=command_name != "hello")
@@ -1489,6 +1497,47 @@ def _hello_document(
     return document
 
 
+_PROCESS_STARTED_AT = datetime.datetime.now(datetime.UTC)
+
+
+def _storage_engine_name(engine: AsyncStorageEngine) -> str:
+    engine_name = type(engine).__name__.lower()
+    if "sqlite" in engine_name:
+        return "sqlite"
+    if "memory" in engine_name:
+        return "memory"
+    return type(engine).__name__
+
+
+def _server_status_document(
+    mongodb_dialect: MongoDialect,
+    *,
+    engine: AsyncStorageEngine,
+) -> dict[str, object]:
+    local_time = datetime.datetime.now(datetime.UTC)
+    uptime_delta = local_time - _PROCESS_STARTED_AT
+    uptime_seconds = max(uptime_delta.total_seconds(), 0.0)
+    return {
+        "host": socket.gethostname(),
+        "version": _build_info_document(mongodb_dialect)["version"],
+        "process": "mongod",
+        "pid": os.getpid(),
+        "uptime": uptime_seconds,
+        "uptimeMillis": int(uptime_seconds * 1000),
+        "uptimeEstimate": int(uptime_seconds),
+        "localTime": local_time,
+        "connections": {
+            "current": 1,
+            "available": 8388607,
+            "totalCreated": 1,
+        },
+        "storageEngine": {
+            "name": _storage_engine_name(engine),
+        },
+        "ok": 1.0,
+    }
+
+
 _SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
     "aggregate",
     "buildInfo",
@@ -1516,6 +1565,7 @@ _SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
     "listIndexes",
     "ping",
     "renameCollection",
+    "serverStatus",
     "update",
     "validate",
 )

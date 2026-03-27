@@ -126,6 +126,19 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(connection_status["ok"], 1.0)
 
+    async def test_server_status_command_returns_local_runtime_metadata(self):
+        async with AsyncMongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
+            status = await client.alpha.command("serverStatus")
+
+            self.assertEqual(status["process"], "mongod")
+            self.assertEqual(status["version"], "8.0.0")
+            self.assertIsInstance(status["pid"], int)
+            self.assertGreaterEqual(status["uptime"], 0)
+            self.assertGreaterEqual(status["uptimeMillis"], 0)
+            self.assertEqual(status["connections"]["current"], 1)
+            self.assertEqual(status["storageEngine"]["name"], "memory")
+            self.assertEqual(status["ok"], 1.0)
+
     async def test_list_collections_command_supports_name_only(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -742,7 +755,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_database_command_rejects_unsupported_commands(self):
         async with open_client("memory") as client:
             with self.assertRaises(OperationFailure):
-                await client.alpha.command("serverStatus")
+                await client.alpha.command("top")
 
     async def test_database_command_rejects_invalid_command_shapes(self):
         async with open_client("memory") as client:
