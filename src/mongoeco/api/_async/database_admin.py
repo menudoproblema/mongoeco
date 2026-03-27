@@ -19,10 +19,22 @@ from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
+    BuildInfoDocument,
+    CmdLineOptsDocument,
+    CollectionListingDocument,
+    CollectionStatsDocument,
+    CollectionValidationDocument,
+    ConnectionStatusDocument,
+    DatabaseListingDocument,
+    DatabaseStatsDocument,
     Document,
     Filter,
+    HelloDocument,
+    HostInfoDocument,
     IndexModel,
+    ListCommandsDocument,
     ReturnDocument,
+    WhatsMyUriDocument,
 )
 
 if TYPE_CHECKING:
@@ -73,9 +85,9 @@ class AsyncDatabaseAdminService:
     ) -> AsyncListingCursor:
         normalized_filter = self._normalize_filter(filter_spec)
 
-        async def _load() -> list[Document]:
+        async def _load() -> list[CollectionListingDocument]:
             names = await self._engine.list_collections(self._db_name, context=session)
-            documents: list[Document] = []
+            documents: list[CollectionListingDocument] = []
             for name in names:
                 documents.append(
                     {
@@ -274,7 +286,7 @@ class AsyncDatabaseAdminService:
         *,
         scale: int = 1,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> CollectionStatsDocument:
         collection = self._database.get_collection(collection_name)
         documents = await collection.find({}, session=session).to_list()
         indexes = await collection.list_indexes(session=session).to_list()
@@ -296,7 +308,7 @@ class AsyncDatabaseAdminService:
         *,
         scale: int = 1,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> DatabaseStatsDocument:
         collection_names = await self._engine.list_collections(self._db_name, context=session)
         objects = 0
         data_size = 0
@@ -322,9 +334,9 @@ class AsyncDatabaseAdminService:
         self,
         *,
         session: ClientSession | None = None,
-    ) -> list[Document]:
+    ) -> list[DatabaseListingDocument]:
         database_names = await self._engine.list_databases(context=session)
-        documents: list[Document] = []
+        documents: list[DatabaseListingDocument] = []
         for database_name in database_names:
             database = type(self._database)(
                 self._engine,
@@ -360,7 +372,7 @@ class AsyncDatabaseAdminService:
         background: bool | None = None,
         session: ClientSession | None = None,
         comment: object | None = None,
-    ) -> dict[str, object]:
+    ) -> CollectionValidationDocument:
         if not isinstance(scandata, bool):
             raise TypeError("scandata must be a bool")
         if not isinstance(full, bool):
@@ -1416,7 +1428,7 @@ class AsyncDatabaseAdminService:
         return {"dropped": self._db_name, "ok": 1.0}
 
 
-def build_info_document(mongodb_dialect: "MongoDialect") -> dict[str, object]:
+def build_info_document(mongodb_dialect: "MongoDialect") -> BuildInfoDocument:
     version_parts = [int(part) for part in mongodb_dialect.server_version.split(".")]
     while len(version_parts) < 2:
         version_parts.append(0)
@@ -1433,8 +1445,8 @@ def hello_document(
     mongodb_dialect: "MongoDialect",
     *,
     legacy_name: bool = False,
-) -> dict[str, object]:
-    document: dict[str, object] = {
+) -> HelloDocument:
+    document: HelloDocument = {
         "helloOk": True,
         "isWritablePrimary": True,
         "maxBsonObjectSize": 16 * 1024 * 1024,
@@ -1472,7 +1484,7 @@ def server_status_document(
     mongodb_dialect: "MongoDialect",
     *,
     engine: AsyncStorageEngine,
-) -> dict[str, object]:
+) -> ServerStatusDocument:
     local_time = datetime.datetime.now(datetime.UTC)
     uptime_delta = local_time - _PROCESS_STARTED_AT
     uptime_seconds = max(uptime_delta.total_seconds(), 0.0)
@@ -1497,7 +1509,7 @@ def server_status_document(
     }
 
 
-def host_info_document() -> dict[str, object]:
+def host_info_document() -> HostInfoDocument:
     return {
         "system": {
             "hostname": socket.gethostname(),
@@ -1517,14 +1529,14 @@ def host_info_document() -> dict[str, object]:
     }
 
 
-def whats_my_uri_document() -> dict[str, object]:
+def whats_my_uri_document() -> WhatsMyUriDocument:
     return {
         "you": "127.0.0.1:0",
         "ok": 1.0,
     }
 
 
-def cmd_line_opts_document() -> dict[str, object]:
+def cmd_line_opts_document() -> CmdLineOptsDocument:
     return {
         "argv": list(sys.argv),
         "parsed": {
@@ -1571,7 +1583,7 @@ SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
 )
 
 
-def list_commands_document() -> dict[str, object]:
+def list_commands_document() -> ListCommandsDocument:
     return {
         "commands": {
             command_name: {
@@ -1583,7 +1595,7 @@ def list_commands_document() -> dict[str, object]:
     }
 
 
-def connection_status_document(*, show_privileges: bool) -> dict[str, object]:
+def connection_status_document(*, show_privileges: bool) -> ConnectionStatusDocument:
     auth_info: dict[str, object] = {
         "authenticatedUsers": [],
         "authenticatedUserRoles": [],

@@ -14,11 +14,11 @@ from mongoeco.compat import (
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.session import ClientSession
 from mongoeco.types import (
+    BuildInfoDocument,
     CodecOptions,
+    CollectionValidationDocument,
     Document,
     Filter,
-    IndexModel,
-    ReturnDocument,
     ReadConcern,
     ReadPreference,
     TransactionOptions,
@@ -160,7 +160,7 @@ class AsyncDatabase:
         background: bool | None = None,
         session: ClientSession | None = None,
         comment: object | None = None,
-    ) -> dict[str, object]:
+    ) -> CollectionValidationDocument:
         return await self._admin.validate_collection(
             name_or_collection,
             scandata=scandata,
@@ -341,7 +341,7 @@ class AsyncMongoClient:
         for collection_name in collection_names:
             await self._engine.drop_collection(name, collection_name, context=session)
 
-    async def server_info(self) -> dict[str, object]:
+    async def server_info(self) -> BuildInfoDocument:
         return build_info_document(self._mongodb_dialect)
 
     @property

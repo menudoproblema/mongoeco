@@ -3,8 +3,9 @@ import unittest
 
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
-from mongoeco.api._async._materialized_cursor import AsyncMaterializedCursor
 from mongoeco.api._async.client import AsyncDatabase
+from mongoeco.api._async.client import AsyncMongoClient
+from mongoeco.api._async._materialized_cursor import AsyncMaterializedCursor
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.api._sync.collection import Collection
@@ -43,6 +44,8 @@ from mongoeco.types import (
     ReadPreferenceMode,
     TransactionOptions,
     WriteConcern,
+    BuildInfoDocument,
+    CollectionValidationDocument,
 )
 
 
@@ -233,3 +236,11 @@ class ArchitectureUnitTests(unittest.TestCase):
             CodecOptions(list)  # type: ignore[arg-type]
         with self.assertRaises(ValueError):
             TransactionOptions(max_commit_time_ms=0)
+
+    def test_admin_surface_uses_structured_metadata_annotations(self):
+        from mongoeco.api._sync.client import Database, MongoClient
+
+        self.assertIs(AsyncDatabase.validate_collection.__annotations__["return"], CollectionValidationDocument)
+        self.assertIs(Database.validate_collection.__annotations__["return"], CollectionValidationDocument)
+        self.assertIs(AsyncMongoClient.server_info.__annotations__["return"], BuildInfoDocument)
+        self.assertIs(MongoClient.server_info.__annotations__["return"], BuildInfoDocument)

@@ -13,6 +13,8 @@ from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.api._sync.collection import Collection
 from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.types import (
+    BuildInfoDocument,
+    CollectionValidationDocument,
     CodecOptions,
     Filter,
     ReadConcern,
@@ -226,7 +228,7 @@ class Database:
         background: bool | None = None,
         session: ClientSession | None = None,
         comment: object | None = None,
-    ) -> dict[str, object]:
+    ) -> CollectionValidationDocument:
         async_database = self._async_database()
         return self._client._run(
             async_database.validate_collection(
@@ -430,7 +432,7 @@ class MongoClient:
         self._ensure_connected()
         self._run(self._async_client.drop_database(name, session=session))
 
-    def server_info(self) -> dict[str, object]:
+    def server_info(self) -> BuildInfoDocument:
         self._ensure_connected()
         return self._run(self._async_client.server_info())
 

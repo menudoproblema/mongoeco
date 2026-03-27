@@ -5,7 +5,7 @@ import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Literal, Self
+from typing import Any, Literal, NotRequired, Self, TypedDict
 
 
 class UndefinedType:
@@ -119,8 +119,170 @@ type IndexKeySpec = SortSpec
 type IndexDocument = dict[str, object]
 type IndexInformationEntry = dict[str, object]
 type IndexInformation = dict[str, IndexInformationEntry]
+type CollectionOptionsDocument = dict[str, object]
 type DocumentScalarId = ObjectId | str | bytes | int | float | bool | None | UndefinedType
 type DocumentId = DocumentScalarId | list[DocumentId] | dict[str, DocumentId]
+
+
+class CollectionInfoDocument(TypedDict):
+    readOnly: bool
+
+
+class CollectionListingDocument(TypedDict):
+    name: str
+    type: str
+    options: CollectionOptionsDocument
+    info: CollectionInfoDocument
+
+
+class DatabaseListingDocument(TypedDict):
+    name: str
+    sizeOnDisk: int
+    empty: bool
+
+
+class CollectionStatsDocument(TypedDict):
+    ns: str
+    count: int
+    size: int
+    avgObjSize: float
+    storageSize: int
+    nindexes: int
+    totalIndexSize: int
+    ok: float
+
+
+class DatabaseStatsDocument(TypedDict):
+    db: str
+    collections: int
+    objects: int
+    avgObjSize: float
+    dataSize: int
+    storageSize: int
+    indexes: int
+    indexSize: int
+    ok: float
+
+
+class CollectionValidationDocument(TypedDict):
+    ns: str
+    valid: bool
+    nrecords: int
+    nIndexes: int
+    keysPerIndex: dict[str, int]
+    warnings: list[object]
+    ok: float
+
+
+class BuildInfoDocument(TypedDict):
+    version: str
+    versionArray: list[int]
+    gitVersion: str
+    ok: float
+
+
+class HelloDocument(BuildInfoDocument, total=False):
+    helloOk: bool
+    isWritablePrimary: bool
+    maxBsonObjectSize: int
+    maxMessageSizeBytes: int
+    maxWriteBatchSize: int
+    localTime: object
+    logicalSessionTimeoutMinutes: int
+    connectionId: int
+    minWireVersion: int
+    maxWireVersion: int
+    readOnly: bool
+    ismaster: bool
+
+
+class ServerStatusConnectionsDocument(TypedDict):
+    current: int
+    available: int
+    totalCreated: int
+
+
+class ServerStatusStorageEngineDocument(TypedDict):
+    name: str
+
+
+class ServerStatusDocument(TypedDict):
+    host: str
+    version: str
+    process: str
+    pid: int
+    uptime: float
+    uptimeMillis: int
+    uptimeEstimate: int
+    localTime: object
+    connections: ServerStatusConnectionsDocument
+    storageEngine: ServerStatusStorageEngineDocument
+    ok: float
+
+
+class HostInfoSystemDocument(TypedDict):
+    hostname: str
+    cpuArch: str
+    numCores: int
+    memSizeMB: int
+
+
+class HostInfoOsDocument(TypedDict):
+    type: str
+    name: str
+    version: str
+
+
+class HostInfoExtraDocument(TypedDict):
+    pythonVersion: str
+
+
+class HostInfoDocument(TypedDict):
+    system: HostInfoSystemDocument
+    os: HostInfoOsDocument
+    extra: HostInfoExtraDocument
+    ok: float
+
+
+class WhatsMyUriDocument(TypedDict):
+    you: str
+    ok: float
+
+
+class CmdLineOptsParsedNetDocument(TypedDict):
+    bindIp: str
+    port: int
+
+
+class CmdLineOptsParsedDocument(TypedDict):
+    net: CmdLineOptsParsedNetDocument
+    storage: dict[str, object]
+
+
+class CmdLineOptsDocument(TypedDict):
+    argv: list[str]
+    parsed: CmdLineOptsParsedDocument
+    ok: float
+
+
+class CommandHelpDocument(TypedDict):
+    help: str
+
+
+class ListCommandsDocument(TypedDict):
+    commands: dict[str, CommandHelpDocument]
+    ok: float
+
+
+class ConnectionStatusAuthInfoDocument(TypedDict):
+    authenticatedUsers: list[object]
+    authenticatedUserRoles: list[object]
+    authenticatedUserPrivileges: NotRequired[list[object]]
+
+
+class ConnectionStatusDocument(TypedDict):
+    authInfo: ConnectionStatusAuthInfoDocument
+    ok: float
 
 
 class ReturnDocument(Enum):
