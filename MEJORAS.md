@@ -116,7 +116,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 
 ## 6. Compatibilidad y Tooling Derivados Automáticamente
 
-- `Estado`: `En progreso`
+- `Estado`: `Aplicado`
 - `Impacto`: `Medio`
 - `Esfuerzo`: `Medio`
 - `Descripción`: derivar automáticamente desde el catálogo de compatibilidad los helpers `supports_*`, snapshots, exports JSON/Markdown y documentación técnica.
@@ -127,90 +127,64 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - tests de snapshot/consistencia en `tests/unit/test_compat.py` y `tests/unit/test_architecture.py`
   - `53dbc90` `refactor: export versioned compatibility artifacts`
   - `fc4c6e0` `refactor: derive runtime compatibility hooks from catalog`
-- `Pendiente para cerrar de verdad`:
-  - derivar más helpers de runtime desde el catálogo maestro
-  - publicar snapshots o artefactos versionados para tooling externo
+  - `1ed0cd9` `refactor: derive compatibility tooling from catalog`
+- `Cierre`: el catálogo ya alimenta hooks de runtime, exports JSON/Markdown y snapshots versionados para tooling externo; la compatibilidad observable, el tooling y la documentación derivada parten de la misma fuente de verdad.
 
 ## 7. Separación Más Fuerte entre Core Semántico y Ejecución por Engine
 
-- `Estado`: `Pendiente`
+- `Estado`: `Aplicado`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Alto`
 - `Descripción`: endurecer la frontera entre semántica MongoDB y ejecución concreta en `MemoryEngine`/`SQLiteEngine`.
 - `Motivación`: a medida que crecen query, update y aggregation, pequeñas decisiones del engine pueden contaminar la semántica observable.
 - `Aporte real`: mejora la paridad entre engines y reduce divergencias sutiles.
+- `Aplicado ya`:
+  - `f856531` `refactor: share read semantics across engines`
+- `Cierre`: la semántica común de lectura y `explain` ya vive en `src/mongoeco/engines/semantic_core.py`; `MemoryEngine` y `SQLiteEngine` se limitan a resolver hint físico, acceso a almacenamiento y estrategia concreta, mientras que validación, filtrado, proyección, límites y construcción base de `QueryPlanExplanation` salen del mismo núcleo semántico compartido.
 
 ## 8. Estado Transaccional Explícito por Sesión y Engine
 
-- `Estado`: `Pendiente`
+- `Estado`: `Aplicado`
 - `Impacto`: `Medio-Alto`
 - `Esfuerzo`: `Medio-Alto`
 - `Descripción`: modelar explícitamente `SessionState`, `TransactionState` y `EngineTransactionContext`.
 - `Motivación`: las transacciones son una zona donde lifecycle, ownership y limpieza de estado importan mucho más que en CRUD simple.
 - `Aporte real`: simplifica el razonamiento sobre transacciones y reduce inconsistencias difíciles de detectar.
+- `Aplicado ya`:
+  - `12ce218` `refactor: model explicit session transaction state`
+- `Cierre`: la sesión ya mantiene estado transaccional y de engine a través de records explícitos, no mediante diccionarios genéricos y hooks implícitos; el ownership y la limpieza de transacciones quedan modelados de forma más clara.
 
 ## 9. Agregación Enchufable por Stages o Handlers Registrados
 
-- `Estado`: `Pendiente`
+- `Estado`: `Aplicado`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Muy Alto`
 - `Descripción`: rediseñar la agregación como un sistema de handlers registrados o stages compilados, donde cada etapa tenga contrato propio.
 - `Motivación`: la agregación es una de las áreas con más complejidad acumulada y crecimiento monolítico.
 - `Aporte real`: simplifica extensión, reduce regresiones cruzadas y hace más mantenible seguir ampliando analítica avanzada.
+- `Aplicado ya`:
+  - `0757799` `refactor: dispatch aggregation through stage handlers`
+- `Cierre`: el pipeline de agregación ya no depende de un gran dispatcher monolítico; cada stage entra por un handler registrado y probado de forma explícita, lo que deja la extensión futura mucho más localizada.
 
-## Orden Recomendado A Partir de Ahora
+## Estado Global
 
-Si el objetivo es que el proyecto termine pareciendo diseñado desde cero, el siguiente orden recomendado es:
+Los nueve bloques de refactor arquitectónico identificados en este documento quedan ya aplicados.
 
-1. cerrar `Compatibilidad y Tooling Derivados Automáticamente`;
-2. reevaluar y, si compensa, abrir `Separación Más Fuerte entre Core Semántico y Ejecución por Engine`;
-3. modelar `Estado Transaccional Explícito por Sesión y Engine`;
-4. dejar `Agregación Enchufable por Stages o Handlers Registrados` como el gran refactor final.
+El proyecto queda bastante más cerca de una base "como si hubiera nacido así" desde el principio:
 
-## Hoja de Ruta Operativa Inmediata
+- compatibilidad derivada desde una fuente única;
+- subsistema administrativo separado del CRUD;
+- metadata interna y resultados críticos tipados;
+- planes de operación explícitos entre API y engines;
+- motor de updates formalizado;
+- semántica compartida separada de la estrategia concreta de cada engine;
+- estado transaccional explícito;
+- agregación dividida en handlers registrados.
 
-Para ejecutar lo pendiente sin perder el estado verde ni reabrir semántica a lo loco, el siguiente bloque operativo recomendado es:
+## Qué Queda a Partir de Aquí
 
-### Iteración 1. Compatibilidad Derivada del Catálogo
+Lo siguiente ya no pertenece a esta hoja de refactor base, sino a evolución futura:
 
-- `Estado`: `Pendiente`
-
-- `Objetivo`: terminar de derivar helpers y artefactos de compatibilidad directamente del catálogo maestro.
-- `Criterio de hecho`:
-  - más helpers de runtime salen del catálogo central;
-  - los snapshots/artefactos versionados sirven también para tooling externo;
-  - documentación y runtime reducen todavía más cualquier drift manual.
-- `Commit esperado`: `refactor: derive compatibility tooling from catalog`
-
-### Iteración 2. Frontera Semántica vs Engines
-
-- `Estado`: `Pendiente`
-
-- `Objetivo`: decidir si ya compensa endurecer más la separación entre semántica MongoDB y ejecución concreta en engines.
-- `Criterio de hecho`:
-  - revisión explícita del drift residual entre `MemoryEngine` y `SQLiteEngine`;
-  - decisión documentada sobre qué semántica debe vivir solo en el core;
-  - si se aborda, primer corte sin romper la suite verde.
-- `Commit esperado`: `refactor: separate semantic core from engine execution`
-
-### Iteración 3. Estado Transaccional Explícito
-
-- `Estado`: `Pendiente`
-
-- `Objetivo`: modelar de forma explícita estado de sesión, transacción y contexto engine.
-- `Criterio de hecho`:
-  - existen `SessionState`, `TransactionState` o equivalentes con roles bien separados;
-  - la propiedad de la transacción y su limpieza dejan de depender de hooks genéricos dispersos;
-  - la semántica observable actual se conserva.
-- `Commit esperado`: `refactor: model explicit transaction state`
-
-### Iteración 4. Agregación Enchufable
-
-- `Estado`: `Pendiente`
-
-- `Objetivo`: transformar la agregación monolítica en handlers o stages con contrato propio.
-- `Criterio de hecho`:
-  - cada familia de stage tiene punto de entrada propio;
-  - el pipeline principal reduce branching monolítico;
-  - la extensión de nuevas etapas deja de requerir tocar un único bloque gigante.
-- `Commit esperado`: `refactor: split aggregation into stage handlers`
+- seguir ampliando funcionalidad sin reabrir la base arquitectónica;
+- endurecer o tipar zonas adicionales solo si el crecimiento real del proyecto lo exige;
+- usar este documento como referencia histórica de las decisiones de base ya consolidadas, no como backlog activo.
