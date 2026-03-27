@@ -107,4 +107,3 @@ class WireSessionStore:
         if isinstance(value, ObjectId):
             return ("objectid", str(value))
         return value
-

@@ -5,7 +5,10 @@ from typing import Any
 from mongoeco.api import AsyncMongoClient
 from mongoeco.errors import MongoEcoError, OperationFailure, PyMongoError
 from mongoeco.wire.capabilities import resolve_wire_command_capability
+from mongoeco.wire.connections import WireConnectionContext
 from mongoeco.wire.cursors import WireCursorStore
+from mongoeco.wire.handshake import WireHandshakeService
+from mongoeco.wire.requests import WireRequestContext
 from mongoeco.wire.sessions import WireSessionStore
 
 
@@ -33,13 +36,47 @@ class WireCommandExecutor:
         self._client = client
         self._cursor_store = cursor_store
         self._session_store = session_store
+        self._handshake = WireHandshakeService(client.mongodb_dialect)
+        self._special_handlers = {
+            "handshake": self._handle_handshake,
+            "end_sessions": self._handle_end_sessions,
+            "get_more": self._handle_get_more,
+            "kill_cursors": self._handle_kill_cursors,
+            "commit_transaction": self._handle_commit_transaction,
+            "abort_transaction": self._handle_abort_transaction,
+            "passthrough": self._handle_passthrough,
+        }
 
     async def execute_command(
         self,
         body: dict[str, Any],
         *,
+        connection: WireConnectionContext,
         db_name: str | None = None,
     ) -> dict[str, Any]:
+        context = self._build_request_context(body, connection=connection, db_name=db_name)
+        handler = self._special_handlers[context.capability.kind]
+        return await handler(context)
+
+    async def execute_legacy_query(
+        self,
+        full_collection_name: str,
+        query: dict[str, Any],
+        *,
+        connection: WireConnectionContext,
+    ) -> dict[str, Any]:
+        if not full_collection_name.endswith(".$cmd"):
+            raise OperationFailure("legacy OP_QUERY only supports command namespaces")
+        db_name = full_collection_name[:-5]
+        return await self.execute_command(query, connection=connection, db_name=db_name)
+
+    def _build_request_context(
+        self,
+        body: dict[str, Any],
+        *,
+        connection: WireConnectionContext,
+        db_name: str | None = None,
+    ) -> WireRequestContext:
         if db_name is None:
             db_name = body.get("$db")
         if not isinstance(db_name, str) or not db_name:
@@ -53,36 +90,50 @@ class WireCommandExecutor:
             raise OperationFailure("wire command document must contain an executable command")
         command_name = next(iter(command_document))
         capability = resolve_wire_command_capability(command_name)
-        if capability.kind == "end_sessions":
-            return self._session_store.end_sessions(command_document.get("endSessions"))
-        if capability.kind == "get_more":
-            return self._cursor_store.get_more(command_document, db_name=db_name)
-        if capability.kind == "kill_cursors":
-            return self._cursor_store.kill_cursors(command_document)
-        if capability.kind == "commit_transaction":
-            return self._session_store.commit_transaction(body)
-        if capability.kind == "abort_transaction":
-            return self._session_store.abort_transaction(body)
-        database = self._client.get_database(db_name)
         session = self._session_store.resolve_for_command(
             self._client,
             body,
             capability=capability,
         )
-        result = await database.command(command_document, session=session)
+        return WireRequestContext(
+            db_name=db_name,
+            command_name=command_name,
+            command_document=command_document,
+            raw_body=body,
+            capability=capability,
+            connection=connection,
+            session=session,
+        )
+
+    async def _handle_handshake(self, context: WireRequestContext) -> dict[str, Any]:
+        context.connection.register_hello(context.command_name, context.raw_body)
+        return self._handshake.build_hello_response(
+            command_name=context.command_name,
+            body=context.raw_body,
+            connection=context.connection,
+        )
+
+    async def _handle_end_sessions(self, context: WireRequestContext) -> dict[str, Any]:
+        return self._session_store.end_sessions(context.command_document.get("endSessions"))
+
+    async def _handle_get_more(self, context: WireRequestContext) -> dict[str, Any]:
+        return self._cursor_store.get_more(context.command_document, db_name=context.db_name)
+
+    async def _handle_kill_cursors(self, context: WireRequestContext) -> dict[str, Any]:
+        return self._cursor_store.kill_cursors(context.command_document)
+
+    async def _handle_commit_transaction(self, context: WireRequestContext) -> dict[str, Any]:
+        return self._session_store.commit_transaction(context.raw_body)
+
+    async def _handle_abort_transaction(self, context: WireRequestContext) -> dict[str, Any]:
+        return self._session_store.abort_transaction(context.raw_body)
+
+    async def _handle_passthrough(self, context: WireRequestContext) -> dict[str, Any]:
+        database = self._client.get_database(context.db_name)
+        result = await database.command(context.command_document, session=context.session)
         if not isinstance(result, dict):
             raise OperationFailure("wire command must resolve to a document response")
-        return self._cursor_store.materialize_command_result(command_document, result)
-
-    async def execute_legacy_query(
-        self,
-        full_collection_name: str,
-        query: dict[str, Any],
-    ) -> dict[str, Any]:
-        if not full_collection_name.endswith(".$cmd"):
-            raise OperationFailure("legacy OP_QUERY only supports command namespaces")
-        db_name = full_collection_name[:-5]
-        return await self.execute_command(query, db_name=db_name)
+        return self._cursor_store.materialize_command_result(context.command_document, result)
 
     @staticmethod
     def error_document(exc: Exception) -> dict[str, Any]:

@@ -8,6 +8,7 @@ from typing import Any
 from mongoeco.api import AsyncMongoClient
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import OperationFailure
+from mongoeco.wire.connections import WireConnectionRegistry
 from mongoeco.wire.cursors import WireCursorStore
 from mongoeco.wire.executor import WireCommandExecutor
 from mongoeco.wire.protocol import (
@@ -55,6 +56,7 @@ class AsyncMongoEcoProxyServer:
         self._port = port
         self._server: asyncio.AbstractServer | None = None
         self._request_ids = itertools.count(1)
+        self._connections = WireConnectionRegistry()
         self._cursor_store = WireCursorStore()
         self._session_store = WireSessionStore()
         self._executor = WireCommandExecutor(self._client, self._cursor_store, self._session_store)
@@ -96,6 +98,7 @@ class AsyncMongoEcoProxyServer:
         reader: asyncio.StreamReader,
         writer: asyncio.StreamWriter,
     ) -> None:
+        connection = self._connections.create(writer.get_extra_info("peername"))
         try:
             while not reader.at_eof():
                 try:
@@ -104,19 +107,20 @@ class AsyncMongoEcoProxyServer:
                     break
                 header = parse_message_header(raw_header)
                 payload = await reader.readexactly(header.message_length - 16)
-                response = await self._dispatch_wire_request(header, payload)
+                response = await self._dispatch_wire_request(header, payload, connection=connection)
                 writer.write(response)
                 await writer.drain()
         finally:
+            self._connections.close(connection)
             writer.close()
             await writer.wait_closed()
 
-    async def _dispatch_wire_request(self, header, payload: bytes) -> bytes:
+    async def _dispatch_wire_request(self, header, payload: bytes, *, connection) -> bytes:
         request_id = next(self._request_ids)
         try:
             if header.op_code == OP_MSG:
                 request = decode_op_msg(header, payload)
-                result = await self._executor.execute_command(request.body)
+                result = await self._executor.execute_command(request.body, connection=connection)
                 return encode_op_msg_response(
                     result,
                     request_id=request_id,
@@ -124,7 +128,11 @@ class AsyncMongoEcoProxyServer:
                 )
             if header.op_code == OP_QUERY:
                 request = decode_op_query(header, payload)
-                result = await self._executor.execute_legacy_query(request.full_collection_name, request.query)
+                result = await self._executor.execute_legacy_query(
+                    request.full_collection_name,
+                    request.query,
+                    connection=connection,
+                )
                 return encode_op_reply(
                     [result],
                     request_id=request_id,

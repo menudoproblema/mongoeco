@@ -25,6 +25,21 @@ KILL_CURSORS_CAPABILITY = WireCommandCapability(
     kind="kill_cursors",
     binds_session=False,
 )
+HELLO_CAPABILITY = WireCommandCapability(
+    name="hello",
+    kind="handshake",
+    binds_session=False,
+)
+ISMASTER_CAPABILITY = WireCommandCapability(
+    name="isMaster",
+    kind="handshake",
+    binds_session=False,
+)
+ISMASTER_LOWER_CAPABILITY = WireCommandCapability(
+    name="ismaster",
+    kind="handshake",
+    binds_session=False,
+)
 COMMIT_TRANSACTION_CAPABILITY = WireCommandCapability(
     name="commitTransaction",
     kind="commit_transaction",
@@ -40,6 +55,9 @@ _SPECIAL_CAPABILITIES: dict[str, WireCommandCapability] = {
         END_SESSIONS_CAPABILITY,
         GET_MORE_CAPABILITY,
         KILL_CURSORS_CAPABILITY,
+        HELLO_CAPABILITY,
+        ISMASTER_CAPABILITY,
+        ISMASTER_LOWER_CAPABILITY,
         COMMIT_TRANSACTION_CAPABILITY,
         ABORT_TRANSACTION_CAPABILITY,
     )
@@ -51,4 +69,3 @@ def resolve_wire_command_capability(command_name: str) -> WireCommandCapability:
         command_name,
         WireCommandCapability(name=command_name),
     )
-

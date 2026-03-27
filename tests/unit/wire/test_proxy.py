@@ -12,6 +12,7 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertEqual(resolve_wire_command_capability("getMore").kind, "get_more")
         self.assertEqual(resolve_wire_command_capability("killCursors").kind, "kill_cursors")
         self.assertEqual(resolve_wire_command_capability("commitTransaction").kind, "commit_transaction")
+        self.assertEqual(resolve_wire_command_capability("hello").kind, "handshake")
         self.assertEqual(resolve_wire_command_capability("find").kind, "passthrough")
 
     def test_error_document_includes_catalog_metadata_and_labels(self):
@@ -114,3 +115,26 @@ class WireProxyUnitTests(unittest.TestCase):
         committed = store.commit_transaction({"lsid": lsid})
         self.assertEqual(committed, {"ok": 1.0})
         self.assertFalse(session.transaction_active)
+
+
+class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
+    async def test_executor_routes_hello_through_handshake_service_and_connection_context(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        result = await proxy._executor.execute_command(
+            {
+                "hello": 1,
+                "$db": "admin",
+                "client": {"application": {"name": "wire-tests"}},
+                "compression": ["noop"],
+            },
+            connection=connection,
+        )
+
+        self.assertEqual(result["ok"], 1.0)
+        self.assertEqual(result["connectionId"], connection.connection_id)
+        self.assertEqual(connection.hello_count, 1)
+        self.assertEqual(connection.last_hello_command, "hello")
+        self.assertEqual(connection.client_metadata, {"application": {"name": "wire-tests"}})
+        self.assertEqual(connection.compression, ("noop",))
