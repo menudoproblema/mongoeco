@@ -195,6 +195,31 @@ Lo siguiente ya no pertenece a esta hoja de refactor base, sino a evolución fut
 - endurecer o tipar zonas adicionales solo si el crecimiento real del proyecto lo exige;
 - usar este documento como referencia histórica de las decisiones de base ya consolidadas, no como backlog activo.
 
+## Evolución Arquitectónica Posterior
+
+### 17. Paridad como Código
+
+- `Estado`: `Aplicado`
+- `Impacto`: `Alto`
+- `Esfuerzo`: `Medio`
+- `Descripción`: convertir la paridad con MongoDB real en una infraestructura declarativa, donde los casos diferenciales vivan como datos reutilizables y el runner pueda filtrarlos, listarlos y ejecutarlos por versión objetivo.
+- `Motivación`: los tests diferenciales manuales eran útiles, pero demasiado acoplados a un `TestCase` concreto y poco preparados para crecer por versión y por families semánticas.
+- `Aporte real`: la paridad ya se puede mantener como un inventario explícito de casos, reutilizable por CI y por tooling local, en vez de una colección de tests artesanales.
+- `Aplicado ya`:
+  - `f916f19` `test: codify real mongodb parity cases`
+
+### 18. Catálogo Formal de Errores MongoDB
+
+- `Estado`: `Aplicado`
+- `Impacto`: `Medio-Alto`
+- `Esfuerzo`: `Medio`
+- `Descripción`: centralizar códigos, `codeName` y `errorLabels` por descriptor de error, y hacer que las excepciones compatibles con PyMongo se construyan a partir de ese catálogo.
+- `Motivación`: la compatibilidad no es solo éxito funcional; también depende de fallar con shape y metadatos estables.
+- `Aporte real`: la paridad de errores deja de depender de clases con lógica dispersa y pasa a apoyarse en una fuente formal y extensible.
+- `Aplicado ya`:
+  - `f916f19` `test: codify real mongodb parity cases`
+  - `f916f19` `refactor: formalize mongo error descriptors`
+
 ## Correcciones de Cierre por Revisión Estricta
 
 Estas líneas no sustituyen al refactor base ya hecho, pero sí corrigen el exceso de optimismo de cierres previos cuando se usa un listón arquitectónico más exigente.

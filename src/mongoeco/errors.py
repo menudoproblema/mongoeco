@@ -4,8 +4,10 @@ from mongoeco.error_catalog import (
     DOCUMENT_VALIDATION_ERROR,
     DUPLICATE_KEY_ERROR,
     EXECUTION_TIMEOUT_ERROR,
+    MongoErrorDescriptor,
     OPERATION_FAILURE,
     WRITE_ERROR,
+    build_error_metadata,
 )
 
 
@@ -39,11 +41,17 @@ class WriteError(PyMongoError):
         code: int | None = None,
         details: dict[str, Any] | None = None,
         error_labels: tuple[str, ...] = (),
+        *,
+        descriptor: MongoErrorDescriptor = WRITE_ERROR,
     ):
         super().__init__(message)
-        self.code = WRITE_ERROR.code if code is None else code
-        self.error_labels = error_labels or WRITE_ERROR.error_labels
-        self.details = _merge_error_details(details, self.error_labels)
+        self.code, self.code_name, self.details = build_error_metadata(
+            descriptor,
+            code=code,
+            details=details,
+            error_labels=error_labels,
+        )
+        self.error_labels = tuple(self.details.get("errorLabels", ())) if self.details else ()
 
 class DuplicateKeyError(WriteError):
     """Se produce cuando se intenta insertar un documento con un _id que ya existe."""
@@ -60,6 +68,7 @@ class DuplicateKeyError(WriteError):
             code=DUPLICATE_KEY_ERROR.code if code is None else code,
             details=details,
             error_labels=error_labels or DUPLICATE_KEY_ERROR.error_labels,
+            descriptor=DUPLICATE_KEY_ERROR,
         )
 
 class DocumentValidationFailure(WriteError):
@@ -77,6 +86,7 @@ class DocumentValidationFailure(WriteError):
             code=DOCUMENT_VALIDATION_ERROR.code if code is None else code,
             details=details,
             error_labels=error_labels or DOCUMENT_VALIDATION_ERROR.error_labels,
+            descriptor=DOCUMENT_VALIDATION_ERROR,
         )
 
 class BulkWriteError(WriteError):
@@ -92,11 +102,17 @@ class OperationFailure(PyMongoError):
         code: int | None = None,
         details: dict[str, Any] | None = None,
         error_labels: tuple[str, ...] = (),
+        *,
+        descriptor: MongoErrorDescriptor = OPERATION_FAILURE,
     ):
         super().__init__(message)
-        self.code = OPERATION_FAILURE.code if code is None else code
-        self.error_labels = error_labels or OPERATION_FAILURE.error_labels
-        self.details = _merge_error_details(details, self.error_labels)
+        self.code, self.code_name, self.details = build_error_metadata(
+            descriptor,
+            code=code,
+            details=details,
+            error_labels=error_labels,
+        )
+        self.error_labels = tuple(self.details.get("errorLabels", ())) if self.details else ()
 
 
 class ExecutionTimeout(OperationFailure):
@@ -114,15 +130,5 @@ class ExecutionTimeout(OperationFailure):
             code=EXECUTION_TIMEOUT_ERROR.code if code is None else code,
             details=details,
             error_labels=error_labels or EXECUTION_TIMEOUT_ERROR.error_labels,
+            descriptor=EXECUTION_TIMEOUT_ERROR,
         )
-
-
-def _merge_error_details(
-    details: dict[str, Any] | None,
-    error_labels: tuple[str, ...],
-) -> dict[str, Any] | None:
-    if not error_labels:
-        return details
-    merged = dict(details or {})
-    merged.setdefault("errorLabels", list(error_labels))
-    return merged
