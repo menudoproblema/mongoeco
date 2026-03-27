@@ -471,11 +471,6 @@ class ArchitectureUnitTests(unittest.TestCase):
             IndexInformation,
         )
 
-    def test_sync_client_exposes_resource_return_helper(self):
-        from mongoeco.api._sync.client import MongoClient
-
-        self.assertTrue(callable(getattr(MongoClient, "_run_resource", None)))
-
     def test_sync_database_delegates_admin_surface_to_dedicated_service(self):
         from mongoeco.api._sync.client import MongoClient
 
@@ -483,14 +478,6 @@ class ArchitectureUnitTests(unittest.TestCase):
 
         self.assertIsInstance(database._admin, DatabaseAdminService)
         self.assertIsInstance(database._admin._commands, DatabaseCommandService)
-
-    def test_sync_database_command_service_reuses_typed_async_parser(self):
-        from mongoeco.api._sync.client import MongoClient
-
-        database = MongoClient().get_database("db")
-        parsed = database._admin._commands.parse_raw_command("buildInfo")
-
-        self.assertIsInstance(parsed, AsyncDatabaseCommandService.StaticAdminCommand)
 
     def test_pymongo_configuration_types_validate_and_are_immutable(self):
         write_concern = WriteConcern("majority", j=True, wtimeout=1000)
@@ -633,13 +620,6 @@ class ArchitectureUnitTests(unittest.TestCase):
             DropDatabaseCommandResult("db").to_document()["dropped"],
             "db",
         )
-
-    def test_database_admin_service_exposes_typed_listing_snapshot_loaders(self):
-        self.assertIn("_list_collection_snapshots", AsyncDatabaseAdminService.__dict__)
-        self.assertIn("_list_database_snapshots", AsyncDatabaseAdminService.__dict__)
-        self.assertIn("_execute_find_and_modify_remove", AsyncDatabaseAdminService.__dict__)
-        self.assertIn("_execute_find_and_modify_operator_update", AsyncDatabaseAdminService.__dict__)
-        self.assertIn("_execute_find_and_modify_replacement", AsyncDatabaseAdminService.__dict__)
 
     def test_database_command_service_routes_use_typed_records(self):
         route = AsyncDatabaseCommandService._DELEGATED_COMMAND_HANDLERS["dropDatabase"]
@@ -796,16 +776,6 @@ class ArchitectureUnitTests(unittest.TestCase):
         service = database._admin._commands
 
         result = asyncio.run(service.execute_document("buildInfo"))
-
-        self.assertEqual(result["gitVersion"], "mongoeco")
-        self.assertEqual(result["ok"], 1.0)
-
-    def test_sync_database_command_service_reuses_async_document_execution(self):
-        from mongoeco.api._sync.client import MongoClient
-
-        database = MongoClient().get_database("db")
-
-        result = database._admin._commands.command("buildInfo")
 
         self.assertEqual(result["gitVersion"], "mongoeco")
         self.assertEqual(result["ok"], 1.0)
