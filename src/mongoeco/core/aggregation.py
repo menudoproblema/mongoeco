@@ -416,7 +416,7 @@ def _validate_accumulator_expression(operator: str, expression: object) -> None:
     if operator == "$count":
         if not isinstance(expression, dict) or expression:
             raise OperationFailure("$count accumulator requires an empty document")
-    if operator in {"$firstN", "$lastN"}:
+    if operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
         if not isinstance(expression, dict) or not {"input", "n"} <= set(expression):
             raise OperationFailure(f"{operator} requires input and n")
 
@@ -2048,7 +2048,7 @@ def evaluate_expression(
                     return None
                 values = _require_array(operator, raw_value)
                 return _slice_array(values, args, document, variables, dialect=dialect)
-            if operator in {"$firstN", "$lastN"}:
+            if operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
                 value, size = _evaluate_pick_n_input(
                     operator,
                     document,
@@ -2059,6 +2059,17 @@ def evaluate_expression(
                 if value is None:
                     return None
                 values = _require_array(operator, value)
+                if operator in {"$maxN", "$minN"}:
+                    filtered = [
+                        deepcopy(item)
+                        for item in values
+                        if item is not None and not isinstance(item, UndefinedType)
+                    ]
+                    filtered.sort(
+                        key=cmp_to_key(dialect.compare_values),
+                        reverse=operator == "$maxN",
+                    )
+                    return filtered[:size]
                 if size >= len(values):
                     return deepcopy(values)
                 if operator == "$firstN":
@@ -2810,7 +2821,7 @@ def _initialize_accumulators(
         elif operator in {"$min", "$max", "$first", "$last"}:
             initialized[field] = None
             flags[field] = False
-        elif operator in {"$firstN", "$lastN"}:
+        elif operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
             initialized[field] = _PickNAccumulator()
         elif operator == "$avg":
             initialized[field] = _AverageAccumulator()
@@ -2900,7 +2911,7 @@ def _apply_accumulators(
         elif operator == "$last":
             bucket[field] = deepcopy(value)
             flags[field] = True
-        elif operator in {"$firstN", "$lastN"}:
+        elif operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
             value, size = _evaluate_pick_n_input(
                 operator,
                 document,
@@ -2916,10 +2927,19 @@ def _apply_accumulators(
             if operator == "$firstN":
                 if len(state.items) < state.n:
                     state.items.append(deepcopy(value))
-            else:
+            elif operator == "$lastN":
                 state.items.append(deepcopy(value))
                 if len(state.items) > state.n:
                     del state.items[:-state.n]
+            else:
+                if value is None or isinstance(value, UndefinedType):
+                    continue
+                state.items.append(deepcopy(value))
+                state.items.sort(
+                    key=cmp_to_key(dialect.compare_values),
+                    reverse=operator == "$maxN",
+                )
+                del state.items[state.n:]
 
 
 def _finalize_accumulators(bucket: dict[str, Any]) -> Document:

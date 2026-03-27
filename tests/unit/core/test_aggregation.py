@@ -1080,6 +1080,14 @@ class AggregationTests(unittest.TestCase):
         self.assertIsNone(
             evaluate_expression(document, {"$lastN": {"input": "$missing", "n": 1}})
         )
+        self.assertEqual(
+            evaluate_expression(document, {"$maxN": {"input": [1, None, 3, 2], "n": 2}}),
+            [3, 2],
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$minN": {"input": [1, None, 3, 2], "n": 2}}),
+            [1, 2],
+        )
 
     def test_evaluate_expression_first_n_and_last_n_reject_invalid_values(self):
         document = {"scores": [10, 20, 30], "text": "Ada"}
@@ -1090,13 +1098,15 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$lastN": {"input": "$text", "n": 1}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$firstN": {"n": 1}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$maxN": {"input": "$scores", "n": 0}})
 
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]
 
         unsupported_group_accumulators = [
             "$bottom", "$bottomN",
-            "$maxN", "$median", "$minN", "$percentile", "$top", "$topN",
+            "$median", "$percentile", "$top", "$topN",
         ]
         for operator in unsupported_group_accumulators:
             with self.subTest(group_operator=operator):
@@ -1106,7 +1116,7 @@ class AggregationTests(unittest.TestCase):
         unsupported_window_operators = [
             "$bottom", "$bottomN", "$covariancePop", "$covarianceSamp",
             "$denseRank", "$derivative", "$documentNumber", "$expMovingAvg", "$integral",
-            "$linearFill", "$locf", "$minN", "$rank", "$shift", "$top", "$topN",
+            "$linearFill", "$locf", "$rank", "$shift", "$top", "$topN",
         ]
         for operator in unsupported_window_operators:
             with self.subTest(window_operator=operator):
@@ -1859,6 +1869,87 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(windowed[3]["runningLastTwo"], [9])
         self.assertEqual(windowed[4]["runningFirstTwo"], [9, None])
         self.assertEqual(windowed[4]["runningLastTwo"], [9, None])
+
+    def test_group_bucket_and_window_support_min_n_and_max_n_accumulators(self):
+        documents = [
+            {"_id": "1", "group": "a", "rank": 1, "score": 2},
+            {"_id": "2", "group": "a", "rank": 2, "score": None},
+            {"_id": "3", "group": "a", "rank": 3, "score": 6},
+            {"_id": "4", "group": "b", "rank": 1, "score": 9},
+            {"_id": "5", "group": "b", "rank": 2, "score": 1},
+        ]
+
+        grouped = apply_pipeline(
+            documents,
+            [
+                {
+                    "$group": {
+                        "_id": "$group",
+                        "topTwo": {"$maxN": {"input": "$score", "n": 2}},
+                        "bottomTwo": {"$minN": {"input": "$score", "n": 2}},
+                    }
+                },
+                {"$sort": {"_id": 1}},
+            ],
+        )
+        self.assertEqual(
+            grouped,
+            [
+                {"_id": "a", "topTwo": [6, 2], "bottomTwo": [2, 6]},
+                {"_id": "b", "topTwo": [9, 1], "bottomTwo": [1, 9]},
+            ],
+        )
+
+        bucketed = apply_pipeline(
+            documents,
+            [
+                {
+                    "$bucket": {
+                        "groupBy": "$rank",
+                        "boundaries": [0, 2, 4],
+                        "output": {
+                            "topTwo": {"$maxN": {"input": "$score", "n": 2}},
+                            "bottomTwo": {"$minN": {"input": "$score", "n": 2}},
+                        },
+                    }
+                }
+            ],
+        )
+        self.assertEqual(
+            bucketed,
+            [
+                {"_id": 0, "topTwo": [9, 2], "bottomTwo": [2, 9]},
+                {"_id": 2, "topTwo": [6, 1], "bottomTwo": [1, 6]},
+            ],
+        )
+
+        windowed = apply_pipeline(
+            documents,
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"rank": 1},
+                        "output": {
+                            "runningTopTwo": {
+                                "$maxN": {"input": "$score", "n": 2},
+                                "window": {"documents": ["unbounded", "current"]},
+                            },
+                            "runningBottomTwo": {
+                                "$minN": {"input": "$score", "n": 2},
+                                "window": {"documents": ["unbounded", "current"]},
+                            },
+                        },
+                    }
+                }
+            ],
+        )
+        self.assertEqual(windowed[0]["runningTopTwo"], [2])
+        self.assertEqual(windowed[0]["runningBottomTwo"], [2])
+        self.assertEqual(windowed[1]["runningTopTwo"], [2])
+        self.assertEqual(windowed[1]["runningBottomTwo"], [2])
+        self.assertEqual(windowed[2]["runningTopTwo"], [6, 2])
+        self.assertEqual(windowed[2]["runningBottomTwo"], [2, 6])
 
     def test_evaluate_expression_supports_stddev_expression_forms(self):
         document = {

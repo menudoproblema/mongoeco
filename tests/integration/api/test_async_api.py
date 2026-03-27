@@ -3424,6 +3424,8 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                     "_id": 0,
                                     "firstScores": {"$firstN": {"input": [10, 20, 30, 40], "n": 3}},
                                     "lastScores": {"$lastN": {"input": [10, 20, 30, 40], "n": 2}},
+                                    "topScores": {"$maxN": {"input": [1, None, 3, 2], "n": 2}},
+                                    "bottomScores": {"$minN": {"input": [1, None, 3, 2], "n": 2}},
                                 }
                             },
                             {"$limit": 1},
@@ -3439,7 +3441,14 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     )
                     self.assertEqual(
                         projected,
-                        [{"firstScores": [10, 20, 30], "lastScores": [30, 40]}],
+                        [
+                            {
+                                "firstScores": [10, 20, 30],
+                                "lastScores": [30, 40],
+                                "topScores": [3, 2],
+                                "bottomScores": [1, 2],
+                            }
+                        ],
                     )
 
     async def test_aggregate_supports_string_expressions_last_and_add_to_set(self):
