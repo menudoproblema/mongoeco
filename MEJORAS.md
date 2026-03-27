@@ -244,30 +244,39 @@ Estas mejoras ya no forman parte del refactor base original, pero sí son la con
 
 ### 10. Validación de Esquemas con Paridad MongoDB (`$jsonSchema`)
 
-- `Estado`: `Pendiente`
+- `Estado`: `Aplicado`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Medio-Alto`
 - `Descripción`: integrar validación de `$jsonSchema` en los planes de escritura para que la semántica de aceptación/rechazo de documentos no dependa del backend.
 - `Motivación`: hoy una app puede insertar datos que una instancia real rechazaría si la colección usa validación de esquema.
 - `Aporte real`: endurece la promesa de paridad de escritura y convierte la validación en parte explícita del core semántico.
+- `Aplicado ya`:
+  - `2b84f91` `feat: add collection json schema validation`
+- `Cierre`: las opciones de colección compilan un validador compartido, la validación se ejecuta desde el core semántico común y ambos engines la aplican de forma consistente en inserts, updates, replacements y upserts.
 
 ### 11. Telemetría Interna y `system.profile`
 
-- `Estado`: `Pendiente`
+- `Estado`: `Aplicado`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Medio-Alto`
 - `Descripción`: registrar latencia, memoria, decisiones de pushdown/fallback y fases de ejecución internas, y exponerlo con una semántica tipo `system.profile`.
 - `Motivación`: `explain()` ayuda a entender el plan, pero no basta para entender costes reales ni regresiones de rendimiento.
 - `Aporte real`: da observabilidad de runtime, facilita diagnósticos y prepara mejor explain/planning futuros.
+- `Aplicado ya`:
+  - `ec82006` `feat: add profiling telemetry and system profile`
+- `Cierre`: ambos engines exponen `profile` y `system.profile`, y la telemetría se registra desde una frontera común de comandos, lecturas materializadas y escrituras, incluyendo lineage y fallbacks cuando están disponibles.
 
 ### 12. MVCC Virtual y Aislamiento Más Fiel
 
-- `Estado`: `Pendiente`
+- `Estado`: `Aplicado con matices`
 - `Impacto`: `Muy Alto`
 - `Esfuerzo`: `Muy Alto`
 - `Descripción`: introducir una capa de versionado lógico de documentos o snapshots para emular con más fidelidad `readConcern`, visibilidad y aislamiento transaccional.
 - `Motivación`: el comportamiento concurrente real de MongoDB no coincide por completo con memoria/SQLite apoyados solo en el backend subyacente.
 - `Aporte real`: reduce la distancia con MongoDB real en una de las zonas más difíciles: consistencia y concurrencia.
+- `Aplicado ya`:
+  - `02d96a4` `refactor: add explicit mvcc engine state`
+- `Cierre`: existe ya estado MVCC explícito por engine y sesión, con snapshots aislados reales en `MemoryEngine` y contexto MVCC formal en `SQLiteEngine`. El cierre sigue con matices porque la emulación todavía no pretende igualar toda la semántica distribuida de MongoDB real.
 
 ### 13. SDK de Extensión para Operadores y Stages
 
