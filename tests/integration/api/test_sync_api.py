@@ -1496,7 +1496,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"_id": "1", "decimal": decimal.Decimal("10.25")}],
                     )
 
-    def test_aggregate_supports_convert_and_set_field(self):
+    def test_aggregate_supports_convert_set_field_and_unset_field(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -1510,6 +1510,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "_id": 1,
                                     "converted": {"$convert": {"input": "$value", "to": "int"}},
                                     "updated": {"$setField": {"field": "name", "input": "$nested", "value": "Ada"}},
+                                    "trimmed": {"$unsetField": {"field": "a", "input": "$nested"}},
                                 }
                             }
                         ]
@@ -1517,7 +1518,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     self.assertEqual(
                         documents,
-                        [{"_id": "1", "converted": 10, "updated": {"a": 1, "name": "Ada"}}],
+                        [{"_id": "1", "converted": 10, "updated": {"a": 1, "name": "Ada"}, "trimmed": {}}],
                     )
 
     def test_aggregate_supports_bson_size_and_rand(self):

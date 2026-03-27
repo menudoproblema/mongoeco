@@ -668,6 +668,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$rand`
     * `$convert`
     * `$setField`
+    * `$unsetField`
     * `$switch`
     * `$bitAnd`
     * `$bitNot`

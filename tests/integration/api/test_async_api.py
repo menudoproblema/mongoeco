@@ -1604,7 +1604,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [{"_id": "1", "decimal": decimal.Decimal("10.25")}],
                     )
 
-    async def test_aggregate_supports_convert_and_set_field(self):
+    async def test_aggregate_supports_convert_set_field_and_unset_field(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
@@ -1618,6 +1618,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                     "_id": 1,
                                     "converted": {"$convert": {"input": "$value", "to": "int"}},
                                     "updated": {"$setField": {"field": "name", "input": "$nested", "value": "Ada"}},
+                                    "trimmed": {"$unsetField": {"field": "a", "input": "$nested"}},
                                 }
                             }
                         ]
@@ -1625,7 +1626,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     self.assertEqual(
                         documents,
-                        [{"_id": "1", "converted": 10, "updated": {"a": 1, "name": "Ada"}}],
+                        [{"_id": "1", "converted": 10, "updated": {"a": 1, "name": "Ada"}, "trimmed": {}}],
                     )
 
     async def test_aggregate_supports_bson_size_and_rand(self):

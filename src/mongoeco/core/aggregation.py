@@ -1412,6 +1412,20 @@ def evaluate_expression(
                 result = deepcopy(input_value)
                 result[field_name] = evaluate_expression(document, spec["value"], variables, dialect=dialect)
                 return result
+            if operator == "$unsetField":
+                if not isinstance(spec, dict) or not {"field", "input"} <= set(spec):
+                    raise OperationFailure("$unsetField requires field and input")
+                field_name = evaluate_expression(document, spec["field"], variables, dialect=dialect)
+                if not isinstance(field_name, str):
+                    raise OperationFailure("$unsetField field must resolve to a string")
+                input_value = _evaluate_expression_with_missing(document, spec["input"], variables, dialect=dialect)
+                if input_value is _MISSING or input_value is None or isinstance(input_value, UndefinedType):
+                    return None
+                if not isinstance(input_value, dict):
+                    raise OperationFailure("$unsetField input must resolve to an object")
+                result = deepcopy(input_value)
+                result.pop(field_name, None)
+                return result
             if operator == "$switch":
                 if not isinstance(spec, dict) or "branches" not in spec:
                     raise OperationFailure("$switch requires branches")

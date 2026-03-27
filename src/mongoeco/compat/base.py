@@ -154,6 +154,7 @@ SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
         '$dateToString',
         '$rand',
         '$setField',
+        '$unsetField',
         '$week',
         '$isoWeek',
         '$isoWeekYear',

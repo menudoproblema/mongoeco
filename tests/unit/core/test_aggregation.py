@@ -1005,6 +1005,19 @@ class AggregationTests(unittest.TestCase):
             ),
             {"a": 1, "name": "Ada"},
         )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$unsetField": {"field": "a", "input": "$nested"}},
+            ),
+            {},
+        )
+        self.assertIsNone(
+            evaluate_expression(
+                {"nested": None},
+                {"$unsetField": {"field": "a", "input": "$nested"}},
+            )
+        )
 
     def test_evaluate_expression_convert_and_set_field_reject_invalid_values(self):
         document = {"value": "Ada", "nested": {"a": 1}, "text": "not-an-object"}
@@ -1022,6 +1035,10 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$setField": {"field": 1, "input": "$nested", "value": "Ada"}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$setField": {"field": "name", "input": "$text", "value": "Ada"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$unsetField": {"field": 1, "input": "$nested"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$unsetField": {"field": "name", "input": "$text"}})
 
     def test_evaluate_expression_supports_bson_size_and_rand(self):
         document = {"doc": {"a": 1, "name": "Ada"}, "nested": {"flag": True}}
