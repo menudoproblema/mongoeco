@@ -324,6 +324,62 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"ns": "alpha.events", "ok": 1.0},
                     )
 
+    def test_database_command_supports_find_and_aggregate(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.alpha.events.insert_many(
+                        [
+                            {"_id": "1", "kind": "view", "rank": 2},
+                            {"_id": "2", "kind": "view", "rank": 1},
+                            {"_id": "3", "kind": "click", "rank": 3},
+                        ]
+                    )
+
+                    found = client.alpha.command(
+                        {
+                            "find": "events",
+                            "filter": {"kind": "view"},
+                            "projection": {"rank": 1, "_id": 0},
+                            "sort": {"rank": 1},
+                            "batchSize": 1,
+                        }
+                    )
+                    aggregated = client.alpha.command(
+                        {
+                            "aggregate": "events",
+                            "pipeline": [
+                                {"$match": {"kind": "view"}},
+                                {"$sort": {"rank": 1}},
+                                {"$project": {"rank": 1, "_id": 0}},
+                            ],
+                            "cursor": {"batchSize": 1},
+                        }
+                    )
+
+                    self.assertEqual(
+                        found,
+                        {
+                            "cursor": {
+                                "id": 0,
+                                "ns": "alpha.events",
+                                "firstBatch": [{"rank": 1}, {"rank": 2}],
+                            },
+                            "ok": 1.0,
+                        },
+                    )
+                    self.assertEqual(
+                        aggregated,
+                        {
+                            "cursor": {
+                                "id": 0,
+                                "ns": "alpha.events",
+                                "firstBatch": [{"rank": 1}, {"rank": 2}],
+                            },
+                            "ok": 1.0,
+                        },
+                    )
+
     def test_database_command_supports_find_and_modify(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -426,6 +482,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 client.alpha.command({"dropIndexes": "events", "index": 1.5})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 client.alpha.command("listDatabases", nameOnly=1)  # type: ignore[arg-type]
+            with self.assertRaises(ValueError):
+                client.alpha.command({"find": "events", "batchSize": -1})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command({"aggregate": "events", "pipeline": [], "cursor": 1})  # type: ignore[arg-type]
             with self.assertRaises(OperationFailure):
                 client.alpha.command({"findAndModify": "events"})
 

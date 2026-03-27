@@ -2,7 +2,12 @@ import datetime
 
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
-from mongoeco.api._async.cursor import _validate_hint_spec, _validate_max_time_ms, _validate_sort_spec
+from mongoeco.api._async.cursor import (
+    _validate_batch_size,
+    _validate_hint_spec,
+    _validate_max_time_ms,
+    _validate_sort_spec,
+)
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,
@@ -13,7 +18,7 @@ from mongoeco.compat import (
 )
 from mongoeco.core.aggregation import _bson_document_size
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.validation import is_filter
+from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import CollectionInvalid, OperationFailure
 from mongoeco.session import ClientSession
@@ -279,6 +284,21 @@ class AsyncDatabase:
         _validate_max_time_ms(max_time_ms)
         return max_time_ms
 
+    @staticmethod
+    def _normalize_projection_from_command(projection: object | None) -> dict[str, object] | None:
+        if projection is None:
+            return None
+        if not is_projection(projection):
+            raise TypeError("projection must be a dict")
+        return projection
+
+    @staticmethod
+    def _normalize_batch_size_from_command(batch_size: object | None) -> int | None:
+        if batch_size is None:
+            return None
+        _validate_batch_size(batch_size)
+        return batch_size
+
     async def _collection_stats(
         self,
         collection_name: str,
@@ -510,6 +530,80 @@ class AsyncDatabase:
                 session=session,
             )
             return {"values": values, "ok": 1.0}
+
+        if command_name == "find":
+            collection_name = self._require_collection_name(spec.get("find"), "find")
+            query = self._normalize_filter(spec.get("filter"))
+            projection = self._normalize_projection_from_command(spec.get("projection"))
+            sort = self._normalize_sort_document(spec.get("sort"))
+            hint = self._normalize_hint_from_command(spec.get("hint"))
+            max_time_ms = self._normalize_max_time_ms_from_command(spec.get("maxTimeMS"))
+            skip = spec.get("skip", 0)
+            if not isinstance(skip, int) or isinstance(skip, bool) or skip < 0:
+                raise TypeError("skip must be a non-negative integer")
+            limit = spec.get("limit")
+            if limit is not None and (
+                not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
+            ):
+                raise TypeError("limit must be a non-negative integer")
+            batch_size = self._normalize_batch_size_from_command(spec.get("batchSize"))
+            first_batch = await self.get_collection(collection_name).find(
+                query,
+                projection,
+                sort=sort,
+                skip=skip,
+                limit=limit,
+                hint=hint,
+                comment=spec.get("comment"),
+                max_time_ms=max_time_ms,
+                batch_size=batch_size,
+                session=session,
+            ).to_list()
+            return {
+                "cursor": {
+                    "id": 0,
+                    "ns": f"{self._db_name}.{collection_name}",
+                    "firstBatch": first_batch,
+                },
+                "ok": 1.0,
+            }
+
+        if command_name == "aggregate":
+            collection_name = self._require_collection_name(
+                spec.get("aggregate"),
+                "aggregate",
+            )
+            pipeline = spec.get("pipeline")
+            if not isinstance(pipeline, list):
+                raise TypeError("pipeline must be a list")
+            cursor_spec = spec.get("cursor", {})
+            if not isinstance(cursor_spec, dict):
+                raise TypeError("cursor must be a document")
+            batch_size = self._normalize_batch_size_from_command(
+                cursor_spec.get("batchSize")
+            )
+            hint = self._normalize_hint_from_command(spec.get("hint"))
+            max_time_ms = self._normalize_max_time_ms_from_command(spec.get("maxTimeMS"))
+            let = spec.get("let")
+            if let is not None and not isinstance(let, dict):
+                raise TypeError("let must be a dict")
+            first_batch = await self.get_collection(collection_name).aggregate(
+                pipeline,
+                hint=hint,
+                comment=spec.get("comment"),
+                max_time_ms=max_time_ms,
+                batch_size=batch_size,
+                let=let,
+                session=session,
+            ).to_list()
+            return {
+                "cursor": {
+                    "id": 0,
+                    "ns": f"{self._db_name}.{collection_name}",
+                    "firstBatch": first_batch,
+                },
+                "ok": 1.0,
+            }
 
         if command_name == "findAndModify":
             collection_name = self._require_collection_name(
