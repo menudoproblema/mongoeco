@@ -1,7 +1,6 @@
 import datetime
 import decimal
 import math
-from collections.abc import Sequence
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any
@@ -28,66 +27,6 @@ from mongoeco.compat.catalog import (
 from mongoeco.types import ObjectId, UndefinedType
 
 
-def _build_behavior_flags(instance: object, hook_names: Sequence[str]) -> MappingProxyType:
-    return MappingProxyType(
-        {
-            hook_name: getattr(instance, hook_name)()
-            for hook_name in hook_names
-        }
-    )
-
-
-def _build_behavior_flag_catalog(
-    catalog: MappingProxyType,
-    hook_names: Sequence[str],
-) -> MappingProxyType:
-    return MappingProxyType(
-        {
-            key: _build_behavior_flags(instance, hook_names)
-            for key, instance in catalog.items()
-        }
-    )
-
-
-def _build_capability_catalog(catalog: MappingProxyType) -> MappingProxyType:
-    return MappingProxyType(
-        {
-            key: instance.capabilities
-            for key, instance in catalog.items()
-        }
-    )
-
-
-def _dialect_catalog_behavior_flag(key: str, flag_name: str) -> bool | None:
-    entry = MONGODB_DIALECT_CATALOG.get(key)
-    if entry is None:
-        return None
-    value = entry.behavior_flags.get(flag_name)
-    return value if isinstance(value, bool) else None
-
-
-def _dialect_catalog_capabilities(key: str) -> frozenset[str] | None:
-    entry = MONGODB_DIALECT_CATALOG.get(key)
-    if entry is None:
-        return None
-    return entry.capabilities
-
-
-def _pymongo_catalog_behavior_flag(key: str, flag_name: str) -> bool | None:
-    entry = PYMONGO_PROFILE_CATALOG.get(key)
-    if entry is None:
-        return None
-    value = entry.behavior_flags.get(flag_name)
-    return value if isinstance(value, bool) else None
-
-
-def _pymongo_catalog_capabilities(key: str) -> frozenset[str] | None:
-    entry = PYMONGO_PROFILE_CATALOG.get(key)
-    if entry is None:
-        return None
-    return entry.capabilities
-
-
 @dataclass(frozen=True, slots=True)
 class MongoDialect:
     """Describe la semántica observable objetivo del servidor MongoDB.
@@ -102,9 +41,14 @@ class MongoDialect:
     key: str
     server_version: str
     label: str
+    catalog_behavior_flags: MappingProxyType = MappingProxyType({})
+    catalog_capabilities: frozenset[str] = frozenset()
 
     def behavior_flag(self, name: str, default: bool | None = None) -> bool | None:
-        return _dialect_catalog_behavior_flag(self.key, name) if name in MONGODB_DIALECT_HOOK_NAMES else default
+        if name not in MONGODB_DIALECT_HOOK_NAMES:
+            return default
+        value = self.catalog_behavior_flags.get(name)
+        return value if isinstance(value, bool) else default
 
     def has_capability(self, name: str) -> bool:
         return name in self.capabilities
@@ -162,10 +106,7 @@ class MongoDialect:
 
     @property
     def capabilities(self) -> frozenset[str]:
-        catalog_capabilities = _dialect_catalog_capabilities(self.key)
-        if catalog_capabilities is not None:
-            return catalog_capabilities
-        return frozenset()
+        return self.catalog_capabilities
 
     def supports_query_field_operator(self, name: str) -> bool:
         return name in self.query_field_operators
@@ -277,8 +218,8 @@ class MongoDialect:
             return -1 if left_repr < right_repr else 1
 
     def behavior_flags(self) -> MappingProxyType:
-        """Expone metadata derivada directamente de los hooks del dialecto."""
-        return _build_behavior_flags(self, MONGODB_DIALECT_HOOK_NAMES)
+        """Expone metadata declarativa derivada del catálogo del dialecto."""
+        return self.catalog_behavior_flags
 
 
 @dataclass(frozen=True, slots=True)
@@ -286,6 +227,8 @@ class MongoDialect70(MongoDialect):
     key: str = '7.0'
     server_version: str = '7.0'
     label: str = 'MongoDB 7.0'
+    catalog_behavior_flags: MappingProxyType = MONGODB_DIALECT_CATALOG['7.0'].behavior_flags
+    catalog_capabilities: frozenset[str] = MONGODB_DIALECT_CATALOG['7.0'].capabilities
 
 
 @dataclass(frozen=True, slots=True)
@@ -293,6 +236,8 @@ class MongoDialect80(MongoDialect):
     key: str = '8.0'
     server_version: str = '8.0'
     label: str = 'MongoDB 8.0'
+    catalog_behavior_flags: MappingProxyType = MONGODB_DIALECT_CATALOG['8.0'].behavior_flags
+    catalog_capabilities: frozenset[str] = MONGODB_DIALECT_CATALOG['8.0'].capabilities
 
 
 @dataclass(frozen=True, slots=True)
@@ -308,9 +253,14 @@ class PyMongoProfile:
     key: str
     driver_series: str
     label: str
+    catalog_behavior_flags: MappingProxyType = MappingProxyType({})
+    catalog_capabilities: frozenset[str] = frozenset()
 
     def behavior_flag(self, name: str, default: bool | None = None) -> bool | None:
-        return _pymongo_catalog_behavior_flag(self.key, name) if name in PYMONGO_PROFILE_HOOK_NAMES else default
+        if name not in PYMONGO_PROFILE_HOOK_NAMES:
+            return default
+        value = self.catalog_behavior_flags.get(name)
+        return value if isinstance(value, bool) else default
 
     def has_capability(self, name: str) -> bool:
         return name in self.capabilities
@@ -323,14 +273,11 @@ class PyMongoProfile:
 
     @property
     def capabilities(self) -> frozenset[str]:
-        catalog_capabilities = _pymongo_catalog_capabilities(self.key)
-        if catalog_capabilities is not None:
-            return catalog_capabilities
-        return frozenset()
+        return self.catalog_capabilities
 
     def behavior_flags(self) -> MappingProxyType:
-        """Expone metadata derivada directamente de los hooks del perfil."""
-        return _build_behavior_flags(self, PYMONGO_PROFILE_HOOK_NAMES)
+        """Expone metadata declarativa derivada del catálogo del perfil."""
+        return self.catalog_behavior_flags
 
 
 @dataclass(frozen=True, slots=True)
@@ -338,6 +285,8 @@ class PyMongoProfile49(PyMongoProfile):
     key: str = '4.9'
     driver_series: str = '4.x'
     label: str = 'PyMongo 4.9'
+    catalog_behavior_flags: MappingProxyType = PYMONGO_PROFILE_CATALOG['4.9'].behavior_flags
+    catalog_capabilities: frozenset[str] = PYMONGO_PROFILE_CATALOG['4.9'].capabilities
 
 
 @dataclass(frozen=True, slots=True)
@@ -345,6 +294,8 @@ class PyMongoProfile411(PyMongoProfile):
     key: str = '4.11'
     driver_series: str = '4.x'
     label: str = 'PyMongo 4.11'
+    catalog_behavior_flags: MappingProxyType = PYMONGO_PROFILE_CATALOG['4.11'].behavior_flags
+    catalog_capabilities: frozenset[str] = PYMONGO_PROFILE_CATALOG['4.11'].capabilities
 
 
 @dataclass(frozen=True, slots=True)
@@ -352,6 +303,8 @@ class PyMongoProfile413(PyMongoProfile411):
     key: str = '4.13'
     driver_series: str = '4.x'
     label: str = 'PyMongo 4.13'
+    catalog_behavior_flags: MappingProxyType = PYMONGO_PROFILE_CATALOG['4.13'].behavior_flags
+    catalog_capabilities: frozenset[str] = PYMONGO_PROFILE_CATALOG['4.13'].capabilities
 
 
 MONGODB_DIALECT_70 = MongoDialect70()
@@ -368,11 +321,12 @@ MONGODB_DIALECTS = MappingProxyType(
     }
 )
 
-MONGODB_DIALECT_CAPABILITIES = _build_capability_catalog(MONGODB_DIALECTS)
+MONGODB_DIALECT_CAPABILITIES = MappingProxyType(
+    {key: instance.capabilities for key, instance in MONGODB_DIALECTS.items()}
+)
 
-MONGODB_DIALECT_BEHAVIOR_FLAGS = _build_behavior_flag_catalog(
-    MONGODB_DIALECTS,
-    MONGODB_DIALECT_HOOK_NAMES,
+MONGODB_DIALECT_BEHAVIOR_FLAGS = MappingProxyType(
+    {key: instance.behavior_flags() for key, instance in MONGODB_DIALECTS.items()}
 )
 
 PYMONGO_PROFILES = MappingProxyType(
@@ -383,11 +337,12 @@ PYMONGO_PROFILES = MappingProxyType(
     }
 )
 
-PYMONGO_PROFILE_CAPABILITIES = _build_capability_catalog(PYMONGO_PROFILES)
+PYMONGO_PROFILE_CAPABILITIES = MappingProxyType(
+    {key: instance.capabilities for key, instance in PYMONGO_PROFILES.items()}
+)
 
-PYMONGO_PROFILE_BEHAVIOR_FLAGS = _build_behavior_flag_catalog(
-    PYMONGO_PROFILES,
-    PYMONGO_PROFILE_HOOK_NAMES,
+PYMONGO_PROFILE_BEHAVIOR_FLAGS = MappingProxyType(
+    {key: instance.behavior_flags() for key, instance in PYMONGO_PROFILES.items()}
 )
 
 assert tuple(MONGODB_DIALECTS) == tuple(MONGODB_DIALECT_CATALOG)
