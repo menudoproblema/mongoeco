@@ -26,6 +26,7 @@ from mongoeco.types import Document, Filter, ObjectId, Projection, SortSpec, Und
 
 type PipelineStage = dict[str, Any]
 type Pipeline = list[PipelineStage]
+type AggregationStageHandler = Callable[[list[Document], object, "AggregationStageContext"], list[Document]]
 
 _CURRENT_COLLECTION_RESOLVER_KEY = "__mongoeco_current_collection__"
 _ACCUMULATOR_FLAGS_KEY = ("__mongoeco_internal__", "accumulator_flags")
@@ -113,6 +114,14 @@ class _AccumulatorBucket:
     values: dict[str, Any]
     flags: dict[str, bool] = field(default_factory=dict)
     include_bucket_id: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class AggregationStageContext:
+    stage_index: int
+    collection_resolver: Callable[[str], list[Document]] | None = None
+    variables: dict[str, Any] | None = None
+    dialect: MongoDialect = MONGODB_DIALECT_70
 
 
 def _accumulator_flags(bucket: dict[object, Any] | _AccumulatorBucket) -> dict[str, bool]:
@@ -3833,6 +3842,201 @@ def split_pushdown_pipeline(
     )
 
 
+def _stage_documents(
+    _documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    if context.stage_index != 0:
+        raise OperationFailure("$documents is only valid as the first pipeline stage")
+    return _require_documents_stage(spec)
+
+
+def _stage_match(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return _apply_match(documents, spec, context.variables, dialect=context.dialect)
+
+
+def _stage_project(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return _apply_project(documents, spec, context.variables, dialect=context.dialect)
+
+
+def _stage_unset(documents: list[Document], spec: object, _context: AggregationStageContext) -> list[Document]:
+    return _apply_unset(documents, spec)
+
+
+def _stage_sample(documents: list[Document], spec: object, _context: AggregationStageContext) -> list[Document]:
+    return _apply_sample(documents, spec)
+
+
+def _stage_sort(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return sort_documents(documents, _require_sort(spec), dialect=context.dialect)
+
+
+def _stage_skip(documents: list[Document], spec: object, _context: AggregationStageContext) -> list[Document]:
+    return documents[_require_non_negative_int("$skip", spec):]
+
+
+def _stage_limit(documents: list[Document], spec: object, _context: AggregationStageContext) -> list[Document]:
+    return documents[:_require_non_negative_int("$limit", spec)]
+
+
+def _stage_add_fields(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return _apply_add_fields(documents, spec, context.variables, dialect=context.dialect)
+
+
+def _stage_unwind(documents: list[Document], spec: object, _context: AggregationStageContext) -> list[Document]:
+    return _apply_unwind(documents, spec)
+
+
+def _stage_group(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return _apply_group(documents, spec, context.variables, dialect=context.dialect)
+
+
+def _stage_bucket(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return _apply_bucket(documents, spec, context.variables, dialect=context.dialect)
+
+
+def _stage_bucket_auto(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return _apply_bucket_auto(documents, spec, context.variables, dialect=context.dialect)
+
+
+def _stage_lookup(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return _apply_lookup(
+        documents,
+        spec,
+        context.collection_resolver,
+        context.variables,
+        dialect=context.dialect,
+    )
+
+
+def _stage_union_with(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return _apply_union_with(
+        documents,
+        spec,
+        context.collection_resolver,
+        context.variables,
+        dialect=context.dialect,
+    )
+
+
+def _stage_replace_root(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return _apply_replace_root(documents, spec, context.variables, dialect=context.dialect)
+
+
+def _stage_replace_with(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return _apply_replace_root(
+        documents,
+        {"newRoot": spec},
+        context.variables,
+        dialect=context.dialect,
+    )
+
+
+def _stage_facet(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return _apply_facet(
+        documents,
+        spec,
+        context.collection_resolver,
+        context.variables,
+        dialect=context.dialect,
+    )
+
+
+def _stage_count(documents: list[Document], spec: object, _context: AggregationStageContext) -> list[Document]:
+    return _apply_count(documents, spec)
+
+
+def _stage_sort_by_count(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return _apply_sort_by_count(documents, spec, context.variables, dialect=context.dialect)
+
+
+def _stage_set_window_fields(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    return _apply_set_window_fields(documents, spec, context.variables, dialect=context.dialect)
+
+
+AGGREGATION_STAGE_HANDLERS: dict[str, AggregationStageHandler] = {
+    "$documents": _stage_documents,
+    "$match": _stage_match,
+    "$project": _stage_project,
+    "$unset": _stage_unset,
+    "$sample": _stage_sample,
+    "$sort": _stage_sort,
+    "$skip": _stage_skip,
+    "$limit": _stage_limit,
+    "$addFields": _stage_add_fields,
+    "$set": _stage_add_fields,
+    "$unwind": _stage_unwind,
+    "$group": _stage_group,
+    "$bucket": _stage_bucket,
+    "$bucketAuto": _stage_bucket_auto,
+    "$lookup": _stage_lookup,
+    "$unionWith": _stage_union_with,
+    "$replaceRoot": _stage_replace_root,
+    "$replaceWith": _stage_replace_with,
+    "$facet": _stage_facet,
+    "$count": _stage_count,
+    "$sortByCount": _stage_sort_by_count,
+    "$setWindowFields": _stage_set_window_fields,
+}
+
+
 def apply_pipeline(
     documents: Iterable[Document],
     pipeline: Pipeline,
@@ -3846,93 +4050,17 @@ def apply_pipeline(
         operator, spec = _require_stage(stage)
         if not dialect.supports_aggregation_stage(operator):
             raise OperationFailure(f"Unsupported aggregation stage: {operator}")
-        if operator == "$documents":
-            if index != 0:
-                raise OperationFailure("$documents is only valid as the first pipeline stage")
-            result = _require_documents_stage(spec)
-            continue
-        if operator == "$match":
-            result = _apply_match(result, spec, variables, dialect=dialect)
-            continue
-        if operator == "$project":
-            result = _apply_project(result, spec, variables, dialect=dialect)
-            continue
-        if operator == "$unset":
-            result = _apply_unset(result, spec)
-            continue
-        if operator == "$sample":
-            result = _apply_sample(result, spec)
-            continue
-        if operator == "$sort":
-            result = sort_documents(result, _require_sort(spec), dialect=dialect)
-            continue
-        if operator == "$skip":
-            result = result[_require_non_negative_int("$skip", spec):]
-            continue
-        if operator == "$limit":
-            result = result[:_require_non_negative_int("$limit", spec)]
-            continue
-        if operator in {"$addFields", "$set"}:
-            result = _apply_add_fields(result, spec, variables, dialect=dialect)
-            continue
-        if operator == "$unwind":
-            result = _apply_unwind(result, spec)
-            continue
-        if operator == "$group":
-            result = _apply_group(result, spec, variables, dialect=dialect)
-            continue
-        if operator == "$bucket":
-            result = _apply_bucket(result, spec, variables, dialect=dialect)
-            continue
-        if operator == "$bucketAuto":
-            result = _apply_bucket_auto(result, spec, variables, dialect=dialect)
-            continue
-        if operator == "$lookup":
-            result = _apply_lookup(
-                result,
-                spec,
-                collection_resolver,
-                variables,
+        handler = AGGREGATION_STAGE_HANDLERS.get(operator)
+        if handler is None:
+            raise OperationFailure(f"Unsupported aggregation stage: {operator}")
+        result = handler(
+            result,
+            spec,
+            AggregationStageContext(
+                stage_index=index,
+                collection_resolver=collection_resolver,
+                variables=variables,
                 dialect=dialect,
-            )
-            continue
-        if operator == "$unionWith":
-            result = _apply_union_with(
-                result,
-                spec,
-                collection_resolver,
-                variables,
-                dialect=dialect,
-            )
-            continue
-        if operator == "$replaceRoot":
-            result = _apply_replace_root(result, spec, variables, dialect=dialect)
-            continue
-        if operator == "$replaceWith":
-            result = _apply_replace_root(
-                result,
-                {"newRoot": spec},
-                variables,
-                dialect=dialect,
-            )
-            continue
-        if operator == "$facet":
-            result = _apply_facet(
-                result,
-                spec,
-                collection_resolver,
-                variables,
-                dialect=dialect,
-            )
-            continue
-        if operator == "$count":
-            result = _apply_count(result, spec)
-            continue
-        if operator == "$sortByCount":
-            result = _apply_sort_by_count(result, spec, variables, dialect=dialect)
-            continue
-        if operator == "$setWindowFields":
-            result = _apply_set_window_fields(result, spec, variables, dialect=dialect)
-            continue
-        raise OperationFailure(f"Unsupported aggregation stage: {operator}")
+            ),
+        )
     return result

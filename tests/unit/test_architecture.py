@@ -43,6 +43,7 @@ from mongoeco.compat.operation_support import (
     MANAGED_OPERATION_OPTION_NAMES,
     OPERATION_OPTION_SIGNATURE_EXCLUSIONS,
 )
+from mongoeco.core.aggregation import AGGREGATION_STAGE_HANDLERS
 from mongoeco.engines.base import (
     AsyncAdminEngine,
     AsyncDatabaseAdminEngine,
@@ -236,6 +237,12 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertTrue(issubclass(AsyncListingCursor, AsyncMaterializedCursor))
         self.assertTrue(issubclass(IndexCursor, MaterializedCursor))
         self.assertTrue(issubclass(ListingCursor, MaterializedCursor))
+
+    def test_aggregation_stage_registry_is_the_dispatch_source(self):
+        self.assertIn("$match", AGGREGATION_STAGE_HANDLERS)
+        self.assertIn("$group", AGGREGATION_STAGE_HANDLERS)
+        self.assertIn("$lookup", AGGREGATION_STAGE_HANDLERS)
+        self.assertIs(AGGREGATION_STAGE_HANDLERS["$set"], AGGREGATION_STAGE_HANDLERS["$addFields"])
 
     def test_index_definition_is_shared_source_for_public_metadata(self):
         index = IndexDefinition([("email", 1), ("created_at", -1)], name="email_created", unique=True)
