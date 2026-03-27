@@ -4,7 +4,14 @@ import decimal
 import uuid
 from typing import Any
 
-from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64, validate_bson_value
+from mongoeco.core.bson_scalars import (
+    BsonDecimal128,
+    BsonDouble,
+    BsonInt32,
+    BsonInt64,
+    unwrap_bson_numeric,
+    validate_bson_value,
+)
 from mongoeco.types import ObjectId, UndefinedType, UNDEFINED
 
 
@@ -84,7 +91,7 @@ class DocumentCodec:
         return data
 
     @staticmethod
-    def decode(data: Any) -> Any:
+    def decode(data: Any, *, preserve_bson_wrappers: bool = False) -> Any:
         if DocumentCodec._is_tagged_value(data):
             payload = data[DocumentCodec._MARKER]
             value_type = payload[DocumentCodec._TYPE]
@@ -103,21 +110,35 @@ class DocumentCodec:
             if value_type == "undefined":
                 return UNDEFINED
             if value_type == "int32":
-                return int(value)
+                return BsonInt32(int(value)) if preserve_bson_wrappers else int(value)
             if value_type == "int64":
-                return int(value)
+                return BsonInt64(int(value)) if preserve_bson_wrappers else int(value)
             if value_type == "double":
-                return float(value)
+                return BsonDouble(float(value)) if preserve_bson_wrappers else float(value)
             if value_type == "decimal128":
-                return decimal.Decimal(value)
+                return BsonDecimal128(decimal.Decimal(value)) if preserve_bson_wrappers else decimal.Decimal(value)
             if value_type == "dict":
-                return {k: DocumentCodec.decode(v) for k, v in value.items()}
+                return {
+                    k: DocumentCodec.decode(v, preserve_bson_wrappers=preserve_bson_wrappers)
+                    for k, v in value.items()
+                }
             raise ValueError(f"Unsupported tagged value type: {value_type}")
 
         if isinstance(data, dict):
-            return {k: DocumentCodec.decode(v) for k, v in data.items()}
+            return {
+                k: DocumentCodec.decode(v, preserve_bson_wrappers=preserve_bson_wrappers)
+                for k, v in data.items()
+            }
 
         if isinstance(data, list):
-            return [DocumentCodec.decode(v) for v in data]
+            return [DocumentCodec.decode(v, preserve_bson_wrappers=preserve_bson_wrappers) for v in data]
 
         return data
+
+    @staticmethod
+    def to_public(data: Any) -> Any:
+        if isinstance(data, dict):
+            return {key: DocumentCodec.to_public(value) for key, value in data.items()}
+        if isinstance(data, list):
+            return [DocumentCodec.to_public(value) for value in data]
+        return unwrap_bson_numeric(data)

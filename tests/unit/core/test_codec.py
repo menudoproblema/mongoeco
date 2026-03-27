@@ -108,6 +108,39 @@ class DocumentCodecTests(unittest.TestCase):
             },
         )
 
+    def test_document_codec_can_preserve_bson_numeric_wrappers_for_internal_use(self):
+        encoded = DocumentCodec.encode(
+            {
+                "i32": BsonInt32(1),
+                "i64": BsonInt64(1 << 40),
+                "double": BsonDouble(1.5),
+                "decimal128": BsonDecimal128(decimal.Decimal("99.125")),
+            }
+        )
+
+        decoded = DocumentCodec.decode(encoded, preserve_bson_wrappers=True)
+
+        self.assertEqual(
+            decoded,
+            {
+                "i32": BsonInt32(1),
+                "i64": BsonInt64(1 << 40),
+                "double": BsonDouble(1.5),
+                "decimal128": BsonDecimal128(decimal.Decimal("99.125")),
+            },
+        )
+
+    def test_document_codec_to_public_unwraps_nested_bson_numeric_wrappers(self):
+        value = {
+            "i32": BsonInt32(1),
+            "items": [BsonInt64(2), {"double": BsonDouble(1.5)}],
+        }
+
+        self.assertEqual(
+            DocumentCodec.to_public(value),
+            {"i32": 1, "items": [2, {"double": 1.5}]},
+        )
+
     def test_document_codec_decode_restores_dict_wrapper_payload(self):
         payload = {
             "$mongoeco": {

@@ -3,6 +3,7 @@ import re
 import math
 
 from mongoeco.compat import MongoDialect
+from mongoeco.core.bson_scalars import BsonInt32, BsonInt64
 from mongoeco.core.operators import UpdateEngine
 from mongoeco.errors import OperationFailure
 
@@ -256,6 +257,20 @@ class UpdateEngineTests(unittest.TestCase):
             UpdateEngine.apply_update({"count": 1}, {"$inc": {"count": "x"}})
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"count": "x"}, {"$inc": {"count": 1}})
+
+    def test_inc_preserves_bson_integer_width_when_possible(self):
+        document = {"count": BsonInt32(1)}
+
+        UpdateEngine.apply_update(document, {"$inc": {"count": 2}})
+
+        self.assertEqual(document["count"], BsonInt32(3))
+
+    def test_inc_promotes_to_bson_int64_when_int32_overflows(self):
+        document = {"count": BsonInt32((1 << 31) - 1)}
+
+        UpdateEngine.apply_update(document, {"$inc": {"count": 1}})
+
+        self.assertEqual(document["count"], BsonInt64(1 << 31))
 
     def test_min_updates_missing_or_greater_values_using_bson_order(self):
         document = {"score": 10, "typed": "text"}

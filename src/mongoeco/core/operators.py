@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.bson_scalars import bson_add, bson_bitwise, bson_multiply, is_bson_numeric, unwrap_bson_numeric
 from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.core.paths import _same_value_for_update, delete_document_value, get_document_value, set_document_value
@@ -477,11 +478,12 @@ class UpdateEngine:
 
     @staticmethod
     def _is_numeric(value: Any) -> bool:
-        return isinstance(value, (int, float)) and not isinstance(value, bool)
+        return is_bson_numeric(value)
 
     @staticmethod
     def _is_integral(value: Any) -> bool:
-        return isinstance(value, int) and not isinstance(value, bool)
+        unwrapped = unwrap_bson_numeric(value)
+        return isinstance(unwrapped, int) and not isinstance(unwrapped, bool)
 
     @staticmethod
     def _iter_ordered_update_items(
@@ -561,7 +563,7 @@ class UpdateEngine:
                     continue
                 if not UpdateEngine._is_numeric(current):
                     raise OperationFailure("$inc requires the target field to be numeric")
-                if set_document_value(doc, target.concrete_path, current + increment):
+                if set_document_value(doc, target.concrete_path, bson_add(current, increment)):
                     modified = True
         return modified
 
@@ -629,13 +631,16 @@ class UpdateEngine:
             for target in application.targets:
                 found, current = get_document_value(doc, target.concrete_path)
                 if not found:
-                    missing_value: int | float = 0.0 if isinstance(factor, float) else 0
+                    missing_value = bson_multiply(
+                        0.0 if isinstance(unwrap_bson_numeric(factor), float) else 0,
+                        factor,
+                    )
                     if set_document_value(doc, target.concrete_path, missing_value):
                         modified = True
                     continue
                 if not UpdateEngine._is_numeric(current):
                     raise OperationFailure("$mul requires the target field to be numeric")
-                if set_document_value(doc, target.concrete_path, current * factor):
+                if set_document_value(doc, target.concrete_path, bson_multiply(current, factor)):
                     modified = True
         return modified
 
@@ -671,12 +676,7 @@ class UpdateEngine:
                     raise OperationFailure("$bit requires the target field to exist and be an integer")
                 if not UpdateEngine._is_integral(current):
                     raise OperationFailure("$bit requires the target field to be an integer")
-                if operator == "and":
-                    replacement = current & operand
-                elif operator == "or":
-                    replacement = current | operand
-                else:
-                    replacement = current ^ operand
+                replacement = bson_bitwise(operator, current, operand)
                 if set_document_value(doc, target.concrete_path, replacement):
                     modified = True
         return modified

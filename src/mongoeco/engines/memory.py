@@ -32,6 +32,7 @@ from mongoeco.core.projections import apply_projection
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import QueryNode, ensure_query_plan
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.core.aggregation import AggregationSpillPolicy
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.session import EngineTransactionContext
@@ -64,7 +65,12 @@ class MemoryEngine(AsyncStorageEngine):
 
     _PROFILE_COLLECTION_NAME = "system.profile"
 
-    def __init__(self, codec: type[DocumentCodec] = DocumentCodec):
+    def __init__(
+        self,
+        codec: type[DocumentCodec] = DocumentCodec,
+        *,
+        aggregation_spill_threshold: int | None = None,
+    ):
         self._storage: dict[str, dict[str, dict[Any, Any]]] = {}
         self._locks: dict[str, _AsyncThreadLock] = {}
         self._indexes: dict[str, dict[str, list[EngineIndexRecord]]] = {}
@@ -76,6 +82,25 @@ class MemoryEngine(AsyncStorageEngine):
         self._profiler = EngineProfiler("memory")
         self._mvcc_version = 0
         self._mvcc_states: dict[str, MemoryMvccState] = {}
+        self.aggregation_spill_policy = (
+            None
+            if aggregation_spill_threshold is None
+            else AggregationSpillPolicy(
+                threshold=aggregation_spill_threshold,
+                codec=codec,
+            )
+        )
+
+    def _decode_storage_document(
+        self,
+        payload: object,
+        *,
+        preserve_bson_wrappers: bool = True,
+    ) -> Document:
+        try:
+            return self._codec.decode(payload, preserve_bson_wrappers=preserve_bson_wrappers)
+        except TypeError:
+            return self._codec.decode(payload)
 
     @override
     def create_session_state(self, session: ClientSession) -> None:
@@ -413,7 +438,7 @@ class MemoryEngine(AsyncStorageEngine):
             for storage_key, data in coll.items():
                 if normalized_exclude is not None and storage_key == normalized_exclude:
                     continue
-                existing = self._codec.decode(data)
+                existing = self._decode_storage_document(data)
                 if not document_in_virtual_index(existing, index):
                     continue
                 existing_key = self._index_key(existing, fields)
@@ -480,7 +505,7 @@ class MemoryEngine(AsyncStorageEngine):
             storage_key = self._storage_key(doc_id)
             original_document = None
             if overwrite and storage_key in coll:
-                original_document = self._codec.decode(coll[storage_key])
+                original_document = self._decode_storage_document(coll[storage_key])
             if not overwrite and storage_key in coll:
                 return False
 
@@ -517,7 +542,7 @@ class MemoryEngine(AsyncStorageEngine):
         if data is None:
             return None
         return apply_projection(
-            self._codec.decode(data),
+            DocumentCodec.to_public(self._decode_storage_document(data)),
             projection,
             dialect=effective_dialect,
         )
@@ -579,7 +604,7 @@ class MemoryEngine(AsyncStorageEngine):
                 )
                 enforce_deadline(deadline)
                 documents = [
-                    self._codec.decode(data)
+                    self._decode_storage_document(data)
                     for data in list(coll.values())
                 ]
 
@@ -667,7 +692,7 @@ class MemoryEngine(AsyncStorageEngine):
                 coll = {}
 
             for storage_key, data in list(coll.items()):
-                document = self._codec.decode(data)
+                document = self._decode_storage_document(data)
                 if not QueryEngine.match_plan(document, semantics.query_plan, dialect=semantics.dialect):
                     continue
 
@@ -743,7 +768,7 @@ class MemoryEngine(AsyncStorageEngine):
         async with self._get_lock(db_name, coll_name):
             coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
             for storage_key, data in list(coll.items()):
-                document = self._codec.decode(data)
+                document = self._decode_storage_document(data)
                 if not QueryEngine.match_plan(document, query_plan, dialect=effective_dialect):
                     continue
                 del coll[storage_key]
@@ -779,7 +804,7 @@ class MemoryEngine(AsyncStorageEngine):
                 1
                 for data in coll.values()
                 if QueryEngine.match_plan(
-                    self._codec.decode(data),
+                    self._decode_storage_document(data),
                     query_plan,
                     dialect=effective_dialect,
                 )
@@ -884,7 +909,7 @@ class MemoryEngine(AsyncStorageEngine):
                 )
                 for data in coll.values():
                     enforce_deadline(deadline)
-                    document = self._codec.decode(data)
+                    document = self._decode_storage_document(data)
                     if not document_in_virtual_index(document, candidate_index):
                         continue
                     key = self._index_key(document, fields)

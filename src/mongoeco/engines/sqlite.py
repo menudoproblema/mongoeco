@@ -351,8 +351,17 @@ class SQLiteEngine(AsyncStorageEngine):
     def _serialize_document(self, document: Document) -> str:
         return json.dumps(self._codec.encode(document), separators=(",", ":"), sort_keys=False)
 
-    def _deserialize_document(self, payload: str) -> Document:
-        return self._codec.decode(json.loads(payload))
+    def _deserialize_document(
+        self,
+        payload: str,
+        *,
+        preserve_bson_wrappers: bool = True,
+    ) -> Document:
+        parsed = json.loads(payload)
+        try:
+            return self._codec.decode(parsed, preserve_bson_wrappers=preserve_bson_wrappers)
+        except TypeError:
+            return self._codec.decode(parsed)
 
     def _load_documents(self, db_name: str, coll_name: str):
         conn = self._require_connection()
@@ -1352,7 +1361,7 @@ class SQLiteEngine(AsyncStorageEngine):
         if row is None:
             return None
         return apply_projection(
-            self._deserialize_document(row[0]),
+            DocumentCodec.to_public(self._deserialize_document(row[0])),
             projection,
             dialect=effective_dialect,
         )

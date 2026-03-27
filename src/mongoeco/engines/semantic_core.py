@@ -3,6 +3,7 @@ from typing import Iterable
 
 from mongoeco.api.operations import UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.operators import CompiledUpdatePlan
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
@@ -237,10 +238,12 @@ def stream_finalize_documents(
         if remaining_skip:
             remaining_skip -= 1
             continue
-        yield apply_projection(
-            document,
-            semantics.projection,
-            dialect=semantics.dialect,
+        yield DocumentCodec.to_public(
+            apply_projection(
+                document,
+                semantics.projection,
+                dialect=semantics.dialect,
+            )
         )
         if remaining_limit is not None:
             remaining_limit -= 1

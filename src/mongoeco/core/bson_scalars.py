@@ -134,3 +134,71 @@ def validate_bson_value(value: object) -> None:
     wrapped = wrap_bson_numeric(value)
     if isinstance(wrapped, BsonDecimal128):
         _normalize_decimal128(wrapped.value)
+
+
+def bson_add(left: object, right: object) -> object:
+    return _wrap_numeric_result(left, right, _numeric_to_decimal(unwrap_bson_numeric(left)) + _numeric_to_decimal(unwrap_bson_numeric(right)))
+
+
+def bson_multiply(left: object, right: object) -> object:
+    return _wrap_numeric_result(left, right, _numeric_to_decimal(unwrap_bson_numeric(left)) * _numeric_to_decimal(unwrap_bson_numeric(right)))
+
+
+def bson_bitwise(operator: str, left: object, right: object) -> object:
+    left_value = _coerce_integral(left)
+    right_value = _coerce_integral(right)
+    if operator == "and":
+        result = left_value & right_value
+    elif operator == "or":
+        result = left_value | right_value
+    elif operator == "xor":
+        result = left_value ^ right_value
+    else:
+        raise ValueError(f"unsupported BSON bitwise operator: {operator}")
+    if not isinstance(left, BsonInt32 | BsonInt64) and not isinstance(right, BsonInt32 | BsonInt64):
+        return result
+    wrapped = wrap_bson_numeric(result)
+    assert isinstance(wrapped, BsonInt32 | BsonInt64)
+    return wrapped
+
+
+def _coerce_integral(value: object) -> int:
+    unwrapped = unwrap_bson_numeric(value)
+    if not isinstance(unwrapped, int) or isinstance(unwrapped, bool):
+        raise TypeError("BSON bitwise operations require integral values")
+    if unwrapped < INT64_MIN or unwrapped > INT64_MAX:
+        raise BsonScalarOverflowError("integer exceeds BSON int64 range")
+    return unwrapped
+
+
+def _wrap_numeric_result(left: object, right: object, result: decimal.Decimal) -> object:
+    wrapped_left = wrap_bson_numeric(left)
+    wrapped_right = wrap_bson_numeric(right)
+    if wrapped_left is None or wrapped_right is None:
+        raise TypeError("BSON arithmetic requires numeric values")
+
+    preserve_wrappers = isinstance(left, BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128) or isinstance(
+        right,
+        BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128,
+    )
+
+    if isinstance(wrapped_left, BsonDecimal128) or isinstance(wrapped_right, BsonDecimal128):
+        normalized = _normalize_decimal128(result)
+        return BsonDecimal128(normalized) if preserve_wrappers else normalized
+
+    if isinstance(wrapped_left, BsonDouble) or isinstance(wrapped_right, BsonDouble):
+        normalized = float(result)
+        return BsonDouble(normalized) if preserve_wrappers else normalized
+
+    integer_result = int(result)
+    if result != decimal.Decimal(integer_result):
+        normalized = float(result)
+        return BsonDouble(normalized) if preserve_wrappers else normalized
+
+    if integer_result < INT64_MIN or integer_result > INT64_MAX:
+        raise BsonScalarOverflowError("integer exceeds BSON int64 range")
+    if not preserve_wrappers:
+        return integer_result
+    if INT32_MIN <= integer_result <= INT32_MAX:
+        return BsonInt32(integer_result)
+    return BsonInt64(integer_result)
