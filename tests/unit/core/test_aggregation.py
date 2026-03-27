@@ -879,6 +879,10 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$dateFromString": {"dateString": 1}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$dateFromString": {"dateString": "2026-03-25", "format": "%Q"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateToString": {"date": "$created_at", "timezone": 1}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateFromString": {"dateString": "2026-03-25", "timezone": 1}})
 
     def test_evaluate_expression_supports_object_to_array_and_zip(self):
         document = {"doc": {"a": 1, "b": 2}, "left": ["a", "b"], "right": [1], "defaults": ["x", 0]}
@@ -961,6 +965,10 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$dateFromParts": {"year": 2026, "isoWeekYear": 2026}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$dateFromParts": {"month": 3}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateFromParts": {"year": 2026, "timezone": 1}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateFromParts": {"year": 2026, "hour": "x"}})
 
     def test_evaluate_expression_supports_switch_and_bitwise_variants(self):
         document = {"value": 5}
@@ -1042,6 +1050,8 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$unsetField": {"field": 1, "input": "$nested"}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$unsetField": {"field": "name", "input": "$text"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$convert": {"input": "$value", "to": 1}})
 
     def test_evaluate_expression_supports_bson_size_and_rand(self):
         document = {"doc": {"a": 1, "name": "Ada"}, "nested": {"flag": True}}
@@ -2341,6 +2351,260 @@ class AggregationTests(unittest.TestCase):
         self.assertIsNone(
             evaluate_expression({"created_at": None}, {"$dateTrunc": {"date": "$created_at", "unit": "hour"}})
         )
+
+    def test_evaluate_expression_supports_extended_scalar_conversion_variants(self):
+        created_at = datetime.datetime(2026, 3, 25, 10, 5, 6, 789000, tzinfo=datetime.timezone.utc)
+        oid = ObjectId("65f0a1000000000000000000")
+        uuid_value = uuid.UUID("12345678-1234-5678-1234-567812345678")
+        document = {
+            "flag": True,
+            "neg": -1,
+            "long_text": str(1 << 40),
+            "float_text": "10.5",
+            "created_at": created_at,
+            "oid": oid,
+            "uuid_bytes": uuid_value.bytes,
+            "uuid_value": uuid_value,
+            "decimal_text": "10.25",
+            "decimal_value": decimal.Decimal("9.5"),
+            "regex": re.compile("^a"),
+            "undefined": UNDEFINED,
+            "nested": {"a": 1},
+        }
+
+        self.assertTrue(evaluate_expression(document, {"$toBool": "$neg"}))
+        self.assertTrue(evaluate_expression(document, {"$toBool": "$nested"}))
+        self.assertEqual(evaluate_expression(document, {"$toInt": "$flag"}), 1)
+        self.assertEqual(evaluate_expression(document, {"$toLong": "$long_text"}), 1 << 40)
+        self.assertEqual(
+            evaluate_expression(document, {"$toLong": "$created_at"}),
+            int(created_at.timestamp() * 1000),
+        )
+        self.assertEqual(evaluate_expression(document, {"$toDouble": "$flag"}), 1.0)
+        self.assertEqual(evaluate_expression(document, {"$toDouble": "$float_text"}), 10.5)
+        self.assertEqual(
+            evaluate_expression(document, {"$toDouble": "$created_at"}),
+            float(int(created_at.timestamp() * 1000)),
+        )
+        self.assertEqual(evaluate_expression(document, {"$toUUID": "$uuid_bytes"}), uuid_value)
+        self.assertEqual(evaluate_expression(document, {"$toUUID": "$uuid_value"}), uuid_value)
+        self.assertEqual(evaluate_expression(document, {"$toDecimal": "$flag"}), decimal.Decimal("1"))
+        self.assertEqual(
+            evaluate_expression(document, {"$toDecimal": "$decimal_value"}),
+            decimal.Decimal("9.5"),
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$convert": {"input": "$created_at", "to": "long"}}),
+            int(created_at.timestamp() * 1000),
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$convert": {"input": "$oid", "to": "objectId"}}),
+            oid,
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$convert": {"input": "$decimal_text", "to": "double"}}),
+            10.25,
+        )
+        self.assertEqual(evaluate_expression(document, {"$type": "$regex"}), "regex")
+        self.assertEqual(evaluate_expression(document, {"$type": "$uuid_bytes"}), "binData")
+        self.assertEqual(evaluate_expression(document, {"$type": "$undefined"}), "undefined")
+        self.assertEqual(evaluate_expression(document, {"$type": "$missing"}), "missing")
+
+    def test_evaluate_expression_scalar_conversion_edge_cases_and_errors(self):
+        huge_decimal = "9" * 7000
+        document = {
+            "blank": "   ",
+            "fractional": 10.5,
+            "nan_value": float("nan"),
+            "bad_uuid": b"short",
+            "huge_decimal": huge_decimal,
+            "text": "Ada",
+        }
+
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$convert": {"input": "$text", "to": "unknown", "onError": "fallback"}},
+            ),
+            "fallback",
+        )
+        self.assertIsNone(
+            evaluate_expression(
+                document,
+                {"$convert": {"input": "$missing", "to": "double"}},
+            )
+        )
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toInt": "$fractional"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toLong": "$fractional"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toDouble": "$blank"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toDate": "$nan_value"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toUUID": "$bad_uuid"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toDecimal": "$huge_decimal"})
+
+    def test_evaluate_expression_scalar_conversion_additional_type_and_error_paths(self):
+        class CustomValue:
+            pass
+
+        oid = ObjectId("65f0a1000000000000000000")
+        aware = datetime.datetime(2026, 3, 25, 10, 5, 6, tzinfo=datetime.timezone(datetime.timedelta(hours=2)))
+        document = {
+            "zero": 0,
+            "empty_list": [],
+            "regex": re.compile("^a"),
+            "none_value": None,
+            "bool_value": False,
+            "decimal_value": decimal.Decimal("1.25"),
+            "dict_value": {"a": 1},
+            "array_value": [1, 2],
+            "oid": oid,
+            "aware": aware,
+            "custom": CustomValue(),
+            "too_big_int": (1 << 31),
+            "too_big_long": (1 << 63),
+            "uuid_text": "12345678-1234-5678-1234-567812345678",
+        }
+
+        self.assertFalse(evaluate_expression(document, {"$toBool": "$zero"}))
+        self.assertTrue(evaluate_expression(document, {"$toBool": "$empty_list"}))
+        self.assertEqual(evaluate_expression(document, {"$type": "$none_value"}), "null")
+        self.assertEqual(evaluate_expression(document, {"$type": "$bool_value"}), "bool")
+        self.assertEqual(evaluate_expression(document, {"$type": "$decimal_value"}), "decimal")
+        self.assertEqual(evaluate_expression(document, {"$type": "$dict_value"}), "object")
+        self.assertEqual(evaluate_expression(document, {"$type": "$array_value"}), "array")
+        self.assertEqual(evaluate_expression(document, {"$type": "$oid"}), "objectId")
+        self.assertEqual(evaluate_expression(document, {"$type": "$aware"}), "date")
+        self.assertEqual(evaluate_expression(document, {"$type": "$custom"}), "CustomValue")
+        self.assertEqual(evaluate_expression(document, {"$toDate": "$aware"}), datetime.datetime(2026, 3, 25, 8, 5, 6))
+        self.assertEqual(evaluate_expression(document, {"$toObjectId": "$oid"}), oid)
+        self.assertEqual(
+            evaluate_expression(document, {"$convert": {"input": "$uuid_text", "to": "string"}}),
+            "12345678-1234-5678-1234-567812345678",
+        )
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$convert": {"input": "$regex", "to": "bool"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toInt": "$too_big_int"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toLong": "$too_big_long"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$convert": {"input": "$uuid_text", "to": "unknown"}})
+
+    def test_evaluate_expression_supports_additional_date_string_and_calendar_variants(self):
+        aware = datetime.datetime(2026, 3, 25, 10, 5, 6, 789000, tzinfo=datetime.timezone.utc)
+        document = {
+            "created_at": datetime.datetime(2026, 3, 25, 10, 5, 6, 789000),
+            "aware": aware,
+            "start": datetime.datetime(2026, 1, 31, 10, 0, 0),
+            "end": datetime.datetime(2027, 3, 1, 9, 0, 0),
+        }
+
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateToString": {"date": "$created_at", "timezone": "+02:00"}},
+            ),
+            "2026-03-25T12:05:06.789",
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateFromString": {"dateString": None, "onNull": "missing"}},
+            ),
+            "missing",
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateFromString": {"dateString": "bad-date", "onError": "bad"}},
+            ),
+            "bad",
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateFromString": {"dateString": "2026-03-25T12:05:06+02:00", "timezone": "Europe/Madrid"}},
+            ),
+            datetime.datetime(2026, 3, 25, 10, 5, 6),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateFromParts": {"year": 2026, "month": 1, "day": 31, "hour": 23, "minute": 59, "second": 58, "millisecond": 7}},
+            ),
+            datetime.datetime(2026, 1, 31, 23, 59, 58, 7000),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateAdd": {"startDate": "$start", "unit": "month", "amount": 1}},
+            ),
+            datetime.datetime(2026, 2, 28, 10, 0, 0),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateAdd": {"startDate": "$start", "unit": "quarter", "amount": 1}},
+            ),
+            datetime.datetime(2026, 4, 30, 10, 0, 0),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateSubtract": {"startDate": "$start", "unit": "year", "amount": 1}},
+            ),
+            datetime.datetime(2025, 1, 31, 10, 0, 0),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateAdd": {"startDate": "$aware", "unit": "hour", "amount": 1, "timezone": "Europe/Madrid"}},
+            ),
+            datetime.datetime(2026, 3, 25, 11, 5, 6, 789000, tzinfo=datetime.timezone.utc),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "second"}},
+            ),
+            int((document["end"] - document["start"]).total_seconds()),
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "month"}},
+            ),
+            14,
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "quarter"}},
+            ),
+            4,
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "year"}},
+            ),
+            1,
+        )
+
+    def test_evaluate_expression_date_math_and_timezone_reject_additional_invalid_values(self):
+        document = {"created_at": datetime.datetime(2026, 3, 25, 10, 5, 6), "text": "Ada"}
+
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateAdd": {"startDate": "$created_at", "unit": "month", "amount": True}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateAdd": {"startDate": "$created_at", "unit": "bad", "amount": 1}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$dateDiff": {"startDate": "$created_at", "endDate": "$text", "unit": "day"}})
 
     def test_evaluate_expression_rejects_invalid_operator_payloads(self):
         document = {"score": 10, "tags": ["a"]}
