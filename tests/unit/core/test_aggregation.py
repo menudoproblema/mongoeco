@@ -494,10 +494,7 @@ class AggregationTests(unittest.TestCase):
     def test_evaluate_expression_rejects_currently_unsupported_operators_explicitly(self):
         document = {"value": "10", "tags": ["a", "b"]}
 
-        unsupported_specs = [
-            {"$percentile": {"input": "$value", "p": [0.5], "method": "approximate"}},
-            {"$median": {"input": "$value", "method": "approximate"}},
-        ]
+        unsupported_specs = []
 
         for spec in unsupported_specs:
             with self.subTest(spec=spec):
@@ -1104,9 +1101,7 @@ class AggregationTests(unittest.TestCase):
     def test_group_and_set_window_fields_reject_unsupported_accumulator_inventory(self):
         documents = [{"_id": "1", "group": "a", "value": 10}]
 
-        unsupported_group_accumulators = [
-            "$median", "$percentile",
-        ]
+        unsupported_group_accumulators = []
         for operator in unsupported_group_accumulators:
             with self.subTest(group_operator=operator):
                 with self.assertRaises(OperationFailure):
@@ -1320,13 +1315,29 @@ class AggregationTests(unittest.TestCase):
             {"value": 1, "name": "Ada"},
         )
 
-    def test_evaluate_expression_rejects_percentile_with_dedicated_test(self):
-        with self.assertRaises(OperationFailure):
-            evaluate_expression({"value": 10}, {"$percentile": {"input": "$value", "p": [0.5], "method": "approximate"}})
+    def test_evaluate_expression_supports_percentile_and_median_with_dedicated_test(self):
+        self.assertEqual(
+            evaluate_expression(
+                {"value": [1, 2, 3, 4]},
+                {"$percentile": {"input": "$value", "p": [0.25, 0.5, 1.0], "method": "approximate"}},
+            ),
+            [1, 2, 4],
+        )
+        self.assertEqual(
+            evaluate_expression(
+                {"value": [1, 2, 3, 4]},
+                {"$median": {"input": "$value", "method": "approximate"}},
+            ),
+            2,
+        )
 
-    def test_evaluate_expression_rejects_median_with_dedicated_test(self):
+    def test_evaluate_expression_percentile_and_median_reject_invalid_payloads(self):
         with self.assertRaises(OperationFailure):
-            evaluate_expression({"value": 10}, {"$median": {"input": "$value", "method": "approximate"}})
+            evaluate_expression({"value": 10}, {"$percentile": {"input": "$value", "p": [0.5], "method": "exact"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression({"value": 10}, {"$percentile": {"input": "$value", "p": [], "method": "approximate"}})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression({"value": 10}, {"$median": {"input": "$value"}})
 
     def test_pipeline_match_supports_nested_expr_inside_nor(self):
         documents = [
@@ -2035,6 +2046,84 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(windowed[3]["runningTop"], "b1")
         self.assertEqual(windowed[4]["runningBottomTwo"], ["b1", "b2"])
 
+    def test_group_window_and_expression_support_percentile_and_median(self):
+        documents = [
+            {"_id": "1", "group": "a", "rank": 1, "score": 1, "scores": [1, 2, 3, 4]},
+            {"_id": "2", "group": "a", "rank": 2, "score": 5, "scores": [10, 20, 30, 40]},
+            {"_id": "3", "group": "a", "rank": 3, "score": "x", "scores": [7, "x", 9]},
+            {"_id": "4", "group": "b", "rank": 1, "score": 2, "scores": None},
+        ]
+
+        grouped = apply_pipeline(
+            documents,
+            [
+                {
+                    "$group": {
+                        "_id": "$group",
+                        "medianScore": {"$median": {"input": "$score", "method": "approximate"}},
+                        "percentiles": {"$percentile": {"input": "$score", "p": [0.0, 0.5, 1.0], "method": "approximate"}},
+                    }
+                },
+                {"$sort": {"_id": 1}},
+            ],
+        )
+        self.assertEqual(
+            grouped,
+            [
+                {"_id": "a", "medianScore": 1, "percentiles": [1, 1, 5]},
+                {"_id": "b", "medianScore": 2, "percentiles": [2, 2, 2]},
+            ],
+        )
+
+        projected = apply_pipeline(
+            documents,
+            [
+                {
+                    "$project": {
+                        "_id": 0,
+                        "medianScores": {"$median": {"input": "$scores", "method": "approximate"}},
+                        "percentileScores": {"$percentile": {"input": "$scores", "p": [0.25, 0.5, 1.0], "method": "approximate"}},
+                    }
+                },
+                {"$limit": 2},
+            ],
+        )
+        self.assertEqual(
+            projected,
+            [
+                {"medianScores": 2, "percentileScores": [1, 2, 4]},
+                {"medianScores": 20, "percentileScores": [10, 20, 40]},
+            ],
+        )
+
+        windowed = apply_pipeline(
+            documents,
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"rank": 1},
+                        "output": {
+                            "runningMedian": {
+                                "$median": {"input": "$score", "method": "approximate"},
+                                "window": {"documents": ["unbounded", "current"]},
+                            },
+                            "runningPercentiles": {
+                                "$percentile": {"input": "$score", "p": [0.0, 1.0], "method": "approximate"},
+                                "window": {"documents": ["unbounded", "current"]},
+                            },
+                        },
+                    }
+                }
+            ],
+        )
+        self.assertEqual(windowed[0]["runningMedian"], 1)
+        self.assertEqual(windowed[1]["runningMedian"], 1)
+        self.assertEqual(windowed[2]["runningMedian"], 1)
+        self.assertEqual(windowed[0]["runningPercentiles"], [1, 1])
+        self.assertEqual(windowed[1]["runningPercentiles"], [1, 5])
+        self.assertEqual(windowed[2]["runningPercentiles"], [1, 5])
+
     def test_evaluate_expression_supports_stddev_expression_forms(self):
         document = {
             "scores": [2, 4, 4, "x"],
@@ -2135,6 +2224,11 @@ class AggregationTests(unittest.TestCase):
             apply_pipeline(
                 [{"value": 1}],
                 [{"$bucketAuto": {"groupBy": "$value", "buckets": 1, "output": {"merged": {"$mergeObjects": "$value"}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"value": 1}],
+                [{"$group": {"_id": None, "percentiles": {"$percentile": {"input": "$value", "p": [0.5], "method": "exact"}}}}],
             )
 
     def test_sum_accumulator_sums_numeric_array_elements(self):

@@ -3344,6 +3344,41 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_aggregate_supports_percentile_and_median(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.analytics.events
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "group": "a", "rank": 1, "score": 1, "scores": [1, 2, 3, 4]},
+                            {"_id": "2", "group": "a", "rank": 2, "score": 5, "scores": [10, 20, 30, 40]},
+                            {"_id": "3", "group": "a", "rank": 3, "score": "x", "scores": [7, "x", 9]},
+                            {"_id": "4", "group": "b", "rank": 1, "score": 2},
+                        ]
+                    )
+
+                    grouped = collection.aggregate(
+                        [
+                            {
+                                "$group": {
+                                    "_id": "$group",
+                                    "medianScore": {"$median": {"input": "$score", "method": "approximate"}},
+                                    "percentiles": {"$percentile": {"input": "$score", "p": [0.0, 0.5, 1.0], "method": "approximate"}},
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        grouped,
+                        [
+                            {"_id": "a", "medianScore": 1, "percentiles": [1, 1, 5]},
+                            {"_id": "b", "medianScore": 2, "percentiles": [2, 2, 2]},
+                        ],
+                    )
+
     def test_aggregate_supports_string_expressions_last_and_add_to_set(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

@@ -100,6 +100,13 @@ class _OrderedAccumulator:
     sort_spec: SortSpec | None = None
 
 
+@dataclass(slots=True)
+class _PercentileAccumulator:
+    values: list[int | float | decimal.Decimal] = field(default_factory=list)
+    probabilities: list[float] | None = None
+    scalar_output: bool = False
+
+
 def _accumulator_flags(bucket: dict[object, Any]) -> dict[str, bool]:
     flags = bucket.get(_ACCUMULATOR_FLAGS_KEY)
     if isinstance(flags, dict):
@@ -433,6 +440,12 @@ def _validate_accumulator_expression(operator: str, expression: object) -> None:
     if operator in {"$topN", "$bottomN"}:
         if not isinstance(expression, dict) or not {"sortBy", "output", "n"} <= set(expression):
             raise OperationFailure(f"{operator} requires sortBy, output and n")
+    if operator == "$median":
+        if not isinstance(expression, dict) or not {"input", "method"} <= set(expression):
+            raise OperationFailure("$median requires input and method")
+    if operator == "$percentile":
+        if not isinstance(expression, dict) or not {"input", "p", "method"} <= set(expression):
+            raise OperationFailure("$percentile requires input, p and method")
 
 
 def _compare_values(
@@ -609,6 +622,91 @@ def _evaluate_ordered_accumulator_input(
             evaluate_expression(document, expression["n"], variables, dialect=dialect),
         )
     return sort_spec, sort_values, output, size
+
+
+def _normalize_percentile_probabilities(
+    operator: str,
+    probabilities_value: Any,
+) -> list[float]:
+    if not isinstance(probabilities_value, list):
+        raise OperationFailure(f"{operator} p must evaluate to an array")
+    if not probabilities_value:
+        raise OperationFailure(f"{operator} p must not be an empty array")
+    normalized: list[float] = []
+    for item in probabilities_value:
+        if not isinstance(item, (int, float, decimal.Decimal)) or isinstance(item, bool):
+            raise OperationFailure(f"{operator} p values must be numeric")
+        probability = float(item)
+        if probability < 0.0 or probability > 1.0:
+            raise OperationFailure(f"{operator} p values must be in the range [0.0, 1.0]")
+        normalized.append(probability)
+    return normalized
+
+
+def _extract_percentile_candidates(
+    operator: str,
+    input_value: Any,
+) -> list[int | float | decimal.Decimal]:
+    if input_value is None or isinstance(input_value, UndefinedType):
+        return []
+    if isinstance(input_value, list):
+        candidates = input_value
+    else:
+        candidates = [input_value]
+    return [
+        candidate
+        for candidate in candidates
+        if _is_numeric(candidate)
+    ]
+
+
+def _parse_percentile_spec(
+    operator: str,
+    document: Document,
+    spec: object,
+    variables: dict[str, Any] | None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> tuple[list[int | float | decimal.Decimal], list[float]]:
+    if not isinstance(spec, dict) or "input" not in spec or "method" not in spec:
+        raise OperationFailure(f"{operator} requires input and method")
+    method = evaluate_expression(document, spec["method"], variables, dialect=dialect)
+    if method != "approximate":
+        raise OperationFailure(f"{operator} method must be 'approximate'")
+    input_value = _evaluate_expression_with_missing(document, spec["input"], variables or {}, dialect=dialect)
+    probabilities = (
+        [0.5]
+        if operator == "$median"
+        else _normalize_percentile_probabilities(
+            operator,
+            evaluate_expression(document, spec.get("p"), variables, dialect=dialect),
+        )
+    )
+    return _extract_percentile_candidates(operator, input_value), probabilities
+
+
+def _compute_percentiles(
+    values: list[int | float | decimal.Decimal],
+    probabilities: list[float],
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> list[int | float | decimal.Decimal] | None:
+    if not values:
+        return None
+    ordered = sorted(values, key=cmp_to_key(dialect.compare_values))
+    results: list[int | float | decimal.Decimal] = []
+    length = len(ordered)
+    for probability in probabilities:
+        if probability <= 0.0:
+            results.append(deepcopy(ordered[0]))
+            continue
+        if probability >= 1.0:
+            results.append(deepcopy(ordered[-1]))
+            continue
+        index = math.ceil(probability * length) - 1
+        index = min(max(index, 0), length - 1)
+        results.append(deepcopy(ordered[index]))
+    return results
 
 
 def _compare_ordered_accumulator_items(
@@ -1853,6 +1951,18 @@ def evaluate_expression(
                     dialect=dialect,
                 )
                 return _compute_stddev(values, population=operator == "$stdDevPop")
+            if operator in {"$median", "$percentile"}:
+                values, probabilities = _parse_percentile_spec(
+                    operator,
+                    document,
+                    spec,
+                    variables,
+                    dialect=dialect,
+                )
+                percentiles = _compute_percentiles(values, probabilities, dialect=dialect)
+                if operator == "$median":
+                    return None if percentiles is None else percentiles[0]
+                return percentiles
             if operator in {"$log", "$pow"}:
                 args = _require_expression_args(operator, spec, min_args=2, max_args=2)
                 left_raw = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
@@ -2936,6 +3046,8 @@ def _initialize_accumulators(
             initialized[field] = _PickNAccumulator()
         elif operator in {"$top", "$bottom", "$topN", "$bottomN"}:
             initialized[field] = _OrderedAccumulator()
+        elif operator in {"$median", "$percentile"}:
+            initialized[field] = _PercentileAccumulator(scalar_output=operator == "$median")
         elif operator == "$avg":
             initialized[field] = _AverageAccumulator()
         elif operator == "$stdDevPop":
@@ -3081,6 +3193,20 @@ def _apply_accumulators(
                 bottom=operator in {"$bottom", "$bottomN"},
                 dialect=dialect,
             )
+        elif operator in {"$median", "$percentile"}:
+            candidates, probabilities = _parse_percentile_spec(
+                operator,
+                document,
+                expression,
+                variables,
+                dialect=dialect,
+            )
+            state = bucket[field]
+            if state.probabilities is None:
+                state.probabilities = probabilities
+            elif state.probabilities != probabilities:
+                raise OperationFailure(f"{operator} p must evaluate to a consistent array within the group")
+            state.values.extend(deepcopy(candidates))
 
 
 def _finalize_accumulators(bucket: dict[str, Any]) -> Document:
@@ -3115,6 +3241,13 @@ def _finalize_accumulators(bucket: dict[str, Any]) -> Document:
                 document[field] = deepcopy(value.items[0][1])
             else:
                 document[field] = [deepcopy(item[1]) for item in value.items]
+        elif isinstance(value, _PercentileAccumulator):
+            probabilities = value.probabilities or [0.5]
+            percentiles = _compute_percentiles(value.values, probabilities)
+            if value.scalar_output:
+                document[field] = None if percentiles is None else percentiles[0]
+            else:
+                document[field] = percentiles
         else:
             document[field] = value
     return document

@@ -695,6 +695,8 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$bottom`
     * `$topN`
     * `$bottomN`
+    * `$median`
+    * `$percentile`
     * `$objectToArray`
     * `$zip`
     * `$slice`
