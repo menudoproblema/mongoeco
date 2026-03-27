@@ -58,6 +58,36 @@ def _build_capability_catalog(catalog: MappingProxyType) -> MappingProxyType:
     )
 
 
+def _dialect_catalog_behavior_flag(key: str, flag_name: str) -> bool | None:
+    entry = MONGODB_DIALECT_CATALOG.get(key)
+    if entry is None:
+        return None
+    value = entry.behavior_flags.get(flag_name)
+    return value if isinstance(value, bool) else None
+
+
+def _dialect_catalog_capabilities(key: str) -> frozenset[str] | None:
+    entry = MONGODB_DIALECT_CATALOG.get(key)
+    if entry is None:
+        return None
+    return entry.capabilities
+
+
+def _pymongo_catalog_behavior_flag(key: str, flag_name: str) -> bool | None:
+    entry = PYMONGO_PROFILE_CATALOG.get(key)
+    if entry is None:
+        return None
+    value = entry.behavior_flags.get(flag_name)
+    return value if isinstance(value, bool) else None
+
+
+def _pymongo_catalog_capabilities(key: str) -> frozenset[str] | None:
+    entry = PYMONGO_PROFILE_CATALOG.get(key)
+    if entry is None:
+        return None
+    return entry.capabilities
+
+
 @dataclass(frozen=True, slots=True)
 class MongoDialect:
     """Describe la semántica observable objetivo del servidor MongoDB.
@@ -75,6 +105,12 @@ class MongoDialect:
 
     def null_query_matches_undefined(self) -> bool:
         """Controla si `null` en query iguala el BSON `undefined` legado."""
+        catalog_value = _dialect_catalog_behavior_flag(
+            self.key,
+            "null_query_matches_undefined",
+        )
+        if catalog_value is not None:
+            return catalog_value
         return True
 
     def expression_truthy(self, value: object) -> bool:
@@ -123,6 +159,9 @@ class MongoDialect:
 
     @property
     def capabilities(self) -> frozenset[str]:
+        catalog_capabilities = _dialect_catalog_capabilities(self.key)
+        if catalog_capabilities is not None:
+            return catalog_capabilities
         return frozenset()
 
     def supports_query_field_operator(self, name: str) -> bool:
@@ -252,9 +291,6 @@ class MongoDialect80(MongoDialect):
     server_version: str = '8.0'
     label: str = 'MongoDB 8.0'
 
-    def null_query_matches_undefined(self) -> bool:
-        return False
-
 
 @dataclass(frozen=True, slots=True)
 class PyMongoProfile:
@@ -271,10 +307,19 @@ class PyMongoProfile:
     label: str
 
     def supports_update_one_sort(self) -> bool:
+        catalog_value = _pymongo_catalog_behavior_flag(
+            self.key,
+            "supports_update_one_sort",
+        )
+        if catalog_value is not None:
+            return catalog_value
         return False
 
     @property
     def capabilities(self) -> frozenset[str]:
+        catalog_capabilities = _pymongo_catalog_capabilities(self.key)
+        if catalog_capabilities is not None:
+            return catalog_capabilities
         return frozenset()
 
     def behavior_flags(self) -> MappingProxyType:
@@ -294,13 +339,6 @@ class PyMongoProfile411(PyMongoProfile):
     key: str = '4.11'
     driver_series: str = '4.x'
     label: str = 'PyMongo 4.11'
-
-    def supports_update_one_sort(self) -> bool:
-        return True
-
-    @property
-    def capabilities(self) -> frozenset[str]:
-        return frozenset({'update_one.sort'})
 
 
 @dataclass(frozen=True, slots=True)

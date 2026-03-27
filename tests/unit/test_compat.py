@@ -132,6 +132,10 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertEqual(full_catalog['pymongo_profiles'], pymongo_catalog)
         self.assertEqual(full_catalog['operation_options'], operation_catalog)
         self.assertIn('query_field_operators', mongodb_catalog['7.0'])
+        self.assertIn('behavior_flags', mongodb_catalog['7.0'])
+        self.assertIn('behavior_flags', pymongo_catalog['4.9'])
+        self.assertFalse(mongodb_catalog['8.0']['behavior_flags']['null_query_matches_undefined'])
+        self.assertTrue(pymongo_catalog['4.11']['behavior_flags']['supports_update_one_sort'])
         self.assertEqual(
             operation_catalog['find']['hint']['status'],
             'effective',

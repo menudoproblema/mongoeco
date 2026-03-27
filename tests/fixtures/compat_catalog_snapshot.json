@@ -171,6 +171,9 @@
         "7",
         "7.0"
       ],
+      "behavior_flags": {
+        "null_query_matches_undefined": true
+      },
       "capabilities": [],
       "group_accumulators": [
         "$addToSet",
@@ -429,6 +432,9 @@
         "8",
         "8.0"
       ],
+      "behavior_flags": {
+        "null_query_matches_undefined": false
+      },
       "capabilities": [],
       "group_accumulators": [
         "$addToSet",
@@ -820,6 +826,9 @@
       "aliases": [
         "4.11"
       ],
+      "behavior_flags": {
+        "supports_update_one_sort": true
+      },
       "capabilities": [
         "update_one.sort"
       ],
@@ -830,6 +839,9 @@
       "aliases": [
         "4.13"
       ],
+      "behavior_flags": {
+        "supports_update_one_sort": true
+      },
       "capabilities": [
         "update_one.sort"
       ],
@@ -841,6 +853,9 @@
         "4",
         "4.9"
       ],
+      "behavior_flags": {
+        "supports_update_one_sort": false
+      },
       "capabilities": [],
       "driver_series": "4.x",
       "label": "PyMongo 4.9"

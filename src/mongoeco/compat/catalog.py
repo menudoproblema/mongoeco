@@ -15,6 +15,7 @@ class MongoDialectCatalogEntry:
     server_version: str
     label: str
     aliases: tuple[str, ...]
+    behavior_flags: MappingProxyType = MappingProxyType({})
     capabilities: frozenset[str] = frozenset()
 
 
@@ -24,6 +25,7 @@ class PyMongoProfileCatalogEntry:
     driver_series: str
     label: str
     aliases: tuple[str, ...]
+    behavior_flags: MappingProxyType = MappingProxyType({})
     capabilities: frozenset[str] = frozenset()
 
 
@@ -340,12 +342,22 @@ MONGODB_DIALECT_CATALOG = MappingProxyType(
             server_version="7.0",
             label="MongoDB 7.0",
             aliases=("7", "7.0"),
+            behavior_flags=MappingProxyType(
+                {
+                    "null_query_matches_undefined": True,
+                }
+            ),
         ),
         "8.0": MongoDialectCatalogEntry(
             key="8.0",
             server_version="8.0",
             label="MongoDB 8.0",
             aliases=("8", "8.0"),
+            behavior_flags=MappingProxyType(
+                {
+                    "null_query_matches_undefined": False,
+                }
+            ),
         ),
     }
 )
@@ -357,12 +369,22 @@ PYMONGO_PROFILE_CATALOG = MappingProxyType(
             driver_series="4.x",
             label="PyMongo 4.9",
             aliases=("4", "4.9"),
+            behavior_flags=MappingProxyType(
+                {
+                    "supports_update_one_sort": False,
+                }
+            ),
         ),
         "4.11": PyMongoProfileCatalogEntry(
             key="4.11",
             driver_series="4.x",
             label="PyMongo 4.11",
             aliases=("4.11",),
+            behavior_flags=MappingProxyType(
+                {
+                    "supports_update_one_sort": True,
+                }
+            ),
             capabilities=frozenset({"update_one.sort"}),
         ),
         "4.13": PyMongoProfileCatalogEntry(
@@ -370,6 +392,11 @@ PYMONGO_PROFILE_CATALOG = MappingProxyType(
             driver_series="4.x",
             label="PyMongo 4.13",
             aliases=("4.13",),
+            behavior_flags=MappingProxyType(
+                {
+                    "supports_update_one_sort": True,
+                }
+            ),
             capabilities=frozenset({"update_one.sort"}),
         ),
     }
@@ -553,6 +580,7 @@ def export_mongodb_dialect_catalog() -> dict[str, dict[str, object]]:
             "server_version": entry.server_version,
             "label": entry.label,
             "aliases": list(entry.aliases),
+            "behavior_flags": dict(entry.behavior_flags),
             "capabilities": sorted(entry.capabilities),
             "query_field_operators": sorted(SUPPORTED_QUERY_FIELD_OPERATORS),
             "query_top_level_operators": sorted(SUPPORTED_QUERY_TOP_LEVEL_OPERATORS),
@@ -572,6 +600,7 @@ def export_pymongo_profile_catalog() -> dict[str, dict[str, object]]:
             "driver_series": entry.driver_series,
             "label": entry.label,
             "aliases": list(entry.aliases),
+            "behavior_flags": dict(entry.behavior_flags),
             "capabilities": sorted(entry.capabilities),
         }
         for key, entry in PYMONGO_PROFILE_CATALOG.items()
