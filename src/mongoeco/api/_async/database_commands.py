@@ -17,8 +17,11 @@ from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     BuildInfoDocument,
+    CollectionStatsSnapshot,
+    CollectionValidationSnapshot,
     CmdLineOptsDocument,
     ConnectionStatusDocument,
+    DatabaseStatsSnapshot,
     HelloDocument,
     HostInfoDocument,
     ListCommandsDocument,
@@ -378,16 +381,16 @@ class AsyncDatabaseCommandService:
         show_privileges: bool = False
 
     @dataclass(frozen=True, slots=True)
-    class CollectionStatsCommand(AdminCommand[dict[str, object]]):
+    class CollectionStatsCommand(AdminCommand[CollectionStatsSnapshot]):
         collection_name: str = ""
         scale: int = 1
 
     @dataclass(frozen=True, slots=True)
-    class DatabaseStatsCommand(AdminCommand[dict[str, object]]):
+    class DatabaseStatsCommand(AdminCommand[DatabaseStatsSnapshot]):
         scale: int = 1
 
     @dataclass(frozen=True, slots=True)
-    class ValidateCollectionCommand(AdminCommand[dict[str, object]]):
+    class ValidateCollectionCommand(AdminCommand[CollectionValidationSnapshot]):
         collection_name: str = ""
         scandata: bool = False
         full: bool = False
@@ -547,7 +550,7 @@ class AsyncDatabaseCommandService:
                 session=session,
             )  # type: ignore[return-value]
         if isinstance(command, self.ValidateCollectionCommand):
-            return await self._admin.validate_collection(
+            return await self._admin._build_collection_validation_snapshot(
                 command.collection_name,
                 scandata=command.scandata,
                 full=command.full,

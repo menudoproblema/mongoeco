@@ -284,7 +284,7 @@ class AsyncDatabaseAdminService:
         *,
         scale: int = 1,
         session: ClientSession | None = None,
-    ) -> CollectionStatsDocument:
+    ) -> CollectionStatsSnapshot:
         collection = self._database.get_collection(collection_name)
         documents = await collection.find({}, session=session).to_list()
         indexes = await collection.list_indexes(session=session).to_list()
@@ -295,23 +295,23 @@ class AsyncDatabaseAdminService:
             data_size=data_size,
             index_count=len(indexes),
             scale=scale,
-        ).to_document()
+        )
 
     async def _database_stats(
         self,
         *,
         scale: int = 1,
         session: ClientSession | None = None,
-    ) -> DatabaseStatsDocument:
+    ) -> DatabaseStatsSnapshot:
         collection_names = await self._engine.list_collections(self._db_name, context=session)
         objects = 0
         data_size = 0
         indexes = 0
         for collection_name in collection_names:
             stats = await self._collection_stats(collection_name, scale=1, session=session)
-            objects += int(stats["count"])
-            data_size += int(stats["size"])
-            indexes += int(stats["nindexes"])
+            objects += stats.count
+            data_size += stats.data_size
+            indexes += stats.index_count
         return DatabaseStatsSnapshot(
             db_name=self._db_name,
             collection_count=len(collection_names),
@@ -319,7 +319,7 @@ class AsyncDatabaseAdminService:
             data_size=data_size,
             index_count=indexes,
             scale=scale,
-        ).to_document()
+        )
 
     async def _list_database_snapshots(
         self,
@@ -345,10 +345,10 @@ class AsyncDatabaseAdminService:
             snapshots.append(
                 DatabaseListingSnapshot(
                     name=database_name,
-                    size_on_disk=stats["storageSize"],
+                    size_on_disk=stats.data_size,
                     empty=(
-                        int(stats["collections"]) == 0
-                        and int(stats["objects"]) == 0
+                        stats.collection_count == 0
+                        and stats.object_count == 0
                     ),
                 )
             )
@@ -364,7 +364,7 @@ class AsyncDatabaseAdminService:
             for snapshot in await self._list_database_snapshots(session=session)
         ]
 
-    async def validate_collection(
+    async def _build_collection_validation_snapshot(
         self,
         name_or_collection: object,
         *,
@@ -373,7 +373,7 @@ class AsyncDatabaseAdminService:
         background: bool | None = None,
         session: ClientSession | None = None,
         comment: object | None = None,
-    ) -> CollectionValidationDocument:
+    ) -> CollectionValidationSnapshot:
         normalize_validate_command_options(
             scandata=scandata,
             full=full,
@@ -403,6 +403,27 @@ class AsyncDatabaseAdminService:
                 str(index["name"]): len(index.get("fields", []))
                 for index in indexes
             },
+        )
+
+    async def validate_collection(
+        self,
+        name_or_collection: object,
+        *,
+        scandata: bool = False,
+        full: bool = False,
+        background: bool | None = None,
+        session: ClientSession | None = None,
+        comment: object | None = None,
+    ) -> CollectionValidationDocument:
+        return (
+            await self._build_collection_validation_snapshot(
+                name_or_collection,
+                scandata=scandata,
+                full=full,
+                background=background,
+                session=session,
+                comment=comment,
+            )
         ).to_document()
 
     async def command(

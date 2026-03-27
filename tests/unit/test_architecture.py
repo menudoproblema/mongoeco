@@ -65,8 +65,8 @@ from mongoeco.types import (
     TransactionOptions,
     WriteConcern,
     BuildInfoDocument,
-    CollectionValidationSnapshot,
     CollectionStatsSnapshot,
+    CollectionValidationSnapshot,
     CollectionListingSnapshot,
     CollectionValidationDocument,
     CommandCursorResult,
@@ -545,6 +545,26 @@ class ArchitectureUnitTests(unittest.TestCase):
 
         self.assertIsInstance(result, ListDatabasesCommandResult)
         self.assertEqual(result.to_document()["databases"], [])
+
+    def test_database_command_service_executes_typed_stats_and_validation_snapshots(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin._commands
+
+        async def _run():
+            await database.get_collection("users").insert_one({"_id": "1", "name": "Ada"})
+            coll_stats = await service.execute(service.parse_raw_command({"collStats": "users"}))
+            db_stats = await service.execute(service.parse_raw_command("dbStats"))
+            validate = await service.execute(service.parse_raw_command({"validate": "users"}))
+            return coll_stats, db_stats, validate
+
+        coll_stats, db_stats, validate = asyncio.run(_run())
+
+        self.assertIsInstance(coll_stats, CollectionStatsSnapshot)
+        self.assertIsInstance(db_stats, DatabaseStatsSnapshot)
+        self.assertIsInstance(validate, CollectionValidationSnapshot)
+        self.assertEqual(coll_stats.namespace, "db.users")
+        self.assertEqual(db_stats.collection_count, 1)
+        self.assertEqual(validate.record_count, 1)
 
     def test_database_command_service_can_execute_and_serialize_in_one_step(self):
         database = AsyncDatabase(MemoryEngine(), "db")
