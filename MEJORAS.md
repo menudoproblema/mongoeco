@@ -43,10 +43,14 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `bfbecee` `refactor: type admin listing metadata snapshots`
   - `dcf0cab` `refactor: unify admin listing snapshot loaders`
   - `56af815` `refactor: extract shared admin command parsing`
+  - `3395070` `refactor: centralize admin option normalization`
+  - `d42c00a` `refactor: type findandmodify and index command results`
+  - `5a9ddbb` `refactor: keep admin result serialization at the boundary`
+  - `3c3b211` `refactor: keep stats and validation as typed snapshots`
+  - `4b767b7` `refactor: compile admin aggregate and lookup reads`
 - `Pendiente para cerrar de verdad`:
-  - reducir todavía más lógica administrativa residual en `Database`
-  - separar mejor ejecución interna y serialización pública de comandos
-  - consolidar un dispatcher tipado todavía más homogéneo entre async y sync
+  - reducir la lógica administrativa residual que aún vive en handlers complejos como `findAndModify`
+  - terminar de homogeneizar algunos tipos de retorno entre comandos de lectura, escritura e introspección
 
 ## 3. Tipado Estricto en el Core Semántico y la Metadata Interna
 
@@ -59,12 +63,14 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 - `Aplicado ya`:
   - `6076c4e` `refactor: type admin metadata contracts`
   - `33caa69` `refactor: type admin command metadata internals`
-  - `cee0689` `refactor: type internal admin command results`
+  - `cd0d5a5` `refactor: type internal admin command results`
   - `0f399ff` `refactor: type explain payloads internally`
   - `bfbecee` `refactor: type admin listing metadata snapshots`
+  - `d42c00a` `refactor: type findandmodify and index command results`
+  - `3c3b211` `refactor: keep stats and validation as typed snapshots`
 - `Pendiente para cerrar de verdad`:
-  - reducir más `dict[str, object]` internos en la capa admin
-  - extender el mismo patrón tipado a más payloads internos fuera de admin/explain
+  - extender el patrón tipado a más payloads internos fuera de admin/explain
+  - seguir reduciendo `dict[str, object]` en rutas de resultados intermedios de agregación y writes complejos
 
 ## 4. Arquitectura Basada en Planes de Operación
 
@@ -81,9 +87,12 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `8ce97aa` `refactor: compile aggregate operations before execution`
   - `5770e05` `refactor: route compiled operations into engines`
   - `1429e9f` `refactor: route aggregate source loads through operations`
+  - `57fb615` `refactor: route aggregate explain through compiled operations`
+  - `5bcc88a` `refactor: route aggregate execution through compiled find operations`
+  - `4b767b7` `refactor: compile admin aggregate and lookup reads`
 - `Pendiente para cerrar de verdad`:
-  - extender la frontera planificada hasta más rutas de engine
-  - consolidar mejor explain/admin sobre operaciones ya compiladas
+  - extender la frontera planificada a algunas rutas auxiliares restantes de admin y writes complejos
+  - seguir reduciendo recomposición manual de operaciones en helpers secundarios
 
 ## 5. Motor de Updates Formal Basado en Paths Compilados
 
@@ -99,8 +108,9 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `58e7bbc` `refactor: compile update operator instructions`
   - `5a7fc5a` `refactor: add explicit update execution context`
   - `c06860b` `refactor: compile reusable update plans in engines`
+  - `b28b28d` `refactor: resolve update applications before mutation`
 - `Pendiente para cerrar de verdad`:
-  - separar más claramente validación, resolución y aplicación final
+  - separar más claramente validación, resolución y aplicación final en operadores complejos de arrays
   - formalizar mejor el estado de ejecución de un update complejo
 
 ## 6. Compatibilidad y Tooling Derivados Automáticamente
