@@ -332,3 +332,24 @@ class ArchitectureUnitTests(unittest.TestCase):
 
         self.assertIsInstance(route, AsyncDatabaseCommandService.Route)
         self.assertFalse(route.passes_spec)
+
+    def test_database_command_service_parses_typed_admin_commands(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin._commands
+
+        coll_stats = service.parse_raw_command({"collStats": "users"})
+        validate = service.parse_raw_command({"validate": "users"})
+        delegated = service.parse_raw_command({"find": "users", "filter": {}})
+
+        self.assertIsInstance(
+            coll_stats,
+            AsyncDatabaseCommandService.CollectionStatsCommand,
+        )
+        self.assertIsInstance(
+            validate,
+            AsyncDatabaseCommandService.ValidateCollectionCommand,
+        )
+        self.assertIsInstance(
+            delegated,
+            AsyncDatabaseCommandService.DelegatedAdminCommand,
+        )

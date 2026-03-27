@@ -3,7 +3,7 @@ import os
 import platform
 import socket
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 from dataclasses import dataclass
 
 from mongoeco.engines.base import AsyncStorageEngine
@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 
 
 _PROCESS_STARTED_AT = datetime.datetime.now(datetime.UTC)
+CommandResultT = TypeVar("CommandResultT")
 
 SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
     "aggregate",
@@ -206,6 +207,40 @@ def connection_status_document(*, show_privileges: bool) -> ConnectionStatusDocu
 
 class AsyncDatabaseCommandService:
     @dataclass(frozen=True, slots=True)
+    class AdminCommand(Generic[CommandResultT]):
+        db_name: str
+        command_name: str
+        spec: dict[str, object]
+
+    @dataclass(frozen=True, slots=True)
+    class StaticAdminCommand(AdminCommand[dict[str, object]]):
+        pass
+
+    @dataclass(frozen=True, slots=True)
+    class ConnectionStatusCommand(AdminCommand[ConnectionStatusDocument]):
+        show_privileges: bool = False
+
+    @dataclass(frozen=True, slots=True)
+    class CollectionStatsCommand(AdminCommand[dict[str, object]]):
+        collection_name: str = ""
+        scale: int = 1
+
+    @dataclass(frozen=True, slots=True)
+    class DatabaseStatsCommand(AdminCommand[dict[str, object]]):
+        scale: int = 1
+
+    @dataclass(frozen=True, slots=True)
+    class ValidateCollectionCommand(AdminCommand[dict[str, object]]):
+        collection_name: str = ""
+        scandata: bool = False
+        full: bool = False
+        background: bool | None = None
+
+    @dataclass(frozen=True, slots=True)
+    class DelegatedAdminCommand(AdminCommand[dict[str, object]]):
+        route: "AsyncDatabaseCommandService.Route | None" = None
+
+    @dataclass(frozen=True, slots=True)
     class Route:
         handler_name: str
         passes_spec: bool = True
@@ -242,6 +277,156 @@ class AsyncDatabaseCommandService:
     def _mongodb_dialect(self) -> "MongoDialect":
         return self._admin._mongodb_dialect
 
+    def parse_raw_command(
+        self,
+        command: object,
+        **kwargs: object,
+    ) -> "AsyncDatabaseCommandService.AdminCommand[dict[str, object]]":
+        spec = self._admin._normalize_command(command, kwargs)
+        command_name = next(iter(spec))
+        if not isinstance(command_name, str):
+            raise TypeError("command name must be a string")
+
+        if command_name in {
+            "ping",
+            "buildInfo",
+            "serverStatus",
+            "hostInfo",
+            "whatsmyuri",
+            "getCmdLineOpts",
+            "hello",
+            "isMaster",
+            "ismaster",
+            "listCommands",
+        }:
+            return self.StaticAdminCommand(
+                db_name=self._admin._db_name,
+                command_name=command_name,
+                spec=spec,
+            )
+        if command_name == "connectionStatus":
+            show_privileges = spec.get("showPrivileges", False)
+            if not isinstance(show_privileges, bool):
+                raise TypeError("showPrivileges must be a bool")
+            return self.ConnectionStatusCommand(
+                db_name=self._admin._db_name,
+                command_name=command_name,
+                spec=spec,
+                show_privileges=show_privileges,
+            )
+        if command_name == "collStats":
+            collection_name = self._admin._require_collection_name(
+                spec.get("collStats"),
+                "collStats",
+            )
+            scale = self._admin._normalize_scale_from_command(spec.get("scale"))
+            return self.CollectionStatsCommand(
+                db_name=self._admin._db_name,
+                command_name=command_name,
+                spec=spec,
+                collection_name=collection_name,
+                scale=scale,
+            )
+        if command_name == "dbStats":
+            scale = self._admin._normalize_scale_from_command(spec.get("scale"))
+            return self.DatabaseStatsCommand(
+                db_name=self._admin._db_name,
+                command_name=command_name,
+                spec=spec,
+                scale=scale,
+            )
+        if command_name == "validate":
+            collection_name = self._admin._require_collection_name(
+                spec.get("validate"),
+                "validate",
+            )
+            return self.ValidateCollectionCommand(
+                db_name=self._admin._db_name,
+                command_name=command_name,
+                spec=spec,
+                collection_name=collection_name,
+                scandata=bool(spec.get("scandata", False)),
+                full=bool(spec.get("full", False)),
+                background=spec.get("background"),
+            )
+
+        route = self._DELEGATED_COMMAND_HANDLERS.get(command_name)
+        if route is None:
+            raise OperationFailure(f"Unsupported command: {command_name}")
+        return self.DelegatedAdminCommand(
+            db_name=self._admin._db_name,
+            command_name=command_name,
+            spec=spec,
+            route=route,
+        )
+
+    async def execute(
+        self,
+        command: "AsyncDatabaseCommandService.AdminCommand[CommandResultT]",
+        *,
+        session: ClientSession | None = None,
+    ) -> CommandResultT:
+        if isinstance(command, self.StaticAdminCommand):
+            return self._execute_static(command)  # type: ignore[return-value]
+        if isinstance(command, self.ConnectionStatusCommand):
+            return connection_status_document(
+                show_privileges=command.show_privileges
+            )  # type: ignore[return-value]
+        if isinstance(command, self.CollectionStatsCommand):
+            return await self._admin._collection_stats(
+                command.collection_name,
+                scale=command.scale,
+                session=session,
+            )  # type: ignore[return-value]
+        if isinstance(command, self.DatabaseStatsCommand):
+            return await self._admin._database_stats(
+                scale=command.scale,
+                session=session,
+            )  # type: ignore[return-value]
+        if isinstance(command, self.ValidateCollectionCommand):
+            return await self._admin.validate_collection(
+                command.collection_name,
+                scandata=command.scandata,
+                full=command.full,
+                background=command.background,
+                session=session,
+            )  # type: ignore[return-value]
+        if isinstance(command, self.DelegatedAdminCommand):
+            assert command.route is not None
+            handler = getattr(self._admin, command.route.handler_name)
+            if command.route.passes_spec:
+                return await handler(command.spec, session=session)
+            return await handler(session=session)
+        raise AssertionError(f"Unexpected admin command type: {type(command)!r}")
+
+    def _execute_static(
+        self,
+        command: "AsyncDatabaseCommandService.StaticAdminCommand",
+    ) -> dict[str, object]:
+        if command.command_name == "ping":
+            return {"ok": 1.0}
+        if command.command_name == "buildInfo":
+            return build_info_document(self._mongodb_dialect)
+        if command.command_name == "serverStatus":
+            return server_status_document(
+                self._mongodb_dialect,
+                engine=self._engine,
+            )
+        if command.command_name == "hostInfo":
+            return host_info_document()
+        if command.command_name == "whatsmyuri":
+            return whats_my_uri_document()
+        if command.command_name == "getCmdLineOpts":
+            return cmd_line_opts_document()
+        if command.command_name in {"hello", "isMaster", "ismaster"}:
+            return hello_document(
+                self._mongodb_dialect,
+                legacy_name=command.command_name != "hello",
+            )
+        if command.command_name == "listCommands":
+            return list_commands_document()
+        raise AssertionError(f"Unexpected static admin command: {command.command_name}")
+
     async def command(
         self,
         command: object,
@@ -249,69 +434,5 @@ class AsyncDatabaseCommandService:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> dict[str, object]:
-        spec = self._admin._normalize_command(command, kwargs)
-        command_name = next(iter(spec))
-        if not isinstance(command_name, str):
-            raise TypeError("command name must be a string")
-
-        if command_name == "ping":
-            return {"ok": 1.0}
-        if command_name == "buildInfo":
-            return build_info_document(self._mongodb_dialect)
-        if command_name == "serverStatus":
-            return server_status_document(
-                self._mongodb_dialect,
-                engine=self._engine,
-            )
-        if command_name == "hostInfo":
-            return host_info_document()
-        if command_name == "whatsmyuri":
-            return whats_my_uri_document()
-        if command_name == "getCmdLineOpts":
-            return cmd_line_opts_document()
-        if command_name in {"hello", "isMaster", "ismaster"}:
-            return hello_document(
-                self._mongodb_dialect,
-                legacy_name=command_name != "hello",
-            )
-        if command_name == "listCommands":
-            return list_commands_document()
-        if command_name == "connectionStatus":
-            show_privileges = spec.get("showPrivileges", False)
-            if not isinstance(show_privileges, bool):
-                raise TypeError("showPrivileges must be a bool")
-            return connection_status_document(show_privileges=show_privileges)
-        if command_name == "collStats":
-            collection_name = self._admin._require_collection_name(
-                spec.get("collStats"),
-                "collStats",
-            )
-            scale = self._admin._normalize_scale_from_command(spec.get("scale"))
-            return await self._admin._collection_stats(
-                collection_name,
-                scale=scale,
-                session=session,
-            )
-        if command_name == "dbStats":
-            scale = self._admin._normalize_scale_from_command(spec.get("scale"))
-            return await self._admin._database_stats(scale=scale, session=session)
-        if command_name == "validate":
-            collection_name = self._admin._require_collection_name(
-                spec.get("validate"),
-                "validate",
-            )
-            return await self._admin.validate_collection(
-                collection_name,
-                scandata=bool(spec.get("scandata", False)),
-                full=bool(spec.get("full", False)),
-                background=spec.get("background"),
-                session=session,
-            )
-
-        handler_entry = self._DELEGATED_COMMAND_HANDLERS.get(command_name)
-        if handler_entry is None:
-            raise OperationFailure(f"Unsupported command: {command_name}")
-        handler = getattr(self._admin, handler_entry.handler_name)
-        if handler_entry.passes_spec:
-            return await handler(spec, session=session)
-        return await handler(session=session)
+        parsed = self.parse_raw_command(command, **kwargs)
+        return await self.execute(parsed, session=session)
