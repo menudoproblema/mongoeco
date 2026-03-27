@@ -26,6 +26,9 @@ mongodb8 = [
 mongodb-real = [
     "pymongo>=4.9,<5",
 ]
+wire = [
+    "pymongo>=4.9,<5",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

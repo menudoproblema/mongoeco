@@ -370,12 +370,18 @@ No conviene adelantar:
 
 ### 15. Proxy Server con MongoDB Wire Protocol
 
-- `Estado`: `Pendiente`
+- `Estado`: `Aplicado con matices`
 - `Impacto`: `Muy Alto`
 - `Esfuerzo`: `Muy Alto`
 - `Descripción`: exponer `mongoeco` como servidor compatible con el protocolo MongoDB para usar drivers oficiales de otros lenguajes.
 - `Motivación`: hoy el proyecto está limitado al ecosistema Python.
 - `Aporte real`: abre el proyecto a Java, Go, Node.js, C# y cualquier cliente compatible con MongoDB sin reimplementar el core.
+- `Aplicado ya`:
+  - proxy async mínimo en `src/mongoeco/wire/`
+  - soporte real para `OP_QUERY`/`OP_REPLY` legacy de handshake y `OP_MSG`
+  - bridge BSON hacia los tipos internos del core
+  - integración validada con `pymongo.MongoClient`
+- `Cierre`: queda con matices porque el proxy actual se centra en comandos y cursores materializados básicos, sin cubrir aún toda la superficie histórica del protocolo ni streaming real con `getMore`, pero la base arquitectónica del servidor ya existe y reutiliza el core en vez de duplicarlo.
 
 ### 16. Políticas de Comportamiento 100% Derivadas del Catálogo
 
