@@ -26,6 +26,20 @@ class CompiledUpdateOperator:
     operator: str
     instructions: tuple[CompiledUpdateInstruction, ...]
 
+    def apply(
+        self,
+        doc: dict[str, Any],
+        *,
+        context: "UpdateExecutionContext",
+    ) -> bool:
+        handler_name = UpdateEngine._OPERATOR_HANDLERS.get(self.operator)
+        if handler_name is None:
+            raise OperationFailure(f"Unsupported update operator: {self.operator}")
+        handler = getattr(UpdateEngine, handler_name)
+        if self.operator == "$rename":
+            return handler(doc, self.instructions, dialect=context.dialect)
+        return handler(doc, self.instructions, context=context)
+
 
 @dataclass(frozen=True, slots=True)
 class UpdateExecutionContext:
@@ -42,6 +56,13 @@ class CompiledUpdatePlan:
     compiled_operators: tuple[CompiledUpdateOperator, ...]
     context: UpdateExecutionContext
 
+    def apply(self, doc: dict[str, Any]) -> bool:
+        modified = False
+        for compiled_operator in self.compiled_operators:
+            if compiled_operator.apply(doc, context=self.context):
+                modified = True
+        return modified
+
 
 @dataclass(frozen=True, slots=True)
 class ResolvedInstructionApplication:
@@ -51,6 +72,24 @@ class ResolvedInstructionApplication:
 
 class UpdateEngine:
     """Motor central para aplicar operadores de actualización de MongoDB."""
+
+    _OPERATOR_HANDLERS: dict[str, str] = {
+        "$set": "_apply_set",
+        "$unset": "_apply_unset",
+        "$inc": "_apply_inc",
+        "$min": "_apply_min",
+        "$max": "_apply_max",
+        "$mul": "_apply_mul",
+        "$bit": "_apply_bit",
+        "$rename": "_apply_rename",
+        "$currentDate": "_apply_current_date",
+        "$setOnInsert": "_apply_set_on_insert",
+        "$push": "_apply_push",
+        "$addToSet": "_apply_add_to_set",
+        "$pull": "_apply_pull",
+        "$pullAll": "_apply_pull_all",
+        "$pop": "_apply_pop",
+    }
 
     @staticmethod
     def apply_update(
@@ -114,67 +153,7 @@ class UpdateEngine:
         doc: dict[str, Any],
         plan: CompiledUpdatePlan,
     ) -> bool:
-        modified = False
-        execution = plan.context
-
-        # Si el update no empieza con $, se trata como un reemplazo completo (Mongo behavior)
-        # Pero en update_one normalmente se requieren operadores. Aquí forzamos operadores.
-        for compiled_operator in plan.compiled_operators:
-            op = compiled_operator.operator
-            instructions = compiled_operator.instructions
-            if op == "$set":
-                if UpdateEngine._apply_set(doc, instructions, context=execution):
-                    modified = True
-            elif op == "$unset":
-                if UpdateEngine._apply_unset(doc, instructions, context=execution):
-                    modified = True
-            elif op == "$inc":
-                if UpdateEngine._apply_inc(doc, instructions, context=execution):
-                    modified = True
-            elif op == "$min":
-                if UpdateEngine._apply_min(doc, instructions, context=execution):
-                    modified = True
-            elif op == "$max":
-                if UpdateEngine._apply_max(doc, instructions, context=execution):
-                    modified = True
-            elif op == "$mul":
-                if UpdateEngine._apply_mul(doc, instructions, context=execution):
-                    modified = True
-            elif op == "$bit":
-                if UpdateEngine._apply_bit(doc, instructions, context=execution):
-                    modified = True
-            elif op == "$rename":
-                if UpdateEngine._apply_rename(doc, instructions, dialect=execution.dialect):
-                    modified = True
-            elif op == "$currentDate":
-                if UpdateEngine._apply_current_date(doc, instructions, context=execution):
-                    modified = True
-            elif op == "$setOnInsert":
-                if UpdateEngine._apply_set_on_insert(
-                    doc,
-                    instructions,
-                    context=execution,
-                ):
-                    modified = True
-            elif op == "$push":
-                if UpdateEngine._apply_push(doc, instructions, context=execution):
-                    modified = True
-            elif op == "$addToSet":
-                if UpdateEngine._apply_add_to_set(doc, instructions, context=execution):
-                    modified = True
-            elif op == "$pull":
-                if UpdateEngine._apply_pull(doc, instructions, context=execution):
-                    modified = True
-            elif op == "$pullAll":
-                if UpdateEngine._apply_pull_all(doc, instructions, context=execution):
-                    modified = True
-            elif op == "$pop":
-                if UpdateEngine._apply_pop(doc, instructions, context=execution):
-                    modified = True
-            else:
-                raise OperationFailure(f"Unsupported update operator: {op}")
-
-        return modified
+        return plan.apply(doc)
 
     @staticmethod
     def build_execution_context(

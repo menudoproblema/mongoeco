@@ -1325,7 +1325,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 if selected is not None:
                     storage_key, original_document = selected
                     document = deepcopy(original_document)
-                    modified = UpdateEngine.apply_compiled_update(document, update_plan)
+                    modified = update_plan.apply(document)
                     if not modified:
                         return UpdateResult(matched_count=1, modified_count=0)
                     self._validate_document_against_unique_indexes(db_name, coll_name, document)
@@ -1398,7 +1398,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     array_filters=array_filters,
                     is_upsert_insert=True,
                 )
-                UpdateEngine.apply_compiled_update(new_doc, upsert_plan)
+                upsert_plan.apply(new_doc)
                 if "_id" not in new_doc:
                     new_doc["_id"] = ObjectId()
                 self._validate_document_against_unique_indexes(db_name, coll_name, new_doc)

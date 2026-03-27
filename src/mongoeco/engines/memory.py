@@ -418,7 +418,7 @@ class MemoryEngine(AsyncStorageEngine):
                 if not QueryEngine.match_plan(document, query_plan, dialect=effective_dialect):
                     continue
 
-                modified = UpdateEngine.apply_compiled_update(document, update_plan)
+                modified = update_plan.apply(document)
                 self._ensure_unique_indexes(
                     db_name,
                     coll_name,
@@ -442,7 +442,7 @@ class MemoryEngine(AsyncStorageEngine):
                 array_filters=array_filters,
                 is_upsert_insert=True,
             )
-            UpdateEngine.apply_compiled_update(new_doc, upsert_plan)
+            upsert_plan.apply(new_doc)
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
 

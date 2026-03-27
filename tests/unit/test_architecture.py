@@ -95,6 +95,7 @@ from mongoeco.types import (
     WriteErrorEntry,
     WriteCommandResult,
 )
+from mongoeco.core.operators import UpdateEngine
 
 
 class ArchitectureUnitTests(unittest.TestCase):
@@ -289,6 +290,15 @@ class ArchitectureUnitTests(unittest.TestCase):
     def test_update_operation_rejects_invalid_array_filters(self):
         with self.assertRaises(TypeError):
             compile_update_operation({"name": "Ada"}, array_filters=[1])
+
+    def test_compiled_update_plan_is_executable_object(self):
+        plan = UpdateEngine.compile_update_plan({"$set": {"name": "Ada"}})
+        document = {"_id": "1"}
+
+        modified = plan.apply(document)
+
+        self.assertTrue(modified)
+        self.assertEqual(document["name"], "Ada")
 
     def test_aggregate_operation_compiles_normalized_pipeline_plan(self):
         operation = compile_aggregate_operation(
