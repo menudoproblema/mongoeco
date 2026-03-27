@@ -14,6 +14,15 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.bson_scalars import (
+    INT32_MAX,
+    INT32_MIN,
+    INT64_MAX,
+    INT64_MIN,
+    bson_numeric_alias,
+    is_bson_numeric,
+    validate_bson_value,
+)
 from mongoeco.core.filtering import BSONComparator
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import delete_document_value, get_document_value, set_document_value
@@ -37,10 +46,15 @@ def _aggregation_key(value: Any) -> Any:
         return ("none", None)
     if isinstance(value, bool):
         return ("bool", value)
-    if isinstance(value, int):
+    numeric_alias = bson_numeric_alias(value)
+    if numeric_alias == "int":
         return ("int", value)
-    if isinstance(value, float):
+    if numeric_alias == "long":
+        return ("long", value)
+    if numeric_alias == "double":
         return ("float", value)
+    if numeric_alias == "decimal":
+        return ("decimal", value)
     if isinstance(value, str):
         return ("str", value)
     if isinstance(value, bytes):
@@ -488,13 +502,13 @@ def _compare_values(
 
 
 def _require_numeric(operator: str, value: object) -> int | float:
-    if not isinstance(value, (int, float, decimal.Decimal)) or isinstance(value, bool):
+    if not is_bson_numeric(value):
         raise OperationFailure(f"{operator} requires numeric arguments")
     return value
 
 
 def _is_numeric(value: object) -> bool:
-    return isinstance(value, (int, float, decimal.Decimal)) and not isinstance(value, bool)
+    return is_bson_numeric(value)
 
 
 def _sum_accumulator_operand(value: Any) -> int | float | None:
@@ -1447,19 +1461,19 @@ def _convert_aggregation_scalar(operator: str, value: Any, target: str) -> Any:
         if isinstance(value, bool):
             return int(value)
         if isinstance(value, int):
-            if value < -(1 << 31) or value > (1 << 31) - 1:
+            if value < INT32_MIN or value > INT32_MAX:
                 raise OperationFailure(f"{operator} overflow")
             return value
         if isinstance(value, float):
             if not math.isfinite(value) or not value.is_integer():
                 raise OperationFailure(f"{operator} cannot convert the value")
             integer = int(value)
-            if integer < -(1 << 31) or integer > (1 << 31) - 1:
+            if integer < INT32_MIN or integer > INT32_MAX:
                 raise OperationFailure(f"{operator} overflow")
             return integer
         if isinstance(value, str):
             integer = _parse_base10_int_string(operator, value)
-            if integer < -(1 << 31) or integer > (1 << 31) - 1:
+            if integer < INT32_MIN or integer > INT32_MAX:
                 raise OperationFailure(f"{operator} overflow")
             return integer
         raise OperationFailure(f"{operator} cannot convert the value")
@@ -1468,19 +1482,19 @@ def _convert_aggregation_scalar(operator: str, value: Any, target: str) -> Any:
         if isinstance(value, bool):
             return int(value)
         if isinstance(value, int):
-            if value < -(1 << 63) or value > (1 << 63) - 1:
+            if value < INT64_MIN or value > INT64_MAX:
                 raise OperationFailure(f"{operator} overflow")
             return value
         if isinstance(value, float):
             if not math.isfinite(value) or not value.is_integer():
                 raise OperationFailure(f"{operator} cannot convert the value")
             integer = int(value)
-            if integer < -(1 << 63) or integer > (1 << 63) - 1:
+            if integer < INT64_MIN or integer > INT64_MAX:
                 raise OperationFailure(f"{operator} overflow")
             return integer
         if isinstance(value, str):
             integer = _parse_base10_int_string(operator, value)
-            if integer < -(1 << 63) or integer > (1 << 63) - 1:
+            if integer < INT64_MIN or integer > INT64_MAX:
                 raise OperationFailure(f"{operator} overflow")
             return integer
         if isinstance(value, datetime.datetime):
@@ -1549,21 +1563,30 @@ def _convert_aggregation_scalar(operator: str, value: Any, target: str) -> Any:
 
     if target == "decimal":
         if isinstance(value, bool):
-            return decimal.Decimal(int(value))
+            result = decimal.Decimal(int(value))
+            validate_bson_value(result)
+            return result
         if isinstance(value, int):
-            return decimal.Decimal(value)
+            result = decimal.Decimal(value)
+            validate_bson_value(result)
+            return result
         if isinstance(value, float):
             if not math.isfinite(value):
                 raise OperationFailure(f"{operator} cannot convert the value")
-            return decimal.Decimal(str(value))
+            result = decimal.Decimal(str(value))
+            validate_bson_value(result)
+            return result
         if isinstance(value, decimal.Decimal):
+            validate_bson_value(value)
             return value
         if isinstance(value, str):
             text = value.strip()
             if not text:
                 raise OperationFailure(f"{operator} cannot convert the string value")
             try:
-                return decimal.Decimal(text)
+                result = decimal.Decimal(text)
+                validate_bson_value(result)
+                return result
             except Exception as exc:
                 raise OperationFailure(f"{operator} cannot convert the string value") from exc
         raise OperationFailure(f"{operator} cannot convert the value")

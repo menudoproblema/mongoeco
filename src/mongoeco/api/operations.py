@@ -11,7 +11,7 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.core.validation import is_filter, is_projection
-from mongoeco.types import ArrayFilters, Filter, Projection, SortSpec
+from mongoeco.types import ArrayFilters, Filter, PlanningIssue, PlanningMode, Projection, SortSpec
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +26,8 @@ class FindOperation:
     comment: object | None = None
     max_time_ms: int | None = None
     batch_size: int | None = None
+    planning_mode: PlanningMode = PlanningMode.STRICT
+    planning_issues: tuple[PlanningIssue, ...] = ()
 
     def with_overrides(self, **changes: object) -> "FindOperation":
         return replace(self, **changes)
@@ -41,6 +43,8 @@ class UpdateOperation:
     comment: object | None = None
     max_time_ms: int | None = None
     let: dict[str, object] | None = None
+    planning_mode: PlanningMode = PlanningMode.STRICT
+    planning_issues: tuple[PlanningIssue, ...] = ()
 
     def with_overrides(self, **changes: object) -> "UpdateOperation":
         return replace(self, **changes)
@@ -54,6 +58,8 @@ class AggregateOperation:
     max_time_ms: int | None = None
     batch_size: int | None = None
     let: dict[str, object] | None = None
+    planning_mode: PlanningMode = PlanningMode.STRICT
+    planning_issues: tuple[PlanningIssue, ...] = ()
 
     def with_overrides(self, **changes: object) -> "AggregateOperation":
         return replace(self, **changes)
@@ -74,6 +80,8 @@ def compile_find_selection_from_update_operation(
         hint=operation.hint,
         comment=operation.comment,
         max_time_ms=operation.max_time_ms,
+        planning_mode=operation.planning_mode,
+        planning_issues=operation.planning_issues,
     )
 
 
@@ -91,6 +99,7 @@ def compile_find_operation(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     variables: dict[str, object] | None = None,
     plan: QueryNode | None = None,
+    planning_mode: PlanningMode = PlanningMode.STRICT,
 ) -> FindOperation:
     normalized_filter = _normalize_filter(filter_spec)
     normalized_projection = _normalize_projection(projection)
@@ -102,7 +111,7 @@ def compile_find_operation(
     normalized_limit = _normalize_limit(limit)
     return FindOperation(
         filter_spec=normalized_filter,
-        plan=compile_filter(normalized_filter, dialect=dialect, variables=variables)
+        plan=compile_filter(normalized_filter, dialect=dialect, variables=variables, planning_mode=planning_mode)
         if plan is None
         else plan,
         projection=normalized_projection,
@@ -113,6 +122,8 @@ def compile_find_operation(
         comment=comment,
         max_time_ms=normalized_max_time_ms,
         batch_size=normalized_batch_size,
+        planning_mode=planning_mode,
+        planning_issues=_collect_query_planning_issues(normalized_filter, dialect=dialect, variables=variables, planning_mode=planning_mode),
     )
 
 
@@ -127,6 +138,8 @@ def compile_update_operation(
     let: object | None = None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     plan: QueryNode | None = None,
+    update_spec: dict[str, object] | None = None,
+    planning_mode: PlanningMode = PlanningMode.STRICT,
 ) -> UpdateOperation:
     normalized_filter = _normalize_filter(filter_spec)
     normalized_sort = _normalize_sort(sort)
@@ -140,6 +153,7 @@ def compile_update_operation(
             normalized_filter,
             dialect=dialect,
             variables=normalized_let,
+            planning_mode=planning_mode,
         )
         if plan is None
         else plan,
@@ -149,6 +163,16 @@ def compile_update_operation(
         comment=comment,
         max_time_ms=normalized_max_time_ms,
         let=normalized_let,
+        planning_mode=planning_mode,
+        planning_issues=(
+            *_collect_query_planning_issues(
+                normalized_filter,
+                dialect=dialect,
+                variables=normalized_let,
+                planning_mode=planning_mode,
+            ),
+            *_collect_update_planning_issues(update_spec, dialect=dialect, planning_mode=planning_mode),
+        ),
     )
 
 
@@ -160,6 +184,8 @@ def compile_aggregate_operation(
     max_time_ms: object | None = None,
     batch_size: object | None = None,
     let: object | None = None,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+    planning_mode: PlanningMode = PlanningMode.STRICT,
 ) -> AggregateOperation:
     if not isinstance(pipeline, list):
         raise TypeError("pipeline must be a list")
@@ -170,7 +196,66 @@ def compile_aggregate_operation(
         max_time_ms=_normalize_max_time_ms(max_time_ms),
         batch_size=_normalize_batch_size(batch_size),
         let=_normalize_let(let),
+        planning_mode=planning_mode,
+        planning_issues=_collect_aggregate_planning_issues(pipeline, dialect=dialect, planning_mode=planning_mode),
     )
+
+
+def _collect_query_planning_issues(
+    filter_spec: Filter,
+    *,
+    dialect: MongoDialect,
+    variables: dict[str, object] | None,
+    planning_mode: PlanningMode,
+) -> tuple[PlanningIssue, ...]:
+    if planning_mode is not PlanningMode.RELAXED:
+        return ()
+    plan = compile_filter(filter_spec, dialect=dialect, variables=variables, planning_mode=planning_mode)
+    issue = getattr(plan, "issue", None)
+    if issue is None:
+        return ()
+    return (issue,)
+
+
+def _collect_update_planning_issues(
+    update_spec: dict[str, object] | None,
+    *,
+    dialect: MongoDialect,
+    planning_mode: PlanningMode,
+) -> tuple[PlanningIssue, ...]:
+    if planning_mode is not PlanningMode.RELAXED or update_spec is None:
+        return ()
+    issues: list[PlanningIssue] = []
+    if not isinstance(update_spec, dict):
+        return (PlanningIssue(scope="update", message="update specification must be a document"),)
+    for operator in update_spec:
+        if isinstance(operator, str) and operator.startswith("$") and not dialect.supports_update_operator(operator):
+            issues.append(PlanningIssue(scope="update", message=f"Unsupported update operator: {operator}"))
+    return tuple(issues)
+
+
+def _collect_aggregate_planning_issues(
+    pipeline: object,
+    *,
+    dialect: MongoDialect,
+    planning_mode: PlanningMode,
+) -> tuple[PlanningIssue, ...]:
+    if planning_mode is not PlanningMode.RELAXED:
+        return ()
+    if not isinstance(pipeline, list):
+        return (PlanningIssue(scope="aggregate", message="pipeline must be a list"),)
+    issues: list[PlanningIssue] = []
+    for stage in pipeline:
+        if not isinstance(stage, dict) or len(stage) != 1:
+            issues.append(PlanningIssue(scope="aggregate", message="Each pipeline stage must be a single-key document"))
+            continue
+        operator = next(iter(stage))
+        if not isinstance(operator, str) or not operator.startswith("$"):
+            issues.append(PlanningIssue(scope="aggregate", message="Pipeline stage operator must start with '$'"))
+            continue
+        if not dialect.supports_aggregation_stage(operator):
+            issues.append(PlanningIssue(scope="aggregate", message=f"Unsupported aggregation stage: {operator}"))
+    return tuple(issues)
 
 
 def _normalize_filter(filter_spec: object | None) -> Filter:

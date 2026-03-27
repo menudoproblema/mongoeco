@@ -13,7 +13,7 @@ from mongoeco.session import ClientSession
 from mongoeco.types import (
     ArrayFilters, BulkWriteResult, CodecOptions, DeleteResult, Document, DocumentId, Filter, InsertManyResult,
     IndexInformation, IndexModel, IndexKeySpec, InsertOneResult, Projection, ReadConcern, ReadPreference,
-    ReturnDocument, SortSpec, Update, UpdateResult, WriteConcern, WriteModel,
+    PlanningMode, ReturnDocument, SortSpec, Update, UpdateResult, WriteConcern, WriteModel,
 )
 
 
@@ -30,6 +30,7 @@ class Collection:
         read_concern: ReadConcern | None = None,
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
+        planning_mode: PlanningMode = PlanningMode.STRICT,
     ):
         self._client = client
         self._db_name = db_name
@@ -46,6 +47,7 @@ class Collection:
         self._codec_options = (
             client.codec_options if codec_options is None else codec_options
         )
+        self._planning_mode = planning_mode
 
     def _async_collection(self):
         self._client._ensure_connected()
@@ -61,7 +63,7 @@ class Collection:
             read_concern=self._read_concern,
             read_preference=self._read_preference,
             codec_options=self._codec_options,
-        )
+        ).with_options(planning_mode=self._planning_mode)
 
     def with_options(
         self,
@@ -70,6 +72,7 @@ class Collection:
         read_concern: ReadConcern | None = None,
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
+        planning_mode: PlanningMode | None = None,
     ) -> "Collection":
         return type(self)(
             self._client,
@@ -79,6 +82,7 @@ class Collection:
             read_concern=self._read_concern if read_concern is None else read_concern,
             read_preference=self._read_preference if read_preference is None else read_preference,
             codec_options=self._codec_options if codec_options is None else codec_options,
+            planning_mode=self._planning_mode if planning_mode is None else planning_mode,
         )
 
     def insert_one(self, document: Document, *, session: ClientSession | None = None) -> InsertOneResult[DocumentId]:

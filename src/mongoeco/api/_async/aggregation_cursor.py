@@ -1,6 +1,10 @@
 from collections.abc import AsyncIterator
 
-from mongoeco.api._async.cursor import HintSpec
+from mongoeco.api._async.cursor import (
+    HintSpec,
+    _ensure_operation_executable,
+    _resolve_planning_mode,
+)
 from mongoeco.api.operations import (
     AggregateOperation,
     FindOperation,
@@ -16,7 +20,7 @@ from mongoeco.core.aggregation import (
     split_pushdown_pipeline,
 )
 from mongoeco.session import ClientSession
-from mongoeco.types import AggregateExplanation, Document
+from mongoeco.types import AggregateExplanation, Document, QueryPlanExplanation
 
 
 class AsyncAggregationCursor:
@@ -43,6 +47,8 @@ class AsyncAggregationCursor:
                 max_time_ms=max_time_ms,
                 batch_size=batch_size,
                 let=let,
+                dialect=getattr(collection, "mongodb_dialect", MONGODB_DIALECT_70),
+                planning_mode=_resolve_planning_mode(collection),
             )
         self._operation = operation
         self._pipeline = operation.pipeline
@@ -224,6 +230,7 @@ class AsyncAggregationCursor:
         )
 
     async def _materialize(self) -> list[Document]:
+        _ensure_operation_executable(self._collection, self._operation)
         deadline = operation_deadline(self._max_time_ms)
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
         pushdown = split_pushdown_pipeline(
@@ -267,6 +274,7 @@ class AsyncAggregationCursor:
         )
 
     async def _stream_batches(self) -> AsyncIterator[Document]:
+        _ensure_operation_executable(self._collection, self._operation)
         if self._batch_size in (None, 0):
             for document in await self._materialize():
                 yield document
@@ -344,6 +352,33 @@ class AsyncAggregationCursor:
         return None
 
     async def explain(self) -> dict[str, object]:
+        if self._operation.planning_issues:
+            return AggregateExplanation(
+                engine_plan=QueryPlanExplanation(
+                    engine="planner",
+                    strategy="deferred",
+                    plan="planning-issues",
+                    sort=None,
+                    skip=0,
+                    limit=None,
+                    hint=self._hint,
+                    hinted_index=None,
+                    comment=self._comment,
+                    max_time_ms=self._max_time_ms,
+                    details={"reason": "execution blocked by deferred planning issues"},
+                    planning_mode=self._operation.planning_mode,
+                    planning_issues=self._operation.planning_issues,
+                ),
+                remaining_pipeline=list(self._pipeline),
+                hint=self._hint,
+                comment=self._comment,
+                max_time_ms=self._max_time_ms,
+                batch_size=self._batch_size,
+                let=self._let,
+                streaming_batch_execution=False,
+                planning_mode=self._operation.planning_mode,
+                planning_issues=self._operation.planning_issues,
+            ).to_document()
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
         pushdown = split_pushdown_pipeline(
             self._pipeline,

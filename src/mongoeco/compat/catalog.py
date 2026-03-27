@@ -7,6 +7,7 @@ from types import MappingProxyType
 from typing import Any
 import uuid
 
+from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.types import ObjectId, UndefinedType
 
 
@@ -325,6 +326,10 @@ DEFAULT_BSON_TYPE_ORDER = MappingProxyType(
         int: 2,
         float: 2,
         decimal.Decimal: 2,
+        BsonInt32: 2,
+        BsonInt64: 2,
+        BsonDouble: 2,
+        BsonDecimal128: 2,
         str: 3,
         dict: 4,
         list: 5,

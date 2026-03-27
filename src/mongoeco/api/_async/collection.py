@@ -42,7 +42,7 @@ from mongoeco.session import ClientSession
 from mongoeco.types import (
     ArrayFilters, BulkWriteErrorDetails, BulkWriteResult, CodecOptions, DeleteResult, Document, DocumentId, Filter,
     IndexInformation, IndexKeySpec, IndexModel, InsertManyResult, InsertOne, InsertOneResult, ObjectId, Projection,
-    ReadConcern, ReadPreference, ReplaceOne, ReturnDocument, SortSpec, Update, UpdateMany, UpdateOne, UpdateResult,
+    PlanningMode, ReadConcern, ReadPreference, ReplaceOne, ReturnDocument, SortSpec, Update, UpdateMany, UpdateOne, UpdateResult,
     UpsertedWriteEntry, WriteConcern, WriteErrorEntry, WriteModel, DeleteOne, DeleteMany,
     normalize_codec_options, normalize_index_keys,
     normalize_read_concern, normalize_read_preference, normalize_write_concern,
@@ -67,6 +67,7 @@ class AsyncCollection:
         read_concern: ReadConcern | None = None,
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
+        planning_mode: PlanningMode = PlanningMode.STRICT,
     ):
         self._engine = engine
         self._db_name = db_name
@@ -87,6 +88,7 @@ class AsyncCollection:
         self._read_concern = normalize_read_concern(read_concern)
         self._read_preference = normalize_read_preference(read_preference)
         self._codec_options = normalize_codec_options(codec_options)
+        self._planning_mode = planning_mode
 
     def with_options(
         self,
@@ -95,6 +97,7 @@ class AsyncCollection:
         read_concern: ReadConcern | None = None,
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
+        planning_mode: PlanningMode | None = None,
     ) -> "AsyncCollection":
         return type(self)(
             self._engine,
@@ -108,7 +111,12 @@ class AsyncCollection:
             read_concern=self._read_concern if read_concern is None else read_concern,
             read_preference=self._read_preference if read_preference is None else read_preference,
             codec_options=self._codec_options if codec_options is None else codec_options,
+            planning_mode=self._planning_mode if planning_mode is None else planning_mode,
         )
+
+    @property
+    def planning_mode(self) -> PlanningMode:
+        return self._planning_mode
 
     @staticmethod
     def _require_document(document: object) -> Document:
@@ -277,6 +285,7 @@ class AsyncCollection:
         selector_filter: Filter | None = None,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
+        self._ensure_operation_executable(operation)
         method = getattr(self._engine, "update_with_operation", None)
         if callable(method):
             return await method(
@@ -310,6 +319,7 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
     ) -> AsyncIterable[Document]:
+        self._ensure_operation_executable(operation)
         method = getattr(self._engine, "scan_find_operation", None)
         if callable(method):
             return method(
@@ -341,6 +351,7 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
     ) -> DeleteResult:
+        self._ensure_operation_executable(operation)
         method = getattr(self._engine, "delete_with_operation", None)
         if callable(method):
             return await method(
@@ -365,6 +376,7 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
     ) -> int:
+        self._ensure_operation_executable(operation)
         method = getattr(self._engine, "count_find_operation", None)
         if callable(method):
             return await method(
@@ -414,8 +426,18 @@ class AsyncCollection:
             max_time_ms=max_time_ms,
             dialect=self._mongodb_dialect,
             plan=plan,
+            planning_mode=self._planning_mode,
         )
         return await self._build_cursor(operation, session=session).first()
+
+    @staticmethod
+    def _operation_issue_message(operation: FindOperation | UpdateOperation | AggregateOperation) -> str:
+        messages = ", ".join(issue.message for issue in operation.planning_issues)
+        return f"operation has deferred planning issues: {messages}"
+
+    def _ensure_operation_executable(self, operation: FindOperation | UpdateOperation | AggregateOperation) -> None:
+        if operation.planning_issues:
+            raise OperationFailure(self._operation_issue_message(operation))
 
     def _build_cursor(
         self,
@@ -681,6 +703,7 @@ class AsyncCollection:
             filter_spec,
             projection=projection,
             dialect=self._mongodb_dialect,
+            planning_mode=self._planning_mode,
         )
         doc = None
         
@@ -726,6 +749,7 @@ class AsyncCollection:
             max_time_ms=max_time_ms,
             batch_size=batch_size,
             dialect=self._mongodb_dialect,
+            planning_mode=self._planning_mode,
         )
         return self._build_cursor(
             operation,
@@ -750,6 +774,8 @@ class AsyncCollection:
             max_time_ms=max_time_ms,
             batch_size=batch_size,
             let=let,
+            dialect=self._mongodb_dialect,
+            planning_mode=self._planning_mode,
         )
         return self._build_aggregation_cursor(operation, session=session)
 
@@ -786,6 +812,8 @@ class AsyncCollection:
             comment=comment,
             let=let,
             dialect=self._mongodb_dialect,
+            update_spec=update_spec,
+            planning_mode=self._planning_mode,
         )
         update_spec = self._require_update(update_spec)
         if operation.sort is not None and not self._pymongo_profile.supports_update_one_sort():
@@ -932,6 +960,8 @@ class AsyncCollection:
             comment=comment,
             let=let,
             dialect=self._mongodb_dialect,
+            update_spec=update_spec,
+            planning_mode=self._planning_mode,
         )
         update_spec = self._require_update(update_spec)
         matched_documents = await self._build_cursor(
@@ -1002,6 +1032,7 @@ class AsyncCollection:
             comment=comment,
             let=let,
             dialect=self._mongodb_dialect,
+            planning_mode=self._planning_mode,
         )
         replacement = self._require_replacement(replacement)
         if operation.sort is not None and not self._pymongo_profile.supports_update_one_sort():
@@ -1074,6 +1105,8 @@ class AsyncCollection:
             max_time_ms=max_time_ms,
             let=let,
             dialect=self._mongodb_dialect,
+            update_spec=update_spec,
+            planning_mode=self._planning_mode,
         )
         update_spec = self._require_update(update_spec)
 
@@ -1163,6 +1196,7 @@ class AsyncCollection:
             max_time_ms=max_time_ms,
             let=let,
             dialect=self._mongodb_dialect,
+            planning_mode=self._planning_mode,
         )
         replacement = self._require_replacement(replacement)
 
@@ -1240,6 +1274,7 @@ class AsyncCollection:
             max_time_ms=max_time_ms,
             let=let,
             dialect=self._mongodb_dialect,
+            planning_mode=self._planning_mode,
         )
 
         before = await self._select_first_document(
@@ -1277,6 +1312,7 @@ class AsyncCollection:
             comment=comment,
             let=let,
             dialect=self._mongodb_dialect,
+            planning_mode=self._planning_mode,
         )
         if operation.hint is not None:
             selected = await self._build_cursor(
@@ -1326,6 +1362,7 @@ class AsyncCollection:
             comment=comment,
             let=let,
             dialect=self._mongodb_dialect,
+            planning_mode=self._planning_mode,
         )
         matched_documents = await self._build_cursor(
             compile_find_selection_from_update_operation(
@@ -1381,6 +1418,7 @@ class AsyncCollection:
             comment=comment,
             max_time_ms=max_time_ms,
             dialect=self._mongodb_dialect,
+            planning_mode=self._planning_mode,
         )
         count = await self._engine_count_with_operation(operation, session=session)
         self._record_operation_metadata(

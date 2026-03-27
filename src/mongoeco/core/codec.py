@@ -1,8 +1,10 @@
 import binascii
 import datetime
+import decimal
 import uuid
 from typing import Any
 
+from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64, validate_bson_value
 from mongoeco.types import ObjectId, UndefinedType, UNDEFINED
 
 
@@ -47,8 +49,13 @@ class DocumentCodec:
         if isinstance(data, list):
             return [DocumentCodec.encode(v) for v in data]
 
+        validate_bson_value(data)
+
         if isinstance(data, datetime.datetime):
             return DocumentCodec._tagged_value("datetime", data.isoformat())
+
+        if isinstance(data, decimal.Decimal):
+            return DocumentCodec._tagged_value("decimal", str(data))
 
         if isinstance(data, uuid.UUID):
             return DocumentCodec._tagged_value("uuid", str(data))
@@ -62,6 +69,18 @@ class DocumentCodec:
         if isinstance(data, UndefinedType):
             return DocumentCodec._tagged_value("undefined", True)
 
+        if isinstance(data, BsonInt32):
+            return DocumentCodec._tagged_value("int32", data.value)
+
+        if isinstance(data, BsonInt64):
+            return DocumentCodec._tagged_value("int64", data.value)
+
+        if isinstance(data, BsonDouble):
+            return DocumentCodec._tagged_value("double", data.value)
+
+        if isinstance(data, BsonDecimal128):
+            return DocumentCodec._tagged_value("decimal128", str(data.value))
+
         return data
 
     @staticmethod
@@ -73,6 +92,8 @@ class DocumentCodec:
 
             if value_type == "datetime":
                 return datetime.datetime.fromisoformat(value)
+            if value_type == "decimal":
+                return decimal.Decimal(value)
             if value_type == "uuid":
                 return uuid.UUID(value)
             if value_type == "objectid":
@@ -81,6 +102,14 @@ class DocumentCodec:
                 return binascii.unhexlify(value)
             if value_type == "undefined":
                 return UNDEFINED
+            if value_type == "int32":
+                return int(value)
+            if value_type == "int64":
+                return int(value)
+            if value_type == "double":
+                return float(value)
+            if value_type == "decimal128":
+                return decimal.Decimal(value)
             if value_type == "dict":
                 return {k: DocumentCodec.decode(v) for k, v in value.items()}
             raise ValueError(f"Unsupported tagged value type: {value_type}")

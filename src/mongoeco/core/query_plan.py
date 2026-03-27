@@ -4,7 +4,7 @@ from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Filter
+from mongoeco.types import Filter, PlanningIssue, PlanningMode
 
 
 class QueryNode:
@@ -14,6 +14,11 @@ class QueryNode:
 @dataclass(frozen=True)
 class MatchAll(QueryNode):
     pass
+
+
+@dataclass(frozen=True)
+class DeferredQueryNode(QueryNode):
+    issue: PlanningIssue
 
 
 @dataclass(frozen=True)
@@ -277,6 +282,27 @@ def compile_filter(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     variables: dict[str, Any] | None = None,
+    planning_mode: PlanningMode = PlanningMode.STRICT,
+) -> QueryNode:
+    try:
+        return _compile_filter_strict(
+            filter_spec,
+            dialect=dialect,
+            variables=variables,
+            planning_mode=planning_mode,
+        )
+    except (OperationFailure, ValueError, TypeError) as exc:
+        if planning_mode is PlanningMode.RELAXED:
+            return DeferredQueryNode(PlanningIssue(scope="query", message=str(exc)))
+        raise
+
+
+def _compile_filter_strict(
+    filter_spec: Filter,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+    variables: dict[str, Any] | None = None,
+    planning_mode: PlanningMode = PlanningMode.STRICT,
 ) -> QueryNode:
     if filter_spec is None:
         return MatchAll()
@@ -302,6 +328,7 @@ def compile_filter(
                             clause,
                             dialect=dialect,
                             variables=variables,
+                            planning_mode=planning_mode,
                         )
                         for clause in value
                     )
@@ -318,6 +345,7 @@ def compile_filter(
                             clause,
                             dialect=dialect,
                             variables=variables,
+                            planning_mode=planning_mode,
                         )
                         for clause in value
                     )
@@ -335,6 +363,7 @@ def compile_filter(
                                 clause,
                                 dialect=dialect,
                                 variables=variables,
+                                planning_mode=planning_mode,
                             )
                             for clause in value
                         )
@@ -357,9 +386,10 @@ def ensure_query_plan(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     variables: dict[str, Any] | None = None,
+    planning_mode: PlanningMode = PlanningMode.STRICT,
 ) -> QueryNode:
     if plan is not None:
         return plan
     if filter_spec is None:
         return MatchAll()
-    return compile_filter(filter_spec, dialect=dialect, variables=variables)
+    return compile_filter(filter_spec, dialect=dialect, variables=variables, planning_mode=planning_mode)

@@ -70,6 +70,7 @@ from mongoeco.types import (
     BulkWriteErrorDetails,
     CodecOptions,
     ExecutionLineageStep,
+    PlanningMode,
     QueryPlanExplanation,
     ReadConcern,
     ReadPreference,
@@ -210,6 +211,62 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertTrue(MONGODB_DIALECT_70.policy.null_query_matches_undefined())
         self.assertFalse(MONGODB_DIALECT_80.policy.null_query_matches_undefined())
         self.assertEqual(MONGODB_DIALECT_70.compare_values(1, 2), MONGODB_DIALECT_70.policy.compare_values(1, 2))
+
+    def test_relaxed_planning_mode_keeps_issues_visible_but_not_executable(self):
+        async def _run() -> None:
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(
+                    engine,
+                    "db",
+                    "users",
+                    planning_mode=PlanningMode.RELAXED,
+                )
+                cursor = collection.find({"$where": "this.a > 1"})
+                explanation = await cursor.explain()
+                self.assertEqual(explanation["planning_mode"], "relaxed")
+                self.assertTrue(explanation["planning_issues"])
+                with self.assertRaises(Exception):
+                    await cursor.to_list()
+            finally:
+                await engine.disconnect()
+
+        asyncio.run(_run())
+
+    def test_relaxed_update_operation_collects_unsupported_update_operator_issue(self):
+        operation = compile_update_operation(
+            {"name": "Ada"},
+            update_spec={"$future": {"value": 1}},
+            planning_mode=PlanningMode.RELAXED,
+        )
+
+        self.assertEqual(operation.planning_mode, PlanningMode.RELAXED)
+        self.assertEqual(len(operation.planning_issues), 1)
+        self.assertEqual(operation.planning_issues[0].scope, "update")
+
+    def test_relaxed_aggregate_operation_collects_stage_shape_and_support_issues(self):
+        operation = compile_aggregate_operation(
+            [{"$future": {}}, {"bad": 1}, {"$match": {}, "$sort": {}}],
+            planning_mode=PlanningMode.RELAXED,
+        )
+
+        self.assertEqual(operation.planning_mode, PlanningMode.RELAXED)
+        self.assertEqual(
+            [issue.scope for issue in operation.planning_issues],
+            ["aggregate", "aggregate", "aggregate"],
+        )
+        self.assertTrue(any("Unsupported aggregation stage" in issue.message for issue in operation.planning_issues))
+
+    def test_aggregate_operation_with_overrides_preserves_planning_metadata(self):
+        operation = compile_aggregate_operation(
+            [{"$future": {}}],
+            planning_mode=PlanningMode.RELAXED,
+        ).with_overrides(batch_size=10)
+
+        self.assertEqual(operation.batch_size, 10)
+        self.assertEqual(operation.planning_mode, PlanningMode.RELAXED)
+        self.assertEqual(len(operation.planning_issues), 1)
 
     def test_memory_engine_read_paths_compile_shared_semantics(self):
         async def _run() -> None:

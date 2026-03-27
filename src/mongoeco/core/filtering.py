@@ -6,6 +6,7 @@ import uuid
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.bson_scalars import bson_numeric_alias
 from mongoeco.core.identity import canonical_document_id
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ObjectId, UndefinedType
@@ -17,6 +18,7 @@ from mongoeco.core.query_plan import (
     EqualsCondition,
     ExprCondition,
     ExistsCondition,
+    DeferredQueryNode,
     GreaterThanCondition,
     GreaterThanOrEqualCondition,
     InCondition,
@@ -77,6 +79,8 @@ class QueryEngine:
     ) -> bool:
         if isinstance(plan, MatchAll):
             return True
+        if isinstance(plan, DeferredQueryNode):
+            raise OperationFailure(f"query plan contains deferred validation issues: {plan.issue.message}")
         if isinstance(plan, EqualsCondition):
             return QueryEngine._evaluate_equals(
                 document,
@@ -474,6 +478,11 @@ class QueryEngine:
 
     @staticmethod
     def _matches_bson_type(candidate: Any, alias: str) -> bool:
+        numeric_alias = bson_numeric_alias(candidate)
+        if numeric_alias is not None:
+            if alias == "number":
+                return True
+            return numeric_alias == alias
         if alias == "double":
             return isinstance(candidate, float) and not isinstance(candidate, bool)
         if alias == "decimal":

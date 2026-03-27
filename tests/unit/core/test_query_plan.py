@@ -6,6 +6,7 @@ from mongoeco.errors import OperationFailure
 from mongoeco.core.query_plan import (
     AllCondition,
     AndCondition,
+    DeferredQueryNode,
     ElemMatchCondition,
     EqualsCondition,
     ExistsCondition,
@@ -21,6 +22,7 @@ from mongoeco.core.query_plan import (
     compile_filter,
     ensure_query_plan,
 )
+from mongoeco.types import PlanningMode
 
 
 class QueryPlanTests(unittest.TestCase):
@@ -64,6 +66,15 @@ class QueryPlanTests(unittest.TestCase):
                     label="Future Top Level",
                 ),
             )
+
+    def test_compile_filter_relaxed_mode_defers_validation_failures(self):
+        plan = compile_filter(
+            {"$where": "this.a > 1"},
+            planning_mode=PlanningMode.RELAXED,
+        )
+
+        self.assertIsInstance(plan, DeferredQueryNode)
+        self.assertEqual(plan.issue.scope, "query")
 
     def test_compile_filter_produces_typed_field_conditions(self):
         plan = compile_filter({"name": "Ada", "age": {"$gte": 18}})

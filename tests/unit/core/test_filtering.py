@@ -84,6 +84,12 @@ class QueryEngineTests(unittest.TestCase):
     def test_query_engine_treats_equal_numeric_values_as_equal(self):
         self.assertTrue(QueryEngine.match({"value": 1.0}, {"value": 1}))
 
+    def test_type_query_distinguishes_bson_int_and_long_by_range(self):
+        self.assertTrue(QueryEngine.match({"value": 1}, {"value": {"$type": "int"}}))
+        self.assertFalse(QueryEngine.match({"value": 1}, {"value": {"$type": "long"}}))
+        self.assertTrue(QueryEngine.match({"value": 1 << 40}, {"value": {"$type": "long"}}))
+        self.assertFalse(QueryEngine.match({"value": 1 << 40}, {"value": {"$type": "int"}}))
+
     def test_query_equality_to_null_matches_undefined_in_7_but_not_in_8(self):
         document = {"value": UNDEFINED}
         array_document = {"value": ["x", UNDEFINED]}

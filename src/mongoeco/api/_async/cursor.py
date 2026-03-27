@@ -1,8 +1,8 @@
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.query_plan import QueryNode
-from mongoeco.errors import InvalidOperation
+from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
-from mongoeco.types import Document, Filter, Projection, SortSpec
+from mongoeco.types import Document, Filter, PlanningMode, Projection, QueryPlanExplanation, SortSpec
 
 
 type HintSpec = str | SortSpec
@@ -15,6 +15,20 @@ def _serialize_explanation(result: object) -> dict[str, object]:
     if isinstance(result, dict):
         return result
     raise TypeError(f"Unsupported explain result type: {type(result)!r}")
+
+
+def _operation_issue_message(operation) -> str:
+    messages = ", ".join(issue.message for issue in operation.planning_issues)
+    return f"operation has deferred planning issues: {messages}"
+
+
+def _ensure_operation_executable(collection, operation) -> None:
+    checker = getattr(collection, "_ensure_operation_executable", None)
+    if callable(checker):
+        checker(operation)
+        return
+    if getattr(operation, "planning_issues", ()):
+        raise OperationFailure(_operation_issue_message(operation))
 
 
 class _AsyncCursorIterator:
@@ -62,6 +76,13 @@ class _AsyncCursorIterator:
 
     async def aclose(self) -> None:
         await self.close()
+
+
+def _resolve_planning_mode(collection) -> object:
+    planning_mode = getattr(collection, "planning_mode", None)
+    if planning_mode is not None:
+        return planning_mode
+    return getattr(collection, "_planning_mode", None) or PlanningMode.STRICT
 
 
 def _validate_sort_spec(sort: SortSpec) -> None:
@@ -142,6 +163,7 @@ class AsyncCursor:
         self._started = True
         engine = self._collection._engine
         operation = self.clone().limit(self._limit if limit is None else limit)._as_operation()
+        _ensure_operation_executable(self._collection, operation)
         scan_find_operation = getattr(engine, "scan_find_operation", None)
         if callable(scan_find_operation):
             return scan_find_operation(
@@ -176,6 +198,7 @@ class AsyncCursor:
                 return []
             effective_limit = min(batch_size, remaining)
         operation = self.clone().skip(effective_skip).limit(effective_limit)._as_operation()
+        _ensure_operation_executable(self._collection, operation)
         engine = self._collection._engine
         scan_find_operation = getattr(engine, "scan_find_operation", None)
         if callable(scan_find_operation):
@@ -307,11 +330,10 @@ class AsyncCursor:
         )
 
     def _as_operation(self):
-        from mongoeco.api.operations import FindOperation
+        from mongoeco.api.operations import compile_find_operation
 
-        return FindOperation(
-            filter_spec=self._filter_spec,
-            plan=self._plan,
+        return compile_find_operation(
+            self._filter_spec,
             projection=self._projection,
             sort=self._sort,
             skip=self._skip,
@@ -320,6 +342,9 @@ class AsyncCursor:
             comment=self._comment,
             max_time_ms=self._max_time_ms,
             batch_size=self._batch_size,
+            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+            planning_mode=_resolve_planning_mode(self._collection),
+            plan=self._plan,
         )
 
     @property
@@ -327,13 +352,30 @@ class AsyncCursor:
         return not self._exhausted
 
     async def explain(self) -> dict[str, object]:
+        operation = self._as_operation()
+        if operation.planning_issues:
+            return QueryPlanExplanation(
+                engine="planner",
+                strategy="deferred",
+                plan="planning-issues",
+                sort=operation.sort,
+                skip=operation.skip,
+                limit=operation.limit,
+                hint=operation.hint,
+                hinted_index=None,
+                comment=operation.comment,
+                max_time_ms=operation.max_time_ms,
+                details={"reason": "execution blocked by deferred planning issues"},
+                planning_mode=operation.planning_mode,
+                planning_issues=operation.planning_issues,
+            ).to_document()
         engine = self._collection._engine
         explain_find_operation = getattr(engine, "explain_find_operation", None)
         if callable(explain_find_operation):
             result = await explain_find_operation(
                 self._collection._db_name,
                 self._collection._collection_name,
-                self._as_operation(),
+                operation,
                 dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
                 context=self._session,
             )
@@ -341,14 +383,14 @@ class AsyncCursor:
             result = await engine.explain_query_plan(
                 self._collection._db_name,
                 self._collection._collection_name,
-                self._filter_spec,
-                plan=self._plan,
-                sort=self._sort,
-                skip=self._skip,
-                limit=self._limit,
-                hint=self._hint,
-                comment=self._comment,
-                max_time_ms=self._max_time_ms,
+                operation.filter_spec,
+                plan=operation.plan,
+                sort=operation.sort,
+                skip=operation.skip,
+                limit=operation.limit,
+                hint=operation.hint,
+                comment=operation.comment,
+                max_time_ms=operation.max_time_ms,
                 dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
                 context=self._session,
             )

@@ -564,11 +564,35 @@ class ConnectionStatusDocument(TypedDict):
     ok: float
 
 
+class PlanningMode(Enum):
+    STRICT = "strict"
+    RELAXED = "relaxed"
+
+
+class PlanningIssueDocument(TypedDict):
+    scope: str
+    message: str
+
+
+@dataclass(frozen=True, slots=True)
+class PlanningIssue:
+    scope: str
+    message: str
+
+    def to_document(self) -> PlanningIssueDocument:
+        return {
+            "scope": self.scope,
+            "message": self.message,
+        }
+
+
 class QueryPlanExplanationDocument(TypedDict, total=False):
     engine: str
     strategy: str
     plan: str
     details: object
+    planning_mode: str
+    planning_issues: list[PlanningIssueDocument]
     execution_lineage: list[ExecutionLineageStepDocument]
     fallback_reason: str | None
     sort: SortSpec | None
@@ -590,6 +614,8 @@ class AggregateExplanationDocument(TypedDict):
     batch_size: int | None
     let: dict[str, object] | None
     streaming_batch_execution: bool
+    planning_mode: str
+    planning_issues: list[PlanningIssueDocument]
 
 
 class ExecutionLineageStepDocument(TypedDict):
@@ -626,6 +652,8 @@ class QueryPlanExplanation:
     max_time_ms: int | None
     details: object | None = None
     indexes: list[IndexDocument] | None = None
+    planning_mode: PlanningMode = PlanningMode.STRICT
+    planning_issues: tuple[PlanningIssue, ...] = ()
     execution_lineage: tuple[ExecutionLineageStep, ...] = ()
     fallback_reason: str | None = None
 
@@ -641,11 +669,14 @@ class QueryPlanExplanation:
             "hinted_index": self.hinted_index,
             "comment": self.comment,
             "max_time_ms": self.max_time_ms,
+            "planning_mode": self.planning_mode.value,
         }
         if self.details is not None:
             document["details"] = self.details
         if self.indexes is not None:
             document["indexes"] = self.indexes
+        if self.planning_issues:
+            document["planning_issues"] = [issue.to_document() for issue in self.planning_issues]
         if self.execution_lineage:
             document["execution_lineage"] = [step.to_document() for step in self.execution_lineage]
         if self.fallback_reason is not None:
@@ -663,6 +694,8 @@ class AggregateExplanation:
     batch_size: int | None
     let: dict[str, object] | None
     streaming_batch_execution: bool
+    planning_mode: PlanningMode = PlanningMode.STRICT
+    planning_issues: tuple[PlanningIssue, ...] = ()
 
     def to_document(self) -> AggregateExplanationDocument:
         engine_plan = self.engine_plan
@@ -679,6 +712,8 @@ class AggregateExplanation:
             "batch_size": self.batch_size,
             "let": self.let,
             "streaming_batch_execution": self.streaming_batch_execution,
+            "planning_mode": self.planning_mode.value,
+            "planning_issues": [issue.to_document() for issue in self.planning_issues],
         }
 
 

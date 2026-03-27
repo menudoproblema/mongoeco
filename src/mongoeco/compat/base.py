@@ -24,6 +24,7 @@ from mongoeco.compat.catalog import (
     SUPPORTED_UPDATE_OPERATORS,
     SUPPORTED_WINDOW_ACCUMULATORS,
 )
+from mongoeco.core.bson_scalars import compare_bson_numeric, unwrap_bson_numeric, wrap_bson_numeric
 from mongoeco.types import ObjectId, UndefinedType
 
 
@@ -211,14 +212,22 @@ class MongoDialect:
 
     def compare_values(self, left: Any, right: Any) -> int:
         """Orden observable BSON para comparaciones y sorting."""
-        type_left = self.bson_type_order.get(type(left), 100)
-        type_right = self.bson_type_order.get(type(right), 100)
+        wrapped_left = wrap_bson_numeric(left)
+        wrapped_right = wrap_bson_numeric(right)
+        if wrapped_left is not None and wrapped_right is not None:
+            return compare_bson_numeric(wrapped_left, wrapped_right)
+
+        normalized_left = unwrap_bson_numeric(left)
+        normalized_right = unwrap_bson_numeric(right)
+
+        type_left = self.bson_type_order.get(type(normalized_left), 100)
+        type_right = self.bson_type_order.get(type(normalized_right), 100)
         if type_left != type_right:
             return -1 if type_left < type_right else 1
 
-        if isinstance(left, dict) and isinstance(right, dict):
-            left_items = list(left.items())
-            right_items = list(right.items())
+        if isinstance(normalized_left, dict) and isinstance(normalized_right, dict):
+            left_items = list(normalized_left.items())
+            right_items = list(normalized_right.items())
             for (left_key, left_value), (right_key, right_value) in zip(left_items, right_items):
                 if left_key != right_key:
                     return -1 if left_key < right_key else 1
@@ -229,32 +238,32 @@ class MongoDialect:
                 return 0
             return -1 if len(left_items) < len(right_items) else 1
 
-        if isinstance(left, list) and isinstance(right, list):
-            for left_value, right_value in zip(left, right):
+        if isinstance(normalized_left, list) and isinstance(normalized_right, list):
+            for left_value, right_value in zip(normalized_left, normalized_right):
                 comparison = self.compare_values(left_value, right_value)
                 if comparison != 0:
                     return comparison
-            if len(left) == len(right):
+            if len(normalized_left) == len(normalized_right):
                 return 0
-            return -1 if len(left) < len(right) else 1
+            return -1 if len(normalized_left) < len(normalized_right) else 1
 
-        if isinstance(left, float) and math.isnan(left):
-            return 0 if isinstance(right, float) and math.isnan(right) else -1
-        if isinstance(right, float) and math.isnan(right):
+        if isinstance(normalized_left, float) and math.isnan(normalized_left):
+            return 0 if isinstance(normalized_right, float) and math.isnan(normalized_right) else -1
+        if isinstance(normalized_right, float) and math.isnan(normalized_right):
             return 1
 
-        if left == right:
+        if normalized_left == normalized_right:
             return 0
 
         try:
-            if left < right:
+            if normalized_left < normalized_right:
                 return -1
-            if left > right:
+            if normalized_left > normalized_right:
                 return 1
             return 0
         except TypeError:
-            left_repr = str(left)
-            right_repr = str(right)
+            left_repr = str(normalized_left)
+            right_repr = str(normalized_right)
             if left_repr == right_repr:
                 return 0
             return -1 if left_repr < right_repr else 1

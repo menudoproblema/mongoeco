@@ -1,6 +1,7 @@
 from mongoeco.api._async.cursor import (
     HintSpec,
     MONGODB_DIALECT_70,
+    _resolve_planning_mode,
     _serialize_explanation,
     _validate_batch_size,
     _validate_hint_spec,
@@ -10,7 +11,7 @@ from mongoeco.api._async.cursor import (
 from mongoeco.api.operations import FindOperation, compile_find_operation
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
-from mongoeco.types import Document, Filter, Projection, SortSpec
+from mongoeco.types import Document, Filter, Projection, QueryPlanExplanation, SortSpec
 
 
 class _CursorIterator:
@@ -283,11 +284,28 @@ class Cursor:
             max_time_ms=self._max_time_ms,
             batch_size=self._batch_size,
             dialect=getattr(self._async_collection, "mongodb_dialect", MONGODB_DIALECT_70),
+            planning_mode=_resolve_planning_mode(self._async_collection),
         )
 
     def explain(self) -> dict[str, object]:
         self._ensure_open()
         operation = self._as_operation()
+        if operation.planning_issues:
+            return QueryPlanExplanation(
+                engine="planner",
+                strategy="deferred",
+                plan="planning-issues",
+                sort=operation.sort,
+                skip=operation.skip,
+                limit=operation.limit,
+                hint=operation.hint,
+                hinted_index=None,
+                comment=operation.comment,
+                max_time_ms=operation.max_time_ms,
+                details={"reason": "execution blocked by deferred planning issues"},
+                planning_mode=operation.planning_mode,
+                planning_issues=operation.planning_issues,
+            ).to_document()
         dialect = getattr(self._async_collection, "mongodb_dialect", None)
         explain_find_operation = getattr(
             self._async_collection._engine,
