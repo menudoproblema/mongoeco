@@ -115,6 +115,21 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertEqual(status["storageEngine"]["name"], "memory")
             self.assertEqual(status["ok"], 1.0)
 
+    def test_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata(self):
+        with MongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
+            host_info = client.alpha.command("hostInfo")
+            whats_my_uri = client.alpha.command("whatsmyuri")
+            cmd_line_opts = client.alpha.command("getCmdLineOpts")
+
+            self.assertIn("hostname", host_info["system"])
+            self.assertGreaterEqual(host_info["system"]["numCores"], 1)
+            self.assertIn("pythonVersion", host_info["extra"])
+            self.assertEqual(host_info["ok"], 1.0)
+            self.assertEqual(whats_my_uri, {"you": "127.0.0.1:0", "ok": 1.0})
+            self.assertIsInstance(cmd_line_opts["argv"], list)
+            self.assertEqual(cmd_line_opts["parsed"]["net"]["bindIp"], "127.0.0.1")
+            self.assertEqual(cmd_line_opts["ok"], 1.0)
+
     def test_list_collections_command_supports_name_only(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

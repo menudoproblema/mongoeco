@@ -1,6 +1,8 @@
 import datetime
 import os
+import platform
 import socket
+import sys
 
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
@@ -490,6 +492,15 @@ class AsyncDatabase:
                 self._mongodb_dialect,
                 engine=self._engine,
             )
+
+        if command_name == "hostInfo":
+            return _host_info_document()
+
+        if command_name == "whatsmyuri":
+            return _whats_my_uri_document()
+
+        if command_name == "getCmdLineOpts":
+            return _cmd_line_opts_document()
 
         if command_name in {"hello", "isMaster", "ismaster"}:
             return _hello_document(self._mongodb_dialect, legacy_name=command_name != "hello")
@@ -1538,6 +1549,44 @@ def _server_status_document(
     }
 
 
+def _host_info_document() -> dict[str, object]:
+    return {
+        "system": {
+            "hostname": socket.gethostname(),
+            "cpuArch": platform.machine() or "unknown",
+            "numCores": os.cpu_count() or 1,
+            "memSizeMB": 0,
+        },
+        "os": {
+            "type": platform.system() or "unknown",
+            "name": platform.platform(),
+            "version": platform.version(),
+        },
+        "extra": {
+            "pythonVersion": platform.python_version(),
+        },
+        "ok": 1.0,
+    }
+
+
+def _whats_my_uri_document() -> dict[str, object]:
+    return {
+        "you": "127.0.0.1:0",
+        "ok": 1.0,
+    }
+
+
+def _cmd_line_opts_document() -> dict[str, object]:
+    return {
+        "argv": list(sys.argv),
+        "parsed": {
+            "net": {"bindIp": "127.0.0.1", "port": 0},
+            "storage": {},
+        },
+        "ok": 1.0,
+    }
+
+
 _SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
     "aggregate",
     "buildInfo",
@@ -1555,7 +1604,9 @@ _SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
     "explain",
     "find",
     "findAndModify",
+    "getCmdLineOpts",
     "hello",
+    "hostInfo",
     "insert",
     "isMaster",
     "ismaster",
@@ -1568,6 +1619,7 @@ _SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
     "serverStatus",
     "update",
     "validate",
+    "whatsmyuri",
 )
 
 
