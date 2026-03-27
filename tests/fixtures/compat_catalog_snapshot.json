@@ -555,6 +555,10 @@
   },
   "operation_options": {
     "aggregate": {
+      "allow_disk_use": {
+        "note": "Controls whether the aggregation cursor may use the configured spill-to-disk policy for blocking stages.",
+        "status": "effective"
+      },
       "batch_size": {
         "note": "Positive batch sizes trigger chunked execution for streamable aggregate pipelines; global stages still fall back to full materialization.",
         "status": "effective"

@@ -7,7 +7,7 @@ import uuid
 from unittest.mock import ANY
 
 from mongoeco.compat import MongoDialect
-from mongoeco.core.bson_scalars import BsonInt32
+from mongoeco.core.bson_scalars import BsonDecimal128, BsonInt32, BsonInt64
 from mongoeco.core.aggregation import (
     _ACCUMULATOR_FLAGS_KEY,
     _MISSING,
@@ -118,6 +118,52 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression({"created_at": datetime.datetime(2021, 1, 1, 0, 0, 0)}, {"$toString": "$created_at"}),
             "2021-01-01T00:00:00.000Z",
         )
+
+    def test_evaluate_expression_preserves_bson_numeric_wrappers_in_add_and_subtract(self):
+        self.assertEqual(
+            evaluate_expression({"left": BsonInt32(2), "right": BsonInt32(3)}, {"$add": ["$left", "$right"]}),
+            BsonInt32(5),
+        )
+        self.assertEqual(
+            evaluate_expression({"left": BsonInt64(1 << 40), "right": 1}, {"$subtract": ["$left", "$right"]}),
+            BsonInt64((1 << 40) - 1),
+        )
+
+    def test_group_accumulators_accept_bson_numeric_wrappers(self):
+        documents = [
+            {"group": "a", "score": BsonInt32(2)},
+            {"group": "a", "score": BsonInt32(3)},
+            {"group": "b", "score": BsonDecimal128(decimal.Decimal("1.5"))},
+            {"group": "b", "score": BsonDecimal128(decimal.Decimal("2.5"))},
+        ]
+
+        grouped = apply_pipeline(
+            documents,
+            [
+                {
+                    "$group": {
+                        "_id": "$group",
+                        "total": {"$sum": "$score"},
+                        "avg": {"$avg": "$score"},
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(
+            grouped,
+            [
+                {"_id": "a", "total": BsonInt32(5), "avg": 2.5},
+                {"_id": "b", "total": BsonDecimal128(decimal.Decimal("4.0")), "avg": decimal.Decimal("2.0")},
+            ],
+        )
+        document = {
+            "score": 10,
+            "bonus": 2,
+            "tags": ["a", "b", "c"],
+            "nested": {"value": 3},
+            "other_tags": ["b", "d"],
+        }
         self.assertEqual(evaluate_expression({"value": float("nan")}, {"$toString": "$value"}), "NaN")
         self.assertEqual(evaluate_expression({"value": float("inf")}, {"$toString": "$value"}), "Infinity")
         self.assertEqual(evaluate_expression({"value": float("-inf")}, {"$toString": "$value"}), "-Infinity")

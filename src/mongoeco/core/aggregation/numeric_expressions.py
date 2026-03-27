@@ -7,6 +7,14 @@ from functools import cmp_to_key
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.bson_scalars import (
+    bson_add,
+    bson_bitwise,
+    bson_multiply,
+    bson_subtract,
+    is_bson_numeric,
+    unwrap_bson_numeric,
+)
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, UndefinedType
 
@@ -72,12 +80,12 @@ def evaluate_numeric_expression(
                 for value in raw_values:
                     if isinstance(value, datetime.datetime):
                         continue
-                    result = _add_milliseconds(result, _require_numeric(operator, value))
+                    result = _add_milliseconds(result, unwrap_bson_numeric(_require_numeric(operator, value)))
                 return result
         values = [_require_numeric(operator, value) for value in raw_values]
         result = values[0]
         for value in values[1:]:
-            result = result + value if operator == "$add" else result * value
+            result = bson_add(result, value) if operator == "$add" else bson_multiply(result, value)
         return result
 
     if operator in {"$subtract", "$divide", "$mod"}:
@@ -88,8 +96,8 @@ def evaluate_numeric_expression(
             return None
         if operator == "$subtract":
             return _subtract_values(left_raw, right_raw)
-        left = _require_numeric(operator, left_raw)
-        right = _require_numeric(operator, right_raw)
+        left = unwrap_bson_numeric(_require_numeric(operator, left_raw))
+        right = unwrap_bson_numeric(_require_numeric(operator, right_raw))
         if operator == "$divide":
             if right == 0:
                 raise OperationFailure("$divide cannot divide by zero")
@@ -104,24 +112,24 @@ def evaluate_numeric_expression(
         result = values[0]
         for value in values[1:]:
             if operator == "$bitAnd":
-                result &= value
+                result = bson_bitwise("and", result, value)
             elif operator == "$bitOr":
-                result |= value
+                result = bson_bitwise("or", result, value)
             else:
-                result ^= value
+                result = bson_bitwise("xor", result, value)
         return result
 
     if operator == "$bitNot":
         args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
         value = _require_integral_numeric(operator, evaluate_expression(document, args[0], variables))
-        return ~value
+        return ~int(unwrap_bson_numeric(value))
 
     if operator in {"$abs", "$exp", "$ln", "$log10", "$sqrt"}:
         args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
         raw_value = evaluate_expression_with_missing(document, args[0], variables)
         if raw_value is missing_sentinel or raw_value is None:
             return None
-        value = _require_numeric(operator, raw_value)
+        value = unwrap_bson_numeric(_require_numeric(operator, raw_value))
         if operator == "$abs":
             return abs(value)
         if math.isnan(value):
@@ -169,8 +177,8 @@ def evaluate_numeric_expression(
         right_raw = evaluate_expression_with_missing(document, args[1], variables)
         if left_raw is missing_sentinel or right_raw is missing_sentinel or left_raw is None or right_raw is None:
             return None
-        left = _require_numeric(operator, left_raw)
-        right = _require_numeric(operator, right_raw)
+        left = unwrap_bson_numeric(_require_numeric(operator, left_raw))
+        right = unwrap_bson_numeric(_require_numeric(operator, right_raw))
         if operator == "$pow":
             return math.pow(left, right)
         if math.isnan(left) or math.isnan(right):
@@ -184,7 +192,7 @@ def evaluate_numeric_expression(
         raw_value = evaluate_expression_with_missing(document, args[0], variables)
         if raw_value is missing_sentinel or raw_value is None:
             return None
-        value = _require_numeric(operator, raw_value)
+        value = unwrap_bson_numeric(_require_numeric(operator, raw_value))
         if math.isnan(value) or math.isinf(value):
             return value
         place_raw = evaluate_expression(document, args[1], variables) if len(args) == 2 else 0
@@ -196,7 +204,7 @@ def evaluate_numeric_expression(
         raw_value = evaluate_expression(document, args[0], variables)
         if raw_value is None:
             return None
-        value = _require_numeric(operator, raw_value)
+        value = unwrap_bson_numeric(_require_numeric(operator, raw_value))
         if math.isnan(value) or math.isinf(value):
             return value
         integer = int(value)
@@ -218,20 +226,24 @@ def evaluate_numeric_expression(
     raise OperationFailure(f"Unsupported numeric expression operator: {operator}")
 
 
-def _require_numeric(operator: str, value: object) -> int | float:
-    if not isinstance(value, (int, float)) or isinstance(value, bool):
+def _require_numeric(operator: str, value: object) -> object:
+    if isinstance(value, bool):
+        raise OperationFailure(f"{operator} requires numeric arguments")
+    if is_bson_numeric(value):
+        return value
+    if not isinstance(value, (int, float, decimal.Decimal)):
         raise OperationFailure(f"{operator} requires numeric arguments")
     return value
 
 
 def _is_numeric(value: object) -> bool:
-    return isinstance(value, (int, float, decimal.Decimal)) and not isinstance(value, bool)
+    return is_bson_numeric(value) or (isinstance(value, (int, float, decimal.Decimal)) and not isinstance(value, bool))
 
 
-def _sum_accumulator_operand(value: Any) -> int | float | None:
+def _sum_accumulator_operand(value: Any) -> object | None:
     if isinstance(value, bool):
         return None
-    if isinstance(value, (int, float)):
+    if is_bson_numeric(value) or isinstance(value, (int, float, decimal.Decimal)):
         return value
     return None
 
@@ -239,7 +251,9 @@ def _sum_accumulator_operand(value: Any) -> int | float | None:
 def _stddev_accumulator_operand(value: Any) -> float | None:
     if value is None or isinstance(value, UndefinedType) or isinstance(value, bool):
         return None
-    if isinstance(value, (int, float)):
+    if is_bson_numeric(value):
+        return float(unwrap_bson_numeric(value))
+    if isinstance(value, (int, float, decimal.Decimal)):
         return float(value)
     return None
 
@@ -376,31 +390,34 @@ def _normalize_numeric_place(operator: str, place: Any) -> int:
 
 
 def _round_numeric(value: int | float, place: int) -> int | float:
-    if isinstance(value, int) and place >= 0:
-        return value
+    unwrapped = unwrap_bson_numeric(value)
+    if isinstance(unwrapped, int) and place >= 0:
+        return unwrapped
     quantizer = decimal.Decimal(f"1e{-place}")
-    rounded = decimal.Decimal(str(value)).quantize(quantizer, rounding=decimal.ROUND_HALF_EVEN)
+    rounded = decimal.Decimal(str(unwrapped)).quantize(quantizer, rounding=decimal.ROUND_HALF_EVEN)
     return int(rounded) if place <= 0 else float(rounded)
 
 
 def _trunc_numeric(value: int | float, place: int) -> int | float:
-    if isinstance(value, int) and place >= 0:
-        return value
+    unwrapped = unwrap_bson_numeric(value)
+    if isinstance(unwrapped, int) and place >= 0:
+        return unwrapped
     factor = 10 ** place if place >= 0 else 10 ** (-place)
     if place >= 0:
-        truncated = math.trunc(value * factor) / factor
+        truncated = math.trunc(unwrapped * factor) / factor
         return int(truncated) if place == 0 else truncated
-    truncated = math.trunc(value / factor) * factor
+    truncated = math.trunc(unwrapped / factor) * factor
     return int(truncated)
 
 
 def _require_integral_numeric(operator: str, value: Any) -> int:
     if isinstance(value, bool):
         raise OperationFailure(f"{operator} requires integral numeric arguments")
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float) and value.is_integer():
-        return int(value)
+    unwrapped = unwrap_bson_numeric(value)
+    if isinstance(unwrapped, int):
+        return unwrapped
+    if isinstance(unwrapped, float) and unwrapped.is_integer():
+        return int(unwrapped)
     raise OperationFailure(f"{operator} requires integral numeric arguments")
 
 
@@ -417,4 +434,4 @@ def _subtract_values(left: Any, right: Any) -> Any:
             return _add_milliseconds(left, -right)
     if isinstance(right, datetime.datetime):
         raise OperationFailure("$subtract only supports number-number, date-date, or date-number")
-    return _require_numeric("$subtract", left) - _require_numeric("$subtract", right)
+    return bson_subtract(_require_numeric("$subtract", left), _require_numeric("$subtract", right))

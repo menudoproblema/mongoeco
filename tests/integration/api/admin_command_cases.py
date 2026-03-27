@@ -391,6 +391,7 @@ async def assert_database_command_supports_find_and_aggregate(case, engine_names
                                 {"$sort": {"rank": 1}},
                                 {"$project": {"rank": 1, "_id": 0}},
                             ],
+                            "allowDiskUse": False,
                             "cursor": {"batchSize": 1},
                         }
                     )
@@ -441,6 +442,7 @@ async def assert_database_command_supports_explain_for_find_and_aggregate(case, 
                                 "hint": "kind_idx",
                                 "comment": "agg explain",
                                 "maxTimeMS": 50,
+                                "allowDiskUse": True,
                             }
                         }
                     )
@@ -456,6 +458,7 @@ async def assert_database_command_supports_explain_for_find_and_aggregate(case, 
                 case.assertEqual(aggregate_explain["comment"], "agg explain")
                 case.assertEqual(aggregate_explain["max_time_ms"], 50)
                 case.assertEqual(aggregate_explain["batch_size"], 1)
+                case.assertTrue(aggregate_explain["allow_disk_use"])
                 case.assertEqual(aggregate_explain["ok"], 1.0)
 
 

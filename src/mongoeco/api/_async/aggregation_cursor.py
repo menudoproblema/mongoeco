@@ -21,6 +21,7 @@ from mongoeco.core.aggregation import (
     apply_pipeline,
     split_pushdown_pipeline,
 )
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.session import ClientSession
 from mongoeco.types import AggregateExplanation, Document, QueryPlanExplanation
 
@@ -37,6 +38,7 @@ class AsyncAggregationCursor:
         comment: object | None = None,
         max_time_ms: int | None = None,
         batch_size: int | None = None,
+        allow_disk_use: bool | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ):
@@ -48,6 +50,7 @@ class AsyncAggregationCursor:
                 comment=comment,
                 max_time_ms=max_time_ms,
                 batch_size=batch_size,
+                allow_disk_use=allow_disk_use,
                 let=let,
                 dialect=getattr(collection, "mongodb_dialect", MONGODB_DIALECT_70),
                 planning_mode=_resolve_planning_mode(collection),
@@ -58,6 +61,7 @@ class AsyncAggregationCursor:
         self._comment = operation.comment
         self._max_time_ms = operation.max_time_ms
         self._batch_size = operation.batch_size
+        self._allow_disk_use = operation.allow_disk_use
         self._let = operation.let
         self._session = session
 
@@ -255,7 +259,7 @@ class AsyncAggregationCursor:
             spill_policy=self._spill_policy(),
         )
         enforce_deadline(deadline)
-        return result
+        return [DocumentCodec.to_public(document) for document in result]
 
     def _pushdown_find_operation(self, *, batch_size: int | None = None) -> FindOperation:
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
@@ -345,7 +349,7 @@ class AsyncAggregationCursor:
                 remaining_limit -= len(transformed)
 
             for document in transformed:
-                yield document
+                yield DocumentCodec.to_public(document)
 
     async def to_list(self) -> list[Document]:
         started_at = time.perf_counter_ns()
@@ -413,6 +417,7 @@ class AsyncAggregationCursor:
                 comment=self._comment,
                 max_time_ms=self._max_time_ms,
                 batch_size=self._batch_size,
+                allow_disk_use=self._allow_disk_use,
                 let=self._let,
                 streaming_batch_execution=False,
                 planning_mode=self._operation.planning_mode,
@@ -459,6 +464,7 @@ class AsyncAggregationCursor:
             comment=self._comment,
             max_time_ms=self._max_time_ms,
             batch_size=self._batch_size,
+            allow_disk_use=self._allow_disk_use,
             let=self._let,
             streaming_batch_execution=self._batch_size not in (None, 0)
             and self._split_streamable_pipeline(pushdown.remaining_pipeline) is not None,
@@ -468,6 +474,8 @@ class AsyncAggregationCursor:
         return self._stream_batches()
 
     def _spill_policy(self) -> AggregationSpillPolicy | None:
+        if self._allow_disk_use is False:
+            return None
         policy = getattr(self._collection._engine, "aggregation_spill_policy", None)
         if isinstance(policy, AggregationSpillPolicy):
             return policy

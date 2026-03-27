@@ -7,6 +7,7 @@ from functools import cmp_to_key
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.bson_scalars import bson_add, is_bson_numeric, unwrap_bson_numeric
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, SortSpec, UndefinedType
 
@@ -26,7 +27,7 @@ _ACCUMULATOR_FLAGS_KEY = ("__mongoeco_internal__", "accumulator_flags")
 
 @dataclass(slots=True)
 class _AverageAccumulator:
-    total: int | float = 0
+    total: object = 0
     count: int = 0
 
 
@@ -101,14 +102,20 @@ def _validate_accumulator_expression(operator: str, expression: object) -> None:
 
 
 def _is_numeric(value: object) -> bool:
-    return isinstance(value, (int, float, decimal.Decimal)) and not isinstance(value, bool)
+    return is_bson_numeric(value) or (isinstance(value, (int, float, decimal.Decimal)) and not isinstance(value, bool))
 
 
-def _sum_accumulator_operand(value: Any) -> int | float | None:
+def _sum_accumulator_operand(value: Any) -> object | None:
     if _is_numeric(value):
         return value
     if isinstance(value, list):
-        return sum(item for item in value if _is_numeric(item))
+        numeric_items = [item for item in value if _is_numeric(item)]
+        if not numeric_items:
+            return None
+        total: object = 0
+        for item in numeric_items:
+            total = bson_add(total, item)
+        return total
     return None
 
 
@@ -117,7 +124,7 @@ def _stddev_accumulator_operand(value: Any) -> float | None:
         return None
     if not _is_numeric(value):
         return None
-    numeric_value = float(value)
+    numeric_value = float(unwrap_bson_numeric(value))
     if not math.isfinite(numeric_value):
         return math.nan
     return numeric_value
@@ -366,7 +373,7 @@ def _apply_accumulators(
             numeric_value = _sum_accumulator_operand(value)
             if numeric_value is None:
                 continue
-            values[field] += numeric_value
+            values[field] = bson_add(values[field], numeric_value)
         elif operator == "$min":
             if value is None:
                 continue
@@ -381,8 +388,9 @@ def _apply_accumulators(
                 flags[field] = True
         elif operator == "$avg":
             if value is None or isinstance(value, bool) or not isinstance(value, (int, float, decimal.Decimal)):
-                continue
-            values[field].total += value
+                if not is_bson_numeric(value):
+                    continue
+            values[field].total = bson_add(values[field].total, value)
             values[field].count += 1
         elif operator in {"$stdDevPop", "$stdDevSamp"}:
             operand = _stddev_accumulator_operand(value)
@@ -501,7 +509,14 @@ def _finalize_accumulators(bucket: _AccumulatorBucket | dict[str, Any]) -> Docum
         if not isinstance(bucket, _AccumulatorBucket) and field == _ACCUMULATOR_FLAGS_KEY:
             continue
         if isinstance(value, _AverageAccumulator):
-            document[field] = None if value.count == 0 else value.total / value.count
+            if value.count == 0:
+                document[field] = None
+            else:
+                total = unwrap_bson_numeric(value.total)
+                if isinstance(total, decimal.Decimal):
+                    document[field] = total / decimal.Decimal(value.count)
+                else:
+                    document[field] = total / value.count
         elif isinstance(value, _StdDevAccumulator):
             if value.invalid or value.count == 0:
                 document[field] = None

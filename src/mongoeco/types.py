@@ -694,6 +694,7 @@ class AggregateExplanationDocument(TypedDict):
     comment: object | None
     max_time_ms: int | None
     batch_size: int | None
+    allow_disk_use: bool | None
     let: dict[str, object] | None
     streaming_batch_execution: bool
     planning_mode: str
@@ -774,6 +775,7 @@ class AggregateExplanation:
     comment: object | None
     max_time_ms: int | None
     batch_size: int | None
+    allow_disk_use: bool | None
     let: dict[str, object] | None
     streaming_batch_execution: bool
     planning_mode: PlanningMode = PlanningMode.STRICT
@@ -792,6 +794,7 @@ class AggregateExplanation:
             "comment": self.comment,
             "max_time_ms": self.max_time_ms,
             "batch_size": self.batch_size,
+            "allow_disk_use": self.allow_disk_use,
             "let": self.let,
             "streaming_batch_execution": self.streaming_batch_execution,
             "planning_mode": self.planning_mode.value,

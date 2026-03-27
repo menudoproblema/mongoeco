@@ -492,6 +492,7 @@ OPERATION_OPTION_SUPPORT_CATALOG = MappingProxyType(
                 "comment": OperationOptionSupport(_EFFECTIVE, "Recorded in engine session metadata and propagated through aggregate explain/materialization."),
                 "max_time_ms": OperationOptionSupport(_EFFECTIVE, "Applied to referenced collection loads, pushdown reads and final pipeline materialization."),
                 "batch_size": OperationOptionSupport(_EFFECTIVE, "Positive batch sizes trigger chunked execution for streamable aggregate pipelines; global stages still fall back to full materialization."),
+                "allow_disk_use": OperationOptionSupport(_EFFECTIVE, "Controls whether the aggregation cursor may use the configured spill-to-disk policy for blocking stages."),
                 "let": OperationOptionSupport(_EFFECTIVE, "Propagated into aggregate expression evaluation and subpipelines."),
             }
         ),

@@ -2,7 +2,10 @@ import unittest
 from unittest.mock import patch
 
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
+from mongoeco.api.operations import compile_aggregate_operation
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
+from mongoeco.core.aggregation import AggregationSpillPolicy
+from mongoeco.core.bson_scalars import BsonInt32
 from mongoeco.core.aggregation import _CURRENT_COLLECTION_RESOLVER_KEY
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll
@@ -87,6 +90,7 @@ class _FakeEngine:
         self.explain_calls = []
         self.explain_find_calls = []
         self.scan_operation_calls = []
+        self.aggregation_spill_policy = AggregationSpillPolicy(threshold=1)
 
     async def explain_query_plan(self, *args, **kwargs):
         self.explain_calls.append((args, kwargs))
@@ -156,6 +160,27 @@ class _AsyncAggregationCursorStub:
 
 
 class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
+    async def test_allow_disk_use_false_disables_engine_spill_policy(self):
+        collection = _FakeCollection([{"_id": "1", "rank": 2}, {"_id": "2", "rank": 1}])
+        cursor = AsyncAggregationCursor(
+            collection,
+            compile_aggregate_operation(
+                [{"$sort": {"rank": 1}}],
+                allow_disk_use=False,
+            ),
+        )
+
+        self.assertIsNone(cursor._spill_policy())
+
+    async def test_aggregation_cursor_converts_internal_bson_wrappers_to_public_documents(self):
+        collection = _FakeCollection([{"_id": "1", "score": BsonInt32(1)}])
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$project": {"score": {"$add": ["$score", 1]}, "_id": 0}}],
+        )
+
+        self.assertEqual(await cursor.to_list(), [{"score": 2}])
+
     async def test_collect_lookup_names_skips_invalid_stages_and_recurses_nested_pipelines(self):
         cursor = AsyncAggregationCursor(
             _FakeCollection([]),
@@ -311,6 +336,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             comment="trace",
             max_time_ms=5,
             batch_size=10,
+            allow_disk_use=True,
             let={"tenant": "a"},
         )
 
@@ -402,6 +428,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             comment="trace",
             max_time_ms=5,
             batch_size=10,
+            allow_disk_use=True,
             let={"tenant": "a"},
         )
 
@@ -412,6 +439,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explanation["comment"], "trace")
         self.assertEqual(explanation["max_time_ms"], 5)
         self.assertEqual(explanation["batch_size"], 10)
+        self.assertTrue(explanation["allow_disk_use"])
         self.assertEqual(explanation["let"], {"tenant": "a"})
         self.assertTrue(explanation["streaming_batch_execution"])
         explain_operation = collection._engine.explain_find_calls[0][2]

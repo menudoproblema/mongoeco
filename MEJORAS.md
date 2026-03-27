@@ -226,8 +226,8 @@ Lo siguiente ya no pertenece a esta hoja de refactor base, sino a evolución fut
 - `Esfuerzo`: `Medio`
 - `Descripción`: introducir una política explícita de spill para stages bloqueantes de agregación, desacoplada del engine y propagada también a pipelines anidados.
 - `Motivación`: la agregación en memoria necesitaba un subsistema formal para poder descargar resultados intermedios sin mezclar esa lógica con cada stage o cursor.
-- `Aporte real`: existe ya una frontera clara de spill (`AggregationSpillPolicy`) y la agregación puede usarla de forma uniforme en stages bloqueantes y facets/joins anidados.
-- `Cierre`: queda con matices porque el backend actual hace round-trip temporal a disco pero no persigue aún una reducción agresiva de memoria por streaming fino; la arquitectura ya está preparada para evolucionar ahí sin reabrir el core.
+- `Aporte real`: existe ya una frontera clara de spill (`AggregationSpillPolicy`), la agregación puede usarla de forma uniforme en stages bloqueantes y facets/joins anidados, y `allowDiskUse` ya forma parte del contrato de `AggregateOperation`, de `aggregate()` y de `Database.command({"aggregate": ...})`.
+- `Cierre`: queda con matices porque el backend actual hace round-trip temporal a disco pero no persigue aún una reducción agresiva de memoria por streaming fino; la arquitectura ya está preparada para evolucionar ahí sin reabrir el core ni volver a tocar la API pública.
 
 ### 20. Fidelidad BSON Escalar en Decodificación Interna y Updates
 
@@ -236,8 +236,8 @@ Lo siguiente ya no pertenece a esta hoja de refactor base, sino a evolución fut
 - `Esfuerzo`: `Medio-Alto`
 - `Descripción`: conservar wrappers BSON en la rehidratación interna de documentos y usar helpers aritméticos BSON-aware en updates numéricos, degradando a tipos públicos solo en el borde de salida.
 - `Motivación`: la fidelidad BSON no debía depender de que todo el core trabajase siempre con `int`/`float` nativos, pero tampoco convenía exponer wrappers al usuario.
-- `Aporte real`: engines, codec y updates numéricos ya distinguen mejor entre representación interna BSON y representación pública Python.
-- `Cierre`: queda con matices porque la fidelidad total todavía requiere seguir llevando esta lógica a más rutas numéricas y de agregación, pero la frontera arquitectónica correcta ya existe.
+- `Aporte real`: engines, codec y updates numéricos ya distinguen mejor entre representación interna BSON y representación pública Python, y esa misma frontera ya se ha extendido a expresiones y acumuladores numéricos de agregación.
+- `Cierre`: queda con matices porque la fidelidad total todavía requiere seguir llevando esta lógica a más rutas numéricas menos frecuentes y a más casos finos de tipos BSON, pero la frontera arquitectónica correcta ya existe y la salida pública ya no expone wrappers por accidente.
 
 ## Correcciones de Cierre por Revisión Estricta
 

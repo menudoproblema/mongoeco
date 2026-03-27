@@ -906,6 +906,7 @@ class AsyncCollection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         batch_size: int | None = None,
+        allow_disk_use: bool | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> AsyncAggregationCursor:
@@ -915,6 +916,7 @@ class AsyncCollection:
             comment=comment,
             max_time_ms=max_time_ms,
             batch_size=batch_size,
+            allow_disk_use=allow_disk_use,
             let=let,
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,

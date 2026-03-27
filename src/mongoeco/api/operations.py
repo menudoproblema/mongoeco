@@ -63,6 +63,7 @@ class AggregateOperation:
     comment: object | None = None
     max_time_ms: int | None = None
     batch_size: int | None = None
+    allow_disk_use: bool | None = None
     let: dict[str, object] | None = None
     planning_mode: PlanningMode = PlanningMode.STRICT
     planning_issues: tuple[PlanningIssue, ...] = ()
@@ -199,6 +200,7 @@ def compile_aggregate_operation(
     comment: object | None = None,
     max_time_ms: object | None = None,
     batch_size: object | None = None,
+    allow_disk_use: object | None = None,
     let: object | None = None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     planning_mode: PlanningMode = PlanningMode.STRICT,
@@ -211,6 +213,7 @@ def compile_aggregate_operation(
         comment=comment,
         max_time_ms=_normalize_max_time_ms(max_time_ms),
         batch_size=_normalize_batch_size(batch_size),
+        allow_disk_use=_normalize_allow_disk_use(allow_disk_use),
         let=_normalize_let(let),
         planning_mode=planning_mode,
         planning_issues=_collect_aggregate_planning_issues(pipeline, dialect=dialect, planning_mode=planning_mode),
@@ -363,6 +366,14 @@ def _normalize_batch_size(batch_size: object | None) -> int | None:
         return None
     _validate_batch_size(batch_size)
     return batch_size
+
+
+def _normalize_allow_disk_use(allow_disk_use: object | None) -> bool | None:
+    if allow_disk_use is None:
+        return None
+    if not isinstance(allow_disk_use, bool):
+        raise TypeError("allow_disk_use must be a bool")
+    return allow_disk_use
 
 
 def _normalize_max_time_ms(max_time_ms: object | None) -> int | None:

@@ -430,6 +430,7 @@ class ArchitectureUnitTests(unittest.TestCase):
             comment="agg",
             max_time_ms=25,
             batch_size=10,
+            allow_disk_use=True,
             let={"target": "Ada"},
         )
 
@@ -439,11 +440,16 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertEqual(operation.comment, "agg")
         self.assertEqual(operation.max_time_ms, 25)
         self.assertEqual(operation.batch_size, 10)
+        self.assertTrue(operation.allow_disk_use)
         self.assertEqual(operation.let, {"target": "Ada"})
 
     def test_aggregate_operation_rejects_invalid_pipeline(self):
         with self.assertRaises(TypeError):
             compile_aggregate_operation({"$match": {"name": "Ada"}})
+
+    def test_aggregate_operation_rejects_invalid_allow_disk_use(self):
+        with self.assertRaises(TypeError):
+            compile_aggregate_operation([{"$match": {"name": "Ada"}}], allow_disk_use="yes")  # type: ignore[arg-type]
 
     def test_admin_cursors_share_materialized_base_classes(self):
         self.assertTrue(issubclass(AsyncIndexCursor, AsyncMaterializedCursor))
@@ -519,6 +525,7 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertTrue(is_operation_option_effective("aggregate", "comment"))
         self.assertTrue(is_operation_option_effective("aggregate", "max_time_ms"))
         self.assertTrue(is_operation_option_effective("aggregate", "batch_size"))
+        self.assertTrue(is_operation_option_effective("aggregate", "allow_disk_use"))
         self.assertTrue(is_operation_option_effective("aggregate", "let"))
         self.assertTrue(is_operation_option_effective("update_one", "comment"))
         self.assertTrue(is_operation_option_effective("update_one", "let"))

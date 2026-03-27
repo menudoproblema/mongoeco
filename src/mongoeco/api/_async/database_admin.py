@@ -282,6 +282,7 @@ class AsyncDatabaseAdminService:
         hint_field: str = "hint",
         comment_field: str = "comment",
         max_time_ms_field: str = "maxTimeMS",
+        allow_disk_use_field: str = "allowDiskUse",
         let_field: str = "let",
     ) -> tuple[str, AggregateOperation]:
         collection_name = self._require_collection_name(
@@ -306,6 +307,7 @@ class AsyncDatabaseAdminService:
                 batch_size=self._normalize_batch_size_from_command(
                     cursor_spec.get(batch_size_field)
                 ),
+                allow_disk_use=spec.get(allow_disk_use_field),
                 let=spec.get(let_field),
             ),
         )

@@ -93,6 +93,7 @@
 - `comment`: `status`="effective", `note`="Recorded in engine session metadata and propagated through aggregate explain/materialization."
 - `max_time_ms`: `status`="effective", `note`="Applied to referenced collection loads, pushdown reads and final pipeline materialization."
 - `batch_size`: `status`="effective", `note`="Positive batch sizes trigger chunked execution for streamable aggregate pipelines; global stages still fall back to full materialization."
+- `allow_disk_use`: `status`="effective", `note`="Controls whether the aggregation cursor may use the configured spill-to-disk policy for blocking stages."
 - `let`: `status`="effective", `note`="Propagated into aggregate expression evaluation and subpipelines."
 
 ### `update_one`

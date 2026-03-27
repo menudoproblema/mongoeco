@@ -144,6 +144,10 @@ def bson_multiply(left: object, right: object) -> object:
     return _wrap_numeric_result(left, right, _numeric_to_decimal(unwrap_bson_numeric(left)) * _numeric_to_decimal(unwrap_bson_numeric(right)))
 
 
+def bson_subtract(left: object, right: object) -> object:
+    return _wrap_numeric_result(left, right, _numeric_to_decimal(unwrap_bson_numeric(left)) - _numeric_to_decimal(unwrap_bson_numeric(right)))
+
+
 def bson_bitwise(operator: str, left: object, right: object) -> object:
     left_value = _coerce_integral(left)
     right_value = _coerce_integral(right)
