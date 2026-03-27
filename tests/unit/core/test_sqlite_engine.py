@@ -2071,7 +2071,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "2", "email": "b@example.com"})
             await engine.create_index("db", "coll", ["email"], unique=True)
 
-            with patch("mongoeco.engines.sqlite.translate_update_spec", side_effect=NotImplementedError("nested")):
+            with patch("mongoeco.engines.sqlite.translate_compiled_update_plan", side_effect=NotImplementedError("nested")):
                 with self.assertRaises(DuplicateKeyError):
                     await engine.update_matching_document(
                         "db",
@@ -2088,7 +2088,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         try:
             await engine.put_document("db", "coll", {"_id": "1", "kind": "match"})
 
-            with patch("mongoeco.engines.sqlite.translate_update_spec", side_effect=NotImplementedError("fallback")):
+            with patch("mongoeco.engines.sqlite.translate_compiled_update_plan", side_effect=NotImplementedError("fallback")):
                 result = await engine.update_matching_document(
                     "db",
                     "coll",

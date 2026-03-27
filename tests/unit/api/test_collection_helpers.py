@@ -1266,8 +1266,9 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                     limit=kwargs.get("limit"),
                 )
 
-            async def update_matching_document(self, *args, **kwargs):
-                self.update_plan = kwargs["plan"]
+            async def update_with_operation(self, *args, **kwargs):
+                operation = args[2]
+                self.update_plan = operation.plan
                 self.update_dialect = kwargs["dialect"]
                 from mongoeco.types import UpdateResult
 

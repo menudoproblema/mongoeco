@@ -7,7 +7,7 @@ import uuid
 from copy import deepcopy
 from typing import Any, AsyncIterable, override
 
-from mongoeco.api.operations import FindOperation, UpdateOperation
+from mongoeco.api.operations import FindOperation, UpdateOperation, compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.mvcc import MemoryMvccState
@@ -619,101 +619,23 @@ class MemoryEngine(AsyncStorageEngine):
 
     @override
     async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, selector_filter: Filter | None = None, array_filters: ArrayFilters | None = None, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> UpdateResult[DocumentId]:
-        effective_dialect = dialect or MONGODB_DIALECT_70
-        query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
-        async with self._get_lock(db_name, coll_name):
-            with self._meta_lock:
-                coll = self._storage_view(context).get(db_name, {}).get(coll_name)
-                collection_options = self._collection_options_snapshot_locked(
-                    db_name,
-                    coll_name,
-                    collection_options=self._collection_options_view(context),
-                )
-            if coll is None:
-                coll = {}
-            update_plan = UpdateEngine.compile_update_plan(
-                update_spec,
-                dialect=effective_dialect,
-                selector_filter=selector_filter or filter_spec,
-                array_filters=array_filters,
-            )
-
-            for storage_key, data in list(coll.items()):
-                document = self._codec.decode(data)
-                if not QueryEngine.match_plan(document, query_plan, dialect=effective_dialect):
-                    continue
-
-                original_document = deepcopy(document)
-                modified = update_plan.apply(document)
-                enforce_collection_document_validation(
-                    document,
-                    options=collection_options,
-                    original_document=original_document,
-                    dialect=effective_dialect,
-                )
-                self._ensure_unique_indexes(
-                    db_name,
-                    coll_name,
-                    document,
-                    exclude_storage_key=storage_key,
-                    indexes_view=self._indexes_view(context),
-                    storage_view=self._storage_view(context),
-                )
-                coll[storage_key] = self._codec.encode(document)
-                return UpdateResult(
-                    matched_count=1,
-                    modified_count=1 if modified else 0,
-                )
-
-            if not upsert:
-                return UpdateResult(matched_count=0, modified_count=0)
-
-            new_doc = deepcopy(upsert_seed or {})
-            upsert_plan = UpdateEngine.compile_update_plan(
-                update_spec,
-                dialect=effective_dialect,
-                selector_filter=selector_filter or filter_spec,
-                array_filters=array_filters,
-                is_upsert_insert=True,
-            )
-            upsert_plan.apply(new_doc)
-            if "_id" not in new_doc:
-                new_doc["_id"] = ObjectId()
-            enforce_collection_document_validation(
-                new_doc,
-                options=collection_options,
-                original_document=None,
-                is_upsert_insert=True,
-                dialect=effective_dialect,
-            )
-
-            with self._meta_lock:
-                db = self._storage_view(context).setdefault(db_name, {})
-                coll = db.setdefault(coll_name, {})
-                self._register_collection_locked(
-                    db_name,
-                    coll_name,
-                    collections=self._collections_view(context),
-                    collection_options=self._collection_options_view(context),
-                )
-
-            storage_key = self._storage_key(new_doc["_id"])
-            if storage_key in coll:
-                raise DuplicateKeyError(f"Duplicate key: _id={new_doc['_id']}")
-
-            self._ensure_unique_indexes(
-                db_name,
-                coll_name,
-                new_doc,
-                indexes_view=self._indexes_view(context),
-                storage_view=self._storage_view(context),
-            )
-            coll[storage_key] = self._codec.encode(new_doc)
-            return UpdateResult(
-                matched_count=0,
-                modified_count=0,
-                upserted_id=new_doc["_id"],
-            )
+        operation = compile_update_operation(
+            filter_spec,
+            array_filters=array_filters,
+            dialect=dialect or MONGODB_DIALECT_70,
+            plan=plan,
+            update_spec=update_spec,
+        )
+        return await self.update_with_operation(
+            db_name,
+            coll_name,
+            operation,
+            upsert=upsert,
+            upsert_seed=upsert_seed,
+            selector_filter=selector_filter,
+            dialect=dialect,
+            context=context,
+        )
 
     @override
     async def update_with_operation(

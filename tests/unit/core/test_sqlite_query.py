@@ -4,6 +4,7 @@ import uuid
 import json
 
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.operators import UpdateEngine
 from mongoeco.core.query_plan import (
     AndCondition,
     AllCondition,
@@ -38,6 +39,7 @@ from mongoeco.engines.sqlite_query import (
     json_path_for_field,
     sort_type_expression_sql,
     translate_query_plan,
+    translate_compiled_update_plan,
     translate_sort_spec,
     translate_update_spec,
     type_expression_sql,
@@ -418,6 +420,12 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             translate_update_spec({"$set": {"profile.name": "Ada"}}, current_document={"profile": 1})
+
+        compiled_sql, compiled_params = translate_compiled_update_plan(
+            UpdateEngine.compile_update_plan({"$set": {"name": "Ada"}, "$unset": {"rank": ""}})
+        )
+        self.assertEqual(compiled_sql, sql)
+        self.assertEqual(compiled_params, params)
 
     def test_translate_update_spec_rejects_unsupported_payloads_and_paths(self):
         with self.assertRaises(NotImplementedError):

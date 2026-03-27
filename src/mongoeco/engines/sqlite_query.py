@@ -3,6 +3,7 @@ import json
 from typing import Any
 import uuid
 
+from mongoeco.core.operators import CompiledUpdatePlan
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import (
     AllCondition,
@@ -605,21 +606,36 @@ def translate_sort_spec(sort: SortSpec | None) -> str:
 
 
 def translate_update_spec(update_spec: Update, *, current_document: dict[str, Any] | None = None) -> SqlFragment:
+    from mongoeco.core.operators import UpdateEngine
+
+    try:
+        plan = UpdateEngine.compile_update_plan(update_spec)
+    except Exception as exc:  # pragma: no cover - compatibility shim
+        raise NotImplementedError(str(exc)) from exc
+    return translate_compiled_update_plan(plan, current_document=current_document)
+
+
+def translate_compiled_update_plan(
+    plan: CompiledUpdatePlan,
+    *,
+    current_document: dict[str, Any] | None = None,
+) -> SqlFragment:
     supported_operators = {"$set", "$unset"}
-    if any(operator not in supported_operators for operator in update_spec):
+    if any(operator.operator not in supported_operators for operator in plan.compiled_operators):
         raise NotImplementedError("Unsupported update operator for SQL translation")
 
     expression = "document"
     params: list[object] = []
 
-    set_params = update_spec.get("$set", {})
-    if set_params:
-        if not isinstance(set_params, dict):
-            raise NotImplementedError("Unsupported $set payload for SQL translation")
+    set_instructions = next(
+        (operator.instructions for operator in plan.compiled_operators if operator.operator == "$set"),
+        (),
+    )
+    if set_instructions:
         args: list[str] = []
-        for path, value in set_params.items():
-            if not isinstance(path, str):
-                raise NotImplementedError("Only string $set paths are supported for SQL translation")
+        for instruction in set_instructions:
+            path = instruction.path.raw
+            value = instruction.value
             if _path_has_numeric_segment(path):
                 raise NotImplementedError("Array index paths require Python update fallback")
             if current_document is not None and "." in path and _path_crosses_scalar_parent(current_document, path):
@@ -629,14 +645,14 @@ def translate_update_spec(update_spec: Update, *, current_document: dict[str, An
             params.append(json.dumps(DocumentCodec.encode(value), separators=(",", ":"), sort_keys=False))
         expression = f"json_set({expression}, {', '.join(args)})"
 
-    unset_params = update_spec.get("$unset", {})
-    if unset_params:
-        if not isinstance(unset_params, dict):
-            raise NotImplementedError("Unsupported $unset payload for SQL translation")
+    unset_instructions = next(
+        (operator.instructions for operator in plan.compiled_operators if operator.operator == "$unset"),
+        (),
+    )
+    if unset_instructions:
         paths: list[str] = []
-        for path in unset_params:
-            if not isinstance(path, str):
-                raise NotImplementedError("Only string $unset paths are supported for SQL translation")
+        for instruction in unset_instructions:
+            path = instruction.path.raw
             if _path_has_numeric_segment(path):
                 raise NotImplementedError("Array index paths require Python update fallback")
             paths.append(_path_literal(path))

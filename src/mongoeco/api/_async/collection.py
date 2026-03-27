@@ -330,53 +330,16 @@ class AsyncCollection:
         self._ensure_operation_executable(operation)
         started_at = time.perf_counter_ns()
         method = getattr(self._engine, "update_with_operation", None)
-        if callable(method):
-            try:
-                result = await method(
-                    self._db_name,
-                    self._collection_name,
-                    operation,
-                    upsert=upsert,
-                    upsert_seed=upsert_seed,
-                    selector_filter=selector_filter,
-                    dialect=self._mongodb_dialect,
-                    context=session,
-                )
-            except Exception as exc:
-                await self._profile_operation(
-                    op="update",
-                    command={
-                        "update": self._collection_name,
-                        "q": operation.filter_spec,
-                        "u": deepcopy(operation.update_spec or {}),
-                        "upsert": upsert,
-                    },
-                    duration_ns=time.perf_counter_ns() - started_at,
-                    errmsg=str(exc),
-                )
-                raise
-            await self._profile_operation(
-                op="update",
-                command={
-                    "update": self._collection_name,
-                    "q": operation.filter_spec,
-                    "u": deepcopy(operation.update_spec or {}),
-                    "upsert": upsert,
-                },
-                duration_ns=time.perf_counter_ns() - started_at,
-            )
-            return result
         try:
-            result = await self._engine.update_matching_document(
+            if not callable(method):
+                raise TypeError("engine must implement update_with_operation")
+            result = await method(
                 self._db_name,
                 self._collection_name,
-                operation.filter_spec,
-                self._require_update(operation.update_spec),
+                operation,
                 upsert=upsert,
                 upsert_seed=upsert_seed,
                 selector_filter=selector_filter,
-                array_filters=operation.array_filters,
-                plan=operation.plan,
                 dialect=self._mongodb_dialect,
                 context=session,
             )

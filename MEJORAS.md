@@ -75,7 +75,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 
 ## 4. Arquitectura Basada en Planes de Operación
 
-- `Estado`: `Aplicado con matices`
+- `Estado`: `Aplicado`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Medio-Alto`
 - `Descripción`: introducir una IR explícita entre API y engines, con objetos como `FindPlan`, `UpdatePlan`, `AggregatePlan` o `AdminCommandPlan`.
@@ -94,11 +94,11 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `ccf1a08` `refactor: parse typed read admin commands`
   - `d9c5956` `refactor: require compiled find operations in collection`
   - `0a660f5` `refactor: close operation plan gaps in admin helpers`
-- `Cierre`: la frontera basada en operaciones compiladas cubre ya la mayor parte de lectura, agregación, `explain`, selección previa de writes y rutas admin, pero el cierre no es todavía absoluto en escritura: la frontera con engine sigue transportando parte de la semántica de update mediante `update_spec` raw junto al plan compilado.
+- `Cierre`: la frontera basada en operaciones compiladas cubre lectura, agregación, `explain`, selección previa de writes y rutas admin. Los engines propios ejecutan ya writes desde `UpdateOperation` y `CompiledUpdatePlan`, sin depender de `update_spec` raw como contrato de frontera.
 
 ## 5. Motor de Updates Formal Basado en Paths Compilados
 
-- `Estado`: `Aplicado con matices`
+- `Estado`: `Aplicado`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Medio-Alto`
 - `Descripción`: separar formalmente parsing de rutas, binding posicional, resolución de `arrayFilters` y aplicación de operadores de update sobre paths compilados.
@@ -112,7 +112,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `c06860b` `refactor: compile reusable update plans in engines`
   - `b28b28d` `refactor: resolve update applications before mutation`
   - `a5ba59b` `refactor: finalize array update execution plans`
-- `Cierre`: los updates ya siguen un flujo formal de paths compilados, contexto explícito, planes reutilizables y aplicaciones resueltas antes de mutar también en operadores de arrays y rutas posicionales complejas, pero el engine todavía no ejecuta una IR de escritura completamente cerrada e independiente de `update_spec`.
+- `Cierre`: los updates siguen ya un flujo formal de paths compilados, contexto explícito, planes reutilizables y aplicaciones resueltas antes de mutar también en operadores de arrays y rutas posicionales complejas. La ejecución de engine consume estos planes compilados como IR real de escritura.
 
 ## 6. Compatibilidad y Tooling Derivados Automáticamente
 
@@ -185,7 +185,7 @@ Además, después del cierre inicial de esta hoja se han endurecido tres cortes 
 
 - los dialectos oficiales y perfiles PyMongo oficiales consumen directamente el catálogo como fuente declarativa, sin depender de lógica específica por clase para sus flags/capacidades base;
 - `mongoeco.core.aggregation` ya es un paquete modular y el dispatcher de stages vive en un módulo propio, separado del resto del runtime de agregación;
-- los updates compilados ya son planes ejecutables (`CompiledUpdatePlan.apply(...)`), de modo que el engine coordina bastante menos la aplicación operador por operador, aunque la frontera de escritura todavía no es una IR absolutamente cerrada.
+- los updates compilados ya son planes ejecutables (`CompiledUpdatePlan.apply(...)`) y la frontera de escritura en los engines propios se apoya ya en `UpdateOperation`/`CompiledUpdatePlan`, no en `update_spec` raw como contrato principal.
 
 ## Qué Queda a Partir de Aquí
 
@@ -201,12 +201,13 @@ Estas líneas no sustituyen al refactor base ya hecho, pero sí corrigen el exce
 
 ### A. IR de Escritura Real Hasta el Engine
 
-- `Estado`: `Reabierto`
+- `Estado`: `Aplicado`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Alto`
 - `Descripción`: hacer que el engine ejecute una IR de escritura cerrada, sin recibir `update_spec` raw como semántica residual.
 - `Motivación`: hoy la lectura está mejor desacoplada que la escritura.
 - `Aporte real`: deja la frontera API/core/engine verdaderamente homogénea.
+- `Cierre`: los engines propios ejecutan ya actualizaciones desde `UpdateOperation` y `CompiledUpdatePlan`; `update_matching_document(...)` queda como shim de compatibilidad que compila y reenvía, no como camino semántico principal.
 
 ### B. Descomposición Real de Agregación por Familias o Stages
 
