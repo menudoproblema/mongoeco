@@ -516,8 +516,6 @@ class MemoryEngine(AsyncStorageEngine):
             data = self._storage_view(context).get(db_name, {}).get(coll_name, {}).get(storage_key)
         if data is None:
             return None
-        if effective_dialect is MONGODB_DIALECT_70:
-            return apply_projection(self._codec.decode(data), projection)
         return apply_projection(
             self._codec.decode(data),
             projection,

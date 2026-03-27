@@ -200,6 +200,14 @@
         "$topN"
       ],
       "label": "MongoDB 7.0",
+      "policy_spec": {
+        "comparison_mode": "bson-total-order",
+        "equality_mode": "bson-structural",
+        "expression_truthiness": "mongo-default",
+        "null_query_matches_undefined": true,
+        "projection_flag_mode": "bool-or-binary-int",
+        "update_path_sort_mode": "numeric-then-lex"
+      },
       "query_field_operators": [
         "$all",
         "$bitsAllClear",
@@ -461,6 +469,14 @@
         "$topN"
       ],
       "label": "MongoDB 8.0",
+      "policy_spec": {
+        "comparison_mode": "bson-total-order",
+        "equality_mode": "bson-structural",
+        "expression_truthiness": "mongo-default",
+        "null_query_matches_undefined": false,
+        "projection_flag_mode": "bool-or-binary-int",
+        "update_path_sort_mode": "numeric-then-lex"
+      },
       "query_field_operators": [
         "$all",
         "$bitsAllClear",

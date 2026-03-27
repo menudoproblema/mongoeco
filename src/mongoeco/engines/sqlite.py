@@ -1351,8 +1351,6 @@ class SQLiteEngine(AsyncStorageEngine):
                 ).fetchone()
         if row is None:
             return None
-        if effective_dialect is MONGODB_DIALECT_70:
-            return apply_projection(self._deserialize_document(row[0]), projection)
         return apply_projection(
             self._deserialize_document(row[0]),
             projection,
@@ -1480,14 +1478,11 @@ class SQLiteEngine(AsyncStorageEngine):
                             return
 
                         documents = filter_documents(documents_iter, semantics)
-                        if semantics.dialect is MONGODB_DIALECT_70:
-                            documents = sort_documents(documents, semantics.sort)
-                        else:
-                            documents = sort_documents(
-                                documents,
-                                semantics.sort,
-                                dialect=semantics.dialect,
-                            )
+                        documents = sort_documents(
+                            documents,
+                            semantics.sort,
+                            dialect=semantics.dialect,
+                        )
                         documents = finalize_documents(
                             documents,
                             semantics,

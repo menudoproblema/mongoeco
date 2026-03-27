@@ -15,7 +15,9 @@ from mongoeco.compat import (
     MONGODB_DIALECT_ALIASES,
     MONGODB_DIALECT_BEHAVIOR_FLAGS,
     MONGODB_DIALECT_CAPABILITIES,
+    MONGODB_DIALECT_POLICY_SPECS,
     MONGODB_DIALECTS,
+    MongoBehaviorPolicySpec,
     MongoDialect70,
     MongoDialect80,
     MongoDialectResolution,
@@ -65,6 +67,7 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertIsInstance(MONGODB_DIALECT_ALIASES, MappingProxyType)
         self.assertIsInstance(MONGODB_DIALECT_CAPABILITIES, MappingProxyType)
         self.assertIsInstance(MONGODB_DIALECT_BEHAVIOR_FLAGS, MappingProxyType)
+        self.assertIsInstance(MONGODB_DIALECT_POLICY_SPECS, MappingProxyType)
         self.assertIsInstance(PYMONGO_PROFILES, MappingProxyType)
         self.assertIsInstance(PYMONGO_PROFILE_ALIASES, MappingProxyType)
         self.assertIsInstance(PYMONGO_PROFILE_CAPABILITIES, MappingProxyType)
@@ -86,6 +89,8 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertIs(PYMONGO_PROFILES['4.13'], PYMONGO_PROFILE_413)
         self.assertEqual(MONGODB_DIALECT_CAPABILITIES['7.0'], MONGODB_DIALECT_70.capabilities)
         self.assertEqual(MONGODB_DIALECT_CAPABILITIES['8.0'], MONGODB_DIALECT_80.capabilities)
+        self.assertEqual(MONGODB_DIALECT_POLICY_SPECS['7.0'], MONGODB_DIALECT_70.policy_spec)
+        self.assertEqual(MONGODB_DIALECT_POLICY_SPECS['8.0'], MONGODB_DIALECT_80.policy_spec)
         self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.9'], PYMONGO_PROFILE_49.capabilities)
         self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.11'], PYMONGO_PROFILE_411.capabilities)
         self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.13'], PYMONGO_PROFILE_413.capabilities)
@@ -101,6 +106,14 @@ class CompatResolutionTests(unittest.TestCase):
     def test_versioned_behavior_flags_capture_known_server_delta_between_7_and_8(self):
         self.assertTrue(MONGODB_DIALECT_70.null_query_matches_undefined())
         self.assertFalse(MONGODB_DIALECT_80.null_query_matches_undefined())
+        self.assertEqual(
+            MONGODB_DIALECT_POLICY_SPECS["7.0"],
+            MongoBehaviorPolicySpec(null_query_matches_undefined=True),
+        )
+        self.assertEqual(
+            MONGODB_DIALECT_POLICY_SPECS["8.0"],
+            MongoBehaviorPolicySpec(null_query_matches_undefined=False),
+        )
         self.assertTrue(MONGODB_DIALECT_BEHAVIOR_FLAGS['7.0']['null_query_matches_undefined'])
         self.assertFalse(MONGODB_DIALECT_BEHAVIOR_FLAGS['8.0']['null_query_matches_undefined'])
         self.assertEqual(MONGODB_DIALECT_BEHAVIOR_FLAGS['7.0'], MONGODB_DIALECT_70.behavior_flags())
@@ -126,6 +139,17 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertFalse(MongoDialect70().supports_query_field_operator('$unknown'))
         self.assertTrue(MongoDialect70().behavior_flag('null_query_matches_undefined'))
         self.assertFalse(MongoDialect80().behavior_flag('null_query_matches_undefined'))
+        self.assertEqual(
+            export_mongodb_dialect_catalog()["7.0"]["policy_spec"],
+            {
+                "null_query_matches_undefined": True,
+                "expression_truthiness": "mongo-default",
+                "projection_flag_mode": "bool-or-binary-int",
+                "update_path_sort_mode": "numeric-then-lex",
+                "equality_mode": "bson-structural",
+                "comparison_mode": "bson-total-order",
+            },
+        )
 
     def test_exported_catalog_matches_public_runtime_catalogs(self):
         mongodb_catalog = export_mongodb_dialect_catalog()

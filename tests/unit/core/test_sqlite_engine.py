@@ -1410,9 +1410,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             ):
                 yield document_id, {"_id": document_id, **payload}
 
-        def _sort(documents, sort):
+        def _sort(documents, sort, **kwargs):
             captured_lengths.append(len(documents))
-            return sort_documents(documents, sort)
+            return sort_documents(documents, sort, **kwargs)
 
         try:
             with (

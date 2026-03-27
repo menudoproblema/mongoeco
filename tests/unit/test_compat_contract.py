@@ -3,7 +3,7 @@ import unittest
 from types import MappingProxyType
 
 from mongoeco.api._async.collection import AsyncCollection
-from mongoeco.compat import MongoDialect70, PyMongoProfile49
+from mongoeco.compat import MongoBehaviorPolicySpec, MongoDialect70, PyMongoProfile49
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.engines.memory import MemoryEngine
@@ -46,6 +46,16 @@ class DialectAndProfileContractTests(unittest.TestCase):
         self.assertTrue(QueryEngine.match(missing_document, {'value': {'$ne': None}}, dialect=false_dialect))
         self.assertFalse(QueryEngine.match(missing_document, {'value': {'$nin': [None]}}, dialect=true_dialect))
         self.assertTrue(QueryEngine.match(missing_document, {'value': {'$nin': [None]}}, dialect=false_dialect))
+
+    def test_query_engine_respects_declarative_policy_spec_override(self):
+        class _CatalogLikeDialect(MongoDialect70):
+            @property
+            def policy_spec(self) -> MongoBehaviorPolicySpec:
+                return MongoBehaviorPolicySpec(null_query_matches_undefined=False)
+
+        document = {'value': UNDEFINED}
+
+        self.assertFalse(QueryEngine.match(document, {'value': None}, dialect=_CatalogLikeDialect()))
 
     def test_query_engine_respects_bson_type_order_hook(self):
         class _SwappedStringOrderDialect(MongoDialect70):

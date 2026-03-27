@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import decimal
 import json
@@ -18,6 +20,7 @@ class MongoDialectCatalogEntry:
     label: str
     aliases: tuple[str, ...]
     behavior_flags: MappingProxyType = MappingProxyType({})
+    policy_spec: "MongoBehaviorPolicySpec" | None = None
     capabilities: frozenset[str] = frozenset()
 
 
@@ -29,6 +32,16 @@ class PyMongoProfileCatalogEntry:
     aliases: tuple[str, ...]
     behavior_flags: MappingProxyType = MappingProxyType({})
     capabilities: frozenset[str] = frozenset()
+
+
+@dataclass(frozen=True, slots=True)
+class MongoBehaviorPolicySpec:
+    null_query_matches_undefined: bool = True
+    expression_truthiness: str = "mongo-default"
+    projection_flag_mode: str = "bool-or-binary-int"
+    update_path_sort_mode: str = "numeric-then-lex"
+    equality_mode: str = "bson-structural"
+    comparison_mode: str = "bson-total-order"
 
 
 class OptionSupportStatus(Enum):
@@ -353,6 +366,9 @@ MONGODB_DIALECT_CATALOG = MappingProxyType(
                     "null_query_matches_undefined": True,
                 }
             ),
+            policy_spec=MongoBehaviorPolicySpec(
+                null_query_matches_undefined=True,
+            ),
         ),
         "8.0": MongoDialectCatalogEntry(
             key="8.0",
@@ -363,6 +379,9 @@ MONGODB_DIALECT_CATALOG = MappingProxyType(
                 {
                     "null_query_matches_undefined": False,
                 }
+            ),
+            policy_spec=MongoBehaviorPolicySpec(
+                null_query_matches_undefined=False,
             ),
         ),
     }
@@ -587,6 +606,18 @@ def export_mongodb_dialect_catalog() -> dict[str, dict[str, object]]:
             "label": entry.label,
             "aliases": list(entry.aliases),
             "behavior_flags": dict(entry.behavior_flags),
+            "policy_spec": (
+                {
+                    "null_query_matches_undefined": entry.policy_spec.null_query_matches_undefined,
+                    "expression_truthiness": entry.policy_spec.expression_truthiness,
+                    "projection_flag_mode": entry.policy_spec.projection_flag_mode,
+                    "update_path_sort_mode": entry.policy_spec.update_path_sort_mode,
+                    "equality_mode": entry.policy_spec.equality_mode,
+                    "comparison_mode": entry.policy_spec.comparison_mode,
+                }
+                if entry.policy_spec is not None
+                else None
+            ),
             "capabilities": sorted(entry.capabilities),
             "query_field_operators": sorted(SUPPORTED_QUERY_FIELD_OPERATORS),
             "query_top_level_operators": sorted(SUPPORTED_QUERY_TOP_LEVEL_OPERATORS),

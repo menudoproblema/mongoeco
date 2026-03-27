@@ -332,3 +332,15 @@ No conviene adelantar:
 - `Descripción`: exponer `mongoeco` como servidor compatible con el protocolo MongoDB para usar drivers oficiales de otros lenguajes.
 - `Motivación`: hoy el proyecto está limitado al ecosistema Python.
 - `Aporte real`: abre el proyecto a Java, Go, Node.js, C# y cualquier cliente compatible con MongoDB sin reimplementar el core.
+
+### 16. Políticas de Comportamiento 100% Derivadas del Catálogo
+
+- `Estado`: `Aplicado con matices`
+- `Impacto`: `Muy Alto`
+- `Esfuerzo`: `Medio-Alto`
+- `Descripción`: hacer que los dialectos oficiales construyan su `BehaviorPolicy` desde una `policy_spec` declarativa en el catálogo, en vez de depender de lógica embebida en clases concretas.
+- `Motivación`: añadir nuevas versiones no debería implicar ir sembrando `if version >= ...` por el core ni mantener semántica duplicada entre catálogo y clases.
+- `Aporte real`: convierte al catálogo en fuente no solo de superficie, sino también de deltas semánticos finos, y prepara el sistema para futuras versiones sin dolor.
+- `Aplicado ya`:
+  - `520178d` `refactor: add behavior policies and read execution lineage`
+- `Cierre`: los dialectos oficiales ya consumen una `policy_spec` declarativa exportable y los engines dejan de depender de condicionales por identidad de versión en rutas básicas de proyección/ordenación. Lo dejo con matices porque la fundación ya está, pero la ganancia máxima llegará cuando haya más deltas semánticos versionados viviendo en esa spec en vez de en flags sueltos.

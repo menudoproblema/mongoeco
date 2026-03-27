@@ -1,15 +1,16 @@
 import datetime
 import decimal
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Callable
+from typing import Any, Callable, ClassVar
 import uuid
 
 from mongoeco.compat.catalog import (
     DEFAULT_BSON_TYPE_ORDER,
     MONGODB_DIALECT_ALIASES,
     MONGODB_DIALECT_CATALOG,
+    MongoBehaviorPolicySpec,
     MONGODB_DIALECT_HOOK_NAMES,
     PYMONGO_PROFILE_ALIASES,
     PYMONGO_PROFILE_CATALOG,
@@ -59,6 +60,150 @@ class MongoBehaviorPolicy:
         return self.compare_values_fn(left, right)
 
 
+def _expression_truthy_default(value: object) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, UndefinedType):
+        return False
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return value != 0
+    return True
+
+
+def _projection_flag_default(value: object) -> int | None:
+    if isinstance(value, bool):
+        return 1 if value else 0
+    if isinstance(value, int) and value in (0, 1):
+        return value
+    return None
+
+
+def _sort_update_path_items_default(params: dict[str, object]) -> list[tuple[str, object]]:
+    def sort_key(item: tuple[str, object]) -> tuple[int, int | str]:
+        path, _ = item
+        if not isinstance(path, str):
+            raise TypeError('update field names must be strings')
+        if path.isdigit():
+            return (0, int(path))
+        return (1, path)
+
+    return sorted(params.items(), key=sort_key)
+
+
+def _compare_values_default(
+    left: Any,
+    right: Any,
+    bson_type_order: MappingProxyType,
+) -> int:
+    wrapped_left = wrap_bson_numeric(left)
+    wrapped_right = wrap_bson_numeric(right)
+    if wrapped_left is not None and wrapped_right is not None:
+        return compare_bson_numeric(wrapped_left, wrapped_right)
+
+    normalized_left = unwrap_bson_numeric(left)
+    normalized_right = unwrap_bson_numeric(right)
+
+    type_left = bson_type_order.get(type(normalized_left), 100)
+    type_right = bson_type_order.get(type(normalized_right), 100)
+    if type_left != type_right:
+        return -1 if type_left < type_right else 1
+
+    if isinstance(normalized_left, dict) and isinstance(normalized_right, dict):
+        left_items = list(normalized_left.items())
+        right_items = list(normalized_right.items())
+        for (left_key, left_value), (right_key, right_value) in zip(left_items, right_items):
+            if left_key != right_key:
+                return -1 if left_key < right_key else 1
+            value_comparison = _compare_values_default(left_value, right_value, bson_type_order)
+            if value_comparison != 0:
+                return value_comparison
+        if len(left_items) == len(right_items):
+            return 0
+        return -1 if len(left_items) < len(right_items) else 1
+
+    if isinstance(normalized_left, list) and isinstance(normalized_right, list):
+        for left_value, right_value in zip(normalized_left, normalized_right):
+            comparison = _compare_values_default(left_value, right_value, bson_type_order)
+            if comparison != 0:
+                return comparison
+        if len(normalized_left) == len(normalized_right):
+            return 0
+        return -1 if len(normalized_left) < len(normalized_right) else 1
+
+    if isinstance(normalized_left, float) and math.isnan(normalized_left):
+        return 0 if isinstance(normalized_right, float) and math.isnan(normalized_right) else -1
+    if isinstance(normalized_right, float) and math.isnan(normalized_right):
+        return 1
+
+    if normalized_left == normalized_right:
+        return 0
+
+    try:
+        if normalized_left < normalized_right:
+            return -1
+        if normalized_left > normalized_right:
+            return 1
+        return 0
+    except TypeError:
+        left_repr = str(normalized_left)
+        right_repr = str(normalized_right)
+        if left_repr == right_repr:
+            return 0
+        return -1 if left_repr < right_repr else 1
+
+
+def _values_equal_default(
+    left: Any,
+    right: Any,
+    bson_type_order: MappingProxyType,
+) -> bool:
+    if isinstance(left, dict) and isinstance(right, dict):
+        left_items = list(left.items())
+        right_items = list(right.items())
+        if len(left_items) != len(right_items):
+            return False
+        return all(
+            left_key == right_key and _values_equal_default(left_value, right_value, bson_type_order)
+            for (left_key, left_value), (right_key, right_value) in zip(left_items, right_items)
+        )
+    if isinstance(left, list) and isinstance(right, list):
+        if len(left) != len(right):
+            return False
+        return all(
+            _values_equal_default(left_item, right_item, bson_type_order)
+            for left_item, right_item in zip(left, right)
+        )
+    return _compare_values_default(left, right, bson_type_order) == 0
+
+
+def build_mongo_behavior_policy(
+    spec: MongoBehaviorPolicySpec,
+    *,
+    bson_type_order: MappingProxyType = DEFAULT_BSON_TYPE_ORDER,
+) -> MongoBehaviorPolicy:
+    if spec.expression_truthiness != "mongo-default":
+        raise ValueError(f"unsupported expression truthiness strategy: {spec.expression_truthiness}")
+    if spec.projection_flag_mode != "bool-or-binary-int":
+        raise ValueError(f"unsupported projection flag strategy: {spec.projection_flag_mode}")
+    if spec.update_path_sort_mode != "numeric-then-lex":
+        raise ValueError(f"unsupported update path sort strategy: {spec.update_path_sort_mode}")
+    if spec.equality_mode != "bson-structural":
+        raise ValueError(f"unsupported equality strategy: {spec.equality_mode}")
+    if spec.comparison_mode != "bson-total-order":
+        raise ValueError(f"unsupported comparison strategy: {spec.comparison_mode}")
+
+    return MongoBehaviorPolicy(
+        null_query_matches_undefined_fn=lambda: spec.null_query_matches_undefined,
+        expression_truthy_fn=_expression_truthy_default,
+        projection_flag_fn=_projection_flag_default,
+        sort_update_path_items_fn=_sort_update_path_items_default,
+        values_equal_fn=lambda left, right: _values_equal_default(left, right, bson_type_order),
+        compare_values_fn=lambda left, right: _compare_values_default(left, right, bson_type_order),
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class MongoDialect:
     """Describe la semántica observable objetivo del servidor MongoDB.
@@ -74,7 +219,18 @@ class MongoDialect:
     server_version: str
     label: str
     catalog_behavior_flags: MappingProxyType = MappingProxyType({})
+    catalog_policy_spec: MongoBehaviorPolicySpec = MongoBehaviorPolicySpec()
     catalog_capabilities: frozenset[str] = frozenset()
+    _base_policy_cache: MongoBehaviorPolicy | None = field(default=None, init=False, repr=False, compare=False)
+    _policy_cache: MongoBehaviorPolicy | None = field(default=None, init=False, repr=False, compare=False)
+    _SEMANTIC_OVERRIDE_NAMES: ClassVar[tuple[str, ...]] = (
+        "null_query_matches_undefined",
+        "expression_truthy",
+        "projection_flag",
+        "sort_update_path_items",
+        "values_equal",
+        "compare_values",
+    )
 
     def behavior_flag(self, name: str, default: bool | None = None) -> bool | None:
         if name not in MONGODB_DIALECT_HOOK_NAMES:
@@ -86,8 +242,34 @@ class MongoDialect:
         return name in self.capabilities
 
     @property
+    def policy_spec(self) -> MongoBehaviorPolicySpec:
+        return self.catalog_policy_spec
+
+    @property
+    def base_policy(self) -> MongoBehaviorPolicy:
+        cached = self._base_policy_cache
+        if cached is not None:
+            return cached
+        policy = build_mongo_behavior_policy(self.policy_spec, bson_type_order=self.bson_type_order)
+        object.__setattr__(self, "_base_policy_cache", policy)
+        return policy
+
+    def _has_semantic_overrides(self) -> bool:
+        dialect_type = type(self)
+        return any(
+            getattr(dialect_type, name) is not getattr(MongoDialect, name)
+            for name in self._SEMANTIC_OVERRIDE_NAMES
+        )
+
+    @property
     def policy(self) -> MongoBehaviorPolicy:
-        return MongoBehaviorPolicy(
+        cached = self._policy_cache
+        if cached is not None:
+            return cached
+        if not self._has_semantic_overrides():
+            object.__setattr__(self, "_policy_cache", self.base_policy)
+            return self.base_policy
+        policy = MongoBehaviorPolicy(
             null_query_matches_undefined_fn=self.null_query_matches_undefined,
             expression_truthy_fn=self.expression_truthy,
             projection_flag_fn=self.projection_flag,
@@ -95,25 +277,14 @@ class MongoDialect:
             values_equal_fn=self.values_equal,
             compare_values_fn=self.compare_values,
         )
+        object.__setattr__(self, "_policy_cache", policy)
+        return policy
 
     def null_query_matches_undefined(self) -> bool:
-        """Controla si `null` en query iguala el BSON `undefined` legado."""
-        value = self.catalog_behavior_flags.get("null_query_matches_undefined")
-        if isinstance(value, bool):
-            return value
-        return True
+        return self.base_policy.null_query_matches_undefined()
 
     def expression_truthy(self, value: object) -> bool:
-        """Truthiness de expresiones agregadas y `$expr`."""
-        if value is None:
-            return False
-        if isinstance(value, UndefinedType):
-            return False
-        if isinstance(value, bool):
-            return value
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
-            return value != 0
-        return True
+        return self.base_policy.expression_truthy(value)
 
     @property
     def query_field_operators(self) -> frozenset[str]:
@@ -173,28 +344,17 @@ class MongoDialect:
         return name in self.window_accumulators
 
     def projection_flag(self, value: object) -> int | None:
-        if isinstance(value, bool):
-            return 1 if value else 0
-        if isinstance(value, int) and value in (0, 1):
-            return value
-        return None
+        return self.base_policy.projection_flag(value)
 
     def sort_update_path_items(
         self,
         params: dict[str, object],
     ) -> list[tuple[str, object]]:
-        def sort_key(item: tuple[str, object]) -> tuple[int, int | str]:
-            path, _ = item
-            if not isinstance(path, str):
-                raise TypeError('update field names must be strings')
-            if path.isdigit():
-                return (0, int(path))
-            return (1, path)
-
-        return sorted(params.items(), key=sort_key)
+        return self.base_policy.sort_update_path_items(params)
 
     def values_equal(self, left: Any, right: Any) -> bool:
-        """Igualdad observable BSON, sensible al orden de campos en documentos."""
+        if self.policy_spec.equality_mode != "bson-structural":
+            raise ValueError(f"unsupported equality strategy: {self.policy_spec.equality_mode}")
         if isinstance(left, dict) and isinstance(right, dict):
             left_items = list(left.items())
             right_items = list(right.items())
@@ -211,7 +371,8 @@ class MongoDialect:
         return self.compare_values(left, right) == 0
 
     def compare_values(self, left: Any, right: Any) -> int:
-        """Orden observable BSON para comparaciones y sorting."""
+        if self.policy_spec.comparison_mode != "bson-total-order":
+            raise ValueError(f"unsupported comparison strategy: {self.policy_spec.comparison_mode}")
         wrapped_left = wrap_bson_numeric(left)
         wrapped_right = wrap_bson_numeric(right)
         if wrapped_left is not None and wrapped_right is not None:
@@ -279,6 +440,7 @@ class MongoDialect70(MongoDialect):
     server_version: str = '7.0'
     label: str = 'MongoDB 7.0'
     catalog_behavior_flags: MappingProxyType = MONGODB_DIALECT_CATALOG['7.0'].behavior_flags
+    catalog_policy_spec: MongoBehaviorPolicySpec = MONGODB_DIALECT_CATALOG['7.0'].policy_spec or MongoBehaviorPolicySpec()
     catalog_capabilities: frozenset[str] = MONGODB_DIALECT_CATALOG['7.0'].capabilities
 
 
@@ -288,6 +450,7 @@ class MongoDialect80(MongoDialect):
     server_version: str = '8.0'
     label: str = 'MongoDB 8.0'
     catalog_behavior_flags: MappingProxyType = MONGODB_DIALECT_CATALOG['8.0'].behavior_flags
+    catalog_policy_spec: MongoBehaviorPolicySpec = MONGODB_DIALECT_CATALOG['8.0'].policy_spec or MongoBehaviorPolicySpec()
     catalog_capabilities: frozenset[str] = MONGODB_DIALECT_CATALOG['8.0'].capabilities
 
 
@@ -378,6 +541,10 @@ MONGODB_DIALECT_CAPABILITIES = MappingProxyType(
 
 MONGODB_DIALECT_BEHAVIOR_FLAGS = MappingProxyType(
     {key: instance.behavior_flags() for key, instance in MONGODB_DIALECTS.items()}
+)
+
+MONGODB_DIALECT_POLICY_SPECS = MappingProxyType(
+    {key: instance.policy_spec for key, instance in MONGODB_DIALECTS.items()}
 )
 
 PYMONGO_PROFILES = MappingProxyType(
