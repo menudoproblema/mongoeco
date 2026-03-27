@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from mongoeco.api.admin_parsing import (
+    FindAndModifyCommandOptions,
     normalize_command_batch_size,
     normalize_command_document,
     normalize_command_hint,
@@ -641,13 +642,11 @@ class AsyncDatabaseAdminService:
             filter_field="query",
             default_projection={"_id": 1},
         )
-        count = await self._database.get_collection(
-            collection_name
-        )._engine_count_with_operation(
+        return await self._execute_count_command(
+            collection_name,
             operation,
             session=session,
         )
-        return CountCommandResult(count=count)
 
     async def _command_distinct(
         self,
@@ -674,6 +673,21 @@ class AsyncDatabaseAdminService:
             filter_field="query",
             batch_size_field=None,
         )
+        return await self._execute_distinct_command(
+            collection_name,
+            key,
+            operation,
+            session=session,
+        )
+
+    async def _execute_distinct_command(
+        self,
+        collection_name: str,
+        key: str,
+        operation: FindOperation,
+        *,
+        session: ClientSession | None = None,
+    ) -> DistinctCommandResult:
         distinct_values: list[object] = []
         async for document in self._database.get_collection(collection_name)._build_cursor(
             operation,
@@ -696,6 +710,21 @@ class AsyncDatabaseAdminService:
                 ):
                     distinct_values.append(candidate)
         return DistinctCommandResult(values=distinct_values)
+
+    async def _execute_count_command(
+        self,
+        collection_name: str,
+        operation: FindOperation,
+        *,
+        session: ClientSession | None = None,
+    ) -> CountCommandResult:
+        count = await self._database.get_collection(
+            collection_name
+        )._engine_count_with_operation(
+            operation,
+            session=session,
+        )
+        return CountCommandResult(count=count)
 
     async def _command_insert(
         self,
@@ -904,6 +933,19 @@ class AsyncDatabaseAdminService:
             spec,
             collection_field="find",
         )
+        return await self._execute_find_command(
+            collection_name,
+            operation,
+            session=session,
+        )
+
+    async def _execute_find_command(
+        self,
+        collection_name: str,
+        operation: FindOperation,
+        *,
+        session: ClientSession | None = None,
+    ) -> CommandCursorResult:
         first_batch = await self._database.get_collection(collection_name)._build_cursor(
             operation,
             session=session,
@@ -920,6 +962,19 @@ class AsyncDatabaseAdminService:
         session: ClientSession | None = None,
     ) -> object:
         collection_name, operation = self._compile_command_aggregate_operation(spec)
+        return await self._execute_aggregate_command(
+            collection_name,
+            operation,
+            session=session,
+        )
+
+    async def _execute_aggregate_command(
+        self,
+        collection_name: str,
+        operation: AggregateOperation,
+        *,
+        session: ClientSession | None = None,
+    ) -> CommandCursorResult:
         first_batch = await self._database.get_collection(
             collection_name
         )._build_aggregation_cursor(
@@ -1045,55 +1100,26 @@ class AsyncDatabaseAdminService:
             result["verbosity"] = verbosity
         return result
 
-    async def _command_find_and_modify(
+    async def _execute_find_and_modify(
         self,
-        spec: dict[str, object],
+        options: FindAndModifyCommandOptions,
         *,
         session: ClientSession | None = None,
-    ) -> dict[str, object]:
-        collection_name = self._require_collection_name(
-            spec.get("findAndModify"),
-            "findAndModify",
-        )
-        query = self._normalize_filter(spec.get("query"))
-        sort = self._normalize_sort_document(spec.get("sort"))
-        fields = spec.get("fields")
-        remove = spec.get("remove", False)
-        if not isinstance(remove, bool):
-            raise TypeError("remove must be a bool")
-        return_new = spec.get("new", False)
-        if not isinstance(return_new, bool):
-            raise TypeError("new must be a bool")
-        upsert = spec.get("upsert", False)
-        if not isinstance(upsert, bool):
-            raise TypeError("upsert must be a bool")
-        array_filters = spec.get("arrayFilters")
-        if array_filters is not None and (
-            not isinstance(array_filters, list)
-            or not all(is_filter(item) for item in array_filters)
-        ):
-            raise TypeError("arrayFilters must be a list of dicts")
-        hint = self._normalize_hint_from_command(spec.get("hint"))
-        max_time_ms = self._normalize_max_time_ms_from_command(spec.get("maxTimeMS"))
-        let = spec.get("let")
-        if let is not None and not isinstance(let, dict):
-            raise TypeError("let must be a dict")
-
-        update_spec = spec.get("update")
-        collection = self._database.get_collection(collection_name)
-        if remove:
-            if update_spec is not None:
+    ) -> FindAndModifyCommandResult:
+        collection = self._database.get_collection(options.collection_name)
+        if options.remove:
+            if options.update_spec is not None:
                 raise OperationFailure("findAndModify remove and update cannot be specified together")
-            if upsert:
+            if options.upsert:
                 raise OperationFailure("findAndModify remove does not support upsert")
             before = await collection.find_one_and_delete(
-                query,
-                projection=fields,
-                sort=sort,
-                hint=hint,
-                comment=spec.get("comment"),
-                max_time_ms=max_time_ms,
-                let=let,
+                options.query,
+                projection=options.fields,
+                sort=options.sort,
+                hint=options.hint,
+                comment=options.comment,
+                max_time_ms=options.max_time_ms,
+                let=options.let,
                 session=session,
             )
             return FindAndModifyCommandResult(
@@ -1103,47 +1129,47 @@ class AsyncDatabaseAdminService:
                 value=before,
             )
 
-        if update_spec is None:
+        if options.update_spec is None:
             raise OperationFailure("findAndModify requires either remove or update")
 
         before_full = await self._first_with_operation(
-            collection_name,
+            options.collection_name,
             compile_find_operation(
-                query,
-                sort=sort,
+                options.query,
+                sort=options.sort,
                 limit=1,
-                hint=hint,
-                comment=spec.get("comment"),
-                max_time_ms=max_time_ms,
+                hint=options.hint,
+                comment=options.comment,
+                max_time_ms=options.max_time_ms,
                 dialect=self._mongodb_dialect,
             ),
             session=session,
         )
-        return_document = ReturnDocument.AFTER if return_new else ReturnDocument.BEFORE
+        return_document = ReturnDocument.AFTER if options.return_new else ReturnDocument.BEFORE
 
-        if isinstance(update_spec, dict) and all(
+        if all(
             isinstance(key, str) and key.startswith("$")
-            for key in update_spec
+            for key in options.update_spec
         ):
-            if before_full is None and upsert:
+            if before_full is None and options.upsert:
                 result = await collection.update_one(
-                    query,
-                    update_spec,
+                    options.query,
+                    options.update_spec,
                     upsert=True,
-                    sort=sort,
-                    array_filters=array_filters,
-                    hint=hint,
-                    comment=spec.get("comment"),
-                    let=let,
+                    sort=options.sort,
+                    array_filters=options.array_filters,
+                    hint=options.hint,
+                    comment=options.comment,
+                    let=options.let,
                     session=session,
                 )
                 value = None
-                if return_new:
+                if options.return_new:
                     value = await self._first_with_operation(
-                        collection_name,
+                        options.collection_name,
                         compile_find_operation(
                             {"_id": result.upserted_id},
-                            projection=fields,
+                            projection=options.fields,
                             limit=1,
                             dialect=self._mongodb_dialect,
                         ),
@@ -1158,48 +1184,45 @@ class AsyncDatabaseAdminService:
                     value=value,
                 )
             value = await collection.find_one_and_update(
-                query,
-                update_spec,
-                projection=fields,
-                sort=sort,
-                upsert=upsert,
+                options.query,
+                options.update_spec,
+                projection=options.fields,
+                sort=options.sort,
+                upsert=options.upsert,
                 return_document=return_document,
-                array_filters=array_filters,
-                hint=hint,
-                comment=spec.get("comment"),
-                max_time_ms=max_time_ms,
-                let=let,
+                array_filters=options.array_filters,
+                hint=options.hint,
+                comment=options.comment,
+                max_time_ms=options.max_time_ms,
+                let=options.let,
                 session=session,
             )
             return FindAndModifyCommandResult(
                 last_error_object=FindAndModifyLastErrorObject(
-                    count=0 if before_full is None and not upsert else 1,
+                    count=0 if before_full is None and not options.upsert else 1,
                     updated_existing=before_full is not None,
                 ),
                 value=value,
             )
 
-        if not isinstance(update_spec, dict):
-            raise TypeError("update must be a document")
-
-        if before_full is None and upsert:
+        if before_full is None and options.upsert:
             result = await collection.replace_one(
-                query,
-                update_spec,
+                options.query,
+                options.update_spec,
                 upsert=True,
-                sort=sort,
-                hint=hint,
-                comment=spec.get("comment"),
-                let=let,
+                sort=options.sort,
+                hint=options.hint,
+                comment=options.comment,
+                let=options.let,
                 session=session,
             )
             value = None
-            if return_new:
+            if options.return_new:
                 value = await self._first_with_operation(
-                    collection_name,
+                    options.collection_name,
                     compile_find_operation(
                         {"_id": result.upserted_id},
-                        projection=fields,
+                        projection=options.fields,
                         limit=1,
                         dialect=self._mongodb_dialect,
                     ),
@@ -1215,21 +1238,21 @@ class AsyncDatabaseAdminService:
             )
 
         value = await collection.find_one_and_replace(
-            query,
-            update_spec,
-            projection=fields,
-            sort=sort,
-            upsert=upsert,
+            options.query,
+            options.update_spec,
+            projection=options.fields,
+            sort=options.sort,
+            upsert=options.upsert,
             return_document=return_document,
-            hint=hint,
-            comment=spec.get("comment"),
-            max_time_ms=max_time_ms,
-            let=let,
+            hint=options.hint,
+            comment=options.comment,
+            max_time_ms=options.max_time_ms,
+            let=options.let,
             session=session,
         )
         return FindAndModifyCommandResult(
             last_error_object=FindAndModifyLastErrorObject(
-                count=0 if before_full is None and not upsert else 1,
+                count=0 if before_full is None and not options.upsert else 1,
                 updated_existing=before_full is not None,
             ),
             value=value,
@@ -1241,12 +1264,24 @@ class AsyncDatabaseAdminService:
         *,
         session: ClientSession | None = None,
     ) -> object:
-        collection_name = self._require_collection_name(
-            spec.get("listIndexes"),
-            "listIndexes",
-        )
-        first_batch = await self._database.get_collection(collection_name).list_indexes(
+        return await self._execute_list_indexes_command(
+            self._require_collection_name(
+                spec.get("listIndexes"),
+                "listIndexes",
+            ),
             comment=spec.get("comment"),
+            session=session,
+        )
+
+    async def _execute_list_indexes_command(
+        self,
+        collection_name: str,
+        *,
+        comment: object | None = None,
+        session: ClientSession | None = None,
+    ) -> CommandCursorResult:
+        first_batch = await self._database.get_collection(collection_name).list_indexes(
+            comment=comment,
             session=session,
         ).to_list()
         return CommandCursorResult(

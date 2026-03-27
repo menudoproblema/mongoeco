@@ -485,7 +485,15 @@ class ArchitectureUnitTests(unittest.TestCase):
 
         coll_stats = service.parse_raw_command({"collStats": "users"})
         validate = service.parse_raw_command({"validate": "users"})
-        delegated = service.parse_raw_command({"find": "users", "filter": {}})
+        find_and_modify = service.parse_raw_command(
+            {"findAndModify": "users", "query": {"name": "Ada"}, "update": {"$set": {"rank": 1}}}
+        )
+        find = service.parse_raw_command({"find": "users", "filter": {}})
+        aggregate = service.parse_raw_command({"aggregate": "users", "pipeline": []})
+        count = service.parse_raw_command({"count": "users"})
+        distinct = service.parse_raw_command({"distinct": "users", "key": "name"})
+        list_indexes = service.parse_raw_command({"listIndexes": "users"})
+        delegated = service.parse_raw_command({"create": "users"})
 
         self.assertIsInstance(
             coll_stats,
@@ -494,6 +502,30 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertIsInstance(
             validate,
             AsyncDatabaseCommandService.ValidateCollectionCommand,
+        )
+        self.assertIsInstance(
+            find_and_modify,
+            AsyncDatabaseCommandService.FindAndModifyCommand,
+        )
+        self.assertIsInstance(
+            find,
+            AsyncDatabaseCommandService.FindCommand,
+        )
+        self.assertIsInstance(
+            aggregate,
+            AsyncDatabaseCommandService.AggregateCommand,
+        )
+        self.assertIsInstance(
+            count,
+            AsyncDatabaseCommandService.CountCommand,
+        )
+        self.assertIsInstance(
+            distinct,
+            AsyncDatabaseCommandService.DistinctCommand,
+        )
+        self.assertIsInstance(
+            list_indexes,
+            AsyncDatabaseCommandService.ListIndexesCommand,
         )
         self.assertIsInstance(
             delegated,

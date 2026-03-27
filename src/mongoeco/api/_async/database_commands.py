@@ -7,7 +7,9 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 from dataclasses import dataclass
 
 from mongoeco.api.admin_parsing import (
+    FindAndModifyCommandOptions,
     normalize_command_document,
+    normalize_find_and_modify_options,
     normalize_command_scale,
     normalize_validate_command_options,
     require_collection_name,
@@ -20,11 +22,16 @@ from mongoeco.types import (
     CollectionStatsSnapshot,
     CollectionValidationSnapshot,
     CmdLineOptsDocument,
+    CommandCursorResult,
     ConnectionStatusDocument,
+    CountCommandResult,
     DatabaseStatsSnapshot,
+    DistinctCommandResult,
+    FindAndModifyCommandResult,
     HelloDocument,
     HostInfoDocument,
     ListCommandsDocument,
+    OkResult,
     ServerStatusDocument,
     WhatsMyUriDocument,
 )
@@ -373,7 +380,7 @@ class AsyncDatabaseCommandService:
         spec: dict[str, object]
 
     @dataclass(frozen=True, slots=True)
-    class StaticAdminCommand(AdminCommand[dict[str, object]]):
+    class StaticAdminCommand(AdminCommand[object]):
         pass
 
     @dataclass(frozen=True, slots=True)
@@ -397,6 +404,36 @@ class AsyncDatabaseCommandService:
         background: bool | None = None
 
     @dataclass(frozen=True, slots=True)
+    class FindAndModifyCommand(AdminCommand[FindAndModifyCommandResult]):
+        options: FindAndModifyCommandOptions | None = None
+
+    @dataclass(frozen=True, slots=True)
+    class FindCommand(AdminCommand[CommandCursorResult]):
+        collection_name: str = ""
+        operation: object | None = None
+
+    @dataclass(frozen=True, slots=True)
+    class AggregateCommand(AdminCommand[CommandCursorResult]):
+        collection_name: str = ""
+        operation: object | None = None
+
+    @dataclass(frozen=True, slots=True)
+    class CountCommand(AdminCommand[CountCommandResult]):
+        collection_name: str = ""
+        operation: object | None = None
+
+    @dataclass(frozen=True, slots=True)
+    class DistinctCommand(AdminCommand[DistinctCommandResult]):
+        collection_name: str = ""
+        key: str = ""
+        operation: object | None = None
+
+    @dataclass(frozen=True, slots=True)
+    class ListIndexesCommand(AdminCommand[CommandCursorResult]):
+        collection_name: str = ""
+        comment: object | None = None
+
+    @dataclass(frozen=True, slots=True)
     class DelegatedAdminCommand(AdminCommand[object]):
         route: "AsyncDatabaseCommandService.Route | None" = None
 
@@ -416,11 +453,7 @@ class AsyncDatabaseCommandService:
         "insert": Route("_command_insert"),
         "update": Route("_command_update"),
         "delete": Route("_command_delete"),
-        "find": Route("_command_find"),
-        "aggregate": Route("_command_aggregate"),
         "explain": Route("_command_explain"),
-        "findAndModify": Route("_command_find_and_modify"),
-        "listIndexes": Route("_command_list_indexes"),
         "createIndexes": Route("_command_create_indexes"),
         "dropIndexes": Route("_command_drop_indexes"),
         "dropDatabase": Route("_command_drop_database", passes_spec=False),
@@ -515,6 +548,95 @@ class AsyncDatabaseCommandService:
                 full=options.full,
                 background=options.background,
             )
+        if command_name == "findAndModify":
+            return self.FindAndModifyCommand(
+                db_name=self._admin._db_name,
+                command_name=command_name,
+                spec=spec,
+                options=normalize_find_and_modify_options(spec),
+            )
+        if command_name == "find":
+            collection_name, operation = self._admin._compile_command_find_operation(
+                spec,
+                collection_field="find",
+            )
+            return self.FindCommand(
+                db_name=self._admin._db_name,
+                command_name=command_name,
+                spec=spec,
+                collection_name=collection_name,
+                operation=operation,
+            )
+        if command_name == "aggregate":
+            collection_name, operation = self._admin._compile_command_aggregate_operation(spec)
+            return self.AggregateCommand(
+                db_name=self._admin._db_name,
+                command_name=command_name,
+                spec=spec,
+                collection_name=collection_name,
+                operation=operation,
+            )
+        if command_name == "count":
+            collection_name, operation = self._admin._compile_command_find_operation(
+                {
+                    "count": require_collection_name(spec.get("count"), "count"),
+                    "query": spec.get("query"),
+                    "skip": spec.get("skip", 0),
+                    "limit": spec.get("limit"),
+                    "hint": spec.get("hint"),
+                    "comment": spec.get("comment"),
+                    "maxTimeMS": spec.get("maxTimeMS"),
+                },
+                collection_field="count",
+                filter_field="query",
+                default_projection={"_id": 1},
+            )
+            return self.CountCommand(
+                db_name=self._admin._db_name,
+                command_name=command_name,
+                spec=spec,
+                collection_name=collection_name,
+                operation=operation,
+            )
+        if command_name == "distinct":
+            collection_name = require_collection_name(
+                spec.get("distinct"),
+                "distinct",
+            )
+            key = spec.get("key")
+            if not isinstance(key, str) or not key:
+                raise TypeError("key must be a non-empty string")
+            _, operation = self._admin._compile_command_find_operation(
+                {
+                    "distinct": collection_name,
+                    "query": spec.get("query"),
+                    "hint": spec.get("hint"),
+                    "comment": spec.get("comment"),
+                    "maxTimeMS": spec.get("maxTimeMS"),
+                },
+                collection_field="distinct",
+                filter_field="query",
+                batch_size_field=None,
+            )
+            return self.DistinctCommand(
+                db_name=self._admin._db_name,
+                command_name=command_name,
+                spec=spec,
+                collection_name=collection_name,
+                key=key,
+                operation=operation,
+            )
+        if command_name == "listIndexes":
+            return self.ListIndexesCommand(
+                db_name=self._admin._db_name,
+                command_name=command_name,
+                spec=spec,
+                collection_name=require_collection_name(
+                    spec.get("listIndexes"),
+                    "listIndexes",
+                ),
+                comment=spec.get("comment"),
+            )
 
         route = self._DELEGATED_COMMAND_HANDLERS.get(command_name)
         if route is None:
@@ -557,6 +679,43 @@ class AsyncDatabaseCommandService:
                 background=command.background,
                 session=session,
             )  # type: ignore[return-value]
+        if isinstance(command, self.FindAndModifyCommand):
+            assert command.options is not None
+            return await self._admin._execute_find_and_modify(
+                command.options,
+                session=session,
+            )  # type: ignore[return-value]
+        if isinstance(command, self.FindCommand):
+            return await self._admin._execute_find_command(
+                command.collection_name,
+                command.operation,
+                session=session,
+            )  # type: ignore[return-value]
+        if isinstance(command, self.AggregateCommand):
+            return await self._admin._execute_aggregate_command(
+                command.collection_name,
+                command.operation,
+                session=session,
+            )  # type: ignore[return-value]
+        if isinstance(command, self.CountCommand):
+            return await self._admin._execute_count_command(
+                command.collection_name,
+                command.operation,
+                session=session,
+            )  # type: ignore[return-value]
+        if isinstance(command, self.DistinctCommand):
+            return await self._admin._execute_distinct_command(
+                command.collection_name,
+                command.key,
+                command.operation,
+                session=session,
+            )  # type: ignore[return-value]
+        if isinstance(command, self.ListIndexesCommand):
+            return await self._admin._execute_list_indexes_command(
+                command.collection_name,
+                comment=command.comment,
+                session=session,
+            )  # type: ignore[return-value]
         if isinstance(command, self.DelegatedAdminCommand):
             assert command.route is not None
             handler = getattr(self._admin, command.route.handler_name)
@@ -570,7 +729,7 @@ class AsyncDatabaseCommandService:
         command: "AsyncDatabaseCommandService.StaticAdminCommand",
     ) -> object:
         if command.command_name == "ping":
-            return {"ok": 1.0}
+            return OkResult()
         if command.command_name == "buildInfo":
             return build_info_result(self._mongodb_dialect)
         if command.command_name == "serverStatus":

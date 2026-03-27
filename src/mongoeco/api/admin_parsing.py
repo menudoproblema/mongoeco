@@ -32,6 +32,23 @@ class ValidationCommandOptions:
     comment: str | None
 
 
+@dataclass(frozen=True, slots=True)
+class FindAndModifyCommandOptions:
+    collection_name: str
+    query: Filter
+    sort: list[tuple[str, int]] | None
+    fields: dict[str, object] | None
+    remove: bool
+    return_new: bool
+    upsert: bool
+    array_filters: list[Filter] | None
+    hint: object | None
+    max_time_ms: int | None
+    let: dict[str, object] | None
+    comment: object | None
+    update_spec: dict[str, object] | None
+
+
 def normalize_command_document(command: object, kwargs: dict[str, object]) -> dict[str, object]:
     if isinstance(command, str):
         if not command:
@@ -189,6 +206,39 @@ def normalize_validate_command_options(
         full=normalize_command_bool(full, "full"),
         background=background,
         comment=comment,
+    )
+
+
+def normalize_find_and_modify_options(
+    spec: dict[str, object],
+) -> FindAndModifyCommandOptions:
+    remove = normalize_command_bool(spec.get("remove"), "remove")
+    return_new = normalize_command_bool(spec.get("new"), "new")
+    upsert = normalize_command_bool(spec.get("upsert"), "upsert")
+    array_filters = spec.get("arrayFilters")
+    if array_filters is not None:
+        if not isinstance(array_filters, list) or not all(is_filter(item) for item in array_filters):
+            raise TypeError("arrayFilters must be a list of dicts")
+    let = spec.get("let")
+    if let is not None and not isinstance(let, dict):
+        raise TypeError("let must be a dict")
+    update_spec = spec.get("update")
+    if update_spec is not None and not isinstance(update_spec, dict):
+        raise TypeError("update must be a document")
+    return FindAndModifyCommandOptions(
+        collection_name=require_collection_name(spec.get("findAndModify"), "findAndModify"),
+        query=normalize_filter_document(spec.get("query")),
+        sort=normalize_command_sort_document(spec.get("sort")),
+        fields=normalize_command_projection(spec.get("fields")),
+        remove=remove,
+        return_new=return_new,
+        upsert=upsert,
+        array_filters=array_filters,
+        hint=normalize_command_hint(spec.get("hint")),
+        max_time_ms=normalize_command_max_time_ms(spec.get("maxTimeMS")),
+        let=let,
+        comment=spec.get("comment"),
+        update_spec=update_spec,
     )
 
 
