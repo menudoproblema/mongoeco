@@ -1,41 +1,32 @@
 from functools import cmp_to_key
-import math
 from copy import deepcopy
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.paths import get_document_value
+from mongoeco.core.paths import get_document_value, set_document_value
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, UndefinedType
+from mongoeco.types import Document
 
-from mongoeco.core.aggregation.runtime import (
+from mongoeco.core.aggregation.accumulators import (
     _AccumulatorBucket,
-    _AverageAccumulator,
-    _OrderedAccumulator,
-    _PercentileAccumulator,
-    _PickNAccumulator,
-    _StdDevAccumulator,
-    _accumulator_flags,
-    _aggregation_key,
-    _append_unique_values,
-    _compute_percentiles,
-    _evaluate_ordered_accumulator_input,
-    _evaluate_pick_n_input,
+    _apply_accumulators,
     _finalize_accumulators,
     _initialize_accumulators,
-    _is_numeric,
-    _parse_percentile_spec,
     _resolve_range_value,
     _resolve_window_index,
     _require_range_bound,
     _require_window_output_spec,
-    _stddev_accumulator_operand,
-    _sum_accumulator_operand,
-    _trim_ordered_accumulator,
     _window_sort_key_values,
     _window_sort_keys_equal,
+)
+from mongoeco.core.aggregation.runtime import (
+    _aggregation_key,
+    _append_unique_values,
+    _resolve_aggregation_field_path,
+    _MISSING,
     evaluate_expression,
+    _evaluate_expression_with_missing,
 )
 from mongoeco.core.aggregation.planning import _require_sort
 
@@ -80,142 +71,29 @@ def _apply_group(
             document,
             variables,
             dialect=dialect,
+            evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
+                current_document,
+                current_expression,
+                current_variables,
+                dialect=dialect,
+            ),
+            evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
+                current_document,
+                current_expression,
+                current_variables or {},
+                dialect=dialect,
+            ),
+            append_unique_values=lambda target, values: _append_unique_values(
+                target,
+                values,
+                dialect=dialect,
+            ),
+            require_sort=_require_sort,
+            resolve_aggregation_field_path=_resolve_aggregation_field_path,
+            missing_sentinel=_MISSING,
         )
 
     return [_finalize_accumulators(bucket) for bucket in groups.values()]
-
-
-def _apply_accumulators(
-    bucket: _AccumulatorBucket | dict[str, Any],
-    accumulator_specs: dict[str, object] | None,
-    document: Document,
-    variables: dict[str, Any] | None = None,
-    *,
-    dialect: MongoDialect = MONGODB_DIALECT_70,
-) -> None:
-    specs = {"count": {"$sum": 1}} if accumulator_specs is None else accumulator_specs
-    values = bucket.values if isinstance(bucket, _AccumulatorBucket) else bucket
-    flags = bucket.flags if isinstance(bucket, _AccumulatorBucket) else _accumulator_flags(bucket)
-    for field, accumulator in specs.items():
-        operator, expression = next(iter(accumulator.items()))
-        value = None if operator == "$count" else evaluate_expression(document, expression, variables, dialect=dialect)
-        if operator in {"$sum", "$count"}:
-            if operator == "$count":
-                values[field] += 1
-                continue
-            if value is None:
-                continue
-            numeric_value = _sum_accumulator_operand(value)
-            if numeric_value is None:
-                continue
-            values[field] += numeric_value
-        elif operator == "$min":
-            if value is None:
-                continue
-            if not flags.get(field, False) or dialect.policy.compare_values(value, values[field]) < 0:
-                values[field] = deepcopy(value)
-                flags[field] = True
-        elif operator == "$max":
-            if value is None:
-                continue
-            if not flags.get(field, False) or dialect.policy.compare_values(value, values[field]) > 0:
-                values[field] = deepcopy(value)
-                flags[field] = True
-        elif operator == "$avg":
-            if value is None or not _is_numeric(value):
-                continue
-            values[field].total += value
-            values[field].count += 1
-        elif operator in {"$stdDevPop", "$stdDevSamp"}:
-            operand = _stddev_accumulator_operand(value)
-            if operand is None:
-                continue
-            if not math.isfinite(operand):
-                values[field].invalid = True
-                continue
-            values[field].total += operand
-            values[field].sum_of_squares += operand * operand
-            values[field].count += 1
-        elif operator == "$push":
-            values[field].append(deepcopy(value))
-        elif operator == "$addToSet":
-            _append_unique_values(values[field], [value], dialect=dialect)
-        elif operator == "$mergeObjects":
-            if value is None:
-                continue
-            if not isinstance(value, dict):
-                raise OperationFailure("$mergeObjects accumulator requires document operands")
-            values[field].update(deepcopy(value))
-        elif operator == "$first":
-            if not flags.get(field, False):
-                values[field] = deepcopy(value)
-                flags[field] = True
-        elif operator == "$last":
-            values[field] = deepcopy(value)
-            flags[field] = True
-        elif operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
-            value, size = _evaluate_pick_n_input(operator, document, expression, variables, dialect=dialect)
-            state = values[field]
-            if state.n is None:
-                state.n = size
-            elif state.n != size:
-                raise OperationFailure(f"{operator} n must evaluate to a consistent positive integer within the group")
-            if operator == "$firstN":
-                if len(state.items) < state.n:
-                    state.items.append(deepcopy(value))
-            elif operator == "$lastN":
-                state.items.append(deepcopy(value))
-                if len(state.items) > state.n:
-                    del state.items[:-state.n]
-            else:
-                if value is None or isinstance(value, UndefinedType):
-                    continue
-                state.items.append(deepcopy(value))
-                state.items.sort(
-                    key=cmp_to_key(dialect.policy.compare_values),
-                    reverse=operator == "$maxN",
-                )
-                del state.items[state.n:]
-        elif operator in {"$top", "$bottom", "$topN", "$bottomN"}:
-            sort_spec, sort_values, output, size = _evaluate_ordered_accumulator_input(
-                operator,
-                document,
-                expression,
-                variables,
-                dialect=dialect,
-            )
-            state = values[field]
-            if state.sort_spec is None:
-                state.sort_spec = sort_spec
-            keep = size if operator in {"$topN", "$bottomN"} else 1
-            if operator in {"$topN", "$bottomN"}:
-                if state.n is None:
-                    state.n = size
-                elif state.n != size:
-                    raise OperationFailure(f"{operator} n must evaluate to a consistent positive integer within the group")
-            state.items.append((sort_values, deepcopy(output), state.sequence))
-            state.sequence += 1
-            _trim_ordered_accumulator(
-                state,
-                sort_spec,
-                keep=keep,
-                bottom=operator in {"$bottom", "$bottomN"},
-                dialect=dialect,
-            )
-        elif operator in {"$median", "$percentile"}:
-            candidates, probabilities = _parse_percentile_spec(
-                operator,
-                document,
-                expression,
-                variables,
-                dialect=dialect,
-            )
-            state = values[field]
-            if state.probabilities is None:
-                state.probabilities = probabilities
-            elif state.probabilities != probabilities:
-                raise OperationFailure(f"{operator} p must evaluate to a consistent array within the group")
-            state.values.extend(deepcopy(candidates))
 
 
 def _apply_bucket(
@@ -261,13 +139,65 @@ def _apply_bucket(
         for index, lower in enumerate(boundaries[:-1]):
             upper = boundaries[index + 1]
             if dialect.policy.compare_values(value, lower) >= 0 and dialect.policy.compare_values(value, upper) < 0:
-                _apply_accumulators(buckets[index], output, document, variables, dialect=dialect)
+                _apply_accumulators(
+                    buckets[index],
+                    output,
+                    document,
+                    variables,
+                    dialect=dialect,
+                    evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
+                        current_document,
+                        current_expression,
+                        current_variables,
+                        dialect=dialect,
+                    ),
+                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
+                        current_document,
+                        current_expression,
+                        current_variables or {},
+                        dialect=dialect,
+                    ),
+                    append_unique_values=lambda target, values: _append_unique_values(
+                        target,
+                        values,
+                        dialect=dialect,
+                    ),
+                    require_sort=_require_sort,
+                    resolve_aggregation_field_path=_resolve_aggregation_field_path,
+                    missing_sentinel=_MISSING,
+                )
                 matched = True
                 break
         if matched:
             continue
         if default_state is not None:
-            _apply_accumulators(default_state, output, document, variables, dialect=dialect)
+            _apply_accumulators(
+                default_state,
+                output,
+                document,
+                variables,
+                dialect=dialect,
+                evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
+                    current_document,
+                    current_expression,
+                    current_variables,
+                    dialect=dialect,
+                ),
+                evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
+                    current_document,
+                    current_expression,
+                    current_variables or {},
+                    dialect=dialect,
+                ),
+                append_unique_values=lambda target, values: _append_unique_values(
+                    target,
+                    values,
+                    dialect=dialect,
+                ),
+                require_sort=_require_sort,
+                resolve_aggregation_field_path=_resolve_aggregation_field_path,
+                missing_sentinel=_MISSING,
+            )
             continue
         raise OperationFailure("$bucket found a document outside of the specified boundaries")
 
@@ -321,7 +251,33 @@ def _apply_bucket_auto(
             values=_initialize_accumulators(output, default_sum=output is None, dialect=dialect),
         )
         for _, document in chunk:
-            _apply_accumulators(bucket, output, document, variables, dialect=dialect)
+            _apply_accumulators(
+                bucket,
+                output,
+                document,
+                variables,
+                dialect=dialect,
+                evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
+                    current_document,
+                    current_expression,
+                    current_variables,
+                    dialect=dialect,
+                ),
+                evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
+                    current_document,
+                    current_expression,
+                    current_variables or {},
+                    dialect=dialect,
+                ),
+                append_unique_values=lambda target, values: _append_unique_values(
+                    target,
+                    values,
+                    dialect=dialect,
+                ),
+                require_sort=_require_sort,
+                resolve_aggregation_field_path=_resolve_aggregation_field_path,
+                missing_sentinel=_MISSING,
+            )
         result.append(_finalize_accumulators(bucket))
     return result
 
@@ -431,7 +387,33 @@ def _apply_set_window_fields(
                     include_bucket_id=False,
                 )
                 for window_document in window_documents:
-                    _apply_accumulators(state, {field: {operator: expression}}, window_document, variables, dialect=dialect)
+                    _apply_accumulators(
+                        state,
+                        {field: {operator: expression}},
+                        window_document,
+                        variables,
+                        dialect=dialect,
+                        evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
+                            current_document,
+                            current_expression,
+                            current_variables,
+                            dialect=dialect,
+                        ),
+                        evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
+                            current_document,
+                            current_expression,
+                            current_variables or {},
+                            dialect=dialect,
+                        ),
+                        append_unique_values=lambda target, values: _append_unique_values(
+                            target,
+                            values,
+                            dialect=dialect,
+                        ),
+                        require_sort=_require_sort,
+                        resolve_aggregation_field_path=_resolve_aggregation_field_path,
+                        missing_sentinel=_MISSING,
+                    )
                 set_document_value(enriched, field, _finalize_accumulators(state)[field])
             result.append(enriched)
     return result
@@ -457,6 +439,3 @@ def _apply_sort_by_count(
         dialect=dialect,
     )
     return sort_documents(grouped, [("count", -1), ("_id", 1)], dialect=dialect)
-
-
-from mongoeco.core.paths import set_document_value  # noqa: E402

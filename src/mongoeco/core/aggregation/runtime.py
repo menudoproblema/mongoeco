@@ -6,8 +6,7 @@ import re
 import uuid
 from collections.abc import Callable, Iterable
 from copy import deepcopy
-from dataclasses import dataclass, field
-from functools import cmp_to_key
+from dataclasses import dataclass
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -15,9 +14,17 @@ from mongoeco.core.aggregation.array_string_expressions import (
     ARRAY_STRING_EXPRESSION_OPERATORS,
     evaluate_array_string_expression,
 )
+from mongoeco.core.aggregation.control_object_expressions import (
+    CONTROL_OBJECT_EXPRESSION_OPERATORS,
+    evaluate_control_object_expression,
+)
 from mongoeco.core.aggregation.date_expressions import (
     DATE_EXPRESSION_OPERATORS,
     evaluate_date_expression,
+)
+from mongoeco.core.aggregation.numeric_expressions import (
+    NUMERIC_EXPRESSION_OPERATORS,
+    evaluate_numeric_expression,
 )
 from mongoeco.core.aggregation.scalar_expressions import (
     SCALAR_EXPRESSION_OPERATORS,
@@ -25,7 +32,6 @@ from mongoeco.core.aggregation.scalar_expressions import (
 )
 from mongoeco.core.bson_scalars import (
     bson_numeric_alias,
-    is_bson_numeric,
 )
 from mongoeco.core.filtering import BSONComparator
 from mongoeco.core.filtering import QueryEngine
@@ -33,14 +39,14 @@ from mongoeco.core.paths import delete_document_value, get_document_value, set_d
 from mongoeco.core.projections import apply_projection, validate_projection_spec
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, ObjectId, SortSpec, UndefinedType
+from mongoeco.types import Document, ObjectId, UndefinedType
+from mongoeco.core.aggregation.accumulators import _evaluate_pick_n_input
 from mongoeco.core.aggregation.planning import Pipeline, _require_sort
 
 
 type AggregationStageHandler = Callable[[list[Document], object, "AggregationStageContext"], list[Document]]
 
 _CURRENT_COLLECTION_RESOLVER_KEY = "__mongoeco_current_collection__"
-_ACCUMULATOR_FLAGS_KEY = ("__mongoeco_internal__", "accumulator_flags")
 
 
 def _aggregation_key(value: Any) -> Any:
@@ -78,67 +84,12 @@ def _aggregation_key(value: Any) -> Any:
         return ("repr", repr(value))
 
 
-@dataclass(slots=True)
-class _AverageAccumulator:
-    total: int | float = 0
-    count: int = 0
-
-
-@dataclass(slots=True)
-class _StdDevAccumulator:
-    population: bool
-    total: float = 0.0
-    sum_of_squares: float = 0.0
-    count: int = 0
-    invalid: bool = False
-
-
-@dataclass(slots=True)
-class _PickNAccumulator:
-    items: list[Any] = field(default_factory=list)
-    n: int | None = None
-
-
-@dataclass(slots=True)
-class _OrderedAccumulator:
-    items: list[tuple[list[Any], Any, int]] = field(default_factory=list)
-    n: int | None = None
-    sequence: int = 0
-    sort_spec: SortSpec | None = None
-
-
-@dataclass(slots=True)
-class _PercentileAccumulator:
-    values: list[int | float | decimal.Decimal] = field(default_factory=list)
-    probabilities: list[float] | None = None
-    scalar_output: bool = False
-
-
-@dataclass(slots=True)
-class _AccumulatorBucket:
-    bucket_id: Any
-    values: dict[str, Any]
-    flags: dict[str, bool] = field(default_factory=dict)
-    include_bucket_id: bool = True
-
-
 @dataclass(frozen=True, slots=True)
 class AggregationStageContext:
     stage_index: int
     collection_resolver: Callable[[str], list[Document]] | None = None
     variables: dict[str, Any] | None = None
     dialect: MongoDialect = MONGODB_DIALECT_70
-
-
-def _accumulator_flags(bucket: dict[object, Any] | _AccumulatorBucket) -> dict[str, bool]:
-    if isinstance(bucket, _AccumulatorBucket):
-        return bucket.flags
-    flags = bucket.get(_ACCUMULATOR_FLAGS_KEY)
-    if isinstance(flags, dict):
-        return flags
-    new_flags: dict[str, bool] = {}
-    bucket[_ACCUMULATOR_FLAGS_KEY] = new_flags
-    return new_flags
 
 
 def _require_unwind_spec(spec: object) -> tuple[str, bool, str | None]:
@@ -317,27 +268,6 @@ def _require_expression_args(operator: str, spec: object, *, min_args: int, max_
     return spec
 
 
-def _validate_accumulator_expression(operator: str, expression: object) -> None:
-    if operator == "$count":
-        if not isinstance(expression, dict) or expression:
-            raise OperationFailure("$count accumulator requires an empty document")
-    if operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
-        if not isinstance(expression, dict) or not {"input", "n"} <= set(expression):
-            raise OperationFailure(f"{operator} requires input and n")
-    if operator in {"$top", "$bottom"}:
-        if not isinstance(expression, dict) or not {"sortBy", "output"} <= set(expression):
-            raise OperationFailure(f"{operator} requires sortBy and output")
-    if operator in {"$topN", "$bottomN"}:
-        if not isinstance(expression, dict) or not {"sortBy", "output", "n"} <= set(expression):
-            raise OperationFailure(f"{operator} requires sortBy, output and n")
-    if operator == "$median":
-        if not isinstance(expression, dict) or not {"input", "method"} <= set(expression):
-            raise OperationFailure("$median requires input and method")
-    if operator == "$percentile":
-        if not isinstance(expression, dict) or not {"input", "p", "method"} <= set(expression):
-            raise OperationFailure("$percentile requires input, p and method")
-
-
 def _compare_values(
     left: Any,
     right: Any,
@@ -358,338 +288,10 @@ def _compare_values(
     }[operator]
 
 
-def _require_numeric(operator: str, value: object) -> int | float:
-    if not is_bson_numeric(value):
-        raise OperationFailure(f"{operator} requires numeric arguments")
-    return value
-
-
-def _is_numeric(value: object) -> bool:
-    return is_bson_numeric(value)
-
-
-def _sum_accumulator_operand(value: Any) -> int | float | None:
-    if _is_numeric(value):
-        return value
-    if isinstance(value, list):
-        return sum(item for item in value if _is_numeric(item))
-    return None
-
-
-def _stddev_accumulator_operand(value: Any) -> float | None:
-    if isinstance(value, bool) or value is None or isinstance(value, list):
-        return None
-    if not _is_numeric(value):
-        return None
-    numeric_value = float(value)
-    if not math.isfinite(numeric_value):
-        return math.nan
-    return numeric_value
-
-
-def _stddev_expression_values(
-    document: Document,
-    spec: object,
-    variables: dict[str, Any] | None,
-    *,
-    dialect: MongoDialect = MONGODB_DIALECT_70,
-) -> list[float]:
-    raw_values: list[Any]
-    if isinstance(spec, list):
-        raw_values = [
-            evaluate_expression(document, item, variables, dialect=dialect)
-            for item in spec
-        ]
-        traverse_arrays = False
-    else:
-        raw_values = [
-            evaluate_expression(document, spec, variables, dialect=dialect)
-        ]
-        traverse_arrays = True
-
-    values: list[float] = []
-    for raw_value in raw_values:
-        if raw_value is None or isinstance(raw_value, bool):
-            continue
-        if isinstance(raw_value, list):
-            if not traverse_arrays:
-                continue
-            candidates = raw_value
-        else:
-            candidates = [raw_value]
-        for candidate in candidates:
-            if isinstance(candidate, bool) or candidate is None:
-                continue
-            if not _is_numeric(candidate):
-                continue
-            numeric_value = float(candidate)
-            if not math.isfinite(numeric_value):
-                return []
-            values.append(numeric_value)
-    return values
-
-
-def _compute_stddev(values: list[float], *, population: bool) -> float | None:
-    if not values:
-        return None
-    if population and len(values) == 1:
-        return 0.0
-    if not population and len(values) < 2:
-        return None
-    total = sum(values)
-    sum_of_squares = sum(value * value for value in values)
-    if population:
-        mean = total / len(values)
-        variance = max((sum_of_squares / len(values)) - (mean * mean), 0.0)
-    else:
-        variance = max(
-            (sum_of_squares - ((total * total) / len(values))) / (len(values) - 1),
-            0.0,
-        )
-    return math.sqrt(variance)
-
-
 def _require_array(operator: str, value: object) -> list[Any]:
     if not isinstance(value, list):
         raise OperationFailure(f"{operator} requires array arguments")
     return value
-
-
-def _normalize_pick_n_size(operator: str, value: Any) -> int:
-    size = _require_integral_numeric(operator, value)
-    if size < 1:
-        raise OperationFailure(f"{operator} n must be a positive integer")
-    return size
-
-
-def _evaluate_pick_n_input(
-    operator: str,
-    document: Document,
-    expression: object,
-    variables: dict[str, Any] | None,
-    *,
-    dialect: MongoDialect = MONGODB_DIALECT_70,
-) -> tuple[Any, int]:
-    if not isinstance(expression, dict) or not {"input", "n"} <= set(expression):
-        raise OperationFailure(f"{operator} requires input and n")
-    value = _evaluate_expression_with_missing(
-        document,
-        expression["input"],
-        variables or {},
-        dialect=dialect,
-    )
-    if value is _MISSING or isinstance(value, UndefinedType):
-        value = None
-    size = _normalize_pick_n_size(
-        operator,
-        evaluate_expression(document, expression["n"], variables, dialect=dialect),
-    )
-    return value, size
-
-
-def _evaluate_ordered_accumulator_input(
-    operator: str,
-    document: Document,
-    expression: object,
-    variables: dict[str, Any] | None,
-    *,
-    dialect: MongoDialect = MONGODB_DIALECT_70,
-) -> tuple[SortSpec, list[Any], Any, int | None]:
-    if not isinstance(expression, dict) or "sortBy" not in expression or "output" not in expression:
-        raise OperationFailure(f"{operator} requires sortBy and output")
-    sort_spec = _require_sort(expression["sortBy"])
-    sort_values: list[Any] = []
-    for field, _direction in sort_spec:
-        resolved = _resolve_aggregation_field_path(document, field)
-        sort_values.append(None if resolved is _MISSING else resolved)
-    output = evaluate_expression(document, expression["output"], variables, dialect=dialect)
-    size: int | None = None
-    if operator in {"$topN", "$bottomN"}:
-        if "n" not in expression:
-            raise OperationFailure(f"{operator} requires n")
-        size = _normalize_pick_n_size(
-            operator,
-            evaluate_expression(document, expression["n"], variables, dialect=dialect),
-        )
-    return sort_spec, sort_values, output, size
-
-
-def _normalize_percentile_probabilities(
-    operator: str,
-    probabilities_value: Any,
-) -> list[float]:
-    if not isinstance(probabilities_value, list):
-        raise OperationFailure(f"{operator} p must evaluate to an array")
-    if not probabilities_value:
-        raise OperationFailure(f"{operator} p must not be an empty array")
-    normalized: list[float] = []
-    for item in probabilities_value:
-        if not isinstance(item, (int, float, decimal.Decimal)) or isinstance(item, bool):
-            raise OperationFailure(f"{operator} p values must be numeric")
-        probability = float(item)
-        if probability < 0.0 or probability > 1.0:
-            raise OperationFailure(f"{operator} p values must be in the range [0.0, 1.0]")
-        normalized.append(probability)
-    return normalized
-
-
-def _extract_percentile_candidates(
-    operator: str,
-    input_value: Any,
-) -> list[int | float | decimal.Decimal]:
-    if input_value is None or isinstance(input_value, UndefinedType):
-        return []
-    if isinstance(input_value, list):
-        candidates = input_value
-    else:
-        candidates = [input_value]
-    return [
-        candidate
-        for candidate in candidates
-        if _is_numeric(candidate)
-    ]
-
-
-def _parse_percentile_spec(
-    operator: str,
-    document: Document,
-    spec: object,
-    variables: dict[str, Any] | None,
-    *,
-    dialect: MongoDialect = MONGODB_DIALECT_70,
-) -> tuple[list[int | float | decimal.Decimal], list[float]]:
-    if not isinstance(spec, dict) or "input" not in spec or "method" not in spec:
-        raise OperationFailure(f"{operator} requires input and method")
-    method = evaluate_expression(document, spec["method"], variables, dialect=dialect)
-    if method != "approximate":
-        raise OperationFailure(f"{operator} method must be 'approximate'")
-    input_value = _evaluate_expression_with_missing(document, spec["input"], variables or {}, dialect=dialect)
-    probabilities = (
-        [0.5]
-        if operator == "$median"
-        else _normalize_percentile_probabilities(
-            operator,
-            evaluate_expression(document, spec.get("p"), variables, dialect=dialect),
-        )
-    )
-    return _extract_percentile_candidates(operator, input_value), probabilities
-
-
-def _compute_percentiles(
-    values: list[int | float | decimal.Decimal],
-    probabilities: list[float],
-    *,
-    dialect: MongoDialect = MONGODB_DIALECT_70,
-) -> list[int | float | decimal.Decimal] | None:
-    if not values:
-        return None
-    ordered = sorted(values, key=cmp_to_key(dialect.policy.compare_values))
-    results: list[int | float | decimal.Decimal] = []
-    length = len(ordered)
-    for probability in probabilities:
-        if probability <= 0.0:
-            results.append(deepcopy(ordered[0]))
-            continue
-        if probability >= 1.0:
-            results.append(deepcopy(ordered[-1]))
-            continue
-        index = math.ceil(probability * length) - 1
-        index = min(max(index, 0), length - 1)
-        results.append(deepcopy(ordered[index]))
-    return results
-
-
-def _compare_ordered_accumulator_items(
-    left: tuple[list[Any], Any, int],
-    right: tuple[list[Any], Any, int],
-    sort_spec: SortSpec,
-    *,
-    dialect: MongoDialect = MONGODB_DIALECT_70,
-    reverse_tie_break: bool = False,
-) -> int:
-    left_sort_values, _left_output, left_sequence = left
-    right_sort_values, _right_output, right_sequence = right
-    for index, (_field, direction) in enumerate(sort_spec):
-        comparison = dialect.policy.compare_values(left_sort_values[index], right_sort_values[index])
-        if comparison == 0:
-            continue
-        return comparison if direction == 1 else -comparison
-    if left_sequence == right_sequence:
-        return 0
-    if reverse_tie_break:
-        return -1 if left_sequence > right_sequence else 1
-    return -1 if left_sequence < right_sequence else 1
-
-
-def _trim_ordered_accumulator(
-    state: _OrderedAccumulator,
-    sort_spec: SortSpec,
-    *,
-    keep: int,
-    bottom: bool,
-    dialect: MongoDialect = MONGODB_DIALECT_70,
-) -> None:
-    state.items.sort(
-        key=cmp_to_key(
-            lambda left, right: _compare_ordered_accumulator_items(
-                left,
-                right,
-                sort_spec,
-                dialect=dialect,
-                reverse_tie_break=bottom,
-            )
-        )
-    )
-    if len(state.items) <= keep:
-        if bottom:
-            state.items.sort(
-                key=cmp_to_key(
-                    lambda left, right: _compare_ordered_accumulator_items(
-                        left,
-                        right,
-                        sort_spec,
-                        dialect=dialect,
-                    )
-                )
-            )
-        return
-    if bottom:
-        del state.items[: len(state.items) - keep]
-        state.items.sort(
-            key=cmp_to_key(
-                lambda left, right: _compare_ordered_accumulator_items(
-                    left,
-                    right,
-                    sort_spec,
-                    dialect=dialect,
-                )
-            )
-        )
-    else:
-        del state.items[keep:]
-
-
-def _window_sort_key_values(
-    document: Document,
-    sort_spec: SortSpec,
-) -> list[Any]:
-    values: list[Any] = []
-    for field, _direction in sort_spec:
-        found, value = get_document_value(document, field)
-        values.append(value if found else None)
-    return values
-
-
-def _window_sort_keys_equal(
-    left: list[Any],
-    right: list[Any],
-    *,
-    dialect: MongoDialect = MONGODB_DIALECT_70,
-) -> bool:
-    if len(left) != len(right):
-        return False
-    return all(dialect.policy.compare_values(left[index], right[index]) == 0 for index in range(len(left)))
-
 
 def _expression_truthy(value: Any, *, dialect: MongoDialect) -> bool:
     return dialect.policy.expression_truthy(value)
@@ -808,17 +410,6 @@ def _trunc_numeric(value: int | float, place: int) -> int | float:
         return int(truncated) if place == 0 else truncated
     truncated = math.trunc(value / factor) * factor
     return int(truncated)
-
-
-def _require_integral_numeric(operator: str, value: Any) -> int:
-    if isinstance(value, bool):
-        raise OperationFailure(f"{operator} requires integral numeric arguments")
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float) and value.is_integer():
-        return int(value)
-    raise OperationFailure(f"{operator} requires integral numeric arguments")
-
 
 def _bson_cstring_size(value: str) -> int:
     encoded = value.encode("utf-8")
@@ -994,308 +585,88 @@ def evaluate_expression(
                     ),
                     missing_sentinel=_MISSING,
                 )
-            if operator in {"$eq", "$ne", "$gt", "$gte", "$lt", "$lte"}:
-                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
-                left = evaluate_expression(document, args[0], variables, dialect=dialect)
-                right = evaluate_expression(document, args[1], variables, dialect=dialect)
-                return _compare_values(left, right, operator, dialect=dialect)
-            if operator == "$and":
-                args = _require_expression_args(operator, spec, min_args=0)
-                return all(
-                    _expression_truthy(
-                        evaluate_expression(document, item, variables, dialect=dialect),
-                        dialect=dialect,
-                    )
-                    for item in args
-                )
-            if operator == "$or":
-                args = _require_expression_args(operator, spec, min_args=0)
-                return any(
-                    _expression_truthy(
-                        evaluate_expression(document, item, variables, dialect=dialect),
-                        dialect=dialect,
-                    )
-                    for item in args
-                )
-            if operator == "$in":
-                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
-                needle = evaluate_expression(document, args[0], variables, dialect=dialect)
-                haystack = evaluate_expression(document, args[1], variables, dialect=dialect)
-                if haystack is None:
-                    return None
-                if not isinstance(haystack, list):
-                    raise OperationFailure("$in requires the second argument to evaluate to a list")
-                return any(
-                    QueryEngine._values_equal(needle, item, dialect=dialect)
-                    for item in haystack
-                )
-            if operator == "$ifNull":
-                args = _require_expression_args(operator, spec, min_args=2)
-                for item in args:
-                    value = evaluate_expression(document, item, variables, dialect=dialect)
-                    if value is not None and not isinstance(value, UndefinedType):
-                        return value
-                return None
-            if operator == "$cond":
-                if isinstance(spec, list):
-                    args = _require_expression_args(operator, spec, min_args=3, max_args=3)
-                    condition, when_true, when_false = args
-                elif isinstance(spec, dict):
-                    if not {"if", "then", "else"} <= set(spec):
-                        raise OperationFailure("$cond object form requires if, then and else")
-                    condition = spec["if"]
-                    when_true = spec["then"]
-                    when_false = spec["else"]
-                else:
-                    raise OperationFailure("$cond requires a list or document specification")
-                condition_value = evaluate_expression(
-                    document,
-                    condition,
-                    variables,
-                    dialect=dialect,
-                )
-                branch = when_true if _expression_truthy(condition_value, dialect=dialect) else when_false
-                return evaluate_expression(document, branch, variables, dialect=dialect)
-            if operator == "$setField":
-                if not isinstance(spec, dict) or not {"field", "input", "value"} <= set(spec):
-                    raise OperationFailure("$setField requires field, input, and value")
-                field_name = evaluate_expression(document, spec["field"], variables, dialect=dialect)
-                if not isinstance(field_name, str):
-                    raise OperationFailure("$setField field must resolve to a string")
-                input_value = _evaluate_expression_with_missing(document, spec["input"], variables, dialect=dialect)
-                if input_value is _MISSING or input_value is None:
-                    return None
-                if not isinstance(input_value, dict):
-                    raise OperationFailure("$setField input must resolve to an object")
-                result = deepcopy(input_value)
-                result[field_name] = evaluate_expression(document, spec["value"], variables, dialect=dialect)
-                return result
-            if operator == "$unsetField":
-                if not isinstance(spec, dict) or not {"field", "input"} <= set(spec):
-                    raise OperationFailure("$unsetField requires field and input")
-                field_name = evaluate_expression(document, spec["field"], variables, dialect=dialect)
-                if not isinstance(field_name, str):
-                    raise OperationFailure("$unsetField field must resolve to a string")
-                input_value = _evaluate_expression_with_missing(document, spec["input"], variables, dialect=dialect)
-                if input_value is _MISSING or input_value is None or isinstance(input_value, UndefinedType):
-                    return None
-                if not isinstance(input_value, dict):
-                    raise OperationFailure("$unsetField input must resolve to an object")
-                result = deepcopy(input_value)
-                result.pop(field_name, None)
-                return result
-            if operator == "$switch":
-                if not isinstance(spec, dict) or "branches" not in spec:
-                    raise OperationFailure("$switch requires branches")
-                branches = spec["branches"]
-                if not isinstance(branches, list) or not branches:
-                    raise OperationFailure("$switch branches must be a non-empty array")
-                for branch in branches:
-                    if not isinstance(branch, dict) or set(branch) != {"case", "then"}:
-                        raise OperationFailure("$switch branches must contain case and then")
-                    condition_value = evaluate_expression(document, branch["case"], variables, dialect=dialect)
-                    if _expression_truthy(condition_value, dialect=dialect):
-                        return evaluate_expression(document, branch["then"], variables, dialect=dialect)
-                if "default" in spec:
-                    return evaluate_expression(document, spec["default"], variables, dialect=dialect)
-                raise OperationFailure("$switch could not find a matching branch for an input, and no default was specified")
-            if operator in {"$add", "$multiply"}:
-                args = _require_expression_args(operator, spec, min_args=2)
-                raw_values = [
-                    evaluate_expression(document, item, variables, dialect=dialect)
-                    for item in args
-                ]
-                if any(value is None for value in raw_values):
-                    return None
-                if operator == "$add":
-                    date_values = [
-                        value for value in raw_values
-                        if isinstance(value, datetime.datetime)
-                    ]
-                    if date_values:
-                        if len(date_values) != 1:
-                            raise OperationFailure("$add only supports a single date argument")
-                        result = date_values[0]
-                        for value in raw_values:
-                            if isinstance(value, datetime.datetime):
-                                continue
-                            result = _add_milliseconds(result, _require_numeric(operator, value))
-                        return result
-                values = [_require_numeric(operator, value) for value in raw_values]
-                result = values[0]
-                for value in values[1:]:
-                    result = result + value if operator == "$add" else result * value
-                return result
-            if operator in {"$subtract", "$divide", "$mod"}:
-                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
-                left_raw = evaluate_expression(document, args[0], variables, dialect=dialect)
-                right_raw = evaluate_expression(document, args[1], variables, dialect=dialect)
-                if left_raw is None or right_raw is None:
-                    return None
-                if operator == "$subtract":
-                    return _subtract_values(left_raw, right_raw)
-                left = _require_numeric(operator, left_raw)
-                right = _require_numeric(operator, right_raw)
-                if operator == "$divide":
-                    if right == 0:
-                        raise OperationFailure("$divide cannot divide by zero")
-                    return left / right
-                if right == 0:
-                    raise OperationFailure("$mod cannot divide by zero")
-                return _mongo_mod(left, right)
-            if operator in {"$bitAnd", "$bitOr", "$bitXor"}:
-                args = _require_expression_args(operator, spec, min_args=2)
-                values = [
-                    _require_integral_numeric(
-                        operator,
-                        evaluate_expression(document, item, variables, dialect=dialect),
-                    )
-                    for item in args
-                ]
-                result = values[0]
-                for value in values[1:]:
-                    if operator == "$bitAnd":
-                        result &= value
-                    elif operator == "$bitOr":
-                        result |= value
-                    else:
-                        result ^= value
-                return result
-            if operator == "$bitNot":
-                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
-                value = _require_integral_numeric(
-                    operator,
-                    evaluate_expression(document, args[0], variables, dialect=dialect),
-                )
-                return ~value
-            if operator in {"$abs", "$exp", "$ln", "$log10", "$sqrt"}:
-                args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
-                raw_value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
-                if raw_value is _MISSING or raw_value is None:
-                    return None
-                value = _require_numeric(operator, raw_value)
-                if operator == "$abs":
-                    return abs(value)
-                if math.isnan(value):
-                    return value
-                if operator == "$exp":
-                    return math.exp(value)
-                if operator == "$sqrt":
-                    if value < 0:
-                        raise OperationFailure("$sqrt cannot operate on negative numbers")
-                    return math.sqrt(value)
-                if value <= 0:
-                    raise OperationFailure(f"{operator} requires a positive numeric argument")
-                return math.log(value) if operator == "$ln" else math.log10(value)
-            if operator in {"$stdDevPop", "$stdDevSamp"}:
-                values = _stddev_expression_values(
-                    document,
-                    spec,
-                    variables,
-                    dialect=dialect,
-                )
-                return _compute_stddev(values, population=operator == "$stdDevPop")
-            if operator in {"$median", "$percentile"}:
-                values, probabilities = _parse_percentile_spec(
+            if operator in CONTROL_OBJECT_EXPRESSION_OPERATORS:
+                return evaluate_control_object_expression(
                     operator,
                     document,
                     spec,
                     variables,
                     dialect=dialect,
-                )
-                percentiles = _compute_percentiles(values, probabilities, dialect=dialect)
-                if operator == "$median":
-                    return None if percentiles is None else percentiles[0]
-                return percentiles
-            if operator in {"$log", "$pow"}:
-                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
-                left_raw = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
-                right_raw = _evaluate_expression_with_missing(document, args[1], variables, dialect=dialect)
-                if left_raw is _MISSING or right_raw is _MISSING or left_raw is None or right_raw is None:
-                    return None
-                left = _require_numeric(operator, left_raw)
-                right = _require_numeric(operator, right_raw)
-                if operator == "$pow":
-                    return math.pow(left, right)
-                if math.isnan(left) or math.isnan(right):
-                    return math.nan
-                if left <= 0 or right <= 0 or right == 1:
-                    raise OperationFailure("$log requires a positive argument and base where base != 1")
-                return math.log(left, right)
-            if operator in {"$round", "$trunc"}:
-                args = _require_expression_args(operator, spec, min_args=1, max_args=2)
-                raw_value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
-                if raw_value is _MISSING or raw_value is None:
-                    return None
-                value = _require_numeric(operator, raw_value)
-                if math.isnan(value) or math.isinf(value):
-                    return value
-                place_raw = evaluate_expression(document, args[1], variables, dialect=dialect) if len(args) == 2 else 0
-                place = _normalize_numeric_place(operator, place_raw)
-                if operator == "$round":
-                    return _round_numeric(value, place)
-                return _trunc_numeric(value, place)
-            if operator in {"$floor", "$ceil"}:
-                args = _require_expression_args(operator, spec, min_args=1, max_args=1)
-                raw_value = evaluate_expression(document, args[0], variables, dialect=dialect)
-                if raw_value is None:
-                    return None
-                value = _require_numeric(operator, raw_value)
-                if math.isnan(value) or math.isinf(value):
-                    return value
-                integer = int(value)
-                if operator == "$floor":
-                    return integer if integer <= value else integer - 1
-                return integer if integer >= value else integer + 1
-            if operator == "$range":
-                args = _require_expression_args(operator, spec, min_args=2, max_args=3)
-                start = evaluate_expression(document, args[0], variables, dialect=dialect)
-                end = evaluate_expression(document, args[1], variables, dialect=dialect)
-                step = evaluate_expression(document, args[2], variables, dialect=dialect) if len(args) == 3 else 1
-                if not all(isinstance(value, int) and not isinstance(value, bool) for value in (start, end, step)):
-                    raise OperationFailure("$range requires integer arguments")
-                if step == 0:
-                    raise OperationFailure("$range step cannot be zero")
-                return list(range(start, end, step))
-            if operator == "$let":
-                if not isinstance(spec, dict) or "vars" not in spec or "in" not in spec or not isinstance(spec["vars"], dict):
-                    raise OperationFailure("$let requires vars and in")
-                scoped = dict(variables)
-                for name, value_expression in spec["vars"].items():
-                    scoped[name] = evaluate_expression(
-                        document,
-                        value_expression,
-                        variables,
+                    evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
+                        current_document,
+                        current_expression,
+                        current_variables,
                         dialect=dialect,
-                    )
-                return evaluate_expression(document, spec["in"], scoped, dialect=dialect)
-            if operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
-                value, size = _evaluate_pick_n_input(
+                    ),
+                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
+                        current_document,
+                        current_expression,
+                        current_variables,
+                        dialect=dialect,
+                    ),
+                    require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: _require_expression_args(
+                        current_operator,
+                        current_spec,
+                        min_args=current_min_args,
+                        max_args=current_max_args,
+                    ),
+                    compare_values=lambda left, right, comparison_operator: _compare_values(
+                        left,
+                        right,
+                        comparison_operator,
+                        dialect=dialect,
+                    ),
+                    expression_truthy=lambda value: _expression_truthy(value, dialect=dialect),
+                    require_array=_require_array,
+                    evaluate_pick_n_input=lambda current_operator, current_document, current_spec, current_variables=None: _evaluate_pick_n_input(
+                        current_operator,
+                        current_document,
+                        current_spec,
+                        current_variables,
+                        dialect=dialect,
+                        evaluate_expression=lambda nested_document, nested_expression, nested_variables=None: evaluate_expression(
+                            nested_document,
+                            nested_expression,
+                            nested_variables,
+                            dialect=dialect,
+                        ),
+                        evaluate_expression_with_missing=lambda nested_document, nested_expression, nested_variables=None: _evaluate_expression_with_missing(
+                            nested_document,
+                            nested_expression,
+                            nested_variables,
+                            dialect=dialect,
+                        ),
+                        missing_sentinel=_MISSING,
+                    ),
+                    missing_sentinel=_MISSING,
+                )
+            if operator in NUMERIC_EXPRESSION_OPERATORS:
+                return evaluate_numeric_expression(
                     operator,
                     document,
                     spec,
                     variables,
                     dialect=dialect,
+                    evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
+                        current_document,
+                        current_expression,
+                        current_variables,
+                        dialect=dialect,
+                    ),
+                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
+                        current_document,
+                        current_expression,
+                        current_variables,
+                        dialect=dialect,
+                    ),
+                    require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: _require_expression_args(
+                        current_operator,
+                        current_spec,
+                        min_args=current_min_args,
+                        max_args=current_max_args,
+                    ),
+                    missing_sentinel=_MISSING,
                 )
-                if value is None:
-                    return None
-                values = _require_array(operator, value)
-                if operator in {"$maxN", "$minN"}:
-                    filtered = [
-                        deepcopy(item)
-                        for item in values
-                        if item is not None and not isinstance(item, UndefinedType)
-                    ]
-                    filtered.sort(
-                        key=cmp_to_key(dialect.policy.compare_values),
-                        reverse=operator == "$maxN",
-                    )
-                    return filtered[:size]
-                if size >= len(values):
-                    return deepcopy(values)
-                if operator == "$firstN":
-                    return deepcopy(values[:size])
-                return deepcopy(values[-size:])
             if operator in DATE_EXPRESSION_OPERATORS:
                 return evaluate_date_expression(
                     operator,
@@ -1317,327 +688,12 @@ def evaluate_expression(
                     ),
                     missing_sentinel=_MISSING,
                 )
-            if operator == "$mergeObjects":
-                args = _require_expression_args(operator, spec, min_args=1)
-                merged: dict[str, Any] = {}
-                for item in args:
-                    value = evaluate_expression(document, item, variables, dialect=dialect)
-                    if value is None:
-                        continue
-                    if not isinstance(value, dict):
-                        raise OperationFailure("$mergeObjects requires document operands")
-                    merged.update(deepcopy(value))
-                return merged
-            if operator == "$getField":
-                if isinstance(spec, str):
-                    field_name = spec
-                    source = document
-                elif isinstance(spec, dict):
-                    if "field" not in spec:
-                        raise OperationFailure("$getField requires field")
-                    field_name = evaluate_expression(document, spec["field"], variables, dialect=dialect)
-                    source = evaluate_expression(
-                        document,
-                        spec.get("input", "$$CURRENT"),
-                        variables,
-                        dialect=dialect,
-                    )
-                else:
-                    raise OperationFailure("$getField requires a string or document specification")
-                if field_name is None:
-                    return None
-                if not isinstance(field_name, str):
-                    raise OperationFailure("$getField field must evaluate to a string")
-                if not isinstance(source, dict):
-                    return None
-                return deepcopy(source.get(field_name))
             raise OperationFailure(f"Unsupported aggregation expression: {operator}")
 
     return {
         key: evaluate_expression(document, value, variables, dialect=dialect)
         for key, value in expression.items()
     }
-
-
-def _initialize_accumulators(
-    accumulator_specs: dict[str, object] | None,
-    *,
-    default_sum: bool = False,
-    dialect: MongoDialect = MONGODB_DIALECT_70,
-    support_checker: Callable[[str], bool] | None = None,
-    unsupported_message: str = "Unsupported accumulator",
-) -> dict[str, Any]:
-    initialized: dict[str, Any] = {}
-    specs = {"count": {"$sum": 1}} if accumulator_specs is None and default_sum else (accumulator_specs or {})
-    if support_checker is None:
-        support_checker = dialect.supports_group_accumulator
-    for field, accumulator in specs.items():
-        if not isinstance(accumulator, dict) or len(accumulator) != 1:
-            raise OperationFailure("Accumulator must be a single-key document")
-        operator, _ = next(iter(accumulator.items()))
-        if not support_checker(operator):
-            raise OperationFailure(f"{unsupported_message}: {operator}")
-        _validate_accumulator_expression(operator, accumulator[operator])
-        if operator in {"$sum", "$count"}:
-            initialized[field] = 0
-        elif operator in {"$min", "$max", "$first", "$last"}:
-            initialized[field] = None
-        elif operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
-            initialized[field] = _PickNAccumulator()
-        elif operator in {"$top", "$bottom", "$topN", "$bottomN"}:
-            initialized[field] = _OrderedAccumulator()
-        elif operator in {"$median", "$percentile"}:
-            initialized[field] = _PercentileAccumulator(scalar_output=operator == "$median")
-        elif operator == "$avg":
-            initialized[field] = _AverageAccumulator()
-        elif operator == "$stdDevPop":
-            initialized[field] = _StdDevAccumulator(population=True)
-        elif operator == "$stdDevSamp":
-            initialized[field] = _StdDevAccumulator(population=False)
-        elif operator in {"$push", "$addToSet"}:
-            initialized[field] = []
-        elif operator == "$mergeObjects":
-            initialized[field] = {}
-        else:
-            raise OperationFailure(f"{unsupported_message}: {operator}")
-    return initialized
-
-
-def _apply_accumulators(
-    bucket: _AccumulatorBucket | dict[str, Any],
-    accumulator_specs: dict[str, object] | None,
-    document: Document,
-    variables: dict[str, Any] | None = None,
-    *,
-    dialect: MongoDialect = MONGODB_DIALECT_70,
-) -> None:
-    specs = {"count": {"$sum": 1}} if accumulator_specs is None else accumulator_specs
-    values = bucket.values if isinstance(bucket, _AccumulatorBucket) else bucket
-    if not isinstance(bucket, _AccumulatorBucket):
-        flags = _accumulator_flags(bucket)
-    else:
-        flags = bucket.flags
-    for field, accumulator in specs.items():
-        operator, expression = next(iter(accumulator.items()))
-        value = None if operator == "$count" else evaluate_expression(document, expression, variables, dialect=dialect)
-        if operator in {"$sum", "$count"}:
-            if operator == "$count":
-                values[field] += 1
-                continue
-            if value is None:
-                continue
-            numeric_value = _sum_accumulator_operand(value)
-            if numeric_value is None:
-                continue
-            values[field] += numeric_value
-        elif operator == "$min":
-            if value is None:
-                continue
-            if not flags.get(field, False) or dialect.policy.compare_values(value, values[field]) < 0:
-                values[field] = deepcopy(value)
-                flags[field] = True
-        elif operator == "$max":
-            if value is None:
-                continue
-            if not flags.get(field, False) or dialect.policy.compare_values(value, values[field]) > 0:
-                values[field] = deepcopy(value)
-                flags[field] = True
-        elif operator == "$avg":
-            if value is None:
-                continue
-            if not _is_numeric(value):
-                continue
-            values[field].total += value
-            values[field].count += 1
-        elif operator in {"$stdDevPop", "$stdDevSamp"}:
-            operand = _stddev_accumulator_operand(value)
-            if operand is None:
-                continue
-            if not math.isfinite(operand):
-                values[field].invalid = True
-                continue
-            values[field].total += operand
-            values[field].sum_of_squares += operand * operand
-            values[field].count += 1
-        elif operator == "$push":
-            values[field].append(deepcopy(value))
-        elif operator == "$addToSet":
-            _append_unique_values(
-                values[field],
-                [value],
-                dialect=dialect,
-            )
-        elif operator == "$mergeObjects":
-            if value is None:
-                continue
-            if not isinstance(value, dict):
-                raise OperationFailure("$mergeObjects accumulator requires document operands")
-            values[field].update(deepcopy(value))
-        elif operator == "$first":
-            if not flags.get(field, False):
-                values[field] = deepcopy(value)
-                flags[field] = True
-        elif operator == "$last":
-            values[field] = deepcopy(value)
-            flags[field] = True
-        elif operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
-            value, size = _evaluate_pick_n_input(
-                operator,
-                document,
-                expression,
-                variables,
-                dialect=dialect,
-            )
-            state = values[field]
-            if state.n is None:
-                state.n = size
-            elif state.n != size:
-                raise OperationFailure(f"{operator} n must evaluate to a consistent positive integer within the group")
-            if operator == "$firstN":
-                if len(state.items) < state.n:
-                    state.items.append(deepcopy(value))
-            elif operator == "$lastN":
-                state.items.append(deepcopy(value))
-                if len(state.items) > state.n:
-                    del state.items[:-state.n]
-            else:
-                if value is None or isinstance(value, UndefinedType):
-                    continue
-                state.items.append(deepcopy(value))
-                state.items.sort(
-                    key=cmp_to_key(dialect.policy.compare_values),
-                    reverse=operator == "$maxN",
-                )
-                del state.items[state.n:]
-        elif operator in {"$top", "$bottom", "$topN", "$bottomN"}:
-            sort_spec, sort_values, output, size = _evaluate_ordered_accumulator_input(
-                operator,
-                document,
-                expression,
-                variables,
-                dialect=dialect,
-            )
-            state = values[field]
-            if state.sort_spec is None:
-                state.sort_spec = sort_spec
-            if operator in {"$topN", "$bottomN"}:
-                if state.n is None:
-                    state.n = size
-                elif state.n != size:
-                    raise OperationFailure(f"{operator} n must evaluate to a consistent positive integer within the group")
-                keep = state.n
-            else:
-                keep = 1
-            state.items.append((sort_values, deepcopy(output), state.sequence))
-            state.sequence += 1
-            _trim_ordered_accumulator(
-                state,
-                sort_spec,
-                keep=keep,
-                bottom=operator in {"$bottom", "$bottomN"},
-                dialect=dialect,
-            )
-        elif operator in {"$median", "$percentile"}:
-            candidates, probabilities = _parse_percentile_spec(
-                operator,
-                document,
-                expression,
-                variables,
-                dialect=dialect,
-            )
-            state = values[field]
-            if state.probabilities is None:
-                state.probabilities = probabilities
-            elif state.probabilities != probabilities:
-                raise OperationFailure(f"{operator} p must evaluate to a consistent array within the group")
-            state.values.extend(deepcopy(candidates))
-
-
-def _finalize_accumulators(bucket: _AccumulatorBucket | dict[str, Any]) -> Document:
-    document: Document = {}
-    include_bucket_id = isinstance(bucket, _AccumulatorBucket) and bucket.include_bucket_id
-    if include_bucket_id:
-        document["_id"] = deepcopy(bucket.bucket_id)
-    values = bucket.values if isinstance(bucket, _AccumulatorBucket) else bucket
-    for field, value in values.items():
-        if not isinstance(bucket, _AccumulatorBucket) and field == _ACCUMULATOR_FLAGS_KEY:
-            continue
-        if isinstance(value, _AverageAccumulator):
-            document[field] = None if value.count == 0 else value.total / value.count
-        elif isinstance(value, _StdDevAccumulator):
-            if value.invalid or value.count == 0:
-                document[field] = None
-            elif value.population:
-                mean = value.total / value.count
-                variance = max((value.sum_of_squares / value.count) - (mean * mean), 0.0)
-                document[field] = math.sqrt(variance)
-            elif value.count < 2:
-                document[field] = None
-            else:
-                variance = max(
-                    (value.sum_of_squares - ((value.total * value.total) / value.count))
-                    / (value.count - 1),
-                    0.0,
-                )
-                document[field] = math.sqrt(variance)
-        elif isinstance(value, _PickNAccumulator):
-            document[field] = deepcopy(value.items)
-        elif isinstance(value, _OrderedAccumulator):
-            if not value.items:
-                document[field] = None
-            elif value.n is None:
-                document[field] = deepcopy(value.items[0][1])
-            else:
-                document[field] = [deepcopy(item[1]) for item in value.items]
-        elif isinstance(value, _PercentileAccumulator):
-            probabilities = value.probabilities or [0.5]
-            percentiles = _compute_percentiles(value.values, probabilities)
-            if value.scalar_output:
-                document[field] = None if percentiles is None else percentiles[0]
-            else:
-                document[field] = percentiles
-        else:
-            document[field] = value
-    return document
-
-
-def _require_window_output_spec(spec: object) -> tuple[str, object, dict[str, object] | None]:
-    if not isinstance(spec, dict):
-        raise OperationFailure("$setWindowFields output entries must be documents")
-    window = spec.get("window")
-    if window is not None and not isinstance(window, dict):
-        raise OperationFailure("$setWindowFields window must be a document")
-    operator_items = [(key, value) for key, value in spec.items() if key != "window"]
-    if len(operator_items) != 1:
-        raise OperationFailure("$setWindowFields output entries require exactly one accumulator")
-    operator, expression = operator_items[0]
-    return operator, expression, window
-
-
-def _resolve_window_index(bound: object, current_index: int, last_index: int, *, lower: bool) -> int:
-    if bound == "unbounded":
-        return 0 if lower else last_index
-    if bound == "current":
-        return current_index
-    if isinstance(bound, int) and not isinstance(bound, bool):
-        return current_index + bound
-    raise OperationFailure("$setWindowFields documents bounds must be integers, 'current' or 'unbounded'")
-
-
-def _require_range_bound(bound: object) -> int | float | str:
-    if bound in {"current", "unbounded"}:
-        return bound
-    if isinstance(bound, (int, float)) and not isinstance(bound, bool):
-        return bound
-    raise OperationFailure("$setWindowFields range bounds must be numeric, 'current' or 'unbounded'")
-
-
-def _resolve_range_value(current_value: object, bound: int | float | str, *, lower: bool) -> float:
-    if bound == "unbounded":
-        return float("-inf") if lower else float("inf")
-    if bound == "current":
-        return float(current_value)  # type: ignore[arg-type]
-    return float(current_value) + float(bound)  # type: ignore[arg-type]
 
 
 from mongoeco.core.aggregation.grouping_stages import (  # noqa: E402
