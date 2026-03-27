@@ -17,7 +17,13 @@ class UpdatePathSegment:
     identifier: str | None = None
 
 
-def parse_update_path(path: str) -> tuple[UpdatePathSegment, ...]:
+@dataclass(frozen=True, slots=True)
+class CompiledUpdatePath:
+    raw: str
+    segments: tuple[UpdatePathSegment, ...]
+
+
+def compile_update_path(path: str) -> CompiledUpdatePath:
     if not isinstance(path, str):
         raise OperationFailure("update field names must be strings")
     if path == "":
@@ -51,33 +57,40 @@ def parse_update_path(path: str) -> tuple[UpdatePathSegment, ...]:
             )
             continue
         parsed.append(UpdatePathSegment("field", segment))
-    return tuple(parsed)
+    return CompiledUpdatePath(raw=path, segments=tuple(parsed))
+
+
+def parse_update_path(path: str) -> tuple[UpdatePathSegment, ...]:
+    return compile_update_path(path).segments
 
 
 def is_valid_array_filter_identifier(identifier: str) -> bool:
     return bool(_ARRAY_FILTER_IDENTIFIER_RE.match(identifier))
 
 
-def update_path_has_numeric_segment(path: str) -> bool:
-    return any(segment.kind == "index" for segment in parse_update_path(path))
+def update_path_has_numeric_segment(path: str | CompiledUpdatePath) -> bool:
+    compiled = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
+    return any(segment.kind == "index" for segment in compiled.segments)
 
 
-def update_path_has_positional_segment(path: str) -> bool:
+def update_path_has_positional_segment(path: str | CompiledUpdatePath) -> bool:
+    compiled = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
     return any(
         segment.kind in {"positional", "all_positional", "filtered_positional"}
-        for segment in parse_update_path(path)
+        for segment in compiled.segments
     )
 
 
 def expand_positional_update_paths(
     doc: object,
-    path: str,
+    path: str | CompiledUpdatePath,
     *,
     filtered_matcher: Callable[[str, object], bool],
 ) -> list[str]:
-    segments = parse_update_path(path)
-    if not update_path_has_positional_segment(path):
-        return [path]
+    compiled = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
+    segments = compiled.segments
+    if not update_path_has_positional_segment(compiled):
+        return [compiled.raw]
 
     expanded: list[str] = []
 

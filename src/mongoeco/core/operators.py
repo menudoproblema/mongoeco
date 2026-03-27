@@ -9,7 +9,12 @@ from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.core.paths import _same_value_for_update, delete_document_value, get_document_value, set_document_value
 from mongoeco.core.sorting import sort_documents
-from mongoeco.core.update_paths import expand_positional_update_paths, is_valid_array_filter_identifier, parse_update_path
+from mongoeco.core.update_paths import (
+    CompiledUpdatePath,
+    compile_update_path,
+    expand_positional_update_paths,
+    is_valid_array_filter_identifier,
+)
 from mongoeco.types import ArrayFilters, Filter, SortSpec
 
 
@@ -113,7 +118,8 @@ class UpdateEngine:
             for path, value in params.items():
                 if not isinstance(path, str):
                     raise OperationFailure("update field names must be strings")
-                for segment in parse_update_path(path):
+                compiled_path = compile_update_path(path)
+                for segment in compiled_path.segments:
                     if segment.kind == "filtered_positional":
                         if segment.identifier is None or segment.identifier not in array_filters:
                             raise OperationFailure("No array filter found for identifier used in update path")
@@ -188,7 +194,8 @@ class UpdateEngine:
         allow_positional: bool,
         dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> list[str]:
-        segments = parse_update_path(path)
+        compiled_path = compile_update_path(path)
+        segments = compiled_path.segments
         if segments[0].raw == "_id":
             raise OperationFailure("Modifying the immutable field '_id' is not allowed")
         if not allow_positional and any(
@@ -199,10 +206,17 @@ class UpdateEngine:
         if any(segment.kind == "positional" for segment in segments):
             if selector_filter is None:
                 raise OperationFailure("The positional operator did not find the match needed from the query")
-            return [UpdateEngine._resolve_legacy_positional_path(doc, path, selector_filter, dialect=dialect)]
+            return [
+                UpdateEngine._resolve_legacy_positional_path(
+                    doc,
+                    compiled_path,
+                    selector_filter,
+                    dialect=dialect,
+                )
+            ]
         concrete_paths = expand_positional_update_paths(
             doc,
-            path,
+            compiled_path,
             filtered_matcher=lambda identifier, candidate: UpdateEngine._array_filter_matches(
                 identifier,
                 candidate,
@@ -215,12 +229,13 @@ class UpdateEngine:
     @staticmethod
     def _resolve_legacy_positional_path(
         doc: dict[str, Any],
-        path: str,
+        path: str | CompiledUpdatePath,
         selector_filter: Filter,
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> str:
-        segments = parse_update_path(path)
+        compiled_path = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
+        segments = compiled_path.segments
         positional_indexes = [index for index, segment in enumerate(segments) if segment.kind == "positional"]
         if len(positional_indexes) != 1:
             raise OperationFailure("Legacy positional '$' update paths support exactly one positional segment")
@@ -304,7 +319,7 @@ class UpdateEngine:
 
     @staticmethod
     def _assert_mutable_path(path: str) -> None:
-        segments = parse_update_path(path)
+        segments = compile_update_path(path).segments
         if segments[0].raw == "_id":
             raise OperationFailure("Modifying the immutable field '_id' is not allowed")
         for segment in segments:
@@ -313,7 +328,7 @@ class UpdateEngine:
 
     @staticmethod
     def _assert_rename_path(path: str) -> None:
-        segments = parse_update_path(path)
+        segments = compile_update_path(path).segments
         if segments[0].raw == "_id":
             raise OperationFailure("Modifying the immutable field '_id' is not allowed")
         if any(
