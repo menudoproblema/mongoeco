@@ -2,7 +2,9 @@ import inspect
 import unittest
 
 from mongoeco.api._async.collection import AsyncCollection
+from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
 from mongoeco.api._async._materialized_cursor import AsyncMaterializedCursor
+from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.api._sync.collection import Collection
@@ -60,6 +62,11 @@ class ArchitectureUnitTests(unittest.TestCase):
 
     def test_namespace_admin_protocol_exposes_collection_options(self):
         self.assertIn("collection_options", AsyncNamespaceAdminEngine.__dict__)
+
+    def test_async_database_delegates_admin_surface_to_dedicated_service(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+
+        self.assertIsInstance(database._admin, AsyncDatabaseAdminService)
 
     def test_admin_cursors_share_materialized_base_classes(self):
         self.assertTrue(issubclass(AsyncIndexCursor, AsyncMaterializedCursor))
