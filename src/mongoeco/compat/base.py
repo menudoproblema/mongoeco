@@ -86,6 +86,8 @@ SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
         '$pow',
         '$round',
         '$sqrt',
+        '$stdDevPop',
+        '$stdDevSamp',
         '$floor',
         '$ceil',
         '$trunc',

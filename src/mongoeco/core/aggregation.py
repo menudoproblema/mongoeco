@@ -453,6 +453,68 @@ def _stddev_accumulator_operand(value: Any) -> float | None:
     return numeric_value
 
 
+def _stddev_expression_values(
+    document: Document,
+    spec: object,
+    variables: dict[str, Any] | None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> list[float]:
+    raw_values: list[Any]
+    if isinstance(spec, list):
+        raw_values = [
+            evaluate_expression(document, item, variables, dialect=dialect)
+            for item in spec
+        ]
+        traverse_arrays = False
+    else:
+        raw_values = [
+            evaluate_expression(document, spec, variables, dialect=dialect)
+        ]
+        traverse_arrays = True
+
+    values: list[float] = []
+    for raw_value in raw_values:
+        if raw_value is None or isinstance(raw_value, bool):
+            continue
+        if isinstance(raw_value, list):
+            if not traverse_arrays:
+                continue
+            candidates = raw_value
+        else:
+            candidates = [raw_value]
+        for candidate in candidates:
+            if isinstance(candidate, bool) or candidate is None:
+                continue
+            if not _is_numeric(candidate):
+                continue
+            numeric_value = float(candidate)
+            if not math.isfinite(numeric_value):
+                return []
+            values.append(numeric_value)
+    return values
+
+
+def _compute_stddev(values: list[float], *, population: bool) -> float | None:
+    if not values:
+        return None
+    if population and len(values) == 1:
+        return 0.0
+    if not population and len(values) < 2:
+        return None
+    total = sum(values)
+    sum_of_squares = sum(value * value for value in values)
+    if population:
+        mean = total / len(values)
+        variance = max((sum_of_squares / len(values)) - (mean * mean), 0.0)
+    else:
+        variance = max(
+            (sum_of_squares - ((total * total) / len(values))) / (len(values) - 1),
+            0.0,
+        )
+    return math.sqrt(variance)
+
+
 def _require_array(operator: str, value: object) -> list[Any]:
     if not isinstance(value, list):
         raise OperationFailure(f"{operator} requires array arguments")
@@ -1549,6 +1611,14 @@ def evaluate_expression(
                 if value <= 0:
                     raise OperationFailure(f"{operator} requires a positive numeric argument")
                 return math.log(value) if operator == "$ln" else math.log10(value)
+            if operator in {"$stdDevPop", "$stdDevSamp"}:
+                values = _stddev_expression_values(
+                    document,
+                    spec,
+                    variables,
+                    dialect=dialect,
+                )
+                return _compute_stddev(values, population=operator == "$stdDevPop")
             if operator in {"$log", "$pow"}:
                 args = _require_expression_args(operator, spec, min_args=2, max_args=2)
                 left_raw = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)

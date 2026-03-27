@@ -2428,6 +2428,30 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertAlmostEqual(windowed[1]["runningPop"], 1.0, places=10)
                     self.assertAlmostEqual(windowed[2]["runningPop"], 0.94280904158, places=10)
 
+    def test_aggregate_supports_stddev_expression_forms(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.events
+                    collection.insert_one({"_id": "1", "scores": [2, 4, 4, "x"], "a": 2, "b": 4, "c": 4})
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 0,
+                                    "popArray": {"$stdDevPop": "$scores"},
+                                    "sampArray": {"$stdDevSamp": "$scores"},
+                                    "popList": {"$stdDevPop": ["$a", "$b", "$c"]},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertAlmostEqual(documents[0]["popArray"], 0.94280904158, places=10)
+                    self.assertAlmostEqual(documents[0]["sampArray"], 1.15470053838, places=10)
+                    self.assertAlmostEqual(documents[0]["popList"], 0.94280904158, places=10)
+
     def test_aggregate_supports_string_expressions_last_and_add_to_set(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

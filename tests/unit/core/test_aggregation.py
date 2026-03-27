@@ -1639,6 +1639,46 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(windowed[4]["runningPop"], 0.0)
         self.assertIsNone(windowed[4]["runningSamp"])
 
+    def test_evaluate_expression_supports_stddev_expression_forms(self):
+        document = {
+            "scores": [2, 4, 4, "x"],
+            "a": 2,
+            "b": 4,
+            "c": 4,
+            "bad": "x",
+        }
+
+        self.assertAlmostEqual(
+            evaluate_expression(document, {"$stdDevPop": "$scores"}),
+            0.94280904158,
+            places=10,
+        )
+        self.assertAlmostEqual(
+            evaluate_expression(document, {"$stdDevSamp": "$scores"}),
+            1.15470053838,
+            places=10,
+        )
+        self.assertAlmostEqual(
+            evaluate_expression(document, {"$stdDevPop": ["$a", "$b", "$c", "$bad"]}),
+            0.94280904158,
+            places=10,
+        )
+        self.assertAlmostEqual(
+            evaluate_expression(document, {"$stdDevSamp": ["$a", "$b", "$c", "$bad"]}),
+            1.15470053838,
+            places=10,
+        )
+        self.assertEqual(
+            evaluate_expression({"only": 5}, {"$stdDevPop": "$only"}),
+            0.0,
+        )
+        self.assertIsNone(
+            evaluate_expression({"only": 5}, {"$stdDevSamp": "$only"})
+        )
+        self.assertIsNone(
+            evaluate_expression({"bad": "x"}, {"$stdDevPop": "$bad"})
+        )
+
     def test_set_window_fields_uses_window_support_hook_when_initializing_state(self):
         class _WindowOnlyLastDialect(MongoDialect):
             def supports_group_accumulator(self, name: str) -> bool:
