@@ -2600,6 +2600,24 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(evaluate_expression(document, {"$type": "$undefined"}), "undefined")
         self.assertEqual(evaluate_expression(document, {"$type": "$missing"}), "missing")
 
+    def test_evaluate_expression_preserves_bson_numeric_wrappers_in_less_common_numeric_paths(self):
+        document = {
+            "i32": BsonInt32(7),
+            "i32neg": BsonInt32(-7),
+            "dbl": BsonDouble(9.25),
+            "dec": BsonDecimal128(decimal.Decimal("12.50")),
+        }
+
+        self.assertEqual(evaluate_expression(document, {"$divide": ["$i32", 2]}), BsonDouble(3.5))
+        self.assertEqual(evaluate_expression(document, {"$mod": ["$i32", 3]}), BsonInt32(1))
+        self.assertEqual(evaluate_expression(document, {"$abs": "$i32neg"}), BsonInt32(7))
+        self.assertEqual(evaluate_expression(document, {"$bitNot": "$i32"}), BsonInt32(-8))
+        self.assertEqual(evaluate_expression(document, {"$floor": ["$dbl"]}), BsonDouble(9.0))
+        self.assertEqual(evaluate_expression(document, {"$ceil": ["$dbl"]}), BsonDouble(10.0))
+        self.assertEqual(evaluate_expression(document, {"$round": ["$dbl", 1]}), BsonDouble(9.2))
+        self.assertEqual(evaluate_expression(document, {"$trunc": ["$dec"]}), BsonDecimal128(decimal.Decimal("12")))
+        self.assertEqual(evaluate_expression(document, {"$pow": ["$i32", 2]}), BsonDouble(49.0))
+
     def test_evaluate_expression_scalar_conversion_edge_cases_and_errors(self):
         huge_decimal = "9" * 7000
         document = {

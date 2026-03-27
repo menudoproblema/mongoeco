@@ -8,9 +8,16 @@ from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_scalars import (
+    BsonDecimal128,
+    BsonDouble,
+    BsonInt32,
+    BsonInt64,
     bson_add,
     bson_bitwise,
+    bson_divide,
+    bson_mod,
     bson_multiply,
+    bson_rewrap_numeric,
     bson_subtract,
     is_bson_numeric,
     unwrap_bson_numeric,
@@ -96,15 +103,15 @@ def evaluate_numeric_expression(
             return None
         if operator == "$subtract":
             return _subtract_values(left_raw, right_raw)
-        left = unwrap_bson_numeric(_require_numeric(operator, left_raw))
-        right = unwrap_bson_numeric(_require_numeric(operator, right_raw))
+        left = _require_numeric(operator, left_raw)
+        right = _require_numeric(operator, right_raw)
         if operator == "$divide":
-            if right == 0:
+            if unwrap_bson_numeric(right) == 0:
                 raise OperationFailure("$divide cannot divide by zero")
-            return left / right
-        if right == 0:
+            return bson_divide(left, right)
+        if unwrap_bson_numeric(right) == 0:
             raise OperationFailure("$mod cannot divide by zero")
-        return _mongo_mod(left, right)
+        return bson_mod(left, right)
 
     if operator in {"$bitAnd", "$bitOr", "$bitXor"}:
         args = require_expression_args(operator, spec, 2, None)
@@ -121,8 +128,9 @@ def evaluate_numeric_expression(
 
     if operator == "$bitNot":
         args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
-        value = _require_integral_numeric(operator, evaluate_expression(document, args[0], variables))
-        return ~int(unwrap_bson_numeric(value))
+        raw_value = evaluate_expression(document, args[0], variables)
+        value = _require_integral_numeric(operator, raw_value)
+        return bson_rewrap_numeric(~int(unwrap_bson_numeric(value)), raw_value)
 
     if operator in {"$abs", "$exp", "$ln", "$log10", "$sqrt"}:
         args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
@@ -131,18 +139,19 @@ def evaluate_numeric_expression(
             return None
         value = unwrap_bson_numeric(_require_numeric(operator, raw_value))
         if operator == "$abs":
-            return abs(value)
+            return bson_rewrap_numeric(abs(value), raw_value)
         if math.isnan(value):
             return value
         if operator == "$exp":
-            return math.exp(value)
+            return bson_rewrap_numeric(math.exp(value), raw_value)
         if operator == "$sqrt":
             if value < 0:
                 raise OperationFailure("$sqrt cannot operate on negative numbers")
-            return math.sqrt(value)
+            return bson_rewrap_numeric(math.sqrt(value), raw_value)
         if value <= 0:
             raise OperationFailure(f"{operator} requires a positive numeric argument")
-        return math.log(value) if operator == "$ln" else math.log10(value)
+        result = math.log(value) if operator == "$ln" else math.log10(value)
+        return bson_rewrap_numeric(result, raw_value)
 
     if operator in {"$stdDevPop", "$stdDevSamp"}:
         values = _stddev_expression_values(
@@ -180,7 +189,14 @@ def evaluate_numeric_expression(
         left = unwrap_bson_numeric(_require_numeric(operator, left_raw))
         right = unwrap_bson_numeric(_require_numeric(operator, right_raw))
         if operator == "$pow":
-            return math.pow(left, right)
+            result = math.pow(left, right)
+            if isinstance(left_raw, BsonDecimal128) or isinstance(right_raw, BsonDecimal128):
+                return bson_rewrap_numeric(result, left_raw, right_raw)
+            if isinstance(left_raw, (BsonDouble, BsonDecimal128)) or isinstance(right_raw, (BsonDouble, BsonDecimal128)):
+                return BsonDouble(float(result))
+            if isinstance(left_raw, (BsonInt32, BsonInt64)) or isinstance(right_raw, (BsonInt32, BsonInt64)):
+                return BsonDouble(float(result))
+            return result
         if math.isnan(left) or math.isnan(right):
             return math.nan
         if left <= 0 or right <= 0 or right == 1:
@@ -197,7 +213,8 @@ def evaluate_numeric_expression(
             return value
         place_raw = evaluate_expression(document, args[1], variables) if len(args) == 2 else 0
         place = _normalize_numeric_place(operator, place_raw)
-        return _round_numeric(value, place) if operator == "$round" else _trunc_numeric(value, place)
+        result = _round_numeric(value, place) if operator == "$round" else _trunc_numeric(value, place)
+        return bson_rewrap_numeric(result, raw_value)
 
     if operator in {"$floor", "$ceil"}:
         args = require_expression_args(operator, spec, 1, 1)
@@ -209,8 +226,10 @@ def evaluate_numeric_expression(
             return value
         integer = int(value)
         if operator == "$floor":
-            return integer if integer <= value else integer - 1
-        return integer if integer >= value else integer + 1
+            result = integer if integer <= value else integer - 1
+        else:
+            result = integer if integer >= value else integer + 1
+        return bson_rewrap_numeric(result, raw_value)
 
     if operator == "$range":
         args = require_expression_args(operator, spec, 2, 3)

@@ -236,8 +236,8 @@ Lo siguiente ya no pertenece a esta hoja de refactor base, sino a evolución fut
 - `Esfuerzo`: `Medio-Alto`
 - `Descripción`: conservar wrappers BSON en la rehidratación interna de documentos y usar helpers aritméticos BSON-aware en updates numéricos, degradando a tipos públicos solo en el borde de salida.
 - `Motivación`: la fidelidad BSON no debía depender de que todo el core trabajase siempre con `int`/`float` nativos, pero tampoco convenía exponer wrappers al usuario.
-- `Aporte real`: engines, codec y updates numéricos ya distinguen mejor entre representación interna BSON y representación pública Python, y esa misma frontera ya se ha extendido a expresiones y acumuladores numéricos de agregación.
-- `Cierre`: queda con matices porque la fidelidad total todavía requiere seguir llevando esta lógica a más rutas numéricas menos frecuentes y a más casos finos de tipos BSON, pero la frontera arquitectónica correcta ya existe y la salida pública ya no expone wrappers por accidente.
+- `Aporte real`: engines, codec y updates numéricos ya distinguen mejor entre representación interna BSON y representación pública Python, y esa misma frontera ya se ha extendido también a conversiones, expresiones escalares y rutas numéricas menos frecuentes de agregación.
+- `Cierre`: queda con matices porque la fidelidad total todavía requiere seguir llevando esta lógica a más casos finos de tipos BSON y a más semántica de servidor real, pero la frontera arquitectónica correcta ya existe y la salida pública ya no expone wrappers por accidente.
 
 ## Correcciones de Cierre por Revisión Estricta
 
@@ -366,7 +366,7 @@ No conviene adelantar:
 - `Aporte real`: mejora explain, selección de planes, fidelidad de hint y comportamiento de índices complejos.
 - `Aplicado ya`:
   - `88883ee` `feat: add virtual index engine semantics`
-- `Cierre`: memoria y SQLite comparten ya una capa virtual para semántica `sparse` y `partialFilterExpression`, tanto en metadata como en unicidad, hints y persistencia. Lo dejo con matices porque el salto final de fidelidad todavía pediría un indexador físico/lógico más ambicioso para planificación automática y escenarios multikey avanzados.
+- `Cierre`: memoria y SQLite comparten ya una capa virtual para semántica `sparse` y `partialFilterExpression`, tanto en metadata como en unicidad, hints, persistencia y `explain`, con inferencia más conservadora y reusable de cuándo una query puede apoyarse en esa semántica virtual. Lo dejo con matices porque el salto final de fidelidad todavía pediría un indexador físico/lógico más ambicioso para planificación automática y escenarios multikey avanzados.
 
 ### 15. Proxy Server con MongoDB Wire Protocol
 
@@ -389,8 +389,10 @@ No conviene adelantar:
   - store de sesiones wire con traducción de `lsid` a `ClientSession`
   - `WireRequestContext` y dispatcher explícito por capacidades, sin branching disperso en el adaptador TCP
   - validación protocolaria explícita de flags y tamaños en `OP_MSG` y `OP_QUERY`
+  - normalización explícita de `OP_QUERY` legacy con `$query`/`$orderby` y propagación de `numberToReturn` a tamaños de batch
+  - mayor superficie real probada a través del proxy para índices, writes, `findAndModify`, cursores y comandos cursorizados
   - integración validada con `pymongo.MongoClient`
-- `Cierre`: el bloque arquitectónico queda cerrado. La superficie soportada sigue siendo deliberadamente acotada, pero ahora ya existe una base completa y mantenible para crecer sin reabrir el diseño: surface declarativa, handshake separado, contexto de conexión, contexto de petición, sesiones wire, cursores wire y executor desacoplado del adaptador TCP.
+- `Cierre`: el bloque arquitectónico queda cerrado. La superficie sigue siendo seleccionada, pero ya no es solo una base mínima: el proxy tiene normalización legacy explícita, store de cursores/sesiones real, surface declarativa, handshake separado, contexto de conexión, contexto de petición y executor desacoplado del adaptador TCP, de forma que crecer en comandos soportados ya no exige reabrir el diseño.
 
 ### 16. Políticas de Comportamiento 100% Derivadas del Catálogo
 
