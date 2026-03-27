@@ -8,7 +8,7 @@ Este documento ya no es solo una lista teórica. Ahora recoge:
 
 Escala usada:
 
-- `Estado`: `Aplicado`, `En progreso`, `Pendiente`
+- `Estado`: `Aplicado`, `Aplicado con matices`, `En progreso`, `Reabierto`, `Pendiente`
 - `Impacto`: `Alto`, `Medio-Alto`, `Medio`
 - `Esfuerzo`: `Bajo`, `Medio`, `Medio-Alto`, `Alto`, `Muy Alto`
 
@@ -75,7 +75,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 
 ## 4. Arquitectura Basada en Planes de Operación
 
-- `Estado`: `Aplicado`
+- `Estado`: `Aplicado con matices`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Medio-Alto`
 - `Descripción`: introducir una IR explícita entre API y engines, con objetos como `FindPlan`, `UpdatePlan`, `AggregatePlan` o `AdminCommandPlan`.
@@ -94,11 +94,11 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `ccf1a08` `refactor: parse typed read admin commands`
   - `d9c5956` `refactor: require compiled find operations in collection`
   - `0a660f5` `refactor: close operation plan gaps in admin helpers`
-- `Cierre`: la frontera basada en operaciones compiladas ya cubre el flujo principal y los helpers auxiliares relevantes: `find`, `count`, `distinct`, `aggregate`, `explain`, selección previa de writes y rutas admin dejan de recomponer operaciones a mano y pasan por planes explícitos compartidos.
+- `Cierre`: la frontera basada en operaciones compiladas cubre ya la mayor parte de lectura, agregación, `explain`, selección previa de writes y rutas admin, pero el cierre no es todavía absoluto en escritura: la frontera con engine sigue transportando parte de la semántica de update mediante `update_spec` raw junto al plan compilado.
 
 ## 5. Motor de Updates Formal Basado en Paths Compilados
 
-- `Estado`: `Aplicado`
+- `Estado`: `Aplicado con matices`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Medio-Alto`
 - `Descripción`: separar formalmente parsing de rutas, binding posicional, resolución de `arrayFilters` y aplicación de operadores de update sobre paths compilados.
@@ -112,7 +112,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `c06860b` `refactor: compile reusable update plans in engines`
   - `b28b28d` `refactor: resolve update applications before mutation`
   - `a5ba59b` `refactor: finalize array update execution plans`
-- `Cierre`: los updates ya siguen un flujo formal de paths compilados, contexto explícito, planes reutilizables y aplicaciones resueltas antes de mutar también en operadores de arrays y rutas posicionales complejas; la semántica de ejecución ya no depende de caminos especiales fuera de ese pipeline.
+- `Cierre`: los updates ya siguen un flujo formal de paths compilados, contexto explícito, planes reutilizables y aplicaciones resueltas antes de mutar también en operadores de arrays y rutas posicionales complejas, pero el engine todavía no ejecuta una IR de escritura completamente cerrada e independiente de `update_spec`.
 
 ## 6. Compatibilidad y Tooling Derivados Automáticamente
 
@@ -132,7 +132,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 
 ## 7. Separación Más Fuerte entre Core Semántico y Ejecución por Engine
 
-- `Estado`: `Aplicado`
+- `Estado`: `Aplicado con matices`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Alto`
 - `Descripción`: endurecer la frontera entre semántica MongoDB y ejecución concreta en `MemoryEngine`/`SQLiteEngine`.
@@ -140,7 +140,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 - `Aporte real`: mejora la paridad entre engines y reduce divergencias sutiles.
 - `Aplicado ya`:
   - `f856531` `refactor: share read semantics across engines`
-- `Cierre`: la semántica común de lectura y `explain` ya vive en `src/mongoeco/engines/semantic_core.py`; `MemoryEngine` y `SQLiteEngine` se limitan a resolver hint físico, acceso a almacenamiento y estrategia concreta, mientras que validación, filtrado, proyección, límites y construcción base de `QueryPlanExplanation` salen del mismo núcleo semántico compartido.
+- `Cierre`: la lectura y `explain` ya comparten núcleo semántico, y eso reduce mucho la deriva entre engines. El cierre estricto sigue pendiente en la zona de writes y de ciertas rutas físicas específicas del backend.
 
 ## 8. Estado Transaccional Explícito por Sesión y Engine
 
@@ -156,7 +156,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 
 ## 9. Agregación Enchufable por Stages o Handlers Registrados
 
-- `Estado`: `Aplicado`
+- `Estado`: `Reabierto`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Muy Alto`
 - `Descripción`: rediseñar la agregación como un sistema de handlers registrados o stages compilados, donde cada etapa tenga contrato propio.
@@ -164,11 +164,11 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 - `Aporte real`: simplifica extensión, reduce regresiones cruzadas y hace más mantenible seguir ampliando analítica avanzada.
 - `Aplicado ya`:
   - `0757799` `refactor: dispatch aggregation through stage handlers`
-- `Cierre`: el pipeline de agregación ya no depende de un gran dispatcher monolítico; cada stage entra por un handler registrado y probado de forma explícita, lo que deja la extensión futura mucho más localizada.
+- `Cierre`: existe ya un dispatcher por handlers registrados y `mongoeco.core.aggregation` es un paquete modular, pero el runtime principal sigue demasiado concentrado en `runtime.py`. Para considerar este punto estrictamente cerrado haría falta descomponer la lógica por familias o por stages reales.
 
 ## Estado Global
 
-Los nueve bloques de refactor arquitectónico identificados en este documento quedan ya aplicados.
+La base del refactor arquitectónico está muy avanzada, pero una revisión estricta obliga a matizar algunos cierres anteriores.
 
 El proyecto queda bastante más cerca de una base "como si hubiera nacido así" desde el principio:
 
@@ -179,13 +179,13 @@ El proyecto queda bastante más cerca de una base "como si hubiera nacido así" 
 - motor de updates formalizado;
 - semántica compartida separada de la estrategia concreta de cada engine;
 - estado transaccional explícito;
-- agregación dividida en handlers registrados.
+- agregación separada ya en paquete y handlers, aunque aún no completamente descompuesta por stages.
 
-Además, después del cierre de esta hoja se han endurecido tres cortes estructurales adicionales para subir el listón de arquitectura:
+Además, después del cierre inicial de esta hoja se han endurecido tres cortes estructurales adicionales para subir el listón de arquitectura:
 
 - los dialectos oficiales y perfiles PyMongo oficiales consumen directamente el catálogo como fuente declarativa, sin depender de lógica específica por clase para sus flags/capacidades base;
 - `mongoeco.core.aggregation` ya es un paquete modular y el dispatcher de stages vive en un módulo propio, separado del resto del runtime de agregación;
-- los updates compilados ya son planes ejecutables (`CompiledUpdatePlan.apply(...)`), de modo que los engines ejecutan un objeto semántico y no coordinan manualmente la aplicación operador por operador.
+- los updates compilados ya son planes ejecutables (`CompiledUpdatePlan.apply(...)`), de modo que el engine coordina bastante menos la aplicación operador por operador, aunque la frontera de escritura todavía no es una IR absolutamente cerrada.
 
 ## Qué Queda a Partir de Aquí
 
@@ -194,3 +194,126 @@ Lo siguiente ya no pertenece a esta hoja de refactor base, sino a evolución fut
 - seguir ampliando funcionalidad sin reabrir la base arquitectónica;
 - endurecer o tipar zonas adicionales solo si el crecimiento real del proyecto lo exige;
 - usar este documento como referencia histórica de las decisiones de base ya consolidadas, no como backlog activo.
+
+## Correcciones de Cierre por Revisión Estricta
+
+Estas líneas no sustituyen al refactor base ya hecho, pero sí corrigen el exceso de optimismo de cierres previos cuando se usa un listón arquitectónico más exigente.
+
+### A. IR de Escritura Real Hasta el Engine
+
+- `Estado`: `Reabierto`
+- `Impacto`: `Alto`
+- `Esfuerzo`: `Alto`
+- `Descripción`: hacer que el engine ejecute una IR de escritura cerrada, sin recibir `update_spec` raw como semántica residual.
+- `Motivación`: hoy la lectura está mejor desacoplada que la escritura.
+- `Aporte real`: deja la frontera API/core/engine verdaderamente homogénea.
+
+### B. Descomposición Real de Agregación por Familias o Stages
+
+- `Estado`: `Reabierto`
+- `Impacto`: `Alto`
+- `Esfuerzo`: `Muy Alto`
+- `Descripción`: dividir la lógica aún concentrada en `src/mongoeco/core/aggregation/runtime.py` en submódulos por families o stages.
+- `Motivación`: el sistema de handlers existe, pero el runtime sigue siendo demasiado grande.
+- `Aporte real`: baja el riesgo de mantenimiento y hace creíble la extensibilidad a largo plazo.
+
+### C. Pushdown/Spill/Error Parity como Subsistema Formal
+
+- `Estado`: `Reabierto`
+- `Impacto`: `Alto`
+- `Esfuerzo`: `Muy Alto`
+- `Descripción`: separar y cerrar de forma explícita tres líneas distintas:
+  1. pushdown seguro y negociado,
+  2. spill-to-disk para etapas bloqueantes,
+  3. catálogo formal de errores MongoDB.
+- `Motivación`: hoy el pushdown SQLite sí existe, pero el spill-to-disk no está y la paridad de errores es parcial.
+- `Aporte real`: mejora fidelidad, observabilidad y comportamiento bajo carga.
+
+### D. Fidelidad BSON Escalar Total
+
+- `Estado`: `En progreso`
+- `Impacto`: `Alto`
+- `Esfuerzo`: `Alto`
+- `Descripción`: completar la capa de wrappers BSON para que las rutas críticas del core operen con semántica estricta de tipos y no solo con una base inicial.
+- `Motivación`: ya existe una buena fundación para `Int32`, `Int64`, `Double` y `Decimal128`, pero todavía no es una fidelidad numérica total en todas las rutas.
+- `Aporte real`: reduce divergencias con MongoDB real en comparaciones, coerciones y overflows.
+
+## Siguiente Ola Arquitectónica
+
+Estas mejoras ya no forman parte del refactor base original, pero sí son la continuación más coherente si el objetivo pasa de "arquitectura nacida bien" a "arquitectura preparada para acercarse a MongoDB real y a usos más amplios". Se listan en orden recomendado de aplicación.
+
+### 10. Validación de Esquemas con Paridad MongoDB (`$jsonSchema`)
+
+- `Estado`: `Pendiente`
+- `Impacto`: `Alto`
+- `Esfuerzo`: `Medio-Alto`
+- `Descripción`: integrar validación de `$jsonSchema` en los planes de escritura para que la semántica de aceptación/rechazo de documentos no dependa del backend.
+- `Motivación`: hoy una app puede insertar datos que una instancia real rechazaría si la colección usa validación de esquema.
+- `Aporte real`: endurece la promesa de paridad de escritura y convierte la validación en parte explícita del core semántico.
+
+### 11. Telemetría Interna y `system.profile`
+
+- `Estado`: `Pendiente`
+- `Impacto`: `Alto`
+- `Esfuerzo`: `Medio-Alto`
+- `Descripción`: registrar latencia, memoria, decisiones de pushdown/fallback y fases de ejecución internas, y exponerlo con una semántica tipo `system.profile`.
+- `Motivación`: `explain()` ayuda a entender el plan, pero no basta para entender costes reales ni regresiones de rendimiento.
+- `Aporte real`: da observabilidad de runtime, facilita diagnósticos y prepara mejor explain/planning futuros.
+
+### 12. MVCC Virtual y Aislamiento Más Fiel
+
+- `Estado`: `Pendiente`
+- `Impacto`: `Muy Alto`
+- `Esfuerzo`: `Muy Alto`
+- `Descripción`: introducir una capa de versionado lógico de documentos o snapshots para emular con más fidelidad `readConcern`, visibilidad y aislamiento transaccional.
+- `Motivación`: el comportamiento concurrente real de MongoDB no coincide por completo con memoria/SQLite apoyados solo en el backend subyacente.
+- `Aporte real`: reduce la distancia con MongoDB real en una de las zonas más difíciles: consistencia y concurrencia.
+
+### 13. SDK de Extensión para Operadores y Stages
+
+- `Estado`: `Pendiente`
+- `Impacto`: `Medio-Alto`
+- `Esfuerzo`: `Alto`
+- `Descripción`: permitir registrar operadores, expresiones o stages externos sin tocar el código fuente principal.
+- `Motivación`: con el catálogo y la agregación ya modularizados, el siguiente paso natural es abrir extensión controlada.
+- `Aporte real`: convierte `mongoeco` en plataforma extensible y no solo en implementación cerrada.
+
+### Orden Consolidado Después de las Tres Primeras
+
+Una vez completadas `10`, `11` y `12`, el siguiente paso arquitectónico recomendado es:
+
+1. **SDK de extensión para operadores y stages**
+2. **motor de indexación virtual de alta fidelidad**
+3. **proxy server con MongoDB wire protocol**
+
+Razón:
+
+- para entonces ya habría:
+  - validación semántica más fuerte,
+  - observabilidad seria,
+  - y una base transaccional/concurrente bastante más madura;
+- eso deja las fronteras internas mucho más estables;
+- y solo entonces compensa abrir la arquitectura a terceros sin congelar APIs demasiado pronto.
+
+No conviene adelantar:
+
+- el **motor de indexación virtual**, porque es potentísimo pero muy caro e invasivo;
+- el **wire protocol proxy**, porque eso ya se parece más a una plataforma/producto que a una mejora de arquitectura base del core.
+
+### 14. Motor de Indexación Virtual de Alta Fidelidad
+
+- `Estado`: `Pendiente`
+- `Impacto`: `Muy Alto`
+- `Esfuerzo`: `Muy Alto`
+- `Descripción`: desacoplar la semántica de indexación MongoDB del índice físico del backend, especialmente para multi-key, sparse y parciales.
+- `Motivación`: SQLite no representa de forma nativa la semántica exacta de índices MongoDB.
+- `Aporte real`: mejora explain, selección de planes, fidelidad de hint y comportamiento de índices complejos.
+
+### 15. Proxy Server con MongoDB Wire Protocol
+
+- `Estado`: `Pendiente`
+- `Impacto`: `Muy Alto`
+- `Esfuerzo`: `Muy Alto`
+- `Descripción`: exponer `mongoeco` como servidor compatible con el protocolo MongoDB para usar drivers oficiales de otros lenguajes.
+- `Motivación`: hoy el proyecto está limitado al ecosistema Python.
+- `Aporte real`: abre el proyecto a Java, Go, Node.js, C# y cualquier cliente compatible con MongoDB sin reimplementar el core.
