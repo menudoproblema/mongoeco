@@ -403,9 +403,21 @@ class Collection:
         key: str,
         filter_spec: Filter | None = None,
         *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> list[object]:
-        return self._client._run(self._async_collection().distinct(key, filter_spec, session=session))
+        return self._client._run(
+            self._async_collection().distinct(
+                key,
+                filter_spec,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                session=session,
+            )
+        )
 
     def create_index(
         self,

@@ -1384,6 +1384,36 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(tags, ["a", "b", "c"])
                     self.assertEqual(cities, ["Madrid", "Sevilla"])
 
+    def test_distinct_supports_hint_comment_and_max_time(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    session = client.start_session()
+                    collection = client.analytics.events
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "kind": "view", "tag": "python"},
+                            {"_id": "2", "kind": "view", "tag": "mongodb"},
+                            {"_id": "3", "kind": "click", "tag": "python"},
+                        ],
+                        session=session,
+                    )
+                    collection.create_index([("kind", 1)], name="kind_idx", session=session)
+
+                    values = collection.distinct(
+                        "tag",
+                        {"kind": "view"},
+                        hint="kind_idx",
+                        comment="trace-distinct",
+                        max_time_ms=25,
+                        session=session,
+                    )
+                    state = next(iter(session.engine_state.values()))
+
+                    self.assertEqual(values, ["python", "mongodb"])
+                    self.assertEqual(state["last_operation"]["comment"], "trace-distinct")
+                    self.assertEqual(state["last_operation"]["max_time_ms"], 25)
+
     def test_find_supports_type_query_operator(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

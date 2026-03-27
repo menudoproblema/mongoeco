@@ -1298,13 +1298,24 @@ class AsyncCollection:
         key: str,
         filter_spec: Filter | None = None,
         *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> list[object]:
         if not isinstance(key, str):
             raise TypeError("key must be a string")
         filter_spec = self._normalize_filter(filter_spec)
+        hint = self._normalize_hint(hint)
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
         distinct_values: list[object] = []
-        async for document in self.find(filter_spec, session=session):
+        async for document in self.find(
+            filter_spec,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+        ):
             values = QueryEngine.extract_values(document, key)
             if not values:
                 found, value = QueryEngine._get_field_value(document, key)
@@ -1321,6 +1332,13 @@ class AsyncCollection:
                     for existing in distinct_values
                 ):
                     distinct_values.append(candidate)
+        self._record_operation_metadata(
+            operation="distinct",
+            comment=comment,
+            hint=hint,
+            max_time_ms=max_time_ms,
+            session=session,
+        )
         return distinct_values
 
     async def create_index(
