@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from mongoeco.api.admin_parsing import (
     normalize_command_document,
     normalize_command_scale,
+    normalize_validate_command_options,
     require_collection_name,
 )
 from mongoeco.engines.base import AsyncStorageEngine
@@ -496,14 +497,20 @@ class AsyncDatabaseCommandService:
                 spec.get("validate"),
                 "validate",
             )
+            options = normalize_validate_command_options(
+                scandata=spec.get("scandata"),
+                full=spec.get("full"),
+                background=spec.get("background"),
+                comment=spec.get("comment"),
+            )
             return self.ValidateCollectionCommand(
                 db_name=self._admin._db_name,
                 command_name=command_name,
                 spec=spec,
                 collection_name=collection_name,
-                scandata=bool(spec.get("scandata", False)),
-                full=bool(spec.get("full", False)),
-                background=spec.get("background"),
+                scandata=options.scandata,
+                full=options.full,
+                background=options.background,
             )
 
         route = self._DELEGATED_COMMAND_HANDLERS.get(command_name)

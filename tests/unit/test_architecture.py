@@ -11,6 +11,10 @@ from mongoeco.api._async.database_commands import (
 from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.api._async._materialized_cursor import AsyncMaterializedCursor
+from mongoeco.api.admin_parsing import (
+    normalize_list_collections_options,
+    normalize_validate_command_options,
+)
 from mongoeco.api.operations import (
     AggregateOperation,
     FindOperation,
@@ -433,6 +437,32 @@ class ArchitectureUnitTests(unittest.TestCase):
             delegated,
             AsyncDatabaseCommandService.DelegatedAdminCommand,
         )
+
+    def test_admin_parsing_centralizes_listing_and_validation_options(self):
+        list_options = normalize_list_collections_options(
+            {
+                "nameOnly": True,
+                "authorizedCollections": False,
+                "filter": {"name": "users"},
+            }
+        )
+        validate_options = normalize_validate_command_options(
+            scandata=True,
+            full=False,
+            background=None,
+            comment="trace",
+        )
+
+        self.assertTrue(list_options.name_only)
+        self.assertEqual(list_options.filter_spec, {"name": "users"})
+        self.assertTrue(validate_options.scandata)
+        self.assertEqual(validate_options.comment, "trace")
+
+    def test_admin_parsing_rejects_invalid_validation_flags(self):
+        with self.assertRaises(TypeError):
+            normalize_validate_command_options(scandata="yes")
+        with self.assertRaises(TypeError):
+            normalize_list_collections_options({"nameOnly": "yes"})
 
     def test_database_command_service_executes_typed_static_results(self):
         database = AsyncDatabase(MemoryEngine(), "db")

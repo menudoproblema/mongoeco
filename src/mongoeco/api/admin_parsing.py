@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from mongoeco.api._async.cursor import (
     _validate_batch_size,
     _validate_hint_spec,
@@ -7,6 +9,27 @@ from mongoeco.api._async.cursor import (
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, Filter, IndexModel
+
+
+@dataclass(frozen=True, slots=True)
+class ListCollectionsCommandOptions:
+    name_only: bool
+    authorized_collections: bool
+    filter_spec: Filter
+
+
+@dataclass(frozen=True, slots=True)
+class ListDatabasesCommandOptions:
+    name_only: bool
+    filter_spec: Filter
+
+
+@dataclass(frozen=True, slots=True)
+class ValidationCommandOptions:
+    scandata: bool
+    full: bool
+    background: bool | None
+    comment: str | None
 
 
 def normalize_command_document(command: object, kwargs: dict[str, object]) -> dict[str, object]:
@@ -112,12 +135,61 @@ def normalize_command_ordered(value: object | None) -> bool:
     return value
 
 
+def normalize_command_bool(value: object | None, field_name: str, *, default: bool = False) -> bool:
+    if value is None:
+        return default
+    if not isinstance(value, bool):
+        raise TypeError(f"{field_name} must be a bool")
+    return value
+
+
 def normalize_command_scale(scale: object | None) -> int:
     if scale is None:
         return 1
     if not isinstance(scale, int) or isinstance(scale, bool) or scale <= 0:
         raise TypeError("scale must be a positive integer")
     return scale
+
+
+def normalize_list_collections_options(
+    spec: dict[str, object],
+) -> ListCollectionsCommandOptions:
+    return ListCollectionsCommandOptions(
+        name_only=normalize_command_bool(spec.get("nameOnly"), "nameOnly"),
+        authorized_collections=normalize_command_bool(
+            spec.get("authorizedCollections"),
+            "authorizedCollections",
+        ),
+        filter_spec=normalize_filter_document(spec.get("filter")),
+    )
+
+
+def normalize_list_databases_options(
+    spec: dict[str, object],
+) -> ListDatabasesCommandOptions:
+    return ListDatabasesCommandOptions(
+        name_only=normalize_command_bool(spec.get("nameOnly"), "nameOnly"),
+        filter_spec=normalize_filter_document(spec.get("filter")),
+    )
+
+
+def normalize_validate_command_options(
+    *,
+    scandata: object | None = None,
+    full: object | None = None,
+    background: object | None = None,
+    comment: object | None = None,
+) -> ValidationCommandOptions:
+    if background is not None and not isinstance(background, bool):
+        raise TypeError("background must be a bool or None")
+    if comment is not None and not isinstance(comment, str):
+        raise TypeError("comment must be a string")
+    return ValidationCommandOptions(
+        scandata=normalize_command_bool(scandata, "scandata"),
+        full=normalize_command_bool(full, "full"),
+        background=background,
+        comment=comment,
+    )
 
 
 def normalize_namespace(value: object, field_name: str) -> tuple[str, str]:

@@ -13,8 +13,11 @@ from mongoeco.api.admin_parsing import (
     normalize_filter_document,
     normalize_index_models_from_command,
     normalize_insert_documents,
+    normalize_list_collections_options,
+    normalize_list_databases_options,
     normalize_namespace,
     normalize_update_specs,
+    normalize_validate_command_options,
     require_collection_name,
     resolve_collection_reference,
 )
@@ -358,14 +361,12 @@ class AsyncDatabaseAdminService:
         session: ClientSession | None = None,
         comment: object | None = None,
     ) -> CollectionValidationDocument:
-        if not isinstance(scandata, bool):
-            raise TypeError("scandata must be a bool")
-        if not isinstance(full, bool):
-            raise TypeError("full must be a bool")
-        if background is not None and not isinstance(background, bool):
-            raise TypeError("background must be a bool or None")
-        if comment is not None and not isinstance(comment, str):
-            raise TypeError("comment must be a string")
+        normalize_validate_command_options(
+            scandata=scandata,
+            full=full,
+            background=background,
+            comment=comment,
+        )
 
         collection_name = self._resolve_collection_reference(
             name_or_collection,
@@ -409,14 +410,8 @@ class AsyncDatabaseAdminService:
         *,
         session: ClientSession | None = None,
     ) -> dict[str, object]:
-        name_only = spec.get("nameOnly", False)
-        if not isinstance(name_only, bool):
-            raise TypeError("nameOnly must be a bool")
-        authorized_collections = spec.get("authorizedCollections", False)
-        if not isinstance(authorized_collections, bool):
-            raise TypeError("authorizedCollections must be a bool")
-        filter_spec = self._normalize_filter(spec.get("filter"))
-        if name_only:
+        options = normalize_list_collections_options(spec)
+        if options.name_only:
             collection_names = await self._engine.list_collections(
                 self._db_name,
                 context=session,
@@ -430,7 +425,7 @@ class AsyncDatabaseAdminService:
                 for document in first_batch
                 if QueryEngine.match(
                     document,
-                    filter_spec,
+                    options.filter_spec,
                     dialect=self._mongodb_dialect,
                 )
             ]
@@ -442,7 +437,7 @@ class AsyncDatabaseAdminService:
                 for document in first_batch
                 if QueryEngine.match(
                     document,
-                    filter_spec,
+                    options.filter_spec,
                     dialect=self._mongodb_dialect,
                 )
             ]
@@ -461,10 +456,7 @@ class AsyncDatabaseAdminService:
         *,
         session: ClientSession | None = None,
     ) -> dict[str, object]:
-        name_only = spec.get("nameOnly", False)
-        if not isinstance(name_only, bool):
-            raise TypeError("nameOnly must be a bool")
-        filter_spec = self._normalize_filter(spec.get("filter"))
+        options = normalize_list_databases_options(spec)
         databases = [
             snapshot.to_document()
             for snapshot in await self._list_database_snapshots(session=session)
@@ -474,12 +466,12 @@ class AsyncDatabaseAdminService:
             for document in databases
             if QueryEngine.match(
                 document,
-                filter_spec,
+                options.filter_spec,
                 dialect=self._mongodb_dialect,
             )
         ]
         total_size = sum(int(document.get("sizeOnDisk", 0)) for document in filtered)
-        if name_only:
+        if options.name_only:
             filtered = [{"name": str(document["name"])} for document in filtered]
         return {
             "databases": filtered,
