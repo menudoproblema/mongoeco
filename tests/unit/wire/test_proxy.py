@@ -1,10 +1,12 @@
 import unittest
 from unittest.mock import patch
 import uuid
+import struct
 
 from mongoeco.errors import ExecutionTimeout, MongoEcoError, OperationFailure, PyMongoError
+from mongoeco.wire.protocol import OP_MSG, OP_QUERY, parse_message_header
 from mongoeco.types import ObjectId
-from mongoeco.wire.connections import WireConnectionContext
+from mongoeco.wire.connections import WireConnectionContext, WireConnectionRegistry
 from mongoeco.wire.capabilities import resolve_wire_command_capability
 from mongoeco.wire.handshake import WireHandshakeService
 from mongoeco.wire.executor import WireCommandExecutor
@@ -14,6 +16,10 @@ from mongoeco.wire.sessions import WireSessionStore
 
 
 class WireProxyUnitTests(unittest.TestCase):
+    def test_proxy_requires_client_or_engine_not_both(self):
+        with self.assertRaisesRegex(TypeError, "mutually exclusive"):
+            AsyncMongoEcoProxyServer(client=AsyncMongoEcoProxyServer()._client, engine=object())  # type: ignore[arg-type]
+
     def test_capability_registry_resolves_special_commands(self):
         self.assertEqual(resolve_wire_command_capability("getMore").kind, "get_more")
         self.assertEqual(resolve_wire_command_capability("killCursors").kind, "kill_cursors")
@@ -130,6 +136,11 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertTrue(surface.supports_opcode(2004))
         self.assertTrue(surface.supports_opcode(2013))
         self.assertFalse(surface.supports_opcode(2012))
+
+    def test_proxy_address_requires_running_server(self):
+        proxy = AsyncMongoEcoProxyServer()
+        with self.assertRaisesRegex(RuntimeError, "not running"):
+            _ = proxy.address
 
     def test_error_document_handles_generic_mongoeco_and_generic_exception(self):
         mongoeco_document = WireCommandExecutor.error_document(MongoEcoError("broken"))
@@ -319,3 +330,105 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                     {"ping": 1, "$db": "admin"},
                     connection=connection,
                 )
+
+    async def test_proxy_start_returns_existing_address_when_already_running(self):
+        async with AsyncMongoEcoProxyServer() as proxy:
+            first = proxy.address
+            second = await proxy.start()
+            self.assertEqual(first, second)
+
+    async def test_dispatch_wire_request_returns_error_reply_for_unsupported_opcode_and_query_errors(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        bad_header = parse_message_header(struct.pack("<iiii", 16, 7, 0, 9999))
+        response = await proxy._dispatch_wire_request(bad_header, b"", connection=connection)
+        decoded = proxy._executor.error_document(OperationFailure("unsupported"))
+        self.assertEqual(response[12:16], struct.pack("<i", OP_MSG))
+        self.assertTrue(response)
+
+        query_header = parse_message_header(struct.pack("<iiii", 16, 9, 0, OP_QUERY))
+        query_payload = b"\x00" * 12
+        query_response = await proxy._dispatch_wire_request(query_header, query_payload, connection=connection)
+        self.assertEqual(query_response[12:16], struct.pack("<i", 1))
+
+    async def test_proxy_handle_connection_closes_writer_on_incomplete_read(self):
+        proxy = AsyncMongoEcoProxyServer()
+
+        class _Reader:
+            def at_eof(self):
+                return False
+
+            async def readexactly(self, n):
+                raise __import__("asyncio").IncompleteReadError(partial=b"", expected=n)
+
+        class _Writer:
+            def __init__(self):
+                self.closed = False
+
+            def get_extra_info(self, name):
+                return ("127.0.0.1", 27017)
+
+            def write(self, data):
+                raise AssertionError("write should not be called")
+
+            async def drain(self):
+                return None
+
+            def close(self):
+                self.closed = True
+
+            async def wait_closed(self):
+                return None
+
+        writer = _Writer()
+        await proxy._handle_connection(_Reader(), writer)
+        self.assertTrue(writer.closed)
+
+    def test_connection_context_and_registry_support_peer_and_hello_tracking(self):
+        registry = WireConnectionRegistry()
+        context = registry.create(("10.0.0.1", 27018))
+        self.assertEqual(context.peer_address, "10.0.0.1:27018")
+
+        registry.register_hello(
+            context,
+            "hello",
+            {"client": {"driver": {"name": "pymongo"}}, "compression": ["zstd"]},
+        )
+        self.assertEqual(context.hello_count, 1)
+        self.assertEqual(context.client_metadata, {"driver": {"name": "pymongo"}})
+        self.assertEqual(context.compression, ("zstd",))
+
+    def test_cursor_store_validates_batch_and_cursor_shapes(self):
+        proxy = AsyncMongoEcoProxyServer()
+        store = proxy._cursor_store
+
+        result = store.materialize_command_result({"find": "events"}, {"ok": 1.0})
+        self.assertEqual(result, {"ok": 1.0})
+
+        result = store.materialize_command_result(
+            {"find": "events"},
+            {"cursor": {"id": 0, "ns": "alpha.events", "firstBatch": "bad"}, "ok": 1.0},
+        )
+        self.assertEqual(result["cursor"]["firstBatch"], "bad")
+
+        with self.assertRaisesRegex(TypeError, "batchSize"):
+            store.materialize_command_result(
+                {"find": "events", "batchSize": -1},
+                {"cursor": {"id": 0, "ns": "alpha.events", "firstBatch": []}, "ok": 1.0},
+            )
+
+        with self.assertRaisesRegex(TypeError, "collection must be a string"):
+            store.get_more({"getMore": 1, "collection": 1}, db_name="alpha")
+
+        with self.assertRaisesRegex(TypeError, "batchSize"):
+            store.get_more({"getMore": 1, "collection": "events", "batchSize": -1}, db_name="alpha")
+
+        with self.assertRaisesRegex(TypeError, "killCursors must name a collection"):
+            store.kill_cursors({"killCursors": "", "cursors": []})
+
+        with self.assertRaisesRegex(TypeError, "cursors must be a list"):
+            store.kill_cursors({"killCursors": "events", "cursors": "bad"})
+
+        with self.assertRaisesRegex(TypeError, "cursor ids must be integers"):
+            store.kill_cursors({"killCursors": "events", "cursors": ["bad"]})
