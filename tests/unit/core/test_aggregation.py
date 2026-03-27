@@ -706,6 +706,10 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(evaluate_expression(document, {"$binarySize": "$blob"}), 4)
         self.assertEqual(evaluate_expression(document, {"$binarySize": "$uuid"}), 16)
         self.assertIsNone(evaluate_expression(document, {"$binarySize": "$missing"}))
+        self.assertEqual(
+            evaluate_expression(document, {"$toUUID": "12345678-1234-5678-1234-567812345678"}),
+            uuid.UUID("12345678-1234-5678-1234-567812345678"),
+        )
 
     def test_evaluate_expression_index_and_binary_size_variants_reject_invalid_values(self):
         document = {"text": "é寿司A", "blob": b"abcd", "items": [1]}
@@ -716,6 +720,8 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$indexOfCP": ["$items", "1"]})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$binarySize": "$text"})
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(document, {"$toUUID": "not-a-uuid"})
 
     def test_evaluate_expression_supports_regex_match_find_and_find_all(self):
         document = {"text": "Ada and ada", "missing": None}

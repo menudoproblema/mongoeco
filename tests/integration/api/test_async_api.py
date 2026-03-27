@@ -1654,6 +1654,32 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [{"_id": "1", "decimal": decimal.Decimal("10.25")}],
                     )
 
+    async def test_aggregate_supports_to_uuid(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one(
+                        {
+                            "_id": "1",
+                            "uuid_text": "12345678-1234-5678-1234-567812345678",
+                        }
+                    )
+
+                    documents = await collection.aggregate(
+                        [{"$project": {"_id": 1, "uuid": {"$toUUID": "$uuid_text"}}}]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {
+                                "_id": "1",
+                                "uuid": uuid.UUID("12345678-1234-5678-1234-567812345678"),
+                            }
+                        ],
+                    )
+
     async def test_aggregate_supports_date_part_extractors(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

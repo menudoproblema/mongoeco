@@ -1231,6 +1231,23 @@ def _convert_aggregation_scalar(operator: str, value: Any, target: str) -> Any:
                 raise OperationFailure(f"{operator} cannot convert the string value") from exc
         raise OperationFailure(f"{operator} cannot convert the value")
 
+    if target == "uuid":
+        if isinstance(value, uuid.UUID):
+            return value
+        if isinstance(value, (bytes, bytearray)):
+            if len(value) != 16:
+                raise OperationFailure(f"{operator} cannot convert the value")
+            try:
+                return uuid.UUID(bytes=bytes(value))
+            except Exception as exc:
+                raise OperationFailure(f"{operator} cannot convert the value") from exc
+        if isinstance(value, str):
+            try:
+                return uuid.UUID(value)
+            except Exception as exc:
+                raise OperationFailure(f"{operator} cannot convert the string value") from exc
+        raise OperationFailure(f"{operator} cannot convert the value")
+
     if target == "decimal":
         if isinstance(value, bool):
             return decimal.Decimal(int(value))
@@ -1853,7 +1870,7 @@ def evaluate_expression(
                 if not isinstance(value, str):
                     raise OperationFailure(f"{operator} requires a string argument")
                 return len(value.encode("utf-8")) if operator == "$strLenBytes" else len(value)
-            if operator in {"$toBool", "$toDate", "$toInt", "$toDouble", "$toLong", "$toObjectId", "$toDecimal"}:
+            if operator in {"$toBool", "$toDate", "$toInt", "$toDouble", "$toLong", "$toObjectId", "$toUUID", "$toDecimal"}:
                 args = _require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, min_args=1, max_args=1)
                 value = _evaluate_expression_with_missing(document, args[0], variables, dialect=dialect)
                 target = {
@@ -1864,6 +1881,7 @@ def evaluate_expression(
                     "$toDouble": "double",
                     "$toLong": "long",
                     "$toObjectId": "objectId",
+                    "$toUUID": "uuid",
                 }[operator]
                 return _convert_aggregation_scalar(operator, value, target)
             if operator in {"$toLower", "$toUpper"}:

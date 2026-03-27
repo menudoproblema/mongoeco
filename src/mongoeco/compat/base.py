@@ -132,6 +132,7 @@ SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
         '$toDouble',
         '$toLong',
         '$toObjectId',
+        '$toUUID',
         '$toLower',
         '$toUpper',
         '$toString',

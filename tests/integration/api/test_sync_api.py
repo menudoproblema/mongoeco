@@ -3,6 +3,7 @@ import decimal
 import re
 import threading
 import unittest
+import uuid
 
 from mongoeco import (
     CodecOptions,
@@ -1544,6 +1545,32 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         documents,
                         [{"_id": "1", "decimal": decimal.Decimal("10.25")}],
+                    )
+
+    def test_aggregate_supports_to_uuid(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "uuid_text": "12345678-1234-5678-1234-567812345678",
+                        }
+                    )
+
+                    documents = collection.aggregate(
+                        [{"$project": {"_id": 1, "uuid": {"$toUUID": "$uuid_text"}}}]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {
+                                "_id": "1",
+                                "uuid": uuid.UUID("12345678-1234-5678-1234-567812345678"),
+                            }
+                        ],
                     )
 
     def test_aggregate_supports_date_part_extractors(self):

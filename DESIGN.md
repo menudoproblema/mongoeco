@@ -696,6 +696,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$toDate`
     * `$toDecimal`
     * `$toObjectId`
+    * `$toUUID`
     * `$toInt`
     * `$toDouble`
     * `$toLong`
