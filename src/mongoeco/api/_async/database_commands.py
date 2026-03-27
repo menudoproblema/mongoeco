@@ -4,6 +4,7 @@ import platform
 import socket
 import sys
 from typing import TYPE_CHECKING
+from dataclasses import dataclass
 
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import OperationFailure
@@ -204,25 +205,30 @@ def connection_status_document(*, show_privileges: bool) -> ConnectionStatusDocu
 
 
 class AsyncDatabaseCommandService:
-    _DELEGATED_COMMAND_HANDLERS: dict[str, tuple[str, bool]] = {
-        "listCollections": ("_command_list_collections", True),
-        "listDatabases": ("_command_list_databases", True),
-        "create": ("_command_create", True),
-        "drop": ("_command_drop", True),
-        "renameCollection": ("_command_rename_collection", True),
-        "count": ("_command_count", True),
-        "distinct": ("_command_distinct", True),
-        "insert": ("_command_insert", True),
-        "update": ("_command_update", True),
-        "delete": ("_command_delete", True),
-        "find": ("_command_find", True),
-        "aggregate": ("_command_aggregate", True),
-        "explain": ("_command_explain", True),
-        "findAndModify": ("_command_find_and_modify", True),
-        "listIndexes": ("_command_list_indexes", True),
-        "createIndexes": ("_command_create_indexes", True),
-        "dropIndexes": ("_command_drop_indexes", True),
-        "dropDatabase": ("_command_drop_database", False),
+    @dataclass(frozen=True, slots=True)
+    class Route:
+        handler_name: str
+        passes_spec: bool = True
+
+    _DELEGATED_COMMAND_HANDLERS: dict[str, Route] = {
+        "listCollections": Route("_command_list_collections"),
+        "listDatabases": Route("_command_list_databases"),
+        "create": Route("_command_create"),
+        "drop": Route("_command_drop"),
+        "renameCollection": Route("_command_rename_collection"),
+        "count": Route("_command_count"),
+        "distinct": Route("_command_distinct"),
+        "insert": Route("_command_insert"),
+        "update": Route("_command_update"),
+        "delete": Route("_command_delete"),
+        "find": Route("_command_find"),
+        "aggregate": Route("_command_aggregate"),
+        "explain": Route("_command_explain"),
+        "findAndModify": Route("_command_find_and_modify"),
+        "listIndexes": Route("_command_list_indexes"),
+        "createIndexes": Route("_command_create_indexes"),
+        "dropIndexes": Route("_command_drop_indexes"),
+        "dropDatabase": Route("_command_drop_database", passes_spec=False),
     }
 
     def __init__(self, admin: "AsyncDatabaseAdminService"):
@@ -305,8 +311,7 @@ class AsyncDatabaseCommandService:
         handler_entry = self._DELEGATED_COMMAND_HANDLERS.get(command_name)
         if handler_entry is None:
             raise OperationFailure(f"Unsupported command: {command_name}")
-        handler_name, passes_spec = handler_entry
-        handler = getattr(self._admin, handler_name)
-        if passes_spec:
+        handler = getattr(self._admin, handler_entry.handler_name)
+        if handler_entry.passes_spec:
             return await handler(spec, session=session)
         return await handler(session=session)

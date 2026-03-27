@@ -47,7 +47,9 @@ from mongoeco.types import (
     TransactionOptions,
     WriteConcern,
     BuildInfoDocument,
+    CollectionStatsSnapshot,
     CollectionValidationDocument,
+    DatabaseStatsSnapshot,
 )
 
 
@@ -275,3 +277,29 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertIs(Database.validate_collection.__annotations__["return"], CollectionValidationDocument)
         self.assertIs(AsyncMongoClient.server_info.__annotations__["return"], BuildInfoDocument)
         self.assertIs(MongoClient.server_info.__annotations__["return"], BuildInfoDocument)
+
+    def test_admin_internal_stats_use_typed_snapshots(self):
+        collection_snapshot = CollectionStatsSnapshot(
+            namespace="db.users",
+            count=4,
+            data_size=200,
+            index_count=2,
+            scale=10,
+        )
+        database_snapshot = DatabaseStatsSnapshot(
+            db_name="db",
+            collection_count=3,
+            object_count=4,
+            data_size=200,
+            index_count=5,
+            scale=10,
+        )
+
+        self.assertEqual(collection_snapshot.to_document()["size"], 20)
+        self.assertEqual(database_snapshot.to_document()["dataSize"], 20)
+
+    def test_database_command_service_routes_use_typed_records(self):
+        route = AsyncDatabaseCommandService._DELEGATED_COMMAND_HANDLERS["dropDatabase"]
+
+        self.assertIsInstance(route, AsyncDatabaseCommandService.Route)
+        self.assertFalse(route.passes_spec)

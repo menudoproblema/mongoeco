@@ -285,6 +285,78 @@ class ConnectionStatusDocument(TypedDict):
     ok: float
 
 
+@dataclass(frozen=True, slots=True)
+class CollectionStatsSnapshot:
+    namespace: str
+    count: int
+    data_size: int
+    index_count: int
+    scale: int = 1
+
+    def __post_init__(self) -> None:
+        if not self.namespace:
+            raise ValueError("namespace must be a non-empty string")
+        for field_name in ("count", "data_size", "index_count"):
+            value = getattr(self, field_name)
+            if value < 0:
+                raise ValueError(f"{field_name} must be >= 0")
+        if self.scale <= 0:
+            raise ValueError("scale must be > 0")
+
+    def to_document(self) -> CollectionStatsDocument:
+        scaled_size = self.data_size // self.scale
+        avg_size = 0.0
+        if self.count:
+            avg_size = (self.data_size / self.count) / self.scale
+        return {
+            "ns": self.namespace,
+            "count": self.count,
+            "size": scaled_size,
+            "avgObjSize": avg_size,
+            "storageSize": scaled_size,
+            "nindexes": self.index_count,
+            "totalIndexSize": 0,
+            "ok": 1.0,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class DatabaseStatsSnapshot:
+    db_name: str
+    collection_count: int
+    object_count: int
+    data_size: int
+    index_count: int
+    scale: int = 1
+
+    def __post_init__(self) -> None:
+        if not self.db_name:
+            raise ValueError("db_name must be a non-empty string")
+        for field_name in ("collection_count", "object_count", "data_size", "index_count"):
+            value = getattr(self, field_name)
+            if value < 0:
+                raise ValueError(f"{field_name} must be >= 0")
+        if self.scale <= 0:
+            raise ValueError("scale must be > 0")
+
+    def to_document(self) -> DatabaseStatsDocument:
+        scaled_size = self.data_size // self.scale
+        avg_size = 0.0
+        if self.object_count:
+            avg_size = (self.data_size / self.object_count) / self.scale
+        return {
+            "db": self.db_name,
+            "collections": self.collection_count,
+            "objects": self.object_count,
+            "avgObjSize": avg_size,
+            "dataSize": scaled_size,
+            "storageSize": scaled_size,
+            "indexes": self.index_count,
+            "indexSize": 0,
+            "ok": 1.0,
+        }
+
+
 class ReturnDocument(Enum):
     BEFORE = 'before'
     AFTER = 'after'

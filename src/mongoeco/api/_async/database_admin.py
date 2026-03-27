@@ -15,9 +15,11 @@ from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
+    CollectionStatsSnapshot,
     CollectionListingDocument,
     CollectionStatsDocument,
     CollectionValidationDocument,
+    DatabaseStatsSnapshot,
     DatabaseListingDocument,
     DatabaseStatsDocument,
     Document,
@@ -281,17 +283,13 @@ class AsyncDatabaseAdminService:
         documents = await collection.find({}, session=session).to_list()
         indexes = await collection.list_indexes(session=session).to_list()
         data_size = sum(_bson_document_size(document) for document in documents)
-        count = len(documents)
-        return {
-            "ns": f"{self._db_name}.{collection_name}",
-            "count": count,
-            "size": data_size // scale,
-            "avgObjSize": ((data_size / count) / scale) if count else 0,
-            "storageSize": data_size // scale,
-            "nindexes": len(indexes),
-            "totalIndexSize": 0,
-            "ok": 1.0,
-        }
+        return CollectionStatsSnapshot(
+            namespace=f"{self._db_name}.{collection_name}",
+            count=len(documents),
+            data_size=data_size,
+            index_count=len(indexes),
+            scale=scale,
+        ).to_document()
 
     async def _database_stats(
         self,
@@ -308,17 +306,14 @@ class AsyncDatabaseAdminService:
             objects += int(stats["count"])
             data_size += int(stats["size"])
             indexes += int(stats["nindexes"])
-        return {
-            "db": self._db_name,
-            "collections": len(collection_names),
-            "objects": objects,
-            "avgObjSize": ((data_size / objects) / scale) if objects else 0,
-            "dataSize": data_size // scale,
-            "storageSize": data_size // scale,
-            "indexes": indexes,
-            "indexSize": 0,
-            "ok": 1.0,
-        }
+        return DatabaseStatsSnapshot(
+            db_name=self._db_name,
+            collection_count=len(collection_names),
+            object_count=objects,
+            data_size=data_size,
+            index_count=indexes,
+            scale=scale,
+        ).to_document()
 
     async def _list_database_documents(
         self,
