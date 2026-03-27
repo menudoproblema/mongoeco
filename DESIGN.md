@@ -687,6 +687,8 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$trunc`
     * `$stdDevPop`
     * `$stdDevSamp`
+    * `$firstN`
+    * `$lastN`
     * `$objectToArray`
     * `$zip`
     * `$slice`

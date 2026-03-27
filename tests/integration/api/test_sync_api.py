@@ -3245,6 +3245,58 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertAlmostEqual(documents[0]["sampArray"], 1.15470053838, places=10)
                     self.assertAlmostEqual(documents[0]["popList"], 0.94280904158, places=10)
 
+    def test_aggregate_supports_first_n_and_last_n(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.analytics.events
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "group": "a", "rank": 1, "score": 2},
+                            {"_id": "2", "group": "a", "rank": 2, "score": 4},
+                            {"_id": "3", "group": "a", "rank": 3, "score": 6},
+                            {"_id": "4", "group": "b", "rank": 1, "score": 9},
+                            {"_id": "5", "group": "b", "rank": 2},
+                        ]
+                    )
+
+                    grouped = collection.aggregate(
+                        [
+                            {
+                                "$group": {
+                                    "_id": "$group",
+                                    "firstTwo": {"$firstN": {"input": "$score", "n": 2}},
+                                    "lastTwo": {"$lastN": {"input": "$score", "n": 2}},
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    projected = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 0,
+                                    "firstScores": {"$firstN": {"input": [10, 20, 30, 40], "n": 3}},
+                                    "lastScores": {"$lastN": {"input": [10, 20, 30, 40], "n": 2}},
+                                }
+                            },
+                            {"$limit": 1},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        grouped,
+                        [
+                            {"_id": "a", "firstTwo": [2, 4], "lastTwo": [4, 6]},
+                            {"_id": "b", "firstTwo": [9, None], "lastTwo": [9, None]},
+                        ],
+                    )
+                    self.assertEqual(
+                        projected,
+                        [{"firstScores": [10, 20, 30], "lastScores": [30, 40]}],
+                    )
+
     def test_aggregate_supports_string_expressions_last_and_add_to_set(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

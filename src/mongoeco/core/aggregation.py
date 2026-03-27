@@ -8,7 +8,7 @@ import re
 import uuid
 from collections.abc import Callable, Iterable
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cmp_to_key
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -84,6 +84,12 @@ class _StdDevAccumulator:
     sum_of_squares: float = 0.0
     count: int = 0
     invalid: bool = False
+
+
+@dataclass(slots=True)
+class _PickNAccumulator:
+    items: list[Any] = field(default_factory=list)
+    n: int | None = None
 
 
 def _accumulator_flags(bucket: dict[object, Any]) -> dict[str, bool]:
@@ -410,6 +416,9 @@ def _validate_accumulator_expression(operator: str, expression: object) -> None:
     if operator == "$count":
         if not isinstance(expression, dict) or expression:
             raise OperationFailure("$count accumulator requires an empty document")
+    if operator in {"$firstN", "$lastN"}:
+        if not isinstance(expression, dict) or not {"input", "n"} <= set(expression):
+            raise OperationFailure(f"{operator} requires input and n")
 
 
 def _compare_values(
@@ -527,6 +536,38 @@ def _require_array(operator: str, value: object) -> list[Any]:
     if not isinstance(value, list):
         raise OperationFailure(f"{operator} requires array arguments")
     return value
+
+
+def _normalize_pick_n_size(operator: str, value: Any) -> int:
+    size = _require_integral_numeric(operator, value)
+    if size < 1:
+        raise OperationFailure(f"{operator} n must be a positive integer")
+    return size
+
+
+def _evaluate_pick_n_input(
+    operator: str,
+    document: Document,
+    expression: object,
+    variables: dict[str, Any] | None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> tuple[Any, int]:
+    if not isinstance(expression, dict) or not {"input", "n"} <= set(expression):
+        raise OperationFailure(f"{operator} requires input and n")
+    value = _evaluate_expression_with_missing(
+        document,
+        expression["input"],
+        variables or {},
+        dialect=dialect,
+    )
+    if value is _MISSING or isinstance(value, UndefinedType):
+        value = None
+    size = _normalize_pick_n_size(
+        operator,
+        evaluate_expression(document, expression["n"], variables, dialect=dialect),
+    )
+    return value, size
 
 
 def _slice_array(value: list[Any], spec: list[object], document: Document, variables: dict[str, Any] | None, *, dialect: MongoDialect) -> list[Any]:
@@ -2007,6 +2048,22 @@ def evaluate_expression(
                     return None
                 values = _require_array(operator, raw_value)
                 return _slice_array(values, args, document, variables, dialect=dialect)
+            if operator in {"$firstN", "$lastN"}:
+                value, size = _evaluate_pick_n_input(
+                    operator,
+                    document,
+                    spec,
+                    variables,
+                    dialect=dialect,
+                )
+                if value is None:
+                    return None
+                values = _require_array(operator, value)
+                if size >= len(values):
+                    return deepcopy(values)
+                if operator == "$firstN":
+                    return deepcopy(values[:size])
+                return deepcopy(values[-size:])
             if operator == "$isArray":
                 args = _require_expression_args(
                     operator,
@@ -2753,6 +2810,8 @@ def _initialize_accumulators(
         elif operator in {"$min", "$max", "$first", "$last"}:
             initialized[field] = None
             flags[field] = False
+        elif operator in {"$firstN", "$lastN"}:
+            initialized[field] = _PickNAccumulator()
         elif operator == "$avg":
             initialized[field] = _AverageAccumulator()
         elif operator == "$stdDevPop":
@@ -2841,6 +2900,26 @@ def _apply_accumulators(
         elif operator == "$last":
             bucket[field] = deepcopy(value)
             flags[field] = True
+        elif operator in {"$firstN", "$lastN"}:
+            value, size = _evaluate_pick_n_input(
+                operator,
+                document,
+                expression,
+                variables,
+                dialect=dialect,
+            )
+            state = bucket[field]
+            if state.n is None:
+                state.n = size
+            elif state.n != size:
+                raise OperationFailure(f"{operator} n must evaluate to a consistent positive integer within the group")
+            if operator == "$firstN":
+                if len(state.items) < state.n:
+                    state.items.append(deepcopy(value))
+            else:
+                state.items.append(deepcopy(value))
+                if len(state.items) > state.n:
+                    del state.items[:-state.n]
 
 
 def _finalize_accumulators(bucket: dict[str, Any]) -> Document:
@@ -2866,6 +2945,8 @@ def _finalize_accumulators(bucket: dict[str, Any]) -> Document:
                     0.0,
                 )
                 document[field] = math.sqrt(variance)
+        elif isinstance(value, _PickNAccumulator):
+            document[field] = deepcopy(value.items)
         else:
             document[field] = value
     return document
