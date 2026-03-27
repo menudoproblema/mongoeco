@@ -1,4 +1,5 @@
 import re
+from functools import cmp_to_key
 from datetime import UTC, datetime
 from copy import deepcopy
 from typing import Any
@@ -7,8 +8,9 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.core.paths import _same_value_for_update, delete_document_value, get_document_value, set_document_value
+from mongoeco.core.sorting import sort_documents
 from mongoeco.core.update_paths import expand_positional_update_paths, is_valid_array_filter_identifier, parse_update_path
-from mongoeco.types import ArrayFilters, Filter
+from mongoeco.types import ArrayFilters, Filter, SortSpec
 
 
 class UpdateEngine:
@@ -631,6 +633,95 @@ class UpdateEngine:
         return deepcopy(each)
 
     @staticmethod
+    def _normalize_push_modifiers(
+        value: Any,
+    ) -> tuple[list[Any], int | None, int | None, SortSpec | int | None]:
+        if not isinstance(value, dict) or "$each" not in value:
+            return [deepcopy(value)], None, None, None
+
+        unsupported = set(value) - {"$each", "$position", "$slice", "$sort"}
+        if unsupported:
+            unsupported_names = ", ".join(sorted(unsupported))
+            raise OperationFailure(
+                f"$push only supports the $each, $position, $slice and $sort modifiers: {unsupported_names}"
+            )
+
+        each = value["$each"]
+        if not isinstance(each, list):
+            raise OperationFailure("$push $each requires an array")
+
+        position = value.get("$position")
+        if position is not None and (
+            not isinstance(position, int) or isinstance(position, bool)
+        ):
+            raise OperationFailure("$push $position must be an integer")
+
+        slice_value = value.get("$slice")
+        if slice_value is not None and (
+            not isinstance(slice_value, int) or isinstance(slice_value, bool)
+        ):
+            raise OperationFailure("$push $slice must be an integer")
+
+        sort_value = value.get("$sort")
+        sort_spec: SortSpec | int | None = None
+        if sort_value is not None:
+            if sort_value in (1, -1) and not isinstance(sort_value, bool):
+                sort_spec = sort_value
+            elif isinstance(sort_value, dict):
+                normalized: SortSpec = []
+                for field, direction in sort_value.items():
+                    if not isinstance(field, str):
+                        raise OperationFailure("$push $sort fields must be strings")
+                    if direction not in (1, -1) or isinstance(direction, bool):
+                        raise OperationFailure("$push $sort directions must be 1 or -1")
+                    normalized.append((field, direction))
+                sort_spec = normalized
+            else:
+                raise OperationFailure("$push $sort must be 1, -1 or a document")
+
+        return deepcopy(each), position, slice_value, sort_spec
+
+    @staticmethod
+    def _apply_push_values(
+        current: list[Any],
+        values: list[Any],
+        *,
+        position: int | None,
+        slice_value: int | None,
+        sort_spec: SortSpec | int | None,
+        dialect: MongoDialect,
+    ) -> bool:
+        if not values and slice_value is None and sort_spec is None:
+            return False
+
+        if values:
+            if position is None:
+                current.extend(values)
+            else:
+                insertion_index = position if position >= 0 else len(current) + position
+                insertion_index = min(max(insertion_index, 0), len(current))
+                for offset, value in enumerate(values):
+                    current.insert(insertion_index + offset, value)
+
+        if sort_spec is not None:
+            if isinstance(sort_spec, int):
+                current.sort(
+                    key=cmp_to_key(dialect.compare_values),
+                    reverse=sort_spec == -1,
+                )
+            else:
+                if any(not isinstance(item, dict) for item in current):
+                    raise OperationFailure(
+                        "$push $sort with a document specification requires array elements to be documents"
+                    )
+                current[:] = sort_documents(current, sort_spec, dialect=dialect)
+
+        if slice_value is not None:
+            current[:] = current[:slice_value] if slice_value >= 0 else current[slice_value:]
+
+        return bool(values) or sort_spec is not None or slice_value is not None
+
+    @staticmethod
     def _apply_push(
         doc: dict[str, Any],
         params: dict[str, Any],
@@ -640,16 +731,31 @@ class UpdateEngine:
         modified = False
         for path, value in UpdateEngine._iter_ordered_update_items(params, dialect=dialect):
             UpdateEngine._assert_mutable_path(path)
-            values = UpdateEngine._expand_array_update_values("$push", value)
+            values, position, slice_value, sort_spec = UpdateEngine._normalize_push_modifiers(value)
             found, current = get_document_value(doc, path)
             if not found:
-                if set_document_value(doc, path, list(values)):
+                new_value = list(values)
+                UpdateEngine._apply_push_values(
+                    new_value,
+                    [],
+                    position=position,
+                    slice_value=slice_value,
+                    sort_spec=sort_spec,
+                    dialect=dialect,
+                )
+                if set_document_value(doc, path, new_value):
                     modified = True
                 continue
             if not isinstance(current, list):
                 raise OperationFailure("$push requires the target field to be an array")
-            if values:
-                current.extend(values)
+            if UpdateEngine._apply_push_values(
+                current,
+                values,
+                position=position,
+                slice_value=slice_value,
+                sort_spec=sort_spec,
+                dialect=dialect,
+            ):
                 modified = True
         return modified
 

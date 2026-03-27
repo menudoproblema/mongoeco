@@ -671,15 +671,65 @@ class UpdateEngineTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"tags": []}, {"$push": {"tags": {"$each": "python"}}})
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({"tags": []}, {"$push": {"tags": {"$each": ["python"], "$slice": 1}}})
+            UpdateEngine.apply_update({"tags": []}, {"$push": {"tags": {"$each": ["python"], "$slice": "1"}}})
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({"tags": []}, {"$push": {"tags": {"$each": ["python"], "$position": 0}}})
+            UpdateEngine.apply_update({"tags": []}, {"$push": {"tags": {"$each": ["python"], "$position": "0"}}})
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({"tags": []}, {"$push": {"tags": {"$each": ["python"], "$sort": 1}}})
+            UpdateEngine.apply_update({"tags": []}, {"$push": {"tags": {"$each": ["python"], "$sort": 0}}})
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"tags": []}, {"$addToSet": {"tags": {"$each": "python"}}})
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"tags": []}, {"$addToSet": {"tags": {"$each": ["python"], "$slice": 1}}})
+
+    def test_push_supports_position_slice_and_scalar_sort_modifiers(self):
+        document = {"scores": [4, 1]}
+
+        modified = UpdateEngine.apply_update(
+            document,
+            {"$push": {"scores": {"$each": [3, 2], "$position": 1, "$sort": 1, "$slice": 3}}},
+        )
+
+        self.assertTrue(modified)
+        self.assertEqual(document, {"scores": [1, 2, 3]})
+
+    def test_push_supports_document_sort_modifier(self):
+        document = {
+            "quizzes": [
+                {"wk": 1, "score": 10},
+                {"wk": 2, "score": 8},
+                {"wk": 3, "score": 5},
+                {"wk": 4, "score": 6},
+            ]
+        }
+
+        modified = UpdateEngine.apply_update(
+            document,
+            {
+                "$push": {
+                    "quizzes": {
+                        "$each": [
+                            {"wk": 5, "score": 8},
+                            {"wk": 6, "score": 7},
+                            {"wk": 7, "score": 6},
+                        ],
+                        "$sort": {"score": -1},
+                        "$slice": 3,
+                    }
+                }
+            },
+        )
+
+        self.assertTrue(modified)
+        self.assertEqual(
+            document,
+            {
+                "quizzes": [
+                    {"wk": 1, "score": 10},
+                    {"wk": 2, "score": 8},
+                    {"wk": 5, "score": 8},
+                ]
+            },
+        )
 
 
     def test_pull_missing_array_is_noop_and_non_array_targets_raise(self):

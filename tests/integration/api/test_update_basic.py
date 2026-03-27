@@ -202,6 +202,56 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(OperationFailure):
                         await coll.update_one({"_id": "1"}, {"$addToSet": {"tags": {"$each": ["python"], "$slice": 1}}})
 
+    async def test_update_one_supports_push_modifiers(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    coll = client.test_db.test_coll
+                    await coll.insert_one(
+                        {
+                            "_id": "1",
+                            "scores": [4, 1],
+                            "quizzes": [
+                                {"wk": 1, "score": 10},
+                                {"wk": 2, "score": 8},
+                                {"wk": 3, "score": 5},
+                                {"wk": 4, "score": 6},
+                            ],
+                        }
+                    )
+
+                    await coll.update_one(
+                        {"_id": "1"},
+                        {"$push": {"scores": {"$each": [3, 2], "$position": 1, "$sort": 1, "$slice": 3}}},
+                    )
+                    await coll.update_one(
+                        {"_id": "1"},
+                        {
+                            "$push": {
+                                "quizzes": {
+                                    "$each": [
+                                        {"wk": 5, "score": 8},
+                                        {"wk": 6, "score": 7},
+                                        {"wk": 7, "score": 6},
+                                    ],
+                                    "$sort": {"score": -1},
+                                    "$slice": 3,
+                                }
+                            }
+                        },
+                    )
+
+                    doc = await coll.find_one({"_id": "1"})
+                    self.assertEqual(doc["scores"], [1, 2, 3])
+                    self.assertEqual(
+                        doc["quizzes"],
+                        [
+                            {"wk": 1, "score": 10},
+                            {"wk": 2, "score": 8},
+                            {"wk": 5, "score": 8},
+                        ],
+                    )
+
     async def test_update_one_supports_inc_push_add_to_set_and_pull(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
