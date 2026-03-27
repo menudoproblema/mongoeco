@@ -779,6 +779,28 @@ def _trim_ordered_accumulator(
         del state.items[keep:]
 
 
+def _window_sort_key_values(
+    document: Document,
+    sort_spec: SortSpec,
+) -> list[Any]:
+    values: list[Any] = []
+    for field, _direction in sort_spec:
+        found, value = get_document_value(document, field)
+        values.append(value if found else None)
+    return values
+
+
+def _window_sort_keys_equal(
+    left: list[Any],
+    right: list[Any],
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> bool:
+    if len(left) != len(right):
+        return False
+    return all(dialect.compare_values(left[index], right[index]) == 0 for index in range(len(left)))
+
+
 def _slice_array(value: list[Any], spec: list[object], document: Document, variables: dict[str, Any] | None, *, dialect: MongoDialect) -> list[Any]:
     if len(spec) == 2:
         count = evaluate_expression(document, spec[1], variables, dialect=dialect)
@@ -3460,6 +3482,11 @@ def _apply_set_window_fields(
             if sort_spec is not None
             else partition_documents
         )
+        window_sort_keys = (
+            [_window_sort_key_values(document, sort_spec) for document in ordered]
+            if sort_spec is not None
+            else []
+        )
         last_index = len(ordered) - 1
         for current_index, document in enumerate(ordered):
             enriched = deepcopy(document)
@@ -3469,6 +3496,28 @@ def _apply_set_window_fields(
                 operator, expression, window = _require_window_output_spec(field_spec)
                 if not dialect.supports_window_accumulator(operator):
                     raise OperationFailure(f"Unsupported $setWindowFields accumulator: {operator}")
+                if operator in {"$rank", "$denseRank", "$documentNumber"}:
+                    if sort_spec is None:
+                        raise OperationFailure(f"{operator} requires sortBy")
+                    if expression != {}:
+                        raise OperationFailure(f"{operator} requires an empty document")
+                    if window is not None:
+                        raise OperationFailure(f"{operator} does not support an explicit window")
+                    if operator == "$documentNumber":
+                        set_document_value(enriched, field, current_index + 1)
+                        continue
+                    rank = 1
+                    dense_rank = 1
+                    previous_key = window_sort_keys[0]
+                    for index in range(1, current_index + 1):
+                        candidate_key = window_sort_keys[index]
+                        if _window_sort_keys_equal(candidate_key, previous_key, dialect=dialect):
+                            continue
+                        dense_rank += 1
+                        rank = index + 1
+                        previous_key = candidate_key
+                    set_document_value(enriched, field, rank if operator == "$rank" else dense_rank)
+                    continue
                 if window is None:
                     start = 0
                     end = last_index

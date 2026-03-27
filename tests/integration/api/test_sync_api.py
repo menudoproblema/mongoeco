@@ -3379,6 +3379,47 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_aggregate_supports_rank_family_window_operators(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.analytics.events
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "group": "a", "score": 10},
+                            {"_id": "2", "group": "a", "score": 20},
+                            {"_id": "3", "group": "a", "score": 20},
+                            {"_id": "4", "group": "b", "score": 5},
+                        ]
+                    )
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$setWindowFields": {
+                                    "partitionBy": "$group",
+                                    "sortBy": {"score": 1},
+                                    "output": {
+                                        "rank": {"$rank": {}},
+                                        "dense": {"$denseRank": {}},
+                                        "docnum": {"$documentNumber": {}},
+                                    },
+                                }
+                            },
+                            {"$project": {"_id": 1, "group": 1, "score": 1, "rank": 1, "dense": 1, "docnum": 1}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {"_id": "1", "group": "a", "score": 10, "rank": 1, "dense": 1, "docnum": 1},
+                            {"_id": "2", "group": "a", "score": 20, "rank": 2, "dense": 2, "docnum": 2},
+                            {"_id": "3", "group": "a", "score": 20, "rank": 2, "dense": 2, "docnum": 3},
+                            {"_id": "4", "group": "b", "score": 5, "rank": 1, "dense": 1, "docnum": 1},
+                        ],
+                    )
+
     def test_aggregate_supports_string_expressions_last_and_add_to_set(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

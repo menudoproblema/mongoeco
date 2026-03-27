@@ -454,7 +454,7 @@ class AggregationTests(unittest.TestCase):
     def test_set_window_fields_rejects_supported_but_unimplemented_accumulator(self):
         class _FutureWindowDialect(MongoDialect):
             def supports_window_accumulator(self, name: str) -> bool:
-                return True if name == "$rank" else super().supports_window_accumulator(name)
+                return True if name == "$futureWindow" else super().supports_window_accumulator(name)
 
         with self.assertRaises(OperationFailure):
             apply_pipeline(
@@ -464,7 +464,7 @@ class AggregationTests(unittest.TestCase):
                         "$setWindowFields": {
                             "partitionBy": "$kind",
                             "sortBy": {"value": 1},
-                            "output": {"rank": {"$rank": "$value"}},
+                            "output": {"rank": {"$futureWindow": "$value"}},
                         }
                     }
                 ],
@@ -1109,8 +1109,8 @@ class AggregationTests(unittest.TestCase):
 
         unsupported_window_operators = [
             "$covariancePop", "$covarianceSamp",
-            "$denseRank", "$derivative", "$documentNumber", "$expMovingAvg", "$integral",
-            "$linearFill", "$locf", "$rank", "$shift",
+            "$derivative", "$expMovingAvg", "$integral",
+            "$linearFill", "$locf", "$shift",
         ]
         for operator in unsupported_window_operators:
             with self.subTest(window_operator=operator):
@@ -1120,18 +1120,53 @@ class AggregationTests(unittest.TestCase):
                         [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {operator: "$value"}}}}],
                     )
 
-    def test_set_window_fields_rejects_rank_with_dedicated_test(self):
-        with self.assertRaises(OperationFailure):
-            apply_pipeline(
-                [{"_id": "1", "value": 10}],
-                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$rank": {}}}}}],
-            )
+    def test_set_window_fields_supports_rank_dense_rank_and_document_number(self):
+        result = apply_pipeline(
+            [
+                {"_id": "1", "group": "a", "score": 10},
+                {"_id": "2", "group": "a", "score": 20},
+                {"_id": "3", "group": "a", "score": 20},
+                {"_id": "4", "group": "b", "score": 5},
+            ],
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"score": 1},
+                        "output": {
+                            "rank": {"$rank": {}},
+                            "dense": {"$denseRank": {}},
+                            "docnum": {"$documentNumber": {}},
+                        },
+                    }
+                }
+            ],
+        )
+        self.assertEqual(
+            result,
+            [
+                {"_id": "1", "group": "a", "score": 10, "rank": 1, "dense": 1, "docnum": 1},
+                {"_id": "2", "group": "a", "score": 20, "rank": 2, "dense": 2, "docnum": 2},
+                {"_id": "3", "group": "a", "score": 20, "rank": 2, "dense": 2, "docnum": 3},
+                {"_id": "4", "group": "b", "score": 5, "rank": 1, "dense": 1, "docnum": 1},
+            ],
+        )
 
-    def test_set_window_fields_rejects_dense_rank_with_dedicated_test(self):
+    def test_set_window_fields_rank_family_rejects_invalid_payloads(self):
         with self.assertRaises(OperationFailure):
             apply_pipeline(
                 [{"_id": "1", "value": 10}],
-                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$denseRank": {}}}}}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$rank": "$value"}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"output": {"result": {"$documentNumber": {}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$denseRank": {}, "window": {"documents": ["unbounded", "current"]}}}}}],
             )
 
     def test_set_window_fields_rejects_shift_with_dedicated_test(self):

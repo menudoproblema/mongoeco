@@ -697,6 +697,9 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$bottomN`
     * `$median`
     * `$percentile`
+    * `$rank`
+    * `$denseRank`
+    * `$documentNumber`
     * `$objectToArray`
     * `$zip`
     * `$slice`
