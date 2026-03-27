@@ -1272,6 +1272,39 @@ def _restore_datetime_timezone(
     return utc_value.astimezone(original.tzinfo)
 
 
+def _evaluate_localized_date_operand(
+    operator: str,
+    document: Document,
+    spec: object,
+    variables: dict[str, Any] | None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> datetime.datetime | None:
+    timezone_value = None
+    date_expression: Any = spec
+    if isinstance(spec, dict):
+        if 'date' not in spec:
+            raise OperationFailure(f'{operator} requires a date expression')
+        date_expression = spec['date']
+        timezone_value = (
+            evaluate_expression(document, spec['timezone'], variables, dialect=dialect)
+            if 'timezone' in spec
+            else None
+        )
+    value = _evaluate_expression_with_missing(
+        document,
+        date_expression,
+        variables,
+        dialect=dialect,
+    )
+    if value is _MISSING or value is None:
+        return None
+    if not isinstance(value, datetime.datetime):
+        raise OperationFailure(f'{operator} requires a date input')
+    timezone = _resolve_timezone(operator, timezone_value)
+    return _localize_datetime(value, timezone)
+
+
 def _add_calendar_months(value: datetime.datetime, months: int) -> datetime.datetime:
     month_index = value.month - 1 + months
     year = value.year + month_index // 12
@@ -2301,25 +2334,56 @@ def evaluate_expression(
                 if not isinstance(spec, dict):
                     raise OperationFailure("$dateFromParts requires a document specification")
                 return _build_date_from_parts(operator, spec, document, variables, dialect=dialect)
-            if operator in {"$week", "$isoWeek", "$isoWeekYear"}:
-                timezone_value = None
-                date_expression: Any = spec
-                if isinstance(spec, dict):
-                    if "date" not in spec:
-                        raise OperationFailure(f"{operator} requires a date expression")
-                    date_expression = spec["date"]
-                    timezone_value = (
-                        evaluate_expression(document, spec["timezone"], variables, dialect=dialect)
-                        if "timezone" in spec
-                        else None
-                    )
-                value = _evaluate_expression_with_missing(document, date_expression, variables, dialect=dialect)
-                if value is _MISSING or value is None:
+            if operator in {
+                "$year",
+                "$month",
+                "$dayOfMonth",
+                "$dayOfWeek",
+                "$dayOfYear",
+                "$hour",
+                "$minute",
+                "$second",
+                "$millisecond",
+                "$isoDayOfWeek",
+            }:
+                localized = _evaluate_localized_date_operand(
+                    operator,
+                    document,
+                    spec,
+                    variables,
+                    dialect=dialect,
+                )
+                if localized is None:
                     return None
-                if not isinstance(value, datetime.datetime):
-                    raise OperationFailure(f"{operator} requires a date input")
-                timezone = _resolve_timezone(operator, timezone_value)
-                localized = _localize_datetime(value, timezone)
+                if operator == "$year":
+                    return localized.year
+                if operator == "$month":
+                    return localized.month
+                if operator == "$dayOfMonth":
+                    return localized.day
+                if operator == "$dayOfWeek":
+                    return ((localized.weekday() + 1) % 7) + 1
+                if operator == "$dayOfYear":
+                    return int(localized.strftime("%j"))
+                if operator == "$hour":
+                    return localized.hour
+                if operator == "$minute":
+                    return localized.minute
+                if operator == "$second":
+                    return localized.second
+                if operator == "$millisecond":
+                    return localized.microsecond // 1000
+                return localized.isoweekday()
+            if operator in {"$week", "$isoWeek", "$isoWeekYear"}:
+                localized = _evaluate_localized_date_operand(
+                    operator,
+                    document,
+                    spec,
+                    variables,
+                    dialect=dialect,
+                )
+                if localized is None:
+                    return None
                 if operator == "$week":
                     return int(localized.strftime("%U"))
                 iso_parts = localized.isocalendar()

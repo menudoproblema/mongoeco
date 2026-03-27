@@ -82,6 +82,13 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(server_info["gitVersion"], "mongoeco")
             self.assertEqual(server_info["ok"], 1.0)
 
+    async def test_build_info_command_shares_source_of_truth_with_server_info(self):
+        async with AsyncMongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
+            server_info = await client.server_info()
+            build_info = await client.alpha.command("buildInfo")
+
+            self.assertEqual(build_info, server_info)
+
     async def test_create_collection_registers_empty_namespace_and_rejects_duplicates(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -1602,6 +1609,72 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(
                         documents,
                         [{"_id": "1", "decimal": decimal.Decimal("10.25")}],
+                    )
+
+    async def test_aggregate_supports_date_part_extractors(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one(
+                        {
+                            "_id": "1",
+                            "created_at": datetime.datetime(2026, 3, 29, 22, 5, 6, 789000),
+                        }
+                    )
+
+                    documents = await collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "year": {"$year": "$created_at"},
+                                    "month": {"$month": "$created_at"},
+                                    "day_of_month": {
+                                        "$dayOfMonth": {
+                                            "date": "$created_at",
+                                            "timezone": "+02:00",
+                                        }
+                                    },
+                                    "day_of_week": {
+                                        "$dayOfWeek": {
+                                            "date": "$created_at",
+                                            "timezone": "+02:00",
+                                        }
+                                    },
+                                    "day_of_year": {"$dayOfYear": "$created_at"},
+                                    "hour": {
+                                        "$hour": {
+                                            "date": "$created_at",
+                                            "timezone": "+02:00",
+                                        }
+                                    },
+                                    "minute": {"$minute": "$created_at"},
+                                    "second": {"$second": "$created_at"},
+                                    "millisecond": {"$millisecond": "$created_at"},
+                                    "iso_day_of_week": {"$isoDayOfWeek": "$created_at"},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {
+                                "_id": "1",
+                                "year": 2026,
+                                "month": 3,
+                                "day_of_month": 30,
+                                "day_of_week": 2,
+                                "day_of_year": 88,
+                                "hour": 0,
+                                "minute": 5,
+                                "second": 6,
+                                "millisecond": 789,
+                                "iso_day_of_week": 7,
+                            }
+                        ],
                     )
 
     async def test_aggregate_supports_convert_set_field_and_unset_field(self):

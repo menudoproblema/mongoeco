@@ -703,6 +703,16 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$dateFromParts`
     * `$dateToParts`
     * `$dateToString`
+    * `$year`
+    * `$month`
+    * `$dayOfMonth`
+    * `$dayOfWeek`
+    * `$dayOfYear`
+    * `$hour`
+    * `$minute`
+    * `$second`
+    * `$millisecond`
+    * `$isoDayOfWeek`
     * `$week`
     * `$isoWeek`
     * `$isoWeekYear`

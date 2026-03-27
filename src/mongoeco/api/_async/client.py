@@ -356,6 +356,9 @@ class AsyncDatabase:
         if command_name == "ping":
             return {"ok": 1.0}
 
+        if command_name == "buildInfo":
+            return _build_info_document(self._mongodb_dialect)
+
         if command_name == "listCollections":
             filter_spec = self._normalize_filter(spec.get("filter"))
             first_batch = await self.list_collections(
@@ -677,16 +680,7 @@ class AsyncMongoClient:
             await self._engine.drop_collection(name, collection_name, context=session)
 
     async def server_info(self) -> dict[str, object]:
-        version_parts = [int(part) for part in self._mongodb_dialect.server_version.split(".")]
-        while len(version_parts) < 2:
-            version_parts.append(0)
-        major, minor = version_parts[:2]
-        return {
-            "version": f"{major}.{minor}.0",
-            "versionArray": [major, minor, 0, 0],
-            "gitVersion": "mongoeco",
-            "ok": 1.0,
-        }
+        return _build_info_document(self._mongodb_dialect)
 
     @property
     def mongodb_dialect(self) -> MongoDialect:
@@ -723,3 +717,16 @@ class AsyncMongoClient:
     @property
     def transaction_options(self) -> TransactionOptions:
         return self._transaction_options
+
+
+def _build_info_document(mongodb_dialect: MongoDialect) -> dict[str, object]:
+    version_parts = [int(part) for part in mongodb_dialect.server_version.split(".")]
+    while len(version_parts) < 2:
+        version_parts.append(0)
+    major, minor = version_parts[:2]
+    return {
+        "version": f"{major}.{minor}.0",
+        "versionArray": [major, minor, 0, 0],
+        "gitVersion": "mongoeco",
+        "ok": 1.0,
+    }

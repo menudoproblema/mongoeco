@@ -57,6 +57,13 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertEqual(server_info["gitVersion"], "mongoeco")
             self.assertEqual(server_info["ok"], 1.0)
 
+    def test_build_info_command_shares_source_of_truth_with_server_info(self):
+        with MongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
+            server_info = client.server_info()
+            build_info = client.alpha.command("buildInfo")
+
+            self.assertEqual(build_info, server_info)
+
     def test_insert_find_and_list_names(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -1494,6 +1501,72 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         documents,
                         [{"_id": "1", "decimal": decimal.Decimal("10.25")}],
+                    )
+
+    def test_aggregate_supports_date_part_extractors(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "created_at": datetime.datetime(2026, 3, 29, 22, 5, 6, 789000),
+                        }
+                    )
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "year": {"$year": "$created_at"},
+                                    "month": {"$month": "$created_at"},
+                                    "day_of_month": {
+                                        "$dayOfMonth": {
+                                            "date": "$created_at",
+                                            "timezone": "+02:00",
+                                        }
+                                    },
+                                    "day_of_week": {
+                                        "$dayOfWeek": {
+                                            "date": "$created_at",
+                                            "timezone": "+02:00",
+                                        }
+                                    },
+                                    "day_of_year": {"$dayOfYear": "$created_at"},
+                                    "hour": {
+                                        "$hour": {
+                                            "date": "$created_at",
+                                            "timezone": "+02:00",
+                                        }
+                                    },
+                                    "minute": {"$minute": "$created_at"},
+                                    "second": {"$second": "$created_at"},
+                                    "millisecond": {"$millisecond": "$created_at"},
+                                    "iso_day_of_week": {"$isoDayOfWeek": "$created_at"},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {
+                                "_id": "1",
+                                "year": 2026,
+                                "month": 3,
+                                "day_of_month": 30,
+                                "day_of_week": 2,
+                                "day_of_year": 88,
+                                "hour": 0,
+                                "minute": 5,
+                                "second": 6,
+                                "millisecond": 789,
+                                "iso_day_of_week": 7,
+                            }
+                        ],
                     )
 
     def test_aggregate_supports_convert_set_field_and_unset_field(self):

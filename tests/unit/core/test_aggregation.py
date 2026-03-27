@@ -1192,6 +1192,52 @@ class AggregationTests(unittest.TestCase):
             10,
         )
 
+    def test_evaluate_expression_supports_date_part_extractors(self):
+        document = {
+            "created_at": datetime.datetime(2026, 3, 29, 22, 5, 6, 789000),
+        }
+
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$year": {"date": "$created_at", "timezone": "+02:00"}},
+            ),
+            2026,
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$month": {"date": "$created_at", "timezone": "+02:00"}},
+            ),
+            3,
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dayOfMonth": {"date": "$created_at", "timezone": "+02:00"}},
+            ),
+            30,
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$dayOfWeek": {"date": "$created_at", "timezone": "+02:00"}},
+            ),
+            2,
+        )
+        self.assertEqual(evaluate_expression(document, {"$dayOfYear": "$created_at"}), 88)
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$hour": {"date": "$created_at", "timezone": "+02:00"}},
+            ),
+            0,
+        )
+        self.assertEqual(evaluate_expression(document, {"$minute": "$created_at"}), 5)
+        self.assertEqual(evaluate_expression(document, {"$second": "$created_at"}), 6)
+        self.assertEqual(evaluate_expression(document, {"$millisecond": "$created_at"}), 789)
+        self.assertEqual(evaluate_expression(document, {"$isoDayOfWeek": "$created_at"}), 7)
+
     def test_evaluate_expression_supports_set_field_with_dedicated_test(self):
         self.assertEqual(
             evaluate_expression({"value": 1}, {"$setField": {"field": "name", "input": "$$ROOT", "value": "Ada"}}),
