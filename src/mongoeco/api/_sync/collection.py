@@ -395,8 +395,20 @@ class Collection:
             )
         )
 
-    def estimated_document_count(self, *, session: ClientSession | None = None) -> int:
-        return self._client._run(self._async_collection().estimated_document_count(session=session))
+    def estimated_document_count(
+        self,
+        *,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        session: ClientSession | None = None,
+    ) -> int:
+        return self._client._run(
+            self._async_collection().estimated_document_count(
+                comment=comment,
+                max_time_ms=max_time_ms,
+                session=session,
+            )
+        )
 
     def distinct(
         self,

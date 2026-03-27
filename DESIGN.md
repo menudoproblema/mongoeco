@@ -764,6 +764,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
 * API pública de colección:
   * `count_documents` ya soporta `hint`, `comment`, `max_time_ms`, `skip` y `limit`
   * `distinct` ya soporta `hint`, `comment` y `max_time_ms`
+  * `estimated_document_count` ya soporta `comment` y `max_time_ms`
 * search indexes:
   * `create_search_index`
   * `create_search_indexes`

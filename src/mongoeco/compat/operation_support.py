@@ -35,6 +35,10 @@ def _build_operation_option_support() -> MappingProxyType[str, MappingProxyType[
             "comment": OperationOptionSupport(effective, "Propagated through the underlying read path and session metadata."),
             "max_time_ms": OperationOptionSupport(effective, "Enforced through the underlying find() path used to enumerate distinct values."),
         },
+        "estimated_document_count": {
+            "comment": OperationOptionSupport(effective, "Propagated through the underlying full-collection read path and session metadata."),
+            "max_time_ms": OperationOptionSupport(effective, "Enforced through the underlying full-collection read path."),
+        },
         "aggregate": {
             "hint": OperationOptionSupport(effective, "Applied through the pushdown find() path used by aggregate() and surfaced in explain()."),
             "comment": OperationOptionSupport(effective, "Recorded in engine session metadata and propagated through aggregate explain/materialization."),

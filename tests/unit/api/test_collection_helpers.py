@@ -640,12 +640,7 @@ class AsyncCollectionHelperTests(unittest.TestCase):
     def test_estimated_document_count_and_drop_delegate_to_engine(self):
         class EngineStub:
             def __init__(self):
-                self.count_calls = []
                 self.drop_calls = []
-
-            async def count_matching_documents(self, *args, **kwargs):
-                self.count_calls.append((args, kwargs))
-                return 7
 
             async def drop_collection(self, db_name, coll_name, *, context=None):
                 self.drop_calls.append((db_name, coll_name, context))
@@ -654,13 +649,23 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         collection = AsyncCollection(engine, "db", "coll")
         session = object()
 
-        count = asyncio.run(collection.estimated_document_count())
+        class CursorStub:
+            async def to_list(self):
+                return [{"_id": str(i)} for i in range(7)]
+
+        with patch.object(collection, "find", return_value=CursorStub()) as mock_find:
+            count = asyncio.run(collection.estimated_document_count())
         asyncio.run(collection.drop(session=session))
 
         self.assertEqual(count, 7)
         self.assertEqual(engine.drop_calls, [("db", "coll", session)])
-        self.assertEqual(engine.count_calls[0][0][:3], ("db", "coll", {}))
-        self.assertEqual(type(engine.count_calls[0][1]["plan"]).__name__, "MatchAll")
+        mock_find.assert_called_once_with(
+            {},
+            {"_id": 1},
+            comment=None,
+            max_time_ms=None,
+            session=None,
+        )
 
     def test_replace_one_rejects_update_operator_document(self):
         with self.assertRaises(ValueError):

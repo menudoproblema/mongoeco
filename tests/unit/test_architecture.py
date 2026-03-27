@@ -107,6 +107,8 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertTrue(is_operation_option_effective("distinct", "hint"))
         self.assertTrue(is_operation_option_effective("distinct", "comment"))
         self.assertTrue(is_operation_option_effective("distinct", "max_time_ms"))
+        self.assertTrue(is_operation_option_effective("estimated_document_count", "comment"))
+        self.assertTrue(is_operation_option_effective("estimated_document_count", "max_time_ms"))
         self.assertTrue(is_operation_option_effective("aggregate", "comment"))
         self.assertTrue(is_operation_option_effective("aggregate", "max_time_ms"))
         self.assertTrue(is_operation_option_effective("aggregate", "batch_size"))

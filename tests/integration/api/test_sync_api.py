@@ -1504,6 +1504,31 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     client.drop_database("alpha")
                     self.assertNotIn("alpha", client.list_database_names())
 
+    def test_estimated_document_count_supports_comment_and_max_time(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    session = client.start_session()
+                    collection = client.analytics.events
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "kind": "view"},
+                            {"_id": "2", "kind": "click"},
+                        ],
+                        session=session,
+                    )
+
+                    count = collection.estimated_document_count(
+                        comment="trace-estimated-count",
+                        max_time_ms=25,
+                        session=session,
+                    )
+                    state = next(iter(session.engine_state.values()))
+
+                    self.assertEqual(count, 2)
+                    self.assertEqual(state["last_operation"]["comment"], "trace-estimated-count")
+                    self.assertEqual(state["last_operation"]["max_time_ms"], 25)
+
     def test_drop_operations_on_missing_targets_are_noops(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

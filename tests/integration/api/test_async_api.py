@@ -1716,6 +1716,31 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     await client.drop_database("beta")
                     self.assertNotIn("beta", await client.list_database_names())
 
+    async def test_estimated_document_count_supports_comment_and_max_time(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    session = client.start_session()
+                    collection = client.analytics.events
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "kind": "view"},
+                            {"_id": "2", "kind": "click"},
+                        ],
+                        session=session,
+                    )
+
+                    count = await collection.estimated_document_count(
+                        comment="trace-estimated-count",
+                        max_time_ms=25,
+                        session=session,
+                    )
+                    state = next(iter(session.engine_state.values()))
+
+                    self.assertEqual(count, 2)
+                    self.assertEqual(state["last_operation"]["comment"], "trace-estimated-count")
+                    self.assertEqual(state["last_operation"]["max_time_ms"], 25)
+
                     await client.drop_database("alpha")
                     self.assertNotIn("alpha", await client.list_database_names())
 

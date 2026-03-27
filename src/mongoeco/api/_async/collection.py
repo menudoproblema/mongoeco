@@ -1282,16 +1282,27 @@ class AsyncCollection:
     async def estimated_document_count(
         self,
         *,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> int:
-        return await self._engine.count_matching_documents(
-            self._db_name,
-            self._collection_name,
-            {},
-            plan=compile_filter({}, dialect=self._mongodb_dialect),
-            dialect=self._mongodb_dialect,
-            context=session,
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
+        count = len(
+            await self.find(
+                {},
+                {"_id": 1},
+                comment=comment,
+                max_time_ms=max_time_ms,
+                session=session,
+            ).to_list()
         )
+        self._record_operation_metadata(
+            operation="estimated_document_count",
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+        )
+        return count
 
     async def distinct(
         self,
