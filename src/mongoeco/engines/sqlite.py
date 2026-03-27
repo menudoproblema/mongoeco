@@ -110,6 +110,7 @@ class SQLiteEngine(AsyncStorageEngine):
         self._active_scan_count = 0
         self._thread_local = threading.local()
         self._profiler = EngineProfiler("sqlite")
+        self._mvcc_version = 0
 
     def _engine_key(self) -> str:
         return f"sqlite:{id(self)}"
@@ -172,7 +173,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 connected=self._connection is not None,
                 supports_transactions=True,
                 transaction_active=False,
-                metadata={"path": self._path},
+                metadata={"path": self._path, "snapshot_version": self._mvcc_version},
             )
         )
         session.register_transaction_hooks(
@@ -194,6 +195,7 @@ class SQLiteEngine(AsyncStorageEngine):
         state.connected = self._connection is not None
         if transaction_active is not None:
             state.transaction_active = transaction_active
+        state.metadata["snapshot_version"] = self._mvcc_version
 
     def _start_session_transaction(self, session: ClientSession) -> None:
         with self._lock:
@@ -204,6 +206,7 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._connection
             conn.execute("BEGIN")
             self._transaction_owner_session_id = session.session_id
+            self._mvcc_version += 1
             self._sync_session_state(session, transaction_active=True)
 
     def _commit_session_transaction(self, session: ClientSession) -> None:
@@ -216,6 +219,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._connection.commit()
             finally:
                 self._transaction_owner_session_id = None
+                self._mvcc_version += 1
                 self._sync_session_state(session, transaction_active=False)
 
     def _abort_session_transaction(self, session: ClientSession) -> None:

@@ -10,6 +10,7 @@ from typing import Any, AsyncIterable, override
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines.mvcc import MemoryMvccState
 from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.engines.semantic_core import (
     EngineReadExecutionPlan,
@@ -68,6 +69,8 @@ class MemoryEngine(AsyncStorageEngine):
         self._connection_count = 0
         self._codec = codec
         self._profiler = EngineProfiler("memory")
+        self._mvcc_version = 0
+        self._mvcc_states: dict[str, MemoryMvccState] = {}
 
     @override
     def create_session_state(self, session: ClientSession) -> None:
@@ -76,10 +79,97 @@ class MemoryEngine(AsyncStorageEngine):
             EngineTransactionContext(
                 engine_key=engine_key,
                 connected=self._connection_count > 0,
-                supports_transactions=False,
+                supports_transactions=True,
+                transaction_active=False,
+                metadata={"snapshot_version": self._mvcc_version},
             )
         )
-        session.register_transaction_hooks(engine_key)
+        session.register_transaction_hooks(
+            engine_key,
+            start=self._start_session_transaction,
+            commit=self._commit_session_transaction,
+            abort=self._abort_session_transaction,
+        )
+
+    def _engine_key(self) -> str:
+        return f"memory:{id(self)}"
+
+    def _sync_session_state(
+        self,
+        session: ClientSession,
+        *,
+        transaction_active: bool | None = None,
+        snapshot_version: int | None = None,
+    ) -> None:
+        state = session.get_engine_context(self._engine_key())
+        if state is None:
+            return
+        state.connected = self._connection_count > 0
+        if transaction_active is not None:
+            state.transaction_active = transaction_active
+        if snapshot_version is not None:
+            state.metadata["snapshot_version"] = snapshot_version
+
+    def _start_session_transaction(self, session: ClientSession) -> None:
+        with self._meta_lock:
+            snapshot = MemoryMvccState.capture(
+                snapshot_version=self._mvcc_version,
+                storage=self._storage,
+                indexes=self._indexes,
+                collections=self._collections,
+                collection_options=self._collection_options,
+            )
+            self._mvcc_states[session.session_id] = snapshot
+        self._sync_session_state(
+            session,
+            transaction_active=True,
+            snapshot_version=snapshot.snapshot_version,
+        )
+
+    def _commit_session_transaction(self, session: ClientSession) -> None:
+        with self._meta_lock:
+            snapshot = self._mvcc_states.pop(session.session_id, None)
+            if snapshot is not None:
+                self._storage = snapshot.storage
+                self._indexes = snapshot.indexes
+                self._collections = snapshot.collections
+                self._collection_options = snapshot.collection_options
+                self._mvcc_version += 1
+        self._sync_session_state(
+            session,
+            transaction_active=False,
+            snapshot_version=self._mvcc_version,
+        )
+
+    def _abort_session_transaction(self, session: ClientSession) -> None:
+        with self._meta_lock:
+            self._mvcc_states.pop(session.session_id, None)
+        self._sync_session_state(
+            session,
+            transaction_active=False,
+            snapshot_version=self._mvcc_version,
+        )
+
+    def _active_mvcc_state(self, context: ClientSession | None) -> MemoryMvccState | None:
+        if context is None or not context.in_transaction:
+            return None
+        return self._mvcc_states.get(context.session_id)
+
+    def _storage_view(self, context: ClientSession | None) -> dict[str, dict[str, dict[Any, Any]]]:
+        state = self._active_mvcc_state(context)
+        return self._storage if state is None else state.storage
+
+    def _indexes_view(self, context: ClientSession | None) -> dict[str, dict[str, list[EngineIndexRecord]]]:
+        state = self._active_mvcc_state(context)
+        return self._indexes if state is None else state.indexes
+
+    def _collections_view(self, context: ClientSession | None) -> dict[str, set[str]]:
+        state = self._active_mvcc_state(context)
+        return self._collections if state is None else state.collections
+
+    def _collection_options_view(self, context: ClientSession | None) -> dict[str, dict[str, Document]]:
+        state = self._active_mvcc_state(context)
+        return self._collection_options if state is None else state.collection_options
 
     def _lock_key(self, db: str, coll: str) -> str:
         return f"{db}.{coll}"
@@ -194,23 +284,36 @@ class MemoryEngine(AsyncStorageEngine):
         coll_name: str,
         *,
         options: Document | None = None,
+        collections: dict[str, set[str]] | None = None,
+        collection_options: dict[str, dict[str, Document]] | None = None,
     ) -> None:
-        self._collections.setdefault(db_name, set()).add(coll_name)
-        db_options = self._collection_options.setdefault(db_name, {})
+        target_collections = self._collections if collections is None else collections
+        target_options = self._collection_options if collection_options is None else collection_options
+        target_collections.setdefault(db_name, set()).add(coll_name)
+        db_options = target_options.setdefault(db_name, {})
         db_options.setdefault(coll_name, deepcopy(options or {}))
 
-    def _prune_collection_registry_locked(self, db_name: str, coll_name: str) -> None:
-        collections = self._collections.get(db_name)
+    def _prune_collection_registry_locked(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        collections: dict[str, set[str]] | None = None,
+        collection_options: dict[str, dict[str, Document]] | None = None,
+    ) -> None:
+        target_collections = self._collections if collections is None else collections
+        target_options = self._collection_options if collection_options is None else collection_options
+        collections = target_collections.get(db_name)
         if collections is None:
             return
         collections.discard(coll_name)
         if not collections:
-            del self._collections[db_name]
-        db_options = self._collection_options.get(db_name)
+            del target_collections[db_name]
+        db_options = target_options.get(db_name)
         if db_options is not None:
             db_options.pop(coll_name, None)
             if not db_options:
-                del self._collection_options[db_name]
+                del target_options[db_name]
 
     def _namespace_exists_locked(self, db_name: str, coll_name: str) -> bool:
         return (
@@ -223,8 +326,11 @@ class MemoryEngine(AsyncStorageEngine):
         self,
         db_name: str,
         coll_name: str,
+        *,
+        collection_options: dict[str, dict[str, Document]] | None = None,
     ) -> Document:
-        return deepcopy(self._collection_options.get(db_name, {}).get(coll_name, {}))
+        target_options = self._collection_options if collection_options is None else collection_options
+        return deepcopy(target_options.get(db_name, {}).get(coll_name, {}))
 
     def _typed_engine_key(self, value: Any) -> Any:
         if value is None:
@@ -277,9 +383,11 @@ class MemoryEngine(AsyncStorageEngine):
         candidate: Document,
         *,
         exclude_storage_key: Any | None = None,
+        indexes_view: dict[str, dict[str, list[EngineIndexRecord]]] | None = None,
+        storage_view: dict[str, dict[str, dict[Any, Any]]] | None = None,
     ) -> None:
-        indexes = self._indexes.get(db_name, {}).get(coll_name, [])
-        coll = self._storage.get(db_name, {}).get(coll_name, {})
+        indexes = (self._indexes if indexes_view is None else indexes_view).get(db_name, {}).get(coll_name, [])
+        coll = (self._storage if storage_view is None else storage_view).get(db_name, {}).get(coll_name, {})
         normalized_exclude = exclude_storage_key
         if exclude_storage_key is not None and exclude_storage_key not in coll:
             normalized_exclude = self._storage_key(exclude_storage_key)
@@ -318,6 +426,7 @@ class MemoryEngine(AsyncStorageEngine):
             self._collections.clear()
             self._collection_options.clear()
             self._locks.clear()
+            self._mvcc_states.clear()
 
     @override
     async def set_profiling_level(
@@ -334,13 +443,23 @@ class MemoryEngine(AsyncStorageEngine):
     @override
     async def put_document(self, db_name: str, coll_name: str, document: Document, overwrite: bool = True, *, context: ClientSession | None = None) -> bool:
         async with self._get_lock(db_name, coll_name):
+            storage = self._storage_view(context)
+            collections = self._collections_view(context)
+            option_store = self._collection_options_view(context)
+            indexes_view = self._indexes_view(context)
             with self._meta_lock:
-                db = self._storage.setdefault(db_name, {})
+                db = storage.setdefault(db_name, {})
                 coll = db.setdefault(coll_name, {})
-                self._register_collection_locked(db_name, coll_name)
+                self._register_collection_locked(
+                    db_name,
+                    coll_name,
+                    collections=collections,
+                    collection_options=option_store,
+                )
                 collection_options = self._collection_options_snapshot_locked(
                     db_name,
                     coll_name,
+                    collection_options=option_store,
                 )
 
             doc_id = document.get("_id")
@@ -363,6 +482,8 @@ class MemoryEngine(AsyncStorageEngine):
                 coll_name,
                 document,
                 exclude_storage_key=storage_key if overwrite else None,
+                indexes_view=indexes_view,
+                storage_view=storage,
             )
 
             coll[storage_key] = self._codec.encode(document)
@@ -378,7 +499,7 @@ class MemoryEngine(AsyncStorageEngine):
             return apply_projection(document, projection, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
             storage_key = self._storage_key(doc_id)
-            data = self._storage.get(db_name, {}).get(coll_name, {}).get(storage_key)
+            data = self._storage_view(context).get(db_name, {}).get(coll_name, {}).get(storage_key)
         if data is None:
             return None
         if effective_dialect is MONGODB_DIALECT_70:
@@ -394,7 +515,7 @@ class MemoryEngine(AsyncStorageEngine):
         if self._is_profile_namespace(coll_name):
             return False
         async with self._get_lock(db_name, coll_name):
-            coll = self._storage.get(db_name, {}).get(coll_name, {})
+            coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
             storage_key = self._storage_key(doc_id)
             if storage_key in coll:
                 del coll[storage_key]
@@ -435,8 +556,8 @@ class MemoryEngine(AsyncStorageEngine):
                 return
 
             async with self._get_lock(db_name, coll_name):
-                coll = self._storage.get(db_name, {}).get(coll_name, {})
-                indexes = deepcopy(self._indexes.get(db_name, {}).get(coll_name, []))
+                coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
+                indexes = deepcopy(self._indexes_view(context).get(db_name, {}).get(coll_name, []))
                 self._resolve_hint_index(
                     db_name,
                     coll_name,
@@ -489,10 +610,11 @@ class MemoryEngine(AsyncStorageEngine):
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
-                coll = self._storage.get(db_name, {}).get(coll_name)
+                coll = self._storage_view(context).get(db_name, {}).get(coll_name)
                 collection_options = self._collection_options_snapshot_locked(
                     db_name,
                     coll_name,
+                    collection_options=self._collection_options_view(context),
                 )
             if coll is None:
                 coll = {}
@@ -521,6 +643,8 @@ class MemoryEngine(AsyncStorageEngine):
                     coll_name,
                     document,
                     exclude_storage_key=storage_key,
+                    indexes_view=self._indexes_view(context),
+                    storage_view=self._storage_view(context),
                 )
                 coll[storage_key] = self._codec.encode(document)
                 return UpdateResult(
@@ -551,15 +675,26 @@ class MemoryEngine(AsyncStorageEngine):
             )
 
             with self._meta_lock:
-                db = self._storage.setdefault(db_name, {})
+                db = self._storage_view(context).setdefault(db_name, {})
                 coll = db.setdefault(coll_name, {})
-                self._register_collection_locked(db_name, coll_name)
+                self._register_collection_locked(
+                    db_name,
+                    coll_name,
+                    collections=self._collections_view(context),
+                    collection_options=self._collection_options_view(context),
+                )
 
             storage_key = self._storage_key(new_doc["_id"])
             if storage_key in coll:
                 raise DuplicateKeyError(f"Duplicate key: _id={new_doc['_id']}")
 
-            self._ensure_unique_indexes(db_name, coll_name, new_doc)
+            self._ensure_unique_indexes(
+                db_name,
+                coll_name,
+                new_doc,
+                indexes_view=self._indexes_view(context),
+                storage_view=self._storage_view(context),
+            )
             coll[storage_key] = self._codec.encode(new_doc)
             return UpdateResult(
                 matched_count=0,
@@ -587,10 +722,11 @@ class MemoryEngine(AsyncStorageEngine):
         )
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
-                coll = self._storage.get(db_name, {}).get(coll_name)
+                coll = self._storage_view(context).get(db_name, {}).get(coll_name)
                 collection_options = self._collection_options_snapshot_locked(
                     db_name,
                     coll_name,
+                    collection_options=self._collection_options_view(context),
                 )
             if coll is None:
                 coll = {}
@@ -613,6 +749,8 @@ class MemoryEngine(AsyncStorageEngine):
                     coll_name,
                     document,
                     exclude_storage_key=storage_key,
+                    indexes_view=self._indexes_view(context),
+                    storage_view=self._storage_view(context),
                 )
                 coll[storage_key] = self._codec.encode(document)
                 return UpdateResult(
@@ -636,15 +774,26 @@ class MemoryEngine(AsyncStorageEngine):
             )
 
             with self._meta_lock:
-                db = self._storage.setdefault(db_name, {})
+                db = self._storage_view(context).setdefault(db_name, {})
                 coll = db.setdefault(coll_name, {})
-                self._register_collection_locked(db_name, coll_name)
+                self._register_collection_locked(
+                    db_name,
+                    coll_name,
+                    collections=self._collections_view(context),
+                    collection_options=self._collection_options_view(context),
+                )
 
             storage_key = self._storage_key(new_doc["_id"])
             if storage_key in coll:
                 raise DuplicateKeyError(f"Duplicate key: _id={new_doc['_id']}")
 
-            self._ensure_unique_indexes(db_name, coll_name, new_doc)
+            self._ensure_unique_indexes(
+                db_name,
+                coll_name,
+                new_doc,
+                indexes_view=self._indexes_view(context),
+                storage_view=self._storage_view(context),
+            )
             coll[storage_key] = self._codec.encode(new_doc)
             return UpdateResult(
                 matched_count=0,
@@ -657,7 +806,7 @@ class MemoryEngine(AsyncStorageEngine):
         effective_dialect = dialect or MONGODB_DIALECT_70
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
-            coll = self._storage.get(db_name, {}).get(coll_name, {})
+            coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
             for storage_key, data in list(coll.items()):
                 document = self._codec.decode(data)
                 if not QueryEngine.match_plan(document, query_plan, dialect=effective_dialect):
@@ -690,7 +839,7 @@ class MemoryEngine(AsyncStorageEngine):
         effective_dialect = dialect or MONGODB_DIALECT_70
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
-            coll = self._storage.get(db_name, {}).get(coll_name, {})
+            coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
             return sum(
                 1
                 for data in coll.values()
@@ -745,11 +894,20 @@ class MemoryEngine(AsyncStorageEngine):
         if index_name == "_id_":
             raise OperationFailure("Conflicting index definition for '_id_'")
         async with self._get_lock(db_name, coll_name):
+            indexes_view = self._indexes_view(context)
+            storage_view = self._storage_view(context)
+            collections = self._collections_view(context)
+            option_store = self._collection_options_view(context)
             enforce_deadline(deadline)
             with self._meta_lock:
-                db_indexes = self._indexes.setdefault(db_name, {})
+                db_indexes = indexes_view.setdefault(db_name, {})
                 coll_indexes = db_indexes.setdefault(coll_name, [])
-                self._register_collection_locked(db_name, coll_name)
+                self._register_collection_locked(
+                    db_name,
+                    coll_name,
+                    collections=collections,
+                    collection_options=option_store,
+                )
 
             for index in coll_indexes:
                 enforce_deadline(deadline)
@@ -768,7 +926,7 @@ class MemoryEngine(AsyncStorageEngine):
 
             if unique:
                 seen: set[tuple[Any, ...]] = set()
-                coll = self._storage.get(db_name, {}).get(coll_name, {})
+                coll = storage_view.get(db_name, {}).get(coll_name, {})
                 for data in coll.values():
                     enforce_deadline(deadline)
                     document = self._codec.decode(data)
@@ -793,7 +951,7 @@ class MemoryEngine(AsyncStorageEngine):
     @override
     async def list_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> list[IndexDocument]:
         async with self._get_lock(db_name, coll_name):
-            indexes = self._indexes.get(db_name, {}).get(coll_name, [])
+            indexes = self._indexes_view(context).get(db_name, {}).get(coll_name, [])
         result = [default_id_index_definition().to_list_document()]
         result.extend(
             index.to_definition().to_list_document()
@@ -804,7 +962,7 @@ class MemoryEngine(AsyncStorageEngine):
     @override
     async def index_information(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> IndexInformation:
         async with self._get_lock(db_name, coll_name):
-            indexes = deepcopy(self._indexes.get(db_name, {}).get(coll_name, []))
+            indexes = deepcopy(self._indexes_view(context).get(db_name, {}).get(coll_name, []))
         result = default_id_index_information()
         result.update(
             {
@@ -834,7 +992,8 @@ class MemoryEngine(AsyncStorageEngine):
                 raise OperationFailure("cannot drop _id index")
             target_name = default_index_name(normalized_keys)
         async with self._get_lock(db_name, coll_name):
-            indexes = self._indexes.get(db_name, {}).get(coll_name, [])
+            indexes_view = self._indexes_view(context)
+            indexes = indexes_view.get(db_name, {}).get(coll_name, [])
             for idx, index in enumerate(indexes):
                 if index["name"] == target_name:
                     del indexes[idx]
@@ -844,10 +1003,10 @@ class MemoryEngine(AsyncStorageEngine):
                     raise OperationFailure(f"index not found with name [{index_or_name}]")
                 raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
 
-            if db_name in self._indexes and coll_name in self._indexes[db_name] and not self._indexes[db_name][coll_name]:
-                del self._indexes[db_name][coll_name]
-                if not self._indexes[db_name]:
-                    del self._indexes[db_name]
+            if db_name in indexes_view and coll_name in indexes_view[db_name] and not indexes_view[db_name][coll_name]:
+                del indexes_view[db_name][coll_name]
+                if not indexes_view[db_name]:
+                    del indexes_view[db_name]
 
     @override
     async def drop_indexes(
@@ -858,10 +1017,11 @@ class MemoryEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> None:
         async with self._get_lock(db_name, coll_name):
-            if db_name in self._indexes and coll_name in self._indexes[db_name]:
-                del self._indexes[db_name][coll_name]
-                if not self._indexes[db_name]:
-                    del self._indexes[db_name]
+            indexes_view = self._indexes_view(context)
+            if db_name in indexes_view and coll_name in indexes_view[db_name]:
+                del indexes_view[db_name][coll_name]
+                if not indexes_view[db_name]:
+                    del indexes_view[db_name]
 
     @override
     async def explain_query_plan(
@@ -1002,11 +1162,16 @@ class MemoryEngine(AsyncStorageEngine):
 
     @override
     async def list_databases(self, *, context: ClientSession | None = None) -> list[str]:
+        storage = self._storage_view(context)
+        indexes = self._indexes_view(context)
+        collections = self._collections_view(context)
+        options = self._collection_options_view(context)
         with self._meta_lock:
             names = sorted(
-                set(self._storage.keys())
-                | set(self._indexes.keys())
-                | set(self._collections.keys())
+                set(storage.keys())
+                | set(indexes.keys())
+                | set(collections.keys())
+                | set(options.keys())
             )
         for db_name in list(self._profiler._settings.keys()):
             if db_name not in names:
@@ -1015,11 +1180,14 @@ class MemoryEngine(AsyncStorageEngine):
 
     @override
     async def list_collections(self, db_name: str, *, context: ClientSession | None = None) -> list[str]:
+        storage = self._storage_view(context)
+        indexes = self._indexes_view(context)
+        collections = self._collections_view(context)
         with self._meta_lock:
             names = sorted(
-                set(self._storage.get(db_name, {}).keys())
-                | set(self._indexes.get(db_name, {}).keys())
-                | set(self._collections.get(db_name, set()))
+                set(storage.get(db_name, {}).keys())
+                | set(indexes.get(db_name, {}).keys())
+                | set(collections.get(db_name, set()))
             )
         if self._profiler.namespace_visible(db_name):
             names = sorted(set(names) | {self._PROFILE_COLLECTION_NAME})
@@ -1035,10 +1203,18 @@ class MemoryEngine(AsyncStorageEngine):
     ) -> dict[str, object]:
         if self._is_profile_namespace(coll_name) and self._profiler.namespace_visible(db_name):
             return {}
+        collections = self._collections_view(context)
+        storage = self._storage_view(context)
+        indexes = self._indexes_view(context)
+        options = self._collection_options_view(context)
         with self._meta_lock:
-            if not self._namespace_exists_locked(db_name, coll_name):
+            if not (
+                coll_name in collections.get(db_name, set())
+                or coll_name in storage.get(db_name, {})
+                or coll_name in indexes.get(db_name, {})
+            ):
                 raise CollectionInvalid(f"collection '{coll_name}' does not exist")
-            return deepcopy(self._collection_options.get(db_name, {}).get(coll_name, {}))
+            return deepcopy(options.get(db_name, {}).get(coll_name, {}))
 
     @override
     async def create_collection(
@@ -1050,13 +1226,23 @@ class MemoryEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> None:
         async with self._get_lock(db_name, coll_name):
+            collections = self._collections_view(context)
+            storage = self._storage_view(context)
+            indexes = self._indexes_view(context)
+            option_store = self._collection_options_view(context)
             with self._meta_lock:
-                if self._namespace_exists_locked(db_name, coll_name):
+                if (
+                    coll_name in collections.get(db_name, set())
+                    or coll_name in storage.get(db_name, {})
+                    or coll_name in indexes.get(db_name, {})
+                ):
                     raise CollectionInvalid(f"collection '{coll_name}' already exists")
                 self._register_collection_locked(
                     db_name,
                     coll_name,
                     options=deepcopy(options or {}),
+                    collections=collections,
+                    collection_options=option_store,
                 )
 
     @override
@@ -1074,31 +1260,50 @@ class MemoryEngine(AsyncStorageEngine):
         async with AsyncExitStack() as stack:
             for name in lock_names:
                 await stack.enter_async_context(self._get_lock(db_name, name))
+            storage = self._storage_view(context)
+            indexes = self._indexes_view(context)
+            collections = self._collections_view(context)
+            option_store = self._collection_options_view(context)
             with self._meta_lock:
-                if not self._namespace_exists_locked(db_name, coll_name):
+                if (
+                    coll_name not in collections.get(db_name, set())
+                    and coll_name not in storage.get(db_name, {})
+                    and coll_name not in indexes.get(db_name, {})
+                ):
                     raise CollectionInvalid(f"collection '{coll_name}' does not exist")
-                if self._namespace_exists_locked(db_name, new_name):
+                if (
+                    new_name in collections.get(db_name, set())
+                    or new_name in storage.get(db_name, {})
+                    or new_name in indexes.get(db_name, {})
+                ):
                     raise CollectionInvalid(f"collection '{new_name}' already exists")
 
-                storage = self._storage.get(db_name)
-                if storage is not None and coll_name in storage:
-                    storage[new_name] = storage.pop(coll_name)
+                db_storage = storage.get(db_name)
+                if db_storage is not None and coll_name in db_storage:
+                    db_storage[new_name] = db_storage.pop(coll_name)
 
-                indexes = self._indexes.get(db_name)
-                if indexes is not None and coll_name in indexes:
-                    indexes[new_name] = indexes.pop(coll_name)
+                db_indexes = indexes.get(db_name)
+                if db_indexes is not None and coll_name in db_indexes:
+                    db_indexes[new_name] = db_indexes.pop(coll_name)
 
-                db_options = self._collection_options.get(db_name)
+                db_options = option_store.get(db_name)
                 if db_options is not None and coll_name in db_options:
                     db_options[new_name] = db_options.pop(coll_name)
 
-                self._prune_collection_registry_locked(db_name, coll_name)
+                self._prune_collection_registry_locked(
+                    db_name,
+                    coll_name,
+                    collections=collections,
+                    collection_options=option_store,
+                )
                 self._register_collection_locked(
                     db_name,
                     new_name,
                     options=deepcopy(
-                        self._collection_options.get(db_name, {}).get(new_name, {})
+                        option_store.get(db_name, {}).get(new_name, {})
                     ),
+                    collections=collections,
+                    collection_options=option_store,
                 )
 
     @override
@@ -1113,13 +1318,22 @@ class MemoryEngine(AsyncStorageEngine):
             self._profiler.clear(db_name)
             return
         async with self._get_lock(db_name, coll_name):
+            storage = self._storage_view(context)
+            indexes = self._indexes_view(context)
+            collections = self._collections_view(context)
+            option_store = self._collection_options_view(context)
             with self._meta_lock:
-                self._prune_collection_registry_locked(db_name, coll_name)
-                if db_name in self._storage and coll_name in self._storage[db_name]:
-                    del self._storage[db_name][coll_name]
-                    if not self._storage[db_name]:
-                        del self._storage[db_name]
-                if db_name in self._indexes and coll_name in self._indexes[db_name]:
-                    del self._indexes[db_name][coll_name]
-                    if not self._indexes[db_name]:
-                        del self._indexes[db_name]
+                self._prune_collection_registry_locked(
+                    db_name,
+                    coll_name,
+                    collections=collections,
+                    collection_options=option_store,
+                )
+                if db_name in storage and coll_name in storage[db_name]:
+                    del storage[db_name][coll_name]
+                    if not storage[db_name]:
+                        del storage[db_name]
+                if db_name in indexes and coll_name in indexes[db_name]:
+                    del indexes[db_name][coll_name]
+                    if not indexes[db_name]:
+                        del indexes[db_name]

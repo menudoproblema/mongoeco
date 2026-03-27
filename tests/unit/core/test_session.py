@@ -133,7 +133,12 @@ class ClientSessionTests(unittest.TestCase):
 
         self.assertEqual(
             session.get_engine_state(f"memory:{id(engine)}"),
-            {"connected": False, "supports_transactions": False},
+            {
+                "connected": False,
+                "supports_transactions": True,
+                "transaction_active": False,
+                "snapshot_version": 0,
+            },
         )
         self.assertEqual(
             session.default_transaction_options,
@@ -154,6 +159,7 @@ class ClientSessionTests(unittest.TestCase):
             {
                 "connected": False,
                 "path": ":memory:",
+                "snapshot_version": 0,
                 "supports_transactions": True,
                 "transaction_active": False,
             },

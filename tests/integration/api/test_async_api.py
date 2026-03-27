@@ -142,6 +142,23 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertTrue(any(entry["op"] == "query" for entry in profile_entries))
                     self.assertTrue(any(entry["op"] == "update" for entry in profile_entries))
 
+    async def test_memory_engine_transactions_use_isolated_mvcc_snapshots(self):
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            session = client.start_session()
+            session.start_transaction()
+
+            await client.alpha.users.insert_one({"_id": "1", "name": "Ada"}, session=session)
+
+            self.assertIsNone(await client.alpha.users.find_one({"_id": "1"}))
+            self.assertEqual(
+                await client.alpha.users.find_one({"_id": "1"}, session=session),
+                {"_id": "1", "name": "Ada"},
+            )
+
+            session.commit_transaction()
+
+            self.assertEqual(await client.alpha.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
+
     async def test_client_propagates_dialect_and_profile_to_database_and_collection(self):
         engine = MemoryEngine()
 
