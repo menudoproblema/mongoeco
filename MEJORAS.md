@@ -181,6 +181,12 @@ El proyecto queda bastante más cerca de una base "como si hubiera nacido así" 
 - estado transaccional explícito;
 - agregación dividida en handlers registrados.
 
+Además, después del cierre de esta hoja se han endurecido tres cortes estructurales adicionales para subir el listón de arquitectura:
+
+- los dialectos oficiales y perfiles PyMongo oficiales consumen directamente el catálogo como fuente declarativa, sin depender de lógica específica por clase para sus flags/capacidades base;
+- `mongoeco.core.aggregation` ya es un paquete modular y el dispatcher de stages vive en un módulo propio, separado del resto del runtime de agregación;
+- los updates compilados ya son planes ejecutables (`CompiledUpdatePlan.apply(...)`), de modo que los engines ejecutan un objeto semántico y no coordinan manualmente la aplicación operador por operador.
+
 ## Qué Queda a Partir de Aquí
 
 Lo siguiente ya no pertenece a esta hoja de refactor base, sino a evolución futura:
