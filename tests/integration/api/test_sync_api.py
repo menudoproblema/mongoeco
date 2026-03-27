@@ -343,6 +343,36 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"ns": "alpha.events", "ok": 1.0},
                     )
 
+    def test_database_command_supports_rename_collection_within_current_database(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.alpha.events.insert_one({"_id": "1", "kind": "view"})
+                    client.alpha.events.create_index([("kind", 1)], name="kind_idx")
+                    client.alpha.archived.insert_one({"_id": "existing"})
+
+                    renamed = client.alpha.command(
+                        {
+                            "renameCollection": "alpha.events",
+                            "to": "alpha.archived",
+                            "dropTarget": True,
+                        }
+                    )
+
+                    self.assertEqual(renamed, {"ok": 1.0})
+                    self.assertEqual(
+                        client.alpha.list_collection_names(),
+                        ["archived"],
+                    )
+                    self.assertEqual(
+                        client.alpha.archived.find_one({"_id": "1"}),
+                        {"_id": "1", "kind": "view"},
+                    )
+                    self.assertIn(
+                        "kind_idx",
+                        client.alpha.archived.index_information(),
+                    )
+
     def test_database_command_supports_find_and_aggregate(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -631,10 +661,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 client.alpha.command({"explain": 1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 client.alpha.command({"connectionStatus": 1, "showPrivileges": 1})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command({"renameCollection": "events", "to": "alpha.logs"})  # type: ignore[arg-type]
             with self.assertRaises(OperationFailure):
                 client.alpha.command({"findAndModify": "events"})
             with self.assertRaises(OperationFailure):
                 client.alpha.command({"explain": {"count": "events"}})
+            with self.assertRaises(OperationFailure):
+                client.alpha.command({"renameCollection": "alpha.events", "to": "beta.logs"})
 
     def test_validate_collection_returns_metadata_and_rejects_missing_namespace(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

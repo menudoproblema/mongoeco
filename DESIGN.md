@@ -749,6 +749,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * `Database.command`
     * ya soporta también `explain` para `find` y `aggregate`
     * ya soporta también `listCommands` y `connectionStatus`
+    * ya soporta también `renameCollection` dentro del mismo `db`
   * `server_info`
   * `validate_collection`
   * listados enriquecidos de bases de datos y colecciones

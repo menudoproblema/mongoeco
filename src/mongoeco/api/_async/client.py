@@ -308,6 +308,15 @@ class AsyncDatabase:
         return value
 
     @staticmethod
+    def _normalize_namespace(value: object, field_name: str) -> tuple[str, str]:
+        if not isinstance(value, str) or "." not in value:
+            raise TypeError(f"{field_name} must be a fully qualified namespace string")
+        db_name, coll_name = value.split(".", 1)
+        if not db_name or not coll_name:
+            raise TypeError(f"{field_name} must be a fully qualified namespace string")
+        return db_name, coll_name
+
+    @staticmethod
     def _normalize_insert_documents(spec: object) -> list[Document]:
         if not isinstance(spec, list) or not spec:
             raise TypeError("documents must be a non-empty list of documents")
@@ -546,6 +555,29 @@ class AsyncDatabase:
                 "ns": f"{self._db_name}.{collection_name}",
                 "ok": 1.0,
             }
+
+        if command_name == "renameCollection":
+            source_db, source_name = self._normalize_namespace(
+                spec.get("renameCollection"),
+                "renameCollection",
+            )
+            target_db, target_name = self._normalize_namespace(spec.get("to"), "to")
+            if source_db != self._db_name or target_db != self._db_name:
+                raise OperationFailure(
+                    "renameCollection only supports namespaces in the current database"
+                )
+            drop_target = spec.get("dropTarget", False)
+            if not isinstance(drop_target, bool):
+                raise TypeError("dropTarget must be a bool")
+            if drop_target:
+                target_names = await self._engine.list_collections(
+                    self._db_name,
+                    context=session,
+                )
+                if target_name in target_names:
+                    await self.drop_collection(target_name, session=session)
+            await self.get_collection(source_name).rename(target_name, session=session)
+            return {"ok": 1.0}
 
         if command_name == "count":
             collection_name = self._require_collection_name(spec.get("count"), "count")
@@ -1458,6 +1490,7 @@ _SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
     "listDatabases",
     "listIndexes",
     "ping",
+    "renameCollection",
     "update",
     "validate",
 )

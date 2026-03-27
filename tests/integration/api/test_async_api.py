@@ -422,6 +422,36 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         {"ns": "alpha.events", "ok": 1.0},
                     )
 
+    async def test_database_command_supports_rename_collection_within_current_database(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    await client.alpha.events.insert_one({"_id": "1", "kind": "view"})
+                    await client.alpha.events.create_index([("kind", 1)], name="kind_idx")
+                    await client.alpha.archived.insert_one({"_id": "existing"})
+
+                    renamed = await client.alpha.command(
+                        {
+                            "renameCollection": "alpha.events",
+                            "to": "alpha.archived",
+                            "dropTarget": True,
+                        }
+                    )
+
+                    self.assertEqual(renamed, {"ok": 1.0})
+                    self.assertEqual(
+                        await client.alpha.list_collection_names(),
+                        ["archived"],
+                    )
+                    self.assertEqual(
+                        await client.alpha.archived.find_one({"_id": "1"}),
+                        {"_id": "1", "kind": "view"},
+                    )
+                    self.assertIn(
+                        "kind_idx",
+                        await client.alpha.archived.index_information(),
+                    )
+
     async def test_database_command_supports_find_and_aggregate(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -710,10 +740,14 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await client.alpha.command({"explain": 1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 await client.alpha.command({"connectionStatus": 1, "showPrivileges": 1})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                await client.alpha.command({"renameCollection": "events", "to": "alpha.logs"})  # type: ignore[arg-type]
             with self.assertRaises(OperationFailure):
                 await client.alpha.command({"findAndModify": "events"})
             with self.assertRaises(OperationFailure):
                 await client.alpha.command({"explain": {"count": "events"}})
+            with self.assertRaises(OperationFailure):
+                await client.alpha.command({"renameCollection": "alpha.events", "to": "beta.logs"})
 
     async def test_validate_collection_returns_metadata_and_rejects_missing_namespace(self):
         for engine_name in ENGINE_FACTORIES:
