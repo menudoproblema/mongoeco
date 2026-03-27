@@ -9,7 +9,19 @@ from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation.date_expressions import _to_utc_naive
-from mongoeco.core.bson_scalars import INT32_MAX, INT32_MIN, INT64_MAX, INT64_MIN, validate_bson_value
+from mongoeco.core.bson_scalars import (
+    BsonDecimal128,
+    BsonDouble,
+    BsonInt32,
+    BsonInt64,
+    INT32_MAX,
+    INT32_MIN,
+    INT64_MAX,
+    INT64_MIN,
+    is_bson_numeric,
+    unwrap_bson_numeric,
+    validate_bson_value,
+)
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, ObjectId, UndefinedType
 
@@ -129,7 +141,7 @@ def evaluate_scalar_expression(
             1,
         )
         value = evaluate_expression_with_missing(document, args[0], variables)
-        return isinstance(value, (int, float)) and not isinstance(value, bool)
+        return is_bson_numeric(value) or (isinstance(value, (int, float)) and not isinstance(value, bool))
 
     if operator == "$type":
         args = require_expression_args(
@@ -149,7 +161,9 @@ def evaluate_scalar_expression(
             1,
         )
         value = evaluate_expression(document, args[0], variables)
-        return None if value is None else stringify_value(value)
+        if value is None:
+            return None
+        return stringify_value(unwrap_bson_numeric(value))
 
     if operator in {"$toBool", "$toDate", "$toDecimal", "$toInt", "$toDouble", "$toLong", "$toObjectId", "$toUUID"}:
         args = require_expression_args(
@@ -204,6 +218,14 @@ def _aggregation_type_name(value: Any, *, missing_sentinel: object) -> str:
         return "undefined"
     if value is None:
         return "null"
+    if isinstance(value, BsonInt32):
+        return "int"
+    if isinstance(value, BsonInt64):
+        return "long"
+    if isinstance(value, BsonDouble):
+        return "double"
+    if isinstance(value, BsonDecimal128):
+        return "decimal"
     if isinstance(value, bool):
         return "bool"
     if isinstance(value, int):
@@ -250,6 +272,8 @@ def _convert_aggregation_scalar(
 ) -> Any:
     if value is None or isinstance(value, UndefinedType):
         return None
+    preserve_numeric_wrappers = isinstance(value, BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128)
+    value = unwrap_bson_numeric(value)
 
     if target == "bool":
         if isinstance(value, bool):
@@ -266,19 +290,19 @@ def _convert_aggregation_scalar(
         if isinstance(value, int):
             if value < INT32_MIN or value > INT32_MAX:
                 raise OperationFailure(f"{operator} overflow")
-            return value
+            return BsonInt32(value) if preserve_numeric_wrappers else value
         if isinstance(value, float):
             if not math.isfinite(value) or not value.is_integer():
                 raise OperationFailure(f"{operator} cannot convert the value")
             integer = int(value)
             if integer < INT32_MIN or integer > INT32_MAX:
                 raise OperationFailure(f"{operator} overflow")
-            return integer
+            return BsonInt32(integer) if preserve_numeric_wrappers else integer
         if isinstance(value, str):
             integer = _parse_base10_int_string(operator, value)
             if integer < INT32_MIN or integer > INT32_MAX:
                 raise OperationFailure(f"{operator} overflow")
-            return integer
+            return BsonInt32(integer) if preserve_numeric_wrappers else integer
         raise OperationFailure(f"{operator} cannot convert the value")
 
     if target == "long":
@@ -287,38 +311,43 @@ def _convert_aggregation_scalar(
         if isinstance(value, int):
             if value < INT64_MIN or value > INT64_MAX:
                 raise OperationFailure(f"{operator} overflow")
-            return value
+            return BsonInt64(value) if preserve_numeric_wrappers else value
         if isinstance(value, float):
             if not math.isfinite(value) or not value.is_integer():
                 raise OperationFailure(f"{operator} cannot convert the value")
             integer = int(value)
             if integer < INT64_MIN or integer > INT64_MAX:
                 raise OperationFailure(f"{operator} overflow")
-            return integer
+            return BsonInt64(integer) if preserve_numeric_wrappers else integer
         if isinstance(value, str):
             integer = _parse_base10_int_string(operator, value)
             if integer < INT64_MIN or integer > INT64_MAX:
                 raise OperationFailure(f"{operator} overflow")
-            return integer
+            return BsonInt64(integer) if preserve_numeric_wrappers else integer
         if isinstance(value, datetime.datetime):
-            return _datetime_to_epoch_millis(value)
+            integer = _datetime_to_epoch_millis(value)
+            return BsonInt64(integer) if preserve_numeric_wrappers else integer
         raise OperationFailure(f"{operator} cannot convert the value")
 
     if target == "double":
         if isinstance(value, bool):
-            return 1.0 if value else 0.0
+            result = 1.0 if value else 0.0
+            return BsonDouble(result) if preserve_numeric_wrappers else result
         if isinstance(value, (int, float)) and not isinstance(value, bool):
-            return float(value)
+            result = float(value)
+            return BsonDouble(result) if preserve_numeric_wrappers else result
         if isinstance(value, str):
             text = value.strip()
             if not text:
                 raise OperationFailure(f"{operator} cannot convert the string value")
             try:
-                return float(text)
+                result = float(text)
+                return BsonDouble(result) if preserve_numeric_wrappers else result
             except ValueError as exc:
                 raise OperationFailure(f"{operator} cannot convert the string value") from exc
         if isinstance(value, datetime.datetime):
-            return float(_datetime_to_epoch_millis(value))
+            result = float(_datetime_to_epoch_millis(value))
+            return BsonDouble(result) if preserve_numeric_wrappers else result
         raise OperationFailure(f"{operator} cannot convert the value")
 
     if target == "date":
@@ -368,20 +397,20 @@ def _convert_aggregation_scalar(
         if isinstance(value, bool):
             result = decimal.Decimal(int(value))
             validate_bson_value(result)
-            return result
+            return BsonDecimal128(result) if preserve_numeric_wrappers else result
         if isinstance(value, int):
             result = decimal.Decimal(value)
             validate_bson_value(result)
-            return result
+            return BsonDecimal128(result) if preserve_numeric_wrappers else result
         if isinstance(value, float):
             if not math.isfinite(value):
                 raise OperationFailure(f"{operator} cannot convert the value")
             result = decimal.Decimal(str(value))
             validate_bson_value(result)
-            return result
+            return BsonDecimal128(result) if preserve_numeric_wrappers else result
         if isinstance(value, decimal.Decimal):
             validate_bson_value(value)
-            return value
+            return BsonDecimal128(value) if preserve_numeric_wrappers else value
         if isinstance(value, str):
             text = value.strip()
             if not text:
@@ -389,7 +418,7 @@ def _convert_aggregation_scalar(
             try:
                 result = decimal.Decimal(text)
                 validate_bson_value(result)
-                return result
+                return BsonDecimal128(result) if preserve_numeric_wrappers else result
             except Exception as exc:
                 raise OperationFailure(f"{operator} cannot convert the string value") from exc
         raise OperationFailure(f"{operator} cannot convert the value")

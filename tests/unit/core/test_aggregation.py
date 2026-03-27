@@ -7,7 +7,7 @@ import uuid
 from unittest.mock import ANY
 
 from mongoeco.compat import MongoDialect
-from mongoeco.core.bson_scalars import BsonDecimal128, BsonInt32, BsonInt64
+from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.aggregation import (
     _ACCUMULATOR_FLAGS_KEY,
     _MISSING,
@@ -157,6 +157,25 @@ class AggregationTests(unittest.TestCase):
                 {"_id": "b", "total": BsonDecimal128(decimal.Decimal("4.0")), "avg": decimal.Decimal("2.0")},
             ],
         )
+
+    def test_scalar_conversions_preserve_bson_numeric_wrappers_when_input_is_wrapped(self):
+        document = {
+            "i32": BsonInt32(2),
+            "i64": BsonInt64(1 << 40),
+            "double": BsonDouble(3.5),
+            "decimal": BsonDecimal128(decimal.Decimal("1.25")),
+        }
+
+        self.assertTrue(evaluate_expression(document, {"$isNumber": "$i32"}))
+        self.assertEqual(evaluate_expression(document, {"$type": "$i64"}), "long")
+        self.assertEqual(evaluate_expression(document, {"$toLong": "$i32"}), BsonInt64(2))
+        self.assertEqual(evaluate_expression(document, {"$toInt": "$i32"}), BsonInt32(2))
+        self.assertEqual(evaluate_expression(document, {"$toDouble": "$i32"}), BsonDouble(2.0))
+        self.assertEqual(
+            evaluate_expression(document, {"$toDecimal": "$double"}),
+            BsonDecimal128(decimal.Decimal("3.5")),
+        )
+        self.assertEqual(evaluate_expression(document, {"$toString": "$decimal"}), "1.25")
         document = {
             "score": 10,
             "bonus": 2,
