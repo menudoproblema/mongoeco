@@ -113,6 +113,27 @@ class UpdateEngineTests(unittest.TestCase):
 
         self.assertEqual([target.concrete_path for target in targets], ["items.0.qty", "items.1.qty"])
 
+    def test_update_engine_compiles_resolved_instruction_applications(self):
+        context = UpdateEngine.build_execution_context(
+            selector_filter={"items.qty": {"$gt": 0}},
+        )
+        compiled = UpdateEngine._compile_update_spec(
+            {"$set": {"items.$[].qty": 5}},
+            {},
+        )
+        applications = UpdateEngine._resolve_instruction_applications(
+            {"items": [{"qty": 1}, {"qty": 2}]},
+            compiled[0].instructions,
+            context=context,
+            allow_positional=True,
+        )
+
+        self.assertEqual(len(applications), 1)
+        self.assertEqual(
+            [target.concrete_path for target in applications[0].targets],
+            ["items.0.qty", "items.1.qty"],
+        )
+
     def test_update_engine_compiles_ordered_operator_instructions(self):
         compiled = UpdateEngine._compile_update_spec(
             {

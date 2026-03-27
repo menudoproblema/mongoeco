@@ -43,6 +43,12 @@ class CompiledUpdatePlan:
     context: UpdateExecutionContext
 
 
+@dataclass(frozen=True, slots=True)
+class ResolvedInstructionApplication:
+    instruction: CompiledUpdateInstruction
+    targets: tuple[ResolvedUpdatePath, ...]
+
+
 class UpdateEngine:
     """Motor central para aplicar operadores de actualización de MongoDB."""
 
@@ -340,6 +346,31 @@ class UpdateEngine:
         return deduplicated
 
     @staticmethod
+    def _resolve_instruction_applications(
+        doc: dict[str, Any],
+        instructions: tuple[CompiledUpdateInstruction, ...],
+        *,
+        context: UpdateExecutionContext,
+        allow_positional: bool,
+    ) -> tuple[ResolvedInstructionApplication, ...]:
+        return tuple(
+            ResolvedInstructionApplication(
+                instruction=instruction,
+                targets=tuple(
+                    UpdateEngine._resolve_update_targets(
+                        doc,
+                        instruction.path,
+                        selector_filter=context.selector_filter,
+                        array_filters=context.compiled_array_filters,
+                        allow_positional=allow_positional,
+                        dialect=context.dialect,
+                    )
+                ),
+            )
+            for instruction in instructions
+        )
+
+    @staticmethod
     def _resolve_legacy_positional_path(
         doc: dict[str, Any],
         path: str | CompiledUpdatePath,
@@ -484,16 +515,18 @@ class UpdateEngine:
         context: UpdateExecutionContext,
     ) -> bool:
         modified = False
-        for instruction in instructions:
-            for target in UpdateEngine._resolve_update_targets(
-                doc,
-                instruction.path,
-                selector_filter=context.selector_filter,
-                array_filters=context.compiled_array_filters,
-                allow_positional=True,
-                dialect=context.dialect,
-            ):
-                if set_document_value(doc, target.concrete_path, deepcopy(instruction.value)):
+        for application in UpdateEngine._resolve_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+            allow_positional=True,
+        ):
+            for target in application.targets:
+                if set_document_value(
+                    doc,
+                    target.concrete_path,
+                    deepcopy(application.instruction.value),
+                ):
                     modified = True
         return modified
 
@@ -505,15 +538,13 @@ class UpdateEngine:
         context: UpdateExecutionContext,
     ) -> bool:
         modified = False
-        for instruction in instructions:
-            for target in UpdateEngine._resolve_update_targets(
-                doc,
-                instruction.path,
-                selector_filter=context.selector_filter,
-                array_filters=context.compiled_array_filters,
-                allow_positional=True,
-                dialect=context.dialect,
-            ):
+        for application in UpdateEngine._resolve_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+            allow_positional=True,
+        ):
+            for target in application.targets:
                 if delete_document_value(doc, target.concrete_path):
                     modified = True
         return modified
@@ -526,18 +557,16 @@ class UpdateEngine:
         context: UpdateExecutionContext,
     ) -> bool:
         modified = False
-        for instruction in instructions:
-            increment = instruction.value
+        for application in UpdateEngine._resolve_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+            allow_positional=True,
+        ):
+            increment = application.instruction.value
             if not UpdateEngine._is_numeric(increment):
                 raise OperationFailure("$inc requires numeric values")
-            for target in UpdateEngine._resolve_update_targets(
-                doc,
-                instruction.path,
-                selector_filter=context.selector_filter,
-                array_filters=context.compiled_array_filters,
-                allow_positional=True,
-                dialect=context.dialect,
-            ):
+            for target in application.targets:
                 found, current = get_document_value(doc, target.concrete_path)
                 if not found:
                     if set_document_value(doc, target.concrete_path, increment):
@@ -557,16 +586,14 @@ class UpdateEngine:
         context: UpdateExecutionContext,
     ) -> bool:
         modified = False
-        for instruction in instructions:
-            value = instruction.value
-            for target in UpdateEngine._resolve_update_targets(
-                doc,
-                instruction.path,
-                selector_filter=context.selector_filter,
-                array_filters=context.compiled_array_filters,
-                allow_positional=True,
-                dialect=context.dialect,
-            ):
+        for application in UpdateEngine._resolve_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+            allow_positional=True,
+        ):
+            value = application.instruction.value
+            for target in application.targets:
                 found, current = get_document_value(doc, target.concrete_path)
                 if not found or context.dialect.compare_values(current, value) > 0:
                     if set_document_value(doc, target.concrete_path, deepcopy(value)):
@@ -581,16 +608,14 @@ class UpdateEngine:
         context: UpdateExecutionContext,
     ) -> bool:
         modified = False
-        for instruction in instructions:
-            value = instruction.value
-            for target in UpdateEngine._resolve_update_targets(
-                doc,
-                instruction.path,
-                selector_filter=context.selector_filter,
-                array_filters=context.compiled_array_filters,
-                allow_positional=True,
-                dialect=context.dialect,
-            ):
+        for application in UpdateEngine._resolve_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+            allow_positional=True,
+        ):
+            value = application.instruction.value
+            for target in application.targets:
                 found, current = get_document_value(doc, target.concrete_path)
                 if not found or context.dialect.compare_values(current, value) < 0:
                     if set_document_value(doc, target.concrete_path, deepcopy(value)):
@@ -605,18 +630,16 @@ class UpdateEngine:
         context: UpdateExecutionContext,
     ) -> bool:
         modified = False
-        for instruction in instructions:
-            factor = instruction.value
+        for application in UpdateEngine._resolve_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+            allow_positional=True,
+        ):
+            factor = application.instruction.value
             if not UpdateEngine._is_numeric(factor):
                 raise OperationFailure("$mul requires numeric values")
-            for target in UpdateEngine._resolve_update_targets(
-                doc,
-                instruction.path,
-                selector_filter=context.selector_filter,
-                array_filters=context.compiled_array_filters,
-                allow_positional=True,
-                dialect=context.dialect,
-            ):
+            for target in application.targets:
                 found, current = get_document_value(doc, target.concrete_path)
                 if not found:
                     missing_value: int | float = 0.0 if isinstance(factor, float) else 0
@@ -637,8 +660,13 @@ class UpdateEngine:
         context: UpdateExecutionContext,
     ) -> bool:
         modified = False
-        for instruction in instructions:
-            bit_spec = instruction.value
+        for application in UpdateEngine._resolve_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+            allow_positional=True,
+        ):
+            bit_spec = application.instruction.value
             if not isinstance(bit_spec, dict):
                 raise OperationFailure("$bit requires a document of bitwise operations")
             if not bit_spec:
@@ -650,14 +678,7 @@ class UpdateEngine:
                 raise OperationFailure("$bit only supports and, or, and xor")
             if not UpdateEngine._is_integral(operand):
                 raise OperationFailure("$bit requires integer operands")
-            for target in UpdateEngine._resolve_update_targets(
-                doc,
-                instruction.path,
-                selector_filter=context.selector_filter,
-                array_filters=context.compiled_array_filters,
-                allow_positional=True,
-                dialect=context.dialect,
-            ):
+            for target in application.targets:
                 found, current = get_document_value(doc, target.concrete_path)
                 if not found:
                     raise OperationFailure("$bit requires the target field to exist and be an integer")
@@ -702,22 +723,20 @@ class UpdateEngine:
     ) -> bool:
         modified = False
         now = datetime.now(UTC).replace(tzinfo=None)
-        for instruction in instructions:
-            value = instruction.value
+        for application in UpdateEngine._resolve_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+            allow_positional=True,
+        ):
+            value = application.instruction.value
             if value is True:
                 replacement = now
             elif isinstance(value, dict) and set(value) == {"$type"} and value["$type"] == "date":
                 replacement = now
             else:
                 raise OperationFailure("$currentDate only supports True or {$type: 'date'}")
-            for target in UpdateEngine._resolve_update_targets(
-                doc,
-                instruction.path,
-                selector_filter=context.selector_filter,
-                array_filters=context.compiled_array_filters,
-                allow_positional=True,
-                dialect=context.dialect,
-            ):
+            for target in application.targets:
                 if set_document_value(doc, target.concrete_path, replacement):
                     modified = True
         return modified
