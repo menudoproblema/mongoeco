@@ -27,8 +27,8 @@ from mongoeco.types import Document, Filter, ObjectId, Projection, SortSpec, Und
 type PipelineStage = dict[str, Any]
 type Pipeline = list[PipelineStage]
 
-_ACCUMULATOR_FLAGS_KEY = ("__mongoeco_internal__", "accumulator_flags")
 _CURRENT_COLLECTION_RESOLVER_KEY = "__mongoeco_current_collection__"
+_ACCUMULATOR_FLAGS_KEY = ("__mongoeco_internal__", "accumulator_flags")
 
 
 def _aggregation_key(value: Any) -> Any:
@@ -107,7 +107,17 @@ class _PercentileAccumulator:
     scalar_output: bool = False
 
 
-def _accumulator_flags(bucket: dict[object, Any]) -> dict[str, bool]:
+@dataclass(slots=True)
+class _AccumulatorBucket:
+    bucket_id: Any
+    values: dict[str, Any]
+    flags: dict[str, bool] = field(default_factory=dict)
+    include_bucket_id: bool = True
+
+
+def _accumulator_flags(bucket: dict[object, Any] | _AccumulatorBucket) -> dict[str, bool]:
+    if isinstance(bucket, _AccumulatorBucket):
+        return bucket.flags
     flags = bucket.get(_ACCUMULATOR_FLAGS_KEY)
     if isinstance(flags, dict):
         return flags
@@ -3011,18 +3021,21 @@ def _apply_group(
         support_checker=dialect.supports_group_accumulator,
         unsupported_message="Unsupported $group accumulator",
     )
-    groups: dict[Any, dict[object, Any]] = {}
+    groups: dict[Any, _AccumulatorBucket] = {}
 
     for document in documents:
         group_id = evaluate_expression(document, spec["_id"], variables, dialect=dialect)
         group_key = _aggregation_key(group_id)
         if group_key not in groups:
-            groups[group_key] = {"_id": deepcopy(group_id), **_initialize_accumulators(
-                accumulator_specs,
-                dialect=dialect,
-                support_checker=dialect.supports_group_accumulator,
-                unsupported_message="Unsupported $group accumulator",
-            )}
+            groups[group_key] = _AccumulatorBucket(
+                bucket_id=deepcopy(group_id),
+                values=_initialize_accumulators(
+                    accumulator_specs,
+                    dialect=dialect,
+                    support_checker=dialect.supports_group_accumulator,
+                    unsupported_message="Unsupported $group accumulator",
+                ),
+            )
 
         bucket = groups[group_key]
         _apply_accumulators(
@@ -3047,8 +3060,7 @@ def _initialize_accumulators(
     support_checker: Callable[[str], bool] | None = None,
     unsupported_message: str = "Unsupported accumulator",
 ) -> dict[str, Any]:
-    initialized: dict[object, Any] = {_ACCUMULATOR_FLAGS_KEY: {}}
-    flags = _accumulator_flags(initialized)
+    initialized: dict[str, Any] = {}
     specs = {"count": {"$sum": 1}} if accumulator_specs is None and default_sum else (accumulator_specs or {})
     if support_checker is None:
         support_checker = dialect.supports_group_accumulator
@@ -3063,7 +3075,6 @@ def _initialize_accumulators(
             initialized[field] = 0
         elif operator in {"$min", "$max", "$first", "$last"}:
             initialized[field] = None
-            flags[field] = False
         elif operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
             initialized[field] = _PickNAccumulator()
         elif operator in {"$top", "$bottom", "$topN", "$bottomN"}:
@@ -3082,11 +3093,11 @@ def _initialize_accumulators(
             initialized[field] = {}
         else:
             raise OperationFailure(f"{unsupported_message}: {operator}")
-    return initialized  # type: ignore[return-value]
+    return initialized
 
 
 def _apply_accumulators(
-    bucket: dict[str, Any],
+    bucket: _AccumulatorBucket | dict[str, Any],
     accumulator_specs: dict[str, object] | None,
     document: Document,
     variables: dict[str, Any] | None = None,
@@ -3094,54 +3105,58 @@ def _apply_accumulators(
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> None:
     specs = {"count": {"$sum": 1}} if accumulator_specs is None else accumulator_specs
-    flags = _accumulator_flags(bucket)
+    values = bucket.values if isinstance(bucket, _AccumulatorBucket) else bucket
+    if not isinstance(bucket, _AccumulatorBucket):
+        flags = _accumulator_flags(bucket)
+    else:
+        flags = bucket.flags
     for field, accumulator in specs.items():
         operator, expression = next(iter(accumulator.items()))
         value = None if operator == "$count" else evaluate_expression(document, expression, variables, dialect=dialect)
         if operator in {"$sum", "$count"}:
             if operator == "$count":
-                bucket[field] += 1
+                values[field] += 1
                 continue
             if value is None:
                 continue
             numeric_value = _sum_accumulator_operand(value)
             if numeric_value is None:
                 continue
-            bucket[field] += numeric_value
+            values[field] += numeric_value
         elif operator == "$min":
             if value is None:
                 continue
-            if not flags[field] or dialect.compare_values(value, bucket[field]) < 0:
-                bucket[field] = deepcopy(value)
+            if not flags.get(field, False) or dialect.compare_values(value, values[field]) < 0:
+                values[field] = deepcopy(value)
                 flags[field] = True
         elif operator == "$max":
             if value is None:
                 continue
-            if not flags[field] or dialect.compare_values(value, bucket[field]) > 0:
-                bucket[field] = deepcopy(value)
+            if not flags.get(field, False) or dialect.compare_values(value, values[field]) > 0:
+                values[field] = deepcopy(value)
                 flags[field] = True
         elif operator == "$avg":
             if value is None:
                 continue
             if not _is_numeric(value):
                 continue
-            bucket[field].total += value
-            bucket[field].count += 1
+            values[field].total += value
+            values[field].count += 1
         elif operator in {"$stdDevPop", "$stdDevSamp"}:
             operand = _stddev_accumulator_operand(value)
             if operand is None:
                 continue
             if not math.isfinite(operand):
-                bucket[field].invalid = True
+                values[field].invalid = True
                 continue
-            bucket[field].total += operand
-            bucket[field].sum_of_squares += operand * operand
-            bucket[field].count += 1
+            values[field].total += operand
+            values[field].sum_of_squares += operand * operand
+            values[field].count += 1
         elif operator == "$push":
-            bucket[field].append(deepcopy(value))
+            values[field].append(deepcopy(value))
         elif operator == "$addToSet":
             _append_unique_values(
-                bucket[field],
+                values[field],
                 [value],
                 dialect=dialect,
             )
@@ -3150,13 +3165,13 @@ def _apply_accumulators(
                 continue
             if not isinstance(value, dict):
                 raise OperationFailure("$mergeObjects accumulator requires document operands")
-            bucket[field].update(deepcopy(value))
+            values[field].update(deepcopy(value))
         elif operator == "$first":
-            if not flags[field]:
-                bucket[field] = deepcopy(value)
+            if not flags.get(field, False):
+                values[field] = deepcopy(value)
                 flags[field] = True
         elif operator == "$last":
-            bucket[field] = deepcopy(value)
+            values[field] = deepcopy(value)
             flags[field] = True
         elif operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
             value, size = _evaluate_pick_n_input(
@@ -3166,7 +3181,7 @@ def _apply_accumulators(
                 variables,
                 dialect=dialect,
             )
-            state = bucket[field]
+            state = values[field]
             if state.n is None:
                 state.n = size
             elif state.n != size:
@@ -3195,7 +3210,7 @@ def _apply_accumulators(
                 variables,
                 dialect=dialect,
             )
-            state = bucket[field]
+            state = values[field]
             if state.sort_spec is None:
                 state.sort_spec = sort_spec
             if operator in {"$topN", "$bottomN"}:
@@ -3223,7 +3238,7 @@ def _apply_accumulators(
                 variables,
                 dialect=dialect,
             )
-            state = bucket[field]
+            state = values[field]
             if state.probabilities is None:
                 state.probabilities = probabilities
             elif state.probabilities != probabilities:
@@ -3231,10 +3246,14 @@ def _apply_accumulators(
             state.values.extend(deepcopy(candidates))
 
 
-def _finalize_accumulators(bucket: dict[str, Any]) -> Document:
+def _finalize_accumulators(bucket: _AccumulatorBucket | dict[str, Any]) -> Document:
     document: Document = {}
-    for field, value in bucket.items():
-        if field == _ACCUMULATOR_FLAGS_KEY:
+    include_bucket_id = isinstance(bucket, _AccumulatorBucket) and bucket.include_bucket_id
+    if include_bucket_id:
+        document["_id"] = deepcopy(bucket.bucket_id)
+    values = bucket.values if isinstance(bucket, _AccumulatorBucket) else bucket
+    for field, value in values.items():
+        if not isinstance(bucket, _AccumulatorBucket) and field == _ACCUMULATOR_FLAGS_KEY:
             continue
         if isinstance(value, _AverageAccumulator):
             document[field] = None if value.count == 0 else value.total / value.count
@@ -3296,27 +3315,27 @@ def _apply_bucket(
         raise OperationFailure("$bucket output must be a document")
 
     default_bucket = spec.get("default")
-    buckets: list[dict[str, Any]] = []
+    buckets: list[_AccumulatorBucket] = []
     for lower in boundaries[:-1]:
-        bucket = {"_id": deepcopy(lower)}
-        bucket.update(
-            _initialize_accumulators(
+        bucket = _AccumulatorBucket(
+            bucket_id=deepcopy(lower),
+            values=_initialize_accumulators(
                 output,
                 default_sum=output is None,
                 dialect=dialect,
-            )
+            ),
         )
         buckets.append(bucket)
 
-    default_state: dict[str, Any] | None = None
+    default_state: _AccumulatorBucket | None = None
     if "default" in spec:
-        default_state = {"_id": deepcopy(default_bucket)}
-        default_state.update(
-            _initialize_accumulators(
+        default_state = _AccumulatorBucket(
+            bucket_id=deepcopy(default_bucket),
+            values=_initialize_accumulators(
                 output,
                 default_sum=output is None,
                 dialect=dialect,
-            )
+            ),
         )
 
     for document in documents:
@@ -3396,13 +3415,13 @@ def _apply_bucket_auto(
         else:
             upper = deepcopy(chunk[-1][0])
 
-        bucket = {"_id": {"min": lower, "max": upper}}
-        bucket.update(
-            _initialize_accumulators(
+        bucket = _AccumulatorBucket(
+            bucket_id={"min": lower, "max": upper},
+            values=_initialize_accumulators(
                 output,
                 default_sum=output is None,
                 dialect=dialect,
-            )
+            ),
         )
         for _, document in chunk:
             _apply_accumulators(bucket, output, document, variables, dialect=dialect)
@@ -3558,11 +3577,15 @@ def _apply_set_window_fields(
                             numeric_candidate = float(candidate_value)
                             if lower_value <= numeric_candidate <= upper_value:
                                 window_documents.append(candidate)
-                state = _initialize_accumulators(
-                    {field: {operator: expression}},
-                    dialect=dialect,
-                    support_checker=dialect.supports_window_accumulator,
-                    unsupported_message="Unsupported $setWindowFields accumulator",
+                state = _AccumulatorBucket(
+                    bucket_id=None,
+                    values=_initialize_accumulators(
+                        {field: {operator: expression}},
+                        dialect=dialect,
+                        support_checker=dialect.supports_window_accumulator,
+                        unsupported_message="Unsupported $setWindowFields accumulator",
+                    ),
+                    include_bucket_id=False,
                 )
                 for window_document in window_documents:
                     _apply_accumulators(
