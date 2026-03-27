@@ -518,6 +518,7 @@ Objetivos principales:
   * positional operators y `array_filters`
 * **Ensanchar aggregation con foco en uso real**:
   * más stages
+    * `$documents`
   * más acumuladores
   * más expresiones
   * más profundidad en `"$setWindowFields"`, `"$bucketAuto"`, `"$lookup"` y familias analíticas

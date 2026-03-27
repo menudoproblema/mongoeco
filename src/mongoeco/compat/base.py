@@ -206,6 +206,7 @@ SUPPORTED_AGGREGATION_STAGES = frozenset(
         '$count',
         '$sortByCount',
         '$setWindowFields',
+        '$documents',
     }
 )
 

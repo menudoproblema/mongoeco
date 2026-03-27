@@ -1639,6 +1639,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_aggregate_supports_documents_stage(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "persisted", "score": 1})
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$documents": [
+                                    {"_id": "1", "score": 10},
+                                    {"_id": "2", "score": 20},
+                                ]
+                            },
+                            {"$match": {"score": {"$gte": 15}}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(documents, [{"_id": "2", "score": 20}])
+
     def test_aggregate_supports_date_part_extractors(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

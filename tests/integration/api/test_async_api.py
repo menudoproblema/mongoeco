@@ -1746,6 +1746,27 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ],
                     )
 
+    async def test_aggregate_supports_documents_stage(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "persisted", "score": 1})
+
+                    documents = await collection.aggregate(
+                        [
+                            {
+                                "$documents": [
+                                    {"_id": "1", "score": 10},
+                                    {"_id": "2", "score": 20},
+                                ]
+                            },
+                            {"$match": {"score": {"$gte": 15}}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(documents, [{"_id": "2", "score": 20}])
+
     async def test_aggregate_supports_date_part_extractors(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

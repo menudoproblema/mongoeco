@@ -314,6 +314,14 @@ def _require_pipeline_spec(operator: str, spec: object) -> Pipeline:
     return spec
 
 
+def _require_documents_stage(spec: object) -> list[Document]:
+    if not isinstance(spec, list):
+        raise OperationFailure("$documents requires an array of documents")
+    if not all(isinstance(item, dict) for item in spec):
+        raise OperationFailure("$documents requires an array of documents")
+    return [deepcopy(item) for item in spec]
+
+
 def _apply_unwind(documents: list[Document], spec: object) -> list[Document]:
     path, preserve, include_array_index = _require_unwind_spec(spec)
     result: list[Document] = []
@@ -3380,10 +3388,15 @@ def apply_pipeline(
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> list[Document]:
     result = [deepcopy(document) for document in documents]
-    for stage in pipeline:
+    for index, stage in enumerate(pipeline):
         operator, spec = _require_stage(stage)
         if not dialect.supports_aggregation_stage(operator):
             raise OperationFailure(f"Unsupported aggregation stage: {operator}")
+        if operator == "$documents":
+            if index != 0:
+                raise OperationFailure("$documents is only valid as the first pipeline stage")
+            result = _require_documents_stage(spec)
+            continue
         if operator == "$match":
             result = _apply_match(result, spec, variables, dialect=dialect)
             continue

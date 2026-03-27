@@ -1155,6 +1155,23 @@ class AggregationTests(unittest.TestCase):
             [{"kinds": ["a", "b"]}],
         )
 
+    def test_pipeline_supports_documents_stage_as_first_stage(self):
+        self.assertEqual(
+            apply_pipeline(
+                [],
+                [
+                    {
+                        "$documents": [
+                            {"_id": "1", "score": 10},
+                            {"_id": "2", "score": 20},
+                        ]
+                    },
+                    {"$match": {"score": {"$gte": 15}}},
+                ],
+            ),
+            [{"_id": "2", "score": 20}],
+        )
+
     def test_pipeline_match_supports_nested_expr_inside_and_or(self):
         documents = [
             {"_id": "1", "a": 5, "b": 11},
@@ -3643,6 +3660,12 @@ class AggregationTests(unittest.TestCase):
 
         with self.assertRaises(OperationFailure):
             apply_pipeline([{"_id": "1"}], [{"$facet": {"bad": {}}}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$match": {}}, {"$documents": [{"_id": "2"}]}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"_id": "1"}], [{"$documents": [1]}])
 
         with self.assertRaises(OperationFailure):
             apply_pipeline([{"_id": "1"}], [{"$bucket": []}])
