@@ -132,6 +132,18 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(compiled[1].instructions[0].target_path.raw, "profile.alias")
         self.assertEqual(compiled[2].instructions[0].path.raw, "tags")
 
+    def test_update_engine_builds_explicit_execution_context(self):
+        context = UpdateEngine.build_execution_context(
+            selector_filter={"items.qty": {"$gt": 0}},
+            array_filters=[{"item.qty": {"$gt": 1}}],
+            is_upsert_insert=True,
+        )
+
+        self.assertEqual(context.selector_filter, {"items.qty": {"$gt": 0}})
+        self.assertEqual(context.raw_array_filters, [{"item.qty": {"$gt": 1}}])
+        self.assertEqual(context.compiled_array_filters, {"item": {"qty": {"$gt": 1}}})
+        self.assertTrue(context.is_upsert_insert)
+
     def test_set_same_value_is_noop(self):
         document = {"field": 1}
 

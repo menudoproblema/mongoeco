@@ -2,7 +2,7 @@ import re
 from functools import cmp_to_key
 from datetime import UTC, datetime
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -27,6 +27,15 @@ class CompiledUpdateOperator:
     instructions: tuple[CompiledUpdateInstruction, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class UpdateExecutionContext:
+    dialect: MongoDialect = MONGODB_DIALECT_70
+    selector_filter: Filter | None = None
+    raw_array_filters: ArrayFilters | None = None
+    compiled_array_filters: dict[str, dict[str, Any]] = field(default_factory=dict)
+    is_upsert_insert: bool = False
+
+
 class UpdateEngine:
     """Motor central para aplicar operadores de actualización de MongoDB."""
 
@@ -39,6 +48,7 @@ class UpdateEngine:
         selector_filter: Filter | None = None,
         array_filters: ArrayFilters | None = None,
         is_upsert_insert: bool = False,
+        context: UpdateExecutionContext | None = None,
     ) -> bool:
         """
         Aplica las operaciones de actualización a un documento (in-place).
@@ -46,11 +56,16 @@ class UpdateEngine:
         """
         if not isinstance(update_spec, dict) or not update_spec:
             raise OperationFailure("update specification must be a non-empty document")
-        compiled_array_filters = UpdateEngine._compile_array_filters(array_filters)
+        execution = context or UpdateEngine.build_execution_context(
+            dialect=dialect,
+            selector_filter=selector_filter,
+            array_filters=array_filters,
+            is_upsert_insert=is_upsert_insert,
+        )
         compiled_operators = UpdateEngine._compile_update_spec(
             update_spec,
-            compiled_array_filters,
-            dialect=dialect,
+            execution.compiled_array_filters,
+            dialect=execution.dialect,
         )
         modified = False
 
@@ -60,61 +75,74 @@ class UpdateEngine:
             op = compiled_operator.operator
             instructions = compiled_operator.instructions
             if op == "$set":
-                if UpdateEngine._apply_set(doc, instructions, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_set(doc, instructions, context=execution):
                     modified = True
             elif op == "$unset":
-                if UpdateEngine._apply_unset(doc, instructions, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_unset(doc, instructions, context=execution):
                     modified = True
             elif op == "$inc":
-                if UpdateEngine._apply_inc(doc, instructions, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_inc(doc, instructions, context=execution):
                     modified = True
             elif op == "$min":
-                if UpdateEngine._apply_min(doc, instructions, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_min(doc, instructions, context=execution):
                     modified = True
             elif op == "$max":
-                if UpdateEngine._apply_max(doc, instructions, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_max(doc, instructions, context=execution):
                     modified = True
             elif op == "$mul":
-                if UpdateEngine._apply_mul(doc, instructions, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_mul(doc, instructions, context=execution):
                     modified = True
             elif op == "$bit":
-                if UpdateEngine._apply_bit(doc, instructions, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_bit(doc, instructions, context=execution):
                     modified = True
             elif op == "$rename":
-                if UpdateEngine._apply_rename(doc, instructions, dialect=dialect):
+                if UpdateEngine._apply_rename(doc, instructions, dialect=execution.dialect):
                     modified = True
             elif op == "$currentDate":
-                if UpdateEngine._apply_current_date(doc, instructions, dialect=dialect, selector_filter=selector_filter, array_filters=compiled_array_filters):
+                if UpdateEngine._apply_current_date(doc, instructions, context=execution):
                     modified = True
             elif op == "$setOnInsert":
                 if UpdateEngine._apply_set_on_insert(
                     doc,
                     instructions,
-                    dialect=dialect,
-                    selector_filter=selector_filter,
-                    array_filters=compiled_array_filters,
-                    is_upsert_insert=is_upsert_insert,
+                    context=execution,
                 ):
                     modified = True
             elif op == "$push":
-                if UpdateEngine._apply_push(doc, instructions, dialect=dialect):
+                if UpdateEngine._apply_push(doc, instructions, dialect=execution.dialect):
                     modified = True
             elif op == "$addToSet":
-                if UpdateEngine._apply_add_to_set(doc, instructions, dialect=dialect):
+                if UpdateEngine._apply_add_to_set(doc, instructions, dialect=execution.dialect):
                     modified = True
             elif op == "$pull":
-                if UpdateEngine._apply_pull(doc, instructions, dialect=dialect):
+                if UpdateEngine._apply_pull(doc, instructions, dialect=execution.dialect):
                     modified = True
             elif op == "$pullAll":
-                if UpdateEngine._apply_pull_all(doc, instructions, dialect=dialect):
+                if UpdateEngine._apply_pull_all(doc, instructions, dialect=execution.dialect):
                     modified = True
             elif op == "$pop":
-                if UpdateEngine._apply_pop(doc, instructions, dialect=dialect):
+                if UpdateEngine._apply_pop(doc, instructions, dialect=execution.dialect):
                     modified = True
             else:
                 raise OperationFailure(f"Unsupported update operator: {op}")
 
         return modified
+
+    @staticmethod
+    def build_execution_context(
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+        selector_filter: Filter | None = None,
+        array_filters: ArrayFilters | None = None,
+        is_upsert_insert: bool = False,
+    ) -> UpdateExecutionContext:
+        return UpdateExecutionContext(
+            dialect=dialect,
+            selector_filter=selector_filter,
+            raw_array_filters=array_filters,
+            compiled_array_filters=UpdateEngine._compile_array_filters(array_filters),
+            is_upsert_insert=is_upsert_insert,
+        )
 
     @staticmethod
     def _compile_update_spec(
@@ -411,19 +439,17 @@ class UpdateEngine:
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
-        selector_filter: Filter | None = None,
-        array_filters: dict[str, dict[str, Any]] | None = None,
+        context: UpdateExecutionContext,
     ) -> bool:
         modified = False
         for instruction in instructions:
             for target in UpdateEngine._resolve_update_targets(
                 doc,
                 instruction.path,
-                selector_filter=selector_filter,
-                array_filters=array_filters or {},
+                selector_filter=context.selector_filter,
+                array_filters=context.compiled_array_filters,
                 allow_positional=True,
-                dialect=dialect,
+                dialect=context.dialect,
             ):
                 if set_document_value(doc, target.concrete_path, deepcopy(instruction.value)):
                     modified = True
@@ -434,19 +460,17 @@ class UpdateEngine:
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
-        selector_filter: Filter | None = None,
-        array_filters: dict[str, dict[str, Any]] | None = None,
+        context: UpdateExecutionContext,
     ) -> bool:
         modified = False
         for instruction in instructions:
             for target in UpdateEngine._resolve_update_targets(
                 doc,
                 instruction.path,
-                selector_filter=selector_filter,
-                array_filters=array_filters or {},
+                selector_filter=context.selector_filter,
+                array_filters=context.compiled_array_filters,
                 allow_positional=True,
-                dialect=dialect,
+                dialect=context.dialect,
             ):
                 if delete_document_value(doc, target.concrete_path):
                     modified = True
@@ -457,9 +481,7 @@ class UpdateEngine:
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
-        selector_filter: Filter | None = None,
-        array_filters: dict[str, dict[str, Any]] | None = None,
+        context: UpdateExecutionContext,
     ) -> bool:
         modified = False
         for instruction in instructions:
@@ -469,10 +491,10 @@ class UpdateEngine:
             for target in UpdateEngine._resolve_update_targets(
                 doc,
                 instruction.path,
-                selector_filter=selector_filter,
-                array_filters=array_filters or {},
+                selector_filter=context.selector_filter,
+                array_filters=context.compiled_array_filters,
                 allow_positional=True,
-                dialect=dialect,
+                dialect=context.dialect,
             ):
                 found, current = get_document_value(doc, target.concrete_path)
                 if not found:
@@ -490,9 +512,7 @@ class UpdateEngine:
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
-        selector_filter: Filter | None = None,
-        array_filters: dict[str, dict[str, Any]] | None = None,
+        context: UpdateExecutionContext,
     ) -> bool:
         modified = False
         for instruction in instructions:
@@ -500,13 +520,13 @@ class UpdateEngine:
             for target in UpdateEngine._resolve_update_targets(
                 doc,
                 instruction.path,
-                selector_filter=selector_filter,
-                array_filters=array_filters or {},
+                selector_filter=context.selector_filter,
+                array_filters=context.compiled_array_filters,
                 allow_positional=True,
-                dialect=dialect,
+                dialect=context.dialect,
             ):
                 found, current = get_document_value(doc, target.concrete_path)
-                if not found or dialect.compare_values(current, value) > 0:
+                if not found or context.dialect.compare_values(current, value) > 0:
                     if set_document_value(doc, target.concrete_path, deepcopy(value)):
                         modified = True
         return modified
@@ -516,9 +536,7 @@ class UpdateEngine:
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
-        selector_filter: Filter | None = None,
-        array_filters: dict[str, dict[str, Any]] | None = None,
+        context: UpdateExecutionContext,
     ) -> bool:
         modified = False
         for instruction in instructions:
@@ -526,13 +544,13 @@ class UpdateEngine:
             for target in UpdateEngine._resolve_update_targets(
                 doc,
                 instruction.path,
-                selector_filter=selector_filter,
-                array_filters=array_filters or {},
+                selector_filter=context.selector_filter,
+                array_filters=context.compiled_array_filters,
                 allow_positional=True,
-                dialect=dialect,
+                dialect=context.dialect,
             ):
                 found, current = get_document_value(doc, target.concrete_path)
-                if not found or dialect.compare_values(current, value) < 0:
+                if not found or context.dialect.compare_values(current, value) < 0:
                     if set_document_value(doc, target.concrete_path, deepcopy(value)):
                         modified = True
         return modified
@@ -542,9 +560,7 @@ class UpdateEngine:
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
-        selector_filter: Filter | None = None,
-        array_filters: dict[str, dict[str, Any]] | None = None,
+        context: UpdateExecutionContext,
     ) -> bool:
         modified = False
         for instruction in instructions:
@@ -554,10 +570,10 @@ class UpdateEngine:
             for target in UpdateEngine._resolve_update_targets(
                 doc,
                 instruction.path,
-                selector_filter=selector_filter,
-                array_filters=array_filters or {},
+                selector_filter=context.selector_filter,
+                array_filters=context.compiled_array_filters,
                 allow_positional=True,
-                dialect=dialect,
+                dialect=context.dialect,
             ):
                 found, current = get_document_value(doc, target.concrete_path)
                 if not found:
@@ -576,9 +592,7 @@ class UpdateEngine:
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
-        selector_filter: Filter | None = None,
-        array_filters: dict[str, dict[str, Any]] | None = None,
+        context: UpdateExecutionContext,
     ) -> bool:
         modified = False
         for instruction in instructions:
@@ -597,10 +611,10 @@ class UpdateEngine:
             for target in UpdateEngine._resolve_update_targets(
                 doc,
                 instruction.path,
-                selector_filter=selector_filter,
-                array_filters=array_filters or {},
+                selector_filter=context.selector_filter,
+                array_filters=context.compiled_array_filters,
                 allow_positional=True,
-                dialect=dialect,
+                dialect=context.dialect,
             ):
                 found, current = get_document_value(doc, target.concrete_path)
                 if not found:
@@ -642,9 +656,7 @@ class UpdateEngine:
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
-        selector_filter: Filter | None = None,
-        array_filters: dict[str, dict[str, Any]] | None = None,
+        context: UpdateExecutionContext,
     ) -> bool:
         modified = False
         now = datetime.now(UTC).replace(tzinfo=None)
@@ -659,10 +671,10 @@ class UpdateEngine:
             for target in UpdateEngine._resolve_update_targets(
                 doc,
                 instruction.path,
-                selector_filter=selector_filter,
-                array_filters=array_filters or {},
+                selector_filter=context.selector_filter,
+                array_filters=context.compiled_array_filters,
                 allow_positional=True,
-                dialect=dialect,
+                dialect=context.dialect,
             ):
                 if set_document_value(doc, target.concrete_path, replacement):
                     modified = True
@@ -673,19 +685,14 @@ class UpdateEngine:
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
-        selector_filter: Filter | None = None,
-        array_filters: dict[str, dict[str, Any]] | None = None,
-        is_upsert_insert: bool = False,
+        context: UpdateExecutionContext,
     ) -> bool:
-        if not is_upsert_insert:
+        if not context.is_upsert_insert:
             return False
         return UpdateEngine._apply_set(
             doc,
             instructions,
-            dialect=dialect,
-            selector_filter=selector_filter,
-            array_filters=array_filters,
+            context=context,
         )
 
     @staticmethod
