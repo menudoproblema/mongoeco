@@ -61,8 +61,10 @@ from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
     EngineReadExecutionPlan,
+    EngineUpdateSemantics,
     build_query_plan_explanation,
     compile_find_semantics,
+    compile_update_semantics,
 )
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.types import EngineIndexRecord, IndexDefinition, IndexInformation, default_id_index_definition
@@ -155,6 +157,22 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertEqual(semantics.hint, [("name", 1)])
         self.assertEqual(semantics.comment, "read")
         self.assertEqual(semantics.max_time_ms, 25)
+
+    def test_compile_update_semantics_returns_typed_write_semantics(self):
+        operation = compile_update_operation(
+            {"name": "Ada"},
+            update_spec={"$set": {"rank": 1}},
+            hint=[("name", 1)],
+            comment="write",
+        )
+
+        semantics = compile_update_semantics(operation)
+
+        self.assertIsInstance(semantics, EngineUpdateSemantics)
+        self.assertEqual(semantics.filter_spec, {"name": "Ada"})
+        self.assertEqual(semantics.selector_filter, {"name": "Ada"})
+        self.assertEqual(semantics.compiled_update_plan.update_spec, {"$set": {"rank": 1}})
+        self.assertEqual(semantics.compiled_upsert_plan.update_spec, {"$set": {"rank": 1}})
 
     def test_query_plan_explanation_builder_reuses_compiled_semantics(self):
         semantics = compile_find_semantics(

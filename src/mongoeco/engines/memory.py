@@ -14,6 +14,7 @@ from mongoeco.engines.semantic_core import (
     EngineReadExecutionPlan,
     build_query_plan_explanation,
     compile_find_semantics,
+    compile_update_semantics,
     filter_documents,
     finalize_documents,
 )
@@ -477,10 +478,11 @@ class MemoryEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
-        if operation.compiled_update_plan is None or operation.update_spec is None:
-            raise OperationFailure("update operation does not include a compiled update plan")
-        effective_dialect = dialect or MONGODB_DIALECT_70
-        query_plan = ensure_query_plan(operation.filter_spec, operation.plan, dialect=effective_dialect)
+        semantics = compile_update_semantics(
+            operation,
+            dialect=dialect,
+            selector_filter=selector_filter,
+        )
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
                 coll = self._storage.get(db_name, {}).get(coll_name)
@@ -489,10 +491,10 @@ class MemoryEngine(AsyncStorageEngine):
 
             for storage_key, data in list(coll.items()):
                 document = self._codec.decode(data)
-                if not QueryEngine.match_plan(document, query_plan, dialect=effective_dialect):
+                if not QueryEngine.match_plan(document, semantics.query_plan, dialect=semantics.dialect):
                     continue
 
-                modified = operation.compiled_update_plan.apply(document)
+                modified = semantics.compiled_update_plan.apply(document)
                 self._ensure_unique_indexes(
                     db_name,
                     coll_name,
@@ -509,14 +511,7 @@ class MemoryEngine(AsyncStorageEngine):
                 return UpdateResult(matched_count=0, modified_count=0)
 
             new_doc = deepcopy(upsert_seed or {})
-            upsert_plan = operation.compiled_upsert_plan or UpdateEngine.compile_update_plan(
-                operation.update_spec,
-                dialect=effective_dialect,
-                selector_filter=selector_filter or operation.filter_spec,
-                array_filters=operation.array_filters,
-                is_upsert_insert=True,
-            )
-            upsert_plan.apply(new_doc)
+            semantics.compiled_upsert_plan.apply(new_doc)
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
 

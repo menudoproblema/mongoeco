@@ -41,6 +41,7 @@ from mongoeco.engines.semantic_core import (
     EngineReadExecutionPlan,
     build_query_plan_explanation,
     compile_find_semantics,
+    compile_update_semantics,
     filter_documents,
     finalize_documents,
     iter_filtered_documents,
@@ -2141,26 +2142,27 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
         dialect: MongoDialect | None = None,
     ) -> UpdateResult[DocumentId]:
-        effective_dialect = dialect or MONGODB_DIALECT_70
-        if operation.compiled_update_plan is None or operation.update_spec is None:
-            raise OperationFailure("update operation does not include a compiled update plan")
-        plan = ensure_query_plan(operation.filter_spec, operation.plan, dialect=effective_dialect)
+        semantics = compile_update_semantics(
+            operation,
+            dialect=dialect,
+            selector_filter=selector_filter,
+        )
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 selected: tuple[str, Document] | None = None
                 sql_selection_supported = False
                 try:
-                    if self._dialect_requires_python_fallback(effective_dialect):
+                    if self._dialect_requires_python_fallback(semantics.dialect):
                         raise NotImplementedError("Custom dialect requires Python fallback")
-                    selected = self._select_first_document_for_plan(db_name, coll_name, plan)
+                    selected = self._select_first_document_for_plan(db_name, coll_name, semantics.query_plan)
                     sql_selection_supported = True
                 except (NotImplementedError, TypeError):
                     pass
 
                 if selected is None and not sql_selection_supported:
                     for storage_key, document in self._load_documents(db_name, coll_name):
-                        if not QueryEngine.match_plan(document, plan, dialect=effective_dialect):
+                        if not QueryEngine.match_plan(document, semantics.query_plan, dialect=semantics.dialect):
                             continue
                         selected = (storage_key, document)
                         break
@@ -2168,14 +2170,14 @@ class SQLiteEngine(AsyncStorageEngine):
                 if selected is not None:
                     storage_key, original_document = selected
                     document = deepcopy(original_document)
-                    modified = operation.compiled_update_plan.apply(document)
+                    modified = semantics.compiled_update_plan.apply(document)
                     if not modified:
                         return UpdateResult(matched_count=1, modified_count=0)
                     self._validate_document_against_unique_indexes(db_name, coll_name, document)
                     indexes = self._load_indexes(db_name, coll_name)
 
                     try:
-                        if self._dialect_requires_python_fallback(effective_dialect):
+                        if self._dialect_requires_python_fallback(semantics.dialect):
                             raise NotImplementedError("Custom dialect requires Python fallback")
                         if operation.array_filters is not None:
                             raise NotImplementedError("array_filters require Python update fallback")
@@ -2236,14 +2238,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     return UpdateResult(matched_count=0, modified_count=0)
 
                 new_doc = deepcopy(upsert_seed or {})
-                upsert_plan = operation.compiled_upsert_plan or UpdateEngine.compile_update_plan(
-                    operation.update_spec,
-                    dialect=effective_dialect,
-                    selector_filter=selector_filter or operation.filter_spec,
-                    array_filters=operation.array_filters,
-                    is_upsert_insert=True,
-                )
-                upsert_plan.apply(new_doc)
+                semantics.compiled_upsert_plan.apply(new_doc)
                 if "_id" not in new_doc:
                     new_doc["_id"] = ObjectId()
                 self._validate_document_against_unique_indexes(db_name, coll_name, new_doc)

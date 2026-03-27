@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from typing import Iterable
 
+from mongoeco.api.operations import UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.operators import CompiledUpdatePlan
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.projections import apply_projection
@@ -43,6 +45,16 @@ class EngineReadExecutionPlan:
     fallback_reason: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class EngineUpdateSemantics:
+    filter_spec: Filter
+    query_plan: QueryNode
+    compiled_update_plan: CompiledUpdatePlan
+    compiled_upsert_plan: CompiledUpdatePlan
+    selector_filter: Filter
+    dialect: MongoDialect
+
+
 def compile_find_semantics(
     filter_spec: Filter | None = None,
     *,
@@ -71,6 +83,25 @@ def compile_find_semantics(
         hint=hint,
         comment=comment,
         max_time_ms=max_time_ms,
+        dialect=effective_dialect,
+    )
+
+
+def compile_update_semantics(
+    operation: UpdateOperation,
+    *,
+    dialect: MongoDialect | None = None,
+    selector_filter: Filter | None = None,
+) -> EngineUpdateSemantics:
+    effective_dialect = dialect or MONGODB_DIALECT_70
+    if operation.compiled_update_plan is None or operation.compiled_upsert_plan is None:
+        raise ValueError("UpdateOperation must include compiled update plans")
+    return EngineUpdateSemantics(
+        filter_spec=operation.filter_spec,
+        query_plan=ensure_query_plan(operation.filter_spec, operation.plan, dialect=effective_dialect),
+        compiled_update_plan=operation.compiled_update_plan,
+        compiled_upsert_plan=operation.compiled_upsert_plan,
+        selector_filter=selector_filter or operation.filter_spec,
         dialect=effective_dialect,
     )
 
