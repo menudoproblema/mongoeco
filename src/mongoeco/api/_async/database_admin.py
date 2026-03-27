@@ -38,13 +38,18 @@ from mongoeco.types import (
     CollectionValidationSnapshot,
     CommandCursorResult,
     CountCommandResult,
+    CreateIndexesCommandResult,
     DatabaseStatsSnapshot,
     DatabaseListingDocument,
     DatabaseListingSnapshot,
     DatabaseStatsDocument,
     DistinctCommandResult,
+    DropDatabaseCommandResult,
+    DropIndexesCommandResult,
     Document,
     Filter,
+    FindAndModifyCommandResult,
+    FindAndModifyLastErrorObject,
     IndexModel,
     ListDatabasesCommandResult,
     NamespaceOkResult,
@@ -1048,11 +1053,12 @@ class AsyncDatabaseAdminService:
                 let=let,
                 session=session,
             )
-            return {
-                "lastErrorObject": {"n": 0 if before is None else 1},
-                "value": before,
-                "ok": 1.0,
-            }
+            return FindAndModifyCommandResult(
+                last_error_object=FindAndModifyLastErrorObject(
+                    count=0 if before is None else 1,
+                ),
+                value=before,
+            ).to_document()
 
         if update_spec is None:
             raise OperationFailure("findAndModify requires either remove or update")
@@ -1092,15 +1098,14 @@ class AsyncDatabaseAdminService:
                         limit=1,
                         session=session,
                     ).first()
-                return {
-                    "lastErrorObject": {
-                        "n": 1,
-                        "updatedExisting": False,
-                        "upserted": result.upserted_id,
-                    },
-                    "value": value,
-                    "ok": 1.0,
-                }
+                return FindAndModifyCommandResult(
+                    last_error_object=FindAndModifyLastErrorObject(
+                        count=1,
+                        updated_existing=False,
+                        upserted_id=result.upserted_id,
+                    ),
+                    value=value,
+                ).to_document()
             value = await collection.find_one_and_update(
                 query,
                 update_spec,
@@ -1115,14 +1120,13 @@ class AsyncDatabaseAdminService:
                 let=let,
                 session=session,
             )
-            return {
-                "lastErrorObject": {
-                    "n": 0 if before_full is None and not upsert else 1,
-                    "updatedExisting": before_full is not None,
-                },
-                "value": value,
-                "ok": 1.0,
-            }
+            return FindAndModifyCommandResult(
+                last_error_object=FindAndModifyLastErrorObject(
+                    count=0 if before_full is None and not upsert else 1,
+                    updated_existing=before_full is not None,
+                ),
+                value=value,
+            ).to_document()
 
         if not isinstance(update_spec, dict):
             raise TypeError("update must be a document")
@@ -1146,15 +1150,14 @@ class AsyncDatabaseAdminService:
                     limit=1,
                     session=session,
                 ).first()
-            return {
-                "lastErrorObject": {
-                    "n": 1,
-                    "updatedExisting": False,
-                    "upserted": result.upserted_id,
-                },
-                "value": value,
-                "ok": 1.0,
-            }
+            return FindAndModifyCommandResult(
+                last_error_object=FindAndModifyLastErrorObject(
+                    count=1,
+                    updated_existing=False,
+                    upserted_id=result.upserted_id,
+                ),
+                value=value,
+            ).to_document()
 
         value = await collection.find_one_and_replace(
             query,
@@ -1169,14 +1172,13 @@ class AsyncDatabaseAdminService:
             let=let,
             session=session,
         )
-        return {
-            "lastErrorObject": {
-                "n": 0 if before_full is None and not upsert else 1,
-                "updatedExisting": before_full is not None,
-            },
-            "value": value,
-            "ok": 1.0,
-        }
+        return FindAndModifyCommandResult(
+            last_error_object=FindAndModifyLastErrorObject(
+                count=0 if before_full is None and not upsert else 1,
+                updated_existing=before_full is not None,
+            ),
+            value=value,
+        ).to_document()
 
     async def _command_list_indexes(
         self,
@@ -1221,15 +1223,12 @@ class AsyncDatabaseAdminService:
             session=session,
         )
         info_after = await collection.index_information(session=session)
-        result: dict[str, object] = {
-            "numIndexesBefore": len(info_before),
-            "numIndexesAfter": len(info_after),
-            "createdCollectionAutomatically": collection_name not in collection_names_before,
-            "ok": 1.0,
-        }
-        if len(info_before) == len(info_after):
-            result["note"] = "all indexes already exist"
-        return result
+        return CreateIndexesCommandResult(
+            num_indexes_before=len(info_before),
+            num_indexes_after=len(info_after),
+            created_collection_automatically=collection_name not in collection_names_before,
+            note="all indexes already exist" if len(info_before) == len(info_after) else None,
+        ).to_document()
 
     async def _command_drop_indexes(
         self,
@@ -1250,18 +1249,14 @@ class AsyncDatabaseAdminService:
             await collection.drop_index(target, comment=spec.get("comment"), session=session)
         else:
             raise TypeError("index must be '*', a name, or a key specification")
-        return (
-            {
-                "nIndexesWas": len(info_before),
-                "ok": 1.0,
-                "msg": f"non-_id indexes for collection {self._db_name}.{collection_name} dropped",
-            }
-            if target == "*"
-            else {
-                "nIndexesWas": len(info_before),
-                "ok": 1.0,
-            }
-        )
+        return DropIndexesCommandResult(
+            previous_index_count=len(info_before),
+            message=(
+                f"non-_id indexes for collection {self._db_name}.{collection_name} dropped"
+                if target == "*"
+                else None
+            ),
+        ).to_document()
 
     async def _command_drop_database(
         self,
@@ -1278,4 +1273,4 @@ class AsyncDatabaseAdminService:
                 collection_name,
                 context=session,
             )
-        return {"dropped": self._db_name, "ok": 1.0}
+        return DropDatabaseCommandResult(database_name=self._db_name).to_document()

@@ -303,6 +303,79 @@ class CollectionValidationSnapshot:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class FindAndModifyLastErrorObject:
+    count: int
+    updated_existing: bool | None = None
+    upserted_id: object | None = None
+
+    def to_document(self) -> dict[str, object]:
+        document: dict[str, object] = {"n": self.count}
+        if self.updated_existing is not None:
+            document["updatedExisting"] = self.updated_existing
+        if self.upserted_id is not None:
+            document["upserted"] = self.upserted_id
+        return document
+
+
+@dataclass(frozen=True, slots=True)
+class FindAndModifyCommandResult:
+    last_error_object: FindAndModifyLastErrorObject
+    value: object
+
+    def to_document(self) -> dict[str, object]:
+        return {
+            "lastErrorObject": self.last_error_object.to_document(),
+            "value": self.value,
+            "ok": 1.0,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CreateIndexesCommandResult:
+    num_indexes_before: int
+    num_indexes_after: int
+    created_collection_automatically: bool
+    note: str | None = None
+
+    def to_document(self) -> dict[str, object]:
+        document: dict[str, object] = {
+            "numIndexesBefore": self.num_indexes_before,
+            "numIndexesAfter": self.num_indexes_after,
+            "createdCollectionAutomatically": self.created_collection_automatically,
+            "ok": 1.0,
+        }
+        if self.note is not None:
+            document["note"] = self.note
+        return document
+
+
+@dataclass(frozen=True, slots=True)
+class DropIndexesCommandResult:
+    previous_index_count: int
+    message: str | None = None
+
+    def to_document(self) -> dict[str, object]:
+        document: dict[str, object] = {
+            "nIndexesWas": self.previous_index_count,
+            "ok": 1.0,
+        }
+        if self.message is not None:
+            document["msg"] = self.message
+        return document
+
+
+@dataclass(frozen=True, slots=True)
+class DropDatabaseCommandResult:
+    database_name: str
+
+    def to_document(self) -> dict[str, object]:
+        return {
+            "dropped": self.database_name,
+            "ok": 1.0,
+        }
+
+
 class BuildInfoDocument(TypedDict):
     version: str
     versionArray: list[int]

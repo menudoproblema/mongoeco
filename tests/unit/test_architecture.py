@@ -71,9 +71,14 @@ from mongoeco.types import (
     CollectionValidationDocument,
     CommandCursorResult,
     CountCommandResult,
+    CreateIndexesCommandResult,
     DatabaseListingSnapshot,
     DatabaseStatsSnapshot,
     DistinctCommandResult,
+    DropDatabaseCommandResult,
+    DropIndexesCommandResult,
+    FindAndModifyCommandResult,
+    FindAndModifyLastErrorObject,
     ListDatabasesCommandResult,
     NamespaceOkResult,
     OkResult,
@@ -441,6 +446,28 @@ class ArchitectureUnitTests(unittest.TestCase):
             "db.users",
         )
         self.assertEqual(WriteCommandResult(2, modified_count=1).to_document()["nModified"], 1)
+        self.assertFalse(
+            FindAndModifyCommandResult(
+                last_error_object=FindAndModifyLastErrorObject(
+                    count=1,
+                    updated_existing=False,
+                    upserted_id="new-id",
+                ),
+                value={"_id": "new-id"},
+            ).to_document()["lastErrorObject"]["updatedExisting"]
+        )
+        self.assertEqual(
+            CreateIndexesCommandResult(1, 2, True).to_document()["numIndexesAfter"],
+            2,
+        )
+        self.assertEqual(
+            DropIndexesCommandResult(2, message="done").to_document()["msg"],
+            "done",
+        )
+        self.assertEqual(
+            DropDatabaseCommandResult("db").to_document()["dropped"],
+            "db",
+        )
 
     def test_database_admin_service_exposes_typed_listing_snapshot_loaders(self):
         self.assertIn("_list_collection_snapshots", AsyncDatabaseAdminService.__dict__)
