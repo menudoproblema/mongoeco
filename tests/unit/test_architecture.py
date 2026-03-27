@@ -20,6 +20,7 @@ from mongoeco.api.operations import (
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.api._sync.collection import Collection
+from mongoeco.api._sync.database_admin import DatabaseAdminService
 from mongoeco.api._sync._materialized_cursor import MaterializedCursor
 from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.api._sync.listing_cursor import ListingCursor
@@ -268,6 +269,13 @@ class ArchitectureUnitTests(unittest.TestCase):
         from mongoeco.api._sync.client import MongoClient
 
         self.assertTrue(callable(getattr(MongoClient, "_run_resource", None)))
+
+    def test_sync_database_delegates_admin_surface_to_dedicated_service(self):
+        from mongoeco.api._sync.client import MongoClient
+
+        database = MongoClient().get_database("db")
+
+        self.assertIsInstance(database._admin, DatabaseAdminService)
 
     def test_pymongo_configuration_types_validate_and_are_immutable(self):
         write_concern = WriteConcern("majority", j=True, wtimeout=1000)

@@ -1,5 +1,6 @@
 import asyncio
 
+from mongoeco.api._sync.database_admin import DatabaseAdminService
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,
@@ -126,6 +127,7 @@ class Database:
         self._codec_options = (
             client.codec_options if codec_options is None else codec_options
         )
+        self._admin = DatabaseAdminService(self)
 
     def _async_database(self):
         self._client._ensure_connected()
@@ -185,10 +187,7 @@ class Database:
         *,
         session: ClientSession | None = None,
     ) -> list[str]:
-        async_database = self._async_database()
-        return self._client._run(
-            async_database.list_collection_names(filter_spec, session=session)
-        )
+        return self._admin.list_collection_names(filter_spec, session=session)
 
     def list_collections(
         self,
@@ -196,11 +195,7 @@ class Database:
         *,
         session: ClientSession | None = None,
     ) -> ListingCursor:
-        async_database = self._async_database()
-        return ListingCursor(
-            self._client,
-            async_database.list_collections(filter_spec, session=session),
-        )
+        return self._admin.list_collections(filter_spec, session=session)
 
     def create_collection(
         self,
@@ -209,15 +204,10 @@ class Database:
         session: ClientSession | None = None,
         **options: object,
     ) -> Collection:
-        async_database = self._async_database()
-        return self._client._run_resource(
-            async_database.create_collection(name, session=session, **options),
-            lambda: self.get_collection(name),
-        )
+        return self._admin.create_collection(name, session=session, **options)
 
     def drop_collection(self, name: str, *, session: ClientSession | None = None) -> None:
-        async_database = self._async_database()
-        self._client._run(async_database.drop_collection(name, session=session))
+        self._admin.drop_collection(name, session=session)
 
     def validate_collection(
         self,
@@ -229,16 +219,13 @@ class Database:
         session: ClientSession | None = None,
         comment: object | None = None,
     ) -> CollectionValidationDocument:
-        async_database = self._async_database()
-        return self._client._run(
-            async_database.validate_collection(
-                name_or_collection,
-                scandata=scandata,
-                full=full,
-                background=background,
-                session=session,
-                comment=comment,
-            )
+        return self._admin.validate_collection(
+            name_or_collection,
+            scandata=scandata,
+            full=full,
+            background=background,
+            session=session,
+            comment=comment,
         )
 
     def command(
@@ -248,10 +235,7 @@ class Database:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> dict[str, object]:
-        async_database = self._async_database()
-        return self._client._run(
-            async_database.command(command, session=session, **kwargs)
-        )
+        return self._admin.command(command, session=session, **kwargs)
 
     @property
     def mongodb_dialect(self) -> MongoDialect:
