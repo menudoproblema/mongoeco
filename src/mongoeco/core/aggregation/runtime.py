@@ -46,6 +46,7 @@ from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, ObjectId, UndefinedType
 from mongoeco.core.aggregation.accumulators import _evaluate_pick_n_input
 from mongoeco.core.aggregation.planning import Pipeline, _require_sort
+from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 
 
 type AggregationStageHandler = Callable[[list[Document], object, "AggregationStageContext"], list[Document]]
@@ -94,6 +95,7 @@ class AggregationStageContext:
     collection_resolver: Callable[[str], list[Document]] | None = None
     variables: dict[str, Any] | None = None
     dialect: MongoDialect = MONGODB_DIALECT_70
+    spill_policy: AggregationSpillPolicy | None = None
 
 
 def _require_unwind_spec(spec: object) -> tuple[str, bool, str | None]:

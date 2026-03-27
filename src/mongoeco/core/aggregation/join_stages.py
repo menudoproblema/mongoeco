@@ -23,6 +23,7 @@ def _apply_lookup(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    spill_policy=None,
 ) -> list[Document]:
     lookup = _require_lookup_spec(spec)
     if collection_resolver is None:
@@ -56,6 +57,7 @@ def _apply_lookup(
                 collection_resolver=collection_resolver,
                 variables=scoped,
                 dialect=dialect,
+                spill_policy=spill_policy,
             )
         else:
             matches = candidate_documents
@@ -72,6 +74,7 @@ def _apply_union_with(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    spill_policy=None,
 ) -> list[Document]:
     union_with = _require_union_with_spec(spec)
     if collection_resolver is None:
@@ -91,6 +94,7 @@ def _apply_union_with(
             collection_resolver=collection_resolver,
             variables=variables,
             dialect=dialect,
+            spill_policy=spill_policy,
         )
     return [deepcopy(document) for document in documents] + foreign_documents
 
@@ -102,6 +106,7 @@ def _apply_facet(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    spill_policy=None,
 ) -> list[Document]:
     if not isinstance(spec, dict):
         raise OperationFailure("$facet requires a document specification")
@@ -117,6 +122,6 @@ def _apply_facet(
             collection_resolver=collection_resolver,
             variables=variables,
             dialect=dialect,
+            spill_policy=spill_policy,
         )
     return [faceted]
-

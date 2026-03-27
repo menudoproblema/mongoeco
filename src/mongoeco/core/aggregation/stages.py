@@ -28,6 +28,7 @@ from mongoeco.core.aggregation.planning import (
     _require_sort,
     _require_stage,
 )
+from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 from mongoeco.core.aggregation.runtime import (
     AggregationStageContext,
     _apply_unwind,
@@ -142,6 +143,7 @@ def _stage_lookup(
         context.collection_resolver,
         context.variables,
         dialect=context.dialect,
+        spill_policy=context.spill_policy,
     )
 
 
@@ -156,6 +158,7 @@ def _stage_union_with(
         context.collection_resolver,
         context.variables,
         dialect=context.dialect,
+        spill_policy=context.spill_policy,
     )
 
 
@@ -191,6 +194,7 @@ def _stage_facet(
         context.collection_resolver,
         context.variables,
         dialect=context.dialect,
+        spill_policy=context.spill_policy,
     )
 
 
@@ -247,6 +251,7 @@ def apply_pipeline(
     collection_resolver=None,
     variables: dict[str, Any] | None = None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    spill_policy: AggregationSpillPolicy | None = None,
 ) -> list[Document]:
     result = [deepcopy(document) for document in documents]
     for index, stage in enumerate(pipeline):
@@ -266,6 +271,9 @@ def apply_pipeline(
                 collection_resolver=collection_resolver,
                 variables=variables,
                 dialect=dialect,
+                spill_policy=spill_policy,
             ),
         )
+        if spill_policy is not None:
+            result = spill_policy.maybe_spill(operator, result)
     return result

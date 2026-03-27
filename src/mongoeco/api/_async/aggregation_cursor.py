@@ -17,6 +17,7 @@ from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.aggregation import (
     Pipeline,
     _CURRENT_COLLECTION_RESOLVER_KEY,
+    AggregationSpillPolicy,
     apply_pipeline,
     split_pushdown_pipeline,
 )
@@ -251,6 +252,7 @@ class AsyncAggregationCursor:
             collection_resolver=referenced_collections.get,
             variables=self._let,
             dialect=dialect,
+            spill_policy=self._spill_policy(),
         )
         enforce_deadline(deadline)
         return result
@@ -327,6 +329,7 @@ class AsyncAggregationCursor:
                 collection_resolver=referenced_collections.get,
                 variables=self._let,
                 dialect=dialect,
+                spill_policy=self._spill_policy(),
             )
             enforce_deadline(deadline)
 
@@ -463,3 +466,13 @@ class AsyncAggregationCursor:
 
     def __aiter__(self) -> AsyncIterator[Document]:
         return self._stream_batches()
+
+    def _spill_policy(self) -> AggregationSpillPolicy | None:
+        policy = getattr(self._collection._engine, "aggregation_spill_policy", None)
+        if isinstance(policy, AggregationSpillPolicy):
+            return policy
+        if callable(policy):
+            resolved = policy()
+            if isinstance(resolved, AggregationSpillPolicy):
+                return resolved
+        return None

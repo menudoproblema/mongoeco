@@ -7,6 +7,7 @@ import uuid
 from unittest.mock import ANY
 
 from mongoeco.compat import MongoDialect
+from mongoeco.core.bson_scalars import BsonInt32
 from mongoeco.core.aggregation import (
     _ACCUMULATOR_FLAGS_KEY,
     _MISSING,
@@ -20,6 +21,7 @@ from mongoeco.core.aggregation import (
     _match_spec_contains_expr,
     _require_projection,
     _resolve_aggregation_field_path,
+    AggregationSpillPolicy,
     apply_pipeline,
     evaluate_expression,
     register_aggregation_expression_operator,
@@ -530,6 +532,89 @@ class AggregationTests(unittest.TestCase):
             )
         finally:
             unregister_aggregation_stage("$annotate")
+
+    def test_apply_pipeline_spills_after_blocking_stage_when_threshold_is_exceeded(self):
+        class _CountingPolicy:
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def maybe_spill(self, operator, documents):
+                if operator == "$sort" and len(documents) > 1:
+                    self.calls += 1
+                return documents
+
+        policy = _CountingPolicy()
+        result = apply_pipeline(
+            [{"_id": "2", "score": 2}, {"_id": "1", "score": 1}],
+            [{"$sort": {"score": 1}}],
+            spill_policy=policy,
+        )
+
+        self.assertEqual(result, [{"_id": "1", "score": 1}, {"_id": "2", "score": 2}])
+        self.assertEqual(policy.calls, 1)
+
+    def test_apply_pipeline_does_not_spill_after_non_blocking_stage(self):
+        class _CountingPolicy:
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def maybe_spill(self, operator, documents):
+                if operator == "$sort" and len(documents) > 1:
+                    self.calls += 1
+                return documents
+
+        policy = _CountingPolicy()
+        result = apply_pipeline(
+            [{"_id": "1", "score": 1}, {"_id": "2", "score": 2}],
+            [{"$project": {"_id": 1}}],
+            spill_policy=policy,
+        )
+
+        self.assertEqual(result, [{"_id": "1"}, {"_id": "2"}])
+        self.assertEqual(policy.calls, 0)
+
+    def test_apply_pipeline_propagates_spill_policy_into_facet_pipelines(self):
+        class _CountingPolicy:
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def maybe_spill(self, operator, documents):
+                if operator == "$sort" and len(documents) > 1:
+                    self.calls += 1
+                return documents
+
+        policy = _CountingPolicy()
+        result = apply_pipeline(
+            [{"_id": "2", "score": 2}, {"_id": "1", "score": 1}],
+            [{"$facet": {"ordered": [{"$sort": {"score": 1}}]}}],
+            spill_policy=policy,
+        )
+
+        self.assertEqual(result, [{"ordered": [{"_id": "1", "score": 1}, {"_id": "2", "score": 2}]}])
+        self.assertEqual(policy.calls, 1)
+
+    def test_aggregation_spill_policy_round_trips_documents_with_bson_wrappers(self):
+        policy = AggregationSpillPolicy(threshold=1)
+
+        result = policy.maybe_spill(
+            "$sort",
+            [{"_id": "1", "score": BsonInt32(1)}, {"_id": "2", "score": BsonInt32(2)}],
+        )
+
+        self.assertEqual(
+            result,
+            [{"_id": "1", "score": BsonInt32(1)}, {"_id": "2", "score": BsonInt32(2)}],
+        )
+
+    def test_aggregation_spill_policy_skips_non_blocking_stages_and_invalid_thresholds(self):
+        policy = AggregationSpillPolicy(threshold=10)
+        documents = [{"_id": "1"}, {"_id": "2"}]
+
+        self.assertIs(policy.maybe_spill("$project", documents), documents)
+        self.assertFalse(policy.should_spill("$sort", documents))
+
+        with self.assertRaises(ValueError):
+            AggregationSpillPolicy(threshold=0)
 
     def test_evaluate_expression_rejects_currently_unsupported_operators_explicitly(self):
         document = {"value": "10", "tags": ["a", "b"]}

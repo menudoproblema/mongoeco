@@ -37,6 +37,10 @@ from mongoeco.core.aggregation.extensions import (
     unregister_aggregation_expression_operator,
     unregister_aggregation_stage,
 )
+from mongoeco.core.aggregation.spill import (
+    BLOCKING_AGGREGATION_STAGES,
+    AggregationSpillPolicy,
+)
 from mongoeco.core.aggregation.grouping_stages import _apply_group
 from mongoeco.core.aggregation.stages import (
     AGGREGATION_STAGE_HANDLERS,
@@ -52,6 +56,8 @@ __all__ = [
     "AggregationStageContext",
     "AggregationStageExtensionHandler",
     "AggregationStageHandler",
+    "AggregationSpillPolicy",
+    "BLOCKING_AGGREGATION_STAGES",
     "Pipeline",
     "PipelineStage",
     "_ACCUMULATOR_FLAGS_KEY",
