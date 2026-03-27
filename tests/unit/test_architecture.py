@@ -23,6 +23,7 @@ from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.api._sync.collection import Collection
 from mongoeco.api._sync.database_admin import DatabaseAdminService
+from mongoeco.api._sync.database_commands import DatabaseCommandService
 from mongoeco.api._sync._materialized_cursor import MaterializedCursor
 from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.api._sync.listing_cursor import ListingCursor
@@ -300,6 +301,15 @@ class ArchitectureUnitTests(unittest.TestCase):
         database = MongoClient().get_database("db")
 
         self.assertIsInstance(database._admin, DatabaseAdminService)
+        self.assertIsInstance(database._admin._commands, DatabaseCommandService)
+
+    def test_sync_database_command_service_reuses_typed_async_parser(self):
+        from mongoeco.api._sync.client import MongoClient
+
+        database = MongoClient().get_database("db")
+        parsed = database._admin._commands.parse_raw_command("buildInfo")
+
+        self.assertIsInstance(parsed, AsyncDatabaseCommandService.StaticAdminCommand)
 
     def test_pymongo_configuration_types_validate_and_are_immutable(self):
         write_concern = WriteConcern("majority", j=True, wtimeout=1000)

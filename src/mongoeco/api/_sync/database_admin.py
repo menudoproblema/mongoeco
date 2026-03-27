@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from mongoeco.api._sync.database_commands import DatabaseCommandService
 from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.session import ClientSession
 from mongoeco.types import CollectionValidationDocument, Filter
@@ -11,6 +12,7 @@ if TYPE_CHECKING:
 class DatabaseAdminService:
     def __init__(self, database: "Database"):
         self._database = database
+        self._commands = DatabaseCommandService(self)
 
     @property
     def _client(self):
@@ -93,7 +95,4 @@ class DatabaseAdminService:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> dict[str, object]:
-        async_database = self._async_database()
-        return self._client._run(
-            async_database.command(command, session=session, **kwargs)
-        )
+        return self._commands.command(command, session=session, **kwargs)
