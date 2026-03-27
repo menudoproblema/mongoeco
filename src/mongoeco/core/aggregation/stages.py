@@ -7,29 +7,35 @@ from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
 
-from mongoeco.core.aggregation.runtime import (
-    AggregationStageContext,
-    Pipeline,
-    _apply_add_fields,
+from mongoeco.core.aggregation.grouping_stages import (
     _apply_bucket,
     _apply_bucket_auto,
     _apply_count,
-    _apply_facet,
     _apply_group,
-    _apply_lookup,
-    _apply_project,
-    _apply_replace_root,
-    _apply_sample,
     _apply_set_window_fields,
     _apply_sort_by_count,
+)
+from mongoeco.core.aggregation.join_stages import (
+    _apply_facet,
+    _apply_lookup,
     _apply_union_with,
-    _apply_unset,
+)
+from mongoeco.core.aggregation.runtime import (
+    AggregationStageContext,
+    Pipeline,
     _apply_unwind,
-    _apply_match,
     _require_documents_stage,
     _require_non_negative_int,
     _require_sort,
     _require_stage,
+)
+from mongoeco.core.aggregation.transform_stages import (
+    _apply_add_fields,
+    _apply_match,
+    _apply_project,
+    _apply_replace_root,
+    _apply_sample,
+    _apply_unset,
 )
 
 

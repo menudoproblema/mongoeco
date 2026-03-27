@@ -9,7 +9,6 @@ from mongoeco.core.aggregation.runtime import (
     _accumulator_flags,
     _aggregation_key,
     _apply_accumulators,
-    _apply_group,
     _bson_document_size,
     _expression_truthy,
     _finalize_accumulators,
@@ -21,6 +20,7 @@ from mongoeco.core.aggregation.runtime import (
     evaluate_expression,
     split_pushdown_pipeline,
 )
+from mongoeco.core.aggregation.grouping_stages import _apply_group
 from mongoeco.core.aggregation.stages import (
     AGGREGATION_STAGE_HANDLERS,
     AggregationStageHandler,
