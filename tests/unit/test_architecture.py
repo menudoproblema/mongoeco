@@ -3,6 +3,7 @@ import unittest
 
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
+from mongoeco.api._async.database_commands import AsyncDatabaseCommandService
 from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.api._async._materialized_cursor import AsyncMaterializedCursor
@@ -71,6 +72,7 @@ class ArchitectureUnitTests(unittest.TestCase):
         database = AsyncDatabase(MemoryEngine(), "db")
 
         self.assertIsInstance(database._admin, AsyncDatabaseAdminService)
+        self.assertIsInstance(database._admin._commands, AsyncDatabaseCommandService)
 
     def test_find_operation_compiles_normalized_read_plan(self):
         operation = compile_find_operation(

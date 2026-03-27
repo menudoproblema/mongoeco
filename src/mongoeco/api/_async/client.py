@@ -1,8 +1,6 @@
 from mongoeco.api._async.collection import AsyncCollection
-from mongoeco.api._async.database_admin import (
-    AsyncDatabaseAdminService,
-    build_info_document,
-)
+from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
+from mongoeco.api._async.database_commands import build_info_document
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,

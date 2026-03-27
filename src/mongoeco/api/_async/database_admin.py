@@ -1,8 +1,3 @@
-import datetime
-import os
-import platform
-import socket
-import sys
 from typing import TYPE_CHECKING
 
 from mongoeco.api._async.cursor import (
@@ -11,6 +6,7 @@ from mongoeco.api._async.cursor import (
     _validate_max_time_ms,
     _validate_sort_spec,
 )
+from mongoeco.api._async.database_commands import AsyncDatabaseCommandService
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.core.aggregation import _bson_document_size
 from mongoeco.core.filtering import QueryEngine
@@ -19,22 +15,15 @@ from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    BuildInfoDocument,
-    CmdLineOptsDocument,
     CollectionListingDocument,
     CollectionStatsDocument,
     CollectionValidationDocument,
-    ConnectionStatusDocument,
     DatabaseListingDocument,
     DatabaseStatsDocument,
     Document,
     Filter,
-    HelloDocument,
-    HostInfoDocument,
     IndexModel,
-    ListCommandsDocument,
     ReturnDocument,
-    WhatsMyUriDocument,
 )
 
 if TYPE_CHECKING:
@@ -45,6 +34,7 @@ if TYPE_CHECKING:
 class AsyncDatabaseAdminService:
     def __init__(self, database: "AsyncDatabase"):
         self._database = database
+        self._commands = AsyncDatabaseCommandService(self)
 
     @property
     def _engine(self) -> AsyncStorageEngine:
@@ -416,88 +406,7 @@ class AsyncDatabaseAdminService:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> dict[str, object]:
-        spec = self._normalize_command(command, kwargs)
-        command_name = next(iter(spec))
-        if not isinstance(command_name, str):
-            raise TypeError("command name must be a string")
-
-        if command_name == "ping":
-            return {"ok": 1.0}
-        if command_name == "buildInfo":
-            return build_info_document(self._mongodb_dialect)
-        if command_name == "serverStatus":
-            return server_status_document(
-                self._mongodb_dialect,
-                engine=self._engine,
-            )
-        if command_name == "hostInfo":
-            return host_info_document()
-        if command_name == "whatsmyuri":
-            return whats_my_uri_document()
-        if command_name == "getCmdLineOpts":
-            return cmd_line_opts_document()
-        if command_name in {"hello", "isMaster", "ismaster"}:
-            return hello_document(self._mongodb_dialect, legacy_name=command_name != "hello")
-        if command_name == "listCommands":
-            return list_commands_document()
-        if command_name == "connectionStatus":
-            show_privileges = spec.get("showPrivileges", False)
-            if not isinstance(show_privileges, bool):
-                raise TypeError("showPrivileges must be a bool")
-            return connection_status_document(show_privileges=show_privileges)
-        if command_name == "listCollections":
-            return await self._command_list_collections(spec, session=session)
-        if command_name == "listDatabases":
-            return await self._command_list_databases(spec, session=session)
-        if command_name == "create":
-            return await self._command_create(spec, session=session)
-        if command_name == "drop":
-            return await self._command_drop(spec, session=session)
-        if command_name == "renameCollection":
-            return await self._command_rename_collection(spec, session=session)
-        if command_name == "count":
-            return await self._command_count(spec, session=session)
-        if command_name == "distinct":
-            return await self._command_distinct(spec, session=session)
-        if command_name == "insert":
-            return await self._command_insert(spec, session=session)
-        if command_name == "update":
-            return await self._command_update(spec, session=session)
-        if command_name == "delete":
-            return await self._command_delete(spec, session=session)
-        if command_name == "find":
-            return await self._command_find(spec, session=session)
-        if command_name == "aggregate":
-            return await self._command_aggregate(spec, session=session)
-        if command_name == "explain":
-            return await self._command_explain(spec, session=session)
-        if command_name == "findAndModify":
-            return await self._command_find_and_modify(spec, session=session)
-        if command_name == "listIndexes":
-            return await self._command_list_indexes(spec, session=session)
-        if command_name == "createIndexes":
-            return await self._command_create_indexes(spec, session=session)
-        if command_name == "dropIndexes":
-            return await self._command_drop_indexes(spec, session=session)
-        if command_name == "dropDatabase":
-            return await self._command_drop_database(session=session)
-        if command_name == "collStats":
-            collection_name = self._require_collection_name(spec.get("collStats"), "collStats")
-            scale = self._normalize_scale_from_command(spec.get("scale"))
-            return await self._collection_stats(collection_name, scale=scale, session=session)
-        if command_name == "dbStats":
-            scale = self._normalize_scale_from_command(spec.get("scale"))
-            return await self._database_stats(scale=scale, session=session)
-        if command_name == "validate":
-            collection_name = self._require_collection_name(spec.get("validate"), "validate")
-            return await self.validate_collection(
-                collection_name,
-                scandata=bool(spec.get("scandata", False)),
-                full=bool(spec.get("full", False)),
-                background=spec.get("background"),
-                session=session,
-            )
-        raise OperationFailure(f"Unsupported command: {command_name}")
+        return await self._commands.command(command, session=session, **kwargs)
 
     async def _command_list_collections(
         self,
@@ -1426,183 +1335,3 @@ class AsyncDatabaseAdminService:
                 context=session,
             )
         return {"dropped": self._db_name, "ok": 1.0}
-
-
-def build_info_document(mongodb_dialect: "MongoDialect") -> BuildInfoDocument:
-    version_parts = [int(part) for part in mongodb_dialect.server_version.split(".")]
-    while len(version_parts) < 2:
-        version_parts.append(0)
-    major, minor = version_parts[:2]
-    return {
-        "version": f"{major}.{minor}.0",
-        "versionArray": [major, minor, 0, 0],
-        "gitVersion": "mongoeco",
-        "ok": 1.0,
-    }
-
-
-def hello_document(
-    mongodb_dialect: "MongoDialect",
-    *,
-    legacy_name: bool = False,
-) -> HelloDocument:
-    document: HelloDocument = {
-        "helloOk": True,
-        "isWritablePrimary": True,
-        "maxBsonObjectSize": 16 * 1024 * 1024,
-        "maxMessageSizeBytes": 48_000_000,
-        "maxWriteBatchSize": 100_000,
-        "localTime": datetime.datetime.now(datetime.UTC),
-        "logicalSessionTimeoutMinutes": 30,
-        "connectionId": 1,
-        "minWireVersion": 0,
-        "maxWireVersion": 20,
-        "readOnly": False,
-        "ok": 1.0,
-    }
-    if legacy_name:
-        document["ismaster"] = True
-    else:
-        document["isWritablePrimary"] = True
-    document.update(build_info_document(mongodb_dialect))
-    return document
-
-
-_PROCESS_STARTED_AT = datetime.datetime.now(datetime.UTC)
-
-
-def _storage_engine_name(engine: AsyncStorageEngine) -> str:
-    engine_name = type(engine).__name__.lower()
-    if "sqlite" in engine_name:
-        return "sqlite"
-    if "memory" in engine_name:
-        return "memory"
-    return type(engine).__name__
-
-
-def server_status_document(
-    mongodb_dialect: "MongoDialect",
-    *,
-    engine: AsyncStorageEngine,
-) -> ServerStatusDocument:
-    local_time = datetime.datetime.now(datetime.UTC)
-    uptime_delta = local_time - _PROCESS_STARTED_AT
-    uptime_seconds = max(uptime_delta.total_seconds(), 0.0)
-    return {
-        "host": socket.gethostname(),
-        "version": build_info_document(mongodb_dialect)["version"],
-        "process": "mongod",
-        "pid": os.getpid(),
-        "uptime": uptime_seconds,
-        "uptimeMillis": int(uptime_seconds * 1000),
-        "uptimeEstimate": int(uptime_seconds),
-        "localTime": local_time,
-        "connections": {
-            "current": 1,
-            "available": 8388607,
-            "totalCreated": 1,
-        },
-        "storageEngine": {
-            "name": _storage_engine_name(engine),
-        },
-        "ok": 1.0,
-    }
-
-
-def host_info_document() -> HostInfoDocument:
-    return {
-        "system": {
-            "hostname": socket.gethostname(),
-            "cpuArch": platform.machine() or "unknown",
-            "numCores": os.cpu_count() or 1,
-            "memSizeMB": 0,
-        },
-        "os": {
-            "type": platform.system() or "unknown",
-            "name": platform.platform(),
-            "version": platform.version(),
-        },
-        "extra": {
-            "pythonVersion": platform.python_version(),
-        },
-        "ok": 1.0,
-    }
-
-
-def whats_my_uri_document() -> WhatsMyUriDocument:
-    return {
-        "you": "127.0.0.1:0",
-        "ok": 1.0,
-    }
-
-
-def cmd_line_opts_document() -> CmdLineOptsDocument:
-    return {
-        "argv": list(sys.argv),
-        "parsed": {
-            "net": {"bindIp": "127.0.0.1", "port": 0},
-            "storage": {},
-        },
-        "ok": 1.0,
-    }
-
-
-SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
-    "aggregate",
-    "buildInfo",
-    "collStats",
-    "connectionStatus",
-    "count",
-    "create",
-    "createIndexes",
-    "dbStats",
-    "delete",
-    "distinct",
-    "drop",
-    "dropDatabase",
-    "dropIndexes",
-    "explain",
-    "find",
-    "findAndModify",
-    "getCmdLineOpts",
-    "hello",
-    "hostInfo",
-    "insert",
-    "isMaster",
-    "ismaster",
-    "listCollections",
-    "listCommands",
-    "listDatabases",
-    "listIndexes",
-    "ping",
-    "renameCollection",
-    "serverStatus",
-    "update",
-    "validate",
-    "whatsmyuri",
-)
-
-
-def list_commands_document() -> ListCommandsDocument:
-    return {
-        "commands": {
-            command_name: {
-                "help": f"mongoeco local support for the {command_name} command",
-            }
-            for command_name in SUPPORTED_DATABASE_COMMANDS
-        },
-        "ok": 1.0,
-    }
-
-
-def connection_status_document(*, show_privileges: bool) -> ConnectionStatusDocument:
-    auth_info: dict[str, object] = {
-        "authenticatedUsers": [],
-        "authenticatedUserRoles": [],
-    }
-    if show_privileges:
-        auth_info["authenticatedUserPrivileges"] = []
-    return {
-        "authInfo": auth_info,
-        "ok": 1.0,
-    }
