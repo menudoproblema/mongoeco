@@ -505,6 +505,32 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     self.assertEqual(counted, {"n": 1, "ok": 1.0})
 
+    async def test_database_command_distinct_supports_hint_comment_and_max_time(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    await client.alpha.events.insert_many(
+                        [
+                            {"_id": "1", "kind": "view", "tag": "python"},
+                            {"_id": "2", "kind": "view", "tag": "mongodb"},
+                            {"_id": "3", "kind": "click", "tag": "python"},
+                        ]
+                    )
+                    await client.alpha.events.create_index([("kind", 1)], name="kind_idx")
+
+                    distinct = await client.alpha.command(
+                        {
+                            "distinct": "events",
+                            "key": "tag",
+                            "query": {"kind": "view"},
+                            "hint": "kind_idx",
+                            "comment": "distinct command",
+                            "maxTimeMS": 50,
+                        }
+                    )
+
+                    self.assertEqual(distinct, {"values": ["python", "mongodb"], "ok": 1.0})
+
     async def test_database_command_supports_rename_collection_within_current_database(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -842,6 +868,8 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     coll_stats = await client.alpha.command({"collStats": "events"})
                     db_stats = await client.alpha.command("dbStats")
+                    scaled_coll_stats = await client.alpha.command({"collStats": "events", "scale": 2})
+                    scaled_db_stats = await client.alpha.command({"dbStats": 1, "scale": 2})
 
                     self.assertEqual(coll_stats["ns"], "alpha.events")
                     self.assertEqual(coll_stats["count"], 1)
@@ -855,6 +883,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(db_stats["indexes"], 2)
                     self.assertEqual(db_stats["storageSize"], db_stats["dataSize"])
                     self.assertEqual(db_stats["ok"], 1.0)
+                    self.assertLessEqual(scaled_coll_stats["size"], coll_stats["size"])
+                    self.assertLessEqual(scaled_coll_stats["storageSize"], coll_stats["storageSize"])
+                    self.assertLessEqual(scaled_db_stats["dataSize"], db_stats["dataSize"])
+                    self.assertLessEqual(scaled_db_stats["storageSize"], db_stats["storageSize"])
 
     async def test_database_command_rejects_unsupported_commands(self):
         async with open_client("memory") as client:
@@ -879,6 +911,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await client.alpha.command({"count": "events", "skip": -1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 await client.alpha.command({"count": "events", "limit": -1})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                await client.alpha.command({"dbStats": 1, "scale": 0})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                await client.alpha.command({"collStats": "events", "scale": -1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 await client.alpha.command({"insert": "events", "documents": {}})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):

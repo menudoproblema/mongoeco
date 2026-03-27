@@ -754,6 +754,8 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * ya soporta también `serverStatus` con metadata local honesta
     * ya soporta también `hostInfo`, `whatsmyuri` y `getCmdLineOpts`
     * `count` ya soporta `skip`, `limit`, `hint`, `comment` y `maxTimeMS`
+    * `distinct` ya soporta `hint`, `comment` y `maxTimeMS`
+    * `collStats` y `dbStats` ya soportan `scale`
   * `server_info`
   * `validate_collection`
   * listados enriquecidos de bases de datos y colecciones

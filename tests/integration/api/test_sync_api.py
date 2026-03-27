@@ -426,6 +426,32 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     self.assertEqual(counted, {"n": 1, "ok": 1.0})
 
+    def test_database_command_distinct_supports_hint_comment_and_max_time(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.alpha.events.insert_many(
+                        [
+                            {"_id": "1", "kind": "view", "tag": "python"},
+                            {"_id": "2", "kind": "view", "tag": "mongodb"},
+                            {"_id": "3", "kind": "click", "tag": "python"},
+                        ]
+                    )
+                    client.alpha.events.create_index([("kind", 1)], name="kind_idx")
+
+                    distinct = client.alpha.command(
+                        {
+                            "distinct": "events",
+                            "key": "tag",
+                            "query": {"kind": "view"},
+                            "hint": "kind_idx",
+                            "comment": "distinct command",
+                            "maxTimeMS": 50,
+                        }
+                    )
+
+                    self.assertEqual(distinct, {"values": ["python", "mongodb"], "ok": 1.0})
+
     def test_database_command_supports_rename_collection_within_current_database(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -763,6 +789,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     coll_stats = client.alpha.command({"collStats": "events"})
                     db_stats = client.alpha.command("dbStats")
+                    scaled_coll_stats = client.alpha.command({"collStats": "events", "scale": 2})
+                    scaled_db_stats = client.alpha.command({"dbStats": 1, "scale": 2})
 
                     self.assertEqual(coll_stats["ns"], "alpha.events")
                     self.assertEqual(coll_stats["count"], 1)
@@ -776,6 +804,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(db_stats["indexes"], 2)
                     self.assertEqual(db_stats["storageSize"], db_stats["dataSize"])
                     self.assertEqual(db_stats["ok"], 1.0)
+                    self.assertLessEqual(scaled_coll_stats["size"], coll_stats["size"])
+                    self.assertLessEqual(scaled_coll_stats["storageSize"], coll_stats["storageSize"])
+                    self.assertLessEqual(scaled_db_stats["dataSize"], db_stats["dataSize"])
+                    self.assertLessEqual(scaled_db_stats["storageSize"], db_stats["storageSize"])
 
     def test_database_command_rejects_unsupported_commands(self):
         with MongoClient(MemoryEngine()) as client:
@@ -800,6 +832,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 client.alpha.command({"count": "events", "skip": -1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 client.alpha.command({"count": "events", "limit": -1})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command({"dbStats": 1, "scale": 0})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command({"collStats": "events", "scale": -1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 client.alpha.command({"insert": "events", "documents": {}})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):

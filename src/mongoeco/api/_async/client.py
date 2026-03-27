@@ -312,6 +312,14 @@ class AsyncDatabase:
         return value
 
     @staticmethod
+    def _normalize_scale_from_command(scale: object | None) -> int:
+        if scale is None:
+            return 1
+        if not isinstance(scale, int) or isinstance(scale, bool) or scale <= 0:
+            raise TypeError("scale must be a positive integer")
+        return scale
+
+    @staticmethod
     def _normalize_namespace(value: object, field_name: str) -> tuple[str, str]:
         if not isinstance(value, str) or "." not in value:
             raise TypeError(f"{field_name} must be a fully qualified namespace string")
@@ -348,6 +356,7 @@ class AsyncDatabase:
         self,
         collection_name: str,
         *,
+        scale: int = 1,
         session: ClientSession | None = None,
     ) -> dict[str, object]:
         collection = self.get_collection(collection_name)
@@ -358,9 +367,9 @@ class AsyncDatabase:
         return {
             "ns": f"{self._db_name}.{collection_name}",
             "count": count,
-            "size": data_size,
-            "avgObjSize": (data_size / count) if count else 0,
-            "storageSize": data_size,
+            "size": data_size // scale,
+            "avgObjSize": ((data_size / count) / scale) if count else 0,
+            "storageSize": data_size // scale,
             "nindexes": len(indexes),
             "totalIndexSize": 0,
             "ok": 1.0,
@@ -369,6 +378,7 @@ class AsyncDatabase:
     async def _database_stats(
         self,
         *,
+        scale: int = 1,
         session: ClientSession | None = None,
     ) -> dict[str, object]:
         collection_names = await self._engine.list_collections(self._db_name, context=session)
@@ -376,7 +386,7 @@ class AsyncDatabase:
         data_size = 0
         indexes = 0
         for collection_name in collection_names:
-            stats = await self._collection_stats(collection_name, session=session)
+            stats = await self._collection_stats(collection_name, scale=1, session=session)
             objects += int(stats["count"])
             data_size += int(stats["size"])
             indexes += int(stats["nindexes"])
@@ -384,9 +394,9 @@ class AsyncDatabase:
             "db": self._db_name,
             "collections": len(collection_names),
             "objects": objects,
-            "avgObjSize": (data_size / objects) if objects else 0,
-            "dataSize": data_size,
-            "storageSize": data_size,
+            "avgObjSize": ((data_size / objects) / scale) if objects else 0,
+            "dataSize": data_size // scale,
+            "storageSize": data_size // scale,
             "indexes": indexes,
             "indexSize": 0,
             "ok": 1.0,
@@ -659,11 +669,34 @@ class AsyncDatabase:
             if not isinstance(key, str) or not key:
                 raise TypeError("key must be a non-empty string")
             query = self._normalize_filter(spec.get("query"))
-            values = await self.get_collection(collection_name).distinct(
-                key,
+            hint = self._normalize_hint_from_command(spec.get("hint"))
+            max_time_ms = self._normalize_max_time_ms_from_command(spec.get("maxTimeMS"))
+            distinct_values: list[object] = []
+            async for document in self.get_collection(collection_name).find(
                 query,
+                sort=None,
+                hint=hint,
+                comment=spec.get("comment"),
+                max_time_ms=max_time_ms,
                 session=session,
-            )
+            ):
+                values = QueryEngine.extract_values(document, key)
+                if not values:
+                    found, value = QueryEngine._get_field_value(document, key)
+                    if not found:
+                        values = [None]
+                    elif isinstance(value, list):
+                        continue
+                    else:
+                        values = [value]
+                candidates = values[1:] if isinstance(values[0], list) else values
+                for candidate in candidates:
+                    if not any(
+                        self._mongodb_dialect.values_equal(existing, candidate)
+                        for existing in distinct_values
+                    ):
+                        distinct_values.append(candidate)
+            values = distinct_values
             return {"values": values, "ok": 1.0}
 
         if command_name == "insert":
@@ -1323,10 +1356,12 @@ class AsyncDatabase:
 
         if command_name == "collStats":
             collection_name = self._require_collection_name(spec.get("collStats"), "collStats")
-            return await self._collection_stats(collection_name, session=session)
+            scale = self._normalize_scale_from_command(spec.get("scale"))
+            return await self._collection_stats(collection_name, scale=scale, session=session)
 
         if command_name == "dbStats":
-            return await self._database_stats(session=session)
+            scale = self._normalize_scale_from_command(spec.get("scale"))
+            return await self._database_stats(scale=scale, session=session)
 
         if command_name == "validate":
             collection_name = self._require_collection_name(spec.get("validate"), "validate")
