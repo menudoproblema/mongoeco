@@ -546,6 +546,53 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertTrue(pulled)
         self.assertEqual(document, {"tags": ["python", "sqlite"]})
 
+    def test_array_mutation_operators_support_positional_and_array_filter_paths(self):
+        document = {
+            "groups": [
+                {"name": "alpha", "tags": ["a"], "scores": [1, 2]},
+                {"name": "beta", "tags": ["b"], "scores": [2, 3]},
+            ]
+        }
+
+        pushed = UpdateEngine.apply_update(
+            document,
+            {"$push": {"groups.$[group].tags": {"$each": ["x"], "$position": 0}}},
+            array_filters=[{"group.name": "beta"}],
+        )
+        added = UpdateEngine.apply_update(
+            document,
+            {"$addToSet": {"groups.$[].tags": "common"}},
+        )
+        pulled = UpdateEngine.apply_update(
+            document,
+            {"$pull": {"groups.$[group].tags": "x"}},
+            array_filters=[{"group.name": "beta"}],
+        )
+        pulled_all = UpdateEngine.apply_update(
+            document,
+            {"$pullAll": {"groups.$[].scores": [2]}},
+        )
+        popped = UpdateEngine.apply_update(
+            document,
+            {"$pop": {"groups.$.scores": 1}},
+            selector_filter={"groups.name": "beta"},
+        )
+
+        self.assertTrue(pushed)
+        self.assertTrue(added)
+        self.assertTrue(pulled)
+        self.assertTrue(pulled_all)
+        self.assertTrue(popped)
+        self.assertEqual(
+            document,
+            {
+                "groups": [
+                    {"name": "alpha", "tags": ["a", "common"], "scores": [1]},
+                    {"name": "beta", "tags": ["b", "common"], "scores": []},
+                ]
+            },
+        )
+
     def test_push_and_add_to_set_detach_inserted_values_from_update_spec(self):
         push_value = {"kind": "a"}
         add_value = {"kind": "b"}

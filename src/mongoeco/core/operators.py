@@ -157,19 +157,19 @@ class UpdateEngine:
                 ):
                     modified = True
             elif op == "$push":
-                if UpdateEngine._apply_push(doc, instructions, dialect=execution.dialect):
+                if UpdateEngine._apply_push(doc, instructions, context=execution):
                     modified = True
             elif op == "$addToSet":
-                if UpdateEngine._apply_add_to_set(doc, instructions, dialect=execution.dialect):
+                if UpdateEngine._apply_add_to_set(doc, instructions, context=execution):
                     modified = True
             elif op == "$pull":
-                if UpdateEngine._apply_pull(doc, instructions, dialect=execution.dialect):
+                if UpdateEngine._apply_pull(doc, instructions, context=execution):
                     modified = True
             elif op == "$pullAll":
-                if UpdateEngine._apply_pull_all(doc, instructions, dialect=execution.dialect):
+                if UpdateEngine._apply_pull_all(doc, instructions, context=execution):
                     modified = True
             elif op == "$pop":
-                if UpdateEngine._apply_pop(doc, instructions, dialect=execution.dialect):
+                if UpdateEngine._apply_pop(doc, instructions, context=execution):
                     modified = True
             else:
                 raise OperationFailure(f"Unsupported update operator: {op}")
@@ -225,7 +225,10 @@ class UpdateEngine:
                     UpdateEngine._assert_rename_path(compiled_path)
                     UpdateEngine._assert_rename_path(target_path)
                 elif operator in {"$push", "$addToSet", "$pull", "$pullAll", "$pop"}:
-                    UpdateEngine._assert_mutable_path(compiled_path)
+                    UpdateEngine._assert_mutable_path(
+                        compiled_path,
+                        allow_positional=True,
+                    )
                 instructions.append(
                     CompiledUpdateInstruction(
                         operator=operator,
@@ -465,14 +468,19 @@ class UpdateEngine:
         seen_paths.append(path)
 
     @staticmethod
-    def _assert_mutable_path(path: str | CompiledUpdatePath) -> None:
+    def _assert_mutable_path(
+        path: str | CompiledUpdatePath,
+        *,
+        allow_positional: bool = False,
+    ) -> None:
         compiled = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
         segments = compiled.segments
         if segments[0].raw == "_id":
             raise OperationFailure("Modifying the immutable field '_id' is not allowed")
-        for segment in segments:
-            if segment.kind in {"positional", "all_positional", "filtered_positional"}:
-                raise OperationFailure("Positional and array-filter update paths are not supported")
+        if not allow_positional:
+            for segment in segments:
+                if segment.kind in {"positional", "all_positional", "filtered_positional"}:
+                    raise OperationFailure("Positional and array-filter update paths are not supported")
 
     @staticmethod
     def _assert_rename_path(path: str | CompiledUpdatePath) -> None:
@@ -857,42 +865,66 @@ class UpdateEngine:
         return bool(values) or sort_spec is not None or slice_value is not None
 
     @staticmethod
+    def _resolve_array_instruction_applications(
+        doc: dict[str, Any],
+        instructions: tuple[CompiledUpdateInstruction, ...],
+        *,
+        context: UpdateExecutionContext,
+    ) -> tuple[ResolvedInstructionApplication, ...]:
+        return UpdateEngine._resolve_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+            allow_positional=True,
+        )
+
+    @staticmethod
+    def _get_or_create_array_target(
+        doc: dict[str, Any],
+        concrete_path: str,
+        *,
+        operator_name: str,
+    ) -> tuple[list[Any], bool]:
+        found, current = get_document_value(doc, concrete_path)
+        if not found:
+            current = []
+            set_document_value(doc, concrete_path, current)
+            return current, True
+        if not isinstance(current, list):
+            raise OperationFailure(f"{operator_name} requires the target field to be an array")
+        return current, False
+
+    @staticmethod
     def _apply_push(
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
+        context: UpdateExecutionContext,
     ) -> bool:
         modified = False
-        for instruction in instructions:
+        for application in UpdateEngine._resolve_array_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+        ):
             values, position, slice_value, sort_spec = UpdateEngine._normalize_push_modifiers(
-                instruction.value
+                application.instruction.value
             )
-            found, current = get_document_value(doc, instruction.path.raw)
-            if not found:
-                new_value = list(values)
-                UpdateEngine._apply_push_values(
-                    new_value,
-                    [],
+            for target in application.targets:
+                current, _created = UpdateEngine._get_or_create_array_target(
+                    doc,
+                    target.concrete_path,
+                    operator_name="$push",
+                )
+                if UpdateEngine._apply_push_values(
+                    current,
+                    values,
                     position=position,
                     slice_value=slice_value,
                     sort_spec=sort_spec,
-                    dialect=dialect,
-                )
-                if set_document_value(doc, instruction.path.raw, new_value):
+                    dialect=context.dialect,
+                ):
                     modified = True
-                continue
-            if not isinstance(current, list):
-                raise OperationFailure("$push requires the target field to be an array")
-            if UpdateEngine._apply_push_values(
-                current,
-                values,
-                position=position,
-                slice_value=slice_value,
-                sort_spec=sort_spec,
-                dialect=dialect,
-            ):
-                modified = True
         return modified
 
     @staticmethod
@@ -900,34 +932,48 @@ class UpdateEngine:
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
+        context: UpdateExecutionContext,
     ) -> bool:
         modified = False
-        for instruction in instructions:
-            values = UpdateEngine._expand_array_update_values("$addToSet", instruction.value)
-            found, current = get_document_value(doc, instruction.path.raw)
-            if not found:
-                unique_values: list[Any] = []
+        for application in UpdateEngine._resolve_array_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+        ):
+            values = UpdateEngine._expand_array_update_values(
+                "$addToSet",
+                application.instruction.value,
+            )
+            for target in application.targets:
+                current, created = UpdateEngine._get_or_create_array_target(
+                    doc,
+                    target.concrete_path,
+                    operator_name="$addToSet",
+                )
+                if created:
+                    unique_values: list[Any] = []
+                    for candidate in values:
+                        if any(
+                            QueryEngine._values_equal(
+                                existing,
+                                candidate,
+                                dialect=context.dialect,
+                            )
+                            for existing in unique_values
+                        ):
+                            continue
+                        unique_values.append(candidate)
+                    if set_document_value(doc, target.concrete_path, unique_values):
+                        modified = True
+                    continue
                 for candidate in values:
                     if any(
-                        QueryEngine._values_equal(existing, candidate, dialect=dialect)
-                        for existing in unique_values
+                        QueryEngine._values_equal(existing, candidate, dialect=context.dialect)
+                        for existing in current
                     ):
                         continue
-                    unique_values.append(candidate)
-                if set_document_value(doc, instruction.path.raw, unique_values):
+                    current.append(candidate)
                     modified = True
-                continue
-            if not isinstance(current, list):
-                raise OperationFailure("$addToSet requires the target field to be an array")
-            for candidate in values:
-                if any(
-                    QueryEngine._values_equal(existing, candidate, dialect=dialect)
-                    for existing in current
-                ):
-                    continue
-                current.append(candidate)
-                modified = True
         return modified
 
     @staticmethod
@@ -935,43 +981,56 @@ class UpdateEngine:
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
+        context: UpdateExecutionContext,
     ) -> bool:
         modified = False
-        for instruction in instructions:
-            value = instruction.value
-            found, current = get_document_value(doc, instruction.path.raw)
-            if not found:
-                continue
-            if not isinstance(current, list):
-                raise OperationFailure("$pull requires the target field to be an array")
-            if isinstance(value, dict) or isinstance(value, re.Pattern):
-                is_predicate = True if isinstance(value, re.Pattern) else (
-                    any(isinstance(key, str) and key.startswith("$") for key in value) or any(
-                        isinstance(candidate, dict) and any(isinstance(key, str) and key.startswith("$") for key in candidate)
-                        for candidate in value.values()
+        for application in UpdateEngine._resolve_array_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+        ):
+            value = application.instruction.value
+            for target in application.targets:
+                found, current = get_document_value(doc, target.concrete_path)
+                if not found:
+                    continue
+                if not isinstance(current, list):
+                    raise OperationFailure("$pull requires the target field to be an array")
+                if isinstance(value, dict) or isinstance(value, re.Pattern):
+                    is_predicate = True if isinstance(value, re.Pattern) else (
+                        any(isinstance(key, str) and key.startswith("$") for key in value) or any(
+                            isinstance(candidate, dict) and any(isinstance(key, str) and key.startswith("$") for key in candidate)
+                            for candidate in value.values()
+                        )
                     )
-                )
-                filtered = [
-                    candidate
-                    for candidate in current
-                    if not (
-                        (
-                            isinstance(candidate, str) and value.search(candidate) is not None
-                            if isinstance(value, re.Pattern)
-                            else QueryEngine._match_elem_match_candidate(candidate, value, dialect=dialect)
-                        ) if is_predicate else QueryEngine._values_equal(candidate, value, dialect=dialect)
-                    )
-                ]
-            else:
-                filtered = [
-                    candidate
-                    for candidate in current
-                    if not QueryEngine._values_equal(candidate, value, dialect=dialect)
-                ]
-            if not _same_value_for_update(filtered, current):
-                if set_document_value(doc, instruction.path.raw, filtered):
-                    modified = True
+                    filtered = [
+                        candidate
+                        for candidate in current
+                        if not (
+                            (
+                                isinstance(candidate, str) and value.search(candidate) is not None
+                                if isinstance(value, re.Pattern)
+                                else QueryEngine._match_elem_match_candidate(
+                                    candidate,
+                                    value,
+                                    dialect=context.dialect,
+                                )
+                            ) if is_predicate else QueryEngine._values_equal(
+                                candidate,
+                                value,
+                                dialect=context.dialect,
+                            )
+                        )
+                    ]
+                else:
+                    filtered = [
+                        candidate
+                        for candidate in current
+                        if not QueryEngine._values_equal(candidate, value, dialect=context.dialect)
+                    ]
+                if not _same_value_for_update(filtered, current):
+                    if set_document_value(doc, target.concrete_path, filtered):
+                        modified = True
         return modified
 
     @staticmethod
@@ -979,29 +1038,34 @@ class UpdateEngine:
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
+        context: UpdateExecutionContext,
     ) -> bool:
         modified = False
-        for instruction in instructions:
-            value = instruction.value
+        for application in UpdateEngine._resolve_array_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+        ):
+            value = application.instruction.value
             if not isinstance(value, list):
                 raise OperationFailure("$pullAll requires an array of values")
-            found, current = get_document_value(doc, instruction.path.raw)
-            if not found:
-                continue
-            if not isinstance(current, list):
-                raise OperationFailure("$pullAll requires the target field to be an array")
-            filtered = [
-                candidate
-                for candidate in current
-                if not any(
-                    QueryEngine._values_equal(candidate, removal, dialect=dialect)
-                    for removal in value
-                )
-            ]
-            if not _same_value_for_update(filtered, current):
-                if set_document_value(doc, instruction.path.raw, filtered):
-                    modified = True
+            for target in application.targets:
+                found, current = get_document_value(doc, target.concrete_path)
+                if not found:
+                    continue
+                if not isinstance(current, list):
+                    raise OperationFailure("$pullAll requires the target field to be an array")
+                filtered = [
+                    candidate
+                    for candidate in current
+                    if not any(
+                        QueryEngine._values_equal(candidate, removal, dialect=context.dialect)
+                        for removal in value
+                    )
+                ]
+                if not _same_value_for_update(filtered, current):
+                    if set_document_value(doc, target.concrete_path, filtered):
+                        modified = True
         return modified
 
     @staticmethod
@@ -1009,21 +1073,26 @@ class UpdateEngine:
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
+        context: UpdateExecutionContext,
     ) -> bool:
         modified = False
-        for instruction in instructions:
-            direction = instruction.value
+        for application in UpdateEngine._resolve_array_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+        ):
+            direction = application.instruction.value
             if isinstance(direction, bool) or direction not in (-1, 1):
                 raise OperationFailure("$pop requires 1 or -1 as direction")
-            found, current = get_document_value(doc, instruction.path.raw)
-            if not found:
-                continue
-            if not isinstance(current, list):
-                raise OperationFailure("$pop requires the target field to be an array")
-            if not current:
-                continue
-            updated = current[1:] if direction == -1 else current[:-1]
-            if set_document_value(doc, instruction.path.raw, updated):
-                modified = True
+            for target in application.targets:
+                found, current = get_document_value(doc, target.concrete_path)
+                if not found:
+                    continue
+                if not isinstance(current, list):
+                    raise OperationFailure("$pop requires the target field to be an array")
+                if not current:
+                    continue
+                updated = current[1:] if direction == -1 else current[:-1]
+                if set_document_value(doc, target.concrete_path, updated):
+                    modified = True
         return modified

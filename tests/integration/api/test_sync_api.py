@@ -1363,6 +1363,58 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(update_one_result.modified_count, 1)
                     self.assertEqual(updated, {"_id": "1", "tags": ["async"], "nums": [1, 3]})
 
+    def test_array_mutation_operators_support_positional_paths_via_api(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "groups": [
+                                {"name": "alpha", "tags": ["a"], "scores": [1, 2]},
+                                {"name": "beta", "tags": ["b"], "scores": [2, 3]},
+                            ],
+                        }
+                    )
+
+                    push_result = collection.update_one(
+                        {"_id": "1"},
+                        {"$push": {"groups.$[group].tags": {"$each": ["x"], "$position": 0}}},
+                        array_filters=[{"group.name": "beta"}],
+                    )
+                    add_to_set_result = collection.update_one(
+                        {"_id": "1"},
+                        {"$addToSet": {"groups.$[].tags": "common"}},
+                    )
+                    pull_result = collection.update_one(
+                        {"_id": "1"},
+                        {"$pull": {"groups.$[group].tags": "x"}},
+                        array_filters=[{"group.name": "beta"}],
+                    )
+                    pull_all_result = collection.update_one(
+                        {"_id": "1"},
+                        {"$pullAll": {"groups.$[].scores": [2]}},
+                    )
+                    pop_result = collection.update_one(
+                        {"groups.name": "beta"},
+                        {"$pop": {"groups.$.scores": 1}},
+                    )
+                    updated = collection.find_one({"_id": "1"})
+
+                    self.assertEqual(push_result.modified_count, 1)
+                    self.assertEqual(add_to_set_result.modified_count, 1)
+                    self.assertEqual(pull_result.modified_count, 1)
+                    self.assertEqual(pull_all_result.modified_count, 1)
+                    self.assertEqual(pop_result.modified_count, 1)
+                    self.assertEqual(
+                        updated["groups"],
+                        [
+                            {"name": "alpha", "tags": ["a", "common"], "scores": [1]},
+                            {"name": "beta", "tags": ["b", "common"], "scores": []},
+                        ],
+                    )
+
     def test_distinct_supports_scalars_arrays_nested_paths_and_filter(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
