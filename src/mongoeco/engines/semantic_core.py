@@ -8,7 +8,13 @@ from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll, QueryNode, ensure_query_plan
+from mongoeco.core.schema_validation import (
+    CompiledCollectionValidator,
+    SchemaValidationResult,
+    compile_collection_validator,
+)
 from mongoeco.core.sorting import sort_documents
+from mongoeco.errors import DocumentValidationFailure
 from mongoeco.types import (
     Document,
     ExecutionLineageStep,
@@ -53,6 +59,61 @@ class EngineUpdateSemantics:
     compiled_upsert_plan: CompiledUpdatePlan
     selector_filter: Filter
     dialect: MongoDialect
+
+
+def compile_collection_validation_semantics(
+    options: dict[str, object] | None,
+    *,
+    dialect: MongoDialect | None = None,
+) -> CompiledCollectionValidator | None:
+    return compile_collection_validator(options, dialect=dialect)
+
+
+def validate_collection_document(
+    document: Document,
+    *,
+    options: dict[str, object] | None,
+    original_document: Document | None = None,
+    is_upsert_insert: bool = False,
+    dialect: MongoDialect | None = None,
+) -> SchemaValidationResult:
+    validator = compile_collection_validation_semantics(options, dialect=dialect)
+    if validator is None:
+        return SchemaValidationResult(valid=True)
+    return validator.validate_document(
+        document,
+        original_document=original_document,
+        is_upsert_insert=is_upsert_insert,
+        dialect=dialect,
+    )
+
+
+def enforce_collection_document_validation(
+    document: Document,
+    *,
+    options: dict[str, object] | None,
+    original_document: Document | None = None,
+    is_upsert_insert: bool = False,
+    dialect: MongoDialect | None = None,
+) -> None:
+    validator = compile_collection_validation_semantics(options, dialect=dialect)
+    if validator is None:
+        return
+    result = validator.validate_document(
+        document,
+        original_document=original_document,
+        is_upsert_insert=is_upsert_insert,
+        dialect=dialect,
+    )
+    if result.valid or validator.validation_action == "warn":
+        return
+    raise DocumentValidationFailure(
+        f"Document failed validation: {result.first_message}",
+        details={
+            "failingDocumentId": document.get("_id"),
+            "schemaRulesNotSatisfied": [issue.render() for issue in result.issues],
+        },
+    )
 
 
 def compile_find_semantics(

@@ -42,6 +42,7 @@ from mongoeco.engines.semantic_core import (
     build_query_plan_explanation,
     compile_find_semantics,
     compile_update_semantics,
+    enforce_collection_document_validation,
     filter_documents,
     finalize_documents,
     iter_filtered_documents,
@@ -1090,6 +1091,24 @@ class SQLiteEngine(AsyncStorageEngine):
                 return {}
             raise CollectionInvalid(f"collection '{coll_name}' does not exist")
 
+    def _collection_options_or_empty_sync(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+    ) -> dict[str, object]:
+        row = conn.execute(
+            """
+            SELECT options_json
+            FROM collections
+            WHERE db_name = ? AND coll_name = ?
+            """,
+            (db_name, coll_name),
+        ).fetchone()
+        if row is None:
+            return {}
+        return json.loads(row[0] or "{}")
+
     def _disconnect_sync(self) -> None:
         connection: sqlite3.Connection | None = None
         with self._lock:
@@ -1113,7 +1132,30 @@ class SQLiteEngine(AsyncStorageEngine):
             with self._bind_connection(conn):
                 storage_key = self._storage_key(document.get("_id"))
                 indexes = self._load_indexes(db_name, coll_name)
+                collection_options = self._collection_options_or_empty_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                )
+                original_document = None
+                if overwrite:
+                    row = conn.execute(
+                        """
+                        SELECT document
+                        FROM documents
+                        WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                        """,
+                        (db_name, coll_name, storage_key),
+                    ).fetchone()
+                    if row is not None:
+                        original_document = self._deserialize_document(row[0])
                 try:
+                    enforce_collection_document_validation(
+                        document,
+                        options=collection_options,
+                        original_document=original_document,
+                        dialect=MONGODB_DIALECT_70,
+                    )
                     self._validate_document_against_unique_indexes(db_name, coll_name, document)
                     if overwrite:
                         self._begin_write(conn, context)
@@ -1329,6 +1371,11 @@ class SQLiteEngine(AsyncStorageEngine):
             with self._bind_connection(conn):
                 selected: tuple[str, Document] | None = None
                 sql_selection_supported = False
+                collection_options = self._collection_options_or_empty_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                )
                 update_plan = UpdateEngine.compile_update_plan(
                     update_spec,
                     dialect=effective_dialect,
@@ -1356,6 +1403,12 @@ class SQLiteEngine(AsyncStorageEngine):
                     modified = update_plan.apply(document)
                     if not modified:
                         return UpdateResult(matched_count=1, modified_count=0)
+                    enforce_collection_document_validation(
+                        document,
+                        options=collection_options,
+                        original_document=original_document,
+                        dialect=effective_dialect,
+                    )
                     self._validate_document_against_unique_indexes(db_name, coll_name, document)
                     indexes = self._load_indexes(db_name, coll_name)
 
@@ -1429,6 +1482,13 @@ class SQLiteEngine(AsyncStorageEngine):
                 upsert_plan.apply(new_doc)
                 if "_id" not in new_doc:
                     new_doc["_id"] = ObjectId()
+                enforce_collection_document_validation(
+                    new_doc,
+                    options=collection_options,
+                    original_document=None,
+                    is_upsert_insert=True,
+                    dialect=effective_dialect,
+                )
                 self._validate_document_against_unique_indexes(db_name, coll_name, new_doc)
 
                 storage_key = self._storage_key(new_doc["_id"])
@@ -2152,6 +2212,11 @@ class SQLiteEngine(AsyncStorageEngine):
             with self._bind_connection(conn):
                 selected: tuple[str, Document] | None = None
                 sql_selection_supported = False
+                collection_options = self._collection_options_or_empty_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                )
                 try:
                     if self._dialect_requires_python_fallback(semantics.dialect):
                         raise NotImplementedError("Custom dialect requires Python fallback")
@@ -2173,6 +2238,12 @@ class SQLiteEngine(AsyncStorageEngine):
                     modified = semantics.compiled_update_plan.apply(document)
                     if not modified:
                         return UpdateResult(matched_count=1, modified_count=0)
+                    enforce_collection_document_validation(
+                        document,
+                        options=collection_options,
+                        original_document=original_document,
+                        dialect=semantics.dialect,
+                    )
                     self._validate_document_against_unique_indexes(db_name, coll_name, document)
                     indexes = self._load_indexes(db_name, coll_name)
 
@@ -2241,6 +2312,13 @@ class SQLiteEngine(AsyncStorageEngine):
                 semantics.compiled_upsert_plan.apply(new_doc)
                 if "_id" not in new_doc:
                     new_doc["_id"] = ObjectId()
+                enforce_collection_document_validation(
+                    new_doc,
+                    options=collection_options,
+                    original_document=None,
+                    is_upsert_insert=True,
+                    dialect=semantics.dialect,
+                )
                 self._validate_document_against_unique_indexes(db_name, coll_name, new_doc)
 
                 storage_key = self._storage_key(new_doc["_id"])

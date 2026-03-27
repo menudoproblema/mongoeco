@@ -15,6 +15,7 @@ from mongoeco.engines.semantic_core import (
     build_query_plan_explanation,
     compile_find_semantics,
     compile_update_semantics,
+    enforce_collection_document_validation,
     filter_documents,
     finalize_documents,
 )
@@ -183,6 +184,13 @@ class MemoryEngine(AsyncStorageEngine):
             or coll_name in self._indexes.get(db_name, {})
         )
 
+    def _collection_options_snapshot_locked(
+        self,
+        db_name: str,
+        coll_name: str,
+    ) -> Document:
+        return deepcopy(self._collection_options.get(db_name, {}).get(coll_name, {}))
+
     def _typed_engine_key(self, value: Any) -> Any:
         if value is None:
             return ("none", None)
@@ -283,11 +291,25 @@ class MemoryEngine(AsyncStorageEngine):
                 db = self._storage.setdefault(db_name, {})
                 coll = db.setdefault(coll_name, {})
                 self._register_collection_locked(db_name, coll_name)
+                collection_options = self._collection_options_snapshot_locked(
+                    db_name,
+                    coll_name,
+                )
 
             doc_id = document.get("_id")
             storage_key = self._storage_key(doc_id)
+            original_document = None
+            if overwrite and storage_key in coll:
+                original_document = self._codec.decode(coll[storage_key])
             if not overwrite and storage_key in coll:
                 return False
+
+            enforce_collection_document_validation(
+                document,
+                options=collection_options,
+                original_document=original_document,
+                dialect=MONGODB_DIALECT_70,
+            )
 
             self._ensure_unique_indexes(
                 db_name,
@@ -406,6 +428,10 @@ class MemoryEngine(AsyncStorageEngine):
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
                 coll = self._storage.get(db_name, {}).get(coll_name)
+                collection_options = self._collection_options_snapshot_locked(
+                    db_name,
+                    coll_name,
+                )
             if coll is None:
                 coll = {}
             update_plan = UpdateEngine.compile_update_plan(
@@ -420,7 +446,14 @@ class MemoryEngine(AsyncStorageEngine):
                 if not QueryEngine.match_plan(document, query_plan, dialect=effective_dialect):
                     continue
 
+                original_document = deepcopy(document)
                 modified = update_plan.apply(document)
+                enforce_collection_document_validation(
+                    document,
+                    options=collection_options,
+                    original_document=original_document,
+                    dialect=effective_dialect,
+                )
                 self._ensure_unique_indexes(
                     db_name,
                     coll_name,
@@ -447,6 +480,13 @@ class MemoryEngine(AsyncStorageEngine):
             upsert_plan.apply(new_doc)
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
+            enforce_collection_document_validation(
+                new_doc,
+                options=collection_options,
+                original_document=None,
+                is_upsert_insert=True,
+                dialect=effective_dialect,
+            )
 
             with self._meta_lock:
                 db = self._storage.setdefault(db_name, {})
@@ -486,6 +526,10 @@ class MemoryEngine(AsyncStorageEngine):
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
                 coll = self._storage.get(db_name, {}).get(coll_name)
+                collection_options = self._collection_options_snapshot_locked(
+                    db_name,
+                    coll_name,
+                )
             if coll is None:
                 coll = {}
 
@@ -494,7 +538,14 @@ class MemoryEngine(AsyncStorageEngine):
                 if not QueryEngine.match_plan(document, semantics.query_plan, dialect=semantics.dialect):
                     continue
 
+                original_document = deepcopy(document)
                 modified = semantics.compiled_update_plan.apply(document)
+                enforce_collection_document_validation(
+                    document,
+                    options=collection_options,
+                    original_document=original_document,
+                    dialect=semantics.dialect,
+                )
                 self._ensure_unique_indexes(
                     db_name,
                     coll_name,
@@ -514,6 +565,13 @@ class MemoryEngine(AsyncStorageEngine):
             semantics.compiled_upsert_plan.apply(new_doc)
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
+            enforce_collection_document_validation(
+                new_doc,
+                options=collection_options,
+                original_document=None,
+                is_upsert_insert=True,
+                dialect=semantics.dialect,
+            )
 
             with self._meta_lock:
                 db = self._storage.setdefault(db_name, {})

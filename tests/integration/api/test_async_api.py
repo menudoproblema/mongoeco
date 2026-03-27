@@ -32,7 +32,14 @@ from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api._async.cursor import AsyncCursor
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import BulkWriteError, CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure
+from mongoeco.errors import (
+    BulkWriteError,
+    CollectionInvalid,
+    DocumentValidationFailure,
+    DuplicateKeyError,
+    InvalidOperation,
+    OperationFailure,
+)
 from tests.integration.api.admin_command_cases import (
     assert_build_info_command_shares_source_of_truth_with_server_info,
     assert_client_server_info_reflects_target_dialect,
@@ -62,6 +69,58 @@ from tests.support import ENGINE_FACTORIES, open_client
 
 
 class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_collection_json_schema_validator_rejects_invalid_inserts_and_updates(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    database = client.get_database("validation")
+                    collection = await database.create_collection(
+                        "users",
+                        validator={
+                            "$jsonSchema": {
+                                "required": ["name"],
+                                "properties": {
+                                    "name": {"bsonType": "string"},
+                                    "age": {"bsonType": "int"},
+                                },
+                            }
+                        },
+                    )
+
+                    with self.assertRaises(DocumentValidationFailure) as insert_error:
+                        await collection.insert_one({"_id": "1", "age": 10})
+                    self.assertEqual(insert_error.exception.code, 121)
+
+                    await collection.insert_one({"_id": "1", "name": "Ada", "age": 10})
+                    with self.assertRaises(DocumentValidationFailure):
+                        await collection.update_one({"_id": "1"}, {"$set": {"age": "old"}})
+
+    async def test_collection_json_schema_warn_mode_allows_write(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = await client.validation.create_collection(
+                        "warn_users",
+                        validator={
+                            "$jsonSchema": {
+                                "required": ["name"],
+                                "properties": {"name": {"bsonType": "string"}},
+                            }
+                        },
+                        validationAction="warn",
+                    )
+
+                    await collection.insert_one({"_id": "1"})
+                    self.assertEqual(await collection.find_one({"_id": "1"}), {"_id": "1"})
+
+    async def test_create_collection_rejects_invalid_json_schema_options(self):
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            with self.assertRaises(OperationFailure):
+                await client.validation.create_collection(
+                    "broken",
+                    validator={"$jsonSchema": {"required": "name"}},
+                )
+
     async def test_client_propagates_dialect_and_profile_to_database_and_collection(self):
         engine = MemoryEngine()
 

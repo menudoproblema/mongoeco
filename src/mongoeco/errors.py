@@ -1,6 +1,7 @@
 from typing import Any
 
 from mongoeco.error_catalog import (
+    DOCUMENT_VALIDATION_ERROR,
     DUPLICATE_KEY_ERROR,
     EXECUTION_TIMEOUT_ERROR,
     OPERATION_FAILURE,
@@ -59,6 +60,23 @@ class DuplicateKeyError(WriteError):
             code=DUPLICATE_KEY_ERROR.code if code is None else code,
             details=details,
             error_labels=error_labels or DUPLICATE_KEY_ERROR.error_labels,
+        )
+
+class DocumentValidationFailure(WriteError):
+    """Se produce cuando una escritura viola el validador de la colección."""
+
+    def __init__(
+        self,
+        message: str,
+        code: int | None = None,
+        details: dict[str, Any] | None = None,
+        error_labels: tuple[str, ...] = (),
+    ):
+        super().__init__(
+            message,
+            code=DOCUMENT_VALIDATION_ERROR.code if code is None else code,
+            details=details,
+            error_labels=error_labels or DOCUMENT_VALIDATION_ERROR.error_labels,
         )
 
 class BulkWriteError(WriteError):

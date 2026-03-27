@@ -35,6 +35,7 @@ from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.core.aggregation import _bson_document_size
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines.semantic_core import compile_collection_validation_semantics
 from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -159,10 +160,15 @@ class AsyncDatabaseAdminService:
         session: ClientSession | None = None,
         **options: object,
     ):
+        normalized_options = dict(options)
+        compile_collection_validation_semantics(
+            normalized_options,
+            dialect=self._mongodb_dialect,
+        )
         await self._engine.create_collection(
             self._db_name,
             name,
-            options=dict(options),
+            options=normalized_options,
             context=session,
         )
         return self._database.get_collection(name)
