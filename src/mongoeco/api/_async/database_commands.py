@@ -6,6 +6,11 @@ import sys
 from typing import TYPE_CHECKING, Generic, TypeVar
 from dataclasses import dataclass
 
+from mongoeco.api.admin_parsing import (
+    normalize_command_document,
+    normalize_command_scale,
+    require_collection_name,
+)
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
@@ -433,7 +438,7 @@ class AsyncDatabaseCommandService:
         command: object,
         **kwargs: object,
     ) -> "AsyncDatabaseCommandService.AdminCommand[dict[str, object]]":
-        spec = self._admin._normalize_command(command, kwargs)
+        spec = normalize_command_document(command, kwargs)
         command_name = next(iter(spec))
         if not isinstance(command_name, str):
             raise TypeError("command name must be a string")
@@ -466,11 +471,11 @@ class AsyncDatabaseCommandService:
                 show_privileges=show_privileges,
             )
         if command_name == "collStats":
-            collection_name = self._admin._require_collection_name(
+            collection_name = require_collection_name(
                 spec.get("collStats"),
                 "collStats",
             )
-            scale = self._admin._normalize_scale_from_command(spec.get("scale"))
+            scale = normalize_command_scale(spec.get("scale"))
             return self.CollectionStatsCommand(
                 db_name=self._admin._db_name,
                 command_name=command_name,
@@ -479,7 +484,7 @@ class AsyncDatabaseCommandService:
                 scale=scale,
             )
         if command_name == "dbStats":
-            scale = self._admin._normalize_scale_from_command(spec.get("scale"))
+            scale = normalize_command_scale(spec.get("scale"))
             return self.DatabaseStatsCommand(
                 db_name=self._admin._db_name,
                 command_name=command_name,
@@ -487,7 +492,7 @@ class AsyncDatabaseCommandService:
                 scale=scale,
             )
         if command_name == "validate":
-            collection_name = self._admin._require_collection_name(
+            collection_name = require_collection_name(
                 spec.get("validate"),
                 "validate",
             )

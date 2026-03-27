@@ -1,17 +1,28 @@
 from typing import TYPE_CHECKING
 
-from mongoeco.api._async.cursor import (
-    _validate_batch_size,
-    _validate_hint_spec,
-    _validate_max_time_ms,
-    _validate_sort_spec,
+from mongoeco.api.admin_parsing import (
+    normalize_command_batch_size,
+    normalize_command_document,
+    normalize_command_hint,
+    normalize_command_max_time_ms,
+    normalize_command_ordered,
+    normalize_command_projection,
+    normalize_command_scale,
+    normalize_command_sort_document,
+    normalize_delete_specs,
+    normalize_filter_document,
+    normalize_index_models_from_command,
+    normalize_insert_documents,
+    normalize_namespace,
+    normalize_update_specs,
+    require_collection_name,
+    resolve_collection_reference,
 )
-from mongoeco.api.operations import compile_aggregate_operation
+from mongoeco.api.operations import FindOperation, compile_aggregate_operation, compile_find_operation
 from mongoeco.api._async.database_commands import AsyncDatabaseCommandService
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.core.aggregation import _bson_document_size
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
 from mongoeco.session import ClientSession
@@ -28,6 +39,7 @@ from mongoeco.types import (
     Document,
     Filter,
     IndexModel,
+    Projection,
     ReturnDocument,
 )
 
@@ -55,11 +67,7 @@ class AsyncDatabaseAdminService:
 
     @staticmethod
     def _normalize_filter(filter_spec: object | None) -> Filter:
-        if filter_spec is None:
-            return {}
-        if not is_filter(filter_spec):
-            raise TypeError("filter_spec must be a dict")
-        return filter_spec
+        return normalize_filter_document(filter_spec)
 
     async def list_collection_names(
         self,
@@ -142,147 +150,117 @@ class AsyncDatabaseAdminService:
 
     @staticmethod
     def _normalize_command(command: object, kwargs: dict[str, object]) -> dict[str, object]:
-        if isinstance(command, str):
-            if not command:
-                raise TypeError("command name must be a non-empty string")
-            return {command: 1, **kwargs}
-        if not isinstance(command, dict) or not command:
-            raise TypeError("command must be a non-empty string or dict")
-        if kwargs:
-            raise TypeError("keyword arguments are only supported when command is a string")
-        return command
+        return normalize_command_document(command, kwargs)
 
     @staticmethod
     def _require_collection_name(value: object, field_name: str) -> str:
-        if not isinstance(value, str) or not value:
-            raise TypeError(f"{field_name} must be a non-empty string")
-        return value
+        return require_collection_name(value, field_name)
 
     @staticmethod
     def _resolve_collection_reference(value: object, field_name: str) -> str:
-        if isinstance(value, str):
-            return AsyncDatabaseAdminService._require_collection_name(value, field_name)
-        name = getattr(value, "name", None)
-        if isinstance(name, str) and name:
-            return name
-        raise TypeError(f"{field_name} must be a collection name or collection object")
+        return resolve_collection_reference(value, field_name)
 
     @staticmethod
     def _normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
-        if not isinstance(indexes, list) or not indexes:
-            raise TypeError("indexes must be a non-empty list")
-
-        normalized: list[IndexModel] = []
-        for raw_index in indexes:
-            if not isinstance(raw_index, dict):
-                raise TypeError("each index specification must be a dict")
-            if "key" not in raw_index:
-                raise OperationFailure("index specification must contain 'key'")
-
-            unsupported = set(raw_index) - {"key", "name", "unique"}
-            if unsupported:
-                unsupported_names = ", ".join(sorted(unsupported))
-                raise TypeError(
-                    f"unsupported createIndexes options in command: {unsupported_names}"
-                )
-
-            kwargs: dict[str, object] = {}
-            if "name" in raw_index:
-                kwargs["name"] = raw_index["name"]
-            if "unique" in raw_index:
-                kwargs["unique"] = raw_index["unique"]
-            normalized.append(IndexModel(raw_index["key"], **kwargs))
-        return normalized
+        return normalize_index_models_from_command(indexes)
 
     @staticmethod
     def _normalize_sort_document(sort: object | None) -> list[tuple[str, int]] | None:
-        if sort is None:
-            return None
-        if not isinstance(sort, dict):
-            raise TypeError("sort must be a document")
-        normalized = list(sort.items())
-        _validate_sort_spec(normalized)
-        return normalized
+        return normalize_command_sort_document(sort)
 
     @staticmethod
     def _normalize_hint_from_command(hint: object | None) -> object | None:
-        if hint is None:
-            return None
-        if isinstance(hint, dict):
-            hint = list(hint.items())
-        _validate_hint_spec(hint)
-        return hint
+        return normalize_command_hint(hint)
 
     @staticmethod
     def _normalize_max_time_ms_from_command(max_time_ms: object | None) -> int | None:
-        if max_time_ms is None:
-            return None
-        _validate_max_time_ms(max_time_ms)
-        return max_time_ms
+        return normalize_command_max_time_ms(max_time_ms)
 
     @staticmethod
     def _normalize_projection_from_command(projection: object | None) -> dict[str, object] | None:
-        if projection is None:
-            return None
-        if not is_projection(projection):
-            raise TypeError("projection must be a dict")
-        return projection
+        return normalize_command_projection(projection)
 
     @staticmethod
     def _normalize_batch_size_from_command(batch_size: object | None) -> int | None:
-        if batch_size is None:
-            return None
-        _validate_batch_size(batch_size)
-        return batch_size
+        return normalize_command_batch_size(batch_size)
+
+    def _compile_command_find_operation(
+        self,
+        spec: dict[str, object],
+        *,
+        collection_field: str,
+        filter_field: str = "filter",
+        projection_field: str = "projection",
+        sort_field: str = "sort",
+        hint_field: str = "hint",
+        comment_field: str = "comment",
+        max_time_ms_field: str = "maxTimeMS",
+        skip_field: str = "skip",
+        limit_field: str = "limit",
+        batch_size_field: str | None = "batchSize",
+        default_projection: Projection | None = None,
+        default_limit: int | None = None,
+    ) -> tuple[str, FindOperation]:
+        collection_name = self._require_collection_name(
+            spec.get(collection_field),
+            collection_field,
+        )
+        skip = spec.get(skip_field, 0)
+        if not isinstance(skip, int) or isinstance(skip, bool) or skip < 0:
+            raise TypeError("skip must be a non-negative integer")
+        limit = spec.get(limit_field, default_limit)
+        if limit is not None and (
+            not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
+        ):
+            raise TypeError("limit must be a non-negative integer")
+        batch_size = (
+            None
+            if batch_size_field is None
+            else self._normalize_batch_size_from_command(spec.get(batch_size_field))
+        )
+        return (
+            collection_name,
+            compile_find_operation(
+                self._normalize_filter(spec.get(filter_field)),
+                projection=normalize_command_projection(
+                    spec.get(projection_field, default_projection)
+                ),
+                sort=normalize_command_sort_document(spec.get(sort_field)),
+                skip=skip,
+                limit=limit,
+                hint=normalize_command_hint(spec.get(hint_field)),
+                comment=spec.get(comment_field),
+                max_time_ms=normalize_command_max_time_ms(
+                    spec.get(max_time_ms_field)
+                ),
+                batch_size=batch_size,
+                dialect=self._mongodb_dialect,
+            ),
+        )
 
     @staticmethod
     def _normalize_ordered_from_command(value: object | None) -> bool:
-        if value is None:
-            return True
-        if not isinstance(value, bool):
-            raise TypeError("ordered must be a bool")
-        return value
+        return normalize_command_ordered(value)
 
     @staticmethod
     def _normalize_scale_from_command(scale: object | None) -> int:
-        if scale is None:
-            return 1
-        if not isinstance(scale, int) or isinstance(scale, bool) or scale <= 0:
-            raise TypeError("scale must be a positive integer")
-        return scale
+        return normalize_command_scale(scale)
 
     @staticmethod
     def _normalize_namespace(value: object, field_name: str) -> tuple[str, str]:
-        if not isinstance(value, str) or "." not in value:
-            raise TypeError(f"{field_name} must be a fully qualified namespace string")
-        db_name, coll_name = value.split(".", 1)
-        if not db_name or not coll_name:
-            raise TypeError(f"{field_name} must be a fully qualified namespace string")
-        return db_name, coll_name
+        return normalize_namespace(value, field_name)
 
     @staticmethod
     def _normalize_insert_documents(spec: object) -> list[Document]:
-        if not isinstance(spec, list) or not spec:
-            raise TypeError("documents must be a non-empty list of documents")
-        if not all(isinstance(item, dict) for item in spec):
-            raise TypeError("documents must be a non-empty list of documents")
-        return spec
+        return normalize_insert_documents(spec)
 
     @staticmethod
     def _normalize_update_specs(spec: object) -> list[dict[str, object]]:
-        if not isinstance(spec, list) or not spec:
-            raise TypeError("updates must be a non-empty list")
-        if not all(isinstance(item, dict) for item in spec):
-            raise TypeError("updates must be a non-empty list")
-        return spec
+        return normalize_update_specs(spec)
 
     @staticmethod
     def _normalize_delete_specs(spec: object) -> list[dict[str, object]]:
-        if not isinstance(spec, list) or not spec:
-            raise TypeError("deletes must be a non-empty list")
-        if not all(isinstance(item, dict) for item in spec):
-            raise TypeError("deletes must be a non-empty list")
-        return spec
+        return normalize_delete_specs(spec)
 
     async def _collection_stats(
         self,
@@ -575,29 +553,26 @@ class AsyncDatabaseAdminService:
         *,
         session: ClientSession | None = None,
     ) -> dict[str, object]:
-        collection_name = self._require_collection_name(spec.get("count"), "count")
-        query = self._normalize_filter(spec.get("query"))
-        skip = spec.get("skip", 0)
-        if not isinstance(skip, int) or isinstance(skip, bool) or skip < 0:
-            raise TypeError("skip must be a non-negative integer")
-        limit = spec.get("limit")
-        if limit is not None and (
-            not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
-        ):
-            raise TypeError("limit must be a non-negative integer")
-        hint = self._normalize_hint_from_command(spec.get("hint"))
-        max_time_ms = self._normalize_max_time_ms_from_command(spec.get("maxTimeMS"))
-        count = len(
-            await self._database.get_collection(collection_name).find(
-                query,
-                {"_id": 1},
-                skip=skip,
-                limit=limit,
-                hint=hint,
-                comment=spec.get("comment"),
-                max_time_ms=max_time_ms,
-                session=session,
-            ).to_list()
+        collection_name, operation = self._compile_command_find_operation(
+            {
+                "count": spec.get("count"),
+                "query": spec.get("query"),
+                "projection": {"_id": 1},
+                "hint": spec.get("hint"),
+                "comment": spec.get("comment"),
+                "maxTimeMS": spec.get("maxTimeMS"),
+                "skip": spec.get("skip", 0),
+                "limit": spec.get("limit"),
+            },
+            collection_field="count",
+            filter_field="query",
+            default_projection={"_id": 1},
+        )
+        count = await self._database.get_collection(
+            collection_name
+        )._engine_count_with_operation(
+            operation,
+            session=session,
         )
         return {"n": count, "ok": 1.0}
 
@@ -846,31 +821,12 @@ class AsyncDatabaseAdminService:
         *,
         session: ClientSession | None = None,
     ) -> dict[str, object]:
-        collection_name = self._require_collection_name(spec.get("find"), "find")
-        query = self._normalize_filter(spec.get("filter"))
-        projection = self._normalize_projection_from_command(spec.get("projection"))
-        sort = self._normalize_sort_document(spec.get("sort"))
-        hint = self._normalize_hint_from_command(spec.get("hint"))
-        max_time_ms = self._normalize_max_time_ms_from_command(spec.get("maxTimeMS"))
-        skip = spec.get("skip", 0)
-        if not isinstance(skip, int) or isinstance(skip, bool) or skip < 0:
-            raise TypeError("skip must be a non-negative integer")
-        limit = spec.get("limit")
-        if limit is not None and (
-            not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
-        ):
-            raise TypeError("limit must be a non-negative integer")
-        batch_size = self._normalize_batch_size_from_command(spec.get("batchSize"))
-        first_batch = await self._database.get_collection(collection_name).find(
-            query,
-            projection,
-            sort=sort,
-            skip=skip,
-            limit=limit,
-            hint=hint,
-            comment=spec.get("comment"),
-            max_time_ms=max_time_ms,
-            batch_size=batch_size,
+        collection_name, operation = self._compile_command_find_operation(
+            spec,
+            collection_field="find",
+        )
+        first_batch = await self._database.get_collection(collection_name)._build_cursor(
+            operation,
             session=session,
         ).to_list()
         return {
@@ -939,44 +895,16 @@ class AsyncDatabaseAdminService:
 
         explained_command_name = next(iter(explain_spec))
         if explained_command_name == "find":
-            collection_name = self._require_collection_name(
-                explain_spec.get("find"),
-                "find",
+            collection_name, operation = self._compile_command_find_operation(
+                explain_spec,
+                collection_field="find",
             )
-            query = self._normalize_filter(explain_spec.get("filter"))
-            projection = self._normalize_projection_from_command(
-                explain_spec.get("projection")
-            )
-            sort = self._normalize_sort_document(explain_spec.get("sort"))
-            hint = self._normalize_hint_from_command(explain_spec.get("hint"))
-            max_time_ms = self._normalize_max_time_ms_from_command(
-                explain_spec.get("maxTimeMS")
-            )
-            skip = explain_spec.get("skip", 0)
-            if not isinstance(skip, int) or isinstance(skip, bool) or skip < 0:
-                raise TypeError("skip must be a non-negative integer")
-            limit = explain_spec.get("limit")
-            if limit is not None and (
-                not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
-            ):
-                raise TypeError("limit must be a non-negative integer")
-            batch_size = self._normalize_batch_size_from_command(
-                explain_spec.get("batchSize")
-            )
-            explanation = await self._database.get_collection(collection_name).find(
-                query,
-                projection,
-                sort=sort,
-                skip=skip,
-                limit=limit,
-                hint=hint,
-                comment=explain_spec.get("comment"),
-                max_time_ms=max_time_ms,
-                batch_size=batch_size,
+            explanation = await self._database.get_collection(collection_name)._build_cursor(
+                operation,
                 session=session,
             ).explain()
             result = dict(explanation)
-            result["batch_size"] = batch_size
+            result["batch_size"] = operation.batch_size
         elif explained_command_name == "aggregate":
             collection_name = self._require_collection_name(
                 explain_spec.get("aggregate"),
@@ -1016,21 +944,26 @@ class AsyncDatabaseAdminService:
             if len(updates) != 1:
                 raise OperationFailure("explain update requires exactly one update specification")
             update_spec = updates[0]
-            query = self._normalize_filter(update_spec.get("q"))
             multi = update_spec.get("multi", False)
             if not isinstance(multi, bool):
                 raise TypeError("multi must be a bool")
-            hint = self._normalize_hint_from_command(update_spec.get("hint"))
-            max_time_ms = self._normalize_max_time_ms_from_command(
-                explain_spec.get("maxTimeMS")
+            _, operation = self._compile_command_find_operation(
+                {
+                    "update": collection_name,
+                    "q": update_spec.get("q"),
+                    "projection": {"_id": 1},
+                    "hint": update_spec.get("hint"),
+                    "comment": explain_spec.get("comment"),
+                    "maxTimeMS": explain_spec.get("maxTimeMS"),
+                    "limit": None if multi else 1,
+                },
+                collection_field="update",
+                filter_field="q",
+                default_projection={"_id": 1},
+                batch_size_field=None,
             )
-            explanation = await self._database.get_collection(collection_name).find(
-                query,
-                {"_id": 1},
-                limit=None if multi else 1,
-                hint=hint,
-                comment=explain_spec.get("comment"),
-                max_time_ms=max_time_ms,
+            explanation = await self._database.get_collection(collection_name)._build_cursor(
+                operation,
                 session=session,
             ).explain()
             result = dict(explanation)
@@ -1045,21 +978,26 @@ class AsyncDatabaseAdminService:
             if len(deletes) != 1:
                 raise OperationFailure("explain delete requires exactly one delete specification")
             delete_spec = deletes[0]
-            query = self._normalize_filter(delete_spec.get("q"))
             limit = delete_spec.get("limit", 0)
             if limit not in (0, 1):
                 raise TypeError("limit must be 0 or 1")
-            hint = self._normalize_hint_from_command(delete_spec.get("hint"))
-            max_time_ms = self._normalize_max_time_ms_from_command(
-                explain_spec.get("maxTimeMS")
+            _, operation = self._compile_command_find_operation(
+                {
+                    "delete": collection_name,
+                    "q": delete_spec.get("q"),
+                    "projection": {"_id": 1},
+                    "hint": delete_spec.get("hint"),
+                    "comment": explain_spec.get("comment"),
+                    "maxTimeMS": explain_spec.get("maxTimeMS"),
+                    "limit": 1 if limit == 1 else None,
+                },
+                collection_field="delete",
+                filter_field="q",
+                default_projection={"_id": 1},
+                batch_size_field=None,
             )
-            explanation = await self._database.get_collection(collection_name).find(
-                query,
-                {"_id": 1},
-                limit=1 if limit == 1 else None,
-                hint=hint,
-                comment=explain_spec.get("comment"),
-                max_time_ms=max_time_ms,
+            explanation = await self._database.get_collection(collection_name)._build_cursor(
+                operation,
                 session=session,
             ).explain()
             result = dict(explanation)
