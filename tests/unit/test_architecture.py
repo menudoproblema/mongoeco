@@ -472,6 +472,9 @@ class ArchitectureUnitTests(unittest.TestCase):
     def test_database_admin_service_exposes_typed_listing_snapshot_loaders(self):
         self.assertIn("_list_collection_snapshots", AsyncDatabaseAdminService.__dict__)
         self.assertIn("_list_database_snapshots", AsyncDatabaseAdminService.__dict__)
+        self.assertIn("_execute_find_and_modify_remove", AsyncDatabaseAdminService.__dict__)
+        self.assertIn("_execute_find_and_modify_operator_update", AsyncDatabaseAdminService.__dict__)
+        self.assertIn("_execute_find_and_modify_replacement", AsyncDatabaseAdminService.__dict__)
 
     def test_database_command_service_routes_use_typed_records(self):
         route = AsyncDatabaseCommandService._DELEGATED_COMMAND_HANDLERS["dropDatabase"]

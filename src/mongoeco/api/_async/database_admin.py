@@ -1108,31 +1108,62 @@ class AsyncDatabaseAdminService:
     ) -> FindAndModifyCommandResult:
         collection = self._database.get_collection(options.collection_name)
         if options.remove:
-            if options.update_spec is not None:
-                raise OperationFailure("findAndModify remove and update cannot be specified together")
-            if options.upsert:
-                raise OperationFailure("findAndModify remove does not support upsert")
-            before = await collection.find_one_and_delete(
-                options.query,
-                projection=options.fields,
-                sort=options.sort,
-                hint=options.hint,
-                comment=options.comment,
-                max_time_ms=options.max_time_ms,
-                let=options.let,
+            return await self._execute_find_and_modify_remove(
+                collection,
+                options,
                 session=session,
-            )
-            return FindAndModifyCommandResult(
-                last_error_object=FindAndModifyLastErrorObject(
-                    count=0 if before is None else 1,
-                ),
-                value=before,
             )
 
         if options.update_spec is None:
             raise OperationFailure("findAndModify requires either remove or update")
 
-        before_full = await self._first_with_operation(
+        if self._is_operator_update(options.update_spec):
+            return await self._execute_find_and_modify_operator_update(
+                collection,
+                options,
+                session=session,
+            )
+        return await self._execute_find_and_modify_replacement(
+            collection,
+            options,
+            session=session,
+        )
+
+    async def _execute_find_and_modify_remove(
+        self,
+        collection,
+        options: FindAndModifyCommandOptions,
+        *,
+        session: ClientSession | None = None,
+    ) -> FindAndModifyCommandResult:
+        if options.update_spec is not None:
+            raise OperationFailure("findAndModify remove and update cannot be specified together")
+        if options.upsert:
+            raise OperationFailure("findAndModify remove does not support upsert")
+        before = await collection.find_one_and_delete(
+            options.query,
+            projection=options.fields,
+            sort=options.sort,
+            hint=options.hint,
+            comment=options.comment,
+            max_time_ms=options.max_time_ms,
+            let=options.let,
+            session=session,
+        )
+        return FindAndModifyCommandResult(
+            last_error_object=FindAndModifyLastErrorObject(
+                count=0 if before is None else 1,
+            ),
+            value=before,
+        )
+
+    async def _find_and_modify_before_full(
+        self,
+        options: FindAndModifyCommandOptions,
+        *,
+        session: ClientSession | None = None,
+    ) -> Document | None:
+        return await self._first_with_operation(
             options.collection_name,
             compile_find_operation(
                 options.query,
@@ -1145,65 +1176,96 @@ class AsyncDatabaseAdminService:
             ),
             session=session,
         )
+
+    async def _find_and_modify_fetch_upserted_value(
+        self,
+        collection_name: str,
+        upserted_id: object,
+        projection: Projection | None,
+        *,
+        session: ClientSession | None = None,
+    ) -> Document | None:
+        return await self._first_with_operation(
+            collection_name,
+            compile_find_operation(
+                {"_id": upserted_id},
+                projection=projection,
+                limit=1,
+                dialect=self._mongodb_dialect,
+            ),
+            session=session,
+        )
+
+    async def _execute_find_and_modify_operator_update(
+        self,
+        collection,
+        options: FindAndModifyCommandOptions,
+        *,
+        session: ClientSession | None = None,
+    ) -> FindAndModifyCommandResult:
+        before_full = await self._find_and_modify_before_full(options, session=session)
         return_document = ReturnDocument.AFTER if options.return_new else ReturnDocument.BEFORE
 
-        if all(
-            isinstance(key, str) and key.startswith("$")
-            for key in options.update_spec
-        ):
-            if before_full is None and options.upsert:
-                result = await collection.update_one(
-                    options.query,
-                    options.update_spec,
-                    upsert=True,
-                    sort=options.sort,
-                    array_filters=options.array_filters,
-                    hint=options.hint,
-                    comment=options.comment,
-                    let=options.let,
-                    session=session,
-                )
-                value = None
-                if options.return_new:
-                    value = await self._first_with_operation(
-                        options.collection_name,
-                        compile_find_operation(
-                            {"_id": result.upserted_id},
-                            projection=options.fields,
-                            limit=1,
-                            dialect=self._mongodb_dialect,
-                        ),
-                        session=session,
-                    )
-                return FindAndModifyCommandResult(
-                    last_error_object=FindAndModifyLastErrorObject(
-                        count=1,
-                        updated_existing=False,
-                        upserted_id=result.upserted_id,
-                    ),
-                    value=value,
-                )
-            value = await collection.find_one_and_update(
+        if before_full is None and options.upsert:
+            result = await collection.update_one(
                 options.query,
                 options.update_spec,
-                projection=options.fields,
+                upsert=True,
                 sort=options.sort,
-                upsert=options.upsert,
-                return_document=return_document,
                 array_filters=options.array_filters,
                 hint=options.hint,
                 comment=options.comment,
-                max_time_ms=options.max_time_ms,
                 let=options.let,
                 session=session,
             )
+            value = None
+            if options.return_new:
+                value = await self._find_and_modify_fetch_upserted_value(
+                    options.collection_name,
+                    result.upserted_id,
+                    options.fields,
+                    session=session,
+                )
             return FindAndModifyCommandResult(
                 last_error_object=FindAndModifyLastErrorObject(
-                    count=0 if before_full is None and not options.upsert else 1,
-                    updated_existing=before_full is not None,
+                    count=1,
+                    updated_existing=False,
+                    upserted_id=result.upserted_id,
                 ),
                 value=value,
             )
+
+        value = await collection.find_one_and_update(
+            options.query,
+            options.update_spec,
+            projection=options.fields,
+            sort=options.sort,
+            upsert=options.upsert,
+            return_document=return_document,
+            array_filters=options.array_filters,
+            hint=options.hint,
+            comment=options.comment,
+            max_time_ms=options.max_time_ms,
+            let=options.let,
+            session=session,
+        )
+        return FindAndModifyCommandResult(
+            last_error_object=FindAndModifyLastErrorObject(
+                count=0 if before_full is None and not options.upsert else 1,
+                updated_existing=before_full is not None,
+            ),
+            value=value,
+        )
+
+    async def _execute_find_and_modify_replacement(
+        self,
+        collection,
+        options: FindAndModifyCommandOptions,
+        *,
+        session: ClientSession | None = None,
+    ) -> FindAndModifyCommandResult:
+        before_full = await self._find_and_modify_before_full(options, session=session)
+        return_document = ReturnDocument.AFTER if options.return_new else ReturnDocument.BEFORE
 
         if before_full is None and options.upsert:
             result = await collection.replace_one(
@@ -1218,14 +1280,10 @@ class AsyncDatabaseAdminService:
             )
             value = None
             if options.return_new:
-                value = await self._first_with_operation(
+                value = await self._find_and_modify_fetch_upserted_value(
                     options.collection_name,
-                    compile_find_operation(
-                        {"_id": result.upserted_id},
-                        projection=options.fields,
-                        limit=1,
-                        dialect=self._mongodb_dialect,
-                    ),
+                    result.upserted_id,
+                    options.fields,
                     session=session,
                 )
             return FindAndModifyCommandResult(
@@ -1236,7 +1294,6 @@ class AsyncDatabaseAdminService:
                 ),
                 value=value,
             )
-
         value = await collection.find_one_and_replace(
             options.query,
             options.update_spec,
@@ -1256,6 +1313,13 @@ class AsyncDatabaseAdminService:
                 updated_existing=before_full is not None,
             ),
             value=value,
+        )
+
+    @staticmethod
+    def _is_operator_update(update_spec: dict[str, object]) -> bool:
+        return all(
+            isinstance(key, str) and key.startswith("$")
+            for key in update_spec
         )
 
     async def _command_list_indexes(
