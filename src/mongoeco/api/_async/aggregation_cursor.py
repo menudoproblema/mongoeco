@@ -203,6 +203,26 @@ class AsyncAggregationCursor:
             )
         ]
 
+    def _build_pushdown_cursor(self, operation: FindOperation):
+        build_cursor = getattr(self._collection, "_build_cursor", None)
+        if callable(build_cursor):
+            return build_cursor(
+                operation,
+                session=self._session,
+            )
+        return self._collection.find(
+            operation.filter_spec,
+            operation.projection,
+            sort=operation.sort,
+            skip=operation.skip,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
+            batch_size=operation.batch_size,
+            session=self._session,
+        )
+
     async def _materialize(self) -> list[Document]:
         deadline = operation_deadline(self._max_time_ms)
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
@@ -213,17 +233,8 @@ class AsyncAggregationCursor:
         enforce_deadline(deadline)
         referenced_collections = await self._load_referenced_collections()
         enforce_deadline(deadline)
-        documents = await self._collection.find(
-            pushdown.filter_spec,
-            pushdown.projection,
-            sort=pushdown.sort,
-            skip=pushdown.skip,
-            limit=pushdown.limit,
-            hint=self._hint,
-            comment=self._comment,
-            max_time_ms=self._max_time_ms,
-            batch_size=self._batch_size,
-            session=self._session,
+        documents = await self._build_pushdown_cursor(
+            self._pushdown_find_operation()
         ).to_list()
         enforce_deadline(deadline)
         result = apply_pipeline(
@@ -290,17 +301,11 @@ class AsyncAggregationCursor:
                     return
                 page_limit = min(page_limit, remaining_source)
 
-            page = await self._collection.find(
-                pushdown.filter_spec,
-                pushdown.projection,
-                sort=pushdown.sort,
-                skip=pushdown.skip + source_offset,
-                limit=page_limit,
-                hint=self._hint,
-                comment=self._comment,
-                max_time_ms=self._max_time_ms,
-                batch_size=self._batch_size,
-                session=self._session,
+            page = await self._build_pushdown_cursor(
+                self._pushdown_find_operation().with_overrides(
+                    skip=pushdown.skip + source_offset,
+                    limit=page_limit,
+                )
             ).to_list()
             enforce_deadline(deadline)
             if not page:

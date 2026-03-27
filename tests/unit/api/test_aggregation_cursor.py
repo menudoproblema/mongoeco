@@ -23,6 +23,7 @@ class _FakeCollection:
     def __init__(self, documents):
         self._documents = documents
         self.calls = []
+        self.built_operations = []
         self._engine = _FakeEngine()
         self._db_name = "db"
         self._collection_name = "coll"
@@ -64,6 +65,21 @@ class _FakeCollection:
         if projection is not None:
             documents = [apply_projection(document, projection) for document in documents]
         return _FakeAsyncFindCursor(documents)
+
+    def _build_cursor(self, operation, *, session=None):
+        self.built_operations.append((operation, session))
+        return self.find(
+            operation.filter_spec,
+            operation.projection,
+            sort=operation.sort,
+            skip=operation.skip,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
+            batch_size=operation.batch_size,
+            session=session,
+        )
 
 
 class _FakeEngine:
@@ -221,6 +237,8 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             ],
         )
         self.assertEqual(documents, [{"rank": 3}])
+        self.assertEqual(len(collection.built_operations), 1)
+        self.assertEqual(collection.built_operations[0][0].sort, [("rank", 1)])
 
     async def test_load_referenced_collections_uses_compiled_find_operations(self):
         collection = _FakeCollection([])
@@ -400,6 +418,27 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explain_operation.hint, "kind_1")
         self.assertEqual(explain_operation.comment, "trace")
         self.assertEqual(explain_operation.max_time_ms, 5)
+
+    async def test_stream_batches_use_compiled_pushdown_operations(self):
+        collection = _FakeCollection(
+            [
+                {"_id": "1", "kind": "view", "rank": 1},
+                {"_id": "2", "kind": "view", "rank": 2},
+                {"_id": "3", "kind": "view", "rank": 3},
+            ]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$match": {"kind": "view"}}],
+            batch_size=2,
+        )
+
+        documents = await cursor.to_list()
+
+        self.assertEqual(len(documents), 3)
+        self.assertGreaterEqual(len(collection.built_operations), 2)
+        self.assertEqual(collection.built_operations[0][0].limit, 2)
+        self.assertEqual(collection.built_operations[1][0].skip, 2)
 
     async def test_materialize_enforces_max_time_deadline(self):
         collection = _FakeCollection([{"_id": "1", "kind": "view"}])
