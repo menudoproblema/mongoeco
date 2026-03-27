@@ -521,6 +521,30 @@ def _require_array(operator: str, value: object) -> list[Any]:
     return value
 
 
+def _slice_array(value: list[Any], spec: list[object], document: Document, variables: dict[str, Any] | None, *, dialect: MongoDialect) -> list[Any]:
+    if len(spec) == 2:
+        count = evaluate_expression(document, spec[1], variables, dialect=dialect)
+        if not isinstance(count, int) or isinstance(count, bool):
+            raise OperationFailure("$slice count must be an integer")
+        if count == 0:
+            return []
+        if count > 0:
+            return deepcopy(value[:count])
+        return deepcopy(value[count:])
+
+    position = evaluate_expression(document, spec[1], variables, dialect=dialect)
+    count = evaluate_expression(document, spec[2], variables, dialect=dialect)
+    if not isinstance(position, int) or isinstance(position, bool):
+        raise OperationFailure("$slice position must be an integer")
+    if not isinstance(count, int) or isinstance(count, bool):
+        raise OperationFailure("$slice count must be an integer")
+    if count < 0:
+        raise OperationFailure("$slice count must be a non-negative integer")
+    start = position if position >= 0 else len(value) + position
+    start = min(max(start, 0), len(value))
+    return deepcopy(value[start : start + count])
+
+
 def _expression_truthy(value: Any, *, dialect: MongoDialect) -> bool:
     return dialect.expression_truthy(value)
 
@@ -1950,6 +1974,32 @@ def evaluate_expression(
                     ):
                         return False
                 return True
+            if operator == "$slice":
+                args = _require_expression_args(operator, spec, min_args=2, max_args=3)
+                raw_value = evaluate_expression(document, args[0], variables, dialect=dialect)
+                if raw_value is None:
+                    return None
+                values = _require_array(operator, raw_value)
+                return _slice_array(values, args, document, variables, dialect=dialect)
+            if operator == "$isArray":
+                args = _require_expression_args(
+                    operator,
+                    [spec] if not isinstance(spec, list) else spec,
+                    min_args=1,
+                    max_args=1,
+                )
+                value = evaluate_expression(document, args[0], variables, dialect=dialect)
+                return isinstance(value, list)
+            if operator == "$cmp":
+                args = _require_expression_args(operator, spec, min_args=2, max_args=2)
+                left = evaluate_expression(document, args[0], variables, dialect=dialect)
+                right = evaluate_expression(document, args[1], variables, dialect=dialect)
+                comparison = dialect.compare_values(left, right)
+                if comparison < 0:
+                    return -1
+                if comparison > 0:
+                    return 1
+                return 0
             if operator == "$map":
                 if not isinstance(spec, dict) or "input" not in spec or "in" not in spec:
                     raise OperationFailure("$map requires input and in")

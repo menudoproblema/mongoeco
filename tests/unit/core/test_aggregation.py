@@ -1238,6 +1238,21 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(evaluate_expression(document, {"$millisecond": "$created_at"}), 789)
         self.assertEqual(evaluate_expression(document, {"$isoDayOfWeek": "$created_at"}), 7)
 
+    def test_evaluate_expression_supports_slice_is_array_and_cmp(self):
+        document = {
+            "values": [1, 2, 3, 4],
+            "nested": {"a": 1},
+        }
+
+        self.assertEqual(evaluate_expression(document, {"$slice": ["$values", 2]}), [1, 2])
+        self.assertEqual(evaluate_expression(document, {"$slice": ["$values", -2]}), [3, 4])
+        self.assertEqual(evaluate_expression(document, {"$slice": ["$values", 1, 2]}), [2, 3])
+        self.assertTrue(evaluate_expression(document, {"$isArray": "$values"}))
+        self.assertFalse(evaluate_expression(document, {"$isArray": "$nested"}))
+        self.assertEqual(evaluate_expression(document, {"$cmp": [1, 2]}), -1)
+        self.assertEqual(evaluate_expression(document, {"$cmp": [2, 2]}), 0)
+        self.assertEqual(evaluate_expression(document, {"$cmp": [3, 2]}), 1)
+
     def test_evaluate_expression_supports_set_field_with_dedicated_test(self):
         self.assertEqual(
             evaluate_expression({"value": 1}, {"$setField": {"field": "name", "input": "$$ROOT", "value": "Ada"}}),

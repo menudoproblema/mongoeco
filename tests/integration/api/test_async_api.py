@@ -1702,6 +1702,48 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ],
                     )
 
+    async def test_aggregate_supports_slice_is_array_and_cmp(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one(
+                        {
+                            "_id": "1",
+                            "values": [1, 2, 3, 4],
+                            "nested": {"a": 1},
+                        }
+                    )
+
+                    documents = await collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "head": {"$slice": ["$values", 2]},
+                                    "tail": {"$slice": ["$values", -2]},
+                                    "middle": {"$slice": ["$values", 1, 2]},
+                                    "is_array": {"$isArray": "$values"},
+                                    "cmp": {"$cmp": [3, 2]},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {
+                                "_id": "1",
+                                "head": [1, 2],
+                                "tail": [3, 4],
+                                "middle": [2, 3],
+                                "is_array": True,
+                                "cmp": 1,
+                            }
+                        ],
+                    )
+
     async def test_aggregate_supports_convert_set_field_and_unset_field(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

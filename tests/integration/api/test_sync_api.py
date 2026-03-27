@@ -1594,6 +1594,48 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_aggregate_supports_slice_is_array_and_cmp(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "values": [1, 2, 3, 4],
+                            "nested": {"a": 1},
+                        }
+                    )
+
+                    documents = collection.aggregate(
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "head": {"$slice": ["$values", 2]},
+                                    "tail": {"$slice": ["$values", -2]},
+                                    "middle": {"$slice": ["$values", 1, 2]},
+                                    "is_array": {"$isArray": "$values"},
+                                    "cmp": {"$cmp": [3, 2]},
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {
+                                "_id": "1",
+                                "head": [1, 2],
+                                "tail": [3, 4],
+                                "middle": [2, 3],
+                                "is_array": True,
+                                "cmp": 1,
+                            }
+                        ],
+                    )
+
     def test_aggregate_supports_convert_set_field_and_unset_field(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
