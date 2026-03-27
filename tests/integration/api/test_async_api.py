@@ -33,6 +33,31 @@ from mongoeco.api._async.cursor import AsyncCursor
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import BulkWriteError, CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure
+from tests.integration.api.admin_command_cases import (
+    assert_build_info_command_shares_source_of_truth_with_server_info,
+    assert_client_server_info_reflects_target_dialect,
+    assert_database_command_count_supports_skip_limit_hint_and_comment,
+    assert_database_command_distinct_supports_hint_comment_and_max_time,
+    assert_database_command_index_commands_support_comment_and_max_time,
+    assert_database_command_rejects_invalid_command_shapes,
+    assert_database_command_rejects_unsupported_commands,
+    assert_database_command_supports_coll_stats_and_db_stats,
+    assert_database_command_supports_collection_index_count_and_distinct_commands,
+    assert_database_command_supports_explain_for_find_and_aggregate,
+    assert_database_command_supports_explain_for_update_and_delete,
+    assert_database_command_supports_find_and_aggregate,
+    assert_database_command_supports_find_and_modify,
+    assert_database_command_supports_insert_update_and_delete,
+    assert_database_command_supports_ping_list_collections_and_drop_database,
+    assert_database_command_supports_rename_collection_within_current_database,
+    assert_database_command_write_commands_surface_write_errors,
+    assert_hello_and_is_master_commands_return_handshake_metadata,
+    assert_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata,
+    assert_list_collections_command_supports_name_only,
+    assert_list_commands_and_connection_status_commands_return_local_admin_metadata,
+    assert_server_status_command_returns_local_runtime_metadata,
+    assert_validate_collection_returns_metadata_and_rejects_missing_namespace,
+)
 from tests.support import ENGINE_FACTORIES, open_client
 
 
@@ -74,113 +99,25 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(collections, ["users"])
 
     async def test_client_server_info_reflects_target_dialect(self):
-        async with AsyncMongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
-            server_info = await client.server_info()
-
-            self.assertEqual(server_info["version"], "8.0.0")
-            self.assertEqual(server_info["versionArray"], [8, 0, 0, 0])
-            self.assertEqual(server_info["gitVersion"], "mongoeco")
-            self.assertEqual(server_info["ok"], 1.0)
+        await assert_client_server_info_reflects_target_dialect(self, open_client)
 
     async def test_build_info_command_shares_source_of_truth_with_server_info(self):
-        async with AsyncMongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
-            server_info = await client.server_info()
-            build_info = await client.alpha.command("buildInfo")
-
-            self.assertEqual(build_info, server_info)
+        await assert_build_info_command_shares_source_of_truth_with_server_info(self, open_client)
 
     async def test_hello_and_is_master_commands_return_handshake_metadata(self):
-        async with AsyncMongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
-            hello = await client.alpha.command("hello")
-            is_master = await client.alpha.command("isMaster")
-
-            self.assertTrue(hello["helloOk"])
-            self.assertTrue(hello["isWritablePrimary"])
-            self.assertEqual(hello["maxBsonObjectSize"], 16 * 1024 * 1024)
-            self.assertEqual(hello["maxMessageSizeBytes"], 48_000_000)
-            self.assertEqual(hello["maxWriteBatchSize"], 100_000)
-            self.assertEqual(hello["logicalSessionTimeoutMinutes"], 30)
-            self.assertEqual(hello["maxWireVersion"], 20)
-            self.assertFalse(hello["readOnly"])
-            self.assertEqual(hello["version"], "8.0.0")
-            self.assertEqual(hello["ok"], 1.0)
-            self.assertTrue(is_master["ismaster"])
-            self.assertEqual(is_master["version"], "8.0.0")
+        await assert_hello_and_is_master_commands_return_handshake_metadata(self, open_client)
 
     async def test_list_commands_and_connection_status_commands_return_local_admin_metadata(self):
-        async with AsyncMongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
-            commands = await client.alpha.command("listCommands")
-            connection_status = await client.alpha.command(
-                {"connectionStatus": 1, "showPrivileges": True}
-            )
-
-            self.assertIn("find", commands["commands"])
-            self.assertIn("aggregate", commands["commands"])
-            self.assertIn("explain", commands["commands"])
-            self.assertEqual(commands["ok"], 1.0)
-            self.assertEqual(connection_status["authInfo"]["authenticatedUsers"], [])
-            self.assertEqual(connection_status["authInfo"]["authenticatedUserRoles"], [])
-            self.assertEqual(
-                connection_status["authInfo"]["authenticatedUserPrivileges"],
-                [],
-            )
-            self.assertEqual(connection_status["ok"], 1.0)
+        await assert_list_commands_and_connection_status_commands_return_local_admin_metadata(self, open_client)
 
     async def test_server_status_command_returns_local_runtime_metadata(self):
-        async with AsyncMongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
-            status = await client.alpha.command("serverStatus")
-
-            self.assertEqual(status["process"], "mongod")
-            self.assertEqual(status["version"], "8.0.0")
-            self.assertIsInstance(status["pid"], int)
-            self.assertGreaterEqual(status["uptime"], 0)
-            self.assertGreaterEqual(status["uptimeMillis"], 0)
-            self.assertEqual(status["connections"]["current"], 1)
-            self.assertEqual(status["storageEngine"]["name"], "memory")
-            self.assertEqual(status["ok"], 1.0)
+        await assert_server_status_command_returns_local_runtime_metadata(self, open_client)
 
     async def test_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata(self):
-        async with AsyncMongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
-            host_info = await client.alpha.command("hostInfo")
-            whats_my_uri = await client.alpha.command("whatsmyuri")
-            cmd_line_opts = await client.alpha.command("getCmdLineOpts")
-
-            self.assertIn("hostname", host_info["system"])
-            self.assertGreaterEqual(host_info["system"]["numCores"], 1)
-            self.assertIn("pythonVersion", host_info["extra"])
-            self.assertEqual(host_info["ok"], 1.0)
-            self.assertEqual(whats_my_uri, {"you": "127.0.0.1:0", "ok": 1.0})
-            self.assertIsInstance(cmd_line_opts["argv"], list)
-            self.assertEqual(cmd_line_opts["parsed"]["net"]["bindIp"], "127.0.0.1")
-            self.assertEqual(cmd_line_opts["ok"], 1.0)
+        await assert_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata(self, open_client)
 
     async def test_list_collections_command_supports_name_only(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    await client.alpha.create_collection("events", capped=True, size=512)
-                    await client.alpha.create_collection("logs")
-
-                    result = await client.alpha.command(
-                        "listCollections",
-                        nameOnly=True,
-                        authorizedCollections=True,
-                        filter={"name": "events"},
-                    )
-
-                    self.assertEqual(
-                        result,
-                        {
-                            "cursor": {
-                                "id": 0,
-                                "ns": "alpha.$cmd.listCollections",
-                                "firstBatch": [
-                                    {"name": "events", "type": "collection"},
-                                ],
-                            },
-                            "ok": 1.0,
-                        },
-                    )
+        await assert_list_collections_command_supports_name_only(self, ENGINE_FACTORIES, open_client)
 
     async def test_create_collection_registers_empty_namespace_and_rejects_duplicates(self):
         for engine_name in ENGINE_FACTORIES:
@@ -361,639 +298,52 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(await client.alpha.list_collection_names(), [])
 
     async def test_database_command_supports_ping_list_collections_and_drop_database(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    await client.alpha.create_collection("events", capped=True)
-                    await client.beta.create_collection("logs")
-
-                    self.assertEqual(await client.alpha.command("ping"), {"ok": 1.0})
-                    self.assertEqual(
-                        await client.alpha.command("listCollections", filter={"name": "events"}),
-                        {
-                            "cursor": {
-                                "id": 0,
-                                "ns": "alpha.$cmd.listCollections",
-                                "firstBatch": [
-                                    {
-                                        "name": "events",
-                                        "type": "collection",
-                                        "options": {"capped": True},
-                                        "info": {"readOnly": False},
-                                    }
-                                ],
-                            },
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        await client.alpha.command("listDatabases", filter={"name": "alpha"}),
-                        {
-                            "databases": [
-                                {
-                                    "name": "alpha",
-                                    "sizeOnDisk": 0,
-                                    "empty": False,
-                                }
-                            ],
-                            "totalSize": 0,
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        await client.alpha.command("listDatabases", nameOnly=True),
-                        {
-                            "databases": [{"name": "alpha"}, {"name": "beta"}],
-                            "totalSize": 0,
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        await client.alpha.command({"dropDatabase": 1}),
-                        {"dropped": "alpha", "ok": 1.0},
-                    )
-                    self.assertNotIn("alpha", await client.list_database_names())
+        await assert_database_command_supports_ping_list_collections_and_drop_database(self, ENGINE_FACTORIES, open_client)
 
     async def test_database_command_supports_collection_index_count_and_distinct_commands(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    self.assertEqual(
-                        await client.alpha.command({"create": "events", "capped": True}),
-                        {"ok": 1.0},
-                    )
-                    await client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view", "tag": "python"},
-                            {"_id": "2", "kind": "view", "tag": "mongodb"},
-                        ]
-                    )
-                    self.assertEqual(
-                        await client.alpha.command(
-                            {
-                                "createIndexes": "events",
-                                "indexes": [
-                                    {
-                                        "key": {"kind": 1},
-                                        "name": "kind_idx",
-                                    }
-                                ],
-                            }
-                        ),
-                        {
-                            "numIndexesBefore": 1,
-                            "numIndexesAfter": 2,
-                            "createdCollectionAutomatically": False,
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        await client.alpha.command({"count": "events", "query": {"kind": "view"}}),
-                        {"n": 2, "ok": 1.0},
-                    )
-                    self.assertEqual(
-                        await client.alpha.command({"distinct": "events", "key": "tag"}),
-                        {"values": ["python", "mongodb"], "ok": 1.0},
-                    )
-                    self.assertEqual(
-                        await client.alpha.command({"listIndexes": "events"}),
-                        {
-                            "cursor": {
-                                "id": 0,
-                                "ns": "alpha.events",
-                                "firstBatch": [
-                                    {"name": "_id_", "key": {"_id": 1}, "fields": ["_id"], "unique": True},
-                                    {"name": "kind_idx", "key": {"kind": 1}, "fields": ["kind"], "unique": False},
-                                ],
-                            },
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        await client.alpha.command({"dropIndexes": "events", "index": "kind_idx"}),
-                        {"nIndexesWas": 2, "ok": 1.0},
-                    )
-                    self.assertEqual(
-                        await client.alpha.command({"drop": "events"}),
-                        {"ns": "alpha.events", "ok": 1.0},
-                    )
+        await assert_database_command_supports_collection_index_count_and_distinct_commands(self, ENGINE_FACTORIES, open_client)
 
     async def test_database_command_index_commands_support_comment_and_max_time(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    await client.alpha.events.insert_one({"_id": "1", "kind": "view"})
-
-                    created = await client.alpha.command(
-                        {
-                            "createIndexes": "events",
-                            "indexes": [{"key": {"kind": 1}, "name": "kind_idx"}],
-                            "comment": "create indexes command",
-                            "maxTimeMS": 50,
-                        }
-                    )
-                    listed = await client.alpha.command(
-                        {
-                            "listIndexes": "events",
-                            "comment": "list indexes command",
-                        }
-                    )
-                    dropped = await client.alpha.command(
-                        {
-                            "dropIndexes": "events",
-                            "index": "kind_idx",
-                            "comment": "drop indexes command",
-                        }
-                    )
-
-                    self.assertEqual(created["numIndexesBefore"], 1)
-                    self.assertEqual(created["numIndexesAfter"], 2)
-                    self.assertEqual(created["ok"], 1.0)
-                    self.assertEqual(listed["cursor"]["firstBatch"][1]["name"], "kind_idx")
-                    self.assertEqual(dropped, {"nIndexesWas": 2, "ok": 1.0})
+        await assert_database_command_index_commands_support_comment_and_max_time(self, ENGINE_FACTORIES, open_client)
 
     async def test_database_command_count_supports_skip_limit_hint_and_comment(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    await client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view", "rank": 1},
-                            {"_id": "2", "kind": "view", "rank": 2},
-                            {"_id": "3", "kind": "view", "rank": 3},
-                        ]
-                    )
-                    await client.alpha.events.create_index([("kind", 1)], name="kind_idx")
-
-                    counted = await client.alpha.command(
-                        {
-                            "count": "events",
-                            "query": {"kind": "view"},
-                            "skip": 1,
-                            "limit": 1,
-                            "hint": "kind_idx",
-                            "comment": "count command",
-                            "maxTimeMS": 50,
-                        }
-                    )
-
-                    self.assertEqual(counted, {"n": 1, "ok": 1.0})
+        await assert_database_command_count_supports_skip_limit_hint_and_comment(self, ENGINE_FACTORIES, open_client)
 
     async def test_database_command_distinct_supports_hint_comment_and_max_time(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    await client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view", "tag": "python"},
-                            {"_id": "2", "kind": "view", "tag": "mongodb"},
-                            {"_id": "3", "kind": "click", "tag": "python"},
-                        ]
-                    )
-                    await client.alpha.events.create_index([("kind", 1)], name="kind_idx")
-
-                    distinct = await client.alpha.command(
-                        {
-                            "distinct": "events",
-                            "key": "tag",
-                            "query": {"kind": "view"},
-                            "hint": "kind_idx",
-                            "comment": "distinct command",
-                            "maxTimeMS": 50,
-                        }
-                    )
-
-                    self.assertEqual(distinct, {"values": ["python", "mongodb"], "ok": 1.0})
+        await assert_database_command_distinct_supports_hint_comment_and_max_time(self, ENGINE_FACTORIES, open_client)
 
     async def test_database_command_supports_rename_collection_within_current_database(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    await client.alpha.events.insert_one({"_id": "1", "kind": "view"})
-                    await client.alpha.events.create_index([("kind", 1)], name="kind_idx")
-                    await client.alpha.archived.insert_one({"_id": "existing"})
-
-                    renamed = await client.alpha.command(
-                        {
-                            "renameCollection": "alpha.events",
-                            "to": "alpha.archived",
-                            "dropTarget": True,
-                        }
-                    )
-
-                    self.assertEqual(renamed, {"ok": 1.0})
-                    self.assertEqual(
-                        await client.alpha.list_collection_names(),
-                        ["archived"],
-                    )
-                    self.assertEqual(
-                        await client.alpha.archived.find_one({"_id": "1"}),
-                        {"_id": "1", "kind": "view"},
-                    )
-                    self.assertIn(
-                        "kind_idx",
-                        await client.alpha.archived.index_information(),
-                    )
+        await assert_database_command_supports_rename_collection_within_current_database(self, ENGINE_FACTORIES, open_client)
 
     async def test_database_command_supports_find_and_aggregate(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    await client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view", "rank": 2},
-                            {"_id": "2", "kind": "view", "rank": 1},
-                            {"_id": "3", "kind": "click", "rank": 3},
-                        ]
-                    )
-
-                    found = await client.alpha.command(
-                        {
-                            "find": "events",
-                            "filter": {"kind": "view"},
-                            "projection": {"rank": 1, "_id": 0},
-                            "sort": {"rank": 1},
-                            "batchSize": 1,
-                        }
-                    )
-                    aggregated = await client.alpha.command(
-                        {
-                            "aggregate": "events",
-                            "pipeline": [
-                                {"$match": {"kind": "view"}},
-                                {"$sort": {"rank": 1}},
-                                {"$project": {"rank": 1, "_id": 0}},
-                            ],
-                            "cursor": {"batchSize": 1},
-                        }
-                    )
-
-                    self.assertEqual(
-                        found,
-                        {
-                            "cursor": {
-                                "id": 0,
-                                "ns": "alpha.events",
-                                "firstBatch": [{"rank": 1}, {"rank": 2}],
-                            },
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        aggregated,
-                        {
-                            "cursor": {
-                                "id": 0,
-                                "ns": "alpha.events",
-                                "firstBatch": [{"rank": 1}, {"rank": 2}],
-                            },
-                            "ok": 1.0,
-                        },
-                    )
+        await assert_database_command_supports_find_and_aggregate(self, ENGINE_FACTORIES, open_client)
 
     async def test_database_command_supports_explain_for_find_and_aggregate(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    await client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view", "rank": 2},
-                            {"_id": "2", "kind": "view", "rank": 1},
-                        ]
-                    )
-                    await client.alpha.events.create_index(
-                        [("kind", 1)],
-                        name="kind_idx",
-                    )
-
-                    find_explain = await client.alpha.command(
-                        {
-                            "explain": {
-                                "find": "events",
-                                "filter": {"kind": "view"},
-                                "sort": {"rank": 1},
-                                "hint": "kind_idx",
-                                "comment": "find explain",
-                                "maxTimeMS": 50,
-                                "batchSize": 1,
-                            },
-                            "verbosity": "queryPlanner",
-                        }
-                    )
-                    aggregate_explain = await client.alpha.command(
-                        {
-                            "explain": {
-                                "aggregate": "events",
-                                "pipeline": [{"$match": {"kind": "view"}}],
-                                "cursor": {"batchSize": 1},
-                                "hint": "kind_idx",
-                                "comment": "agg explain",
-                                "maxTimeMS": 50,
-                            }
-                        }
-                    )
-
-                    self.assertEqual(find_explain["verbosity"], "queryPlanner")
-                    self.assertEqual(find_explain["hint"], "kind_idx")
-                    self.assertEqual(find_explain["comment"], "find explain")
-                    self.assertEqual(find_explain["max_time_ms"], 50)
-                    self.assertEqual(find_explain["batch_size"], 1)
-                    self.assertEqual(find_explain["ok"], 1.0)
-                    self.assertEqual(aggregate_explain["hint"], "kind_idx")
-                    self.assertEqual(aggregate_explain["comment"], "agg explain")
-                    self.assertEqual(aggregate_explain["max_time_ms"], 50)
-                    self.assertEqual(aggregate_explain["batch_size"], 1)
-                    self.assertEqual(aggregate_explain["ok"], 1.0)
+        await assert_database_command_supports_explain_for_find_and_aggregate(self, ENGINE_FACTORIES, open_client)
 
     async def test_database_command_supports_explain_for_update_and_delete(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    await client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view"},
-                            {"_id": "2", "kind": "click"},
-                        ]
-                    )
-                    await client.alpha.events.create_index(
-                        [("kind", 1)],
-                        name="kind_idx",
-                    )
-
-                    update_explain = await client.alpha.command(
-                        {
-                            "explain": {
-                                "update": "events",
-                                "updates": [
-                                    {
-                                        "q": {"kind": "view"},
-                                        "u": {"$set": {"done": True}},
-                                        "multi": False,
-                                        "hint": "kind_idx",
-                                    }
-                                ],
-                                "comment": "update explain",
-                                "maxTimeMS": 50,
-                            }
-                        }
-                    )
-                    delete_explain = await client.alpha.command(
-                        {
-                            "explain": {
-                                "delete": "events",
-                                "deletes": [
-                                    {
-                                        "q": {"kind": "click"},
-                                        "limit": 1,
-                                        "hint": "kind_idx",
-                                    }
-                                ],
-                                "comment": "delete explain",
-                                "maxTimeMS": 50,
-                            }
-                        }
-                    )
-
-                    self.assertEqual(update_explain["command"], "update")
-                    self.assertFalse(update_explain["multi"])
-                    self.assertEqual(update_explain["hint"], "kind_idx")
-                    self.assertEqual(update_explain["comment"], "update explain")
-                    self.assertEqual(update_explain["max_time_ms"], 50)
-                    self.assertEqual(update_explain["ok"], 1.0)
-                    self.assertEqual(delete_explain["command"], "delete")
-                    self.assertEqual(delete_explain["limit"], 1)
-                    self.assertEqual(delete_explain["hint"], "kind_idx")
-                    self.assertEqual(delete_explain["comment"], "delete explain")
-                    self.assertEqual(delete_explain["max_time_ms"], 50)
-                    self.assertEqual(delete_explain["ok"], 1.0)
+        await assert_database_command_supports_explain_for_update_and_delete(self, ENGINE_FACTORIES, open_client)
 
     async def test_database_command_supports_insert_update_and_delete(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    inserted = await client.alpha.command(
-                        {
-                            "insert": "events",
-                            "documents": [
-                                {"_id": "1", "kind": "view", "rank": 1},
-                                {"_id": "2", "kind": "click", "rank": 2},
-                            ],
-                        }
-                    )
-                    updated = await client.alpha.command(
-                        {
-                            "update": "events",
-                            "updates": [
-                                {
-                                    "q": {"kind": "view"},
-                                    "u": {"$set": {"done": True}},
-                                    "multi": True,
-                                },
-                                {
-                                    "q": {"kind": "missing"},
-                                    "u": {"kind": "missing", "done": True},
-                                    "upsert": True,
-                                },
-                            ],
-                        }
-                    )
-                    deleted = await client.alpha.command(
-                        {
-                            "delete": "events",
-                            "deletes": [
-                                {"q": {"kind": "click"}, "limit": 1},
-                                {"q": {"kind": "missing"}, "limit": 0},
-                            ],
-                        }
-                    )
-
-                    self.assertEqual(inserted, {"n": 2, "ok": 1.0})
-                    self.assertEqual(updated["n"], 1)
-                    self.assertEqual(updated["nModified"], 1)
-                    self.assertEqual(updated["ok"], 1.0)
-                    self.assertEqual(len(updated["upserted"]), 1)
-                    self.assertEqual(deleted, {"n": 2, "ok": 1.0})
+        await assert_database_command_supports_insert_update_and_delete(self, ENGINE_FACTORIES, open_client)
 
     async def test_database_command_write_commands_surface_write_errors(self):
-        async with open_client("memory") as client:
-            await client.alpha.events.insert_one({"_id": "1", "kind": "view"})
-
-            with self.assertRaises(BulkWriteError):
-                await client.alpha.command(
-                    {
-                        "insert": "events",
-                        "documents": [
-                            {"_id": "1", "kind": "duplicate"},
-                            {"_id": "2", "kind": "ok"},
-                        ],
-                    }
-                )
+        await assert_database_command_write_commands_surface_write_errors(self, open_client)
 
     async def test_database_command_supports_find_and_modify(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    await client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view", "rank": 2, "done": False},
-                            {"_id": "2", "kind": "view", "rank": 1, "done": False},
-                        ]
-                    )
-
-                    updated = await client.alpha.command(
-                        {
-                            "findAndModify": "events",
-                            "query": {"kind": "view"},
-                            "sort": {"rank": 1},
-                            "update": {"$set": {"done": True}},
-                            "fields": {"done": 1, "_id": 0},
-                            "new": True,
-                        }
-                    )
-                    removed = await client.alpha.command(
-                        {
-                            "findAndModify": "events",
-                            "query": {"kind": "view"},
-                            "remove": True,
-                            "fields": {"rank": 1, "_id": 0},
-                        }
-                    )
-                    upserted = await client.alpha.command(
-                        {
-                            "findAndModify": "events",
-                            "query": {"kind": "missing"},
-                            "update": {"kind": "missing", "done": True},
-                            "upsert": True,
-                            "new": True,
-                            "fields": {"kind": 1, "done": 1, "_id": 0},
-                        }
-                    )
-
-                    self.assertEqual(
-                        updated,
-                        {
-                            "lastErrorObject": {"n": 1, "updatedExisting": True},
-                            "value": {"done": True},
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        removed,
-                        {
-                            "lastErrorObject": {"n": 1},
-                            "value": {"rank": 2},
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(upserted["lastErrorObject"]["n"], 1)
-                    self.assertFalse(upserted["lastErrorObject"]["updatedExisting"])
-                    self.assertIn("upserted", upserted["lastErrorObject"])
-                    self.assertEqual(
-                        upserted["value"],
-                        {"kind": "missing", "done": True},
-                    )
+        await assert_database_command_supports_find_and_modify(self, ENGINE_FACTORIES, open_client)
 
     async def test_database_command_supports_coll_stats_and_db_stats(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    await client.alpha.events.insert_one({"_id": "1", "kind": "view"})
-                    await client.alpha.events.create_index([("kind", 1)], name="kind_idx")
-
-                    coll_stats = await client.alpha.command({"collStats": "events"})
-                    db_stats = await client.alpha.command("dbStats")
-                    scaled_coll_stats = await client.alpha.command({"collStats": "events", "scale": 2})
-                    scaled_db_stats = await client.alpha.command({"dbStats": 1, "scale": 2})
-
-                    self.assertEqual(coll_stats["ns"], "alpha.events")
-                    self.assertEqual(coll_stats["count"], 1)
-                    self.assertEqual(coll_stats["nindexes"], 2)
-                    self.assertGreater(coll_stats["size"], 0)
-                    self.assertEqual(coll_stats["storageSize"], coll_stats["size"])
-                    self.assertEqual(coll_stats["ok"], 1.0)
-                    self.assertEqual(db_stats["db"], "alpha")
-                    self.assertEqual(db_stats["collections"], 1)
-                    self.assertEqual(db_stats["objects"], 1)
-                    self.assertEqual(db_stats["indexes"], 2)
-                    self.assertEqual(db_stats["storageSize"], db_stats["dataSize"])
-                    self.assertEqual(db_stats["ok"], 1.0)
-                    self.assertLessEqual(scaled_coll_stats["size"], coll_stats["size"])
-                    self.assertLessEqual(scaled_coll_stats["storageSize"], coll_stats["storageSize"])
-                    self.assertLessEqual(scaled_db_stats["dataSize"], db_stats["dataSize"])
-                    self.assertLessEqual(scaled_db_stats["storageSize"], db_stats["storageSize"])
+        await assert_database_command_supports_coll_stats_and_db_stats(self, ENGINE_FACTORIES, open_client)
 
     async def test_database_command_rejects_unsupported_commands(self):
-        async with open_client("memory") as client:
-            with self.assertRaises(OperationFailure):
-                await client.alpha.command("top")
+        await assert_database_command_rejects_unsupported_commands(self, open_client)
 
     async def test_database_command_rejects_invalid_command_shapes(self):
-        async with open_client("memory") as client:
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"createIndexes": "events", "indexes": ()})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"distinct": "events", "key": 1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"dropIndexes": "events", "index": 1.5})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command("listDatabases", nameOnly=1)  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command("listCollections", nameOnly=1)  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command("listCollections", authorizedCollections=1)  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"count": "events", "skip": -1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"count": "events", "limit": -1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"dbStats": 1, "scale": 0})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"collStats": "events", "scale": -1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"insert": "events", "documents": {}})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"update": "events", "updates": {}})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"delete": "events", "deletes": {}})  # type: ignore[arg-type]
-            with self.assertRaises(ValueError):
-                await client.alpha.command({"find": "events", "batchSize": -1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"aggregate": "events", "pipeline": [], "cursor": 1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"explain": 1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"connectionStatus": 1, "showPrivileges": 1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"renameCollection": "events", "to": "alpha.logs"})  # type: ignore[arg-type]
-            with self.assertRaises(OperationFailure):
-                await client.alpha.command({"findAndModify": "events"})
-            with self.assertRaises(OperationFailure):
-                await client.alpha.command({"explain": {"count": "events"}})
-            with self.assertRaises(TypeError):
-                await client.alpha.command({"explain": {"update": "events", "updates": []}})
-            with self.assertRaises(OperationFailure):
-                await client.alpha.command({"renameCollection": "alpha.events", "to": "beta.logs"})
+        await assert_database_command_rejects_invalid_command_shapes(self, open_client)
 
     async def test_validate_collection_returns_metadata_and_rejects_missing_namespace(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    await client.alpha.events.insert_one({"_id": "1", "kind": "view"})
-                    await client.alpha.events.create_index([("kind", 1)], name="kind_idx")
-
-                    validated = await client.alpha.validate_collection("events")
-                    validated_from_command = await client.alpha.command({"validate": "events"})
-
-                    self.assertEqual(validated["ns"], "alpha.events")
-                    self.assertEqual(validated["nrecords"], 1)
-                    self.assertEqual(validated["nIndexes"], 2)
-                    self.assertEqual(validated["keysPerIndex"], {"_id_": 1, "kind_idx": 1})
-                    self.assertTrue(validated["valid"])
-                    self.assertEqual(validated_from_command, validated)
-
-        async with open_client("memory") as client:
-            with self.assertRaises(CollectionInvalid):
-                await client.alpha.validate_collection("missing")
+        await assert_validate_collection_returns_metadata_and_rejects_missing_namespace(self, ENGINE_FACTORIES, open_client)
 
     async def test_collection_rename_moves_documents_and_indexes(self):
         for engine_name in ENGINE_FACTORIES:

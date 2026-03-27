@@ -27,7 +27,7 @@ async def open_engine(engine_name: str):
 
 
 @asynccontextmanager
-async def open_client(engine_name: str):
+async def open_client(engine_name: str, **client_kwargs):
     async with open_engine(engine_name) as engine:
-        async with AsyncMongoClient(engine) as client:
+        async with AsyncMongoClient(engine, **client_kwargs) as client:
             yield client

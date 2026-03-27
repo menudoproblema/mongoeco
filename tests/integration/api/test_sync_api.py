@@ -1,5 +1,8 @@
+import asyncio
+from contextlib import asynccontextmanager
 import datetime
 import decimal
+import queue
 import re
 import threading
 import unittest
@@ -29,10 +32,92 @@ from mongoeco.api._sync.cursor import Cursor
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import BulkWriteError, CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure
+from tests.integration.api.admin_command_cases import (
+    assert_build_info_command_shares_source_of_truth_with_server_info,
+    assert_client_server_info_reflects_target_dialect,
+    assert_database_command_count_supports_skip_limit_hint_and_comment,
+    assert_database_command_distinct_supports_hint_comment_and_max_time,
+    assert_database_command_index_commands_support_comment_and_max_time,
+    assert_database_command_rejects_invalid_command_shapes,
+    assert_database_command_rejects_unsupported_commands,
+    assert_database_command_supports_coll_stats_and_db_stats,
+    assert_database_command_supports_collection_index_count_and_distinct_commands,
+    assert_database_command_supports_explain_for_find_and_aggregate,
+    assert_database_command_supports_explain_for_update_and_delete,
+    assert_database_command_supports_find_and_aggregate,
+    assert_database_command_supports_find_and_modify,
+    assert_database_command_supports_insert_update_and_delete,
+    assert_database_command_supports_ping_list_collections_and_drop_database,
+    assert_database_command_supports_rename_collection_within_current_database,
+    assert_database_command_write_commands_surface_write_errors,
+    assert_hello_and_is_master_commands_return_handshake_metadata,
+    assert_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata,
+    assert_list_collections_command_supports_name_only,
+    assert_list_commands_and_connection_status_commands_return_local_admin_metadata,
+    assert_server_status_command_returns_local_runtime_metadata,
+    assert_validate_collection_returns_metadata_and_rejects_missing_namespace,
+)
 SYNC_ENGINE_FACTORIES = {
     "memory": MemoryEngine,
     "sqlite": SQLiteEngine,
 }
+
+
+@asynccontextmanager
+async def open_sync_client(engine_name: str, **client_kwargs):
+    requests: queue.Queue[tuple[tuple[str, ...], tuple[object, ...], dict[str, object], asyncio.Future] | None] = queue.Queue()
+    ready = threading.Event()
+    shutdown_error: list[BaseException] = []
+
+    def _worker() -> None:
+        try:
+            with MongoClient(SYNC_ENGINE_FACTORIES[engine_name](), **client_kwargs) as client:
+                ready.set()
+                while True:
+                    request = requests.get()
+                    if request is None:
+                        return
+                    path, args, kwargs, future = request
+                    if future.cancelled():
+                        continue
+                    try:
+                        target = client
+                        for segment in path:
+                            target = getattr(target, segment)
+                        result = target(*args, **kwargs)
+                    except BaseException as exc:  # pragma: no cover - forward worker exceptions
+                        future.get_loop().call_soon_threadsafe(future.set_exception, exc)
+                    else:
+                        future.get_loop().call_soon_threadsafe(future.set_result, result)
+        except BaseException as exc:  # pragma: no cover - worker setup failure
+            shutdown_error.append(exc)
+            ready.set()
+
+    class _AsyncSyncProxy:
+        def __init__(self, path: tuple[str, ...] = ()) -> None:
+            self._path = path
+
+        def __getattr__(self, name: str):
+            return _AsyncSyncProxy((*self._path, name))
+
+        async def __call__(self, *args, **kwargs):
+            loop = asyncio.get_running_loop()
+            future: asyncio.Future = loop.create_future()
+            requests.put((self._path, args, kwargs, future))
+            return await future
+
+    worker = threading.Thread(target=_worker, daemon=True)
+    worker.start()
+    await asyncio.to_thread(ready.wait)
+    if shutdown_error:
+        raise shutdown_error[0]
+    try:
+        yield _AsyncSyncProxy()
+    finally:
+        requests.put(None)
+        await asyncio.to_thread(worker.join)
+        if shutdown_error:
+            raise shutdown_error[0]
 
 
 class SyncApiIntegrationTests(unittest.TestCase):
@@ -50,113 +135,25 @@ class SyncApiIntegrationTests(unittest.TestCase):
             client.close()
 
     def test_client_server_info_reflects_target_dialect(self):
-        with MongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
-            server_info = client.server_info()
-
-            self.assertEqual(server_info["version"], "8.0.0")
-            self.assertEqual(server_info["versionArray"], [8, 0, 0, 0])
-            self.assertEqual(server_info["gitVersion"], "mongoeco")
-            self.assertEqual(server_info["ok"], 1.0)
+        asyncio.run(assert_client_server_info_reflects_target_dialect(self, open_sync_client))
 
     def test_build_info_command_shares_source_of_truth_with_server_info(self):
-        with MongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
-            server_info = client.server_info()
-            build_info = client.alpha.command("buildInfo")
-
-            self.assertEqual(build_info, server_info)
+        asyncio.run(assert_build_info_command_shares_source_of_truth_with_server_info(self, open_sync_client))
 
     def test_hello_and_is_master_commands_return_handshake_metadata(self):
-        with MongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
-            hello = client.alpha.command("hello")
-            is_master = client.alpha.command("isMaster")
-
-            self.assertTrue(hello["helloOk"])
-            self.assertTrue(hello["isWritablePrimary"])
-            self.assertEqual(hello["maxBsonObjectSize"], 16 * 1024 * 1024)
-            self.assertEqual(hello["maxMessageSizeBytes"], 48_000_000)
-            self.assertEqual(hello["maxWriteBatchSize"], 100_000)
-            self.assertEqual(hello["logicalSessionTimeoutMinutes"], 30)
-            self.assertEqual(hello["maxWireVersion"], 20)
-            self.assertFalse(hello["readOnly"])
-            self.assertEqual(hello["version"], "8.0.0")
-            self.assertEqual(hello["ok"], 1.0)
-            self.assertTrue(is_master["ismaster"])
-            self.assertEqual(is_master["version"], "8.0.0")
+        asyncio.run(assert_hello_and_is_master_commands_return_handshake_metadata(self, open_sync_client))
 
     def test_list_commands_and_connection_status_commands_return_local_admin_metadata(self):
-        with MongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
-            commands = client.alpha.command("listCommands")
-            connection_status = client.alpha.command(
-                {"connectionStatus": 1, "showPrivileges": True}
-            )
-
-            self.assertIn("find", commands["commands"])
-            self.assertIn("aggregate", commands["commands"])
-            self.assertIn("explain", commands["commands"])
-            self.assertEqual(commands["ok"], 1.0)
-            self.assertEqual(connection_status["authInfo"]["authenticatedUsers"], [])
-            self.assertEqual(connection_status["authInfo"]["authenticatedUserRoles"], [])
-            self.assertEqual(
-                connection_status["authInfo"]["authenticatedUserPrivileges"],
-                [],
-            )
-            self.assertEqual(connection_status["ok"], 1.0)
+        asyncio.run(assert_list_commands_and_connection_status_commands_return_local_admin_metadata(self, open_sync_client))
 
     def test_server_status_command_returns_local_runtime_metadata(self):
-        with MongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
-            status = client.alpha.command("serverStatus")
-
-            self.assertEqual(status["process"], "mongod")
-            self.assertEqual(status["version"], "8.0.0")
-            self.assertIsInstance(status["pid"], int)
-            self.assertGreaterEqual(status["uptime"], 0)
-            self.assertGreaterEqual(status["uptimeMillis"], 0)
-            self.assertEqual(status["connections"]["current"], 1)
-            self.assertEqual(status["storageEngine"]["name"], "memory")
-            self.assertEqual(status["ok"], 1.0)
+        asyncio.run(assert_server_status_command_returns_local_runtime_metadata(self, open_sync_client))
 
     def test_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata(self):
-        with MongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
-            host_info = client.alpha.command("hostInfo")
-            whats_my_uri = client.alpha.command("whatsmyuri")
-            cmd_line_opts = client.alpha.command("getCmdLineOpts")
-
-            self.assertIn("hostname", host_info["system"])
-            self.assertGreaterEqual(host_info["system"]["numCores"], 1)
-            self.assertIn("pythonVersion", host_info["extra"])
-            self.assertEqual(host_info["ok"], 1.0)
-            self.assertEqual(whats_my_uri, {"you": "127.0.0.1:0", "ok": 1.0})
-            self.assertIsInstance(cmd_line_opts["argv"], list)
-            self.assertEqual(cmd_line_opts["parsed"]["net"]["bindIp"], "127.0.0.1")
-            self.assertEqual(cmd_line_opts["ok"], 1.0)
+        asyncio.run(assert_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata(self, open_sync_client))
 
     def test_list_collections_command_supports_name_only(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    client.alpha.create_collection("events", capped=True, size=512)
-                    client.alpha.create_collection("logs")
-
-                    result = client.alpha.command(
-                        "listCollections",
-                        nameOnly=True,
-                        authorizedCollections=True,
-                        filter={"name": "events"},
-                    )
-
-                    self.assertEqual(
-                        result,
-                        {
-                            "cursor": {
-                                "id": 0,
-                                "ns": "alpha.$cmd.listCollections",
-                                "firstBatch": [
-                                    {"name": "events", "type": "collection"},
-                                ],
-                            },
-                            "ok": 1.0,
-                        },
-                    )
+        asyncio.run(assert_list_collections_command_supports_name_only(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_insert_find_and_list_names(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -282,639 +279,52 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertEqual(client.alpha.list_collection_names(), [])
 
     def test_database_command_supports_ping_list_collections_and_drop_database(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    client.alpha.create_collection("events", capped=True)
-                    client.beta.create_collection("logs")
-
-                    self.assertEqual(client.alpha.command("ping"), {"ok": 1.0})
-                    self.assertEqual(
-                        client.alpha.command("listCollections", filter={"name": "events"}),
-                        {
-                            "cursor": {
-                                "id": 0,
-                                "ns": "alpha.$cmd.listCollections",
-                                "firstBatch": [
-                                    {
-                                        "name": "events",
-                                        "type": "collection",
-                                        "options": {"capped": True},
-                                        "info": {"readOnly": False},
-                                    }
-                                ],
-                            },
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        client.alpha.command("listDatabases", filter={"name": "alpha"}),
-                        {
-                            "databases": [
-                                {
-                                    "name": "alpha",
-                                    "sizeOnDisk": 0,
-                                    "empty": False,
-                                }
-                            ],
-                            "totalSize": 0,
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        client.alpha.command("listDatabases", nameOnly=True),
-                        {
-                            "databases": [{"name": "alpha"}, {"name": "beta"}],
-                            "totalSize": 0,
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        client.alpha.command({"dropDatabase": 1}),
-                        {"dropped": "alpha", "ok": 1.0},
-                    )
-                    self.assertNotIn("alpha", client.list_database_names())
+        asyncio.run(assert_database_command_supports_ping_list_collections_and_drop_database(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_database_command_supports_collection_index_count_and_distinct_commands(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    self.assertEqual(
-                        client.alpha.command({"create": "events", "capped": True}),
-                        {"ok": 1.0},
-                    )
-                    client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view", "tag": "python"},
-                            {"_id": "2", "kind": "view", "tag": "mongodb"},
-                        ]
-                    )
-                    self.assertEqual(
-                        client.alpha.command(
-                            {
-                                "createIndexes": "events",
-                                "indexes": [
-                                    {
-                                        "key": {"kind": 1},
-                                        "name": "kind_idx",
-                                    }
-                                ],
-                            }
-                        ),
-                        {
-                            "numIndexesBefore": 1,
-                            "numIndexesAfter": 2,
-                            "createdCollectionAutomatically": False,
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        client.alpha.command({"count": "events", "query": {"kind": "view"}}),
-                        {"n": 2, "ok": 1.0},
-                    )
-                    self.assertEqual(
-                        client.alpha.command({"distinct": "events", "key": "tag"}),
-                        {"values": ["python", "mongodb"], "ok": 1.0},
-                    )
-                    self.assertEqual(
-                        client.alpha.command({"listIndexes": "events"}),
-                        {
-                            "cursor": {
-                                "id": 0,
-                                "ns": "alpha.events",
-                                "firstBatch": [
-                                    {"name": "_id_", "key": {"_id": 1}, "fields": ["_id"], "unique": True},
-                                    {"name": "kind_idx", "key": {"kind": 1}, "fields": ["kind"], "unique": False},
-                                ],
-                            },
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        client.alpha.command({"dropIndexes": "events", "index": "kind_idx"}),
-                        {"nIndexesWas": 2, "ok": 1.0},
-                    )
-                    self.assertEqual(
-                        client.alpha.command({"drop": "events"}),
-                        {"ns": "alpha.events", "ok": 1.0},
-                    )
+        asyncio.run(assert_database_command_supports_collection_index_count_and_distinct_commands(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_database_command_index_commands_support_comment_and_max_time(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    client.alpha.events.insert_one({"_id": "1", "kind": "view"})
-
-                    created = client.alpha.command(
-                        {
-                            "createIndexes": "events",
-                            "indexes": [{"key": {"kind": 1}, "name": "kind_idx"}],
-                            "comment": "create indexes command",
-                            "maxTimeMS": 50,
-                        }
-                    )
-                    listed = client.alpha.command(
-                        {
-                            "listIndexes": "events",
-                            "comment": "list indexes command",
-                        }
-                    )
-                    dropped = client.alpha.command(
-                        {
-                            "dropIndexes": "events",
-                            "index": "kind_idx",
-                            "comment": "drop indexes command",
-                        }
-                    )
-
-                    self.assertEqual(created["numIndexesBefore"], 1)
-                    self.assertEqual(created["numIndexesAfter"], 2)
-                    self.assertEqual(created["ok"], 1.0)
-                    self.assertEqual(listed["cursor"]["firstBatch"][1]["name"], "kind_idx")
-                    self.assertEqual(dropped, {"nIndexesWas": 2, "ok": 1.0})
+        asyncio.run(assert_database_command_index_commands_support_comment_and_max_time(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_database_command_count_supports_skip_limit_hint_and_comment(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view", "rank": 1},
-                            {"_id": "2", "kind": "view", "rank": 2},
-                            {"_id": "3", "kind": "view", "rank": 3},
-                        ]
-                    )
-                    client.alpha.events.create_index([("kind", 1)], name="kind_idx")
-
-                    counted = client.alpha.command(
-                        {
-                            "count": "events",
-                            "query": {"kind": "view"},
-                            "skip": 1,
-                            "limit": 1,
-                            "hint": "kind_idx",
-                            "comment": "count command",
-                            "maxTimeMS": 50,
-                        }
-                    )
-
-                    self.assertEqual(counted, {"n": 1, "ok": 1.0})
+        asyncio.run(assert_database_command_count_supports_skip_limit_hint_and_comment(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_database_command_distinct_supports_hint_comment_and_max_time(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view", "tag": "python"},
-                            {"_id": "2", "kind": "view", "tag": "mongodb"},
-                            {"_id": "3", "kind": "click", "tag": "python"},
-                        ]
-                    )
-                    client.alpha.events.create_index([("kind", 1)], name="kind_idx")
-
-                    distinct = client.alpha.command(
-                        {
-                            "distinct": "events",
-                            "key": "tag",
-                            "query": {"kind": "view"},
-                            "hint": "kind_idx",
-                            "comment": "distinct command",
-                            "maxTimeMS": 50,
-                        }
-                    )
-
-                    self.assertEqual(distinct, {"values": ["python", "mongodb"], "ok": 1.0})
+        asyncio.run(assert_database_command_distinct_supports_hint_comment_and_max_time(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_database_command_supports_rename_collection_within_current_database(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    client.alpha.events.insert_one({"_id": "1", "kind": "view"})
-                    client.alpha.events.create_index([("kind", 1)], name="kind_idx")
-                    client.alpha.archived.insert_one({"_id": "existing"})
-
-                    renamed = client.alpha.command(
-                        {
-                            "renameCollection": "alpha.events",
-                            "to": "alpha.archived",
-                            "dropTarget": True,
-                        }
-                    )
-
-                    self.assertEqual(renamed, {"ok": 1.0})
-                    self.assertEqual(
-                        client.alpha.list_collection_names(),
-                        ["archived"],
-                    )
-                    self.assertEqual(
-                        client.alpha.archived.find_one({"_id": "1"}),
-                        {"_id": "1", "kind": "view"},
-                    )
-                    self.assertIn(
-                        "kind_idx",
-                        client.alpha.archived.index_information(),
-                    )
+        asyncio.run(assert_database_command_supports_rename_collection_within_current_database(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_database_command_supports_find_and_aggregate(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view", "rank": 2},
-                            {"_id": "2", "kind": "view", "rank": 1},
-                            {"_id": "3", "kind": "click", "rank": 3},
-                        ]
-                    )
-
-                    found = client.alpha.command(
-                        {
-                            "find": "events",
-                            "filter": {"kind": "view"},
-                            "projection": {"rank": 1, "_id": 0},
-                            "sort": {"rank": 1},
-                            "batchSize": 1,
-                        }
-                    )
-                    aggregated = client.alpha.command(
-                        {
-                            "aggregate": "events",
-                            "pipeline": [
-                                {"$match": {"kind": "view"}},
-                                {"$sort": {"rank": 1}},
-                                {"$project": {"rank": 1, "_id": 0}},
-                            ],
-                            "cursor": {"batchSize": 1},
-                        }
-                    )
-
-                    self.assertEqual(
-                        found,
-                        {
-                            "cursor": {
-                                "id": 0,
-                                "ns": "alpha.events",
-                                "firstBatch": [{"rank": 1}, {"rank": 2}],
-                            },
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        aggregated,
-                        {
-                            "cursor": {
-                                "id": 0,
-                                "ns": "alpha.events",
-                                "firstBatch": [{"rank": 1}, {"rank": 2}],
-                            },
-                            "ok": 1.0,
-                        },
-                    )
+        asyncio.run(assert_database_command_supports_find_and_aggregate(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_database_command_supports_explain_for_find_and_aggregate(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view", "rank": 2},
-                            {"_id": "2", "kind": "view", "rank": 1},
-                        ]
-                    )
-                    client.alpha.events.create_index(
-                        [("kind", 1)],
-                        name="kind_idx",
-                    )
-
-                    find_explain = client.alpha.command(
-                        {
-                            "explain": {
-                                "find": "events",
-                                "filter": {"kind": "view"},
-                                "sort": {"rank": 1},
-                                "hint": "kind_idx",
-                                "comment": "find explain",
-                                "maxTimeMS": 50,
-                                "batchSize": 1,
-                            },
-                            "verbosity": "queryPlanner",
-                        }
-                    )
-                    aggregate_explain = client.alpha.command(
-                        {
-                            "explain": {
-                                "aggregate": "events",
-                                "pipeline": [{"$match": {"kind": "view"}}],
-                                "cursor": {"batchSize": 1},
-                                "hint": "kind_idx",
-                                "comment": "agg explain",
-                                "maxTimeMS": 50,
-                            }
-                        }
-                    )
-
-                    self.assertEqual(find_explain["verbosity"], "queryPlanner")
-                    self.assertEqual(find_explain["hint"], "kind_idx")
-                    self.assertEqual(find_explain["comment"], "find explain")
-                    self.assertEqual(find_explain["max_time_ms"], 50)
-                    self.assertEqual(find_explain["batch_size"], 1)
-                    self.assertEqual(find_explain["ok"], 1.0)
-                    self.assertEqual(aggregate_explain["hint"], "kind_idx")
-                    self.assertEqual(aggregate_explain["comment"], "agg explain")
-                    self.assertEqual(aggregate_explain["max_time_ms"], 50)
-                    self.assertEqual(aggregate_explain["batch_size"], 1)
-                    self.assertEqual(aggregate_explain["ok"], 1.0)
+        asyncio.run(assert_database_command_supports_explain_for_find_and_aggregate(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_database_command_supports_explain_for_update_and_delete(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view"},
-                            {"_id": "2", "kind": "click"},
-                        ]
-                    )
-                    client.alpha.events.create_index(
-                        [("kind", 1)],
-                        name="kind_idx",
-                    )
-
-                    update_explain = client.alpha.command(
-                        {
-                            "explain": {
-                                "update": "events",
-                                "updates": [
-                                    {
-                                        "q": {"kind": "view"},
-                                        "u": {"$set": {"done": True}},
-                                        "multi": False,
-                                        "hint": "kind_idx",
-                                    }
-                                ],
-                                "comment": "update explain",
-                                "maxTimeMS": 50,
-                            }
-                        }
-                    )
-                    delete_explain = client.alpha.command(
-                        {
-                            "explain": {
-                                "delete": "events",
-                                "deletes": [
-                                    {
-                                        "q": {"kind": "click"},
-                                        "limit": 1,
-                                        "hint": "kind_idx",
-                                    }
-                                ],
-                                "comment": "delete explain",
-                                "maxTimeMS": 50,
-                            }
-                        }
-                    )
-
-                    self.assertEqual(update_explain["command"], "update")
-                    self.assertFalse(update_explain["multi"])
-                    self.assertEqual(update_explain["hint"], "kind_idx")
-                    self.assertEqual(update_explain["comment"], "update explain")
-                    self.assertEqual(update_explain["max_time_ms"], 50)
-                    self.assertEqual(update_explain["ok"], 1.0)
-                    self.assertEqual(delete_explain["command"], "delete")
-                    self.assertEqual(delete_explain["limit"], 1)
-                    self.assertEqual(delete_explain["hint"], "kind_idx")
-                    self.assertEqual(delete_explain["comment"], "delete explain")
-                    self.assertEqual(delete_explain["max_time_ms"], 50)
-                    self.assertEqual(delete_explain["ok"], 1.0)
+        asyncio.run(assert_database_command_supports_explain_for_update_and_delete(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_database_command_supports_insert_update_and_delete(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    inserted = client.alpha.command(
-                        {
-                            "insert": "events",
-                            "documents": [
-                                {"_id": "1", "kind": "view", "rank": 1},
-                                {"_id": "2", "kind": "click", "rank": 2},
-                            ],
-                        }
-                    )
-                    updated = client.alpha.command(
-                        {
-                            "update": "events",
-                            "updates": [
-                                {
-                                    "q": {"kind": "view"},
-                                    "u": {"$set": {"done": True}},
-                                    "multi": True,
-                                },
-                                {
-                                    "q": {"kind": "missing"},
-                                    "u": {"kind": "missing", "done": True},
-                                    "upsert": True,
-                                },
-                            ],
-                        }
-                    )
-                    deleted = client.alpha.command(
-                        {
-                            "delete": "events",
-                            "deletes": [
-                                {"q": {"kind": "click"}, "limit": 1},
-                                {"q": {"kind": "missing"}, "limit": 0},
-                            ],
-                        }
-                    )
-
-                    self.assertEqual(inserted, {"n": 2, "ok": 1.0})
-                    self.assertEqual(updated["n"], 1)
-                    self.assertEqual(updated["nModified"], 1)
-                    self.assertEqual(updated["ok"], 1.0)
-                    self.assertEqual(len(updated["upserted"]), 1)
-                    self.assertEqual(deleted, {"n": 2, "ok": 1.0})
+        asyncio.run(assert_database_command_supports_insert_update_and_delete(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_database_command_write_commands_surface_write_errors(self):
-        with MongoClient(MemoryEngine()) as client:
-            client.alpha.events.insert_one({"_id": "1", "kind": "view"})
-
-            with self.assertRaises(BulkWriteError):
-                client.alpha.command(
-                    {
-                        "insert": "events",
-                        "documents": [
-                            {"_id": "1", "kind": "duplicate"},
-                            {"_id": "2", "kind": "ok"},
-                        ],
-                    }
-                )
+        asyncio.run(assert_database_command_write_commands_surface_write_errors(self, open_sync_client))
 
     def test_database_command_supports_find_and_modify(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    client.alpha.events.insert_many(
-                        [
-                            {"_id": "1", "kind": "view", "rank": 2, "done": False},
-                            {"_id": "2", "kind": "view", "rank": 1, "done": False},
-                        ]
-                    )
-
-                    updated = client.alpha.command(
-                        {
-                            "findAndModify": "events",
-                            "query": {"kind": "view"},
-                            "sort": {"rank": 1},
-                            "update": {"$set": {"done": True}},
-                            "fields": {"done": 1, "_id": 0},
-                            "new": True,
-                        }
-                    )
-                    removed = client.alpha.command(
-                        {
-                            "findAndModify": "events",
-                            "query": {"kind": "view"},
-                            "remove": True,
-                            "fields": {"rank": 1, "_id": 0},
-                        }
-                    )
-                    upserted = client.alpha.command(
-                        {
-                            "findAndModify": "events",
-                            "query": {"kind": "missing"},
-                            "update": {"kind": "missing", "done": True},
-                            "upsert": True,
-                            "new": True,
-                            "fields": {"kind": 1, "done": 1, "_id": 0},
-                        }
-                    )
-
-                    self.assertEqual(
-                        updated,
-                        {
-                            "lastErrorObject": {"n": 1, "updatedExisting": True},
-                            "value": {"done": True},
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(
-                        removed,
-                        {
-                            "lastErrorObject": {"n": 1},
-                            "value": {"rank": 2},
-                            "ok": 1.0,
-                        },
-                    )
-                    self.assertEqual(upserted["lastErrorObject"]["n"], 1)
-                    self.assertFalse(upserted["lastErrorObject"]["updatedExisting"])
-                    self.assertIn("upserted", upserted["lastErrorObject"])
-                    self.assertEqual(
-                        upserted["value"],
-                        {"kind": "missing", "done": True},
-                    )
+        asyncio.run(assert_database_command_supports_find_and_modify(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_database_command_supports_coll_stats_and_db_stats(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    client.alpha.events.insert_one({"_id": "1", "kind": "view"})
-                    client.alpha.events.create_index([("kind", 1)], name="kind_idx")
-
-                    coll_stats = client.alpha.command({"collStats": "events"})
-                    db_stats = client.alpha.command("dbStats")
-                    scaled_coll_stats = client.alpha.command({"collStats": "events", "scale": 2})
-                    scaled_db_stats = client.alpha.command({"dbStats": 1, "scale": 2})
-
-                    self.assertEqual(coll_stats["ns"], "alpha.events")
-                    self.assertEqual(coll_stats["count"], 1)
-                    self.assertEqual(coll_stats["nindexes"], 2)
-                    self.assertGreater(coll_stats["size"], 0)
-                    self.assertEqual(coll_stats["storageSize"], coll_stats["size"])
-                    self.assertEqual(coll_stats["ok"], 1.0)
-                    self.assertEqual(db_stats["db"], "alpha")
-                    self.assertEqual(db_stats["collections"], 1)
-                    self.assertEqual(db_stats["objects"], 1)
-                    self.assertEqual(db_stats["indexes"], 2)
-                    self.assertEqual(db_stats["storageSize"], db_stats["dataSize"])
-                    self.assertEqual(db_stats["ok"], 1.0)
-                    self.assertLessEqual(scaled_coll_stats["size"], coll_stats["size"])
-                    self.assertLessEqual(scaled_coll_stats["storageSize"], coll_stats["storageSize"])
-                    self.assertLessEqual(scaled_db_stats["dataSize"], db_stats["dataSize"])
-                    self.assertLessEqual(scaled_db_stats["storageSize"], db_stats["storageSize"])
+        asyncio.run(assert_database_command_supports_coll_stats_and_db_stats(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_database_command_rejects_unsupported_commands(self):
-        with MongoClient(MemoryEngine()) as client:
-            with self.assertRaises(OperationFailure):
-                client.alpha.command("top")
+        asyncio.run(assert_database_command_rejects_unsupported_commands(self, open_sync_client))
 
     def test_database_command_rejects_invalid_command_shapes(self):
-        with MongoClient(MemoryEngine()) as client:
-            with self.assertRaises(TypeError):
-                client.alpha.command({"createIndexes": "events", "indexes": ()})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command({"distinct": "events", "key": 1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command({"dropIndexes": "events", "index": 1.5})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command("listDatabases", nameOnly=1)  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command("listCollections", nameOnly=1)  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command("listCollections", authorizedCollections=1)  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command({"count": "events", "skip": -1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command({"count": "events", "limit": -1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command({"dbStats": 1, "scale": 0})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command({"collStats": "events", "scale": -1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command({"insert": "events", "documents": {}})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command({"update": "events", "updates": {}})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command({"delete": "events", "deletes": {}})  # type: ignore[arg-type]
-            with self.assertRaises(ValueError):
-                client.alpha.command({"find": "events", "batchSize": -1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command({"aggregate": "events", "pipeline": [], "cursor": 1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command({"explain": 1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command({"connectionStatus": 1, "showPrivileges": 1})  # type: ignore[arg-type]
-            with self.assertRaises(TypeError):
-                client.alpha.command({"renameCollection": "events", "to": "alpha.logs"})  # type: ignore[arg-type]
-            with self.assertRaises(OperationFailure):
-                client.alpha.command({"findAndModify": "events"})
-            with self.assertRaises(OperationFailure):
-                client.alpha.command({"explain": {"count": "events"}})
-            with self.assertRaises(TypeError):
-                client.alpha.command({"explain": {"update": "events", "updates": []}})
-            with self.assertRaises(OperationFailure):
-                client.alpha.command({"renameCollection": "alpha.events", "to": "beta.logs"})
+        asyncio.run(assert_database_command_rejects_invalid_command_shapes(self, open_sync_client))
 
     def test_validate_collection_returns_metadata_and_rejects_missing_namespace(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    client.alpha.events.insert_one({"_id": "1", "kind": "view"})
-                    client.alpha.events.create_index([("kind", 1)], name="kind_idx")
-
-                    validated = client.alpha.validate_collection("events")
-                    validated_from_command = client.alpha.command({"validate": "events"})
-
-                    self.assertEqual(validated["ns"], "alpha.events")
-                    self.assertEqual(validated["nrecords"], 1)
-                    self.assertEqual(validated["nIndexes"], 2)
-                    self.assertEqual(validated["keysPerIndex"], {"_id_": 1, "kind_idx": 1})
-                    self.assertTrue(validated["valid"])
-                    self.assertEqual(validated_from_command, validated)
-
-        with MongoClient(MemoryEngine()) as client:
-            with self.assertRaises(CollectionInvalid):
-                client.alpha.validate_collection("missing")
+        asyncio.run(assert_validate_collection_returns_metadata_and_rejects_missing_namespace(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_collection_rename_moves_documents_and_indexes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
