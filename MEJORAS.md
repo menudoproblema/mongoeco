@@ -27,7 +27,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 
 ## 2. Subsistema Separado de Administración y Comandos
 
-- `Estado`: `En progreso`
+- `Estado`: `Aplicado`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Medio`
 - `Descripción`: extraer administración de colecciones, índices, estadísticas y `Database.command()` a un subsistema propio, separado del flujo CRUD principal.
@@ -48,9 +48,9 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `5a9ddbb` `refactor: keep admin result serialization at the boundary`
   - `3c3b211` `refactor: keep stats and validation as typed snapshots`
   - `4b767b7` `refactor: compile admin aggregate and lookup reads`
-- `Pendiente para cerrar de verdad`:
-  - reducir la lógica administrativa residual que aún vive en handlers complejos como `findAndModify`
-  - terminar de homogeneizar algunos tipos de retorno entre comandos de lectura, escritura e introspección
+  - `ccf1a08` `refactor: parse typed read admin commands`
+  - `6712e86` `refactor: split findandmodify admin execution`
+- `Cierre`: el subsistema ya separa parseo, ejecución y serialización pública; los comandos principales de lectura, escritura e introspección viajan por servicios propios y los handlers complejos restantes ya están descompuestos en rutas internas más pequeñas.
 
 ## 3. Tipado Estricto en el Core Semántico y la Metadata Interna
 
@@ -71,6 +71,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 - `Pendiente para cerrar de verdad`:
   - extender el patrón tipado a más payloads internos fuera de admin/explain
   - seguir reduciendo `dict[str, object]` en rutas de resultados intermedios de agregación y writes complejos
+- `Estado actual`: el tipado interno está muy avanzado en admin, listados, stats, validación, `explain` y varios comandos compuestos; el trabajo pendiente ya está concentrado fuera del subsistema admin.
 
 ## 4. Arquitectura Basada en Planes de Operación
 
@@ -90,9 +91,11 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `57fb615` `refactor: route aggregate explain through compiled operations`
   - `5bcc88a` `refactor: route aggregate execution through compiled find operations`
   - `4b767b7` `refactor: compile admin aggregate and lookup reads`
+  - `ccf1a08` `refactor: parse typed read admin commands`
 - `Pendiente para cerrar de verdad`:
   - extender la frontera planificada a algunas rutas auxiliares restantes de admin y writes complejos
   - seguir reduciendo recomposición manual de operaciones en helpers secundarios
+- `Estado actual`: `find`, `count`, `distinct`, `aggregate`, `explain` y varias rutas admin ya se apoyan en operaciones compiladas; quedan flecos auxiliares, no ya el flujo principal.
 
 ## 5. Motor de Updates Formal Basado en Paths Compilados
 
