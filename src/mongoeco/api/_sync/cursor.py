@@ -1,5 +1,6 @@
 from mongoeco.api._async.cursor import (
     HintSpec,
+    _serialize_explanation,
     _validate_batch_size,
     _validate_hint_spec,
     _validate_max_time_ms,
@@ -272,7 +273,8 @@ class Cursor:
     def explain(self) -> dict[str, object]:
         self._ensure_open()
         dialect = getattr(self._async_collection, "mongodb_dialect", None)
-        return self._client._run(
+        return _serialize_explanation(
+            self._client._run(
             self._async_collection._engine.explain_query_plan(
                 self._async_collection._db_name,
                 self._async_collection._collection_name,
@@ -286,6 +288,7 @@ class Cursor:
                 max_time_ms=self._max_time_ms,
                 dialect=dialect,
                 context=self._session,
+            )
             )
         )
 

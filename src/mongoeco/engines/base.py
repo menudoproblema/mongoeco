@@ -13,6 +13,7 @@ from mongoeco.types import (
     IndexDocument,
     IndexKeySpec,
     Projection,
+    QueryPlanExplanation,
     SortSpec,
     Update,
     UpdateResult,
@@ -52,7 +53,7 @@ class AsyncIndexAdminEngine(Protocol):
 
 @runtime_checkable
 class AsyncExplainEngine(Protocol):
-    async def explain_query_plan(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, hint: str | IndexKeySpec | None = None, comment: object | None = None, max_time_ms: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> dict[str, object]: ...
+    async def explain_query_plan(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, hint: str | IndexKeySpec | None = None, comment: object | None = None, max_time_ms: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> QueryPlanExplanation: ...
 
 
 @runtime_checkable

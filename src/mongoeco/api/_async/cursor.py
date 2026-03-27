@@ -8,6 +8,15 @@ from mongoeco.types import Document, Filter, Projection, SortSpec
 type HintSpec = str | SortSpec
 
 
+def _serialize_explanation(result: object) -> dict[str, object]:
+    to_document = getattr(result, "to_document", None)
+    if callable(to_document):
+        return to_document()
+    if isinstance(result, dict):
+        return result
+    raise TypeError(f"Unsupported explain result type: {type(result)!r}")
+
+
 class _AsyncCursorIterator:
     def __init__(self, cursor: "AsyncCursor", *, batch_size: int | None, enforce_ownership: bool):
         self._cursor = cursor
@@ -281,7 +290,8 @@ class AsyncCursor:
         return not self._exhausted
 
     async def explain(self) -> dict[str, object]:
-        return await self._collection._engine.explain_query_plan(
+        return _serialize_explanation(
+            await self._collection._engine.explain_query_plan(
             self._collection._db_name,
             self._collection._collection_name,
             self._filter_spec,
@@ -294,4 +304,5 @@ class AsyncCursor:
             max_time_ms=self._max_time_ms,
             dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
             context=self._session,
+            )
         )

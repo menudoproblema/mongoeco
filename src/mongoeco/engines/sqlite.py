@@ -58,6 +58,7 @@ from mongoeco.types import (
     IndexKeySpec,
     ObjectId,
     Projection,
+    QueryPlanExplanation,
     SortSpec,
     Update,
     UpdateResult,
@@ -2125,7 +2126,7 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> QueryPlanExplanation:
         effective_dialect = dialect or MONGODB_DIALECT_70
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         self._record_operation_metadata(
@@ -2152,19 +2153,19 @@ class SQLiteEngine(AsyncStorageEngine):
             hint=hint,
             max_time_ms=max_time_ms,
         )
-        return {
-            "engine": "sqlite",
-            "strategy": "sql",
-            "plan": repr(query_plan),
-            "details": details,
-            "sort": sort,
-            "skip": skip,
-            "limit": limit,
-            "hint": hint,
-            "hinted_index": None if hinted_index is None else hinted_index["name"],
-            "comment": comment,
-            "max_time_ms": max_time_ms,
-        }
+        return QueryPlanExplanation(
+            engine="sqlite",
+            strategy="sql",
+            plan=repr(query_plan),
+            details=details,
+            sort=sort,
+            skip=skip,
+            limit=limit,
+            hint=hint,
+            hinted_index=None if hinted_index is None else hinted_index["name"],
+            comment=comment,
+            max_time_ms=max_time_ms,
+        )
 
     @override
     async def list_databases(self, *, context: ClientSession | None = None) -> list[str]:

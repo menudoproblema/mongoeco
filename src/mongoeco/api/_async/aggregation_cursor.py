@@ -11,7 +11,7 @@ from mongoeco.core.aggregation import (
     split_pushdown_pipeline,
 )
 from mongoeco.session import ClientSession
-from mongoeco.types import Document
+from mongoeco.types import AggregateExplanation, Document
 
 
 class AsyncAggregationCursor:
@@ -308,8 +308,8 @@ class AsyncAggregationCursor:
             ),
             "_plan",
         )
-        return {
-            "engine_plan": await self._collection._engine.explain_query_plan(
+        return AggregateExplanation(
+            engine_plan=await self._collection._engine.explain_query_plan(
                 self._collection._db_name,
                 self._collection._collection_name,
                 pushdown.filter_spec,
@@ -323,15 +323,15 @@ class AsyncAggregationCursor:
                 dialect=dialect,
                 context=self._session,
             ),
-            "remaining_pipeline": pushdown.remaining_pipeline,
-            "hint": self._hint,
-            "comment": self._comment,
-            "max_time_ms": self._max_time_ms,
-            "batch_size": self._batch_size,
-            "let": self._let,
-            "streaming_batch_execution": self._batch_size not in (None, 0)
+            remaining_pipeline=pushdown.remaining_pipeline,
+            hint=self._hint,
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
+            batch_size=self._batch_size,
+            let=self._let,
+            streaming_batch_execution=self._batch_size not in (None, 0)
             and self._split_streamable_pipeline(pushdown.remaining_pipeline) is not None,
-        }
+        ).to_document()
 
     def __aiter__(self) -> AsyncIterator[Document]:
         return self._stream_batches()

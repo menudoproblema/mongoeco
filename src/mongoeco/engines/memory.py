@@ -20,7 +20,7 @@ from mongoeco.errors import CollectionInvalid, DuplicateKeyError, OperationFailu
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     ArrayFilters, DeleteResult, Document, DocumentId, Filter, IndexInformation, IndexDocument, IndexKeySpec, ObjectId,
-    Projection, SortSpec, Update, UpdateResult, default_index_name,
+    Projection, QueryPlanExplanation, SortSpec, Update, UpdateResult, default_index_name,
     default_id_index_definition, default_id_index_document, default_id_index_information, index_fields,
     IndexDefinition, normalize_index_keys,
 )
@@ -638,7 +638,7 @@ class MemoryEngine(AsyncStorageEngine):
         max_time_ms: int | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
-    ) -> dict[str, object]:
+    ) -> QueryPlanExplanation:
         effective_dialect = dialect or MONGODB_DIALECT_70
         deadline = operation_deadline(max_time_ms)
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
@@ -659,19 +659,19 @@ class MemoryEngine(AsyncStorageEngine):
             indexes=indexes,
         )
         enforce_deadline(deadline)
-        return {
-            "engine": "memory",
-            "strategy": "python",
-            "plan": repr(query_plan),
-            "sort": sort,
-            "skip": skip,
-            "limit": limit,
-            "hint": hint,
-            "hinted_index": None if hinted_index is None else hinted_index["name"],
-            "comment": comment,
-            "max_time_ms": max_time_ms,
-            "indexes": indexes,
-        }
+        return QueryPlanExplanation(
+            engine="memory",
+            strategy="python",
+            plan=repr(query_plan),
+            sort=sort,
+            skip=skip,
+            limit=limit,
+            hint=hint,
+            hinted_index=None if hinted_index is None else hinted_index["name"],
+            comment=comment,
+            max_time_ms=max_time_ms,
+            indexes=indexes,
+        )
 
     @override
     async def list_databases(self, *, context: ClientSession | None = None) -> list[str]:

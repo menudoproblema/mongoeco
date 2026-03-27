@@ -54,6 +54,7 @@ from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.types import IndexDefinition, IndexInformation, default_id_index_definition
 from mongoeco.types import (
     CodecOptions,
+    QueryPlanExplanation,
     ReadConcern,
     ReadPreference,
     ReadPreferenceMode,
@@ -79,6 +80,25 @@ class ArchitectureUnitTests(unittest.TestCase):
                 self.assertIsInstance(engine, AsyncNamespaceAdminEngine)
                 self.assertIsInstance(engine, AsyncAdminEngine)
                 self.assertIsInstance(engine, AsyncStorageEngine)
+
+    def test_engines_produce_typed_query_plan_explanations(self):
+        async def _run() -> None:
+            memory = MemoryEngine()
+            sqlite = SQLiteEngine()
+            await memory.connect()
+            await sqlite.connect()
+            try:
+                memory_explain = await memory.explain_query_plan("db", "users", {})
+                sqlite_explain = await sqlite.explain_query_plan("db", "users", {})
+                self.assertIsInstance(memory_explain, QueryPlanExplanation)
+                self.assertIsInstance(sqlite_explain, QueryPlanExplanation)
+                self.assertEqual(memory_explain.to_document()["engine"], "memory")
+                self.assertEqual(sqlite_explain.to_document()["engine"], "sqlite")
+            finally:
+                await memory.disconnect()
+                await sqlite.disconnect()
+
+        asyncio.run(_run())
 
     def test_namespace_admin_protocol_exposes_collection_options(self):
         self.assertIn("collection_options", AsyncNamespaceAdminEngine.__dict__)

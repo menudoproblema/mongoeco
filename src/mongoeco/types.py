@@ -285,6 +285,96 @@ class ConnectionStatusDocument(TypedDict):
     ok: float
 
 
+class QueryPlanExplanationDocument(TypedDict, total=False):
+    engine: str
+    strategy: str
+    plan: str
+    details: dict[str, object]
+    sort: SortSpec | None
+    skip: int
+    limit: int | None
+    hint: str | IndexKeySpec | None
+    hinted_index: str | None
+    comment: object | None
+    max_time_ms: int | None
+    indexes: list[IndexDocument]
+
+
+class AggregateExplanationDocument(TypedDict):
+    engine_plan: QueryPlanExplanationDocument
+    remaining_pipeline: list[dict[str, object]]
+    hint: str | IndexKeySpec | None
+    comment: object | None
+    max_time_ms: int | None
+    batch_size: int | None
+    let: dict[str, object] | None
+    streaming_batch_execution: bool
+
+
+@dataclass(frozen=True, slots=True)
+class QueryPlanExplanation:
+    engine: str
+    strategy: str
+    plan: str
+    sort: SortSpec | None
+    skip: int
+    limit: int | None
+    hint: str | IndexKeySpec | None
+    hinted_index: str | None
+    comment: object | None
+    max_time_ms: int | None
+    details: dict[str, object] | None = None
+    indexes: list[IndexDocument] | None = None
+
+    def to_document(self) -> QueryPlanExplanationDocument:
+        document: QueryPlanExplanationDocument = {
+            "engine": self.engine,
+            "strategy": self.strategy,
+            "plan": self.plan,
+            "sort": self.sort,
+            "skip": self.skip,
+            "limit": self.limit,
+            "hint": self.hint,
+            "hinted_index": self.hinted_index,
+            "comment": self.comment,
+            "max_time_ms": self.max_time_ms,
+        }
+        if self.details is not None:
+            document["details"] = self.details
+        if self.indexes is not None:
+            document["indexes"] = self.indexes
+        return document
+
+
+@dataclass(frozen=True, slots=True)
+class AggregateExplanation:
+    engine_plan: QueryPlanExplanation | QueryPlanExplanationDocument
+    remaining_pipeline: list[dict[str, object]]
+    hint: str | IndexKeySpec | None
+    comment: object | None
+    max_time_ms: int | None
+    batch_size: int | None
+    let: dict[str, object] | None
+    streaming_batch_execution: bool
+
+    def to_document(self) -> AggregateExplanationDocument:
+        engine_plan = self.engine_plan
+        if isinstance(engine_plan, QueryPlanExplanation):
+            serialized_engine_plan = engine_plan.to_document()
+        else:
+            serialized_engine_plan = engine_plan
+        return {
+            "engine_plan": serialized_engine_plan,
+            "remaining_pipeline": self.remaining_pipeline,
+            "hint": self.hint,
+            "comment": self.comment,
+            "max_time_ms": self.max_time_ms,
+            "batch_size": self.batch_size,
+            "let": self.let,
+            "streaming_batch_execution": self.streaming_batch_execution,
+        }
+
+
 @dataclass(frozen=True, slots=True)
 class CollectionStatsSnapshot:
     namespace: str
