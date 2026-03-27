@@ -1055,10 +1055,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                 original_select = collection._select_first_document
 
                 def _wrapped_build_cursor(*args, **kwargs):
+                    operation = args[0] if args else None
                     recorded_find.append(
                         {
-                            "hint": kwargs.get("hint"),
-                            "comment": kwargs.get("comment"),
+                            "hint": getattr(operation, "hint", kwargs.get("hint")),
+                            "comment": getattr(operation, "comment", kwargs.get("comment")),
                         }
                     )
                     return original_build_cursor(*args, **kwargs)

@@ -414,50 +414,32 @@ class AsyncCollection:
             dialect=self._mongodb_dialect,
             plan=plan,
         )
-        return await self._build_cursor(
-            operation.filter_spec,
-            operation.plan,
-            None,
+        return await self._build_cursor(operation, session=session).first()
+
+    @staticmethod
+    def _selection_operation_from_update(
+        operation: UpdateOperation,
+        *,
+        projection: Projection | None = None,
+        limit: int | None = None,
+    ) -> FindOperation:
+        return FindOperation(
+            filter_spec=operation.filter_spec,
+            plan=operation.plan,
+            projection=projection,
             sort=operation.sort,
-            limit=operation.limit,
+            limit=limit,
             hint=operation.hint,
             comment=operation.comment,
             max_time_ms=operation.max_time_ms,
-            session=session,
-        ).first()
+        )
 
     def _build_cursor(
         self,
-        operation_or_filter: FindOperation | Filter,
-        plan: QueryNode | None = None,
-        projection: Projection | None = None,
+        operation: FindOperation,
         *,
-        sort: SortSpec | None = None,
-        skip: int = 0,
-        limit: int | None = None,
-        hint: HintSpec | None = None,
-        comment: object | None = None,
-        max_time_ms: int | None = None,
-        batch_size: int | None = None,
         session: ClientSession | None = None,
     ) -> AsyncCursor:
-        if isinstance(operation_or_filter, FindOperation):
-            operation = operation_or_filter
-        else:
-            if plan is None:
-                raise TypeError("plan is required when _build_cursor receives a raw filter")
-            operation = FindOperation(
-                filter_spec=operation_or_filter,
-                plan=plan,
-                projection=projection,
-                sort=sort,
-                skip=skip,
-                limit=limit,
-                hint=hint,
-                comment=comment,
-                max_time_ms=max_time_ms,
-                batch_size=batch_size,
-            )
         return AsyncCursor(
             self,
             operation.filter_spec,
@@ -763,16 +745,7 @@ class AsyncCollection:
             dialect=self._mongodb_dialect,
         )
         return self._build_cursor(
-            operation.filter_spec,
-            operation.plan,
-            operation.projection,
-            sort=operation.sort,
-            skip=operation.skip,
-            limit=operation.limit,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            batch_size=operation.batch_size,
+            operation,
             session=session,
         )
 
@@ -839,13 +812,7 @@ class AsyncCollection:
             )
         if operation.sort is not None:
             selected = await self._build_cursor(
-                operation.filter_spec,
-                operation.plan,
-                None,
-                sort=operation.sort,
-                limit=1,
-                hint=operation.hint,
-                comment=operation.comment,
+                self._selection_operation_from_update(operation, limit=1),
                 session=session,
             ).first()
             if selected is None and not upsert:
@@ -880,12 +847,11 @@ class AsyncCollection:
             )
         if operation.hint is not None:
             selected = await self._build_cursor(
-                operation.filter_spec,
-                operation.plan,
-                {"_id": 1},
-                limit=1,
-                hint=operation.hint,
-                comment=operation.comment,
+                self._selection_operation_from_update(
+                    operation,
+                    projection={"_id": 1},
+                    limit=1,
+                ),
                 session=session,
             ).first()
             if selected is None:
@@ -986,11 +952,10 @@ class AsyncCollection:
         )
         update_spec = self._require_update(update_spec)
         matched_documents = await self._build_cursor(
-            operation.filter_spec,
-            operation.plan,
-            {"_id": 1},
-            hint=operation.hint,
-            comment=operation.comment,
+            self._selection_operation_from_update(
+                operation,
+                projection={"_id": 1},
+            ),
             session=session,
         ).to_list()
         if not matched_documents:
@@ -1332,12 +1297,11 @@ class AsyncCollection:
         )
         if operation.hint is not None:
             selected = await self._build_cursor(
-                operation.filter_spec,
-                operation.plan,
-                {"_id": 1},
-                limit=1,
-                hint=operation.hint,
-                comment=operation.comment,
+                self._selection_operation_from_update(
+                    operation,
+                    projection={"_id": 1},
+                    limit=1,
+                ),
                 session=session,
             ).first()
             if selected is None:
@@ -1381,11 +1345,10 @@ class AsyncCollection:
             dialect=self._mongodb_dialect,
         )
         matched_documents = await self._build_cursor(
-            operation.filter_spec,
-            operation.plan,
-            {"_id": 1},
-            hint=operation.hint,
-            comment=operation.comment,
+            self._selection_operation_from_update(
+                operation,
+                projection={"_id": 1},
+            ),
             session=session,
         ).to_list()
         deleted_count = 0
