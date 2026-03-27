@@ -38,10 +38,11 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `c39fdf1` `refactor: extract async database command service`
   - `75444e7` `refactor: add sync database admin service`
   - `1681e98` `refactor: parse typed admin commands before execution`
+  - `4484998` `refactor: add sync database command service`
 - `Pendiente para cerrar de verdad`:
   - reducir todavía más lógica administrativa residual en `Database`
   - separar mejor ejecución interna y serialización pública de comandos
-  - consolidar un dispatcher tipado más homogéneo entre async y sync
+  - consolidar un dispatcher tipado todavía más homogéneo entre async y sync
 
 ## 3. Tipado Estricto en el Core Semántico y la Metadata Interna
 
@@ -55,9 +56,10 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `6076c4e` `refactor: type admin metadata contracts`
   - `33caa69` `refactor: type admin command metadata internals`
   - `cee0689` `refactor: type internal admin command results`
+  - `0f399ff` `refactor: type explain payloads internally`
 - `Pendiente para cerrar de verdad`:
-  - tipar explain/admin payloads internos con records privados
   - reducir más `dict[str, object]` internos en la capa admin
+  - extender el mismo patrón tipado a más payloads internos fuera de admin/explain
 
 ## 4. Arquitectura Basada en Planes de Operación
 
@@ -87,8 +89,8 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 - `Aplicado ya`:
   - `a41ca5b` `refactor: compile update paths explicitly`
   - `1e4b40e` `refactor: separate update target resolution from mutation`
+  - `58e7bbc` `refactor: compile update operator instructions`
 - `Pendiente para cerrar de verdad`:
-  - compilar también instrucciones de update por operador
   - separar más claramente validación, resolución y aplicación final
   - formalizar mejor el estado de ejecución de un update complejo
 
@@ -103,6 +105,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 - `Aplicado ya`:
   - exports públicos de compatibilidad desde `src/mongoeco/compat/catalog.py`
   - tests de snapshot/consistencia en `tests/unit/test_compat.py` y `tests/unit/test_architecture.py`
+  - `53dbc90` `refactor: export versioned compatibility artifacts`
 - `Pendiente para cerrar de verdad`:
   - derivar más helpers de runtime desde el catálogo maestro
   - publicar snapshots o artefactos versionados para tooling externo
@@ -138,8 +141,8 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 
 Si el objetivo es que el proyecto termine pareciendo diseñado desde cero, el siguiente orden recomendado es:
 
-1. compilar también las instrucciones de update por operador;
-2. tipar `explain` y más payloads internos del subsistema admin;
-3. seguir empujando `FindOperation` / `UpdateOperation` / `AggregateOperation` hasta la frontera con engines;
-4. derivar más helpers y artefactos de compatibilidad directamente del catálogo;
+1. seguir empujando `FindOperation` / `UpdateOperation` / `AggregateOperation` hasta la frontera con engines;
+2. derivar más helpers y decisiones de runtime directamente del catálogo de compatibilidad;
+3. reducir la lógica administrativa residual que aún vive en `Database` o en servicios mixtos;
+4. seguir formalizando el estado de ejecución de updates complejos;
 5. después volver a evaluar si ya compensa endurecer la frontera semántica/engine.
