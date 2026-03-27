@@ -21,7 +21,12 @@ from mongoeco.api.admin_parsing import (
     require_collection_name,
     resolve_collection_reference,
 )
-from mongoeco.api.operations import FindOperation, compile_aggregate_operation, compile_find_operation
+from mongoeco.api.operations import (
+    AggregateOperation,
+    FindOperation,
+    compile_aggregate_operation,
+    compile_find_operation,
+)
 from mongoeco.api._async.database_commands import AsyncDatabaseCommandService
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.core.aggregation import _bson_document_size
@@ -253,6 +258,57 @@ class AsyncDatabaseAdminService:
                 dialect=self._mongodb_dialect,
             ),
         )
+
+    def _compile_command_aggregate_operation(
+        self,
+        spec: dict[str, object],
+        *,
+        collection_field: str = "aggregate",
+        pipeline_field: str = "pipeline",
+        cursor_field: str = "cursor",
+        batch_size_field: str = "batchSize",
+        hint_field: str = "hint",
+        comment_field: str = "comment",
+        max_time_ms_field: str = "maxTimeMS",
+        let_field: str = "let",
+    ) -> tuple[str, AggregateOperation]:
+        collection_name = self._require_collection_name(
+            spec.get(collection_field),
+            collection_field,
+        )
+        pipeline = spec.get(pipeline_field)
+        if not isinstance(pipeline, list):
+            raise TypeError("pipeline must be a list")
+        cursor_spec = spec.get(cursor_field, {})
+        if not isinstance(cursor_spec, dict):
+            raise TypeError("cursor must be a document")
+        return (
+            collection_name,
+            compile_aggregate_operation(
+                pipeline,
+                hint=self._normalize_hint_from_command(spec.get(hint_field)),
+                comment=spec.get(comment_field),
+                max_time_ms=self._normalize_max_time_ms_from_command(
+                    spec.get(max_time_ms_field)
+                ),
+                batch_size=self._normalize_batch_size_from_command(
+                    cursor_spec.get(batch_size_field)
+                ),
+                let=spec.get(let_field),
+            ),
+        )
+
+    async def _first_with_operation(
+        self,
+        collection_name: str,
+        operation: FindOperation,
+        *,
+        session: ClientSession | None = None,
+    ) -> Document | None:
+        return await self._database.get_collection(collection_name)._build_cursor(
+            operation,
+            session=session,
+        ).first()
 
     @staticmethod
     def _normalize_ordered_from_command(value: object | None) -> bool:
@@ -606,16 +662,21 @@ class AsyncDatabaseAdminService:
         key = spec.get("key")
         if not isinstance(key, str) or not key:
             raise TypeError("key must be a non-empty string")
-        query = self._normalize_filter(spec.get("query"))
-        hint = self._normalize_hint_from_command(spec.get("hint"))
-        max_time_ms = self._normalize_max_time_ms_from_command(spec.get("maxTimeMS"))
+        _, operation = self._compile_command_find_operation(
+            {
+                "distinct": collection_name,
+                "query": spec.get("query"),
+                "hint": spec.get("hint"),
+                "comment": spec.get("comment"),
+                "maxTimeMS": spec.get("maxTimeMS"),
+            },
+            collection_field="distinct",
+            filter_field="query",
+            batch_size_field=None,
+        )
         distinct_values: list[object] = []
-        async for document in self._database.get_collection(collection_name).find(
-            query,
-            sort=None,
-            hint=hint,
-            comment=spec.get("comment"),
-            max_time_ms=max_time_ms,
+        async for document in self._database.get_collection(collection_name)._build_cursor(
+            operation,
             session=session,
         ):
             values = QueryEngine.extract_values(document, key)
@@ -858,27 +919,7 @@ class AsyncDatabaseAdminService:
         *,
         session: ClientSession | None = None,
     ) -> object:
-        collection_name = self._require_collection_name(
-            spec.get("aggregate"),
-            "aggregate",
-        )
-        pipeline = spec.get("pipeline")
-        if not isinstance(pipeline, list):
-            raise TypeError("pipeline must be a list")
-        cursor_spec = spec.get("cursor", {})
-        if not isinstance(cursor_spec, dict):
-            raise TypeError("cursor must be a document")
-        batch_size = self._normalize_batch_size_from_command(
-            cursor_spec.get("batchSize")
-        )
-        operation = compile_aggregate_operation(
-            pipeline,
-            hint=self._normalize_hint_from_command(spec.get("hint")),
-            comment=spec.get("comment"),
-            max_time_ms=self._normalize_max_time_ms_from_command(spec.get("maxTimeMS")),
-            batch_size=batch_size,
-            let=spec.get("let"),
-        )
+        collection_name, operation = self._compile_command_aggregate_operation(spec)
         first_batch = await self._database.get_collection(
             collection_name
         )._build_aggregation_cursor(
@@ -916,27 +957,8 @@ class AsyncDatabaseAdminService:
             result = dict(explanation)
             result["batch_size"] = operation.batch_size
         elif explained_command_name == "aggregate":
-            collection_name = self._require_collection_name(
-                explain_spec.get("aggregate"),
-                "aggregate",
-            )
-            pipeline = explain_spec.get("pipeline")
-            if not isinstance(pipeline, list):
-                raise TypeError("pipeline must be a list")
-            cursor_spec = explain_spec.get("cursor", {})
-            if not isinstance(cursor_spec, dict):
-                raise TypeError("cursor must be a document")
-            operation = compile_aggregate_operation(
-                pipeline,
-                hint=self._normalize_hint_from_command(explain_spec.get("hint")),
-                comment=explain_spec.get("comment"),
-                max_time_ms=self._normalize_max_time_ms_from_command(
-                    explain_spec.get("maxTimeMS")
-                ),
-                batch_size=self._normalize_batch_size_from_command(
-                    cursor_spec.get("batchSize")
-                ),
-                let=explain_spec.get("let"),
+            collection_name, operation = self._compile_command_aggregate_operation(
+                explain_spec
             )
             explanation = await self._database.get_collection(
                 collection_name
@@ -1084,15 +1106,19 @@ class AsyncDatabaseAdminService:
         if update_spec is None:
             raise OperationFailure("findAndModify requires either remove or update")
 
-        before_full = await collection.find(
-            query,
-            sort=sort,
-            limit=1,
-            hint=hint,
-            comment=spec.get("comment"),
-            max_time_ms=max_time_ms,
+        before_full = await self._first_with_operation(
+            collection_name,
+            compile_find_operation(
+                query,
+                sort=sort,
+                limit=1,
+                hint=hint,
+                comment=spec.get("comment"),
+                max_time_ms=max_time_ms,
+                dialect=self._mongodb_dialect,
+            ),
             session=session,
-        ).first()
+        )
         return_document = ReturnDocument.AFTER if return_new else ReturnDocument.BEFORE
 
         if isinstance(update_spec, dict) and all(
@@ -1113,12 +1139,16 @@ class AsyncDatabaseAdminService:
                 )
                 value = None
                 if return_new:
-                    value = await collection.find(
-                        {"_id": result.upserted_id},
-                        fields,
-                        limit=1,
+                    value = await self._first_with_operation(
+                        collection_name,
+                        compile_find_operation(
+                            {"_id": result.upserted_id},
+                            projection=fields,
+                            limit=1,
+                            dialect=self._mongodb_dialect,
+                        ),
                         session=session,
-                    ).first()
+                    )
                 return FindAndModifyCommandResult(
                     last_error_object=FindAndModifyLastErrorObject(
                         count=1,
@@ -1165,12 +1195,16 @@ class AsyncDatabaseAdminService:
             )
             value = None
             if return_new:
-                value = await collection.find(
-                    {"_id": result.upserted_id},
-                    fields,
-                    limit=1,
+                value = await self._first_with_operation(
+                    collection_name,
+                    compile_find_operation(
+                        {"_id": result.upserted_id},
+                        projection=fields,
+                        limit=1,
+                        dialect=self._mongodb_dialect,
+                    ),
                     session=session,
-                ).first()
+                )
             return FindAndModifyCommandResult(
                 last_error_object=FindAndModifyLastErrorObject(
                     count=1,
