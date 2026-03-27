@@ -691,6 +691,10 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * `$lastN`
     * `$maxN`
     * `$minN`
+    * `$top`
+    * `$bottom`
+    * `$topN`
+    * `$bottomN`
     * `$objectToArray`
     * `$zip`
     * `$slice`

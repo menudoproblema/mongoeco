@@ -1105,8 +1105,7 @@ class AggregationTests(unittest.TestCase):
         documents = [{"_id": "1", "group": "a", "value": 10}]
 
         unsupported_group_accumulators = [
-            "$bottom", "$bottomN",
-            "$median", "$percentile", "$top", "$topN",
+            "$median", "$percentile",
         ]
         for operator in unsupported_group_accumulators:
             with self.subTest(group_operator=operator):
@@ -1114,9 +1113,9 @@ class AggregationTests(unittest.TestCase):
                     apply_pipeline(documents, [{"$group": {"_id": "$group", "result": {operator: "$value"}}}])
 
         unsupported_window_operators = [
-            "$bottom", "$bottomN", "$covariancePop", "$covarianceSamp",
+            "$covariancePop", "$covarianceSamp",
             "$denseRank", "$derivative", "$documentNumber", "$expMovingAvg", "$integral",
-            "$linearFill", "$locf", "$rank", "$shift", "$top", "$topN",
+            "$linearFill", "$locf", "$rank", "$shift",
         ]
         for operator in unsupported_window_operators:
             with self.subTest(window_operator=operator):
@@ -1950,6 +1949,91 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(windowed[1]["runningBottomTwo"], [2])
         self.assertEqual(windowed[2]["runningTopTwo"], [6, 2])
         self.assertEqual(windowed[2]["runningBottomTwo"], [2, 6])
+
+    def test_group_bucket_and_window_support_top_and_bottom_accumulators(self):
+        documents = [
+            {"_id": "1", "group": "a", "rank": 1, "score": 2, "label": "a1"},
+            {"_id": "2", "group": "a", "rank": 2, "score": 4, "label": "a2"},
+            {"_id": "3", "group": "a", "rank": 3, "score": 4, "label": "a3"},
+            {"_id": "4", "group": "b", "rank": 1, "score": None, "label": "b1"},
+            {"_id": "5", "group": "b", "rank": 2, "label": "b2"},
+        ]
+
+        grouped = apply_pipeline(
+            documents,
+            [
+                {
+                    "$group": {
+                        "_id": "$group",
+                        "topLabel": {"$top": {"sortBy": {"score": -1}, "output": "$label"}},
+                        "bottomLabel": {"$bottom": {"sortBy": {"score": -1}, "output": "$label"}},
+                        "topTwo": {"$topN": {"sortBy": {"score": -1}, "output": "$label", "n": 2}},
+                        "bottomTwo": {"$bottomN": {"sortBy": {"score": -1}, "output": "$label", "n": 2}},
+                    }
+                },
+                {"$sort": {"_id": 1}},
+            ],
+        )
+        self.assertEqual(
+            grouped,
+            [
+                {"_id": "a", "topLabel": "a2", "bottomLabel": "a1", "topTwo": ["a2", "a3"], "bottomTwo": ["a2", "a1"]},
+                {"_id": "b", "topLabel": "b1", "bottomLabel": "b1", "topTwo": ["b1", "b2"], "bottomTwo": ["b1", "b2"]},
+            ],
+        )
+
+        bucketed = apply_pipeline(
+            documents,
+            [
+                {
+                    "$bucket": {
+                        "groupBy": "$rank",
+                        "boundaries": [0, 2, 4],
+                        "output": {
+                            "topLabel": {"$top": {"sortBy": {"score": -1}, "output": "$label"}},
+                            "bottomLabel": {"$bottom": {"sortBy": {"score": -1}, "output": "$label"}},
+                        },
+                    }
+                }
+            ],
+        )
+        self.assertEqual(
+            bucketed,
+            [
+                {"_id": 0, "topLabel": "a1", "bottomLabel": "b1"},
+                {"_id": 2, "topLabel": "a2", "bottomLabel": "b2"},
+            ],
+        )
+
+        windowed = apply_pipeline(
+            documents,
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"rank": 1},
+                        "output": {
+                            "runningTop": {
+                                "$top": {"sortBy": {"score": -1}, "output": "$label"},
+                                "window": {"documents": ["unbounded", "current"]},
+                            },
+                            "runningBottomTwo": {
+                                "$bottomN": {"sortBy": {"score": -1}, "output": "$label", "n": 2},
+                                "window": {"documents": ["unbounded", "current"]},
+                            },
+                        },
+                    }
+                }
+            ],
+        )
+        self.assertEqual(windowed[0]["runningTop"], "a1")
+        self.assertEqual(windowed[1]["runningTop"], "a2")
+        self.assertEqual(windowed[2]["runningTop"], "a2")
+        self.assertEqual(windowed[0]["runningBottomTwo"], ["a1"])
+        self.assertEqual(windowed[1]["runningBottomTwo"], ["a2", "a1"])
+        self.assertEqual(windowed[2]["runningBottomTwo"], ["a2", "a1"])
+        self.assertEqual(windowed[3]["runningTop"], "b1")
+        self.assertEqual(windowed[4]["runningBottomTwo"], ["b1", "b2"])
 
     def test_evaluate_expression_supports_stddev_expression_forms(self):
         document = {

@@ -3306,6 +3306,44 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_aggregate_supports_top_and_bottom_accumulators(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.analytics.events
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "group": "a", "rank": 1, "score": 2, "label": "a1"},
+                            {"_id": "2", "group": "a", "rank": 2, "score": 4, "label": "a2"},
+                            {"_id": "3", "group": "a", "rank": 3, "score": 4, "label": "a3"},
+                            {"_id": "4", "group": "b", "rank": 1, "score": None, "label": "b1"},
+                            {"_id": "5", "group": "b", "rank": 2, "label": "b2"},
+                        ]
+                    )
+
+                    grouped = collection.aggregate(
+                        [
+                            {
+                                "$group": {
+                                    "_id": "$group",
+                                    "topLabel": {"$top": {"sortBy": {"score": -1}, "output": "$label"}},
+                                    "bottomLabel": {"$bottom": {"sortBy": {"score": -1}, "output": "$label"}},
+                                    "topTwo": {"$topN": {"sortBy": {"score": -1}, "output": "$label", "n": 2}},
+                                    "bottomTwo": {"$bottomN": {"sortBy": {"score": -1}, "output": "$label", "n": 2}},
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        grouped,
+                        [
+                            {"_id": "a", "topLabel": "a2", "bottomLabel": "a1", "topTwo": ["a2", "a3"], "bottomTwo": ["a2", "a1"]},
+                            {"_id": "b", "topLabel": "b1", "bottomLabel": "b1", "topTwo": ["b1", "b2"], "bottomTwo": ["b1", "b2"]},
+                        ],
+                    )
+
     def test_aggregate_supports_string_expressions_last_and_add_to_set(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

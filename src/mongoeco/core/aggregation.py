@@ -92,6 +92,14 @@ class _PickNAccumulator:
     n: int | None = None
 
 
+@dataclass(slots=True)
+class _OrderedAccumulator:
+    items: list[tuple[list[Any], Any, int]] = field(default_factory=list)
+    n: int | None = None
+    sequence: int = 0
+    sort_spec: SortSpec | None = None
+
+
 def _accumulator_flags(bucket: dict[object, Any]) -> dict[str, bool]:
     flags = bucket.get(_ACCUMULATOR_FLAGS_KEY)
     if isinstance(flags, dict):
@@ -419,6 +427,12 @@ def _validate_accumulator_expression(operator: str, expression: object) -> None:
     if operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
         if not isinstance(expression, dict) or not {"input", "n"} <= set(expression):
             raise OperationFailure(f"{operator} requires input and n")
+    if operator in {"$top", "$bottom"}:
+        if not isinstance(expression, dict) or not {"sortBy", "output"} <= set(expression):
+            raise OperationFailure(f"{operator} requires sortBy and output")
+    if operator in {"$topN", "$bottomN"}:
+        if not isinstance(expression, dict) or not {"sortBy", "output", "n"} <= set(expression):
+            raise OperationFailure(f"{operator} requires sortBy, output and n")
 
 
 def _compare_values(
@@ -568,6 +582,103 @@ def _evaluate_pick_n_input(
         evaluate_expression(document, expression["n"], variables, dialect=dialect),
     )
     return value, size
+
+
+def _evaluate_ordered_accumulator_input(
+    operator: str,
+    document: Document,
+    expression: object,
+    variables: dict[str, Any] | None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> tuple[SortSpec, list[Any], Any, int | None]:
+    if not isinstance(expression, dict) or "sortBy" not in expression or "output" not in expression:
+        raise OperationFailure(f"{operator} requires sortBy and output")
+    sort_spec = _require_sort(expression["sortBy"])
+    sort_values: list[Any] = []
+    for field, _direction in sort_spec:
+        resolved = _resolve_aggregation_field_path(document, field)
+        sort_values.append(None if resolved is _MISSING else resolved)
+    output = evaluate_expression(document, expression["output"], variables, dialect=dialect)
+    size: int | None = None
+    if operator in {"$topN", "$bottomN"}:
+        if "n" not in expression:
+            raise OperationFailure(f"{operator} requires n")
+        size = _normalize_pick_n_size(
+            operator,
+            evaluate_expression(document, expression["n"], variables, dialect=dialect),
+        )
+    return sort_spec, sort_values, output, size
+
+
+def _compare_ordered_accumulator_items(
+    left: tuple[list[Any], Any, int],
+    right: tuple[list[Any], Any, int],
+    sort_spec: SortSpec,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+    reverse_tie_break: bool = False,
+) -> int:
+    left_sort_values, _left_output, left_sequence = left
+    right_sort_values, _right_output, right_sequence = right
+    for index, (_field, direction) in enumerate(sort_spec):
+        comparison = dialect.compare_values(left_sort_values[index], right_sort_values[index])
+        if comparison == 0:
+            continue
+        return comparison if direction == 1 else -comparison
+    if left_sequence == right_sequence:
+        return 0
+    if reverse_tie_break:
+        return -1 if left_sequence > right_sequence else 1
+    return -1 if left_sequence < right_sequence else 1
+
+
+def _trim_ordered_accumulator(
+    state: _OrderedAccumulator,
+    sort_spec: SortSpec,
+    *,
+    keep: int,
+    bottom: bool,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> None:
+    state.items.sort(
+        key=cmp_to_key(
+            lambda left, right: _compare_ordered_accumulator_items(
+                left,
+                right,
+                sort_spec,
+                dialect=dialect,
+                reverse_tie_break=bottom,
+            )
+        )
+    )
+    if len(state.items) <= keep:
+        if bottom:
+            state.items.sort(
+                key=cmp_to_key(
+                    lambda left, right: _compare_ordered_accumulator_items(
+                        left,
+                        right,
+                        sort_spec,
+                        dialect=dialect,
+                    )
+                )
+            )
+        return
+    if bottom:
+        del state.items[: len(state.items) - keep]
+        state.items.sort(
+            key=cmp_to_key(
+                lambda left, right: _compare_ordered_accumulator_items(
+                    left,
+                    right,
+                    sort_spec,
+                    dialect=dialect,
+                )
+            )
+        )
+    else:
+        del state.items[keep:]
 
 
 def _slice_array(value: list[Any], spec: list[object], document: Document, variables: dict[str, Any] | None, *, dialect: MongoDialect) -> list[Any]:
@@ -2823,6 +2934,8 @@ def _initialize_accumulators(
             flags[field] = False
         elif operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
             initialized[field] = _PickNAccumulator()
+        elif operator in {"$top", "$bottom", "$topN", "$bottomN"}:
+            initialized[field] = _OrderedAccumulator()
         elif operator == "$avg":
             initialized[field] = _AverageAccumulator()
         elif operator == "$stdDevPop":
@@ -2940,6 +3053,34 @@ def _apply_accumulators(
                     reverse=operator == "$maxN",
                 )
                 del state.items[state.n:]
+        elif operator in {"$top", "$bottom", "$topN", "$bottomN"}:
+            sort_spec, sort_values, output, size = _evaluate_ordered_accumulator_input(
+                operator,
+                document,
+                expression,
+                variables,
+                dialect=dialect,
+            )
+            state = bucket[field]
+            if state.sort_spec is None:
+                state.sort_spec = sort_spec
+            if operator in {"$topN", "$bottomN"}:
+                if state.n is None:
+                    state.n = size
+                elif state.n != size:
+                    raise OperationFailure(f"{operator} n must evaluate to a consistent positive integer within the group")
+                keep = state.n
+            else:
+                keep = 1
+            state.items.append((sort_values, deepcopy(output), state.sequence))
+            state.sequence += 1
+            _trim_ordered_accumulator(
+                state,
+                sort_spec,
+                keep=keep,
+                bottom=operator in {"$bottom", "$bottomN"},
+                dialect=dialect,
+            )
 
 
 def _finalize_accumulators(bucket: dict[str, Any]) -> Document:
@@ -2967,6 +3108,13 @@ def _finalize_accumulators(bucket: dict[str, Any]) -> Document:
                 document[field] = math.sqrt(variance)
         elif isinstance(value, _PickNAccumulator):
             document[field] = deepcopy(value.items)
+        elif isinstance(value, _OrderedAccumulator):
+            if not value.items:
+                document[field] = None
+            elif value.n is None:
+                document[field] = deepcopy(value.items[0][1])
+            else:
+                document[field] = [deepcopy(item[1]) for item in value.items]
         else:
             document[field] = value
     return document

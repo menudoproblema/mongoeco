@@ -214,9 +214,9 @@ SUPPORTED_AGGREGATION_STAGES = frozenset(
     }
 )
 
-SUPPORTED_GROUP_ACCUMULATORS = frozenset({'$sum', '$count', '$min', '$max', '$first', '$last', '$firstN', '$lastN', '$maxN', '$minN', '$avg', '$push', '$addToSet', '$mergeObjects', '$stdDevPop', '$stdDevSamp'})
+SUPPORTED_GROUP_ACCUMULATORS = frozenset({'$sum', '$count', '$min', '$max', '$first', '$last', '$firstN', '$lastN', '$maxN', '$minN', '$top', '$bottom', '$topN', '$bottomN', '$avg', '$push', '$addToSet', '$mergeObjects', '$stdDevPop', '$stdDevSamp'})
 
-SUPPORTED_WINDOW_ACCUMULATORS = frozenset({'$sum', '$count', '$min', '$max', '$avg', '$push', '$first', '$last', '$firstN', '$lastN', '$maxN', '$minN', '$addToSet', '$stdDevPop', '$stdDevSamp'})
+SUPPORTED_WINDOW_ACCUMULATORS = frozenset({'$sum', '$count', '$min', '$max', '$avg', '$push', '$first', '$last', '$firstN', '$lastN', '$maxN', '$minN', '$top', '$bottom', '$topN', '$bottomN', '$addToSet', '$stdDevPop', '$stdDevSamp'})
 
 DEFAULT_BSON_TYPE_ORDER = MappingProxyType(
     {
