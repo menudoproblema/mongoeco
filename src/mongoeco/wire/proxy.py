@@ -19,6 +19,7 @@ from mongoeco.wire.protocol import (
     encode_op_reply,
     parse_message_header,
 )
+from mongoeco.wire.sessions import WireSessionStore
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,7 +56,8 @@ class AsyncMongoEcoProxyServer:
         self._server: asyncio.AbstractServer | None = None
         self._request_ids = itertools.count(1)
         self._cursor_store = WireCursorStore()
-        self._executor = WireCommandExecutor(self._client, self._cursor_store)
+        self._session_store = WireSessionStore()
+        self._executor = WireCommandExecutor(self._client, self._cursor_store, self._session_store)
 
     async def __aenter__(self) -> "AsyncMongoEcoProxyServer":
         await self.start()
@@ -85,6 +87,7 @@ class AsyncMongoEcoProxyServer:
             await self._server.wait_closed()
             self._server = None
         self._cursor_store.clear()
+        self._session_store.clear()
         if self._owns_client:
             await self._client._engine.disconnect()
 

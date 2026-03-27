@@ -69,3 +69,33 @@ class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
             sequences = await asyncio.to_thread(_exercise)
 
             self.assertEqual(sequences, [1, 2, 3, 4])
+
+    async def test_proxy_supports_explicit_pymongo_sessions(self):
+        async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
+            uri = proxy.address.uri
+
+            def _exercise() -> tuple[str, int]:
+                client = PyMongoClient(
+                    uri,
+                    serverSelectionTimeoutMS=3000,
+                    directConnection=True,
+                )
+                try:
+                    collection = client.alpha.events
+                    with client.start_session() as session:
+                        insert_result = collection.insert_one(
+                            {"kind": "session", "score": 7},
+                            session=session,
+                        )
+                        found = collection.find_one(
+                            {"_id": insert_result.inserted_id},
+                            session=session,
+                        )
+                    return found["kind"], found["score"]
+                finally:
+                    client.close()
+
+            kind, score = await asyncio.to_thread(_exercise)
+
+            self.assertEqual(kind, "session")
+            self.assertEqual(score, 7)

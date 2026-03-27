@@ -4,7 +4,9 @@ from typing import Any
 
 from mongoeco.api import AsyncMongoClient
 from mongoeco.errors import MongoEcoError, OperationFailure, PyMongoError
+from mongoeco.wire.capabilities import resolve_wire_command_capability
 from mongoeco.wire.cursors import WireCursorStore
+from mongoeco.wire.sessions import WireSessionStore
 
 
 _WIRE_INTERNAL_KEYS = frozenset(
@@ -22,9 +24,15 @@ _WIRE_INTERNAL_KEYS = frozenset(
 
 
 class WireCommandExecutor:
-    def __init__(self, client: AsyncMongoClient, cursor_store: WireCursorStore) -> None:
+    def __init__(
+        self,
+        client: AsyncMongoClient,
+        cursor_store: WireCursorStore,
+        session_store: WireSessionStore,
+    ) -> None:
         self._client = client
         self._cursor_store = cursor_store
+        self._session_store = session_store
 
     async def execute_command(
         self,
@@ -44,14 +52,24 @@ class WireCommandExecutor:
         if not command_document:
             raise OperationFailure("wire command document must contain an executable command")
         command_name = next(iter(command_document))
-        if command_name == "endSessions":
-            return {"ok": 1.0}
-        if command_name == "getMore":
+        capability = resolve_wire_command_capability(command_name)
+        if capability.kind == "end_sessions":
+            return self._session_store.end_sessions(command_document.get("endSessions"))
+        if capability.kind == "get_more":
             return self._cursor_store.get_more(command_document, db_name=db_name)
-        if command_name == "killCursors":
+        if capability.kind == "kill_cursors":
             return self._cursor_store.kill_cursors(command_document)
+        if capability.kind == "commit_transaction":
+            return self._session_store.commit_transaction(body)
+        if capability.kind == "abort_transaction":
+            return self._session_store.abort_transaction(body)
         database = self._client.get_database(db_name)
-        result = await database.command(command_document)
+        session = self._session_store.resolve_for_command(
+            self._client,
+            body,
+            capability=capability,
+        )
+        result = await database.command(command_document, session=session)
         if not isinstance(result, dict):
             raise OperationFailure("wire command must resolve to a document response")
         return self._cursor_store.materialize_command_result(command_document, result)
@@ -89,4 +107,3 @@ class WireCommandExecutor:
         if isinstance(exc, MongoEcoError):
             return {"ok": 0.0, "errmsg": str(exc)}
         return {"ok": 0.0, "errmsg": str(exc)}
-
