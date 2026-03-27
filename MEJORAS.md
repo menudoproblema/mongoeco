@@ -75,7 +75,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 
 ## 4. Arquitectura Basada en Planes de Operación
 
-- `Estado`: `En progreso`
+- `Estado`: `Aplicado`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Medio-Alto`
 - `Descripción`: introducir una IR explícita entre API y engines, con objetos como `FindPlan`, `UpdatePlan`, `AggregatePlan` o `AdminCommandPlan`.
@@ -92,10 +92,9 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `5bcc88a` `refactor: route aggregate execution through compiled find operations`
   - `4b767b7` `refactor: compile admin aggregate and lookup reads`
   - `ccf1a08` `refactor: parse typed read admin commands`
-- `Pendiente para cerrar de verdad`:
-  - extender la frontera planificada a algunas rutas auxiliares restantes de admin y writes complejos
-  - seguir reduciendo recomposición manual de operaciones en helpers secundarios
-- `Estado actual`: `find`, `count`, `distinct`, `aggregate`, `explain` y varias rutas admin ya se apoyan en operaciones compiladas; quedan flecos auxiliares, no ya el flujo principal.
+  - `d9c5956` `refactor: require compiled find operations in collection`
+  - `0a660f5` `refactor: close operation plan gaps in admin helpers`
+- `Cierre`: la frontera basada en operaciones compiladas ya cubre el flujo principal y los helpers auxiliares relevantes: `find`, `count`, `distinct`, `aggregate`, `explain`, selección previa de writes y rutas admin dejan de recomponer operaciones a mano y pasan por planes explícitos compartidos.
 
 ## 5. Motor de Updates Formal Basado en Paths Compilados
 
