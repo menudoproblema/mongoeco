@@ -380,8 +380,10 @@ No conviene adelantar:
   - proxy async mínimo en `src/mongoeco/wire/`
   - soporte real para `OP_QUERY`/`OP_REPLY` legacy de handshake y `OP_MSG`
   - bridge BSON hacia los tipos internos del core
+  - subsistema de ejecución y store de cursores wire desacoplados del adaptador TCP
+  - soporte real para `getMore` y `killCursors` sobre cursores materializados básicos
   - integración validada con `pymongo.MongoClient`
-- `Cierre`: queda con matices porque el proxy actual se centra en comandos y cursores materializados básicos, sin cubrir aún toda la superficie histórica del protocolo ni streaming real con `getMore`, pero la base arquitectónica del servidor ya existe y reutiliza el core en vez de duplicarlo.
+- `Cierre`: queda con matices porque el proxy actual sigue centrado en comandos y cursores materializados básicos, sin cubrir aún toda la superficie histórica del protocolo ni un streaming más fino o distribuido, pero la base arquitectónica del servidor ya existe, mantiene ciclo de vida real de cursores y reutiliza el core en vez de duplicarlo.
 
 ### 16. Políticas de Comportamiento 100% Derivadas del Catálogo
 
