@@ -46,3 +46,26 @@ class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(found["kind"], "view")
             self.assertEqual(found["score"], 2)
             self.assertEqual(aggregated, [{"score": 3}])
+
+    async def test_proxy_supports_get_more_batches_through_pymongo_cursor(self):
+        async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
+            uri = proxy.address.uri
+
+            def _exercise() -> list[int]:
+                client = PyMongoClient(
+                    uri,
+                    serverSelectionTimeoutMS=3000,
+                    directConnection=True,
+                )
+                try:
+                    collection = client.alpha.events
+                    collection.insert_many(
+                        [{"seq": 1}, {"seq": 2}, {"seq": 3}, {"seq": 4}]
+                    )
+                    return [doc["seq"] for doc in collection.find({}, sort=[("seq", 1)], batch_size=2)]
+                finally:
+                    client.close()
+
+            sequences = await asyncio.to_thread(_exercise)
+
+            self.assertEqual(sequences, [1, 2, 3, 4])
