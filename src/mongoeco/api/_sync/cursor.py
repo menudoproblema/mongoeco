@@ -1,12 +1,13 @@
 from mongoeco.api._async.cursor import (
     HintSpec,
+    MONGODB_DIALECT_70,
     _serialize_explanation,
     _validate_batch_size,
     _validate_hint_spec,
     _validate_max_time_ms,
     _validate_sort_spec,
 )
-from mongoeco.core.query_plan import compile_filter
+from mongoeco.api.operations import FindOperation, compile_find_operation
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
 from mongoeco.types import Document, Filter, Projection, SortSpec
@@ -270,25 +271,56 @@ class Cursor:
     def alive(self) -> bool:
         return not self._closed and not self._exhausted
 
+    def _as_operation(self) -> FindOperation:
+        return compile_find_operation(
+            self._filter_spec,
+            projection=self._projection,
+            sort=self._sort,
+            skip=self._skip,
+            limit=self._limit,
+            hint=self._hint,
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
+            batch_size=self._batch_size,
+            dialect=getattr(self._async_collection, "mongodb_dialect", MONGODB_DIALECT_70),
+        )
+
     def explain(self) -> dict[str, object]:
         self._ensure_open()
+        operation = self._as_operation()
         dialect = getattr(self._async_collection, "mongodb_dialect", None)
+        explain_find_operation = getattr(
+            self._async_collection._engine,
+            "explain_find_operation",
+            None,
+        )
+        if callable(explain_find_operation):
+            result = self._client._run(
+                explain_find_operation(
+                    self._async_collection._db_name,
+                    self._async_collection._collection_name,
+                    operation,
+                    dialect=dialect,
+                    context=self._session,
+                )
+            )
+            return _serialize_explanation(result)
         return _serialize_explanation(
             self._client._run(
-            self._async_collection._engine.explain_query_plan(
-                self._async_collection._db_name,
-                self._async_collection._collection_name,
-                self._filter_spec,
-                plan=compile_filter(self._filter_spec, dialect=dialect),
-                sort=self._sort,
-                skip=self._skip,
-                limit=self._limit,
-                hint=self._hint,
-                comment=self._comment,
-                max_time_ms=self._max_time_ms,
-                dialect=dialect,
-                context=self._session,
-            )
+                self._async_collection._engine.explain_query_plan(
+                    self._async_collection._db_name,
+                    self._async_collection._collection_name,
+                    operation.filter_spec,
+                    plan=operation.plan,
+                    sort=operation.sort,
+                    skip=operation.skip,
+                    limit=operation.limit,
+                    hint=operation.hint,
+                    comment=operation.comment,
+                    max_time_ms=operation.max_time_ms,
+                    dialect=dialect,
+                    context=self._session,
+                )
             )
         )
 

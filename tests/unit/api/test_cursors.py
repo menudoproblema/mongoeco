@@ -15,6 +15,7 @@ class _AsyncEngineStub:
     def __init__(self, documents):
         self._documents = documents
         self.explain_calls = []
+        self.explain_find_calls = []
 
     async def _scan(self, *, skip=0, limit=None):
         documents = self._documents[skip:]
@@ -29,6 +30,10 @@ class _AsyncEngineStub:
     async def explain_query_plan(self, *args, **kwargs):
         self.explain_calls.append((args, kwargs))
         return {"engine": "stub", "details": ["COLLSCAN"]}
+
+    async def explain_find_operation(self, *args, **kwargs):
+        self.explain_find_calls.append((args, kwargs))
+        return {"engine": "stub", "details": ["IXSCAN"]}
 
 
 class _AsyncCollectionStub:
@@ -397,11 +402,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(cursor.alive)
         self.assertEqual(await cursor.first(), {"_id": "2"})
 
-        self.assertEqual(await cursor.explain(), {"engine": "stub", "details": ["COLLSCAN"]})
-        self.assertEqual(collection._engine.explain_calls[0][1]["sort"], [("_id", 1)])
-        self.assertEqual(collection._engine.explain_calls[0][1]["hint"], "name_1")
-        self.assertEqual(collection._engine.explain_calls[0][1]["comment"], "trace")
-        self.assertEqual(collection._engine.explain_calls[0][1]["max_time_ms"], 5)
+        self.assertEqual(await cursor.explain(), {"engine": "stub", "details": ["IXSCAN"]})
+        operation = collection._engine.explain_find_calls[0][0][2]
+        self.assertEqual(operation.sort, [("_id", 1)])
+        self.assertEqual(operation.hint, "name_1")
+        self.assertEqual(operation.comment, "trace")
+        self.assertEqual(operation.max_time_ms, 5)
 
 
     def test_sync_cursor_rejects_negative_skip_and_limit_and_supports_iteration(self):
@@ -643,10 +649,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         cursor.rewind()
         self.assertTrue(cursor.alive)
         self.assertEqual(cursor.first(), {"_id": "1"})
-        self.assertEqual(cursor.explain(), {"engine": "stub", "details": ["COLLSCAN"]})
-        self.assertEqual(collection._engine.explain_calls[0][1]["hint"], "name_1")
-        self.assertEqual(collection._engine.explain_calls[0][1]["comment"], "trace")
-        self.assertEqual(collection._engine.explain_calls[0][1]["max_time_ms"], 5)
+        self.assertEqual(cursor.explain(), {"engine": "stub", "details": ["IXSCAN"]})
+        self.assertEqual(collection._engine.explain_find_calls[0][1]["context"], None)
+        operation = collection._engine.explain_find_calls[0][0][2]
+        self.assertEqual(operation.hint, "name_1")
+        self.assertEqual(operation.comment, "trace")
+        self.assertEqual(operation.max_time_ms, 5)
 
     def test_sync_index_cursor_supports_first_to_list_and_close(self):
         async_cursor = AsyncIndexCursor(
