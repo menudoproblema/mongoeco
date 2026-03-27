@@ -280,12 +280,15 @@ Estas mejoras ya no forman parte del refactor base original, pero sí son la con
 
 ### 13. SDK de Extensión para Operadores y Stages
 
-- `Estado`: `Pendiente`
+- `Estado`: `Aplicado`
 - `Impacto`: `Medio-Alto`
 - `Esfuerzo`: `Alto`
 - `Descripción`: permitir registrar operadores, expresiones o stages externos sin tocar el código fuente principal.
 - `Motivación`: con el catálogo y la agregación ya modularizados, el siguiente paso natural es abrir extensión controlada.
 - `Aporte real`: convierte `mongoeco` en plataforma extensible y no solo en implementación cerrada.
+- `Aplicado ya`:
+  - `59c8dcc` `feat: add aggregation extension sdk`
+- `Cierre`: la agregación expone ya un registro formal de operadores de expresión y stages, con alta/baja explícita, decoradores de registro y reconocimiento desde runtime y planificación relajada, sin depender de tocar el catálogo base ni de subclasificar dialectos.
 
 ### Orden Consolidado Después de las Tres Primeras
 
@@ -311,12 +314,15 @@ No conviene adelantar:
 
 ### 14. Motor de Indexación Virtual de Alta Fidelidad
 
-- `Estado`: `Pendiente`
+- `Estado`: `Aplicado con matices`
 - `Impacto`: `Muy Alto`
 - `Esfuerzo`: `Muy Alto`
 - `Descripción`: desacoplar la semántica de indexación MongoDB del índice físico del backend, especialmente para multi-key, sparse y parciales.
 - `Motivación`: SQLite no representa de forma nativa la semántica exacta de índices MongoDB.
 - `Aporte real`: mejora explain, selección de planes, fidelidad de hint y comportamiento de índices complejos.
+- `Aplicado ya`:
+  - `88883ee` `feat: add virtual index engine semantics`
+- `Cierre`: memoria y SQLite comparten ya una capa virtual para semántica `sparse` y `partialFilterExpression`, tanto en metadata como en unicidad, hints y persistencia. Lo dejo con matices porque el salto final de fidelidad todavía pediría un indexador físico/lógico más ambicioso para planificación automática y escenarios multikey avanzados.
 
 ### 15. Proxy Server con MongoDB Wire Protocol
 
