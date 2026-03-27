@@ -36,11 +36,12 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 - `Aplicado ya`:
   - `436b7dc` `refactor: extract async database admin service`
   - `c39fdf1` `refactor: extract async database command service`
+  - `75444e7` `refactor: add sync database admin service`
   - `1681e98` `refactor: parse typed admin commands before execution`
 - `Pendiente para cerrar de verdad`:
-  - simetría completa en la capa sync
-  - resultados administrativos internos tipados de forma homogénea
-  - separar mejor parseo, ejecución y serialización pública de comandos
+  - reducir todavía más lógica administrativa residual en `Database`
+  - separar mejor ejecución interna y serialización pública de comandos
+  - consolidar un dispatcher tipado más homogéneo entre async y sync
 
 ## 3. Tipado Estricto en el Core Semántico y la Metadata Interna
 
@@ -53,8 +54,8 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 - `Aplicado ya`:
   - `6076c4e` `refactor: type admin metadata contracts`
   - `33caa69` `refactor: type admin command metadata internals`
+  - `cee0689` `refactor: type internal admin command results`
 - `Pendiente para cerrar de verdad`:
-  - tipar resultados internos de comandos admin más allá de stats
   - tipar explain/admin payloads internos con records privados
   - reducir más `dict[str, object]` internos en la capa admin
 
@@ -70,8 +71,8 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `0069fd8` `refactor: add compiled find operations`
   - `f1640a4` `refactor: compile write operations in api layer`
   - `1681e98` `refactor: parse typed admin commands before execution`
+  - `8ce97aa` `refactor: compile aggregate operations before execution`
 - `Pendiente para cerrar de verdad`:
-  - `AggregateOperation`
   - extender la frontera planificada hasta más rutas de engine
   - consolidar mejor explain/admin sobre operaciones ya compiladas
 
@@ -93,12 +94,18 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 
 ## 6. Compatibilidad y Tooling Derivados Automáticamente
 
-- `Estado`: `Pendiente`
+- `Estado`: `En progreso`
 - `Impacto`: `Medio`
 - `Esfuerzo`: `Medio`
 - `Descripción`: derivar automáticamente desde el catálogo de compatibilidad los helpers `supports_*`, snapshots, exports JSON/Markdown y documentación técnica.
 - `Motivación`: aunque ya hay catálogo central, todavía no toda la observabilidad del soporte sale de él de forma automática.
 - `Aporte real`: evita drift entre código, tests, documentación y tooling.
+- `Aplicado ya`:
+  - exports públicos de compatibilidad desde `src/mongoeco/compat/catalog.py`
+  - tests de snapshot/consistencia en `tests/unit/test_compat.py` y `tests/unit/test_architecture.py`
+- `Pendiente para cerrar de verdad`:
+  - derivar más helpers de runtime desde el catálogo maestro
+  - publicar snapshots o artefactos versionados para tooling externo
 
 ## 7. Separación Más Fuerte entre Core Semántico y Ejecución por Engine
 
@@ -131,8 +138,8 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 
 Si el objetivo es que el proyecto termine pareciendo diseñado desde cero, el siguiente orden recomendado es:
 
-1. tipar también los resultados internos del subsistema admin;
-2. llevar la simetría del subsistema admin a la capa sync;
-3. introducir `AggregateOperation` y seguir ensanchando la frontera de planes explícitos;
-4. compilar también las instrucciones de update por operador;
+1. compilar también las instrucciones de update por operador;
+2. tipar `explain` y más payloads internos del subsistema admin;
+3. seguir empujando `FindOperation` / `UpdateOperation` / `AggregateOperation` hasta la frontera con engines;
+4. derivar más helpers y artefactos de compatibilidad directamente del catálogo;
 5. después volver a evaluar si ya compensa endurecer la frontera semántica/engine.
