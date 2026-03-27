@@ -496,11 +496,36 @@ class AsyncDatabase:
             return _connection_status_document(show_privileges=show_privileges)
 
         if command_name == "listCollections":
+            name_only = spec.get("nameOnly", False)
+            if not isinstance(name_only, bool):
+                raise TypeError("nameOnly must be a bool")
+            authorized_collections = spec.get("authorizedCollections", False)
+            if not isinstance(authorized_collections, bool):
+                raise TypeError("authorizedCollections must be a bool")
             filter_spec = self._normalize_filter(spec.get("filter"))
-            first_batch = await self.list_collections(
-                filter_spec,
-                session=session,
-            ).to_list()
+            if name_only:
+                collection_names = await self._engine.list_collections(
+                    self._db_name,
+                    context=session,
+                )
+                first_batch = [
+                    {"name": name, "type": "collection"}
+                    for name in collection_names
+                ]
+                first_batch = [
+                    document
+                    for document in first_batch
+                    if QueryEngine.match(
+                        document,
+                        filter_spec,
+                        dialect=self._mongodb_dialect,
+                    )
+                ]
+            else:
+                first_batch = await self.list_collections(
+                    filter_spec,
+                    session=session,
+                ).to_list()
             return {
                 "cursor": {
                     "id": 0,

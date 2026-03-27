@@ -126,6 +126,34 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(connection_status["ok"], 1.0)
 
+    async def test_list_collections_command_supports_name_only(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    await client.alpha.create_collection("events", capped=True, size=512)
+                    await client.alpha.create_collection("logs")
+
+                    result = await client.alpha.command(
+                        "listCollections",
+                        nameOnly=True,
+                        authorizedCollections=True,
+                        filter={"name": "events"},
+                    )
+
+                    self.assertEqual(
+                        result,
+                        {
+                            "cursor": {
+                                "id": 0,
+                                "ns": "alpha.$cmd.listCollections",
+                                "firstBatch": [
+                                    {"name": "events", "type": "collection"},
+                                ],
+                            },
+                            "ok": 1.0,
+                        },
+                    )
+
     async def test_create_collection_registers_empty_namespace_and_rejects_duplicates(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -726,6 +754,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await client.alpha.command({"dropIndexes": "events", "index": 1.5})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 await client.alpha.command("listDatabases", nameOnly=1)  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                await client.alpha.command("listCollections", nameOnly=1)  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                await client.alpha.command("listCollections", authorizedCollections=1)  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 await client.alpha.command({"insert": "events", "documents": {}})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
