@@ -490,7 +490,7 @@ class UpdateEngine:
         dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> list[tuple[str, Any]]:
         try:
-            return [(path, value) for path, value in dialect.sort_update_path_items(params)]
+            return [(path, value) for path, value in dialect.policy.sort_update_path_items(params)]
         except TypeError as exc:
             raise OperationFailure("update field names must be strings") from exc
 
@@ -582,7 +582,7 @@ class UpdateEngine:
             value = application.instruction.value
             for target in application.targets:
                 found, current = get_document_value(doc, target.concrete_path)
-                if not found or context.dialect.compare_values(current, value) > 0:
+                if not found or context.dialect.policy.compare_values(current, value) > 0:
                     if set_document_value(doc, target.concrete_path, deepcopy(value)):
                         modified = True
         return modified
@@ -604,7 +604,7 @@ class UpdateEngine:
             value = application.instruction.value
             for target in application.targets:
                 found, current = get_document_value(doc, target.concrete_path)
-                if not found or context.dialect.compare_values(current, value) < 0:
+                if not found or context.dialect.policy.compare_values(current, value) < 0:
                     if set_document_value(doc, target.concrete_path, deepcopy(value)):
                         modified = True
         return modified
@@ -828,7 +828,7 @@ class UpdateEngine:
         if sort_spec is not None:
             if isinstance(sort_spec, int):
                 current.sort(
-                    key=cmp_to_key(dialect.compare_values),
+                    key=cmp_to_key(dialect.policy.compare_values),
                     reverse=sort_spec == -1,
                 )
             else:

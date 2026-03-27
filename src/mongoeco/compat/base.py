@@ -3,7 +3,7 @@ import decimal
 import math
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Callable
 import uuid
 
 from mongoeco.compat.catalog import (
@@ -25,6 +25,37 @@ from mongoeco.compat.catalog import (
     SUPPORTED_WINDOW_ACCUMULATORS,
 )
 from mongoeco.types import ObjectId, UndefinedType
+
+
+@dataclass(frozen=True, slots=True)
+class MongoBehaviorPolicy:
+    null_query_matches_undefined_fn: Callable[[], bool]
+    expression_truthy_fn: Callable[[object], bool]
+    projection_flag_fn: Callable[[object], int | None]
+    sort_update_path_items_fn: Callable[[dict[str, object]], list[tuple[str, object]]]
+    values_equal_fn: Callable[[Any, Any], bool]
+    compare_values_fn: Callable[[Any, Any], int]
+
+    def null_query_matches_undefined(self) -> bool:
+        return self.null_query_matches_undefined_fn()
+
+    def expression_truthy(self, value: object) -> bool:
+        return self.expression_truthy_fn(value)
+
+    def projection_flag(self, value: object) -> int | None:
+        return self.projection_flag_fn(value)
+
+    def sort_update_path_items(
+        self,
+        params: dict[str, object],
+    ) -> list[tuple[str, object]]:
+        return self.sort_update_path_items_fn(params)
+
+    def values_equal(self, left: Any, right: Any) -> bool:
+        return self.values_equal_fn(left, right)
+
+    def compare_values(self, left: Any, right: Any) -> int:
+        return self.compare_values_fn(left, right)
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,11 +84,22 @@ class MongoDialect:
     def has_capability(self, name: str) -> bool:
         return name in self.capabilities
 
+    @property
+    def policy(self) -> MongoBehaviorPolicy:
+        return MongoBehaviorPolicy(
+            null_query_matches_undefined_fn=self.null_query_matches_undefined,
+            expression_truthy_fn=self.expression_truthy,
+            projection_flag_fn=self.projection_flag,
+            sort_update_path_items_fn=self.sort_update_path_items,
+            values_equal_fn=self.values_equal,
+            compare_values_fn=self.compare_values,
+        )
+
     def null_query_matches_undefined(self) -> bool:
         """Controla si `null` en query iguala el BSON `undefined` legado."""
-        catalog_value = self.behavior_flag("null_query_matches_undefined")
-        if catalog_value is not None:
-            return catalog_value
+        value = self.catalog_behavior_flags.get("null_query_matches_undefined")
+        if isinstance(value, bool):
+            return value
         return True
 
     def expression_truthy(self, value: object) -> bool:

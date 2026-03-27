@@ -2,6 +2,7 @@ from typing import AsyncIterable, Protocol, runtime_checkable
 
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MongoDialect
+from mongoeco.engines.semantic_core import EngineReadExecutionPlan
 from mongoeco.core.query_plan import QueryNode
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -63,6 +64,19 @@ class AsyncExplainEngine(Protocol):
 
 
 @runtime_checkable
+class AsyncReadPlanningEngine(Protocol):
+    async def plan_find_execution(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: FindOperation,
+        *,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> EngineReadExecutionPlan: ...
+
+
+@runtime_checkable
 class AsyncDatabaseAdminEngine(Protocol):
     async def list_databases(self, *, context: ClientSession | None = None) -> list[str]: ...
 
@@ -91,6 +105,7 @@ class AsyncStorageEngine(
     AsyncLifecycleEngine,
     AsyncCrudEngine,
     AsyncIndexAdminEngine,
+    AsyncReadPlanningEngine,
     AsyncExplainEngine,
     AsyncAdminEngine,
     Protocol,

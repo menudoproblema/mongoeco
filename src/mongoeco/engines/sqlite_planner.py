@@ -1,17 +1,15 @@
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from mongoeco.engines.semantic_core import EngineFindSemantics
-from mongoeco.types import IndexKeySpec
+from mongoeco.engines.semantic_core import EngineFindSemantics, EngineReadExecutionPlan
+from mongoeco.types import ExecutionLineageStep, IndexKeySpec
 
 
-@dataclass(frozen=True, slots=True)
-class SQLiteReadExecutionPlan:
-    semantics: EngineFindSemantics
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SQLiteReadExecutionPlan(EngineReadExecutionPlan):
     use_sql: bool
     sql: str | None = None
     params: tuple[object, ...] = ()
-    fallback_reason: str | None = None
 
     def require_sql(self) -> tuple[str, tuple[object, ...]]:
         if not self.use_sql or self.sql is None:
@@ -37,36 +35,48 @@ def compile_sqlite_read_execution_plan(
     if dialect_requires_python_fallback(semantics.dialect):
         return SQLiteReadExecutionPlan(
             semantics=semantics,
+            strategy="python",
+            execution_lineage=_python_lineage(semantics, "Custom dialect requires Python fallback"),
             use_sql=False,
             fallback_reason="Custom dialect requires Python fallback",
         )
     if plan_has_array_traversing_paths(db_name, coll_name, semantics.query_plan):
         return SQLiteReadExecutionPlan(
             semantics=semantics,
+            strategy="python",
+            execution_lineage=_python_lineage(semantics, "Array traversal requires Python fallback"),
             use_sql=False,
             fallback_reason="Array traversal requires Python fallback",
         )
     if plan_requires_python_for_array_comparisons(db_name, coll_name, semantics.query_plan):
         return SQLiteReadExecutionPlan(
             semantics=semantics,
+            strategy="python",
+            execution_lineage=_python_lineage(semantics, "Top-level array comparisons require Python fallback"),
             use_sql=False,
             fallback_reason="Top-level array comparisons require Python fallback",
         )
     if plan_requires_python_for_undefined(db_name, coll_name, semantics.query_plan):
         return SQLiteReadExecutionPlan(
             semantics=semantics,
+            strategy="python",
+            execution_lineage=_python_lineage(semantics, "Tagged undefined requires Python fallback"),
             use_sql=False,
             fallback_reason="Tagged undefined requires Python fallback",
         )
     if plan_requires_python_for_bytes(db_name, coll_name, semantics.query_plan):
         return SQLiteReadExecutionPlan(
             semantics=semantics,
+            strategy="python",
+            execution_lineage=_python_lineage(semantics, "Tagged bytes require Python fallback"),
             use_sql=False,
             fallback_reason="Tagged bytes require Python fallback",
         )
     if sort_requires_python(db_name, coll_name, semantics.query_plan, semantics.sort):
         return SQLiteReadExecutionPlan(
             semantics=semantics,
+            strategy="python",
+            execution_lineage=_python_lineage(semantics, "Sort requires Python fallback"),
             use_sql=False,
             fallback_reason="Sort requires Python fallback",
         )
@@ -84,12 +94,44 @@ def compile_sqlite_read_execution_plan(
     except NotImplementedError as exc:
         return SQLiteReadExecutionPlan(
             semantics=semantics,
+            strategy="python",
+            execution_lineage=_python_lineage(semantics, str(exc)),
             use_sql=False,
             fallback_reason=str(exc),
         )
     return SQLiteReadExecutionPlan(
         semantics=semantics,
+        strategy="sql",
+        execution_lineage=_sql_lineage(semantics),
         use_sql=True,
         sql=sql,
         params=tuple(params),
     )
+
+
+def _sql_lineage(semantics: EngineFindSemantics) -> tuple[ExecutionLineageStep, ...]:
+    lineage = [
+        ExecutionLineageStep(runtime="sql", phase="scan", detail="engine pushdown"),
+        ExecutionLineageStep(runtime="sql", phase="filter", detail="engine pushdown"),
+    ]
+    if semantics.sort:
+        lineage.append(ExecutionLineageStep(runtime="sql", phase="sort", detail="engine pushdown"))
+    if semantics.skip or semantics.limit is not None:
+        lineage.append(ExecutionLineageStep(runtime="sql", phase="slice", detail="engine pushdown"))
+    if semantics.projection is not None:
+        lineage.append(ExecutionLineageStep(runtime="python", phase="project", detail="semantic core projection"))
+    return tuple(lineage)
+
+
+def _python_lineage(semantics: EngineFindSemantics, reason: str) -> tuple[ExecutionLineageStep, ...]:
+    lineage = [
+        ExecutionLineageStep(runtime="python", phase="scan", detail=reason),
+        ExecutionLineageStep(runtime="python", phase="filter", detail="semantic core"),
+    ]
+    if semantics.sort:
+        lineage.append(ExecutionLineageStep(runtime="python", phase="sort", detail="semantic core"))
+    if semantics.skip or semantics.limit is not None:
+        lineage.append(ExecutionLineageStep(runtime="python", phase="slice", detail="semantic core"))
+    if semantics.projection is not None:
+        lineage.append(ExecutionLineageStep(runtime="python", phase="project", detail="semantic core"))
+    return tuple(lineage)

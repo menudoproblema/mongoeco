@@ -568,7 +568,9 @@ class QueryPlanExplanationDocument(TypedDict, total=False):
     engine: str
     strategy: str
     plan: str
-    details: dict[str, object]
+    details: object
+    execution_lineage: list[ExecutionLineageStepDocument]
+    fallback_reason: str | None
     sort: SortSpec | None
     skip: int
     limit: int | None
@@ -590,6 +592,26 @@ class AggregateExplanationDocument(TypedDict):
     streaming_batch_execution: bool
 
 
+class ExecutionLineageStepDocument(TypedDict):
+    runtime: str
+    phase: str
+    detail: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class ExecutionLineageStep:
+    runtime: str
+    phase: str
+    detail: str | None = None
+
+    def to_document(self) -> ExecutionLineageStepDocument:
+        return {
+            "runtime": self.runtime,
+            "phase": self.phase,
+            "detail": self.detail,
+        }
+
+
 @dataclass(frozen=True, slots=True)
 class QueryPlanExplanation:
     engine: str
@@ -602,8 +624,10 @@ class QueryPlanExplanation:
     hinted_index: str | None
     comment: object | None
     max_time_ms: int | None
-    details: dict[str, object] | None = None
+    details: object | None = None
     indexes: list[IndexDocument] | None = None
+    execution_lineage: tuple[ExecutionLineageStep, ...] = ()
+    fallback_reason: str | None = None
 
     def to_document(self) -> QueryPlanExplanationDocument:
         document: QueryPlanExplanationDocument = {
@@ -622,6 +646,10 @@ class QueryPlanExplanation:
             document["details"] = self.details
         if self.indexes is not None:
             document["indexes"] = self.indexes
+        if self.execution_lineage:
+            document["execution_lineage"] = [step.to_document() for step in self.execution_lineage]
+        if self.fallback_reason is not None:
+            document["fallback_reason"] = self.fallback_reason
         return document
 
 

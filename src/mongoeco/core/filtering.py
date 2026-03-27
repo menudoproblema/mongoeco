@@ -54,7 +54,7 @@ class BSONComparator:
 
     @staticmethod
     def compare(a: Any, b: Any) -> int:
-        return MONGODB_DIALECT_70.compare_values(a, b)
+        return MONGODB_DIALECT_70.policy.compare_values(a, b)
 
 class QueryEngine:
     """Motor central de filtrado de MongoDB."""
@@ -274,7 +274,7 @@ class QueryEngine:
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> bool:
-        return dialect.values_equal(left, right)
+        return dialect.policy.values_equal(left, right)
 
     @staticmethod
     def _regex_item_matches_candidate(candidate: Any, pattern: re.Pattern[str]) -> bool:
@@ -345,7 +345,7 @@ class QueryEngine:
     ) -> bool:
         values = QueryEngine._extract_values(doc, field)
         if not values:
-            return not (condition is None and dialect.null_query_matches_undefined())
+            return not (condition is None and dialect.policy.null_query_matches_undefined())
         candidates = values or [None]
         return all(
             not QueryEngine._values_equal(value, condition, dialect=dialect)
@@ -364,14 +364,15 @@ class QueryEngine:
         candidates = QueryEngine._extract_values(doc, field)
         if not candidates:
             return False
+        policy = dialect.policy
         if operator == "gt":
-            return any(dialect.compare_values(value, target) > 0 for value in candidates)
+            return any(policy.compare_values(value, target) > 0 for value in candidates)
         if operator == "gte":
-            return any(dialect.compare_values(value, target) >= 0 for value in candidates)
+            return any(policy.compare_values(value, target) >= 0 for value in candidates)
         if operator == "lt":
-            return any(dialect.compare_values(value, target) < 0 for value in candidates)
+            return any(policy.compare_values(value, target) < 0 for value in candidates)
         if operator == "lte":
-            return any(dialect.compare_values(value, target) <= 0 for value in candidates)
+            return any(policy.compare_values(value, target) <= 0 for value in candidates)
         raise ValueError(f"Unsupported comparison operator kind: {operator}")
 
     @staticmethod
@@ -406,7 +407,7 @@ class QueryEngine:
         candidates = QueryEngine._extract_values(doc, field)
         if not candidates:
             has_null = any(item is None for item in values)
-            return not (has_null and dialect.null_query_matches_undefined())
+            return not (has_null and dialect.policy.null_query_matches_undefined())
         return not any(
             QueryEngine._in_item_matches_candidate(
                 candidate,

@@ -220,7 +220,7 @@ def _is_simple_projection_for_dialect(
 
 
 def _projection_flag(value: object, *, dialect: MongoDialect) -> int | None:
-    return dialect.projection_flag(value)
+    return dialect.policy.projection_flag(value)
 
 
 def _require_unwind_spec(spec: object) -> tuple[str, bool, str | None]:
@@ -410,7 +410,7 @@ def _lookup_matches(
         QueryEngine._query_equality_matches(
             local_value,
             foreign_value,
-            null_matches_undefined=dialect.null_query_matches_undefined(),
+            null_matches_undefined=dialect.policy.null_query_matches_undefined(),
             dialect=dialect,
         )
         for local_value in left
@@ -478,7 +478,7 @@ def _compare_values(
         return QueryEngine._values_equal(left, right, dialect=dialect)
     if operator == "$ne":
         return not QueryEngine._values_equal(left, right, dialect=dialect)
-    comparison = dialect.compare_values(left, right)
+    comparison = dialect.policy.compare_values(left, right)
     return {
         "$gt": comparison > 0,
         "$gte": comparison >= 0,
@@ -712,7 +712,7 @@ def _compute_percentiles(
 ) -> list[int | float | decimal.Decimal] | None:
     if not values:
         return None
-    ordered = sorted(values, key=cmp_to_key(dialect.compare_values))
+    ordered = sorted(values, key=cmp_to_key(dialect.policy.compare_values))
     results: list[int | float | decimal.Decimal] = []
     length = len(ordered)
     for probability in probabilities:
@@ -739,7 +739,7 @@ def _compare_ordered_accumulator_items(
     left_sort_values, _left_output, left_sequence = left
     right_sort_values, _right_output, right_sequence = right
     for index, (_field, direction) in enumerate(sort_spec):
-        comparison = dialect.compare_values(left_sort_values[index], right_sort_values[index])
+        comparison = dialect.policy.compare_values(left_sort_values[index], right_sort_values[index])
         if comparison == 0:
             continue
         return comparison if direction == 1 else -comparison
@@ -817,7 +817,7 @@ def _window_sort_keys_equal(
 ) -> bool:
     if len(left) != len(right):
         return False
-    return all(dialect.compare_values(left[index], right[index]) == 0 for index in range(len(left)))
+    return all(dialect.policy.compare_values(left[index], right[index]) == 0 for index in range(len(left)))
 
 
 def _slice_array(value: list[Any], spec: list[object], document: Document, variables: dict[str, Any] | None, *, dialect: MongoDialect) -> list[Any]:
@@ -845,7 +845,7 @@ def _slice_array(value: list[Any], spec: list[object], document: Document, varia
 
 
 def _expression_truthy(value: Any, *, dialect: MongoDialect) -> bool:
-    return dialect.expression_truthy(value)
+    return dialect.policy.expression_truthy(value)
 
 
 def _append_unique_values(
@@ -2328,7 +2328,7 @@ def evaluate_expression(
                         if item is not None and not isinstance(item, UndefinedType)
                     ]
                     filtered.sort(
-                        key=cmp_to_key(dialect.compare_values),
+                        key=cmp_to_key(dialect.policy.compare_values),
                         reverse=operator == "$maxN",
                     )
                     return filtered[:size]
@@ -2350,7 +2350,7 @@ def evaluate_expression(
                 args = _require_expression_args(operator, spec, min_args=2, max_args=2)
                 left = evaluate_expression(document, args[0], variables, dialect=dialect)
                 right = evaluate_expression(document, args[1], variables, dialect=dialect)
-                comparison = dialect.compare_values(left, right)
+                comparison = dialect.policy.compare_values(left, right)
                 if comparison < 0:
                     return -1
                 if comparison > 0:
@@ -2576,7 +2576,7 @@ def evaluate_expression(
                 if isinstance(sort_by, int):
                     return sorted(
                         values,
-                        key=cmp_to_key(dialect.compare_values),
+                        key=cmp_to_key(dialect.policy.compare_values),
                         reverse=sort_by == -1,
                     )
                 return sort_documents(values, sort_by, dialect=dialect)
@@ -3135,13 +3135,13 @@ def _apply_accumulators(
         elif operator == "$min":
             if value is None:
                 continue
-            if not flags.get(field, False) or dialect.compare_values(value, values[field]) < 0:
+            if not flags.get(field, False) or dialect.policy.compare_values(value, values[field]) < 0:
                 values[field] = deepcopy(value)
                 flags[field] = True
         elif operator == "$max":
             if value is None:
                 continue
-            if not flags.get(field, False) or dialect.compare_values(value, values[field]) > 0:
+            if not flags.get(field, False) or dialect.policy.compare_values(value, values[field]) > 0:
                 values[field] = deepcopy(value)
                 flags[field] = True
         elif operator == "$avg":
@@ -3207,7 +3207,7 @@ def _apply_accumulators(
                     continue
                 state.items.append(deepcopy(value))
                 state.items.sort(
-                    key=cmp_to_key(dialect.compare_values),
+                    key=cmp_to_key(dialect.policy.compare_values),
                     reverse=operator == "$maxN",
                 )
                 del state.items[state.n:]
@@ -3316,7 +3316,7 @@ def _apply_bucket(
     if not isinstance(boundaries, list) or len(boundaries) < 2:
         raise OperationFailure("$bucket boundaries must be a list with at least two values")
     for index in range(len(boundaries) - 1):
-        if dialect.compare_values(boundaries[index], boundaries[index + 1]) >= 0:
+        if dialect.policy.compare_values(boundaries[index], boundaries[index + 1]) >= 0:
             raise OperationFailure("$bucket boundaries must be strictly increasing")
 
     output = spec.get("output")
@@ -3352,7 +3352,7 @@ def _apply_bucket(
         matched = False
         for index, lower in enumerate(boundaries[:-1]):
             upper = boundaries[index + 1]
-            if dialect.compare_values(value, lower) >= 0 and dialect.compare_values(value, upper) < 0:
+            if dialect.policy.compare_values(value, lower) >= 0 and dialect.policy.compare_values(value, upper) < 0:
                 _apply_accumulators(
                     buckets[index],
                     output,
@@ -3407,7 +3407,7 @@ def _apply_bucket_auto(
     if not evaluated:
         return []
 
-    evaluated.sort(key=lambda item: cmp_to_key(dialect.compare_values)(item[0]))
+    evaluated.sort(key=lambda item: cmp_to_key(dialect.policy.compare_values)(item[0]))
     bucket_count = min(buckets, len(evaluated))
     base = len(evaluated) // bucket_count
     remainder = len(evaluated) % bucket_count

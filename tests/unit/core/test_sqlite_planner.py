@@ -34,5 +34,7 @@ class SQLitePlannerUnitTests(unittest.TestCase):
 
             self.assertIsInstance(plan, SQLiteReadExecutionPlan)
             self.assertTrue(plan.use_sql)
+            self.assertEqual(plan.strategy, "sql")
+            self.assertTrue(plan.execution_lineage)
 
         asyncio.run(_run())

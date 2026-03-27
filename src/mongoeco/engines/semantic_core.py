@@ -7,7 +7,14 @@ from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll, QueryNode, ensure_query_plan
 from mongoeco.core.sorting import sort_documents
-from mongoeco.types import Document, Filter, Projection, QueryPlanExplanation, SortSpec
+from mongoeco.types import (
+    Document,
+    ExecutionLineageStep,
+    Filter,
+    Projection,
+    QueryPlanExplanation,
+    SortSpec,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +33,14 @@ class EngineFindSemantics:
     @property
     def deadline(self) -> float | None:
         return operation_deadline(self.max_time_ms)
+
+
+@dataclass(frozen=True, slots=True)
+class EngineReadExecutionPlan:
+    semantics: EngineFindSemantics
+    strategy: str
+    execution_lineage: tuple[ExecutionLineageStep, ...]
+    fallback_reason: str | None = None
 
 
 def compile_find_semantics(
@@ -149,6 +164,8 @@ def build_query_plan_explanation(
     hinted_index: str | None = None,
     details: object | None = None,
     indexes: list[object] | None = None,
+    execution_lineage: tuple[ExecutionLineageStep, ...] = (),
+    fallback_reason: str | None = None,
 ) -> QueryPlanExplanation:
     return QueryPlanExplanation(
         engine=engine,
@@ -163,4 +180,6 @@ def build_query_plan_explanation(
         comment=semantics.comment,
         max_time_ms=semantics.max_time_ms,
         indexes=indexes,
+        execution_lineage=execution_lineage,
+        fallback_reason=fallback_reason,
     )

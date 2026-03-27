@@ -11,6 +11,7 @@ from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.semantic_core import (
+    EngineReadExecutionPlan,
     build_query_plan_explanation,
     compile_find_semantics,
     filter_documents,
@@ -26,7 +27,7 @@ from mongoeco.errors import CollectionInvalid, DuplicateKeyError, OperationFailu
 from mongoeco.session import ClientSession
 from mongoeco.session import EngineTransactionContext
 from mongoeco.types import (
-    ArrayFilters, DeleteResult, Document, DocumentId, Filter, IndexInformation, IndexDocument, IndexKeySpec, ObjectId,
+    ArrayFilters, DeleteResult, Document, DocumentId, ExecutionLineageStep, Filter, IndexInformation, IndexDocument, IndexKeySpec, ObjectId,
     Projection, QueryPlanExplanation, SortSpec, Update, UpdateResult, default_index_name,
     default_id_index_definition, default_id_index_document, default_id_index_information, index_fields,
     EngineIndexRecord, IndexDefinition, normalize_index_keys,
@@ -748,12 +749,70 @@ class MemoryEngine(AsyncStorageEngine):
             indexes=indexes,
         )
         enforce_deadline(deadline)
+        execution_plan = await self.plan_find_execution(
+            db_name,
+            coll_name,
+            FindOperation(
+                filter_spec=semantics.filter_spec,
+                projection=semantics.projection,
+                sort=semantics.sort,
+                skip=semantics.skip,
+                limit=semantics.limit,
+                hint=semantics.hint,
+                comment=semantics.comment,
+                max_time_ms=semantics.max_time_ms,
+                batch_size=None,
+                plan=semantics.query_plan,
+            ),
+            dialect=dialect,
+            context=context,
+        )
         return build_query_plan_explanation(
             engine="memory",
-            strategy="python",
+            strategy=execution_plan.strategy,
             semantics=semantics,
             hinted_index=None if hinted_index is None else hinted_index["name"],
             indexes=indexes,
+            execution_lineage=execution_plan.execution_lineage,
+            fallback_reason=execution_plan.fallback_reason,
+        )
+
+    @override
+    async def plan_find_execution(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: FindOperation,
+        *,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> EngineReadExecutionPlan:
+        semantics = compile_find_semantics(
+            operation.filter_spec,
+            plan=operation.plan,
+            projection=operation.projection,
+            sort=operation.sort,
+            skip=operation.skip,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
+            dialect=dialect,
+        )
+        lineage = [
+            ExecutionLineageStep(runtime="python", phase="scan", detail="engine scan"),
+            ExecutionLineageStep(runtime="python", phase="filter", detail="semantic core"),
+        ]
+        if semantics.sort:
+            lineage.append(ExecutionLineageStep(runtime="python", phase="sort", detail="semantic core"))
+        if semantics.projection is not None:
+            lineage.append(ExecutionLineageStep(runtime="python", phase="project", detail="semantic core"))
+        if semantics.skip or semantics.limit is not None:
+            lineage.append(ExecutionLineageStep(runtime="python", phase="slice", detail="semantic core"))
+        return EngineReadExecutionPlan(
+            semantics=semantics,
+            strategy="python",
+            execution_lineage=tuple(lineage),
         )
 
     @override

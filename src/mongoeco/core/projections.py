@@ -7,7 +7,7 @@ from mongoeco.types import Document, Projection
 
 
 def _projection_flag(value: object, *, dialect: MongoDialect) -> int | None:
-    return dialect.projection_flag(value)
+    return dialect.policy.projection_flag(value)
 
 
 def validate_projection_spec(

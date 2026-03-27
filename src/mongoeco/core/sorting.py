@@ -18,14 +18,15 @@ def sort_value(
         return None
 
     primary = values[0]
+    policy = dialect.policy
     if isinstance(primary, list):
         if not primary:
             return []
         members = values[1:] or primary
-        ordered = sorted(members, key=cmp_to_key(dialect.compare_values))
+        ordered = sorted(members, key=cmp_to_key(policy.compare_values))
         return ordered[0] if direction == 1 else ordered[-1]
     if len(values) > 1:
-        ordered = sorted(values, key=cmp_to_key(dialect.compare_values))
+        ordered = sorted(values, key=cmp_to_key(policy.compare_values))
         return ordered[0] if direction == 1 else ordered[-1]
     return primary
 
@@ -37,8 +38,9 @@ def compare_documents(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> int:
+    policy = dialect.policy
     for field, direction in sort:
-        result = dialect.compare_values(
+        result = policy.compare_values(
             sort_value(left, field, direction, dialect=dialect),
             sort_value(right, field, direction, dialect=dialect),
         )

@@ -53,12 +53,14 @@ from mongoeco.engines.base import (
     AsyncIndexAdminEngine,
     AsyncLifecycleEngine,
     AsyncNamespaceAdminEngine,
+    AsyncReadPlanningEngine,
     AsyncSessionEngine,
     AsyncStorageEngine,
 )
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
+    EngineReadExecutionPlan,
     build_query_plan_explanation,
     compile_find_semantics,
 )
@@ -67,6 +69,7 @@ from mongoeco.types import EngineIndexRecord, IndexDefinition, IndexInformation,
 from mongoeco.types import (
     BulkWriteErrorDetails,
     CodecOptions,
+    ExecutionLineageStep,
     QueryPlanExplanation,
     ReadConcern,
     ReadPreference,
@@ -106,6 +109,7 @@ class ArchitectureUnitTests(unittest.TestCase):
                 self.assertIsInstance(engine, AsyncLifecycleEngine)
                 self.assertIsInstance(engine, AsyncCrudEngine)
                 self.assertIsInstance(engine, AsyncIndexAdminEngine)
+                self.assertIsInstance(engine, AsyncReadPlanningEngine)
                 self.assertIsInstance(engine, AsyncExplainEngine)
                 self.assertIsInstance(engine, AsyncDatabaseAdminEngine)
                 self.assertIsInstance(engine, AsyncNamespaceAdminEngine)
@@ -179,6 +183,34 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertEqual(explanation.comment, semantics.comment)
         self.assertEqual(explanation.max_time_ms, semantics.max_time_ms)
 
+    def test_query_plan_explanation_serializes_execution_lineage(self):
+        semantics = compile_find_semantics({"name": "Ada"})
+        explanation = build_query_plan_explanation(
+            engine="sqlite",
+            strategy="sql",
+            semantics=semantics,
+            execution_lineage=(
+                ExecutionLineageStep(runtime="sql", phase="scan", detail="engine pushdown"),
+                ExecutionLineageStep(runtime="python", phase="project", detail="semantic core projection"),
+            ),
+            fallback_reason=None,
+        )
+
+        self.assertEqual(
+            explanation.to_document()["execution_lineage"],
+            [
+                {"runtime": "sql", "phase": "scan", "detail": "engine pushdown"},
+                {"runtime": "python", "phase": "project", "detail": "semantic core projection"},
+            ],
+        )
+
+    def test_dialect_policy_is_explicit_behavior_boundary(self):
+        from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
+
+        self.assertTrue(MONGODB_DIALECT_70.policy.null_query_matches_undefined())
+        self.assertFalse(MONGODB_DIALECT_80.policy.null_query_matches_undefined())
+        self.assertEqual(MONGODB_DIALECT_70.compare_values(1, 2), MONGODB_DIALECT_70.policy.compare_values(1, 2))
+
     def test_memory_engine_read_paths_compile_shared_semantics(self):
         async def _run() -> None:
             engine = MemoryEngine()
@@ -187,6 +219,42 @@ class ArchitectureUnitTests(unittest.TestCase):
                 with patch("mongoeco.engines.memory.compile_find_semantics", wraps=compile_find_semantics) as compiler:
                     await engine.explain_query_plan("db", "users", {})
                     self.assertGreaterEqual(compiler.call_count, 1)
+            finally:
+                await engine.disconnect()
+
+        asyncio.run(_run())
+
+    def test_engines_plan_read_execution_before_explain(self):
+        async def _run() -> None:
+            operation = compile_find_operation({"name": "Ada"})
+            memory = MemoryEngine()
+            sqlite = SQLiteEngine()
+            await memory.connect()
+            await sqlite.connect()
+            try:
+                memory_plan = await memory.plan_find_execution("db", "users", operation)
+                sqlite_plan = await sqlite.plan_find_execution("db", "users", operation)
+                self.assertIsInstance(memory_plan, EngineReadExecutionPlan)
+                self.assertIsInstance(sqlite_plan, EngineReadExecutionPlan)
+                self.assertEqual(memory_plan.strategy, "python")
+                self.assertEqual(sqlite_plan.strategy, "sql")
+                self.assertTrue(sqlite_plan.execution_lineage)
+            finally:
+                await memory.disconnect()
+                await sqlite.disconnect()
+
+        asyncio.run(_run())
+
+    def test_sqlite_read_planner_exposes_fallback_reason_in_negotiation(self):
+        async def _run() -> None:
+            engine = SQLiteEngine()
+            await engine.connect()
+            try:
+                operation = compile_find_operation({"payload": {"$gt": b"x"}})
+                plan = await engine.plan_find_execution("db", "users", operation)
+                self.assertEqual(plan.strategy, "python")
+                self.assertIsNotNone(plan.fallback_reason)
+                self.assertTrue(plan.execution_lineage)
             finally:
                 await engine.disconnect()
 

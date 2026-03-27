@@ -38,6 +38,7 @@ from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
+    EngineReadExecutionPlan,
     build_query_plan_explanation,
     compile_find_semantics,
     filter_documents,
@@ -67,6 +68,7 @@ from mongoeco.types import (
     DeleteResult,
     Document,
     DocumentId,
+    ExecutionLineageStep,
     EngineIndexRecord,
     Filter,
     IndexDocument,
@@ -749,6 +751,35 @@ class SQLiteEngine(AsyncStorageEngine):
             plan_requires_python_for_bytes=self._plan_requires_python_for_bytes,
             sort_requires_python=self._sort_requires_python,
             build_select_sql=self._build_select_sql,
+        )
+
+    async def plan_find_execution(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: FindOperation,
+        *,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> EngineReadExecutionPlan:
+        semantics = compile_find_semantics(
+            operation.filter_spec,
+            plan=operation.plan,
+            projection=operation.projection,
+            sort=operation.sort,
+            skip=operation.skip,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
+            dialect=dialect,
+        )
+        return await asyncio.to_thread(
+            self._compile_read_execution_plan,
+            db_name,
+            coll_name,
+            semantics,
+            hint=operation.hint,
         )
 
     def _explain_query_plan_sync(
@@ -2257,19 +2288,43 @@ class SQLiteEngine(AsyncStorageEngine):
             coll_name,
             hint,
         )
-        details = await asyncio.to_thread(
-            self._explain_query_plan_sync,
+        execution_plan = await self.plan_find_execution(
             db_name,
             coll_name,
-            semantics,
-            hint=hint,
+            FindOperation(
+                filter_spec=semantics.filter_spec or {},
+                plan=semantics.query_plan,
+                projection=semantics.projection,
+                sort=semantics.sort,
+                skip=semantics.skip,
+                limit=semantics.limit,
+                hint=semantics.hint,
+                comment=semantics.comment,
+                max_time_ms=semantics.max_time_ms,
+                batch_size=None,
+            ),
+            dialect=dialect,
+            context=context,
         )
+        details: object
+        if isinstance(execution_plan, SQLiteReadExecutionPlan) and execution_plan.use_sql:
+            details = await asyncio.to_thread(
+                self._explain_query_plan_sync,
+                db_name,
+                coll_name,
+                semantics,
+                hint=hint,
+            )
+        else:
+            details = {"fallback_reason": execution_plan.fallback_reason}
         return build_query_plan_explanation(
             engine="sqlite",
-            strategy="sql",
+            strategy=execution_plan.strategy,
             semantics=semantics,
             details=details,
             hinted_index=None if hinted_index is None else hinted_index["name"],
+            execution_lineage=execution_plan.execution_lineage,
+            fallback_reason=execution_plan.fallback_reason,
         )
 
     @override

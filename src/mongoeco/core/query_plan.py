@@ -169,7 +169,7 @@ def _compile_field_condition(
         return EqualsCondition(
             field,
             condition,
-            null_matches_undefined=condition is None and dialect.null_query_matches_undefined(),
+            null_matches_undefined=condition is None and dialect.policy.null_query_matches_undefined(),
         )
 
     clauses: list[QueryNode] = []
@@ -183,7 +183,7 @@ def _compile_field_condition(
                 EqualsCondition(
                     field,
                     value,
-                    null_matches_undefined=value is None and dialect.null_query_matches_undefined(),
+                    null_matches_undefined=value is None and dialect.policy.null_query_matches_undefined(),
                 )
             )
         elif operator == "$ne":
@@ -204,7 +204,7 @@ def _compile_field_condition(
                     field,
                     tuple(value),
                     null_matches_undefined=any(item is None for item in value)
-                    and dialect.null_query_matches_undefined(),
+                    and dialect.policy.null_query_matches_undefined(),
                 )
             )
         elif operator == "$nin":
