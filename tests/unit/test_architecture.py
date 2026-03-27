@@ -62,7 +62,9 @@ from mongoeco.types import (
     WriteConcern,
     BuildInfoDocument,
     CollectionStatsSnapshot,
+    CollectionListingSnapshot,
     CollectionValidationDocument,
+    DatabaseListingSnapshot,
     DatabaseStatsSnapshot,
 )
 
@@ -374,6 +376,12 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertIs(MongoClient.server_info.__annotations__["return"], BuildInfoDocument)
 
     def test_admin_internal_stats_use_typed_snapshots(self):
+        listing_snapshot = CollectionListingSnapshot(name="users")
+        database_listing_snapshot = DatabaseListingSnapshot(
+            name="db",
+            size_on_disk=128,
+            empty=False,
+        )
         collection_snapshot = CollectionStatsSnapshot(
             namespace="db.users",
             count=4,
@@ -390,6 +398,8 @@ class ArchitectureUnitTests(unittest.TestCase):
             scale=10,
         )
 
+        self.assertEqual(listing_snapshot.to_document()["info"]["readOnly"], False)
+        self.assertEqual(database_listing_snapshot.to_document()["sizeOnDisk"], 128)
         self.assertEqual(collection_snapshot.to_document()["size"], 20)
         self.assertEqual(database_snapshot.to_document()["dataSize"], 20)
 

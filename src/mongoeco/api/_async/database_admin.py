@@ -18,10 +18,12 @@ from mongoeco.session import ClientSession
 from mongoeco.types import (
     CollectionStatsSnapshot,
     CollectionListingDocument,
+    CollectionListingSnapshot,
     CollectionStatsDocument,
     CollectionValidationDocument,
     DatabaseStatsSnapshot,
     DatabaseListingDocument,
+    DatabaseListingSnapshot,
     DatabaseStatsDocument,
     Document,
     Filter,
@@ -83,16 +85,14 @@ class AsyncDatabaseAdminService:
             documents: list[CollectionListingDocument] = []
             for name in names:
                 documents.append(
-                    {
-                        "name": name,
-                        "type": "collection",
-                        "options": await self._engine.collection_options(
+                    CollectionListingSnapshot(
+                        name=name,
+                        options=await self._engine.collection_options(
                             self._db_name,
                             name,
                             context=session,
                         ),
-                        "info": {"readOnly": False},
-                    }
+                    ).to_document()
                 )
             return [
                 document
@@ -338,14 +338,14 @@ class AsyncDatabaseAdminService:
             )
             stats = await database._admin._database_stats(session=session)
             documents.append(
-                {
-                    "name": database_name,
-                    "sizeOnDisk": stats["storageSize"],
-                    "empty": (
+                DatabaseListingSnapshot(
+                    name=database_name,
+                    size_on_disk=stats["storageSize"],
+                    empty=(
                         int(stats["collections"]) == 0
                         and int(stats["objects"]) == 0
                     ),
-                }
+                ).to_document()
             )
         return documents
 

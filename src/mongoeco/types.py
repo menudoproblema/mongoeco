@@ -3,7 +3,7 @@ import os
 import threading
 import time
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Literal, NotRequired, Self, TypedDict
 
@@ -139,6 +139,36 @@ class DatabaseListingDocument(TypedDict):
     name: str
     sizeOnDisk: int
     empty: bool
+
+
+@dataclass(frozen=True, slots=True)
+class CollectionListingSnapshot:
+    name: str
+    type: str = "collection"
+    options: CollectionOptionsDocument = field(default_factory=dict)
+    read_only: bool = False
+
+    def to_document(self) -> CollectionListingDocument:
+        return {
+            "name": self.name,
+            "type": self.type,
+            "options": self.options,
+            "info": {"readOnly": self.read_only},
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class DatabaseListingSnapshot:
+    name: str
+    size_on_disk: int
+    empty: bool
+
+    def to_document(self) -> DatabaseListingDocument:
+        return {
+            "name": self.name,
+            "sizeOnDisk": self.size_on_disk,
+            "empty": self.empty,
+        }
 
 
 class CollectionStatsDocument(TypedDict):
