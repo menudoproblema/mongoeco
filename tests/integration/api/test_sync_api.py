@@ -64,6 +64,24 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
             self.assertEqual(build_info, server_info)
 
+    def test_hello_and_is_master_commands_return_handshake_metadata(self):
+        with MongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
+            hello = client.alpha.command("hello")
+            is_master = client.alpha.command("isMaster")
+
+            self.assertTrue(hello["helloOk"])
+            self.assertTrue(hello["isWritablePrimary"])
+            self.assertEqual(hello["maxBsonObjectSize"], 16 * 1024 * 1024)
+            self.assertEqual(hello["maxMessageSizeBytes"], 48_000_000)
+            self.assertEqual(hello["maxWriteBatchSize"], 100_000)
+            self.assertEqual(hello["logicalSessionTimeoutMinutes"], 30)
+            self.assertEqual(hello["maxWireVersion"], 20)
+            self.assertFalse(hello["readOnly"])
+            self.assertEqual(hello["version"], "8.0.0")
+            self.assertEqual(hello["ok"], 1.0)
+            self.assertTrue(is_master["ismaster"])
+            self.assertEqual(is_master["version"], "8.0.0")
+
     def test_insert_find_and_list_names(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

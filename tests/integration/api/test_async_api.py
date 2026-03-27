@@ -89,6 +89,24 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(build_info, server_info)
 
+    async def test_hello_and_is_master_commands_return_handshake_metadata(self):
+        async with AsyncMongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
+            hello = await client.alpha.command("hello")
+            is_master = await client.alpha.command("isMaster")
+
+            self.assertTrue(hello["helloOk"])
+            self.assertTrue(hello["isWritablePrimary"])
+            self.assertEqual(hello["maxBsonObjectSize"], 16 * 1024 * 1024)
+            self.assertEqual(hello["maxMessageSizeBytes"], 48_000_000)
+            self.assertEqual(hello["maxWriteBatchSize"], 100_000)
+            self.assertEqual(hello["logicalSessionTimeoutMinutes"], 30)
+            self.assertEqual(hello["maxWireVersion"], 20)
+            self.assertFalse(hello["readOnly"])
+            self.assertEqual(hello["version"], "8.0.0")
+            self.assertEqual(hello["ok"], 1.0)
+            self.assertTrue(is_master["ismaster"])
+            self.assertEqual(is_master["version"], "8.0.0")
+
     async def test_create_collection_registers_empty_namespace_and_rejects_duplicates(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

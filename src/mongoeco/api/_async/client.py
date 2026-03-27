@@ -1,3 +1,5 @@
+import datetime
+
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.compat import (
@@ -391,6 +393,9 @@ class AsyncDatabase:
 
         if command_name == "buildInfo":
             return _build_info_document(self._mongodb_dialect)
+
+        if command_name in {"hello", "isMaster", "ismaster"}:
+            return _hello_document(self._mongodb_dialect, legacy_name=command_name != "hello")
 
         if command_name == "listCollections":
             filter_spec = self._normalize_filter(spec.get("filter"))
@@ -787,3 +792,32 @@ def _build_info_document(mongodb_dialect: MongoDialect) -> dict[str, object]:
         "gitVersion": "mongoeco",
         "ok": 1.0,
     }
+
+
+def _hello_document(
+    mongodb_dialect: MongoDialect,
+    *,
+    legacy_name: bool = False,
+) -> dict[str, object]:
+    document: dict[str, object] = {
+        "helloOk": True,
+        "isWritablePrimary": True,
+        "maxBsonObjectSize": 16 * 1024 * 1024,
+        "maxMessageSizeBytes": 48_000_000,
+        "maxWriteBatchSize": 100_000,
+        "localTime": datetime.datetime.now(datetime.UTC),
+        "logicalSessionTimeoutMinutes": 30,
+        "connectionId": 1,
+        "minWireVersion": 0,
+        # La documentación oficial de hello para 7.0/8.0 sigue mostrando 20
+        # en ejemplos de despliegue standalone; usamos ese baseline estable.
+        "maxWireVersion": 20,
+        "readOnly": False,
+        "ok": 1.0,
+    }
+    if legacy_name:
+        document["ismaster"] = True
+    else:
+        document["isWritablePrimary"] = True
+    document.update(_build_info_document(mongodb_dialect))
+    return document
