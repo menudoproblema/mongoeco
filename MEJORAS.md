@@ -206,7 +206,7 @@ Lo siguiente ya no pertenece a esta hoja de refactor base, sino a evolución fut
 - `Motivación`: los tests diferenciales manuales eran útiles, pero demasiado acoplados a un `TestCase` concreto y poco preparados para crecer por versión y por families semánticas.
 - `Aporte real`: la paridad ya se puede mantener como un inventario explícito de casos, reutilizable por CI y por tooling local, en vez de una colección de tests artesanales.
 - `Aplicado ya`:
-  - `f916f19` `test: codify real mongodb parity cases`
+  - `9f39fe5` `test: codify real mongodb parity cases`
 
 ### 18. Catálogo Formal de Errores MongoDB
 
@@ -217,8 +217,7 @@ Lo siguiente ya no pertenece a esta hoja de refactor base, sino a evolución fut
 - `Motivación`: la compatibilidad no es solo éxito funcional; también depende de fallar con shape y metadatos estables.
 - `Aporte real`: la paridad de errores deja de depender de clases con lógica dispersa y pasa a apoyarse en una fuente formal y extensible.
 - `Aplicado ya`:
-  - `f916f19` `test: codify real mongodb parity cases`
-  - `f916f19` `refactor: formalize mongo error descriptors`
+  - `e2314a8` `refactor: formalize mongo error descriptors`
 
 ## Correcciones de Cierre por Revisión Estricta
 
@@ -243,16 +242,15 @@ Estas líneas no sustituyen al refactor base ya hecho, pero sí corrigen el exce
 - `Motivación`: el sistema de handlers existe, pero el runtime sigue siendo demasiado grande.
 - `Aporte real`: baja el riesgo de mantenimiento y hace creíble la extensibilidad a largo plazo.
 
-### C. Pushdown/Spill/Error Parity como Subsistema Formal
+### C. Pushdown/Spill como Subsistema Formal
 
 - `Estado`: `Reabierto`
 - `Impacto`: `Alto`
 - `Esfuerzo`: `Muy Alto`
-- `Descripción`: separar y cerrar de forma explícita tres líneas distintas:
+- `Descripción`: separar y cerrar de forma explícita dos líneas distintas:
   1. pushdown seguro y negociado,
-  2. spill-to-disk para etapas bloqueantes,
-  3. catálogo formal de errores MongoDB.
-- `Motivación`: hoy el pushdown SQLite sí existe, pero el spill-to-disk no está y la paridad de errores es parcial.
+  2. spill-to-disk para etapas bloqueantes.
+- `Motivación`: hoy el pushdown SQLite sí existe, pero el spill-to-disk no está.
 - `Aporte real`: mejora fidelidad, observabilidad y comportamiento bajo carga.
 
 ### D. Fidelidad BSON Escalar Total
