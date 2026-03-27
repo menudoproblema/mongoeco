@@ -1246,16 +1246,37 @@ class AsyncCollection:
         )
         return DeleteResult(deleted_count=deleted_count)
 
-    async def count_documents(self, filter_spec: Filter, *, session: ClientSession | None = None) -> int:
+    async def count_documents(
+        self,
+        filter_spec: Filter,
+        *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        skip: int = 0,
+        limit: int | None = None,
+        session: ClientSession | None = None,
+    ) -> int:
         filter_spec = self._normalize_filter(filter_spec)
-        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
-        return await self._engine.count_matching_documents(
-            self._db_name,
-            self._collection_name,
-            filter_spec,
-            plan=plan,
-            dialect=self._mongodb_dialect,
-            context=session,
+        hint = self._normalize_hint(hint)
+        max_time_ms = self._normalize_max_time_ms(max_time_ms)
+        if not isinstance(skip, int) or isinstance(skip, bool) or skip < 0:
+            raise TypeError("skip must be a non-negative integer")
+        if limit is not None and (
+            not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
+        ):
+            raise TypeError("limit must be a non-negative integer")
+        return len(
+            await self.find(
+                filter_spec,
+                {"_id": 1},
+                skip=skip,
+                limit=limit,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                session=session,
+            ).to_list()
         )
 
     async def estimated_document_count(

@@ -1634,6 +1634,37 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     self.assertEqual(count, 2)
 
+    async def test_count_documents_supports_skip_limit_hint_comment_and_max_time(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    session = client.start_session()
+                    collection = client.analytics.events
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "kind": "view"},
+                            {"_id": "2", "kind": "view"},
+                            {"_id": "3", "kind": "view"},
+                        ],
+                        session=session,
+                    )
+                    await collection.create_index([("kind", 1)], name="kind_idx", session=session)
+
+                    count = await collection.count_documents(
+                        {"kind": "view"},
+                        skip=1,
+                        limit=1,
+                        hint="kind_idx",
+                        comment="trace-count-documents",
+                        max_time_ms=25,
+                        session=session,
+                    )
+                    state = next(iter(session.engine_state.values()))
+
+                    self.assertEqual(count, 1)
+                    self.assertEqual(state["last_operation"]["comment"], "trace-count-documents")
+                    self.assertEqual(state["last_operation"]["max_time_ms"], 25)
+
     async def test_estimated_document_count_and_drop_collection_and_database(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

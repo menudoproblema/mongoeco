@@ -25,6 +25,11 @@ def _build_operation_option_support() -> MappingProxyType[str, MappingProxyType[
             "max_time_ms": OperationOptionSupport(effective, "Enforced as a local deadline during read execution and explain()."),
             "batch_size": OperationOptionSupport(effective, "Async and sync find cursors now fetch local batches before yielding results, even though engines remain in-process."),
         },
+        "count_documents": {
+            "hint": OperationOptionSupport(effective, "Applied through the underlying find() path used to count matching documents."),
+            "comment": OperationOptionSupport(effective, "Propagated through the underlying read path and session metadata."),
+            "max_time_ms": OperationOptionSupport(effective, "Enforced through the underlying find() path used to count documents."),
+        },
         "aggregate": {
             "hint": OperationOptionSupport(effective, "Applied through the pushdown find() path used by aggregate() and surfaced in explain()."),
             "comment": OperationOptionSupport(effective, "Recorded in engine session metadata and propagated through aggregate explain/materialization."),

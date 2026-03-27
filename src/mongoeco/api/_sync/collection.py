@@ -372,8 +372,28 @@ class Collection:
             )
         )
 
-    def count_documents(self, filter_spec: Filter, *, session: ClientSession | None = None) -> int:
-        return self._client._run(self._async_collection().count_documents(filter_spec, session=session))
+    def count_documents(
+        self,
+        filter_spec: Filter,
+        *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        skip: int = 0,
+        limit: int | None = None,
+        session: ClientSession | None = None,
+    ) -> int:
+        return self._client._run(
+            self._async_collection().count_documents(
+                filter_spec,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                skip=skip,
+                limit=limit,
+                session=session,
+            )
+        )
 
     def estimated_document_count(self, *, session: ClientSession | None = None) -> int:
         return self._client._run(self._async_collection().estimated_document_count(session=session))

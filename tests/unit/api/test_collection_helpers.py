@@ -1233,10 +1233,12 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         class EngineStub:
             def __init__(self):
                 self.scan_plan = None
+                self.scan_plans = []
                 self.update_plan = None
                 self.delete_plan = None
                 self.count_plan = None
                 self.scan_dialect = None
+                self.scan_dialects = []
                 self.update_dialect = None
                 self.delete_dialect = None
                 self.count_dialect = None
@@ -1250,6 +1252,8 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             def scan_collection(self, *args, **kwargs):
                 self.scan_plan = kwargs["plan"]
                 self.scan_dialect = kwargs["dialect"]
+                self.scan_plans.append(kwargs["plan"])
+                self.scan_dialects.append(kwargs["dialect"])
                 return _scan_stub_documents(
                     [],
                     skip=kwargs.get("skip", 0),
@@ -1309,15 +1313,18 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         asyncio.run(collection.delete_one({"name": "Ada"}))
         asyncio.run(collection.count_documents({"name": "Ada"}))
 
-        self.assertEqual(type(engine.scan_plan).__name__, "EqualsCondition")
+        self.assertEqual(type(engine.scan_plans[0]).__name__, "EqualsCondition")
+        self.assertEqual(type(engine.scan_plans[1]).__name__, "EqualsCondition")
         self.assertEqual(type(engine.update_plan).__name__, "EqualsCondition")
         self.assertEqual(type(engine.delete_plan).__name__, "EqualsCondition")
-        self.assertEqual(type(engine.count_plan).__name__, "EqualsCondition")
-        self.assertNotIsInstance(engine.scan_plan, MatchAll)
-        self.assertIs(engine.scan_dialect, collection.mongodb_dialect)
+        self.assertIsNone(engine.count_plan)
+        self.assertNotIsInstance(engine.scan_plans[0], MatchAll)
+        self.assertNotIsInstance(engine.scan_plans[1], MatchAll)
+        self.assertIs(engine.scan_dialects[0], collection.mongodb_dialect)
+        self.assertIs(engine.scan_dialects[1], collection.mongodb_dialect)
         self.assertIs(engine.update_dialect, collection.mongodb_dialect)
         self.assertIs(engine.delete_dialect, collection.mongodb_dialect)
-        self.assertIs(engine.count_dialect, collection.mongodb_dialect)
+        self.assertIsNone(engine.count_dialect)
 
     def test_index_helpers_normalize_and_forward_arguments(self):
         class EngineStub:

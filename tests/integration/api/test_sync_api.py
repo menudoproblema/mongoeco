@@ -3724,6 +3724,37 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     with self.assertRaises(TypeError):
                         collection.count_documents([])
 
+    def test_count_documents_supports_skip_limit_hint_comment_and_max_time(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    session = client.start_session()
+                    collection = client.analytics.events
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "kind": "view"},
+                            {"_id": "2", "kind": "view"},
+                            {"_id": "3", "kind": "view"},
+                        ],
+                        session=session,
+                    )
+                    collection.create_index([("kind", 1)], name="kind_idx", session=session)
+
+                    count = collection.count_documents(
+                        {"kind": "view"},
+                        skip=1,
+                        limit=1,
+                        hint="kind_idx",
+                        comment="trace-count-documents",
+                        max_time_ms=25,
+                        session=session,
+                    )
+                    state = next(iter(session.engine_state.values()))
+
+                    self.assertEqual(count, 1)
+                    self.assertEqual(state["last_operation"]["comment"], "trace-count-documents")
+                    self.assertEqual(state["last_operation"]["max_time_ms"], 25)
+
     def test_update_one_rejects_invalid_update_shapes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
