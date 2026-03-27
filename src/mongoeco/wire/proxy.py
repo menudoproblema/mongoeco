@@ -141,6 +141,7 @@ class AsyncMongoEcoProxyServer:
                     request.full_collection_name,
                     request.query,
                     connection=connection,
+                    number_to_return=request.number_to_return,
                 )
                 return encode_op_reply(
                     [result],

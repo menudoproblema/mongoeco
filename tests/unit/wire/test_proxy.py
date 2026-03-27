@@ -306,6 +306,67 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 connection=connection,
             )
 
+    async def test_executor_normalizes_legacy_query_wrappers_and_batch_size(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+        captured: dict[str, object] = {}
+
+        class _Database:
+            async def command(self, command_document, session=None):
+                captured.update(command_document)
+                return {
+                    "cursor": {
+                        "id": 0,
+                        "ns": "alpha.events",
+                        "firstBatch": [{"seq": 1}, {"seq": 2}, {"seq": 3}],
+                    },
+                    "ok": 1.0,
+                }
+
+        with patch.object(proxy._client, "get_database", return_value=_Database()):
+            result = await proxy._executor.execute_legacy_query(
+                "alpha.$cmd",
+                {
+                    "$query": {"find": "events", "filter": {"kind": "view"}},
+                    "$orderby": {"seq": 1},
+                    "$readPreference": {"mode": "primaryPreferred"},
+                },
+                connection=connection,
+                number_to_return=2,
+            )
+
+        self.assertEqual(captured["find"], "events")
+        self.assertEqual(captured["sort"], {"seq": 1})
+        self.assertEqual(captured["batchSize"], 2)
+        self.assertEqual(result["cursor"]["firstBatch"], [{"seq": 1}, {"seq": 2}])
+
+    async def test_executor_applies_legacy_number_to_return_to_cursor_commands(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+        captured: dict[str, object] = {}
+
+        class _Database:
+            async def command(self, command_document, session=None):
+                captured.update(command_document)
+                return {
+                    "cursor": {
+                        "id": 0,
+                        "ns": "alpha.$cmd.listCollections",
+                        "firstBatch": [{"name": "events"}],
+                    },
+                    "ok": 1.0,
+                }
+
+        with patch.object(proxy._client, "get_database", return_value=_Database()):
+            await proxy._executor.execute_legacy_query(
+                "alpha.$cmd",
+                {"listCollections": 1},
+                connection=connection,
+                number_to_return=7,
+            )
+
+        self.assertEqual(captured["cursor"], {"batchSize": 7})
+
     async def test_executor_rejects_empty_command_document(self):
         proxy = AsyncMongoEcoProxyServer()
         connection = proxy._connections.create(("127.0.0.1", 27017))

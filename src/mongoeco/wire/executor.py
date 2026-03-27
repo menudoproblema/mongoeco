@@ -67,11 +67,16 @@ class WireCommandExecutor:
         query: dict[str, Any],
         *,
         connection: WireConnectionContext,
+        number_to_return: int | None = None,
     ) -> dict[str, Any]:
         if not full_collection_name.endswith(".$cmd"):
             raise OperationFailure("legacy OP_QUERY only supports command namespaces")
         db_name = full_collection_name[:-5]
-        return await self.execute_command(query, connection=connection, db_name=db_name)
+        return await self.execute_command(
+            self._normalize_legacy_query_body(query, number_to_return=number_to_return),
+            connection=connection,
+            db_name=db_name,
+        )
 
     def _build_request_context(
         self,
@@ -139,6 +144,44 @@ class WireCommandExecutor:
         if not isinstance(result, dict):
             raise OperationFailure("wire command must resolve to a document response")
         return self._cursor_store.materialize_command_result(context.command_document, result)
+
+    @staticmethod
+    def _normalize_legacy_query_body(
+        query: dict[str, Any],
+        *,
+        number_to_return: int | None,
+    ) -> dict[str, Any]:
+        if not isinstance(query, dict):
+            raise OperationFailure("legacy OP_QUERY command must be a document")
+        if "$query" in query:
+            wrapped_query = query.get("$query")
+            if not isinstance(wrapped_query, dict):
+                raise OperationFailure("legacy OP_QUERY $query wrapper must contain a document")
+            body = dict(wrapped_query)
+            for key, value in query.items():
+                if key == "$query":
+                    continue
+                if key == "$orderby" and "sort" not in body and "find" in body:
+                    body["sort"] = value
+                    continue
+                body[key] = value
+        else:
+            body = dict(query)
+
+        if not body:
+            raise OperationFailure("legacy OP_QUERY command must contain a document")
+
+        command_name = next(iter(body))
+        if number_to_return is not None and number_to_return > 0:
+            if command_name == "find":
+                body.setdefault("batchSize", number_to_return)
+            elif command_name in {"aggregate", "listCollections", "listIndexes"}:
+                cursor_spec = body.get("cursor")
+                if cursor_spec is None:
+                    body["cursor"] = {"batchSize": number_to_return}
+                elif isinstance(cursor_spec, dict):
+                    cursor_spec.setdefault("batchSize", number_to_return)
+        return body
 
     @staticmethod
     def error_document(exc: Exception) -> dict[str, Any]:
