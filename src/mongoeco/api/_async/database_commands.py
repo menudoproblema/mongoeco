@@ -64,17 +64,187 @@ SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
 )
 
 
+@dataclass(frozen=True, slots=True)
+class BuildInfoResult:
+    version: str
+    version_array: tuple[int, int, int, int]
+    git_version: str = "mongoeco"
+
+    def to_document(self) -> BuildInfoDocument:
+        return {
+            "version": self.version,
+            "versionArray": list(self.version_array),
+            "gitVersion": self.git_version,
+            "ok": 1.0,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class HelloResult:
+    build_info: BuildInfoResult
+    legacy_name: bool = False
+
+    def to_document(self) -> HelloDocument:
+        document: HelloDocument = {
+            "helloOk": True,
+            "isWritablePrimary": True,
+            "maxBsonObjectSize": 16 * 1024 * 1024,
+            "maxMessageSizeBytes": 48_000_000,
+            "maxWriteBatchSize": 100_000,
+            "localTime": datetime.datetime.now(datetime.UTC),
+            "logicalSessionTimeoutMinutes": 30,
+            "connectionId": 1,
+            "minWireVersion": 0,
+            "maxWireVersion": 20,
+            "readOnly": False,
+            "ok": 1.0,
+        }
+        if self.legacy_name:
+            document["ismaster"] = True
+        else:
+            document["isWritablePrimary"] = True
+        document.update(self.build_info.to_document())
+        return document
+
+
+@dataclass(frozen=True, slots=True)
+class ServerStatusResult:
+    host: str
+    version: str
+    process: str
+    pid: int
+    uptime: float
+    uptime_millis: int
+    uptime_estimate: int
+    local_time: datetime.datetime
+    storage_engine_name: str
+
+    def to_document(self) -> ServerStatusDocument:
+        return {
+            "host": self.host,
+            "version": self.version,
+            "process": self.process,
+            "pid": self.pid,
+            "uptime": self.uptime,
+            "uptimeMillis": self.uptime_millis,
+            "uptimeEstimate": self.uptime_estimate,
+            "localTime": self.local_time,
+            "connections": {
+                "current": 1,
+                "available": 8388607,
+                "totalCreated": 1,
+            },
+            "storageEngine": {
+                "name": self.storage_engine_name,
+            },
+            "ok": 1.0,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class HostInfoResult:
+    hostname: str
+    cpu_arch: str
+    num_cores: int
+    os_type: str
+    os_name: str
+    os_version: str
+    python_version: str
+
+    def to_document(self) -> HostInfoDocument:
+        return {
+            "system": {
+                "hostname": self.hostname,
+                "cpuArch": self.cpu_arch,
+                "numCores": self.num_cores,
+                "memSizeMB": 0,
+            },
+            "os": {
+                "type": self.os_type,
+                "name": self.os_name,
+                "version": self.os_version,
+            },
+            "extra": {
+                "pythonVersion": self.python_version,
+            },
+            "ok": 1.0,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class WhatsMyUriResult:
+    address: str
+
+    def to_document(self) -> WhatsMyUriDocument:
+        return {
+            "you": self.address,
+            "ok": 1.0,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CmdLineOptsResult:
+    argv: tuple[str, ...]
+    bind_ip: str
+    port: int
+
+    def to_document(self) -> CmdLineOptsDocument:
+        return {
+            "argv": list(self.argv),
+            "parsed": {
+                "net": {"bindIp": self.bind_ip, "port": self.port},
+                "storage": {},
+            },
+            "ok": 1.0,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ListCommandsResult:
+    command_names: tuple[str, ...]
+
+    def to_document(self) -> ListCommandsDocument:
+        return {
+            "commands": {
+                command_name: {
+                    "help": f"mongoeco local support for the {command_name} command",
+                }
+                for command_name in self.command_names
+            },
+            "ok": 1.0,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ConnectionStatusResult:
+    show_privileges: bool
+
+    def to_document(self) -> ConnectionStatusDocument:
+        auth_info: dict[str, object] = {
+            "authenticatedUsers": [],
+            "authenticatedUserRoles": [],
+        }
+        if self.show_privileges:
+            auth_info["authenticatedUserPrivileges"] = []
+        return {
+            "authInfo": auth_info,
+            "ok": 1.0,
+        }
+
+
 def build_info_document(mongodb_dialect: "MongoDialect") -> BuildInfoDocument:
+    return build_info_result(mongodb_dialect).to_document()
+
+
+def build_info_result(mongodb_dialect: "MongoDialect") -> BuildInfoResult:
     version_parts = [int(part) for part in mongodb_dialect.server_version.split(".")]
     while len(version_parts) < 2:
         version_parts.append(0)
     major, minor = version_parts[:2]
-    return {
-        "version": f"{major}.{minor}.0",
-        "versionArray": [major, minor, 0, 0],
-        "gitVersion": "mongoeco",
-        "ok": 1.0,
-    }
+    return BuildInfoResult(
+        version=f"{major}.{minor}.0",
+        version_array=(major, minor, 0, 0),
+    )
 
 
 def hello_document(
@@ -82,26 +252,18 @@ def hello_document(
     *,
     legacy_name: bool = False,
 ) -> HelloDocument:
-    document: HelloDocument = {
-        "helloOk": True,
-        "isWritablePrimary": True,
-        "maxBsonObjectSize": 16 * 1024 * 1024,
-        "maxMessageSizeBytes": 48_000_000,
-        "maxWriteBatchSize": 100_000,
-        "localTime": datetime.datetime.now(datetime.UTC),
-        "logicalSessionTimeoutMinutes": 30,
-        "connectionId": 1,
-        "minWireVersion": 0,
-        "maxWireVersion": 20,
-        "readOnly": False,
-        "ok": 1.0,
-    }
-    if legacy_name:
-        document["ismaster"] = True
-    else:
-        document["isWritablePrimary"] = True
-    document.update(build_info_document(mongodb_dialect))
-    return document
+    return hello_result(mongodb_dialect, legacy_name=legacy_name).to_document()
+
+
+def hello_result(
+    mongodb_dialect: "MongoDialect",
+    *,
+    legacy_name: bool = False,
+) -> HelloResult:
+    return HelloResult(
+        build_info=build_info_result(mongodb_dialect),
+        legacy_name=legacy_name,
+    )
 
 
 def _storage_engine_name(engine: AsyncStorageEngine) -> str:
@@ -118,91 +280,80 @@ def server_status_document(
     *,
     engine: AsyncStorageEngine,
 ) -> ServerStatusDocument:
+    return server_status_result(mongodb_dialect, engine=engine).to_document()
+
+
+def server_status_result(
+    mongodb_dialect: "MongoDialect",
+    *,
+    engine: AsyncStorageEngine,
+) -> ServerStatusResult:
     local_time = datetime.datetime.now(datetime.UTC)
     uptime_delta = local_time - _PROCESS_STARTED_AT
     uptime_seconds = max(uptime_delta.total_seconds(), 0.0)
-    return {
-        "host": socket.gethostname(),
-        "version": build_info_document(mongodb_dialect)["version"],
-        "process": "mongod",
-        "pid": os.getpid(),
-        "uptime": uptime_seconds,
-        "uptimeMillis": int(uptime_seconds * 1000),
-        "uptimeEstimate": int(uptime_seconds),
-        "localTime": local_time,
-        "connections": {
-            "current": 1,
-            "available": 8388607,
-            "totalCreated": 1,
-        },
-        "storageEngine": {
-            "name": _storage_engine_name(engine),
-        },
-        "ok": 1.0,
-    }
+    return ServerStatusResult(
+        host=socket.gethostname(),
+        version=build_info_result(mongodb_dialect).version,
+        process="mongod",
+        pid=os.getpid(),
+        uptime=uptime_seconds,
+        uptime_millis=int(uptime_seconds * 1000),
+        uptime_estimate=int(uptime_seconds),
+        local_time=local_time,
+        storage_engine_name=_storage_engine_name(engine),
+    )
 
 
 def host_info_document() -> HostInfoDocument:
-    return {
-        "system": {
-            "hostname": socket.gethostname(),
-            "cpuArch": platform.machine() or "unknown",
-            "numCores": os.cpu_count() or 1,
-            "memSizeMB": 0,
-        },
-        "os": {
-            "type": platform.system() or "unknown",
-            "name": platform.platform(),
-            "version": platform.version(),
-        },
-        "extra": {
-            "pythonVersion": platform.python_version(),
-        },
-        "ok": 1.0,
-    }
+    return host_info_result().to_document()
+
+
+def host_info_result() -> HostInfoResult:
+    return HostInfoResult(
+        hostname=socket.gethostname(),
+        cpu_arch=platform.machine() or "unknown",
+        num_cores=os.cpu_count() or 1,
+        os_type=platform.system() or "unknown",
+        os_name=platform.platform(),
+        os_version=platform.version(),
+        python_version=platform.python_version(),
+    )
 
 
 def whats_my_uri_document() -> WhatsMyUriDocument:
-    return {
-        "you": "127.0.0.1:0",
-        "ok": 1.0,
-    }
+    return whats_my_uri_result().to_document()
+
+
+def whats_my_uri_result() -> WhatsMyUriResult:
+    return WhatsMyUriResult(address="127.0.0.1:0")
 
 
 def cmd_line_opts_document() -> CmdLineOptsDocument:
-    return {
-        "argv": list(sys.argv),
-        "parsed": {
-            "net": {"bindIp": "127.0.0.1", "port": 0},
-            "storage": {},
-        },
-        "ok": 1.0,
-    }
+    return cmd_line_opts_result().to_document()
+
+
+def cmd_line_opts_result() -> CmdLineOptsResult:
+    return CmdLineOptsResult(
+        argv=tuple(sys.argv),
+        bind_ip="127.0.0.1",
+        port=0,
+    )
 
 
 def list_commands_document() -> ListCommandsDocument:
-    return {
-        "commands": {
-            command_name: {
-                "help": f"mongoeco local support for the {command_name} command",
-            }
-            for command_name in SUPPORTED_DATABASE_COMMANDS
-        },
-        "ok": 1.0,
-    }
+    return list_commands_result().to_document()
+
+
+def list_commands_result() -> ListCommandsResult:
+    return ListCommandsResult(command_names=SUPPORTED_DATABASE_COMMANDS)
 
 
 def connection_status_document(*, show_privileges: bool) -> ConnectionStatusDocument:
-    auth_info: dict[str, object] = {
-        "authenticatedUsers": [],
-        "authenticatedUserRoles": [],
-    }
-    if show_privileges:
-        auth_info["authenticatedUserPrivileges"] = []
-    return {
-        "authInfo": auth_info,
-        "ok": 1.0,
-    }
+    return connection_status_result(show_privileges=show_privileges).to_document()
+
+
+def connection_status_result(*, show_privileges: bool) -> ConnectionStatusResult:
+    return ConnectionStatusResult(show_privileges=show_privileges)
 
 
 class AsyncDatabaseCommandService:
@@ -369,7 +520,7 @@ class AsyncDatabaseCommandService:
         if isinstance(command, self.StaticAdminCommand):
             return self._execute_static(command)  # type: ignore[return-value]
         if isinstance(command, self.ConnectionStatusCommand):
-            return connection_status_document(
+            return connection_status_result(
                 show_privileges=command.show_privileges
             )  # type: ignore[return-value]
         if isinstance(command, self.CollectionStatsCommand):
@@ -402,30 +553,39 @@ class AsyncDatabaseCommandService:
     def _execute_static(
         self,
         command: "AsyncDatabaseCommandService.StaticAdminCommand",
-    ) -> dict[str, object]:
+    ) -> object:
         if command.command_name == "ping":
             return {"ok": 1.0}
         if command.command_name == "buildInfo":
-            return build_info_document(self._mongodb_dialect)
+            return build_info_result(self._mongodb_dialect)
         if command.command_name == "serverStatus":
-            return server_status_document(
+            return server_status_result(
                 self._mongodb_dialect,
                 engine=self._engine,
             )
         if command.command_name == "hostInfo":
-            return host_info_document()
+            return host_info_result()
         if command.command_name == "whatsmyuri":
-            return whats_my_uri_document()
+            return whats_my_uri_result()
         if command.command_name == "getCmdLineOpts":
-            return cmd_line_opts_document()
+            return cmd_line_opts_result()
         if command.command_name in {"hello", "isMaster", "ismaster"}:
-            return hello_document(
+            return hello_result(
                 self._mongodb_dialect,
                 legacy_name=command.command_name != "hello",
             )
         if command.command_name == "listCommands":
-            return list_commands_document()
+            return list_commands_result()
         raise AssertionError(f"Unexpected static admin command: {command.command_name}")
+
+    @staticmethod
+    def _serialize_result(result: object) -> dict[str, object]:
+        to_document = getattr(result, "to_document", None)
+        if callable(to_document):
+            return to_document()
+        if isinstance(result, dict):
+            return result
+        raise TypeError(f"Unsupported admin command result type: {type(result)!r}")
 
     async def command(
         self,
@@ -435,4 +595,4 @@ class AsyncDatabaseCommandService:
         **kwargs: object,
     ) -> dict[str, object]:
         parsed = self.parse_raw_command(command, **kwargs)
-        return await self.execute(parsed, session=session)
+        return self._serialize_result(await self.execute(parsed, session=session))

@@ -1,9 +1,13 @@
+import asyncio
 import inspect
 import unittest
 
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
-from mongoeco.api._async.database_commands import AsyncDatabaseCommandService
+from mongoeco.api._async.database_commands import (
+    AsyncDatabaseCommandService,
+    BuildInfoResult,
+)
 from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.api._async._materialized_cursor import AsyncMaterializedCursor
@@ -353,3 +357,13 @@ class ArchitectureUnitTests(unittest.TestCase):
             delegated,
             AsyncDatabaseCommandService.DelegatedAdminCommand,
         )
+
+    def test_database_command_service_executes_typed_static_results(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin._commands
+        command = service.parse_raw_command("buildInfo")
+
+        result = asyncio.run(service.execute(command))
+
+        self.assertIsInstance(result, BuildInfoResult)
+        self.assertEqual(result.to_document()["gitVersion"], "mongoeco")
