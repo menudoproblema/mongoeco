@@ -477,6 +477,15 @@ class AsyncDatabase:
         if command_name in {"hello", "isMaster", "ismaster"}:
             return _hello_document(self._mongodb_dialect, legacy_name=command_name != "hello")
 
+        if command_name == "listCommands":
+            return _list_commands_document()
+
+        if command_name == "connectionStatus":
+            show_privileges = spec.get("showPrivileges", False)
+            if not isinstance(show_privileges, bool):
+                raise TypeError("showPrivileges must be a bool")
+            return _connection_status_document(show_privileges=show_privileges)
+
         if command_name == "listCollections":
             filter_spec = self._normalize_filter(spec.get("filter"))
             first_batch = await self.list_collections(
@@ -1421,3 +1430,59 @@ def _hello_document(
         document["isWritablePrimary"] = True
     document.update(_build_info_document(mongodb_dialect))
     return document
+
+
+_SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
+    "aggregate",
+    "buildInfo",
+    "collStats",
+    "connectionStatus",
+    "count",
+    "create",
+    "createIndexes",
+    "dbStats",
+    "delete",
+    "distinct",
+    "drop",
+    "dropDatabase",
+    "dropIndexes",
+    "explain",
+    "find",
+    "findAndModify",
+    "hello",
+    "insert",
+    "isMaster",
+    "ismaster",
+    "listCollections",
+    "listCommands",
+    "listDatabases",
+    "listIndexes",
+    "ping",
+    "update",
+    "validate",
+)
+
+
+def _list_commands_document() -> dict[str, object]:
+    return {
+        "commands": {
+            command_name: {
+                "help": f"mongoeco local support for the {command_name} command",
+            }
+            for command_name in _SUPPORTED_DATABASE_COMMANDS
+        },
+        "ok": 1.0,
+    }
+
+
+def _connection_status_document(*, show_privileges: bool) -> dict[str, object]:
+    auth_info: dict[str, object] = {
+        "authenticatedUsers": [],
+        "authenticatedUserRoles": [],
+    }
+    if show_privileges:
+        auth_info["authenticatedUserPrivileges"] = []
+    return {
+        "authInfo": auth_info,
+        "ok": 1.0,
+    }

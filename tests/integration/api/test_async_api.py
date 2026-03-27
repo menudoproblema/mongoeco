@@ -107,6 +107,25 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(is_master["ismaster"])
             self.assertEqual(is_master["version"], "8.0.0")
 
+    async def test_list_commands_and_connection_status_commands_return_local_admin_metadata(self):
+        async with AsyncMongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
+            commands = await client.alpha.command("listCommands")
+            connection_status = await client.alpha.command(
+                {"connectionStatus": 1, "showPrivileges": True}
+            )
+
+            self.assertIn("find", commands["commands"])
+            self.assertIn("aggregate", commands["commands"])
+            self.assertIn("explain", commands["commands"])
+            self.assertEqual(commands["ok"], 1.0)
+            self.assertEqual(connection_status["authInfo"]["authenticatedUsers"], [])
+            self.assertEqual(connection_status["authInfo"]["authenticatedUserRoles"], [])
+            self.assertEqual(
+                connection_status["authInfo"]["authenticatedUserPrivileges"],
+                [],
+            )
+            self.assertEqual(connection_status["ok"], 1.0)
+
     async def test_create_collection_registers_empty_namespace_and_rejects_duplicates(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -689,6 +708,8 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await client.alpha.command({"aggregate": "events", "pipeline": [], "cursor": 1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 await client.alpha.command({"explain": 1})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                await client.alpha.command({"connectionStatus": 1, "showPrivileges": 1})  # type: ignore[arg-type]
             with self.assertRaises(OperationFailure):
                 await client.alpha.command({"findAndModify": "events"})
             with self.assertRaises(OperationFailure):

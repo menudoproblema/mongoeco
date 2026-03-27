@@ -83,6 +83,25 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertTrue(is_master["ismaster"])
             self.assertEqual(is_master["version"], "8.0.0")
 
+    def test_list_commands_and_connection_status_commands_return_local_admin_metadata(self):
+        with MongoClient(MemoryEngine(), mongodb_dialect="8.0") as client:
+            commands = client.alpha.command("listCommands")
+            connection_status = client.alpha.command(
+                {"connectionStatus": 1, "showPrivileges": True}
+            )
+
+            self.assertIn("find", commands["commands"])
+            self.assertIn("aggregate", commands["commands"])
+            self.assertIn("explain", commands["commands"])
+            self.assertEqual(commands["ok"], 1.0)
+            self.assertEqual(connection_status["authInfo"]["authenticatedUsers"], [])
+            self.assertEqual(connection_status["authInfo"]["authenticatedUserRoles"], [])
+            self.assertEqual(
+                connection_status["authInfo"]["authenticatedUserPrivileges"],
+                [],
+            )
+            self.assertEqual(connection_status["ok"], 1.0)
+
     def test_insert_find_and_list_names(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -610,6 +629,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 client.alpha.command({"aggregate": "events", "pipeline": [], "cursor": 1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 client.alpha.command({"explain": 1})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command({"connectionStatus": 1, "showPrivileges": 1})  # type: ignore[arg-type]
             with self.assertRaises(OperationFailure):
                 client.alpha.command({"findAndModify": "events"})
             with self.assertRaises(OperationFailure):

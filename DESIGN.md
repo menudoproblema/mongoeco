@@ -747,6 +747,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
 * API administrativa y de metadata:
   * `Database.command`
     * ya soporta también `explain` para `find` y `aggregate`
+    * ya soporta también `listCommands` y `connectionStatus`
   * `server_info`
   * `validate_collection`
   * listados enriquecidos de bases de datos y colecciones
