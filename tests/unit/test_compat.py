@@ -1,4 +1,6 @@
 from types import MappingProxyType
+import json
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
@@ -45,6 +47,12 @@ from mongoeco.compat import (
 
 
 class CompatResolutionTests(unittest.TestCase):
+    def test_exported_full_catalog_matches_versioned_snapshot_fixture(self):
+        snapshot_path = Path("tests/fixtures/compat_catalog_snapshot.json")
+        expected = json.loads(snapshot_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(export_full_compat_catalog(), expected)
+
     def test_catalog_is_exposed_as_immutable_global_data(self):
         self.assertIsInstance(MONGODB_DIALECTS, MappingProxyType)
         self.assertIsInstance(MONGODB_DIALECT_ALIASES, MappingProxyType)

@@ -1,0 +1,858 @@
+{
+  "defaults": {
+    "mongodb_dialect": "7.0",
+    "pymongo_auto_profile": "auto-installed",
+    "pymongo_profile": "4.9",
+    "pymongo_strict_auto_profile": "strict-auto-installed"
+  },
+  "hooks": {
+    "mongodb_dialect": [
+      "null_query_matches_undefined"
+    ],
+    "pymongo_profile": [
+      "supports_update_one_sort"
+    ]
+  },
+  "mongodb_dialects": {
+    "7.0": {
+      "aggregation_expression_operators": [
+        "$abs",
+        "$add",
+        "$allElementsTrue",
+        "$and",
+        "$anyElementTrue",
+        "$arrayElemAt",
+        "$arrayToObject",
+        "$binarySize",
+        "$bitAnd",
+        "$bitNot",
+        "$bitOr",
+        "$bitXor",
+        "$bsonSize",
+        "$ceil",
+        "$cmp",
+        "$concat",
+        "$concatArrays",
+        "$cond",
+        "$convert",
+        "$dateAdd",
+        "$dateDiff",
+        "$dateFromParts",
+        "$dateFromString",
+        "$dateSubtract",
+        "$dateToParts",
+        "$dateToString",
+        "$dateTrunc",
+        "$dayOfMonth",
+        "$dayOfWeek",
+        "$dayOfYear",
+        "$divide",
+        "$eq",
+        "$exp",
+        "$filter",
+        "$first",
+        "$firstN",
+        "$floor",
+        "$getField",
+        "$gt",
+        "$gte",
+        "$hour",
+        "$ifNull",
+        "$in",
+        "$indexOfArray",
+        "$indexOfBytes",
+        "$indexOfCP",
+        "$isArray",
+        "$isNumber",
+        "$isoDayOfWeek",
+        "$isoWeek",
+        "$isoWeekYear",
+        "$lastN",
+        "$let",
+        "$literal",
+        "$ln",
+        "$log",
+        "$log10",
+        "$lt",
+        "$lte",
+        "$ltrim",
+        "$map",
+        "$maxN",
+        "$median",
+        "$mergeObjects",
+        "$millisecond",
+        "$minN",
+        "$minute",
+        "$mod",
+        "$month",
+        "$multiply",
+        "$ne",
+        "$objectToArray",
+        "$or",
+        "$percentile",
+        "$pow",
+        "$rand",
+        "$range",
+        "$reduce",
+        "$regexFind",
+        "$regexFindAll",
+        "$regexMatch",
+        "$replaceAll",
+        "$replaceOne",
+        "$reverseArray",
+        "$round",
+        "$rtrim",
+        "$second",
+        "$setDifference",
+        "$setEquals",
+        "$setField",
+        "$setIntersection",
+        "$setIsSubset",
+        "$setUnion",
+        "$size",
+        "$slice",
+        "$sortArray",
+        "$split",
+        "$sqrt",
+        "$stdDevPop",
+        "$stdDevSamp",
+        "$strLenBytes",
+        "$strLenCP",
+        "$strcasecmp",
+        "$substr",
+        "$substrBytes",
+        "$substrCP",
+        "$subtract",
+        "$switch",
+        "$toBool",
+        "$toDate",
+        "$toDecimal",
+        "$toDouble",
+        "$toInt",
+        "$toLong",
+        "$toLower",
+        "$toObjectId",
+        "$toString",
+        "$toUUID",
+        "$toUpper",
+        "$trim",
+        "$trunc",
+        "$type",
+        "$unsetField",
+        "$week",
+        "$year",
+        "$zip"
+      ],
+      "aggregation_stages": [
+        "$addFields",
+        "$bucket",
+        "$bucketAuto",
+        "$count",
+        "$documents",
+        "$facet",
+        "$group",
+        "$limit",
+        "$lookup",
+        "$match",
+        "$project",
+        "$replaceRoot",
+        "$replaceWith",
+        "$sample",
+        "$set",
+        "$setWindowFields",
+        "$skip",
+        "$sort",
+        "$sortByCount",
+        "$unionWith",
+        "$unset",
+        "$unwind"
+      ],
+      "aliases": [
+        "7",
+        "7.0"
+      ],
+      "capabilities": [],
+      "group_accumulators": [
+        "$addToSet",
+        "$avg",
+        "$bottom",
+        "$bottomN",
+        "$count",
+        "$first",
+        "$firstN",
+        "$last",
+        "$lastN",
+        "$max",
+        "$maxN",
+        "$median",
+        "$mergeObjects",
+        "$min",
+        "$minN",
+        "$percentile",
+        "$push",
+        "$stdDevPop",
+        "$stdDevSamp",
+        "$sum",
+        "$top",
+        "$topN"
+      ],
+      "label": "MongoDB 7.0",
+      "query_field_operators": [
+        "$all",
+        "$bitsAllClear",
+        "$bitsAllSet",
+        "$bitsAnyClear",
+        "$bitsAnySet",
+        "$cmp",
+        "$elemMatch",
+        "$eq",
+        "$exists",
+        "$gt",
+        "$gte",
+        "$in",
+        "$lt",
+        "$lte",
+        "$mod",
+        "$ne",
+        "$nin",
+        "$not",
+        "$options",
+        "$regex",
+        "$size",
+        "$type"
+      ],
+      "query_top_level_operators": [
+        "$and",
+        "$expr",
+        "$nor",
+        "$or"
+      ],
+      "server_version": "7.0",
+      "update_operators": [
+        "$addToSet",
+        "$bit",
+        "$currentDate",
+        "$inc",
+        "$max",
+        "$min",
+        "$mul",
+        "$pop",
+        "$pull",
+        "$pullAll",
+        "$push",
+        "$rename",
+        "$set",
+        "$setOnInsert",
+        "$unset"
+      ],
+      "window_accumulators": [
+        "$addToSet",
+        "$avg",
+        "$bottom",
+        "$bottomN",
+        "$count",
+        "$denseRank",
+        "$documentNumber",
+        "$first",
+        "$firstN",
+        "$last",
+        "$lastN",
+        "$max",
+        "$maxN",
+        "$median",
+        "$min",
+        "$minN",
+        "$percentile",
+        "$push",
+        "$rank",
+        "$stdDevPop",
+        "$stdDevSamp",
+        "$sum",
+        "$top",
+        "$topN"
+      ]
+    },
+    "8.0": {
+      "aggregation_expression_operators": [
+        "$abs",
+        "$add",
+        "$allElementsTrue",
+        "$and",
+        "$anyElementTrue",
+        "$arrayElemAt",
+        "$arrayToObject",
+        "$binarySize",
+        "$bitAnd",
+        "$bitNot",
+        "$bitOr",
+        "$bitXor",
+        "$bsonSize",
+        "$ceil",
+        "$cmp",
+        "$concat",
+        "$concatArrays",
+        "$cond",
+        "$convert",
+        "$dateAdd",
+        "$dateDiff",
+        "$dateFromParts",
+        "$dateFromString",
+        "$dateSubtract",
+        "$dateToParts",
+        "$dateToString",
+        "$dateTrunc",
+        "$dayOfMonth",
+        "$dayOfWeek",
+        "$dayOfYear",
+        "$divide",
+        "$eq",
+        "$exp",
+        "$filter",
+        "$first",
+        "$firstN",
+        "$floor",
+        "$getField",
+        "$gt",
+        "$gte",
+        "$hour",
+        "$ifNull",
+        "$in",
+        "$indexOfArray",
+        "$indexOfBytes",
+        "$indexOfCP",
+        "$isArray",
+        "$isNumber",
+        "$isoDayOfWeek",
+        "$isoWeek",
+        "$isoWeekYear",
+        "$lastN",
+        "$let",
+        "$literal",
+        "$ln",
+        "$log",
+        "$log10",
+        "$lt",
+        "$lte",
+        "$ltrim",
+        "$map",
+        "$maxN",
+        "$median",
+        "$mergeObjects",
+        "$millisecond",
+        "$minN",
+        "$minute",
+        "$mod",
+        "$month",
+        "$multiply",
+        "$ne",
+        "$objectToArray",
+        "$or",
+        "$percentile",
+        "$pow",
+        "$rand",
+        "$range",
+        "$reduce",
+        "$regexFind",
+        "$regexFindAll",
+        "$regexMatch",
+        "$replaceAll",
+        "$replaceOne",
+        "$reverseArray",
+        "$round",
+        "$rtrim",
+        "$second",
+        "$setDifference",
+        "$setEquals",
+        "$setField",
+        "$setIntersection",
+        "$setIsSubset",
+        "$setUnion",
+        "$size",
+        "$slice",
+        "$sortArray",
+        "$split",
+        "$sqrt",
+        "$stdDevPop",
+        "$stdDevSamp",
+        "$strLenBytes",
+        "$strLenCP",
+        "$strcasecmp",
+        "$substr",
+        "$substrBytes",
+        "$substrCP",
+        "$subtract",
+        "$switch",
+        "$toBool",
+        "$toDate",
+        "$toDecimal",
+        "$toDouble",
+        "$toInt",
+        "$toLong",
+        "$toLower",
+        "$toObjectId",
+        "$toString",
+        "$toUUID",
+        "$toUpper",
+        "$trim",
+        "$trunc",
+        "$type",
+        "$unsetField",
+        "$week",
+        "$year",
+        "$zip"
+      ],
+      "aggregation_stages": [
+        "$addFields",
+        "$bucket",
+        "$bucketAuto",
+        "$count",
+        "$documents",
+        "$facet",
+        "$group",
+        "$limit",
+        "$lookup",
+        "$match",
+        "$project",
+        "$replaceRoot",
+        "$replaceWith",
+        "$sample",
+        "$set",
+        "$setWindowFields",
+        "$skip",
+        "$sort",
+        "$sortByCount",
+        "$unionWith",
+        "$unset",
+        "$unwind"
+      ],
+      "aliases": [
+        "8",
+        "8.0"
+      ],
+      "capabilities": [],
+      "group_accumulators": [
+        "$addToSet",
+        "$avg",
+        "$bottom",
+        "$bottomN",
+        "$count",
+        "$first",
+        "$firstN",
+        "$last",
+        "$lastN",
+        "$max",
+        "$maxN",
+        "$median",
+        "$mergeObjects",
+        "$min",
+        "$minN",
+        "$percentile",
+        "$push",
+        "$stdDevPop",
+        "$stdDevSamp",
+        "$sum",
+        "$top",
+        "$topN"
+      ],
+      "label": "MongoDB 8.0",
+      "query_field_operators": [
+        "$all",
+        "$bitsAllClear",
+        "$bitsAllSet",
+        "$bitsAnyClear",
+        "$bitsAnySet",
+        "$cmp",
+        "$elemMatch",
+        "$eq",
+        "$exists",
+        "$gt",
+        "$gte",
+        "$in",
+        "$lt",
+        "$lte",
+        "$mod",
+        "$ne",
+        "$nin",
+        "$not",
+        "$options",
+        "$regex",
+        "$size",
+        "$type"
+      ],
+      "query_top_level_operators": [
+        "$and",
+        "$expr",
+        "$nor",
+        "$or"
+      ],
+      "server_version": "8.0",
+      "update_operators": [
+        "$addToSet",
+        "$bit",
+        "$currentDate",
+        "$inc",
+        "$max",
+        "$min",
+        "$mul",
+        "$pop",
+        "$pull",
+        "$pullAll",
+        "$push",
+        "$rename",
+        "$set",
+        "$setOnInsert",
+        "$unset"
+      ],
+      "window_accumulators": [
+        "$addToSet",
+        "$avg",
+        "$bottom",
+        "$bottomN",
+        "$count",
+        "$denseRank",
+        "$documentNumber",
+        "$first",
+        "$firstN",
+        "$last",
+        "$lastN",
+        "$max",
+        "$maxN",
+        "$median",
+        "$min",
+        "$minN",
+        "$percentile",
+        "$push",
+        "$rank",
+        "$stdDevPop",
+        "$stdDevSamp",
+        "$sum",
+        "$top",
+        "$topN"
+      ]
+    }
+  },
+  "operation_options": {
+    "aggregate": {
+      "batch_size": {
+        "note": "Positive batch sizes trigger chunked execution for streamable aggregate pipelines; global stages still fall back to full materialization.",
+        "status": "effective"
+      },
+      "comment": {
+        "note": "Recorded in engine session metadata and propagated through aggregate explain/materialization.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through the pushdown find() path used by aggregate() and surfaced in explain().",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Propagated into aggregate expression evaluation and subpipelines.",
+        "status": "effective"
+      },
+      "max_time_ms": {
+        "note": "Applied to referenced collection loads, pushdown reads and final pipeline materialization.",
+        "status": "effective"
+      }
+    },
+    "bulk_write": {
+      "comment": {
+        "note": "Recorded in engine session metadata for the batch write operation.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Command-level let variables flow into per-operation write filters through $expr when requests do not override them.",
+        "status": "effective"
+      }
+    },
+    "count_documents": {
+      "comment": {
+        "note": "Propagated through the underlying read path and session metadata.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through the underlying find() path used to count matching documents.",
+        "status": "effective"
+      },
+      "max_time_ms": {
+        "note": "Enforced through the underlying find() path used to count documents.",
+        "status": "effective"
+      }
+    },
+    "create_index": {
+      "comment": {
+        "note": "Recorded in engine session metadata for index administration.",
+        "status": "effective"
+      },
+      "max_time_ms": {
+        "note": "Enforced as a local deadline during index build and multikey backfill.",
+        "status": "effective"
+      }
+    },
+    "create_indexes": {
+      "comment": {
+        "note": "Recorded in engine session metadata for index administration.",
+        "status": "effective"
+      },
+      "max_time_ms": {
+        "note": "Enforced as a local deadline across the whole index batch.",
+        "status": "effective"
+      }
+    },
+    "delete_many": {
+      "comment": {
+        "note": "Recorded in engine session metadata for the write operation.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through hinted _id preselection before per-document deletes.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Command-level let variables are available through $expr in write filters and selection paths.",
+        "status": "effective"
+      }
+    },
+    "delete_one": {
+      "comment": {
+        "note": "Recorded in engine session metadata for the write operation.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through hinted document selection before delete.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Command-level let variables are available through $expr in write filters and selection paths.",
+        "status": "effective"
+      }
+    },
+    "distinct": {
+      "comment": {
+        "note": "Propagated through the underlying read path and session metadata.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through the underlying find() path used to enumerate distinct values.",
+        "status": "effective"
+      },
+      "max_time_ms": {
+        "note": "Enforced through the underlying find() path used to enumerate distinct values.",
+        "status": "effective"
+      }
+    },
+    "drop_index": {
+      "comment": {
+        "note": "Recorded in engine session metadata for index administration.",
+        "status": "effective"
+      }
+    },
+    "drop_indexes": {
+      "comment": {
+        "note": "Recorded in engine session metadata for index administration.",
+        "status": "effective"
+      }
+    },
+    "estimated_document_count": {
+      "comment": {
+        "note": "Propagated through the underlying full-collection read path and session metadata.",
+        "status": "effective"
+      },
+      "max_time_ms": {
+        "note": "Enforced through the underlying full-collection read path.",
+        "status": "effective"
+      }
+    },
+    "find": {
+      "batch_size": {
+        "note": "Async and sync find cursors now fetch local batches before yielding results, even though engines remain in-process.",
+        "status": "effective"
+      },
+      "comment": {
+        "note": "Recorded in engine session metadata and surfaced by explain().",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Validated against existing indexes and applied to read planning/explain where engines can honor it.",
+        "status": "effective"
+      },
+      "max_time_ms": {
+        "note": "Enforced as a local deadline during read execution and explain().",
+        "status": "effective"
+      }
+    },
+    "find_one_and_delete": {
+      "comment": {
+        "note": "Propagated through the underlying read selection path and session metadata.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through hinted document selection before delete.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Command-level let variables are available through $expr in write filters and selection paths.",
+        "status": "effective"
+      },
+      "max_time_ms": {
+        "note": "Propagated through the underlying read selection path and enforced there.",
+        "status": "effective"
+      },
+      "sort": {
+        "note": "Implemented through find() selection semantics before delete.",
+        "status": "effective"
+      }
+    },
+    "find_one_and_replace": {
+      "comment": {
+        "note": "Propagated through the underlying read selection path and session metadata.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through hinted document selection and post-replacement fetch.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Command-level let variables are available through $expr in write filters and selection paths.",
+        "status": "effective"
+      },
+      "max_time_ms": {
+        "note": "Propagated through the underlying read selection path and enforced there.",
+        "status": "effective"
+      },
+      "sort": {
+        "note": "Implemented through replace_one()/find semantics with profile-aware validation.",
+        "status": "effective"
+      }
+    },
+    "find_one_and_update": {
+      "array_filters": {
+        "note": "Propagated to the underlying update_one() execution for supported filtered positional paths.",
+        "status": "effective"
+      },
+      "comment": {
+        "note": "Propagated through the underlying read selection path and session metadata.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through hinted document selection and post-update fetch.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Command-level let variables are available through $expr in write filters and selection paths.",
+        "status": "effective"
+      },
+      "max_time_ms": {
+        "note": "Propagated through the underlying read selection path and enforced there.",
+        "status": "effective"
+      },
+      "sort": {
+        "note": "Implemented through update_one()/find semantics with profile-aware validation.",
+        "status": "effective"
+      }
+    },
+    "list_indexes": {
+      "comment": {
+        "note": "Recorded in engine session metadata for index administration.",
+        "status": "effective"
+      }
+    },
+    "replace_one": {
+      "comment": {
+        "note": "Recorded in engine session metadata for the write operation.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through hinted document selection before replacement.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Command-level let variables are available through $expr in write filters and selection paths.",
+        "status": "effective"
+      },
+      "sort": {
+        "note": "Implemented with profile-aware validation since PyMongo 4.11.",
+        "status": "effective"
+      }
+    },
+    "update_many": {
+      "array_filters": {
+        "note": "Applied during per-document update execution for supported filtered positional paths.",
+        "status": "effective"
+      },
+      "comment": {
+        "note": "Recorded in engine session metadata for the write operation.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through hinted _id preselection before per-document updates.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Command-level let variables are available through $expr in write filters and selection paths.",
+        "status": "effective"
+      }
+    },
+    "update_one": {
+      "array_filters": {
+        "note": "Applied during update execution for supported filtered positional paths.",
+        "status": "effective"
+      },
+      "comment": {
+        "note": "Recorded in engine session metadata for the write operation.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through hinted document selection before single-document update execution.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Command-level let variables are available through $expr in write filters and selection paths.",
+        "status": "effective"
+      },
+      "sort": {
+        "note": "Implemented with profile-aware validation since PyMongo 4.11.",
+        "status": "effective"
+      }
+    }
+  },
+  "pymongo_profiles": {
+    "4.11": {
+      "aliases": [
+        "4.11"
+      ],
+      "capabilities": [
+        "update_one.sort"
+      ],
+      "driver_series": "4.x",
+      "label": "PyMongo 4.11"
+    },
+    "4.13": {
+      "aliases": [
+        "4.13"
+      ],
+      "capabilities": [
+        "update_one.sort"
+      ],
+      "driver_series": "4.x",
+      "label": "PyMongo 4.13"
+    },
+    "4.9": {
+      "aliases": [
+        "4",
+        "4.9"
+      ],
+      "capabilities": [],
+      "driver_series": "4.x",
+      "label": "PyMongo 4.9"
+    }
+  },
+  "supported_majors": {
+    "mongodb": [
+      7,
+      8
+    ],
+    "pymongo": [
+      4
+    ]
+  }
+}
