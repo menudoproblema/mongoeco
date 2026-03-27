@@ -403,6 +403,70 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         {"ns": "alpha.events", "ok": 1.0},
                     )
 
+    async def test_database_command_supports_find_and_modify(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    await client.alpha.events.insert_many(
+                        [
+                            {"_id": "1", "kind": "view", "rank": 2, "done": False},
+                            {"_id": "2", "kind": "view", "rank": 1, "done": False},
+                        ]
+                    )
+
+                    updated = await client.alpha.command(
+                        {
+                            "findAndModify": "events",
+                            "query": {"kind": "view"},
+                            "sort": {"rank": 1},
+                            "update": {"$set": {"done": True}},
+                            "fields": {"done": 1, "_id": 0},
+                            "new": True,
+                        }
+                    )
+                    removed = await client.alpha.command(
+                        {
+                            "findAndModify": "events",
+                            "query": {"kind": "view"},
+                            "remove": True,
+                            "fields": {"rank": 1, "_id": 0},
+                        }
+                    )
+                    upserted = await client.alpha.command(
+                        {
+                            "findAndModify": "events",
+                            "query": {"kind": "missing"},
+                            "update": {"kind": "missing", "done": True},
+                            "upsert": True,
+                            "new": True,
+                            "fields": {"kind": 1, "done": 1, "_id": 0},
+                        }
+                    )
+
+                    self.assertEqual(
+                        updated,
+                        {
+                            "lastErrorObject": {"n": 1, "updatedExisting": True},
+                            "value": {"done": True},
+                            "ok": 1.0,
+                        },
+                    )
+                    self.assertEqual(
+                        removed,
+                        {
+                            "lastErrorObject": {"n": 1},
+                            "value": {"rank": 2},
+                            "ok": 1.0,
+                        },
+                    )
+                    self.assertEqual(upserted["lastErrorObject"]["n"], 1)
+                    self.assertFalse(upserted["lastErrorObject"]["updatedExisting"])
+                    self.assertIn("upserted", upserted["lastErrorObject"])
+                    self.assertEqual(
+                        upserted["value"],
+                        {"kind": "missing", "done": True},
+                    )
+
     async def test_database_command_supports_coll_stats_and_db_stats(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -441,6 +505,8 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await client.alpha.command({"dropIndexes": "events", "index": 1.5})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 await client.alpha.command("listDatabases", nameOnly=1)  # type: ignore[arg-type]
+            with self.assertRaises(OperationFailure):
+                await client.alpha.command({"findAndModify": "events"})
 
     async def test_validate_collection_returns_metadata_and_rejects_missing_namespace(self):
         for engine_name in ENGINE_FACTORIES:

@@ -2,6 +2,7 @@ import datetime
 
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
+from mongoeco.api._async.cursor import _validate_hint_spec, _validate_max_time_ms, _validate_sort_spec
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,
@@ -21,6 +22,7 @@ from mongoeco.types import (
     Document,
     Filter,
     IndexModel,
+    ReturnDocument,
     ReadConcern,
     ReadPreference,
     TransactionOptions,
@@ -250,6 +252,32 @@ class AsyncDatabase:
                 kwargs["unique"] = raw_index["unique"]
             normalized.append(IndexModel(raw_index["key"], **kwargs))
         return normalized
+
+    @staticmethod
+    def _normalize_sort_document(sort: object | None) -> list[tuple[str, int]] | None:
+        if sort is None:
+            return None
+        if not isinstance(sort, dict):
+            raise TypeError("sort must be a document")
+        normalized = list(sort.items())
+        _validate_sort_spec(normalized)
+        return normalized
+
+    @staticmethod
+    def _normalize_hint_from_command(hint: object | None) -> object | None:
+        if hint is None:
+            return None
+        if isinstance(hint, dict):
+            hint = list(hint.items())
+        _validate_hint_spec(hint)
+        return hint
+
+    @staticmethod
+    def _normalize_max_time_ms_from_command(max_time_ms: object | None) -> int | None:
+        if max_time_ms is None:
+            return None
+        _validate_max_time_ms(max_time_ms)
+        return max_time_ms
 
     async def _collection_stats(
         self,
@@ -482,6 +510,182 @@ class AsyncDatabase:
                 session=session,
             )
             return {"values": values, "ok": 1.0}
+
+        if command_name == "findAndModify":
+            collection_name = self._require_collection_name(
+                spec.get("findAndModify"),
+                "findAndModify",
+            )
+            query = self._normalize_filter(spec.get("query"))
+            sort = self._normalize_sort_document(spec.get("sort"))
+            fields = spec.get("fields")
+            remove = spec.get("remove", False)
+            if not isinstance(remove, bool):
+                raise TypeError("remove must be a bool")
+            return_new = spec.get("new", False)
+            if not isinstance(return_new, bool):
+                raise TypeError("new must be a bool")
+            upsert = spec.get("upsert", False)
+            if not isinstance(upsert, bool):
+                raise TypeError("upsert must be a bool")
+            array_filters = spec.get("arrayFilters")
+            if array_filters is not None and (
+                not isinstance(array_filters, list)
+                or not all(is_filter(item) for item in array_filters)
+            ):
+                raise TypeError("arrayFilters must be a list of dicts")
+            hint = self._normalize_hint_from_command(spec.get("hint"))
+            max_time_ms = self._normalize_max_time_ms_from_command(spec.get("maxTimeMS"))
+            let = spec.get("let")
+            if let is not None and not isinstance(let, dict):
+                raise TypeError("let must be a dict")
+
+            update_spec = spec.get("update")
+            if remove:
+                if update_spec is not None:
+                    raise OperationFailure("findAndModify remove and update cannot be specified together")
+                if upsert:
+                    raise OperationFailure("findAndModify remove does not support upsert")
+                before = await self.get_collection(collection_name).find_one_and_delete(
+                    query,
+                    projection=fields,
+                    sort=sort,
+                    hint=hint,
+                    comment=spec.get("comment"),
+                    max_time_ms=max_time_ms,
+                    let=let,
+                    session=session,
+                )
+                return {
+                    "lastErrorObject": {"n": 0 if before is None else 1},
+                    "value": before,
+                    "ok": 1.0,
+                }
+
+            if update_spec is None:
+                raise OperationFailure("findAndModify requires either remove or update")
+
+            collection = self.get_collection(collection_name)
+            before_full = await collection.find(
+                query,
+                sort=sort,
+                limit=1,
+                hint=hint,
+                comment=spec.get("comment"),
+                max_time_ms=max_time_ms,
+                session=session,
+            ).first()
+            return_document = ReturnDocument.AFTER if return_new else ReturnDocument.BEFORE
+
+            if isinstance(update_spec, dict) and all(
+                isinstance(key, str) and key.startswith("$")
+                for key in update_spec
+            ):
+                if before_full is None and upsert:
+                    result = await collection.update_one(
+                        query,
+                        update_spec,
+                        upsert=True,
+                        sort=sort,
+                        array_filters=array_filters,
+                        hint=hint,
+                        comment=spec.get("comment"),
+                        let=let,
+                        session=session,
+                    )
+                    value = None
+                    if return_new:
+                        value = await collection.find(
+                            {"_id": result.upserted_id},
+                            fields,
+                            limit=1,
+                            session=session,
+                        ).first()
+                    return {
+                        "lastErrorObject": {
+                            "n": 1,
+                            "updatedExisting": False,
+                            "upserted": result.upserted_id,
+                        },
+                        "value": value,
+                        "ok": 1.0,
+                    }
+                value = await collection.find_one_and_update(
+                    query,
+                    update_spec,
+                    projection=fields,
+                    sort=sort,
+                    upsert=upsert,
+                    return_document=return_document,
+                    array_filters=array_filters,
+                    hint=hint,
+                    comment=spec.get("comment"),
+                    max_time_ms=max_time_ms,
+                    let=let,
+                    session=session,
+                )
+                return {
+                    "lastErrorObject": {
+                        "n": 0 if before_full is None and not upsert else 1,
+                        "updatedExisting": before_full is not None,
+                    },
+                    "value": value,
+                    "ok": 1.0,
+                }
+
+            if not isinstance(update_spec, dict):
+                raise TypeError("update must be a document")
+
+            if before_full is None and upsert:
+                result = await collection.replace_one(
+                    query,
+                    update_spec,
+                    upsert=True,
+                    sort=sort,
+                    hint=hint,
+                    comment=spec.get("comment"),
+                    let=let,
+                    session=session,
+                )
+                value = None
+                if return_new:
+                    value = await collection.find(
+                        {"_id": result.upserted_id},
+                        fields,
+                        limit=1,
+                        session=session,
+                    ).first()
+                return {
+                    "lastErrorObject": {
+                        "n": 1,
+                        "updatedExisting": False,
+                        "upserted": result.upserted_id,
+                    },
+                    "value": value,
+                    "ok": 1.0,
+                }
+
+            value = await collection.find_one_and_replace(
+                query,
+                update_spec,
+                projection=fields,
+                sort=sort,
+                upsert=upsert,
+                return_document=return_document,
+                hint=hint,
+                comment=spec.get("comment"),
+                max_time_ms=max_time_ms,
+                let=let,
+                session=session,
+            )
+            return {
+                "lastErrorObject": {
+                    "n": 0 if before_full is None and not upsert else 1,
+                    "updatedExisting": before_full is not None,
+                },
+                "value": value,
+                "ok": 1.0,
+            }
 
         if command_name == "listIndexes":
             collection_name = self._require_collection_name(
