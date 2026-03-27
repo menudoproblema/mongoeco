@@ -21,6 +21,7 @@ from mongoeco.api.operations import (
     UpdateOperation,
     compile_aggregate_operation,
     compile_find_operation,
+    compile_find_selection_from_update_operation,
     compile_update_operation,
 )
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
@@ -178,6 +179,31 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertEqual(operation.comment, "write")
         self.assertEqual(operation.max_time_ms, 25)
         self.assertEqual(operation.let, {"target": "Ada"})
+
+    def test_find_selection_operation_derives_from_update_operation(self):
+        update_operation = compile_update_operation(
+            {"name": "Ada"},
+            sort=[("rank", 1)],
+            hint=[("name", 1)],
+            comment="write",
+            max_time_ms=25,
+            let={"target": "Ada"},
+        )
+
+        selection = compile_find_selection_from_update_operation(
+            update_operation,
+            projection={"_id": 1},
+            limit=1,
+        )
+
+        self.assertIsInstance(selection, FindOperation)
+        self.assertEqual(selection.filter_spec, update_operation.filter_spec)
+        self.assertEqual(selection.plan, update_operation.plan)
+        self.assertEqual(selection.sort, update_operation.sort)
+        self.assertEqual(selection.hint, update_operation.hint)
+        self.assertEqual(selection.comment, update_operation.comment)
+        self.assertEqual(selection.projection, {"_id": 1})
+        self.assertEqual(selection.limit, 1)
 
     def test_update_operation_rejects_invalid_array_filters(self):
         with self.assertRaises(TypeError):
@@ -576,6 +602,31 @@ class ArchitectureUnitTests(unittest.TestCase):
             delegated,
             AsyncDatabaseCommandService.DelegatedAdminCommand,
         )
+        self.assertIsInstance(find.operation, FindOperation)
+        self.assertIsInstance(count.operation, FindOperation)
+        self.assertIsInstance(distinct.operation, FindOperation)
+        self.assertIsInstance(aggregate.operation, AggregateOperation)
+
+    def test_database_admin_service_compiles_count_and_distinct_operations(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin
+
+        count_collection, count_operation = service._compile_command_count_operation(
+            {"count": "users", "query": {"name": "Ada"}, "skip": 1, "limit": 2}
+        )
+        distinct_collection, distinct_key, distinct_operation = (
+            service._compile_command_distinct_operation(
+                {"distinct": "users", "key": "name", "query": {"active": True}}
+            )
+        )
+
+        self.assertEqual(count_collection, "users")
+        self.assertEqual(count_operation.filter_spec, {"name": "Ada"})
+        self.assertEqual(count_operation.skip, 1)
+        self.assertEqual(count_operation.limit, 2)
+        self.assertEqual(distinct_collection, "users")
+        self.assertEqual(distinct_key, "name")
+        self.assertEqual(distinct_operation.filter_spec, {"active": True})
 
     def test_admin_parsing_centralizes_listing_and_validation_options(self):
         list_options = normalize_list_collections_options(

@@ -27,6 +27,8 @@ from mongoeco.api.operations import (
     FindOperation,
     compile_aggregate_operation,
     compile_find_operation,
+    compile_find_selection_from_update_operation,
+    compile_update_operation,
 )
 from mongoeco.api._async.database_commands import AsyncDatabaseCommandService
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
@@ -300,6 +302,109 @@ class AsyncDatabaseAdminService:
                 ),
                 let=spec.get(let_field),
             ),
+        )
+
+    def _compile_command_update_selection_operation(
+        self,
+        update_spec: dict[str, object],
+        *,
+        comment: object | None,
+        max_time_ms: object | None,
+        limit: int | None,
+    ) -> FindOperation:
+        return compile_find_selection_from_update_operation(
+            compile_update_operation(
+                self._normalize_filter(update_spec.get("q")),
+                hint=self._normalize_hint_from_command(update_spec.get("hint")),
+                comment=comment,
+                max_time_ms=self._normalize_max_time_ms_from_command(max_time_ms),
+                let=update_spec.get("let"),
+                dialect=self._mongodb_dialect,
+            ),
+            projection={"_id": 1},
+            limit=limit,
+        )
+
+    def _compile_command_delete_selection_operation(
+        self,
+        delete_spec: dict[str, object],
+        *,
+        comment: object | None,
+        max_time_ms: object | None,
+        limit: int | None,
+    ) -> FindOperation:
+        return compile_find_selection_from_update_operation(
+            compile_update_operation(
+                self._normalize_filter(delete_spec.get("q")),
+                hint=self._normalize_hint_from_command(delete_spec.get("hint")),
+                comment=comment,
+                max_time_ms=self._normalize_max_time_ms_from_command(max_time_ms),
+                let=delete_spec.get("let"),
+                dialect=self._mongodb_dialect,
+            ),
+            projection={"_id": 1},
+            limit=limit,
+        )
+
+    def _compile_command_count_operation(
+        self,
+        spec: dict[str, object],
+    ) -> tuple[str, FindOperation]:
+        return self._compile_command_find_operation(
+            spec,
+            collection_field="count",
+            filter_field="query",
+            default_projection={"_id": 1},
+        )
+
+    def _compile_command_distinct_operation(
+        self,
+        spec: dict[str, object],
+    ) -> tuple[str, str, FindOperation]:
+        collection_name = self._require_collection_name(
+            spec.get("distinct"),
+            "distinct",
+        )
+        key = spec.get("key")
+        if not isinstance(key, str) or not key:
+            raise TypeError("key must be a non-empty string")
+        _, operation = self._compile_command_find_operation(
+            spec,
+            collection_field="distinct",
+            filter_field="query",
+            batch_size_field=None,
+        )
+        return collection_name, key, operation
+
+    def _compile_find_and_modify_selection_operation(
+        self,
+        options: FindAndModifyCommandOptions,
+        *,
+        projection: Projection | None = None,
+        limit: int | None = 1,
+    ) -> FindOperation:
+        return compile_find_operation(
+            options.query,
+            projection=projection,
+            sort=options.sort,
+            limit=limit,
+            hint=options.hint,
+            comment=options.comment,
+            max_time_ms=options.max_time_ms,
+            dialect=self._mongodb_dialect,
+        )
+
+    def _compile_id_lookup_operation(
+        self,
+        document_id: object,
+        *,
+        projection: Projection | None = None,
+    ) -> FindOperation:
+        return compile_find_operation(
+            {"_id": document_id},
+            projection=projection,
+            limit=1,
+            dialect=self._mongodb_dialect,
         )
 
     async def _first_with_operation(
@@ -630,21 +735,7 @@ class AsyncDatabaseAdminService:
         *,
         session: ClientSession | None = None,
     ) -> object:
-        collection_name, operation = self._compile_command_find_operation(
-            {
-                "count": spec.get("count"),
-                "query": spec.get("query"),
-                "projection": {"_id": 1},
-                "hint": spec.get("hint"),
-                "comment": spec.get("comment"),
-                "maxTimeMS": spec.get("maxTimeMS"),
-                "skip": spec.get("skip", 0),
-                "limit": spec.get("limit"),
-            },
-            collection_field="count",
-            filter_field="query",
-            default_projection={"_id": 1},
-        )
+        collection_name, operation = self._compile_command_count_operation(spec)
         return await self._execute_count_command(
             collection_name,
             operation,
@@ -657,25 +748,7 @@ class AsyncDatabaseAdminService:
         *,
         session: ClientSession | None = None,
     ) -> object:
-        collection_name = self._require_collection_name(
-            spec.get("distinct"),
-            "distinct",
-        )
-        key = spec.get("key")
-        if not isinstance(key, str) or not key:
-            raise TypeError("key must be a non-empty string")
-        _, operation = self._compile_command_find_operation(
-            {
-                "distinct": collection_name,
-                "query": spec.get("query"),
-                "hint": spec.get("hint"),
-                "comment": spec.get("comment"),
-                "maxTimeMS": spec.get("maxTimeMS"),
-            },
-            collection_field="distinct",
-            filter_field="query",
-            batch_size_field=None,
-        )
+        collection_name, key, operation = self._compile_command_distinct_operation(spec)
         return await self._execute_distinct_command(
             collection_name,
             key,
@@ -1039,20 +1112,11 @@ class AsyncDatabaseAdminService:
             multi = update_spec.get("multi", False)
             if not isinstance(multi, bool):
                 raise TypeError("multi must be a bool")
-            _, operation = self._compile_command_find_operation(
-                {
-                    "update": collection_name,
-                    "q": update_spec.get("q"),
-                    "projection": {"_id": 1},
-                    "hint": update_spec.get("hint"),
-                    "comment": explain_spec.get("comment"),
-                    "maxTimeMS": explain_spec.get("maxTimeMS"),
-                    "limit": None if multi else 1,
-                },
-                collection_field="update",
-                filter_field="q",
-                default_projection={"_id": 1},
-                batch_size_field=None,
+            operation = self._compile_command_update_selection_operation(
+                update_spec,
+                comment=explain_spec.get("comment"),
+                max_time_ms=explain_spec.get("maxTimeMS"),
+                limit=None if multi else 1,
             )
             explanation = await self._database.get_collection(collection_name)._build_cursor(
                 operation,
@@ -1073,20 +1137,11 @@ class AsyncDatabaseAdminService:
             limit = delete_spec.get("limit", 0)
             if limit not in (0, 1):
                 raise TypeError("limit must be 0 or 1")
-            _, operation = self._compile_command_find_operation(
-                {
-                    "delete": collection_name,
-                    "q": delete_spec.get("q"),
-                    "projection": {"_id": 1},
-                    "hint": delete_spec.get("hint"),
-                    "comment": explain_spec.get("comment"),
-                    "maxTimeMS": explain_spec.get("maxTimeMS"),
-                    "limit": 1 if limit == 1 else None,
-                },
-                collection_field="delete",
-                filter_field="q",
-                default_projection={"_id": 1},
-                batch_size_field=None,
+            operation = self._compile_command_delete_selection_operation(
+                delete_spec,
+                comment=explain_spec.get("comment"),
+                max_time_ms=explain_spec.get("maxTimeMS"),
+                limit=1 if limit == 1 else None,
             )
             explanation = await self._database.get_collection(collection_name)._build_cursor(
                 operation,
@@ -1170,15 +1225,7 @@ class AsyncDatabaseAdminService:
     ) -> Document | None:
         return await self._first_with_operation(
             options.collection_name,
-            compile_find_operation(
-                options.query,
-                sort=options.sort,
-                limit=1,
-                hint=options.hint,
-                comment=options.comment,
-                max_time_ms=options.max_time_ms,
-                dialect=self._mongodb_dialect,
-            ),
+            self._compile_find_and_modify_selection_operation(options),
             session=session,
         )
 
@@ -1192,11 +1239,9 @@ class AsyncDatabaseAdminService:
     ) -> Document | None:
         return await self._first_with_operation(
             collection_name,
-            compile_find_operation(
-                {"_id": upserted_id},
+            self._compile_id_lookup_operation(
+                upserted_id,
                 projection=projection,
-                limit=1,
-                dialect=self._mongodb_dialect,
             ),
             session=session,
         )

@@ -9,6 +9,7 @@ from mongoeco.api.operations import (
     UpdateOperation,
     compile_aggregate_operation,
     compile_find_operation,
+    compile_find_selection_from_update_operation,
     compile_update_operation,
 )
 from mongoeco.api._async.cursor import (
@@ -416,24 +417,6 @@ class AsyncCollection:
         )
         return await self._build_cursor(operation, session=session).first()
 
-    @staticmethod
-    def _selection_operation_from_update(
-        operation: UpdateOperation,
-        *,
-        projection: Projection | None = None,
-        limit: int | None = None,
-    ) -> FindOperation:
-        return FindOperation(
-            filter_spec=operation.filter_spec,
-            plan=operation.plan,
-            projection=projection,
-            sort=operation.sort,
-            limit=limit,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-        )
-
     def _build_cursor(
         self,
         operation: FindOperation,
@@ -812,7 +795,7 @@ class AsyncCollection:
             )
         if operation.sort is not None:
             selected = await self._build_cursor(
-                self._selection_operation_from_update(operation, limit=1),
+                compile_find_selection_from_update_operation(operation, limit=1),
                 session=session,
             ).first()
             if selected is None and not upsert:
@@ -847,7 +830,7 @@ class AsyncCollection:
             )
         if operation.hint is not None:
             selected = await self._build_cursor(
-                self._selection_operation_from_update(
+                compile_find_selection_from_update_operation(
                     operation,
                     projection={"_id": 1},
                     limit=1,
@@ -952,7 +935,7 @@ class AsyncCollection:
         )
         update_spec = self._require_update(update_spec)
         matched_documents = await self._build_cursor(
-            self._selection_operation_from_update(
+            compile_find_selection_from_update_operation(
                 operation,
                 projection={"_id": 1},
             ),
@@ -1297,7 +1280,7 @@ class AsyncCollection:
         )
         if operation.hint is not None:
             selected = await self._build_cursor(
-                self._selection_operation_from_update(
+                compile_find_selection_from_update_operation(
                     operation,
                     projection={"_id": 1},
                     limit=1,
@@ -1345,7 +1328,7 @@ class AsyncCollection:
             dialect=self._mongodb_dialect,
         )
         matched_documents = await self._build_cursor(
-            self._selection_operation_from_update(
+            compile_find_selection_from_update_operation(
                 operation,
                 projection={"_id": 1},
             ),

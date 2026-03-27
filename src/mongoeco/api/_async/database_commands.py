@@ -577,20 +577,7 @@ class AsyncDatabaseCommandService:
                 operation=operation,
             )
         if command_name == "count":
-            collection_name, operation = self._admin._compile_command_find_operation(
-                {
-                    "count": require_collection_name(spec.get("count"), "count"),
-                    "query": spec.get("query"),
-                    "skip": spec.get("skip", 0),
-                    "limit": spec.get("limit"),
-                    "hint": spec.get("hint"),
-                    "comment": spec.get("comment"),
-                    "maxTimeMS": spec.get("maxTimeMS"),
-                },
-                collection_field="count",
-                filter_field="query",
-                default_projection={"_id": 1},
-            )
+            collection_name, operation = self._admin._compile_command_count_operation(spec)
             return self.CountCommand(
                 db_name=self._admin._db_name,
                 command_name=command_name,
@@ -599,24 +586,8 @@ class AsyncDatabaseCommandService:
                 operation=operation,
             )
         if command_name == "distinct":
-            collection_name = require_collection_name(
-                spec.get("distinct"),
-                "distinct",
-            )
-            key = spec.get("key")
-            if not isinstance(key, str) or not key:
-                raise TypeError("key must be a non-empty string")
-            _, operation = self._admin._compile_command_find_operation(
-                {
-                    "distinct": collection_name,
-                    "query": spec.get("query"),
-                    "hint": spec.get("hint"),
-                    "comment": spec.get("comment"),
-                    "maxTimeMS": spec.get("maxTimeMS"),
-                },
-                collection_field="distinct",
-                filter_field="query",
-                batch_size_field=None,
+            collection_name, key, operation = self._admin._compile_command_distinct_operation(
+                spec
             )
             return self.DistinctCommand(
                 db_name=self._admin._db_name,

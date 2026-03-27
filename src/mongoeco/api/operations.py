@@ -59,6 +59,24 @@ class AggregateOperation:
         return replace(self, **changes)
 
 
+def compile_find_selection_from_update_operation(
+    operation: UpdateOperation,
+    *,
+    projection: Projection | None = None,
+    limit: int | None = None,
+) -> FindOperation:
+    return FindOperation(
+        filter_spec=operation.filter_spec,
+        plan=operation.plan,
+        projection=projection,
+        sort=operation.sort,
+        limit=limit,
+        hint=operation.hint,
+        comment=operation.comment,
+        max_time_ms=operation.max_time_ms,
+    )
+
+
 def compile_find_operation(
     filter_spec: object | None = None,
     *,
