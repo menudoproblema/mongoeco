@@ -22,6 +22,10 @@ class ChangeStreamPipelineTests(unittest.TestCase):
         self.assertEqual(match_filter, {"operationType": "insert"})
         self.assertEqual(projection, {"operationType": 1})
 
+    def test_compile_change_stream_pipeline_rejects_invalid_stage_shape(self):
+        with self.assertRaises(TypeError):
+            compile_change_stream_pipeline([{"$match": {}, "$project": {}}])
+
 
 class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
     async def test_cursor_filters_by_scope_pipeline_and_timeout(self):
@@ -69,6 +73,64 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
         cursor.close()
         with self.assertRaises(OperationFailure):
             await cursor.try_next()
+
+    async def test_cursor_can_resume_after_token_and_start_at_operation_time(self):
+        hub = ChangeStreamHub()
+        hub.publish(
+            operation_type="insert",
+            db_name="alpha",
+            coll_name="users",
+            document_key={"_id": 1},
+            full_document={"_id": 1},
+        )
+        hub.publish(
+            operation_type="insert",
+            db_name="alpha",
+            coll_name="users",
+            document_key={"_id": 2},
+            full_document={"_id": 2},
+        )
+
+        resumed = AsyncChangeStreamCursor(
+            hub,
+            scope=ChangeStreamScope(),
+            resume_after={"_data": "1"},
+            max_await_time_ms=10,
+        )
+        started = AsyncChangeStreamCursor(
+            hub,
+            scope=ChangeStreamScope(),
+            start_at_operation_time=2,
+            max_await_time_ms=10,
+        )
+
+        resumed_event = await resumed.try_next()
+        started_event = await started.try_next()
+
+        self.assertEqual(resumed_event["documentKey"], {"_id": 2})
+        self.assertEqual(started_event["documentKey"], {"_id": 2})
+
+    async def test_cursor_rejects_conflicting_resume_options(self):
+        hub = ChangeStreamHub()
+        with self.assertRaises(OperationFailure):
+            AsyncChangeStreamCursor(
+                hub,
+                scope=ChangeStreamScope(),
+                resume_after={"_data": "1"},
+                start_after={"_data": "2"},
+            )
+        with self.assertRaises(OperationFailure):
+            AsyncChangeStreamCursor(
+                hub,
+                scope=ChangeStreamScope(),
+                resume_after={"_data": "x"},
+            )
+        with self.assertRaises(TypeError):
+            AsyncChangeStreamCursor(
+                hub,
+                scope=ChangeStreamScope(),
+                start_at_operation_time=-1,
+            )
 
 
 class ChangeStreamCursorTests(unittest.TestCase):

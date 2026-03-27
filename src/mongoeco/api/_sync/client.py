@@ -243,6 +243,9 @@ class Database:
         pipeline: object | None = None,
         *,
         max_await_time_ms: int | None = None,
+        resume_after: dict[str, object] | None = None,
+        start_after: dict[str, object] | None = None,
+        start_at_operation_time: int | None = None,
         session: ClientSession | None = None,
     ) -> ChangeStreamCursor:
         return ChangeStreamCursor(
@@ -250,6 +253,9 @@ class Database:
             self._async_database().watch(
                 pipeline,
                 max_await_time_ms=max_await_time_ms,
+                resume_after=resume_after,
+                start_after=start_after,
+                start_at_operation_time=start_at_operation_time,
                 session=session,
             ),
         )
@@ -442,6 +448,9 @@ class MongoClient:
         pipeline: object | None = None,
         *,
         max_await_time_ms: int | None = None,
+        resume_after: dict[str, object] | None = None,
+        start_after: dict[str, object] | None = None,
+        start_at_operation_time: int | None = None,
         session: ClientSession | None = None,
     ) -> ChangeStreamCursor:
         self._ensure_connected()
@@ -450,6 +459,9 @@ class MongoClient:
             self._async_client.watch(
                 pipeline,
                 max_await_time_ms=max_await_time_ms,
+                resume_after=resume_after,
+                start_after=start_after,
+                start_at_operation_time=start_at_operation_time,
                 session=session,
             ),
         )

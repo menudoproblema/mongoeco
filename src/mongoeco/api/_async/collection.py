@@ -2144,6 +2144,9 @@ class AsyncCollection:
         pipeline: object | None = None,
         *,
         max_await_time_ms: int | None = None,
+        resume_after: dict[str, object] | None = None,
+        start_after: dict[str, object] | None = None,
+        start_at_operation_time: int | None = None,
         session: ClientSession | None = None,
     ) -> AsyncChangeStreamCursor:
         del session
@@ -2158,6 +2161,9 @@ class AsyncCollection:
             scope=ChangeStreamScope(db_name=self._db_name, coll_name=self._collection_name),
             pipeline=pipeline,
             max_await_time_ms=max_await_time_ms,
+            resume_after=resume_after,
+            start_after=start_after,
+            start_at_operation_time=start_at_operation_time,
         )
 
     @property

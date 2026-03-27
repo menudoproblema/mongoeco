@@ -786,6 +786,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * ya soporta `drop_search_index`
 * observabilidad:
   * ya soporta `watch` en cliente, base de datos y colección mediante un bus interno de eventos y scoping local explícito
+  * ya soporta también reanudación local básica con `resume_after`, `start_after` y `start_at_operation_time`
 * mejor alineación con `bson` y clases públicas asociadas
   * ya soporta también clases públicas BSON alineadas con el ecosistema:
     * `Binary`
@@ -853,6 +854,7 @@ Estos bloques se consideran ya estructuralmente aplicados:
   * search indexes locales tipados y persistidos por engine;
   * `watch()` en cliente, base de datos y colección sobre un bus interno de change streams con scoping explícito;
   * clases públicas BSON (`Binary`, `Regex`, `Timestamp`, `Decimal128`, `SON`, `DBRef`) integradas en codec, validación y expresiones observables;
+  * bridge BSON del proxy wire alineado con esas clases públicas en ambas direcciones;
   * compatibilidad observable suficiente para crecer esa superficie sin contaminar CRUD ni el core semántico.
 * **Extensibilidad**:
   * SDK de extensión para operadores de expresión y stages de agregación.

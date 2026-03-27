@@ -107,6 +107,28 @@ class VirtualIndexTests(unittest.TestCase):
         self.assertTrue(query_can_use_index(partial_index, InCondition("score", (10, 12, 15))))
         self.assertFalse(query_can_use_index(partial_index, compile_filter({"score": {"$lt": 20}})))
 
+    def test_partial_index_implication_handles_type_and_regex_requirements(self):
+        typed_index = EngineIndexRecord(
+            name="typed_idx",
+            fields=["value"],
+            key=[("value", 1)],
+            unique=False,
+            partial_filter_expression={"value": {"$type": "string"}},
+        )
+        regex_index = EngineIndexRecord(
+            name="regex_idx",
+            fields=["name"],
+            key=[("name", 1)],
+            unique=False,
+            partial_filter_expression={"name": {"$regex": "^ad", "$options": "i"}},
+        )
+
+        self.assertTrue(query_can_use_index(typed_index, compile_filter({"value": "ada"})))
+        self.assertFalse(query_can_use_index(typed_index, compile_filter({"value": 3})))
+        self.assertTrue(query_can_use_index(regex_index, compile_filter({"name": "Ada"})))
+        self.assertTrue(query_can_use_index(regex_index, compile_filter({"name": {"$in": ["Ada", "admin"]}})))
+        self.assertFalse(query_can_use_index(regex_index, compile_filter({"name": {"$in": ["Ada", 3]}})))
+
     def test_virtual_index_usage_description_surfaces_usable_and_hinted_indexes(self):
         indexes = [
             EngineIndexRecord(

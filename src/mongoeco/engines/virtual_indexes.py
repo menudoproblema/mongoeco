@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import re
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.filtering import QueryEngine
@@ -189,6 +190,8 @@ def _plan_implies_exists_true(query_plan: QueryNode, field: str) -> bool:
 
 
 def _implies_same_field_condition(query_plan: QueryNode, requirement: QueryNode) -> bool:
+    if isinstance(requirement, ExistsCondition):
+        return requirement.value and _plan_implies_exists_true(query_plan, requirement.field)
     if isinstance(requirement, EqualsCondition):
         if isinstance(query_plan, EqualsCondition):
             return query_plan.field == requirement.field and query_plan.value == requirement.value
@@ -205,6 +208,10 @@ def _implies_same_field_condition(query_plan: QueryNode, requirement: QueryNode)
         if isinstance(query_plan, InCondition):
             return query_plan.field == requirement.field and set(query_plan.values).issubset(set(requirement.values))
         return False
+    if isinstance(requirement, TypeCondition):
+        return _same_field_type_implies(query_plan, requirement.field, requirement.values)
+    if isinstance(requirement, RegexCondition):
+        return _same_field_regex_implies(query_plan, requirement)
     if isinstance(requirement, GreaterThanCondition):
         return _same_field_ordering_implies(query_plan, requirement.field, minimum=requirement.value, inclusive=False)
     if isinstance(requirement, GreaterThanOrEqualCondition):
@@ -214,6 +221,64 @@ def _implies_same_field_condition(query_plan: QueryNode, requirement: QueryNode)
     if isinstance(requirement, LessThanOrEqualCondition):
         return _same_field_ordering_implies(query_plan, requirement.field, maximum=requirement.value, inclusive=True)
     return False
+
+
+def _same_field_type_implies(query_plan: QueryNode, field: str, type_spec: object) -> bool:
+    aliases: set[str] = set()
+    if isinstance(type_spec, tuple):
+        for candidate in type_spec:
+            aliases.update(QueryEngine._normalize_type_specifier(candidate))
+    else:
+        aliases.update(QueryEngine._normalize_type_specifier(type_spec))
+    if isinstance(query_plan, EqualsCondition):
+        return query_plan.field == field and any(
+            QueryEngine._matches_bson_type(query_plan.value, alias)
+            for alias in aliases
+        )
+    if isinstance(query_plan, InCondition):
+        return query_plan.field == field and bool(query_plan.values) and all(
+            any(QueryEngine._matches_bson_type(value, alias) for alias in aliases)
+            for value in query_plan.values
+        )
+    if isinstance(query_plan, TypeCondition):
+        query_aliases: set[str] = set()
+        for candidate in query_plan.values:
+            query_aliases.update(QueryEngine._normalize_type_specifier(candidate))
+        return query_plan.field == field and query_aliases.issubset(aliases)
+    return False
+
+
+def _same_field_regex_implies(query_plan: QueryNode, requirement: RegexCondition) -> bool:
+    if isinstance(query_plan, EqualsCondition):
+        if query_plan.field != requirement.field or not isinstance(query_plan.value, str):
+            return False
+        return _compile_regex_condition(requirement).search(query_plan.value) is not None
+    if isinstance(query_plan, InCondition):
+        if query_plan.field != requirement.field or not query_plan.values:
+            return False
+        compiled = _compile_regex_condition(requirement)
+        return all(isinstance(value, str) and compiled.search(value) is not None for value in query_plan.values)
+    if isinstance(query_plan, RegexCondition):
+        return (
+            query_plan.field == requirement.field
+            and query_plan.pattern == requirement.pattern
+            and query_plan.options == requirement.options
+        )
+    return False
+
+
+def _compile_regex_condition(condition: RegexCondition) -> re.Pattern[str]:
+    flags = 0
+    for option in condition.options:
+        if option == "i":
+            flags |= re.IGNORECASE
+        elif option == "m":
+            flags |= re.MULTILINE
+        elif option == "s":
+            flags |= re.DOTALL
+        elif option == "x":
+            flags |= re.VERBOSE
+    return re.compile(condition.pattern, flags)
 
 
 def _same_field_ordering_implies(

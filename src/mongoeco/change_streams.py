@@ -34,6 +34,20 @@ class ChangeStreamHub:
         with self._condition:
             return len(self._events)
 
+    def offset_after_token(self, token: int) -> int:
+        with self._condition:
+            for index, event in enumerate(self._events):
+                if event.token > token:
+                    return index
+            return len(self._events)
+
+    def offset_at_or_after_cluster_time(self, cluster_time: int) -> int:
+        with self._condition:
+            for index, event in enumerate(self._events):
+                if event.token >= cluster_time:
+                    return index
+            return len(self._events)
+
     def publish(
         self,
         *,
@@ -116,10 +130,18 @@ class AsyncChangeStreamCursor:
         scope: ChangeStreamScope,
         pipeline: object | None = None,
         max_await_time_ms: int | None = None,
+        resume_after: dict[str, object] | None = None,
+        start_after: dict[str, object] | None = None,
+        start_at_operation_time: int | None = None,
     ) -> None:
         self._hub = hub
         self._scope = scope
-        self._offset = hub.current_offset()
+        self._offset = _resolve_change_stream_offset(
+            hub,
+            resume_after=resume_after,
+            start_after=start_after,
+            start_at_operation_time=start_at_operation_time,
+        )
         self._match_filter, self._projection = compile_change_stream_pipeline(pipeline)
         self._max_await_time_ms = max_await_time_ms
         self._closed = False
@@ -206,3 +228,36 @@ class ChangeStreamCursor:
     @property
     def alive(self) -> bool:
         return self._async_cursor.alive
+
+
+def _resolve_change_stream_offset(
+    hub: ChangeStreamHub,
+    *,
+    resume_after: dict[str, object] | None,
+    start_after: dict[str, object] | None,
+    start_at_operation_time: int | None,
+) -> int:
+    configured = sum(
+        option is not None
+        for option in (resume_after, start_after, start_at_operation_time)
+    )
+    if configured > 1:
+        raise OperationFailure(
+            "watch accepts at most one of resume_after, start_after, or start_at_operation_time"
+        )
+    if resume_after is not None:
+        return hub.offset_after_token(_parse_resume_token(resume_after))
+    if start_after is not None:
+        return hub.offset_after_token(_parse_resume_token(start_after))
+    if start_at_operation_time is not None:
+        if not isinstance(start_at_operation_time, int) or isinstance(start_at_operation_time, bool) or start_at_operation_time < 0:
+            raise TypeError("start_at_operation_time must be a non-negative integer")
+        return hub.offset_at_or_after_cluster_time(start_at_operation_time)
+    return hub.current_offset()
+
+
+def _parse_resume_token(token: dict[str, object]) -> int:
+    raw = token.get("_data")
+    if not isinstance(raw, str) or not raw.isdigit():
+        raise OperationFailure("resume token must contain a numeric _data field")
+    return int(raw)
