@@ -9,6 +9,7 @@ from mongoeco.api._async.cursor import (
 )
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import Pipeline
+from mongoeco.core.aggregation.extensions import get_registered_aggregation_stage
 from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.core.validation import is_filter, is_projection
@@ -304,7 +305,7 @@ def _collect_aggregate_planning_issues(
         if not isinstance(operator, str) or not operator.startswith("$"):
             issues.append(PlanningIssue(scope="aggregate", message="Pipeline stage operator must start with '$'"))
             continue
-        if not dialect.supports_aggregation_stage(operator):
+        if get_registered_aggregation_stage(operator) is None and not dialect.supports_aggregation_stage(operator):
             issues.append(PlanningIssue(scope="aggregate", message=f"Unsupported aggregation stage: {operator}"))
     return tuple(issues)
 

@@ -15,6 +15,7 @@ from mongoeco.core.aggregation.grouping_stages import (
     _apply_set_window_fields,
     _apply_sort_by_count,
 )
+from mongoeco.core.aggregation.extensions import get_registered_aggregation_stage
 from mongoeco.core.aggregation.join_stages import (
     _apply_facet,
     _apply_lookup,
@@ -250,9 +251,11 @@ def apply_pipeline(
     result = [deepcopy(document) for document in documents]
     for index, stage in enumerate(pipeline):
         operator, spec = _require_stage(stage)
-        if not dialect.supports_aggregation_stage(operator):
-            raise OperationFailure(f"Unsupported aggregation stage: {operator}")
-        handler = AGGREGATION_STAGE_HANDLERS.get(operator)
+        handler = get_registered_aggregation_stage(operator)
+        if handler is None:
+            if not dialect.supports_aggregation_stage(operator):
+                raise OperationFailure(f"Unsupported aggregation stage: {operator}")
+            handler = AGGREGATION_STAGE_HANDLERS.get(operator)
         if handler is None:
             raise OperationFailure(f"Unsupported aggregation stage: {operator}")
         result = handler(

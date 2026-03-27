@@ -40,7 +40,11 @@ from mongoeco.compat.operation_support import (
     MANAGED_OPERATION_OPTION_NAMES,
     OPERATION_OPTION_SIGNATURE_EXCLUSIONS,
 )
-from mongoeco.core.aggregation import AGGREGATION_STAGE_HANDLERS
+from mongoeco.core.aggregation import (
+    AGGREGATION_STAGE_HANDLERS,
+    register_aggregation_stage,
+    unregister_aggregation_stage,
+)
 from mongoeco.engines.base import (
     AsyncAdminEngine,
     AsyncDatabaseAdminEngine,
@@ -271,6 +275,18 @@ class ArchitectureUnitTests(unittest.TestCase):
             ["aggregate", "aggregate", "aggregate"],
         )
         self.assertTrue(any("Unsupported aggregation stage" in issue.message for issue in operation.planning_issues))
+
+    def test_relaxed_aggregate_operation_accepts_registered_extension_stage(self):
+        register_aggregation_stage("$future", lambda documents, _spec, _context: documents)
+        try:
+            operation = compile_aggregate_operation(
+                [{"$future": {}}],
+                planning_mode=PlanningMode.RELAXED,
+            )
+        finally:
+            unregister_aggregation_stage("$future")
+
+        self.assertEqual(operation.planning_issues, ())
 
     def test_aggregate_operation_with_overrides_preserves_planning_metadata(self):
         operation = compile_aggregate_operation(

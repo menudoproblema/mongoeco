@@ -14,6 +14,10 @@ from mongoeco.core.aggregation.array_string_expressions import (
     ARRAY_STRING_EXPRESSION_OPERATORS,
     evaluate_array_string_expression,
 )
+from mongoeco.core.aggregation.extensions import (
+    AggregationExpressionExtensionContext,
+    get_registered_aggregation_expression_operator,
+)
 from mongoeco.core.aggregation.control_object_expressions import (
     CONTROL_OBJECT_EXPRESSION_OPERATORS,
     evaluate_control_object_expression,
@@ -525,6 +529,35 @@ def evaluate_expression(
     if len(expression) == 1:
         operator, spec = next(iter(expression.items()))
         if isinstance(operator, str) and operator.startswith("$"):
+            extension_handler = get_registered_aggregation_expression_operator(operator)
+            if extension_handler is not None:
+                return extension_handler(
+                    document,
+                    spec,
+                    variables,
+                    dialect,
+                    AggregationExpressionExtensionContext(
+                        evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
+                            current_document,
+                            current_expression,
+                            current_variables,
+                            dialect=dialect,
+                        ),
+                        evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
+                            current_document,
+                            current_expression,
+                            current_variables,
+                            dialect=dialect,
+                        ),
+                        require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: _require_expression_args(
+                            current_operator,
+                            current_spec,
+                            min_args=current_min_args,
+                            max_args=current_max_args,
+                        ),
+                        missing_sentinel=_MISSING,
+                    ),
+                )
             if not dialect.supports_aggregation_expression_operator(operator):
                 raise OperationFailure(f"Unsupported aggregation expression: {operator}")
             if operator == "$literal":

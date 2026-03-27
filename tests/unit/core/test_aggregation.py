@@ -22,7 +22,11 @@ from mongoeco.core.aggregation import (
     _resolve_aggregation_field_path,
     apply_pipeline,
     evaluate_expression,
+    register_aggregation_expression_operator,
+    register_aggregation_stage,
     split_pushdown_pipeline,
+    unregister_aggregation_expression_operator,
+    unregister_aggregation_stage,
 )
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ObjectId, UNDEFINED
@@ -365,6 +369,23 @@ class AggregationTests(unittest.TestCase):
                 ),
             )
 
+    def test_evaluate_expression_can_use_registered_extension_operator_without_custom_dialect(self):
+        def _handler(document, spec, variables, _dialect, context):
+            args = context.require_expression_args("$echo", spec, 1, 1)
+            return context.evaluate_expression(document, args[0], variables)
+
+        register_aggregation_expression_operator("$echo", _handler)
+        try:
+            self.assertEqual(
+                evaluate_expression(
+                    {"value": 7},
+                    {"$echo": ["$value"]},
+                ),
+                7,
+            )
+        finally:
+            unregister_aggregation_expression_operator("$echo")
+
     def test_group_rejects_unsupported_accumulator_for_default_and_custom_dialects(self):
         with self.assertRaises(OperationFailure):
             apply_pipeline(
@@ -490,6 +511,25 @@ class AggregationTests(unittest.TestCase):
                     label="Future Stage",
                 ),
             )
+
+    def test_apply_pipeline_can_use_registered_extension_stage_without_custom_dialect(self):
+        def _handler(documents, spec, _context):
+            return [
+                {**document, "tag": spec.get("tag")}
+                for document in documents
+            ]
+
+        register_aggregation_stage("$annotate", _handler)
+        try:
+            self.assertEqual(
+                apply_pipeline(
+                    [{"_id": "1"}],
+                    [{"$annotate": {"tag": "ext"}}],
+                ),
+                [{"_id": "1", "tag": "ext"}],
+            )
+        finally:
+            unregister_aggregation_stage("$annotate")
 
     def test_evaluate_expression_rejects_currently_unsupported_operators_explicitly(self):
         document = {"value": "10", "tags": ["a", "b"]}
