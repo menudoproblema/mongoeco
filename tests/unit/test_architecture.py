@@ -6,6 +6,7 @@ from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
 from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.api._async._materialized_cursor import AsyncMaterializedCursor
+from mongoeco.api.operations import FindOperation, compile_find_operation
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.api._sync.collection import Collection
@@ -70,6 +71,34 @@ class ArchitectureUnitTests(unittest.TestCase):
         database = AsyncDatabase(MemoryEngine(), "db")
 
         self.assertIsInstance(database._admin, AsyncDatabaseAdminService)
+
+    def test_find_operation_compiles_normalized_read_plan(self):
+        operation = compile_find_operation(
+            {"name": "Ada"},
+            projection={"name": 1},
+            sort=[("rank", 1)],
+            skip=2,
+            limit=5,
+            hint=[("name", 1)],
+            comment="read",
+            max_time_ms=25,
+            batch_size=10,
+        )
+
+        self.assertIsInstance(operation, FindOperation)
+        self.assertEqual(operation.filter_spec, {"name": "Ada"})
+        self.assertEqual(operation.projection, {"name": 1})
+        self.assertEqual(operation.sort, [("rank", 1)])
+        self.assertEqual(operation.skip, 2)
+        self.assertEqual(operation.limit, 5)
+        self.assertEqual(operation.hint, [("name", 1)])
+        self.assertEqual(operation.comment, "read")
+        self.assertEqual(operation.max_time_ms, 25)
+        self.assertEqual(operation.batch_size, 10)
+
+    def test_find_operation_rejects_invalid_skip(self):
+        with self.assertRaises(TypeError):
+            compile_find_operation({"name": "Ada"}, skip=-1)
 
     def test_admin_cursors_share_materialized_base_classes(self):
         self.assertTrue(issubclass(AsyncIndexCursor, AsyncMaterializedCursor))

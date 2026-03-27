@@ -3,6 +3,7 @@ from copy import deepcopy
 import time
 
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
+from mongoeco.api.operations import FindOperation, compile_find_operation
 from mongoeco.api._async.cursor import (
     AsyncCursor,
     HintSpec,
@@ -119,18 +120,6 @@ class AsyncCollection:
         return [cls._require_document(document) for document in normalized]
 
     @staticmethod
-    def _require_write_requests(requests: object) -> list[WriteModel]:
-        if not isinstance(requests, list):
-            raise TypeError("requests must be a list of write models")
-        normalized = list(requests)
-        if not normalized:
-            raise ValueError("requests must not be empty")
-        supported = (InsertOne, UpdateOne, UpdateMany, ReplaceOne, DeleteOne, DeleteMany)
-        if not all(isinstance(request, supported) for request in normalized):
-            raise TypeError("bulk_write requests must be write model instances")
-        return normalized
-
-    @staticmethod
     def _normalize_filter(filter_spec: object | None) -> Filter:
         if filter_spec is None:
             return {}
@@ -145,6 +134,18 @@ class AsyncCollection:
         if not is_projection(projection):
             raise TypeError("projection must be a dict")
         return projection
+
+    @staticmethod
+    def _require_write_requests(requests: object) -> list[WriteModel]:
+        if not isinstance(requests, list):
+            raise TypeError("requests must be a list of write models")
+        normalized = list(requests)
+        if not normalized:
+            raise ValueError("requests must not be empty")
+        supported = (InsertOne, UpdateOne, UpdateMany, ReplaceOne, DeleteOne, DeleteMany)
+        if not all(isinstance(request, supported) for request in normalized):
+            raise TypeError("bulk_write requests must be write model instances")
+        return normalized
 
     @staticmethod
     def _require_update(update_spec: object) -> Update:
@@ -168,18 +169,18 @@ class AsyncCollection:
         return replacement
 
     @staticmethod
-    def _normalize_sort(sort: object | None) -> SortSpec | None:
-        if sort is None:
-            return None
-        _validate_sort_spec(sort)
-        return sort
-
-    @staticmethod
     def _normalize_hint(hint: object | None) -> HintSpec | None:
         if hint is None:
             return None
         _validate_hint_spec(hint)
         return hint
+
+    @staticmethod
+    def _normalize_sort(sort: object | None) -> SortSpec | None:
+        if sort is None:
+            return None
+        _validate_sort_spec(sort)
+        return sort
 
     @staticmethod
     def _normalize_batch_size(batch_size: object | None) -> int | None:
@@ -279,28 +280,33 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
-        effective_plan = (
-            compile_filter(filter_spec, dialect=self._mongodb_dialect)
-            if plan is None
-            else plan
-        )
-        return await self._build_cursor(
+        operation = compile_find_operation(
             filter_spec,
-            effective_plan,
-            None,
             sort=sort,
             limit=1,
             hint=hint,
             comment=comment,
             max_time_ms=max_time_ms,
+            dialect=self._mongodb_dialect,
+            plan=plan,
+        )
+        return await self._build_cursor(
+            operation.filter_spec,
+            operation.plan,
+            None,
+            sort=operation.sort,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
             session=session,
         ).first()
 
     def _build_cursor(
         self,
-        filter_spec: Filter,
-        plan: QueryNode,
-        projection: Projection | None,
+        operation_or_filter: FindOperation | Filter,
+        plan: QueryNode | None = None,
+        projection: Projection | None = None,
         *,
         sort: SortSpec | None = None,
         skip: int = 0,
@@ -311,18 +317,35 @@ class AsyncCollection:
         batch_size: int | None = None,
         session: ClientSession | None = None,
     ) -> AsyncCursor:
+        if isinstance(operation_or_filter, FindOperation):
+            operation = operation_or_filter
+        else:
+            if plan is None:
+                raise TypeError("plan is required when _build_cursor receives a raw filter")
+            operation = FindOperation(
+                filter_spec=operation_or_filter,
+                plan=plan,
+                projection=projection,
+                sort=sort,
+                skip=skip,
+                limit=limit,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                batch_size=batch_size,
+            )
         return AsyncCursor(
             self,
-            filter_spec,
-            plan,
-            projection,
-            sort=sort,
-            skip=skip,
-            limit=limit,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            batch_size=batch_size,
+            operation.filter_spec,
+            operation.plan,
+            operation.projection,
+            sort=operation.sort,
+            skip=operation.skip,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
+            batch_size=operation.batch_size,
             session=session,
         )
 
@@ -566,27 +589,30 @@ class AsyncCollection:
         return result
 
     async def find_one(self, filter_spec: Filter | None = None, projection: Projection | None = None, *, session: ClientSession | None = None) -> Document | None:
-        filter_spec = self._normalize_filter(filter_spec)
-        projection = self._normalize_projection(projection)
+        operation = compile_find_operation(
+            filter_spec,
+            projection=projection,
+            dialect=self._mongodb_dialect,
+        )
         doc = None
         
-        if self._can_use_direct_id_lookup(filter_spec):
+        if self._can_use_direct_id_lookup(operation.filter_spec):
             doc = await self._engine.get_document(
                 self._db_name,
                 self._collection_name,
-                filter_spec["_id"],
-                projection=projection,
+                operation.filter_spec["_id"],
+                projection=operation.projection,
                 dialect=self._mongodb_dialect,
                 context=session,
             )
         else:
-            plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
+            operation = operation.with_overrides(limit=1)
             async for d in self._engine.scan_collection(
                 self._db_name,
                 self._collection_name,
-                filter_spec,
-                plan=plan,
-                projection=projection,
+                operation.filter_spec,
+                plan=operation.plan,
+                projection=operation.projection,
                 dialect=self._mongodb_dialect,
                 context=session,
             ):
@@ -609,17 +635,9 @@ class AsyncCollection:
         batch_size: int | None = None,
         session: ClientSession | None = None,
     ):
-        filter_spec = self._normalize_filter(filter_spec)
-        projection = self._normalize_projection(projection)
-        sort = self._normalize_sort(sort)
-        hint = self._normalize_hint(hint)
-        max_time_ms = self._normalize_max_time_ms(max_time_ms)
-        batch_size = self._normalize_batch_size(batch_size)
-        plan = compile_filter(filter_spec, dialect=self._mongodb_dialect)
-        return self._build_cursor(
+        operation = compile_find_operation(
             filter_spec,
-            plan,
-            projection,
+            projection=projection,
             sort=sort,
             skip=skip,
             limit=limit,
@@ -627,6 +645,19 @@ class AsyncCollection:
             comment=comment,
             max_time_ms=max_time_ms,
             batch_size=batch_size,
+            dialect=self._mongodb_dialect,
+        )
+        return self._build_cursor(
+            operation.filter_spec,
+            operation.plan,
+            operation.projection,
+            sort=operation.sort,
+            skip=operation.skip,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
+            batch_size=operation.batch_size,
             session=session,
         )
 
