@@ -20,6 +20,7 @@ from mongoeco.wire.protocol import (
     encode_op_reply,
     parse_message_header,
 )
+from mongoeco.wire.surface import WireSurface
 from mongoeco.wire.sessions import WireSessionStore
 
 
@@ -54,12 +55,18 @@ class AsyncMongoEcoProxyServer:
         self._owns_client = client is None
         self._host = host
         self._port = port
+        self._surface = WireSurface()
         self._server: asyncio.AbstractServer | None = None
         self._request_ids = itertools.count(1)
         self._connections = WireConnectionRegistry()
         self._cursor_store = WireCursorStore()
         self._session_store = WireSessionStore()
-        self._executor = WireCommandExecutor(self._client, self._cursor_store, self._session_store)
+        self._executor = WireCommandExecutor(
+            self._client,
+            self._cursor_store,
+            self._session_store,
+            surface=self._surface,
+        )
 
     async def __aenter__(self) -> "AsyncMongoEcoProxyServer":
         await self.start()
@@ -118,6 +125,8 @@ class AsyncMongoEcoProxyServer:
     async def _dispatch_wire_request(self, header, payload: bytes, *, connection) -> bytes:
         request_id = next(self._request_ids)
         try:
+            if not self._surface.supports_opcode(header.op_code):
+                raise OperationFailure(f"unsupported wire opCode: {header.op_code}")
             if header.op_code == OP_MSG:
                 request = decode_op_msg(header, payload)
                 result = await self._executor.execute_command(request.body, connection=connection)

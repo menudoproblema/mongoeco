@@ -12,6 +12,8 @@ from mongoeco.wire.bson_bridge import decode_wire_value, encode_wire_value
 OP_REPLY = 1
 OP_QUERY = 2004
 OP_MSG = 2013
+OP_MSG_ALLOWED_FLAGS_MASK = 0
+OP_QUERY_ALLOWED_FLAGS_MASK = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,28 +53,42 @@ def decode_op_msg(header: MessageHeader, payload: bytes) -> OpMsgRequest:
     if len(payload) < 5:
         raise ValueError("OP_MSG payload is too short")
     flag_bits = struct.unpack("<i", payload[:4])[0]
+    if flag_bits & ~OP_MSG_ALLOWED_FLAGS_MASK:
+        raise ValueError(f"unsupported OP_MSG flags: {flag_bits}")
     position = 4
     body: dict[str, Any] | None = None
     while position < len(payload):
         kind = payload[position]
         position += 1
         if kind == 0:
+            if position + 4 > len(payload):
+                raise ValueError("OP_MSG body section is truncated")
             document_size = struct.unpack("<i", payload[position : position + 4])[0]
+            if document_size <= 0 or position + document_size > len(payload):
+                raise ValueError("OP_MSG body document has invalid size")
             raw_document = payload[position : position + document_size]
             body = decode_wire_value(BSON(raw_document).decode())
             position += document_size
             continue
         if kind == 1:
+            if position + 4 > len(payload):
+                raise ValueError("OP_MSG document sequence is truncated")
             section_size = struct.unpack("<i", payload[position : position + 4])[0]
             section_start = position
             section_end = section_start + section_size
+            if section_size <= 4 or section_end > len(payload):
+                raise ValueError("OP_MSG document sequence has invalid size")
             position += 4
             identifier_end = payload.index(0, position, section_end)
             identifier = payload[position:identifier_end].decode("utf-8")
             position = identifier_end + 1
             sequence: list[dict[str, Any]] = []
             while position < section_end:
+                if position + 4 > section_end:
+                    raise ValueError("OP_MSG document sequence entry is truncated")
                 document_size = struct.unpack("<i", payload[position : position + 4])[0]
+                if document_size <= 0 or position + document_size > section_end:
+                    raise ValueError("OP_MSG document sequence entry has invalid size")
                 raw_document = payload[position : position + document_size]
                 sequence.append(decode_wire_value(BSON(raw_document).decode()))
                 position += document_size
@@ -92,13 +108,19 @@ def decode_op_query(header: MessageHeader, payload: bytes) -> OpQueryRequest:
     if len(payload) < 12:
         raise ValueError("OP_QUERY payload is too short")
     flags = struct.unpack("<i", payload[:4])[0]
+    if flags & ~OP_QUERY_ALLOWED_FLAGS_MASK:
+        raise ValueError(f"unsupported OP_QUERY flags: {flags}")
     position = 4
     namespace_end = payload.index(0, position)
     full_collection_name = payload[position:namespace_end].decode("utf-8")
     position = namespace_end + 1
     number_to_skip, number_to_return = struct.unpack("<ii", payload[position : position + 8])
     position += 8
+    if position + 4 > len(payload):
+        raise ValueError("OP_QUERY document is truncated")
     query_size = struct.unpack("<i", payload[position : position + 4])[0]
+    if query_size <= 0 or position + query_size > len(payload):
+        raise ValueError("OP_QUERY document has invalid size")
     query = decode_wire_value(BSON(payload[position : position + query_size]).decode())
     return OpQueryRequest(
         header=header,

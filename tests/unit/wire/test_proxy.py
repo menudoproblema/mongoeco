@@ -2,8 +2,10 @@ import unittest
 
 from mongoeco.errors import ExecutionTimeout
 from mongoeco.wire.capabilities import resolve_wire_command_capability
+from mongoeco.wire.handshake import WireHandshakeService
 from mongoeco.wire.executor import WireCommandExecutor
 from mongoeco.wire.proxy import AsyncMongoEcoProxyServer
+from mongoeco.wire.surface import WireSurface
 from mongoeco.wire.sessions import WireSessionStore
 
 
@@ -116,6 +118,15 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertEqual(committed, {"ok": 1.0})
         self.assertFalse(session.transaction_active)
 
+    def test_wire_surface_declares_supported_commands_and_opcodes(self):
+        surface = WireSurface()
+
+        self.assertTrue(surface.supports_command("find"))
+        self.assertTrue(surface.supports_command("getMore"))
+        self.assertTrue(surface.supports_opcode(2004))
+        self.assertTrue(surface.supports_opcode(2013))
+        self.assertFalse(surface.supports_opcode(2012))
+
 
 class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
     async def test_executor_routes_hello_through_handshake_service_and_connection_context(self):
@@ -138,3 +149,13 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(connection.last_hello_command, "hello")
         self.assertEqual(connection.client_metadata, {"application": {"name": "wire-tests"}})
         self.assertEqual(connection.compression, ("noop",))
+
+    async def test_executor_rejects_commands_outside_wire_surface(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        with self.assertRaisesRegex(Exception, "unsupported wire command"):
+            await proxy._executor.execute_command(
+                {"__unsupported__": 1, "$db": "admin"},
+                connection=connection,
+            )

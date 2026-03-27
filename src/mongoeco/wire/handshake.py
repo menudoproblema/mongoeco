@@ -8,17 +8,7 @@ from mongoeco.api._async.database_commands import build_info_result
 from mongoeco.compat import MongoDialect
 from mongoeco.types import HelloDocument
 from mongoeco.wire.connections import WireConnectionContext
-
-
-@dataclass(frozen=True, slots=True)
-class WireHelloCapabilities:
-    logical_session_timeout_minutes: int = 30
-    min_wire_version: int = 0
-    max_wire_version: int = 20
-    max_bson_object_size: int = 16 * 1024 * 1024
-    max_message_size_bytes: int = 48_000_000
-    max_write_batch_size: int = 100_000
-    compression: tuple[str, ...] = ()
+from mongoeco.wire.surface import WireSurface
 
 
 class WireHandshakeService:
@@ -26,10 +16,10 @@ class WireHandshakeService:
         self,
         mongodb_dialect: MongoDialect,
         *,
-        capabilities: WireHelloCapabilities | None = None,
+        surface: WireSurface | None = None,
     ) -> None:
         self._mongodb_dialect = mongodb_dialect
-        self._capabilities = capabilities or WireHelloCapabilities()
+        self._surface = surface or WireSurface()
 
     def build_hello_response(
         self,
@@ -42,15 +32,15 @@ class WireHandshakeService:
         response: HelloDocument = {
             "helloOk": True,
             "isWritablePrimary": True,
-            "maxBsonObjectSize": self._capabilities.max_bson_object_size,
-            "maxMessageSizeBytes": self._capabilities.max_message_size_bytes,
-            "maxWriteBatchSize": self._capabilities.max_write_batch_size,
-            "logicalSessionTimeoutMinutes": self._capabilities.logical_session_timeout_minutes,
+            "maxBsonObjectSize": self._surface.max_bson_object_size,
+            "maxMessageSizeBytes": self._surface.max_message_size_bytes,
+            "maxWriteBatchSize": self._surface.max_write_batch_size,
+            "logicalSessionTimeoutMinutes": self._surface.logical_session_timeout_minutes,
             "connectionId": connection.connection_id,
-            "minWireVersion": self._capabilities.min_wire_version,
-            "maxWireVersion": self._capabilities.max_wire_version,
+            "minWireVersion": self._surface.min_wire_version,
+            "maxWireVersion": self._surface.max_wire_version,
             "readOnly": False,
-            "compression": list(self._capabilities.compression or connection.compression),
+            "compression": list(self._surface.compression or connection.compression),
             "localTime": datetime.datetime.now(datetime.UTC),
             "ok": 1.0,
             "version": build_info.version,

@@ -370,7 +370,7 @@ No conviene adelantar:
 
 ### 15. Proxy Server con MongoDB Wire Protocol
 
-- `Estado`: `Aplicado con matices`
+- `Estado`: `Aplicado`
 - `Impacto`: `Muy Alto`
 - `Esfuerzo`: `Muy Alto`
 - `Descripción`: exponer `mongoeco` como servidor compatible con el protocolo MongoDB para usar drivers oficiales de otros lenguajes.
@@ -382,13 +382,15 @@ No conviene adelantar:
   - bridge BSON hacia los tipos internos del core
   - registro explícito de capacidades wire por comando
   - servicio de handshake/capability advertisement separado del executor
+  - `WireSurface` explícita para opcodes, comandos soportados, límites y sesiones/transacciones
   - contexto de conexión wire explícito, con `connectionId`, metadata de cliente y compresión
   - subsistema de ejecución y store de cursores wire desacoplados del adaptador TCP
   - soporte real para `getMore` y `killCursors` sobre cursores materializados básicos
   - store de sesiones wire con traducción de `lsid` a `ClientSession`
   - `WireRequestContext` y dispatcher explícito por capacidades, sin branching disperso en el adaptador TCP
+  - validación protocolaria explícita de flags y tamaños en `OP_MSG` y `OP_QUERY`
   - integración validada con `pymongo.MongoClient`
-- `Cierre`: queda con matices porque el proxy actual sigue centrado en comandos y cursores materializados básicos, sin cubrir aún toda la superficie histórica del protocolo ni un streaming más fino o distribuido, pero la base arquitectónica del servidor ya existe, mantiene ciclo de vida real de cursores y reutiliza el core en vez de duplicarlo.
+- `Cierre`: el bloque arquitectónico queda cerrado. La superficie soportada sigue siendo deliberadamente acotada, pero ahora ya existe una base completa y mantenible para crecer sin reabrir el diseño: surface declarativa, handshake separado, contexto de conexión, contexto de petición, sesiones wire, cursores wire y executor desacoplado del adaptador TCP.
 
 ### 16. Políticas de Comportamiento 100% Derivadas del Catálogo
 

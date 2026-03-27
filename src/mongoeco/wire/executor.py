@@ -9,6 +9,7 @@ from mongoeco.wire.connections import WireConnectionContext
 from mongoeco.wire.cursors import WireCursorStore
 from mongoeco.wire.handshake import WireHandshakeService
 from mongoeco.wire.requests import WireRequestContext
+from mongoeco.wire.surface import WireSurface
 from mongoeco.wire.sessions import WireSessionStore
 
 
@@ -32,11 +33,13 @@ class WireCommandExecutor:
         client: AsyncMongoClient,
         cursor_store: WireCursorStore,
         session_store: WireSessionStore,
+        surface: WireSurface | None = None,
     ) -> None:
         self._client = client
         self._cursor_store = cursor_store
         self._session_store = session_store
-        self._handshake = WireHandshakeService(client.mongodb_dialect)
+        self._surface = surface or WireSurface()
+        self._handshake = WireHandshakeService(client.mongodb_dialect, surface=self._surface)
         self._special_handlers = {
             "handshake": self._handle_handshake,
             "end_sessions": self._handle_end_sessions,
@@ -89,6 +92,8 @@ class WireCommandExecutor:
         if not command_document:
             raise OperationFailure("wire command document must contain an executable command")
         command_name = next(iter(command_document))
+        if not self._surface.supports_command(command_name):
+            raise OperationFailure(f"unsupported wire command: {command_name}")
         capability = resolve_wire_command_capability(command_name)
         session = self._session_store.resolve_for_command(
             self._client,
