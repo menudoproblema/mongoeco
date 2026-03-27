@@ -2109,7 +2109,6 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
         operation: UpdateOperation,
-        update_spec: Update,
         upsert: bool = False,
         upsert_seed: Document | None = None,
         *,
@@ -2117,19 +2116,167 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
-        return await self.update_matching_document(
+        if operation.compiled_update_plan is None or operation.update_spec is None:
+            raise OperationFailure("update operation does not include a compiled update plan")
+        return await asyncio.to_thread(
+            self._update_with_operation_sync,
             db_name,
             coll_name,
-            operation.filter_spec,
-            update_spec,
-            upsert=upsert,
-            upsert_seed=upsert_seed,
-            selector_filter=selector_filter,
-            array_filters=operation.array_filters,
-            plan=operation.plan,
-            dialect=dialect,
-            context=context,
+            operation,
+            upsert,
+            upsert_seed,
+            selector_filter,
+            context,
+            dialect,
         )
+
+    def _update_with_operation_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: UpdateOperation,
+        upsert: bool,
+        upsert_seed: Document | None,
+        selector_filter: Filter | None,
+        context: ClientSession | None,
+        dialect: MongoDialect | None = None,
+    ) -> UpdateResult[DocumentId]:
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        if operation.compiled_update_plan is None or operation.update_spec is None:
+            raise OperationFailure("update operation does not include a compiled update plan")
+        plan = ensure_query_plan(operation.filter_spec, operation.plan, dialect=effective_dialect)
+        with self._lock:
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
+                selected: tuple[str, Document] | None = None
+                sql_selection_supported = False
+                try:
+                    if self._dialect_requires_python_fallback(effective_dialect):
+                        raise NotImplementedError("Custom dialect requires Python fallback")
+                    selected = self._select_first_document_for_plan(db_name, coll_name, plan)
+                    sql_selection_supported = True
+                except (NotImplementedError, TypeError):
+                    pass
+
+                if selected is None and not sql_selection_supported:
+                    for storage_key, document in self._load_documents(db_name, coll_name):
+                        if not QueryEngine.match_plan(document, plan, dialect=effective_dialect):
+                            continue
+                        selected = (storage_key, document)
+                        break
+
+                if selected is not None:
+                    storage_key, original_document = selected
+                    document = deepcopy(original_document)
+                    modified = operation.compiled_update_plan.apply(document)
+                    if not modified:
+                        return UpdateResult(matched_count=1, modified_count=0)
+                    self._validate_document_against_unique_indexes(db_name, coll_name, document)
+                    indexes = self._load_indexes(db_name, coll_name)
+
+                    try:
+                        if self._dialect_requires_python_fallback(effective_dialect):
+                            raise NotImplementedError("Custom dialect requires Python fallback")
+                        if operation.array_filters is not None:
+                            raise NotImplementedError("array_filters require Python update fallback")
+                        update_sql, update_params = translate_update_spec(
+                            operation.update_spec,
+                            current_document=original_document,
+                        )
+                        self._begin_write(conn, context)
+                        conn.execute(
+                            f"""
+                            UPDATE documents
+                            SET document = {update_sql}
+                            WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                            """,
+                            (*update_params, db_name, coll_name, storage_key),
+                        )
+                        self._rebuild_multikey_entries_for_document(
+                            conn,
+                            db_name,
+                            coll_name,
+                            storage_key,
+                            document,
+                            indexes,
+                        )
+                        self._commit_write(conn, context)
+                        return UpdateResult(matched_count=1, modified_count=1)
+                    except (NotImplementedError, TypeError):
+                        self._rollback_write(conn, context)
+                    except sqlite3.IntegrityError as exc:
+                        self._rollback_write(conn, context)
+                        raise DuplicateKeyError(str(exc)) from exc
+
+                    try:
+                        self._begin_write(conn, context)
+                        conn.execute(
+                            """
+                            UPDATE documents
+                            SET document = ?
+                            WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                            """,
+                            (self._serialize_document(document), db_name, coll_name, storage_key),
+                        )
+                        self._rebuild_multikey_entries_for_document(
+                            conn,
+                            db_name,
+                            coll_name,
+                            storage_key,
+                            document,
+                            indexes,
+                        )
+                        self._commit_write(conn, context)
+                        return UpdateResult(matched_count=1, modified_count=1)
+                    except sqlite3.IntegrityError as exc:
+                        self._rollback_write(conn, context)
+                        raise DuplicateKeyError(str(exc)) from exc
+
+                if not upsert:
+                    return UpdateResult(matched_count=0, modified_count=0)
+
+                new_doc = deepcopy(upsert_seed or {})
+                upsert_plan = operation.compiled_upsert_plan or UpdateEngine.compile_update_plan(
+                    operation.update_spec,
+                    dialect=effective_dialect,
+                    selector_filter=selector_filter or operation.filter_spec,
+                    array_filters=operation.array_filters,
+                    is_upsert_insert=True,
+                )
+                upsert_plan.apply(new_doc)
+                if "_id" not in new_doc:
+                    new_doc["_id"] = ObjectId()
+                self._validate_document_against_unique_indexes(db_name, coll_name, new_doc)
+
+                storage_key = self._storage_key(new_doc["_id"])
+                indexes = self._load_indexes(db_name, coll_name)
+                try:
+                    self._begin_write(conn, context)
+                    conn.execute(
+                        """
+                        INSERT INTO documents (db_name, coll_name, storage_key, document)
+                        VALUES (?, ?, ?, ?)
+                        """,
+                        (db_name, coll_name, storage_key, self._serialize_document(new_doc)),
+                    )
+                    self._rebuild_multikey_entries_for_document(
+                        conn,
+                        db_name,
+                        coll_name,
+                        storage_key,
+                        new_doc,
+                        indexes,
+                    )
+                    self._commit_write(conn, context)
+                except sqlite3.IntegrityError as exc:
+                    self._rollback_write(conn, context)
+                    raise DuplicateKeyError(str(exc)) from exc
+
+                return UpdateResult(
+                    matched_count=0,
+                    modified_count=0,
+                    upserted_id=new_doc["_id"],
+                )
 
     @override
     async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult:

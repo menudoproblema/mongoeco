@@ -9,8 +9,10 @@ from mongoeco.api._async.cursor import (
 )
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import Pipeline
+from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.core.validation import is_filter, is_projection
+from mongoeco.errors import OperationFailure
 from mongoeco.types import ArrayFilters, Filter, PlanningIssue, PlanningMode, Projection, SortSpec
 
 
@@ -37,6 +39,9 @@ class FindOperation:
 class UpdateOperation:
     filter_spec: Filter
     plan: QueryNode
+    update_spec: dict[str, object] | None = None
+    compiled_update_plan: CompiledUpdatePlan | None = None
+    compiled_upsert_plan: CompiledUpdatePlan | None = None
     sort: SortSpec | None = None
     array_filters: ArrayFilters | None = None
     hint: HintSpec | None = None
@@ -147,6 +152,13 @@ def compile_update_operation(
     normalized_hint = _normalize_hint(hint)
     normalized_max_time_ms = _normalize_max_time_ms(max_time_ms)
     normalized_let = _normalize_let(let)
+    compiled_update_plan, compiled_upsert_plan = _compile_update_plans(
+        update_spec,
+        dialect=dialect,
+        selector_filter=normalized_filter,
+        array_filters=normalized_array_filters,
+        planning_mode=planning_mode,
+    )
     return UpdateOperation(
         filter_spec=normalized_filter,
         plan=compile_filter(
@@ -157,6 +169,9 @@ def compile_update_operation(
         )
         if plan is None
         else plan,
+        update_spec=update_spec,
+        compiled_update_plan=compiled_update_plan,
+        compiled_upsert_plan=compiled_upsert_plan,
         sort=normalized_sort,
         array_filters=normalized_array_filters,
         hint=normalized_hint,
@@ -232,6 +247,42 @@ def _collect_update_planning_issues(
         if isinstance(operator, str) and operator.startswith("$") and not dialect.supports_update_operator(operator):
             issues.append(PlanningIssue(scope="update", message=f"Unsupported update operator: {operator}"))
     return tuple(issues)
+
+
+def _compile_update_plans(
+    update_spec: dict[str, object] | None,
+    *,
+    dialect: MongoDialect,
+    selector_filter: Filter,
+    array_filters: ArrayFilters | None,
+    planning_mode: PlanningMode,
+) -> tuple[CompiledUpdatePlan | None, CompiledUpdatePlan | None]:
+    if not isinstance(update_spec, dict) or not update_spec:
+        return None, None
+    if not all(isinstance(operator, str) and operator.startswith("$") for operator in update_spec):
+        return None, None
+    if not all(isinstance(params, dict) for params in update_spec.values()):
+        return None, None
+    try:
+        return (
+            UpdateEngine.compile_update_plan(
+                update_spec,
+                dialect=dialect,
+                selector_filter=selector_filter,
+                array_filters=array_filters,
+            ),
+            UpdateEngine.compile_update_plan(
+                update_spec,
+                dialect=dialect,
+                selector_filter=selector_filter,
+                array_filters=array_filters,
+                is_upsert_insert=True,
+            ),
+        )
+    except OperationFailure:
+        if planning_mode is PlanningMode.RELAXED:
+            return None, None
+        raise
 
 
 def _collect_aggregate_planning_issues(

@@ -470,7 +470,6 @@ class MemoryEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
         operation: UpdateOperation,
-        update_spec: Update,
         upsert: bool = False,
         upsert_seed: Document | None = None,
         *,
@@ -478,19 +477,65 @@ class MemoryEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
-        return await self.update_matching_document(
-            db_name,
-            coll_name,
-            operation.filter_spec,
-            update_spec,
-            upsert=upsert,
-            upsert_seed=upsert_seed,
-            selector_filter=selector_filter,
-            array_filters=operation.array_filters,
-            plan=operation.plan,
-            dialect=dialect,
-            context=context,
-        )
+        if operation.compiled_update_plan is None or operation.update_spec is None:
+            raise OperationFailure("update operation does not include a compiled update plan")
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        query_plan = ensure_query_plan(operation.filter_spec, operation.plan, dialect=effective_dialect)
+        async with self._get_lock(db_name, coll_name):
+            with self._meta_lock:
+                coll = self._storage.get(db_name, {}).get(coll_name)
+            if coll is None:
+                coll = {}
+
+            for storage_key, data in list(coll.items()):
+                document = self._codec.decode(data)
+                if not QueryEngine.match_plan(document, query_plan, dialect=effective_dialect):
+                    continue
+
+                modified = operation.compiled_update_plan.apply(document)
+                self._ensure_unique_indexes(
+                    db_name,
+                    coll_name,
+                    document,
+                    exclude_storage_key=storage_key,
+                )
+                coll[storage_key] = self._codec.encode(document)
+                return UpdateResult(
+                    matched_count=1,
+                    modified_count=1 if modified else 0,
+                )
+
+            if not upsert:
+                return UpdateResult(matched_count=0, modified_count=0)
+
+            new_doc = deepcopy(upsert_seed or {})
+            upsert_plan = operation.compiled_upsert_plan or UpdateEngine.compile_update_plan(
+                operation.update_spec,
+                dialect=effective_dialect,
+                selector_filter=selector_filter or operation.filter_spec,
+                array_filters=operation.array_filters,
+                is_upsert_insert=True,
+            )
+            upsert_plan.apply(new_doc)
+            if "_id" not in new_doc:
+                new_doc["_id"] = ObjectId()
+
+            with self._meta_lock:
+                db = self._storage.setdefault(db_name, {})
+                coll = db.setdefault(coll_name, {})
+                self._register_collection_locked(db_name, coll_name)
+
+            storage_key = self._storage_key(new_doc["_id"])
+            if storage_key in coll:
+                raise DuplicateKeyError(f"Duplicate key: _id={new_doc['_id']}")
+
+            self._ensure_unique_indexes(db_name, coll_name, new_doc)
+            coll[storage_key] = self._codec.encode(new_doc)
+            return UpdateResult(
+                matched_count=0,
+                modified_count=0,
+                upserted_id=new_doc["_id"],
+            )
 
     @override
     async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult:
