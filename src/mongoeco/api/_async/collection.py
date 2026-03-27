@@ -275,6 +275,49 @@ class AsyncCollection:
                 hint=hint,
             )
 
+    async def _profile_operation(
+        self,
+        *,
+        op: str,
+        command: dict[str, object],
+        duration_ns: int,
+        operation: FindOperation | None = None,
+        errmsg: str | None = None,
+    ) -> None:
+        if self._collection_name == "system.profile":
+            return
+        recorder = getattr(self._engine, "_record_profile_event", None)
+        if not callable(recorder):
+            return
+        execution_lineage: tuple[object, ...] = ()
+        fallback_reason: str | None = None
+        if operation is not None:
+            planner = getattr(self._engine, "plan_find_execution", None)
+            if callable(planner):
+                try:
+                    execution_plan = await planner(
+                        self._db_name,
+                        self._collection_name,
+                        operation,
+                        dialect=self._mongodb_dialect,
+                        context=None,
+                    )
+                    execution_lineage = execution_plan.execution_lineage
+                    fallback_reason = execution_plan.fallback_reason
+                except Exception:
+                    execution_lineage = ()
+                    fallback_reason = None
+        recorder(
+            self._db_name,
+            op=op,
+            command=command,
+            duration_micros=max(1, duration_ns // 1000),
+            execution_lineage=tuple(execution_lineage),
+            fallback_reason=fallback_reason,
+            ok=0.0 if errmsg is not None else 1.0,
+            errmsg=errmsg,
+        )
+
     async def _engine_update_with_operation(
         self,
         operation: UpdateOperation,
@@ -285,31 +328,82 @@ class AsyncCollection:
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
         self._ensure_operation_executable(operation)
+        started_at = time.perf_counter_ns()
         method = getattr(self._engine, "update_with_operation", None)
         if callable(method):
-            return await method(
+            try:
+                result = await method(
+                    self._db_name,
+                    self._collection_name,
+                    operation,
+                    upsert=upsert,
+                    upsert_seed=upsert_seed,
+                    selector_filter=selector_filter,
+                    dialect=self._mongodb_dialect,
+                    context=session,
+                )
+            except Exception as exc:
+                await self._profile_operation(
+                    op="update",
+                    command={
+                        "update": self._collection_name,
+                        "q": operation.filter_spec,
+                        "u": deepcopy(operation.update_spec or {}),
+                        "upsert": upsert,
+                    },
+                    duration_ns=time.perf_counter_ns() - started_at,
+                    errmsg=str(exc),
+                )
+                raise
+            await self._profile_operation(
+                op="update",
+                command={
+                    "update": self._collection_name,
+                    "q": operation.filter_spec,
+                    "u": deepcopy(operation.update_spec or {}),
+                    "upsert": upsert,
+                },
+                duration_ns=time.perf_counter_ns() - started_at,
+            )
+            return result
+        try:
+            result = await self._engine.update_matching_document(
                 self._db_name,
                 self._collection_name,
-                operation,
+                operation.filter_spec,
+                self._require_update(operation.update_spec),
                 upsert=upsert,
                 upsert_seed=upsert_seed,
                 selector_filter=selector_filter,
+                array_filters=operation.array_filters,
+                plan=operation.plan,
                 dialect=self._mongodb_dialect,
                 context=session,
             )
-        return await self._engine.update_matching_document(
-            self._db_name,
-            self._collection_name,
-            operation.filter_spec,
-            self._require_update(operation.update_spec),
-            upsert=upsert,
-            upsert_seed=upsert_seed,
-            selector_filter=selector_filter,
-            array_filters=operation.array_filters,
-            plan=operation.plan,
-            dialect=self._mongodb_dialect,
-            context=session,
+        except Exception as exc:
+            await self._profile_operation(
+                op="update",
+                command={
+                    "update": self._collection_name,
+                    "q": operation.filter_spec,
+                    "u": deepcopy(operation.update_spec or {}),
+                    "upsert": upsert,
+                },
+                duration_ns=time.perf_counter_ns() - started_at,
+                errmsg=str(exc),
+            )
+            raise
+        await self._profile_operation(
+            op="update",
+            command={
+                "update": self._collection_name,
+                "q": operation.filter_spec,
+                "u": deepcopy(operation.update_spec or {}),
+                "upsert": upsert,
+            },
+            duration_ns=time.perf_counter_ns() - started_at,
         )
+        return result
 
     def _engine_scan_with_operation(
         self,
@@ -350,23 +444,54 @@ class AsyncCollection:
         session: ClientSession | None = None,
     ) -> DeleteResult:
         self._ensure_operation_executable(operation)
+        started_at = time.perf_counter_ns()
         method = getattr(self._engine, "delete_with_operation", None)
         if callable(method):
-            return await method(
+            try:
+                result = await method(
+                    self._db_name,
+                    self._collection_name,
+                    operation,
+                    dialect=self._mongodb_dialect,
+                    context=session,
+                )
+            except Exception as exc:
+                await self._profile_operation(
+                    op="remove",
+                    command={"delete": self._collection_name, "q": operation.filter_spec},
+                    duration_ns=time.perf_counter_ns() - started_at,
+                    errmsg=str(exc),
+                )
+                raise
+            await self._profile_operation(
+                op="remove",
+                command={"delete": self._collection_name, "q": operation.filter_spec},
+                duration_ns=time.perf_counter_ns() - started_at,
+            )
+            return result
+        try:
+            result = await self._engine.delete_matching_document(
                 self._db_name,
                 self._collection_name,
-                operation,
+                operation.filter_spec,
+                plan=operation.plan,
                 dialect=self._mongodb_dialect,
                 context=session,
             )
-        return await self._engine.delete_matching_document(
-            self._db_name,
-            self._collection_name,
-            operation.filter_spec,
-            plan=operation.plan,
-            dialect=self._mongodb_dialect,
-            context=session,
+        except Exception as exc:
+            await self._profile_operation(
+                op="remove",
+                command={"delete": self._collection_name, "q": operation.filter_spec},
+                duration_ns=time.perf_counter_ns() - started_at,
+                errmsg=str(exc),
+            )
+            raise
+        await self._profile_operation(
+            op="remove",
+            command={"delete": self._collection_name, "q": operation.filter_spec},
+            duration_ns=time.perf_counter_ns() - started_at,
         )
+        return result
 
     async def _engine_count_with_operation(
         self,
@@ -375,23 +500,32 @@ class AsyncCollection:
         session: ClientSession | None = None,
     ) -> int:
         self._ensure_operation_executable(operation)
+        started_at = time.perf_counter_ns()
         method = getattr(self._engine, "count_find_operation", None)
         if callable(method):
-            return await method(
+            count = await method(
                 self._db_name,
                 self._collection_name,
                 operation,
                 dialect=self._mongodb_dialect,
                 context=session,
             )
-        return await self._engine.count_matching_documents(
-            self._db_name,
-            self._collection_name,
-            operation.filter_spec,
-            plan=operation.plan,
-            dialect=self._mongodb_dialect,
-            context=session,
+        else:
+            count = await self._engine.count_matching_documents(
+                self._db_name,
+                self._collection_name,
+                operation.filter_spec,
+                plan=operation.plan,
+                dialect=self._mongodb_dialect,
+                context=session,
+            )
+        await self._profile_operation(
+            op="command",
+            command={"count": self._collection_name, "query": operation.filter_spec},
+            duration_ns=time.perf_counter_ns() - started_at,
+            operation=operation,
         )
+        return count
 
     @staticmethod
     def _can_use_direct_id_lookup(filter_spec: Filter) -> bool:
@@ -529,13 +663,27 @@ class AsyncCollection:
         if "_id" not in original:
             original["_id"] = ObjectId()
         doc = deepcopy(original)
-        
-        success = await self._engine.put_document(
-            self._db_name, self._collection_name, doc, overwrite=False, context=session
-        )
+
+        started_at = time.perf_counter_ns()
+        try:
+            success = await self._engine.put_document(
+                self._db_name, self._collection_name, doc, overwrite=False, context=session
+            )
+        except Exception as exc:
+            await self._profile_operation(
+                op="insert",
+                command={"insert": self._collection_name, "documents": [deepcopy(doc)]},
+                duration_ns=time.perf_counter_ns() - started_at,
+                errmsg=str(exc),
+            )
+            raise
         if not success:
             raise DuplicateKeyError(f"Duplicate key: _id={doc['_id']}")
-            
+        await self._profile_operation(
+            op="insert",
+            command={"insert": self._collection_name, "documents": [deepcopy(doc)]},
+            duration_ns=time.perf_counter_ns() - started_at,
+        )
         return InsertOneResult(inserted_id=doc["_id"])
 
     async def insert_many(
@@ -545,22 +693,39 @@ class AsyncCollection:
         session: ClientSession | None = None,
     ) -> InsertManyResult[DocumentId]:
         inserted_ids: list[DocumentId] = []
+        command_documents: list[Document] = []
+        started_at = time.perf_counter_ns()
         for original in self._require_documents(documents):
             if "_id" not in original:
                 original["_id"] = ObjectId()
             doc = deepcopy(original)
+            command_documents.append(deepcopy(doc))
 
-            success = await self._engine.put_document(
-                self._db_name,
-                self._collection_name,
-                doc,
-                overwrite=False,
-                context=session,
-            )
+            try:
+                success = await self._engine.put_document(
+                    self._db_name,
+                    self._collection_name,
+                    doc,
+                    overwrite=False,
+                    context=session,
+                )
+            except Exception as exc:
+                await self._profile_operation(
+                    op="insert",
+                    command={"insert": self._collection_name, "documents": command_documents},
+                    duration_ns=time.perf_counter_ns() - started_at,
+                    errmsg=str(exc),
+                )
+                raise
             if not success:
                 raise DuplicateKeyError(f"Duplicate key: _id={doc['_id']}")
             inserted_ids.append(doc["_id"])
 
+        await self._profile_operation(
+            op="insert",
+            command={"insert": self._collection_name, "documents": command_documents},
+            duration_ns=time.perf_counter_ns() - started_at,
+        )
         return InsertManyResult(inserted_ids=inserted_ids)
 
     async def bulk_write(
@@ -704,21 +869,37 @@ class AsyncCollection:
             planning_mode=self._planning_mode,
         )
         doc = None
-        
-        if self._can_use_direct_id_lookup(operation.filter_spec):
-            doc = await self._engine.get_document(
-                self._db_name,
-                self._collection_name,
-                operation.filter_spec["_id"],
-                projection=operation.projection,
-                dialect=self._mongodb_dialect,
-                context=session,
+        started_at = time.perf_counter_ns()
+        try:
+            if self._can_use_direct_id_lookup(operation.filter_spec):
+                doc = await self._engine.get_document(
+                    self._db_name,
+                    self._collection_name,
+                    operation.filter_spec["_id"],
+                    projection=operation.projection,
+                    dialect=self._mongodb_dialect,
+                    context=session,
+                )
+            else:
+                operation = operation.with_overrides(limit=1)
+                async for d in self._engine_scan_with_operation(operation, session=session):
+                    doc = d
+                    break
+        except Exception as exc:
+            await self._profile_operation(
+                op="query",
+                command={"find": self._collection_name, "filter": operation.filter_spec},
+                duration_ns=time.perf_counter_ns() - started_at,
+                operation=operation,
+                errmsg=str(exc),
             )
-        else:
-            operation = operation.with_overrides(limit=1)
-            async for d in self._engine_scan_with_operation(operation, session=session):
-                doc = d
-                break
+            raise
+        await self._profile_operation(
+            op="query",
+            command={"find": self._collection_name, "filter": operation.filter_spec},
+            duration_ns=time.perf_counter_ns() - started_at,
+            operation=operation,
+        )
 
         return doc
 

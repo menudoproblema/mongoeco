@@ -180,6 +180,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     validator={"$jsonSchema": {"required": "name"}},
                 )
 
+    def test_profile_command_and_system_profile_capture_operations(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    database = client.get_database("profiled")
+                    profile_enabled = database.command({"profile": 2, "slowms": 0})
+                    self.assertEqual(profile_enabled["was"], 0)
+
+                    collection = database.get_collection("users")
+                    collection.insert_one({"_id": "1", "name": "Ada"})
+                    collection.find_one({"_id": "1"})
+                    collection.update_one({"_id": "1"}, {"$set": {"active": True}})
+
+                    profile_status = database.command({"profile": -1})
+                    self.assertEqual(profile_status["was"], 2)
+                    profile_entries = database.get_collection("system.profile").find().to_list()
+
+                    self.assertTrue(any(entry["op"] == "insert" for entry in profile_entries))
+                    self.assertTrue(any(entry["op"] == "query" for entry in profile_entries))
+                    self.assertTrue(any(entry["op"] == "update" for entry in profile_entries))
+
     def test_client_supports_attribute_and_item_access_with_lazy_connect(self):
         client = MongoClient()
         try:

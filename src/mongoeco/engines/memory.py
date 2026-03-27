@@ -10,6 +10,7 @@ from typing import Any, AsyncIterable, override
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.engines.semantic_core import (
     EngineReadExecutionPlan,
     build_query_plan_explanation,
@@ -30,6 +31,7 @@ from mongoeco.session import ClientSession
 from mongoeco.session import EngineTransactionContext
 from mongoeco.types import (
     ArrayFilters, DeleteResult, Document, DocumentId, ExecutionLineageStep, Filter, IndexInformation, IndexDocument, IndexKeySpec, ObjectId,
+    ProfilingCommandResult,
     Projection, QueryPlanExplanation, SortSpec, Update, UpdateResult, default_index_name,
     default_id_index_definition, default_id_index_document, default_id_index_information, index_fields,
     EngineIndexRecord, IndexDefinition, normalize_index_keys,
@@ -54,6 +56,8 @@ class _AsyncThreadLock:
 class MemoryEngine(AsyncStorageEngine):
     """Motor de almacenamiento en memoria ultra-rápido."""
 
+    _PROFILE_COLLECTION_NAME = "system.profile"
+
     def __init__(self, codec: type[DocumentCodec] = DocumentCodec):
         self._storage: dict[str, dict[str, dict[Any, Any]]] = {}
         self._locks: dict[str, _AsyncThreadLock] = {}
@@ -63,6 +67,7 @@ class MemoryEngine(AsyncStorageEngine):
         self._meta_lock = threading.Lock()
         self._connection_count = 0
         self._codec = codec
+        self._profiler = EngineProfiler("memory")
 
     @override
     def create_session_state(self, session: ClientSession) -> None:
@@ -105,6 +110,36 @@ class MemoryEngine(AsyncStorageEngine):
                 "recorded_at": time.monotonic(),
             },
         )
+
+    def _record_profile_event(
+        self,
+        db_name: str,
+        *,
+        op: str,
+        command: dict[str, object],
+        duration_micros: int,
+        execution_lineage: tuple[ExecutionLineageStep, ...] = (),
+        fallback_reason: str | None = None,
+        ok: float = 1.0,
+        errmsg: str | None = None,
+    ) -> None:
+        self._profiler.record(
+            db_name,
+            op=op,
+            namespace=f"{db_name}.{self._PROFILE_COLLECTION_NAME}",
+            command=command,
+            duration_micros=duration_micros,
+            execution_lineage=execution_lineage,
+            fallback_reason=fallback_reason,
+            ok=ok,
+            errmsg=errmsg,
+        )
+
+    def _is_profile_namespace(self, coll_name: str) -> bool:
+        return coll_name == self._PROFILE_COLLECTION_NAME
+
+    def _profile_documents(self, db_name: str) -> list[Document]:
+        return self._profiler.list_entries(db_name)
 
     def _resolve_hint_index(
         self,
@@ -285,6 +320,18 @@ class MemoryEngine(AsyncStorageEngine):
             self._locks.clear()
 
     @override
+    async def set_profiling_level(
+        self,
+        db_name: str,
+        level: int,
+        *,
+        slow_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> ProfilingCommandResult:
+        del context
+        return self._profiler.set_level(db_name, level, slow_ms=slow_ms)
+
+    @override
     async def put_document(self, db_name: str, coll_name: str, document: Document, overwrite: bool = True, *, context: ClientSession | None = None) -> bool:
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
@@ -324,6 +371,11 @@ class MemoryEngine(AsyncStorageEngine):
     @override
     async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
         effective_dialect = dialect or MONGODB_DIALECT_70
+        if self._is_profile_namespace(coll_name):
+            document = self._profiler.get_entry(db_name, doc_id)
+            if document is None:
+                return None
+            return apply_projection(document, projection, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
             storage_key = self._storage_key(doc_id)
             data = self._storage.get(db_name, {}).get(coll_name, {}).get(storage_key)
@@ -339,6 +391,8 @@ class MemoryEngine(AsyncStorageEngine):
 
     @override
     async def delete_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, context: ClientSession | None = None) -> bool:
+        if self._is_profile_namespace(coll_name):
+            return False
         async with self._get_lock(db_name, coll_name):
             coll = self._storage.get(db_name, {}).get(coll_name, {})
             storage_key = self._storage_key(doc_id)
@@ -371,6 +425,14 @@ class MemoryEngine(AsyncStorageEngine):
                 hint=hint,
             )
             enforce_deadline(deadline)
+
+            if self._is_profile_namespace(coll_name):
+                documents = filter_documents(self._profile_documents(db_name), semantics)
+                documents = finalize_documents(documents, semantics)
+                for document in documents:
+                    enforce_deadline(deadline)
+                    yield document
+                return
 
             async with self._get_lock(db_name, coll_name):
                 coll = self._storage.get(db_name, {}).get(coll_name, {})
@@ -941,20 +1003,27 @@ class MemoryEngine(AsyncStorageEngine):
     @override
     async def list_databases(self, *, context: ClientSession | None = None) -> list[str]:
         with self._meta_lock:
-            return sorted(
+            names = sorted(
                 set(self._storage.keys())
                 | set(self._indexes.keys())
                 | set(self._collections.keys())
             )
+        for db_name in list(self._profiler._settings.keys()):
+            if db_name not in names:
+                names.append(db_name)
+        return sorted(names)
 
     @override
     async def list_collections(self, db_name: str, *, context: ClientSession | None = None) -> list[str]:
         with self._meta_lock:
-            return sorted(
+            names = sorted(
                 set(self._storage.get(db_name, {}).keys())
                 | set(self._indexes.get(db_name, {}).keys())
                 | set(self._collections.get(db_name, set()))
             )
+        if self._profiler.namespace_visible(db_name):
+            names = sorted(set(names) | {self._PROFILE_COLLECTION_NAME})
+        return names
 
     @override
     async def collection_options(
@@ -964,6 +1033,8 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> dict[str, object]:
+        if self._is_profile_namespace(coll_name) and self._profiler.namespace_visible(db_name):
+            return {}
         with self._meta_lock:
             if not self._namespace_exists_locked(db_name, coll_name):
                 raise CollectionInvalid(f"collection '{coll_name}' does not exist")
@@ -1038,6 +1109,9 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> None:
+        if self._is_profile_namespace(coll_name):
+            self._profiler.clear(db_name)
+            return
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
                 self._prune_collection_registry_locked(db_name, coll_name)

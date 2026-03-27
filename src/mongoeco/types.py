@@ -142,6 +142,28 @@ class DatabaseListingDocument(TypedDict):
     empty: bool
 
 
+class ProfilingCommandDocument(TypedDict):
+    was: int
+    slowms: int
+    sampleRate: float
+    ok: float
+
+
+class ProfileEntryDocument(TypedDict, total=False):
+    _id: int
+    op: str
+    ns: str
+    command: dict[str, object]
+    millis: float
+    micros: int
+    ts: str
+    engine: str
+    executionLineage: list["ExecutionLineageStepDocument"]
+    fallbackReason: str
+    ok: float
+    errmsg: str
+
+
 @dataclass(frozen=True, slots=True)
 class CollectionListingSnapshot:
     name: str
@@ -170,6 +192,62 @@ class DatabaseListingSnapshot:
             "sizeOnDisk": self.size_on_disk,
             "empty": self.empty,
         }
+
+
+@dataclass(frozen=True, slots=True)
+class ProfilingSettingsSnapshot:
+    level: int = 0
+    slow_ms: int = 100
+
+
+@dataclass(frozen=True, slots=True)
+class ProfilingCommandResult:
+    previous_level: int
+    slow_ms: int
+
+    def to_document(self) -> ProfilingCommandDocument:
+        return {
+            "was": self.previous_level,
+            "slowms": self.slow_ms,
+            "sampleRate": 1.0,
+            "ok": 1.0,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ProfileEntrySnapshot:
+    profile_id: int
+    op: str
+    namespace: str
+    command: dict[str, object]
+    millis: float
+    micros: int
+    ts: str
+    engine: str
+    execution_lineage: tuple["ExecutionLineageStep", ...] = ()
+    fallback_reason: str | None = None
+    ok: float = 1.0
+    errmsg: str | None = None
+
+    def to_document(self) -> ProfileEntryDocument:
+        document: ProfileEntryDocument = {
+            "_id": self.profile_id,
+            "op": self.op,
+            "ns": self.namespace,
+            "command": deepcopy(self.command),
+            "millis": self.millis,
+            "micros": self.micros,
+            "ts": self.ts,
+            "engine": self.engine,
+            "ok": self.ok,
+        }
+        if self.execution_lineage:
+            document["executionLineage"] = [step.to_document() for step in self.execution_lineage]
+        if self.fallback_reason is not None:
+            document["fallbackReason"] = self.fallback_reason
+        if self.errmsg is not None:
+            document["errmsg"] = self.errmsg
+        return document
 
 
 class CollectionStatsDocument(TypedDict):

@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+import time
 
 from mongoeco.api._async.cursor import (
     HintSpec,
@@ -344,11 +345,46 @@ class AsyncAggregationCursor:
                 yield document
 
     async def to_list(self) -> list[Document]:
-        return [document async for document in self]
+        started_at = time.perf_counter_ns()
+        try:
+            documents = [document async for document in self]
+        except Exception as exc:
+            profiler = getattr(self._collection, "_profile_operation", None)
+            if callable(profiler):
+                await profiler(
+                    op="command",
+                    command={"aggregate": self._collection._collection_name, "pipeline": list(self._pipeline)},
+                    duration_ns=time.perf_counter_ns() - started_at,
+                    errmsg=str(exc),
+                )
+            raise
+        profiler = getattr(self._collection, "_profile_operation", None)
+        if callable(profiler):
+            await profiler(
+                op="command",
+                command={"aggregate": self._collection._collection_name, "pipeline": list(self._pipeline)},
+                duration_ns=time.perf_counter_ns() - started_at,
+            )
+        return documents
 
     async def first(self) -> Document | None:
+        started_at = time.perf_counter_ns()
         async for document in self:
+            profiler = getattr(self._collection, "_profile_operation", None)
+            if callable(profiler):
+                await profiler(
+                    op="command",
+                    command={"aggregate": self._collection._collection_name, "pipeline": list(self._pipeline)},
+                    duration_ns=time.perf_counter_ns() - started_at,
+                )
             return document
+        profiler = getattr(self._collection, "_profile_operation", None)
+        if callable(profiler):
+            await profiler(
+                op="command",
+                command={"aggregate": self._collection._collection_name, "pipeline": list(self._pipeline)},
+                duration_ns=time.perf_counter_ns() - started_at,
+            )
         return None
 
     async def explain(self) -> dict[str, object]:

@@ -14,6 +14,7 @@ from mongoeco.types import (
     IndexInformation,
     IndexDocument,
     IndexKeySpec,
+    ProfilingCommandResult,
     Projection,
     QueryPlanExplanation,
     SortSpec,
@@ -82,6 +83,18 @@ class AsyncDatabaseAdminEngine(Protocol):
 
 
 @runtime_checkable
+class AsyncProfilingEngine(Protocol):
+    async def set_profiling_level(
+        self,
+        db_name: str,
+        level: int,
+        *,
+        slow_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> ProfilingCommandResult: ...
+
+
+@runtime_checkable
 class AsyncNamespaceAdminEngine(Protocol):
     async def list_collections(self, db_name: str, *, context: ClientSession | None = None) -> list[str]: ...
     async def collection_options(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> dict[str, object]: ...
@@ -108,6 +121,7 @@ class AsyncStorageEngine(
     AsyncReadPlanningEngine,
     AsyncExplainEngine,
     AsyncAdminEngine,
+    AsyncProfilingEngine,
     Protocol,
 ):
     """Protocolo Delgado (Thin Protocol) de Almacenamiento."""

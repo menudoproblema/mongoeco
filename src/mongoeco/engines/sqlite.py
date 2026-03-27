@@ -36,6 +36,7 @@ from mongoeco.core.query_plan import (
 )
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
     EngineReadExecutionPlan,
@@ -77,6 +78,7 @@ from mongoeco.types import (
     IndexInformation,
     IndexKeySpec,
     ObjectId,
+    ProfilingCommandResult,
     Projection,
     QueryPlanExplanation,
     SortSpec,
@@ -95,6 +97,8 @@ from mongoeco.types import (
 class SQLiteEngine(AsyncStorageEngine):
     """Motor SQLite async-first usando la stdlib como backend persistente."""
 
+    _PROFILE_COLLECTION_NAME = "system.profile"
+
     def __init__(self, path: str = ":memory:", codec: type[DocumentCodec] = DocumentCodec):
         self._path = path
         self._codec = codec
@@ -105,6 +109,7 @@ class SQLiteEngine(AsyncStorageEngine):
         self._scan_condition = threading.Condition()
         self._active_scan_count = 0
         self._thread_local = threading.local()
+        self._profiler = EngineProfiler("sqlite")
 
     def _engine_key(self) -> str:
         return f"sqlite:{id(self)}"
@@ -130,6 +135,33 @@ class SQLiteEngine(AsyncStorageEngine):
                 "recorded_at": time.monotonic(),
             },
         )
+
+    def _record_profile_event(
+        self,
+        db_name: str,
+        *,
+        op: str,
+        command: dict[str, object],
+        duration_micros: int,
+        execution_lineage: tuple[ExecutionLineageStep, ...] = (),
+        fallback_reason: str | None = None,
+        ok: float = 1.0,
+        errmsg: str | None = None,
+    ) -> None:
+        self._profiler.record(
+            db_name,
+            op=op,
+            namespace=f"{db_name}.{self._PROFILE_COLLECTION_NAME}",
+            command=command,
+            duration_micros=duration_micros,
+            execution_lineage=execution_lineage,
+            fallback_reason=fallback_reason,
+            ok=ok,
+            errmsg=errmsg,
+        )
+
+    def _is_profile_namespace(self, coll_name: str) -> bool:
+        return coll_name == self._PROFILE_COLLECTION_NAME
 
     @override
     def create_session_state(self, session: ClientSession) -> None:
@@ -1075,6 +1107,8 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         context: ClientSession | None = None,
     ) -> dict[str, object]:
+        if self._is_profile_namespace(coll_name) and self._profiler.namespace_visible(db_name):
+            return {}
         with self._lock:
             conn = self._require_connection(context)
             row = conn.execute(
@@ -1125,6 +1159,9 @@ class SQLiteEngine(AsyncStorageEngine):
             self._transaction_owner_session_id = None
         if connection is not None:
             connection.close()
+
+    def _profile_documents(self, db_name: str) -> list[Document]:
+        return self._profiler.list_entries(db_name)
 
     def _put_document_sync(self, db_name: str, coll_name: str, document: Document, overwrite: bool, context: ClientSession | None) -> bool:
         with self._lock:
@@ -1207,6 +1244,11 @@ class SQLiteEngine(AsyncStorageEngine):
 
     def _get_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, projection: Projection | None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
         effective_dialect = dialect or MONGODB_DIALECT_70
+        if self._is_profile_namespace(coll_name):
+            document = self._profiler.get_entry(db_name, doc_id)
+            if document is None:
+                return None
+            return apply_projection(document, projection, dialect=effective_dialect)
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -1229,6 +1271,8 @@ class SQLiteEngine(AsyncStorageEngine):
         )
 
     def _delete_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, context: ClientSession | None) -> bool:
+        if self._is_profile_namespace(coll_name):
+            return False
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -1282,6 +1326,27 @@ class SQLiteEngine(AsyncStorageEngine):
             )
         )
         deadline = semantics.deadline
+        if self._is_profile_namespace(coll_name):
+            documents_iter = iter(self._profile_documents(db_name))
+            if semantics.sort is None:
+                for document in stream_finalize_documents(
+                    iter_filtered_documents(documents_iter, semantics),
+                    semantics,
+                ):
+                    enforce_deadline(deadline)
+                    if stop_event is not None and stop_event.is_set():
+                        break
+                    yield document
+                return
+            documents = filter_documents(documents_iter, semantics)
+            documents = sort_documents(documents, semantics.sort, dialect=semantics.dialect)
+            documents = finalize_documents(documents, semantics, apply_sort_phase=False)
+            for document in documents:
+                enforce_deadline(deadline)
+                if stop_event is not None and stop_event.is_set():
+                    break
+                yield document
+            return
         with self._lock:
             conn: sqlite3.Connection | None = None
             if self._session_owns_transaction(context):
@@ -1886,7 +1951,11 @@ class SQLiteEngine(AsyncStorageEngine):
                 ORDER BY db_name
                 """
             )
-            return [row[0] for row in cursor.fetchall()]
+            names = [row[0] for row in cursor.fetchall()]
+        for db_name in list(self._profiler._settings.keys()):
+            if db_name not in names:
+                names.append(db_name)
+        return sorted(names)
 
     def _list_collections_sync(self, db_name: str, context: ClientSession | None = None) -> list[str]:
         with self._lock:
@@ -1908,7 +1977,10 @@ class SQLiteEngine(AsyncStorageEngine):
                 """,
                 (db_name, db_name, db_name),
             )
-            return [row[0] for row in cursor.fetchall()]
+            names = [row[0] for row in cursor.fetchall()]
+        if self._profiler.namespace_visible(db_name):
+            names = sorted(set(names) | {self._PROFILE_COLLECTION_NAME})
+        return names
 
     def _create_collection_sync(
         self,
@@ -1961,6 +2033,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 raise
 
     def _drop_collection_sync(self, db_name: str, coll_name: str, context: ClientSession | None = None) -> None:
+        if self._is_profile_namespace(coll_name):
+            self._profiler.clear(db_name)
+            return
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -2013,6 +2088,18 @@ class SQLiteEngine(AsyncStorageEngine):
     @override
     async def disconnect(self) -> None:
         await asyncio.to_thread(self._disconnect_sync)
+
+    @override
+    async def set_profiling_level(
+        self,
+        db_name: str,
+        level: int,
+        *,
+        slow_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> ProfilingCommandResult:
+        del context
+        return self._profiler.set_level(db_name, level, slow_ms=slow_ms)
 
     @override
     async def put_document(self, db_name: str, coll_name: str, document: Document, overwrite: bool = True, *, context: ClientSession | None = None) -> bool:

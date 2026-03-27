@@ -121,6 +121,27 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     validator={"$jsonSchema": {"required": "name"}},
                 )
 
+    async def test_profile_command_and_system_profile_capture_operations(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    database = client.get_database("profiled")
+                    profile_enabled = await database.command({"profile": 2, "slowms": 0})
+                    self.assertEqual(profile_enabled["was"], 0)
+
+                    collection = database.get_collection("users")
+                    await collection.insert_one({"_id": "1", "name": "Ada"})
+                    await collection.find_one({"_id": "1"})
+                    await collection.update_one({"_id": "1"}, {"$set": {"active": True}})
+
+                    profile_status = await database.command({"profile": -1})
+                    self.assertEqual(profile_status["was"], 2)
+                    profile_entries = await database.get_collection("system.profile").find().to_list()
+
+                    self.assertTrue(any(entry["op"] == "insert" for entry in profile_entries))
+                    self.assertTrue(any(entry["op"] == "query" for entry in profile_entries))
+                    self.assertTrue(any(entry["op"] == "update" for entry in profile_entries))
+
     async def test_client_propagates_dialect_and_profile_to_database_and_collection(self):
         engine = MemoryEngine()
 

@@ -1,3 +1,5 @@
+import time
+
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.query_plan import QueryNode
 from mongoeco.errors import InvalidOperation, OperationFailure
@@ -287,22 +289,84 @@ class AsyncCursor:
         return self
 
     async def to_list(self) -> list[Document]:
-        documents = [document async for document in self]
+        operation = self._as_operation()
+        started_at = time.perf_counter_ns()
+        try:
+            documents = [document async for document in self]
+        except Exception as exc:
+            profiler = getattr(self._collection, "_profile_operation", None)
+            if callable(profiler):
+                await profiler(
+                    op="query",
+                    command={"find": self._collection._collection_name, "filter": operation.filter_spec},
+                    duration_ns=time.perf_counter_ns() - started_at,
+                    operation=operation,
+                    errmsg=str(exc),
+                )
+            raise
+        profiler = getattr(self._collection, "_profile_operation", None)
+        if callable(profiler):
+            await profiler(
+                op="query",
+                command={"find": self._collection._collection_name, "filter": operation.filter_spec},
+                duration_ns=time.perf_counter_ns() - started_at,
+                operation=operation,
+            )
         return documents
 
     async def first(self) -> Document | None:
+        operation = self._as_operation()
+        started_at = time.perf_counter_ns()
         if self._limit == 0:
             return None
         active = self._active_async_iterable
         if active is not None:
             try:
-                return await active.__anext__()
+                value = await active.__anext__()
             except StopAsyncIteration:
-                return None
+                value = None
+            except Exception as exc:
+                profiler = getattr(self._collection, "_profile_operation", None)
+                if callable(profiler):
+                    await profiler(
+                        op="query",
+                        command={"find": self._collection._collection_name, "filter": operation.filter_spec},
+                        duration_ns=time.perf_counter_ns() - started_at,
+                        operation=operation,
+                        errmsg=str(exc),
+                    )
+                raise
+            else:
+                profiler = getattr(self._collection, "_profile_operation", None)
+                if callable(profiler):
+                    await profiler(
+                        op="query",
+                        command={"find": self._collection._collection_name, "filter": operation.filter_spec},
+                        duration_ns=time.perf_counter_ns() - started_at,
+                        operation=operation,
+                    )
+                return value
+            return value
         if self._exhausted:
             return None
         async for document in self._iter(limit=1, enforce_ownership=False):
+            profiler = getattr(self._collection, "_profile_operation", None)
+            if callable(profiler):
+                await profiler(
+                    op="query",
+                    command={"find": self._collection._collection_name, "filter": operation.filter_spec},
+                    duration_ns=time.perf_counter_ns() - started_at,
+                    operation=operation,
+                )
             return document
+        profiler = getattr(self._collection, "_profile_operation", None)
+        if callable(profiler):
+            await profiler(
+                op="query",
+                command={"find": self._collection._collection_name, "filter": operation.filter_spec},
+                duration_ns=time.perf_counter_ns() - started_at,
+                operation=operation,
+            )
         return None
 
     def rewind(self) -> "AsyncCursor":

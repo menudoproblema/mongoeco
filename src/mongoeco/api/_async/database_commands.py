@@ -3,6 +3,7 @@ import os
 import platform
 import socket
 import sys
+import time
 from typing import TYPE_CHECKING, Generic, TypeVar
 from dataclasses import dataclass
 
@@ -32,6 +33,7 @@ from mongoeco.types import (
     HostInfoDocument,
     ListCommandsDocument,
     OkResult,
+    ProfilingCommandResult,
     ServerStatusDocument,
     WhatsMyUriDocument,
 )
@@ -72,6 +74,7 @@ SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
     "listDatabases",
     "listIndexes",
     "ping",
+    "profile",
     "renameCollection",
     "serverStatus",
     "update",
@@ -397,6 +400,11 @@ class AsyncDatabaseCommandService:
         scale: int = 1
 
     @dataclass(frozen=True, slots=True)
+    class ProfileCommand(AdminCommand[ProfilingCommandResult]):
+        level: int = -1
+        slow_ms: int | None = None
+
+    @dataclass(frozen=True, slots=True)
     class ValidateCollectionCommand(AdminCommand[CollectionValidationSnapshot]):
         collection_name: str = ""
         scandata: bool = False
@@ -528,6 +536,22 @@ class AsyncDatabaseCommandService:
                 spec=spec,
                 scale=scale,
             )
+        if command_name == "profile":
+            level = spec.get("profile")
+            if not isinstance(level, int) or isinstance(level, bool):
+                raise TypeError("profile level must be an integer")
+            slow_ms = spec.get("slowms")
+            if slow_ms is not None and (
+                not isinstance(slow_ms, int) or isinstance(slow_ms, bool)
+            ):
+                raise TypeError("slowms must be an integer")
+            return self.ProfileCommand(
+                db_name=self._admin._db_name,
+                command_name=command_name,
+                spec=spec,
+                level=level,
+                slow_ms=slow_ms,
+            )
         if command_name == "validate":
             collection_name = require_collection_name(
                 spec.get("validate"),
@@ -642,6 +666,13 @@ class AsyncDatabaseCommandService:
                 scale=command.scale,
                 session=session,
             )  # type: ignore[return-value]
+        if isinstance(command, self.ProfileCommand):
+            return await self._engine.set_profiling_level(
+                command.db_name,
+                command.level,
+                slow_ms=command.slow_ms,
+                context=session,
+            )  # type: ignore[return-value]
         if isinstance(command, self.ValidateCollectionCommand):
             return await self._admin._build_collection_validation_snapshot(
                 command.collection_name,
@@ -744,7 +775,30 @@ class AsyncDatabaseCommandService:
             if isinstance(command, self.AdminCommand)
             else self.parse_raw_command(command, **kwargs)
         )
-        return self.serialize_result(await self.execute(parsed, session=session))
+        started_at = time.perf_counter_ns()
+        try:
+            serialized = self.serialize_result(await self.execute(parsed, session=session))
+        except Exception as exc:
+            recorder = getattr(self._engine, "_record_profile_event", None)
+            if callable(recorder) and parsed.command_name != "profile":
+                recorder(
+                    parsed.db_name,
+                    op="command",
+                    command=dict(parsed.spec),
+                    duration_micros=max(1, (time.perf_counter_ns() - started_at) // 1000),
+                    ok=0.0,
+                    errmsg=str(exc),
+                )
+            raise
+        recorder = getattr(self._engine, "_record_profile_event", None)
+        if callable(recorder) and parsed.command_name != "profile":
+            recorder(
+                parsed.db_name,
+                op="command",
+                command=dict(parsed.spec),
+                duration_micros=max(1, (time.perf_counter_ns() - started_at) // 1000),
+            )
+        return serialized
 
     async def command(
         self,
