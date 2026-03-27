@@ -31,7 +31,7 @@ from mongoeco.core.aggregation import (
     unregister_aggregation_stage,
 )
 from mongoeco.errors import OperationFailure
-from mongoeco.types import ObjectId, UNDEFINED
+from mongoeco.types import Binary, Decimal128, ObjectId, Regex, Timestamp, UNDEFINED
 
 
 class AggregationTests(unittest.TestCase):
@@ -78,6 +78,49 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(_resolve_aggregation_field_path([{"name": "Ada"}], "0.name"), "Ada")
         self.assertIs(_resolve_aggregation_field_path([{"name": "Ada"}], "2.name"), _MISSING)
         self.assertEqual(_resolve_aggregation_field_path([{"name": "Ada"}, 1], "name"), ["Ada"])
+
+    def test_aggregation_scalar_expressions_support_public_bson_classes(self):
+        documents = apply_pipeline(
+            [
+                {
+                    "blob": Binary(b"\x00\x01\x02", subtype=4),
+                    "amount": Decimal128("10.25"),
+                    "pattern": Regex("^ad", "i"),
+                    "ts": Timestamp(1234567890, 7),
+                }
+            ],
+            [
+                {
+                    "$project": {
+                        "_id": 0,
+                        "blobType": {"$type": "$blob"},
+                        "blobSize": {"$binarySize": "$blob"},
+                        "amountType": {"$type": "$amount"},
+                        "amountString": {"$toString": "$amount"},
+                        "patternType": {"$type": "$pattern"},
+                        "patternString": {"$toString": "$pattern"},
+                        "timestampType": {"$type": "$ts"},
+                        "timestampString": {"$toString": "$ts"},
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(
+            documents,
+            [
+                {
+                    "blobType": "binData",
+                    "blobSize": 3,
+                    "amountType": "decimal",
+                    "amountString": "10.25",
+                    "patternType": "regex",
+                    "patternString": "/^ad/i",
+                    "timestampType": "timestamp",
+                    "timestampString": "Timestamp(1234567890, 7)",
+                }
+            ],
+        )
         self.assertIs(_resolve_aggregation_field_path(1, "name"), _MISSING)
 
     def test_evaluate_expression_supports_common_boolean_and_arithmetic_operators(self):

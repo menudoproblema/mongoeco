@@ -9,7 +9,7 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_scalars import bson_numeric_alias
 from mongoeco.core.identity import canonical_document_id
 from mongoeco.errors import OperationFailure
-from mongoeco.types import ObjectId, UndefinedType
+from mongoeco.types import Binary, Decimal128, ObjectId, Regex, Timestamp, UndefinedType
 from mongoeco.core.query_plan import (
     AllCondition,
     AndCondition,
@@ -43,15 +43,19 @@ class BSONComparator:
     TYPE_ORDER: dict[type, int] = {
         type(None): 1,
         UndefinedType: 1,
-        int: 2, float: 2, decimal.Decimal: 2,
+        int: 2, float: 2, decimal.Decimal: 2, Decimal128: 2,
         str: 3,
         dict: 4,
         list: 5,
         bytes: 6,
+        Binary: 6,
         uuid.UUID: 6,
         ObjectId: 7,
         bool: 8,
         datetime.datetime: 9,
+        Timestamp: 10,
+        re.Pattern: 11,
+        Regex: 11,
     }
 
     @staticmethod
@@ -292,6 +296,8 @@ class QueryEngine:
         null_matches_undefined: bool,
         dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> bool:
+        if isinstance(item, Regex):
+            return QueryEngine._regex_item_matches_candidate(candidate, item.compile())
         if isinstance(item, re.Pattern):
             return QueryEngine._regex_item_matches_candidate(candidate, item)
         return QueryEngine._query_equality_matches(
@@ -446,6 +452,7 @@ class QueryEngine:
                 10: ("null",),
                 11: ("regex",),
                 16: ("int",),
+                17: ("timestamp",),
                 18: ("long",),
                 19: ("decimal",),
             }
@@ -466,6 +473,7 @@ class QueryEngine:
             "null": ("null",),
             "regex": ("regex",),
             "int": ("int",),
+            "timestamp": ("timestamp",),
             "long": ("long",),
             "decimal": ("decimal",),
             "undefined": ("undefined",),
@@ -486,7 +494,7 @@ class QueryEngine:
         if alias == "double":
             return isinstance(candidate, float) and not isinstance(candidate, bool)
         if alias == "decimal":
-            return isinstance(candidate, decimal.Decimal)
+            return isinstance(candidate, (decimal.Decimal, Decimal128))
         if alias in {"int", "long"}:
             return isinstance(candidate, int) and not isinstance(candidate, bool)
         if alias == "string":
@@ -496,17 +504,19 @@ class QueryEngine:
         if alias == "array":
             return isinstance(candidate, list)
         if alias == "binData":
-            return isinstance(candidate, (bytes, uuid.UUID))
+            return isinstance(candidate, (bytes, Binary, uuid.UUID))
         if alias == "objectId":
             return isinstance(candidate, ObjectId)
         if alias == "bool":
             return isinstance(candidate, bool)
         if alias == "date":
             return isinstance(candidate, datetime.datetime)
+        if alias == "timestamp":
+            return isinstance(candidate, Timestamp)
         if alias == "null":
             return candidate is None
         if alias == "regex":
-            return isinstance(candidate, re.Pattern)
+            return isinstance(candidate, (re.Pattern, Regex))
         if alias == "undefined":
             return isinstance(candidate, UndefinedType)
         return False

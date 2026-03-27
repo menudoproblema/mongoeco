@@ -43,7 +43,7 @@ from mongoeco.core.paths import delete_document_value, get_document_value, set_d
 from mongoeco.core.projections import apply_projection, validate_projection_spec
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, ObjectId, UndefinedType
+from mongoeco.types import Binary, Decimal128, Document, ObjectId, Regex, Timestamp, UndefinedType
 from mongoeco.core.aggregation.accumulators import _evaluate_pick_n_input
 from mongoeco.core.aggregation.planning import Pipeline, _require_sort
 from mongoeco.core.aggregation.spill import AggregationSpillPolicy
@@ -70,7 +70,7 @@ def _aggregation_key(value: Any) -> Any:
         return ("decimal", value)
     if isinstance(value, str):
         return ("str", value)
-    if isinstance(value, bytes):
+    if isinstance(value, (bytes, Binary)):
         return ("bytes", value)
     if isinstance(value, uuid.UUID):
         return ("uuid", value)
@@ -78,6 +78,8 @@ def _aggregation_key(value: Any) -> Any:
         return ("objectid", value)
     if isinstance(value, datetime.datetime):
         return ("datetime", value)
+    if isinstance(value, Timestamp):
+        return ("timestamp", value)
     if isinstance(value, dict):
         return ("dict", tuple((key, _aggregation_key(item)) for key, item in value.items()))
     if isinstance(value, list):
@@ -376,6 +378,8 @@ def _mongo_mod(left: int | float, right: int | float) -> int | float:
 def _stringify_aggregation_value(value: Any) -> str:
     if isinstance(value, bool):
         return "true" if value else "false"
+    if isinstance(value, Decimal128):
+        return str(value)
     if isinstance(value, decimal.Decimal):
         return format(value, "f")
     if isinstance(value, float):
@@ -386,8 +390,12 @@ def _stringify_aggregation_value(value: Any) -> str:
     if isinstance(value, datetime.datetime):
         normalized = value.astimezone(datetime.UTC) if value.tzinfo is not None else value
         return normalized.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-    if isinstance(value, (bytes, bytearray)):
+    if isinstance(value, (bytes, bytearray, Binary)):
         return base64.b64encode(bytes(value)).decode("ascii")
+    if isinstance(value, Regex):
+        return f"/{value.pattern}/{value.flags}"
+    if isinstance(value, Timestamp):
+        return f"Timestamp({value.time}, {value.inc})"
     return str(value)
 
 
@@ -438,7 +446,7 @@ def _bson_value_size(value: Any) -> int:
         return _bson_document_size(value)
     if isinstance(value, list):
         return _bson_document_size({str(index): item for index, item in enumerate(value)})
-    if isinstance(value, (bytes, bytearray)):
+    if isinstance(value, (bytes, bytearray, Binary)):
         return 4 + 1 + len(value)
     if isinstance(value, uuid.UUID):
         return 4 + 1 + 16
@@ -452,6 +460,10 @@ def _bson_value_size(value: Any) -> int:
         return 0
     if isinstance(value, re.Pattern):
         return _bson_cstring_size(value.pattern) + _bson_cstring_size("")
+    if isinstance(value, Regex):
+        return _bson_cstring_size(value.pattern) + _bson_cstring_size(value.flags)
+    if isinstance(value, Timestamp):
+        return 8
     if isinstance(value, int):
         return 4 if -(1 << 31) <= value <= (1 << 31) - 1 else 8
     raise OperationFailure(f"$bsonSize cannot encode value of type {type(value).__name__}")

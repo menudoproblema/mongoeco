@@ -9,7 +9,7 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, SortSpec, UndefinedType
+from mongoeco.types import Document, Regex, SortSpec, UndefinedType
 
 
 type ExpressionEvaluator = Callable[[Document, object, dict[str, Any] | None], Any]
@@ -626,6 +626,10 @@ def _compile_aggregation_regex(regex_value: Any, options_value: Any, *, operator
     pattern: str
     if options_value is not None and not isinstance(options_value, str):
         raise OperationFailure(f"{operator} options must be a string")
+    if isinstance(regex_value, Regex):
+        if options_value not in {None, ""}:
+            raise OperationFailure(f"{operator} cannot specify options in both regex and options")
+        return regex_value.compile()
     if isinstance(regex_value, re.Pattern):
         if options_value not in {None, ""}:
             raise OperationFailure(f"{operator} cannot specify options in both regex and options")

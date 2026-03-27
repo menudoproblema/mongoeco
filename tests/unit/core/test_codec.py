@@ -5,7 +5,7 @@ import uuid
 
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.codec import DocumentCodec
-from mongoeco.types import UNDEFINED
+from mongoeco.types import Binary, DBRef, Decimal128, Regex, SON, Timestamp, UNDEFINED
 
 
 class DocumentCodecTests(unittest.TestCase):
@@ -150,3 +150,23 @@ class DocumentCodecTests(unittest.TestCase):
         }
 
         self.assertEqual(DocumentCodec.decode(payload), {"nested": 1.5})
+
+    def test_document_codec_round_trip_restores_public_bson_types(self):
+        original = {
+            "bin": Binary(b"\x00\x01\x02", subtype=4),
+            "regex": Regex("^ad", "im"),
+            "ts": Timestamp(1234567890, 7),
+            "decimal128": Decimal128("10.25"),
+            "son": SON([("b", 2), ("a", 1)]),
+            "ref": DBRef("users", "ada", database="observe", extras={"tenant": "t1"}),
+        }
+
+        decoded = DocumentCodec.decode(DocumentCodec.encode(original))
+
+        self.assertEqual(decoded["bin"], original["bin"])
+        self.assertEqual(decoded["bin"].subtype, 4)
+        self.assertEqual(decoded["regex"], original["regex"])
+        self.assertEqual(decoded["ts"], original["ts"])
+        self.assertEqual(decoded["decimal128"], original["decimal128"])
+        self.assertEqual(list(decoded["son"].items()), [("b", 2), ("a", 1)])
+        self.assertEqual(decoded["ref"], original["ref"])

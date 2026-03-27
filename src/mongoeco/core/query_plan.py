@@ -4,7 +4,7 @@ from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Filter, PlanningIssue, PlanningMode
+from mongoeco.types import Filter, PlanningIssue, PlanningMode, Regex
 
 
 class QueryNode:
@@ -163,6 +163,12 @@ def _compile_field_condition(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> QueryNode:
+    if isinstance(condition, Regex):
+        return RegexCondition(
+            field,
+            condition.pattern,
+            condition.flags,
+        )
     if isinstance(condition, re.Pattern):
         return RegexCondition(
             field,
@@ -234,7 +240,10 @@ def _compile_field_condition(
                 raise ValueError("$mod necesita un resto numerico")
             clauses.append(ModCondition(field, divisor, remainder))
         elif operator == "$regex":
-            if isinstance(value, re.Pattern):
+            if isinstance(value, Regex):
+                regex_value = value.pattern
+                regex_options += value.flags
+            elif isinstance(value, re.Pattern):
                 regex_value = value.pattern
                 regex_options += _regex_options_from_pattern(value)
             else:

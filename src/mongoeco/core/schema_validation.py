@@ -20,7 +20,7 @@ from mongoeco.core.bson_scalars import (
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, ObjectId, UndefinedType
+from mongoeco.types import Binary, DBRef, Decimal128, Document, ObjectId, Regex, SON, Timestamp, UndefinedType
 
 
 _JSON_TYPE_MAP: dict[str, tuple[type[Any], ...]] = {
@@ -42,6 +42,7 @@ _BSON_TYPE_ALIASES = frozenset(
         "objectId",
         "bool",
         "date",
+        "timestamp",
         "null",
         "regex",
         "int",
@@ -342,6 +343,8 @@ class CompiledJsonSchema:
             return decimal.Decimal(str(value.value))
         if isinstance(value, BsonInt32 | BsonInt64):
             return decimal.Decimal(value.value)
+        if isinstance(value, Decimal128):
+            return value.to_decimal()
         if isinstance(value, decimal.Decimal):
             return value
         if isinstance(value, float):
@@ -367,19 +370,23 @@ class CompiledJsonSchema:
         if type_name == "double":
             return bson_numeric_alias(value) == "double"
         if type_name == "decimal":
-            return bson_numeric_alias(value) == "decimal"
+            return bson_numeric_alias(value) == "decimal" or isinstance(value, Decimal128)
         if type_name == "objectId":
             return isinstance(value, ObjectId)
         if type_name == "date":
             return isinstance(value, datetime.datetime)
+        if type_name == "timestamp":
+            return isinstance(value, Timestamp)
         if type_name == "binData":
-            return isinstance(value, (bytes, bytearray, uuid.UUID))
+            return isinstance(value, (bytes, bytearray, uuid.UUID, Binary))
         if type_name == "regex":
-            return isinstance(value, re.Pattern)
+            return isinstance(value, (re.Pattern, Regex))
         expected = _JSON_TYPE_MAP.get(type_name)
         if expected is None:
             return False
         if type_name in {"object", "array"}:
+            if type_name == "object":
+                return isinstance(value, (dict, SON, DBRef))
             return isinstance(value, expected)
         return isinstance(value, expected) and not (
             type_name in {"bool", "boolean"} and isinstance(value, bool) is False

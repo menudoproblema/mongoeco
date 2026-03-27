@@ -19,7 +19,7 @@ from mongoeco.core.update_paths import (
     ResolvedUpdatePath,
     resolve_positional_update_paths,
 )
-from mongoeco.types import ArrayFilters, Filter, SortSpec
+from mongoeco.types import ArrayFilters, Filter, Regex, SortSpec
 
 
 @dataclass(frozen=True, slots=True)
@@ -975,8 +975,9 @@ class UpdateEngine:
                     continue
                 if not isinstance(current, list):
                     raise OperationFailure("$pull requires the target field to be an array")
-                if isinstance(value, dict) or isinstance(value, re.Pattern):
-                    is_predicate = True if isinstance(value, re.Pattern) else (
+                if isinstance(value, dict) or isinstance(value, (re.Pattern, Regex)):
+                    compiled_regex = value.compile() if isinstance(value, Regex) else value
+                    is_predicate = True if isinstance(value, (re.Pattern, Regex)) else (
                         any(isinstance(key, str) and key.startswith("$") for key in value) or any(
                             isinstance(candidate, dict) and any(isinstance(key, str) and key.startswith("$") for key in candidate)
                             for candidate in value.values()
@@ -987,8 +988,8 @@ class UpdateEngine:
                         for candidate in current
                         if not (
                             (
-                                isinstance(candidate, str) and value.search(candidate) is not None
-                                if isinstance(value, re.Pattern)
+                                isinstance(candidate, str) and compiled_regex.search(candidate) is not None
+                                if isinstance(value, (re.Pattern, Regex))
                                 else QueryEngine._match_elem_match_candidate(
                                     candidate,
                                     value,

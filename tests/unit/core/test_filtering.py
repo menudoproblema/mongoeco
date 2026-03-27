@@ -9,7 +9,7 @@ from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.errors import OperationFailure
-from mongoeco.types import ObjectId, UNDEFINED
+from mongoeco.types import Binary, Decimal128, ObjectId, Regex, Timestamp, UNDEFINED
 
 
 class QueryEngineTests(unittest.TestCase):
@@ -89,6 +89,15 @@ class QueryEngineTests(unittest.TestCase):
         self.assertFalse(QueryEngine.match({"value": 1}, {"value": {"$type": "long"}}))
         self.assertTrue(QueryEngine.match({"value": 1 << 40}, {"value": {"$type": "long"}}))
         self.assertFalse(QueryEngine.match({"value": 1 << 40}, {"value": {"$type": "int"}}))
+
+    def test_type_query_accepts_public_bson_classes(self):
+        self.assertTrue(QueryEngine.match({"value": Binary(b"abc", subtype=4)}, {"value": {"$type": "binData"}}))
+        self.assertTrue(QueryEngine.match({"value": Decimal128("1.5")}, {"value": {"$type": "decimal"}}))
+        self.assertTrue(QueryEngine.match({"value": Regex("^ad", "i")}, {"value": {"$type": "regex"}}))
+        self.assertTrue(QueryEngine.match({"value": Timestamp(10, 1)}, {"value": {"$type": "timestamp"}}))
+
+    def test_query_plan_accepts_public_regex(self):
+        self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": Regex("^ad", "i")}))
 
     def test_query_equality_to_null_matches_undefined_in_7_but_not_in_8(self):
         document = {"value": UNDEFINED}

@@ -3,6 +3,8 @@ import math
 from dataclasses import dataclass
 from typing import Any
 
+from mongoeco.types import Decimal128
+
 
 INT32_MIN = -(1 << 31)
 INT32_MAX = (1 << 31) - 1
@@ -55,6 +57,8 @@ def wrap_bson_numeric(value: object) -> BsonNumeric | None:
         return BsonInt64(value)
     if isinstance(value, float):
         return BsonDouble(value)
+    if isinstance(value, Decimal128):
+        return BsonDecimal128(_normalize_decimal128(value.to_decimal()))
     if isinstance(value, decimal.Decimal):
         return BsonDecimal128(_normalize_decimal128(value))
     return None
@@ -115,6 +119,8 @@ def compare_bson_numeric(left: object, right: object) -> int:
 
 
 def _numeric_to_decimal(value: int | float | decimal.Decimal) -> decimal.Decimal:
+    if isinstance(value, Decimal128):
+        return _normalize_decimal128(value.to_decimal())
     if isinstance(value, decimal.Decimal):
         return _normalize_decimal128(value)
     if isinstance(value, float):

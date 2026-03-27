@@ -1,7 +1,11 @@
 import binascii
+import datetime
+import decimal
 import os
+import re
 import threading
 import time
+from collections import OrderedDict
 from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -107,6 +111,94 @@ class ObjectId:
         if not isinstance(other, ObjectId):
             return NotImplemented
         return self._oid < other._oid
+
+
+class Binary(bytes):
+    """Representa BinData BSON con subtipo explícito."""
+
+    def __new__(cls, data: bytes | bytearray | memoryview, subtype: int = 0) -> Self:
+        instance = super().__new__(cls, bytes(data))
+        if not 0 <= subtype <= 255:
+            raise ValueError("binary subtype must be between 0 and 255")
+        instance.subtype = subtype
+        return instance
+
+    def __repr__(self) -> str:
+        return f"Binary({bytes(self)!r}, subtype={self.subtype})"
+
+
+@dataclass(frozen=True, slots=True)
+class Regex:
+    pattern: str
+    flags: str = ""
+
+    def __post_init__(self) -> None:
+        invalid = sorted(set(self.flags) - {"i", "m", "s", "x"})
+        if invalid:
+            joined = "".join(invalid)
+            raise ValueError(f"unsupported regex flags: {joined}")
+
+    def compile(self) -> re.Pattern[str]:
+        compiled_flags = 0
+        if "i" in self.flags:
+            compiled_flags |= re.IGNORECASE
+        if "m" in self.flags:
+            compiled_flags |= re.MULTILINE
+        if "s" in self.flags:
+            compiled_flags |= re.DOTALL
+        if "x" in self.flags:
+            compiled_flags |= re.VERBOSE
+        return re.compile(self.pattern, compiled_flags)
+
+
+@dataclass(frozen=True, slots=True)
+class Timestamp:
+    time: int
+    inc: int
+
+    def __post_init__(self) -> None:
+        if self.time < 0 or self.inc < 0:
+            raise ValueError("timestamp components must be non-negative")
+
+    def as_datetime(self) -> datetime.datetime:
+        return datetime.datetime.fromtimestamp(self.time, tz=datetime.UTC).replace(tzinfo=None)
+
+
+@dataclass(frozen=True, slots=True)
+class Decimal128:
+    value: decimal.Decimal
+
+    def __init__(self, value: decimal.Decimal | int | float | str) -> None:
+        object.__setattr__(self, "value", decimal.Decimal(str(value)) if not isinstance(value, decimal.Decimal) else value)
+
+    def to_decimal(self) -> decimal.Decimal:
+        return self.value
+
+    def __str__(self) -> str:
+        return format(self.value, "f")
+
+    def __repr__(self) -> str:
+        return f"Decimal128('{self.value}')"
+
+
+class SON(OrderedDict[str, Any]):
+    """Ordered mapping compatible con bson.son.SON."""
+
+
+@dataclass(frozen=True, slots=True)
+class DBRef:
+    collection: str
+    id: Any
+    database: str | None = None
+    extras: dict[str, Any] = field(default_factory=dict)
+
+    def as_document(self) -> SON:
+        document: SON = SON([("$ref", self.collection), ("$id", self.id)])
+        if self.database is not None:
+            document["$db"] = self.database
+        for key, value in self.extras.items():
+            document[key] = value
+        return document
 
 
 type Document = dict[str, Any]

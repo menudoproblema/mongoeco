@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 import decimal
 import json
+import re
 from dataclasses import dataclass
 from enum import Enum
 from types import MappingProxyType
@@ -10,7 +11,7 @@ from typing import Any
 import uuid
 
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
-from mongoeco.types import ObjectId, UndefinedType
+from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, SON, Timestamp, UndefinedType
 
 
 @dataclass(frozen=True, slots=True)
@@ -339,18 +340,25 @@ DEFAULT_BSON_TYPE_ORDER = MappingProxyType(
         int: 2,
         float: 2,
         decimal.Decimal: 2,
+        Decimal128: 2,
         BsonInt32: 2,
         BsonInt64: 2,
         BsonDouble: 2,
         BsonDecimal128: 2,
         str: 3,
         dict: 4,
+        SON: 4,
+        DBRef: 4,
         list: 5,
         bytes: 6,
+        Binary: 6,
         uuid.UUID: 6,
         ObjectId: 7,
         bool: 8,
         datetime.datetime: 9,
+        Timestamp: 10,
+        re.Pattern: 11,
+        Regex: 11,
     }
 )
 

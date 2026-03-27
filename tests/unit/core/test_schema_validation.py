@@ -8,7 +8,7 @@ from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.schema_validation import CompiledJsonSchema, compile_collection_validator
 from mongoeco.errors import OperationFailure
-from mongoeco.types import ObjectId
+from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, SON, Timestamp
 
 
 class SchemaValidationTests(unittest.TestCase):
@@ -124,6 +124,31 @@ class SchemaValidationTests(unittest.TestCase):
         self.assertTrue(any("array has more than 2 items" in message for message in rendered))
         self.assertTrue(any("value is not in enum" in message for message in rendered))
         self.assertTrue(any("additional properties are not allowed" in message for message in rendered))
+
+    def test_json_schema_accepts_public_bson_helper_classes(self):
+        schema = CompiledJsonSchema(
+            {
+                "bsonType": "object",
+                "properties": {
+                    "payload": {"bsonType": "binData"},
+                    "amount": {"bsonType": "decimal"},
+                    "pattern": {"bsonType": "regex"},
+                    "ts": {"bsonType": "timestamp"},
+                    "ref": {"bsonType": "object"},
+                },
+            }
+        )
+
+        result = schema.validate(
+            {
+                "payload": Binary(b"abc", subtype=0),
+                "amount": Decimal128("1.25"),
+                "pattern": Regex("^ad", "i"),
+                "ts": Timestamp(123, 1),
+                "ref": DBRef("users", ObjectId("0123456789abcdef01234567"), database="db", extras={"meta": SON([("tenant", "t1")])}),
+            }
+        )
+        self.assertTrue(result.valid)
 
     def test_json_schema_supports_bson_scalar_types_and_numeric_bounds(self):
         schema = CompiledJsonSchema(

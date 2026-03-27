@@ -12,7 +12,7 @@ from mongoeco.core.bson_scalars import (
     unwrap_bson_numeric,
     validate_bson_value,
 )
-from mongoeco.types import ObjectId, UndefinedType, UNDEFINED
+from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, SON, Timestamp, UndefinedType, UNDEFINED
 
 
 class DocumentCodec:
@@ -48,6 +48,11 @@ class DocumentCodec:
 
     @staticmethod
     def encode(data: Any) -> Any:
+        if isinstance(data, SON):
+            return DocumentCodec._tagged_value(
+                "son",
+                [[key, DocumentCodec.encode(value)] for key, value in data.items()],
+            )
         if isinstance(data, dict):
             encoded = {k: DocumentCodec.encode(v) for k, v in data.items()}
             if DocumentCodec._is_tagged_value(encoded):
@@ -69,6 +74,44 @@ class DocumentCodec:
 
         if isinstance(data, ObjectId):
             return DocumentCodec._tagged_value("objectid", str(data))
+
+        if isinstance(data, Binary):
+            return DocumentCodec._tagged_value(
+                "binary",
+                {
+                    "hex": binascii.hexlify(bytes(data)).decode("ascii"),
+                    "subtype": data.subtype,
+                },
+            )
+
+        if isinstance(data, Regex):
+            return DocumentCodec._tagged_value(
+                "regex",
+                {
+                    "pattern": data.pattern,
+                    "flags": data.flags,
+                },
+            )
+
+        if isinstance(data, Timestamp):
+            return DocumentCodec._tagged_value(
+                "timestamp",
+                {"time": data.time, "inc": data.inc},
+            )
+
+        if isinstance(data, Decimal128):
+            return DocumentCodec._tagged_value("decimal128_public", str(data.value))
+
+        if isinstance(data, DBRef):
+            return DocumentCodec._tagged_value(
+                "dbref",
+                {
+                    "collection": data.collection,
+                    "id": DocumentCodec.encode(data.id),
+                    "database": data.database,
+                    "extras": DocumentCodec.encode(data.extras),
+                },
+            )
 
         if isinstance(data, bytes):
             return DocumentCodec._tagged_value("bytes", binascii.hexlify(data).decode("ascii"))
@@ -105,6 +148,21 @@ class DocumentCodec:
                 return uuid.UUID(value)
             if value_type == "objectid":
                 return ObjectId(value)
+            if value_type == "binary":
+                return Binary(binascii.unhexlify(value["hex"]), subtype=int(value["subtype"]))
+            if value_type == "regex":
+                return Regex(value["pattern"], value["flags"])
+            if value_type == "timestamp":
+                return Timestamp(int(value["time"]), int(value["inc"]))
+            if value_type == "decimal128_public":
+                return Decimal128(decimal.Decimal(value))
+            if value_type == "dbref":
+                return DBRef(
+                    collection=str(value["collection"]),
+                    id=DocumentCodec.decode(value["id"], preserve_bson_wrappers=preserve_bson_wrappers),
+                    database=str(value["database"]) if value["database"] is not None else None,
+                    extras=DocumentCodec.decode(value["extras"], preserve_bson_wrappers=preserve_bson_wrappers),
+                )
             if value_type == "bytes":
                 return binascii.unhexlify(value)
             if value_type == "undefined":
@@ -122,6 +180,14 @@ class DocumentCodec:
                     k: DocumentCodec.decode(v, preserve_bson_wrappers=preserve_bson_wrappers)
                     for k, v in value.items()
                 }
+            if value_type == "son":
+                return SON(
+                    (
+                        str(key),
+                        DocumentCodec.decode(item, preserve_bson_wrappers=preserve_bson_wrappers),
+                    )
+                    for key, item in value
+                )
             raise ValueError(f"Unsupported tagged value type: {value_type}")
 
         if isinstance(data, dict):

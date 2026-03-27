@@ -23,7 +23,7 @@ from mongoeco.core.bson_scalars import (
     validate_bson_value,
 )
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, ObjectId, UndefinedType
+from mongoeco.types import Binary, Decimal128, Document, ObjectId, Regex, Timestamp, UndefinedType
 
 
 type ExpressionEvaluator = Callable[[Document, object, dict[str, Any] | None], Any]
@@ -127,7 +127,7 @@ def evaluate_scalar_expression(
         value = evaluate_expression_with_missing(document, args[0], variables)
         if value is missing_sentinel or value is None:
             return None
-        if isinstance(value, (bytes, bytearray)):
+        if isinstance(value, (bytes, bytearray, Binary)):
             return len(value)
         if isinstance(value, uuid.UUID):
             return len(value.bytes)
@@ -226,6 +226,8 @@ def _aggregation_type_name(value: Any, *, missing_sentinel: object) -> str:
         return "double"
     if isinstance(value, BsonDecimal128):
         return "decimal"
+    if isinstance(value, Decimal128):
+        return "decimal"
     if isinstance(value, bool):
         return "bool"
     if isinstance(value, int):
@@ -240,13 +242,15 @@ def _aggregation_type_name(value: Any, *, missing_sentinel: object) -> str:
         return "object"
     if isinstance(value, list):
         return "array"
-    if isinstance(value, (bytes, bytearray, uuid.UUID)):
+    if isinstance(value, (bytes, bytearray, uuid.UUID, Binary)):
         return "binData"
     if isinstance(value, ObjectId):
         return "objectId"
+    if isinstance(value, Timestamp):
+        return "timestamp"
     if isinstance(value, datetime.datetime):
         return "date"
-    if isinstance(value, re.Pattern):
+    if isinstance(value, (re.Pattern, Regex)):
         return "regex"
     return type(value).__name__
 
@@ -280,7 +284,7 @@ def _convert_aggregation_scalar(
             return value
         if isinstance(value, (int, float)) and not isinstance(value, bool):
             return value != 0
-        if isinstance(value, (str, list, dict, bytes, bytearray, uuid.UUID, ObjectId, datetime.datetime)):
+        if isinstance(value, (str, list, dict, bytes, bytearray, uuid.UUID, Binary, ObjectId, datetime.datetime, Timestamp)):
             return True
         raise OperationFailure(f"{operator} cannot convert the value")
 
@@ -379,7 +383,7 @@ def _convert_aggregation_scalar(
     if target == "uuid":
         if isinstance(value, uuid.UUID):
             return value
-        if isinstance(value, (bytes, bytearray)):
+        if isinstance(value, (bytes, bytearray, Binary)):
             if len(value) != 16:
                 raise OperationFailure(f"{operator} cannot convert the value")
             try:
@@ -406,6 +410,10 @@ def _convert_aggregation_scalar(
             if not math.isfinite(value):
                 raise OperationFailure(f"{operator} cannot convert the value")
             result = decimal.Decimal(str(value))
+            validate_bson_value(result)
+            return BsonDecimal128(result) if preserve_numeric_wrappers else result
+        if isinstance(value, Decimal128):
+            result = value.to_decimal()
             validate_bson_value(result)
             return BsonDecimal128(result) if preserve_numeric_wrappers else result
         if isinstance(value, decimal.Decimal):
