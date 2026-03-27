@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
+from mongoeco.core.aggregation import _CURRENT_COLLECTION_RESOLVER_KEY
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll
 from mongoeco.core.sorting import sort_documents
@@ -68,10 +69,22 @@ class _FakeCollection:
 class _FakeEngine:
     def __init__(self):
         self.explain_calls = []
+        self.scan_operation_calls = []
 
     async def explain_query_plan(self, *args, **kwargs):
         self.explain_calls.append((args, kwargs))
         return {"engine": "fake", "details": ["SCAN"]}
+
+    def scan_find_operation(self, db_name, coll_name, operation, **kwargs):
+        self.scan_operation_calls.append((db_name, coll_name, operation, kwargs))
+
+        async def _iter():
+            if coll_name == "coll":
+                yield {"_id": "1", "name": "Ada"}
+            elif coll_name == "roles":
+                yield {"_id": "r1", "label": "admin"}
+
+        return _iter()
 
 
 class _SyncClientStub:
@@ -203,6 +216,32 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             ],
         )
         self.assertEqual(documents, [{"rank": 3}])
+
+    async def test_load_referenced_collections_uses_compiled_find_operations(self):
+        collection = _FakeCollection([])
+        cursor = AsyncAggregationCursor(
+            collection,
+            [
+                {"$lookup": {"from": "roles", "localField": "role_id", "foreignField": "_id", "as": "roles"}},
+                {"$unionWith": {"pipeline": []}},
+            ],
+            comment="agg-trace",
+            max_time_ms=15,
+        )
+
+        loaded = await cursor._load_referenced_collections()
+
+        self.assertEqual(loaded["roles"], [{"_id": "r1", "label": "admin"}])
+        self.assertEqual(loaded[_CURRENT_COLLECTION_RESOLVER_KEY], [{"_id": "1", "name": "Ada"}])
+        self.assertEqual(len(collection._engine.scan_operation_calls), 2)
+        for db_name, coll_name, operation, kwargs in collection._engine.scan_operation_calls:
+            self.assertEqual(db_name, "db")
+            self.assertIn(coll_name, {"coll", "roles"})
+            self.assertEqual(operation.filter_spec, {})
+            self.assertEqual(operation.comment, "agg-trace")
+            self.assertEqual(operation.max_time_ms, 15)
+            self.assertIsNone(operation.projection)
+            self.assertEqual(kwargs["context"], None)
 
     async def test_materialize_keeps_remaining_pipeline_when_prefix_breaks(self):
         collection = _FakeCollection(

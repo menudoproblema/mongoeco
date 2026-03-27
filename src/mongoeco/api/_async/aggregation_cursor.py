@@ -1,7 +1,12 @@
 from collections.abc import AsyncIterator
 
 from mongoeco.api._async.cursor import HintSpec
-from mongoeco.api.operations import AggregateOperation, compile_aggregate_operation
+from mongoeco.api.operations import (
+    AggregateOperation,
+    FindOperation,
+    compile_aggregate_operation,
+    compile_find_operation,
+)
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.aggregation import (
@@ -140,36 +145,63 @@ class AsyncAggregationCursor:
         names = self._collect_collection_names(self._pipeline)
         loaded: dict[str, list[Document]] = {}
         if _CURRENT_COLLECTION_RESOLVER_KEY in names:
-            engine = getattr(self._collection, "_engine", None)
-            db_name = getattr(self._collection, "_db_name", None)
             collection_name = getattr(self._collection, "_collection_name", None)
-            if engine is not None and db_name is not None and collection_name is not None:
-                current_collection = engine.scan_collection(
-                    db_name,
+            if isinstance(collection_name, str):
+                loaded[_CURRENT_COLLECTION_RESOLVER_KEY] = await self._load_collection_documents(
                     collection_name,
-                    {},
-                    comment=self._comment,
-                    max_time_ms=self._max_time_ms,
-                    dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-                    context=self._session,
                 )
-                loaded[_CURRENT_COLLECTION_RESOLVER_KEY] = [
-                    document async for document in current_collection
-                ]
         for name in names:
             if name == _CURRENT_COLLECTION_RESOLVER_KEY:
                 continue
-            collection = self._collection._engine.scan_collection(
+            loaded[name] = await self._load_collection_documents(name)
+        return loaded
+
+    def _scan_collection_with_operation(
+        self,
+        collection_name: str,
+        operation: FindOperation,
+    ):
+        engine = self._collection._engine
+        dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
+        scan_find_operation = getattr(engine, "scan_find_operation", None)
+        if callable(scan_find_operation):
+            return scan_find_operation(
                 self._collection._db_name,
-                name,
-                {},
-                comment=self._comment,
-                max_time_ms=self._max_time_ms,
-                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+                collection_name,
+                operation,
+                dialect=dialect,
                 context=self._session,
             )
-            loaded[name] = [document async for document in collection]
-        return loaded
+        return engine.scan_collection(
+            self._collection._db_name,
+            collection_name,
+            operation.filter_spec,
+            plan=operation.plan,
+            projection=operation.projection,
+            sort=operation.sort,
+            skip=operation.skip,
+            limit=operation.limit,
+            hint=operation.hint,
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
+            dialect=dialect,
+            context=self._session,
+        )
+
+    async def _load_collection_documents(self, collection_name: str) -> list[Document]:
+        operation = compile_find_operation(
+            {},
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
+            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+        )
+        return [
+            document
+            async for document in self._scan_collection_with_operation(
+                collection_name,
+                operation,
+            )
+        ]
 
     async def _materialize(self) -> list[Document]:
         deadline = operation_deadline(self._max_time_ms)
