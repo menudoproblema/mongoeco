@@ -277,6 +277,27 @@ class QueryEngine:
         return dialect.values_equal(left, right)
 
     @staticmethod
+    def _regex_item_matches_candidate(candidate: Any, pattern: re.Pattern[str]) -> bool:
+        return isinstance(candidate, str) and pattern.search(candidate) is not None
+
+    @staticmethod
+    def _in_item_matches_candidate(
+        candidate: Any,
+        item: Any,
+        *,
+        null_matches_undefined: bool,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> bool:
+        if isinstance(item, re.Pattern):
+            return QueryEngine._regex_item_matches_candidate(candidate, item)
+        return QueryEngine._query_equality_matches(
+            candidate,
+            item,
+            null_matches_undefined=null_matches_undefined,
+            dialect=dialect,
+        )
+
+    @staticmethod
     def _query_equality_matches(
         candidate: Any,
         expected: Any,
@@ -364,7 +385,7 @@ class QueryEngine:
     ) -> bool:
         candidates = QueryEngine._extract_values(doc, field) or [None]
         return any(
-            QueryEngine._query_equality_matches(
+            QueryEngine._in_item_matches_candidate(
                 candidate,
                 item,
                 null_matches_undefined=null_matches_undefined,
@@ -387,7 +408,12 @@ class QueryEngine:
             has_null = any(item is None for item in values)
             return not (has_null and dialect.null_query_matches_undefined())
         return not any(
-            QueryEngine._values_equal(candidate, item, dialect=dialect)
+            QueryEngine._in_item_matches_candidate(
+                candidate,
+                item,
+                null_matches_undefined=False,
+                dialect=dialect,
+            )
             for candidate in candidates
             for item in values
         )

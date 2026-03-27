@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import decimal
+import re
 import threading
 import unittest
 import uuid
@@ -465,6 +466,29 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     found = await collection.find_one()
 
                     self.assertEqual(found, {"_id": "user-1", "name": "Ada"})
+
+    async def test_find_supports_implicit_regex_literals_and_in_regex(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    await client.alpha.users.insert_many(
+                        [
+                            {"_id": "1", "name": "MongoDB", "tags": ["beta", "stable"]},
+                            {"_id": "2", "name": "Postgres", "tags": ["alpha", "stable"]},
+                        ]
+                    )
+
+                    implicit = await client.alpha.users.find(
+                        {"name": re.compile("^mongo", re.IGNORECASE)},
+                        sort=[("_id", 1)],
+                    ).to_list()
+                    in_regex = await client.alpha.users.find(
+                        {"tags": {"$in": [re.compile("^be"), re.compile("^zz")]}},
+                        sort=[("_id", 1)],
+                    ).to_list()
+
+                    self.assertEqual([document["_id"] for document in implicit], ["1"])
+                    self.assertEqual([document["_id"] for document in in_regex], ["1"])
 
     async def test_update_one_sort_is_profile_gated(self):
         engine = MemoryEngine()

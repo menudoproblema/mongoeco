@@ -1,6 +1,7 @@
 import copy
 import importlib.util
 import os
+import re
 import unittest
 import uuid
 from collections.abc import Callable
@@ -141,6 +142,33 @@ class MongoRealParityBase(unittest.TestCase):
                         }
                     },
                     sort=[('_id', 1)],
+                )
+            ],
+        )
+
+    def test_find_implicit_regex_literal_matches_real_mongodb(self) -> None:
+        self._assert_matches_real(
+            [
+                {"_id": "1", "name": "MongoDB"},
+                {"_id": "2", "name": "Postgres"},
+            ],
+            lambda collection: [
+                document["_id"]
+                for document in collection.find({"name": re.compile("^mongo", re.IGNORECASE)}, sort=[("_id", 1)])
+            ],
+        )
+
+    def test_find_in_with_regex_literals_matches_real_mongodb(self) -> None:
+        self._assert_matches_real(
+            [
+                {"_id": "1", "tags": ["beta", "stable"]},
+                {"_id": "2", "tags": ["alpha", "stable"]},
+            ],
+            lambda collection: [
+                document["_id"]
+                for document in collection.find(
+                    {"tags": {"$in": [re.compile("^be"), re.compile("^zz")]}},
+                    sort=[("_id", 1)],
                 )
             ],
         )

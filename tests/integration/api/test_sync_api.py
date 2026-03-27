@@ -1,5 +1,6 @@
 import datetime
 import decimal
+import re
 import threading
 import unittest
 
@@ -69,6 +70,29 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(found["name"], "Ada")
                     self.assertEqual(set(client.list_database_names()), {"test"})
                     self.assertEqual(client.test.list_collection_names(), ["users"])
+
+    def test_find_supports_implicit_regex_literals_and_in_regex(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.alpha.users.insert_many(
+                        [
+                            {"_id": "1", "name": "MongoDB", "tags": ["beta", "stable"]},
+                            {"_id": "2", "name": "Postgres", "tags": ["alpha", "stable"]},
+                        ]
+                    )
+
+                    implicit = client.alpha.users.find(
+                        {"name": re.compile("^mongo", re.IGNORECASE)},
+                        sort=[("_id", 1)],
+                    ).to_list()
+                    in_regex = client.alpha.users.find(
+                        {"tags": {"$in": [re.compile("^be"), re.compile("^zz")]}},
+                        sort=[("_id", 1)],
+                    ).to_list()
+
+                    self.assertEqual([document["_id"] for document in implicit], ["1"])
+                    self.assertEqual([document["_id"] for document in in_regex], ["1"])
 
     def test_create_collection_registers_empty_namespace_and_rejects_duplicates(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

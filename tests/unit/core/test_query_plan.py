@@ -1,3 +1,4 @@
+import re
 import unittest
 
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80, MongoDialect
@@ -146,6 +147,14 @@ class QueryPlanTests(unittest.TestCase):
         )
         self.assertEqual(
             compile_filter({"name": {"$regex": "^ad", "$options": "i"}}),
+            RegexCondition("name", "^ad", "i"),
+        )
+        self.assertEqual(
+            compile_filter({"name": {"$regex": re.compile("^ad", re.IGNORECASE)}}),
+            RegexCondition("name", "^ad", "i"),
+        )
+        self.assertEqual(
+            compile_filter({"name": re.compile("^ad", re.IGNORECASE)}),
             RegexCondition("name", "^ad", "i"),
         )
         self.assertEqual(

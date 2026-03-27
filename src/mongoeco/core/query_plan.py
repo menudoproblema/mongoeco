@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import re
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -138,12 +139,32 @@ class OrCondition(QueryNode):
     clauses: tuple[QueryNode, ...]
 
 
+def _regex_options_from_pattern(pattern: re.Pattern[str]) -> str:
+    options = ""
+    if pattern.flags & re.IGNORECASE:
+        options += "i"
+    if pattern.flags & re.MULTILINE:
+        options += "m"
+    if pattern.flags & re.DOTALL:
+        options += "s"
+    if pattern.flags & re.VERBOSE:
+        options += "x"
+    return options
+
+
 def _compile_field_condition(
     field: str,
     condition: Any,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> QueryNode:
+    if isinstance(condition, re.Pattern):
+        return RegexCondition(
+            field,
+            condition.pattern,
+            _regex_options_from_pattern(condition),
+        )
+
     if not isinstance(condition, dict) or not any(isinstance(key, str) and key.startswith("$") for key in condition):
         return EqualsCondition(
             field,
@@ -208,9 +229,13 @@ def _compile_field_condition(
                 raise ValueError("$mod necesita un resto numerico")
             clauses.append(ModCondition(field, divisor, remainder))
         elif operator == "$regex":
-            if not isinstance(value, str):
-                raise ValueError("$regex necesita un patron string")
-            regex_value = value
+            if isinstance(value, re.Pattern):
+                regex_value = value.pattern
+                regex_options += _regex_options_from_pattern(value)
+            else:
+                if not isinstance(value, str):
+                    raise ValueError("$regex necesita un patron string o regex compilada")
+                regex_value = value
         elif operator == "$options":
             if not isinstance(value, str):
                 raise ValueError("$options necesita un string")

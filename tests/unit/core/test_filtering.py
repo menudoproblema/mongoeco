@@ -379,7 +379,38 @@ class QueryEngineTests(unittest.TestCase):
         self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": {"$regex": "^Ad"}}))
         self.assertTrue(QueryEngine.match({"name": "ada"}, {"name": {"$regex": "^ad", "$options": "i"}}))
         self.assertTrue(QueryEngine.match({"tags": ["python", "mongodb"]}, {"tags": {"$regex": "^py"}}))
+        self.assertTrue(QueryEngine.match({"name": "ada"}, {"name": {"$regex": re.compile("^ad", re.IGNORECASE)}}))
         self.assertFalse(QueryEngine.match({"name": "Grace"}, {"name": {"$regex": "^Ad"}}))
+
+    def test_query_engine_supports_implicit_regex_literals_but_not_explicit_eq(self):
+        self.assertTrue(QueryEngine.match({"name": "MongoDB2"}, {"name": re.compile("MongoDB")}))
+        self.assertFalse(QueryEngine.match({"name": "MongoDB2"}, {"name": {"$eq": re.compile("MongoDB")}}))
+        self.assertTrue(
+            QueryEngine.match(
+                {"name": re.compile("MongoDB")},
+                {"name": {"$eq": re.compile("MongoDB")}},
+            )
+        )
+
+    def test_query_engine_supports_regex_literals_inside_in_and_nin(self):
+        self.assertTrue(
+            QueryEngine.match(
+                {"tags": ["beta", "stable"]},
+                {"tags": {"$in": [re.compile("^be"), re.compile("^zz")]}}
+            )
+        )
+        self.assertFalse(
+            QueryEngine.match(
+                {"tags": ["beta", "stable"]},
+                {"tags": {"$nin": [re.compile("^be"), re.compile("^zz")]}}
+            )
+        )
+        self.assertTrue(
+            QueryEngine.match(
+                {"tags": ["alpha", "stable"]},
+                {"tags": {"$nin": [re.compile("^be"), re.compile("^zz")]}}
+            )
+        )
 
     def test_query_engine_supports_not_operator(self):
         self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": {"$not": {"$regex": "^Gr"}}}))
