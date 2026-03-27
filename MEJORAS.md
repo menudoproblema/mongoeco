@@ -146,3 +146,51 @@ Si el objetivo es que el proyecto termine pareciendo diseñado desde cero, el si
 3. reducir la lógica administrativa residual que aún vive en `Database` o en servicios mixtos;
 4. seguir formalizando el estado de ejecución de updates complejos;
 5. después volver a evaluar si ya compensa endurecer la frontera semántica/engine.
+
+## Hoja de Ruta Operativa Inmediata
+
+Para ejecutar lo pendiente sin perder el estado verde ni reabrir semántica a lo loco, el siguiente bloque operativo recomendado es:
+
+### Iteración 1. Frontera API → Engine
+
+- `Objetivo`: que `FindOperation`, `UpdateOperation` y `AggregateOperation` no se queden solo en la API y empiecen a cruzar la frontera con los engines de forma explícita.
+- `Criterio de hecho`:
+  - los engines aceptan operaciones compiladas en más rutas de lectura/escritura;
+  - la API deja de desempaquetar parte de esas operaciones en parámetros sueltos;
+  - `explain` y `count` reutilizan esa misma frontera.
+- `Commit esperado`: `refactor: route compiled operations into engines`
+
+### Iteración 2. Estado Explícito de Updates
+
+- `Objetivo`: introducir un estado/contexto de ejecución de updates más formal para que validación, resolución de targets y aplicación final no dependan de una larga lista de argumentos.
+- `Criterio de hecho`:
+  - existe un contexto de ejecución tipado;
+  - los operadores principales lo consumen;
+  - `arrayFilters`, selector original y flags de upsert viven en un solo sitio.
+- `Commit esperado`: `refactor: add explicit update execution context`
+
+### Iteración 3. Runtime Derivado del Catálogo
+
+- `Objetivo`: seguir moviendo decisiones de runtime que aún dependen de overrides manuales hacia el catálogo de compatibilidad.
+- `Criterio de hecho`:
+  - hooks/version flags relevantes salen del catálogo;
+  - `capabilities` y `behavior_flags()` reducen duplicación manual;
+  - tests de compatibilidad fijan que runtime y catálogo siguen alineados.
+- `Commit esperado`: `refactor: derive runtime compatibility hooks from catalog`
+
+### Iteración 4. Dispatcher Admin Más Homogéneo
+
+- `Objetivo`: cerrar mejor la separación entre parseo, ejecución y serialización pública de comandos admin, evitando caminos ligeramente distintos entre async y sync.
+- `Criterio de hecho`:
+  - async y sync reutilizan el mismo punto de serialización;
+  - el servicio de comandos expone un camino explícito para ejecutar y serializar documentos;
+  - `Database` sigue adelgazando.
+- `Commit esperado`: `refactor: unify admin command document execution`
+
+### Iteración 5. Revisión de Frontera Semántica
+
+- `Objetivo`: reevaluar si, después de las cuatro iteraciones anteriores, ya compensa endurecer más la frontera entre core semántico y ejecución por engine.
+- `Criterio de hecho`:
+  - revisión explícita de drift residual entre `MemoryEngine` y `SQLiteEngine`;
+  - decisión informada sobre si abrir ya el bloque grande de separación semántica/engine.
+- `Commit esperado`: no obligatorio; depende del resultado de la revisión.
