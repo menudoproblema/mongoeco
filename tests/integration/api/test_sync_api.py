@@ -2389,6 +2389,45 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_aggregate_supports_stddev_accumulators(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.events
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "group": "a", "rank": 1, "score": 2},
+                            {"_id": "2", "group": "a", "rank": 2, "score": 4},
+                            {"_id": "3", "group": "a", "rank": 3, "score": 4},
+                            {"_id": "4", "group": "b", "rank": 1, "score": 10},
+                        ]
+                    )
+
+                    grouped = collection.aggregate(
+                        [{"$group": {"_id": "$group", "pop": {"$stdDevPop": "$score"}, "samp": {"$stdDevSamp": "$score"}}}]
+                    ).to_list()
+                    windowed = collection.aggregate(
+                        [
+                            {
+                                "$setWindowFields": {
+                                    "partitionBy": "$group",
+                                    "sortBy": {"rank": 1},
+                                    "output": {
+                                        "runningPop": {"$stdDevPop": "$score", "window": {"documents": ["unbounded", "current"]}},
+                                    },
+                                }
+                            },
+                            {"$project": {"_id": 0, "group": 1, "rank": 1, "runningPop": 1}},
+                        ]
+                    ).to_list()
+
+                    self.assertAlmostEqual(grouped[0]["pop"], 0.94280904158, places=10)
+                    self.assertAlmostEqual(grouped[0]["samp"], 1.15470053838, places=10)
+                    self.assertEqual(grouped[1], {"_id": "b", "pop": 0.0, "samp": None})
+                    self.assertEqual(windowed[0]["runningPop"], 0.0)
+                    self.assertAlmostEqual(windowed[1]["runningPop"], 1.0, places=10)
+                    self.assertAlmostEqual(windowed[2]["runningPop"], 0.94280904158, places=10)
+
     def test_aggregate_supports_string_expressions_last_and_add_to_set(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

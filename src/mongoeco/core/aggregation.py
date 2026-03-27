@@ -77,6 +77,15 @@ class _AverageAccumulator:
     count: int = 0
 
 
+@dataclass(slots=True)
+class _StdDevAccumulator:
+    population: bool
+    total: float = 0.0
+    sum_of_squares: float = 0.0
+    count: int = 0
+    invalid: bool = False
+
+
 def _accumulator_flags(bucket: dict[object, Any]) -> dict[str, bool]:
     flags = bucket.get(_ACCUMULATOR_FLAGS_KEY)
     if isinstance(flags, dict):
@@ -431,6 +440,17 @@ def _sum_accumulator_operand(value: Any) -> int | float | None:
     if isinstance(value, list):
         return sum(item for item in value if _is_numeric(item))
     return None
+
+
+def _stddev_accumulator_operand(value: Any) -> float | None:
+    if isinstance(value, bool) or value is None or isinstance(value, list):
+        return None
+    if not _is_numeric(value):
+        return None
+    numeric_value = float(value)
+    if not math.isfinite(numeric_value):
+        return math.nan
+    return numeric_value
 
 
 def _require_array(operator: str, value: object) -> list[Any]:
@@ -2484,72 +2504,17 @@ def _apply_group(
             )}
 
         bucket = groups[group_key]
-        flags = _accumulator_flags(bucket)
-        for field, accumulator in accumulator_specs.items():
-            operator, expression = next(iter(accumulator.items()))
-            value = None if operator == "$count" else evaluate_expression(document, expression, variables, dialect=dialect)
-            if operator in {"$sum", "$count"}:
-                if operator == "$count":
-                    bucket[field] += 1
-                    continue
-                if value is None:
-                    continue
-                numeric_value = _sum_accumulator_operand(value)
-                if numeric_value is None:
-                    continue
-                bucket[field] += numeric_value
-            elif operator == "$min":
-                if value is None:
-                    continue
-                if not flags[field] or dialect.compare_values(value, bucket[field]) < 0:
-                    bucket[field] = deepcopy(value)
-                    flags[field] = True
-            elif operator == "$max":
-                if value is None:
-                    continue
-                if not flags[field] or dialect.compare_values(value, bucket[field]) > 0:
-                    bucket[field] = deepcopy(value)
-                    flags[field] = True
-            elif operator == "$avg":
-                if value is None:
-                    continue
-                if not _is_numeric(value):
-                    continue
-                bucket[field].total += value
-                bucket[field].count += 1
-            elif operator == "$push":
-                bucket[field].append(deepcopy(value))
-            elif operator == "$addToSet":
-                _append_unique_values(
-                    bucket[field],
-                    [value],
-                    dialect=dialect,
-                )
-            elif operator == "$mergeObjects":
-                if value is None:
-                    continue
-                if not isinstance(value, dict):
-                    raise OperationFailure("$mergeObjects accumulator requires document operands")
-                bucket[field].update(deepcopy(value))
-            elif operator == "$first":
-                if not flags[field]:
-                    bucket[field] = deepcopy(value)
-                    flags[field] = True
-            elif operator == "$last":
-                bucket[field] = deepcopy(value)
-                flags[field] = True
+        _apply_accumulators(
+            bucket,
+            accumulator_specs,
+            document,
+            variables,
+            dialect=dialect,
+        )
 
     result: list[Document] = []
     for bucket in groups.values():
-        document: Document = {}
-        for field, value in bucket.items():
-            if field == _ACCUMULATOR_FLAGS_KEY:
-                continue
-            if isinstance(value, _AverageAccumulator):
-                document[field] = None if value.count == 0 else value.total / value.count
-            else:
-                document[field] = value
-        result.append(document)
+        result.append(_finalize_accumulators(bucket))
     return result
 
 
@@ -2580,6 +2545,10 @@ def _initialize_accumulators(
             flags[field] = False
         elif operator == "$avg":
             initialized[field] = _AverageAccumulator()
+        elif operator == "$stdDevPop":
+            initialized[field] = _StdDevAccumulator(population=True)
+        elif operator == "$stdDevSamp":
+            initialized[field] = _StdDevAccumulator(population=False)
         elif operator in {"$push", "$addToSet"}:
             initialized[field] = []
         elif operator == "$mergeObjects":
@@ -2631,6 +2600,16 @@ def _apply_accumulators(
                 continue
             bucket[field].total += value
             bucket[field].count += 1
+        elif operator in {"$stdDevPop", "$stdDevSamp"}:
+            operand = _stddev_accumulator_operand(value)
+            if operand is None:
+                continue
+            if not math.isfinite(operand):
+                bucket[field].invalid = True
+                continue
+            bucket[field].total += operand
+            bucket[field].sum_of_squares += operand * operand
+            bucket[field].count += 1
         elif operator == "$push":
             bucket[field].append(deepcopy(value))
         elif operator == "$addToSet":
@@ -2661,6 +2640,22 @@ def _finalize_accumulators(bucket: dict[str, Any]) -> Document:
             continue
         if isinstance(value, _AverageAccumulator):
             document[field] = None if value.count == 0 else value.total / value.count
+        elif isinstance(value, _StdDevAccumulator):
+            if value.invalid or value.count == 0:
+                document[field] = None
+            elif value.population:
+                mean = value.total / value.count
+                variance = max((value.sum_of_squares / value.count) - (mean * mean), 0.0)
+                document[field] = math.sqrt(variance)
+            elif value.count < 2:
+                document[field] = None
+            else:
+                variance = max(
+                    (value.sum_of_squares - ((value.total * value.total) / value.count))
+                    / (value.count - 1),
+                    0.0,
+                )
+                document[field] = math.sqrt(variance)
         else:
             document[field] = value
     return document

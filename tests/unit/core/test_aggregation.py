@@ -1061,8 +1061,7 @@ class AggregationTests(unittest.TestCase):
 
         unsupported_group_accumulators = [
             "$bottom", "$bottomN", "$firstN", "$lastN",
-            "$maxN", "$median", "$minN", "$percentile", "$stdDevPop",
-            "$stdDevSamp", "$top", "$topN",
+            "$maxN", "$median", "$minN", "$percentile", "$top", "$topN",
         ]
         for operator in unsupported_group_accumulators:
             with self.subTest(group_operator=operator):
@@ -1072,8 +1071,7 @@ class AggregationTests(unittest.TestCase):
         unsupported_window_operators = [
             "$bottom", "$bottomN", "$covariancePop", "$covarianceSamp",
             "$denseRank", "$derivative", "$documentNumber", "$expMovingAvg", "$integral",
-            "$linearFill", "$locf", "$minN", "$rank", "$shift", "$stdDevPop",
-            "$stdDevSamp", "$top", "$topN",
+            "$linearFill", "$locf", "$minN", "$rank", "$shift", "$top", "$topN",
         ]
         for operator in unsupported_window_operators:
             with self.subTest(window_operator=operator):
@@ -1524,7 +1522,7 @@ class AggregationTests(unittest.TestCase):
         )
 
         bucketed = apply_pipeline(
-            documents,
+            [document for document in documents if document["_id"] != "4"],
             [
                 {
                     "$bucketAuto": {
@@ -1568,6 +1566,78 @@ class AggregationTests(unittest.TestCase):
                 {"_id": "3", "group": "b", "score": 3, "meta": None, "runningCount": 1},
             ],
         )
+
+    def test_group_bucket_and_window_support_stddev_accumulators(self):
+        documents = [
+            {"_id": "1", "group": "a", "rank": 1, "score": 2},
+            {"_id": "2", "group": "a", "rank": 2, "score": 4},
+            {"_id": "3", "group": "a", "rank": 3, "score": 4},
+            {"_id": "4", "group": "a", "rank": 4, "score": "x"},
+            {"_id": "5", "group": "b", "rank": 1, "score": 10},
+        ]
+
+        grouped = apply_pipeline(
+            documents,
+            [
+                {
+                    "$group": {
+                        "_id": "$group",
+                        "pop": {"$stdDevPop": "$score"},
+                        "samp": {"$stdDevSamp": "$score"},
+                    }
+                }
+            ],
+        )
+        self.assertEqual(grouped[0]["_id"], "a")
+        self.assertAlmostEqual(grouped[0]["pop"], 0.94280904158, places=10)
+        self.assertAlmostEqual(grouped[0]["samp"], 1.15470053838, places=10)
+        self.assertEqual(grouped[1], {"_id": "b", "pop": 0.0, "samp": None})
+
+        bucketed = apply_pipeline(
+            [document for document in documents if document["_id"] != "4"],
+            [
+                {
+                    "$bucket": {
+                        "groupBy": "$score",
+                        "boundaries": [0, 5, 20],
+                        "output": {
+                            "pop": {"$stdDevPop": "$score"},
+                            "samp": {"$stdDevSamp": "$score"},
+                        },
+                    }
+                }
+            ],
+        )
+        self.assertAlmostEqual(bucketed[0]["pop"], 0.94280904158, places=10)
+        self.assertAlmostEqual(bucketed[0]["samp"], 1.15470053838, places=10)
+        self.assertEqual(bucketed[1]["pop"], 0.0)
+        self.assertIsNone(bucketed[1]["samp"])
+
+        windowed = apply_pipeline(
+            documents,
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"rank": 1},
+                        "output": {
+                            "runningPop": {"$stdDevPop": "$score", "window": {"documents": ["unbounded", "current"]}},
+                            "runningSamp": {"$stdDevSamp": "$score", "window": {"documents": ["unbounded", "current"]}},
+                        },
+                    }
+                }
+            ],
+        )
+        self.assertEqual(windowed[0]["runningPop"], 0.0)
+        self.assertIsNone(windowed[0]["runningSamp"])
+        self.assertAlmostEqual(windowed[1]["runningPop"], 1.0, places=10)
+        self.assertAlmostEqual(windowed[1]["runningSamp"], 1.41421356237, places=10)
+        self.assertAlmostEqual(windowed[2]["runningPop"], 0.94280904158, places=10)
+        self.assertAlmostEqual(windowed[2]["runningSamp"], 1.15470053838, places=10)
+        self.assertAlmostEqual(windowed[3]["runningPop"], 0.94280904158, places=10)
+        self.assertAlmostEqual(windowed[3]["runningSamp"], 1.15470053838, places=10)
+        self.assertEqual(windowed[4]["runningPop"], 0.0)
+        self.assertIsNone(windowed[4]["runningSamp"])
 
     def test_set_window_fields_uses_window_support_hook_when_initializing_state(self):
         class _WindowOnlyLastDialect(MongoDialect):
