@@ -54,7 +54,7 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
 
 ## 3. Tipado Estricto en el Core Semántico y la Metadata Interna
 
-- `Estado`: `En progreso`
+- `Estado`: `Aplicado`
 - `Impacto`: `Medio-Alto`
 - `Esfuerzo`: `Medio-Bajo`
 - `Descripción`: sustituir `dict[str, Any]` internos por dataclasses o records privados en piezas críticas como índices, stats, explain, resultados administrativos y estados internos complejos.
@@ -68,10 +68,10 @@ Ordenadas por prioridad práctica actual: más impacto, menos esfuerzo relativo 
   - `bfbecee` `refactor: type admin listing metadata snapshots`
   - `d42c00a` `refactor: type findandmodify and index command results`
   - `3c3b211` `refactor: keep stats and validation as typed snapshots`
-- `Pendiente para cerrar de verdad`:
-  - extender el patrón tipado a más payloads internos fuera de admin/explain
-  - seguir reduciendo `dict[str, object]` en rutas de resultados intermedios de agregación y writes complejos
-- `Estado actual`: el tipado interno está muy avanzado en admin, listados, stats, validación, `explain` y varios comandos compuestos; el trabajo pendiente ya está concentrado fuera del subsistema admin.
+  - `eb85f03` `refactor: type complex write metadata`
+  - `8137d48` `refactor: type engine index metadata`
+  - `30eec95` `refactor: type aggregation intermediate buckets`
+- `Cierre`: el tipado interno ya cubre admin, listados, stats, validación, `explain`, writes complejos, metadata de índices en engines y buckets intermedios de agregación. Los `dict` que siguen existiendo a partir de aquí responden sobre todo a documentos públicos o a estructuras deliberadamente flexibles del lenguaje MongoDB.
 
 ## 4. Arquitectura Basada en Planes de Operación
 
