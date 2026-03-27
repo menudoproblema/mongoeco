@@ -163,6 +163,30 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
         self.assertEqual(sql, "(json_type(document, '$.value') = 'array')")
         self.assertEqual(params, [])
 
+    def test_translate_type_condition_supports_numeric_codes_and_aliases(self):
+        sql, _ = translate_query_plan(TypeCondition("value", (1, 3, 5, 7, 8, 9, 10, 16, 18, "undefined")))
+
+        self.assertIn("json_type(document, '$.value') = 'real'", sql)
+        self.assertIn("json_type(document, '$.value') = 'object'", sql)
+        self.assertIn("IN ('bytes', 'uuid')", sql)
+        self.assertIn("= 'objectid'", sql)
+        self.assertIn("json_type(document, '$.value') IN ('true', 'false')", sql)
+        self.assertIn("= 'datetime'", sql)
+        self.assertIn("json_type(document, '$.value') = 'null'", sql)
+        self.assertIn("BETWEEN -2147483648 AND 2147483647", sql)
+        self.assertIn("> 2147483647", sql)
+        self.assertIn("= 'undefined'", sql)
+
+    def test_translate_type_condition_rejects_non_translatable_specs(self):
+        with self.assertRaises(NotImplementedError):
+            translate_query_plan(TypeCondition("value", (True,)))
+        with self.assertRaises(NotImplementedError):
+            translate_query_plan(TypeCondition("value", (11,)))
+        with self.assertRaises(NotImplementedError):
+            translate_query_plan(TypeCondition("value", ("regex",)))
+        with self.assertRaises(NotImplementedError):
+            translate_query_plan(TypeCondition("value", ("future",)))
+
     def test_internal_translation_helpers_cover_string_and_error_branches(self):
         self.assertEqual(_normalize_comparable_value("Ada"), ("string", "Ada"))
         with self.assertRaises(NotImplementedError):
@@ -196,6 +220,12 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
         sql, params = _translate_comparison(">", "name", "Ada")
         self.assertIn("json_type(document, '$.name') = 'text'", sql)
         self.assertEqual(params, [3, "Ada"])
+
+    def test_translate_comparison_rejects_non_comparable_tagged_values(self):
+        self.assertEqual(_normalize_comparable_value(UNDEFINED), ("undefined", True))
+
+        with self.assertRaises(NotImplementedError):
+            _translate_comparison(">", "payload", {"nested": True})
 
     def test_sort_type_expression_sql_keeps_bytes_out_of_uuid_bucket(self):
         expression = sort_type_expression_sql("payload")
