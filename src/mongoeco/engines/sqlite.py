@@ -36,6 +36,15 @@ from mongoeco.core.query_plan import (
 )
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines.semantic_core import (
+    EngineFindSemantics,
+    build_query_plan_explanation,
+    compile_find_semantics,
+    filter_documents,
+    finalize_documents,
+    iter_filtered_documents,
+    stream_finalize_documents,
+)
 from mongoeco.engines.sqlite_query import (
     _translate_scalar_equals,
     index_expressions_sql,
@@ -726,35 +735,50 @@ class SQLiteEngine(AsyncStorageEngine):
         self,
         db_name: str,
         coll_name: str,
-        filter_spec: Filter | None = None,
+        semantics_or_filter_spec: EngineFindSemantics | Filter | None = None,
         *,
+        plan: QueryNode | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
         hint: str | IndexKeySpec | None = None,
         max_time_ms: int | None = None,
+        dialect: MongoDialect | None = None,
     ) -> list[str]:
-        deadline = operation_deadline(max_time_ms)
+        semantics = (
+            semantics_or_filter_spec
+            if isinstance(semantics_or_filter_spec, EngineFindSemantics)
+            else compile_find_semantics(
+                semantics_or_filter_spec,
+                plan=plan,
+                sort=sort,
+                skip=skip,
+                limit=limit,
+                hint=hint,
+                max_time_ms=max_time_ms,
+                dialect=dialect,
+            )
+        )
+        deadline = semantics.deadline
         with self._lock:
             conn = self._require_connection()
-            plan = ensure_query_plan(filter_spec)
             enforce_deadline(deadline)
-            if self._plan_has_array_traversing_paths(db_name, coll_name, plan):
+            if self._plan_has_array_traversing_paths(db_name, coll_name, semantics.query_plan):
                 raise NotImplementedError("Array traversal requires Python fallback")
-            if self._plan_requires_python_for_array_comparisons(db_name, coll_name, plan):
+            if self._plan_requires_python_for_array_comparisons(db_name, coll_name, semantics.query_plan):
                 raise NotImplementedError("Top-level array comparisons require Python fallback")
-            if self._plan_requires_python_for_bytes(db_name, coll_name, plan):
+            if self._plan_requires_python_for_bytes(db_name, coll_name, semantics.query_plan):
                 raise NotImplementedError("Tagged bytes require Python fallback")
-            if self._plan_requires_python_for_undefined(db_name, coll_name, plan):
+            if self._plan_requires_python_for_undefined(db_name, coll_name, semantics.query_plan):
                 raise NotImplementedError("Tagged undefined values require Python fallback")
             sql, params = self._build_select_sql(
                 db_name,
                 coll_name,
-                plan,
+                semantics.query_plan,
                 select_clause="document",
-                sort=sort,
-                skip=skip,
-                limit=limit,
+                sort=semantics.sort,
+                skip=semantics.skip,
+                limit=semantics.limit,
                 hint=hint,
             )
             rows = conn.execute(f"EXPLAIN QUERY PLAN {sql}", tuple(params)).fetchall()
@@ -1146,27 +1170,35 @@ class SQLiteEngine(AsyncStorageEngine):
         self,
         db_name: str,
         coll_name: str,
-        filter_spec: Filter | None,
-        plan: QueryNode | None,
-        projection: Projection | None,
-        sort: SortSpec | None,
-        skip: int,
-        limit: int | None,
-        context: ClientSession | None,
+        semantics_or_filter_spec: EngineFindSemantics | Filter | None,
+        plan: QueryNode | None = None,
+        projection: Projection | None = None,
+        sort: SortSpec | None = None,
+        skip: int = 0,
+        limit: int | None = None,
+        context: ClientSession | None = None,
         stop_event: threading.Event | None = None,
-        dialect: MongoDialect | None = None,
         *,
         hint: str | IndexKeySpec | None = None,
         max_time_ms: int | None = None,
+        dialect: MongoDialect | None = None,
     ):
-        effective_dialect = dialect or MONGODB_DIALECT_70
-        deadline = operation_deadline(max_time_ms)
-        if skip < 0:
-            raise ValueError("skip must be >= 0")
-        if limit is not None and limit < 0:
-            raise ValueError("limit must be >= 0")
-
-        plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
+        semantics = (
+            semantics_or_filter_spec
+            if isinstance(semantics_or_filter_spec, EngineFindSemantics)
+            else compile_find_semantics(
+                semantics_or_filter_spec,
+                plan=plan,
+                projection=projection,
+                sort=sort,
+                skip=skip,
+                limit=limit,
+                hint=hint,
+                max_time_ms=max_time_ms,
+                dialect=dialect,
+            )
+        )
+        deadline = semantics.deadline
         with self._lock:
             conn: sqlite3.Connection | None = None
             if self._session_owns_transaction(context):
@@ -1174,24 +1206,24 @@ class SQLiteEngine(AsyncStorageEngine):
             with self._bind_connection(conn) if conn is not None else nullcontext():
                 try:
                     enforce_deadline(deadline)
-                    if self._dialect_requires_python_fallback(effective_dialect):
+                    if self._dialect_requires_python_fallback(semantics.dialect):
                         raise NotImplementedError("Custom dialect requires Python fallback")
-                    if self._plan_has_array_traversing_paths(db_name, coll_name, plan):
+                    if self._plan_has_array_traversing_paths(db_name, coll_name, semantics.query_plan):
                         raise NotImplementedError("Array traversal requires Python fallback")
-                    if self._plan_requires_python_for_array_comparisons(db_name, coll_name, plan):
+                    if self._plan_requires_python_for_array_comparisons(db_name, coll_name, semantics.query_plan):
                         raise NotImplementedError("Top-level array comparisons require Python fallback")
-                    if self._plan_requires_python_for_undefined(db_name, coll_name, plan):
+                    if self._plan_requires_python_for_undefined(db_name, coll_name, semantics.query_plan):
                         raise NotImplementedError("Tagged undefined requires Python fallback")
-                    if self._sort_requires_python(db_name, coll_name, plan, sort):
+                    if self._sort_requires_python(db_name, coll_name, semantics.query_plan, semantics.sort):
                         raise NotImplementedError("Sort requires Python fallback")
                     sql, sql_params = self._build_select_sql(
                         db_name,
                         coll_name,
-                        plan,
+                        semantics.query_plan,
                         select_clause="document",
-                        sort=sort,
-                        skip=skip,
-                        limit=limit,
+                        sort=semantics.sort,
+                        skip=semantics.skip,
+                        limit=semantics.limit,
                         hint=hint,
                     )
                     if conn is None:
@@ -1202,79 +1234,51 @@ class SQLiteEngine(AsyncStorageEngine):
                             enforce_deadline(deadline)
                             if stop_event is not None and stop_event.is_set():
                                 break
-                            if effective_dialect is MONGODB_DIALECT_70:
-                                yield apply_projection(self._deserialize_document(payload), projection)
-                            else:
-                                yield apply_projection(
-                                    self._deserialize_document(payload),
-                                    projection,
-                                    dialect=effective_dialect,
-                                )
+                            yield apply_projection(
+                                self._deserialize_document(payload),
+                                semantics.projection,
+                                dialect=semantics.dialect,
+                            )
                     finally:
                         cursor.close()
                     return
                 except (NotImplementedError, TypeError):
                     documents_iter = (document for _, document in self._load_documents(db_name, coll_name))
-                    if not isinstance(plan, MatchAll):
-                        documents_iter = (
-                            document
-                            for document in documents_iter
-                            if QueryEngine.match_plan(document, plan, dialect=effective_dialect)
-                        )
                     try:
-                        if sort is None:
-                            remaining_skip = skip
-                            remaining_limit = limit
-                            for document in documents_iter:
-                                enforce_deadline(deadline)
+                        if semantics.sort is None:
+                            for document in stream_finalize_documents(
+                                iter_filtered_documents(documents_iter, semantics),
+                                semantics,
+                            ):
                                 if stop_event is not None and stop_event.is_set():
                                     break
-                                if remaining_skip:
-                                    remaining_skip -= 1
-                                    continue
-                                if effective_dialect is MONGODB_DIALECT_70:
-                                    yield apply_projection(document, projection)
-                                else:
-                                    yield apply_projection(
-                                        document,
-                                        projection,
-                                        dialect=effective_dialect,
-                                    )
-                                if remaining_limit is not None:
-                                    remaining_limit -= 1
-                                    if remaining_limit == 0:
-                                        return
+                                yield document
                             return
 
-                        if effective_dialect is MONGODB_DIALECT_70:
-                            documents = sort_documents(list(documents_iter), sort)
+                        documents = filter_documents(documents_iter, semantics)
+                        if semantics.dialect is MONGODB_DIALECT_70:
+                            documents = sort_documents(documents, semantics.sort)
                         else:
                             documents = sort_documents(
-                                list(documents_iter),
-                                sort,
-                                dialect=effective_dialect,
+                                documents,
+                                semantics.sort,
+                                dialect=semantics.dialect,
                             )
+                        documents = finalize_documents(
+                            documents,
+                            semantics,
+                            apply_sort_phase=False,
+                        )
                     finally:
                         close = getattr(documents_iter, "close", None)
                         if callable(close):
                             close()
 
-        if skip:
-            documents = documents[skip:]
-        if limit is not None:
-            documents = documents[:limit]
         for document in documents:
             enforce_deadline(deadline)
             if stop_event is not None and stop_event.is_set():
                 break
-            if effective_dialect is MONGODB_DIALECT_70:
-                yield apply_projection(document, projection)
-            else:
-                yield apply_projection(
-                    document,
-                    projection,
-                    dialect=effective_dialect,
-                )
+            yield document
 
     def _update_matching_document_sync(
         self,
@@ -1949,6 +1953,19 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> AsyncIterable[Document]:
+        semantics = compile_find_semantics(
+            filter_spec,
+            plan=plan,
+            projection=projection,
+            sort=sort,
+            skip=skip,
+            limit=limit,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            dialect=dialect,
+        )
+
         async def _scan() -> AsyncIterable[Document]:
             self._record_operation_metadata(
                 context,
@@ -1968,17 +1985,10 @@ class SQLiteEngine(AsyncStorageEngine):
                     for document in self._iter_scan_documents_sync(
                         db_name,
                         coll_name,
-                        filter_spec,
-                        plan,
-                        projection,
-                        sort,
-                        skip,
-                        limit,
-                        context,
-                        max_time_ms=max_time_ms,
+                        semantics,
+                        context=context,
                         hint=hint,
                         stop_event=stop_event,
-                        dialect=dialect,
                     ):
                         if stop_event.is_set():
                             break
@@ -2224,8 +2234,17 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> QueryPlanExplanation:
-        effective_dialect = dialect or MONGODB_DIALECT_70
-        query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
+        semantics = compile_find_semantics(
+            filter_spec,
+            plan=plan,
+            sort=sort,
+            skip=skip,
+            limit=limit,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            dialect=dialect,
+        )
         self._record_operation_metadata(
             context,
             operation="explain_query_plan",
@@ -2243,25 +2262,15 @@ class SQLiteEngine(AsyncStorageEngine):
             self._explain_query_plan_sync,
             db_name,
             coll_name,
-            filter_spec,
-            sort=sort,
-            skip=skip,
-            limit=limit,
+            semantics,
             hint=hint,
-            max_time_ms=max_time_ms,
         )
-        return QueryPlanExplanation(
+        return build_query_plan_explanation(
             engine="sqlite",
             strategy="sql",
-            plan=repr(query_plan),
+            semantics=semantics,
             details=details,
-            sort=sort,
-            skip=skip,
-            limit=limit,
-            hint=hint,
             hinted_index=None if hinted_index is None else hinted_index["name"],
-            comment=comment,
-            max_time_ms=max_time_ms,
         )
 
     @override

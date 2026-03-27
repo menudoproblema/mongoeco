@@ -10,13 +10,18 @@ from typing import Any, AsyncIterable, override
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines.semantic_core import (
+    build_query_plan_explanation,
+    compile_find_semantics,
+    filter_documents,
+    finalize_documents,
+)
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operators import UpdateEngine
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.codec import DocumentCodec
-from mongoeco.core.query_plan import MatchAll, QueryNode, ensure_query_plan
+from mongoeco.core.query_plan import QueryNode, ensure_query_plan
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
-from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.session import EngineTransactionContext
@@ -321,13 +326,19 @@ class MemoryEngine(AsyncStorageEngine):
     @override
     def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, hint: str | IndexKeySpec | None = None, comment: object | None = None, max_time_ms: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
         async def _scan():
-            effective_dialect = dialect or MONGODB_DIALECT_70
-            deadline = operation_deadline(max_time_ms)
-            if skip < 0:
-                raise ValueError("skip must be >= 0")
-            if limit is not None and limit < 0:
-                raise ValueError("limit must be >= 0")
-            query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
+            semantics = compile_find_semantics(
+                filter_spec,
+                plan=plan,
+                projection=projection,
+                sort=sort,
+                skip=skip,
+                limit=limit,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                dialect=dialect,
+            )
+            deadline = semantics.deadline
             self._record_operation_metadata(
                 context,
                 operation="scan_collection",
@@ -352,35 +363,12 @@ class MemoryEngine(AsyncStorageEngine):
                     for data in list(coll.values())
                 ]
 
-            if not isinstance(query_plan, MatchAll):
-                filtered: list[Document] = []
-                for document in documents:
-                    enforce_deadline(deadline)
-                    if QueryEngine.match_plan(document, query_plan, dialect=effective_dialect):
-                        filtered.append(document)
-                documents = filtered
-            enforce_deadline(deadline)
-            if effective_dialect is MONGODB_DIALECT_70:
-                documents = sort_documents(documents, sort)
-            else:
-                documents = sort_documents(documents, sort, dialect=effective_dialect)
-            enforce_deadline(deadline)
-
-            if skip:
-                documents = documents[skip:]
-            if limit is not None:
-                documents = documents[:limit]
+            documents = filter_documents(documents, semantics)
+            documents = finalize_documents(documents, semantics)
 
             for document in documents:
                 enforce_deadline(deadline)
-                if effective_dialect is MONGODB_DIALECT_70:
-                    yield apply_projection(document, projection)
-                else:
-                    yield apply_projection(
-                        document,
-                        projection,
-                        dialect=effective_dialect,
-                    )
+                yield document
         return _scan()
 
     @override
@@ -731,9 +719,18 @@ class MemoryEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> QueryPlanExplanation:
-        effective_dialect = dialect or MONGODB_DIALECT_70
-        deadline = operation_deadline(max_time_ms)
-        query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
+        semantics = compile_find_semantics(
+            filter_spec,
+            plan=plan,
+            sort=sort,
+            skip=skip,
+            limit=limit,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            dialect=dialect,
+        )
+        deadline = semantics.deadline
         self._record_operation_metadata(
             context,
             operation="explain_query_plan",
@@ -751,17 +748,11 @@ class MemoryEngine(AsyncStorageEngine):
             indexes=indexes,
         )
         enforce_deadline(deadline)
-        return QueryPlanExplanation(
+        return build_query_plan_explanation(
             engine="memory",
             strategy="python",
-            plan=repr(query_plan),
-            sort=sort,
-            skip=skip,
-            limit=limit,
-            hint=hint,
+            semantics=semantics,
             hinted_index=None if hinted_index is None else hinted_index["name"],
-            comment=comment,
-            max_time_ms=max_time_ms,
             indexes=indexes,
         )
 

@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import unittest
+from unittest.mock import patch
 
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
@@ -56,6 +57,11 @@ from mongoeco.engines.base import (
     AsyncStorageEngine,
 )
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.engines.semantic_core import (
+    EngineFindSemantics,
+    build_query_plan_explanation,
+    compile_find_semantics,
+)
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.types import EngineIndexRecord, IndexDefinition, IndexInformation, default_id_index_definition
 from mongoeco.types import (
@@ -121,6 +127,80 @@ class ArchitectureUnitTests(unittest.TestCase):
             finally:
                 await memory.disconnect()
                 await sqlite.disconnect()
+
+        asyncio.run(_run())
+
+    def test_compile_find_semantics_returns_typed_read_semantics(self):
+        semantics = compile_find_semantics(
+            {"name": "Ada"},
+            sort=[("rank", 1)],
+            skip=1,
+            limit=2,
+            hint=[("name", 1)],
+            comment="read",
+            max_time_ms=25,
+        )
+
+        self.assertIsInstance(semantics, EngineFindSemantics)
+        self.assertEqual(semantics.filter_spec, {"name": "Ada"})
+        self.assertEqual(semantics.sort, [("rank", 1)])
+        self.assertEqual(semantics.skip, 1)
+        self.assertEqual(semantics.limit, 2)
+        self.assertEqual(semantics.hint, [("name", 1)])
+        self.assertEqual(semantics.comment, "read")
+        self.assertEqual(semantics.max_time_ms, 25)
+
+    def test_query_plan_explanation_builder_reuses_compiled_semantics(self):
+        semantics = compile_find_semantics(
+            {"name": "Ada"},
+            sort=[("rank", 1)],
+            skip=1,
+            limit=2,
+            hint=[("name", 1)],
+            comment="read",
+            max_time_ms=25,
+        )
+
+        explanation = build_query_plan_explanation(
+            engine="memory",
+            strategy="python",
+            semantics=semantics,
+            hinted_index="name_1",
+        )
+
+        self.assertEqual(explanation.engine, "memory")
+        self.assertEqual(explanation.strategy, "python")
+        self.assertEqual(explanation.sort, semantics.sort)
+        self.assertEqual(explanation.skip, semantics.skip)
+        self.assertEqual(explanation.limit, semantics.limit)
+        self.assertEqual(explanation.hint, semantics.hint)
+        self.assertEqual(explanation.hinted_index, "name_1")
+        self.assertEqual(explanation.comment, semantics.comment)
+        self.assertEqual(explanation.max_time_ms, semantics.max_time_ms)
+
+    def test_memory_engine_read_paths_compile_shared_semantics(self):
+        async def _run() -> None:
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                with patch("mongoeco.engines.memory.compile_find_semantics", wraps=compile_find_semantics) as compiler:
+                    await engine.explain_query_plan("db", "users", {})
+                    self.assertGreaterEqual(compiler.call_count, 1)
+            finally:
+                await engine.disconnect()
+
+        asyncio.run(_run())
+
+    def test_sqlite_engine_read_paths_compile_shared_semantics(self):
+        async def _run() -> None:
+            engine = SQLiteEngine()
+            await engine.connect()
+            try:
+                with patch("mongoeco.engines.sqlite.compile_find_semantics", wraps=compile_find_semantics) as compiler:
+                    await engine.explain_query_plan("db", "users", {})
+                    self.assertGreaterEqual(compiler.call_count, 1)
+            finally:
+                await engine.disconnect()
 
         asyncio.run(_run())
 
