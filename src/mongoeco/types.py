@@ -204,6 +204,105 @@ class CollectionValidationDocument(TypedDict):
     ok: float
 
 
+@dataclass(frozen=True, slots=True)
+class CommandCursorResult:
+    namespace: str
+    first_batch: list[object]
+    cursor_id: int = 0
+
+    def to_document(self) -> dict[str, object]:
+        return {
+            "cursor": {
+                "id": self.cursor_id,
+                "ns": self.namespace,
+                "firstBatch": self.first_batch,
+            },
+            "ok": 1.0,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ListDatabasesCommandResult:
+    databases: list[dict[str, object]]
+    total_size: int
+
+    def to_document(self) -> dict[str, object]:
+        return {
+            "databases": self.databases,
+            "totalSize": self.total_size,
+            "ok": 1.0,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class OkResult:
+    def to_document(self) -> dict[str, object]:
+        return {"ok": 1.0}
+
+
+@dataclass(frozen=True, slots=True)
+class NamespaceOkResult:
+    namespace: str
+
+    def to_document(self) -> dict[str, object]:
+        return {
+            "ns": self.namespace,
+            "ok": 1.0,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CountCommandResult:
+    count: int
+
+    def to_document(self) -> dict[str, object]:
+        return {"n": self.count, "ok": 1.0}
+
+
+@dataclass(frozen=True, slots=True)
+class DistinctCommandResult:
+    values: list[object]
+
+    def to_document(self) -> dict[str, object]:
+        return {"values": self.values, "ok": 1.0}
+
+
+@dataclass(frozen=True, slots=True)
+class WriteCommandResult:
+    count: int
+    modified_count: int | None = None
+    upserted: list[dict[str, object]] | None = None
+
+    def to_document(self) -> dict[str, object]:
+        document: dict[str, object] = {"n": self.count, "ok": 1.0}
+        if self.modified_count is not None:
+            document["nModified"] = self.modified_count
+        if self.upserted:
+            document["upserted"] = self.upserted
+        return document
+
+
+@dataclass(frozen=True, slots=True)
+class CollectionValidationSnapshot:
+    namespace: str
+    record_count: int
+    index_count: int
+    keys_per_index: dict[str, int]
+    valid: bool = True
+    warnings: list[object] = field(default_factory=list)
+
+    def to_document(self) -> CollectionValidationDocument:
+        return {
+            "ns": self.namespace,
+            "valid": self.valid,
+            "nrecords": self.record_count,
+            "nIndexes": self.index_count,
+            "keysPerIndex": self.keys_per_index,
+            "warnings": list(self.warnings),
+            "ok": 1.0,
+        }
+
+
 class BuildInfoDocument(TypedDict):
     version: str
     versionArray: list[int]

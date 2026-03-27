@@ -35,15 +35,23 @@ from mongoeco.types import (
     CollectionListingSnapshot,
     CollectionStatsDocument,
     CollectionValidationDocument,
+    CollectionValidationSnapshot,
+    CommandCursorResult,
+    CountCommandResult,
     DatabaseStatsSnapshot,
     DatabaseListingDocument,
     DatabaseListingSnapshot,
     DatabaseStatsDocument,
+    DistinctCommandResult,
     Document,
     Filter,
     IndexModel,
+    ListDatabasesCommandResult,
+    NamespaceOkResult,
+    OkResult,
     Projection,
     ReturnDocument,
+    WriteCommandResult,
 )
 
 if TYPE_CHECKING:
@@ -379,21 +387,18 @@ class AsyncDatabaseAdminService:
         indexes = await self._database.get_collection(collection_name).list_indexes(
             session=session
         ).to_list()
-        return {
-            "ns": f"{self._db_name}.{collection_name}",
-            "valid": True,
-            "nrecords": await self._database.get_collection(collection_name).count_documents(
+        return CollectionValidationSnapshot(
+            namespace=f"{self._db_name}.{collection_name}",
+            record_count=await self._database.get_collection(collection_name).count_documents(
                 {},
                 session=session,
             ),
-            "nIndexes": len(indexes),
-            "keysPerIndex": {
+            index_count=len(indexes),
+            keys_per_index={
                 str(index["name"]): len(index.get("fields", []))
                 for index in indexes
             },
-            "warnings": [],
-            "ok": 1.0,
-        }
+        ).to_document()
 
     async def command(
         self,
@@ -441,14 +446,10 @@ class AsyncDatabaseAdminService:
                     dialect=self._mongodb_dialect,
                 )
             ]
-        return {
-            "cursor": {
-                "id": 0,
-                "ns": f"{self._db_name}.$cmd.listCollections",
-                "firstBatch": first_batch,
-            },
-            "ok": 1.0,
-        }
+        return CommandCursorResult(
+            namespace=f"{self._db_name}.$cmd.listCollections",
+            first_batch=first_batch,
+        ).to_document()
 
     async def _command_list_databases(
         self,
@@ -473,11 +474,10 @@ class AsyncDatabaseAdminService:
         total_size = sum(int(document.get("sizeOnDisk", 0)) for document in filtered)
         if options.name_only:
             filtered = [{"name": str(document["name"])} for document in filtered]
-        return {
-            "databases": filtered,
-            "totalSize": total_size,
-            "ok": 1.0,
-        }
+        return ListDatabasesCommandResult(
+            databases=filtered,
+            total_size=total_size,
+        ).to_document()
 
     async def _command_create(
         self,
@@ -496,7 +496,7 @@ class AsyncDatabaseAdminService:
             session=session,
             **options,
         )
-        return {"ok": 1.0}
+        return OkResult().to_document()
 
     async def _command_drop(
         self,
@@ -506,10 +506,9 @@ class AsyncDatabaseAdminService:
     ) -> dict[str, object]:
         collection_name = self._require_collection_name(spec.get("drop"), "drop")
         await self.drop_collection(collection_name, session=session)
-        return {
-            "ns": f"{self._db_name}.{collection_name}",
-            "ok": 1.0,
-        }
+        return NamespaceOkResult(
+            namespace=f"{self._db_name}.{collection_name}",
+        ).to_document()
 
     async def _command_rename_collection(
         self,
@@ -537,7 +536,7 @@ class AsyncDatabaseAdminService:
             if target_name in target_names:
                 await self.drop_collection(target_name, session=session)
         await self._database.get_collection(source_name).rename(target_name, session=session)
-        return {"ok": 1.0}
+        return OkResult().to_document()
 
     async def _command_count(
         self,
@@ -566,7 +565,7 @@ class AsyncDatabaseAdminService:
             operation,
             session=session,
         )
-        return {"n": count, "ok": 1.0}
+        return CountCommandResult(count=count).to_document()
 
     async def _command_distinct(
         self,
@@ -609,7 +608,7 @@ class AsyncDatabaseAdminService:
                     for existing in distinct_values
                 ):
                     distinct_values.append(candidate)
-        return {"values": distinct_values, "ok": 1.0}
+        return DistinctCommandResult(values=distinct_values).to_document()
 
     async def _command_insert(
         self,
@@ -644,7 +643,7 @@ class AsyncDatabaseAdminService:
                     "n": inserted,
                 },
             )
-        return {"n": inserted, "ok": 1.0}
+        return WriteCommandResult(count=inserted).to_document()
 
     async def _command_update(
         self,
@@ -744,10 +743,11 @@ class AsyncDatabaseAdminService:
                     "upserted": upserted,
                 },
             )
-        result: dict[str, object] = {"n": matched, "nModified": modified, "ok": 1.0}
-        if upserted:
-            result["upserted"] = upserted
-        return result
+        return WriteCommandResult(
+            count=matched,
+            modified_count=modified,
+            upserted=upserted or None,
+        ).to_document()
 
     async def _command_delete(
         self,
@@ -805,7 +805,7 @@ class AsyncDatabaseAdminService:
                     "n": deleted,
                 },
             )
-        return {"n": deleted, "ok": 1.0}
+        return WriteCommandResult(count=deleted).to_document()
 
     async def _command_find(
         self,
@@ -821,14 +821,10 @@ class AsyncDatabaseAdminService:
             operation,
             session=session,
         ).to_list()
-        return {
-            "cursor": {
-                "id": 0,
-                "ns": f"{self._db_name}.{collection_name}",
-                "firstBatch": first_batch,
-            },
-            "ok": 1.0,
-        }
+        return CommandCursorResult(
+            namespace=f"{self._db_name}.{collection_name}",
+            first_batch=first_batch,
+        ).to_document()
 
     async def _command_aggregate(
         self,
@@ -863,14 +859,10 @@ class AsyncDatabaseAdminService:
             operation,
             session=session,
         ).to_list()
-        return {
-            "cursor": {
-                "id": 0,
-                "ns": f"{self._db_name}.{collection_name}",
-                "firstBatch": first_batch,
-            },
-            "ok": 1.0,
-        }
+        return CommandCursorResult(
+            namespace=f"{self._db_name}.{collection_name}",
+            first_batch=first_batch,
+        ).to_document()
 
     async def _command_explain(
         self,
@@ -1200,14 +1192,10 @@ class AsyncDatabaseAdminService:
             comment=spec.get("comment"),
             session=session,
         ).to_list()
-        return {
-            "cursor": {
-                "id": 0,
-                "ns": f"{self._db_name}.{collection_name}",
-                "firstBatch": first_batch,
-            },
-            "ok": 1.0,
-        }
+        return CommandCursorResult(
+            namespace=f"{self._db_name}.{collection_name}",
+            first_batch=first_batch,
+        ).to_document()
 
     async def _command_create_indexes(
         self,

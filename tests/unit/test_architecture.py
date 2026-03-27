@@ -65,11 +65,19 @@ from mongoeco.types import (
     TransactionOptions,
     WriteConcern,
     BuildInfoDocument,
+    CollectionValidationSnapshot,
     CollectionStatsSnapshot,
     CollectionListingSnapshot,
     CollectionValidationDocument,
+    CommandCursorResult,
+    CountCommandResult,
     DatabaseListingSnapshot,
     DatabaseStatsSnapshot,
+    DistinctCommandResult,
+    ListDatabasesCommandResult,
+    NamespaceOkResult,
+    OkResult,
+    WriteCommandResult,
 )
 
 
@@ -406,6 +414,33 @@ class ArchitectureUnitTests(unittest.TestCase):
         self.assertEqual(database_listing_snapshot.to_document()["sizeOnDisk"], 128)
         self.assertEqual(collection_snapshot.to_document()["size"], 20)
         self.assertEqual(database_snapshot.to_document()["dataSize"], 20)
+
+    def test_admin_internal_results_use_typed_snapshots(self):
+        cursor_result = CommandCursorResult(
+            namespace="db.users",
+            first_batch=[{"_id": 1}],
+        )
+        list_databases_result = ListDatabasesCommandResult(
+            databases=[{"name": "db", "sizeOnDisk": 0, "empty": True}],
+            total_size=0,
+        )
+        validation_result = CollectionValidationSnapshot(
+            namespace="db.users",
+            record_count=3,
+            index_count=1,
+            keys_per_index={"_id_": 1},
+        )
+        self.assertEqual(cursor_result.to_document()["cursor"]["ns"], "db.users")
+        self.assertEqual(list_databases_result.to_document()["totalSize"], 0)
+        self.assertTrue(validation_result.to_document()["valid"])
+        self.assertEqual(CountCommandResult(3).to_document()["n"], 3)
+        self.assertEqual(DistinctCommandResult(["Ada"]).to_document()["values"], ["Ada"])
+        self.assertEqual(OkResult().to_document()["ok"], 1.0)
+        self.assertEqual(
+            NamespaceOkResult("db.users").to_document()["ns"],
+            "db.users",
+        )
+        self.assertEqual(WriteCommandResult(2, modified_count=1).to_document()["nModified"], 1)
 
     def test_database_admin_service_exposes_typed_listing_snapshot_loaders(self):
         self.assertIn("_list_collection_snapshots", AsyncDatabaseAdminService.__dict__)
