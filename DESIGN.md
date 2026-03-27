@@ -745,9 +745,9 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * `bypass_document_validation`
 
 #### Fase 6
-* API administrativa y de metadata:
+  * API administrativa y de metadata:
   * `Database.command`
-    * ya soporta también `explain` para `find` y `aggregate`
+    * ya soporta también `explain` para `find`, `aggregate`, `update` y `delete`
     * ya soporta también `listCommands` y `connectionStatus`
     * ya soporta también `renameCollection` dentro del mismo `db`
     * `listCollections` ya soporta `nameOnly`

@@ -982,6 +982,64 @@ class AsyncDatabase:
                     session=session,
                 ).explain()
                 result = dict(explanation)
+            elif explained_command_name == "update":
+                collection_name = self._require_collection_name(
+                    explain_spec.get("update"),
+                    "update",
+                )
+                updates = self._normalize_update_specs(explain_spec.get("updates"))
+                if len(updates) != 1:
+                    raise OperationFailure("explain update requires exactly one update specification")
+                update_spec = updates[0]
+                query = self._normalize_filter(update_spec.get("q"))
+                multi = update_spec.get("multi", False)
+                if not isinstance(multi, bool):
+                    raise TypeError("multi must be a bool")
+                hint = self._normalize_hint_from_command(update_spec.get("hint"))
+                max_time_ms = self._normalize_max_time_ms_from_command(
+                    explain_spec.get("maxTimeMS")
+                )
+                explanation = await self.get_collection(collection_name).find(
+                    query,
+                    {"_id": 1},
+                    limit=None if multi else 1,
+                    hint=hint,
+                    comment=explain_spec.get("comment"),
+                    max_time_ms=max_time_ms,
+                    session=session,
+                ).explain()
+                result = dict(explanation)
+                result["command"] = "update"
+                result["multi"] = multi
+            elif explained_command_name == "delete":
+                collection_name = self._require_collection_name(
+                    explain_spec.get("delete"),
+                    "delete",
+                )
+                deletes = self._normalize_delete_specs(explain_spec.get("deletes"))
+                if len(deletes) != 1:
+                    raise OperationFailure("explain delete requires exactly one delete specification")
+                delete_spec = deletes[0]
+                query = self._normalize_filter(delete_spec.get("q"))
+                limit = delete_spec.get("limit", 0)
+                if limit not in (0, 1):
+                    raise TypeError("limit must be 0 or 1")
+                hint = self._normalize_hint_from_command(delete_spec.get("hint"))
+                max_time_ms = self._normalize_max_time_ms_from_command(
+                    explain_spec.get("maxTimeMS")
+                )
+                explanation = await self.get_collection(collection_name).find(
+                    query,
+                    {"_id": 1},
+                    limit=1 if limit == 1 else None,
+                    hint=hint,
+                    comment=explain_spec.get("comment"),
+                    max_time_ms=max_time_ms,
+                    session=session,
+                ).explain()
+                result = dict(explanation)
+                result["command"] = "delete"
+                result["limit"] = limit
             else:
                 raise OperationFailure(
                     f"Unsupported explain command: {explained_command_name}"

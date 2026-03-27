@@ -618,6 +618,68 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(aggregate_explain["batch_size"], 1)
                     self.assertEqual(aggregate_explain["ok"], 1.0)
 
+    async def test_database_command_supports_explain_for_update_and_delete(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    await client.alpha.events.insert_many(
+                        [
+                            {"_id": "1", "kind": "view"},
+                            {"_id": "2", "kind": "click"},
+                        ]
+                    )
+                    await client.alpha.events.create_index(
+                        [("kind", 1)],
+                        name="kind_idx",
+                    )
+
+                    update_explain = await client.alpha.command(
+                        {
+                            "explain": {
+                                "update": "events",
+                                "updates": [
+                                    {
+                                        "q": {"kind": "view"},
+                                        "u": {"$set": {"done": True}},
+                                        "multi": False,
+                                        "hint": "kind_idx",
+                                    }
+                                ],
+                                "comment": "update explain",
+                                "maxTimeMS": 50,
+                            }
+                        }
+                    )
+                    delete_explain = await client.alpha.command(
+                        {
+                            "explain": {
+                                "delete": "events",
+                                "deletes": [
+                                    {
+                                        "q": {"kind": "click"},
+                                        "limit": 1,
+                                        "hint": "kind_idx",
+                                    }
+                                ],
+                                "comment": "delete explain",
+                                "maxTimeMS": 50,
+                            }
+                        }
+                    )
+
+                    self.assertEqual(update_explain["command"], "update")
+                    self.assertFalse(update_explain["multi"])
+                    self.assertEqual(update_explain["hint"], "kind_idx")
+                    self.assertEqual(update_explain["comment"], "update explain")
+                    self.assertEqual(update_explain["max_time_ms"], 50)
+                    self.assertEqual(update_explain["ok"], 1.0)
+                    self.assertEqual(delete_explain["command"], "delete")
+                    self.assertEqual(delete_explain["limit"], 1)
+                    self.assertEqual(delete_explain["hint"], "kind_idx")
+                    self.assertEqual(delete_explain["comment"], "delete explain")
+                    self.assertEqual(delete_explain["max_time_ms"], 50)
+                    self.assertEqual(delete_explain["ok"], 1.0)
+
     async def test_database_command_supports_insert_update_and_delete(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -806,6 +868,8 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await client.alpha.command({"findAndModify": "events"})
             with self.assertRaises(OperationFailure):
                 await client.alpha.command({"explain": {"count": "events"}})
+            with self.assertRaises(TypeError):
+                await client.alpha.command({"explain": {"update": "events", "updates": []}})
             with self.assertRaises(OperationFailure):
                 await client.alpha.command({"renameCollection": "alpha.events", "to": "beta.logs"})
 

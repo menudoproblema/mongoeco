@@ -539,6 +539,68 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(aggregate_explain["batch_size"], 1)
                     self.assertEqual(aggregate_explain["ok"], 1.0)
 
+    def test_database_command_supports_explain_for_update_and_delete(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.alpha.events.insert_many(
+                        [
+                            {"_id": "1", "kind": "view"},
+                            {"_id": "2", "kind": "click"},
+                        ]
+                    )
+                    client.alpha.events.create_index(
+                        [("kind", 1)],
+                        name="kind_idx",
+                    )
+
+                    update_explain = client.alpha.command(
+                        {
+                            "explain": {
+                                "update": "events",
+                                "updates": [
+                                    {
+                                        "q": {"kind": "view"},
+                                        "u": {"$set": {"done": True}},
+                                        "multi": False,
+                                        "hint": "kind_idx",
+                                    }
+                                ],
+                                "comment": "update explain",
+                                "maxTimeMS": 50,
+                            }
+                        }
+                    )
+                    delete_explain = client.alpha.command(
+                        {
+                            "explain": {
+                                "delete": "events",
+                                "deletes": [
+                                    {
+                                        "q": {"kind": "click"},
+                                        "limit": 1,
+                                        "hint": "kind_idx",
+                                    }
+                                ],
+                                "comment": "delete explain",
+                                "maxTimeMS": 50,
+                            }
+                        }
+                    )
+
+                    self.assertEqual(update_explain["command"], "update")
+                    self.assertFalse(update_explain["multi"])
+                    self.assertEqual(update_explain["hint"], "kind_idx")
+                    self.assertEqual(update_explain["comment"], "update explain")
+                    self.assertEqual(update_explain["max_time_ms"], 50)
+                    self.assertEqual(update_explain["ok"], 1.0)
+                    self.assertEqual(delete_explain["command"], "delete")
+                    self.assertEqual(delete_explain["limit"], 1)
+                    self.assertEqual(delete_explain["hint"], "kind_idx")
+                    self.assertEqual(delete_explain["comment"], "delete explain")
+                    self.assertEqual(delete_explain["max_time_ms"], 50)
+                    self.assertEqual(delete_explain["ok"], 1.0)
+
     def test_database_command_supports_insert_update_and_delete(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -727,6 +789,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 client.alpha.command({"findAndModify": "events"})
             with self.assertRaises(OperationFailure):
                 client.alpha.command({"explain": {"count": "events"}})
+            with self.assertRaises(TypeError):
+                client.alpha.command({"explain": {"update": "events", "updates": []}})
             with self.assertRaises(OperationFailure):
                 client.alpha.command({"renameCollection": "alpha.events", "to": "beta.logs"})
 
