@@ -380,6 +380,68 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         },
                     )
 
+    def test_database_command_supports_insert_update_and_delete(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    inserted = client.alpha.command(
+                        {
+                            "insert": "events",
+                            "documents": [
+                                {"_id": "1", "kind": "view", "rank": 1},
+                                {"_id": "2", "kind": "click", "rank": 2},
+                            ],
+                        }
+                    )
+                    updated = client.alpha.command(
+                        {
+                            "update": "events",
+                            "updates": [
+                                {
+                                    "q": {"kind": "view"},
+                                    "u": {"$set": {"done": True}},
+                                    "multi": True,
+                                },
+                                {
+                                    "q": {"kind": "missing"},
+                                    "u": {"kind": "missing", "done": True},
+                                    "upsert": True,
+                                },
+                            ],
+                        }
+                    )
+                    deleted = client.alpha.command(
+                        {
+                            "delete": "events",
+                            "deletes": [
+                                {"q": {"kind": "click"}, "limit": 1},
+                                {"q": {"kind": "missing"}, "limit": 0},
+                            ],
+                        }
+                    )
+
+                    self.assertEqual(inserted, {"n": 2, "ok": 1.0})
+                    self.assertEqual(updated["n"], 1)
+                    self.assertEqual(updated["nModified"], 1)
+                    self.assertEqual(updated["ok"], 1.0)
+                    self.assertEqual(len(updated["upserted"]), 1)
+                    self.assertEqual(deleted, {"n": 2, "ok": 1.0})
+
+    def test_database_command_write_commands_surface_write_errors(self):
+        with MongoClient(MemoryEngine()) as client:
+            client.alpha.events.insert_one({"_id": "1", "kind": "view"})
+
+            with self.assertRaises(BulkWriteError):
+                client.alpha.command(
+                    {
+                        "insert": "events",
+                        "documents": [
+                            {"_id": "1", "kind": "duplicate"},
+                            {"_id": "2", "kind": "ok"},
+                        ],
+                    }
+                )
+
     def test_database_command_supports_find_and_modify(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -482,6 +544,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 client.alpha.command({"dropIndexes": "events", "index": 1.5})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 client.alpha.command("listDatabases", nameOnly=1)  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command({"insert": "events", "documents": {}})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command({"update": "events", "updates": {}})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                client.alpha.command({"delete": "events", "deletes": {}})  # type: ignore[arg-type]
             with self.assertRaises(ValueError):
                 client.alpha.command({"find": "events", "batchSize": -1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):

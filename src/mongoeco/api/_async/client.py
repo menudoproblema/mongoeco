@@ -20,7 +20,7 @@ from mongoeco.core.aggregation import _bson_document_size
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.engines.base import AsyncStorageEngine
-from mongoeco.errors import CollectionInvalid, OperationFailure
+from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     CodecOptions,
@@ -299,6 +299,38 @@ class AsyncDatabase:
         _validate_batch_size(batch_size)
         return batch_size
 
+    @staticmethod
+    def _normalize_ordered_from_command(value: object | None) -> bool:
+        if value is None:
+            return True
+        if not isinstance(value, bool):
+            raise TypeError("ordered must be a bool")
+        return value
+
+    @staticmethod
+    def _normalize_insert_documents(spec: object) -> list[Document]:
+        if not isinstance(spec, list) or not spec:
+            raise TypeError("documents must be a non-empty list of documents")
+        if not all(isinstance(item, dict) for item in spec):
+            raise TypeError("documents must be a non-empty list of documents")
+        return spec
+
+    @staticmethod
+    def _normalize_update_specs(spec: object) -> list[dict[str, object]]:
+        if not isinstance(spec, list) or not spec:
+            raise TypeError("updates must be a non-empty list")
+        if not all(isinstance(item, dict) for item in spec):
+            raise TypeError("updates must be a non-empty list")
+        return spec
+
+    @staticmethod
+    def _normalize_delete_specs(spec: object) -> list[dict[str, object]]:
+        if not isinstance(spec, list) or not spec:
+            raise TypeError("deletes must be a non-empty list")
+        if not all(isinstance(item, dict) for item in spec):
+            raise TypeError("deletes must be a non-empty list")
+        return spec
+
     async def _collection_stats(
         self,
         collection_name: str,
@@ -530,6 +562,187 @@ class AsyncDatabase:
                 session=session,
             )
             return {"values": values, "ok": 1.0}
+
+        if command_name == "insert":
+            collection_name = self._require_collection_name(spec.get("insert"), "insert")
+            documents = self._normalize_insert_documents(spec.get("documents"))
+            ordered = self._normalize_ordered_from_command(spec.get("ordered"))
+            collection = self.get_collection(collection_name)
+            inserted = 0
+            write_errors: list[dict[str, object]] = []
+            for index, document in enumerate(documents):
+                try:
+                    await collection.insert_one(document, session=session)
+                    inserted += 1
+                except Exception as exc:
+                    write_errors.append(
+                        {
+                            "index": index,
+                            "errmsg": str(exc),
+                        }
+                    )
+                    if ordered:
+                        break
+            if write_errors:
+                raise BulkWriteError(
+                    "insert command failed",
+                    details={
+                        "writeErrors": write_errors,
+                        "n": inserted,
+                    },
+                )
+            return {"n": inserted, "ok": 1.0}
+
+        if command_name == "update":
+            collection_name = self._require_collection_name(spec.get("update"), "update")
+            updates = self._normalize_update_specs(spec.get("updates"))
+            ordered = self._normalize_ordered_from_command(spec.get("ordered"))
+            collection = self.get_collection(collection_name)
+            matched = 0
+            modified = 0
+            upserted: list[dict[str, object]] = []
+            write_errors: list[dict[str, object]] = []
+            for index, update_spec in enumerate(updates):
+                try:
+                    query = self._normalize_filter(update_spec.get("q"))
+                    update_document = update_spec.get("u")
+                    if not isinstance(update_document, dict):
+                        raise TypeError("u must be a document")
+                    multi = update_spec.get("multi", False)
+                    if not isinstance(multi, bool):
+                        raise TypeError("multi must be a bool")
+                    upsert = update_spec.get("upsert", False)
+                    if not isinstance(upsert, bool):
+                        raise TypeError("upsert must be a bool")
+                    array_filters = update_spec.get("arrayFilters")
+                    if array_filters is not None and (
+                        not isinstance(array_filters, list)
+                        or not all(is_filter(item) for item in array_filters)
+                    ):
+                        raise TypeError("arrayFilters must be a list of dicts")
+                    hint = self._normalize_hint_from_command(update_spec.get("hint"))
+                    let = update_spec.get("let")
+                    if let is not None and not isinstance(let, dict):
+                        raise TypeError("let must be a dict")
+
+                    is_operator_update = all(
+                        isinstance(key, str) and key.startswith("$")
+                        for key in update_document
+                    )
+                    if multi:
+                        if not is_operator_update:
+                            raise OperationFailure("replacement updates cannot be multi")
+                        result = await collection.update_many(
+                            query,
+                            update_document,
+                            upsert=upsert,
+                            array_filters=array_filters,
+                            hint=hint,
+                            comment=spec.get("comment"),
+                            let=let,
+                            session=session,
+                        )
+                    elif is_operator_update:
+                        result = await collection.update_one(
+                            query,
+                            update_document,
+                            upsert=upsert,
+                            array_filters=array_filters,
+                            hint=hint,
+                            comment=spec.get("comment"),
+                            let=let,
+                            session=session,
+                        )
+                    else:
+                        result = await collection.replace_one(
+                            query,
+                            update_document,
+                            upsert=upsert,
+                            hint=hint,
+                            comment=spec.get("comment"),
+                            let=let,
+                            session=session,
+                        )
+                    matched += result.matched_count
+                    modified += result.modified_count
+                    if result.upserted_id is not None:
+                        upserted.append({"index": index, "_id": result.upserted_id})
+                except Exception as exc:
+                    write_errors.append(
+                        {
+                            "index": index,
+                            "errmsg": str(exc),
+                        }
+                    )
+                    if ordered:
+                        break
+            if write_errors:
+                raise BulkWriteError(
+                    "update command failed",
+                    details={
+                        "writeErrors": write_errors,
+                        "n": matched,
+                        "nModified": modified,
+                        "upserted": upserted,
+                    },
+                )
+            result: dict[str, object] = {"n": matched, "nModified": modified, "ok": 1.0}
+            if upserted:
+                result["upserted"] = upserted
+            return result
+
+        if command_name == "delete":
+            collection_name = self._require_collection_name(spec.get("delete"), "delete")
+            deletes = self._normalize_delete_specs(spec.get("deletes"))
+            ordered = self._normalize_ordered_from_command(spec.get("ordered"))
+            collection = self.get_collection(collection_name)
+            deleted = 0
+            write_errors: list[dict[str, object]] = []
+            for index, delete_spec in enumerate(deletes):
+                try:
+                    query = self._normalize_filter(delete_spec.get("q"))
+                    limit = delete_spec.get("limit", 0)
+                    if limit not in (0, 1):
+                        raise TypeError("limit must be 0 or 1")
+                    hint = self._normalize_hint_from_command(delete_spec.get("hint"))
+                    let = delete_spec.get("let")
+                    if let is not None and not isinstance(let, dict):
+                        raise TypeError("let must be a dict")
+                    if limit == 1:
+                        result = await collection.delete_one(
+                            query,
+                            hint=hint,
+                            comment=spec.get("comment"),
+                            let=let,
+                            session=session,
+                        )
+                    else:
+                        result = await collection.delete_many(
+                            query,
+                            hint=hint,
+                            comment=spec.get("comment"),
+                            let=let,
+                            session=session,
+                        )
+                    deleted += result.deleted_count
+                except Exception as exc:
+                    write_errors.append(
+                        {
+                            "index": index,
+                            "errmsg": str(exc),
+                        }
+                    )
+                    if ordered:
+                        break
+            if write_errors:
+                raise BulkWriteError(
+                    "delete command failed",
+                    details={
+                        "writeErrors": write_errors,
+                        "n": deleted,
+                    },
+                )
+            return {"n": deleted, "ok": 1.0}
 
         if command_name == "find":
             collection_name = self._require_collection_name(spec.get("find"), "find")

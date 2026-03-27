@@ -459,6 +459,68 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         },
                     )
 
+    async def test_database_command_supports_insert_update_and_delete(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    inserted = await client.alpha.command(
+                        {
+                            "insert": "events",
+                            "documents": [
+                                {"_id": "1", "kind": "view", "rank": 1},
+                                {"_id": "2", "kind": "click", "rank": 2},
+                            ],
+                        }
+                    )
+                    updated = await client.alpha.command(
+                        {
+                            "update": "events",
+                            "updates": [
+                                {
+                                    "q": {"kind": "view"},
+                                    "u": {"$set": {"done": True}},
+                                    "multi": True,
+                                },
+                                {
+                                    "q": {"kind": "missing"},
+                                    "u": {"kind": "missing", "done": True},
+                                    "upsert": True,
+                                },
+                            ],
+                        }
+                    )
+                    deleted = await client.alpha.command(
+                        {
+                            "delete": "events",
+                            "deletes": [
+                                {"q": {"kind": "click"}, "limit": 1},
+                                {"q": {"kind": "missing"}, "limit": 0},
+                            ],
+                        }
+                    )
+
+                    self.assertEqual(inserted, {"n": 2, "ok": 1.0})
+                    self.assertEqual(updated["n"], 1)
+                    self.assertEqual(updated["nModified"], 1)
+                    self.assertEqual(updated["ok"], 1.0)
+                    self.assertEqual(len(updated["upserted"]), 1)
+                    self.assertEqual(deleted, {"n": 2, "ok": 1.0})
+
+    async def test_database_command_write_commands_surface_write_errors(self):
+        async with open_client("memory") as client:
+            await client.alpha.events.insert_one({"_id": "1", "kind": "view"})
+
+            with self.assertRaises(BulkWriteError):
+                await client.alpha.command(
+                    {
+                        "insert": "events",
+                        "documents": [
+                            {"_id": "1", "kind": "duplicate"},
+                            {"_id": "2", "kind": "ok"},
+                        ],
+                    }
+                )
+
     async def test_database_command_supports_find_and_modify(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -561,6 +623,12 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await client.alpha.command({"dropIndexes": "events", "index": 1.5})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
                 await client.alpha.command("listDatabases", nameOnly=1)  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                await client.alpha.command({"insert": "events", "documents": {}})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                await client.alpha.command({"update": "events", "updates": {}})  # type: ignore[arg-type]
+            with self.assertRaises(TypeError):
+                await client.alpha.command({"delete": "events", "deletes": {}})  # type: ignore[arg-type]
             with self.assertRaises(ValueError):
                 await client.alpha.command({"find": "events", "batchSize": -1})  # type: ignore[arg-type]
             with self.assertRaises(TypeError):
