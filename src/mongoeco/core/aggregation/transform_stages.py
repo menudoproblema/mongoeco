@@ -12,12 +12,14 @@ from mongoeco.types import Document
 
 from mongoeco.core.aggregation.runtime import (
     _expression_truthy,
+    evaluate_expression,
+)
+from mongoeco.core.aggregation.planning import (
     _match_spec_contains_expr,
     _projection_flag,
     _require_projection_for_dialect,
     _require_sample_spec,
     _require_unset_spec,
-    evaluate_expression,
 )
 
 
@@ -186,4 +188,3 @@ def _apply_replace_root(
 
 
 from mongoeco.core.aggregation.runtime import _REMOVE  # noqa: E402
-

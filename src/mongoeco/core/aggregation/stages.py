@@ -20,14 +20,16 @@ from mongoeco.core.aggregation.join_stages import (
     _apply_lookup,
     _apply_union_with,
 )
-from mongoeco.core.aggregation.runtime import (
-    AggregationStageContext,
+from mongoeco.core.aggregation.planning import (
     Pipeline,
-    _apply_unwind,
     _require_documents_stage,
     _require_non_negative_int,
     _require_sort,
     _require_stage,
+)
+from mongoeco.core.aggregation.runtime import (
+    AggregationStageContext,
+    _apply_unwind,
 )
 from mongoeco.core.aggregation.transform_stages import (
     _apply_add_fields,

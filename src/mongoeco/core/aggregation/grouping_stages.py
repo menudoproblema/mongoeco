@@ -26,7 +26,6 @@ from mongoeco.core.aggregation.runtime import (
     _initialize_accumulators,
     _is_numeric,
     _parse_percentile_spec,
-    _require_sort,
     _resolve_range_value,
     _resolve_window_index,
     _require_range_bound,
@@ -38,6 +37,7 @@ from mongoeco.core.aggregation.runtime import (
     _window_sort_keys_equal,
     evaluate_expression,
 )
+from mongoeco.core.aggregation.planning import _require_sort
 
 
 def _apply_group(
@@ -460,4 +460,3 @@ def _apply_sort_by_count(
 
 
 from mongoeco.core.paths import set_document_value  # noqa: E402
-

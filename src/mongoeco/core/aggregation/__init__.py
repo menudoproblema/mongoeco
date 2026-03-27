@@ -1,8 +1,5 @@
 from mongoeco.core.aggregation.runtime import (
-    AggregationPushdown,
     AggregationStageContext,
-    Pipeline,
-    PipelineStage,
     _ACCUMULATOR_FLAGS_KEY,
     _CURRENT_COLLECTION_RESOLVER_KEY,
     _MISSING,
@@ -13,11 +10,16 @@ from mongoeco.core.aggregation.runtime import (
     _expression_truthy,
     _finalize_accumulators,
     _initialize_accumulators,
+    _resolve_aggregation_field_path,
+    evaluate_expression,
+)
+from mongoeco.core.aggregation.planning import (
+    AggregationPushdown,
+    Pipeline,
+    PipelineStage,
     _is_simple_projection,
     _match_spec_contains_expr,
     _require_projection,
-    _resolve_aggregation_field_path,
-    evaluate_expression,
     split_pushdown_pipeline,
 )
 from mongoeco.core.aggregation.grouping_stages import _apply_group
