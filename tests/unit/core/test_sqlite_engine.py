@@ -1,7 +1,9 @@
 import asyncio
 import datetime
+import os
 import sqlite3
 import threading
+import tempfile
 import unittest
 import uuid
 from unittest.mock import Mock, patch
@@ -526,6 +528,17 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             engine._shutdown_executor()
 
+    def test_default_sqlite_engines_share_process_executor(self):
+        first = SQLiteEngine()
+        second = SQLiteEngine()
+        executor_a = first._ensure_executor()
+        executor_b = second._ensure_executor()
+        try:
+            self.assertIs(executor_a, executor_b)
+        finally:
+            first._shutdown_executor()
+            second._shutdown_executor()
+
     def test_lookup_collection_id_uses_cache(self):
         engine = SQLiteEngine()
         cursor = Mock()
@@ -592,11 +605,18 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
+            _, snapshot_indexes = await engine._run_blocking(
+                engine._snapshot_bulk_insert_preparation_sync,
+                "db",
+                "coll",
+                None,
+            )
             documents = [{"_id": "1", "email": "a@example.com"}]
             prepared_documents = [
                 (
                     engine._storage_key("1"),
                     engine._serialize_document(documents[0]),
+                    [],
                 )
             ]
             with patch.object(engine, "_serialize_document", side_effect=AssertionError("serialize-in-lock")):
@@ -606,6 +626,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                     "coll",
                     documents,
                     prepared_documents,
+                    snapshot_indexes,
                     None,
                     bypass_document_validation=True,
                     snapshot_options=None,
@@ -616,6 +637,90 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(results, [True])
         self.assertEqual(found, documents[0])
+
+    async def test_put_documents_bulk_prefers_precomputed_multikey_rows_when_index_snapshot_is_stable(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["tags"], unique=False, name="idx_tags")
+            snapshot_options, snapshot_indexes = await engine._run_blocking(
+                engine._snapshot_bulk_insert_preparation_sync,
+                "db",
+                "coll",
+                None,
+            )
+            del snapshot_options
+            documents = [{"_id": "1", "tags": ["python", "sqlite"]}]
+            prepared_documents = [
+                engine._prepare_bulk_document_with_indexes_sync(documents[0], snapshot_indexes)
+            ]
+            with patch.object(engine, "_build_multikey_rows_for_document", side_effect=AssertionError("recomputed")):
+                results = await engine._run_blocking(
+                    engine._put_documents_bulk_sync,
+                    "db",
+                    "coll",
+                    documents,
+                    prepared_documents,
+                    snapshot_indexes,
+                    None,
+                    bypass_document_validation=True,
+                    snapshot_options=None,
+                )
+                rows = engine._require_connection().execute(
+                    """
+                    SELECT index_name, element_key
+                    FROM multikey_entries
+                    WHERE collection_id = ? AND storage_key = ?
+                    ORDER BY index_name, element_key
+                    """,
+                    (1, engine._storage_key("1")),
+                ).fetchall()
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(results, [True])
+        self.assertEqual(rows, [("idx_tags", "python"), ("idx_tags", "sqlite")])
+
+    async def test_connect_defers_multikey_physical_index_recreation_until_index_metadata_load(self):
+        handle = tempfile.NamedTemporaryFile(suffix=".sqlite3", delete=False)
+        handle.close()
+        path = handle.name
+        engine = SQLiteEngine(path)
+        try:
+            await engine.connect()
+            try:
+                await engine.put_document("db", "coll", {"_id": "1", "tags": ["python"]})
+                await engine.create_index("db", "coll", ["tags"], unique=False, name="idx_tags")
+                physical_name = engine._physical_multikey_index_name("db", "coll", "idx_tags")
+                conn = engine._require_connection()
+                conn.execute(f"DROP INDEX IF EXISTS {engine._quote_identifier(physical_name)}")
+                conn.commit()
+                engine._ensured_multikey_physical_indexes.discard(physical_name)
+            finally:
+                await engine.disconnect()
+
+            reopened = SQLiteEngine(path)
+            await reopened.connect()
+            try:
+                conn = reopened._require_connection()
+                before = conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?",
+                    (physical_name,),
+                ).fetchone()
+                self.assertIsNone(before)
+
+                reopened._load_indexes("db", "coll")
+
+                after = conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?",
+                    (physical_name,),
+                ).fetchone()
+            finally:
+                await reopened.disconnect()
+        finally:
+            os.unlink(path)
+
+        self.assertEqual(after[0], physical_name)
 
     async def test_load_indexes_rejects_non_list_metadata(self):
         engine = SQLiteEngine()

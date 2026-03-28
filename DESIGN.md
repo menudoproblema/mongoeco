@@ -1104,15 +1104,19 @@ Refinamiento continuo ya aplicado después del cierre formal de Fase 8:
 * `collection_id` ya se resuelve con cache en memoria estable por colección, evitando roundtrips repetidos a SQLite en rutas multikey;
 * cache en memoria de metadata de índices SQLite versionada por colección, para no invalidar `users` cuando cambia `logs`;
 * creación de índice multikey vuelta a priorizar integridad total sobre escaneo optimista, evitando la ventana de inconsistencia durante la construcción;
-* fallback de SQLite ejecutado sobre un ejecutor propio del engine, sin depender del pool global de `asyncio.to_thread`;
-* tamaño del ejecutor propio de SQLite configurable, con heurística por CPU cuando no se especifica;
+* fallback de SQLite ejecutado sobre un ejecutor dedicado del runtime de SQLite, sin depender del pool global de `asyncio.to_thread`;
+* el ejecutor por defecto de SQLite ya se comparte a nivel de proceso entre engines, evitando multiplicar `ThreadPoolExecutor` idénticos cuando conviven muchos `MongoClient`;
+* tamaño del ejecutor de SQLite configurable, con heurística por CPU cuando no se especifica;
 * validación documental en `SQLiteEngine` adelantada fuera del lock en la ruta estable de `put_document`, con revalidación solo si el snapshot cambia al volver a entrar;
 * spill de agregación mejorado con ordenación externa por chunks para `$sort` cuando la política de spill lo pide;
 * `SyncRunner` más explícito al propagar `ExecutionTimeout` y `ServerSelectionTimeoutError` en la capa sync;
 * `SyncRunner` protegido frente a cierre concurrente mientras otra llamada sync sigue ejecutándose;
+* acceso real a `asyncio.Runner` serializado con lock para evitar carreras entre `run()`, drenado de tareas y `close()` cuando varias hebras sync comparten cliente;
 * pool de conexiones del driver con espera FIFO real para reducir starvation bajo contención.
 * `bulk_write` y writes compuestos ya preparan y validan sus modelos en paralelo antes de entrar en la ruta de ejecución, sin perder la semántica actual de errores ordenados/no ordenados.
 * `insert_many` sobre SQLite ya puede aprovechar una ruta bulk con validación paralela previa y un tramo transaccional único controlado para la inserción real.
+* `put_documents_bulk` entra al lock con serialización, `storage_key` y filas multikey ya precalculadas desde el snapshot estable de índices, recalculando dentro del lock solo si la metadata cambió de verdad;
+* la verificación de índices físicos multikey persistidos ya no penaliza el `connect()` completo; pasa a una ruta perezosa al cargar metadata de índices de la colección.
 
 Estado actual del contraste versionado con `mongomock`:
 

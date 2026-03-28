@@ -38,6 +38,7 @@ class _SyncRunner:
         self._closing = False
         self._state_condition = threading.Condition()
         self._active_runs = 0
+        self._runner_lock = threading.Lock()
 
     def _cleanup_pending_tasks(self) -> None:
         if self._closed:
@@ -66,13 +67,16 @@ class _SyncRunner:
             except TimeoutError:
                 pass
 
-        self._runner.run(_drain_pending())
+        with self._runner_lock:
+            self._runner.run(_drain_pending())
         shutdown_asyncgens = getattr(loop, "shutdown_asyncgens", None)
         if callable(shutdown_asyncgens):
-            self._runner.run(shutdown_asyncgens())
+            with self._runner_lock:
+                self._runner.run(shutdown_asyncgens())
         shutdown_default_executor = getattr(loop, "shutdown_default_executor", None)
         if callable(shutdown_default_executor):
-            self._runner.run(shutdown_default_executor())
+            with self._runner_lock:
+                self._runner.run(shutdown_default_executor())
 
     def run(self, awaitable):
         with self._state_condition:
@@ -85,7 +89,8 @@ class _SyncRunner:
                 asyncio.get_running_loop()
             except RuntimeError:
                 try:
-                    return self._runner.run(awaitable)
+                    with self._runner_lock:
+                        return self._runner.run(awaitable)
                 except ExecutionTimeout as exc:
                     raise ExecutionTimeout(
                         f"sync operation timed out: {exc}",
@@ -131,7 +136,8 @@ class _SyncRunner:
                             loop.close()
                 else:
                     self._cleanup_pending_tasks()
-                    self._runner.close()
+                    with self._runner_lock:
+                        self._runner.close()
             finally:
                 with self._state_condition:
                     self._closed = True

@@ -123,6 +123,28 @@ class SyncClientUnitTests(unittest.TestCase):
 
         self.assertTrue(closed)
 
+    def test_sync_runner_rejects_running_inside_event_loop_from_secondary_thread(self):
+        runner = _SyncRunner()
+        captured: list[type[BaseException]] = []
+
+        def _worker() -> None:
+            async def _exercise() -> None:
+                try:
+                    runner.run(_noop())
+                except BaseException as exc:  # pragma: no cover - assertion follows on captured type
+                    captured.append(type(exc))
+
+            asyncio.run(_exercise())
+
+        try:
+            worker = threading.Thread(target=_worker)
+            worker.start()
+            worker.join()
+        finally:
+            runner.close()
+
+        self.assertEqual(captured, [InvalidOperation])
+
     def test_sync_runner_marks_itself_closed_even_if_runner_close_fails(self):
         runner = _SyncRunner()
 
