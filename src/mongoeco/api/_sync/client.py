@@ -40,6 +40,48 @@ class _SyncRunner:
         self._active_runs = 0
         self._runner_lock = threading.Lock()
 
+    def _run_direct(self, awaitable):
+        try:
+            with self._runner_lock:
+                return self._runner.run(awaitable)
+        except ExecutionTimeout as exc:
+            raise ExecutionTimeout(
+                f"sync operation timed out: {exc}",
+                code=exc.code,
+                details=exc.details,
+                error_labels=exc.error_labels,
+            ) from exc
+        except ServerSelectionTimeoutError as exc:
+            raise ServerSelectionTimeoutError(f"sync server selection timed out: {exc}") from exc
+
+    @staticmethod
+    def _rethrow_helper_error(outcome: dict[str, object]) -> None:
+        error = outcome.get("error")
+        if isinstance(error, BaseException):
+            raise error
+
+    def _invoke_on_helper_thread(self, operation):
+        outcome: dict[str, object] = {}
+        done = threading.Event()
+
+        def _worker() -> None:
+            try:
+                outcome["result"] = operation()
+            except BaseException as exc:  # pragma: no cover - rethrown synchronously below
+                outcome["error"] = exc
+            finally:
+                done.set()
+
+        worker = threading.Thread(
+            target=_worker,
+            name="mongoeco-sync-runner-helper",
+            daemon=True,
+        )
+        worker.start()
+        done.wait()
+        self._rethrow_helper_error(outcome)
+        return outcome.get("result")
+
     def _cleanup_pending_tasks(self) -> None:
         if self._closed:
             return
@@ -88,27 +130,21 @@ class _SyncRunner:
             try:
                 asyncio.get_running_loop()
             except RuntimeError:
-                try:
-                    with self._runner_lock:
-                        return self._runner.run(awaitable)
-                except ExecutionTimeout as exc:
-                    raise ExecutionTimeout(
-                        f"sync operation timed out: {exc}",
-                        code=exc.code,
-                        details=exc.details,
-                        error_labels=exc.error_labels,
-                    ) from exc
-                except ServerSelectionTimeoutError as exc:
-                    raise ServerSelectionTimeoutError(f"sync server selection timed out: {exc}") from exc
+                return self._run_direct(awaitable)
 
-            close = getattr(awaitable, "close", None)
-            if callable(close):
-                close()
-            raise InvalidOperation("MongoClient no puede usarse dentro de un event loop activo")
+            return self._invoke_on_helper_thread(lambda: self._run_direct(awaitable))
         finally:
             with self._state_condition:
                 self._active_runs -= 1
                 self._state_condition.notify_all()
+
+    def _close_runner_resources(self) -> None:
+        self._cleanup_pending_tasks()
+        close_runner = getattr(self._runner, "close", None)
+        if not callable(close_runner):
+            return
+        with self._runner_lock:
+            close_runner()
 
     def close(self) -> None:
         with self._state_condition:
@@ -126,18 +162,9 @@ class _SyncRunner:
                     running_loop_active = False
 
                 if running_loop_active:
-                    get_loop = getattr(self._runner, "get_loop", None)
-                    if callable(get_loop):
-                        try:
-                            loop = get_loop()
-                        except Exception:
-                            loop = None
-                        if loop is not None and not loop.is_closed():
-                            loop.close()
+                    self._invoke_on_helper_thread(self._close_runner_resources)
                 else:
-                    self._cleanup_pending_tasks()
-                    with self._runner_lock:
-                        self._runner.close()
+                    self._close_runner_resources()
             finally:
                 with self._state_condition:
                     self._closed = True

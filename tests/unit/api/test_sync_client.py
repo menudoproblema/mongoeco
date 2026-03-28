@@ -98,39 +98,25 @@ class SyncClientUnitTests(unittest.TestCase):
         asyncio.run(_exercise())
         self.assertTrue(runner._closed)
 
-    def test_sync_runner_rejects_running_inside_event_loop_and_closes_awaitable(self):
+    def test_sync_runner_runs_inside_active_event_loop(self):
         runner = _SyncRunner()
-        closed = False
-
-        class _Awaitable:
-            def close(self):
-                nonlocal closed
-                closed = True
-
-            def __await__(self):
-                if False:
-                    yield None
-                return None
 
         async def _exercise():
-            with self.assertRaises(InvalidOperation):
-                runner.run(_Awaitable())
+            self.assertEqual(runner.run(_noop()), None)
 
         try:
             asyncio.run(_exercise())
         finally:
             runner.close()
 
-        self.assertTrue(closed)
-
-    def test_sync_runner_rejects_running_inside_event_loop_from_secondary_thread(self):
+    def test_sync_runner_runs_inside_active_event_loop_from_secondary_thread(self):
         runner = _SyncRunner()
-        captured: list[type[BaseException]] = []
+        captured: list[object] = []
 
         def _worker() -> None:
             async def _exercise() -> None:
                 try:
-                    runner.run(_noop())
+                    captured.append(runner.run(_noop()))
                 except BaseException as exc:  # pragma: no cover - assertion follows on captured type
                     captured.append(type(exc))
 
@@ -143,7 +129,17 @@ class SyncClientUnitTests(unittest.TestCase):
         finally:
             runner.close()
 
-        self.assertEqual(captured, [InvalidOperation])
+        self.assertEqual(captured, [None])
+
+    def test_sync_runner_close_supports_active_event_loop(self):
+        runner = _SyncRunner()
+
+        async def _exercise() -> None:
+            runner.run(_noop())
+            runner.close()
+
+        asyncio.run(_exercise())
+        self.assertTrue(runner._closed)
 
     def test_sync_runner_marks_itself_closed_even_if_runner_close_fails(self):
         runner = _SyncRunner()

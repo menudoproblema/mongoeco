@@ -4158,10 +4158,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
 
 class SyncApiLoopSafetyTests(unittest.IsolatedAsyncioTestCase):
-    async def test_sync_client_rejects_usage_inside_active_event_loop(self):
-        client = MongoClient()
+    async def test_sync_client_supports_usage_inside_active_event_loop(self):
+        client = MongoClient(MemoryEngine())
         try:
-            with self.assertRaises(InvalidOperation):
-                client.list_database_names()
+            self.assertEqual(client.list_database_names(), [])
+            client.test.users.insert_one({"_id": "1", "name": "Ada"})
+            self.assertEqual(client.test.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
         finally:
             client.close()

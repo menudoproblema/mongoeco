@@ -1416,6 +1416,58 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             asyncio.run(collection.create_indexes([]))
 
+    def test_create_indexes_accepts_pymongo_style_index_models(self):
+        class FakePyMongoIndexModel:
+            def __init__(self, document):
+                self.document = document
+
+        class EngineStub:
+            def __init__(self):
+                self.calls = []
+
+            async def create_index(self, *args, **kwargs):
+                self.calls.append((args, kwargs))
+                return kwargs["name"] or "email_1"
+
+            async def index_information(self, *args, **kwargs):
+                return {"_id_": {"key": [("_id", 1)], "unique": True}}
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        names = asyncio.run(
+            collection.create_indexes(
+                [
+                    FakePyMongoIndexModel(
+                        {
+                            "key": [("email", 1)],
+                            "name": "email_idx",
+                            "unique": True,
+                            "partialFilterExpression": {"active": True},
+                        }
+                    )
+                ]
+            )
+        )
+
+        self.assertEqual(names, ["email_idx"])
+        self.assertEqual(
+            engine.calls,
+            [
+                (
+                    ("db", "coll", [("email", 1)]),
+                    {
+                        "unique": True,
+                        "name": "email_idx",
+                        "sparse": False,
+                        "partial_filter_expression": {"active": True},
+                        "max_time_ms": None,
+                        "context": None,
+                    },
+                )
+            ],
+        )
+
     def test_insert_many_accepts_iterable_but_rejects_mappings_and_empty_iterables(self):
         collection = AsyncCollection(MemoryEngine(), "db", "coll")
 

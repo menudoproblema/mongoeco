@@ -346,12 +346,42 @@ class AsyncCollection:
     def _normalize_index_models(cls, indexes: object) -> list[IndexModel]:
         if not isinstance(indexes, list):
             raise TypeError("indexes must be a list of IndexModel instances")
-        normalized = list(indexes)
+        normalized = [cls._normalize_index_model(index) for index in indexes]
         if not normalized:
             raise ValueError("indexes must not be empty")
-        if not all(isinstance(index, IndexModel) for index in normalized):
-            raise TypeError("indexes must contain only IndexModel instances")
         return normalized
+
+    @staticmethod
+    def _normalize_index_model(model: object) -> IndexModel:
+        if isinstance(model, IndexModel):
+            return model
+        document = getattr(model, "document", None)
+        if not isinstance(document, dict):
+            raise TypeError("indexes must contain only IndexModel instances")
+        if "key" not in document:
+            raise TypeError("index model document must contain 'key'")
+        unsupported = set(document) - {
+            "key",
+            "name",
+            "unique",
+            "sparse",
+            "partialFilterExpression",
+            "partial_filter_expression",
+        }
+        if unsupported:
+            unsupported_names = ", ".join(sorted(unsupported))
+            raise TypeError(f"unsupported IndexModel options: {unsupported_names}")
+        kwargs: dict[str, object] = {}
+        for field in (
+            "name",
+            "unique",
+            "sparse",
+            "partialFilterExpression",
+            "partial_filter_expression",
+        ):
+            if field in document:
+                kwargs[field] = document[field]
+        return IndexModel(document["key"], **kwargs)
 
     @staticmethod
     def _normalize_search_index_model(model: object) -> SearchIndexModel:
