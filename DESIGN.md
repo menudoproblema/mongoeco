@@ -646,6 +646,12 @@ Estado de avance dentro de Fase 8:
   * refinamiento BSON restante en rutas menos frecuentes y comparación fina fuera de los caminos ya cerrados;
   * refinamiento de pool de conexiones y de concurrencia/locking de SQLite, si el proyecto decide perseguir comportamiento más cercano a producción y no solo paridad funcional fina;
   * profundidad adicional de cliente de red o del proxy wire que ya no exija nueva infraestructura transversal.
+* refinamientos estructurales aún plausibles, a incorporar sin reabrir fases ya cerradas:
+  * **origen Fase 7, prioridad media-alta**: convertir el pool de conexiones del driver en un subsistema con espera asíncrona real para `checkout`, `waitQueueTimeoutMS` o equivalente y degradación por latencia en vez de fallo inmediato cuando `max_pool_size` se satura;
+  * **origen Fase 4, prioridad media**: reducir el locking global de `SQLiteEngine` y explorar un modelo más cercano a WAL/lecturas concurrentes si el proyecto decide perseguir ambición más cercana a producción y no solo corrección funcional local;
+  * **origen transversal BSON/planning, prioridad alta**: unificar en un único helper compartido toda la sabiduría de orden de tipos y comparación BSON que hoy aparece repartida entre el core y claves auxiliares de engine, para evitar divergencias silenciosas entre memoria y SQLite;
+  * **origen Fase 2/3, prioridad alta**: seguir endureciendo los caminos híbridos de fallback en SQLite y agregación para que un `sort` o stage Python no fuerce materialización completa prematura del subconjunto filtrado cuando todavía sería posible mantener cursores más incrementales o una estrategia de spill/límite de materialización más explícita;
+  * **origen Fase 1, prioridad media**: endurecer el cierre de `_SyncRunner` y de recursos pendientes para minimizar fugas o estados zombie cuando existan sockets o tareas de transporte aún activas al cerrar el cliente sincronizado.
 
 Criterio de foco:
 * Esta fase existe para evitar que los “últimos 10-15%” de fidelidad y profundidad queden repartidos en notas marginales.
@@ -1096,6 +1102,14 @@ Estado actual del contraste versionado con `mongomock`:
 * `401` ya marcados como `equivalent`;
 * `44` marcados como `outside-scope`;
 * `418` quedan como `review-needed`.
+
+Orden recomendado de refino continuo después del cierre de Fase 8:
+
+1. unificación estricta de comparación y orden BSON entre core y engines;
+2. mejora de fallback/materialización en SQLite y agregación;
+3. seguir importando o reescribiendo casos de alto valor desde la cola restante de `mongomock`;
+4. capa sync más robusta en cierre y propagación;
+5. pool del driver y concurrencia SQLite solo si el objetivo pasa de paridad fina a ambición más cercana a producción.
 
 ### 7.5 Estado Vivo Actual del Repositorio
 
