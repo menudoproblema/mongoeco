@@ -22,6 +22,13 @@ class SearchTextQuery:
 
 
 @dataclass(frozen=True, slots=True)
+class SearchPhraseQuery:
+    index_name: str
+    raw_query: str
+    paths: tuple[str, ...] | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class SearchVectorQuery:
     index_name: str
     path: str
@@ -92,39 +99,50 @@ def validate_search_stage_pipeline(pipeline: object) -> None:
 def compile_search_stage(
     operator: str,
     spec: object,
-) -> SearchTextQuery | SearchVectorQuery:
+) -> SearchTextQuery | SearchPhraseQuery | SearchVectorQuery:
     if operator == "$search":
-        return compile_search_text_query(spec)
+        return compile_search_text_like_query(spec)
     if operator == "$vectorSearch":
         return compile_vector_search_query(spec)
     raise OperationFailure("unsupported search stage operator")
 
 
-def compile_search_text_query(spec: object) -> SearchTextQuery:
+def compile_search_text_like_query(spec: object) -> SearchTextQuery | SearchPhraseQuery:
     if not isinstance(spec, dict):
         raise OperationFailure("$search requires a document specification")
-    unsupported_operators = sorted(set(spec) - {"index", "text"})
+    unsupported_operators = sorted(set(spec) - {"index", "text", "phrase"})
     if unsupported_operators:
         raise OperationFailure(
-            "$search currently supports only the text operator; unsupported keys: "
+            "$search local runtime supports only text and phrase; unsupported keys: "
             + ", ".join(unsupported_operators)
         )
     index_name = spec.get("index", "default")
     if not isinstance(index_name, str) or not index_name:
         raise OperationFailure("$search index must be a non-empty string")
-    text_spec = spec.get("text")
-    if not isinstance(text_spec, dict):
-        raise OperationFailure("$search currently supports only the text operator")
-    unsupported_text_options = sorted(set(text_spec) - {"query", "path"})
-    if unsupported_text_options:
+    has_text = "text" in spec
+    has_phrase = "phrase" in spec
+    if has_text == has_phrase:
+        raise OperationFailure("$search requires exactly one of text or phrase")
+    clause_name = "text" if has_text else "phrase"
+    clause_spec = spec.get(clause_name)
+    if not isinstance(clause_spec, dict):
+        raise OperationFailure(f"$search.{clause_name} requires a document specification")
+    unsupported_options = sorted(set(clause_spec) - {"query", "path"})
+    if unsupported_options:
         raise OperationFailure(
-            "$search.text only supports query and path; unsupported keys: "
-            + ", ".join(unsupported_text_options)
+            f"$search.{clause_name} only supports query and path; unsupported keys: "
+            + ", ".join(unsupported_options)
         )
-    raw_query = text_spec.get("query")
+    raw_query = clause_spec.get("query")
     if not isinstance(raw_query, str) or not raw_query.strip():
-        raise OperationFailure("$search.text.query must be a non-empty string")
-    paths = _normalize_search_paths(text_spec.get("path"))
+        raise OperationFailure(f"$search.{clause_name}.query must be a non-empty string")
+    paths = _normalize_search_paths(clause_spec.get("path"))
+    if has_phrase:
+        return SearchPhraseQuery(
+            index_name=index_name,
+            raw_query=raw_query,
+            paths=paths,
+        )
     terms = tuple(term for term in raw_query.strip().split() if term)
     if not terms:
         raise OperationFailure("$search.text.query must contain at least one term")
@@ -134,6 +152,20 @@ def compile_search_text_query(spec: object) -> SearchTextQuery:
         terms=terms,
         paths=paths,
     )
+
+
+def compile_search_text_query(spec: object) -> SearchTextQuery:
+    query = compile_search_text_like_query(spec)
+    if not isinstance(query, SearchTextQuery):
+        raise OperationFailure("$search.text specification is required")
+    return query
+
+
+def compile_search_phrase_query(spec: object) -> SearchPhraseQuery:
+    query = compile_search_text_like_query(spec)
+    if not isinstance(query, SearchPhraseQuery):
+        raise OperationFailure("$search.phrase specification is required")
+    return query
 
 
 def compile_vector_search_query(spec: object) -> SearchVectorQuery:
@@ -187,6 +219,22 @@ def matches_search_text_query(
     return all(any(term.lower() in value for value in lowered_entries) for term in query.terms)
 
 
+def matches_search_phrase_query(
+    document: Document,
+    *,
+    definition: SearchIndexDefinition,
+    query: SearchPhraseQuery,
+) -> bool:
+    entries = iter_searchable_text_entries(document, definition)
+    if query.paths is not None:
+        allowed = set(query.paths)
+        entries = [entry for entry in entries if entry[0] in allowed]
+    if not entries:
+        return False
+    phrase = query.raw_query.strip().lower()
+    return any(phrase in value.lower() for _, value in entries if value)
+
+
 def score_vector_document(
     document: Document,
     *,
@@ -226,7 +274,9 @@ def iter_searchable_text_entries(
     return _collect_entries_from_mapping(document, mappings)
 
 
-def sqlite_fts5_query(query: SearchTextQuery) -> str:
+def sqlite_fts5_query(query: SearchTextQuery | SearchPhraseQuery) -> str:
+    if isinstance(query, SearchPhraseQuery):
+        return _quote_fts_term(query.raw_query.strip())
     return " AND ".join(_quote_fts_term(term) for term in query.terms)
 
 

@@ -293,10 +293,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         )
                     with self.assertRaises(OperationFailure):
                         collection.aggregate([{"$vectorSearch": {"index": "vec"}}]).to_list()
-                    with self.assertRaises(OperationFailure):
-                        collection.aggregate(
-                            [{"$search": {"index": "by_text", "phrase": {"query": "ada", "path": "body"}}}]
-                        ).to_list()
+                    phrase_hits = collection.aggregate(
+                        [{"$search": {"index": "by_text", "phrase": {"query": "Ada wrote the first algorithm", "path": "body"}}}]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in phrase_hits], [3])
+                    phrase_explanation = collection.aggregate(
+                        [{"$search": {"index": "by_text", "phrase": {"query": "Ada wrote the first algorithm", "path": "body"}}}]
+                    ).explain()
+                    self.assertEqual(phrase_explanation["engine_plan"]["details"]["queryOperator"], "phrase")
+                    if engine_name == "sqlite":
+                        self.assertEqual(
+                            phrase_explanation["engine_plan"]["details"]["fts5_match"],
+                            '"Ada wrote the first algorithm"',
+                        )
                     with self.assertRaises(OperationFailure):
                         collection.create_search_index({"mappings": {"fields": {"title": {"type": "number"}}}})
 

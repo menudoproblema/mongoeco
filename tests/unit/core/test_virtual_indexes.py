@@ -20,11 +20,14 @@ from mongoeco.types import EngineIndexRecord
 
 class VirtualIndexTests(unittest.TestCase):
     def test_normalize_partial_filter_expression_validates_input(self):
+        original = {"active": True}
         self.assertIsNone(normalize_partial_filter_expression(None))
         self.assertEqual(
-            normalize_partial_filter_expression({"active": True}),
+            normalize_partial_filter_expression(original),
             {"active": True},
         )
+        normalized = normalize_partial_filter_expression(original)
+        self.assertIsNot(normalized, original)
         with self.assertRaises(TypeError):
             normalize_partial_filter_expression(["bad"])  # type: ignore[arg-type]
 
@@ -172,3 +175,75 @@ class VirtualIndexTests(unittest.TestCase):
                 "hintedIndexIsVirtual": True,
             },
         )
+
+    def test_virtual_index_usage_description_handles_plain_hints_and_dict_indexes(self):
+        indexes = [
+            {
+                "name": "plain_name",
+                "fields": ["name"],
+                "sparse": False,
+            },
+            {
+                "name": "email_sparse",
+                "fields": ["email"],
+                "sparse": True,
+            },
+        ]
+
+        details = describe_virtual_index_usage(
+            indexes,
+            compile_filter({"email": "a@example.com"}),
+            hinted_index_name="plain_name",
+        )
+
+        self.assertEqual(
+            details,
+            {
+                "usableVirtualIndexes": ["email_sparse"],
+                "hintedIndexIsVirtual": False,
+            },
+        )
+
+    def test_partial_index_implication_handles_or_and_exists_requirements(self):
+        partial_index = EngineIndexRecord(
+            name="active_or_premium",
+            fields=["tier"],
+            key=[("tier", 1)],
+            unique=False,
+            partial_filter_expression={"$or": [{"active": True}, {"tier": "premium"}]},
+        )
+
+        self.assertTrue(query_can_use_index(partial_index, compile_filter({"active": True})))
+        self.assertTrue(query_can_use_index(partial_index, compile_filter({"tier": "premium"})))
+        self.assertFalse(query_can_use_index(partial_index, compile_filter({"tier": "basic"})))
+
+        sparse_dict_index = {
+            "name": "profile_sparse",
+            "fields": ["profile.name"],
+            "sparse": True,
+        }
+        self.assertTrue(query_can_use_index(sparse_dict_index, compile_filter({"profile.name": {"$exists": True}})))
+        self.assertFalse(query_can_use_index(sparse_dict_index, compile_filter({"profile.name": None})))
+
+    def test_partial_index_implication_respects_inclusive_and_type_alias_bounds(self):
+        partial_index = EngineIndexRecord(
+            name="score_lte_idx",
+            fields=["score"],
+            key=[("score", 1)],
+            unique=False,
+            partial_filter_expression={"score": {"$lte": 10}},
+        )
+        typed_index = EngineIndexRecord(
+            name="typed_idx",
+            fields=["value"],
+            key=[("value", 1)],
+            unique=False,
+            partial_filter_expression={"value": {"$type": ["string", "null"]}},
+        )
+
+        self.assertTrue(query_can_use_index(partial_index, compile_filter({"score": {"$lt": 5}})))
+        self.assertTrue(query_can_use_index(partial_index, compile_filter({"score": {"$lte": 10}})))
+        self.assertFalse(query_can_use_index(partial_index, compile_filter({"score": {"$gt": 10}})))
+        self.assertTrue(query_can_use_index(typed_index, compile_filter({"value": None})))
+        self.assertTrue(query_can_use_index(typed_index, compile_filter({"value": "ada"})))
+        self.assertFalse(query_can_use_index(typed_index, compile_filter({"value": 2})))

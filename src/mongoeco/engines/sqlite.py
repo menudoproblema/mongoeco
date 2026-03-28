@@ -43,11 +43,13 @@ from mongoeco.core.query_plan import (
     ensure_query_plan,
 )
 from mongoeco.core.search import (
+    SearchPhraseQuery,
     SearchTextQuery,
     SearchVectorQuery,
     build_search_index_document,
     compile_search_stage,
     iter_searchable_text_entries,
+    matches_search_phrase_query,
     matches_search_text_query,
     score_vector_document,
     sqlite_fts5_query,
@@ -3060,7 +3062,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 definition, physical_name, ready_at_epoch = rows[0]
                 if not self._search_index_is_ready_sync(ready_at_epoch):
                     raise OperationFailure(f"search index [{query.index_name}] is not ready yet")
-                if isinstance(query, SearchTextQuery) and definition.index_type != "search":
+                if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) and definition.index_type != "search":
                     raise OperationFailure(f"search index [{query.index_name}] does not support $search")
                 if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
                     raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
@@ -3117,10 +3119,18 @@ class SQLiteEngine(AsyncStorageEngine):
                 documents = [
                     document
                     for _, document in self._load_documents(db_name, coll_name)
-                    if matches_search_text_query(
+                    if (
+                        matches_search_text_query(
+                            document,
+                            definition=definition,
+                            query=query,
+                        )
+                        if isinstance(query, SearchTextQuery)
+                        else matches_search_phrase_query(
                         document,
                         definition=definition,
                         query=query,
+                        )
                     )
                 ]
                 enforce_deadline(deadline)
@@ -3145,7 +3155,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 definition, physical_name, ready_at_epoch = rows[0]
                 backend = "python"
                 fts5_match: str | None = None
-                if isinstance(query, SearchTextQuery):
+                if isinstance(query, (SearchTextQuery, SearchPhraseQuery)):
                     resolved_physical_name = self._ensure_search_backend_sync(
                         conn,
                         db_name,
@@ -3182,8 +3192,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     definition,
                     ready=self._search_index_is_ready_sync(ready_at_epoch),
                 ),
-                "query": query.raw_query if isinstance(query, SearchTextQuery) else None,
-                "paths": list(query.paths) if isinstance(query, SearchTextQuery) and query.paths is not None else None,
+                "queryOperator": "phrase" if isinstance(query, SearchPhraseQuery) else "text" if isinstance(query, SearchTextQuery) else None,
+                "query": query.raw_query if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) else None,
+                "paths": list(query.paths) if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) and query.paths is not None else None,
                 "fts5_match": fts5_match,
                 "path": query.path if isinstance(query, SearchVectorQuery) else None,
                 "queryVector": list(query.query_vector) if isinstance(query, SearchVectorQuery) else None,

@@ -692,7 +692,7 @@ Regla práctica:
 ### Fase 9: Search Runtime Local
 Objetivo: pasar de la mera gestión de definiciones de search indexes a un runtime local ejecutable, honesto y observable.
 
-Estado actual: **iniciada y operativa para texto, con vector search local experimental**.
+Estado actual: **operativa para texto y phrase, con vector search local experimental**.
 
 Perímetro:
 * **Search Contract**:
@@ -714,6 +714,7 @@ Aplicado ya en el estado actual:
 * validación explícita de definiciones de search index y rechazo de mappings no soportados;
 * `SearchIndexDocument` honesto (`queryable` / `status`) para `search` y `vectorSearch`;
 * `$search` soportado como primer stage real de `aggregate` en `MemoryEngine` y `SQLiteEngine`;
+* `$search.phrase` soportado dentro del subset local y ejecutado de forma coherente en memoria y sobre FTS5 cuando aplica;
 * rechazo explícito del DSL de `$search` y `$vectorSearch` fuera del subset soportado localmente;
 * explain honesto del backend de búsqueda, incluyendo la traducción `FTS5 MATCH` cuando aplica;
 * backend FTS5 para SQLite con sincronización en insert, update, delete, bulk insert y ciclo de vida de índices.
@@ -735,7 +736,7 @@ Orden recomendado:
 ### Fase 10: Mongomock Parity Closure
 Objetivo: vaciar de forma disciplinada la cola larga de casos `review-needed` frente a la suite histórica de `mongomock`.
 
-Estado actual: **en marcha**.
+Estado actual: **cerrada en la matriz versionada**.
 
 Perímetro:
 * seguir clasificando la matriz versionada en:

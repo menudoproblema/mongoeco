@@ -39,10 +39,12 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import QueryNode, ensure_query_plan
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.search import (
+    SearchPhraseQuery,
     SearchTextQuery,
     SearchVectorQuery,
     build_search_index_document,
     compile_search_stage,
+    matches_search_phrase_query,
     matches_search_text_query,
     score_vector_document,
     validate_search_index_definition,
@@ -1128,7 +1130,7 @@ class MemoryEngine(AsyncStorageEngine):
                 raise OperationFailure(f"search index not found with name [{query.index_name}]")
             if not self._search_index_is_ready(db_name, coll_name, query.index_name):
                 raise OperationFailure(f"search index [{query.index_name}] is not ready yet")
-            if isinstance(query, SearchTextQuery) and definition.index_type != "search":
+            if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) and definition.index_type != "search":
                 raise OperationFailure(f"search index [{query.index_name}] does not support $search")
             if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
                 raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
@@ -1142,6 +1144,16 @@ class MemoryEngine(AsyncStorageEngine):
                 document
                 for document in documents
                 if matches_search_text_query(
+                    document,
+                    definition=definition,
+                    query=query,
+                )
+            ]
+        if isinstance(query, SearchPhraseQuery):
+            return [
+                document
+                for document in documents
+                if matches_search_phrase_query(
                     document,
                     definition=definition,
                     query=query,
@@ -1179,7 +1191,7 @@ class MemoryEngine(AsyncStorageEngine):
         if definition is None:
             raise OperationFailure(f"search index not found with name [{query.index_name}]")
         ready = self._search_index_is_ready(db_name, coll_name, query.index_name)
-        if isinstance(query, SearchTextQuery) and definition.index_type != "search":
+        if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) and definition.index_type != "search":
             raise OperationFailure(f"search index [{query.index_name}] does not support $search")
         if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
             raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
@@ -1200,8 +1212,9 @@ class MemoryEngine(AsyncStorageEngine):
                 "backend": "python",
                 "status": "READY" if ready else "PENDING",
                 "definition": build_search_index_document(definition, ready=ready),
-                "query": query.raw_query if isinstance(query, SearchTextQuery) else None,
-                "paths": list(query.paths) if isinstance(query, SearchTextQuery) and query.paths is not None else None,
+                "queryOperator": "phrase" if isinstance(query, SearchPhraseQuery) else "text" if isinstance(query, SearchTextQuery) else None,
+                "query": query.raw_query if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) else None,
+                "paths": list(query.paths) if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) and query.paths is not None else None,
                 "path": query.path if isinstance(query, SearchVectorQuery) else None,
                 "queryVector": list(query.query_vector) if isinstance(query, SearchVectorQuery) else None,
                 "limit": query.limit if isinstance(query, SearchVectorQuery) else None,
