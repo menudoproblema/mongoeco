@@ -613,6 +613,11 @@ Objetivos principales:
   * `collation`
   * `bypass_document_validation`
   * `allow_disk_use` en todos los puntos donde la superficie PyMongo lo expone y no solo en el contrato interno actual
+  * contraste exhaustivo de la suite de `mongomock`:
+    * inventario completo de casos
+    * clasificación por áreas
+    * matriz `cubierto / equivalente / no cubierto / fuera de alcance`
+    * importación selectiva o reescritura de los casos con más valor contractual
 * **Proxy wire y superficie de servidor más profunda**:
   * ampliar la `WireSurface` cuando el crecimiento de comandos o semántica de servidor ya no quepa limpiamente en la capa actual;
   * seguir endureciendo compatibilidad con drivers externos, cursores, sesiones, errores y shape de respuestas.
@@ -626,6 +631,17 @@ Criterio de foco:
 * Esta fase existe para evitar que los “últimos 10-15%” de fidelidad y profundidad queden repartidos en notas marginales.
 * Si una pieza no exige reabrir arquitectura base, pero sí mejora de forma clara la robustez contractual, la completitud o la paridad fina, pertenece antes a Fase 8 que a una nueva ola de refactor.
 * Si una pieza es principalmente de producto o plataforma de red, pero ya depende de la arquitectura preparada en Fase 7 y no de nueva infraestructura transversal, también puede aterrizar aquí.
+* Optimizaciones opcionales de implementación solo entran aquí si:
+  * ayudan a sostener la fidelidad contractual sin duplicar semántica de forma peligrosa; y
+  * no reabren otra vez el diseño central del core.
+
+Nota de implementación opcional para Fase 8:
+* **Backend Rust opcional para BSON core**:
+  * sí es una vía interesante para codec, comparación/orden BSON y conversiones numéricas si el profiling real lo justifica;
+  * debe plantearse como backend intercambiable y no como segunda fuente de verdad semántica.
+* **`QueryNode` en Rust**:
+  * no es objetivo por defecto;
+  * solo tendría sentido si la semántica del planner está completamente congelada y aparece un cuello de botella real que no compense seguir resolviendo en Python.
 
 ### Regla de Corte Entre Fases
 Para evitar mezclar objetivos y perder foco:
