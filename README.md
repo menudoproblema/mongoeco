@@ -101,5 +101,5 @@ best treated as pre-release.
 
 ## License
 
-No public license has been selected yet. If you want this repository to be
-published as open source, the next step is to choose and add one explicitly.
+This project is licensed under the Apache License 2.0. See
+[LICENSE](LICENSE).
