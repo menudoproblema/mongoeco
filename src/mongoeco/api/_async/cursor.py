@@ -508,6 +508,4 @@ class AsyncCursor:
                 dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
                 context=self._session,
             )
-        return _serialize_explanation(
-            result
-        )
+        return _serialize_explanation(result)

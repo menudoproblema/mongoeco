@@ -73,125 +73,133 @@ class QueryEngine:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
-        if isinstance(plan, MatchAll):
-            return True
-        if isinstance(plan, DeferredQueryNode):
-            raise OperationFailure(f"query plan contains deferred validation issues: {plan.issue.message}")
-        if isinstance(plan, EqualsCondition):
-            return QueryEngine._evaluate_equals(
-                document,
-                plan.field,
-                plan.value,
-                null_matches_undefined=plan.null_matches_undefined,
-                dialect=dialect,
-                collation=collation,
-            )
-        if isinstance(plan, NotEqualsCondition):
-            return QueryEngine._evaluate_not_equals(
-                document,
-                plan.field,
-                plan.value,
-                dialect=dialect,
-                collation=collation,
-            )
-        if isinstance(plan, GreaterThanCondition):
-            return QueryEngine._evaluate_comparison(
-                document,
-                plan.field,
-                plan.value,
-                "gt",
-                dialect=dialect,
-                collation=collation,
-            )
-        if isinstance(plan, GreaterThanOrEqualCondition):
-            return QueryEngine._evaluate_comparison(
-                document,
-                plan.field,
-                plan.value,
-                "gte",
-                dialect=dialect,
-                collation=collation,
-            )
-        if isinstance(plan, LessThanCondition):
-            return QueryEngine._evaluate_comparison(
-                document,
-                plan.field,
-                plan.value,
-                "lt",
-                dialect=dialect,
-                collation=collation,
-            )
-        if isinstance(plan, LessThanOrEqualCondition):
-            return QueryEngine._evaluate_comparison(
-                document,
-                plan.field,
-                plan.value,
-                "lte",
-                dialect=dialect,
-                collation=collation,
-            )
-        if isinstance(plan, InCondition):
-            return QueryEngine._evaluate_in(
-                document,
-                plan.field,
-                plan.values,
-                null_matches_undefined=plan.null_matches_undefined,
-                dialect=dialect,
-                collation=collation,
-            )
-        if isinstance(plan, NotInCondition):
-            return QueryEngine._evaluate_not_in(
-                document,
-                plan.field,
-                plan.values,
-                dialect=dialect,
-                collation=collation,
-            )
-        if isinstance(plan, AllCondition):
-            return QueryEngine._evaluate_all(
-                document,
-                plan.field,
-                plan.values,
-                dialect=dialect,
-                collation=collation,
-            )
-        if isinstance(plan, SizeCondition):
-            return QueryEngine._evaluate_size(document, plan.field, plan.value)
-        if isinstance(plan, ModCondition):
-            return QueryEngine._evaluate_mod(document, plan.field, plan.divisor, plan.remainder)
-        if isinstance(plan, RegexCondition):
-            return QueryEngine._evaluate_regex(document, plan.field, plan.pattern, plan.options)
-        if isinstance(plan, NotCondition):
-            return not QueryEngine.match_plan(document, plan.clause, dialect=dialect, collation=collation)
-        if isinstance(plan, ElemMatchCondition):
-            return QueryEngine._evaluate_elem_match(
-                document,
-                plan.field,
-                plan.condition,
-                dialect=plan.dialect,
-                collation=collation,
-            )
-        if isinstance(plan, ExistsCondition):
-            return QueryEngine._evaluate_exists(document, plan.field, plan.value)
-        if isinstance(plan, TypeCondition):
-            return QueryEngine._evaluate_type(document, plan.field, plan.values)
-        if isinstance(plan, BitwiseCondition):
-            return QueryEngine._evaluate_bitwise(document, plan.field, plan.operator, plan.operand)
-        if isinstance(plan, ExprCondition):
-            from mongoeco.core.aggregation import _expression_truthy, evaluate_expression
+        match plan:
+            case MatchAll():
+                return True
+            case DeferredQueryNode(issue=issue):
+                raise OperationFailure(f"query plan contains deferred validation issues: {issue.message}")
+            case EqualsCondition(field=field, value=value, null_matches_undefined=null_matches_undefined):
+                return QueryEngine._evaluate_equals(
+                    document,
+                    field,
+                    value,
+                    null_matches_undefined=null_matches_undefined,
+                    dialect=dialect,
+                    collation=collation,
+                )
+            case NotEqualsCondition(field=field, value=value):
+                return QueryEngine._evaluate_not_equals(
+                    document,
+                    field,
+                    value,
+                    dialect=dialect,
+                    collation=collation,
+                )
+            case GreaterThanCondition(field=field, value=value):
+                return QueryEngine._evaluate_comparison(
+                    document,
+                    field,
+                    value,
+                    "gt",
+                    dialect=dialect,
+                    collation=collation,
+                )
+            case GreaterThanOrEqualCondition(field=field, value=value):
+                return QueryEngine._evaluate_comparison(
+                    document,
+                    field,
+                    value,
+                    "gte",
+                    dialect=dialect,
+                    collation=collation,
+                )
+            case LessThanCondition(field=field, value=value):
+                return QueryEngine._evaluate_comparison(
+                    document,
+                    field,
+                    value,
+                    "lt",
+                    dialect=dialect,
+                    collation=collation,
+                )
+            case LessThanOrEqualCondition(field=field, value=value):
+                return QueryEngine._evaluate_comparison(
+                    document,
+                    field,
+                    value,
+                    "lte",
+                    dialect=dialect,
+                    collation=collation,
+                )
+            case InCondition(field=field, values=values, null_matches_undefined=null_matches_undefined):
+                return QueryEngine._evaluate_in(
+                    document,
+                    field,
+                    values,
+                    null_matches_undefined=null_matches_undefined,
+                    dialect=dialect,
+                    collation=collation,
+                )
+            case NotInCondition(field=field, values=values):
+                return QueryEngine._evaluate_not_in(
+                    document,
+                    field,
+                    values,
+                    dialect=dialect,
+                    collation=collation,
+                )
+            case AllCondition(field=field, values=values):
+                return QueryEngine._evaluate_all(
+                    document,
+                    field,
+                    values,
+                    dialect=dialect,
+                    collation=collation,
+                )
+            case SizeCondition(field=field, value=value):
+                return QueryEngine._evaluate_size(document, field, value)
+            case ModCondition(field=field, divisor=divisor, remainder=remainder):
+                return QueryEngine._evaluate_mod(document, field, divisor, remainder)
+            case RegexCondition(field=field, pattern=pattern, options=options):
+                return QueryEngine._evaluate_regex(document, field, pattern, options)
+            case NotCondition(clause=clause):
+                return not QueryEngine.match_plan(document, clause, dialect=dialect, collation=collation)
+            case ElemMatchCondition(field=field, condition=condition, dialect=elem_dialect):
+                return QueryEngine._evaluate_elem_match(
+                    document,
+                    field,
+                    condition,
+                    dialect=elem_dialect,
+                    collation=collation,
+                )
+            case ExistsCondition(field=field, value=value):
+                return QueryEngine._evaluate_exists(document, field, value)
+            case TypeCondition(field=field, values=values):
+                return QueryEngine._evaluate_type(document, field, values)
+            case BitwiseCondition(field=field, operator=operator, operand=operand):
+                return QueryEngine._evaluate_bitwise(document, field, operator, operand)
+            case ExprCondition(expression=expression, variables=variables):
+                from mongoeco.core.aggregation import _expression_truthy, evaluate_expression
 
-            value = evaluate_expression(
-                document,
-                plan.expression,
-                plan.variables,
-                dialect=dialect,
-            )
-            return _expression_truthy(value, dialect=dialect)
-        if isinstance(plan, AndCondition):
-            return all(QueryEngine.match_plan(document, clause, dialect=dialect, collation=collation) for clause in plan.clauses)
-        if isinstance(plan, OrCondition):
-            return any(QueryEngine.match_plan(document, clause, dialect=dialect, collation=collation) for clause in plan.clauses)
-        raise TypeError(f"Unsupported query plan node: {type(plan)!r}")
+                value = evaluate_expression(
+                    document,
+                    expression,
+                    variables,
+                    dialect=dialect,
+                )
+                return _expression_truthy(value, dialect=dialect)
+            case AndCondition(clauses=clauses):
+                return all(
+                    QueryEngine.match_plan(document, clause, dialect=dialect, collation=collation)
+                    for clause in clauses
+                )
+            case OrCondition(clauses=clauses):
+                return any(
+                    QueryEngine.match_plan(document, clause, dialect=dialect, collation=collation)
+                    for clause in clauses
+                )
+            case _:
+                raise TypeError(f"Unsupported query plan node: {type(plan)!r}")
 
     @staticmethod
     def _extract_values(doc: Any, path: str) -> list[Any]:

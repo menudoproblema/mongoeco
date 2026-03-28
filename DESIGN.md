@@ -1171,6 +1171,7 @@ Refinamiento continuo ya aplicado después del cierre formal de Fase 8:
 * helper compartido para orden BSON y clave de índice numérica, usado ya tanto por el core como por `SQLiteEngine`;
 * soporte de rangos numéricos sobre índices multikey auxiliares en SQLite con orden textual estable;
 * `multikey_entries` endurecida con `type_score` para que la comparación mixta no dependa de la semántica nativa de orden de SQLite;
+* `QueryEngine.match_plan(...)` ya despacha por `match/case` sobre `QueryNode`, evitando la cadena monolítica de `if isinstance(...)` en el camino principal de lectura;
 * `multikey_entries` ya usa `collection_id` en las rutas calientes de búsqueda y mantenimiento, reduciendo dependencia física de `db_name`/`coll_name`;
 * `collection_id` ya se resuelve con cache en memoria estable por colección, evitando roundtrips repetidos a SQLite en rutas multikey;
 * cache en memoria de metadata de índices SQLite versionada por colección, para no invalidar `users` cuando cambia `logs`;
@@ -1183,6 +1184,7 @@ Refinamiento continuo ya aplicado después del cierre formal de Fase 8:
 * `SyncRunner` más explícito al propagar `ExecutionTimeout` y `ServerSelectionTimeoutError` en la capa sync;
 * `SyncRunner` protegido frente a cierre concurrente mientras otra llamada sync sigue ejecutándose;
 * acceso real a `asyncio.Runner` serializado con lock para evitar carreras entre `run()`, drenado de tareas y `close()` cuando varias hebras sync comparten cliente;
+* la ruta canónica interna de lectura ya es `scan_find_semantics(...)` / `explain_find_semantics(...)`, mientras `scan_collection(...)`, `scan_find_operation(...)` y equivalentes quedan como shims legacy de compatibilidad;
 * pool de conexiones del driver con espera FIFO real para reducir starvation bajo contención.
 * `bulk_write` y writes compuestos ya preparan y validan sus modelos en paralelo antes de entrar en la ruta de ejecución, sin perder la semántica actual de errores ordenados/no ordenados.
 * `insert_many` sobre SQLite ya puede aprovechar una ruta bulk con validación paralela previa y un tramo transaccional único controlado para la inserción real.
