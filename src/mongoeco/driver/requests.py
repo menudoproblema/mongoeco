@@ -7,6 +7,7 @@ from mongoeco.driver.connections import ConnectionLease
 from mongoeco.driver.policies import ConcernPolicy, RetryPolicy, SelectionPolicy, TimeoutPolicy
 from mongoeco.driver.security import AuthPolicy, TlsPolicy
 from mongoeco.driver.topology import ServerDescription, TopologyDescription
+from mongoeco.session import ClientSession
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,8 +15,12 @@ class CommandRequest:
     database: str
     command_name: str
     payload: dict[str, Any]
-    session_id: str | None = None
+    session: ClientSession | None = None
     read_only: bool = False
+
+    @property
+    def session_id(self) -> str | None:
+        return None if self.session is None else self.session.session_id
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,3 +54,4 @@ class PreparedRequestExecution:
     plan: RequestExecutionPlan
     selected_server: ServerDescription
     connection: ConnectionLease
+    attempt_number: int = 1

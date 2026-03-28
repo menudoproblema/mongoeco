@@ -11,11 +11,13 @@ from mongoeco.compat import (
     resolve_pymongo_profile_resolution,
 )
 from mongoeco.driver import (
+    AsyncCommandTransport,
     AuthPolicy,
     ConcernPolicy,
     DriverRuntime,
     MongoUri,
     PreparedRequestExecution,
+    RequestExecutionResult,
     RequestExecutionPlan,
     SelectionPolicy,
     SrvResolution,
@@ -24,6 +26,8 @@ from mongoeco.driver import (
     TopologyDescription,
     RetryPolicy,
 )
+from mongoeco.driver.monitoring import DriverMonitor
+from mongoeco.driver.transports import LocalCommandTransport
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -439,6 +443,28 @@ class AsyncMongoClient:
     def complete_command_request_execution(self, execution: PreparedRequestExecution) -> None:
         self._driver_runtime.complete_request_execution(execution)
 
+    async def execute_driver_command(
+        self,
+        database: str,
+        command_name: str,
+        payload: dict[str, object],
+        *,
+        session: ClientSession | None = None,
+        read_only: bool = False,
+        transport: AsyncCommandTransport | None = None,
+    ) -> RequestExecutionResult:
+        plan = self.plan_command_request(
+            database,
+            command_name,
+            payload,
+            session=session,
+            read_only=read_only,
+        )
+        return await self._driver_runtime.execute_request(
+            plan,
+            LocalCommandTransport(self) if transport is None else transport,
+        )
+
     def watch(
         self,
         pipeline: object | None = None,
@@ -545,3 +571,7 @@ class AsyncMongoClient:
     @property
     def driver_runtime(self) -> DriverRuntime:
         return self._driver_runtime
+
+    @property
+    def driver_monitor(self) -> DriverMonitor:
+        return self._driver_runtime.monitor

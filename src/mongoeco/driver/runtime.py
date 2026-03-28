@@ -5,6 +5,12 @@ from typing import Any
 from mongoeco.driver.connections import ConnectionLease, ConnectionPoolSnapshot, ConnectionRegistry
 from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_seeds
 from mongoeco.driver.execution import RequestExecutionResult, execute_request_pipeline
+from mongoeco.driver.monitoring import (
+    ConnectionCheckedInEvent,
+    ConnectionCheckedOutEvent,
+    DriverMonitor,
+    ServerSelectedEvent,
+)
 from mongoeco.driver.policies import (
     ConcernPolicy,
     RetryPolicy,
@@ -67,6 +73,7 @@ class DriverRuntime:
             read_preference=effective_read_preference,
         )
         self._connections = ConnectionRegistry(self._effective_uri)
+        self._monitor = DriverMonitor()
 
     def plan_command_request(
         self,
@@ -82,7 +89,7 @@ class DriverRuntime:
                 database=database,
                 command_name=command_name,
                 payload=payload,
-                session_id=None if session is None else session.session_id,
+                session=session,
                 read_only=read_only,
             ),
             topology=self._topology,
@@ -111,14 +118,46 @@ class DriverRuntime:
             raise RuntimeError("no candidate servers available for request execution")
         selected_server = plan.candidate_servers[min(attempt_number - 1, len(plan.candidate_servers) - 1)]
         lease = self._connections.checkout(selected_server)
-        return PreparedRequestExecution(
+        execution = PreparedRequestExecution(
             plan=plan,
             selected_server=selected_server,
             connection=lease,
+            attempt_number=attempt_number,
         )
+        self._monitor.emit(
+            ServerSelectedEvent(
+                database=plan.request.database,
+                command_name=plan.request.command_name,
+                server_address=selected_server.address,
+                attempt_number=attempt_number,
+                read_only=plan.request.read_only,
+                session_id=plan.request.session_id,
+            )
+        )
+        self._monitor.emit(
+            ConnectionCheckedOutEvent(
+                database=plan.request.database,
+                command_name=plan.request.command_name,
+                server_address=selected_server.address,
+                connection_id=lease.connection_id,
+                attempt_number=attempt_number,
+                session_id=plan.request.session_id,
+            )
+        )
+        return execution
 
     def complete_request_execution(self, execution: PreparedRequestExecution) -> None:
         self._connections.checkin(execution.connection)
+        self._monitor.emit(
+            ConnectionCheckedInEvent(
+                database=execution.plan.request.database,
+                command_name=execution.plan.request.command_name,
+                server_address=execution.selected_server.address,
+                connection_id=execution.connection.connection_id,
+                attempt_number=execution.attempt_number,
+                session_id=execution.plan.request.session_id,
+            )
+        )
 
     def clear_connections(self) -> None:
         self._connections.clear()
@@ -129,6 +168,7 @@ class DriverRuntime:
             prepare_execution=self.prepare_request_execution_attempt,
             complete_execution=self.complete_request_execution,
             transport=transport,
+            monitor=self._monitor,
         )
 
     @property
@@ -174,3 +214,7 @@ class DriverRuntime:
     @property
     def connection_snapshots(self) -> tuple[ConnectionPoolSnapshot, ...]:
         return self._connections.snapshots()
+
+    @property
+    def monitor(self) -> DriverMonitor:
+        return self._monitor

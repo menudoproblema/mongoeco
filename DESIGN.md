@@ -888,6 +888,12 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * timeout de socket
     * retry básico para lecturas y escrituras
 * monitoring y comportamiento propio de un cliente de red completo
+  * ya existe `DriverMonitor` tipado con eventos de:
+    * selección de servidor
+    * checkout/checkin de conexión
+    * inicio, éxito y fallo de comando
+  * ya existe transporte local explícito sobre `Database.command(...)`
+  * el cliente ya puede ejecutar peticiones a través del runtime completo con `execute_driver_command(...)`
 
 Arquitectura ya preparada antes de abrir la funcionalidad de red real:
 * `MongoUri` tipado y compilado, con semillas, credenciales y opciones normalizadas
@@ -910,13 +916,12 @@ Arquitectura ya preparada antes de abrir la funcionalidad de red real:
 
 Esto deja la Fase 7 lista para crecer sin repartir lógica de URI, topología, políticas y pools entre `MongoClient`, el proxy wire y futuros conectores de red.
 
-Primer bloque funcional ya abierto en Fase 7:
-* la URI deja de ser metadata pasiva y pasa a gobernar el runtime del cliente;
-* concerns, preferencias, auth/TLS y topología básica ya entran por un `DriverRuntime` común;
-* el siguiente corte natural es profundizar en:
-  * selección de servidor con tags y staleness reales;
-  * semántica de SRV/TLS/auth completa frente a conexiones reales;
-  * y clasificación más fina de errores/red, además de transporte real sobre conexiones del runtime.
+Estado actual de Fase 7:
+* la URI deja de ser metadata pasiva y gobierna ya el runtime del cliente;
+* concerns, preferencias, auth/TLS, SRV, topología, selección y pools ya entran por un `DriverRuntime` común;
+* ya existe pipeline explícito de ejecución y monitoring de estilo driver;
+* el trabajo que quede en adelante ya no es abrir infraestructura base, sino ampliar semántica de red real y profundidad funcional sobre esta arquitectura.
+* con este cierre, la Fase 7 puede considerarse ya consolidada en su arquitectura base.
 
 ---
 

@@ -7,6 +7,16 @@ from mongoeco.driver.execution import (
     classify_request_exception,
     execute_request_pipeline,
 )
+from mongoeco.driver.monitoring import (
+    CommandFailedEvent,
+    CommandStartedEvent,
+    CommandSucceededEvent,
+    ConnectionCheckedInEvent,
+    ConnectionCheckedOutEvent,
+    DriverEvent,
+    DriverMonitor,
+    ServerSelectedEvent,
+)
 from mongoeco.driver.connections import (
     ConnectionLease,
     ConnectionPool,
@@ -38,6 +48,7 @@ from mongoeco.driver.topology import (
     TopologyType,
     build_local_topology_description,
 )
+from mongoeco.driver.transports import CallbackCommandTransport, LocalCommandTransport
 from mongoeco.driver.uri import (
     MongoAuthOptions,
     MongoClientOptions,
@@ -78,6 +89,14 @@ __all__ = [
     "RequestExecutionResult",
     "classify_request_exception",
     "execute_request_pipeline",
+    "DriverEvent",
+    "DriverMonitor",
+    "ServerSelectedEvent",
+    "ConnectionCheckedOutEvent",
+    "ConnectionCheckedInEvent",
+    "CommandStartedEvent",
+    "CommandSucceededEvent",
+    "CommandFailedEvent",
     "ServerDescription",
     "ServerType",
     "TopologyDescription",
@@ -100,4 +119,6 @@ __all__ = [
     "RequestExecutionPlan",
     "RequestOutcome",
     "DriverRuntime",
+    "CallbackCommandTransport",
+    "LocalCommandTransport",
 ]

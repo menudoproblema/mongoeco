@@ -11,14 +11,21 @@ from mongoeco import (
 from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.driver import (
     AuthPolicy,
+    CommandFailedEvent,
+    CommandStartedEvent,
+    CommandSucceededEvent,
     CommandRequest,
+    ConnectionCheckedInEvent,
+    ConnectionCheckedOutEvent,
     ConnectionRegistry,
     DriverRuntime,
+    LocalCommandTransport,
     PreparedRequestExecution,
     RequestAttempt,
     RequestExecutionPlan,
     RequestExecutionResult,
     RequestExecutionTrace,
+    ServerSelectedEvent,
     ServerDescription,
     ServerType,
     SrvResolution,
@@ -433,6 +440,40 @@ class ClientDriverArchitectureTests(unittest.TestCase):
         self.assertTrue(client.tls_policy.enabled)
         self.assertEqual(client.effective_client_uri.seeds[0].address, "cluster.example.net:27017")
 
+    def test_async_client_execute_driver_command_uses_local_transport_and_records_monitoring(self):
+        client = AsyncMongoClient(uri="mongodb://db1:27017/")
+
+        result = asyncio.run(
+            client.execute_driver_command(
+                "admin",
+                "ping",
+                {"ping": 1},
+                read_only=True,
+            )
+        )
+
+        self.assertTrue(result.outcome.ok)
+        self.assertEqual(result.outcome.response["ok"], 1.0)
+        events = client.driver_monitor.history
+        self.assertIsInstance(events[0], ServerSelectedEvent)
+        self.assertIsInstance(events[1], ConnectionCheckedOutEvent)
+        self.assertIsInstance(events[2], CommandStartedEvent)
+        self.assertIsInstance(events[3], CommandSucceededEvent)
+        self.assertIsInstance(events[4], ConnectionCheckedInEvent)
+
+    def test_sync_client_execute_driver_command_wraps_async_runtime(self):
+        client = MongoClient(uri="mongodb://db1:27017/")
+
+        result = client.execute_driver_command(
+            "admin",
+            "ping",
+            {"ping": 1},
+            read_only=True,
+        )
+
+        self.assertTrue(result.outcome.ok)
+        self.assertEqual(result.outcome.response["ok"], 1.0)
+
 
 class RequestExecutionPipelineTests(unittest.TestCase):
     def test_execute_request_retries_retryable_read_errors(self):
@@ -541,3 +582,72 @@ class RequestExecutionPipelineTests(unittest.TestCase):
         self.assertIsInstance(result.trace, RequestExecutionTrace)
         self.assertEqual(len(result.trace.attempts), 1)
         self.assertIsInstance(result.trace.attempts[0], RequestAttempt)
+
+    def test_execute_request_monitoring_tracks_retry_lifecycle(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017,db2:27018/?replicaSet=rs0&retryReads=true",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
+        )
+        plan = runtime.plan_command_request("observe", "find", {"find": "events"}, read_only=True)
+
+        class RetryTransport:
+            def __init__(self):
+                self._calls = 0
+
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                self._calls += 1
+                if self._calls == 1:
+                    raise OperationFailure(
+                        "retryable read failure",
+                        error_labels=("RetryableReadError",),
+                    )
+                return {"ok": 1.0, "cursor": {"id": 0}}
+
+        result = asyncio.run(runtime.execute_request(plan, RetryTransport()))
+
+        self.assertTrue(result.outcome.ok)
+        event_types = [type(event) for event in runtime.monitor.history]
+        self.assertEqual(
+            event_types,
+            [
+                ServerSelectedEvent,
+                ConnectionCheckedOutEvent,
+                CommandStartedEvent,
+                CommandFailedEvent,
+                ConnectionCheckedInEvent,
+                ServerSelectedEvent,
+                ConnectionCheckedOutEvent,
+                CommandStartedEvent,
+                CommandSucceededEvent,
+                ConnectionCheckedInEvent,
+            ],
+        )
+        self.assertTrue(runtime.monitor.history[3].retryable)
+
+    def test_local_command_transport_executes_database_commands_with_session(self):
+        client = AsyncMongoClient(uri="mongodb://db1:27017/")
+        session = client.start_session()
+        plan = client.plan_command_request(
+            "admin",
+            "ping",
+            {"ping": 1},
+            session=session,
+            read_only=True,
+        )
+        execution = client.prepare_command_request_execution(
+            "admin",
+            "ping",
+            {"ping": 1},
+            session=session,
+            read_only=True,
+        )
+
+        try:
+            response = asyncio.run(LocalCommandTransport(client).send(execution))
+        finally:
+            client.complete_command_request_execution(execution)
+
+        self.assertEqual(plan.request.session_id, session.session_id)
+        self.assertEqual(response["ok"], 1.0)

@@ -8,6 +8,8 @@ from mongoeco.compat import (
     PyMongoProfile,
     PyMongoProfileResolution,
 )
+from mongoeco.driver import AsyncCommandTransport, RequestExecutionResult
+from mongoeco.driver.monitoring import DriverMonitor
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
@@ -548,3 +550,29 @@ class MongoClient:
     @property
     def driver_runtime(self):
         return self._async_client.driver_runtime
+
+    @property
+    def driver_monitor(self) -> DriverMonitor:
+        return self._async_client.driver_monitor
+
+    def execute_driver_command(
+        self,
+        database: str,
+        command_name: str,
+        payload: dict[str, object],
+        *,
+        session: ClientSession | None = None,
+        read_only: bool = False,
+        transport: AsyncCommandTransport | None = None,
+    ) -> RequestExecutionResult:
+        self._ensure_connected()
+        return self._runner.run(
+            self._async_client.execute_driver_command(
+                database,
+                command_name,
+                payload,
+                session=session,
+                read_only=read_only,
+                transport=transport,
+            )
+        )

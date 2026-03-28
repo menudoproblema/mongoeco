@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+from mongoeco.driver.monitoring import CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, DriverMonitor
 from mongoeco.driver.requests import PreparedRequestExecution, RequestExecutionPlan, RequestOutcome
 from mongoeco.errors import ConnectionFailure, ExecutionTimeout, OperationFailure, PyMongoError
 
@@ -70,6 +72,7 @@ async def execute_request_pipeline(
     prepare_execution,
     complete_execution,
     transport: AsyncCommandTransport,
+    monitor: DriverMonitor | None = None,
 ) -> RequestExecutionResult:
     attempts: list[RequestAttempt] = []
     max_attempts = len(plan.candidate_servers) or 1
@@ -77,6 +80,20 @@ async def execute_request_pipeline(
         max_attempts = max(max_attempts, 2)
     for attempt_number in range(1, max_attempts + 1):
         execution = prepare_execution(plan, attempt_number=attempt_number)
+        started_at = time.perf_counter()
+        if monitor is not None:
+            monitor.emit(
+                CommandStartedEvent(
+                    database=plan.request.database,
+                    command_name=plan.request.command_name,
+                    command=dict(plan.request.payload),
+                    server_address=execution.selected_server.address,
+                    connection_id=execution.connection.connection_id,
+                    attempt_number=execution.attempt_number,
+                    read_only=plan.request.read_only,
+                    session_id=plan.request.session_id,
+                )
+            )
         try:
             response = await _send_with_timeout(transport, execution, plan=plan)
             outcome = RequestOutcome(
@@ -85,6 +102,19 @@ async def execute_request_pipeline(
                 response=response,
                 retryable=False,
             )
+            if monitor is not None:
+                monitor.emit(
+                    CommandSucceededEvent(
+                        database=plan.request.database,
+                        command_name=plan.request.command_name,
+                        reply=response,
+                        server_address=execution.selected_server.address,
+                        connection_id=execution.connection.connection_id,
+                        attempt_number=execution.attempt_number,
+                        duration_ms=(time.perf_counter() - started_at) * 1000,
+                        session_id=plan.request.session_id,
+                    )
+                )
         except Exception as exc:  # noqa: BLE001
             outcome = classify_request_exception(exc, plan=plan)
             outcome = RequestOutcome(
@@ -94,6 +124,20 @@ async def execute_request_pipeline(
                 error=outcome.error,
                 retryable=outcome.retryable,
             )
+            if monitor is not None:
+                monitor.emit(
+                    CommandFailedEvent(
+                        database=plan.request.database,
+                        command_name=plan.request.command_name,
+                        failure=outcome.error or str(exc),
+                        server_address=execution.selected_server.address,
+                        connection_id=execution.connection.connection_id,
+                        attempt_number=execution.attempt_number,
+                        duration_ms=(time.perf_counter() - started_at) * 1000,
+                        retryable=outcome.retryable,
+                        session_id=plan.request.session_id,
+                    )
+                )
         finally:
             complete_execution(execution)
         attempts.append(
