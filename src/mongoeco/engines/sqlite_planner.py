@@ -33,6 +33,14 @@ def compile_sqlite_read_execution_plan(
     sort_requires_python: Callable[[str, str, object, object], bool],
     build_select_sql: Callable[..., tuple[str, list[object]]],
 ) -> SQLiteReadExecutionPlan:
+    if semantics.collation is not None:
+        return SQLiteReadExecutionPlan(
+            semantics=semantics,
+            strategy="python",
+            execution_lineage=_python_lineage(semantics, "Collation requires Python fallback"),
+            use_sql=False,
+            fallback_reason="Collation requires Python fallback",
+        )
     if dialect_requires_python_fallback(semantics.dialect):
         return SQLiteReadExecutionPlan(
             semantics=semantics,

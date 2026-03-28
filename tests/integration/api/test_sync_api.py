@@ -248,6 +248,152 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection.insert_one({"_id": "1"})
                     self.assertEqual(collection.find_one({"_id": "1"}), {"_id": "1"})
 
+    def test_bypass_document_validation_allows_invalid_writes(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.validation.create_collection(
+                        "bypass_users",
+                        validator={
+                            "$jsonSchema": {
+                                "required": ["name"],
+                                "properties": {
+                                    "name": {"bsonType": "string"},
+                                    "age": {"bsonType": "int"},
+                                },
+                            }
+                        },
+                    )
+
+                    collection.insert_one({"_id": "1", "age": 10}, bypass_document_validation=True)
+                    collection.update_one(
+                        {"_id": "1"},
+                        {"$set": {"age": "old"}},
+                        bypass_document_validation=True,
+                    )
+                    collection.replace_one(
+                        {"_id": "1"},
+                        {"_id": "1", "age": "stale"},
+                        bypass_document_validation=True,
+                    )
+                    collection.bulk_write(
+                        [
+                            InsertOne({"_id": "2"}),
+                            UpdateOne({"_id": "2"}, {"$set": {"age": "legacy"}}),
+                        ],
+                        bypass_document_validation=True,
+                    )
+
+                    self.assertEqual(collection.find_one({"_id": "1"}), {"_id": "1", "age": "stale"})
+                    self.assertEqual(collection.find_one({"_id": "2"}), {"_id": "2", "age": "legacy"})
+
+    def test_collation_applies_to_query_sort_update_delete_and_distinct(self):
+        collation = {"locale": "en", "strength": 2, "numericOrdering": True}
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.alpha.names
+                    collection.insert_many(
+                        [
+                            {"_id": 1, "name": "Alice", "code": "10"},
+                            {"_id": 2, "name": "alice", "code": "2"},
+                            {"_id": 3, "name": "Bob", "code": "3"},
+                        ]
+                    )
+
+                    found = collection.find_one({"name": "ALICE"}, collation=collation)
+                    self.assertEqual(found["_id"], 1)
+
+                    ordered = collection.find(
+                        {},
+                        {"_id": 0, "code": 1},
+                        sort=[("code", 1)],
+                        collation=collation,
+                    ).to_list()
+                    self.assertEqual(ordered, [{"code": "2"}, {"code": "3"}, {"code": "10"}])
+
+                    update_result = collection.update_one(
+                        {"name": "ALICE"},
+                        {"$set": {"matched": True}},
+                        collation=collation,
+                    )
+                    self.assertEqual(update_result.matched_count, 1)
+                    self.assertEqual(collection.find_one({"_id": 1}), {"_id": 1, "name": "Alice", "code": "10", "matched": True})
+
+                    distinct_names = collection.distinct("name", collation=collation)
+                    self.assertEqual(distinct_names, ["Alice", "Bob"])
+
+                    delete_result = collection.delete_one({"name": "bob"}, collation=collation)
+                    self.assertEqual(delete_result.deleted_count, 1)
+                    self.assertIsNone(collection.find_one({"_id": 3}))
+
+    def test_database_command_supports_bypass_document_validation_and_collation(self):
+        collation = {"locale": "en", "strength": 2}
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    database = client.validation
+                    collection = database.create_collection(
+                        "cmd_users",
+                        validator={
+                            "$jsonSchema": {
+                                "required": ["name"],
+                                "properties": {"name": {"bsonType": "string"}},
+                            }
+                        },
+                    )
+                    database.command(
+                        {
+                            "insert": "cmd_users",
+                            "documents": [{"_id": "1"}],
+                            "bypassDocumentValidation": True,
+                        }
+                    )
+                    collection.insert_many(
+                        [
+                            {"_id": "2", "name": "Alice"},
+                            {"_id": "3", "name": "alice"},
+                            {"_id": "4", "name": "Bob"},
+                        ]
+                    )
+
+                    count_result = database.command(
+                        {"count": "cmd_users", "query": {"name": "ALICE"}, "collation": collation}
+                    )
+                    self.assertEqual(count_result["n"], 2)
+
+                    database.command(
+                        {
+                            "update": "cmd_users",
+                            "updates": [
+                                {
+                                    "q": {"name": "ALICE"},
+                                    "u": {"$set": {"matched": True}},
+                                    "collation": collation,
+                                }
+                            ],
+                        }
+                    )
+                    self.assertTrue(collection.find_one({"_id": "2"})["matched"])
+
+                    distinct_result = database.command(
+                        {
+                            "distinct": "cmd_users",
+                            "key": "name",
+                            "query": {"name": {"$exists": True}},
+                            "collation": collation,
+                        }
+                    )
+                    self.assertEqual(distinct_result["values"], ["Alice", "Bob"])
+
+                    database.command(
+                        {
+                            "delete": "cmd_users",
+                            "deletes": [{"q": {"name": "bob"}, "limit": 1, "collation": collation}],
+                        }
+                    )
+                    self.assertIsNone(collection.find_one({"_id": "4"}))
+
     def test_create_collection_rejects_invalid_json_schema_options(self):
         with MongoClient(MemoryEngine()) as client:
             with self.assertRaises(OperationFailure):

@@ -77,6 +77,7 @@ from mongoeco.session import ClientSession
 from mongoeco.session import EngineTransactionContext
 from mongoeco.types import (
     ArrayFilters,
+    CollationDocument,
     DeleteResult,
     Document,
     DocumentId,
@@ -1303,7 +1304,16 @@ class SQLiteEngine(AsyncStorageEngine):
     def _profile_documents(self, db_name: str) -> list[Document]:
         return self._profiler.list_entries(db_name)
 
-    def _put_document_sync(self, db_name: str, coll_name: str, document: Document, overwrite: bool, context: ClientSession | None) -> bool:
+    def _put_document_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        document: Document,
+        overwrite: bool,
+        context: ClientSession | None,
+        *,
+        bypass_document_validation: bool = False,
+    ) -> bool:
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -1327,12 +1337,13 @@ class SQLiteEngine(AsyncStorageEngine):
                     if row is not None:
                         original_document = self._deserialize_document(row[0])
                 try:
-                    enforce_collection_document_validation(
-                        document,
-                        options=collection_options,
-                        original_document=original_document,
-                        dialect=MONGODB_DIALECT_70,
-                    )
+                    if not bypass_document_validation:
+                        enforce_collection_document_validation(
+                            document,
+                            options=collection_options,
+                            original_document=original_document,
+                            dialect=MONGODB_DIALECT_70,
+                        )
                     self._validate_document_against_unique_indexes(
                         db_name,
                         coll_name,
@@ -1482,7 +1493,12 @@ class SQLiteEngine(AsyncStorageEngine):
                     yield document
                 return
             documents = filter_documents(documents_iter, semantics)
-            documents = sort_documents(documents, semantics.sort, dialect=semantics.dialect)
+            documents = sort_documents(
+                documents,
+                semantics.sort,
+                dialect=semantics.dialect,
+                collation=semantics.collation,
+            )
             documents = finalize_documents(documents, semantics, apply_sort_phase=False)
             for document in documents:
                 enforce_deadline(deadline)
@@ -1514,6 +1530,7 @@ class SQLiteEngine(AsyncStorageEngine):
                                 documents,
                                 semantics.sort,
                                 dialect=semantics.dialect,
+                                collation=semantics.collation,
                             )
                             documents = finalize_documents(
                                 documents,
@@ -1556,6 +1573,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             documents,
                             semantics.sort,
                             dialect=semantics.dialect,
+                            collation=semantics.collation,
                         )
                         documents = finalize_documents(
                             documents,
@@ -1586,6 +1604,7 @@ class SQLiteEngine(AsyncStorageEngine):
         plan: QueryNode | None,
         context: ClientSession | None,
         dialect: MongoDialect | None = None,
+        bypass_document_validation: bool = False,
     ) -> UpdateResult[DocumentId]:
         effective_dialect = dialect or MONGODB_DIALECT_70
         operation = compile_update_operation(
@@ -1604,6 +1623,7 @@ class SQLiteEngine(AsyncStorageEngine):
             selector_filter,
             context,
             effective_dialect,
+            bypass_document_validation,
         )
 
     def _delete_matching_document_sync(
@@ -1614,18 +1634,22 @@ class SQLiteEngine(AsyncStorageEngine):
         plan: QueryNode | None,
         context: ClientSession | None,
         dialect: MongoDialect | None = None,
+        collation: CollationDocument | None = None,
     ) -> DeleteResult:
         effective_dialect = dialect or MONGODB_DIALECT_70
         plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         semantics = compile_find_semantics(
             filter_spec,
             plan=plan,
+            collation=collation,
             dialect=effective_dialect,
         )
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 try:
+                    if semantics.collation is not None:
+                        raise NotImplementedError("Collation requires Python delete fallback")
                     selected = self._select_first_document_for_plan(
                         db_name,
                         coll_name,
@@ -1650,7 +1674,12 @@ class SQLiteEngine(AsyncStorageEngine):
                     pass
 
                 for storage_key, document in self._load_documents(db_name, coll_name):
-                    if not QueryEngine.match_plan(document, semantics.query_plan, dialect=effective_dialect):
+                    if not QueryEngine.match_plan(
+                        document,
+                        semantics.query_plan,
+                        dialect=effective_dialect,
+                        collation=semantics.collation,
+                    ):
                         continue
                     self._begin_write(conn, context)
                     conn.execute(
@@ -1707,7 +1736,12 @@ class SQLiteEngine(AsyncStorageEngine):
                     return sum(
                         1
                         for _, document in self._load_documents(db_name, coll_name)
-                        if QueryEngine.match_plan(document, semantics.query_plan, dialect=effective_dialect)
+                        if QueryEngine.match_plan(
+                            document,
+                            semantics.query_plan,
+                            dialect=effective_dialect,
+                            collation=semantics.collation,
+                        )
                     )
 
     def _create_index_sync(
@@ -2294,8 +2328,25 @@ class SQLiteEngine(AsyncStorageEngine):
         return self._profiler.set_level(db_name, level, slow_ms=slow_ms)
 
     @override
-    async def put_document(self, db_name: str, coll_name: str, document: Document, overwrite: bool = True, *, context: ClientSession | None = None) -> bool:
-        return await asyncio.to_thread(self._put_document_sync, db_name, coll_name, document, overwrite, context)
+    async def put_document(
+        self,
+        db_name: str,
+        coll_name: str,
+        document: Document,
+        overwrite: bool = True,
+        *,
+        context: ClientSession | None = None,
+        bypass_document_validation: bool = False,
+    ) -> bool:
+        return await asyncio.to_thread(
+            self._put_document_sync,
+            db_name,
+            coll_name,
+            document,
+            overwrite,
+            context,
+            bypass_document_validation=bypass_document_validation,
+        )
 
     @override
     async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
@@ -2314,6 +2365,7 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         plan: QueryNode | None = None,
         projection: Projection | None = None,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
@@ -2327,6 +2379,7 @@ class SQLiteEngine(AsyncStorageEngine):
             filter_spec,
             plan=plan,
             projection=projection,
+            collation=collation,
             sort=sort,
             skip=skip,
             limit=limit,
@@ -2434,6 +2487,7 @@ class SQLiteEngine(AsyncStorageEngine):
         plan: QueryNode | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
+        bypass_document_validation: bool = False,
     ) -> UpdateResult[DocumentId]:
         return await asyncio.to_thread(
             self._update_matching_document_sync,
@@ -2448,6 +2502,7 @@ class SQLiteEngine(AsyncStorageEngine):
             plan,
             context,
             dialect,
+            bypass_document_validation,
         )
 
     @override
@@ -2462,6 +2517,7 @@ class SQLiteEngine(AsyncStorageEngine):
         selector_filter: Filter | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
+        bypass_document_validation: bool = False,
     ) -> UpdateResult[DocumentId]:
         if operation.compiled_update_plan is None or operation.compiled_upsert_plan is None:
             raise OperationFailure("update operation does not include a compiled update plan")
@@ -2475,6 +2531,7 @@ class SQLiteEngine(AsyncStorageEngine):
             selector_filter,
             context,
             dialect,
+            bypass_document_validation,
         )
 
     def _update_with_operation_sync(
@@ -2487,6 +2544,7 @@ class SQLiteEngine(AsyncStorageEngine):
         selector_filter: Filter | None,
         context: ClientSession | None,
         dialect: MongoDialect | None = None,
+        bypass_document_validation: bool = False,
     ) -> UpdateResult[DocumentId]:
         semantics = compile_update_semantics(
             operation,
@@ -2506,6 +2564,8 @@ class SQLiteEngine(AsyncStorageEngine):
                 try:
                     if self._dialect_requires_python_fallback(semantics.dialect):
                         raise NotImplementedError("Custom dialect requires Python fallback")
+                    if semantics.collation is not None:
+                        raise NotImplementedError("Collation requires Python update fallback")
                     selected = self._select_first_document_for_plan(db_name, coll_name, semantics.query_plan)
                     sql_selection_supported = True
                 except (NotImplementedError, TypeError):
@@ -2513,7 +2573,12 @@ class SQLiteEngine(AsyncStorageEngine):
 
                 if selected is None and not sql_selection_supported:
                     for storage_key, document in self._load_documents(db_name, coll_name):
-                        if not QueryEngine.match_plan(document, semantics.query_plan, dialect=semantics.dialect):
+                        if not QueryEngine.match_plan(
+                            document,
+                            semantics.query_plan,
+                            dialect=semantics.dialect,
+                            collation=semantics.collation,
+                        ):
                             continue
                         selected = (storage_key, document)
                         break
@@ -2524,12 +2589,13 @@ class SQLiteEngine(AsyncStorageEngine):
                     modified = semantics.compiled_update_plan.apply(document)
                     if not modified:
                         return UpdateResult(matched_count=1, modified_count=0)
-                    enforce_collection_document_validation(
-                        document,
-                        options=collection_options,
-                        original_document=original_document,
-                        dialect=semantics.dialect,
-                    )
+                    if not bypass_document_validation:
+                        enforce_collection_document_validation(
+                            document,
+                            options=collection_options,
+                            original_document=original_document,
+                            dialect=semantics.dialect,
+                        )
                     self._validate_document_against_unique_indexes(
                         db_name,
                         coll_name,
@@ -2603,13 +2669,14 @@ class SQLiteEngine(AsyncStorageEngine):
                 semantics.compiled_upsert_plan.apply(new_doc)
                 if "_id" not in new_doc:
                     new_doc["_id"] = ObjectId()
-                enforce_collection_document_validation(
-                    new_doc,
-                    options=collection_options,
-                    original_document=None,
-                    is_upsert_insert=True,
-                    dialect=semantics.dialect,
-                )
+                if not bypass_document_validation:
+                    enforce_collection_document_validation(
+                        new_doc,
+                        options=collection_options,
+                        original_document=None,
+                        is_upsert_insert=True,
+                        dialect=semantics.dialect,
+                    )
                 self._validate_document_against_unique_indexes(db_name, coll_name, new_doc)
 
                 storage_key = self._storage_key(new_doc["_id"])
@@ -2643,7 +2710,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 )
 
     @override
-    async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult:
+    async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, collation: CollationDocument | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult:
         return await asyncio.to_thread(
             self._delete_matching_document_sync,
             db_name,
@@ -2652,6 +2719,7 @@ class SQLiteEngine(AsyncStorageEngine):
             plan,
             context,
             dialect,
+            collation,
         )
 
     @override
@@ -2669,16 +2737,17 @@ class SQLiteEngine(AsyncStorageEngine):
             coll_name,
             operation.filter_spec,
             plan=operation.plan,
+            collation=operation.collation,
             dialect=dialect,
             context=context,
         )
 
     @override
-    async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int:
+    async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, collation: CollationDocument | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int:
         return await self.count_find_semantics(
             db_name,
             coll_name,
-            compile_find_semantics(filter_spec, plan=plan, dialect=dialect),
+            compile_find_semantics(filter_spec, plan=plan, collation=collation, dialect=dialect),
             context=context,
         )
 
@@ -2858,6 +2927,7 @@ class SQLiteEngine(AsyncStorageEngine):
         filter_spec: Filter | None = None,
         *,
         plan: QueryNode | None = None,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
@@ -2870,6 +2940,7 @@ class SQLiteEngine(AsyncStorageEngine):
         semantics = compile_find_semantics(
             filter_spec,
             plan=plan,
+            collation=collation,
             sort=sort,
             skip=skip,
             limit=limit,
@@ -2914,6 +2985,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 filter_spec=semantics.filter_spec or {},
                 plan=semantics.query_plan,
                 projection=semantics.projection,
+                collation=None if semantics.collation is None else semantics.collation.to_document(),
                 sort=semantics.sort,
                 skip=semantics.skip,
                 limit=semantics.limit,

@@ -10,11 +10,12 @@ from mongoeco.api._async.cursor import (
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.core.aggregation.extensions import get_registered_aggregation_stage
+from mongoeco.core.collation import normalize_collation
 from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.errors import OperationFailure
-from mongoeco.types import ArrayFilters, Filter, PlanningIssue, PlanningMode, Projection, SortSpec
+from mongoeco.types import ArrayFilters, CollationDocument, Filter, PlanningIssue, PlanningMode, Projection, SortSpec
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,6 +23,7 @@ class FindOperation:
     filter_spec: Filter
     plan: QueryNode
     projection: Projection | None = None
+    collation: CollationDocument | None = None
     sort: SortSpec | None = None
     skip: int = 0
     limit: int | None = None
@@ -43,6 +45,7 @@ class UpdateOperation:
     update_spec: dict[str, object] | None = None
     compiled_update_plan: CompiledUpdatePlan | None = None
     compiled_upsert_plan: CompiledUpdatePlan | None = None
+    collation: CollationDocument | None = None
     sort: SortSpec | None = None
     array_filters: ArrayFilters | None = None
     hint: HintSpec | None = None
@@ -59,6 +62,7 @@ class UpdateOperation:
 @dataclass(frozen=True, slots=True)
 class AggregateOperation:
     pipeline: Pipeline
+    collation: CollationDocument | None = None
     hint: HintSpec | None = None
     comment: object | None = None
     max_time_ms: int | None = None
@@ -82,6 +86,7 @@ def compile_find_selection_from_update_operation(
         filter_spec=operation.filter_spec,
         plan=operation.plan,
         projection=projection,
+        collation=operation.collation,
         sort=operation.sort,
         limit=limit,
         hint=operation.hint,
@@ -96,6 +101,7 @@ def compile_find_operation(
     filter_spec: object | None = None,
     *,
     projection: object | None = None,
+    collation: object | None = None,
     sort: object | None = None,
     skip: int = 0,
     limit: int | None = None,
@@ -110,6 +116,7 @@ def compile_find_operation(
 ) -> FindOperation:
     normalized_filter = _normalize_filter(filter_spec)
     normalized_projection = _normalize_projection(projection)
+    normalized_collation = _normalize_collation(collation)
     normalized_sort = _normalize_sort(sort)
     normalized_hint = _normalize_hint(hint)
     normalized_max_time_ms = _normalize_max_time_ms(max_time_ms)
@@ -122,6 +129,7 @@ def compile_find_operation(
         if plan is None
         else plan,
         projection=normalized_projection,
+        collation=normalized_collation,
         sort=normalized_sort,
         skip=normalized_skip,
         limit=normalized_limit,
@@ -137,6 +145,7 @@ def compile_find_operation(
 def compile_update_operation(
     filter_spec: object | None = None,
     *,
+    collation: object | None = None,
     sort: object | None = None,
     array_filters: object | None = None,
     hint: object | None = None,
@@ -150,6 +159,7 @@ def compile_update_operation(
 ) -> UpdateOperation:
     normalized_filter = _normalize_filter(filter_spec)
     normalized_sort = _normalize_sort(sort)
+    normalized_collation = _normalize_collation(collation)
     normalized_array_filters = _normalize_array_filters(array_filters)
     normalized_hint = _normalize_hint(hint)
     normalized_max_time_ms = _normalize_max_time_ms(max_time_ms)
@@ -174,6 +184,7 @@ def compile_update_operation(
         update_spec=update_spec,
         compiled_update_plan=compiled_update_plan,
         compiled_upsert_plan=compiled_upsert_plan,
+        collation=normalized_collation,
         sort=normalized_sort,
         array_filters=normalized_array_filters,
         hint=normalized_hint,
@@ -196,6 +207,7 @@ def compile_update_operation(
 def compile_aggregate_operation(
     pipeline: object,
     *,
+    collation: object | None = None,
     hint: object | None = None,
     comment: object | None = None,
     max_time_ms: object | None = None,
@@ -209,6 +221,7 @@ def compile_aggregate_operation(
         raise TypeError("pipeline must be a list")
     return AggregateOperation(
         pipeline=pipeline,
+        collation=_normalize_collation(collation),
         hint=_normalize_hint(hint),
         comment=comment,
         max_time_ms=_normalize_max_time_ms(max_time_ms),
@@ -319,6 +332,13 @@ def _normalize_filter(filter_spec: object | None) -> Filter:
     if not is_filter(filter_spec):
         raise TypeError("filter_spec must be a dict")
     return filter_spec
+
+
+def _normalize_collation(collation: object | None) -> CollationDocument | None:
+    normalized = normalize_collation(collation)
+    if normalized is None:
+        return None
+    return normalized.to_document()
 
 
 def _normalize_projection(projection: object | None) -> Projection | None:

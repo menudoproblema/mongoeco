@@ -7,6 +7,7 @@ from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_scalars import bson_numeric_alias
+from mongoeco.core.collation import CollationSpec, compare_with_collation, values_equal_with_collation
 from mongoeco.core.identity import canonical_document_id
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Binary, Decimal128, ObjectId, Regex, Timestamp, UndefinedType
@@ -71,8 +72,14 @@ class QueryEngine:
         filter_spec: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
-        return QueryEngine.match_plan(document, compile_filter(filter_spec, dialect=dialect), dialect=dialect)
+        return QueryEngine.match_plan(
+            document,
+            compile_filter(filter_spec, dialect=dialect),
+            dialect=dialect,
+            collation=collation,
+        )
 
     @staticmethod
     def match_plan(
@@ -80,6 +87,7 @@ class QueryEngine:
         plan: QueryNode,
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
         if isinstance(plan, MatchAll):
             return True
@@ -92,6 +100,7 @@ class QueryEngine:
                 plan.value,
                 null_matches_undefined=plan.null_matches_undefined,
                 dialect=dialect,
+                collation=collation,
             )
         if isinstance(plan, NotEqualsCondition):
             return QueryEngine._evaluate_not_equals(
@@ -99,6 +108,7 @@ class QueryEngine:
                 plan.field,
                 plan.value,
                 dialect=dialect,
+                collation=collation,
             )
         if isinstance(plan, GreaterThanCondition):
             return QueryEngine._evaluate_comparison(
@@ -107,6 +117,7 @@ class QueryEngine:
                 plan.value,
                 "gt",
                 dialect=dialect,
+                collation=collation,
             )
         if isinstance(plan, GreaterThanOrEqualCondition):
             return QueryEngine._evaluate_comparison(
@@ -115,6 +126,7 @@ class QueryEngine:
                 plan.value,
                 "gte",
                 dialect=dialect,
+                collation=collation,
             )
         if isinstance(plan, LessThanCondition):
             return QueryEngine._evaluate_comparison(
@@ -123,6 +135,7 @@ class QueryEngine:
                 plan.value,
                 "lt",
                 dialect=dialect,
+                collation=collation,
             )
         if isinstance(plan, LessThanOrEqualCondition):
             return QueryEngine._evaluate_comparison(
@@ -131,6 +144,7 @@ class QueryEngine:
                 plan.value,
                 "lte",
                 dialect=dialect,
+                collation=collation,
             )
         if isinstance(plan, InCondition):
             return QueryEngine._evaluate_in(
@@ -139,6 +153,7 @@ class QueryEngine:
                 plan.values,
                 null_matches_undefined=plan.null_matches_undefined,
                 dialect=dialect,
+                collation=collation,
             )
         if isinstance(plan, NotInCondition):
             return QueryEngine._evaluate_not_in(
@@ -146,6 +161,7 @@ class QueryEngine:
                 plan.field,
                 plan.values,
                 dialect=dialect,
+                collation=collation,
             )
         if isinstance(plan, AllCondition):
             return QueryEngine._evaluate_all(
@@ -153,6 +169,7 @@ class QueryEngine:
                 plan.field,
                 plan.values,
                 dialect=dialect,
+                collation=collation,
             )
         if isinstance(plan, SizeCondition):
             return QueryEngine._evaluate_size(document, plan.field, plan.value)
@@ -161,9 +178,15 @@ class QueryEngine:
         if isinstance(plan, RegexCondition):
             return QueryEngine._evaluate_regex(document, plan.field, plan.pattern, plan.options)
         if isinstance(plan, NotCondition):
-            return not QueryEngine.match_plan(document, plan.clause, dialect=dialect)
+            return not QueryEngine.match_plan(document, plan.clause, dialect=dialect, collation=collation)
         if isinstance(plan, ElemMatchCondition):
-            return QueryEngine._evaluate_elem_match(document, plan.field, plan.condition, dialect=plan.dialect)
+            return QueryEngine._evaluate_elem_match(
+                document,
+                plan.field,
+                plan.condition,
+                dialect=plan.dialect,
+                collation=collation,
+            )
         if isinstance(plan, ExistsCondition):
             return QueryEngine._evaluate_exists(document, plan.field, plan.value)
         if isinstance(plan, TypeCondition):
@@ -181,9 +204,9 @@ class QueryEngine:
             )
             return _expression_truthy(value, dialect=dialect)
         if isinstance(plan, AndCondition):
-            return all(QueryEngine.match_plan(document, clause, dialect=dialect) for clause in plan.clauses)
+            return all(QueryEngine.match_plan(document, clause, dialect=dialect, collation=collation) for clause in plan.clauses)
         if isinstance(plan, OrCondition):
-            return any(QueryEngine.match_plan(document, clause, dialect=dialect) for clause in plan.clauses)
+            return any(QueryEngine.match_plan(document, clause, dialect=dialect, collation=collation) for clause in plan.clauses)
         raise TypeError(f"Unsupported query plan node: {type(plan)!r}")
 
     @staticmethod
@@ -281,8 +304,9 @@ class QueryEngine:
         right: Any,
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
-        return dialect.policy.values_equal(left, right)
+        return values_equal_with_collation(left, right, dialect=dialect, collation=collation)
 
     @staticmethod
     def _regex_item_matches_candidate(candidate: Any, pattern: re.Pattern[str]) -> bool:
@@ -295,6 +319,7 @@ class QueryEngine:
         *,
         null_matches_undefined: bool,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
         if isinstance(item, Regex):
             return QueryEngine._regex_item_matches_candidate(candidate, item.compile())
@@ -305,6 +330,7 @@ class QueryEngine:
             item,
             null_matches_undefined=null_matches_undefined,
             dialect=dialect,
+            collation=collation,
         )
 
     @staticmethod
@@ -314,6 +340,7 @@ class QueryEngine:
         *,
         null_matches_undefined: bool,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
         if expected is None:
             if candidate is None:
@@ -322,7 +349,7 @@ class QueryEngine:
                 return True
         if null_matches_undefined and candidate is None and isinstance(expected, UndefinedType):
             return True
-        return QueryEngine._values_equal(candidate, expected, dialect=dialect)
+        return QueryEngine._values_equal(candidate, expected, dialect=dialect, collation=collation)
 
     @staticmethod
     def _evaluate_equals(
@@ -332,6 +359,7 @@ class QueryEngine:
         *,
         null_matches_undefined: bool = False,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
         values = QueryEngine._extract_values(doc, field)
         candidates = values or [None]
@@ -341,6 +369,7 @@ class QueryEngine:
                 condition,
                 null_matches_undefined=null_matches_undefined,
                 dialect=dialect,
+                collation=collation,
             )
             for value in candidates
         )
@@ -352,13 +381,14 @@ class QueryEngine:
         condition: Any,
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
         values = QueryEngine._extract_values(doc, field)
         if not values:
             return not (condition is None and dialect.policy.null_query_matches_undefined())
         candidates = values or [None]
         return all(
-            not QueryEngine._values_equal(value, condition, dialect=dialect)
+            not QueryEngine._values_equal(value, condition, dialect=dialect, collation=collation)
             for value in candidates
         )
 
@@ -370,19 +400,20 @@ class QueryEngine:
         operator: str,
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
         candidates = QueryEngine._extract_values(doc, field)
         if not candidates:
             return False
         policy = dialect.policy
         if operator == "gt":
-            return any(policy.compare_values(value, target) > 0 for value in candidates)
+            return any(compare_with_collation(value, target, dialect=dialect, collation=collation) > 0 for value in candidates)
         if operator == "gte":
-            return any(policy.compare_values(value, target) >= 0 for value in candidates)
+            return any(compare_with_collation(value, target, dialect=dialect, collation=collation) >= 0 for value in candidates)
         if operator == "lt":
-            return any(policy.compare_values(value, target) < 0 for value in candidates)
+            return any(compare_with_collation(value, target, dialect=dialect, collation=collation) < 0 for value in candidates)
         if operator == "lte":
-            return any(policy.compare_values(value, target) <= 0 for value in candidates)
+            return any(compare_with_collation(value, target, dialect=dialect, collation=collation) <= 0 for value in candidates)
         raise ValueError(f"Unsupported comparison operator kind: {operator}")
 
     @staticmethod
@@ -393,6 +424,7 @@ class QueryEngine:
         *,
         null_matches_undefined: bool = False,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
         candidates = QueryEngine._extract_values(doc, field) or [None]
         return any(
@@ -401,6 +433,7 @@ class QueryEngine:
                 item,
                 null_matches_undefined=null_matches_undefined,
                 dialect=dialect,
+                collation=collation,
             )
             for candidate in candidates
             for item in values
@@ -413,6 +446,7 @@ class QueryEngine:
         values: tuple[Any, ...],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
         candidates = QueryEngine._extract_values(doc, field)
         if not candidates:
@@ -424,6 +458,7 @@ class QueryEngine:
                 item,
                 null_matches_undefined=False,
                 dialect=dialect,
+                collation=collation,
             )
             for candidate in candidates
             for item in values
@@ -615,6 +650,7 @@ class QueryEngine:
         expected_values: tuple[Any, ...],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
         found, value = QueryEngine._get_field_value(doc, field)
         if found and isinstance(value, list):
@@ -628,13 +664,13 @@ class QueryEngine:
         for expected in expected_values:
             if isinstance(expected, dict) and set(expected) == {"$elemMatch"}:
                 if not any(
-                    QueryEngine._match_elem_match_candidate(candidate, expected["$elemMatch"], dialect=dialect)
+                    QueryEngine._match_elem_match_candidate(candidate, expected["$elemMatch"], dialect=dialect, collation=collation)
                     for candidate in candidates
                 ):
                     return False
                 continue
             if not any(
-                QueryEngine._values_equal(candidate, expected, dialect=dialect)
+                QueryEngine._values_equal(candidate, expected, dialect=dialect, collation=collation)
                 for candidate in candidates
             ):
                 return False
@@ -691,6 +727,7 @@ class QueryEngine:
         condition: Any,
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
         values = QueryEngine._extract_values(doc, field)
         array_candidates = [value for value in values if isinstance(value, list)]
@@ -698,7 +735,7 @@ class QueryEngine:
             return False
         for array_candidate in array_candidates:
             if any(
-                QueryEngine._match_elem_match_candidate(candidate, condition, dialect=dialect)
+                QueryEngine._match_elem_match_candidate(candidate, condition, dialect=dialect, collation=collation)
                 for candidate in array_candidate
             ):
                 return True
@@ -710,12 +747,13 @@ class QueryEngine:
         condition: Any,
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
         if not isinstance(condition, dict):
-            return QueryEngine._values_equal(candidate, condition, dialect=dialect)
+            return QueryEngine._values_equal(candidate, condition, dialect=dialect, collation=collation)
         if any(isinstance(key, str) and key.startswith("$") for key in condition):
             wrapper = {"value": candidate}
-            return QueryEngine.match(wrapper, {"value": condition}, dialect=dialect)
+            return QueryEngine.match(wrapper, {"value": condition}, dialect=dialect, collation=collation)
         if not isinstance(candidate, dict):
             return False
-        return QueryEngine.match(candidate, condition, dialect=dialect)
+        return QueryEngine.match(candidate, condition, dialect=dialect, collation=collation)

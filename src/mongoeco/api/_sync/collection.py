@@ -14,7 +14,7 @@ from mongoeco.compat import (
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    ArrayFilters, BulkWriteResult, CodecOptions, DeleteResult, Document, DocumentId, Filter, InsertManyResult,
+    ArrayFilters, BulkWriteResult, CodecOptions, CollationDocument, DeleteResult, Document, DocumentId, Filter, InsertManyResult,
     IndexInformation, IndexModel, IndexKeySpec, InsertOneResult, Projection, ReadConcern, ReadPreference,
     PlanningMode, ReturnDocument, SearchIndexModel, SortSpec, Update, UpdateResult, WriteConcern, WriteModel,
 )
@@ -68,6 +68,11 @@ class Collection:
             codec_options=self._codec_options,
         ).with_options(planning_mode=self._planning_mode)
 
+    def _run_collection_method(self, method_name: str, /, *args, **kwargs):
+        collection = self._async_collection()
+        method = getattr(collection, method_name)
+        return self._client._run(method(*args, **kwargs))
+
     def with_options(
         self,
         *,
@@ -88,37 +93,68 @@ class Collection:
             planning_mode=self._planning_mode if planning_mode is None else planning_mode,
         )
 
-    def insert_one(self, document: Document, *, session: ClientSession | None = None) -> InsertOneResult[DocumentId]:
-        return self._client._run(self._async_collection().insert_one(document, session=session))
+    def insert_one(
+        self,
+        document: Document,
+        *,
+        bypass_document_validation: bool = False,
+        session: ClientSession | None = None,
+    ) -> InsertOneResult[DocumentId]:
+        return self._run_collection_method(
+            "insert_one",
+            document,
+            bypass_document_validation=bypass_document_validation,
+            session=session,
+        )
 
     def insert_many(
         self,
         documents: list[Document],
         *,
+        bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> InsertManyResult[DocumentId]:
-        return self._client._run(self._async_collection().insert_many(documents, session=session))
+        return self._run_collection_method(
+            "insert_many",
+            documents,
+            bypass_document_validation=bypass_document_validation,
+            session=session,
+        )
 
-    def find_one(self, filter_spec: Filter | None = None, projection: Projection | None = None, *, session: ClientSession | None = None) -> Document | None:
-        return self._client._run(self._async_collection().find_one(filter_spec, projection, session=session))
+    def find_one(
+        self,
+        filter_spec: Filter | None = None,
+        projection: Projection | None = None,
+        *,
+        collation: CollationDocument | None = None,
+        session: ClientSession | None = None,
+    ) -> Document | None:
+        return self._run_collection_method(
+            "find_one",
+            filter_spec,
+            projection,
+            collation=collation,
+            session=session,
+        )
 
     def bulk_write(
         self,
         requests: list[WriteModel],
         *,
         ordered: bool = True,
+        bypass_document_validation: bool = False,
         comment: object | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> BulkWriteResult[DocumentId]:
-        return self._client._run(
-            self._async_collection().bulk_write(
-                requests,
-                ordered=ordered,
-                comment=comment,
-                let=let,
-                session=session,
-            )
+        return self._run_collection_method(
+            "bulk_write",
+            requests,
+            ordered=ordered,
+            bypass_document_validation=bypass_document_validation,
+            comment=comment,
+            let=let,
+            session=session,
         )
 
     def find(
@@ -126,6 +162,7 @@ class Collection:
         filter_spec: Filter | None = None,
         projection: Projection | None = None,
         *,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
@@ -141,6 +178,7 @@ class Collection:
             async_collection,
             {} if filter_spec is None else filter_spec,
             projection,
+            collation=collation,
             sort=sort,
             skip=skip,
             limit=limit,
@@ -182,6 +220,7 @@ class Collection:
         filter_spec: Filter | None = None,
         projection: Projection | None = None,
         *,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
@@ -196,6 +235,7 @@ class Collection:
             self._async_collection().find_raw_batches(
                 filter_spec,
                 projection,
+                collation=collation,
                 sort=sort,
                 skip=skip,
                 limit=limit,
@@ -239,25 +279,28 @@ class Collection:
         update_spec: Update,
         upsert: bool = False,
         *,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         array_filters: ArrayFilters | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
+        bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
-        return self._client._run(
-            self._async_collection().update_one(
-                filter_spec,
-                update_spec,
-                upsert,
-                sort=sort,
-                array_filters=array_filters,
-                hint=hint,
-                comment=comment,
-                let=let,
-                session=session,
-            )
+        return self._run_collection_method(
+            "update_one",
+            filter_spec,
+            update_spec,
+            upsert,
+            collation=collation,
+            sort=sort,
+            array_filters=array_filters,
+            hint=hint,
+            comment=comment,
+            let=let,
+            bypass_document_validation=bypass_document_validation,
+            session=session,
         )
 
     def replace_one(
@@ -266,23 +309,26 @@ class Collection:
         replacement: Document,
         upsert: bool = False,
         *,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
+        bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
-        return self._client._run(
-            self._async_collection().replace_one(
-                filter_spec,
-                replacement,
-                upsert,
-                sort=sort,
-                hint=hint,
-                comment=comment,
-                let=let,
-                session=session,
-            )
+        return self._run_collection_method(
+            "replace_one",
+            filter_spec,
+            replacement,
+            upsert,
+            collation=collation,
+            sort=sort,
+            hint=hint,
+            comment=comment,
+            let=let,
+            bypass_document_validation=bypass_document_validation,
+            session=session,
         )
 
     def find_one_and_update(
@@ -291,6 +337,7 @@ class Collection:
         update_spec: Update,
         *,
         projection: Projection | None = None,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         upsert: bool = False,
         return_document: ReturnDocument | None = None,
@@ -299,23 +346,25 @@ class Collection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         let: dict[str, object] | None = None,
+        bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> Document | None:
-        return self._client._run(
-            self._async_collection().find_one_and_update(
-                filter_spec,
-                update_spec,
-                projection=projection,
-                sort=sort,
-                upsert=upsert,
-                return_document=return_document,
-                array_filters=array_filters,
-                hint=hint,
-                comment=comment,
-                max_time_ms=max_time_ms,
-                let=let,
-                session=session,
-            )
+        return self._run_collection_method(
+            "find_one_and_update",
+            filter_spec,
+            update_spec,
+            projection=projection,
+            collation=collation,
+            sort=sort,
+            upsert=upsert,
+            return_document=return_document,
+            array_filters=array_filters,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            let=let,
+            bypass_document_validation=bypass_document_validation,
+            session=session,
         )
 
     def find_one_and_replace(
@@ -324,6 +373,7 @@ class Collection:
         replacement: Document,
         *,
         projection: Projection | None = None,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         upsert: bool = False,
         return_document: ReturnDocument | None = None,
@@ -331,22 +381,24 @@ class Collection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         let: dict[str, object] | None = None,
+        bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> Document | None:
-        return self._client._run(
-            self._async_collection().find_one_and_replace(
-                filter_spec,
-                replacement,
-                projection=projection,
-                sort=sort,
-                upsert=upsert,
-                return_document=return_document,
-                hint=hint,
-                comment=comment,
-                max_time_ms=max_time_ms,
-                let=let,
-                session=session,
-            )
+        return self._run_collection_method(
+            "find_one_and_replace",
+            filter_spec,
+            replacement,
+            projection=projection,
+            collation=collation,
+            sort=sort,
+            upsert=upsert,
+            return_document=return_document,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            let=let,
+            bypass_document_validation=bypass_document_validation,
+            session=session,
         )
 
     def find_one_and_delete(
@@ -354,6 +406,7 @@ class Collection:
         filter_spec: Filter,
         *,
         projection: Projection | None = None,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
@@ -361,36 +414,37 @@ class Collection:
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
-        return self._client._run(
-            self._async_collection().find_one_and_delete(
-                filter_spec,
-                projection=projection,
-                sort=sort,
-                hint=hint,
-                comment=comment,
-                max_time_ms=max_time_ms,
-                let=let,
-                session=session,
-            )
+        return self._run_collection_method(
+            "find_one_and_delete",
+            filter_spec,
+            projection=projection,
+            collation=collation,
+            sort=sort,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            let=let,
+            session=session,
         )
 
     def delete_one(
         self,
         filter_spec: Filter,
         *,
+        collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> DeleteResult:
-        return self._client._run(
-            self._async_collection().delete_one(
-                filter_spec,
-                hint=hint,
-                comment=comment,
-                let=let,
-                session=session,
-            )
+        return self._run_collection_method(
+            "delete_one",
+            filter_spec,
+            collation=collation,
+            hint=hint,
+            comment=comment,
+            let=let,
+            session=session,
         )
 
     def update_many(
@@ -399,48 +453,53 @@ class Collection:
         update_spec: Update,
         upsert: bool = False,
         *,
+        collation: CollationDocument | None = None,
         array_filters: ArrayFilters | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
+        bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
-        return self._client._run(
-            self._async_collection().update_many(
-                filter_spec,
-                update_spec,
-                upsert,
-                array_filters=array_filters,
-                hint=hint,
-                comment=comment,
-                let=let,
-                session=session,
-            )
+        return self._run_collection_method(
+            "update_many",
+            filter_spec,
+            update_spec,
+            upsert,
+            collation=collation,
+            array_filters=array_filters,
+            hint=hint,
+            comment=comment,
+            let=let,
+            bypass_document_validation=bypass_document_validation,
+            session=session,
         )
 
     def delete_many(
         self,
         filter_spec: Filter,
         *,
+        collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> DeleteResult:
-        return self._client._run(
-            self._async_collection().delete_many(
-                filter_spec,
-                hint=hint,
-                comment=comment,
-                let=let,
-                session=session,
-            )
+        return self._run_collection_method(
+            "delete_many",
+            filter_spec,
+            collation=collation,
+            hint=hint,
+            comment=comment,
+            let=let,
+            session=session,
         )
 
     def count_documents(
         self,
         filter_spec: Filter,
         *,
+        collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
@@ -448,16 +507,16 @@ class Collection:
         limit: int | None = None,
         session: ClientSession | None = None,
     ) -> int:
-        return self._client._run(
-            self._async_collection().count_documents(
-                filter_spec,
-                hint=hint,
-                comment=comment,
-                max_time_ms=max_time_ms,
-                skip=skip,
-                limit=limit,
-                session=session,
-            )
+        return self._run_collection_method(
+            "count_documents",
+            filter_spec,
+            collation=collation,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            skip=skip,
+            limit=limit,
+            session=session,
         )
 
     def estimated_document_count(
@@ -467,12 +526,11 @@ class Collection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> int:
-        return self._client._run(
-            self._async_collection().estimated_document_count(
-                comment=comment,
-                max_time_ms=max_time_ms,
-                session=session,
-            )
+        return self._run_collection_method(
+            "estimated_document_count",
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
         )
 
     def distinct(
@@ -480,20 +538,21 @@ class Collection:
         key: str,
         filter_spec: Filter | None = None,
         *,
+        collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> list[object]:
-        return self._client._run(
-            self._async_collection().distinct(
-                key,
-                filter_spec,
-                hint=hint,
-                comment=comment,
-                max_time_ms=max_time_ms,
-                session=session,
-            )
+        return self._run_collection_method(
+            "distinct",
+            key,
+            filter_spec,
+            collation=collation,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
         )
 
     def create_index(

@@ -33,6 +33,7 @@ from mongoeco.compat import (
     resolve_pymongo_profile_resolution,
 )
 from mongoeco.core.aggregation import Pipeline
+from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operators import UpdateEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
@@ -43,7 +44,7 @@ from mongoeco.core.upserts import seed_upsert_document
 from mongoeco.core.validation import is_document, is_filter, is_projection, is_update
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    ArrayFilters, BulkWriteErrorDetails, BulkWriteResult, CodecOptions, DeleteResult, Document, DocumentId, Filter,
+    ArrayFilters, BulkWriteErrorDetails, BulkWriteResult, CodecOptions, CollationDocument, DeleteResult, Document, DocumentId, Filter,
     IndexInformation, IndexKeySpec, IndexModel, InsertManyResult, InsertOne, InsertOneResult, ObjectId, Projection,
     PlanningMode, ReadConcern, ReadPreference, ReplaceOne, ReturnDocument, SearchIndexDefinition, SearchIndexDocument,
     SearchIndexModel, SortSpec, Update, UpdateMany, UpdateOne, UpdateResult,
@@ -212,6 +213,13 @@ class AsyncCollection:
             return None
         _validate_batch_size(batch_size)
         return batch_size
+
+    @staticmethod
+    def _normalize_collation(collation: object | None) -> CollationDocument | None:
+        normalized = normalize_collation(collation)
+        if normalized is None:
+            return None
+        return normalized.to_document()
 
     @staticmethod
     def _normalize_max_time_ms(max_time_ms: object | None) -> int | None:
@@ -389,6 +397,7 @@ class AsyncCollection:
         upsert_seed: Document | None = None,
         selector_filter: Filter | None = None,
         session: ClientSession | None = None,
+        bypass_document_validation: bool = False,
     ) -> UpdateResult[DocumentId]:
         self._ensure_operation_executable(operation)
         started_at = time.perf_counter_ns()
@@ -405,6 +414,7 @@ class AsyncCollection:
                 selector_filter=selector_filter,
                 dialect=self._mongodb_dialect,
                 context=session,
+                bypass_document_validation=bypass_document_validation,
             )
         except Exception as exc:
             await self._profile_operation(
@@ -414,6 +424,7 @@ class AsyncCollection:
                     "q": operation.filter_spec,
                     "u": deepcopy(operation.update_spec or {}),
                     "upsert": upsert,
+                    "bypassDocumentValidation": bypass_document_validation,
                 },
                 duration_ns=time.perf_counter_ns() - started_at,
                 errmsg=str(exc),
@@ -426,6 +437,7 @@ class AsyncCollection:
                 "q": operation.filter_spec,
                 "u": deepcopy(operation.update_spec or {}),
                 "upsert": upsert,
+                "bypassDocumentValidation": bypass_document_validation,
             },
             duration_ns=time.perf_counter_ns() - started_at,
         )
@@ -598,6 +610,7 @@ class AsyncCollection:
         filter_spec: Filter,
         *,
         plan: QueryNode | None = None,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
@@ -606,6 +619,7 @@ class AsyncCollection:
     ) -> Document | None:
         operation = compile_find_operation(
             filter_spec,
+            collation=collation,
             sort=sort,
             limit=1,
             hint=hint,
@@ -637,6 +651,7 @@ class AsyncCollection:
             operation.filter_spec,
             operation.plan,
             operation.projection,
+            collation=operation.collation,
             sort=operation.sort,
             skip=operation.skip,
             limit=operation.limit,
@@ -653,6 +668,7 @@ class AsyncCollection:
         *,
         overwrite: bool,
         session: ClientSession | None = None,
+        bypass_document_validation: bool = False,
     ) -> None:
         success = await self._engine.put_document(
             self._db_name,
@@ -660,6 +676,7 @@ class AsyncCollection:
             document,
             overwrite=overwrite,
             context=session,
+            bypass_document_validation=bypass_document_validation,
         )
         if not success:
             raise DuplicateKeyError(f"Duplicate key: _id={document['_id']}")
@@ -713,7 +730,13 @@ class AsyncCollection:
                 f"for {type(request).__name__} in bulk_write()"
             )
 
-    async def insert_one(self, document: Document, *, session: ClientSession | None = None) -> InsertOneResult[DocumentId]:
+    async def insert_one(
+        self,
+        document: Document,
+        *,
+        bypass_document_validation: bool = False,
+        session: ClientSession | None = None,
+    ) -> InsertOneResult[DocumentId]:
         original = self._require_document(document)
         if "_id" not in original:
             original["_id"] = ObjectId()
@@ -722,12 +745,21 @@ class AsyncCollection:
         started_at = time.perf_counter_ns()
         try:
             success = await self._engine.put_document(
-                self._db_name, self._collection_name, doc, overwrite=False, context=session
+                self._db_name,
+                self._collection_name,
+                doc,
+                overwrite=False,
+                context=session,
+                bypass_document_validation=bypass_document_validation,
             )
         except Exception as exc:
             await self._profile_operation(
                 op="insert",
-                command={"insert": self._collection_name, "documents": [deepcopy(doc)]},
+                command={
+                    "insert": self._collection_name,
+                    "documents": [deepcopy(doc)],
+                    "bypassDocumentValidation": bypass_document_validation,
+                },
                 duration_ns=time.perf_counter_ns() - started_at,
                 errmsg=str(exc),
             )
@@ -736,7 +768,11 @@ class AsyncCollection:
             raise DuplicateKeyError(f"Duplicate key: _id={doc['_id']}")
         await self._profile_operation(
             op="insert",
-            command={"insert": self._collection_name, "documents": [deepcopy(doc)]},
+            command={
+                "insert": self._collection_name,
+                "documents": [deepcopy(doc)],
+                "bypassDocumentValidation": bypass_document_validation,
+            },
             duration_ns=time.perf_counter_ns() - started_at,
         )
         self._publish_change_event(
@@ -750,6 +786,7 @@ class AsyncCollection:
         self,
         documents: list[Document],
         *,
+        bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> InsertManyResult[DocumentId]:
         inserted_ids: list[DocumentId] = []
@@ -768,11 +805,16 @@ class AsyncCollection:
                     doc,
                     overwrite=False,
                     context=session,
+                    bypass_document_validation=bypass_document_validation,
                 )
             except Exception as exc:
                 await self._profile_operation(
                     op="insert",
-                    command={"insert": self._collection_name, "documents": command_documents},
+                    command={
+                        "insert": self._collection_name,
+                        "documents": command_documents,
+                        "bypassDocumentValidation": bypass_document_validation,
+                    },
                     duration_ns=time.perf_counter_ns() - started_at,
                     errmsg=str(exc),
                 )
@@ -783,7 +825,11 @@ class AsyncCollection:
 
         await self._profile_operation(
             op="insert",
-            command={"insert": self._collection_name, "documents": command_documents},
+            command={
+                "insert": self._collection_name,
+                "documents": command_documents,
+                "bypassDocumentValidation": bypass_document_validation,
+            },
             duration_ns=time.perf_counter_ns() - started_at,
         )
         for inserted in command_documents:
@@ -799,6 +845,7 @@ class AsyncCollection:
         requests: list[WriteModel],
         *,
         ordered: bool = True,
+        bypass_document_validation: bool = False,
         comment: object | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
@@ -819,49 +866,67 @@ class AsyncCollection:
             self._validate_bulk_write_request_against_profile(request)
             try:
                 if isinstance(request, InsertOne):
-                    await self.insert_one(request.document, session=session)
+                    insert_kwargs = {"session": session}
+                    if bypass_document_validation:
+                        insert_kwargs["bypass_document_validation"] = True
+                    await self.insert_one(request.document, **insert_kwargs)
                     inserted_count += 1
                 elif isinstance(request, UpdateOne):
+                    update_one_kwargs = {
+                        "sort": request.sort,
+                        "array_filters": request.array_filters,
+                        "hint": request.hint,
+                        "comment": request.comment if request.comment is not None else comment,
+                        "let": request.let if request.let is not None else let,
+                        "session": session,
+                    }
+                    if bypass_document_validation:
+                        update_one_kwargs["bypass_document_validation"] = True
                     result = await self.update_one(
                         request.filter,
                         request.update,
                         request.upsert,
-                        sort=request.sort,
-                        array_filters=request.array_filters,
-                        hint=request.hint,
-                        comment=request.comment if request.comment is not None else comment,
-                        let=request.let if request.let is not None else let,
-                        session=session,
+                        **update_one_kwargs,
                     )
                     matched_count += result.matched_count
                     modified_count += result.modified_count
                     if result.upserted_id is not None:
                         upserted_ids[index] = result.upserted_id
                 elif isinstance(request, UpdateMany):
+                    update_many_kwargs = {
+                        "array_filters": request.array_filters,
+                        "hint": request.hint,
+                        "comment": request.comment if request.comment is not None else comment,
+                        "let": request.let if request.let is not None else let,
+                        "session": session,
+                    }
+                    if bypass_document_validation:
+                        update_many_kwargs["bypass_document_validation"] = True
                     result = await self.update_many(
                         request.filter,
                         request.update,
                         request.upsert,
-                        array_filters=request.array_filters,
-                        hint=request.hint,
-                        comment=request.comment if request.comment is not None else comment,
-                        let=request.let if request.let is not None else let,
-                        session=session,
+                        **update_many_kwargs,
                     )
                     matched_count += result.matched_count
                     modified_count += result.modified_count
                     if result.upserted_id is not None:
                         upserted_ids[index] = result.upserted_id
                 elif isinstance(request, ReplaceOne):
+                    replace_one_kwargs = {
+                        "sort": request.sort,
+                        "hint": request.hint,
+                        "comment": request.comment if request.comment is not None else comment,
+                        "let": request.let if request.let is not None else let,
+                        "session": session,
+                    }
+                    if bypass_document_validation:
+                        replace_one_kwargs["bypass_document_validation"] = True
                     result = await self.replace_one(
                         request.filter,
                         request.replacement,
                         request.upsert,
-                        sort=request.sort,
-                        hint=request.hint,
-                        comment=request.comment if request.comment is not None else comment,
-                        let=request.let if request.let is not None else let,
-                        session=session,
+                        **replace_one_kwargs,
                     )
                     matched_count += result.matched_count
                     modified_count += result.modified_count
@@ -927,17 +992,25 @@ class AsyncCollection:
         )
         return result
 
-    async def find_one(self, filter_spec: Filter | None = None, projection: Projection | None = None, *, session: ClientSession | None = None) -> Document | None:
+    async def find_one(
+        self,
+        filter_spec: Filter | None = None,
+        projection: Projection | None = None,
+        *,
+        collation: CollationDocument | None = None,
+        session: ClientSession | None = None,
+    ) -> Document | None:
         operation = compile_find_operation(
             filter_spec,
             projection=projection,
+            collation=collation,
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
         doc = None
         started_at = time.perf_counter_ns()
         try:
-            if self._can_use_direct_id_lookup(operation.filter_spec):
+            if operation.collation is None and self._can_use_direct_id_lookup(operation.filter_spec):
                 doc = await self._engine.get_document(
                     self._db_name,
                     self._collection_name,
@@ -974,6 +1047,7 @@ class AsyncCollection:
         filter_spec: Filter | None = None,
         projection: Projection | None = None,
         *,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
@@ -986,6 +1060,7 @@ class AsyncCollection:
         operation = compile_find_operation(
             filter_spec,
             projection=projection,
+            collation=collation,
             sort=sort,
             skip=skip,
             limit=limit,
@@ -1031,6 +1106,7 @@ class AsyncCollection:
         filter_spec: Filter | None = None,
         projection: Projection | None = None,
         *,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
@@ -1043,6 +1119,7 @@ class AsyncCollection:
         cursor = self.find(
             filter_spec,
             projection,
+            collation=collation,
             sort=sort,
             skip=skip,
             limit=limit,
@@ -1115,15 +1192,18 @@ class AsyncCollection:
         update_spec: Update,
         upsert: bool = False,
         *,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         array_filters: ArrayFilters | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
+        bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
         operation = compile_update_operation(
             filter_spec,
+            collation=collation,
             sort=sort,
             array_filters=array_filters,
             hint=hint,
@@ -1171,6 +1251,7 @@ class AsyncCollection:
                     upsert=False,
                     selector_filter=operation.filter_spec,
                     session=session,
+                    bypass_document_validation=bypass_document_validation,
                 )
                 self._record_operation_metadata(
                     operation="update_one",
@@ -1191,6 +1272,7 @@ class AsyncCollection:
                 update_spec,
                 session=session,
                 array_filters=operation.array_filters,
+                bypass_document_validation=bypass_document_validation,
             )
         if operation.hint is not None:
             selected = await self._build_cursor(
@@ -1208,6 +1290,7 @@ class AsyncCollection:
                         update_spec,
                         session=session,
                         array_filters=operation.array_filters,
+                        bypass_document_validation=bypass_document_validation,
                     )
                 return UpdateResult(matched_count=0, modified_count=0)
             identity_filter = {"_id": selected["_id"]}
@@ -1221,6 +1304,7 @@ class AsyncCollection:
                 upsert=False,
                 selector_filter=operation.filter_spec,
                 session=session,
+                bypass_document_validation=bypass_document_validation,
             )
             self._record_operation_metadata(
                 operation="update_one",
@@ -1247,6 +1331,7 @@ class AsyncCollection:
             upsert_seed=upsert_seed,
             selector_filter=operation.filter_spec,
             session=session,
+            bypass_document_validation=bypass_document_validation,
         )
         self._record_operation_metadata(
             operation="update_one",
@@ -1279,6 +1364,7 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
         array_filters: ArrayFilters | None = None,
+        bypass_document_validation: bool = False,
     ) -> UpdateResult[DocumentId]:
         new_doc: Document = {}
         seed_upsert_document(new_doc, filter_spec)
@@ -1291,7 +1377,12 @@ class AsyncCollection:
         )
         if "_id" not in new_doc:
             new_doc["_id"] = ObjectId()
-        await self._put_replacement_document(new_doc, overwrite=False, session=session)
+        await self._put_replacement_document(
+            new_doc,
+            overwrite=False,
+            session=session,
+            bypass_document_validation=bypass_document_validation,
+        )
         self._publish_change_event(
             operation_type="insert",
             document_key={"_id": deepcopy(new_doc["_id"])},
@@ -1309,14 +1400,17 @@ class AsyncCollection:
         update_spec: Update,
         upsert: bool = False,
         *,
+        collation: CollationDocument | None = None,
         array_filters: ArrayFilters | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
+        bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
         operation = compile_update_operation(
             filter_spec,
+            collation=collation,
             array_filters=array_filters,
             hint=hint,
             comment=comment,
@@ -1339,10 +1433,12 @@ class AsyncCollection:
                     operation.filter_spec,
                     update_spec,
                     upsert=True,
+                    collation=operation.collation,
                     array_filters=operation.array_filters,
                     hint=operation.hint,
                     comment=operation.comment,
                     let=operation.let,
+                    bypass_document_validation=bypass_document_validation,
                     session=session,
                 )
             return UpdateResult(matched_count=0, modified_count=0)
@@ -1360,6 +1456,7 @@ class AsyncCollection:
                 upsert=False,
                 selector_filter=operation.filter_spec,
                 session=session,
+                bypass_document_validation=bypass_document_validation,
             )
             modified_count += result.modified_count
             updated = await self._document_by_id(matched["_id"], session=session)
@@ -1387,14 +1484,17 @@ class AsyncCollection:
         replacement: Document,
         upsert: bool = False,
         *,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
+        bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
         operation = compile_update_operation(
             filter_spec,
+            collation=collation,
             sort=sort,
             hint=hint,
             comment=comment,
@@ -1411,6 +1511,7 @@ class AsyncCollection:
         selected = await self._select_first_document(
             operation.filter_spec,
             plan=operation.plan,
+            collation=operation.collation,
             sort=operation.sort,
             hint=operation.hint,
             comment=operation.comment,
@@ -1420,7 +1521,12 @@ class AsyncCollection:
             if not upsert:
                 return UpdateResult(matched_count=0, modified_count=0)
             document = self._build_upsert_replacement_document(operation.filter_spec, replacement)
-            await self._put_replacement_document(document, overwrite=False, session=session)
+            await self._put_replacement_document(
+                document,
+                overwrite=False,
+                session=session,
+                bypass_document_validation=bypass_document_validation,
+            )
             self._record_operation_metadata(
                 operation="replace_one",
                 comment=operation.comment,
@@ -1442,7 +1548,12 @@ class AsyncCollection:
             raise OperationFailure("The _id field cannot be changed in a replacement document")
         document = self._materialize_replacement_document(selected, replacement)
         modified_count = 0 if self._mongodb_dialect.values_equal(selected, document) else 1
-        await self._put_replacement_document(document, overwrite=True, session=session)
+        await self._put_replacement_document(
+            document,
+            overwrite=True,
+            session=session,
+            bypass_document_validation=bypass_document_validation,
+        )
         self._record_operation_metadata(
             operation="replace_one",
             comment=operation.comment,
@@ -1462,6 +1573,7 @@ class AsyncCollection:
         update_spec: Update,
         *,
         projection: Projection | None = None,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         upsert: bool = False,
         return_document: ReturnDocument | None = None,
@@ -1470,12 +1582,14 @@ class AsyncCollection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         let: dict[str, object] | None = None,
+        bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> Document | None:
         projection = self._normalize_projection(projection)
         return_document = self._normalize_return_document(return_document)
         operation = compile_update_operation(
             filter_spec,
+            collation=collation,
             sort=sort,
             array_filters=array_filters,
             hint=hint,
@@ -1491,6 +1605,7 @@ class AsyncCollection:
         before = await self._select_first_document(
             operation.filter_spec,
             plan=operation.plan,
+            collation=operation.collation,
             sort=operation.sort,
             hint=operation.hint,
             comment=operation.comment,
@@ -1504,11 +1619,13 @@ class AsyncCollection:
                 operation.filter_spec,
                 update_spec,
                 upsert=True,
+                collation=operation.collation,
                 sort=operation.sort,
                 array_filters=operation.array_filters,
                 hint=operation.hint,
                 comment=operation.comment,
                 let=operation.let,
+                bypass_document_validation=bypass_document_validation,
                 session=session,
             )
             if return_document is ReturnDocument.BEFORE:
@@ -1516,6 +1633,7 @@ class AsyncCollection:
             return await self.find(
                 {"_id": result.upserted_id},
                 projection,
+                collation=operation.collation,
                 limit=1,
                 hint=operation.hint,
                 comment=operation.comment,
@@ -1535,6 +1653,7 @@ class AsyncCollection:
             upsert=False,
             selector_filter=operation.filter_spec,
             session=session,
+            bypass_document_validation=bypass_document_validation,
         )
         after = await self._document_by_id(before["_id"], session=session)
         if after is not None:
@@ -1548,6 +1667,7 @@ class AsyncCollection:
         return await self.find(
             identity_filter,
             projection,
+            collation=operation.collation,
             limit=1,
             hint=operation.hint,
             comment=operation.comment,
@@ -1561,6 +1681,7 @@ class AsyncCollection:
         replacement: Document,
         *,
         projection: Projection | None = None,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         upsert: bool = False,
         return_document: ReturnDocument | None = None,
@@ -1568,12 +1689,14 @@ class AsyncCollection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         let: dict[str, object] | None = None,
+        bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> Document | None:
         projection = self._normalize_projection(projection)
         return_document = self._normalize_return_document(return_document)
         operation = compile_update_operation(
             filter_spec,
+            collation=collation,
             sort=sort,
             hint=hint,
             comment=comment,
@@ -1587,6 +1710,7 @@ class AsyncCollection:
         before = await self._select_first_document(
             operation.filter_spec,
             plan=operation.plan,
+            collation=operation.collation,
             sort=operation.sort,
             hint=operation.hint,
             comment=operation.comment,
@@ -1600,10 +1724,12 @@ class AsyncCollection:
                 operation.filter_spec,
                 replacement,
                 upsert=True,
+                collation=operation.collation,
                 sort=operation.sort,
                 hint=operation.hint,
                 comment=operation.comment,
                 let=operation.let,
+                bypass_document_validation=bypass_document_validation,
                 session=session,
             )
             if return_document is ReturnDocument.BEFORE:
@@ -1611,6 +1737,7 @@ class AsyncCollection:
             return await self.find(
                 {"_id": result.upserted_id},
                 projection,
+                collation=operation.collation,
                 limit=1,
                 hint=operation.hint,
                 comment=operation.comment,
@@ -1623,6 +1750,8 @@ class AsyncCollection:
             identity_filter,
             replacement,
             upsert=False,
+            collation=operation.collation,
+            bypass_document_validation=bypass_document_validation,
             session=session,
         )
         if return_document is ReturnDocument.BEFORE:
@@ -1630,6 +1759,7 @@ class AsyncCollection:
         return await self.find(
             identity_filter,
             projection,
+            collation=operation.collation,
             limit=1,
             hint=operation.hint,
             comment=operation.comment,
@@ -1642,6 +1772,7 @@ class AsyncCollection:
         filter_spec: Filter,
         *,
         projection: Projection | None = None,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
@@ -1652,6 +1783,7 @@ class AsyncCollection:
         projection = self._normalize_projection(projection)
         operation = compile_update_operation(
             filter_spec,
+            collation=collation,
             sort=sort,
             hint=hint,
             comment=comment,
@@ -1664,6 +1796,7 @@ class AsyncCollection:
         before = await self._select_first_document(
             operation.filter_spec,
             plan=operation.plan,
+            collation=operation.collation,
             sort=operation.sort,
             hint=operation.hint,
             comment=operation.comment,
@@ -1689,6 +1822,7 @@ class AsyncCollection:
         self,
         filter_spec: Filter,
         *,
+        collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
@@ -1696,6 +1830,7 @@ class AsyncCollection:
     ) -> DeleteResult:
         operation = compile_update_operation(
             filter_spec,
+            collation=collation,
             hint=hint,
             comment=comment,
             let=let,
@@ -1761,6 +1896,7 @@ class AsyncCollection:
         self,
         filter_spec: Filter,
         *,
+        collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
@@ -1768,6 +1904,7 @@ class AsyncCollection:
     ) -> DeleteResult:
         operation = compile_update_operation(
             filter_spec,
+            collation=collation,
             hint=hint,
             comment=comment,
             let=let,
@@ -1807,6 +1944,7 @@ class AsyncCollection:
         self,
         filter_spec: Filter,
         *,
+        collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
@@ -1815,6 +1953,7 @@ class AsyncCollection:
         session: ClientSession | None = None,
     ) -> int:
         filter_spec = self._normalize_filter(filter_spec)
+        normalized_collation = normalize_collation(collation)
         hint = self._normalize_hint(hint)
         max_time_ms = self._normalize_max_time_ms(max_time_ms)
         if not isinstance(skip, int) or isinstance(skip, bool) or skip < 0:
@@ -1826,6 +1965,7 @@ class AsyncCollection:
         operation = compile_find_operation(
             filter_spec,
             projection={"_id": 1},
+            collation=collation,
             skip=skip,
             limit=limit,
             hint=hint,
@@ -1874,6 +2014,7 @@ class AsyncCollection:
         key: str,
         filter_spec: Filter | None = None,
         *,
+        collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
@@ -1882,11 +2023,13 @@ class AsyncCollection:
         if not isinstance(key, str):
             raise TypeError("key must be a string")
         filter_spec = self._normalize_filter(filter_spec)
+        normalized_collation = normalize_collation(collation)
         hint = self._normalize_hint(hint)
         max_time_ms = self._normalize_max_time_ms(max_time_ms)
         distinct_values: list[object] = []
         async for document in self.find(
             filter_spec,
+            collation=collation,
             hint=hint,
             comment=comment,
             max_time_ms=max_time_ms,
@@ -1904,7 +2047,12 @@ class AsyncCollection:
             candidates = values[1:] if isinstance(values[0], list) else values
             for candidate in candidates:
                 if not any(
-                    self._mongodb_dialect.values_equal(existing, candidate)
+                    QueryEngine._values_equal(
+                        existing,
+                        candidate,
+                        dialect=self._mongodb_dialect,
+                        collation=normalized_collation,
+                    )
                     for existing in distinct_values
                 ):
                     distinct_values.append(candidate)

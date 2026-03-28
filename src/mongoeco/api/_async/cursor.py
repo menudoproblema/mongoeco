@@ -4,7 +4,7 @@ from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.query_plan import QueryNode
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
-from mongoeco.types import Document, Filter, PlanningMode, Projection, QueryPlanExplanation, SortSpec
+from mongoeco.types import CollationDocument, Document, Filter, PlanningMode, Projection, QueryPlanExplanation, SortSpec
 
 
 type HintSpec = str | SortSpec
@@ -132,6 +132,7 @@ class AsyncCursor:
         plan: QueryNode,
         projection: Projection | None,
         *,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
@@ -145,6 +146,7 @@ class AsyncCursor:
         self._filter_spec = filter_spec
         self._plan = plan
         self._projection = projection
+        self._collation = collation
         self._sort = sort
         self._skip = skip
         self._limit = limit
@@ -195,6 +197,7 @@ class AsyncCursor:
             operation.filter_spec,
             plan=operation.plan,
             projection=operation.projection,
+            collation=operation.collation,
             sort=operation.sort,
             skip=operation.skip,
             limit=operation.limit,
@@ -247,6 +250,7 @@ class AsyncCursor:
                     operation.filter_spec,
                     plan=operation.plan,
                     projection=operation.projection,
+                    collation=operation.collation,
                     sort=operation.sort,
                     skip=operation.skip,
                     limit=operation.limit,
@@ -412,6 +416,7 @@ class AsyncCursor:
             self._filter_spec,
             self._plan,
             self._projection,
+            collation=self._collation,
             sort=self._sort,
             skip=self._skip,
             limit=self._limit,
@@ -428,6 +433,7 @@ class AsyncCursor:
         return compile_find_operation(
             self._filter_spec,
             projection=self._projection,
+            collation=self._collation,
             sort=self._sort,
             skip=self._skip,
             limit=self._limit,

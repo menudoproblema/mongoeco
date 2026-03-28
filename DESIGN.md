@@ -633,16 +633,16 @@ Estado de avance dentro de Fase 8:
   * IR de lectura tipada hasta engines, con shims legacy solo como compatibilidad;
   * distinción formal entre stages streamables y materializantes en el core de agregación;
   * `find_raw_batches` y `aggregate_raw_batches`;
+  * `collation` observable en query, sort, update, delete y comandos administrativos compatibles, con fallback Python seguro cuando SQLite no puede preservar la semántica;
+  * `bypass_document_validation` efectivo en escrituras de colección y en comandos administrativos de escritura;
   * type bracketing y comparación BSON aplicados también al razonamiento de índices virtuales;
   * degradación híbrida de SQLite cuando solo el `sort` requiere Python, manteniendo `scan` y `filter` en SQL;
-* siguen pendientes los bloques más anchos:
-  * `collation`;
-  * `bypass_document_validation`;
+  * centralización práctica de la capa sync en la superficie más amplia de colección, manteniendo la implementación maestra en async;
+  * inventario exhaustivo de la suite de `mongomock` y matriz base `cubierto / equivalente / no cubierto / fuera de alcance` como artefactos versionados.
+* se consideran ya fuera del perímetro de cierre de esta fase y pasan a refino continuo:
   * refinamiento BSON restante en rutas menos frecuentes y comparación fina fuera de los caminos ya cerrados;
-  * centralización o generación de la capa sync para evitar deriva de firmas y propagación;
   * refinamiento de pool de conexiones y de concurrencia/locking de SQLite, si el proyecto decide perseguir comportamiento más cercano a producción y no solo paridad funcional fina;
-  * contraste exhaustivo contra la suite de `mongomock`.
-  * todo lo que quede pendiente de la ambición más profunda de cliente de red, pero ya como refinamiento y no como base arquitectónica.
+  * profundidad adicional de cliente de red o del proxy wire que ya no exija nueva infraestructura transversal.
 
 Criterio de foco:
 * Esta fase existe para evitar que los “últimos 10-15%” de fidelidad y profundidad queden repartidos en notas marginales.
@@ -656,7 +656,7 @@ Nota de implementación opcional para Fase 8:
 * **Capa sync generada o centralizada**:
   * sí es una mejora interesante de resultado final para evitar deriva entre async y sync;
   * no debe preceder al cierre de las fronteras estructurales del core;
-  * si no se automatiza, conviene al menos centralizar por completo el wrapping sync sobre el runtime async.
+  * en el cierre real de Fase 8 se acepta como suficiente una centralización fuerte del wrapping sync en los puntos de mayor superficie, sin imponer todavía generación automática.
 * **Backend Rust opcional para BSON core**:
   * sí es una vía interesante para codec, comparación/orden BSON y conversiones numéricas si el profiling real lo justifica;
   * debe plantearse como backend intercambiable y no como segunda fuente de verdad semántica.
@@ -1062,6 +1062,28 @@ Mientras no aparezca una de esas señales, el criterio recomendado es:
 
 1. mantener `DESIGN.md` como visión consolidada;
 2. dedicar el siguiente esfuerzo principalmente a **superficie funcional, cobertura y paridad observable**, no a reabrir otra gran ola de refactor.
+
+### 7.5 Estado Actual de Fase 8
+
+Fase 8 puede considerarse **cerrada** dentro del perímetro que este documento le asigna.
+
+Queda ya aplicada:
+
+* la capa de compatibilidad con capabilities semánticas explícitas para deltas finos;
+* la IR única de lectura hasta los engines;
+* la distinción formal `streamable` / `materializing` en agregación;
+* `find_raw_batches` y `aggregate_raw_batches`;
+* `collation` y `bypass_document_validation` en la superficie observable local relevante;
+* fallback híbrido de SQLite para evitar materialización innecesaria cuando solo el orden requiere Python;
+* artefactos versionados para contraste exhaustivo con la suite de `mongomock`:
+  * `tests/fixtures/mongomock_suite_inventory.json`
+  * `tests/fixtures/mongomock_suite_matrix.json`
+
+Lo que quede a partir de aquí ya no forma parte del cierre de Fase 8, sino de refinamiento continuo:
+
+* aumentar la clasificación real dentro de la matriz de `mongomock`;
+* seguir apurando fidelidad BSON rara;
+* refinar comportamiento de driver o de SQLite con ambición más cercana a producción.
 
 ### 7.5 Estado Vivo Actual del Repositorio
 

@@ -208,6 +208,7 @@ type ArrayFilters = list[Filter]
 type Projection = dict[str, Any]
 type SortDirection = Literal[1, -1]
 type SortSpec = list[tuple[str, SortDirection]]
+type CollationDocument = dict[str, object]
 type IndexKeySpec = SortSpec
 type IndexDocument = dict[str, object]
 type IndexInformationEntry = dict[str, object]

@@ -2,6 +2,7 @@ from functools import cmp_to_key
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.types import Document, SortSpec
 
@@ -12,21 +13,41 @@ def sort_value(
     direction: int,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> Any:
     values = QueryEngine.extract_values(document, field)
     if not values:
         return None
 
     primary = values[0]
-    policy = dialect.policy
     if isinstance(primary, list):
         if not primary:
             return []
         members = values[1:] or primary
-        ordered = sorted(members, key=cmp_to_key(policy.compare_values))
+        ordered = sorted(
+            members,
+            key=cmp_to_key(
+                lambda left, right: compare_with_collation(
+                    left,
+                    right,
+                    dialect=dialect,
+                    collation=collation,
+                )
+            ),
+        )
         return ordered[0] if direction == 1 else ordered[-1]
     if len(values) > 1:
-        ordered = sorted(values, key=cmp_to_key(policy.compare_values))
+        ordered = sorted(
+            values,
+            key=cmp_to_key(
+                lambda left, right: compare_with_collation(
+                    left,
+                    right,
+                    dialect=dialect,
+                    collation=collation,
+                )
+            ),
+        )
         return ordered[0] if direction == 1 else ordered[-1]
     return primary
 
@@ -37,12 +58,14 @@ def compare_documents(
     sort: SortSpec,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> int:
-    policy = dialect.policy
     for field, direction in sort:
-        result = policy.compare_values(
-            sort_value(left, field, direction, dialect=dialect),
-            sort_value(right, field, direction, dialect=dialect),
+        result = compare_with_collation(
+            sort_value(left, field, direction, dialect=dialect, collation=collation),
+            sort_value(right, field, direction, dialect=dialect, collation=collation),
+            dialect=dialect,
+            collation=collation,
         )
         if result != 0:
             return result if direction == 1 else -result
@@ -54,6 +77,7 @@ def sort_documents(
     sort: SortSpec | None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> list[Document]:
     if not sort:
         return documents
@@ -65,6 +89,7 @@ def sort_documents(
                 right,
                 sort,
                 dialect=dialect,
+                collation=collation,
             )
         ),
     )

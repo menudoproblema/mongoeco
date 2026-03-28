@@ -11,7 +11,7 @@ from mongoeco.api._async.cursor import (
 from mongoeco.api.operations import FindOperation, compile_find_operation
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
-from mongoeco.types import Document, Filter, Projection, QueryPlanExplanation, SortSpec
+from mongoeco.types import CollationDocument, Document, Filter, Projection, QueryPlanExplanation, SortSpec
 
 
 class _CursorIterator:
@@ -59,6 +59,7 @@ class Cursor:
         filter_spec: Filter,
         projection: Projection | None,
         *,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
@@ -72,6 +73,7 @@ class Cursor:
         self._async_collection = async_collection
         self._filter_spec = filter_spec
         self._projection = projection
+        self._collation = collation
         self._sort = sort
         self._skip = skip
         self._limit = limit
@@ -159,6 +161,7 @@ class Cursor:
                 self._async_collection.find(
                     self._filter_spec,
                     self._projection,
+                    collation=self._collation,
                     sort=self._sort,
                     skip=self._skip,
                     limit=self._limit,
@@ -196,6 +199,7 @@ class Cursor:
             async_iterable = self._async_collection.find(
                 self._filter_spec,
                 self._projection,
+                collation=self._collation,
                 sort=self._sort,
                 skip=self._skip,
                 limit=self._limit,
@@ -231,6 +235,7 @@ class Cursor:
             self._async_collection.find(
                 self._filter_spec,
                 self._projection,
+                collation=self._collation,
                 sort=self._sort,
                 skip=self._skip,
                 limit=self._limit,
@@ -258,6 +263,7 @@ class Cursor:
             self._async_collection,
             self._filter_spec,
             self._projection,
+            collation=self._collation,
             sort=self._sort,
             skip=self._skip,
             limit=self._limit,
@@ -276,6 +282,7 @@ class Cursor:
         return compile_find_operation(
             self._filter_spec,
             projection=self._projection,
+            collation=self._collation,
             sort=self._sort,
             skip=self._skip,
             limit=self._limit,

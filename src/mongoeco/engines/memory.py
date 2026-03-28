@@ -9,6 +9,7 @@ from typing import Any, AsyncIterable, override
 
 from mongoeco.api.operations import FindOperation, UpdateOperation, compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.collation import normalize_collation
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.mvcc import MemoryMvccState
 from mongoeco.engines.profiling import EngineProfiler
@@ -40,7 +41,7 @@ from mongoeco.errors import CollectionInvalid, DuplicateKeyError, OperationFailu
 from mongoeco.session import ClientSession
 from mongoeco.session import EngineTransactionContext
 from mongoeco.types import (
-    ArrayFilters, DeleteResult, Document, DocumentId, ExecutionLineageStep, Filter, IndexInformation, IndexDocument, IndexKeySpec, ObjectId,
+    ArrayFilters, CollationDocument, DeleteResult, Document, DocumentId, ExecutionLineageStep, Filter, IndexInformation, IndexDocument, IndexKeySpec, ObjectId,
     ProfilingCommandResult,
     Projection, QueryPlanExplanation, SortSpec, Update, UpdateResult, default_index_name,
     default_id_index_definition, default_id_index_document, default_id_index_information, index_fields,
@@ -492,7 +493,16 @@ class MemoryEngine(AsyncStorageEngine):
         return self._profiler.set_level(db_name, level, slow_ms=slow_ms)
 
     @override
-    async def put_document(self, db_name: str, coll_name: str, document: Document, overwrite: bool = True, *, context: ClientSession | None = None) -> bool:
+    async def put_document(
+        self,
+        db_name: str,
+        coll_name: str,
+        document: Document,
+        overwrite: bool = True,
+        *,
+        context: ClientSession | None = None,
+        bypass_document_validation: bool = False,
+    ) -> bool:
         async with self._get_lock(db_name, coll_name):
             storage = self._storage_view(context)
             collections = self._collections_view(context)
@@ -521,12 +531,13 @@ class MemoryEngine(AsyncStorageEngine):
             if not overwrite and storage_key in coll:
                 return False
 
-            enforce_collection_document_validation(
-                document,
-                options=collection_options,
-                original_document=original_document,
-                dialect=MONGODB_DIALECT_70,
-            )
+            if not bypass_document_validation:
+                enforce_collection_document_validation(
+                    document,
+                    options=collection_options,
+                    original_document=original_document,
+                    dialect=MONGODB_DIALECT_70,
+                )
 
             self._ensure_unique_indexes(
                 db_name,
@@ -625,11 +636,12 @@ class MemoryEngine(AsyncStorageEngine):
         return _scan()
 
     @override
-    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, hint: str | IndexKeySpec | None = None, comment: object | None = None, max_time_ms: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
+    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, collation: CollationDocument | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, hint: str | IndexKeySpec | None = None, comment: object | None = None, max_time_ms: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
         semantics = compile_find_semantics(
             filter_spec,
             plan=plan,
             projection=projection,
+            collation=collation,
             sort=sort,
             skip=skip,
             limit=limit,
@@ -663,7 +675,7 @@ class MemoryEngine(AsyncStorageEngine):
         )
 
     @override
-    async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, selector_filter: Filter | None = None, array_filters: ArrayFilters | None = None, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> UpdateResult[DocumentId]:
+    async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, selector_filter: Filter | None = None, array_filters: ArrayFilters | None = None, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None, bypass_document_validation: bool = False) -> UpdateResult[DocumentId]:
         operation = compile_update_operation(
             filter_spec,
             array_filters=array_filters,
@@ -680,6 +692,7 @@ class MemoryEngine(AsyncStorageEngine):
             selector_filter=selector_filter,
             dialect=dialect,
             context=context,
+            bypass_document_validation=bypass_document_validation,
         )
 
     @override
@@ -694,6 +707,7 @@ class MemoryEngine(AsyncStorageEngine):
         selector_filter: Filter | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
+        bypass_document_validation: bool = False,
     ) -> UpdateResult[DocumentId]:
         semantics = compile_update_semantics(
             operation,
@@ -713,17 +727,23 @@ class MemoryEngine(AsyncStorageEngine):
 
             for storage_key, data in list(coll.items()):
                 document = self._decode_storage_document(data)
-                if not QueryEngine.match_plan(document, semantics.query_plan, dialect=semantics.dialect):
+                if not QueryEngine.match_plan(
+                    document,
+                    semantics.query_plan,
+                    dialect=semantics.dialect,
+                    collation=semantics.collation,
+                ):
                     continue
 
                 original_document = deepcopy(document)
                 modified = semantics.compiled_update_plan.apply(document)
-                enforce_collection_document_validation(
-                    document,
-                    options=collection_options,
-                    original_document=original_document,
-                    dialect=semantics.dialect,
-                )
+                if not bypass_document_validation:
+                    enforce_collection_document_validation(
+                        document,
+                        options=collection_options,
+                        original_document=original_document,
+                        dialect=semantics.dialect,
+                    )
                 self._ensure_unique_indexes(
                     db_name,
                     coll_name,
@@ -745,13 +765,14 @@ class MemoryEngine(AsyncStorageEngine):
             semantics.compiled_upsert_plan.apply(new_doc)
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
-            enforce_collection_document_validation(
-                new_doc,
-                options=collection_options,
-                original_document=None,
-                is_upsert_insert=True,
-                dialect=semantics.dialect,
-            )
+            if not bypass_document_validation:
+                enforce_collection_document_validation(
+                    new_doc,
+                    options=collection_options,
+                    original_document=None,
+                    is_upsert_insert=True,
+                    dialect=semantics.dialect,
+                )
 
             with self._meta_lock:
                 db = self._storage_view(context).setdefault(db_name, {})
@@ -782,14 +803,19 @@ class MemoryEngine(AsyncStorageEngine):
             )
 
     @override
-    async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult:
+    async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, collation: CollationDocument | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult:
         effective_dialect = dialect or MONGODB_DIALECT_70
         query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
             coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
             for storage_key, data in list(coll.items()):
                 document = self._decode_storage_document(data)
-                if not QueryEngine.match_plan(document, query_plan, dialect=effective_dialect):
+                if not QueryEngine.match_plan(
+                    document,
+                    query_plan,
+                    dialect=effective_dialect,
+                    collation=normalize_collation(collation),
+                ):
                     continue
                 del coll[storage_key]
                 return DeleteResult(deleted_count=1)
@@ -810,15 +836,17 @@ class MemoryEngine(AsyncStorageEngine):
             coll_name,
             operation.filter_spec,
             plan=operation.plan,
+            collation=operation.collation,
             dialect=dialect,
             context=context,
         )
 
     @override
-    async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int:
+    async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, collation: CollationDocument | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int:
         semantics = compile_find_semantics(
             filter_spec,
             plan=plan,
+            collation=collation,
             dialect=dialect,
         )
         return await self.count_find_semantics(
@@ -1152,6 +1180,7 @@ class MemoryEngine(AsyncStorageEngine):
         filter_spec: Filter | None = None,
         *,
         plan: QueryNode | None = None,
+        collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
@@ -1164,6 +1193,7 @@ class MemoryEngine(AsyncStorageEngine):
         semantics = compile_find_semantics(
             filter_spec,
             plan=plan,
+            collation=collation,
             sort=sort,
             skip=skip,
             limit=limit,
@@ -1214,6 +1244,7 @@ class MemoryEngine(AsyncStorageEngine):
             FindOperation(
                 filter_spec=semantics.filter_spec or {},
                 projection=semantics.projection,
+                collation=None if semantics.collation is None else semantics.collation.to_document(),
                 sort=semantics.sort,
                 skip=semantics.skip,
                 limit=semantics.limit,

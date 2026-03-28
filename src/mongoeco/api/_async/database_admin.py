@@ -33,6 +33,7 @@ from mongoeco.api.operations import (
 from mongoeco.api._async.database_commands import AsyncDatabaseCommandService
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.core.aggregation import _bson_document_size
+from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.semantic_core import compile_collection_validation_semantics
@@ -258,6 +259,7 @@ class AsyncDatabaseAdminService:
                 projection=normalize_command_projection(
                     spec.get(projection_field, default_projection)
                 ),
+                collation=spec.get("collation"),
                 sort=normalize_command_sort_document(spec.get(sort_field)),
                 skip=skip,
                 limit=limit,
@@ -323,6 +325,7 @@ class AsyncDatabaseAdminService:
         return compile_find_selection_from_update_operation(
             compile_update_operation(
                 self._normalize_filter(update_spec.get("q")),
+                collation=update_spec.get("collation"),
                 hint=self._normalize_hint_from_command(update_spec.get("hint")),
                 comment=comment,
                 max_time_ms=self._normalize_max_time_ms_from_command(max_time_ms),
@@ -344,6 +347,7 @@ class AsyncDatabaseAdminService:
         return compile_find_selection_from_update_operation(
             compile_update_operation(
                 self._normalize_filter(delete_spec.get("q")),
+                collation=delete_spec.get("collation"),
                 hint=self._normalize_hint_from_command(delete_spec.get("hint")),
                 comment=comment,
                 max_time_ms=self._normalize_max_time_ms_from_command(max_time_ms),
@@ -773,6 +777,7 @@ class AsyncDatabaseAdminService:
         session: ClientSession | None = None,
     ) -> DistinctCommandResult:
         distinct_values: list[object] = []
+        normalized_collation = normalize_collation(operation.collation)
         async for document in self._database.get_collection(collection_name)._build_cursor(
             operation,
             session=session,
@@ -789,7 +794,12 @@ class AsyncDatabaseAdminService:
             candidates = values[1:] if isinstance(values[0], list) else values
             for candidate in candidates:
                 if not any(
-                    self._mongodb_dialect.values_equal(existing, candidate)
+                    QueryEngine._values_equal(
+                        existing,
+                        candidate,
+                        dialect=self._mongodb_dialect,
+                        collation=normalized_collation,
+                    )
                     for existing in distinct_values
                 ):
                     distinct_values.append(candidate)
@@ -819,12 +829,19 @@ class AsyncDatabaseAdminService:
         collection_name = self._require_collection_name(spec.get("insert"), "insert")
         documents = self._normalize_insert_documents(spec.get("documents"))
         ordered = self._normalize_ordered_from_command(spec.get("ordered"))
+        bypass_document_validation = spec.get("bypassDocumentValidation", False)
+        if not isinstance(bypass_document_validation, bool):
+            raise TypeError("bypassDocumentValidation must be a bool")
         collection = self._database.get_collection(collection_name)
         inserted = 0
         write_errors: list[WriteErrorEntry] = []
         for index, document in enumerate(documents):
             try:
-                await collection.insert_one(document, session=session)
+                await collection.insert_one(
+                    document,
+                    bypass_document_validation=bypass_document_validation,
+                    session=session,
+                )
                 inserted += 1
             except Exception as exc:
                 write_errors.append(
@@ -854,6 +871,9 @@ class AsyncDatabaseAdminService:
         collection_name = self._require_collection_name(spec.get("update"), "update")
         updates = self._normalize_update_specs(spec.get("updates"))
         ordered = self._normalize_ordered_from_command(spec.get("ordered"))
+        bypass_document_validation = spec.get("bypassDocumentValidation", False)
+        if not isinstance(bypass_document_validation, bool):
+            raise TypeError("bypassDocumentValidation must be a bool")
         collection = self._database.get_collection(collection_name)
         matched = 0
         modified = 0
@@ -893,10 +913,12 @@ class AsyncDatabaseAdminService:
                         query,
                         update_document,
                         upsert=upsert,
+                        collation=update_spec.get("collation"),
                         array_filters=array_filters,
                         hint=hint,
                         comment=spec.get("comment"),
                         let=let,
+                        bypass_document_validation=bypass_document_validation,
                         session=session,
                     )
                 elif is_operator_update:
@@ -904,10 +926,12 @@ class AsyncDatabaseAdminService:
                         query,
                         update_document,
                         upsert=upsert,
+                        collation=update_spec.get("collation"),
                         array_filters=array_filters,
                         hint=hint,
                         comment=spec.get("comment"),
                         let=let,
+                        bypass_document_validation=bypass_document_validation,
                         session=session,
                     )
                 else:
@@ -915,9 +939,11 @@ class AsyncDatabaseAdminService:
                         query,
                         update_document,
                         upsert=upsert,
+                        collation=update_spec.get("collation"),
                         hint=hint,
                         comment=spec.get("comment"),
                         let=let,
+                        bypass_document_validation=bypass_document_validation,
                         session=session,
                     )
                 matched += result.matched_count
@@ -976,6 +1002,7 @@ class AsyncDatabaseAdminService:
                 if limit == 1:
                     result = await collection.delete_one(
                         query,
+                        collation=delete_spec.get("collation"),
                         hint=hint,
                         comment=spec.get("comment"),
                         let=let,
@@ -984,6 +1011,7 @@ class AsyncDatabaseAdminService:
                 else:
                     result = await collection.delete_many(
                         query,
+                        collation=delete_spec.get("collation"),
                         hint=hint,
                         comment=spec.get("comment"),
                         let=let,
@@ -1211,6 +1239,7 @@ class AsyncDatabaseAdminService:
         before = await collection.find_one_and_delete(
             options.query,
             projection=options.fields,
+            collation=options.collation,
             sort=options.sort,
             hint=options.hint,
             comment=options.comment,
@@ -1269,11 +1298,13 @@ class AsyncDatabaseAdminService:
                 options.query,
                 options.update_spec,
                 upsert=True,
+                collation=options.collation,
                 sort=options.sort,
                 array_filters=options.array_filters,
                 hint=options.hint,
                 comment=options.comment,
                 let=options.let,
+                bypass_document_validation=options.bypass_document_validation,
                 session=session,
             )
             value = None
@@ -1297,6 +1328,7 @@ class AsyncDatabaseAdminService:
             options.query,
             options.update_spec,
             projection=options.fields,
+            collation=options.collation,
             sort=options.sort,
             upsert=options.upsert,
             return_document=return_document,
@@ -1305,6 +1337,7 @@ class AsyncDatabaseAdminService:
             comment=options.comment,
             max_time_ms=options.max_time_ms,
             let=options.let,
+            bypass_document_validation=options.bypass_document_validation,
             session=session,
         )
         return FindAndModifyCommandResult(
@@ -1330,10 +1363,12 @@ class AsyncDatabaseAdminService:
                 options.query,
                 options.update_spec,
                 upsert=True,
+                collation=options.collation,
                 sort=options.sort,
                 hint=options.hint,
                 comment=options.comment,
                 let=options.let,
+                bypass_document_validation=options.bypass_document_validation,
                 session=session,
             )
             value = None
@@ -1356,6 +1391,7 @@ class AsyncDatabaseAdminService:
             options.query,
             options.update_spec,
             projection=options.fields,
+            collation=options.collation,
             sort=options.sort,
             upsert=options.upsert,
             return_document=return_document,
@@ -1363,6 +1399,7 @@ class AsyncDatabaseAdminService:
             comment=options.comment,
             max_time_ms=options.max_time_ms,
             let=options.let,
+            bypass_document_validation=options.bypass_document_validation,
             session=session,
         )
         return FindAndModifyCommandResult(

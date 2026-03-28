@@ -36,11 +36,13 @@ class ValidationCommandOptions:
 class FindAndModifyCommandOptions:
     collection_name: str
     query: Filter
+    collation: dict[str, object] | None
     sort: list[tuple[str, int]] | None
     fields: dict[str, object] | None
     remove: bool
     return_new: bool
     upsert: bool
+    bypass_document_validation: bool
     array_filters: list[Filter] | None
     hint: object | None
     max_time_ms: int | None
@@ -226,17 +228,25 @@ def normalize_find_and_modify_options(
     let = spec.get("let")
     if let is not None and not isinstance(let, dict):
         raise TypeError("let must be a dict")
+    collation = spec.get("collation")
+    if collation is not None and not isinstance(collation, dict):
+        raise TypeError("collation must be a document")
+    bypass_document_validation = spec.get("bypassDocumentValidation", False)
+    if not isinstance(bypass_document_validation, bool):
+        raise TypeError("bypassDocumentValidation must be a bool")
     update_spec = spec.get("update")
     if update_spec is not None and not isinstance(update_spec, dict):
         raise TypeError("update must be a document")
     return FindAndModifyCommandOptions(
         collection_name=require_collection_name(spec.get("findAndModify"), "findAndModify"),
         query=normalize_filter_document(spec.get("query")),
+        collation=collation,
         sort=normalize_command_sort_document(spec.get("sort")),
         fields=normalize_command_projection(spec.get("fields")),
         remove=remove,
         return_new=return_new,
         upsert=upsert,
+        bypass_document_validation=bypass_document_validation,
         array_filters=array_filters,
         hint=normalize_command_hint(spec.get("hint")),
         max_time_ms=normalize_command_max_time_ms(spec.get("maxTimeMS")),

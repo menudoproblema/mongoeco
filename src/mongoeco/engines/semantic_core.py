@@ -4,6 +4,7 @@ from typing import Iterable
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.collation import CollationSpec, normalize_collation
 from mongoeco.core.operators import CompiledUpdatePlan
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
@@ -23,6 +24,7 @@ from mongoeco.types import (
     Projection,
     QueryPlanExplanation,
     SortSpec,
+    CollationDocument,
 )
 
 
@@ -31,6 +33,7 @@ class EngineFindSemantics:
     filter_spec: Filter | None
     query_plan: QueryNode
     projection: Projection | None
+    collation: CollationSpec | None
     sort: SortSpec | None
     skip: int
     limit: int | None
@@ -59,6 +62,7 @@ class EngineUpdateSemantics:
     compiled_update_plan: CompiledUpdatePlan
     compiled_upsert_plan: CompiledUpdatePlan
     selector_filter: Filter
+    collation: CollationSpec | None
     dialect: MongoDialect
 
 
@@ -122,6 +126,7 @@ def compile_find_semantics(
     *,
     plan: QueryNode | None = None,
     projection: Projection | None = None,
+    collation: CollationDocument | None = None,
     sort: SortSpec | None = None,
     skip: int = 0,
     limit: int | None = None,
@@ -139,6 +144,7 @@ def compile_find_semantics(
         filter_spec=filter_spec,
         query_plan=ensure_query_plan(filter_spec, plan, dialect=effective_dialect),
         projection=projection,
+        collation=normalize_collation(collation),
         sort=sort,
         skip=skip,
         limit=limit,
@@ -158,6 +164,7 @@ def compile_find_semantics_from_operation(
         operation.filter_spec,
         plan=operation.plan,
         projection=operation.projection,
+        collation=operation.collation,
         sort=operation.sort,
         skip=operation.skip,
         limit=operation.limit,
@@ -183,6 +190,7 @@ def compile_update_semantics(
         compiled_update_plan=operation.compiled_update_plan,
         compiled_upsert_plan=operation.compiled_upsert_plan,
         selector_filter=selector_filter or operation.filter_spec,
+        collation=normalize_collation(operation.collation),
         dialect=effective_dialect,
     )
 
@@ -211,6 +219,7 @@ def iter_filtered_documents(
             document,
             semantics.query_plan,
             dialect=semantics.dialect,
+            collation=semantics.collation,
         ):
             yield document
     enforce_deadline(deadline)
@@ -226,7 +235,12 @@ def finalize_documents(
     deadline = semantics.deadline
     result = list(documents)
     if apply_sort_phase:
-        result = sort_documents(result, semantics.sort, dialect=semantics.dialect)
+        result = sort_documents(
+            result,
+            semantics.sort,
+            dialect=semantics.dialect,
+            collation=semantics.collation,
+        )
         enforce_deadline(deadline)
     if apply_skip_limit_phase:
         if semantics.skip:
