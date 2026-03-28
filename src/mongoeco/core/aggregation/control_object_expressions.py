@@ -185,7 +185,9 @@ def evaluate_control_object_expression(
         return deepcopy(values[-size:])
 
     if operator == "$mergeObjects":
-        args = require_expression_args(operator, spec, 1, None)
+        args = spec if isinstance(spec, list) else [spec]
+        if not args:
+            raise OperationFailure("$mergeObjects requires at least 1 arguments")
         merged: dict[str, Any] = {}
         for item in args:
             value = evaluate_expression(document, item, variables)

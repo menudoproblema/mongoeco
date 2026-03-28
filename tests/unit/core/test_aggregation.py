@@ -2972,6 +2972,13 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$mod": [1, 0]})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$mergeObjects": [1]})
+        self.assertEqual(
+            evaluate_expression(
+                {"meta": {"name": "Ada"}},
+                {"$mergeObjects": "$meta"},
+            ),
+            {"name": "Ada"},
+        )
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$getField": {}})
         with self.assertRaises(OperationFailure):
