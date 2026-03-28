@@ -21,6 +21,7 @@ from mongoeco.api.operations import FindOperation, UpdateOperation, compile_upda
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect, MongoDialect70, MongoDialect80
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS, bson_engine_key, bson_numeric_index_key
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import canonical_document_id
 from mongoeco.core.operators import UpdateEngine
@@ -86,8 +87,8 @@ from mongoeco.engines.sqlite_query import (
     path_array_prefixes,
     type_expression_sql,
     translate_query_plan,
-    translate_sort_spec,
     translate_compiled_update_plan,
+    SQLiteQueryTranslator,
 )
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
@@ -146,6 +147,7 @@ class SQLiteEngine(AsyncStorageEngine):
         path: str = ":memory:",
         codec: type[DocumentCodec] = DocumentCodec,
         executor_workers: int | None = None,
+        aggregation_materialization_limit: int | None = 50_000,
         simulate_search_index_latency: float = 0.0,
     ):
         self._path = path
@@ -171,7 +173,16 @@ class SQLiteEngine(AsyncStorageEngine):
         self._ensured_multikey_physical_indexes: set[str] = set()
         self._fts5_available: bool | None = None
         self._ensured_search_backends: set[str] = set()
+        self.aggregation_cost_policy = (
+            None
+            if aggregation_materialization_limit is None
+            else AggregationCostPolicy(
+                max_materialized_documents=aggregation_materialization_limit,
+                require_spill_for_blocking_stages=True,
+            )
+        )
         self._simulate_search_index_latency = max(0.0, float(simulate_search_index_latency))
+        self._sql_translator = SQLiteQueryTranslator()
 
     def _ensure_executor(self) -> ThreadPoolExecutor:
         executor = self._executor
@@ -559,30 +570,24 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> tuple[str, list[object]]:
         hinted_index = self._resolve_hint_index(db_name, coll_name, hint, plan=plan, dialect=dialect)
-        where_sql, params = self._translate_query_plan_with_multikey(db_name, coll_name, plan)
-        order_sql = translate_sort_spec(sort)
+        where_fragment = self._translate_query_plan_with_multikey(db_name, coll_name, plan)
         from_clause = "documents"
         if hinted_index is not None and hinted_index.get("physical_name") is not None:
             from_clause = (
                 "documents INDEXED BY "
                 f"{self._quote_identifier(str(hinted_index['physical_name']))}"
             )
-        sql = f"""
-            SELECT {select_clause}
-            FROM {from_clause}
-            WHERE db_name = ? AND coll_name = ? AND ({where_sql})
-            {order_sql}
-        """
-        sql_params: list[object] = [db_name, coll_name, *params]
-        if limit is not None:
-            sql += " LIMIT ?"
-            sql_params.append(limit)
-        elif skip:
-            sql += " LIMIT -1"
-        if skip:
-            sql += " OFFSET ?"
-            sql_params.append(skip)
-        return sql, sql_params
+        statement = self._sql_translator.build_select_statement(
+            select_clause=select_clause,
+            from_clause=from_clause,
+            namespace_sql="db_name = ? AND coll_name = ?",
+            namespace_params=(db_name, coll_name),
+            where_fragment=where_fragment,
+            sort=sort,
+            skip=skip,
+            limit=limit,
+        )
+        return statement.sql, list(statement.params)
 
     @staticmethod
     def _normalize_multikey_number(value: int | float) -> str:

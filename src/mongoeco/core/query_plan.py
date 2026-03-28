@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import re
-from typing import Any
+from typing import Any, TypeIs
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.errors import OperationFailure
@@ -142,6 +142,62 @@ class AndCondition(QueryNode):
 @dataclass(frozen=True)
 class OrCondition(QueryNode):
     clauses: tuple[QueryNode, ...]
+
+
+type ConcreteQueryNode = (
+    MatchAll
+    | DeferredQueryNode
+    | EqualsCondition
+    | NotEqualsCondition
+    | GreaterThanCondition
+    | GreaterThanOrEqualCondition
+    | LessThanCondition
+    | LessThanOrEqualCondition
+    | InCondition
+    | NotInCondition
+    | AllCondition
+    | SizeCondition
+    | ModCondition
+    | RegexCondition
+    | NotCondition
+    | ElemMatchCondition
+    | ExistsCondition
+    | TypeCondition
+    | BitwiseCondition
+    | ExprCondition
+    | AndCondition
+    | OrCondition
+)
+
+
+def is_concrete_query_node(node: QueryNode) -> TypeIs[ConcreteQueryNode]:
+    return isinstance(
+        node,
+        (
+            MatchAll,
+            DeferredQueryNode,
+            EqualsCondition,
+            NotEqualsCondition,
+            GreaterThanCondition,
+            GreaterThanOrEqualCondition,
+            LessThanCondition,
+            LessThanOrEqualCondition,
+            InCondition,
+            NotInCondition,
+            AllCondition,
+            SizeCondition,
+            ModCondition,
+            RegexCondition,
+            NotCondition,
+            ElemMatchCondition,
+            ExistsCondition,
+            TypeCondition,
+            BitwiseCondition,
+            ExprCondition,
+            AndCondition,
+            OrCondition,
+        ),
+    )
 
 
 def _regex_options_from_pattern(pattern: re.Pattern[str]) -> str:

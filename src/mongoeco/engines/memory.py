@@ -11,6 +11,7 @@ from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.collation import normalize_collation
+from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.mvcc import MemoryMvccState
 from mongoeco.engines.profiling import EngineProfiler
@@ -85,6 +86,7 @@ class MemoryEngine(AsyncStorageEngine):
         codec: type[DocumentCodec] = DocumentCodec,
         *,
         aggregation_spill_threshold: int | None = None,
+        aggregation_materialization_limit: int | None = 50_000,
         simulate_search_index_latency: float = 0.0,
     ):
         self._storage: dict[str, dict[str, dict[Any, Any]]] = {}
@@ -106,6 +108,14 @@ class MemoryEngine(AsyncStorageEngine):
             else AggregationSpillPolicy(
                 threshold=aggregation_spill_threshold,
                 codec=codec,
+            )
+        )
+        self.aggregation_cost_policy = (
+            None
+            if aggregation_materialization_limit is None
+            else AggregationCostPolicy(
+                max_materialized_documents=aggregation_materialization_limit,
+                require_spill_for_blocking_stages=True,
             )
         )
         self._simulate_search_index_latency = max(0.0, float(simulate_search_index_latency))

@@ -42,6 +42,7 @@ from mongoeco.core.aggregation.spill import (
     BLOCKING_AGGREGATION_STAGES,
     AggregationSpillPolicy,
 )
+from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.core.aggregation.grouping_stages import _apply_group
 from mongoeco.core.aggregation.stages import (
     AGGREGATION_STAGE_HANDLERS,
@@ -50,6 +51,7 @@ from mongoeco.core.aggregation.stages import (
     AggregationStageSpec,
     apply_pipeline,
     get_aggregation_stage_spec,
+    has_materializing_aggregation_stage,
     is_streamable_aggregation_stage,
 )
 
@@ -65,6 +67,7 @@ __all__ = [
     "AggregationStageHandler",
     "AggregationStageSpec",
     "AggregationSpillPolicy",
+    "AggregationCostPolicy",
     "BLOCKING_AGGREGATION_STAGES",
     "Pipeline",
     "PipelineStage",
@@ -86,6 +89,7 @@ __all__ = [
     "apply_pipeline",
     "evaluate_expression",
     "get_aggregation_stage_spec",
+    "has_materializing_aggregation_stage",
     "get_registered_aggregation_expression_operator",
     "get_registered_aggregation_stage",
     "is_streamable_aggregation_stage",

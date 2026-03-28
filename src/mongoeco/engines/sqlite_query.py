@@ -6,6 +6,7 @@ import uuid
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS
 from mongoeco.core.operators import CompiledUpdatePlan
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.sql_translation import BaseSQLTranslator
 from mongoeco.core.query_plan import (
     AllCondition,
     AndCondition,
@@ -32,6 +33,14 @@ from mongoeco.types import SortSpec, Update
 
 
 type SqlFragment = tuple[str, list[object]]
+
+
+class SQLiteQueryTranslator(BaseSQLTranslator):
+    def translate_query_plan(self, plan: QueryNode) -> SqlFragment:
+        return translate_query_plan(plan)
+
+    def translate_sort_spec(self, sort: SortSpec | None) -> str:
+        return translate_sort_spec(sort)
 
 
 def _quote_sql_string(value: str) -> str:

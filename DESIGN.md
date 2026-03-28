@@ -1188,11 +1188,17 @@ Refinamiento continuo ya aplicado después del cierre formal de Fase 8:
 * `count` y `delete` en la capa de colección también quedan ya anclados a `count_find_semantics(...)` y `delete_with_operation(...)` como rutas internas canónicas, en vez de depender de `count_matching_documents(...)` o `delete_matching_document(...)`;
 * los motores de lectura ya aceptan también `plan_find_semantics(...)` como ruta directa de planificación interna, evitando reconstruir `FindOperation` cuando la API ya dispone de semánticas compiladas;
 * `QueryEngine.match_plan(...)` mantiene un contrato explícito de exhaustividad frente a todos los nodos concretos de `QueryNode`, para que nuevos nodos no entren sin handler;
+* `QueryNode` queda además tipado como unión concreta interna (`ConcreteQueryNode`) y validado con `TypeIs`, preparando comprobación estática de exhaustividad con `mypy` sin depender solo de excepciones en runtime;
+* los motores SQL ya comparten una base `BaseSQLTranslator` en el core para la composición del `SELECT` y la traducción de `QueryNode`/`SortSpec`, dejando en SQLite solo las extensiones específicas (por ejemplo, multikey);
 * pool de conexiones del driver con espera FIFO real para reducir starvation bajo contención.
 * `bulk_write` y writes compuestos ya preparan y validan sus modelos en paralelo antes de entrar en la ruta de ejecución, sin perder la semántica actual de errores ordenados/no ordenados.
 * `insert_many` sobre SQLite ya puede aprovechar una ruta bulk con validación paralela previa y un tramo transaccional único controlado para la inserción real.
 * `put_documents_bulk` entra al lock con serialización, `storage_key` y filas multikey ya precalculadas desde el snapshot estable de índices, recalculando dentro del lock solo si la metadata cambió de verdad;
 * la verificación de índices físicos multikey persistidos ya no penaliza el `connect()` completo; pasa a una ruta perezosa al cargar metadata de índices de la colección.
+* agregación incorpora ya una `AggregationCostPolicy` rudimentaria para abortar materializaciones peligrosas o exigir spill cuando un pipeline bloqueante excede el presupuesto configurado por engine.
+
+Línea futura explícitamente deferida:
+* la aceleración en Rust se sigue contemplando, pero no a frontera documento-a-documento; si se aborda, será a grano grueso (`scan/filter/sort` completos o lotes grandes), para que el coste de cruce Python/Rust no anule la mejora.
 * `AsyncMongoClient` y `MongoClient` ya exponen `get_default_database(...)` con prioridad de la URI, fallback explícito y preservación de opciones del cliente.
 
 Estado actual del contraste versionado con `mongomock`:

@@ -309,6 +309,17 @@ def is_streamable_aggregation_stage(
     return get_aggregation_stage_spec(operator, dialect=dialect).execution_mode == "streamable"
 
 
+def has_materializing_aggregation_stage(
+    pipeline: Pipeline,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> bool:
+    return any(
+        not is_streamable_aggregation_stage(operator, dialect=dialect)
+        for operator, _spec in (_require_stage(stage) for stage in pipeline)
+    )
+
+
 def apply_pipeline(
     documents: Iterable[Document],
     pipeline: Pipeline,

@@ -5,6 +5,7 @@ from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api.operations import compile_aggregate_operation
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.core.aggregation import (
+    AggregationCostPolicy,
     AggregationSpillPolicy,
     register_aggregation_stage,
     unregister_aggregation_stage,
@@ -14,7 +15,7 @@ from mongoeco.core.aggregation import _CURRENT_COLLECTION_RESOLVER_KEY
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll
 from mongoeco.core.sorting import sort_documents
-from mongoeco.errors import ExecutionTimeout, InvalidOperation
+from mongoeco.errors import ExecutionTimeout, InvalidOperation, OperationFailure
 
 
 class _FakeAsyncFindCursor:
@@ -94,6 +95,7 @@ class _FakeEngine:
         self.explain_semantics_calls = []
         self.scan_semantics_calls = []
         self.aggregation_spill_policy = AggregationSpillPolicy(threshold=1)
+        self.aggregation_cost_policy = None
 
     async def explain_find_semantics(self, db_name, coll_name, semantics, **kwargs):
         self.explain_semantics_calls.append((db_name, coll_name, semantics, kwargs))
@@ -493,6 +495,33 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         with patch("mongoeco.api._async.aggregation_cursor.enforce_deadline", side_effect=ExecutionTimeout("operation exceeded time limit")):
             with self.assertRaises(ExecutionTimeout):
                 await cursor.to_list()
+
+    async def test_materialize_rejects_large_blocking_pipeline_without_spill_budget(self):
+        collection = _FakeCollection([{"_id": "1", "kind": "a"}, {"_id": "2", "kind": "a"}])
+        collection._engine.aggregation_cost_policy = AggregationCostPolicy(max_materialized_documents=1)
+        cursor = AsyncAggregationCursor(
+            collection,
+            compile_aggregate_operation(
+                [{"$group": {"_id": "$kind", "count": {"$sum": 1}}}],
+                allow_disk_use=False,
+            ),
+        )
+
+        with self.assertRaises(OperationFailure):
+            await cursor.to_list()
+
+    async def test_materialize_allows_large_blocking_pipeline_when_spill_is_available(self):
+        collection = _FakeCollection([{"_id": "1", "kind": "a"}, {"_id": "2", "kind": "a"}])
+        collection._engine.aggregation_cost_policy = AggregationCostPolicy(max_materialized_documents=1)
+        cursor = AsyncAggregationCursor(
+            collection,
+            compile_aggregate_operation(
+                [{"$group": {"_id": "$kind", "count": {"$sum": 1}}}],
+                allow_disk_use=True,
+            ),
+        )
+
+        self.assertEqual(await cursor.to_list(), [{"_id": "a", "count": 2}])
 
 
 class SyncAggregationCursorTests(unittest.TestCase):

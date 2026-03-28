@@ -15,10 +15,12 @@ from mongoeco.api.operations import (
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.aggregation import (
+    AggregationCostPolicy,
     Pipeline,
     _CURRENT_COLLECTION_RESOLVER_KEY,
     AggregationSpillPolicy,
     apply_pipeline,
+    has_materializing_aggregation_stage,
     is_streamable_aggregation_stage,
     split_pushdown_pipeline,
 )
@@ -273,6 +275,11 @@ class AsyncAggregationCursor:
             ).to_list()
             remaining_pipeline = pushdown.remaining_pipeline
         enforce_deadline(deadline)
+        self._enforce_materialization_budget(
+            len(documents),
+            remaining_pipeline,
+            dialect=dialect,
+        )
         result = apply_pipeline(
             documents,
             remaining_pipeline,
@@ -284,6 +291,31 @@ class AsyncAggregationCursor:
         )
         enforce_deadline(deadline)
         return [DocumentCodec.to_public(document) for document in result]
+
+    def _cost_policy(self) -> AggregationCostPolicy | None:
+        policy = getattr(self._collection._engine, "aggregation_cost_policy", None)
+        if isinstance(policy, AggregationCostPolicy):
+            return policy
+        return None
+
+    def _enforce_materialization_budget(
+        self,
+        document_count: int,
+        pipeline: Pipeline,
+        *,
+        dialect,
+    ) -> None:
+        policy = self._cost_policy()
+        if policy is None:
+            return
+        policy.enforce_budget(
+            document_count=document_count,
+            has_materializing_stage=has_materializing_aggregation_stage(
+                pipeline,
+                dialect=dialect,
+            ),
+            spill_available=self._spill_policy() is not None,
+        )
 
     def _pushdown_find_operation(self, *, batch_size: int | None = None) -> FindOperation:
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)

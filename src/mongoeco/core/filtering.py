@@ -3,7 +3,7 @@ import decimal
 import math
 import re
 import uuid
-from typing import Any
+from typing import Any, assert_never
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_scalars import bson_numeric_alias
@@ -36,6 +36,7 @@ from mongoeco.core.query_plan import (
     SizeCondition,
     TypeCondition,
     compile_filter,
+    is_concrete_query_node,
 )
 
 
@@ -99,6 +100,8 @@ class QueryEngine:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
+        if not is_concrete_query_node(plan):
+            raise TypeError(f"Unsupported query plan node: {type(plan)!r}")
         match plan:
             case MatchAll():
                 return True
@@ -225,7 +228,7 @@ class QueryEngine:
                     for clause in clauses
                 )
             case _:
-                raise TypeError(f"Unsupported query plan node: {type(plan)!r}")
+                assert_never(plan)
 
     @staticmethod
     def _extract_values(doc: Any, path: str) -> list[Any]:
