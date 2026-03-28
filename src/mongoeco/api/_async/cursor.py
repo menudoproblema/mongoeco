@@ -174,37 +174,10 @@ class AsyncCursor:
             operation,
             dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
         )
-        scan_find_semantics = getattr(engine, "scan_find_semantics", None)
-        if callable(scan_find_semantics):
-            return scan_find_semantics(
-                self._collection._db_name,
-                self._collection._collection_name,
-                semantics,
-                context=self._session,
-            )
-        scan_find_operation = getattr(engine, "scan_find_operation", None)
-        if callable(scan_find_operation):
-            return scan_find_operation(
-                self._collection._db_name,
-                self._collection._collection_name,
-                operation,
-                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-                context=self._session,
-            )
-        return engine.scan_collection(
+        return engine.scan_find_semantics(
             self._collection._db_name,
             self._collection._collection_name,
-            operation.filter_spec,
-            plan=operation.plan,
-            projection=operation.projection,
-            collation=operation.collation,
-            sort=operation.sort,
-            skip=operation.skip,
-            limit=operation.limit,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+            semantics,
             context=self._session,
         )
 
@@ -225,41 +198,12 @@ class AsyncCursor:
             operation,
             dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
         )
-        scan_find_semantics = getattr(engine, "scan_find_semantics", None)
-        if callable(scan_find_semantics):
-            iterable = scan_find_semantics(
-                self._collection._db_name,
-                self._collection._collection_name,
-                semantics,
-                context=self._session,
-            )
-        else:
-            scan_find_operation = getattr(engine, "scan_find_operation", None)
-            if callable(scan_find_operation):
-                iterable = scan_find_operation(
-                    self._collection._db_name,
-                    self._collection._collection_name,
-                    operation,
-                    dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-                    context=self._session,
-                )
-            else:
-                iterable = engine.scan_collection(
-                    self._collection._db_name,
-                    self._collection._collection_name,
-                    operation.filter_spec,
-                    plan=operation.plan,
-                    projection=operation.projection,
-                    collation=operation.collation,
-                    sort=operation.sort,
-                    skip=operation.skip,
-                    limit=operation.limit,
-                    hint=operation.hint,
-                    comment=operation.comment,
-                    max_time_ms=operation.max_time_ms,
-                    dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-                    context=self._session,
-                )
+        iterable = engine.scan_find_semantics(
+            self._collection._db_name,
+            self._collection._collection_name,
+            semantics,
+            context=self._session,
+        )
         return [document async for document in iterable]
 
     def _iter(self, *, limit: int | None = None, enforce_ownership: bool = True) -> _AsyncCursorIterator:
@@ -475,37 +419,10 @@ class AsyncCursor:
             operation,
             dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
         )
-        explain_find_semantics = getattr(engine, "explain_find_semantics", None)
-        if callable(explain_find_semantics):
-            result = await explain_find_semantics(
-                self._collection._db_name,
-                self._collection._collection_name,
-                semantics,
-                context=self._session,
-            )
-            return _serialize_explanation(result)
-        explain_find_operation = getattr(engine, "explain_find_operation", None)
-        if callable(explain_find_operation):
-            result = await explain_find_operation(
-                self._collection._db_name,
-                self._collection._collection_name,
-                operation,
-                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-                context=self._session,
-            )
-        else:
-            result = await engine.explain_query_plan(
-                self._collection._db_name,
-                self._collection._collection_name,
-                operation.filter_spec,
-                plan=operation.plan,
-                sort=operation.sort,
-                skip=operation.skip,
-                limit=operation.limit,
-                hint=operation.hint,
-                comment=operation.comment,
-                max_time_ms=operation.max_time_ms,
-                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-                context=self._session,
-            )
+        result = await engine.explain_find_semantics(
+            self._collection._db_name,
+            self._collection._collection_name,
+            semantics,
+            context=self._session,
+        )
         return _serialize_explanation(result)

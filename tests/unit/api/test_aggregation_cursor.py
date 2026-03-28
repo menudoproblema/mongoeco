@@ -91,21 +91,16 @@ class _FakeCollection:
 
 class _FakeEngine:
     def __init__(self):
-        self.explain_calls = []
-        self.explain_find_calls = []
-        self.scan_operation_calls = []
+        self.explain_semantics_calls = []
+        self.scan_semantics_calls = []
         self.aggregation_spill_policy = AggregationSpillPolicy(threshold=1)
 
-    async def explain_query_plan(self, *args, **kwargs):
-        self.explain_calls.append((args, kwargs))
-        return {"engine": "fake", "details": ["SCAN"]}
-
-    async def explain_find_operation(self, db_name, coll_name, operation, **kwargs):
-        self.explain_find_calls.append((db_name, coll_name, operation, kwargs))
+    async def explain_find_semantics(self, db_name, coll_name, semantics, **kwargs):
+        self.explain_semantics_calls.append((db_name, coll_name, semantics, kwargs))
         return {"engine": "fake", "details": ["IXSCAN"]}
 
-    def scan_find_operation(self, db_name, coll_name, operation, **kwargs):
-        self.scan_operation_calls.append((db_name, coll_name, operation, kwargs))
+    def scan_find_semantics(self, db_name, coll_name, semantics, **kwargs):
+        self.scan_semantics_calls.append((db_name, coll_name, semantics, kwargs))
 
         async def _iter():
             if coll_name == "coll":
@@ -300,14 +295,14 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(loaded["roles"], [{"_id": "r1", "label": "admin"}])
         self.assertEqual(loaded[_CURRENT_COLLECTION_RESOLVER_KEY], [{"_id": "1", "name": "Ada"}])
-        self.assertEqual(len(collection._engine.scan_operation_calls), 2)
-        for db_name, coll_name, operation, kwargs in collection._engine.scan_operation_calls:
+        self.assertEqual(len(collection._engine.scan_semantics_calls), 2)
+        for db_name, coll_name, semantics, kwargs in collection._engine.scan_semantics_calls:
             self.assertEqual(db_name, "db")
             self.assertIn(coll_name, {"coll", "roles"})
-            self.assertEqual(operation.filter_spec, {})
-            self.assertEqual(operation.comment, "agg-trace")
-            self.assertEqual(operation.max_time_ms, 15)
-            self.assertIsNone(operation.projection)
+            self.assertEqual(semantics.filter_spec, {})
+            self.assertEqual(semantics.comment, "agg-trace")
+            self.assertEqual(semantics.max_time_ms, 15)
+            self.assertIsNone(semantics.projection)
             self.assertEqual(kwargs["context"], None)
 
     async def test_materialize_keeps_remaining_pipeline_when_prefix_breaks(self):
@@ -461,10 +456,10 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(explanation["allow_disk_use"])
         self.assertEqual(explanation["let"], {"tenant": "a"})
         self.assertTrue(explanation["streaming_batch_execution"])
-        explain_operation = collection._engine.explain_find_calls[0][2]
-        self.assertEqual(explain_operation.hint, "kind_1")
-        self.assertEqual(explain_operation.comment, "trace")
-        self.assertEqual(explain_operation.max_time_ms, 5)
+        explain_semantics = collection._engine.explain_semantics_calls[0][2]
+        self.assertEqual(explain_semantics.hint, "kind_1")
+        self.assertEqual(explain_semantics.comment, "trace")
+        self.assertEqual(explain_semantics.max_time_ms, 5)
 
     async def test_stream_batches_use_compiled_pushdown_operations(self):
         collection = _FakeCollection(

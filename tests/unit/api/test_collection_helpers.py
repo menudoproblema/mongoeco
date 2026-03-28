@@ -26,6 +26,17 @@ def _scan_stub_documents(documents, *, skip=0, limit=None):
     return _scan()
 
 
+class _SemanticsScanMixin:
+    _stub_documents = []
+
+    def scan_find_semantics(self, db_name, coll_name, semantics, *, context=None):
+        return _scan_stub_documents(
+            list(self._stub_documents),
+            skip=semantics.skip,
+            limit=semantics.limit,
+        )
+
+
 class AsyncCollectionHelperTests(unittest.TestCase):
     def setUp(self):
         self.collection = AsyncCollection(MemoryEngine(), "db", "coll")
@@ -579,13 +590,8 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         self.assertEqual(asyncio.run(_exercise()), [None, "Madrid"])
 
     def test_distinct_uses_scalar_fallback_when_exact_path_exists_but_extract_values_is_empty(self):
-        class EngineStub:
-            def scan_collection(self, *args, **kwargs):
-                return _scan_stub_documents(
-                    [{"profile": {"city": "Madrid"}}],
-                    skip=kwargs.get("skip", 0),
-                    limit=kwargs.get("limit"),
-                )
+        class EngineStub(_SemanticsScanMixin):
+            _stub_documents = [{"profile": {"city": "Madrid"}}]
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -596,13 +602,8 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         self.assertEqual(result, ["Madrid"])
 
     def test_distinct_skips_list_fallback_when_exact_path_is_an_empty_array(self):
-        class EngineStub:
-            def scan_collection(self, *args, **kwargs):
-                return _scan_stub_documents(
-                    [{"profile": {"city": []}}],
-                    skip=kwargs.get("skip", 0),
-                    limit=kwargs.get("limit"),
-                )
+        class EngineStub(_SemanticsScanMixin):
+            _stub_documents = [{"profile": {"city": []}}]
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -642,13 +643,8 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         )
 
     def test_update_many_returns_zero_counts_when_nothing_matches_and_upsert_is_false(self):
-        class EngineStub:
-            def scan_collection(self, *args, **kwargs):
-                return _scan_stub_documents(
-                    [],
-                    skip=kwargs.get("skip", 0),
-                    limit=kwargs.get("limit"),
-                )
+        class EngineStub(_SemanticsScanMixin):
+            _stub_documents = []
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -713,13 +709,8 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             )
 
     def test_replace_one_returns_zero_when_nothing_matches_and_upsert_is_false(self):
-        class EngineStub:
-            def scan_collection(self, *args, **kwargs):
-                return _scan_stub_documents(
-                    [],
-                    skip=kwargs.get("skip", 0),
-                    limit=kwargs.get("limit"),
-                )
+        class EngineStub(_SemanticsScanMixin):
+            _stub_documents = []
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -729,16 +720,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         self.assertEqual(result.modified_count, 0)
 
     def test_replace_one_upsert_builds_seeded_document(self):
-        class EngineStub:
+        class EngineStub(_SemanticsScanMixin):
+            _stub_documents = []
+
             def __init__(self):
                 self.document = None
-
-            def scan_collection(self, *args, **kwargs):
-                return _scan_stub_documents(
-                    [],
-                    skip=kwargs.get("skip", 0),
-                    limit=kwargs.get("limit"),
-                )
 
             async def put_document(self, _db, _coll, document, **kwargs):
                 self.document = document
@@ -866,13 +852,8 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         self.assertEqual(list(materialized.keys()), ["a", "_id"])
 
     def test_replace_one_upsert_duplicate_key_error_when_engine_rejects_document(self):
-        class EngineStub:
-            def scan_collection(self, *args, **kwargs):
-                return _scan_stub_documents(
-                    [],
-                    skip=kwargs.get("skip", 0),
-                    limit=kwargs.get("limit"),
-                )
+        class EngineStub(_SemanticsScanMixin):
+            _stub_documents = []
 
             async def put_document(self, *args, **kwargs):
                 return False
@@ -915,13 +896,8 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             )
 
     def test_find_one_and_update_returns_none_when_nothing_matches_without_upsert(self):
-        class EngineStub:
-            def scan_collection(self, *args, **kwargs):
-                return _scan_stub_documents(
-                    [],
-                    skip=kwargs.get("skip", 0),
-                    limit=kwargs.get("limit"),
-                )
+        class EngineStub(_SemanticsScanMixin):
+            _stub_documents = []
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -995,13 +971,8 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         self.assertEqual(before_existing, {"done": False})
 
     def test_find_one_and_delete_returns_none_when_nothing_matches(self):
-        class EngineStub:
-            def scan_collection(self, *args, **kwargs):
-                return _scan_stub_documents(
-                    [],
-                    skip=kwargs.get("skip", 0),
-                    limit=kwargs.get("limit"),
-                )
+        class EngineStub(_SemanticsScanMixin):
+            _stub_documents = []
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -1236,16 +1207,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         self.assertEqual(result, ["Ada"])
 
     def test_find_one_returns_projection_already_applied_by_engine(self):
-        class EngineStub:
+        class EngineStub(_SemanticsScanMixin):
+            _stub_documents = [{"_id": "1", "name": "Ada"}]
+
             async def get_document(self, *args, **kwargs):
                 return {"name": "Ada"}
-
-            def scan_collection(self, *args, **kwargs):
-                return _scan_stub_documents(
-                    [{"_id": "1", "name": "Ada"}],
-                    skip=kwargs.get("skip", 0),
-                    limit=kwargs.get("limit"),
-                )
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
 
@@ -1258,13 +1224,11 @@ class AsyncCollectionHelperTests(unittest.TestCase):
     def test_collection_compiles_plan_once_and_passes_it_to_engine(self):
         class EngineStub:
             def __init__(self):
-                self.scan_plan = None
-                self.scan_plans = []
+                self.scan_semantics = None
+                self.scan_semantics_history = []
                 self.update_plan = None
                 self.delete_plan = None
                 self.count_plan = None
-                self.scan_dialect = None
-                self.scan_dialects = []
                 self.update_dialect = None
                 self.delete_dialect = None
                 self.count_dialect = None
@@ -1275,15 +1239,13 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             async def get_document(self, *args, **kwargs):
                 return None
 
-            def scan_collection(self, *args, **kwargs):
-                self.scan_plan = kwargs["plan"]
-                self.scan_dialect = kwargs["dialect"]
-                self.scan_plans.append(kwargs["plan"])
-                self.scan_dialects.append(kwargs["dialect"])
+            def scan_find_semantics(self, db_name, coll_name, semantics, *, context=None):
+                self.scan_semantics = semantics
+                self.scan_semantics_history.append(semantics)
                 return _scan_stub_documents(
                     [],
-                    skip=kwargs.get("skip", 0),
-                    limit=kwargs.get("limit"),
+                    skip=semantics.skip,
+                    limit=semantics.limit,
                 )
 
             async def update_with_operation(self, *args, **kwargs):
@@ -1340,13 +1302,13 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         asyncio.run(collection.delete_one({"name": "Ada"}))
         asyncio.run(collection.count_documents({"name": "Ada"}))
 
-        self.assertEqual(type(engine.scan_plans[0]).__name__, "EqualsCondition")
+        self.assertEqual(type(engine.scan_semantics_history[0].query_plan).__name__, "EqualsCondition")
         self.assertEqual(type(engine.update_plan).__name__, "EqualsCondition")
         self.assertEqual(type(engine.delete_plan).__name__, "EqualsCondition")
         self.assertEqual(type(engine.count_plan).__name__, "EqualsCondition")
-        self.assertNotIsInstance(engine.scan_plans[0], MatchAll)
+        self.assertNotIsInstance(engine.scan_semantics_history[0].query_plan, MatchAll)
         self.assertNotIsInstance(engine.count_plan, MatchAll)
-        self.assertIs(engine.scan_dialects[0], collection.mongodb_dialect)
+        self.assertIs(engine.scan_semantics_history[0].dialect, collection.mongodb_dialect)
         self.assertIs(engine.update_dialect, collection.mongodb_dialect)
         self.assertIs(engine.delete_dialect, collection.mongodb_dialect)
         self.assertIs(engine.count_dialect, collection.mongodb_dialect)

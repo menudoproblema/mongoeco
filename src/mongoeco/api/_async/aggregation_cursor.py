@@ -209,36 +209,10 @@ class AsyncAggregationCursor:
         from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
 
         semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
-        scan_find_semantics = getattr(engine, "scan_find_semantics", None)
-        if callable(scan_find_semantics):
-            return scan_find_semantics(
-                self._collection._db_name,
-                collection_name,
-                semantics,
-                context=self._session,
-            )
-        scan_find_operation = getattr(engine, "scan_find_operation", None)
-        if callable(scan_find_operation):
-            return scan_find_operation(
-                self._collection._db_name,
-                collection_name,
-                operation,
-                dialect=dialect,
-                context=self._session,
-            )
-        return engine.scan_collection(
+        return engine.scan_find_semantics(
             self._collection._db_name,
             collection_name,
-            operation.filter_spec,
-            plan=operation.plan,
-            projection=operation.projection,
-            sort=operation.sort,
-            skip=operation.skip,
-            limit=operation.limit,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            dialect=dialect,
+            semantics,
             context=self._session,
         )
 
@@ -524,47 +498,12 @@ class AsyncAggregationCursor:
             from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
 
             semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
-            explain_find_semantics = getattr(
-                self._collection._engine,
-                "explain_find_semantics",
-                None,
+            engine_plan = await self._collection._engine.explain_find_semantics(
+                self._collection._db_name,
+                self._collection._collection_name,
+                semantics,
+                context=self._session,
             )
-            if callable(explain_find_semantics):
-                engine_plan = await explain_find_semantics(
-                    self._collection._db_name,
-                    self._collection._collection_name,
-                    semantics,
-                    context=self._session,
-                )
-            else:
-                explain_find_operation = getattr(
-                    self._collection._engine,
-                    "explain_find_operation",
-                    None,
-                )
-                if callable(explain_find_operation):
-                    engine_plan = await explain_find_operation(
-                        self._collection._db_name,
-                        self._collection._collection_name,
-                        operation,
-                        dialect=dialect,
-                        context=self._session,
-                    )
-                else:
-                    engine_plan = await self._collection._engine.explain_query_plan(
-                        self._collection._db_name,
-                        self._collection._collection_name,
-                        operation.filter_spec,
-                        plan=operation.plan,
-                        sort=operation.sort,
-                        skip=operation.skip,
-                        limit=operation.limit,
-                        hint=operation.hint,
-                        comment=operation.comment,
-                        max_time_ms=operation.max_time_ms,
-                        dialect=dialect,
-                        context=self._session,
-                    )
         return AggregateExplanation(
             engine_plan=engine_plan,
             remaining_pipeline=remaining_pipeline,

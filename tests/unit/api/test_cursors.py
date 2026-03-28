@@ -14,8 +14,7 @@ from mongoeco.errors import InvalidOperation
 class _AsyncEngineStub:
     def __init__(self, documents):
         self._documents = documents
-        self.explain_calls = []
-        self.explain_find_calls = []
+        self.explain_semantics_calls = []
 
     async def _scan(self, *, skip=0, limit=None):
         documents = self._documents[skip:]
@@ -24,15 +23,11 @@ class _AsyncEngineStub:
         for document in documents:
             yield document
 
-    def scan_collection(self, *args, **kwargs):
-        return self._scan(skip=kwargs.get("skip", 0), limit=kwargs.get("limit"))
+    def scan_find_semantics(self, db_name, coll_name, semantics, **kwargs):
+        return self._scan(skip=semantics.skip, limit=semantics.limit)
 
-    async def explain_query_plan(self, *args, **kwargs):
-        self.explain_calls.append((args, kwargs))
-        return {"engine": "stub", "details": ["COLLSCAN"]}
-
-    async def explain_find_operation(self, *args, **kwargs):
-        self.explain_find_calls.append((args, kwargs))
+    async def explain_find_semantics(self, *args, **kwargs):
+        self.explain_semantics_calls.append((args, kwargs))
         return {"engine": "stub", "details": ["IXSCAN"]}
 
 
@@ -74,9 +69,9 @@ class _BatchTrackingEngineStub:
         self._documents = documents
         self.created_scans = []
 
-    def scan_collection(self, *args, **kwargs):
-        skip = kwargs.get("skip", 0)
-        limit = kwargs.get("limit")
+    def scan_find_semantics(self, db_name, coll_name, semantics, **kwargs):
+        skip = semantics.skip
+        limit = semantics.limit
         documents = self._documents[skip:]
         if limit is not None:
             documents = documents[:limit]
@@ -84,7 +79,7 @@ class _BatchTrackingEngineStub:
         self.created_scans.append(scan)
         return scan
 
-    async def explain_query_plan(self, *args, **kwargs):
+    async def explain_find_semantics(self, *args, **kwargs):
         return {"engine": "tracking"}
 
 
@@ -403,11 +398,11 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await cursor.first(), {"_id": "2"})
 
         self.assertEqual(await cursor.explain(), {"engine": "stub", "details": ["IXSCAN"]})
-        operation = collection._engine.explain_find_calls[0][0][2]
-        self.assertEqual(operation.sort, [("_id", 1)])
-        self.assertEqual(operation.hint, "name_1")
-        self.assertEqual(operation.comment, "trace")
-        self.assertEqual(operation.max_time_ms, 5)
+        semantics = collection._engine.explain_semantics_calls[0][0][2]
+        self.assertEqual(semantics.sort, [("_id", 1)])
+        self.assertEqual(semantics.hint, "name_1")
+        self.assertEqual(semantics.comment, "trace")
+        self.assertEqual(semantics.max_time_ms, 5)
 
 
     def test_sync_cursor_rejects_negative_skip_and_limit_and_supports_iteration(self):
@@ -650,11 +645,11 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(cursor.alive)
         self.assertEqual(cursor.first(), {"_id": "1"})
         self.assertEqual(cursor.explain(), {"engine": "stub", "details": ["IXSCAN"]})
-        self.assertEqual(collection._engine.explain_find_calls[0][1]["context"], None)
-        operation = collection._engine.explain_find_calls[0][0][2]
-        self.assertEqual(operation.hint, "name_1")
-        self.assertEqual(operation.comment, "trace")
-        self.assertEqual(operation.max_time_ms, 5)
+        self.assertEqual(collection._engine.explain_semantics_calls[0][1]["context"], None)
+        semantics = collection._engine.explain_semantics_calls[0][0][2]
+        self.assertEqual(semantics.hint, "name_1")
+        self.assertEqual(semantics.comment, "trace")
+        self.assertEqual(semantics.max_time_ms, 5)
 
     def test_sync_index_cursor_supports_first_to_list_and_close(self):
         async_cursor = AsyncIndexCursor(

@@ -532,36 +532,10 @@ class AsyncCollection:
             operation,
             dialect=self._mongodb_dialect,
         )
-        method = getattr(self._engine, "scan_find_semantics", None)
-        if callable(method):
-            return method(
-                self._db_name,
-                self._collection_name,
-                semantics,
-                context=session,
-            )
-        method = getattr(self._engine, "scan_find_operation", None)
-        if callable(method):
-            return method(
-                self._db_name,
-                self._collection_name,
-                operation,
-                dialect=self._mongodb_dialect,
-                context=session,
-            )
-        return self._engine.scan_collection(
+        return self._engine.scan_find_semantics(
             self._db_name,
             self._collection_name,
-            operation.filter_spec,
-            plan=operation.plan,
-            projection=operation.projection,
-            sort=operation.sort,
-            skip=operation.skip,
-            limit=operation.limit,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            dialect=self._mongodb_dialect,
+            semantics,
             context=session,
         )
 

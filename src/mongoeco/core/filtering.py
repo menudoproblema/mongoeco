@@ -39,6 +39,32 @@ from mongoeco.core.query_plan import (
 )
 
 
+HANDLED_QUERY_NODE_TYPES: tuple[type[QueryNode], ...] = (
+    MatchAll,
+    DeferredQueryNode,
+    EqualsCondition,
+    NotEqualsCondition,
+    GreaterThanCondition,
+    GreaterThanOrEqualCondition,
+    LessThanCondition,
+    LessThanOrEqualCondition,
+    InCondition,
+    NotInCondition,
+    AllCondition,
+    SizeCondition,
+    ModCondition,
+    RegexCondition,
+    NotCondition,
+    ElemMatchCondition,
+    ExistsCondition,
+    TypeCondition,
+    BitwiseCondition,
+    ExprCondition,
+    AndCondition,
+    OrCondition,
+)
+
+
 class BSONComparator:
     """Reglas de comparación de MongoDB (Type Brackets)."""
     TYPE_ORDER = MONGODB_DIALECT_70.bson_type_order

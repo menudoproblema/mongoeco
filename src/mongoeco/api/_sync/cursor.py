@@ -317,51 +317,12 @@ class Cursor:
         from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
 
         semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
-        explain_find_semantics = getattr(
-            self._async_collection._engine,
-            "explain_find_semantics",
-            None,
-        )
-        if callable(explain_find_semantics):
-            result = self._client._run(
-                explain_find_semantics(
+        return _serialize_explanation(
+            self._client._run(
+                self._async_collection._engine.explain_find_semantics(
                     self._async_collection._db_name,
                     self._async_collection._collection_name,
                     semantics,
-                    context=self._session,
-                )
-            )
-            return _serialize_explanation(result)
-        explain_find_operation = getattr(
-            self._async_collection._engine,
-            "explain_find_operation",
-            None,
-        )
-        if callable(explain_find_operation):
-            result = self._client._run(
-                explain_find_operation(
-                    self._async_collection._db_name,
-                    self._async_collection._collection_name,
-                    operation,
-                    dialect=dialect,
-                    context=self._session,
-                )
-            )
-            return _serialize_explanation(result)
-        return _serialize_explanation(
-            self._client._run(
-                self._async_collection._engine.explain_query_plan(
-                    self._async_collection._db_name,
-                    self._async_collection._collection_name,
-                    operation.filter_spec,
-                    plan=operation.plan,
-                    sort=operation.sort,
-                    skip=operation.skip,
-                    limit=operation.limit,
-                    hint=operation.hint,
-                    comment=operation.comment,
-                    max_time_ms=operation.max_time_ms,
-                    dialect=dialect,
                     context=self._session,
                 )
             )

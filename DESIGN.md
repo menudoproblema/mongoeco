@@ -1184,8 +1184,9 @@ Refinamiento continuo ya aplicado después del cierre formal de Fase 8:
 * `SyncRunner` más explícito al propagar `ExecutionTimeout` y `ServerSelectionTimeoutError` en la capa sync;
 * `SyncRunner` protegido frente a cierre concurrente mientras otra llamada sync sigue ejecutándose;
 * acceso real a `asyncio.Runner` serializado con lock para evitar carreras entre `run()`, drenado de tareas y `close()` cuando varias hebras sync comparten cliente;
-* la ruta canónica interna de lectura ya es `scan_find_semantics(...)` / `explain_find_semantics(...)`, mientras `scan_collection(...)`, `scan_find_operation(...)` y equivalentes quedan como shims legacy de compatibilidad;
+* la ruta canónica interna de lectura ya es `scan_find_semantics(...)` / `explain_find_semantics(...)`, y los cursores/colecciones dejan de caer a `scan_collection(...)`, `scan_find_operation(...)` o equivalentes; esos métodos quedan solo como shims legacy de compatibilidad en engines concretos y tests contractuales;
 * los motores de lectura ya aceptan también `plan_find_semantics(...)` como ruta directa de planificación interna, evitando reconstruir `FindOperation` cuando la API ya dispone de semánticas compiladas;
+* `QueryEngine.match_plan(...)` mantiene un contrato explícito de exhaustividad frente a todos los nodos concretos de `QueryNode`, para que nuevos nodos no entren sin handler;
 * pool de conexiones del driver con espera FIFO real para reducir starvation bajo contención.
 * `bulk_write` y writes compuestos ya preparan y validan sus modelos en paralelo antes de entrar en la ruta de ejecución, sin perder la semántica actual de errores ordenados/no ordenados.
 * `insert_many` sobre SQLite ya puede aprovechar una ruta bulk con validación paralela previa y un tramo transaccional único controlado para la inserción real.

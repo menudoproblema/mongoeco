@@ -6,13 +6,26 @@ import unittest
 import uuid
 
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
-from mongoeco.core.filtering import BSONComparator, QueryEngine
+from mongoeco.core.filtering import BSONComparator, HANDLED_QUERY_NODE_TYPES, QueryEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Binary, Decimal128, ObjectId, Regex, Timestamp, UNDEFINED
 
 
 class QueryEngineTests(unittest.TestCase):
+    def test_query_engine_dispatch_covers_all_concrete_query_nodes(self):
+        def _collect_concrete_subclasses(base: type[QueryNode]) -> set[type[QueryNode]]:
+            concrete: set[type[QueryNode]] = set()
+            for subclass in base.__subclasses__():
+                concrete.add(subclass)
+                concrete.update(_collect_concrete_subclasses(subclass))
+            return concrete
+
+        self.assertEqual(
+            set(HANDLED_QUERY_NODE_TYPES),
+            _collect_concrete_subclasses(QueryNode),
+        )
+
     def test_query_engine_uses_custom_dialect_for_equality_membership_and_ranges(self):
         class CaseInsensitiveReverseRangeDialect(type(MONGODB_DIALECT_70)):
             pass
