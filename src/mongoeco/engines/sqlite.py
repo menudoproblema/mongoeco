@@ -323,6 +323,7 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         indexes: list[EngineIndexRecord] | None = None,
         plan: QueryNode | None = None,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> EngineIndexRecord | None:
         if hint is None:
             return None
@@ -341,12 +342,12 @@ class SQLiteEngine(AsyncStorageEngine):
         for index in indexes:
             if isinstance(hint, str):
                 if index["name"] == hint:
-                    if plan is not None and not query_can_use_index(index, plan):
+                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
             else:
                 if index["key"] == normalized_hint:
-                    if plan is not None and not query_can_use_index(index, plan):
+                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
 
@@ -394,8 +395,9 @@ class SQLiteEngine(AsyncStorageEngine):
         skip: int = 0,
         limit: int | None = None,
         hint: str | IndexKeySpec | None = None,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> tuple[str, list[object]]:
-        hinted_index = self._resolve_hint_index(db_name, coll_name, hint, plan=plan)
+        hinted_index = self._resolve_hint_index(db_name, coll_name, hint, plan=plan, dialect=dialect)
         where_sql, params = self._translate_query_plan_with_multikey(db_name, coll_name, plan)
         order_sql = translate_sort_spec(sort)
         from_clause = "documents"
@@ -1506,6 +1508,24 @@ class SQLiteEngine(AsyncStorageEngine):
                         conn = self._require_connection(context)
                     cursor = conn.execute(sql, tuple(sql_params))
                     try:
+                        if execution_plan.apply_python_sort:
+                            documents = [self._deserialize_document(payload) for (payload,) in cursor]
+                            documents = sort_documents(
+                                documents,
+                                semantics.sort,
+                                dialect=semantics.dialect,
+                            )
+                            documents = finalize_documents(
+                                documents,
+                                semantics,
+                                apply_sort_phase=False,
+                            )
+                            for document in documents:
+                                enforce_deadline(deadline)
+                                if stop_event is not None and stop_event.is_set():
+                                    break
+                                yield document
+                            return
                         for (payload,) in cursor:
                             enforce_deadline(deadline)
                             if stop_event is not None and stop_event.is_set():
@@ -2907,19 +2927,27 @@ class SQLiteEngine(AsyncStorageEngine):
         )
         details: object
         if isinstance(execution_plan, SQLiteReadExecutionPlan) and execution_plan.use_sql:
-            details = await asyncio.to_thread(
+            sql_details = await asyncio.to_thread(
                 self._explain_query_plan_sync,
                 db_name,
                 coll_name,
                 semantics,
                 hint=semantics.hint,
             )
+            if execution_plan.fallback_reason is None:
+                details = sql_details
+            else:
+                details = {
+                    "engine_details": sql_details,
+                    "fallback_reason": execution_plan.fallback_reason,
+                }
         else:
             details = {"fallback_reason": execution_plan.fallback_reason}
         virtual_details = describe_virtual_index_usage(
             await asyncio.to_thread(self._list_indexes_sync, db_name, coll_name, context),
             semantics.query_plan,
             hinted_index_name=None if hinted_index is None else hinted_index["name"],
+            dialect=semantics.dialect,
         )
         if virtual_details is not None:
             if isinstance(details, dict):

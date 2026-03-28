@@ -107,6 +107,18 @@ class VirtualIndexTests(unittest.TestCase):
         self.assertTrue(query_can_use_index(partial_index, InCondition("score", (10, 12, 15))))
         self.assertFalse(query_can_use_index(partial_index, compile_filter({"score": {"$lt": 20}})))
 
+    def test_partial_index_implication_uses_bson_type_order_for_mixed_type_bounds(self):
+        partial_index = EngineIndexRecord(
+            name="score_gte_idx",
+            fields=["score"],
+            key=[("score", 1)],
+            unique=False,
+            partial_filter_expression={"score": {"$gte": 10}},
+        )
+
+        self.assertTrue(query_can_use_index(partial_index, compile_filter({"score": {"$gt": "Ada"}})))
+        self.assertFalse(query_can_use_index(partial_index, compile_filter({"score": {"$lt": "Ada"}})))
+
     def test_partial_index_implication_handles_type_and_regex_requirements(self):
         typed_index = EngineIndexRecord(
             name="typed_idx",

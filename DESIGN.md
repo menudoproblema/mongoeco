@@ -633,10 +633,14 @@ Estado de avance dentro de Fase 8:
   * IR de lectura tipada hasta engines, con shims legacy solo como compatibilidad;
   * distinción formal entre stages streamables y materializantes en el core de agregación;
   * `find_raw_batches` y `aggregate_raw_batches`;
+  * type bracketing y comparación BSON aplicados también al razonamiento de índices virtuales;
+  * degradación híbrida de SQLite cuando solo el `sort` requiere Python, manteniendo `scan` y `filter` en SQL;
 * siguen pendientes los bloques más anchos:
   * `collation`;
   * `bypass_document_validation`;
-  * refinamiento BSON/índices virtuales/planning más fino;
+  * refinamiento BSON restante en rutas menos frecuentes y comparación fina fuera de los caminos ya cerrados;
+  * centralización o generación de la capa sync para evitar deriva de firmas y propagación;
+  * refinamiento de pool de conexiones y de concurrencia/locking de SQLite, si el proyecto decide perseguir comportamiento más cercano a producción y no solo paridad funcional fina;
   * contraste exhaustivo contra la suite de `mongomock`.
   * todo lo que quede pendiente de la ambición más profunda de cliente de red, pero ya como refinamiento y no como base arquitectónica.
 

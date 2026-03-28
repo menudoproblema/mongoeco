@@ -1395,7 +1395,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertEqual(documents, [{"_id": "1", "rank": [2, 3]}])
-        self.assertGreater(load_documents.call_count, 0)
+        self.assertEqual(load_documents.call_count, 0)
 
     async def test_scan_collection_filters_before_materializing_python_sort_fallback(self):
         engine = SQLiteEngine()
@@ -1450,7 +1450,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertEqual(documents, [{"_id": "2", "rank": [1, 4]}, {"_id": "1", "rank": [2, 3]}])
-        self.assertGreater(load_documents.call_count, 0)
+        self.assertEqual(load_documents.call_count, 0)
 
     async def test_sort_requires_python_for_array_traversing_plan_and_sort_key(self):
         engine = SQLiteEngine()
@@ -1567,7 +1567,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             documents,
             [{"_id": "2", "profile": {"rank": 1}}, {"_id": "1", "profile": {"rank": 2}}],
         )
-        self.assertGreater(load_documents.call_count, 0)
+        self.assertEqual(load_documents.call_count, 0)
 
     async def test_count_matching_documents_uses_sql_translation_for_simple_filters(self):
         engine = SQLiteEngine()
@@ -1989,7 +1989,33 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertEqual(documents, ["2", "1"])
-        self.assertGreater(load_documents.call_count, 0)
+        self.assertEqual(load_documents.call_count, 0)
+
+    async def test_scan_collection_uses_hybrid_sql_filter_with_python_sort_for_tagged_bytes(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "kind": "view", "payload": b"\x02"})
+            await engine.put_document("db", "coll", {"_id": "2", "kind": "view", "payload": b"\x01"})
+            await engine.put_document("db", "coll", {"_id": "3", "kind": "skip", "payload": b"\x00"})
+
+            with (
+                patch("mongoeco.engines.sqlite.QueryEngine.match_plan", side_effect=AssertionError("fallback")),
+                patch.object(engine, "_load_documents", side_effect=AssertionError("loaded")),
+            ):
+                documents = [
+                    document["_id"]
+                    async for document in engine.scan_collection(
+                        "db",
+                        "coll",
+                        {"kind": "view"},
+                        sort=[("payload", 1)],
+                    )
+                ]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["2", "1"])
 
     async def test_update_matching_document_uses_sql_selected_candidate_for_simple_updates(self):
         engine = SQLiteEngine()

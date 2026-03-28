@@ -63,6 +63,8 @@ def document_in_virtual_index(
 def query_can_use_index(
     index: EngineIndexRecord | dict[str, object],
     query_plan: QueryNode,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> bool:
     if _index_sparse(index) and not any(
         _plan_implies_exists_true(query_plan, field)
@@ -72,19 +74,21 @@ def query_can_use_index(
     partial_filter_expression = _index_partial_filter_expression(index)
     if partial_filter_expression is None:
         return True
-    partial_plan = compile_filter(partial_filter_expression)
-    return _plan_implies(query_plan, partial_plan)
+    partial_plan = compile_filter(partial_filter_expression, dialect=dialect)
+    return _plan_implies(query_plan, partial_plan, dialect=dialect)
 
 
 def collect_usable_virtual_index_names(
     indexes: list[EngineIndexRecord] | list[dict[str, object]],
     query_plan: QueryNode,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> list[str]:
     names: list[str] = []
     for index in indexes:
         if not is_virtual_index(index):
             continue
-        if query_can_use_index(index, query_plan):
+        if query_can_use_index(index, query_plan, dialect=dialect):
             name = _index_name(index)
             if name:
                 names.append(name)
@@ -96,8 +100,9 @@ def describe_virtual_index_usage(
     query_plan: QueryNode,
     *,
     hinted_index_name: str | None = None,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> dict[str, object] | None:
-    usable = collect_usable_virtual_index_names(indexes, query_plan)
+    usable = collect_usable_virtual_index_names(indexes, query_plan, dialect=dialect)
     hinted_virtual: bool | None = None
     if hinted_index_name is not None:
         for index in indexes:
@@ -143,20 +148,25 @@ def _index_partial_filter_expression(index: EngineIndexRecord | dict[str, object
     return value if isinstance(value, dict) else None
 
 
-def _plan_implies(query_plan: QueryNode, requirement: QueryNode) -> bool:
+def _plan_implies(
+    query_plan: QueryNode,
+    requirement: QueryNode,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> bool:
     if isinstance(requirement, MatchAll):
         return True
     if query_plan == requirement:
         return True
     if isinstance(query_plan, OrCondition):
-        return all(_plan_implies(clause, requirement) for clause in query_plan.clauses)
+        return all(_plan_implies(clause, requirement, dialect=dialect) for clause in query_plan.clauses)
     if isinstance(requirement, OrCondition):
-        return any(_plan_implies(query_plan, clause) for clause in requirement.clauses)
+        return any(_plan_implies(query_plan, clause, dialect=dialect) for clause in requirement.clauses)
     if isinstance(requirement, AndCondition):
-        return all(_plan_implies(query_plan, clause) for clause in requirement.clauses)
+        return all(_plan_implies(query_plan, clause, dialect=dialect) for clause in requirement.clauses)
     if isinstance(query_plan, AndCondition):
-        return any(_plan_implies(clause, requirement) for clause in query_plan.clauses)
-    if _implies_same_field_condition(query_plan, requirement):
+        return any(_plan_implies(clause, requirement, dialect=dialect) for clause in query_plan.clauses)
+    if _implies_same_field_condition(query_plan, requirement, dialect=dialect):
         return True
     if isinstance(requirement, ExistsCondition) and requirement.value:
         return _plan_implies_exists_true(query_plan, requirement.field)
@@ -189,7 +199,12 @@ def _plan_implies_exists_true(query_plan: QueryNode, field: str) -> bool:
     return False
 
 
-def _implies_same_field_condition(query_plan: QueryNode, requirement: QueryNode) -> bool:
+def _implies_same_field_condition(
+    query_plan: QueryNode,
+    requirement: QueryNode,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> bool:
     if isinstance(requirement, ExistsCondition):
         return requirement.value and _plan_implies_exists_true(query_plan, requirement.field)
     if isinstance(requirement, EqualsCondition):
@@ -213,13 +228,37 @@ def _implies_same_field_condition(query_plan: QueryNode, requirement: QueryNode)
     if isinstance(requirement, RegexCondition):
         return _same_field_regex_implies(query_plan, requirement)
     if isinstance(requirement, GreaterThanCondition):
-        return _same_field_ordering_implies(query_plan, requirement.field, minimum=requirement.value, inclusive=False)
+        return _same_field_ordering_implies(
+            query_plan,
+            requirement.field,
+            minimum=requirement.value,
+            inclusive=False,
+            dialect=dialect,
+        )
     if isinstance(requirement, GreaterThanOrEqualCondition):
-        return _same_field_ordering_implies(query_plan, requirement.field, minimum=requirement.value, inclusive=True)
+        return _same_field_ordering_implies(
+            query_plan,
+            requirement.field,
+            minimum=requirement.value,
+            inclusive=True,
+            dialect=dialect,
+        )
     if isinstance(requirement, LessThanCondition):
-        return _same_field_ordering_implies(query_plan, requirement.field, maximum=requirement.value, inclusive=False)
+        return _same_field_ordering_implies(
+            query_plan,
+            requirement.field,
+            maximum=requirement.value,
+            inclusive=False,
+            dialect=dialect,
+        )
     if isinstance(requirement, LessThanOrEqualCondition):
-        return _same_field_ordering_implies(query_plan, requirement.field, maximum=requirement.value, inclusive=True)
+        return _same_field_ordering_implies(
+            query_plan,
+            requirement.field,
+            maximum=requirement.value,
+            inclusive=True,
+            dialect=dialect,
+        )
     return False
 
 
@@ -288,16 +327,29 @@ def _same_field_ordering_implies(
     minimum: object | None = None,
     maximum: object | None = None,
     inclusive: bool,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> bool:
     if isinstance(query_plan, EqualsCondition):
         if query_plan.field != field:
             return False
-        return _value_satisfies_bounds(query_plan.value, minimum=minimum, maximum=maximum, inclusive=inclusive)
+        return _value_satisfies_bounds(
+            query_plan.value,
+            minimum=minimum,
+            maximum=maximum,
+            inclusive=inclusive,
+            dialect=dialect,
+        )
     if isinstance(query_plan, InCondition):
         if query_plan.field != field or not query_plan.values:
             return False
         return all(
-            _value_satisfies_bounds(value, minimum=minimum, maximum=maximum, inclusive=inclusive)
+            _value_satisfies_bounds(
+                value,
+                minimum=minimum,
+                maximum=maximum,
+                inclusive=inclusive,
+                dialect=dialect,
+            )
             for value in query_plan.values
         )
     comparisons = {
@@ -311,9 +363,22 @@ def _same_field_ordering_implies(
             if query_plan.field != field:
                 return False
             if kind == "min" and minimum is not None:
-                return _compare_bounds(query_plan.value, minimum, query_inclusive, inclusive)
+                return _compare_bounds(
+                    query_plan.value,
+                    minimum,
+                    query_inclusive,
+                    inclusive,
+                    dialect=dialect,
+                )
             if kind == "max" and maximum is not None:
-                return _compare_bounds(query_plan.value, maximum, query_inclusive, inclusive, reverse=True)
+                return _compare_bounds(
+                    query_plan.value,
+                    maximum,
+                    query_inclusive,
+                    inclusive,
+                    reverse=True,
+                    dialect=dialect,
+                )
     return False
 
 
@@ -324,21 +389,20 @@ def _compare_bounds(
     right_inclusive: bool,
     *,
     reverse: bool = False,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> bool:
-    try:
-        if reverse:
-            if left < right:
-                return True
-            if left == right:
-                return (not left_inclusive) or right_inclusive
-            return False
-        if left > right:
+    comparison = dialect.policy.compare_values(left, right)
+    if reverse:
+        if comparison < 0:
             return True
-        if left == right:
-            return left_inclusive or not right_inclusive
+        if comparison == 0:
+            return (not left_inclusive) or right_inclusive
         return False
-    except TypeError:
-        return False
+    if comparison > 0:
+        return True
+    if comparison == 0:
+        return left_inclusive or not right_inclusive
+    return False
 
 
 def _value_satisfies_bounds(
@@ -347,14 +411,14 @@ def _value_satisfies_bounds(
     minimum: object | None = None,
     maximum: object | None = None,
     inclusive: bool,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> bool:
-    try:
-        if minimum is not None:
-            if value < minimum or (value == minimum and not inclusive):
-                return False
-        if maximum is not None:
-            if value > maximum or (value == maximum and not inclusive):
-                return False
-        return True
-    except TypeError:
-        return False
+    if minimum is not None:
+        minimum_comparison = dialect.policy.compare_values(value, minimum)
+        if minimum_comparison < 0 or (minimum_comparison == 0 and not inclusive):
+            return False
+    if maximum is not None:
+        maximum_comparison = dialect.policy.compare_values(value, maximum)
+        if maximum_comparison > 0 or (maximum_comparison == 0 and not inclusive):
+            return False
+    return True

@@ -279,6 +279,7 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         indexes: list[EngineIndexRecord] | None = None,
         plan: QueryNode | None = None,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> EngineIndexRecord | None:
         if hint is None:
             return None
@@ -309,12 +310,12 @@ class MemoryEngine(AsyncStorageEngine):
         for index in indexes:
             if isinstance(hint, str):
                 if index["name"] == hint:
-                    if plan is not None and not query_can_use_index(index, plan):
+                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
             else:
                 if index["key"] == normalized_hint:
-                    if plan is not None and not query_can_use_index(index, plan):
+                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
 
@@ -607,6 +608,7 @@ class MemoryEngine(AsyncStorageEngine):
                     semantics.hint,
                     indexes=indexes,
                     plan=semantics.query_plan,
+                    dialect=semantics.dialect,
                 )
                 enforce_deadline(deadline)
                 documents = [
@@ -1203,6 +1205,7 @@ class MemoryEngine(AsyncStorageEngine):
             semantics.hint,
             indexes=indexes,
             plan=semantics.query_plan,
+            dialect=semantics.dialect,
         )
         enforce_deadline(deadline)
         execution_plan = await self.plan_find_execution(
@@ -1227,6 +1230,7 @@ class MemoryEngine(AsyncStorageEngine):
             indexes,
             semantics.query_plan,
             hinted_index_name=None if hinted_index is None else hinted_index["name"],
+            dialect=semantics.dialect,
         )
         return build_query_plan_explanation(
             engine="memory",

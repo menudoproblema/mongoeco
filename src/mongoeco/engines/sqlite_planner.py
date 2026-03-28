@@ -10,6 +10,7 @@ class SQLiteReadExecutionPlan(EngineReadExecutionPlan):
     use_sql: bool
     sql: str | None = None
     params: tuple[object, ...] = ()
+    apply_python_sort: bool = False
 
     def require_sql(self) -> tuple[str, tuple[object, ...]]:
         if not self.use_sql or self.sql is None:
@@ -73,11 +74,34 @@ def compile_sqlite_read_execution_plan(
             fallback_reason="Tagged bytes require Python fallback",
         )
     if sort_requires_python(db_name, coll_name, semantics.query_plan, semantics.sort):
+        try:
+            sql, params = build_select_sql(
+                db_name,
+                coll_name,
+                semantics.query_plan,
+                select_clause=select_clause,
+                sort=None,
+                skip=0,
+                limit=None,
+                hint=hint,
+                dialect=semantics.dialect,
+            )
+        except NotImplementedError:
+            return SQLiteReadExecutionPlan(
+                semantics=semantics,
+                strategy="python",
+                execution_lineage=_python_lineage(semantics, "Sort requires Python fallback"),
+                use_sql=False,
+                fallback_reason="Sort requires Python fallback",
+            )
         return SQLiteReadExecutionPlan(
             semantics=semantics,
-            strategy="python",
-            execution_lineage=_python_lineage(semantics, "Sort requires Python fallback"),
-            use_sql=False,
+            strategy="hybrid",
+            execution_lineage=_hybrid_lineage(semantics, "Sort requires Python fallback"),
+            use_sql=True,
+            sql=sql,
+            params=tuple(params),
+            apply_python_sort=True,
             fallback_reason="Sort requires Python fallback",
         )
     try:
@@ -90,6 +114,7 @@ def compile_sqlite_read_execution_plan(
             skip=semantics.skip,
             limit=semantics.limit,
             hint=hint,
+            dialect=semantics.dialect,
         )
     except NotImplementedError as exc:
         return SQLiteReadExecutionPlan(
@@ -134,4 +159,18 @@ def _python_lineage(semantics: EngineFindSemantics, reason: str) -> tuple[Execut
         lineage.append(ExecutionLineageStep(runtime="python", phase="slice", detail="semantic core"))
     if semantics.projection is not None:
         lineage.append(ExecutionLineageStep(runtime="python", phase="project", detail="semantic core"))
+    return tuple(lineage)
+
+
+def _hybrid_lineage(semantics: EngineFindSemantics, reason: str) -> tuple[ExecutionLineageStep, ...]:
+    lineage = [
+        ExecutionLineageStep(runtime="sql", phase="scan", detail="engine pushdown"),
+        ExecutionLineageStep(runtime="sql", phase="filter", detail="engine pushdown"),
+    ]
+    if semantics.sort:
+        lineage.append(ExecutionLineageStep(runtime="python", phase="sort", detail=reason))
+    if semantics.skip or semantics.limit is not None:
+        lineage.append(ExecutionLineageStep(runtime="python", phase="slice", detail="semantic core"))
+    if semantics.projection is not None:
+        lineage.append(ExecutionLineageStep(runtime="python", phase="project", detail="semantic core projection"))
     return tuple(lineage)
