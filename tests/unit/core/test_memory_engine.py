@@ -699,6 +699,62 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_drop_index_prunes_index_data(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+            await engine.create_index("db", "coll", ["email"], name="email_1")
+            self.assertIn("email_1", engine._index_data["db"]["coll"])
+
+            await engine.drop_index("db", "coll", "email_1")
+        finally:
+            await engine.disconnect()
+
+        self.assertNotIn("db", engine._index_data)
+
+    async def test_drop_indexes_prunes_collection_index_data(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+            await engine.create_index("db", "coll", ["email"], name="email_1")
+            await engine.create_index("db", "coll", ["_id", "email"], name="id_email_1")
+
+            await engine.drop_indexes("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertNotIn("db", engine._index_data)
+
+    async def test_rename_collection_moves_index_data(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+            await engine.create_index("db", "coll", ["email"], name="email_1")
+
+            await engine.rename_collection("db", "coll", "renamed")
+        finally:
+            await engine.disconnect()
+
+        self.assertNotIn("coll", engine._index_data.get("db", {}))
+        self.assertIn("renamed", engine._index_data.get("db", {}))
+        self.assertIn("email_1", engine._index_data["db"]["renamed"])
+
+    async def test_drop_collection_prunes_index_data(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+            await engine.create_index("db", "coll", ["email"], name="email_1")
+
+            await engine.drop_collection("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertNotIn("db", engine._index_data)
+
     async def test_builtin_id_index_cannot_be_dropped(self):
         engine = MemoryEngine()
         await engine.connect()

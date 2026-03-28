@@ -12,6 +12,7 @@ class MemoryMvccState:
     snapshot_version: int
     storage: dict[str, dict[str, dict[Any, Any]]]
     indexes: dict[str, dict[str, list[EngineIndexRecord]]]
+    index_data: dict[str, dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]]]
     search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]]
     collections: dict[str, set[str]]
     collection_options: dict[str, dict[str, Document]]
@@ -23,6 +24,7 @@ class MemoryMvccState:
         snapshot_version: int,
         storage: dict[str, dict[str, dict[Any, Any]]],
         indexes: dict[str, dict[str, list[EngineIndexRecord]]],
+        index_data: dict[str, dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]]],
         search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]],
         collections: dict[str, set[str]],
         collection_options: dict[str, dict[str, Document]],
@@ -31,6 +33,7 @@ class MemoryMvccState:
             snapshot_version=snapshot_version,
             storage=deepcopy(storage),
             indexes=deepcopy(indexes),
+            index_data=deepcopy(index_data),
             search_indexes=deepcopy(search_indexes),
             collections=deepcopy(collections),
             collection_options=deepcopy(collection_options),
