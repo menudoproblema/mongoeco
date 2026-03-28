@@ -230,8 +230,8 @@ aislada de firmas.
 
 El repositorio incluye un arnés repetible:
 
-* [scripts/run_pymongo_profile_matrix.py](/Users/uve/Proyectos/mongoeco2/scripts/run_pymongo_profile_matrix.py)
-* [tests/fixtures/pymongo_profile_matrix.json](/Users/uve/Proyectos/mongoeco2/tests/fixtures/pymongo_profile_matrix.json)
+* [scripts/run_pymongo_profile_matrix.py](scripts/run_pymongo_profile_matrix.py)
+* [tests/fixtures/pymongo_profile_matrix.json](tests/fixtures/pymongo_profile_matrix.json)
 
 Uso recomendado:
 

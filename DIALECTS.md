@@ -6,7 +6,7 @@ PyMongo sin duplicar la suite ni dispersar `if version == ...` por todo el
 core.
 
 Para una guía de uso orientada a configuración de aplicación, testing local y
-CI, ver [COMPATIBILITY.md](/Users/uve/Proyectos/mongoeco2/COMPATIBILITY.md).
+CI, ver [COMPATIBILITY.md](COMPATIBILITY.md).
 
 ---
 

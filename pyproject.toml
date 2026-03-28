@@ -6,16 +6,36 @@ build-backend = "setuptools.build_meta"
 name = "mongoeco"
 dynamic = ["version"]
 description = "Async-first MongoDB-like persistence library with pluggable storage engines."
+readme = "README.md"
 requires-python = ">=3.13"
 dependencies = []
+keywords = [
+    "mongodb",
+    "pymongo",
+    "testing",
+    "sqlite",
+    "embedded-database",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
+    "Topic :: Software Development :: Testing",
+]
 
 [project.optional-dependencies]
 dev = [
+    "build",
     "coverage",
     "pre-commit",
     "pytest",
     "pytest-cov",
     "ruff",
+    "twine",
 ]
 mongodb7 = [
     "pymongo>=4.9,<5",

@@ -1,0 +1,4 @@
+include README.md
+include COMPATIBILITY.md
+include DIALECTS.md
+include TODO.md
