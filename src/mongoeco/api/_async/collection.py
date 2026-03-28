@@ -198,6 +198,22 @@ class AsyncCollection:
             change_hub=self._change_hub,
         )
 
+    def __getattr__(self, name: str) -> "AsyncCollection":
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return self.__getitem__(name)
+
+    def __getitem__(self, name: str) -> "AsyncCollection":
+        if not isinstance(name, str) or not name:
+            raise TypeError("subcollection name must be a non-empty string")
+        return self.database.get_collection(
+            f"{self._collection_name}.{name}",
+            write_concern=self._write_concern,
+            read_concern=self._read_concern,
+            read_preference=self._read_preference,
+            codec_options=self._codec_options,
+        ).with_options(planning_mode=self._planning_mode)
+
     @property
     def planning_mode(self) -> PlanningMode:
         return self._planning_mode
@@ -2487,6 +2503,28 @@ class AsyncCollection:
     @property
     def name(self) -> str:
         return self._collection_name
+
+    @property
+    def full_name(self) -> str:
+        return f"{self._db_name}.{self._collection_name}"
+
+    @property
+    def database(self):
+        from mongoeco.api._async.client import AsyncDatabase
+
+        return AsyncDatabase(
+            self._engine,
+            self._db_name,
+            mongodb_dialect=self._mongodb_dialect,
+            mongodb_dialect_resolution=self._mongodb_dialect_resolution,
+            pymongo_profile=self._pymongo_profile,
+            pymongo_profile_resolution=self._pymongo_profile_resolution,
+            write_concern=self._write_concern,
+            read_concern=self._read_concern,
+            read_preference=self._read_preference,
+            codec_options=self._codec_options,
+            change_hub=self._change_hub,
+        )
 
     @property
     def mongodb_dialect(self) -> MongoDialect:

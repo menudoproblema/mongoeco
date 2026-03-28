@@ -93,6 +93,22 @@ class Collection:
             planning_mode=self._planning_mode if planning_mode is None else planning_mode,
         )
 
+    def __getattr__(self, name: str) -> "Collection":
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return self.__getitem__(name)
+
+    def __getitem__(self, name: str) -> "Collection":
+        if not isinstance(name, str) or not name:
+            raise TypeError("subcollection name must be a non-empty string")
+        return self.database.get_collection(
+            f"{self._collection_name}.{name}",
+            write_concern=self._write_concern,
+            read_concern=self._read_concern,
+            read_preference=self._read_preference,
+            codec_options=self._codec_options,
+        ).with_options(planning_mode=self._planning_mode)
+
     def insert_one(
         self,
         document: Document,
@@ -801,3 +817,17 @@ class Collection:
     @property
     def codec_options(self) -> CodecOptions:
         return self._codec_options
+
+    @property
+    def full_name(self) -> str:
+        return f"{self._db_name}.{self._collection_name}"
+
+    @property
+    def database(self):
+        return self._client.get_database(
+            self._db_name,
+            write_concern=self._write_concern,
+            read_concern=self._read_concern,
+            read_preference=self._read_preference,
+            codec_options=self._codec_options,
+        )

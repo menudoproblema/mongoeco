@@ -1019,6 +1019,50 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertTrue(second["version"].startswith(f"{client.mongodb_dialect.server_version}."))
             self.assertEqual(first["versionArray"], second["versionArray"])
 
+    def test_collection_namespace_helpers_and_cursor_metadata(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.alpha.get_collection(
+                        "events",
+                        read_concern=ReadConcern("majority"),
+                    )
+                    child = collection.daily
+                    child_underscore = collection["daily_logs"]
+                    sibling = collection.database.get_collection(
+                        "logs",
+                        read_concern=ReadConcern("local"),
+                    )
+
+                    self.assertEqual(collection.name, "events")
+                    self.assertEqual(collection.full_name, "alpha.events")
+                    self.assertEqual(collection.database.name, "alpha")
+                    self.assertEqual(child.name, "events.daily")
+                    self.assertEqual(child.full_name, "alpha.events.daily")
+                    self.assertEqual(child_underscore.name, "events.daily_logs")
+                    self.assertEqual(child_underscore.full_name, "alpha.events.daily_logs")
+                    self.assertEqual(sibling.name, "logs")
+                    self.assertEqual(sibling.full_name, "alpha.logs")
+                    self.assertEqual(sibling.read_concern, ReadConcern("local"))
+                    self.assertEqual(collection.read_concern, ReadConcern("majority"))
+
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "kind": "view"},
+                            {"_id": "2", "kind": "click"},
+                        ]
+                    )
+                    collection.create_index([("kind", 1)], name="kind_idx")
+
+                    cursor = collection.find({"kind": "view"}).hint("kind_idx")
+                    clone = cursor.clone().limit(1)
+
+                    self.assertEqual(cursor.collection.full_name, "alpha.events")
+                    self.assertEqual(clone.collection.full_name, "alpha.events")
+                    self.assertTrue(cursor.alive)
+                    self.assertEqual(clone.to_list(), [{"_id": "1", "kind": "view"}])
+                    self.assertEqual(cursor.to_list(), [{"_id": "1", "kind": "view"}])
+
     def test_start_session_inherits_default_transaction_options_from_client(self):
         transaction_options = TransactionOptions(
             write_concern=WriteConcern("majority"),
@@ -1425,6 +1469,39 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     self.assertEqual(tags, ["a", "b", "c"])
                     self.assertEqual(cities, ["Madrid", "Sevilla"])
+
+    def test_distinct_supports_document_values_and_arrays_of_documents(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_many(
+                        [
+                            {
+                                "_id": "1",
+                                "profile": {"city": "Madrid"},
+                                "items": [{"code": "a"}, {"code": "b"}],
+                                "nested": {"items": [{"code": "a"}, {"code": "b"}]},
+                            },
+                            {
+                                "_id": "2",
+                                "profile": {"city": "Sevilla"},
+                                "items": [{"code": "b"}, {"code": "c"}],
+                                "nested": {"items": [{"code": "b"}, {"code": "c"}]},
+                            },
+                        ]
+                    )
+
+                    profiles = collection.distinct("profile")
+                    item_documents = collection.distinct("items")
+                    nested_codes = collection.distinct("nested.items.code")
+
+                    self.assertEqual(profiles, [{"city": "Madrid"}, {"city": "Sevilla"}])
+                    self.assertEqual(
+                        item_documents,
+                        [{"code": "a"}, {"code": "b"}, {"code": "c"}],
+                    )
+                    self.assertEqual(nested_codes, ["a", "b", "c"])
 
     def test_distinct_supports_hint_comment_and_max_time(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

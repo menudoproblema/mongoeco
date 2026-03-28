@@ -278,6 +278,21 @@ class Cursor:
     def alive(self) -> bool:
         return not self._closed and not self._exhausted
 
+    @property
+    def collection(self):
+        from mongoeco.api._sync.collection import Collection
+
+        return Collection(
+            self._client,
+            self._async_collection._db_name,
+            self._async_collection._collection_name,
+            write_concern=self._async_collection.write_concern,
+            read_concern=self._async_collection.read_concern,
+            read_preference=self._async_collection.read_preference,
+            codec_options=self._async_collection.codec_options,
+            planning_mode=_resolve_planning_mode(self._async_collection),
+        )
+
     def _as_operation(self) -> FindOperation:
         return compile_find_operation(
             self._filter_spec,

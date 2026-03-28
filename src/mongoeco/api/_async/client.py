@@ -261,6 +261,10 @@ class AsyncDatabase:
     def codec_options(self) -> CodecOptions:
         return self._codec_options
 
+    @property
+    def name(self) -> str:
+        return self._db_name
+
 
 class AsyncMongoClient:
     """

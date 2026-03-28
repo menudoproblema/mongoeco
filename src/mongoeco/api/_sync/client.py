@@ -342,6 +342,10 @@ class Database:
     def codec_options(self) -> CodecOptions:
         return self._codec_options
 
+    @property
+    def name(self) -> str:
+        return self._name
+
 
 class MongoClient:
     """Cliente sincronico que adapta la implementacion async."""

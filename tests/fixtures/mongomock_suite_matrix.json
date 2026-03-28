@@ -2,8 +2,8 @@
   "inventory_root": "/Users/uve/Proyectos/mongoeco2/.tmp/mongomock/tests",
   "inventory_total_cases": 872,
   "status_counts": {
-    "covered": 22,
-    "equivalent": 752,
+    "covered": 73,
+    "equivalent": 701,
     "outside-scope": 98
   },
   "cases": [
@@ -173,9 +173,9 @@
       "class_name": "MongoClientApiTest",
       "test_name": "test__read_preference",
       "category": "_client_api",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de read_preference en cliente, database, collection y driver runtime."
+      "note": "Existe cobertura local directa de read_preference en cliente, database, collection y driver runtime."
     },
     {
       "id": "test__client_api.py::MongoClientApiTest::test__different_read_preference",
@@ -183,9 +183,9 @@
       "class_name": "MongoClientApiTest",
       "test_name": "test__different_read_preference",
       "category": "_client_api",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de with_options y override de read_preference."
+      "note": "Existe cobertura local directa de with_options y override de read_preference."
     },
     {
       "id": "test__client_api.py::MongoClientApiTest::test__codec_options_with_pymongo",
@@ -193,9 +193,9 @@
       "class_name": "MongoClientApiTest",
       "test_name": "test__codec_options_with_pymongo",
       "category": "_client_api",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de codec_options observables con clases publicas BSON."
+      "note": "Existe cobertura local directa de codec_options observables con clases publicas BSON."
     },
     {
       "id": "test__client_api.py::MongoClientApiTest::test__codec_options",
@@ -203,9 +203,9 @@
       "class_name": "MongoClientApiTest",
       "test_name": "test__codec_options",
       "category": "_client_api",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de codec_options en cliente, database y collection."
+      "note": "Existe cobertura local directa de codec_options en cliente, database y collection."
     },
     {
       "id": "test__client_api.py::MongoClientApiTest::test__parse_url",
@@ -323,9 +323,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__get_subcollections",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de acceso a colecciones hijas, hermanas y metadata observable."
+      "note": "Existe cobertura local directa de acceso a subcolecciones via getattr/getitem."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__get_subcollections_by_attribute_underscore",
@@ -333,9 +333,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__get_subcollections_by_attribute_underscore",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de acceso a colecciones hijas, hermanas y metadata observable."
+      "note": "Existe cobertura local directa de acceso a subcolecciones con guion bajo via getattr/getitem."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__get_sibling_collection",
@@ -343,9 +343,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__get_sibling_collection",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de acceso a colecciones hijas, hermanas y metadata observable."
+      "note": "Existe cobertura local directa de acceso a colecciones hermanas via database."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__get_collection_read_concern_option",
@@ -353,9 +353,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__get_collection_read_concern_option",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de acceso a colecciones hijas, hermanas y metadata observable."
+      "note": "Existe cobertura local directa de propagation de read_concern al pedir colecciones."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__get_collection_full_name",
@@ -363,9 +363,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__get_collection_full_name",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de acceso a colecciones hijas, hermanas y metadata observable."
+      "note": "Existe cobertura local directa de full_name y metadata observable de colecciones."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_collection",
@@ -373,9 +373,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_collection",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
+      "note": "Existe cobertura local directa de la referencia collection en cursores."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_alive",
@@ -383,9 +383,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_alive",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
+      "note": "Existe cobertura local directa de alive en cursores durante rewind, clone y close."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_collation",
@@ -393,9 +393,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_collation",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
+      "note": "Existe cobertura local directa de cursores con collation y comportamiento observable asociado."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__drop_collection",
@@ -433,9 +433,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_hint",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
+      "note": "Existe cobertura local directa de hint en cursores y su ejecucion."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__distinct_nested_field",
@@ -443,9 +443,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__distinct_nested_field",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de distinct sobre campos anidados."
+      "note": "Existe cobertura local directa de distinct sobre campos anidados."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__distinct_array_field",
@@ -453,9 +453,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__distinct_array_field",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de distinct sobre arrays."
+      "note": "Existe cobertura local directa de distinct sobre arrays."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__distinct_array_nested_field",
@@ -463,9 +463,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__distinct_array_nested_field",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de distinct sobre arrays anidados."
+      "note": "Existe cobertura local directa de distinct sobre arrays anidados."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__distinct_document_field",
@@ -473,9 +473,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__distinct_document_field",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de distinct sobre valores documentales."
+      "note": "Existe cobertura local directa de distinct sobre valores documentales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__distinct_array_field_with_dicts",
@@ -483,9 +483,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__distinct_array_field_with_dicts",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de distinct sobre arrays con documentos."
+      "note": "Existe cobertura local directa de distinct sobre arrays con documentos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__distinct_filter_field",
@@ -493,9 +493,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__distinct_filter_field",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de distinct con filtro."
+      "note": "Existe cobertura local directa de distinct con filtro."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__distinct_error",
@@ -513,9 +513,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_clone",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
+      "note": "Existe cobertura local directa de clone de cursor y preservacion de metadata."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_clone_keep_limit_skip",
@@ -523,9 +523,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_clone_keep_limit_skip",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
+      "note": "Existe cobertura local directa de clone de cursor preservando skip y limit."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_cursor_returns_document_copies",
@@ -743,9 +743,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_with_collation",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
+      "note": "Existe cobertura local directa de find con collation."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_removed_and_changed_options",
@@ -1103,9 +1103,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_many_collation",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
+      "note": "Existe cobertura local directa de update_many con collation."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_many_array_filters",
@@ -1433,9 +1433,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__delete_many_collation_option",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de delete_one, delete_many, validaciones y hints compatibles."
+      "note": "Existe cobertura local directa de delete_many con collation."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__delete_many_hint_option",
@@ -2313,9 +2313,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__with_options_different_read_preference",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de with_options y propagacion de concerns/preference."
+      "note": "Existe cobertura local directa de with_options sobre colecciones con override de read_preference."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__codec_options",
@@ -2323,9 +2323,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__codec_options",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de codec_options en cliente, database y collection."
+      "note": "Existe cobertura local directa de codec_options en cliente, database y collection."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__codec_options_without_pymongo",
@@ -2333,9 +2333,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__codec_options_without_pymongo",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de codec_options sin depender de rutas historicas de mongomock."
+      "note": "Existe cobertura local directa de codec_options sin depender de rutas historicas de mongomock."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__with_options_wrong_kwarg",
@@ -2553,9 +2553,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bulk_write_insert_one",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bulk_write_update_one",
@@ -2563,9 +2563,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bulk_write_update_one",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bulk_write_update_many",
@@ -2573,9 +2573,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bulk_write_update_many",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bulk_write_replace_one",
@@ -2583,9 +2583,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bulk_write_replace_one",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bulk_write_update_id",
@@ -2593,9 +2593,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bulk_write_update_id",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bulk_write_delete_one",
@@ -2603,9 +2603,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bulk_write_delete_one",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bulk_write_delete_many",
@@ -2613,9 +2613,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bulk_write_delete_many",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bulk_write_matched_count_no_changes",
@@ -2623,9 +2623,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bulk_write_matched_count_no_changes",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bulk_write_matched_count_replace_multiple_objects",
@@ -2633,9 +2633,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bulk_write_matched_count_replace_multiple_objects",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_find_with_comment",
@@ -3923,9 +3923,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_insert_many_bulk_write_error",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de errores de bulk write en insert_many."
+      "note": "Existe cobertura local directa de errores de bulk write en insert_many."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_insert_many_bulk_write_error_details",
@@ -3933,9 +3933,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_insert_many_bulk_write_error_details",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de detalles de BulkWriteError."
+      "note": "Existe cobertura local directa de detalles de BulkWriteError."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_insert_bson_validation",
@@ -4263,9 +4263,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__read_preference",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de read_preference en cliente, database, collection y driver runtime."
+      "note": "Existe cobertura local directa de read_preference en cliente, database, collection y driver runtime."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bulk_write_unordered",
@@ -4273,9 +4273,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bulk_write_unordered",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bulk_write_unordered_with_bulk_write",
@@ -4283,9 +4283,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bulk_write_unordered_with_bulk_write",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bulk_write_ordered",
@@ -4293,9 +4293,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bulk_write_ordered",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bulk_write_ordered_with_bulk_write",
@@ -4303,9 +4303,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bulk_write_ordered_with_bulk_write",
       "category": "collection",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__set_union",
@@ -4693,9 +4693,9 @@
       "class_name": "DatabaseAPITest",
       "test_name": "test__read_preference",
       "category": "admin-client",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de read_preference en cliente, database, collection y driver runtime."
+      "note": "Existe cobertura local directa de read_preference en cliente, database, collection y driver runtime."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__get_collection_different_read_preference",
@@ -4703,9 +4703,9 @@
       "class_name": "DatabaseAPITest",
       "test_name": "test__get_collection_different_read_preference",
       "category": "admin-client",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de override de read_preference al pedir coleccion."
+      "note": "Existe cobertura local directa de override de read_preference al pedir coleccion."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__get_collection_different_codec_options",
@@ -4713,9 +4713,9 @@
       "class_name": "DatabaseAPITest",
       "test_name": "test__get_collection_different_codec_options",
       "category": "admin-client",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de override de codec_options al pedir coleccion."
+      "note": "Existe cobertura local directa de override de codec_options al pedir coleccion."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__codec_options",
@@ -4723,9 +4723,9 @@
       "class_name": "DatabaseAPITest",
       "test_name": "test__codec_options",
       "category": "admin-client",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de codec_options en cliente, database y collection."
+      "note": "Existe cobertura local directa de codec_options en cliente, database y collection."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__read_concern",
@@ -8463,9 +8463,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__distinct_nested_field",
       "category": "_mongomock",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de distinct sobre campos anidados."
+      "note": "Existe cobertura local directa de distinct sobre campos anidados."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__distinct_array_field",
@@ -8473,9 +8473,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__distinct_array_field",
       "category": "_mongomock",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de distinct sobre arrays."
+      "note": "Existe cobertura local directa de distinct sobre arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__distinct_array_nested_field",
@@ -8483,9 +8483,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__distinct_array_nested_field",
       "category": "_mongomock",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de distinct sobre arrays anidados."
+      "note": "Existe cobertura local directa de distinct sobre arrays anidados."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__distinct_array_field_with_dicts",
@@ -8493,9 +8493,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__distinct_array_field_with_dicts",
       "category": "_mongomock",
-      "status": "equivalent",
+      "status": "covered",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de distinct sobre arrays con documentos."
+      "note": "Existe cobertura local directa de distinct sobre arrays con documentos."
     },
     {
       "id": "test__mongomock.py::InsertedDocumentTest::test__object_is_consistent",

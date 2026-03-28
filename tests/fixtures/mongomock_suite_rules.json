@@ -273,24 +273,24 @@
       "note": "Existe cobertura local equivalente de Database.command y surface administrativa principal."
     },
     "test__read_preference": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de read_preference en cliente, database, collection y driver runtime."
+      "status": "covered",
+      "note": "Existe cobertura local directa de read_preference en cliente, database, collection y driver runtime."
     },
     "test__different_read_preference": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de with_options y override de read_preference."
+      "status": "covered",
+      "note": "Existe cobertura local directa de with_options y override de read_preference."
     },
     "test__codec_options": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de codec_options en cliente, database y collection."
+      "status": "covered",
+      "note": "Existe cobertura local directa de codec_options en cliente, database y collection."
     },
     "test__codec_options_with_pymongo": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de codec_options observables con clases publicas BSON."
+      "status": "covered",
+      "note": "Existe cobertura local directa de codec_options observables con clases publicas BSON."
     },
     "test__codec_options_without_pymongo": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de codec_options sin depender de rutas historicas de mongomock."
+      "status": "covered",
+      "note": "Existe cobertura local directa de codec_options sin depender de rutas historicas de mongomock."
     },
     "test__read_concern": {
       "status": "equivalent",
@@ -300,17 +300,21 @@
       "status": "equivalent",
       "note": "Existe cobertura local equivalente de with_options en cliente, database y collection."
     },
+    "test__with_options_different_read_preference": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de with_options sobre colecciones con override de read_preference."
+    },
     "test__with_options_pymongo": {
       "status": "equivalent",
       "note": "Existe cobertura local equivalente de with_options con opciones estilo PyMongo."
     },
     "test__get_collection_different_read_preference": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de override de read_preference al pedir coleccion."
+      "status": "covered",
+      "note": "Existe cobertura local directa de override de read_preference al pedir coleccion."
     },
     "test__get_collection_different_codec_options": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de override de codec_options al pedir coleccion."
+      "status": "covered",
+      "note": "Existe cobertura local directa de override de codec_options al pedir coleccion."
     },
     "test__collection_names": {
       "status": "equivalent",
@@ -377,36 +381,92 @@
       "note": "Existe cobertura local equivalente de delete_many."
     },
     "test__distinct_nested_field": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de distinct sobre campos anidados."
+      "status": "covered",
+      "note": "Existe cobertura local directa de distinct sobre campos anidados."
     },
     "test__distinct_array_field": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de distinct sobre arrays."
+      "status": "covered",
+      "note": "Existe cobertura local directa de distinct sobre arrays."
     },
     "test__distinct_array_nested_field": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de distinct sobre arrays anidados."
+      "status": "covered",
+      "note": "Existe cobertura local directa de distinct sobre arrays anidados."
     },
     "test__distinct_document_field": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de distinct sobre valores documentales."
+      "status": "covered",
+      "note": "Existe cobertura local directa de distinct sobre valores documentales."
     },
     "test__distinct_array_field_with_dicts": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de distinct sobre arrays con documentos."
+      "status": "covered",
+      "note": "Existe cobertura local directa de distinct sobre arrays con documentos."
     },
     "test__distinct_filter_field": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de distinct con filtro."
+      "status": "covered",
+      "note": "Existe cobertura local directa de distinct con filtro."
     },
     "test_insert_many_bulk_write_error": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de errores de bulk write en insert_many."
+      "status": "covered",
+      "note": "Existe cobertura local directa de errores de bulk write en insert_many."
     },
     "test_insert_many_bulk_write_error_details": {
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de detalles de BulkWriteError."
+      "status": "covered",
+      "note": "Existe cobertura local directa de detalles de BulkWriteError."
+    },
+    "test__cursor_collation": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de cursores con collation y comportamiento observable asociado."
+    },
+    "test__find_with_collation": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de find con collation."
+    },
+    "test__update_many_collation": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de update_many con collation."
+    },
+    "test__delete_many_collation_option": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de delete_many con collation."
+    },
+    "test__cursor_clone": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de clone de cursor y preservacion de metadata."
+    },
+    "test__cursor_clone_keep_limit_skip": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de clone de cursor preservando skip y limit."
+    },
+    "test__cursor_hint": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de hint en cursores y su ejecucion."
+    },
+    "test__cursor_collection": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de la referencia collection en cursores."
+    },
+    "test__cursor_alive": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de alive en cursores durante rewind, clone y close."
+    },
+    "test__get_subcollections": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de acceso a subcolecciones via getattr/getitem."
+    },
+    "test__get_subcollections_by_attribute_underscore": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de acceso a subcolecciones con guion bajo via getattr/getitem."
+    },
+    "test__get_sibling_collection": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de acceso a colecciones hermanas via database."
+    },
+    "test__get_collection_full_name": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de full_name y metadata observable de colecciones."
+    },
+    "test__get_collection_read_concern_option": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de propagation de read_concern al pedir colecciones."
     },
     "test_find_with_comment": {
       "status": "equivalent",
@@ -432,8 +492,8 @@
   "test_name_prefix_rules": [
     {
       "prefix": "test__bulk_write_",
-      "status": "equivalent",
-      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+      "status": "covered",
+      "note": "Existe cobertura local directa de bulk_write ordenado, no ordenado y modelos basicos."
     }
   ],
   "category_test_name_prefix_rules": {

@@ -394,6 +394,10 @@ class AsyncCursor:
     def alive(self) -> bool:
         return not self._exhausted
 
+    @property
+    def collection(self):
+        return self._collection
+
     async def explain(self) -> dict[str, object]:
         operation = self._as_operation()
         if operation.planning_issues:
