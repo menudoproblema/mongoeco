@@ -825,6 +825,18 @@ class PlanningIssue:
         }
 
 
+class ExecutionLineageStepDocument(TypedDict):
+    runtime: str
+    phase: str
+    detail: str | None
+
+
+class PhysicalPlanStepDocument(TypedDict):
+    runtime: str
+    operation: str
+    detail: str | None
+
+
 class QueryPlanExplanationDocument(TypedDict, total=False):
     engine: str
     strategy: str
@@ -859,12 +871,6 @@ class AggregateExplanationDocument(TypedDict):
     planning_issues: list[PlanningIssueDocument]
 
 
-class ExecutionLineageStepDocument(TypedDict):
-    runtime: str
-    phase: str
-    detail: str | None
-
-
 @dataclass(frozen=True, slots=True)
 class ExecutionLineageStep:
     runtime: str
@@ -877,12 +883,6 @@ class ExecutionLineageStep:
             "phase": self.phase,
             "detail": self.detail,
         }
-
-
-class PhysicalPlanStepDocument(TypedDict):
-    runtime: str
-    operation: str
-    detail: str | None
 
 
 @dataclass(frozen=True, slots=True)

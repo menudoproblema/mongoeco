@@ -15,7 +15,7 @@ __pycache__
 .tmpcov
 .coverage
 .coverage-tmp
-.tmp-pytest
+.tmp-*
 
 # Logging
 *.log
