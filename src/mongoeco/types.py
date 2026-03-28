@@ -206,6 +206,23 @@ type Filter = dict[str, Any]
 type Update = dict[str, Any]
 type ArrayFilters = list[Filter]
 type Projection = dict[str, Any]
+type BsonScalar = (
+    None
+    | bool
+    | int
+    | float
+    | str
+    | bytes
+    | datetime.datetime
+    | Binary
+    | Decimal128
+    | Regex
+    | Timestamp
+    | ObjectId
+    | DBRef
+    | UndefinedType
+)
+type BsonValue = BsonScalar | list["BsonValue"] | dict[str, "BsonValue"] | SON
 type SortDirection = Literal[1, -1]
 type SortSpec = list[tuple[str, SortDirection]]
 type CollationDocument = dict[str, object]
@@ -814,6 +831,7 @@ class QueryPlanExplanationDocument(TypedDict, total=False):
     planning_mode: str
     planning_issues: list[PlanningIssueDocument]
     execution_lineage: list[ExecutionLineageStepDocument]
+    physical_plan: list[PhysicalPlanStepDocument]
     fallback_reason: str | None
     sort: SortSpec | None
     skip: int
@@ -859,6 +877,26 @@ class ExecutionLineageStep:
         }
 
 
+class PhysicalPlanStepDocument(TypedDict):
+    runtime: str
+    operation: str
+    detail: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class PhysicalPlanStep:
+    runtime: str
+    operation: str
+    detail: str | None = None
+
+    def to_document(self) -> PhysicalPlanStepDocument:
+        return {
+            "runtime": self.runtime,
+            "operation": self.operation,
+            "detail": self.detail,
+        }
+
+
 @dataclass(frozen=True, slots=True)
 class QueryPlanExplanation:
     engine: str
@@ -876,6 +914,7 @@ class QueryPlanExplanation:
     planning_mode: PlanningMode = PlanningMode.STRICT
     planning_issues: tuple[PlanningIssue, ...] = ()
     execution_lineage: tuple[ExecutionLineageStep, ...] = ()
+    physical_plan: tuple[PhysicalPlanStep, ...] = ()
     fallback_reason: str | None = None
 
     def to_document(self) -> QueryPlanExplanationDocument:
@@ -900,6 +939,8 @@ class QueryPlanExplanation:
             document["planning_issues"] = [issue.to_document() for issue in self.planning_issues]
         if self.execution_lineage:
             document["execution_lineage"] = [step.to_document() for step in self.execution_lineage]
+        if self.physical_plan:
+            document["physical_plan"] = [step.to_document() for step in self.physical_plan]
         if self.fallback_reason is not None:
             document["fallback_reason"] = self.fallback_reason
         return document

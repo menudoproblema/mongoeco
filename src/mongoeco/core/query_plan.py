@@ -4,7 +4,7 @@ from typing import Any, TypeIs
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Filter, PlanningIssue, PlanningMode, Regex
+from mongoeco.types import BsonValue, Filter, PlanningIssue, PlanningMode, Regex
 
 
 class QueryNode:
@@ -24,57 +24,57 @@ class DeferredQueryNode(QueryNode):
 @dataclass(frozen=True)
 class EqualsCondition(QueryNode):
     field: str
-    value: Any
+    value: BsonValue
     null_matches_undefined: bool = False
 
 
 @dataclass(frozen=True)
 class NotEqualsCondition(QueryNode):
     field: str
-    value: Any
+    value: BsonValue
 
 
 @dataclass(frozen=True)
 class GreaterThanCondition(QueryNode):
     field: str
-    value: Any
+    value: BsonValue
 
 
 @dataclass(frozen=True)
 class GreaterThanOrEqualCondition(QueryNode):
     field: str
-    value: Any
+    value: BsonValue
 
 
 @dataclass(frozen=True)
 class LessThanCondition(QueryNode):
     field: str
-    value: Any
+    value: BsonValue
 
 
 @dataclass(frozen=True)
 class LessThanOrEqualCondition(QueryNode):
     field: str
-    value: Any
+    value: BsonValue
 
 
 @dataclass(frozen=True)
 class InCondition(QueryNode):
     field: str
-    values: tuple[Any, ...]
+    values: tuple[BsonValue, ...]
     null_matches_undefined: bool = False
 
 
 @dataclass(frozen=True)
 class NotInCondition(QueryNode):
     field: str
-    values: tuple[Any, ...]
+    values: tuple[BsonValue, ...]
 
 
 @dataclass(frozen=True)
 class AllCondition(QueryNode):
     field: str
-    values: tuple[Any, ...]
+    values: tuple[BsonValue, ...]
 
 
 @dataclass(frozen=True)
@@ -118,7 +118,7 @@ class ExistsCondition(QueryNode):
 @dataclass(frozen=True)
 class TypeCondition(QueryNode):
     field: str
-    values: tuple[Any, ...]
+    values: tuple[BsonValue, ...]
 
 
 @dataclass(frozen=True)

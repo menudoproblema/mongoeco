@@ -4034,6 +4034,7 @@ class SQLiteEngine(AsyncStorageEngine):
             details=details,
             hinted_index=None if hinted_index is None else hinted_index["name"],
             execution_lineage=execution_plan.execution_lineage,
+            physical_plan=execution_plan.physical_plan,
             fallback_reason=execution_plan.fallback_reason,
         )
 

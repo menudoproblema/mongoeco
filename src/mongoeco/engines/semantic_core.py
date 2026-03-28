@@ -20,6 +20,7 @@ from mongoeco.errors import DocumentValidationFailure
 from mongoeco.types import (
     Document,
     ExecutionLineageStep,
+    PhysicalPlanStep,
     Filter,
     Projection,
     QueryPlanExplanation,
@@ -52,6 +53,7 @@ class EngineReadExecutionPlan:
     semantics: EngineFindSemantics
     strategy: str
     execution_lineage: tuple[ExecutionLineageStep, ...]
+    physical_plan: tuple[PhysicalPlanStep, ...] = ()
     fallback_reason: str | None = None
 
 
@@ -304,6 +306,7 @@ def build_query_plan_explanation(
     details: object | None = None,
     indexes: list[object] | None = None,
     execution_lineage: tuple[ExecutionLineageStep, ...] = (),
+    physical_plan: tuple[PhysicalPlanStep, ...] = (),
     fallback_reason: str | None = None,
 ) -> QueryPlanExplanation:
     return QueryPlanExplanation(
@@ -320,5 +323,6 @@ def build_query_plan_explanation(
         max_time_ms=semantics.max_time_ms,
         indexes=indexes,
         execution_lineage=execution_lineage,
+        physical_plan=physical_plan,
         fallback_reason=fallback_reason,
     )

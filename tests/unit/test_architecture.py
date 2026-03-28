@@ -135,6 +135,7 @@ class ArchitectureUnitTests(unittest.TestCase):
                     plan = await engine.plan_find_semantics("db", "users", semantics)
                     self.assertIsInstance(plan, EngineReadExecutionPlan)
                     self.assertEqual(plan.semantics.query_plan, semantics.query_plan)
+                    self.assertTrue(plan.physical_plan)
         asyncio.run(_exercise())
 
     def test_engines_produce_typed_query_plan_explanations(self):
@@ -151,6 +152,10 @@ class ArchitectureUnitTests(unittest.TestCase):
                 self.assertIsInstance(sqlite_explain, QueryPlanExplanation)
                 self.assertEqual(memory_explain.to_document()["engine"], "memory")
                 self.assertEqual(sqlite_explain.to_document()["engine"], "sqlite")
+                self.assertTrue(memory_explain.physical_plan)
+                self.assertTrue(sqlite_explain.physical_plan)
+                self.assertIn("physical_plan", memory_explain.to_document())
+                self.assertIn("physical_plan", sqlite_explain.to_document())
             finally:
                 await memory.disconnect()
                 await sqlite.disconnect()

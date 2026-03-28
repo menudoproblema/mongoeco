@@ -54,6 +54,7 @@ from mongoeco.session import ClientSession
 from mongoeco.session import EngineTransactionContext
 from mongoeco.types import (
     ArrayFilters, CollationDocument, DeleteResult, Document, DocumentId, ExecutionLineageStep, Filter, IndexInformation, IndexDocument, IndexKeySpec, ObjectId,
+    PhysicalPlanStep,
     ProfilingCommandResult,
     Projection, QueryPlanExplanation, SortSpec, Update, UpdateResult, default_index_name,
     default_id_index_definition, default_id_index_document, default_id_index_information, index_fields,
@@ -1258,6 +1259,7 @@ class MemoryEngine(AsyncStorageEngine):
             hinted_index=None if hinted_index is None else hinted_index["name"],
             indexes=indexes,
             execution_lineage=execution_plan.execution_lineage,
+            physical_plan=execution_plan.physical_plan,
             fallback_reason=execution_plan.fallback_reason,
         )
 
@@ -1303,6 +1305,25 @@ class MemoryEngine(AsyncStorageEngine):
             semantics=semantics,
             strategy="python",
             execution_lineage=tuple(lineage),
+            physical_plan=(
+                PhysicalPlanStep(runtime="python", operation="scan"),
+                PhysicalPlanStep(runtime="python", operation="filter"),
+                *(
+                    (PhysicalPlanStep(runtime="python", operation="sort"),)
+                    if semantics.sort
+                    else ()
+                ),
+                *(
+                    (PhysicalPlanStep(runtime="python", operation="project"),)
+                    if semantics.projection is not None
+                    else ()
+                ),
+                *(
+                    (PhysicalPlanStep(runtime="python", operation="slice"),)
+                    if semantics.skip or semantics.limit is not None
+                    else ()
+                ),
+            ),
         )
 
     @override

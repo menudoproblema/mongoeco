@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from mongoeco.engines.semantic_core import EngineFindSemantics, EngineReadExecutionPlan
-from mongoeco.types import ExecutionLineageStep, IndexKeySpec
+from mongoeco.types import ExecutionLineageStep, IndexKeySpec, PhysicalPlanStep
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -38,6 +38,7 @@ def compile_sqlite_read_execution_plan(
             semantics=semantics,
             strategy="python",
             execution_lineage=_python_lineage(semantics, "Collation requires Python fallback"),
+            physical_plan=_python_physical_plan(semantics, "collation"),
             use_sql=False,
             fallback_reason="Collation requires Python fallback",
         )
@@ -46,6 +47,7 @@ def compile_sqlite_read_execution_plan(
             semantics=semantics,
             strategy="python",
             execution_lineage=_python_lineage(semantics, "Custom dialect requires Python fallback"),
+            physical_plan=_python_physical_plan(semantics, "dialect"),
             use_sql=False,
             fallback_reason="Custom dialect requires Python fallback",
         )
@@ -54,6 +56,7 @@ def compile_sqlite_read_execution_plan(
             semantics=semantics,
             strategy="python",
             execution_lineage=_python_lineage(semantics, "Array traversal requires Python fallback"),
+            physical_plan=_python_physical_plan(semantics, "array-traversal"),
             use_sql=False,
             fallback_reason="Array traversal requires Python fallback",
         )
@@ -62,6 +65,7 @@ def compile_sqlite_read_execution_plan(
             semantics=semantics,
             strategy="python",
             execution_lineage=_python_lineage(semantics, "Top-level array comparisons require Python fallback"),
+            physical_plan=_python_physical_plan(semantics, "array-comparison"),
             use_sql=False,
             fallback_reason="Top-level array comparisons require Python fallback",
         )
@@ -70,6 +74,7 @@ def compile_sqlite_read_execution_plan(
             semantics=semantics,
             strategy="python",
             execution_lineage=_python_lineage(semantics, "Tagged undefined requires Python fallback"),
+            physical_plan=_python_physical_plan(semantics, "undefined"),
             use_sql=False,
             fallback_reason="Tagged undefined requires Python fallback",
         )
@@ -78,6 +83,7 @@ def compile_sqlite_read_execution_plan(
             semantics=semantics,
             strategy="python",
             execution_lineage=_python_lineage(semantics, "Tagged bytes require Python fallback"),
+            physical_plan=_python_physical_plan(semantics, "bytes"),
             use_sql=False,
             fallback_reason="Tagged bytes require Python fallback",
         )
@@ -99,6 +105,7 @@ def compile_sqlite_read_execution_plan(
                 semantics=semantics,
                 strategy="python",
                 execution_lineage=_python_lineage(semantics, "Sort requires Python fallback"),
+                physical_plan=_python_physical_plan(semantics, "sort"),
                 use_sql=False,
                 fallback_reason="Sort requires Python fallback",
             )
@@ -106,6 +113,7 @@ def compile_sqlite_read_execution_plan(
             semantics=semantics,
             strategy="hybrid",
             execution_lineage=_hybrid_lineage(semantics, "Sort requires Python fallback"),
+            physical_plan=_hybrid_physical_plan(semantics, "sort"),
             use_sql=True,
             sql=sql,
             params=tuple(params),
@@ -129,6 +137,7 @@ def compile_sqlite_read_execution_plan(
             semantics=semantics,
             strategy="python",
             execution_lineage=_python_lineage(semantics, str(exc)),
+            physical_plan=_python_physical_plan(semantics, "translator"),
             use_sql=False,
             fallback_reason=str(exc),
         )
@@ -136,6 +145,7 @@ def compile_sqlite_read_execution_plan(
         semantics=semantics,
         strategy="sql",
         execution_lineage=_sql_lineage(semantics),
+        physical_plan=_sql_physical_plan(semantics),
         use_sql=True,
         sql=sql,
         params=tuple(params),
@@ -182,3 +192,50 @@ def _hybrid_lineage(semantics: EngineFindSemantics, reason: str) -> tuple[Execut
     if semantics.projection is not None:
         lineage.append(ExecutionLineageStep(runtime="python", phase="project", detail="semantic core projection"))
     return tuple(lineage)
+
+
+def _sql_physical_plan(semantics: EngineFindSemantics) -> tuple[PhysicalPlanStep, ...]:
+    steps: list[PhysicalPlanStep] = [
+        PhysicalPlanStep(runtime="sql", operation="scan"),
+        PhysicalPlanStep(runtime="sql", operation="filter"),
+    ]
+    if semantics.sort:
+        steps.append(PhysicalPlanStep(runtime="sql", operation="sort"))
+    if semantics.skip or semantics.limit is not None:
+        steps.append(PhysicalPlanStep(runtime="sql", operation="slice"))
+    if semantics.projection is not None:
+        steps.append(PhysicalPlanStep(runtime="python", operation="project"))
+    return tuple(steps)
+
+
+def _python_physical_plan(
+    semantics: EngineFindSemantics,
+    reason: str,
+) -> tuple[PhysicalPlanStep, ...]:
+    steps: list[PhysicalPlanStep] = [
+        PhysicalPlanStep(runtime="python", operation="scan", detail=reason),
+        PhysicalPlanStep(runtime="python", operation="filter"),
+    ]
+    if semantics.sort:
+        steps.append(PhysicalPlanStep(runtime="python", operation="sort"))
+    if semantics.projection is not None:
+        steps.append(PhysicalPlanStep(runtime="python", operation="project"))
+    if semantics.skip or semantics.limit is not None:
+        steps.append(PhysicalPlanStep(runtime="python", operation="slice"))
+    return tuple(steps)
+
+
+def _hybrid_physical_plan(
+    semantics: EngineFindSemantics,
+    reason: str,
+) -> tuple[PhysicalPlanStep, ...]:
+    steps: list[PhysicalPlanStep] = [
+        PhysicalPlanStep(runtime="sql", operation="scan"),
+        PhysicalPlanStep(runtime="sql", operation="filter"),
+        PhysicalPlanStep(runtime="python", operation="sort", detail=reason),
+    ]
+    if semantics.projection is not None:
+        steps.append(PhysicalPlanStep(runtime="python", operation="project"))
+    if semantics.skip or semantics.limit is not None:
+        steps.append(PhysicalPlanStep(runtime="python", operation="slice"))
+    return tuple(steps)

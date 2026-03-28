@@ -1189,7 +1189,9 @@ Refinamiento continuo ya aplicado después del cierre formal de Fase 8:
 * los motores de lectura ya aceptan también `plan_find_semantics(...)` como ruta directa de planificación interna, evitando reconstruir `FindOperation` cuando la API ya dispone de semánticas compiladas;
 * `QueryEngine.match_plan(...)` mantiene un contrato explícito de exhaustividad frente a todos los nodos concretos de `QueryNode`, para que nuevos nodos no entren sin handler;
 * `QueryNode` queda además tipado como unión concreta interna (`ConcreteQueryNode`) y validado con `TypeIs`, preparando comprobación estática de exhaustividad con `mypy` sin depender solo de excepciones en runtime;
+* el payload de los nodos de comparación deja de ser una caja negra genérica y pasa a apoyarse en `BsonValue` como alias formal del espacio BSON soportado en el AST;
 * los motores SQL ya comparten una base `BaseSQLTranslator` en el core para la composición del `SELECT` y la traducción de `QueryNode`/`SortSpec`, dejando en SQLite solo las extensiones específicas (por ejemplo, multikey);
+* la planificación de lectura ya distingue mejor entre semántica lógica y plan físico: `EngineReadExecutionPlan` y las explicaciones públicas exponen `physical_plan`, con pasos compuestos como `sql scan/filter -> python sort/project/slice` cuando hay pushdown parcial;
 * pool de conexiones del driver con espera FIFO real para reducir starvation bajo contención.
 * `bulk_write` y writes compuestos ya preparan y validan sus modelos en paralelo antes de entrar en la ruta de ejecución, sin perder la semántica actual de errores ordenados/no ordenados.
 * `insert_many` sobre SQLite ya puede aprovechar una ruta bulk con validación paralela previa y un tramo transaccional único controlado para la inserción real.
