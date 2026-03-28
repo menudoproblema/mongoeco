@@ -184,6 +184,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             compile_filter({"tags": {"$gt": 2}}),
         )
         self.assertIn("multikey_entries", gt_sql)
+        self.assertIn("type_score", gt_sql)
         self.assertIn("element_key > ?", gt_sql)
         self.assertIn(SQLiteEngine._normalize_multikey_number(2), gt_params)
 
@@ -475,6 +476,38 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 engine._load_indexes("db", "coll")
         finally:
             await engine.disconnect()
+
+    def test_load_indexes_uses_versioned_cache(self):
+        engine = SQLiteEngine()
+        cursor = Mock()
+        cursor.fetchall.return_value = [
+            (
+                "idx_email",
+                "idx_physical",
+                '["email"]',
+                '[["email", 1]]',
+                0,
+                0,
+                None,
+                0,
+                None,
+            )
+        ]
+        connection = Mock()
+        connection.execute.return_value = cursor
+        engine._connection = connection
+
+        first = engine._load_indexes("db", "coll")
+        second = engine._load_indexes("db", "coll")
+
+        self.assertEqual(connection.execute.call_count, 1)
+        self.assertEqual(first, second)
+
+        engine._mvcc_version += 1
+        third = engine._load_indexes("db", "coll")
+
+        self.assertEqual(connection.execute.call_count, 2)
+        self.assertEqual(first, third)
 
     async def test_load_indexes_rejects_non_list_metadata(self):
         engine = SQLiteEngine()
@@ -837,14 +870,14 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             conn = engine._require_connection()
             rows = conn.execute(
                 """
-                SELECT element_type, element_key
+                SELECT element_type, type_score, element_key
                 FROM multikey_entries
                 WHERE db_name = ? AND coll_name = ? AND index_name = ?
                 ORDER BY element_key
                 """,
                 ("db", "coll", "idx_tags"),
             ).fetchall()
-            self.assertEqual(rows, [("string", "mongodb"), ("string", "python")])
+            self.assertEqual(rows, [("string", 3, "mongodb"), ("string", 3, "python")])
 
             await engine.update_matching_document(
                 "db",
@@ -854,14 +887,14 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             )
             rows = conn.execute(
                 """
-                SELECT element_type, element_key
+                SELECT element_type, type_score, element_key
                 FROM multikey_entries
                 WHERE db_name = ? AND coll_name = ? AND index_name = ?
                 ORDER BY element_key
                 """,
                 ("db", "coll", "idx_tags"),
             ).fetchall()
-            self.assertEqual(rows, [("string", "sqlite")])
+            self.assertEqual(rows, [("string", 3, "sqlite")])
 
             deleted = await engine.delete_matching_document("db", "coll", {"tags": "sqlite"})
             self.assertEqual(deleted.deleted_count, 1)

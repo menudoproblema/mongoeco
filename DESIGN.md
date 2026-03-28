@@ -1099,6 +1099,9 @@ Refinamiento continuo ya aplicado después del cierre formal de Fase 8:
 
 * helper compartido para orden BSON y clave de índice numérica, usado ya tanto por el core como por `SQLiteEngine`;
 * soporte de rangos numéricos sobre índices multikey auxiliares en SQLite con orden textual estable;
+* `multikey_entries` endurecida con `type_score` para que la comparación mixta no dependa de la semántica nativa de orden de SQLite;
+* cache en memoria de metadata de índices SQLite con invalidación explícita en cambios estructurales;
+* construcción de índice multikey en dos fases cuando hay reader dedicado disponible, evitando retener el lock exclusivo durante todo el escaneo de colección;
 * fallback de SQLite ejecutado sobre un ejecutor propio del engine, sin depender del pool global de `asyncio.to_thread`;
 * validación documental en `SQLiteEngine` adelantada fuera del lock en la ruta estable de `put_document`, con revalidación solo si el snapshot cambia al volver a entrar;
 * spill de agregación mejorado con ordenación externa por chunks para `$sort` cuando la política de spill lo pide;

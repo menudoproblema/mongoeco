@@ -17,7 +17,7 @@ from typing import Any, AsyncIterable, override
 
 from mongoeco.api.operations import FindOperation, UpdateOperation, compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect, MongoDialect70, MongoDialect80
-from mongoeco.core.bson_ordering import bson_engine_key, bson_numeric_index_key
+from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS, bson_engine_key, bson_numeric_index_key
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import canonical_document_id
@@ -126,6 +126,7 @@ class SQLiteEngine(AsyncStorageEngine):
         self._executor: ThreadPoolExecutor | None = None
         self._profiler = EngineProfiler("sqlite")
         self._mvcc_version = 0
+        self._index_cache: dict[tuple[str, str], tuple[int, list[EngineIndexRecord]]] = {}
 
     def _ensure_executor(self) -> ThreadPoolExecutor:
         executor = self._executor
@@ -146,6 +147,18 @@ class SQLiteEngine(AsyncStorageEngine):
 
     def _engine_key(self) -> str:
         return f"sqlite:{id(self)}"
+
+    def _invalidate_index_cache(self, db_name: str | None = None, coll_name: str | None = None) -> None:
+        if db_name is None or coll_name is None:
+            self._index_cache.clear()
+            return
+        self._index_cache.pop((db_name, coll_name), None)
+
+    @staticmethod
+    def _multikey_type_score(element_type: str) -> int:
+        if element_type == "undefined":
+            return 0
+        return SQLITE_SORT_BUCKET_WEIGHTS.get(element_type, SQLITE_SORT_BUCKET_WEIGHTS["fallback"])
 
     def _record_operation_metadata(
         self,
@@ -544,14 +557,27 @@ class SQLiteEngine(AsyncStorageEngine):
         operator: str,
     ) -> tuple[str, list[object]]:
         physical_name = self._quote_identifier(str(index["multikey_physical_name"]))
+        type_score = self._multikey_type_score(element_type)
+        if operator in (">", ">="):
+            comparison_sql = (
+                "(type_score > ? OR (type_score = ? AND element_key "
+                f"{operator} ?))"
+            )
+            params_tail = [type_score, type_score, element_key]
+        else:
+            comparison_sql = (
+                "(type_score < ? OR (type_score = ? AND element_key "
+                f"{operator} ?))"
+            )
+            params_tail = [type_score, type_score, element_key]
         return (
             "EXISTS ("
             f"SELECT 1 FROM multikey_entries INDEXED BY {physical_name} "
             "WHERE db_name = ? AND coll_name = ? AND index_name = ? "
             "AND storage_key = documents.storage_key "
-            "AND element_type = ? AND element_key "
-            f"{operator} ?)",
-            [db_name, coll_name, index["name"], element_type, element_key],
+            "AND "
+            f"{comparison_sql})",
+            [db_name, coll_name, index["name"], *params_tail],
         )
 
     def _translate_equals_with_multikey(
@@ -994,6 +1020,10 @@ class SQLiteEngine(AsyncStorageEngine):
         return [str(row[3]) for row in rows]
 
     def _load_indexes(self, db_name: str, coll_name: str) -> list[EngineIndexRecord]:
+        cache_key = (db_name, coll_name)
+        cached = self._index_cache.get(cache_key)
+        if cached is not None and cached[0] == self._mvcc_version:
+            return deepcopy(cached[1])
         conn = self._require_connection()
         cursor = conn.execute(
             """
@@ -1047,6 +1077,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     or self._physical_multikey_index_name(db_name, coll_name, name),
                 )
             )
+        self._index_cache[cache_key] = (self._mvcc_version, deepcopy(indexes))
         return indexes
 
     def _load_search_indexes(self, db_name: str, coll_name: str) -> list[SearchIndexDefinition]:
@@ -1097,19 +1128,29 @@ class SQLiteEngine(AsyncStorageEngine):
         indexes: list[EngineIndexRecord],
     ) -> None:
         self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-        rows: list[tuple[str, str, str, str, str, str]] = []
+        rows: list[tuple[str, str, str, str, str, int, str]] = []
         for index in indexes:
             if not index.get("multikey"):
                 continue
             field = index["fields"][0]
             for element_type, element_key in self._extract_multikey_entries(document, field):
-                rows.append((db_name, coll_name, index["name"], storage_key, element_type, element_key))
+                rows.append(
+                    (
+                        db_name,
+                        coll_name,
+                        index["name"],
+                        storage_key,
+                        element_type,
+                        self._multikey_type_score(element_type),
+                        element_key,
+                    )
+                )
         if rows:
             conn.executemany(
                 """
                 INSERT OR IGNORE INTO multikey_entries (
-                    db_name, coll_name, index_name, storage_key, element_type, element_key
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                    db_name, coll_name, index_name, storage_key, element_type, type_score, element_key
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 rows,
             )
@@ -1136,15 +1177,23 @@ class SQLiteEngine(AsyncStorageEngine):
             return
         field = index["fields"][0]
         rows = [
-            (db_name, coll_name, index["name"], storage_key, element_type, element_key)
+            (
+                db_name,
+                coll_name,
+                index["name"],
+                storage_key,
+                element_type,
+                self._multikey_type_score(element_type),
+                element_key,
+            )
             for element_type, element_key in self._extract_multikey_entries(document, field)
         ]
         if rows:
             conn.executemany(
                 """
                 INSERT OR IGNORE INTO multikey_entries (
-                    db_name, coll_name, index_name, storage_key, element_type, element_key
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                    db_name, coll_name, index_name, storage_key, element_type, type_score, element_key
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 rows,
             )
@@ -1212,6 +1261,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         index_name TEXT NOT NULL,
                         storage_key TEXT NOT NULL,
                         element_type TEXT NOT NULL,
+                        type_score INTEGER NOT NULL DEFAULT 100,
                         element_key TEXT NOT NULL
                     )
                     """
@@ -1240,6 +1290,14 @@ class SQLiteEngine(AsyncStorageEngine):
                     connection.execute("ALTER TABLE indexes ADD COLUMN multikey_flag INTEGER NOT NULL DEFAULT 0")
                 if "multikey_physical_name" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN multikey_physical_name TEXT")
+                multikey_columns = {
+                    row[1]
+                    for row in connection.execute("PRAGMA table_info(multikey_entries)").fetchall()
+                }
+                if "type_score" not in multikey_columns:
+                    connection.execute(
+                        "ALTER TABLE multikey_entries ADD COLUMN type_score INTEGER NOT NULL DEFAULT 100"
+                    )
                 connection.execute(
                     """
                     INSERT OR IGNORE INTO collections (db_name, coll_name, options_json)
@@ -1252,6 +1310,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 )
                 connection.commit()
                 self._connection = connection
+                self._invalidate_index_cache()
             self._connection_count += 1
 
     def _create_sqlite_connection(self) -> sqlite3.Connection:
@@ -1379,6 +1438,7 @@ class SQLiteEngine(AsyncStorageEngine):
             connection = self._connection
             self._connection = None
             self._transaction_owner_session_id = None
+            self._invalidate_index_cache()
         if connection is not None:
             connection.close()
 
@@ -1852,6 +1912,22 @@ class SQLiteEngine(AsyncStorageEngine):
                         )
                     )
 
+    def _snapshot_documents_for_index_build(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None,
+    ) -> list[tuple[str, Document]] | None:
+        if not self._can_use_dedicated_reader(context):
+            return None
+        reader = self._create_sqlite_connection()
+        try:
+            with self._bind_connection(reader):
+                return list(self._load_documents(db_name, coll_name))
+        finally:
+            reader.close()
+
     def _create_index_sync(
         self,
         db_name: str,
@@ -1878,11 +1954,14 @@ class SQLiteEngine(AsyncStorageEngine):
         physical_name = self._physical_index_name(db_name, coll_name, index_name)
         multikey = self._supports_multikey_index(fields, unique)
         multikey_physical_name = self._physical_multikey_index_name(db_name, coll_name, index_name)
+        snapshot_version: int | None = None
+        snapshot_documents: list[tuple[str, Document]] | None = None
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 enforce_deadline(deadline)
                 indexes = self._load_indexes(db_name, coll_name)
+                snapshot_version = self._mvcc_version
                 for index in indexes:
                     enforce_deadline(deadline)
                     if index["name"] == index_name:
@@ -1909,20 +1988,31 @@ class SQLiteEngine(AsyncStorageEngine):
                     for field in fields:
                         if self._field_traverses_array_in_collection(db_name, coll_name, field):
                             raise OperationFailure("SQLite unique indexes do not support paths that traverse arrays")
-                expressions = ", ".join(
-                    [
-                        "db_name",
-                        "coll_name",
-                        *[
-                            f"{expression}{' DESC' if direction == -1 else ''}"
-                            for field, direction in normalized_keys
-                            for expression in index_expressions_sql(field)
-                        ],
-                    ]
-                )
-                unique_sql = "UNIQUE " if unique and not (sparse or partial_filter_expression is not None) else ""
+        if multikey:
+            snapshot_documents = self._snapshot_documents_for_index_build(
+                db_name,
+                coll_name,
+                context=context,
+            )
+        expressions = ", ".join(
+            [
+                "db_name",
+                "coll_name",
+                *[
+                    f"{expression}{' DESC' if direction == -1 else ''}"
+                    for field, direction in normalized_keys
+                    for expression in index_expressions_sql(field)
+                ],
+            ]
+        )
+        unique_sql = "UNIQUE " if unique and not (sparse or partial_filter_expression is not None) else ""
+        with self._lock:
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
+                enforce_deadline(deadline)
+                if snapshot_version is not None and self._mvcc_version != snapshot_version:
+                    snapshot_documents = None
                 try:
-                    enforce_deadline(deadline)
                     self._begin_write(conn, context)
                     conn.execute(
                         f"CREATE {unique_sql}INDEX {self._quote_identifier(physical_name)} "
@@ -1932,7 +2022,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         enforce_deadline(deadline)
                         conn.execute(
                             f"CREATE INDEX {self._quote_identifier(multikey_physical_name)} "
-                            "ON multikey_entries (db_name, coll_name, index_name, element_type, element_key, storage_key)"
+                            "ON multikey_entries (db_name, coll_name, index_name, type_score, element_key, storage_key)"
                         )
                     conn.execute(
                         """
@@ -1968,7 +2058,10 @@ class SQLiteEngine(AsyncStorageEngine):
                             multikey=True,
                             multikey_physical_name=multikey_physical_name,
                         )
-                        for storage_key, document in self._load_documents(db_name, coll_name):
+                        documents_for_build = snapshot_documents
+                        if documents_for_build is None:
+                            documents_for_build = list(self._load_documents(db_name, coll_name))
+                        for storage_key, document in documents_for_build:
                             enforce_deadline(deadline)
                             self._replace_multikey_entries_for_index_for_document(
                                 conn,
@@ -1980,9 +2073,11 @@ class SQLiteEngine(AsyncStorageEngine):
                             )
                     enforce_deadline(deadline)
                     self._commit_write(conn, context)
+                    self._invalidate_index_cache(db_name, coll_name)
                     return index_name
                 except sqlite3.IntegrityError as exc:
                     self._rollback_write(conn, context)
+                    self._invalidate_index_cache(db_name, coll_name)
                     raise DuplicateKeyError(str(exc)) from exc
 
     def _list_indexes_sync(self, db_name: str, coll_name: str, context: ClientSession | None) -> list[IndexDocument]:
@@ -2070,6 +2165,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         (db_name, coll_name, target["name"]),
                     )
                     self._commit_write(conn, context)
+                    self._invalidate_index_cache(db_name, coll_name)
                 except Exception:
                     self._rollback_write(conn, context)
                     raise
@@ -2109,6 +2205,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         (db_name, coll_name),
                     )
                     self._commit_write(conn, context)
+                    self._invalidate_index_cache(db_name, coll_name)
                 except Exception:
                     self._rollback_write(conn, context)
                     raise
@@ -2355,6 +2452,8 @@ class SQLiteEngine(AsyncStorageEngine):
                         (new_name, db_name, coll_name),
                     )
                 self._commit_write(conn, context)
+                self._invalidate_index_cache(db_name, coll_name)
+                self._invalidate_index_cache(db_name, new_name)
             except Exception:
                 self._rollback_write(conn, context)
                 raise
@@ -2411,6 +2510,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         (db_name, coll_name),
                     )
                     self._commit_write(conn, context)
+                    self._invalidate_index_cache(db_name, coll_name)
                 except Exception:
                     self._rollback_write(conn, context)
                     raise
