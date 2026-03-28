@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 
 from mongoeco import (
@@ -7,13 +8,17 @@ from mongoeco import (
     ReadPreferenceMode,
     parse_mongo_uri,
 )
+from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.driver import (
     AuthPolicy,
     CommandRequest,
     ConnectionRegistry,
     DriverRuntime,
     PreparedRequestExecution,
+    RequestAttempt,
     RequestExecutionPlan,
+    RequestExecutionResult,
+    RequestExecutionTrace,
     ServerDescription,
     ServerType,
     SrvResolution,
@@ -25,6 +30,7 @@ from mongoeco.driver import (
     build_read_preference_from_uri,
     build_tls_policy,
     build_write_concern_from_uri,
+    classify_request_exception,
     build_local_topology_description,
     materialize_srv_uri,
     resolve_srv_seeds,
@@ -426,3 +432,112 @@ class ClientDriverArchitectureTests(unittest.TestCase):
         self.assertEqual(client.auth_policy.source, "$external")
         self.assertTrue(client.tls_policy.enabled)
         self.assertEqual(client.effective_client_uri.seeds[0].address, "cluster.example.net:27017")
+
+
+class RequestExecutionPipelineTests(unittest.TestCase):
+    def test_execute_request_retries_retryable_read_errors(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017,db2:27018,db3:27019/?replicaSet=rs0&retryReads=true",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
+        )
+        plan = runtime.plan_command_request("observe", "find", {"find": "events"}, read_only=True)
+        seen: list[str] = []
+
+        class RetryReadTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                seen.append(execution.selected_server.address)
+                if len(seen) == 1:
+                    raise OperationFailure(
+                        "retryable read failure",
+                        error_labels=("RetryableReadError",),
+                    )
+                return {"ok": 1.0, "cursor": {"id": 0}}
+
+        result = asyncio.run(runtime.execute_request(plan, RetryReadTransport()))
+
+        self.assertIsInstance(result, RequestExecutionResult)
+        self.assertTrue(result.outcome.ok)
+        self.assertEqual(seen, ["db2:27018", "db3:27019"])
+        self.assertEqual(len(result.trace.attempts), 2)
+
+    def test_execute_request_retries_connection_failures_for_writes(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017,db2:27018/?replicaSet=rs0&retryWrites=true",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        plan = runtime.plan_command_request("observe", "insert", {"insert": "events"}, read_only=False)
+        seen: list[str] = []
+
+        class RetryWriteTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                seen.append(execution.selected_server.address)
+                if len(seen) == 1:
+                    raise ConnectionFailure("temporary network failure")
+                return {"ok": 1.0, "n": 1}
+
+        result = asyncio.run(runtime.execute_request(plan, RetryWriteTransport()))
+
+        self.assertTrue(result.outcome.ok)
+        self.assertEqual(seen, ["db1:27017", "db1:27017"])
+
+    def test_execute_request_honors_socket_timeout(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/?socketTimeoutMS=5",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        plan = runtime.plan_command_request("observe", "find", {"find": "events"}, read_only=True)
+
+        class SlowTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                del execution
+                await asyncio.sleep(0.05)
+                return {"ok": 1.0}
+
+        result = asyncio.run(runtime.execute_request(plan, SlowTransport()))
+
+        self.assertFalse(result.outcome.ok)
+        self.assertIn("socket timeout", result.outcome.error or "")
+        self.assertFalse(result.outcome.retryable)
+
+    def test_classify_request_exception_marks_retryable_labels(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/?retryReads=true",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        plan = runtime.plan_command_request("observe", "find", {"find": "events"}, read_only=True)
+
+        outcome = classify_request_exception(
+            OperationFailure("read failed", error_labels=("RetryableReadError",)),
+            plan=plan,
+        )
+
+        self.assertFalse(outcome.ok)
+        self.assertTrue(outcome.retryable)
+
+    def test_execute_request_trace_captures_attempt_metadata(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/?retryReads=false",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        plan = runtime.plan_command_request("observe", "find", {"find": "events"}, read_only=True)
+
+        class FailingTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                raise ConnectionFailure(f"failed on {execution.selected_server.address}")
+
+        result = asyncio.run(runtime.execute_request(plan, FailingTransport()))
+
+        self.assertFalse(result.outcome.ok)
+        self.assertIsInstance(result.trace, RequestExecutionTrace)
+        self.assertEqual(len(result.trace.attempts), 1)
+        self.assertIsInstance(result.trace.attempts[0], RequestAttempt)

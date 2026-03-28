@@ -880,6 +880,13 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * retries
   * selección de lectura/escritura
   * ya se derivan desde URI hacia el runtime del cliente antes de ejecutar peticiones
+  * ya existe pipeline explícito de ejecución con:
+    * selección de servidor
+    * checkout/checkin de conexión
+    * envío por transporte
+    * clasificación de errores
+    * timeout de socket
+    * retry básico para lecturas y escrituras
 * monitoring y comportamiento propio de un cliente de red completo
 
 Arquitectura ya preparada antes de abrir la funcionalidad de red real:
@@ -909,7 +916,7 @@ Primer bloque funcional ya abierto en Fase 7:
 * el siguiente corte natural es profundizar en:
   * selección de servidor con tags y staleness reales;
   * semántica de SRV/TLS/auth completa frente a conexiones reales;
-  * y pipeline explícito de envío/retry/timeout sobre conexiones reales.
+  * y clasificación más fina de errores/red, además de transporte real sobre conexiones del runtime.
 
 ---
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from mongoeco.driver.connections import ConnectionLease
 from mongoeco.driver.policies import ConcernPolicy, RetryPolicy, SelectionPolicy, TimeoutPolicy
 from mongoeco.driver.security import AuthPolicy, TlsPolicy
 from mongoeco.driver.topology import ServerDescription, TopologyDescription
@@ -41,3 +42,10 @@ class RequestOutcome:
     response: dict[str, Any] | None = None
     error: str | None = None
     retryable: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class PreparedRequestExecution:
+    plan: RequestExecutionPlan
+    selected_server: ServerDescription
+    connection: ConnectionLease

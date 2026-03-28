@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
 from mongoeco.driver.connections import ConnectionLease, ConnectionPoolSnapshot, ConnectionRegistry
 from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_seeds
+from mongoeco.driver.execution import RequestExecutionResult, execute_request_pipeline
 from mongoeco.driver.policies import (
     ConcernPolicy,
     RetryPolicy,
@@ -15,7 +15,7 @@ from mongoeco.driver.policies import (
     build_selection_policy,
     build_timeout_policy,
 )
-from mongoeco.driver.requests import CommandRequest, RequestExecutionPlan
+from mongoeco.driver.requests import CommandRequest, PreparedRequestExecution, RequestExecutionPlan
 from mongoeco.driver.security import AuthPolicy, TlsPolicy, build_auth_policy, build_tls_policy
 from mongoeco.driver.topology import ServerDescription, TopologyDescription, build_local_topology_description
 from mongoeco.driver.uri import (
@@ -28,13 +28,6 @@ from mongoeco.driver.uri import (
 )
 from mongoeco.session import ClientSession
 from mongoeco.types import ReadConcern, ReadPreference, WriteConcern
-
-
-@dataclass(frozen=True, slots=True)
-class PreparedRequestExecution:
-    plan: RequestExecutionPlan
-    selected_server: ServerDescription
-    connection: ConnectionLease
 
 
 class DriverRuntime:
@@ -106,9 +99,17 @@ class DriverRuntime:
         )
 
     def prepare_request_execution(self, plan: RequestExecutionPlan) -> PreparedRequestExecution:
+        return self.prepare_request_execution_attempt(plan, attempt_number=1)
+
+    def prepare_request_execution_attempt(
+        self,
+        plan: RequestExecutionPlan,
+        *,
+        attempt_number: int,
+    ) -> PreparedRequestExecution:
         if not plan.candidate_servers:
             raise RuntimeError("no candidate servers available for request execution")
-        selected_server = plan.candidate_servers[0]
+        selected_server = plan.candidate_servers[min(attempt_number - 1, len(plan.candidate_servers) - 1)]
         lease = self._connections.checkout(selected_server)
         return PreparedRequestExecution(
             plan=plan,
@@ -121,6 +122,14 @@ class DriverRuntime:
 
     def clear_connections(self) -> None:
         self._connections.clear()
+
+    async def execute_request(self, plan: RequestExecutionPlan, transport) -> RequestExecutionResult:
+        return await execute_request_pipeline(
+            plan=plan,
+            prepare_execution=self.prepare_request_execution_attempt,
+            complete_execution=self.complete_request_execution,
+            transport=transport,
+        )
 
     @property
     def uri(self) -> MongoUri:

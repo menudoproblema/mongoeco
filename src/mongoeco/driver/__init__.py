@@ -1,4 +1,12 @@
 from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_seeds
+from mongoeco.driver.execution import (
+    AsyncCommandTransport,
+    RequestAttempt,
+    RequestExecutionResult,
+    RequestExecutionTrace,
+    classify_request_exception,
+    execute_request_pipeline,
+)
 from mongoeco.driver.connections import (
     ConnectionLease,
     ConnectionPool,
@@ -20,8 +28,8 @@ from mongoeco.driver.policies import (
     build_selection_policy,
     build_timeout_policy,
 )
-from mongoeco.driver.requests import CommandRequest, RequestExecutionPlan, RequestOutcome
-from mongoeco.driver.runtime import DriverRuntime, PreparedRequestExecution
+from mongoeco.driver.requests import CommandRequest, PreparedRequestExecution, RequestExecutionPlan, RequestOutcome
+from mongoeco.driver.runtime import DriverRuntime
 from mongoeco.driver.security import AuthPolicy, TlsPolicy, build_auth_policy, build_tls_policy
 from mongoeco.driver.topology import (
     ServerDescription,
@@ -64,6 +72,12 @@ __all__ = [
     "ConnectionPool",
     "ConnectionRegistry",
     "build_connection_pool_options",
+    "AsyncCommandTransport",
+    "RequestAttempt",
+    "RequestExecutionTrace",
+    "RequestExecutionResult",
+    "classify_request_exception",
+    "execute_request_pipeline",
     "ServerDescription",
     "ServerType",
     "TopologyDescription",
@@ -82,8 +96,8 @@ __all__ = [
     "build_auth_policy",
     "build_tls_policy",
     "CommandRequest",
+    "PreparedRequestExecution",
     "RequestExecutionPlan",
     "RequestOutcome",
-    "PreparedRequestExecution",
     "DriverRuntime",
 ]
