@@ -1095,6 +1095,14 @@ Lo que quede a partir de aquí ya no forma parte del cierre de Fase 8, sino de r
 * seguir apurando fidelidad BSON rara;
 * refinar comportamiento de driver o de SQLite con ambición más cercana a producción.
 
+Refinamiento continuo ya aplicado después del cierre formal de Fase 8:
+
+* helper compartido para orden BSON y clave de índice numérica, usado ya tanto por el core como por `SQLiteEngine`;
+* soporte de rangos numéricos sobre índices multikey auxiliares en SQLite con orden textual estable;
+* fallback de SQLite ejecutado sobre un ejecutor propio del engine, sin depender del pool global de `asyncio.to_thread`;
+* `SyncRunner` más explícito al propagar `ExecutionTimeout` y `ServerSelectionTimeoutError` en la capa sync;
+* pool de conexiones del driver con espera FIFO real para reducir starvation bajo contención.
+
 Estado actual del contraste versionado con `mongomock`:
 
 * `872` casos inventariados;
@@ -1103,13 +1111,12 @@ Estado actual del contraste versionado con `mongomock`:
 * `66` marcados como `outside-scope`;
 * `210` quedan como `review-needed`.
 
-Orden recomendado de refino continuo después del cierre de Fase 8:
+Orden recomendado de refino continuo a partir de aquí:
 
-1. unificación estricta de comparación y orden BSON entre core y engines;
-2. mejora de fallback/materialización en SQLite y agregación;
-3. seguir importando o reescribiendo casos de alto valor desde la cola restante de `mongomock`;
-4. capa sync más robusta en cierre y propagación;
-5. pool del driver y concurrencia SQLite solo si el objetivo pasa de paridad fina a ambición más cercana a producción.
+1. seguir importando o reescribiendo casos de alto valor desde la cola restante de `mongomock`;
+2. seguir apurando fidelidad BSON rara y semántica fina de comparación;
+3. revisar si merece la pena otra vuelta sobre materialización/fallback en agregación y SQLite;
+4. endurecer más pooling y concurrencia SQLite solo si el objetivo pasa de paridad fina a ambición más cercana a producción.
 
 ### 7.5 Estado Vivo Actual del Repositorio
 

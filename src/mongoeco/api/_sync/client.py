@@ -11,7 +11,7 @@ from mongoeco.compat import (
 from mongoeco.driver import AsyncCommandTransport, RequestExecutionResult, TopologyDescription, WireProtocolCommandTransport
 from mongoeco.driver.monitoring import DriverMonitor
 from mongoeco.engines.base import AsyncStorageEngine
-from mongoeco.errors import InvalidOperation
+from mongoeco.errors import ExecutionTimeout, InvalidOperation, ServerSelectionTimeoutError
 from mongoeco.session import ClientSession
 from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.api._sync.collection import Collection
@@ -77,7 +77,17 @@ class _SyncRunner:
         try:
             asyncio.get_running_loop()
         except RuntimeError:
-            return self._runner.run(awaitable)
+            try:
+                return self._runner.run(awaitable)
+            except ExecutionTimeout as exc:
+                raise ExecutionTimeout(
+                    f"sync operation timed out: {exc}",
+                    code=exc.code,
+                    details=exc.details,
+                    error_labels=exc.error_labels,
+                ) from exc
+            except ServerSelectionTimeoutError as exc:
+                raise ServerSelectionTimeoutError(f"sync server selection timed out: {exc}") from exc
 
         close = getattr(awaitable, "close", None)
         if callable(close):

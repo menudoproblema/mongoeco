@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections import deque
 from dataclasses import dataclass
 from enum import Enum
 import time
@@ -99,6 +100,7 @@ class ConnectionPool:
         self._options = options
         self._connections: dict[str, DriverConnection] = {}
         self._wait_condition = asyncio.Condition()
+        self._waiters: deque[str] = deque()
 
     @property
     def key(self) -> PoolKey:
@@ -110,57 +112,49 @@ class ConnectionPool:
 
     def checkout(self, server: ServerDescription) -> DriverConnection:
         self._prune_idle()
-        for connection in self._connections.values():
-            if connection.state is ConnectionState.READY:
-                connection.mark_checked_out()
-                return connection
-        if len(self._connections) >= self._options.max_pool_size:
+        connection = self._checkout_if_available(server)
+        if connection is None:
             raise RuntimeError("connection pool exhausted")
-        now = time.monotonic()
-        connection = DriverConnection(
-            connection_id=str(uuid4()),
-            server=server,
-            pool_key=self._key,
-            created_at_monotonic=now,
-            last_used_at_monotonic=now,
-        )
-        connection.mark_checked_out()
-        self._connections[connection.connection_id] = connection
         return connection
 
     async def checkout_async(self, server: ServerDescription) -> DriverConnection:
         deadline = None
         if self._options.wait_queue_timeout_ms is not None:
             deadline = time.monotonic() + (self._options.wait_queue_timeout_ms / 1000)
+        waiter_id: str | None = None
         async with self._wait_condition:
-            while True:
-                self._prune_idle()
-                for connection in self._connections.values():
-                    if connection.state is ConnectionState.READY:
-                        connection.mark_checked_out()
-                        return connection
-                if len(self._connections) < self._options.max_pool_size:
-                    now = time.monotonic()
-                    connection = DriverConnection(
-                        connection_id=str(uuid4()),
-                        server=server,
-                        pool_key=self._key,
-                        created_at_monotonic=now,
-                        last_used_at_monotonic=now,
-                    )
-                    connection.mark_checked_out()
-                    self._connections[connection.connection_id] = connection
-                    return connection
-                if deadline is None:
-                    await self._wait_condition.wait()
-                    continue
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    raise RuntimeError("connection pool exhausted")
-                try:
-                    await asyncio.wait_for(self._wait_condition.wait(), timeout=remaining)
-                except TimeoutError as exc:
-                    raise RuntimeError("connection pool exhausted") from exc
+            try:
+                while True:
+                    self._prune_idle()
+                    should_try_checkout = waiter_id is None and not self._waiters
+                    if waiter_id is not None and self._waiters and self._waiters[0] == waiter_id:
+                        should_try_checkout = True
+                    if should_try_checkout:
+                        connection = self._checkout_if_available(server)
+                        if connection is not None:
+                            if waiter_id is not None and self._waiters and self._waiters[0] == waiter_id:
+                                self._waiters.popleft()
+                                self._wait_condition.notify_all()
+                            return connection
+                    if waiter_id is None:
+                        waiter_id = str(uuid4())
+                        self._waiters.append(waiter_id)
+                    if deadline is None:
+                        await self._wait_condition.wait()
+                        continue
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise RuntimeError("connection pool exhausted")
+                    try:
+                        await asyncio.wait_for(self._wait_condition.wait(), timeout=remaining)
+                    except TimeoutError as exc:
+                        raise RuntimeError("connection pool exhausted") from exc
+            finally:
+                if waiter_id is not None and waiter_id in self._waiters:
+                    was_front = self._waiters[0] == waiter_id
+                    self._waiters.remove(waiter_id)
+                    if was_front:
+                        self._wait_condition.notify_all()
 
     def checkin(self, connection_id: str) -> None:
         connection = self._connections.get(connection_id)
@@ -171,7 +165,7 @@ class ConnectionPool:
     async def checkin_async(self, connection_id: str) -> None:
         async with self._wait_condition:
             self.checkin(connection_id)
-            self._wait_condition.notify(1)
+            self._wait_condition.notify_all()
 
     def clear(self) -> None:
         for connection in self._connections.values():
@@ -192,7 +186,26 @@ class ConnectionPool:
     async def discard_async(self, connection_id: str) -> None:
         async with self._wait_condition:
             self.discard(connection_id)
-            self._wait_condition.notify(1)
+            self._wait_condition.notify_all()
+
+    def _checkout_if_available(self, server: ServerDescription) -> DriverConnection | None:
+        for connection in self._connections.values():
+            if connection.state is ConnectionState.READY:
+                connection.mark_checked_out()
+                return connection
+        if len(self._connections) >= self._options.max_pool_size:
+            return None
+        now = time.monotonic()
+        connection = DriverConnection(
+            connection_id=str(uuid4()),
+            server=server,
+            pool_key=self._key,
+            created_at_monotonic=now,
+            last_used_at_monotonic=now,
+        )
+        connection.mark_checked_out()
+        self._connections[connection.connection_id] = connection
+        return connection
 
     def _prune_idle(self) -> None:
         max_idle_time_ms = self._options.max_idle_time_ms

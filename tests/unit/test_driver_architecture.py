@@ -469,6 +469,33 @@ class ConnectionArchitectureTests(unittest.TestCase):
 
         asyncio.run(_run())
 
+    def test_connection_registry_async_checkout_honors_fifo_wait_order(self):
+        uri = parse_mongo_uri("mongodb://db1:27017/?maxPoolSize=1&waitQueueTimeoutMS=100")
+        topology = build_local_topology_description(uri)
+        registry = ConnectionRegistry(uri)
+
+        async def _run() -> list[str]:
+            first = await registry.checkout_async(topology.servers[0])
+            order: list[str] = []
+
+            async def _waiter(label: str) -> None:
+                lease = await registry.checkout_async(topology.servers[0])
+                order.append(label)
+                await asyncio.sleep(0)
+                await registry.checkin_async(lease)
+
+            waiter_a = asyncio.create_task(_waiter("a"))
+            await asyncio.sleep(0)
+            waiter_b = asyncio.create_task(_waiter("b"))
+            await asyncio.sleep(0.01)
+            await registry.checkin_async(first)
+            await asyncio.gather(waiter_a, waiter_b)
+            return order
+
+        order = asyncio.run(_run())
+
+        self.assertEqual(order, ["a", "b"])
+
 
 class ClientDriverArchitectureTests(unittest.TestCase):
     def test_async_client_exposes_driver_state_and_request_planning(self):

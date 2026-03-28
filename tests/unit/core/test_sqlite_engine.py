@@ -134,12 +134,22 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
     def test_multikey_helpers_cover_supported_unsupported_and_logical_translation_paths(self):
         engine = SQLiteEngine()
 
-        self.assertEqual(SQLiteEngine._normalize_multikey_number(1), "1")
-        self.assertEqual(SQLiteEngine._normalize_multikey_number(1.0), "1")
-        self.assertEqual(SQLiteEngine._normalize_multikey_number(1.5), "1.5")
+        self.assertEqual(SQLiteEngine._normalize_multikey_number(1), SQLiteEngine._normalize_multikey_number(1.0))
+        self.assertLess(
+            SQLiteEngine._normalize_multikey_number(-10),
+            SQLiteEngine._normalize_multikey_number(-1),
+        )
+        self.assertLess(
+            SQLiteEngine._normalize_multikey_number(-1),
+            SQLiteEngine._normalize_multikey_number(0),
+        )
+        self.assertLess(
+            SQLiteEngine._normalize_multikey_number(1.5),
+            SQLiteEngine._normalize_multikey_number(2),
+        )
         self.assertEqual(SQLiteEngine._multikey_value_signature(None), ("null", ""))
         self.assertEqual(SQLiteEngine._multikey_value_signature(True), ("bool", "1"))
-        self.assertEqual(SQLiteEngine._multikey_value_signature(7), ("number", "7"))
+        self.assertEqual(SQLiteEngine._multikey_value_signature(7), ("number", SQLiteEngine._normalize_multikey_number(7)))
         self.assertEqual(SQLiteEngine._multikey_value_signature("Ada"), ("string", "Ada"))
         self.assertEqual(SQLiteEngine._multikey_value_signature(uuid.UUID("12345678-1234-5678-1234-567812345678")), ("uuid", "12345678-1234-5678-1234-567812345678"))
         self.assertEqual(SQLiteEngine._multikey_value_signature(UNDEFINED), ("undefined", "1"))
@@ -167,6 +177,15 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertIn("multikey_entries", in_sql)
         self.assertIn(" OR ", in_sql)
+
+        gt_sql, gt_params = engine._translate_query_plan_with_multikey(
+            "db",
+            "coll",
+            compile_filter({"tags": {"$gt": 2}}),
+        )
+        self.assertIn("multikey_entries", gt_sql)
+        self.assertIn("element_key > ?", gt_sql)
+        self.assertIn(SQLiteEngine._normalize_multikey_number(2), gt_params)
 
         engine._find_multikey_index = Mock(return_value=None)
         fallback_sql, _ = engine._translate_query_plan_with_multikey(

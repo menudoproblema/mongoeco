@@ -1,10 +1,11 @@
 import unittest
 import asyncio
+from unittest.mock import patch
 
 from mongoeco import MongoDialect80, PyMongoProfile413
 from mongoeco.api._sync.client import MongoClient, _SyncRunner
 from mongoeco.engines.memory import MemoryEngine
-from mongoeco.errors import InvalidOperation
+from mongoeco.errors import ExecutionTimeout, InvalidOperation, ServerSelectionTimeoutError
 
 
 async def _noop() -> None:
@@ -133,6 +134,33 @@ class SyncClientUnitTests(unittest.TestCase):
             runner.close()
 
         self.assertTrue(runner._closed)
+
+    def test_sync_runner_rewraps_execution_timeout_with_sync_context(self):
+        runner = _SyncRunner()
+        awaitable = _noop()
+        try:
+            with patch.object(runner._runner, "run", side_effect=ExecutionTimeout("operation exceeded time limit")):
+                with self.assertRaises(ExecutionTimeout) as raised:
+                    runner.run(awaitable)
+        finally:
+            awaitable.close()
+            runner.close()
+
+        self.assertIn("sync operation timed out", str(raised.exception))
+        self.assertEqual(raised.exception.code, 50)
+
+    def test_sync_runner_rewraps_server_selection_timeout_with_sync_context(self):
+        runner = _SyncRunner()
+        awaitable = _noop()
+        try:
+            with patch.object(runner._runner, "run", side_effect=ServerSelectionTimeoutError("no suitable servers")):
+                with self.assertRaises(ServerSelectionTimeoutError) as raised:
+                    runner.run(awaitable)
+        finally:
+            awaitable.close()
+            runner.close()
+
+        self.assertIn("sync server selection timed out", str(raised.exception))
 
     def test_client_exit_after_manual_close_returns_false(self):
         client = MongoClient()

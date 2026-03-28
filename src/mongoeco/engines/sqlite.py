@@ -1,6 +1,8 @@
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, nullcontext
 import datetime
+from functools import partial
 import hashlib
 import json
 import math
@@ -15,7 +17,7 @@ from typing import Any, AsyncIterable, override
 
 from mongoeco.api.operations import FindOperation, UpdateOperation, compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect, MongoDialect70, MongoDialect80
-from mongoeco.core.bson_ordering import bson_engine_key
+from mongoeco.core.bson_ordering import bson_engine_key, bson_numeric_index_key
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import canonical_document_id
@@ -121,8 +123,26 @@ class SQLiteEngine(AsyncStorageEngine):
         self._scan_condition = threading.Condition()
         self._active_scan_count = 0
         self._thread_local = threading.local()
+        self._executor: ThreadPoolExecutor | None = None
         self._profiler = EngineProfiler("sqlite")
         self._mvcc_version = 0
+
+    def _ensure_executor(self) -> ThreadPoolExecutor:
+        executor = self._executor
+        if executor is None:
+            executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="mongoeco-sqlite")
+            self._executor = executor
+        return executor
+
+    def _shutdown_executor(self) -> None:
+        executor = self._executor
+        self._executor = None
+        if executor is not None:
+            executor.shutdown(wait=True, cancel_futures=True)
+
+    async def _run_blocking(self, func, /, *args, **kwargs):
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(self._ensure_executor(), partial(func, *args, **kwargs))
 
     def _engine_key(self) -> str:
         return f"sqlite:{id(self)}"
@@ -427,16 +447,9 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @staticmethod
     def _normalize_multikey_number(value: int | float) -> str:
-        if isinstance(value, float):
-            if math.isnan(value) or math.isinf(value):
-                raise NotImplementedError("NaN and infinity are not supported in SQLite multikey indexes")
-        decimal = Decimal(str(value)).normalize()
-        if decimal == decimal.to_integral():
-            return format(decimal.quantize(Decimal(1)), "f")
-        text = format(decimal, "f")
-        if "." in text:
-            text = text.rstrip("0").rstrip(".")
-        return text or "0"
+        if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+            raise NotImplementedError("NaN and infinity are not supported in SQLite multikey indexes")
+        return bson_numeric_index_key(value)
 
     @staticmethod
     def _multikey_value_signature(value: object) -> tuple[str, str] | None:
@@ -520,6 +533,27 @@ class SQLiteEngine(AsyncStorageEngine):
             params.extend([db_name, coll_name, index["name"], element_type, element_key])
         return "(" + " OR ".join(clauses) + ")", params
 
+    def _translate_multikey_ordered_exists_clause(
+        self,
+        db_name: str,
+        coll_name: str,
+        index: EngineIndexRecord,
+        *,
+        element_type: str,
+        element_key: str,
+        operator: str,
+    ) -> tuple[str, list[object]]:
+        physical_name = self._quote_identifier(str(index["multikey_physical_name"]))
+        return (
+            "EXISTS ("
+            f"SELECT 1 FROM multikey_entries INDEXED BY {physical_name} "
+            "WHERE db_name = ? AND coll_name = ? AND index_name = ? "
+            "AND storage_key = documents.storage_key "
+            "AND element_type = ? AND element_key "
+            f"{operator} ?)",
+            [db_name, coll_name, index["name"], element_type, element_key],
+        )
+
     def _translate_equals_with_multikey(
         self,
         db_name: str,
@@ -568,6 +602,29 @@ class SQLiteEngine(AsyncStorageEngine):
             params.extend(eq_params)
         return " OR ".join(clauses), params
 
+    def _translate_range_with_multikey(
+        self,
+        db_name: str,
+        coll_name: str,
+        plan: GreaterThanCondition | GreaterThanOrEqualCondition | LessThanCondition | LessThanOrEqualCondition,
+        index: EngineIndexRecord,
+        *,
+        operator: str,
+    ) -> tuple[str, list[object]]:
+        signature = self._multikey_value_signature(plan.value)
+        if signature is None or signature[0] != "number":
+            return translate_query_plan(plan)
+        scalar_sql, scalar_params = translate_query_plan(plan)
+        array_sql, array_params = self._translate_multikey_ordered_exists_clause(
+            db_name,
+            coll_name,
+            index,
+            element_type=signature[0],
+            element_key=signature[1],
+            operator=operator,
+        )
+        return f"(({scalar_sql}) OR {array_sql})", [*scalar_params, *array_params]
+
     def _translate_query_plan_with_multikey(
         self,
         db_name: str,
@@ -586,6 +643,26 @@ class SQLiteEngine(AsyncStorageEngine):
             if index is None:
                 return translate_query_plan(plan)
             return self._translate_in_with_multikey(db_name, coll_name, plan, index)
+        if isinstance(plan, GreaterThanCondition):
+            index = self._find_multikey_index(db_name, coll_name, plan.field)
+            if index is None:
+                return translate_query_plan(plan)
+            return self._translate_range_with_multikey(db_name, coll_name, plan, index, operator=">")
+        if isinstance(plan, GreaterThanOrEqualCondition):
+            index = self._find_multikey_index(db_name, coll_name, plan.field)
+            if index is None:
+                return translate_query_plan(plan)
+            return self._translate_range_with_multikey(db_name, coll_name, plan, index, operator=">=")
+        if isinstance(plan, LessThanCondition):
+            index = self._find_multikey_index(db_name, coll_name, plan.field)
+            if index is None:
+                return translate_query_plan(plan)
+            return self._translate_range_with_multikey(db_name, coll_name, plan, index, operator="<")
+        if isinstance(plan, LessThanOrEqualCondition):
+            index = self._find_multikey_index(db_name, coll_name, plan.field)
+            if index is None:
+                return translate_query_plan(plan)
+            return self._translate_range_with_multikey(db_name, coll_name, plan, index, operator="<=")
         if isinstance(plan, AndCondition):
             fragments = [self._translate_query_plan_with_multikey(db_name, coll_name, clause) for clause in plan.clauses]
             sql = " AND ".join(f"({fragment_sql})" for fragment_sql, _ in fragments)
@@ -865,7 +942,7 @@ class SQLiteEngine(AsyncStorageEngine):
             max_time_ms=operation.max_time_ms,
             dialect=dialect,
         )
-        return await asyncio.to_thread(
+        return await self._run_blocking(
             self._compile_read_execution_plan,
             db_name,
             coll_name,
@@ -2298,11 +2375,13 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @override
     async def connect(self) -> None:
-        await asyncio.to_thread(self._connect_sync)
+        await self._run_blocking(self._connect_sync)
 
     @override
     async def disconnect(self) -> None:
-        await asyncio.to_thread(self._disconnect_sync)
+        await self._run_blocking(self._disconnect_sync)
+        if self._connection_count == 0:
+            self._shutdown_executor()
 
     @override
     async def set_profiling_level(
@@ -2327,7 +2406,7 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
         bypass_document_validation: bool = False,
     ) -> bool:
-        return await asyncio.to_thread(
+        return await self._run_blocking(
             self._put_document_sync,
             db_name,
             coll_name,
@@ -2339,11 +2418,11 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @override
     async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
-        return await asyncio.to_thread(self._get_document_sync, db_name, coll_name, doc_id, projection, dialect, context)
+        return await self._run_blocking(self._get_document_sync, db_name, coll_name, doc_id, projection, dialect, context)
 
     @override
     async def delete_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, context: ClientSession | None = None) -> bool:
-        return await asyncio.to_thread(self._delete_document_sync, db_name, coll_name, doc_id, context)
+        return await self._run_blocking(self._delete_document_sync, db_name, coll_name, doc_id, context)
 
     @override
     def scan_collection(
@@ -2429,10 +2508,10 @@ class SQLiteEngine(AsyncStorageEngine):
                         self._scan_condition.notify_all()
                     items.put(sentinel)
 
-            producer = asyncio.create_task(asyncio.to_thread(_produce))
+            producer = asyncio.create_task(self._run_blocking(_produce))
             try:
                 while True:
-                    item = await asyncio.to_thread(items.get)
+                    item = await self._run_blocking(items.get)
                     if item is sentinel:
                         break
                     if isinstance(item, Exception):
@@ -2478,7 +2557,7 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
         bypass_document_validation: bool = False,
     ) -> UpdateResult[DocumentId]:
-        return await asyncio.to_thread(
+        return await self._run_blocking(
             self._update_matching_document_sync,
             db_name,
             coll_name,
@@ -2510,7 +2589,7 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> UpdateResult[DocumentId]:
         if operation.compiled_update_plan is None or operation.compiled_upsert_plan is None:
             raise OperationFailure("update operation does not include a compiled update plan")
-        return await asyncio.to_thread(
+        return await self._run_blocking(
             self._update_with_operation_sync,
             db_name,
             coll_name,
@@ -2700,7 +2779,7 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @override
     async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, collation: CollationDocument | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult:
-        return await asyncio.to_thread(
+        return await self._run_blocking(
             self._delete_matching_document_sync,
             db_name,
             coll_name,
@@ -2749,7 +2828,7 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> int:
-        return await asyncio.to_thread(
+        return await self._run_blocking(
             self._count_matching_documents_sync,
             db_name,
             coll_name,
@@ -2790,7 +2869,7 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> str:
-        return await asyncio.to_thread(
+        return await self._run_blocking(
             self._create_index_sync,
             db_name,
             coll_name,
@@ -2805,11 +2884,11 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @override
     async def list_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> list[IndexDocument]:
-        return await asyncio.to_thread(self._list_indexes_sync, db_name, coll_name, context)
+        return await self._run_blocking(self._list_indexes_sync, db_name, coll_name, context)
 
     @override
     async def index_information(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> IndexInformation:
-        return await asyncio.to_thread(self._index_information_sync, db_name, coll_name, context)
+        return await self._run_blocking(self._index_information_sync, db_name, coll_name, context)
 
     @override
     async def drop_index(
@@ -2820,7 +2899,7 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> None:
-        await asyncio.to_thread(self._drop_index_sync, db_name, coll_name, index_or_name, context)
+        await self._run_blocking(self._drop_index_sync, db_name, coll_name, index_or_name, context)
 
     @override
     async def drop_indexes(
@@ -2830,7 +2909,7 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> None:
-        await asyncio.to_thread(self._drop_indexes_sync, db_name, coll_name, context)
+        await self._run_blocking(self._drop_indexes_sync, db_name, coll_name, context)
 
     @override
     async def create_search_index(
@@ -2842,7 +2921,7 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> str:
-        return await asyncio.to_thread(
+        return await self._run_blocking(
             self._create_search_index_sync,
             db_name,
             coll_name,
@@ -2860,7 +2939,7 @@ class SQLiteEngine(AsyncStorageEngine):
         name: str | None = None,
         context: ClientSession | None = None,
     ) -> list[SearchIndexDocument]:
-        return await asyncio.to_thread(
+        return await self._run_blocking(
             self._list_search_indexes_sync,
             db_name,
             coll_name,
@@ -2879,7 +2958,7 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> None:
-        await asyncio.to_thread(
+        await self._run_blocking(
             self._update_search_index_sync,
             db_name,
             coll_name,
@@ -2899,7 +2978,7 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> None:
-        await asyncio.to_thread(
+        await self._run_blocking(
             self._drop_search_index_sync,
             db_name,
             coll_name,
@@ -2961,7 +3040,7 @@ class SQLiteEngine(AsyncStorageEngine):
             max_time_ms=semantics.max_time_ms,
             hint=semantics.hint,
         )
-        hinted_index = await asyncio.to_thread(
+        hinted_index = await self._run_blocking(
             self._resolve_hint_index,
             db_name,
             coll_name,
@@ -2988,7 +3067,7 @@ class SQLiteEngine(AsyncStorageEngine):
         )
         details: object
         if isinstance(execution_plan, SQLiteReadExecutionPlan) and execution_plan.use_sql:
-            sql_details = await asyncio.to_thread(
+            sql_details = await self._run_blocking(
                 self._explain_query_plan_sync,
                 db_name,
                 coll_name,
@@ -3005,7 +3084,7 @@ class SQLiteEngine(AsyncStorageEngine):
         else:
             details = {"fallback_reason": execution_plan.fallback_reason}
         virtual_details = describe_virtual_index_usage(
-            await asyncio.to_thread(self._list_indexes_sync, db_name, coll_name, context),
+            await self._run_blocking(self._list_indexes_sync, db_name, coll_name, context),
             semantics.query_plan,
             hinted_index_name=None if hinted_index is None else hinted_index["name"],
             dialect=semantics.dialect,
@@ -3044,11 +3123,11 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @override
     async def list_databases(self, *, context: ClientSession | None = None) -> list[str]:
-        return await asyncio.to_thread(self._list_databases_sync, context)
+        return await self._run_blocking(self._list_databases_sync, context)
 
     @override
     async def list_collections(self, db_name: str, *, context: ClientSession | None = None) -> list[str]:
-        return await asyncio.to_thread(self._list_collections_sync, db_name, context)
+        return await self._run_blocking(self._list_collections_sync, db_name, context)
 
     @override
     async def collection_options(
@@ -3058,7 +3137,7 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> dict[str, object]:
-        return await asyncio.to_thread(
+        return await self._run_blocking(
             self._collection_options_sync,
             db_name,
             coll_name,
@@ -3074,7 +3153,7 @@ class SQLiteEngine(AsyncStorageEngine):
         options: dict[str, object] | None = None,
         context: ClientSession | None = None,
     ) -> None:
-        await asyncio.to_thread(
+        await self._run_blocking(
             self._create_collection_sync,
             db_name,
             coll_name,
@@ -3091,7 +3170,7 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> None:
-        await asyncio.to_thread(
+        await self._run_blocking(
             self._rename_collection_sync,
             db_name,
             coll_name,
@@ -3107,4 +3186,4 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> None:
-        await asyncio.to_thread(self._drop_collection_sync, db_name, coll_name, context)
+        await self._run_blocking(self._drop_collection_sync, db_name, coll_name, context)
