@@ -8,6 +8,7 @@ from mongoeco import (
     parse_mongo_uri,
 )
 from mongoeco.driver import (
+    AuthPolicy,
     CommandRequest,
     ConnectionRegistry,
     DriverRuntime,
@@ -15,12 +16,18 @@ from mongoeco.driver import (
     RequestExecutionPlan,
     ServerDescription,
     ServerType,
+    SrvResolution,
+    TlsPolicy,
     TopologyDescription,
     TopologyType,
+    build_auth_policy,
     build_read_concern_from_uri,
     build_read_preference_from_uri,
+    build_tls_policy,
     build_write_concern_from_uri,
     build_local_topology_description,
+    materialize_srv_uri,
+    resolve_srv_seeds,
     build_selection_policy,
     build_timeout_policy,
 )
@@ -77,6 +84,24 @@ class MongoUriTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_mongo_uri("mongodb://localhost/?directConnection=true&loadBalanced=true")
 
+    def test_parse_mongodb_srv_defaults_tls_and_rejects_multiple_hosts(self):
+        uri = parse_mongo_uri("mongodb+srv://cluster.example.net/?srvServiceName=custom")
+
+        self.assertEqual(uri.scheme, "mongodb+srv")
+        self.assertTrue(uri.options.tls.enabled)
+        self.assertEqual(uri.options.srv_service_name, "custom")
+
+        with self.assertRaises(ValueError):
+            parse_mongo_uri("mongodb+srv://a.example.net,b.example.net/")
+
+    def test_parse_uri_rejects_password_without_username(self):
+        with self.assertRaises(ValueError):
+            parse_mongo_uri("mongodb://:secret@localhost/")
+
+    def test_parse_uri_rejects_srv_with_direct_connection(self):
+        with self.assertRaises(ValueError):
+            parse_mongo_uri("mongodb+srv://cluster.example.net/?directConnection=true")
+
     def test_build_concerns_and_preference_from_uri(self):
         uri = parse_mongo_uri(
             "mongodb://localhost/?w=majority&journal=true&wtimeoutMS=5000"
@@ -98,6 +123,43 @@ class MongoUriTests(unittest.TestCase):
         self.assertEqual(read_preference.mode, ReadPreferenceMode.SECONDARY)
         self.assertEqual(read_preference.tag_sets, ({"region": "eu"},))
         self.assertEqual(read_preference.max_staleness_seconds, 90)
+
+    def test_srv_resolution_materializes_effective_uri(self):
+        uri = parse_mongo_uri("mongodb+srv://cluster.example.net/?srvMaxHosts=2")
+
+        resolution = resolve_srv_seeds(
+            uri,
+            srv_records=(
+                ("db1.example.net", 27017),
+                ("db2.example.net", 27018),
+                ("db3.example.net", 27019),
+            ),
+        )
+        effective_uri = materialize_srv_uri(uri, resolution=resolution)
+
+        self.assertIsInstance(resolution, SrvResolution)
+        self.assertEqual([seed.address for seed in resolution.resolved_seeds], ["db1.example.net:27017", "db2.example.net:27018"])
+        self.assertEqual([seed.address for seed in effective_uri.seeds], ["db1.example.net:27017", "db2.example.net:27018"])
+
+    def test_build_auth_and_tls_policies_validate_mechanism_constraints(self):
+        x509_uri = parse_mongo_uri(
+            "mongodb://client@localhost/?authMechanism=MONGODB-X509&tls=true"
+        )
+
+        auth_policy = build_auth_policy(x509_uri)
+        tls_policy = build_tls_policy(x509_uri)
+
+        self.assertIsInstance(auth_policy, AuthPolicy)
+        self.assertTrue(auth_policy.external)
+        self.assertEqual(auth_policy.source, "$external")
+        self.assertIsInstance(tls_policy, TlsPolicy)
+        self.assertTrue(tls_policy.enabled)
+
+        with self.assertRaises(ValueError):
+            build_auth_policy(parse_mongo_uri("mongodb://localhost/?authMechanism=SCRAM-SHA-256"))
+
+        with self.assertRaises(ValueError):
+            build_tls_policy(parse_mongo_uri("mongodb://localhost/?authMechanism=MONGODB-X509"))
 
 
 class TopologyAndPolicyTests(unittest.TestCase):
@@ -307,6 +369,26 @@ class ClientDriverArchitectureTests(unittest.TestCase):
 
         self.assertEqual(runtime.connection_snapshots[0].checked_out, 0)
 
+    def test_driver_runtime_exposes_srv_auth_and_tls_state(self):
+        runtime = DriverRuntime(
+            uri="mongodb+srv://client@cluster.example.net/admin?authMechanism=PLAIN&srvMaxHosts=1",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+            srv_records=(("db1.example.net", 27017), ("db2.example.net", 27018)),
+        )
+
+        self.assertEqual(runtime.uri.scheme, "mongodb+srv")
+        self.assertEqual(runtime.effective_uri.seeds[0].address, "db1.example.net:27017")
+        self.assertTrue(runtime.tls_policy.enabled)
+        self.assertEqual(runtime.auth_policy.source, "$external")
+        self.assertEqual(runtime.srv_resolution.max_hosts, 1)
+
+        plan = runtime.plan_command_request("admin", "ping", {"ping": 1}, read_only=True)
+
+        self.assertTrue(plan.tls_policy.enabled)
+        self.assertEqual(plan.auth_policy.mechanism, "PLAIN")
+
     def test_sync_client_with_options_preserves_uri_architecture_state(self):
         client = MongoClient(
             uri="mongodb://db1:27017/?retryWrites=false",
@@ -335,3 +417,12 @@ class ClientDriverArchitectureTests(unittest.TestCase):
         self.assertTrue(client.write_concern.j)
         self.assertEqual(client.read_concern.level, "majority")
         self.assertEqual(client.read_preference.mode, ReadPreferenceMode.SECONDARY_PREFERRED)
+
+    def test_client_exposes_auth_tls_and_effective_uri(self):
+        client = AsyncMongoClient(
+            uri="mongodb+srv://client@cluster.example.net/admin?authMechanism=PLAIN",
+        )
+
+        self.assertEqual(client.auth_policy.source, "$external")
+        self.assertTrue(client.tls_policy.enabled)
+        self.assertEqual(client.effective_client_uri.seeds[0].address, "cluster.example.net:27017")

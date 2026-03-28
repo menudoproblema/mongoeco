@@ -861,8 +861,13 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * ya soporta seeds, credenciales, `directConnection`, `loadBalanced`, `replicaSet`, compresores, auth y TLS tipados
     * ya soporta también derivación de `readPreference`, `readPreferenceTags`, `maxStalenessSeconds`, `readConcernLevel`, `w`, `journal` y `wtimeoutMS`
   * auth
+    * ya existe `AuthPolicy` explícita derivada desde URI
+    * ya valida mecanismos básicos como `SCRAM-*`, `PLAIN`, `GSSAPI` y `MONGODB-X509`
   * TLS
+    * ya existe `TlsPolicy` explícita derivada desde URI
+    * `mongodb+srv` activa TLS por defecto y se validan invariantes básicas de certificados y X509
   * SRV
+    * ya existe resolución SRV tipada y materialización de seeds efectivos para el runtime
   * replica sets
   * sharding
   * pooling
@@ -903,7 +908,7 @@ Primer bloque funcional ya abierto en Fase 7:
 * concerns, preferencias, auth/TLS y topología básica ya entran por un `DriverRuntime` común;
 * el siguiente corte natural es profundizar en:
   * selección de servidor con tags y staleness reales;
-  * semántica de SRV/TLS/auth;
+  * semántica de SRV/TLS/auth completa frente a conexiones reales;
   * y pipeline explícito de envío/retry/timeout sobre conexiones reales.
 
 ---

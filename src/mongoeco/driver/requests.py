@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from mongoeco.driver.policies import ConcernPolicy, RetryPolicy, SelectionPolicy, TimeoutPolicy
+from mongoeco.driver.security import AuthPolicy, TlsPolicy
 from mongoeco.driver.topology import ServerDescription, TopologyDescription
 
 
@@ -24,6 +25,8 @@ class RequestExecutionPlan:
     retry_policy: RetryPolicy
     selection_policy: SelectionPolicy
     concern_policy: ConcernPolicy
+    auth_policy: AuthPolicy
+    tls_policy: TlsPolicy
     candidate_servers: tuple[ServerDescription, ...] = field(default_factory=tuple)
 
     @property

@@ -514,6 +514,10 @@ class MongoClient:
         return self._async_client.topology_description
 
     @property
+    def effective_client_uri(self):
+        return self._async_client.effective_client_uri
+
+    @property
     def timeout_policy(self):
         return self._async_client.timeout_policy
 
@@ -528,6 +532,18 @@ class MongoClient:
     @property
     def concern_policy(self):
         return self._async_client.concern_policy
+
+    @property
+    def auth_policy(self):
+        return self._async_client.auth_policy
+
+    @property
+    def tls_policy(self):
+        return self._async_client.tls_policy
+
+    @property
+    def srv_resolution(self):
+        return self._async_client.srv_resolution
 
     @property
     def driver_runtime(self):

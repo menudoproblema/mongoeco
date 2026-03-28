@@ -14,6 +14,7 @@ type MongoScheme = Literal["mongodb", "mongodb+srv"]
 class MongoAuthOptions:
     source: str | None = None
     mechanism: str | None = None
+    mechanism_properties: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,6 +123,14 @@ def parse_mongo_uri(uri: str | None) -> MongoUri:
     default_database = parsed.path.lstrip("/") or None
     option_pairs = parse_qsl(parsed.query, keep_blank_values=True)
     options = _parse_client_options(option_pairs)
+    options = _finalize_client_options(
+        parsed.scheme,  # type: ignore[arg-type]
+        seeds=seeds,
+        username=username,
+        password=password,
+        default_database=default_database,
+        options=options,
+    )
     return MongoUri(
         original=uri,
         scheme=parsed.scheme,  # type: ignore[arg-type]
@@ -137,6 +146,8 @@ def _parse_seeds(hostinfo: str, *, scheme: MongoScheme) -> tuple[MongoUriSeed, .
     raw_seeds = [item for item in hostinfo.split(",") if item]
     if not raw_seeds:
         raise ValueError("uri must include at least one host")
+    if scheme == "mongodb+srv" and len(raw_seeds) != 1:
+        raise ValueError("mongodb+srv URIs must include exactly one hostname")
     seeds: list[MongoUriSeed] = []
     for raw_seed in raw_seeds:
         if raw_seed.startswith("["):
@@ -237,6 +248,7 @@ def _parse_client_options(option_pairs: list[tuple[str, str]]) -> MongoClientOpt
     auth = MongoAuthOptions(
         source=raw_options.get("authSource"),
         mechanism=raw_options.get("authMechanism"),
+        mechanism_properties=_parse_auth_mechanism_properties(raw_options.get("authMechanismProperties")),
     )
     tls = MongoTlsOptions(
         enabled=tls_enabled,
@@ -271,6 +283,79 @@ def _parse_client_options(option_pairs: list[tuple[str, str]]) -> MongoClientOpt
         srv_service_name=raw_options.get("srvServiceName"),
         srv_max_hosts=_get_int("srvMaxHosts", None),
         raw_options=raw_options,
+    )
+
+
+def _parse_auth_mechanism_properties(raw: str | None) -> dict[str, str]:
+    if raw is None:
+        return {}
+    properties: dict[str, str] = {}
+    for item in raw.split(","):
+        if not item:
+            continue
+        if ":" not in item:
+            raise ValueError("authMechanismProperties entries must be key:value pairs")
+        key, value = item.split(":", 1)
+        if not key:
+            raise ValueError("authMechanismProperties keys must be non-empty")
+        properties[key] = value
+    return properties
+
+
+def _finalize_client_options(
+    scheme: MongoScheme,
+    *,
+    seeds: tuple[MongoUriSeed, ...],
+    username: str | None,
+    password: str | None,
+    default_database: str | None,
+    options: MongoClientOptions,
+) -> MongoClientOptions:
+    del default_database
+    tls = options.tls
+    if scheme == "mongodb+srv" and not options.raw_options.get("tls") and not options.raw_options.get("ssl"):
+        tls = MongoTlsOptions(
+            enabled=True,
+            allow_invalid_certificates=tls.allow_invalid_certificates,
+            ca_file=tls.ca_file,
+            certificate_key_file=tls.certificate_key_file,
+        )
+    if scheme == "mongodb+srv" and options.direct_connection:
+        raise ValueError("mongodb+srv does not support directConnection=true")
+    if options.load_balanced and options.replica_set:
+        raise ValueError("loadBalanced and replicaSet are mutually exclusive")
+    if options.load_balanced and len(seeds) != 1:
+        raise ValueError("loadBalanced requires exactly one seed")
+    if password is not None and username is None:
+        raise ValueError("password requires username")
+    if options.auth.mechanism == "MONGODB-X509" and username is None:
+        raise ValueError("MONGODB-X509 requires a username")
+    return MongoClientOptions(
+        app_name=options.app_name,
+        replica_set=options.replica_set,
+        auth=options.auth,
+        tls=tls,
+        direct_connection=options.direct_connection,
+        load_balanced=options.load_balanced,
+        retry_reads=options.retry_reads,
+        retry_writes=options.retry_writes,
+        server_selection_timeout_ms=options.server_selection_timeout_ms,
+        connect_timeout_ms=options.connect_timeout_ms,
+        socket_timeout_ms=options.socket_timeout_ms,
+        max_pool_size=options.max_pool_size,
+        min_pool_size=options.min_pool_size,
+        max_idle_time_ms=options.max_idle_time_ms,
+        compressors=options.compressors,
+        read_preference=options.read_preference,
+        read_preference_tags=options.read_preference_tags,
+        max_staleness_seconds=options.max_staleness_seconds,
+        read_concern_level=options.read_concern_level,
+        write_concern_w=options.write_concern_w,
+        write_concern_journal=options.write_concern_journal,
+        write_concern_wtimeout_ms=options.write_concern_wtimeout_ms,
+        srv_service_name=options.srv_service_name,
+        srv_max_hosts=options.srv_max_hosts,
+        raw_options=options.raw_options,
     )
 
 

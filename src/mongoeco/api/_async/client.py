@@ -11,12 +11,15 @@ from mongoeco.compat import (
     resolve_pymongo_profile_resolution,
 )
 from mongoeco.driver import (
+    AuthPolicy,
     ConcernPolicy,
     DriverRuntime,
     MongoUri,
     PreparedRequestExecution,
     RequestExecutionPlan,
     SelectionPolicy,
+    SrvResolution,
+    TlsPolicy,
     TimeoutPolicy,
     TopologyDescription,
     RetryPolicy,
@@ -508,6 +511,10 @@ class AsyncMongoClient:
         return self._driver_runtime.topology
 
     @property
+    def effective_client_uri(self) -> MongoUri:
+        return self._driver_runtime.effective_uri
+
+    @property
     def timeout_policy(self) -> TimeoutPolicy:
         return self._driver_runtime.timeout_policy
 
@@ -522,6 +529,18 @@ class AsyncMongoClient:
     @property
     def concern_policy(self) -> ConcernPolicy:
         return self._driver_runtime.concern_policy
+
+    @property
+    def auth_policy(self) -> AuthPolicy:
+        return self._driver_runtime.auth_policy
+
+    @property
+    def tls_policy(self) -> TlsPolicy:
+        return self._driver_runtime.tls_policy
+
+    @property
+    def srv_resolution(self) -> SrvResolution | None:
+        return self._driver_runtime.srv_resolution
 
     @property
     def driver_runtime(self) -> DriverRuntime:

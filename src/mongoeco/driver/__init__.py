@@ -1,3 +1,4 @@
+from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_seeds
 from mongoeco.driver.connections import (
     ConnectionLease,
     ConnectionPool,
@@ -21,6 +22,7 @@ from mongoeco.driver.policies import (
 )
 from mongoeco.driver.requests import CommandRequest, RequestExecutionPlan, RequestOutcome
 from mongoeco.driver.runtime import DriverRuntime, PreparedRequestExecution
+from mongoeco.driver.security import AuthPolicy, TlsPolicy, build_auth_policy, build_tls_policy
 from mongoeco.driver.topology import (
     ServerDescription,
     ServerType,
@@ -47,6 +49,9 @@ __all__ = [
     "MongoUri",
     "MongoUriSeed",
     "parse_mongo_uri",
+    "SrvResolution",
+    "resolve_srv_seeds",
+    "materialize_srv_uri",
     "build_write_concern_from_uri",
     "build_read_concern_from_uri",
     "build_read_preference_from_uri",
@@ -68,10 +73,14 @@ __all__ = [
     "RetryPolicy",
     "SelectionPolicy",
     "ConcernPolicy",
+    "AuthPolicy",
+    "TlsPolicy",
     "build_timeout_policy",
     "build_retry_policy",
     "build_selection_policy",
     "build_concern_policy",
+    "build_auth_policy",
+    "build_tls_policy",
     "CommandRequest",
     "RequestExecutionPlan",
     "RequestOutcome",

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from mongoeco.driver.connections import ConnectionLease, ConnectionPoolSnapshot, ConnectionRegistry
+from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_seeds
 from mongoeco.driver.policies import (
     ConcernPolicy,
     RetryPolicy,
@@ -15,9 +16,11 @@ from mongoeco.driver.policies import (
     build_timeout_policy,
 )
 from mongoeco.driver.requests import CommandRequest, RequestExecutionPlan
+from mongoeco.driver.security import AuthPolicy, TlsPolicy, build_auth_policy, build_tls_policy
 from mongoeco.driver.topology import ServerDescription, TopologyDescription, build_local_topology_description
 from mongoeco.driver.uri import (
     MongoUri,
+    MongoUriSeed,
     build_read_concern_from_uri,
     build_read_preference_from_uri,
     build_write_concern_from_uri,
@@ -42,16 +45,27 @@ class DriverRuntime:
         write_concern: WriteConcern,
         read_concern: ReadConcern,
         read_preference: ReadPreference,
+        srv_records: tuple[tuple[str, int | None], ...] | None = None,
     ):
         self._uri = parse_mongo_uri(uri)
-        effective_write_concern = build_write_concern_from_uri(self._uri, write_concern)
-        effective_read_concern = build_read_concern_from_uri(self._uri, read_concern)
-        effective_read_preference = build_read_preference_from_uri(self._uri, read_preference)
-        self._topology = build_local_topology_description(self._uri)
-        self._timeout_policy = build_timeout_policy(self._uri)
-        self._retry_policy = build_retry_policy(self._uri)
-        self._selection_policy = build_selection_policy(
+        resolution = resolve_srv_seeds(
             self._uri,
+            srv_records=None
+            if srv_records is None
+            else tuple(MongoUriSeed(host, port) for host, port in srv_records),
+        )
+        self._srv_resolution = resolution
+        self._effective_uri = materialize_srv_uri(self._uri, resolution=resolution)
+        effective_write_concern = build_write_concern_from_uri(self._effective_uri, write_concern)
+        effective_read_concern = build_read_concern_from_uri(self._effective_uri, read_concern)
+        effective_read_preference = build_read_preference_from_uri(self._effective_uri, read_preference)
+        self._auth_policy = build_auth_policy(self._effective_uri)
+        self._tls_policy = build_tls_policy(self._effective_uri)
+        self._topology = build_local_topology_description(self._effective_uri)
+        self._timeout_policy = build_timeout_policy(self._effective_uri)
+        self._retry_policy = build_retry_policy(self._effective_uri)
+        self._selection_policy = build_selection_policy(
+            self._effective_uri,
             read_preference=effective_read_preference,
         )
         self._concern_policy = build_concern_policy(
@@ -59,7 +73,7 @@ class DriverRuntime:
             read_concern=effective_read_concern,
             read_preference=effective_read_preference,
         )
-        self._connections = ConnectionRegistry(self._uri)
+        self._connections = ConnectionRegistry(self._effective_uri)
 
     def plan_command_request(
         self,
@@ -83,6 +97,8 @@ class DriverRuntime:
             retry_policy=self._retry_policy,
             selection_policy=self._selection_policy,
             concern_policy=self._concern_policy,
+            auth_policy=self._auth_policy,
+            tls_policy=self._tls_policy,
             candidate_servers=self._selection_policy.select_servers(
                 self._topology,
                 for_writes=not read_only,
@@ -115,6 +131,10 @@ class DriverRuntime:
         return self._topology
 
     @property
+    def effective_uri(self) -> MongoUri:
+        return self._effective_uri
+
+    @property
     def timeout_policy(self) -> TimeoutPolicy:
         return self._timeout_policy
 
@@ -129,6 +149,18 @@ class DriverRuntime:
     @property
     def concern_policy(self) -> ConcernPolicy:
         return self._concern_policy
+
+    @property
+    def auth_policy(self) -> AuthPolicy:
+        return self._auth_policy
+
+    @property
+    def tls_policy(self) -> TlsPolicy:
+        return self._tls_policy
+
+    @property
+    def srv_resolution(self) -> SrvResolution | None:
+        return self._srv_resolution
 
     @property
     def connection_snapshots(self) -> tuple[ConnectionPoolSnapshot, ...]:
