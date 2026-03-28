@@ -589,6 +589,10 @@ Criterio de foco:
 Esta fase agrupa todo lo que queda fuera del “núcleo ya correcto” pero sigue siendo relevante para hablar de cierre serio frente a `mongomock`, PyMongo y, en ciertos perímetros, MongoDB real. No es una fase de reescritura; es una fase de **cierre fino**, pensada para concentrar matices, bordes y profundidad restante sin volver a contaminar las fases ya consolidadas.
 
 Objetivos principales:
+* **Refinamientos estructurales para sostenibilidad de versiones y mantenimiento**:
+  * mover los deltas de comportamiento del catálogo desde flags/hardcodes hacia capacidades semánticas explícitas;
+  * cerrar la transición para que los engines consuman una IR única de consulta, en vez de convivir con filtros crudos y planes tipados en paralelo;
+  * introducir una distinción formal entre stages streamables y stages materializantes en agregación, para ordenar mejor memoria, spill y optimizaciones futuras.
 * **Semántica BSON total**:
   * cerrar overflow, conversiones y comparaciones raras que todavía no están modeladas al nivel más estricto;
   * ampliar la fidelidad numérica y escalar en caminos menos frecuentes de aggregation, sorting, filtering y writes;
@@ -633,6 +637,10 @@ Criterio de foco:
   * no reabren otra vez el diseño central del core.
 
 Nota de implementación opcional para Fase 8:
+* **Capa sync generada o centralizada**:
+  * sí es una mejora interesante de resultado final para evitar deriva entre async y sync;
+  * no debe preceder al cierre de las fronteras estructurales del core;
+  * si no se automatiza, conviene al menos centralizar por completo el wrapping sync sobre el runtime async.
 * **Backend Rust opcional para BSON core**:
   * sí es una vía interesante para codec, comparación/orden BSON y conversiones numéricas si el profiling real lo justifica;
   * debe plantearse como backend intercambiable y no como segunda fuente de verdad semántica.

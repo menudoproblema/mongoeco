@@ -70,6 +70,9 @@ DEFAULT_PYMONGO_PROFILE = "4.9"
 AUTO_INSTALLED_PYMONGO_PROFILE = "auto-installed"
 STRICT_AUTO_INSTALLED_PYMONGO_PROFILE = "strict-auto-installed"
 
+MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED = "query.null_matches_undefined"
+PYMONGO_CAP_UPDATE_ONE_SORT = "update_one.sort"
+
 SUPPORTED_QUERY_FIELD_OPERATORS = frozenset(
     {
         "$eq",
@@ -377,6 +380,7 @@ MONGODB_DIALECT_CATALOG = MappingProxyType(
             policy_spec=MongoBehaviorPolicySpec(
                 null_query_matches_undefined=True,
             ),
+            capabilities=frozenset({MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED}),
         ),
         "8.0": MongoDialectCatalogEntry(
             key="8.0",
@@ -391,6 +395,7 @@ MONGODB_DIALECT_CATALOG = MappingProxyType(
             policy_spec=MongoBehaviorPolicySpec(
                 null_query_matches_undefined=False,
             ),
+            capabilities=frozenset(),
         ),
     }
 )
@@ -418,7 +423,7 @@ PYMONGO_PROFILE_CATALOG = MappingProxyType(
                     "supports_update_one_sort": True,
                 }
             ),
-            capabilities=frozenset({"update_one.sort"}),
+            capabilities=frozenset({PYMONGO_CAP_UPDATE_ONE_SORT}),
         ),
         "4.13": PyMongoProfileCatalogEntry(
             key="4.13",
@@ -430,7 +435,7 @@ PYMONGO_PROFILE_CATALOG = MappingProxyType(
                     "supports_update_one_sort": True,
                 }
             ),
-            capabilities=frozenset({"update_one.sort"}),
+            capabilities=frozenset({PYMONGO_CAP_UPDATE_ONE_SORT}),
         ),
     }
 )

@@ -21,7 +21,7 @@
 - `aliases`: `7`, `7.0`
 - `behavior_flags`: `{'null_query_matches_undefined': True}`
 - `policy_spec`: `{'null_query_matches_undefined': True, 'expression_truthiness': 'mongo-default', 'projection_flag_mode': 'bool-or-binary-int', 'update_path_sort_mode': 'numeric-then-lex', 'equality_mode': 'bson-structural', 'comparison_mode': 'bson-total-order'}`
-- `capabilities`: _empty_
+- `capabilities`: `query.null_matches_undefined`
 - `query_field_operators`: `$all`, `$bitsAllClear`, `$bitsAllSet`, `$bitsAnyClear`, `$bitsAnySet`, `$cmp`, `$elemMatch`, `$eq`, `$exists`, `$gt`, `$gte`, `$in`, `$lt`, `$lte`, `$mod`, `$ne`, `$nin`, `$not`, `$options`, `$regex`, `$size`, `$type`
 - `query_top_level_operators`: `$and`, `$expr`, `$nor`, `$or`
 - `update_operators`: `$addToSet`, `$bit`, `$currentDate`, `$inc`, `$max`, `$min`, `$mul`, `$pop`, `$pull`, `$pullAll`, `$push`, `$rename`, `$set`, `$setOnInsert`, `$unset`

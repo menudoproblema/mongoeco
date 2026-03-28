@@ -8,10 +8,12 @@ import uuid
 
 from mongoeco.compat.catalog import (
     DEFAULT_BSON_TYPE_ORDER,
+    MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED,
     MONGODB_DIALECT_ALIASES,
     MONGODB_DIALECT_CATALOG,
     MongoBehaviorPolicySpec,
     MONGODB_DIALECT_HOOK_NAMES,
+    PYMONGO_CAP_UPDATE_ONE_SORT,
     PYMONGO_PROFILE_ALIASES,
     PYMONGO_PROFILE_CATALOG,
     PYMONGO_PROFILE_HOOK_NAMES,
@@ -182,6 +184,7 @@ def build_mongo_behavior_policy(
     spec: MongoBehaviorPolicySpec,
     *,
     bson_type_order: MappingProxyType = DEFAULT_BSON_TYPE_ORDER,
+    capabilities: frozenset[str] = frozenset(),
 ) -> MongoBehaviorPolicy:
     if spec.expression_truthiness != "mongo-default":
         raise ValueError(f"unsupported expression truthiness strategy: {spec.expression_truthiness}")
@@ -195,7 +198,11 @@ def build_mongo_behavior_policy(
         raise ValueError(f"unsupported comparison strategy: {spec.comparison_mode}")
 
     return MongoBehaviorPolicy(
-        null_query_matches_undefined_fn=lambda: spec.null_query_matches_undefined,
+        null_query_matches_undefined_fn=lambda: (
+            MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED in capabilities
+            if capabilities
+            else spec.null_query_matches_undefined
+        ),
         expression_truthy_fn=_expression_truthy_default,
         projection_flag_fn=_projection_flag_default,
         sort_update_path_items_fn=_sort_update_path_items_default,
@@ -241,6 +248,9 @@ class MongoDialect:
     def has_capability(self, name: str) -> bool:
         return name in self.capabilities
 
+    def supports(self, capability: str) -> bool:
+        return self.has_capability(capability)
+
     @property
     def policy_spec(self) -> MongoBehaviorPolicySpec:
         return self.catalog_policy_spec
@@ -250,7 +260,13 @@ class MongoDialect:
         cached = self._base_policy_cache
         if cached is not None:
             return cached
-        policy = build_mongo_behavior_policy(self.policy_spec, bson_type_order=self.bson_type_order)
+        dialect_type = type(self)
+        uses_declared_capabilities = getattr(dialect_type, "policy_spec") is getattr(MongoDialect, "policy_spec")
+        policy = build_mongo_behavior_policy(
+            self.policy_spec,
+            bson_type_order=self.bson_type_order,
+            capabilities=self.capabilities if uses_declared_capabilities else frozenset(),
+        )
         object.__setattr__(self, "_base_policy_cache", policy)
         return policy
 
@@ -479,11 +495,14 @@ class PyMongoProfile:
     def has_capability(self, name: str) -> bool:
         return name in self.capabilities
 
+    def supports(self, capability: str) -> bool:
+        return self.has_capability(capability)
+
     def supports_update_one_sort(self) -> bool:
+        if self.supports(PYMONGO_CAP_UPDATE_ONE_SORT):
+            return True
         catalog_value = self.behavior_flag("supports_update_one_sort")
-        if catalog_value is not None:
-            return catalog_value
-        return False
+        return bool(catalog_value) if catalog_value is not None else False
 
     @property
     def capabilities(self) -> frozenset[str]:

@@ -3,7 +3,13 @@ import unittest
 from types import MappingProxyType
 
 from mongoeco.api._async.collection import AsyncCollection
-from mongoeco.compat import MongoBehaviorPolicySpec, MongoDialect70, PyMongoProfile49
+from mongoeco.compat import (
+    MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED,
+    MongoBehaviorPolicySpec,
+    MongoDialect70,
+    MongoDialect80,
+    PyMongoProfile49,
+)
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.engines.memory import MemoryEngine
@@ -56,6 +62,16 @@ class DialectAndProfileContractTests(unittest.TestCase):
         document = {'value': UNDEFINED}
 
         self.assertFalse(QueryEngine.match(document, {'value': None}, dialect=_CatalogLikeDialect()))
+
+    def test_query_engine_prefers_semantic_capabilities_for_official_delta_behavior(self):
+        class _CapabilityDialect(MongoDialect80):
+            @property
+            def capabilities(self) -> frozenset[str]:
+                return frozenset({MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED})
+
+        document = {'value': UNDEFINED}
+
+        self.assertTrue(QueryEngine.match(document, {'value': None}, dialect=_CapabilityDialect()))
 
     def test_query_engine_respects_bson_type_order_hook(self):
         class _SwappedStringOrderDialect(MongoDialect70):

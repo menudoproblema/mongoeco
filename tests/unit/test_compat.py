@@ -9,6 +9,7 @@ from mongoeco.compat import (
     DEFAULT_MONGODB_DIALECT,
     DEFAULT_PYMONGO_PROFILE,
     detect_installed_pymongo_profile_resolution,
+    MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED,
     MONGODB_DIALECT_HOOK_NAMES,
     MONGODB_DIALECT_70,
     MONGODB_DIALECT_80,
@@ -27,6 +28,7 @@ from mongoeco.compat import (
     PYMONGO_PROFILE_ALIASES,
     PYMONGO_PROFILE_BEHAVIOR_FLAGS,
     PYMONGO_PROFILE_CAPABILITIES,
+    PYMONGO_CAP_UPDATE_ONE_SORT,
     PYMONGO_PROFILE_HOOK_NAMES,
     PYMONGO_PROFILES,
     PyMongoProfile49,
@@ -116,6 +118,8 @@ class CompatResolutionTests(unittest.TestCase):
         )
         self.assertTrue(MONGODB_DIALECT_BEHAVIOR_FLAGS['7.0']['null_query_matches_undefined'])
         self.assertFalse(MONGODB_DIALECT_BEHAVIOR_FLAGS['8.0']['null_query_matches_undefined'])
+        self.assertEqual(MONGODB_DIALECT_CAPABILITIES['7.0'], frozenset({MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED}))
+        self.assertEqual(MONGODB_DIALECT_CAPABILITIES['8.0'], frozenset())
         self.assertEqual(MONGODB_DIALECT_BEHAVIOR_FLAGS['7.0'], MONGODB_DIALECT_70.behavior_flags())
         self.assertEqual(MONGODB_DIALECT_BEHAVIOR_FLAGS['8.0'], MONGODB_DIALECT_80.behavior_flags())
 
@@ -124,8 +128,8 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertTrue(PYMONGO_PROFILE_411.supports_update_one_sort())
         self.assertTrue(PYMONGO_PROFILE_413.supports_update_one_sort())
         self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.9'], frozenset())
-        self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.11'], frozenset({'update_one.sort'}))
-        self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.13'], frozenset({'update_one.sort'}))
+        self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.11'], frozenset({PYMONGO_CAP_UPDATE_ONE_SORT}))
+        self.assertEqual(PYMONGO_PROFILE_CAPABILITIES['4.13'], frozenset({PYMONGO_CAP_UPDATE_ONE_SORT}))
         self.assertFalse(PYMONGO_PROFILE_BEHAVIOR_FLAGS['4.9']['supports_update_one_sort'])
         self.assertTrue(PYMONGO_PROFILE_BEHAVIOR_FLAGS['4.11']['supports_update_one_sort'])
         self.assertTrue(PYMONGO_PROFILE_BEHAVIOR_FLAGS['4.13']['supports_update_one_sort'])
@@ -139,6 +143,8 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertFalse(MongoDialect70().supports_query_field_operator('$unknown'))
         self.assertTrue(MongoDialect70().behavior_flag('null_query_matches_undefined'))
         self.assertFalse(MongoDialect80().behavior_flag('null_query_matches_undefined'))
+        self.assertTrue(MongoDialect70().supports(MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED))
+        self.assertFalse(MongoDialect80().supports(MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED))
         self.assertEqual(
             export_mongodb_dialect_catalog()["7.0"]["policy_spec"],
             {
@@ -173,8 +179,8 @@ class CompatResolutionTests(unittest.TestCase):
             operation_catalog['find']['hint']['status'],
             'effective',
         )
-        self.assertTrue(PYMONGO_PROFILE_411.has_capability('update_one.sort'))
-        self.assertFalse(PYMONGO_PROFILE_49.has_capability('update_one.sort'))
+        self.assertTrue(PYMONGO_PROFILE_411.supports(PYMONGO_CAP_UPDATE_ONE_SORT))
+        self.assertFalse(PYMONGO_PROFILE_49.supports(PYMONGO_CAP_UPDATE_ONE_SORT))
 
     def test_resolve_mongodb_dialect_uses_baseline_by_default(self):
         self.assertIs(resolve_mongodb_dialect(), MONGODB_DIALECT_70)

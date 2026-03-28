@@ -174,7 +174,9 @@
       "behavior_flags": {
         "null_query_matches_undefined": true
       },
-      "capabilities": [],
+      "capabilities": [
+        "query.null_matches_undefined"
+      ],
       "group_accumulators": [
         "$addToSet",
         "$avg",

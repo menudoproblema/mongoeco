@@ -29,8 +29,10 @@ from mongoeco.compat.catalog import (
     export_full_compat_catalog,
     export_full_compat_catalog_markdown,
     export_mongodb_dialect_catalog,
+    MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED,
     MongoBehaviorPolicySpec,
     export_operation_option_catalog,
+    PYMONGO_CAP_UPDATE_ONE_SORT,
     export_pymongo_profile_catalog,
 )
 from mongoeco.compat.operation_support import (
@@ -69,6 +71,7 @@ __all__ = [
     'MongoDialect70',
     'MongoDialect80',
     'MongoBehaviorPolicySpec',
+    'MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED',
     'PyMongoProfile',
     'PYMONGO_PROFILE_HOOK_NAMES',
     'PYMONGO_PROFILE_49',
@@ -78,6 +81,7 @@ __all__ = [
     'PYMONGO_PROFILE_ALIASES',
     'PYMONGO_PROFILE_CAPABILITIES',
     'PYMONGO_PROFILE_BEHAVIOR_FLAGS',
+    'PYMONGO_CAP_UPDATE_ONE_SORT',
     'PyMongoProfile49',
     'PyMongoProfile411',
     'PyMongoProfile413',
