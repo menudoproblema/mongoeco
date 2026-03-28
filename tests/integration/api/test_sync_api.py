@@ -5,6 +5,7 @@ import decimal
 import queue
 import re
 import threading
+import time
 import unittest
 import uuid
 from bson import decode_all
@@ -142,7 +143,20 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     created_many = collection.create_search_indexes(
                         [
                             SearchIndexModel({"mappings": {"dynamic": True}}, name="by_text"),
-                            SearchIndexModel({"analyzer": "keyword"}, name="by_keyword", type="vectorSearch"),
+                            SearchIndexModel(
+                                {
+                                    "fields": [
+                                        {
+                                            "type": "vector",
+                                            "path": "embedding",
+                                            "numDimensions": 3,
+                                            "similarity": "cosine",
+                                        }
+                                    ]
+                                },
+                                name="by_keyword",
+                                type="vectorSearch",
+                            ),
                         ]
                     )
                     self.assertEqual(created_many, ["by_text", "by_keyword"])
@@ -155,8 +169,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     by_keyword = next(
                         document for document in listed if document["name"] == "by_keyword"
                     )
-                    self.assertFalse(by_keyword["queryable"])
-                    self.assertEqual(by_keyword["status"], "UNSUPPORTED")
+                    self.assertTrue(by_keyword["queryable"])
+                    self.assertEqual(by_keyword["status"], "READY")
 
                     only_default = collection.list_search_indexes("default").to_list()
                     self.assertEqual(len(only_default), 1)
@@ -177,24 +191,40 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.search_runtime.get_collection("docs")
                     collection.insert_many(
                         [
-                            {"_id": 1, "title": "Ada", "body": "Analytical engine notes"},
-                            {"_id": 2, "title": "Grace", "body": "Compiler pioneer"},
-                            {"_id": 3, "title": "Notes", "body": "Ada wrote the first algorithm"},
+                            {"_id": 1, "title": "Ada", "body": "Analytical engine notes", "embedding": [1.0, 0.0, 0.0]},
+                            {"_id": 2, "title": "Grace", "body": "Compiler pioneer", "embedding": [0.1, 0.9, 0.0]},
+                            {"_id": 3, "title": "Notes", "body": "Ada wrote the first algorithm", "embedding": [0.9, 0.1, 0.0]},
                         ]
                     )
-                    collection.create_search_index(
-                        SearchIndexModel(
-                            {
-                                "mappings": {
-                                    "dynamic": False,
-                                    "fields": {
-                                        "title": {"type": "string"},
-                                        "body": {"type": "string"},
-                                    },
-                                }
-                            },
-                            name="by_text",
-                        )
+                    collection.create_search_indexes(
+                        [
+                            SearchIndexModel(
+                                {
+                                    "mappings": {
+                                        "dynamic": False,
+                                        "fields": {
+                                            "title": {"type": "string"},
+                                            "body": {"type": "string"},
+                                        },
+                                    }
+                                },
+                                name="by_text",
+                            ),
+                            SearchIndexModel(
+                                {
+                                    "fields": [
+                                        {
+                                            "type": "vector",
+                                            "path": "embedding",
+                                            "numDimensions": 3,
+                                            "similarity": "cosine",
+                                        }
+                                    ]
+                                },
+                                name="by_vector",
+                                type="vectorSearch",
+                            ),
+                        ]
                     )
 
                     hits = collection.aggregate(
@@ -219,6 +249,40 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}}]
                     ).explain()
                     self.assertEqual(explanation["engine_plan"]["strategy"], "search")
+                    if engine_name == "sqlite":
+                        self.assertEqual(explanation["engine_plan"]["details"]["backend"], "fts5")
+                        self.assertEqual(explanation["engine_plan"]["details"]["fts5_match"], '"ada"')
+
+                    vector_hits = collection.aggregate(
+                        [
+                            {
+                                "$vectorSearch": {
+                                    "index": "by_vector",
+                                    "path": "embedding",
+                                    "queryVector": [1.0, 0.0, 0.0],
+                                    "limit": 2,
+                                    "numCandidates": 3,
+                                }
+                            }
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in vector_hits], [3, 2])
+
+                    vector_explanation = collection.aggregate(
+                        [
+                            {
+                                "$vectorSearch": {
+                                    "index": "by_vector",
+                                    "path": "embedding",
+                                    "queryVector": [1.0, 0.0, 0.0],
+                                    "limit": 2,
+                                    "numCandidates": 3,
+                                }
+                            }
+                        ]
+                    ).explain()
+                    self.assertEqual(vector_explanation["engine_plan"]["details"]["backend"], "python")
+                    self.assertEqual(vector_explanation["engine_plan"]["details"]["path"], "embedding")
 
                     with self.assertRaises(OperationFailure):
                         collection.aggregate(
@@ -230,7 +294,37 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     with self.assertRaises(OperationFailure):
                         collection.aggregate([{"$vectorSearch": {"index": "vec"}}]).to_list()
                     with self.assertRaises(OperationFailure):
+                        collection.aggregate(
+                            [{"$search": {"index": "by_text", "phrase": {"query": "ada", "path": "body"}}}]
+                        ).to_list()
+                    with self.assertRaises(OperationFailure):
                         collection.create_search_index({"mappings": {"fields": {"title": {"type": "number"}}}})
+
+    def test_search_index_latency_can_surface_pending_state(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory(simulate_search_index_latency=0.02)) as client:
+                    collection = client.search_latency.get_collection("docs")
+                    collection.create_search_index(
+                        SearchIndexModel(
+                            {
+                                "mappings": {
+                                    "dynamic": False,
+                                    "fields": {"title": {"type": "string"}},
+                                }
+                            },
+                            name="by_text",
+                        )
+                    )
+                    listed = collection.list_search_indexes("by_text").to_list()
+                    self.assertEqual(listed[0]["status"], "PENDING")
+                    with self.assertRaises(OperationFailure):
+                        collection.aggregate(
+                            [{"$search": {"index": "by_text", "text": {"query": "ada", "path": "title"}}}]
+                        ).to_list()
+                    time.sleep(0.03)
+                    ready = collection.list_search_indexes("by_text").to_list()
+                    self.assertEqual(ready[0]["status"], "READY")
 
     def test_watch_surfaces_client_database_and_collection_scopes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

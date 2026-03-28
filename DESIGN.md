@@ -692,7 +692,7 @@ Regla práctica:
 ### Fase 9: Search Runtime Local
 Objetivo: pasar de la mera gestión de definiciones de search indexes a un runtime local ejecutable, honesto y observable.
 
-Estado actual: **iniciada y ya operativa para texto**.
+Estado actual: **iniciada y operativa para texto, con vector search local experimental**.
 
 Perímetro:
 * **Search Contract**:
@@ -707,26 +707,30 @@ Perímetro:
   * modelar un estado observable del índice alineado con la realidad local del backend;
   * priorizar un contrato sincero (`READY` inmediato cuando el backend local termina realmente) antes que simular asincronía opaca.
 * **Vector search**:
-  * queda explícitamente fuera del primer cierre del runtime local;
-  * solo deberá abrirse con un backend opcional dedicado o con una emulación declaradamente parcial/experimental.
+  * abrirse solo con un perímetro declaradamente parcial/experimental;
+  * no vender la emulación local como equivalente a Atlas Search hasta tener un backend especializado.
 
 Aplicado ya en el estado actual:
 * validación explícita de definiciones de search index y rechazo de mappings no soportados;
 * `SearchIndexDocument` honesto (`queryable` / `status`) para `search` y `vectorSearch`;
 * `$search` soportado como primer stage real de `aggregate` en `MemoryEngine` y `SQLiteEngine`;
-* explain honesto del backend de búsqueda;
+* rechazo explícito del DSL de `$search` y `$vectorSearch` fuera del subset soportado localmente;
+* explain honesto del backend de búsqueda, incluyendo la traducción `FTS5 MATCH` cuando aplica;
 * backend FTS5 para SQLite con sincronización en insert, update, delete, bulk insert y ciclo de vida de índices.
+* `vectorSearch` experimental de fuerza bruta en `MemoryEngine` y `SQLiteEngine`, orientado a colecciones pequeñas y con similitud coseno;
+* latencia opcional simulada para lifecycle de search indexes en entornos de prueba.
 
 Pendiente dentro de la propia fase:
 * ampliar el subset de mappings locales más allá del contrato textual actual;
-* decidir si se modela un lifecycle observable más rico que `READY` inmediato;
-* mantener `vectorSearch` como explícitamente no soportado hasta tener backend dedicado.
+* decidir si se modela un lifecycle observable más rico que `PENDING -> READY`;
+* decidir si `vectorSearch` merece un backend dedicado más allá del modo experimental local.
 
 Orden recomendado:
 1. contrato y validador de definiciones;
 2. `$search` inicial con errores explícitos y explain honesto;
 3. backend FTS5 para SQLite;
-4. ampliaciones de mappings, lifecycle y posible vector search opcional.
+4. lifecycle opcional de índices y vector search experimental;
+5. ampliaciones de mappings y posible backend especializado futuro.
 
 ### Fase 10: Mongomock Parity Closure
 Objetivo: vaciar de forma disciplinada la cola larga de casos `review-needed` frente a la suite histórica de `mongomock`.

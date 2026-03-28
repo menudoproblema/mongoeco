@@ -38,10 +38,14 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import QueryNode, ensure_query_plan
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.search import (
+    SearchTextQuery,
+    SearchVectorQuery,
     build_search_index_document,
     compile_search_stage,
     matches_search_text_query,
+    score_vector_document,
     validate_search_index_definition,
+    vector_field_paths,
 )
 from mongoeco.core.aggregation import AggregationSpillPolicy
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, OperationFailure
@@ -81,11 +85,13 @@ class MemoryEngine(AsyncStorageEngine):
         codec: type[DocumentCodec] = DocumentCodec,
         *,
         aggregation_spill_threshold: int | None = None,
+        simulate_search_index_latency: float = 0.0,
     ):
         self._storage: dict[str, dict[str, dict[Any, Any]]] = {}
         self._locks: dict[str, _AsyncThreadLock] = {}
         self._indexes: dict[str, dict[str, list[EngineIndexRecord]]] = {}
         self._search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]] = {}
+        self._search_index_ready_at: dict[tuple[str, str, str], float] = {}
         self._collections: dict[str, set[str]] = {}
         self._collection_options: dict[str, dict[str, Document]] = {}
         self._meta_lock = threading.Lock()
@@ -102,6 +108,24 @@ class MemoryEngine(AsyncStorageEngine):
                 codec=codec,
             )
         )
+        self._simulate_search_index_latency = max(0.0, float(simulate_search_index_latency))
+
+    def _mark_search_index_pending(self, db_name: str, coll_name: str, index_name: str) -> None:
+        if self._simulate_search_index_latency <= 0:
+            self._search_index_ready_at.pop((db_name, coll_name, index_name), None)
+            return
+        self._search_index_ready_at[(db_name, coll_name, index_name)] = (
+            time.time() + self._simulate_search_index_latency
+        )
+
+    def _search_index_is_ready(self, db_name: str, coll_name: str, index_name: str) -> bool:
+        ready_at = self._search_index_ready_at.get((db_name, coll_name, index_name))
+        if ready_at is None:
+            return True
+        if time.time() >= ready_at:
+            self._search_index_ready_at.pop((db_name, coll_name, index_name), None)
+            return True
+        return False
 
     def _decode_storage_document(
         self,
@@ -456,6 +480,7 @@ class MemoryEngine(AsyncStorageEngine):
             self._storage.clear()
             self._indexes.clear()
             self._search_indexes.clear()
+            self._search_index_ready_at.clear()
             self._collections.clear()
             self._collection_options.clear()
             self._locks.clear()
@@ -1090,6 +1115,7 @@ class MemoryEngine(AsyncStorageEngine):
                             )
                         return normalized_definition.name
                 coll_search_indexes.append(normalized_definition)
+                self._mark_search_index_pending(db_name, coll_name, normalized_definition.name)
         return normalized_definition.name
 
     @override
@@ -1106,7 +1132,10 @@ class MemoryEngine(AsyncStorageEngine):
                 self._search_indexes_view(context).get(db_name, {}).get(coll_name, [])
             )
         documents = [
-            build_search_index_document(index)
+            build_search_index_document(
+                index,
+                ready=self._search_index_is_ready(db_name, coll_name, index.name),
+            )
             for index in sorted(indexes, key=lambda item: item.name)
         ]
         if name is None:
@@ -1140,6 +1169,7 @@ class MemoryEngine(AsyncStorageEngine):
                         name=name,
                         index_type=existing.index_type,
                     )
+                    self._mark_search_index_pending(db_name, coll_name, name)
                     return
         raise OperationFailure(f"search index not found with name [{name}]")
 
@@ -1161,6 +1191,7 @@ class MemoryEngine(AsyncStorageEngine):
             for idx, existing in enumerate(coll_search_indexes):
                 if existing.name == name:
                     del coll_search_indexes[idx]
+                    self._search_index_ready_at.pop((db_name, coll_name, name), None)
                     if not coll_search_indexes:
                         del search_indexes[db_name][coll_name]
                     if not search_indexes[db_name]:
@@ -1187,20 +1218,39 @@ class MemoryEngine(AsyncStorageEngine):
             definition = next((item for item in indexes if item.name == query.index_name), None)
             if definition is None:
                 raise OperationFailure(f"search index not found with name [{query.index_name}]")
+            if not self._search_index_is_ready(db_name, coll_name, query.index_name):
+                raise OperationFailure(f"search index [{query.index_name}] is not ready yet")
+            if isinstance(query, SearchTextQuery) and definition.index_type != "search":
+                raise OperationFailure(f"search index [{query.index_name}] does not support $search")
+            if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
+                raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
             documents = [
                 self._decode_storage_document(payload)
                 for payload in self._storage_view(context).get(db_name, {}).get(coll_name, {}).values()
             ]
         enforce_deadline(deadline)
-        return [
-            document
-            for document in documents
-            if matches_search_text_query(
+        if isinstance(query, SearchTextQuery):
+            return [
+                document
+                for document in documents
+                if matches_search_text_query(
+                    document,
+                    definition=definition,
+                    query=query,
+                )
+            ]
+        vector_hits: list[tuple[float, Document]] = []
+        for document in documents:
+            score = score_vector_document(
                 document,
                 definition=definition,
                 query=query,
             )
-        ]
+            if score is None:
+                continue
+            vector_hits.append((score, document))
+        vector_hits.sort(key=lambda item: item[0], reverse=True)
+        return [document for _score, document in vector_hits[: query.limit]]
 
     async def explain_search_documents(
         self,
@@ -1220,10 +1270,15 @@ class MemoryEngine(AsyncStorageEngine):
         definition = next((item for item in indexes if item.name == query.index_name), None)
         if definition is None:
             raise OperationFailure(f"search index not found with name [{query.index_name}]")
+        ready = self._search_index_is_ready(db_name, coll_name, query.index_name)
+        if isinstance(query, SearchTextQuery) and definition.index_type != "search":
+            raise OperationFailure(f"search index [{query.index_name}] does not support $search")
+        if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
+            raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
         return QueryPlanExplanation(
             engine="memory",
             strategy="search",
-            plan="python-search-scan",
+            plan="python-vector-search" if isinstance(query, SearchVectorQuery) else "python-search-scan",
             sort=None,
             skip=0,
             limit=None,
@@ -1235,7 +1290,15 @@ class MemoryEngine(AsyncStorageEngine):
                 "operator": operator,
                 "index": query.index_name,
                 "backend": "python",
-                "definition": build_search_index_document(definition),
+                "status": "READY" if ready else "PENDING",
+                "definition": build_search_index_document(definition, ready=ready),
+                "query": query.raw_query if isinstance(query, SearchTextQuery) else None,
+                "paths": list(query.paths) if isinstance(query, SearchTextQuery) and query.paths is not None else None,
+                "path": query.path if isinstance(query, SearchVectorQuery) else None,
+                "queryVector": list(query.query_vector) if isinstance(query, SearchVectorQuery) else None,
+                "limit": query.limit if isinstance(query, SearchVectorQuery) else None,
+                "numCandidates": query.num_candidates if isinstance(query, SearchVectorQuery) else None,
+                "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
             },
         )
 
@@ -1536,6 +1599,9 @@ class MemoryEngine(AsyncStorageEngine):
                 db_search_indexes = search_indexes.get(db_name)
                 if db_search_indexes is not None and coll_name in db_search_indexes:
                     db_search_indexes[new_name] = db_search_indexes.pop(coll_name)
+                ready_at = self._search_index_ready_at
+                for key in [key for key in ready_at if key[0] == db_name and key[1] == coll_name]:
+                    ready_at[(db_name, new_name, key[2])] = ready_at.pop(key)
 
                 db_options = option_store.get(db_name)
                 if db_options is not None and coll_name in db_options:
@@ -1593,3 +1659,6 @@ class MemoryEngine(AsyncStorageEngine):
                     del search_indexes[db_name][coll_name]
                     if not search_indexes[db_name]:
                         del search_indexes[db_name]
+                ready_at = self._search_index_ready_at
+                for key in [key for key in ready_at if key[0] == db_name and key[1] == coll_name]:
+                    del ready_at[key]

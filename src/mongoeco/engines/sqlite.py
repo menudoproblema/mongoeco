@@ -42,12 +42,16 @@ from mongoeco.core.query_plan import (
     ensure_query_plan,
 )
 from mongoeco.core.search import (
+    SearchTextQuery,
+    SearchVectorQuery,
     build_search_index_document,
     compile_search_stage,
     iter_searchable_text_entries,
     matches_search_text_query,
+    score_vector_document,
     sqlite_fts5_query,
     validate_search_index_definition,
+    vector_field_paths,
 )
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.base import AsyncStorageEngine
@@ -142,6 +146,7 @@ class SQLiteEngine(AsyncStorageEngine):
         path: str = ":memory:",
         codec: type[DocumentCodec] = DocumentCodec,
         executor_workers: int | None = None,
+        simulate_search_index_latency: float = 0.0,
     ):
         self._path = path
         self._codec = codec
@@ -166,6 +171,7 @@ class SQLiteEngine(AsyncStorageEngine):
         self._ensured_multikey_physical_indexes: set[str] = set()
         self._fts5_available: bool | None = None
         self._ensured_search_backends: set[str] = set()
+        self._simulate_search_index_latency = max(0.0, float(simulate_search_index_latency))
 
     def _ensure_executor(self) -> ThreadPoolExecutor:
         executor = self._executor
@@ -1307,10 +1313,10 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         *,
         name: str | None = None,
-    ) -> list[tuple[SearchIndexDefinition, str | None]]:
+    ) -> list[tuple[SearchIndexDefinition, str | None, float | None]]:
         conn = self._require_connection()
         sql = """
-            SELECT name, index_type, definition_json, physical_name
+            SELECT name, index_type, definition_json, physical_name, ready_at_epoch
             FROM search_indexes
             WHERE db_name = ? AND coll_name = ?
         """
@@ -1334,8 +1340,9 @@ class SQLiteEngine(AsyncStorageEngine):
                         index_type=index_type,
                     ),
                     physical_name,
+                    ready_at_epoch,
                 )
-                for row_name, index_type, definition_json, physical_name in rows
+                for row_name, index_type, definition_json, physical_name, ready_at_epoch in rows
             ]
         finally:
             close = getattr(cursor, "close", None)
@@ -1343,7 +1350,15 @@ class SQLiteEngine(AsyncStorageEngine):
                 close()
 
     def _load_search_indexes(self, db_name: str, coll_name: str) -> list[SearchIndexDefinition]:
-        return [definition for definition, _ in self._load_search_index_rows(db_name, coll_name)]
+        return [definition for definition, _physical_name, _ready_at_epoch in self._load_search_index_rows(db_name, coll_name)]
+
+    def _pending_search_index_ready_at(self) -> float | None:
+        if self._simulate_search_index_latency <= 0:
+            return None
+        return time.time() + self._simulate_search_index_latency
+
+    def _search_index_is_ready_sync(self, ready_at_epoch: float | None) -> bool:
+        return ready_at_epoch is None or time.time() >= ready_at_epoch
 
     def _drop_search_backend_sync(self, conn: sqlite3.Connection, physical_name: str | None) -> None:
         if not physical_name:
@@ -1407,10 +1422,10 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
         storage_key: str,
-        search_indexes: list[tuple[SearchIndexDefinition, str | None]] | None = None,
+        search_indexes: list[tuple[SearchIndexDefinition, str | None, float | None]] | None = None,
     ) -> None:
         rows = search_indexes if search_indexes is not None else self._load_search_index_rows(db_name, coll_name)
-        for definition, physical_name in rows:
+        for definition, physical_name, _ready_at_epoch in rows:
             if definition.index_type != "search" or not physical_name:
                 continue
             if not self._sqlite_table_exists(conn, physical_name):
@@ -1427,7 +1442,7 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         storage_key: str,
         document: Document,
-        search_indexes: list[tuple[SearchIndexDefinition, str | None]] | None = None,
+        search_indexes: list[tuple[SearchIndexDefinition, str | None, float | None]] | None = None,
     ) -> None:
         rows = search_indexes if search_indexes is not None else self._load_search_index_rows(db_name, coll_name)
         self._delete_search_entries_for_storage_key(
@@ -1437,7 +1452,7 @@ class SQLiteEngine(AsyncStorageEngine):
             storage_key,
             search_indexes=rows,
         )
-        for definition, physical_name in rows:
+        for definition, physical_name, _ready_at_epoch in rows:
             if definition.index_type != "search":
                 continue
             resolved_physical_name = physical_name
@@ -1608,6 +1623,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         name TEXT NOT NULL,
                         index_type TEXT NOT NULL,
                         definition_json TEXT NOT NULL,
+                        ready_at_epoch REAL,
                         PRIMARY KEY (db_name, coll_name, name)
                     )
                     """
@@ -1658,6 +1674,8 @@ class SQLiteEngine(AsyncStorageEngine):
                 }
                 if "physical_name" not in search_index_columns:
                     connection.execute("ALTER TABLE search_indexes ADD COLUMN physical_name TEXT")
+                if "ready_at_epoch" not in search_index_columns:
+                    connection.execute("ALTER TABLE search_indexes ADD COLUMN ready_at_epoch REAL")
                 multikey_columns = {
                     row[1]
                     for row in connection.execute("PRAGMA table_info(multikey_entries)").fetchall()
@@ -2861,8 +2879,8 @@ class SQLiteEngine(AsyncStorageEngine):
                 conn.execute(
                     """
                     INSERT INTO search_indexes (
-                        db_name, coll_name, name, index_type, definition_json, physical_name
-                    ) VALUES (?, ?, ?, ?, ?, ?)
+                        db_name, coll_name, name, index_type, definition_json, physical_name, ready_at_epoch
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         db_name,
@@ -2871,6 +2889,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         normalized_definition.index_type,
                         json.dumps(normalized_definition.definition, separators=(",", ":"), sort_keys=True),
                         physical_name,
+                        self._pending_search_index_ready_at(),
                     ),
                 )
                 self._ensure_search_backend_sync(
@@ -2896,8 +2915,14 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                indexes = self._load_search_indexes(db_name, coll_name)
-        documents = [build_search_index_document(index) for index in indexes]
+                rows = self._load_search_index_rows(db_name, coll_name)
+        documents = [
+            build_search_index_document(
+                definition,
+                ready=self._search_index_is_ready_sync(ready_at_epoch),
+            )
+            for definition, _physical_name, ready_at_epoch in rows
+        ]
         if name is None:
             return documents
         return [document for document in documents if document["name"] == name]
@@ -2940,12 +2965,13 @@ class SQLiteEngine(AsyncStorageEngine):
                 conn.execute(
                     """
                     UPDATE search_indexes
-                    SET definition_json = ?, physical_name = ?
+                    SET definition_json = ?, physical_name = ?, ready_at_epoch = ?
                     WHERE db_name = ? AND coll_name = ? AND name = ?
                     """,
                     (
                         json.dumps(normalized_definition, separators=(",", ":"), sort_keys=True),
                         physical_name,
+                        self._pending_search_index_ready_at(),
                         db_name,
                         coll_name,
                         name,
@@ -3021,9 +3047,31 @@ class SQLiteEngine(AsyncStorageEngine):
                 rows = self._load_search_index_rows(db_name, coll_name, name=query.index_name)
                 if not rows:
                     raise OperationFailure(f"search index not found with name [{query.index_name}]")
-                definition, physical_name = rows[0]
-                if definition.index_type != "search":
-                    raise OperationFailure(f"search index [{query.index_name}] is not queryable")
+                definition, physical_name, ready_at_epoch = rows[0]
+                if not self._search_index_is_ready_sync(ready_at_epoch):
+                    raise OperationFailure(f"search index [{query.index_name}] is not ready yet")
+                if isinstance(query, SearchTextQuery) and definition.index_type != "search":
+                    raise OperationFailure(f"search index [{query.index_name}] does not support $search")
+                if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
+                    raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
+                if isinstance(query, SearchVectorQuery):
+                    documents = [
+                        document
+                        for _, document in self._load_documents(db_name, coll_name)
+                    ]
+                    enforce_deadline(deadline)
+                    vector_hits: list[tuple[float, Document]] = []
+                    for document in documents:
+                        score = score_vector_document(
+                            document,
+                            definition=definition,
+                            query=query,
+                        )
+                        if score is None:
+                            continue
+                        vector_hits.append((score, document))
+                    vector_hits.sort(key=lambda item: item[0], reverse=True)
+                    return [document for _score, document in vector_hits[: query.limit]]
                 resolved_physical_name = self._ensure_search_backend_sync(
                     conn,
                     db_name,
@@ -3084,25 +3132,30 @@ class SQLiteEngine(AsyncStorageEngine):
                 rows = self._load_search_index_rows(db_name, coll_name, name=query.index_name)
                 if not rows:
                     raise OperationFailure(f"search index not found with name [{query.index_name}]")
-                definition, physical_name = rows[0]
-                resolved_physical_name = self._ensure_search_backend_sync(
-                    conn,
-                    db_name,
-                    coll_name,
-                    definition,
-                    physical_name,
-                )
-                backend = (
-                    "fts5"
-                    if resolved_physical_name
-                    and self._supports_fts5(conn)
-                    and self._sqlite_table_exists(conn, resolved_physical_name)
-                    else "python"
-                )
+                definition, physical_name, ready_at_epoch = rows[0]
+                backend = "python"
+                fts5_match: str | None = None
+                if isinstance(query, SearchTextQuery):
+                    resolved_physical_name = self._ensure_search_backend_sync(
+                        conn,
+                        db_name,
+                        coll_name,
+                        definition,
+                        physical_name,
+                    )
+                    if (
+                        resolved_physical_name
+                        and self._supports_fts5(conn)
+                        and self._sqlite_table_exists(conn, resolved_physical_name)
+                    ):
+                        backend = "fts5"
+                        fts5_match = sqlite_fts5_query(query)
+                elif isinstance(query, SearchVectorQuery):
+                    backend = "python"
         return QueryPlanExplanation(
             engine="sqlite",
             strategy="search",
-            plan=f"{backend}-search",
+            plan="python-vector-search" if isinstance(query, SearchVectorQuery) else f"{backend}-search",
             sort=None,
             skip=0,
             limit=None,
@@ -3114,8 +3167,19 @@ class SQLiteEngine(AsyncStorageEngine):
                 "operator": operator,
                 "index": query.index_name,
                 "backend": backend,
-                "query": query.raw_query,
-                "paths": list(query.paths) if query.paths is not None else None,
+                "status": "READY" if self._search_index_is_ready_sync(ready_at_epoch) else "PENDING",
+                "definition": build_search_index_document(
+                    definition,
+                    ready=self._search_index_is_ready_sync(ready_at_epoch),
+                ),
+                "query": query.raw_query if isinstance(query, SearchTextQuery) else None,
+                "paths": list(query.paths) if isinstance(query, SearchTextQuery) and query.paths is not None else None,
+                "fts5_match": fts5_match,
+                "path": query.path if isinstance(query, SearchVectorQuery) else None,
+                "queryVector": list(query.query_vector) if isinstance(query, SearchVectorQuery) else None,
+                "limit": query.limit if isinstance(query, SearchVectorQuery) else None,
+                "numCandidates": query.num_candidates if isinstance(query, SearchVectorQuery) else None,
+                "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
             },
         )
 
@@ -3244,7 +3308,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             conn.execute(
                                 f"DROP INDEX IF EXISTS {self._quote_identifier(index['multikey_physical_name'])}"
                             )
-                    for _definition, physical_name in search_indexes:
+                    for _definition, physical_name, _ready_at_epoch in search_indexes:
                         self._drop_search_backend_sync(conn, physical_name)
                     conn.execute(
                         """

@@ -2,10 +2,13 @@ import unittest
 
 from mongoeco.core.search import (
     SearchTextQuery,
+    SearchVectorQuery,
     build_search_index_document,
     compile_search_stage,
     compile_search_text_query,
+    compile_vector_search_query,
     iter_searchable_text_entries,
+    score_vector_document,
     sqlite_fts5_query,
     validate_search_index_definition,
     validate_search_stage_pipeline,
@@ -28,12 +31,26 @@ class SearchCoreTests(unittest.TestCase):
                 index_type="search",
             )
 
-    def test_build_search_index_document_marks_vector_search_as_not_queryable(self) -> None:
+    def test_build_search_index_document_marks_pending_queryable_vector_search(self) -> None:
         document = build_search_index_document(
-            SearchIndexDefinition({"analyzer": "keyword"}, name="vec", index_type="vectorSearch")
+            SearchIndexDefinition(
+                {
+                    "fields": [
+                        {
+                            "type": "vector",
+                            "path": "embedding",
+                            "numDimensions": 3,
+                            "similarity": "cosine",
+                        }
+                    ]
+                },
+                name="vec",
+                index_type="vectorSearch",
+            ),
+            ready=False,
         )
-        self.assertFalse(document["queryable"])
-        self.assertEqual(document["status"], "UNSUPPORTED")
+        self.assertTrue(document["queryable"])
+        self.assertEqual(document["status"], "PENDING")
 
     def test_compile_search_text_query_supports_paths(self) -> None:
         query = compile_search_text_query(
@@ -92,9 +109,68 @@ class SearchCoreTests(unittest.TestCase):
                 ]
             )
 
-    def test_compile_search_stage_rejects_vector_search(self) -> None:
+    def test_compile_search_stage_rejects_unsupported_search_operator_keys(self) -> None:
         with self.assertRaises(OperationFailure):
-            compile_search_stage("$vectorSearch", {"index": "vec"})
+            compile_search_stage(
+                "$search",
+                {"index": "by_text", "phrase": {"query": "ada", "path": "title"}},
+            )
+
+    def test_compile_vector_search_query_supports_local_runtime_subset(self) -> None:
+        query = compile_vector_search_query(
+            {
+                "index": "vec",
+                "path": "embedding",
+                "queryVector": [1, 0, 0],
+                "limit": 2,
+                "numCandidates": 4,
+            }
+        )
+        self.assertEqual(
+            query,
+            SearchVectorQuery(
+                index_name="vec",
+                path="embedding",
+                query_vector=(1.0, 0.0, 0.0),
+                limit=2,
+                num_candidates=4,
+            ),
+        )
+
+    def test_validate_vector_search_index_definition_requires_vector_fields(self) -> None:
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition(
+                {"analyzer": "keyword"},
+                index_type="vectorSearch",
+            )
+
+    def test_score_vector_document_uses_cosine_similarity(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": 3,
+                        "similarity": "cosine",
+                    }
+                ]
+            },
+            name="vec",
+            index_type="vectorSearch",
+        )
+        score = score_vector_document(
+            {"embedding": [1.0, 0.0, 0.0]},
+            definition=definition,
+            query=SearchVectorQuery(
+                index_name="vec",
+                path="embedding",
+                query_vector=(1.0, 0.0, 0.0),
+                limit=1,
+                num_candidates=1,
+            ),
+        )
+        self.assertEqual(score, 1.0)
 
 
 if __name__ == "__main__":
