@@ -587,6 +587,46 @@ Criterio de foco:
 * Nada de esta fase debe bloquear el crecimiento del mock local.
 * Solo se aborda si el proyecto decide evolucionar explícitamente desde “mock compatible” hacia “driver local con ambición de paridad de cliente”.
 
+### Fase 8: Cierre de Paridad Fina y Completitud
+Esta fase agrupa todo lo que queda fuera del “núcleo ya correcto” pero sigue siendo relevante para hablar de cierre serio frente a `mongomock`, PyMongo y, en ciertos perímetros, MongoDB real. No es una fase de reescritura; es una fase de **cierre fino**, pensada para concentrar matices, bordes y profundidad restante sin volver a contaminar las fases ya consolidadas.
+
+Objetivos principales:
+* **Semántica BSON total**:
+  * cerrar overflow, conversiones y comparaciones raras que todavía no están modeladas al nivel más estricto;
+  * ampliar la fidelidad numérica y escalar en caminos menos frecuentes de aggregation, sorting, filtering y writes;
+  * reforzar el contrato observable cuando haya wrappers BSON internos y tipos públicos `bson` reales.
+* **Pushdown, spill y planificación avanzada**:
+  * seguir reduciendo los caminos físicos específicos del backend que todavía afectan al comportamiento observable;
+  * mejorar el spill para agregación más allá del contrato actual de `allowDiskUse`;
+  * avanzar en planificación y degradación segura sin materialización innecesaria cuando haya `sort`, stages globales o rutas mixtas SQL/Python.
+* **Motor de indexación virtual de alta fidelidad**:
+  * completar la historia de multikey avanzado;
+  * seguir mejorando interacción con hints, explain y selección/planning;
+  * cerrar matices de `sparse`, `partialFilterExpression` y tipos/arrays complejos.
+* **Agregación y lenguaje MongoDB en su último tramo**:
+  * cerrar complejidad residual del área de aggregation si nuevas superficies vuelven a tensionar el runtime;
+  * mantener extensibilidad de stages y expresiones sin que reaparezcan monolitos;
+  * abordar etapas o expresiones de borde que no compensaban en fases anteriores.
+* **Paridad fina de API pendiente de fases previas**:
+  * `find_raw_batches`
+  * `aggregate_raw_batches`
+  * `collation`
+  * `bypass_document_validation`
+  * `allow_disk_use` en todos los puntos donde la superficie PyMongo lo expone y no solo en el contrato interno actual
+* **Proxy wire y superficie de servidor más profunda**:
+  * ampliar la `WireSurface` cuando el crecimiento de comandos o semántica de servidor ya no quepa limpiamente en la capa actual;
+  * seguir endureciendo compatibilidad con drivers externos, cursores, sesiones, errores y shape de respuestas.
+* **Topología y comportamiento de driver real restantes**:
+  * selección de servidor con tags y `maxStalenessSeconds` reales;
+  * SRV, TLS y auth completos;
+  * retries, timeouts y pipeline de envío/recepción ya contra conexiones reales;
+  * todo lo que quede pendiente de la ambición de Fase 7 pero no compense mezclar con la apertura inicial de esa fase.
+
+Criterio de foco:
+* Esta fase existe para evitar que los “últimos 10-15%” de fidelidad y profundidad queden repartidos en notas marginales.
+* Si una pieza no exige reabrir arquitectura base, pero sí mejora de forma clara la robustez contractual, la completitud o la paridad fina, pertenece antes a Fase 8 que a una nueva ola de refactor.
+* Si una pieza es principalmente de producto o plataforma de red, pero ya depende de la arquitectura preparada en Fase 7 y no de nueva infraestructura transversal, también puede aterrizar aquí.
+
 ### Regla de Corte Entre Fases
 Para evitar mezclar objetivos y perder foco:
 * **Fase 3**: ampliación funcional visible, agregación útil, escrituras de alto valor y multikey real en SQLite
@@ -594,12 +634,14 @@ Para evitar mezclar objetivos y perder foco:
 * **Fase 5**: breadth semántico de query, update y aggregation
 * **Fase 6**: API administrativa ancha, observabilidad y compatibilidad de ecosistema
 * **Fase 7**: topología y semántica propia de driver de red real
+* **Fase 8**: cierre de paridad fina, profundidad restante y completitud contractual
 
 Regla práctica:
 * si una funcionalidad habilita correctamente otras diez y reduce deuda estructural, debe ir antes aunque no sea la más vistosa
 * si una funcionalidad ensancha mucho la compatibilidad semántica del lenguaje, debe evaluarse para Fase 5
 * si una funcionalidad es principalmente administrativa, observable o de ecosistema, debe evaluarse para Fase 6
 * si una funcionalidad exige comportarse como driver de red real, debe evaluarse para Fase 7 y no contaminar el roadmap principal del mock local
+* si una funcionalidad ya no exige arquitectura nueva, pero sí cerrar matices, bordes o profundidad contractual, debe evaluarse para Fase 8
 
 ### Mapa de Superficie PyMongo Pendiente por Fase
 Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este es el backlog de alto nivel ya repartido por crecimiento esperado.
