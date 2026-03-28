@@ -813,6 +813,27 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * selección de lectura/escritura
 * monitoring y comportamiento propio de un cliente de red completo
 
+Arquitectura ya preparada antes de abrir la funcionalidad de red real:
+* `MongoUri` tipado y compilado, con semillas, credenciales y opciones normalizadas
+* `TopologyDescription` y `ServerDescription` explícitos como frontera para selección de servidor
+* políticas separadas para:
+  * timeouts
+  * retries
+  * selección
+  * concerns
+* `DriverRuntime` como punto único para:
+  * planificación de peticiones
+  * preparación de ejecución
+  * snapshot de topología
+  * ciclo de vida de pools
+* subsistema de conexiones/pooling separado del cliente:
+  * `PoolKey`
+  * `ConnectionPool`
+  * `ConnectionRegistry`
+  * leases y snapshots tipados
+
+Esto deja la Fase 7 lista para crecer sin repartir lógica de URI, topología, políticas y pools entre `MongoClient`, el proxy wire y futuros conectores de red.
+
 ---
 
 ## 7. Estado Arquitectónico Consolidado y Punto de Reentrada
@@ -858,6 +879,9 @@ Estos bloques se consideran ya estructuralmente aplicados:
   * compatibilidad observable suficiente para crecer esa superficie sin contaminar CRUD ni el core semántico.
 * **Extensibilidad**:
   * SDK de extensión para operadores de expresión y stages de agregación.
+* **Preparación explícita para Fase 7**:
+  * `DriverRuntime` como orquestador de URI, topología, políticas y request planning;
+  * subsistema separado de pools y conexiones listo para evolucionar a red real, TLS, retries y selección de servidor.
 * **Proxy wire**:
   * `WireSurface` declarativa;
   * handshake separado;

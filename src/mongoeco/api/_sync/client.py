@@ -300,6 +300,7 @@ class MongoClient:
         self,
         engine: AsyncStorageEngine | None = None,
         *,
+        uri: str | None = None,
         mongodb_dialect: MongoDialect | str | None = None,
         pymongo_profile: PyMongoProfile | str | None = None,
         write_concern: WriteConcern | None = None,
@@ -310,6 +311,7 @@ class MongoClient:
     ):
         self._async_client = AsyncMongoClient(
             engine,
+            uri=uri,
             mongodb_dialect=mongodb_dialect,
             pymongo_profile=pymongo_profile,
             write_concern=write_concern,
@@ -391,6 +393,7 @@ class MongoClient:
     ) -> "MongoClient":
         return type(self)(
             self._async_client._engine,
+            uri=self.client_uri.original,
             mongodb_dialect=self.mongodb_dialect,
             pymongo_profile=self.pymongo_profile,
             write_concern=self.write_concern if write_concern is None else write_concern,
@@ -501,3 +504,31 @@ class MongoClient:
     @property
     def transaction_options(self) -> TransactionOptions:
         return self._async_client.transaction_options
+
+    @property
+    def client_uri(self):
+        return self._async_client.client_uri
+
+    @property
+    def topology_description(self):
+        return self._async_client.topology_description
+
+    @property
+    def timeout_policy(self):
+        return self._async_client.timeout_policy
+
+    @property
+    def retry_policy(self):
+        return self._async_client.retry_policy
+
+    @property
+    def selection_policy(self):
+        return self._async_client.selection_policy
+
+    @property
+    def concern_policy(self):
+        return self._async_client.concern_policy
+
+    @property
+    def driver_runtime(self):
+        return self._async_client.driver_runtime

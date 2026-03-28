@@ -10,6 +10,17 @@ from mongoeco.compat import (
     resolve_mongodb_dialect_resolution,
     resolve_pymongo_profile_resolution,
 )
+from mongoeco.driver import (
+    ConcernPolicy,
+    DriverRuntime,
+    MongoUri,
+    PreparedRequestExecution,
+    RequestExecutionPlan,
+    SelectionPolicy,
+    TimeoutPolicy,
+    TopologyDescription,
+    RetryPolicy,
+)
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -251,6 +262,7 @@ class AsyncMongoClient:
         self,
         engine: AsyncStorageEngine | None = None,
         *,
+        uri: str | None = None,
         mongodb_dialect: MongoDialect | str | None = None,
         pymongo_profile: PyMongoProfile | str | None = None,
         write_concern: WriteConcern | None = None,
@@ -273,6 +285,12 @@ class AsyncMongoClient:
         self._read_preference = normalize_read_preference(read_preference)
         self._codec_options = normalize_codec_options(codec_options)
         self._transaction_options = normalize_transaction_options(transaction_options)
+        self._driver_runtime = DriverRuntime(
+            uri=uri,
+            write_concern=self._write_concern,
+            read_concern=self._read_concern,
+            read_preference=self._read_preference,
+        )
         self._change_hub = ChangeStreamHub()
 
     @staticmethod
@@ -302,9 +320,10 @@ class AsyncMongoClient:
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
         transaction_options: TransactionOptions | None = None,
-    ) -> "AsyncMongoClient":
+        ) -> "AsyncMongoClient":
         return type(self)(
             self._engine,
+            uri=self.client_uri.original,
             mongodb_dialect=self._mongodb_dialect,
             pymongo_profile=self._pymongo_profile,
             write_concern=self._write_concern if write_concern is None else write_concern,
@@ -376,6 +395,44 @@ class AsyncMongoClient:
     async def server_info(self) -> BuildInfoDocument:
         return build_info_document(self._mongodb_dialect)
 
+    def plan_command_request(
+        self,
+        database: str,
+        command_name: str,
+        payload: dict[str, object],
+        *,
+        session: ClientSession | None = None,
+        read_only: bool = False,
+    ) -> RequestExecutionPlan:
+        return self._driver_runtime.plan_command_request(
+            database,
+            command_name,
+            payload,
+            session=session,
+            read_only=read_only,
+        )
+
+    def prepare_command_request_execution(
+        self,
+        database: str,
+        command_name: str,
+        payload: dict[str, object],
+        *,
+        session: ClientSession | None = None,
+        read_only: bool = False,
+    ) -> PreparedRequestExecution:
+        plan = self.plan_command_request(
+            database,
+            command_name,
+            payload,
+            session=session,
+            read_only=read_only,
+        )
+        return self._driver_runtime.prepare_request_execution(plan)
+
+    def complete_command_request_execution(self, execution: PreparedRequestExecution) -> None:
+        self._driver_runtime.complete_request_execution(execution)
+
     def watch(
         self,
         pipeline: object | None = None,
@@ -438,3 +495,31 @@ class AsyncMongoClient:
     @property
     def transaction_options(self) -> TransactionOptions:
         return self._transaction_options
+
+    @property
+    def client_uri(self) -> MongoUri:
+        return self._driver_runtime.uri
+
+    @property
+    def topology_description(self) -> TopologyDescription:
+        return self._driver_runtime.topology
+
+    @property
+    def timeout_policy(self) -> TimeoutPolicy:
+        return self._driver_runtime.timeout_policy
+
+    @property
+    def retry_policy(self) -> RetryPolicy:
+        return self._driver_runtime.retry_policy
+
+    @property
+    def selection_policy(self) -> SelectionPolicy:
+        return self._driver_runtime.selection_policy
+
+    @property
+    def concern_policy(self) -> ConcernPolicy:
+        return self._driver_runtime.concern_policy
+
+    @property
+    def driver_runtime(self) -> DriverRuntime:
+        return self._driver_runtime
