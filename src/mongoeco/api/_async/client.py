@@ -315,6 +315,7 @@ class AsyncMongoClient:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self._driver_runtime.stop_topology_monitoring()
         self._driver_runtime.clear_connections()
         await self._engine.disconnect()
 
@@ -494,6 +495,16 @@ class AsyncMongoClient:
 
     async def refresh_topology(self, *, transport: WireProtocolCommandTransport | None = None) -> TopologyDescription:
         return await self._driver_runtime.refresh_topology(transport=transport)
+
+    async def start_topology_monitoring(
+        self,
+        *,
+        transport: WireProtocolCommandTransport | None = None,
+    ) -> None:
+        await self._driver_runtime.start_topology_monitoring(transport=transport)
+
+    async def stop_topology_monitoring(self) -> None:
+        await self._driver_runtime.stop_topology_monitoring()
 
     def watch(
         self,

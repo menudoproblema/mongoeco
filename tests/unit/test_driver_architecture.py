@@ -357,6 +357,16 @@ class ConnectionArchitectureTests(unittest.TestCase):
         self.assertNotEqual(first.connection_id, second.connection_id)
         registry.checkin(second)
 
+    def test_connection_registry_discard_removes_connection(self):
+        uri = parse_mongo_uri("mongodb://db1:27017/")
+        topology = build_local_topology_description(uri)
+        registry = ConnectionRegistry(uri)
+
+        lease = registry.checkout(topology.servers[0])
+        registry.discard(lease)
+
+        self.assertIsNone(registry.get_connection(lease))
+
 
 class ClientDriverArchitectureTests(unittest.TestCase):
     def test_async_client_exposes_driver_state_and_request_planning(self):
@@ -539,6 +549,23 @@ class ClientDriverArchitectureTests(unittest.TestCase):
         self.assertEqual(len(topology.servers), 1)
         self.assertEqual(topology.servers[0].server_type, ServerType.STANDALONE)
         self.assertIsNone(topology.servers[0].error)
+
+    def test_async_client_can_start_and_stop_topology_monitoring(self):
+        async def _run() -> TopologyDescription:
+            async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
+                client = AsyncMongoClient(uri=f"{proxy.address.uri}&heartbeatFrequencyMS=10")
+                await client._engine.connect()
+                try:
+                    await client.start_topology_monitoring()
+                    await asyncio.sleep(0.03)
+                    await client.stop_topology_monitoring()
+                    return client.topology_description
+                finally:
+                    await client.close()
+
+        topology = asyncio.run(_run())
+
+        self.assertEqual(topology.topology_type, TopologyType.SINGLE)
 
 
 class RequestExecutionPipelineTests(unittest.TestCase):
@@ -729,6 +756,44 @@ class RequestExecutionPipelineTests(unittest.TestCase):
         transport = runtime.create_network_transport()
 
         self.assertIsInstance(transport, WireProtocolCommandTransport)
+
+    def test_execute_request_returns_selection_timeout_when_no_candidates(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/?directConnection=true",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        runtime._topology = TopologyDescription(topology_type=TopologyType.UNKNOWN, servers=())  # type: ignore[attr-defined]
+        plan = runtime.plan_command_request("admin", "ping", {"ping": 1}, read_only=True)
+
+        class NoopTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                del execution
+                return {"ok": 1.0}
+
+        result = asyncio.run(runtime.execute_request(plan, NoopTransport()))
+
+        self.assertFalse(result.outcome.ok)
+        self.assertIn("no eligible servers", result.outcome.error or "")
+
+    def test_execute_request_discards_broken_connection_on_failure(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/?retryReads=false",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        plan = runtime.plan_command_request("observe", "find", {"find": "events"}, read_only=True)
+
+        class BrokenTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                raise ConnectionFailure(f"socket closed on {execution.selected_server.address}")
+
+        result = asyncio.run(runtime.execute_request(plan, BrokenTransport()))
+
+        self.assertFalse(result.outcome.ok)
+        self.assertEqual(runtime.connection_snapshots[0].total_size, 0)
 
     def test_refresh_topology_derives_replica_set_membership_from_hello(self):
         topology = TopologyDescription(

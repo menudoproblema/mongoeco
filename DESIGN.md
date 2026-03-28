@@ -899,6 +899,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * el cliente ya puede ejecutar peticiones a través del runtime completo con `execute_driver_command(...)`
   * el cliente ya puede ejecutar también peticiones sobre transporte wire real con `execute_network_command(...)`
   * ya existe refresh explícito de topología contra `hello` real sobre conexiones del runtime
+  * ya existe también monitoring periódico de topología con `heartbeatFrequencyMS`
 
 Arquitectura ya preparada antes de abrir la funcionalidad de red real:
 * `MongoUri` tipado y compilado, con semillas, credenciales y opciones normalizadas
@@ -927,6 +928,7 @@ Estado actual de Fase 7:
 * ya existe pipeline explícito de ejecución y monitoring de estilo driver;
 * ya existen transporte local y transporte wire real sobre sockets;
 * ya existe refresh de topología por `hello` y pooling con recursos vivos reutilizables;
+* ya existe descarte de conexiones rotas y timeout honesto cuando no hay servidor elegible;
 * con este cierre, la Fase 7 puede considerarse aplicada en su perímetro principal.
 
 ---

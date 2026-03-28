@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from mongoeco.driver.connections import ConnectionLease, ConnectionPoolSnapshot, ConnectionRegistry
 from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_seeds
-from mongoeco.driver.execution import RequestExecutionResult, execute_request_pipeline
+from mongoeco.driver.execution import (
+    RequestExecutionResult,
+    RequestExecutionTrace,
+    classify_request_exception,
+    execute_request_pipeline,
+)
 from mongoeco.driver.monitoring import (
     ConnectionCheckedInEvent,
     ConnectionCheckedOutEvent,
@@ -36,6 +42,7 @@ from mongoeco.driver.uri import (
 )
 from mongoeco.session import ClientSession
 from mongoeco.types import ReadConcern, ReadPreference, WriteConcern
+from mongoeco.errors import ServerSelectionTimeoutError
 
 
 class DriverRuntime:
@@ -76,6 +83,7 @@ class DriverRuntime:
         )
         self._connections = ConnectionRegistry(self._effective_uri)
         self._monitor = DriverMonitor()
+        self._topology_monitor_task: asyncio.Task[None] | None = None
 
     def plan_command_request(
         self,
@@ -161,14 +169,26 @@ class DriverRuntime:
             )
         )
 
+    def discard_request_execution(self, execution: PreparedRequestExecution) -> None:
+        self._connections.discard(execution.connection)
+
     def clear_connections(self) -> None:
         self._connections.clear()
 
     async def execute_request(self, plan: RequestExecutionPlan, transport) -> RequestExecutionResult:
+        if not plan.candidate_servers:
+            error = ServerSelectionTimeoutError(
+                f"no eligible servers found within {plan.timeout_policy.server_selection_timeout_ms}ms"
+            )
+            return RequestExecutionResult(
+                outcome=classify_request_exception(error, plan=plan),
+                trace=RequestExecutionTrace(),
+            )
         return await execute_request_pipeline(
             plan=plan,
             prepare_execution=self.prepare_request_execution_attempt,
             complete_execution=self.complete_request_execution,
+            discard_execution=self.discard_request_execution,
             transport=transport,
             monitor=self._monitor,
         )
@@ -188,6 +208,40 @@ class DriverRuntime:
             transport=self.create_network_transport() if transport is None else transport,
         )
         return self._topology
+
+    async def start_topology_monitoring(
+        self,
+        *,
+        transport: WireProtocolCommandTransport | None = None,
+    ) -> None:
+        if self._topology_monitor_task is not None and not self._topology_monitor_task.done():
+            return
+        self._topology_monitor_task = asyncio.create_task(
+            self._topology_monitor_loop(transport=transport),
+            name="mongoeco-driver-topology-monitor",
+        )
+
+    async def stop_topology_monitoring(self) -> None:
+        task = self._topology_monitor_task
+        if task is None:
+            return
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+        self._topology_monitor_task = None
+
+    async def _topology_monitor_loop(
+        self,
+        *,
+        transport: WireProtocolCommandTransport | None = None,
+    ) -> None:
+        interval = self._effective_uri.options.heartbeat_frequency_ms / 1000
+        active_transport = self.create_network_transport() if transport is None else transport
+        while True:
+            await self.refresh_topology(transport=active_transport)
+            await asyncio.sleep(interval)
 
     @property
     def uri(self) -> MongoUri:

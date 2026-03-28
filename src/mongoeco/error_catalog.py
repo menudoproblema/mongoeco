@@ -25,6 +25,9 @@ EXECUTION_TIMEOUT_ERROR = MongoErrorDescriptor(
     code=50,
     code_name="MaxTimeMSExpired",
 )
+SERVER_SELECTION_TIMEOUT_ERROR = MongoErrorDescriptor(
+    name="ServerSelectionTimeoutError",
+)
 WRITE_ERROR = MongoErrorDescriptor(name="WriteError")
 OPERATION_FAILURE = MongoErrorDescriptor(name="OperationFailure")
 
@@ -34,6 +37,7 @@ ERROR_DESCRIPTORS: dict[str, MongoErrorDescriptor] = {
         DUPLICATE_KEY_ERROR,
         DOCUMENT_VALIDATION_ERROR,
         EXECUTION_TIMEOUT_ERROR,
+        SERVER_SELECTION_TIMEOUT_ERROR,
         WRITE_ERROR,
         OPERATION_FAILURE,
     )

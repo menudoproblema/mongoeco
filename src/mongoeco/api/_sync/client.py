@@ -603,6 +603,17 @@ class MongoClient:
         self._ensure_connected()
         return self._runner.run(self._async_client.refresh_topology(transport=transport))
 
+    def start_topology_monitoring(
+        self,
+        *,
+        transport: WireProtocolCommandTransport | None = None,
+    ) -> None:
+        self._ensure_connected()
+        self._runner.run(self._async_client.start_topology_monitoring(transport=transport))
+
+    def stop_topology_monitoring(self) -> None:
+        self._runner.run(self._async_client.stop_topology_monitoring())
+
     @property
     def network_transport(self) -> WireProtocolCommandTransport:
         return self._async_client.network_transport

@@ -6,6 +6,7 @@ from mongoeco.error_catalog import (
     EXECUTION_TIMEOUT_ERROR,
     MongoErrorDescriptor,
     OPERATION_FAILURE,
+    SERVER_SELECTION_TIMEOUT_ERROR,
     WRITE_ERROR,
     build_error_metadata,
 )
@@ -22,6 +23,17 @@ class PyMongoError(MongoEcoError):
 class ConnectionFailure(PyMongoError):
     """Se produce cuando falla la conexión con el motor de almacenamiento."""
     pass
+
+
+class ServerSelectionTimeoutError(ConnectionFailure):
+    """Se produce cuando no hay ningún servidor elegible antes del timeout de selección."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.code = SERVER_SELECTION_TIMEOUT_ERROR.code
+        self.code_name = SERVER_SELECTION_TIMEOUT_ERROR.code_name
+        self.details = None
+        self.error_labels = SERVER_SELECTION_TIMEOUT_ERROR.error_labels
 
 class InvalidOperation(PyMongoError):
     """Se produce cuando se intenta una operación no válida."""

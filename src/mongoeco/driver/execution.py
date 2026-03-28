@@ -71,6 +71,7 @@ async def execute_request_pipeline(
     plan: RequestExecutionPlan,
     prepare_execution,
     complete_execution,
+    discard_execution=None,
     transport: AsyncCommandTransport,
     monitor: DriverMonitor | None = None,
 ) -> RequestExecutionResult:
@@ -81,6 +82,7 @@ async def execute_request_pipeline(
     for attempt_number in range(1, max_attempts + 1):
         execution = prepare_execution(plan, attempt_number=attempt_number)
         started_at = time.perf_counter()
+        should_discard = False
         if monitor is not None:
             monitor.emit(
                 CommandStartedEvent(
@@ -116,6 +118,7 @@ async def execute_request_pipeline(
                     )
                 )
         except Exception as exc:  # noqa: BLE001
+            should_discard = isinstance(exc, ConnectionFailure)
             outcome = classify_request_exception(exc, plan=plan)
             outcome = RequestOutcome(
                 server_address=execution.selected_server.address,
@@ -139,7 +142,10 @@ async def execute_request_pipeline(
                     )
                 )
         finally:
-            complete_execution(execution)
+            if discard_execution is not None and should_discard:
+                discard_execution(execution)
+            else:
+                complete_execution(execution)
         attempts.append(
             RequestAttempt(
                 attempt_number=attempt_number,
