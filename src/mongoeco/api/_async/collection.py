@@ -8,6 +8,23 @@ import time
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub, ChangeStreamScope
 from mongoeco.api._async.raw_batch_cursor import AsyncRawBatchCursor
+from mongoeco.api.public_api import (
+    ARG_UNSET,
+    COLLECTION_COUNT_DOCUMENTS_SPEC,
+    COLLECTION_DELETE_MANY_SPEC,
+    COLLECTION_DELETE_ONE_SPEC,
+    COLLECTION_DISTINCT_SPEC,
+    COLLECTION_FIND_ONE_AND_DELETE_SPEC,
+    COLLECTION_FIND_ONE_AND_REPLACE_SPEC,
+    COLLECTION_FIND_ONE_AND_UPDATE_SPEC,
+    COLLECTION_FIND_ONE_SPEC,
+    COLLECTION_FIND_RAW_BATCHES_SPEC,
+    COLLECTION_FIND_SPEC,
+    COLLECTION_REPLACE_ONE_SPEC,
+    COLLECTION_UPDATE_MANY_SPEC,
+    COLLECTION_UPDATE_ONE_SPEC,
+    normalize_public_operation_arguments,
+)
 from mongoeco.api.operations import (
     AggregateOperation,
     FindOperation,
@@ -57,8 +74,8 @@ from mongoeco.types import (
 )
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure, WriteError
 
-_FILTER_UNSET = object()
-_UPDATE_UNSET = object()
+_FILTER_UNSET = ARG_UNSET
+_UPDATE_UNSET = ARG_UNSET
 
 
 @dataclass(slots=True)
@@ -246,33 +263,6 @@ class AsyncCollection:
         if not is_filter(filter_spec):
             raise TypeError("filter_spec must be a dict")
         return filter_spec
-
-    @staticmethod
-    def _resolve_filter_argument(
-        filter_spec: object,
-        filter: object,
-        *,
-        required: bool,
-    ) -> Filter | None:
-        if filter_spec is not _FILTER_UNSET and filter is not _FILTER_UNSET:
-            raise TypeError("cannot pass both filter and filter_spec")
-        if filter is not _FILTER_UNSET:
-            return AsyncCollection._normalize_filter(filter)
-        if filter_spec is not _FILTER_UNSET:
-            return AsyncCollection._normalize_filter(filter_spec)
-        if required:
-            raise TypeError("missing required filter")
-        return None
-
-    @staticmethod
-    def _resolve_update_argument(update_spec: object, update: object) -> Update:
-        if update_spec is not _UPDATE_UNSET and update is not _UPDATE_UNSET:
-            raise TypeError("cannot pass both update and update_spec")
-        if update is not _UPDATE_UNSET:
-            return AsyncCollection._require_update(update)
-        if update_spec is not _UPDATE_UNSET:
-            return AsyncCollection._require_update(update_spec)
-        raise TypeError("missing required update")
 
     @staticmethod
     def _normalize_projection(projection: object | None) -> Projection | None:
@@ -1141,30 +1131,57 @@ class AsyncCollection:
         filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> Document | None:
-        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=False)
+        options = normalize_public_operation_arguments(
+            COLLECTION_FIND_ONE_SPEC,
+            explicit={
+                "filter_spec": filter_spec,
+                "projection": projection,
+                "collation": collation,
+                "session": session,
+            },
+            extra_kwargs={"filter": filter, **kwargs},
+            profile=self._pymongo_profile,
+        )
         operation = compile_find_operation(
-            filter_spec,
-            projection=projection,
-            collation=collation,
+            options.get("filter_spec"),
+            projection=options.get("projection"),
+            collation=options.get("collation"),
+            sort=options.get("sort"),
+            skip=options.get("skip", 0),
+            limit=1,
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            max_time_ms=options.get("max_time_ms"),
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
         doc = None
         started_at = time.perf_counter_ns()
         try:
-            if operation.collation is None and self._can_use_direct_id_lookup(operation.filter_spec):
+            if (
+                operation.collation is None
+                and operation.sort is None
+                and operation.skip == 0
+                and operation.hint is None
+                and operation.comment is None
+                and operation.max_time_ms is None
+                and self._can_use_direct_id_lookup(operation.filter_spec)
+            ):
                 doc = await self._engine.get_document(
                     self._db_name,
                     self._collection_name,
                     operation.filter_spec["_id"],
                     projection=operation.projection,
                     dialect=self._mongodb_dialect,
-                    context=session,
+                    context=options.get("session"),
                 )
             else:
-                operation = operation.with_overrides(limit=1)
-                async for d in self._engine_scan_with_operation(operation, session=session):
+                async for d in self._engine_scan_with_operation(
+                    operation,
+                    session=options.get("session"),
+                ):
                     doc = d
                     break
         except Exception as exc:
@@ -1200,25 +1217,43 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         batch_size: int | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ):
-        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=False)
+        options = normalize_public_operation_arguments(
+            COLLECTION_FIND_SPEC,
+            explicit={
+                "filter_spec": filter_spec,
+                "projection": projection,
+                "collation": collation,
+                "sort": sort,
+                "skip": skip,
+                "limit": limit,
+                "hint": hint,
+                "comment": comment,
+                "max_time_ms": max_time_ms,
+                "batch_size": batch_size,
+                "session": session,
+            },
+            extra_kwargs={"filter": filter, **kwargs},
+            profile=self._pymongo_profile,
+        )
         operation = compile_find_operation(
-            filter_spec,
-            projection=projection,
-            collation=collation,
-            sort=sort,
-            skip=skip,
-            limit=limit,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            batch_size=batch_size,
+            options.get("filter_spec"),
+            projection=options.get("projection"),
+            collation=options.get("collation"),
+            sort=options.get("sort"),
+            skip=options.get("skip", 0),
+            limit=options.get("limit"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            max_time_ms=options.get("max_time_ms"),
+            batch_size=options.get("batch_size"),
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
         return self._build_cursor(
             operation,
-            session=session,
+            session=options.get("session"),
         )
 
     def aggregate(
@@ -1263,20 +1298,38 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         batch_size: int | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> AsyncRawBatchCursor:
-        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=False)
+        options = normalize_public_operation_arguments(
+            COLLECTION_FIND_RAW_BATCHES_SPEC,
+            explicit={
+                "filter_spec": filter_spec,
+                "projection": projection,
+                "collation": collation,
+                "sort": sort,
+                "skip": skip,
+                "limit": limit,
+                "hint": hint,
+                "comment": comment,
+                "max_time_ms": max_time_ms,
+                "batch_size": batch_size,
+                "session": session,
+            },
+            extra_kwargs={"filter": filter, **kwargs},
+            profile=self._pymongo_profile,
+        )
         cursor = self.find(
-            filter_spec,
-            projection,
-            collation=collation,
-            sort=sort,
-            skip=skip,
-            limit=limit,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            batch_size=batch_size,
-            session=session,
+            options.get("filter_spec", _FILTER_UNSET),
+            options.get("projection"),
+            collation=options.get("collation"),
+            sort=options.get("sort"),
+            skip=options.get("skip", 0),
+            limit=options.get("limit"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            max_time_ms=options.get("max_time_ms"),
+            batch_size=options.get("batch_size"),
+            session=options.get("session"),
         )
         offset = 0
 
@@ -1353,17 +1406,39 @@ class AsyncCollection:
         let: dict[str, object] | None = None,
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> UpdateResult[DocumentId]:
-        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
-        update_spec = self._resolve_update_argument(update_spec, update)
+        options = normalize_public_operation_arguments(
+            COLLECTION_UPDATE_ONE_SPEC,
+            explicit={
+                "filter_spec": filter_spec,
+                "update_spec": update_spec,
+                "upsert": upsert,
+                "collation": collation,
+                "sort": sort,
+                "array_filters": array_filters,
+                "hint": hint,
+                "comment": comment,
+                "let": let,
+                "bypass_document_validation": bypass_document_validation,
+                "session": session,
+            },
+            extra_kwargs={"filter": filter, "update": update, **kwargs},
+            profile=self._pymongo_profile,
+        )
+        filter_spec = self._normalize_filter(options["filter_spec"])
+        update_spec = self._require_update(options["update_spec"])
+        upsert = bool(options.get("upsert", False))
+        bypass_document_validation = bool(options.get("bypass_document_validation", False))
+        session = options.get("session")
         operation = compile_update_operation(
             filter_spec,
-            collation=collation,
-            sort=sort,
-            array_filters=array_filters,
-            hint=hint,
-            comment=comment,
-            let=let,
+            collation=options.get("collation"),
+            sort=options.get("sort"),
+            array_filters=options.get("array_filters"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            let=options.get("let"),
             dialect=self._mongodb_dialect,
             update_spec=update_spec,
             planning_mode=self._planning_mode,
@@ -1380,11 +1455,6 @@ class AsyncCollection:
             ).first()
             if selected is not None:
                 event_selected_id = selected["_id"]
-        if operation.sort is not None and not self._pymongo_profile.supports_update_one_sort():
-            raise TypeError(
-                f"sort is not supported by PyMongo profile {self._pymongo_profile.key} "
-                "for update_one()"
-            )
         if operation.sort is not None:
             selected = await self._build_cursor(
                 compile_find_selection_from_update_operation(operation, limit=1),
@@ -1563,16 +1633,37 @@ class AsyncCollection:
         let: dict[str, object] | None = None,
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> UpdateResult[DocumentId]:
-        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
-        update_spec = self._resolve_update_argument(update_spec, update)
+        options = normalize_public_operation_arguments(
+            COLLECTION_UPDATE_MANY_SPEC,
+            explicit={
+                "filter_spec": filter_spec,
+                "update_spec": update_spec,
+                "upsert": upsert,
+                "collation": collation,
+                "array_filters": array_filters,
+                "hint": hint,
+                "comment": comment,
+                "let": let,
+                "bypass_document_validation": bypass_document_validation,
+                "session": session,
+            },
+            extra_kwargs={"filter": filter, "update": update, **kwargs},
+            profile=self._pymongo_profile,
+        )
+        filter_spec = self._normalize_filter(options["filter_spec"])
+        update_spec = self._require_update(options["update_spec"])
+        upsert = bool(options.get("upsert", False))
+        bypass_document_validation = bool(options.get("bypass_document_validation", False))
+        session = options.get("session")
         operation = compile_update_operation(
             filter_spec,
-            collation=collation,
-            array_filters=array_filters,
-            hint=hint,
-            comment=comment,
-            let=let,
+            collation=options.get("collation"),
+            array_filters=options.get("array_filters"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            let=options.get("let"),
             dialect=self._mongodb_dialect,
             update_spec=update_spec,
             planning_mode=self._planning_mode,
@@ -1637,10 +1728,11 @@ class AsyncCollection:
 
     async def replace_one(
         self,
-        filter_spec: Filter,
-        replacement: Document,
+        filter_spec: Filter | object = _FILTER_UNSET,
+        replacement: Document | object = ARG_UNSET,
         upsert: bool = False,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         hint: HintSpec | None = None,
@@ -1648,23 +1740,40 @@ class AsyncCollection:
         let: dict[str, object] | None = None,
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> UpdateResult[DocumentId]:
+        options = normalize_public_operation_arguments(
+            COLLECTION_REPLACE_ONE_SPEC,
+            explicit={
+                "filter_spec": filter_spec,
+                "replacement": replacement,
+                "upsert": upsert,
+                "collation": collation,
+                "sort": sort,
+                "hint": hint,
+                "comment": comment,
+                "let": let,
+                "bypass_document_validation": bypass_document_validation,
+                "session": session,
+            },
+            extra_kwargs={"filter": filter, **kwargs},
+            profile=self._pymongo_profile,
+        )
+        filter_spec = self._normalize_filter(options["filter_spec"])
+        replacement = self._require_replacement(options["replacement"])
+        upsert = bool(options.get("upsert", False))
+        bypass_document_validation = bool(options.get("bypass_document_validation", False))
+        session = options.get("session")
         operation = compile_update_operation(
             filter_spec,
-            collation=collation,
-            sort=sort,
-            hint=hint,
-            comment=comment,
-            let=let,
+            collation=options.get("collation"),
+            sort=options.get("sort"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            let=options.get("let"),
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
-        replacement = self._require_replacement(replacement)
-        if operation.sort is not None and not self._pymongo_profile.supports_update_one_sort():
-            raise TypeError(
-                f"sort is not supported by PyMongo profile {self._pymongo_profile.key} "
-                "for replace_one()"
-            )
         selected = await self._select_first_document(
             operation.filter_spec,
             plan=operation.plan,
@@ -1743,20 +1852,45 @@ class AsyncCollection:
         let: dict[str, object] | None = None,
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> Document | None:
-        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
-        update_spec = self._resolve_update_argument(update_spec, update)
-        projection = self._normalize_projection(projection)
-        return_document = self._normalize_return_document(return_document)
+        options = normalize_public_operation_arguments(
+            COLLECTION_FIND_ONE_AND_UPDATE_SPEC,
+            explicit={
+                "filter_spec": filter_spec,
+                "update_spec": update_spec,
+                "projection": projection,
+                "collation": collation,
+                "sort": sort,
+                "upsert": upsert,
+                "return_document": return_document,
+                "array_filters": array_filters,
+                "hint": hint,
+                "comment": comment,
+                "max_time_ms": max_time_ms,
+                "let": let,
+                "bypass_document_validation": bypass_document_validation,
+                "session": session,
+            },
+            extra_kwargs={"filter": filter, "update": update, **kwargs},
+            profile=self._pymongo_profile,
+        )
+        filter_spec = self._normalize_filter(options["filter_spec"])
+        update_spec = self._require_update(options["update_spec"])
+        projection = self._normalize_projection(options.get("projection"))
+        return_document = self._normalize_return_document(options.get("return_document"))
+        upsert = bool(options.get("upsert", False))
+        bypass_document_validation = bool(options.get("bypass_document_validation", False))
+        session = options.get("session")
         operation = compile_update_operation(
             filter_spec,
-            collation=collation,
-            sort=sort,
-            array_filters=array_filters,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            let=let,
+            collation=options.get("collation"),
+            sort=options.get("sort"),
+            array_filters=options.get("array_filters"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            max_time_ms=options.get("max_time_ms"),
+            let=options.get("let"),
             dialect=self._mongodb_dialect,
             update_spec=update_spec,
             planning_mode=self._planning_mode,
@@ -1836,9 +1970,10 @@ class AsyncCollection:
 
     async def find_one_and_replace(
         self,
-        filter_spec: Filter,
-        replacement: Document,
+        filter_spec: Filter | object = _FILTER_UNSET,
+        replacement: Document | object = ARG_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         projection: Projection | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
@@ -1850,21 +1985,46 @@ class AsyncCollection:
         let: dict[str, object] | None = None,
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> Document | None:
-        projection = self._normalize_projection(projection)
-        return_document = self._normalize_return_document(return_document)
+        options = normalize_public_operation_arguments(
+            COLLECTION_FIND_ONE_AND_REPLACE_SPEC,
+            explicit={
+                "filter_spec": filter_spec,
+                "replacement": replacement,
+                "projection": projection,
+                "collation": collation,
+                "sort": sort,
+                "upsert": upsert,
+                "return_document": return_document,
+                "hint": hint,
+                "comment": comment,
+                "max_time_ms": max_time_ms,
+                "let": let,
+                "bypass_document_validation": bypass_document_validation,
+                "session": session,
+            },
+            extra_kwargs={"filter": filter, **kwargs},
+            profile=self._pymongo_profile,
+        )
+        filter_spec = self._normalize_filter(options["filter_spec"])
+        replacement = self._require_replacement(options["replacement"])
+        projection = self._normalize_projection(options.get("projection"))
+        return_document = self._normalize_return_document(options.get("return_document"))
+        upsert = bool(options.get("upsert", False))
+        bypass_document_validation = bool(options.get("bypass_document_validation", False))
+        session = options.get("session")
         operation = compile_update_operation(
             filter_spec,
-            collation=collation,
-            sort=sort,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            let=let,
+            collation=options.get("collation"),
+            sort=options.get("sort"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            max_time_ms=options.get("max_time_ms"),
+            let=options.get("let"),
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
-        replacement = self._require_replacement(replacement)
 
         before = await self._select_first_document(
             operation.filter_spec,
@@ -1939,17 +2099,35 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> Document | None:
-        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
-        projection = self._normalize_projection(projection)
+        options = normalize_public_operation_arguments(
+            COLLECTION_FIND_ONE_AND_DELETE_SPEC,
+            explicit={
+                "filter_spec": filter_spec,
+                "projection": projection,
+                "collation": collation,
+                "sort": sort,
+                "hint": hint,
+                "comment": comment,
+                "max_time_ms": max_time_ms,
+                "let": let,
+                "session": session,
+            },
+            extra_kwargs={"filter": filter, **kwargs},
+            profile=self._pymongo_profile,
+        )
+        filter_spec = self._normalize_filter(options["filter_spec"])
+        projection = self._normalize_projection(options.get("projection"))
+        session = options.get("session")
         operation = compile_update_operation(
             filter_spec,
-            collation=collation,
-            sort=sort,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            let=let,
+            collation=options.get("collation"),
+            sort=options.get("sort"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            max_time_ms=options.get("max_time_ms"),
+            let=options.get("let"),
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
@@ -1989,14 +2167,29 @@ class AsyncCollection:
         comment: object | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> DeleteResult:
-        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
+        options = normalize_public_operation_arguments(
+            COLLECTION_DELETE_ONE_SPEC,
+            explicit={
+                "filter_spec": filter_spec,
+                "collation": collation,
+                "hint": hint,
+                "comment": comment,
+                "let": let,
+                "session": session,
+            },
+            extra_kwargs={"filter": filter, **kwargs},
+            profile=self._pymongo_profile,
+        )
+        filter_spec = self._normalize_filter(options["filter_spec"])
+        session = options.get("session")
         operation = compile_update_operation(
             filter_spec,
-            collation=collation,
-            hint=hint,
-            comment=comment,
-            let=let,
+            collation=options.get("collation"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            let=options.get("let"),
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
@@ -2065,14 +2258,29 @@ class AsyncCollection:
         comment: object | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> DeleteResult:
-        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
+        options = normalize_public_operation_arguments(
+            COLLECTION_DELETE_MANY_SPEC,
+            explicit={
+                "filter_spec": filter_spec,
+                "collation": collation,
+                "hint": hint,
+                "comment": comment,
+                "let": let,
+                "session": session,
+            },
+            extra_kwargs={"filter": filter, **kwargs},
+            profile=self._pymongo_profile,
+        )
+        filter_spec = self._normalize_filter(options["filter_spec"])
+        session = options.get("session")
         operation = compile_update_operation(
             filter_spec,
-            collation=collation,
-            hint=hint,
-            comment=comment,
-            let=let,
+            collation=options.get("collation"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            let=options.get("let"),
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
@@ -2117,36 +2325,42 @@ class AsyncCollection:
         skip: int = 0,
         limit: int | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> int:
-        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
-        normalized_collation = normalize_collation(collation)
-        hint = self._normalize_hint(hint)
-        max_time_ms = self._normalize_max_time_ms(max_time_ms)
-        if not isinstance(skip, int) or isinstance(skip, bool) or skip < 0:
-            raise TypeError("skip must be a non-negative integer")
-        if limit is not None and (
-            not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
-        ):
-            raise TypeError("limit must be a non-negative integer")
+        options = normalize_public_operation_arguments(
+            COLLECTION_COUNT_DOCUMENTS_SPEC,
+            explicit={
+                "filter_spec": filter_spec,
+                "collation": collation,
+                "hint": hint,
+                "comment": comment,
+                "max_time_ms": max_time_ms,
+                "skip": skip,
+                "limit": limit,
+                "session": session,
+            },
+            extra_kwargs={"filter": filter, **kwargs},
+            profile=self._pymongo_profile,
+        )
         operation = compile_find_operation(
-            filter_spec,
+            options["filter_spec"],
             projection={"_id": 1},
-            collation=collation,
-            skip=skip,
-            limit=limit,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
+            collation=options.get("collation"),
+            skip=options.get("skip", 0),
+            limit=options.get("limit"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            max_time_ms=options.get("max_time_ms"),
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
-        count = await self._engine_count_with_operation(operation, session=session)
+        count = await self._engine_count_with_operation(operation, session=options.get("session"))
         self._record_operation_metadata(
             operation="count_documents",
             comment=operation.comment,
             hint=operation.hint,
             max_time_ms=operation.max_time_ms,
-            session=session,
+            session=options.get("session"),
         )
         return count
 
@@ -2186,21 +2400,34 @@ class AsyncCollection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> list[object]:
-        if not isinstance(key, str):
+        options = normalize_public_operation_arguments(
+            COLLECTION_DISTINCT_SPEC,
+            explicit={
+                "key": key,
+                "filter_spec": filter_spec,
+                "collation": collation,
+                "hint": hint,
+                "comment": comment,
+                "max_time_ms": max_time_ms,
+                "session": session,
+            },
+            extra_kwargs={"filter": filter, **kwargs},
+            profile=self._pymongo_profile,
+        )
+        if not isinstance(options["key"], str):
             raise TypeError("key must be a string")
-        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=False)
-        normalized_collation = normalize_collation(collation)
-        hint = self._normalize_hint(hint)
-        max_time_ms = self._normalize_max_time_ms(max_time_ms)
+        key = options["key"]
+        normalized_collation = normalize_collation(options.get("collation"))
         distinct_values: list[object] = []
         async for document in self.find(
-            filter_spec,
-            collation=collation,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            session=session,
+            options.get("filter_spec"),
+            collation=options.get("collation"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            max_time_ms=options.get("max_time_ms"),
+            session=options.get("session"),
         ):
             values = QueryEngine.extract_values(document, key)
             if not values:
@@ -2225,10 +2452,10 @@ class AsyncCollection:
                     distinct_values.append(candidate)
         self._record_operation_metadata(
             operation="distinct",
-            comment=comment,
-            hint=hint,
-            max_time_ms=max_time_ms,
-            session=session,
+            comment=options.get("comment"),
+            hint=options.get("hint"),
+            max_time_ms=options.get("max_time_ms"),
+            session=options.get("session"),
         )
         return distinct_values
 

@@ -1,5 +1,11 @@
 from typing import TYPE_CHECKING
 
+from mongoeco.api.public_api import (
+    ARG_UNSET,
+    DATABASE_LIST_COLLECTION_NAMES_SPEC,
+    DATABASE_LIST_COLLECTIONS_SPEC,
+    normalize_public_operation_arguments,
+)
 from mongoeco.api._sync.database_commands import DatabaseCommandService
 from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.session import ClientSession
@@ -8,7 +14,7 @@ from mongoeco.types import CollectionValidationDocument, Filter
 if TYPE_CHECKING:
     from mongoeco.api._sync.client import Database
 
-_FILTER_UNSET = object()
+_FILTER_UNSET = ARG_UNSET
 
 
 class DatabaseAdminService:
@@ -34,17 +40,17 @@ class DatabaseAdminService:
         *,
         filter: Filter | object = _FILTER_UNSET,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> list[str]:
-        if filter_spec is not _FILTER_UNSET and filter is not _FILTER_UNSET:
-            raise TypeError("cannot pass both filter and filter_spec")
-        if filter is not _FILTER_UNSET:
-            filter_spec = filter
-        elif filter_spec is _FILTER_UNSET:
-            filter_spec = None
+        options = normalize_public_operation_arguments(
+            DATABASE_LIST_COLLECTION_NAMES_SPEC,
+            explicit={"filter_spec": filter_spec, "session": session},
+            extra_kwargs={"filter": filter, **kwargs},
+        )
         return self._run_database_method(
             "list_collection_names",
-            filter_spec,
-            session=session,
+            options.get("filter_spec", _FILTER_UNSET),
+            session=options.get("session"),
         )
 
     def list_collections(
@@ -53,17 +59,20 @@ class DatabaseAdminService:
         *,
         filter: Filter | object = _FILTER_UNSET,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> ListingCursor:
-        if filter_spec is not _FILTER_UNSET and filter is not _FILTER_UNSET:
-            raise TypeError("cannot pass both filter and filter_spec")
-        if filter is not _FILTER_UNSET:
-            filter_spec = filter
-        elif filter_spec is _FILTER_UNSET:
-            filter_spec = None
+        options = normalize_public_operation_arguments(
+            DATABASE_LIST_COLLECTIONS_SPEC,
+            explicit={"filter_spec": filter_spec, "session": session},
+            extra_kwargs={"filter": filter, **kwargs},
+        )
         async_database = self._async_database()
         return ListingCursor(
             self._client,
-            async_database.list_collections(filter_spec, session=session),
+            async_database.list_collections(
+                options.get("filter_spec", _FILTER_UNSET),
+                session=options.get("session"),
+            ),
         )
 
     def create_collection(

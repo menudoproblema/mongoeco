@@ -1,6 +1,12 @@
 import asyncio
 import threading
 
+from mongoeco.api.public_api import (
+    ARG_UNSET,
+    DATABASE_LIST_COLLECTION_NAMES_SPEC,
+    DATABASE_LIST_COLLECTIONS_SPEC,
+    normalize_public_operation_arguments,
+)
 from mongoeco.change_streams import ChangeStreamCursor
 from mongoeco.api._sync.database_admin import DatabaseAdminService
 from mongoeco.compat import (
@@ -28,7 +34,7 @@ from mongoeco.types import (
     WriteConcern,
 )
 
-_FILTER_UNSET = object()
+_FILTER_UNSET = ARG_UNSET
 
 
 class _SyncRunner:
@@ -209,16 +215,6 @@ class Database:
         )
         self._admin = DatabaseAdminService(self)
 
-    @staticmethod
-    def _resolve_filter_argument(filter_spec: object, filter: object) -> Filter | None:
-        if filter_spec is not _FILTER_UNSET and filter is not _FILTER_UNSET:
-            raise TypeError("cannot pass both filter and filter_spec")
-        if filter is not _FILTER_UNSET:
-            return filter
-        if filter_spec is _FILTER_UNSET:
-            return None
-        return filter_spec
-
     def _async_database(self):
         self._client._ensure_connected()
         return self._client._async_client.get_database(
@@ -277,9 +273,17 @@ class Database:
         *,
         filter: Filter | object = _FILTER_UNSET,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> list[str]:
-        resolved_filter = self._resolve_filter_argument(filter_spec, filter)
-        return self._admin.list_collection_names(resolved_filter, session=session)
+        options = normalize_public_operation_arguments(
+            DATABASE_LIST_COLLECTION_NAMES_SPEC,
+            explicit={"filter_spec": filter_spec, "session": session},
+            extra_kwargs={"filter": filter, **kwargs},
+        )
+        return self._admin.list_collection_names(
+            options.get("filter_spec", _FILTER_UNSET),
+            session=options.get("session"),
+        )
 
     def list_collections(
         self,
@@ -287,9 +291,17 @@ class Database:
         *,
         filter: Filter | object = _FILTER_UNSET,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> ListingCursor:
-        resolved_filter = self._resolve_filter_argument(filter_spec, filter)
-        return self._admin.list_collections(resolved_filter, session=session)
+        options = normalize_public_operation_arguments(
+            DATABASE_LIST_COLLECTIONS_SPEC,
+            explicit={"filter_spec": filter_spec, "session": session},
+            extra_kwargs={"filter": filter, **kwargs},
+        )
+        return self._admin.list_collections(
+            options.get("filter_spec", _FILTER_UNSET),
+            session=options.get("session"),
+        )
 
     def create_collection(
         self,

@@ -254,6 +254,32 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             asyncio.run(collection.find_one({"_id": "1"}, filter={"_id": "1"}))
 
+    def test_find_one_accepts_profile_normalized_kwargs(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                await collection.insert_one({"_id": "1", "name": "Ada", "rank": 2})
+                await collection.insert_one({"_id": "2", "name": "Grace", "rank": 1})
+                return await collection.find_one(
+                    filter={"name": {"$in": ["Ada", "Grace"]}},
+                    sort=[("rank", 1)],
+                    skip=1,
+                )
+            finally:
+                await engine.disconnect()
+
+        found = asyncio.run(_exercise())
+
+        self.assertEqual(found, {"_id": "1", "name": "Ada", "rank": 2})
+
+    def test_find_one_rejects_unknown_public_kwargs(self):
+        collection = AsyncCollection(MemoryEngine(), "db", "coll")
+
+        with self.assertRaises(TypeError):
+            asyncio.run(collection.find_one(filter={"_id": "1"}, unsupported=True))
+
     def test_update_keyword_alias_is_supported_in_async_collection(self):
         async def _exercise():
             engine = MemoryEngine()

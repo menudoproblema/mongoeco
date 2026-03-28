@@ -1,5 +1,6 @@
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
+from mongoeco.api.public_api import ARG_UNSET
 from mongoeco.api._async.database_commands import build_info_document
 from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub, ChangeStreamScope
 from mongoeco.compat import (
@@ -143,19 +144,33 @@ class AsyncDatabase:
 
     async def list_collection_names(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = ARG_UNSET,
         *,
+        filter: Filter | object = ARG_UNSET,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> list[str]:
-        return await self._admin.list_collection_names(filter_spec, session=session)
+        return await self._admin.list_collection_names(
+            filter_spec,
+            filter=filter,
+            session=session,
+            **kwargs,
+        )
 
     def list_collections(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = ARG_UNSET,
         *,
+        filter: Filter | object = ARG_UNSET,
         session: ClientSession | None = None,
+        **kwargs: object,
     ):
-        return self._admin.list_collections(filter_spec, session=session)
+        return self._admin.list_collections(
+            filter_spec,
+            filter=filter,
+            session=session,
+            **kwargs,
+        )
 
     async def create_collection(
         self,

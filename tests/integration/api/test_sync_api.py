@@ -4201,6 +4201,27 @@ class SyncApiFilterAliasTests(unittest.TestCase):
                 {"_id": "1", "name": "Ada", "count": 2},
             )
 
+    def test_sync_collection_accepts_profile_normalized_kwargs(self):
+        with MongoClient(MemoryEngine()) as client:
+            collection = client.test.users
+            collection.insert_one({"_id": "1", "name": "Ada", "rank": 2})
+            collection.insert_one({"_id": "2", "name": "Grace", "rank": 1})
+
+            found = collection.find_one(
+                filter={"name": {"$in": ["Ada", "Grace"]}},
+                sort=[("rank", 1)],
+                skip=1,
+            )
+
+            self.assertEqual(found, {"_id": "1", "name": "Ada", "rank": 2})
+
+    def test_sync_collection_rejects_unknown_public_kwargs(self):
+        with MongoClient(MemoryEngine()) as client:
+            collection = client.test.users
+
+            with self.assertRaises(TypeError):
+                collection.find_one(filter={"_id": "1"}, unsupported=True)
+
     def test_sync_database_supports_filter_keyword_alias(self):
         with MongoClient(MemoryEngine()) as client:
             database = client.get_database("test")
