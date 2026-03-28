@@ -3,12 +3,7 @@
 Estado actual del repo:
 
 * fases históricas cerradas;
-* capítulo `mongomock` cerrado:
-  * `872` casos inventariados
-  * `73` `covered`
-  * `701` `equivalent`
-  * `98` `outside-scope`
-  * `0` `review-needed`
+* capítulo `mongomock` cerrado y sin backlog operativo abierto;
 * runtime local de `search` cerrado en su perímetro actual;
 * backlog restante ya no es de cierre de fases, sino de evolución del producto.
 
