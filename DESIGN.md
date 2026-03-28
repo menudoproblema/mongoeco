@@ -1085,7 +1085,7 @@ Queda ya aplicada:
 
 Lo que quede a partir de aquí ya no forma parte del cierre de Fase 8, sino de refinamiento continuo:
 
-* aumentar la clasificación real dentro de la matriz de `mongomock` más allá de la clasificación inicial ya versionada;
+* seguir importando o reescribiendo casos de alto valor desde la cola restante de `mongomock`, sobre todo en `collection` y `_mongomock`;
 * seguir apurando fidelidad BSON rara;
 * refinar comportamiento de driver o de SQLite con ambición más cercana a producción.
 
@@ -1093,9 +1093,9 @@ Estado actual del contraste versionado con `mongomock`:
 
 * `872` casos inventariados;
 * `9` ya marcados como `covered`;
-* `75` ya marcados como `equivalent`;
-* `26` marcados como `outside-scope`;
-* `762` quedan como `review-needed`.
+* `401` ya marcados como `equivalent`;
+* `44` marcados como `outside-scope`;
+* `418` quedan como `review-needed`.
 
 ### 7.5 Estado Vivo Actual del Repositorio
 

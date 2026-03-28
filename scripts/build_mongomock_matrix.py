@@ -80,6 +80,28 @@ def _resolve_case_rule(
                 ):
                     return status, note
 
+    category_test_name_prefix_rules = rules.get("category_test_name_prefix_rules", {})
+    if isinstance(category_test_name_prefix_rules, dict):
+        category = case.get("category")
+        test_name = case.get("test_name")
+        category_rules = category_test_name_prefix_rules.get(category)
+        if isinstance(test_name, str) and isinstance(category_rules, list):
+            for rule in category_rules:
+                if not isinstance(rule, dict):
+                    continue
+                prefix = rule.get("prefix")
+                status = rule.get("status")
+                note = rule.get("note", "")
+                if (
+                    isinstance(prefix, str)
+                    and prefix
+                    and test_name.startswith(prefix)
+                    and isinstance(status, str)
+                    and status in RULE_STATUSES
+                    and isinstance(note, str)
+                ):
+                    return status, note
+
     test_name_contains_rules = rules.get("test_name_contains_rules", [])
     if isinstance(test_name_contains_rules, list):
         test_name = case.get("test_name")

@@ -25,7 +25,24 @@
       "note": "Escenarios especificos de threading historicos de mongomock fuera del perimetro actual."
     }
   },
-  "case_rules": {},
+  "case_rules": {
+    "test__database_api.py::DatabaseAPITest::test__get_collection_by_attribute_underscore": {
+      "status": "outside-scope",
+      "note": "La resolucion especial por atributo con guion bajo historica de mongomock/PyMongo no forma parte del contrato principal local."
+    },
+    "test__database_api.py::DatabaseAPITest::test__with_options_type_registry": {
+      "status": "outside-scope",
+      "note": "TypeRegistry avanzado asociado a codec options historicos queda fuera del perimetro contractual actual."
+    },
+    "test__database_api.py::DatabaseAPITest::test__rename_unknown_collection": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de rename_collection con namespaces inexistentes y conflictos."
+    },
+    "test__database_api.py::DatabaseAPITest::test__bad_type_as_a_read_concern_returns_type_error": {
+      "status": "equivalent",
+      "note": "Existe validacion tipada local de read_concern y tests de surface asociados."
+    }
+  },
   "test_name_equals_rules": {
     "test_start_session": {
       "status": "covered",
@@ -223,6 +240,67 @@
       "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
     }
   ],
+  "category_test_name_prefix_rules": {
+    "collection": [
+      {
+        "prefix": "test__aggregate_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
+      },
+      {
+        "prefix": "test__update_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
+      },
+      {
+        "prefix": "test__create_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
+      },
+      {
+        "prefix": "test__drop_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de drop_collection, drop_database e indices."
+      },
+      {
+        "prefix": "test__rename_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de rename de campos y colecciones."
+      },
+      {
+        "prefix": "test__insert_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
+      }
+    ],
+    "_mongomock": [
+      {
+        "prefix": "test__aggregate_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      },
+      {
+        "prefix": "test__find_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
+      },
+      {
+        "prefix": "test__update_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de update operators y upserts."
+      },
+      {
+        "prefix": "test__drop_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de drop de colecciones e indices."
+      },
+      {
+        "prefix": "test__insert_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de inserciones y copias documentales principales."
+      }
+    ]
+  },
   "test_name_contains_rules": [
     {
       "pattern": "collation",
@@ -233,6 +311,26 @@
       "pattern": "allow_disk_use",
       "status": "equivalent",
       "note": "Existe cobertura contractual local para allow_disk_use en aggregate, explain y surface wire/admin."
+    },
+    {
+      "pattern": "hashable",
+      "status": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
+    },
+    {
+      "pattern": "equality",
+      "status": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
+    },
+    {
+      "pattern": "repr",
+      "status": "outside-scope",
+      "note": "Representaciones textuales de wrappers publicos historicos no forman parte del contrato principal de mongoeco."
+    },
+    {
+      "pattern": "dereference",
+      "status": "outside-scope",
+      "note": "DBRef dereference historico de mongomock no forma parte del contrato principal local."
     }
   ]
 }

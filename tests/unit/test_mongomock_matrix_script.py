@@ -178,6 +178,45 @@ class MongomockMatrixScriptTests(unittest.TestCase):
         self.assertEqual(matrix["cases"][0]["status"], "equivalent")
         self.assertEqual(matrix["cases"][0]["note"], "Cobertura local equivalente.")
 
+    def test_build_matrix_applies_category_test_name_prefix_rules(self):
+        module = _load_script_module()
+
+        matrix = module.build_matrix(
+            {
+                "root": "/tmp/mongomock/tests",
+                "cases": [
+                    {
+                        "file": "test_collection.py",
+                        "class_name": "CollectionTests",
+                        "test_name": "test__aggregate_lookup",
+                        "category": "collection",
+                    },
+                    {
+                        "file": "test_collection.py",
+                        "class_name": "CollectionTests",
+                        "test_name": "test__aggregate_lookup",
+                        "category": "_mongomock",
+                    },
+                ],
+            },
+            rules={
+                "category_test_name_prefix_rules": {
+                    "collection": [
+                        {
+                            "prefix": "test__aggregate_",
+                            "status": "equivalent",
+                            "note": "Cobertura local equivalente para aggregate en collection.",
+                        }
+                    ]
+                }
+            },
+        )
+
+        self.assertEqual(
+            [case["status"] for case in matrix["cases"]],
+            ["equivalent", "review-needed"],
+        )
+
     def test_build_matrix_rejects_non_document_cases(self):
         module = _load_script_module()
 

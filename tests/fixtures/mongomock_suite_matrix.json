@@ -3,9 +3,9 @@
   "inventory_total_cases": 872,
   "status_counts": {
     "covered": 9,
-    "equivalent": 75,
-    "outside-scope": 26,
-    "review-needed": 762
+    "equivalent": 401,
+    "outside-scope": 44,
+    "review-needed": 418
   },
   "cases": [
     {
@@ -224,9 +224,9 @@
       "class_name": "MongoClientApiTest",
       "test_name": "test__equality",
       "category": "_client_api",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
     },
     {
       "id": "test__client_api.py::MongoClientApiTest::test__not_hashable",
@@ -234,9 +234,9 @@
       "class_name": "MongoClientApiTest",
       "test_name": "test__not_hashable",
       "category": "_client_api",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
     },
     {
       "id": "test__client_api.py::MongoClientApiTest::test__hashable",
@@ -244,9 +244,9 @@
       "class_name": "MongoClientApiTest",
       "test_name": "test__hashable",
       "category": "_client_api",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
     },
     {
       "id": "test__client_api.py::MongoClientApiTest::test__parse_hosts",
@@ -404,9 +404,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__drop_collection",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de drop_collection, drop_database e indices."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__drop_collection_indexes",
@@ -414,9 +414,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__drop_collection_indexes",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de drop_collection, drop_database e indices."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__drop_n_recreate_collection",
@@ -424,9 +424,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__drop_n_recreate_collection",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de drop_collection, drop_database e indices."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_hint",
@@ -554,9 +554,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_retval",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__remove_retval",
@@ -644,9 +644,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__insert_one",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__insert_one_type_error",
@@ -654,9 +654,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__insert_one_type_error",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__insert_many",
@@ -664,9 +664,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__insert_many",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__insert_many_with_generator",
@@ -674,9 +674,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__insert_many_with_generator",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__insert_many_type_error",
@@ -684,9 +684,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__insert_many_type_error",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__insert_many_type_error_do_not_insert",
@@ -694,9 +694,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__insert_many_type_error_do_not_insert",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__insert_many_write_errors",
@@ -704,9 +704,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__insert_many_write_errors",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__count",
@@ -884,9 +884,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_interns_lists_and_dicts",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_cannot_change__id",
@@ -894,9 +894,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_cannot_change__id",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_empty_id",
@@ -904,9 +904,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_empty_id",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_one",
@@ -924,9 +924,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_id",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_one_upsert",
@@ -934,9 +934,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_one_upsert",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_one_upsert_dots",
@@ -944,9 +944,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_one_upsert_dots",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_one_upsert_match_subdocuments",
@@ -954,9 +954,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_one_upsert_match_subdocuments",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_one_upsert_operators",
@@ -964,9 +964,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_one_upsert_operators",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_one_unset_position",
@@ -974,9 +974,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_one_unset_position",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_one_no_change",
@@ -984,9 +984,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_one_no_change",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__rename_one_foo_to_bar",
@@ -994,9 +994,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__rename_one_foo_to_bar",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de rename de campos y colecciones."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__rename_missing_field",
@@ -1004,9 +1004,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__rename_missing_field",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de rename de campos y colecciones."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__rename_unsupported",
@@ -1014,9 +1014,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__rename_unsupported",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de rename de campos y colecciones."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_one_upsert_invalid_filter",
@@ -1024,9 +1024,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_one_upsert_invalid_filter",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_one_hint",
@@ -1034,9 +1034,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_one_hint",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_pipeline",
@@ -1044,9 +1044,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_pipeline",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_pipeline_upsert",
@@ -1054,9 +1054,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_pipeline_upsert",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_pipeline_upsert__invalid_stage_name",
@@ -1064,9 +1064,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_pipeline_upsert__invalid_stage_name",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_pipeline_invalid_stages",
@@ -1074,9 +1074,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_pipeline_invalid_stages",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_pipeline_not_mapping_nor_list",
@@ -1084,9 +1084,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_pipeline_not_mapping_nor_list",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_many",
@@ -1106,7 +1106,7 @@
       "category": "collection",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura contractual local para collation en query, sort, update, delete, distinct y aggregate."
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_many_array_filters",
@@ -1114,9 +1114,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_many_array_filters",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_many_let",
@@ -1124,9 +1124,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_many_let",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_many_upsert",
@@ -1134,9 +1134,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_many_upsert",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_non_json_values",
@@ -1144,9 +1144,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_non_json_values",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_push_slice_from_the_end",
@@ -1154,9 +1154,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_push_slice_from_the_end",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_push_slice_from_the_front",
@@ -1164,9 +1164,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_push_slice_from_the_front",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_push_slice_to_zero",
@@ -1174,9 +1174,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_push_slice_to_zero",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_push_slice_only",
@@ -1184,9 +1184,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_push_slice_only",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_push_slice_nested_field",
@@ -1194,9 +1194,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_push_slice_nested_field",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_push_slice_positional_nested_field",
@@ -1204,9 +1204,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_push_slice_positional_nested_field",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_push_sort",
@@ -1214,9 +1214,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_push_sort",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_push_sort_document",
@@ -1224,9 +1224,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_push_sort_document",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_push_position",
@@ -1234,9 +1234,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_push_position",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_push_negative_position",
@@ -1244,9 +1244,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_push_negative_position",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_push_other_clauses",
@@ -1254,9 +1254,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_push_other_clauses",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_push_positional_nested_field",
@@ -1264,9 +1264,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_push_positional_nested_field",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_push_array_of_arrays",
@@ -1274,9 +1274,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_push_array_of_arrays",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_pull_filter_operator",
@@ -1284,9 +1284,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_pull_filter_operator",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_pull_filter_operator_on_subdocs",
@@ -1294,9 +1294,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_pull_filter_operator_on_subdocs",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_pull_in",
@@ -1304,9 +1304,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_pull_in",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_pull_in_nested",
@@ -1314,9 +1314,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_pull_in_nested",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_pop",
@@ -1324,9 +1324,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_pop",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_pop_negative_index",
@@ -1334,9 +1334,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_pop_negative_index",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_pop_large_index",
@@ -1344,9 +1344,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_pop_large_index",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_pop_empty",
@@ -1354,9 +1354,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_pop_empty",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__replace_one",
@@ -1394,9 +1394,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_one_invalid",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__delete_one",
@@ -1614,9 +1614,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_uniq_idxs_with_ascending_ordering",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_uniq_idxs_with_descending_ordering",
@@ -1624,9 +1624,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_uniq_idxs_with_descending_ordering",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_uniq_idxs_without_ordering",
@@ -1634,9 +1634,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_uniq_idxs_without_ordering",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_index_duplicate",
@@ -1644,9 +1644,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_index_duplicate",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_index_wrong_type",
@@ -1654,9 +1654,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_index_wrong_type",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ttl_index_ignores_record_in_the_future",
@@ -1794,9 +1794,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_indexes_with_expireAfterSeconds",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_indexes_wrong_type",
@@ -1804,9 +1804,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_indexes_wrong_type",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_indexes_uniq_idxs",
@@ -1814,9 +1814,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_indexes_uniq_idxs",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_indexes_names",
@@ -1824,9 +1824,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_indexes_names",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ensure_uniq_idxs_with_ascending_ordering",
@@ -1894,9 +1894,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__insert_empty_doc_uniq_idx",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__insert_empty_doc_twice_uniq_idx",
@@ -1904,9 +1904,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__insert_empty_doc_twice_uniq_idx",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_sparse_unique_index",
@@ -1974,9 +1974,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_uniq_idxs_with_dupes_already_there",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_index_with_name",
@@ -1984,9 +1984,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_index_with_name",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__insert_empty_doc_idx_information",
@@ -1994,9 +1994,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__insert_empty_doc_idx_information",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__empty_table_idx_information",
@@ -2014,9 +2014,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_idx_information",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__drop_index_not_found",
@@ -2024,9 +2024,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__drop_index_not_found",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de drop_collection, drop_database e indices."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_unique_idx_information_with_ascending_ordering",
@@ -2034,9 +2034,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_unique_idx_information_with_ascending_ordering",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_unique_idx_information_with_descending_ordering",
@@ -2044,9 +2044,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__create_unique_idx_information_with_descending_ordering",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de create_collection, create_index y create_indexes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__set_with_positional_operator",
@@ -2374,9 +2374,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_current_date",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_datetime_precision",
@@ -2444,9 +2444,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__insert_zero_timestamp",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__rename_collection",
@@ -2454,9 +2454,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__rename_collection",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de rename de campos y colecciones."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__rename_collection_to_bad_names",
@@ -2464,9 +2464,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__rename_collection_to_bad_names",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de rename de campos y colecciones."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__rename_collection_already_exists",
@@ -2474,9 +2474,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__rename_collection_already_exists",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de rename de campos y colecciones."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__rename_collection_drop_target",
@@ -2484,9 +2484,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__rename_collection_drop_target",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de rename de campos y colecciones."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_rewind",
@@ -2674,9 +2674,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_replace_root",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_replace_root_use_dots",
@@ -2684,9 +2684,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_replace_root_use_dots",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_replace_root_non_existing",
@@ -2694,9 +2694,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_replace_root_non_existing",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_replace_root_missing_in_expr",
@@ -2704,9 +2704,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_replace_root_missing_in_expr",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_replace_root_static",
@@ -2714,9 +2714,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_replace_root_static",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_replace_root_expression",
@@ -2724,9 +2724,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_replace_root_expression",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_replace_root_with_array",
@@ -2734,9 +2734,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_replace_root_with_array",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_replace_root_wrong_options",
@@ -2744,9 +2744,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_replace_root_wrong_options",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_lookup",
@@ -2754,9 +2754,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_lookup",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_lookup_reverse",
@@ -2764,9 +2764,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_lookup_reverse",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_lookup_missing_operator",
@@ -2774,9 +2774,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_lookup_missing_operator",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_lookup_operator_not_string",
@@ -2784,9 +2784,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_lookup_operator_not_string",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_lookup_dot_in_local_field",
@@ -2794,9 +2794,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_lookup_dot_in_local_field",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_lookup_dot_in_as",
@@ -2804,9 +2804,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_lookup_dot_in_as",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_lookup_pipeline",
@@ -2814,9 +2814,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_lookup_pipeline",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_lookup_pipeline_with_concise_correlated_subquery",
@@ -2824,9 +2824,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_lookup_pipeline_with_concise_correlated_subquery",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_behaves_as_lookup",
@@ -2834,9 +2834,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_behaves_as_lookup",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_basic",
@@ -2844,9 +2844,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_basic",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_expression_start_with",
@@ -2854,9 +2854,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_expression_start_with",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_depth_field",
@@ -2864,9 +2864,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_depth_field",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_multiple_connections",
@@ -2874,9 +2874,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_multiple_connections",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_cyclic_pointers",
@@ -2884,9 +2884,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_cyclic_pointers",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_restrict_search",
@@ -2894,9 +2894,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_restrict_search",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_max_depth",
@@ -2904,9 +2904,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_max_depth",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_max_depth_0",
@@ -2914,9 +2914,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_max_depth_0",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_from_array",
@@ -2924,9 +2924,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_from_array",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_aggregate_graph_lookup_basic_connect_from",
@@ -2964,9 +2964,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_missing_operator",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graphlookup_operator_not_string",
@@ -2974,9 +2974,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graphlookup_operator_not_string",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_restrict_not_dict",
@@ -2984,9 +2984,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_restrict_not_dict",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_max_depth_not_number",
@@ -2994,9 +2994,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_max_depth_not_number",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_depth_filed_not_string",
@@ -3004,9 +3004,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_depth_filed_not_string",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_graph_lookup_dot_in_as_field",
@@ -3014,9 +3014,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_graph_lookup_dot_in_as_field",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_sample",
@@ -3024,9 +3024,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_sample",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_empty",
@@ -3034,9 +3034,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_empty",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_sample_errors",
@@ -3044,9 +3044,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_sample_errors",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_count",
@@ -3054,9 +3054,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_count",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_count_errors",
@@ -3064,9 +3064,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_count_errors",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_facet",
@@ -3074,9 +3074,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_facet",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_array_size",
@@ -3084,9 +3084,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_array_size",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_array_size_missing",
@@ -3094,9 +3094,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_array_size_missing",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_cond_mongodb_to_bool",
@@ -3104,9 +3104,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_cond_mongodb_to_bool",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_array_size_if_null",
@@ -3114,9 +3114,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_array_size_if_null",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_if_null",
@@ -3124,9 +3124,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_if_null",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_if_null_multi_field_not_supported",
@@ -3134,9 +3134,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_if_null_multi_field_not_supported",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_if_null_multi_field",
@@ -3144,9 +3144,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_if_null_multi_field",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_if_null_expression",
@@ -3154,9 +3154,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_if_null_expression",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_switch",
@@ -3164,9 +3164,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_switch",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_switch_operation_failures",
@@ -3174,9 +3174,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_switch_operation_failures",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_switch_mongodb_to_bool",
@@ -3184,9 +3184,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_switch_mongodb_to_bool",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_array_element_at",
@@ -3194,9 +3194,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_array_element_at",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_first",
@@ -3204,9 +3204,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_first",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_last",
@@ -3214,9 +3214,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_last",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_rename__id",
@@ -3224,9 +3224,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_rename__id",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_rename_dot_fields",
@@ -3234,9 +3234,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_rename_dot_fields",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_id",
@@ -3244,9 +3244,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_id",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_missing_fields",
@@ -3254,9 +3254,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_missing_fields",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_missing_nested_fields",
@@ -3264,9 +3264,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_missing_nested_fields",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_out",
@@ -3274,9 +3274,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_out",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_out_no_entries",
@@ -3284,9 +3284,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_out_no_entries",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_include_in_exclusion",
@@ -3294,9 +3294,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_include_in_exclusion",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_exclude_in_inclusion",
@@ -3304,9 +3304,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_exclude_in_inclusion",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_computed_field_in_exclusion",
@@ -3314,9 +3314,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_computed_field_in_exclusion",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_id_can_always_be_excluded",
@@ -3324,9 +3324,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_id_can_always_be_excluded",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_inclusion_with_only_id",
@@ -3334,9 +3334,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_inclusion_with_only_id",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_exclusion_with_only_id",
@@ -3344,9 +3344,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_exclusion_with_only_id",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_subfield",
@@ -3354,9 +3354,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_subfield",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_subfield_exclude",
@@ -3364,9 +3364,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_subfield_exclude",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_subfield_conflict",
@@ -3374,9 +3374,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_subfield_conflict",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_group_operations",
@@ -3384,9 +3384,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_group_operations",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_array_subfield",
@@ -3394,9 +3394,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_array_subfield",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_arithmetic",
@@ -3404,9 +3404,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_arithmetic",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_string_operation_split_exceptions",
@@ -3414,9 +3414,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_string_operation_split_exceptions",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_string_operations",
@@ -3424,9 +3424,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_string_operations",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_match_expr",
@@ -3434,9 +3434,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_match_expr",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_regexpmatch",
@@ -3444,9 +3444,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_regexpmatch",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_add_fields",
@@ -3454,9 +3454,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_add_fields",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_set",
@@ -3464,9 +3464,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_set",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_set_empty",
@@ -3474,9 +3474,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_set_empty",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_set_override",
@@ -3484,9 +3484,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_set_override",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_set_error",
@@ -3494,9 +3494,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_set_error",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_set_subfield",
@@ -3504,9 +3504,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_set_subfield",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__strcmp_not_enough_params",
@@ -3534,9 +3534,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_tostr_operation_objectid",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_unrecognized",
@@ -3544,9 +3544,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_unrecognized",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_not_implemented",
@@ -3554,9 +3554,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_not_implemented",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_let",
@@ -3564,9 +3564,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_let",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_project_rotate",
@@ -3574,9 +3574,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_rotate",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_mixed_expression",
@@ -3584,9 +3584,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_mixed_expression",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_type_array",
@@ -3804,9 +3804,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_project_out_replace",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__all_elemmatch",
@@ -3984,9 +3984,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_invalid_encode_type",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators, pipelines, upserts, array filters y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__replace_invalid_encode_type",
@@ -4024,9 +4024,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_group_scalar_key",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_group_uuid_key",
@@ -4034,9 +4034,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_group_uuid_key",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_group_missing_key",
@@ -4044,9 +4044,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_group_missing_key",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_group_dict_key",
@@ -4054,9 +4054,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_group_dict_key",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_group_dbref_key",
@@ -4064,9 +4064,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_group_dbref_key",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_group_sum",
@@ -4074,9 +4074,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_group_sum",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_group_sum_for_decimal",
@@ -4084,9 +4084,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_group_sum_for_decimal",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_bucket",
@@ -4094,9 +4094,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_bucket",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_bucket_no_default",
@@ -4104,9 +4104,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_bucket_no_default",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_bucket_wrong_options",
@@ -4114,9 +4114,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_bucket_wrong_options",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_subtract_dates",
@@ -4124,9 +4124,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_subtract_dates",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_subtract_milliseconds_from_date",
@@ -4134,9 +4134,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_subtract_milliseconds_from_date",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_system_variables",
@@ -4144,9 +4144,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_system_variables",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_select_nested",
@@ -4154,9 +4154,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_select_nested",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_concatArrays",
@@ -4164,9 +4164,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_concatArrays",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_concatArrays_exceptions",
@@ -4174,9 +4174,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_concatArrays_exceptions",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_filter",
@@ -4184,9 +4184,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_filter",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_filter_wrong_options",
@@ -4194,9 +4194,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_filter_wrong_options",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_map",
@@ -4204,9 +4204,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_map",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_map_errors",
@@ -4214,9 +4214,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_map_errors",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_slice",
@@ -4224,9 +4224,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_slice",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_slice_wrong",
@@ -4234,9 +4234,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_slice_wrong",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__write_concern",
@@ -4364,9 +4364,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__insert_do_not_modify_input",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_to_string",
@@ -4374,9 +4374,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_to_string",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_to_decimal",
@@ -4384,9 +4384,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_to_decimal",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_to_decimal_without_pymongo",
@@ -4394,9 +4394,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_to_decimal_without_pymongo",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_to_int",
@@ -4404,9 +4404,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_to_int",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_to_long",
@@ -4414,9 +4414,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_to_long",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_to_long_no_pymongo",
@@ -4424,9 +4424,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_to_long_no_pymongo",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_date_to_string",
@@ -4434,9 +4434,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_date_to_string",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_date_from_parts",
@@ -4444,9 +4444,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_date_from_parts",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_array_to_object",
@@ -4454,9 +4454,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__aggregate_array_to_object",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate en collection, incluyendo stages, joins, expresiones y errores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_aggregate_object_to_array",
@@ -4554,9 +4554,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__equality",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__not_hashable",
@@ -4564,9 +4564,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__not_hashable",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__hashable",
@@ -4574,9 +4574,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__hashable",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bad_type_as_a_read_concern_returns_type_error",
@@ -4604,9 +4604,9 @@
       "class_name": "DatabaseAPITest",
       "test_name": "test__get_collection_by_attribute_underscore",
       "category": "admin-client",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La resolucion especial por atributo con guion bajo historica de mongomock/PyMongo no forma parte del contrato principal local."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__session",
@@ -4664,9 +4664,9 @@
       "class_name": "DatabaseAPITest",
       "test_name": "test__repr",
       "category": "admin-client",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Representaciones textuales de wrappers publicos historicos no forman parte del contrato principal de mongoeco."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__rename_unknown_collection",
@@ -4674,9 +4674,9 @@
       "class_name": "DatabaseAPITest",
       "test_name": "test__rename_unknown_collection",
       "category": "admin-client",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de rename_collection con namespaces inexistentes y conflictos."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__dereference",
@@ -4684,9 +4684,9 @@
       "class_name": "DatabaseAPITest",
       "test_name": "test__dereference",
       "category": "admin-client",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "DBRef dereference historico de mongomock no forma parte del contrato principal local."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__read_preference",
@@ -4764,9 +4764,9 @@
       "class_name": "DatabaseAPITest",
       "test_name": "test__with_options_type_registry",
       "category": "admin-client",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "TypeRegistry avanzado asociado a codec options historicos queda fuera del perimetro contractual actual."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__collection_names",
@@ -4834,9 +4834,9 @@
       "class_name": "DatabaseAPITest",
       "test_name": "test__equality",
       "category": "admin-client",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__not_hashable",
@@ -4844,9 +4844,9 @@
       "class_name": "DatabaseAPITest",
       "test_name": "test__not_hashable",
       "category": "admin-client",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__hashable",
@@ -4854,9 +4854,9 @@
       "class_name": "DatabaseAPITest",
       "test_name": "test__hashable",
       "category": "admin-client",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__bad_type_as_a_read_concern_returns_type_error",
@@ -4864,9 +4864,9 @@
       "class_name": "DatabaseAPITest",
       "test_name": "test__bad_type_as_a_read_concern_returns_type_error",
       "category": "admin-client",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe validacion tipada local de read_concern y tests de surface asociados."
     },
     {
       "id": "test__diff.py::DiffTest::test__assert_no_diff",
@@ -5084,9 +5084,9 @@
       "class_name": "InterfaceTest",
       "test_name": "test__repr",
       "category": "_mongomock",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Representaciones textuales de wrappers publicos historicos no forman parte del contrato principal de mongoeco."
     },
     {
       "id": "test__mongomock.py::InterfaceTest::test__bad_uri_raises",
@@ -5144,9 +5144,9 @@
       "class_name": "DatabaseGettingTest",
       "test_name": "test__drop_database",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de drop de colecciones e indices."
     },
     {
       "id": "test__mongomock.py::DatabaseGettingTest::test__drop_database_system_collection",
@@ -5154,9 +5154,9 @@
       "class_name": "DatabaseGettingTest",
       "test_name": "test__drop_database_system_collection",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de drop de colecciones e indices."
     },
     {
       "id": "test__mongomock.py::DatabaseGettingTest::test__drop_database_indexes",
@@ -5164,9 +5164,9 @@
       "class_name": "DatabaseGettingTest",
       "test_name": "test__drop_database_indexes",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de drop de colecciones e indices."
     },
     {
       "id": "test__mongomock.py::DatabaseGettingTest::test__sparse_unique_index",
@@ -5194,9 +5194,9 @@
       "class_name": "DatabaseGettingTest",
       "test_name": "test__dereference",
       "category": "_mongomock",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "DBRef dereference historico de mongomock no forma parte del contrato principal local."
     },
     {
       "id": "test__mongomock.py::DatabaseGettingTest::test__getting_default_database_valid",
@@ -5254,9 +5254,9 @@
       "class_name": "EqualityCollectionTest",
       "test_name": "test__database_equality",
       "category": "_mongomock",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
     },
     {
       "id": "test__mongomock.py::EqualityCollectionTest::test__database_hashable",
@@ -5264,9 +5264,9 @@
       "class_name": "EqualityCollectionTest",
       "test_name": "test__database_hashable",
       "category": "_mongomock",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
     },
     {
       "id": "test__mongomock.py::EqualityCollectionTest::test__database_not_hashable",
@@ -5274,9 +5274,9 @@
       "class_name": "EqualityCollectionTest",
       "test_name": "test__database_not_hashable",
       "category": "_mongomock",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Semantica exacta de igualdad/hash de wrappers publicos historicos de mongomock fuera del perimetro contractual local."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_is_empty",
@@ -5284,9 +5284,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_is_empty",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__inserting",
@@ -5324,9 +5324,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__insert_one",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de inserciones y copias documentales principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__insert_many",
@@ -5334,9 +5334,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__insert_many",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de inserciones y copias documentales principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__save",
@@ -5354,9 +5354,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__insert_object_id_as_dict",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de inserciones y copias documentales principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__count",
@@ -5404,9 +5404,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_one",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_one_no_args",
@@ -5414,9 +5414,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_one_no_args",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_by_attributes",
@@ -5424,9 +5424,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_by_attributes",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_by_document",
@@ -5434,9 +5434,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_by_document",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_by_empty_document",
@@ -5444,9 +5444,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_by_empty_document",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_by_attributes_return_fields",
@@ -5454,9 +5454,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_by_attributes_return_fields",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_by_attributes_return_fields_elemMatch",
@@ -5464,9 +5464,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_by_attributes_return_fields_elemMatch",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_with_expr",
@@ -5474,9 +5474,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_with_expr",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test_double_negation",
@@ -5534,9 +5534,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_by_dotted_attributes",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_empty_array_field",
@@ -5544,9 +5544,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_empty_array_field",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_non_empty_array_field",
@@ -5554,9 +5554,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_non_empty_array_field",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_by_objectid_in_list",
@@ -5564,9 +5564,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_by_objectid_in_list",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_subselect_in_list",
@@ -5574,9 +5574,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_subselect_in_list",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_dict_in_nested_list",
@@ -5584,9 +5584,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_dict_in_nested_list",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_by_regex_object",
@@ -5594,9 +5594,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_by_regex_object",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_by_regex_string",
@@ -5604,9 +5604,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_by_regex_string",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_in_array_by_regex_object",
@@ -5614,9 +5614,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_in_array_by_regex_object",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_in_array_by_regex_string",
@@ -5624,9 +5624,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_in_array_by_regex_string",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_by_regex_string_on_absent_field_dont_break",
@@ -5634,9 +5634,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_by_regex_string_on_absent_field_dont_break",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_by_elemMatch",
@@ -5644,9 +5644,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_by_elemMatch",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_by_elemMatchDirectQuery",
@@ -5654,9 +5654,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_by_elemMatchDirectQuery",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_in_array",
@@ -5664,9 +5664,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_in_array",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_in_array_equal_null",
@@ -5674,9 +5674,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_in_array_equal_null",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_notequal",
@@ -5684,9 +5684,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_notequal",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_notequal_by_value",
@@ -5694,9 +5694,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_notequal_by_value",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_not",
@@ -5704,9 +5704,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_not",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_not_exceptions",
@@ -5714,9 +5714,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_not_exceptions",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_compare",
@@ -5724,9 +5724,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_compare",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_compare_objects",
@@ -5734,9 +5734,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_compare_objects",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_compare_nested_objects",
@@ -5744,9 +5744,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_compare_nested_objects",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_sets",
@@ -5754,9 +5754,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_sets",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_operators_in_list",
@@ -5764,9 +5764,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_operators_in_list",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_sets_regex",
@@ -5774,9 +5774,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_sets_regex",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_negative_matches",
@@ -5784,9 +5784,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_negative_matches",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_ne_multiple_keys",
@@ -5794,9 +5794,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_ne_multiple_keys",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_and_modify_remove",
@@ -5804,9 +5804,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_and_modify_remove",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_one_and_delete",
@@ -5844,9 +5844,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_sort_list",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_sort_list_empty_order",
@@ -5854,9 +5854,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_sort_list_empty_order",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_sort_list_nested_doc",
@@ -5864,9 +5864,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_sort_list_nested_doc",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_sort_list_nested_list",
@@ -5874,9 +5874,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_sort_list_nested_list",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_limit",
@@ -5884,9 +5884,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_limit",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_projection_subdocument_lists",
@@ -5894,9 +5894,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_projection_subdocument_lists",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_type",
@@ -5904,9 +5904,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_type",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__sort_mixed_types",
@@ -5924,9 +5924,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_sort_uuid",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__fail_at_uuid_encoding",
@@ -5944,9 +5944,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__find_all",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__return_only_selected_fields",
@@ -6224,9 +6224,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__update_upsert_with_id",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators y upserts."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__update_with_zero_id",
@@ -6234,9 +6234,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__update_with_zero_id",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators y upserts."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__update_upsert_with_dots",
@@ -6244,9 +6244,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__update_upsert_with_dots",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators y upserts."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__update_upsert_with_operators",
@@ -6254,9 +6254,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__update_upsert_with_operators",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators y upserts."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__update_upsert_with_matched_subdocuments",
@@ -6264,9 +6264,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__update_upsert_with_matched_subdocuments",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators y upserts."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__update_with_empty_document_comes",
@@ -6274,9 +6274,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__update_with_empty_document_comes",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators y upserts."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__update_one",
@@ -6894,9 +6894,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__update_push_slice_nested_field",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators y upserts."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__update_push_array_of_arrays",
@@ -6904,9 +6904,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__update_push_array_of_arrays",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators y upserts."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__update_push_sort",
@@ -6914,9 +6914,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__update_push_sort",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators y upserts."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__update_push_position",
@@ -6924,9 +6924,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__update_push_position",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de update operators y upserts."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__drop",
@@ -6954,9 +6954,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__drop_index",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de drop de colecciones e indices."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__drop_index_by_name",
@@ -6964,9 +6964,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__drop_index_by_name",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de drop de colecciones e indices."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__index_information",
@@ -7054,9 +7054,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__aggregate_system_variables_generate_array",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::CollectionMapReduceTest::test__map_reduce",
@@ -7324,9 +7324,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_on_no_data",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate14",
@@ -7344,9 +7344,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_group_by_dbref",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_include_in_inclusion",
@@ -7354,9 +7354,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_project_include_in_inclusion",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_exclude_in_exclusion",
@@ -7364,9 +7364,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_project_exclude_in_exclusion",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_exclude_id_in_inclusion",
@@ -7374,9 +7374,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_project_exclude_id_in_inclusion",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_with_subfields",
@@ -7384,9 +7384,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_project_with_subfields",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_with_subfields_exclude",
@@ -7394,9 +7394,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_project_with_subfields_exclude",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test_aggregate_project_with_missing_subfields",
@@ -7414,9 +7414,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_unwind_project_id",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate17",
@@ -7584,9 +7584,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_add_to_set_missing_value",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate32",
@@ -7624,9 +7624,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_regexpmatch",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate35",
@@ -7644,9 +7644,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_project_id_0",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_array_subfield",
@@ -7654,9 +7654,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_project_array_subfield",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_array_size_missing",
@@ -7664,9 +7664,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_project_array_size_missing",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_bucket",
@@ -7674,9 +7674,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_bucket",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_lookup_dot_in_local_field",
@@ -7684,9 +7684,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_lookup_dot_in_local_field",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_lookup_with_let",
@@ -7694,9 +7694,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_lookup_with_let",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_lookup_with_concise_correlated_subquery",
@@ -7704,9 +7704,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_lookup_with_concise_correlated_subquery",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_count",
@@ -7714,9 +7714,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_count",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_if_null",
@@ -7724,9 +7724,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_if_null",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_if_null_multi_field",
@@ -7734,9 +7734,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_if_null_multi_field",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_is_number",
@@ -7744,9 +7744,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_is_number",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_is_array",
@@ -7754,9 +7754,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_is_array",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_facet",
@@ -7764,9 +7764,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_facet",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_rotate",
@@ -7774,9 +7774,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_project_rotate",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_unwind_options",
@@ -7784,9 +7784,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_unwind_options",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_subtract_dates",
@@ -7794,9 +7794,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_subtract_dates",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_system_variables",
@@ -7804,9 +7804,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_system_variables",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_date_operators",
@@ -7814,9 +7814,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_date_operators",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_in",
@@ -7824,9 +7824,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_in",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_switch",
@@ -7834,9 +7834,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_switch",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_switch_mongodb_to_bool",
@@ -7844,9 +7844,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_switch_mongodb_to_bool",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_bug_473",
@@ -7854,9 +7854,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_bug_473",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_array_eleme_at",
@@ -7864,9 +7864,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_array_eleme_at",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test_aggregate_bug_607",
@@ -7884,9 +7884,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_first_last_in_array",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_cond_mongodb_to_bool",
@@ -7894,9 +7894,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_cond_mongodb_to_bool",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_concatArrays",
@@ -7904,9 +7904,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_concatArrays",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_concatArrays_exceptions",
@@ -7914,9 +7914,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_concatArrays_exceptions",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_filter",
@@ -7924,9 +7924,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_filter",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_map",
@@ -7934,9 +7934,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_map",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_filter_in_arrayElemAt",
@@ -7944,9 +7944,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_filter_in_arrayElemAt",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_slice",
@@ -7954,9 +7954,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_slice",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_no_entries",
@@ -7964,9 +7964,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_no_entries",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__replace_root",
@@ -7994,9 +7994,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__insert_date_with_timezone",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de inserciones y copias documentales principales."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test_aggregate_date_with_timezone",
@@ -8014,9 +8014,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_add_fields",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_add_fields_with_max_min",
@@ -8024,9 +8024,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_add_fields_with_max_min",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate36",
@@ -8044,9 +8044,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_exception",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_add_fields_with_sum_avg",
@@ -8054,9 +8054,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_add_fields_with_sum_avg",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test_aggregate_to_string",
@@ -8074,9 +8074,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_to_decimal",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test_aggregate_to_int",
@@ -8164,9 +8164,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_project_missing_fields",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_graph_lookup_missing_field",
@@ -8174,9 +8174,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_graph_lookup_missing_field",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_merge_objects",
@@ -8184,9 +8184,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_merge_objects",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__add_fields",
@@ -8204,9 +8204,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_with_missing_fields1",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__group_with_missing_fields1",
@@ -8254,9 +8254,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate_merge_objects_replace_root",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientGraphLookupTest::test_graphlookup_basic",
@@ -8294,9 +8294,9 @@
       "class_name": "MongoClientGraphLookupTest",
       "test_name": "test__aggregate_let",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientGraphLookupTest::test__aggregate_let_errors",
@@ -8304,9 +8304,9 @@
       "class_name": "MongoClientGraphLookupTest",
       "test_name": "test__aggregate_let_errors",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__skip",
@@ -8514,9 +8514,9 @@
       "class_name": "InsertedDocumentTest",
       "test_name": "test__find_by_id",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::InsertedDocumentTest::test__remove_by_id",
@@ -8554,9 +8554,9 @@
       "class_name": "InsertedDocumentTest",
       "test_name": "test__find_returns_copied_object",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, projection, sort, regex y filtros principales."
     },
     {
       "id": "test__mongomock.py::ObjectIdTest::test__equal_with_same_id",
