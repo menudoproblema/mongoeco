@@ -49,6 +49,37 @@ def _resolve_case_rule(
             if isinstance(status, str) and status in RULE_STATUSES and isinstance(note, str):
                 return status, note
 
+    test_name_equals_rules = rules.get("test_name_equals_rules", {})
+    if isinstance(test_name_equals_rules, dict):
+        test_name = case.get("test_name")
+        if isinstance(test_name, str):
+            rule = test_name_equals_rules.get(test_name)
+            if isinstance(rule, dict):
+                status = rule.get("status")
+                note = rule.get("note", "")
+                if isinstance(status, str) and status in RULE_STATUSES and isinstance(note, str):
+                    return status, note
+
+    test_name_prefix_rules = rules.get("test_name_prefix_rules", [])
+    if isinstance(test_name_prefix_rules, list):
+        test_name = case.get("test_name")
+        if isinstance(test_name, str):
+            for rule in test_name_prefix_rules:
+                if not isinstance(rule, dict):
+                    continue
+                prefix = rule.get("prefix")
+                status = rule.get("status")
+                note = rule.get("note", "")
+                if (
+                    isinstance(prefix, str)
+                    and prefix
+                    and test_name.startswith(prefix)
+                    and isinstance(status, str)
+                    and status in RULE_STATUSES
+                    and isinstance(note, str)
+                ):
+                    return status, note
+
     test_name_contains_rules = rules.get("test_name_contains_rules", [])
     if isinstance(test_name_contains_rules, list):
         test_name = case.get("test_name")

@@ -26,6 +26,203 @@
     }
   },
   "case_rules": {},
+  "test_name_equals_rules": {
+    "test_start_session": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de start_session y sesion de cliente en async y sync."
+    },
+    "test__session": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de sesion a nivel de database/client y transacciones locales."
+    },
+    "test_list_database_names": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de list_database_names, incluyendo visibilidad transaccional."
+    },
+    "test_database_names": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de nombres de bases de datos en cliente y database."
+    },
+    "test_client_implements_context_managers": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de context managers sync y async en el cliente."
+    },
+    "test_server_version": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de server_info/version y buildInfo como fuente de verdad."
+    },
+    "test_consistent_server_version": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de estabilidad de server_info/version entre llamadas."
+    },
+    "test__parse_url": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de parse_mongo_uri, opciones y credenciales."
+    },
+    "test__parse_hosts": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de parsing de seeds y host lists en URI."
+    },
+    "test__command_ping": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de ping y comandos admin basicos."
+    },
+    "test__command_ping_string": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de ping como comando string."
+    },
+    "test__command_fake_ping_string": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de rechazo de comandos string no soportados."
+    },
+    "test__command": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de Database.command y surface administrativa principal."
+    },
+    "test__read_preference": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de read_preference en cliente, database, collection y driver runtime."
+    },
+    "test__different_read_preference": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de with_options y override de read_preference."
+    },
+    "test__codec_options": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de codec_options en cliente, database y collection."
+    },
+    "test__codec_options_with_pymongo": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de codec_options observables con clases publicas BSON."
+    },
+    "test__codec_options_without_pymongo": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de codec_options sin depender de rutas historicas de mongomock."
+    },
+    "test__read_concern": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de read_concern en cliente, database y with_options."
+    },
+    "test__with_options": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de with_options en cliente, database y collection."
+    },
+    "test__with_options_pymongo": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de with_options con opciones estilo PyMongo."
+    },
+    "test__get_collection_different_read_preference": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de override de read_preference al pedir coleccion."
+    },
+    "test__get_collection_different_codec_options": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de override de codec_options al pedir coleccion."
+    },
+    "test__collection_names": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de nombres de colecciones."
+    },
+    "test__list_collection_names": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de list_collection_names."
+    },
+    "test__list_collections": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de list_collections y sus cursores."
+    },
+    "test__create_collection": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de create_collection y metadata asociada."
+    },
+    "test__create_collection_bad_names": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de validacion de nombres invalidos de coleccion."
+    },
+    "test__lazy_create_collection": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de creacion perezosa via insercion."
+    },
+    "test__count_documents": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de count_documents en async y sync."
+    },
+    "test__estimated_document_count": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de estimated_document_count en async y sync."
+    },
+    "test__find_one_and_delete": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de find_one_and_delete."
+    },
+    "test__find_one_and_replace": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de find_one_and_replace."
+    },
+    "test__find_one_and_update": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de find_one_and_update."
+    },
+    "test__update_one": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de update_one."
+    },
+    "test__update_many": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de update_many."
+    },
+    "test__replace_one": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de replace_one."
+    },
+    "test__delete_one": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de delete_one."
+    },
+    "test__delete_many": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de delete_many."
+    },
+    "test__distinct_nested_field": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de distinct sobre campos anidados."
+    },
+    "test__distinct_array_field": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de distinct sobre arrays."
+    },
+    "test__distinct_array_nested_field": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de distinct sobre arrays anidados."
+    },
+    "test__distinct_document_field": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de distinct sobre valores documentales."
+    },
+    "test__distinct_array_field_with_dicts": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de distinct sobre arrays con documentos."
+    },
+    "test__distinct_filter_field": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de distinct con filtro."
+    },
+    "test_insert_many_bulk_write_error": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de errores de bulk write en insert_many."
+    },
+    "test_insert_many_bulk_write_error_details": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de detalles de BulkWriteError."
+    }
+  },
+  "test_name_prefix_rules": [
+    {
+      "prefix": "test__bulk_write_",
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de bulk_write ordenado, no ordenado y modelos basicos."
+    }
+  ],
   "test_name_contains_rules": [
     {
       "pattern": "collation",

@@ -1085,9 +1085,17 @@ Queda ya aplicada:
 
 Lo que quede a partir de aquí ya no forma parte del cierre de Fase 8, sino de refinamiento continuo:
 
-* aumentar la clasificación real dentro de la matriz de `mongomock` más allá del triage inicial ya versionado;
+* aumentar la clasificación real dentro de la matriz de `mongomock` más allá de la clasificación inicial ya versionada;
 * seguir apurando fidelidad BSON rara;
 * refinar comportamiento de driver o de SQLite con ambición más cercana a producción.
+
+Estado actual del contraste versionado con `mongomock`:
+
+* `872` casos inventariados;
+* `9` ya marcados como `covered`;
+* `75` ya marcados como `equivalent`;
+* `26` marcados como `outside-scope`;
+* `762` quedan como `review-needed`.
 
 ### 7.5 Estado Vivo Actual del Repositorio
 
@@ -1095,6 +1103,6 @@ Para evitar que los cierres históricos de cada fase se confundan con el estado 
 
 * la métrica viva de referencia debe tomarse siempre de la última ejecución real de la suite, no de snapshots antiguos incluidos en fases ya cerradas;
 * en el estado actual del repositorio, la verificación de referencia es:
-  * `python -m unittest discover -s tests -p 'test*.py'` -> `1416` tests, `OK (skipped=1)`
+  * `python -m unittest discover -s tests -p 'test*.py'` -> `1446` tests, `OK (skipped=1)`
   * cobertura total sobre `src/mongoeco` -> `92%`
 * cualquier mención anterior a `100%` o a snapshots de `726`/`831` tests debe leerse como contexto histórico del cierre de fase correspondiente, no como descripción del estado presente.

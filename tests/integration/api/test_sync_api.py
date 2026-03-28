@@ -802,6 +802,17 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertEqual(tuned.write_concern, WriteConcern(1))
             self.assertEqual(tuned.read_concern, ReadConcern("local"))
 
+    def test_client_context_manager_and_server_info_are_stable(self):
+        client = MongoClient(MemoryEngine())
+        with client as managed:
+            self.assertIs(managed, client)
+            first = client.server_info()
+            second = client.server_info()
+
+            self.assertTrue(first["version"].startswith(f"{client.mongodb_dialect.server_version}."))
+            self.assertTrue(second["version"].startswith(f"{client.mongodb_dialect.server_version}."))
+            self.assertEqual(first["versionArray"], second["versionArray"])
+
     def test_start_session_inherits_default_transaction_options_from_client(self):
         transaction_options = TransactionOptions(
             write_concern=WriteConcern("majority"),

@@ -119,6 +119,65 @@ class MongomockMatrixScriptTests(unittest.TestCase):
         self.assertEqual(matrix["cases"][0]["status"], "equivalent")
         self.assertEqual(matrix["cases"][0]["note"], "Cobertura local equivalente.")
 
+    def test_build_matrix_applies_test_name_equals_rules(self):
+        module = _load_script_module()
+
+        matrix = module.build_matrix(
+            {
+                "root": "/tmp/mongomock/tests",
+                "cases": [
+                    {
+                        "file": "test_client.py",
+                        "class_name": "ClientTests",
+                        "test_name": "test_start_session",
+                        "category": "_client_api",
+                    }
+                ],
+            },
+            rules={
+                "test_name_equals_rules": {
+                    "test_start_session": {
+                        "status": "covered",
+                        "note": "Cobertura local directa.",
+                    }
+                }
+            },
+        )
+
+        self.assertEqual(matrix["status_counts"], {"covered": 1})
+        self.assertEqual(matrix["cases"][0]["status"], "covered")
+        self.assertEqual(matrix["cases"][0]["note"], "Cobertura local directa.")
+
+    def test_build_matrix_applies_test_name_prefix_rules(self):
+        module = _load_script_module()
+
+        matrix = module.build_matrix(
+            {
+                "root": "/tmp/mongomock/tests",
+                "cases": [
+                    {
+                        "file": "test_collection.py",
+                        "class_name": "CollectionTests",
+                        "test_name": "test__bulk_write_insert_one",
+                        "category": "collection",
+                    }
+                ],
+            },
+            rules={
+                "test_name_prefix_rules": [
+                    {
+                        "prefix": "test__bulk_write_",
+                        "status": "equivalent",
+                        "note": "Cobertura local equivalente.",
+                    }
+                ]
+            },
+        )
+
+        self.assertEqual(matrix["status_counts"], {"equivalent": 1})
+        self.assertEqual(matrix["cases"][0]["status"], "equivalent")
+        self.assertEqual(matrix["cases"][0]["note"], "Cobertura local equivalente.")
+
     def test_build_matrix_rejects_non_document_cases(self):
         module = _load_script_module()
 
