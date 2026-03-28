@@ -49,6 +49,27 @@ def _resolve_case_rule(
             if isinstance(status, str) and status in RULE_STATUSES and isinstance(note, str):
                 return status, note
 
+    test_name_contains_rules = rules.get("test_name_contains_rules", [])
+    if isinstance(test_name_contains_rules, list):
+        test_name = case.get("test_name")
+        if isinstance(test_name, str):
+            lowered = test_name.lower()
+            for rule in test_name_contains_rules:
+                if not isinstance(rule, dict):
+                    continue
+                pattern = rule.get("pattern")
+                status = rule.get("status")
+                note = rule.get("note", "")
+                if (
+                    isinstance(pattern, str)
+                    and pattern
+                    and pattern.lower() in lowered
+                    and isinstance(status, str)
+                    and status in RULE_STATUSES
+                    and isinstance(note, str)
+                ):
+                    return status, note
+
     return DEFAULT_STATUS, ""
 
 

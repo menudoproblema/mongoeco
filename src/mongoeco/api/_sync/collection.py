@@ -193,6 +193,7 @@ class Collection:
         self,
         pipeline: Pipeline,
         *,
+        collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
@@ -205,6 +206,7 @@ class Collection:
             self._client,
             self._async_collection().aggregate(
                 pipeline,
+                collation=collation,
                 hint=hint,
                 comment=comment,
                 max_time_ms=max_time_ms,
@@ -251,6 +253,7 @@ class Collection:
         self,
         pipeline: Pipeline,
         *,
+        collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
@@ -263,6 +266,7 @@ class Collection:
             self._client,
             self._async_collection().aggregate_raw_batches(
                 pipeline,
+                collation=collation,
                 hint=hint,
                 comment=comment,
                 max_time_ms=max_time_ms,

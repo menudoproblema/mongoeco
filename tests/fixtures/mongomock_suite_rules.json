@@ -25,5 +25,17 @@
       "note": "Escenarios especificos de threading historicos de mongomock fuera del perimetro actual."
     }
   },
-  "case_rules": {}
+  "case_rules": {},
+  "test_name_contains_rules": [
+    {
+      "pattern": "collation",
+      "status": "equivalent",
+      "note": "Existe cobertura contractual local para collation en query, sort, update, delete, distinct y aggregate."
+    },
+    {
+      "pattern": "allow_disk_use",
+      "status": "equivalent",
+      "note": "Existe cobertura contractual local para allow_disk_use en aggregate, explain y surface wire/admin."
+    }
+  ]
 }

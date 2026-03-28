@@ -89,6 +89,36 @@ class MongomockMatrixScriptTests(unittest.TestCase):
         self.assertEqual(matrix["cases"][0]["coverage"], "outside-scope")
         self.assertEqual(matrix["cases"][1]["status"], "review-needed")
 
+    def test_build_matrix_applies_test_name_contains_rules(self):
+        module = _load_script_module()
+
+        matrix = module.build_matrix(
+            {
+                "root": "/tmp/mongomock/tests",
+                "cases": [
+                    {
+                        "file": "test_collection.py",
+                        "class_name": "CollectionTests",
+                        "test_name": "test_find_with_collation",
+                        "category": "collection",
+                    }
+                ],
+            },
+            rules={
+                "test_name_contains_rules": [
+                    {
+                        "pattern": "collation",
+                        "status": "equivalent",
+                        "note": "Cobertura local equivalente.",
+                    }
+                ]
+            },
+        )
+
+        self.assertEqual(matrix["status_counts"], {"equivalent": 1})
+        self.assertEqual(matrix["cases"][0]["status"], "equivalent")
+        self.assertEqual(matrix["cases"][0]["note"], "Cobertura local equivalente.")
+
     def test_build_matrix_rejects_non_document_cases(self):
         module = _load_script_module()
 

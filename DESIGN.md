@@ -633,14 +633,15 @@ Estado de avance dentro de Fase 8:
   * IR de lectura tipada hasta engines, con shims legacy solo como compatibilidad;
   * distinción formal entre stages streamables y materializantes en el core de agregación;
   * `find_raw_batches` y `aggregate_raw_batches`;
-  * `collation` observable en query, sort, update, delete y comandos administrativos compatibles, con fallback Python seguro cuando SQLite no puede preservar la semántica;
+  * `collation` observable en query, sort, update, delete, aggregate y comandos administrativos compatibles, con fallback Python seguro cuando SQLite no puede preservar la semántica;
   * `bypass_document_validation` efectivo en escrituras de colección y en comandos administrativos de escritura;
   * type bracketing y comparación BSON aplicados también al razonamiento de índices virtuales;
   * degradación híbrida de SQLite cuando solo el `sort` requiere Python, manteniendo `scan` y `filter` en SQL;
   * centralización práctica de la capa sync en la superficie más amplia de colección, manteniendo la implementación maestra en async;
   * centralización adicional del wrapping sync en administración de base de datos, evitando más deriva manual en el borde sync;
   * inventario exhaustivo de la suite de `mongomock` y matriz base `cubierto / equivalente / no cubierto / fuera de alcance` como artefactos versionados;
-  * reglas de triage inicial para marcar de forma explícita lo que queda fuera de alcance contractual en la propia suite de `mongomock`.
+  * reglas de triage inicial para marcar de forma explícita lo que queda fuera de alcance contractual en la propia suite de `mongomock`;
+  * primera clasificación automática conservadora para casos de `collation` y `allow_disk_use` ya cubiertos por contratos locales.
 * se consideran ya fuera del perímetro de cierre de esta fase y pasan a refino continuo:
   * refinamiento BSON restante en rutas menos frecuentes y comparación fina fuera de los caminos ya cerrados;
   * refinamiento de pool de conexiones y de concurrencia/locking de SQLite, si el proyecto decide perseguir comportamiento más cercano a producción y no solo paridad funcional fina;
@@ -1084,7 +1085,7 @@ Queda ya aplicada:
 
 Lo que quede a partir de aquí ya no forma parte del cierre de Fase 8, sino de refinamiento continuo:
 
-* aumentar la clasificación real dentro de la matriz de `mongomock`;
+* aumentar la clasificación real dentro de la matriz de `mongomock` más allá del triage inicial ya versionado;
 * seguir apurando fidelidad BSON rara;
 * refinar comportamiento de driver o de SQLite con ambición más cercana a producción.
 

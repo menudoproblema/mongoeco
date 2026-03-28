@@ -23,6 +23,7 @@ from mongoeco.core.aggregation import (
     split_pushdown_pipeline,
 )
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.collation import normalize_collation
 from mongoeco.session import ClientSession
 from mongoeco.types import AggregateExplanation, Document, QueryPlanExplanation
 
@@ -40,6 +41,7 @@ class AsyncAggregationCursor:
         max_time_ms: int | None = None,
         batch_size: int | None = None,
         allow_disk_use: bool | None = None,
+        collation: dict[str, object] | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ):
@@ -52,6 +54,7 @@ class AsyncAggregationCursor:
                 max_time_ms=max_time_ms,
                 batch_size=batch_size,
                 allow_disk_use=allow_disk_use,
+                collation=collation,
                 let=let,
                 dialect=getattr(collection, "mongodb_dialect", MONGODB_DIALECT_70),
                 planning_mode=_resolve_planning_mode(collection),
@@ -63,6 +66,7 @@ class AsyncAggregationCursor:
         self._max_time_ms = operation.max_time_ms
         self._batch_size = operation.batch_size
         self._allow_disk_use = operation.allow_disk_use
+        self._collation = normalize_collation(operation.collation)
         self._let = operation.let
         self._session = session
 
@@ -228,6 +232,7 @@ class AsyncAggregationCursor:
         return self._collection.find(
             operation.filter_spec,
             operation.projection,
+            collation=operation.collation,
             sort=operation.sort,
             skip=operation.skip,
             limit=operation.limit,
@@ -259,6 +264,7 @@ class AsyncAggregationCursor:
             collection_resolver=referenced_collections.get,
             variables=self._let,
             dialect=dialect,
+            collation=self._collation,
             spill_policy=self._spill_policy(),
         )
         enforce_deadline(deadline)
@@ -276,6 +282,7 @@ class AsyncAggregationCursor:
             sort=pushdown.sort,
             skip=pushdown.skip,
             limit=pushdown.limit,
+            collation=self._operation.collation,
             hint=self._hint,
             comment=self._comment,
             max_time_ms=self._max_time_ms,
@@ -339,6 +346,7 @@ class AsyncAggregationCursor:
                 collection_resolver=referenced_collections.get,
                 variables=self._let,
                 dialect=dialect,
+                collation=self._collation,
                 spill_policy=self._spill_policy(),
             )
             enforce_deadline(deadline)

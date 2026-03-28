@@ -301,6 +301,7 @@ class AsyncDatabaseAdminService:
             collection_name,
             compile_aggregate_operation(
                 pipeline,
+                collation=spec.get("collation"),
                 hint=self._normalize_hint_from_command(spec.get(hint_field)),
                 comment=spec.get(comment_field),
                 max_time_ms=self._normalize_max_time_ms_from_command(

@@ -327,6 +327,50 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(delete_result.deleted_count, 1)
                     self.assertIsNone(collection.find_one({"_id": 3}))
 
+    def test_collation_applies_to_aggregate_and_aggregate_command(self):
+        collation = {"locale": "en", "strength": 2, "numericOrdering": True}
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.alpha.events
+                    collection.insert_many(
+                        [
+                            {"_id": 1, "kind": "View", "rank": "10"},
+                            {"_id": 2, "kind": "view", "rank": "2"},
+                            {"_id": 3, "kind": "click", "rank": "3"},
+                        ]
+                    )
+
+                    aggregated = collection.aggregate(
+                        [
+                            {"$match": {"kind": "VIEW"}},
+                            {"$sort": {"rank": 1}},
+                            {"$project": {"_id": 0, "rank": 1}},
+                        ],
+                        collation=collation,
+                    ).to_list()
+                    self.assertEqual(aggregated, [{"rank": "2"}, {"rank": "10"}])
+
+                    command_result = client.alpha.command(
+                        {
+                            "aggregate": "events",
+                            "pipeline": [
+                                {"$match": {"kind": "VIEW"}},
+                                {"$sort": {"rank": 1}},
+                                {"$project": {"_id": 0, "rank": 1}},
+                            ],
+                            "collation": collation,
+                            "cursor": {"batchSize": 1},
+                        }
+                    )
+                    self.assertEqual(
+                        command_result,
+                        {
+                            "cursor": {"id": 0, "ns": "alpha.events", "firstBatch": [{"rank": "2"}, {"rank": "10"}]},
+                            "ok": 1.0,
+                        },
+                    )
+
     def test_database_command_supports_bypass_document_validation_and_collation(self):
         collation = {"locale": "en", "strength": 2}
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

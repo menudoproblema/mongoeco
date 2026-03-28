@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.collation import CollationSpec
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
@@ -71,7 +72,13 @@ def _stage_match(
     spec: object,
     context: AggregationStageContext,
 ) -> list[Document]:
-    return _apply_match(documents, spec, context.variables, dialect=context.dialect)
+    return _apply_match(
+        documents,
+        spec,
+        context.variables,
+        dialect=context.dialect,
+        collation=context.collation,
+    )
 
 
 def _stage_project(
@@ -95,7 +102,12 @@ def _stage_sort(
     spec: object,
     context: AggregationStageContext,
 ) -> list[Document]:
-    return sort_documents(documents, _require_sort(spec), dialect=context.dialect)
+    return sort_documents(
+        documents,
+        _require_sort(spec),
+        dialect=context.dialect,
+        collation=context.collation,
+    )
 
 
 def _stage_skip(documents: list[Document], spec: object, _context: AggregationStageContext) -> list[Document]:
@@ -153,6 +165,7 @@ def _stage_lookup(
         context.collection_resolver,
         context.variables,
         dialect=context.dialect,
+        collation=context.collation,
         spill_policy=context.spill_policy,
     )
 
@@ -168,6 +181,7 @@ def _stage_union_with(
         context.collection_resolver,
         context.variables,
         dialect=context.dialect,
+        collation=context.collation,
         spill_policy=context.spill_policy,
     )
 
@@ -204,6 +218,7 @@ def _stage_facet(
         context.collection_resolver,
         context.variables,
         dialect=context.dialect,
+        collation=context.collation,
         spill_policy=context.spill_policy,
     )
 
@@ -292,6 +307,7 @@ def apply_pipeline(
     collection_resolver=None,
     variables: dict[str, Any] | None = None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
     spill_policy: AggregationSpillPolicy | None = None,
 ) -> list[Document]:
     result = [deepcopy(document) for document in documents]
@@ -306,6 +322,7 @@ def apply_pipeline(
                 collection_resolver=collection_resolver,
                 variables=variables,
                 dialect=dialect,
+                collation=collation,
                 spill_policy=spill_policy,
             ),
         )

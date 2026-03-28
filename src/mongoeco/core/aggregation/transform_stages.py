@@ -3,6 +3,7 @@ import random
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.collation import CollationSpec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import delete_document_value, set_document_value
 from mongoeco.core.projections import apply_projection
@@ -29,6 +30,7 @@ def _apply_match(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> list[Document]:
     if not isinstance(spec, dict):
         raise OperationFailure("$match requires a document specification")
@@ -56,7 +58,7 @@ def _apply_match(
                 return False
         if filter_spec:
             plan = compile_filter(filter_spec, dialect=dialect)
-            if not QueryEngine.match_plan(document, plan, dialect=dialect):
+            if not QueryEngine.match_plan(document, plan, dialect=dialect, collation=collation):
                 return False
         if expr is not None and not _expression_truthy(
             evaluate_expression(document, expr, variables, dialect=dialect),
@@ -71,7 +73,12 @@ def _apply_match(
     plan = compile_filter(spec, dialect=dialect) if spec else None
     result: list[Document] = []
     for document in documents:
-        if plan is not None and not QueryEngine.match_plan(document, plan, dialect=dialect):
+        if plan is not None and not QueryEngine.match_plan(
+            document,
+            plan,
+            dialect=dialect,
+            collation=collation,
+        ):
             continue
         result.append(document)
     return result

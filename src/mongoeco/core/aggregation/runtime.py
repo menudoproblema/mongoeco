@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.collation import CollationSpec
 from mongoeco.core.aggregation.array_string_expressions import (
     ARRAY_STRING_EXPRESSION_OPERATORS,
     evaluate_array_string_expression,
@@ -97,6 +98,7 @@ class AggregationStageContext:
     collection_resolver: Callable[[str], list[Document]] | None = None
     variables: dict[str, Any] | None = None
     dialect: MongoDialect = MONGODB_DIALECT_70
+    collation: CollationSpec | None = None
     spill_policy: AggregationSpillPolicy | None = None
 
 
@@ -251,6 +253,7 @@ def _lookup_matches(
     foreign_values: list[Any],
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> bool:
     left = local_values or [None]
     right = foreign_values or [None]
@@ -260,6 +263,7 @@ def _lookup_matches(
             foreign_value,
             null_matches_undefined=dialect.policy.null_query_matches_undefined(),
             dialect=dialect,
+            collation=collation,
         )
         for local_value in left
         for foreign_value in right

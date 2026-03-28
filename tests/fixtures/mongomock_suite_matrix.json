@@ -2,8 +2,9 @@
   "inventory_root": "/Users/uve/Proyectos/mongoeco2/.tmp/mongomock/tests",
   "inventory_total_cases": 872,
   "status_counts": {
+    "equivalent": 5,
     "outside-scope": 26,
-    "review-needed": 846
+    "review-needed": 841
   },
   "cases": [
     {
@@ -392,9 +393,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_collation",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura contractual local para collation en query, sort, update, delete, distinct y aggregate."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__drop_collection",
@@ -742,9 +743,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_with_collation",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura contractual local para collation en query, sort, update, delete, distinct y aggregate."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_removed_and_changed_options",
@@ -1102,9 +1103,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__update_many_collation",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura contractual local para collation en query, sort, update, delete, distinct y aggregate."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_many_array_filters",
@@ -1432,9 +1433,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__delete_many_collation_option",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura contractual local para collation en query, sort, update, delete, distinct y aggregate."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__delete_many_hint_option",
@@ -4592,9 +4593,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_allow_disk_use",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura contractual local para allow_disk_use en aggregate, explain y surface wire/admin."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__get_collection_by_attribute_underscore",

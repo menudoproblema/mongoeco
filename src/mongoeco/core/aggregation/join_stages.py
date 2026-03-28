@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.collation import CollationSpec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
@@ -23,6 +24,7 @@ def _apply_lookup(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
     spill_policy=None,
 ) -> list[Document]:
     lookup = _require_lookup_spec(spec)
@@ -43,6 +45,7 @@ def _apply_lookup(
                     local_values,
                     QueryEngine.extract_values(foreign_document, lookup["foreignField"]),
                     dialect=dialect,
+                    collation=collation,
                 )
             ]
         if "pipeline" in lookup:
@@ -57,6 +60,7 @@ def _apply_lookup(
                 collection_resolver=collection_resolver,
                 variables=scoped,
                 dialect=dialect,
+                collation=collation,
                 spill_policy=spill_policy,
             )
         else:
@@ -74,6 +78,7 @@ def _apply_union_with(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
     spill_policy=None,
 ) -> list[Document]:
     union_with = _require_union_with_spec(spec)
@@ -94,6 +99,7 @@ def _apply_union_with(
             collection_resolver=collection_resolver,
             variables=variables,
             dialect=dialect,
+            collation=collation,
             spill_policy=spill_policy,
         )
     return [deepcopy(document) for document in documents] + foreign_documents
@@ -106,6 +112,7 @@ def _apply_facet(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
     spill_policy=None,
 ) -> list[Document]:
     if not isinstance(spec, dict):
@@ -122,6 +129,7 @@ def _apply_facet(
             collection_resolver=collection_resolver,
             variables=variables,
             dialect=dialect,
+            collation=collation,
             spill_policy=spill_policy,
         )
     return [faceted]
