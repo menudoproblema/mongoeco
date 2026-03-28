@@ -39,7 +39,8 @@ class SelectionPolicy:
         if for_writes:
             return topology.writable_servers
         if topology.topology_type is not TopologyType.REPLICA_SET:
-            return topology.readable_servers
+            readable = topology.readable_servers
+            return self._order_nearest(readable) if self.mode is ReadPreferenceMode.NEAREST else readable
         readable = topology.readable_servers
         secondaries = tuple(
             server for server in readable if server.server_type.name == "RS_SECONDARY"
@@ -47,15 +48,67 @@ class SelectionPolicy:
         primaries = tuple(
             server for server in readable if server.server_type.name in {"RS_PRIMARY", "STANDALONE", "MONGOS"}
         )
+        eligible_secondaries = self._apply_secondary_filters(secondaries)
         if self.mode is ReadPreferenceMode.PRIMARY:
             return primaries[:1]
         if self.mode is ReadPreferenceMode.PRIMARY_PREFERRED:
-            return primaries or secondaries
+            return primaries[:1] or eligible_secondaries
         if self.mode is ReadPreferenceMode.SECONDARY:
-            return secondaries
+            return eligible_secondaries
         if self.mode is ReadPreferenceMode.SECONDARY_PREFERRED:
-            return secondaries or primaries
-        return readable
+            return eligible_secondaries or primaries[:1]
+        nearest_candidates = self._apply_tag_sets(readable)
+        return self._order_nearest(nearest_candidates)
+
+    def _apply_secondary_filters(
+        self,
+        secondaries: tuple[ServerDescription, ...],
+    ) -> tuple[ServerDescription, ...]:
+        return self._apply_staleness(self._apply_tag_sets(secondaries))
+
+    def _apply_tag_sets(
+        self,
+        servers: tuple[ServerDescription, ...],
+    ) -> tuple[ServerDescription, ...]:
+        if not self.tag_sets:
+            return servers
+        for tag_set in self.tag_sets:
+            matches = tuple(server for server in servers if _server_matches_tag_set(server, tag_set))
+            if matches:
+                return matches
+        return ()
+
+    def _apply_staleness(
+        self,
+        servers: tuple[ServerDescription, ...],
+    ) -> tuple[ServerDescription, ...]:
+        if self.max_staleness_seconds is None:
+            return servers
+        return tuple(
+            server
+            for server in servers
+            if server.staleness_seconds is None or server.staleness_seconds <= self.max_staleness_seconds
+        )
+
+    def _order_nearest(
+        self,
+        servers: tuple[ServerDescription, ...],
+    ) -> tuple[ServerDescription, ...]:
+        return tuple(
+            sorted(
+                servers,
+                key=lambda server: (
+                    float("inf") if server.round_trip_time_ms is None else server.round_trip_time_ms,
+                    server.address,
+                ),
+            )
+        )
+
+
+def _server_matches_tag_set(server: ServerDescription, tag_set: dict[str, str]) -> bool:
+    if not tag_set:
+        return True
+    return all(server.tags.get(key) == value for key, value in tag_set.items())
 
 
 @dataclass(frozen=True, slots=True)

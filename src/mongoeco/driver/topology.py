@@ -26,6 +26,7 @@ class ServerDescription:
     address: str
     server_type: ServerType = ServerType.UNKNOWN
     round_trip_time_ms: float | None = None
+    staleness_seconds: int | None = None
     set_name: str | None = None
     tags: dict[str, str] = field(default_factory=dict)
     wire_version_range: tuple[int, int] | None = None
@@ -97,6 +98,8 @@ def build_local_topology_description(uri: MongoUri) -> TopologyDescription:
             ServerDescription(
                 address=seed.address,
                 server_type=server_type,
+                round_trip_time_ms=1.0 + index,
+                staleness_seconds=0 if server_type is not ServerType.RS_SECONDARY else 15 * index,
                 set_name=uri.options.replica_set,
                 logical_session_timeout_minutes=30,
                 wire_version_range=(0, 20),

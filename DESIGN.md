@@ -869,6 +869,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * selección de servidor
     * ya existe selección básica por topología y `readPreference`
     * ya existe degradación coherente para topologías no replicadas
+    * ya soporta también filtrado básico por `readPreferenceTags`, `maxStalenessSeconds` y ordenación `nearest`
 * concerns y preferencias con semántica de driver real:
   * timeouts
   * retries
