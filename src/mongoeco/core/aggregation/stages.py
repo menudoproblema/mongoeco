@@ -330,7 +330,7 @@ def apply_pipeline(
     collation: CollationSpec | None = None,
     spill_policy: AggregationSpillPolicy | None = None,
 ) -> list[Document]:
-    result = [deepcopy(document) for document in documents]
+    result = list(documents)
     for index, stage in enumerate(pipeline):
         operator, spec = _require_stage(stage)
         stage_spec = get_aggregation_stage_spec(operator, dialect=dialect)

@@ -82,18 +82,35 @@ def sort_documents(
 ) -> list[Document]:
     if not sort:
         return documents
-    return sorted(
-        documents,
-        key=cmp_to_key(
-            lambda left, right: compare_documents(
-                left,
-                right,
-                sort,
+
+    # Precompute sort keys so comparisons do not repeatedly traverse the document.
+    decorated = [
+        (
+            [
+                sort_value(doc, field, direction, dialect=dialect, collation=collation)
+                for field, direction in sort
+            ],
+            doc,
+        )
+        for doc in documents
+    ]
+
+    def _compare_decorated(left_tuple: tuple[list[Any], Document], right_tuple: tuple[list[Any], Document]) -> int:
+        left_keys, _ = left_tuple
+        right_keys, _ = right_tuple
+        for index, (_field, direction) in enumerate(sort):
+            result = compare_with_collation(
+                left_keys[index],
+                right_keys[index],
                 dialect=dialect,
                 collation=collation,
             )
-        ),
-    )
+            if result != 0:
+                return result if direction == 1 else -result
+        return 0
+
+    decorated.sort(key=cmp_to_key(_compare_decorated))
+    return [doc for _keys, doc in decorated]
 
 
 def sort_documents_window(

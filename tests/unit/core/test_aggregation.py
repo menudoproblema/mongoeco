@@ -4,6 +4,7 @@ import math
 import re
 import unittest
 import uuid
+from copy import deepcopy
 from unittest.mock import ANY
 
 from mongoeco.compat import MongoDialect
@@ -122,6 +123,31 @@ class AggregationTests(unittest.TestCase):
                 }
             ],
         )
+
+    def test_apply_pipeline_does_not_mutate_input_documents(self):
+        documents = [
+            {"_id": "1", "name": "Ada", "nested": {"city": "London"}, "scores": [3, 1, 2]},
+            {"_id": "2", "name": "Grace", "nested": {"city": "Paris"}, "scores": [5, 4]},
+        ]
+        original = deepcopy(documents)
+
+        result = apply_pipeline(
+            documents,
+            [
+                {"$addFields": {"city": "$nested.city"}},
+                {"$sort": {"name": 1}},
+                {"$project": {"_id": 1, "city": 1, "scores": 1}},
+            ],
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {"_id": "1", "city": "London", "scores": [3, 1, 2]},
+                {"_id": "2", "city": "Paris", "scores": [5, 4]},
+            ],
+        )
+        self.assertEqual(documents, original)
         self.assertIs(_resolve_aggregation_field_path(1, "name"), _MISSING)
 
     def test_evaluate_expression_supports_common_boolean_and_arithmetic_operators(self):
