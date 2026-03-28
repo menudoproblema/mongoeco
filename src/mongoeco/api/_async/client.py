@@ -30,6 +30,7 @@ from mongoeco.driver import (
 from mongoeco.driver.monitoring import DriverMonitor
 from mongoeco.driver.transports import LocalCommandTransport
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     BuildInfoDocument,
@@ -374,6 +375,26 @@ class AsyncMongoClient:
             read_preference=self._read_preference if read_preference is None else read_preference,
             codec_options=self._codec_options if codec_options is None else codec_options,
             change_hub=self._change_hub,
+        )
+
+    def get_default_database(
+        self,
+        default: str | None = None,
+        *,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+    ) -> AsyncDatabase:
+        name = self.client_uri.default_database or default
+        if not isinstance(name, str) or not name:
+            raise InvalidOperation("No default database name defined or provided")
+        return self.get_database(
+            name,
+            write_concern=write_concern,
+            read_concern=read_concern,
+            read_preference=read_preference,
+            codec_options=codec_options,
         )
 
     def start_session(

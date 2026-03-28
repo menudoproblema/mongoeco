@@ -122,6 +122,21 @@ class ArchitectureUnitTests(unittest.TestCase):
                 self.assertIsInstance(engine, AsyncAdminEngine)
                 self.assertIsInstance(engine, AsyncStorageEngine)
 
+    def test_read_planning_engines_accept_compiled_find_semantics_directly(self):
+        async def _exercise() -> None:
+            operation = compile_find_operation({"kind": "view"}, sort=[("rank", 1)])
+            semantics = compile_find_semantics(
+                operation.filter_spec,
+                plan=operation.plan,
+                sort=operation.sort,
+            )
+            for engine in (MemoryEngine(), SQLiteEngine()):
+                async with AsyncMongoClient(engine):
+                    plan = await engine.plan_find_semantics("db", "users", semantics)
+                    self.assertIsInstance(plan, EngineReadExecutionPlan)
+                    self.assertEqual(plan.semantics.query_plan, semantics.query_plan)
+        asyncio.run(_exercise())
+
     def test_engines_produce_typed_query_plan_explanations(self):
         async def _run() -> None:
             memory = MemoryEngine()

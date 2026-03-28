@@ -1159,24 +1159,29 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> EngineReadExecutionPlan:
-        semantics = compile_find_semantics(
-            operation.filter_spec,
-            plan=operation.plan,
-            projection=operation.projection,
-            sort=operation.sort,
-            skip=operation.skip,
-            limit=operation.limit,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            dialect=dialect,
+        semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
+        return await self.plan_find_semantics(
+            db_name,
+            coll_name,
+            semantics,
+            context=context,
         )
+
+    async def plan_find_semantics(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        context: ClientSession | None = None,
+    ) -> EngineReadExecutionPlan:
+        del context
         return await self._run_blocking(
             self._compile_read_execution_plan,
             db_name,
             coll_name,
             semantics,
-            hint=operation.hint,
+            hint=semantics.hint,
         )
 
     def _explain_query_plan_sync(
@@ -4146,23 +4151,10 @@ class SQLiteEngine(AsyncStorageEngine):
             coll_name,
             semantics.hint,
         )
-        execution_plan = await self.plan_find_execution(
+        execution_plan = await self.plan_find_semantics(
             db_name,
             coll_name,
-            FindOperation(
-                filter_spec=semantics.filter_spec or {},
-                plan=semantics.query_plan,
-                projection=semantics.projection,
-                collation=None if semantics.collation is None else semantics.collation.to_document(),
-                sort=semantics.sort,
-                skip=semantics.skip,
-                limit=semantics.limit,
-                hint=semantics.hint,
-                comment=semantics.comment,
-                max_time_ms=semantics.max_time_ms,
-                batch_size=None,
-            ),
-            dialect=semantics.dialect,
+            semantics,
             context=context,
         )
         details: object

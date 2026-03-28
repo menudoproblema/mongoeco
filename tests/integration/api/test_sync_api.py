@@ -963,6 +963,34 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertEqual(tuned.write_concern, WriteConcern(1))
             self.assertEqual(tuned.read_concern, ReadConcern("local"))
 
+    def test_get_default_database_uses_uri_name_or_explicit_default_and_preserves_options(self):
+        read_preference = ReadPreference(ReadPreferenceMode.SECONDARY)
+        codec_options = CodecOptions(dict, tz_aware=True)
+
+        with MongoClient(
+            MemoryEngine(),
+            uri="mongodb://localhost/observe",
+            read_preference=read_preference,
+            codec_options=codec_options,
+        ) as client:
+            from_uri = client.get_default_database()
+            overridden = client.get_default_database(
+                "ignored",
+                write_concern=WriteConcern(1),
+            )
+
+            self.assertEqual(from_uri._name, "observe")
+            self.assertEqual(overridden._name, "observe")
+            self.assertIs(from_uri.read_preference, read_preference)
+            self.assertIs(from_uri.codec_options, codec_options)
+            self.assertEqual(overridden.write_concern, WriteConcern(1))
+
+        with MongoClient(MemoryEngine(), uri="mongodb://localhost") as client:
+            explicit = client.get_default_database("fallback")
+            self.assertEqual(explicit._name, "fallback")
+            with self.assertRaises(InvalidOperation):
+                client.get_default_database()
+
     def test_client_context_manager_and_server_info_are_stable(self):
         client = MongoClient(MemoryEngine())
         with client as managed:

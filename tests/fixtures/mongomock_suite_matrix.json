@@ -2,10 +2,9 @@
   "inventory_root": "/Users/uve/Proyectos/mongoeco2/.tmp/mongomock/tests",
   "inventory_total_cases": 872,
   "status_counts": {
-    "covered": 9,
-    "equivalent": 644,
-    "outside-scope": 97,
-    "review-needed": 122
+    "covered": 22,
+    "equivalent": 752,
+    "outside-scope": 98
   },
   "cases": [
     {
@@ -16,7 +15,7 @@
       "category": "_bulk_operations",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de inserts en bulk y errores principales."
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y mutacion controlada del argumento."
     },
     {
       "id": "test__bulk_operations.py::BulkOperationsTest::test__bulk_update_must_raise_error_if_missed_operator",
@@ -54,9 +53,9 @@
       "class_name": "BulkOperationsTest",
       "test_name": "test__update_must_update_all_documents",
       "category": "_bulk_operations",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de updates en bulk_write, incluidos lotes que afectan multiples documentos."
     },
     {
       "id": "test__bulk_operations.py::BulkOperationsTest::test__ordered_insert_and_update",
@@ -64,9 +63,9 @@
       "class_name": "BulkOperationsTest",
       "test_name": "test__ordered_insert_and_update",
       "category": "_bulk_operations",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de orden y errores parciales en bulk_write."
     },
     {
       "id": "test__bulk_operations.py::BulkOperationsTest::test__update_one",
@@ -156,7 +155,7 @@
       "category": "_bulk_operations",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de inserts en bulk y errores principales."
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y mutacion controlada del argumento."
     },
     {
       "id": "test__bulk_operations.py::CollectionComparisonTest::test__mixed_operations",
@@ -504,9 +503,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__distinct_error",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de distinct con errores de shape y validacion de argumentos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_clone",
@@ -624,9 +623,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cannot_insert_non_string_keys",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de rechazo de claves no string y errores BSON asociados."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__insert",
@@ -634,9 +633,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__insert",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y mutacion controlada del argumento."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__insert_one",
@@ -714,9 +713,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__count",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de count_documents y conteo observable en collection."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__count_documents",
@@ -864,9 +863,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__regex_options",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de regex, opciones y filtros mixtos con candidatos no string."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__iterate_on_find_and_update",
@@ -874,9 +873,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__iterate_on_find_and_update",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de iteracion con find y escrituras posteriores."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_interns_lists_and_dicts",
@@ -1454,9 +1453,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__string_matching",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de matching string, regex y comparacion observable."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__collection_is_indexable",
@@ -1464,9 +1463,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__collection_is_indexable",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de acceso indexado y por atributo a colecciones."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_distinct",
@@ -1604,9 +1603,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ordered_insert_find",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de orden observable entre insercion y lectura posterior."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_uniq_idxs_with_ascending_ordering",
@@ -2004,9 +2003,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__empty_table_idx_information",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de index_information sobre colecciones vacias."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_idx_information",
@@ -2054,9 +2053,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__set_with_positional_operator",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de $set, setUnion, setEquals y variantes sobre rutas, arrays y agregacion."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__set_replace_subdocument",
@@ -2064,9 +2063,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__set_replace_subdocument",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de $set, setUnion, setEquals y variantes sobre rutas, arrays y agregacion."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__set_replace_subdocument_positional_operator",
@@ -2074,9 +2073,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__set_replace_subdocument_positional_operator",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de $set, setUnion, setEquals y variantes sobre rutas, arrays y agregacion."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_and_modify_with_sort",
@@ -2124,9 +2123,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__avoid_change_data_after_set",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de copia defensiva al aplicar $set y al persistir documentos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__filter_with_ne",
@@ -2384,9 +2383,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_datetime_precision",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de precision y round-trip de datetimes."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__mix_tz_naive_aware",
@@ -2394,9 +2393,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__mix_tz_naive_aware",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de datetimes naive y aware con codec options."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__configure_client_tz_aware",
@@ -2404,9 +2403,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__configure_client_tz_aware",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de configuracion tz_aware a nivel de cliente y collection."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__list_of_dates",
@@ -2414,9 +2413,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__list_of_dates",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de arrays de fechas y orden BSON observable."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__current_date_timestamp_requires_pymongo",
@@ -2456,7 +2455,7 @@
       "category": "collection",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente de rename de campos y colecciones."
+      "note": "Existe cobertura local equivalente de rename_collection."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__rename_collection_to_bad_names",
@@ -3514,9 +3513,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__strcmp_not_enough_params",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de validacion de argumentos de operadores string en agregacion."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__substr_not_enough_params",
@@ -3524,9 +3523,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__substr_not_enough_params",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de validacion de argumentos de operadores substring en agregacion."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_tostr_operation_objectid",
@@ -3814,9 +3813,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__all_elemmatch",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de $all combinado con elemMatch y size."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__all_size",
@@ -3824,9 +3823,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__all_size",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de $all combinado con elemMatch y size."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__filter_eq_on_array",
@@ -3904,9 +3903,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_filter_not_bad_value",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de $not malformado, regex y filtros booleanos relacionados."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_filter_not_regex",
@@ -3914,9 +3913,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_filter_not_regex",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de $not malformado, regex y filtros booleanos relacionados."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_insert_many_bulk_write_error",
@@ -3944,9 +3943,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_insert_bson_validation",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de validacion BSON en inserciones y updates."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_insert_bson_invalid_encode_type",
@@ -3954,9 +3953,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_insert_bson_invalid_encode_type",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de validacion BSON en inserciones y updates."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_update_bson_invalid_encode_type",
@@ -3964,9 +3963,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_update_bson_invalid_encode_type",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de errores BSON en updates."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_insert_bson_special_characters",
@@ -3974,9 +3973,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_insert_bson_special_characters",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de validacion BSON en inserciones y updates."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_invalid_encode_type",
@@ -4014,9 +4013,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__agregate_first_on_empty",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de aggregate sobre casos vacios y expresiones basicas."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_group_scalar_key",
@@ -4244,9 +4243,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__write_concern",
       "category": "collection",
-      "status": "review-needed",
+      "status": "covered",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local directa de write_concern observable en cliente, database y collection."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__read_preference_default",
@@ -4254,9 +4253,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__read_preference_default",
       "category": "collection",
-      "status": "review-needed",
+      "status": "covered",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local directa de read_preference por defecto y propagacion por opciones."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__read_preference",
@@ -4314,9 +4313,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__set_union",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de $set, setUnion, setEquals y variantes sobre rutas, arrays y agregacion."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__set_equals",
@@ -4324,9 +4323,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__set_equals",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de $set, setUnion, setEquals y variantes sobre rutas, arrays y agregacion."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__add_to_set_missing_value",
@@ -4334,9 +4333,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__add_to_set_missing_value",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de addToSet sin valor y validacion observable."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__not_implemented_operator",
@@ -4514,9 +4513,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_set_no_content",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de rechazo de updates vacios o malformados."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_snapshot_arg",
@@ -4524,9 +4523,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_snapshot_arg",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "El argumento snapshot historico queda fuera del contrato principal local."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_elem_match",
@@ -4534,9 +4533,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_elem_match",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de elemMatch en filtros y arrays."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_list_collection_names_filter",
@@ -4544,9 +4543,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_list_collection_names_filter",
       "category": "collection",
-      "status": "review-needed",
+      "status": "covered",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local directa de list_collection_names con filtro en admin/database."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__equality",
@@ -4584,9 +4583,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__bad_type_as_a_read_concern_returns_type_error",
       "category": "collection",
-      "status": "review-needed",
+      "status": "covered",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local directa de validacion tipada de read_concern en cliente, database y collection."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_allow_disk_use",
@@ -5094,9 +5093,9 @@
       "class_name": "InterfaceTest",
       "test_name": "test__bad_uri_raises",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "covered",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local directa de parse_mongo_uri rechazando URIs invalidas y bounds incompatibles."
     },
     {
       "id": "test__mongomock.py::InterfaceTest::test__none_uri_host",
@@ -5104,9 +5103,9 @@
       "class_name": "InterfaceTest",
       "test_name": "test__none_uri_host",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "covered",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local directa de parse_mongo_uri con host por defecto localhost."
     },
     {
       "id": "test__mongomock.py::DatabaseGettingTest::test__get_database_read_concern",
@@ -5174,9 +5173,9 @@
       "class_name": "DatabaseGettingTest",
       "test_name": "test__sparse_unique_index",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de indices sparse unicos y parciales."
     },
     {
       "id": "test__mongomock.py::DatabaseGettingTest::test__alive",
@@ -5204,9 +5203,9 @@
       "class_name": "DatabaseGettingTest",
       "test_name": "test__getting_default_database_valid",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "covered",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local directa de get_default_database a partir de la URI del cliente."
     },
     {
       "id": "test__mongomock.py::DatabaseGettingTest::test__getting_default_database_invalid",
@@ -5214,9 +5213,9 @@
       "class_name": "DatabaseGettingTest",
       "test_name": "test__getting_default_database_invalid",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "covered",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local directa del fallo cuando no hay default database en URI ni fallback explicito."
     },
     {
       "id": "test__mongomock.py::DatabaseGettingTest::test__getting_default_database_with_default_parameter",
@@ -5224,9 +5223,9 @@
       "class_name": "DatabaseGettingTest",
       "test_name": "test__getting_default_database_with_default_parameter",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "covered",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local directa de get_default_database con fallback explicito."
     },
     {
       "id": "test__mongomock.py::DatabaseGettingTest::test__getting_default_database_ignoring_default_parameter",
@@ -5234,9 +5233,9 @@
       "class_name": "DatabaseGettingTest",
       "test_name": "test__getting_default_database_ignoring_default_parameter",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "covered",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local directa de prioridad de la URI frente al fallback explicito en get_default_database."
     },
     {
       "id": "test__mongomock.py::DatabaseGettingTest::test__getting_default_database_preserves_options",
@@ -5244,9 +5243,9 @@
       "class_name": "DatabaseGettingTest",
       "test_name": "test__getting_default_database_preserves_options",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "covered",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local directa de get_default_database preservando opciones del cliente."
     },
     {
       "id": "test__mongomock.py::EqualityCollectionTest::test__database_equality",
@@ -5294,9 +5293,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__inserting",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de inserciones simples y persistencia observable."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__bulk_insert",
@@ -5304,9 +5303,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__bulk_insert",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de bulk insert y copia defensiva de documentos."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__insert",
@@ -5314,9 +5313,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__insert",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y mutacion controlada del argumento."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__insert_one",
@@ -5484,9 +5483,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test_double_negation",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de negaciones anidadas y filtros booleanos."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__size",
@@ -5494,9 +5493,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__size",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de $size y operadores relacionados sobre arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__all_with_other_operators",
@@ -5504,9 +5503,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__all_with_other_operators",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de $all combinado con otros operadores."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__regex_match_non_string",
@@ -5514,9 +5513,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__regex_match_non_string",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de regex sobre candidatos no string y arrays mixtos."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__regex_match_non_string_in_list",
@@ -5524,9 +5523,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__regex_match_non_string_in_list",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de regex sobre candidatos no string y arrays mixtos."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_by_dotted_attributes",
@@ -5934,9 +5933,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__fail_at_uuid_encoding",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de errores de codificacion UUID/BSON."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_all",
@@ -6064,9 +6063,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__default_fields_if_projection_empty",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de projection vacia y campos por defecto."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__projection_slice_int_first",
@@ -6214,9 +6213,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__update",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de updates principales y persistencia observable."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__update_upsert_with_id",
@@ -6414,9 +6413,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__max",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de $max."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__min",
@@ -6424,9 +6423,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__min",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de $min."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__inc_upsert",
@@ -6934,9 +6933,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__drop",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de drop de colecciones e indices."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__ensure_index",
@@ -6944,9 +6943,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__ensure_index",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de create_index/ensure_index e informacion asociada."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__drop_index",
@@ -6974,9 +6973,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__index_information",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de index_information."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__list_indexes",
@@ -6984,9 +6983,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__list_indexes",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de list_indexes y cursores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__empty_logical_operators",
@@ -6994,9 +6993,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__empty_logical_operators",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de operadores logicos vacios y sus errores principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__rename",
@@ -7004,9 +7003,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__rename",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de rename de campos y colecciones."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__rename_collection",
@@ -7014,9 +7013,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__rename_collection",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de rename_collection."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__set_equals",
@@ -7056,7 +7055,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::CollectionMapReduceTest::test__map_reduce",
@@ -7194,9 +7193,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate1",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate2",
@@ -7204,9 +7203,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate2",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate3",
@@ -7214,9 +7213,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate3",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate4",
@@ -7224,9 +7223,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate4",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate5",
@@ -7234,9 +7233,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate5",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate6",
@@ -7244,9 +7243,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate6",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate7",
@@ -7254,9 +7253,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate7",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate8",
@@ -7264,9 +7263,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate8",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate9",
@@ -7274,9 +7273,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate9",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate10",
@@ -7284,9 +7283,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate10",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate11",
@@ -7294,9 +7293,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate11",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate12",
@@ -7304,9 +7303,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate12",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate13",
@@ -7314,9 +7313,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate13",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_on_no_data",
@@ -7326,7 +7325,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate14",
@@ -7334,9 +7333,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate14",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_group_by_dbref",
@@ -7346,7 +7345,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_include_in_inclusion",
@@ -7356,7 +7355,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_exclude_in_exclusion",
@@ -7366,7 +7365,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_exclude_id_in_inclusion",
@@ -7376,7 +7375,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_with_subfields",
@@ -7386,7 +7385,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_with_subfields_exclude",
@@ -7396,7 +7395,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test_aggregate_project_with_missing_subfields",
@@ -7416,7 +7415,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate17",
@@ -7424,9 +7423,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate17",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate18",
@@ -7434,9 +7433,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate18",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate19",
@@ -7444,9 +7443,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate19",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate20",
@@ -7454,9 +7453,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate20",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate21",
@@ -7464,9 +7463,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate21",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate22",
@@ -7474,9 +7473,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate22",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate23",
@@ -7484,9 +7483,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate23",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate24",
@@ -7494,9 +7493,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate24",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate25",
@@ -7504,9 +7503,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate25",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate26",
@@ -7514,9 +7513,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate26",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate27",
@@ -7524,9 +7523,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate27",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate27b",
@@ -7534,9 +7533,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate27b",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate28",
@@ -7544,9 +7543,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate28",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate29",
@@ -7554,9 +7553,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate29",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate30",
@@ -7564,9 +7563,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate30",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate31",
@@ -7574,9 +7573,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate31",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_add_to_set_missing_value",
@@ -7586,7 +7585,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate32",
@@ -7594,9 +7593,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate32",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate33",
@@ -7604,9 +7603,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate33",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate34",
@@ -7614,9 +7613,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate34",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_regexpmatch",
@@ -7626,7 +7625,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate35",
@@ -7634,9 +7633,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate35",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_id_0",
@@ -7646,7 +7645,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_array_subfield",
@@ -7656,7 +7655,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_array_size_missing",
@@ -7666,7 +7665,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_bucket",
@@ -7676,7 +7675,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_lookup_dot_in_local_field",
@@ -7686,7 +7685,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_lookup_with_let",
@@ -7696,7 +7695,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_lookup_with_concise_correlated_subquery",
@@ -7706,7 +7705,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_count",
@@ -7716,7 +7715,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_if_null",
@@ -7726,7 +7725,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_if_null_multi_field",
@@ -7736,7 +7735,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_is_number",
@@ -7746,7 +7745,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_is_array",
@@ -7756,7 +7755,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_facet",
@@ -7766,7 +7765,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_project_rotate",
@@ -7776,7 +7775,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_unwind_options",
@@ -7786,7 +7785,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_subtract_dates",
@@ -7796,7 +7795,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_system_variables",
@@ -7806,7 +7805,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_date_operators",
@@ -7816,7 +7815,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_in",
@@ -7826,7 +7825,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_switch",
@@ -7836,7 +7835,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_switch_mongodb_to_bool",
@@ -7846,7 +7845,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_bug_473",
@@ -7856,7 +7855,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_array_eleme_at",
@@ -7866,7 +7865,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test_aggregate_bug_607",
@@ -7886,7 +7885,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_cond_mongodb_to_bool",
@@ -7896,7 +7895,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_concatArrays",
@@ -7906,7 +7905,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_concatArrays_exceptions",
@@ -7916,7 +7915,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_filter",
@@ -7926,7 +7925,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_map",
@@ -7936,7 +7935,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_filter_in_arrayElemAt",
@@ -7946,7 +7945,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_slice",
@@ -7956,7 +7955,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_no_entries",
@@ -7966,7 +7965,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__replace_root",
@@ -7974,9 +7973,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__replace_root",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de replaceRoot y replaceWith en agregacion."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__replace_root_new_document",
@@ -7984,9 +7983,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__replace_root_new_document",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de replaceRoot y replaceWith en agregacion."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__insert_date_with_timezone",
@@ -8016,7 +8015,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_add_fields_with_max_min",
@@ -8026,7 +8025,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate36",
@@ -8034,9 +8033,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__aggregate36",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_exception",
@@ -8046,7 +8045,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_add_fields_with_sum_avg",
@@ -8056,7 +8055,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test_aggregate_to_string",
@@ -8076,7 +8075,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test_aggregate_to_int",
@@ -8134,9 +8133,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__create_duplicate_index",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de indices duplicados y validacion observable."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__partial_filter_expression_unique_index",
@@ -8144,9 +8143,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__partial_filter_expression_unique_index",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de indices parciales unicos."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test_aggregate_project_with_boolean",
@@ -8166,7 +8165,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_graph_lookup_missing_field",
@@ -8176,7 +8175,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_merge_objects",
@@ -8186,7 +8185,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__add_fields",
@@ -8194,9 +8193,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__add_fields",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de addFields/set en agregacion."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_with_missing_fields1",
@@ -8206,7 +8205,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__group_with_missing_fields1",
@@ -8244,9 +8243,9 @@
       "class_name": "MongoClientAggregateTest",
       "test_name": "test__add_fields_with_missing_fields",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de addFields/set en agregacion."
     },
     {
       "id": "test__mongomock.py::MongoClientAggregateTest::test__aggregate_merge_objects_replace_root",
@@ -8256,7 +8255,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientGraphLookupTest::test_graphlookup_basic",
@@ -8296,7 +8295,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientGraphLookupTest::test__aggregate_let_errors",
@@ -8306,7 +8305,7 @@
       "category": "_mongomock",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura local equivalente amplia de aggregate frente a la superficie historica de mongomock."
+      "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__skip",
@@ -8314,9 +8313,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__skip",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de skip, sort+skip y slicing de cursores."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__skipped_find",
@@ -8324,9 +8323,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__skipped_find",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de skip, sort+skip y slicing de cursores."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__limit",
@@ -8334,9 +8333,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__limit",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de limit y ventanas de cursor."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__negative_limit",
@@ -8344,9 +8343,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__negative_limit",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de rechazo de limites negativos."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__skip_and_limit",
@@ -8354,9 +8353,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__skip_and_limit",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de skip, sort+skip y slicing de cursores."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__count",
@@ -8454,9 +8453,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__close",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de cierre de cursores y clientes."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__distinct_nested_field",
@@ -8504,9 +8503,9 @@
       "class_name": "InsertedDocumentTest",
       "test_name": "test__object_is_consistent",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de consistencia observable y copia defensiva de documentos insertados."
     },
     {
       "id": "test__mongomock.py::InsertedDocumentTest::test__find_by_id",
@@ -8534,9 +8533,9 @@
       "class_name": "InsertedDocumentTest",
       "test_name": "test__inserting_changes_argument",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de mutacion controlada del argumento al insertar y preservacion del almacenado."
     },
     {
       "id": "test__mongomock.py::InsertedDocumentTest::test__data_is_copied",
@@ -8544,9 +8543,9 @@
       "class_name": "InsertedDocumentTest",
       "test_name": "test__data_is_copied",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de copia defensiva de datos insertados."
     },
     {
       "id": "test__mongomock.py::InsertedDocumentTest::test__find_returns_copied_object",
@@ -8564,9 +8563,9 @@
       "class_name": "ObjectIdTest",
       "test_name": "test__equal_with_same_id",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de igualdad por valor en ObjectId y wrappers BSON."
     },
     {
       "id": "test__mongomock.py::MongoClientTest::test__database_names",
@@ -8574,9 +8573,9 @@
       "class_name": "MongoClientTest",
       "test_name": "test__database_names",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "covered",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local directa de list_database_names y visibilidad de nombres de bases de datos."
     },
     {
       "id": "test__mongomock.py::DatabaseTest::test__database_names",
@@ -8584,9 +8583,9 @@
       "class_name": "DatabaseTest",
       "test_name": "test__database_names",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "covered",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local directa de list_database_names y visibilidad de nombres de bases de datos."
     },
     {
       "id": "test__not_implemented.py::NotImplementedTests::test_raises",

@@ -1368,23 +1368,10 @@ class MemoryEngine(AsyncStorageEngine):
             dialect=semantics.dialect,
         )
         enforce_deadline(deadline)
-        execution_plan = await self.plan_find_execution(
+        execution_plan = await self.plan_find_semantics(
             db_name,
             coll_name,
-            FindOperation(
-                filter_spec=semantics.filter_spec or {},
-                projection=semantics.projection,
-                collation=None if semantics.collation is None else semantics.collation.to_document(),
-                sort=semantics.sort,
-                skip=semantics.skip,
-                limit=semantics.limit,
-                hint=semantics.hint,
-                comment=semantics.comment,
-                max_time_ms=semantics.max_time_ms,
-                batch_size=None,
-                plan=semantics.query_plan,
-            ),
-            dialect=semantics.dialect,
+            semantics,
             context=context,
         )
         details = describe_virtual_index_usage(
@@ -1414,18 +1401,24 @@ class MemoryEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> EngineReadExecutionPlan:
-        semantics = compile_find_semantics(
-            operation.filter_spec,
-            plan=operation.plan,
-            projection=operation.projection,
-            sort=operation.sort,
-            skip=operation.skip,
-            limit=operation.limit,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            dialect=dialect,
+        semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
+        return await self.plan_find_semantics(
+            db_name,
+            coll_name,
+            semantics,
+            context=context,
         )
+
+    @override
+    async def plan_find_semantics(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        context: ClientSession | None = None,
+    ) -> EngineReadExecutionPlan:
+        del db_name, coll_name, context
         lineage = [
             ExecutionLineageStep(runtime="python", phase="scan", detail="engine scan"),
             ExecutionLineageStep(runtime="python", phase="filter", detail="semantic core"),

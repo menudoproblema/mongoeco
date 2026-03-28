@@ -749,10 +749,10 @@ Perímetro:
 
 Estado vivo actual de la matriz:
 * `872` casos inventariados;
-* `9` `covered`;
-* `644` `equivalent`;
-* `97` `outside-scope`;
-* `122` `review-needed`.
+* `22` `covered`;
+* `752` `equivalent`;
+* `98` `outside-scope`;
+* `0` `review-needed`.
 
 Orden recomendado:
 1. descargar reglas conservadoras por familias ya cubiertas;
@@ -1185,19 +1185,21 @@ Refinamiento continuo ya aplicado después del cierre formal de Fase 8:
 * `SyncRunner` protegido frente a cierre concurrente mientras otra llamada sync sigue ejecutándose;
 * acceso real a `asyncio.Runner` serializado con lock para evitar carreras entre `run()`, drenado de tareas y `close()` cuando varias hebras sync comparten cliente;
 * la ruta canónica interna de lectura ya es `scan_find_semantics(...)` / `explain_find_semantics(...)`, mientras `scan_collection(...)`, `scan_find_operation(...)` y equivalentes quedan como shims legacy de compatibilidad;
+* los motores de lectura ya aceptan también `plan_find_semantics(...)` como ruta directa de planificación interna, evitando reconstruir `FindOperation` cuando la API ya dispone de semánticas compiladas;
 * pool de conexiones del driver con espera FIFO real para reducir starvation bajo contención.
 * `bulk_write` y writes compuestos ya preparan y validan sus modelos en paralelo antes de entrar en la ruta de ejecución, sin perder la semántica actual de errores ordenados/no ordenados.
 * `insert_many` sobre SQLite ya puede aprovechar una ruta bulk con validación paralela previa y un tramo transaccional único controlado para la inserción real.
 * `put_documents_bulk` entra al lock con serialización, `storage_key` y filas multikey ya precalculadas desde el snapshot estable de índices, recalculando dentro del lock solo si la metadata cambió de verdad;
 * la verificación de índices físicos multikey persistidos ya no penaliza el `connect()` completo; pasa a una ruta perezosa al cargar metadata de índices de la colección.
+* `AsyncMongoClient` y `MongoClient` ya exponen `get_default_database(...)` con prioridad de la URI, fallback explícito y preservación de opciones del cliente.
 
 Estado actual del contraste versionado con `mongomock`:
 
 * `872` casos inventariados;
-* `9` ya marcados como `covered`;
-* `587` ya marcados como `equivalent`;
-* `66` marcados como `outside-scope`;
-* `210` quedan como `review-needed`.
+* `22` ya marcados como `covered`;
+* `752` ya marcados como `equivalent`;
+* `98` marcados como `outside-scope`;
+* `0` quedan como `review-needed`.
 
 Orden recomendado de refino continuo a partir de aquí:
 

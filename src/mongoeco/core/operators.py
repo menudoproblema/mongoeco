@@ -1,16 +1,13 @@
 import re
-from functools import cmp_to_key
-from datetime import UTC, datetime
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.bson_scalars import bson_add, bson_bitwise, bson_multiply, is_bson_numeric, unwrap_bson_numeric
+from mongoeco.core.bson_scalars import is_bson_numeric, unwrap_bson_numeric
 from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.errors import OperationFailure
-from mongoeco.core.paths import _same_value_for_update, delete_document_value, get_document_value, set_document_value
-from mongoeco.core.sorting import sort_documents
+from mongoeco.core.paths import get_document_value
 from mongoeco.core.update_paths import (
     CompiledUpdateInstruction,
     CompiledUpdatePath,
@@ -20,12 +17,47 @@ from mongoeco.core.update_paths import (
     resolve_positional_update_paths,
 )
 from mongoeco.types import ArrayFilters, Filter, Regex, SortSpec
+from mongoeco.core.update_array_operators import (
+    apply_add_to_set,
+    apply_pop,
+    apply_pull,
+    apply_pull_all,
+    apply_push,
+)
+from mongoeco.core.update_scalar_operators import (
+    apply_bit,
+    apply_current_date,
+    apply_inc,
+    apply_max,
+    apply_min,
+    apply_mul,
+    apply_rename,
+    apply_set,
+    apply_set_on_insert,
+    apply_unset,
+)
+
+
+UpdateOperatorHandler = Callable[[dict[str, Any], tuple[CompiledUpdateInstruction, ...], "UpdateExecutionContext"], bool]
+
+
+def _unsupported_update_operator_handler(operator: str) -> UpdateOperatorHandler:
+    def _raise(
+        doc: dict[str, Any],
+        instructions: tuple[CompiledUpdateInstruction, ...],
+        context: "UpdateExecutionContext",
+    ) -> bool:
+        del doc, instructions, context
+        raise OperationFailure(f"Unsupported update operator: {operator}")
+
+    return _raise
 
 
 @dataclass(frozen=True, slots=True)
 class CompiledUpdateOperator:
     operator: str
     instructions: tuple[CompiledUpdateInstruction, ...]
+    handler: UpdateOperatorHandler
 
     def apply(
         self,
@@ -33,13 +65,7 @@ class CompiledUpdateOperator:
         *,
         context: "UpdateExecutionContext",
     ) -> bool:
-        handler_name = UpdateEngine._OPERATOR_HANDLERS.get(self.operator)
-        if handler_name is None:
-            raise OperationFailure(f"Unsupported update operator: {self.operator}")
-        handler = getattr(UpdateEngine, handler_name)
-        if self.operator == "$rename":
-            return handler(doc, self.instructions, dialect=context.dialect)
-        return handler(doc, self.instructions, context=context)
+        return self.handler(doc, self.instructions, context)
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,22 +100,22 @@ class ResolvedInstructionApplication:
 class UpdateEngine:
     """Motor central para aplicar operadores de actualización de MongoDB."""
 
-    _OPERATOR_HANDLERS: dict[str, str] = {
-        "$set": "_apply_set",
-        "$unset": "_apply_unset",
-        "$inc": "_apply_inc",
-        "$min": "_apply_min",
-        "$max": "_apply_max",
-        "$mul": "_apply_mul",
-        "$bit": "_apply_bit",
-        "$rename": "_apply_rename",
-        "$currentDate": "_apply_current_date",
-        "$setOnInsert": "_apply_set_on_insert",
-        "$push": "_apply_push",
-        "$addToSet": "_apply_add_to_set",
-        "$pull": "_apply_pull",
-        "$pullAll": "_apply_pull_all",
-        "$pop": "_apply_pop",
+    _OPERATOR_HANDLERS: dict[str, UpdateOperatorHandler] = {
+        "$set": lambda doc, instructions, context: apply_set(doc, instructions, context=context, helpers=UpdateEngine),
+        "$unset": lambda doc, instructions, context: apply_unset(doc, instructions, context=context, helpers=UpdateEngine),
+        "$inc": lambda doc, instructions, context: apply_inc(doc, instructions, context=context, helpers=UpdateEngine),
+        "$min": lambda doc, instructions, context: apply_min(doc, instructions, context=context, helpers=UpdateEngine),
+        "$max": lambda doc, instructions, context: apply_max(doc, instructions, context=context, helpers=UpdateEngine),
+        "$mul": lambda doc, instructions, context: apply_mul(doc, instructions, context=context, helpers=UpdateEngine),
+        "$bit": lambda doc, instructions, context: apply_bit(doc, instructions, context=context, helpers=UpdateEngine),
+        "$rename": lambda doc, instructions, context: apply_rename(doc, instructions, context=context, helpers=UpdateEngine),
+        "$currentDate": lambda doc, instructions, context: apply_current_date(doc, instructions, context=context, helpers=UpdateEngine),
+        "$setOnInsert": lambda doc, instructions, context: apply_set_on_insert(doc, instructions, context=context, helpers=UpdateEngine),
+        "$push": lambda doc, instructions, context: apply_push(doc, instructions, context=context, helpers=UpdateEngine),
+        "$addToSet": lambda doc, instructions, context: apply_add_to_set(doc, instructions, context=context, helpers=UpdateEngine),
+        "$pull": lambda doc, instructions, context: apply_pull(doc, instructions, context=context, helpers=UpdateEngine),
+        "$pullAll": lambda doc, instructions, context: apply_pull_all(doc, instructions, context=context, helpers=UpdateEngine),
+        "$pop": lambda doc, instructions, context: apply_pop(doc, instructions, context=context, helpers=UpdateEngine),
     }
 
     @staticmethod
@@ -221,6 +247,8 @@ class UpdateEngine:
                 CompiledUpdateOperator(
                     operator=operator,
                     instructions=tuple(instructions),
+                    handler=UpdateEngine._OPERATOR_HANDLERS.get(operator)
+                    or _unsupported_update_operator_handler(operator),
                 )
             )
         unused_identifiers = set(array_filters) - referenced_identifiers
@@ -495,584 +523,3 @@ class UpdateEngine:
             return [(path, value) for path, value in dialect.policy.sort_update_path_items(params)]
         except TypeError as exc:
             raise OperationFailure("update field names must be strings") from exc
-
-    @staticmethod
-    def _apply_set(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        modified = False
-        for application in UpdateEngine._resolve_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-            allow_positional=True,
-        ):
-            for target in application.targets:
-                if set_document_value(
-                    doc,
-                    target.concrete_path,
-                    deepcopy(application.instruction.value),
-                ):
-                    modified = True
-        return modified
-
-    @staticmethod
-    def _apply_unset(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        modified = False
-        for application in UpdateEngine._resolve_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-            allow_positional=True,
-        ):
-            for target in application.targets:
-                if delete_document_value(doc, target.concrete_path):
-                    modified = True
-        return modified
-
-    @staticmethod
-    def _apply_inc(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        modified = False
-        for application in UpdateEngine._resolve_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-            allow_positional=True,
-        ):
-            increment = application.instruction.value
-            if not UpdateEngine._is_numeric(increment):
-                raise OperationFailure("$inc requires numeric values")
-            for target in application.targets:
-                found, current = get_document_value(doc, target.concrete_path)
-                if not found:
-                    if set_document_value(doc, target.concrete_path, increment):
-                        modified = True
-                    continue
-                if not UpdateEngine._is_numeric(current):
-                    raise OperationFailure("$inc requires the target field to be numeric")
-                if set_document_value(doc, target.concrete_path, bson_add(current, increment)):
-                    modified = True
-        return modified
-
-    @staticmethod
-    def _apply_min(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        modified = False
-        for application in UpdateEngine._resolve_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-            allow_positional=True,
-        ):
-            value = application.instruction.value
-            for target in application.targets:
-                found, current = get_document_value(doc, target.concrete_path)
-                if not found or context.dialect.policy.compare_values(current, value) > 0:
-                    if set_document_value(doc, target.concrete_path, deepcopy(value)):
-                        modified = True
-        return modified
-
-    @staticmethod
-    def _apply_max(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        modified = False
-        for application in UpdateEngine._resolve_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-            allow_positional=True,
-        ):
-            value = application.instruction.value
-            for target in application.targets:
-                found, current = get_document_value(doc, target.concrete_path)
-                if not found or context.dialect.policy.compare_values(current, value) < 0:
-                    if set_document_value(doc, target.concrete_path, deepcopy(value)):
-                        modified = True
-        return modified
-
-    @staticmethod
-    def _apply_mul(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        modified = False
-        for application in UpdateEngine._resolve_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-            allow_positional=True,
-        ):
-            factor = application.instruction.value
-            if not UpdateEngine._is_numeric(factor):
-                raise OperationFailure("$mul requires numeric values")
-            for target in application.targets:
-                found, current = get_document_value(doc, target.concrete_path)
-                if not found:
-                    missing_value = bson_multiply(
-                        0.0 if isinstance(unwrap_bson_numeric(factor), float) else 0,
-                        factor,
-                    )
-                    if set_document_value(doc, target.concrete_path, missing_value):
-                        modified = True
-                    continue
-                if not UpdateEngine._is_numeric(current):
-                    raise OperationFailure("$mul requires the target field to be numeric")
-                if set_document_value(doc, target.concrete_path, bson_multiply(current, factor)):
-                    modified = True
-        return modified
-
-    @staticmethod
-    def _apply_bit(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        modified = False
-        for application in UpdateEngine._resolve_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-            allow_positional=True,
-        ):
-            bit_spec = application.instruction.value
-            if not isinstance(bit_spec, dict):
-                raise OperationFailure("$bit requires a document of bitwise operations")
-            if not bit_spec:
-                continue
-            if len(bit_spec) != 1:
-                raise OperationFailure("$bit requires exactly one of and, or, or xor")
-            operator, operand = next(iter(bit_spec.items()))
-            if operator not in {"and", "or", "xor"}:
-                raise OperationFailure("$bit only supports and, or, and xor")
-            if not UpdateEngine._is_integral(operand):
-                raise OperationFailure("$bit requires integer operands")
-            for target in application.targets:
-                found, current = get_document_value(doc, target.concrete_path)
-                if not found:
-                    raise OperationFailure("$bit requires the target field to exist and be an integer")
-                if not UpdateEngine._is_integral(current):
-                    raise OperationFailure("$bit requires the target field to be an integer")
-                replacement = bson_bitwise(operator, current, operand)
-                if set_document_value(doc, target.concrete_path, replacement):
-                    modified = True
-        return modified
-
-    @staticmethod
-    def _apply_rename(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
-    ) -> bool:
-        modified = False
-        for instruction in instructions:
-            if instruction.target_path is None:
-                raise OperationFailure("$rename requires string target paths")
-            found, current = get_document_value(doc, instruction.path.raw)
-            if not found:
-                continue
-            delete_document_value(doc, instruction.target_path.raw)
-            set_document_value(doc, instruction.target_path.raw, deepcopy(current))
-            delete_document_value(doc, instruction.path.raw)
-            modified = True
-        return modified
-
-    @staticmethod
-    def _apply_current_date(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        modified = False
-        now = datetime.now(UTC).replace(tzinfo=None)
-        for application in UpdateEngine._resolve_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-            allow_positional=True,
-        ):
-            value = application.instruction.value
-            if value is True:
-                replacement = now
-            elif isinstance(value, dict) and set(value) == {"$type"} and value["$type"] == "date":
-                replacement = now
-            else:
-                raise OperationFailure("$currentDate only supports True or {$type: 'date'}")
-            for target in application.targets:
-                if set_document_value(doc, target.concrete_path, replacement):
-                    modified = True
-        return modified
-
-    @staticmethod
-    def _apply_set_on_insert(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        if not context.is_upsert_insert:
-            return False
-        return UpdateEngine._apply_set(
-            doc,
-            instructions,
-            context=context,
-        )
-
-    @staticmethod
-    def _expand_array_update_values(operator: str, value: Any) -> list[Any]:
-        if not isinstance(value, dict) or "$each" not in value:
-            return [deepcopy(value)]
-        if set(value) != {"$each"}:
-            raise OperationFailure(f"{operator} only supports the $each modifier")
-        each = value["$each"]
-        if not isinstance(each, list):
-            raise OperationFailure(f"{operator} $each requires an array")
-        return deepcopy(each)
-
-    @staticmethod
-    def _normalize_push_modifiers(
-        value: Any,
-    ) -> tuple[list[Any], int | None, int | None, SortSpec | int | None]:
-        if not isinstance(value, dict) or "$each" not in value:
-            return [deepcopy(value)], None, None, None
-
-        unsupported = set(value) - {"$each", "$position", "$slice", "$sort"}
-        if unsupported:
-            unsupported_names = ", ".join(sorted(unsupported))
-            raise OperationFailure(
-                f"$push only supports the $each, $position, $slice and $sort modifiers: {unsupported_names}"
-            )
-
-        each = value["$each"]
-        if not isinstance(each, list):
-            raise OperationFailure("$push $each requires an array")
-
-        position = value.get("$position")
-        if position is not None and (
-            not isinstance(position, int) or isinstance(position, bool)
-        ):
-            raise OperationFailure("$push $position must be an integer")
-
-        slice_value = value.get("$slice")
-        if slice_value is not None and (
-            not isinstance(slice_value, int) or isinstance(slice_value, bool)
-        ):
-            raise OperationFailure("$push $slice must be an integer")
-
-        sort_value = value.get("$sort")
-        sort_spec: SortSpec | int | None = None
-        if sort_value is not None:
-            if sort_value in (1, -1) and not isinstance(sort_value, bool):
-                sort_spec = sort_value
-            elif isinstance(sort_value, dict):
-                normalized: SortSpec = []
-                for field, direction in sort_value.items():
-                    if not isinstance(field, str):
-                        raise OperationFailure("$push $sort fields must be strings")
-                    if direction not in (1, -1) or isinstance(direction, bool):
-                        raise OperationFailure("$push $sort directions must be 1 or -1")
-                    normalized.append((field, direction))
-                sort_spec = normalized
-            else:
-                raise OperationFailure("$push $sort must be 1, -1 or a document")
-
-        return deepcopy(each), position, slice_value, sort_spec
-
-    @staticmethod
-    def _apply_push_values(
-        current: list[Any],
-        values: list[Any],
-        *,
-        position: int | None,
-        slice_value: int | None,
-        sort_spec: SortSpec | int | None,
-        dialect: MongoDialect,
-    ) -> bool:
-        if not values and slice_value is None and sort_spec is None:
-            return False
-
-        if values:
-            if position is None:
-                current.extend(values)
-            else:
-                insertion_index = position if position >= 0 else len(current) + position
-                insertion_index = min(max(insertion_index, 0), len(current))
-                for offset, value in enumerate(values):
-                    current.insert(insertion_index + offset, value)
-
-        if sort_spec is not None:
-            if isinstance(sort_spec, int):
-                current.sort(
-                    key=cmp_to_key(dialect.policy.compare_values),
-                    reverse=sort_spec == -1,
-                )
-            else:
-                if any(not isinstance(item, dict) for item in current):
-                    raise OperationFailure(
-                        "$push $sort with a document specification requires array elements to be documents"
-                    )
-                current[:] = sort_documents(current, sort_spec, dialect=dialect)
-
-        if slice_value is not None:
-            current[:] = current[:slice_value] if slice_value >= 0 else current[slice_value:]
-
-        return bool(values) or sort_spec is not None or slice_value is not None
-
-    @staticmethod
-    def _resolve_array_instruction_applications(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> tuple[ResolvedInstructionApplication, ...]:
-        return UpdateEngine._resolve_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-            allow_positional=True,
-        )
-
-    @staticmethod
-    def _get_or_create_array_target(
-        doc: dict[str, Any],
-        concrete_path: str,
-        *,
-        operator_name: str,
-    ) -> tuple[list[Any], bool]:
-        found, current = get_document_value(doc, concrete_path)
-        if not found:
-            current = []
-            set_document_value(doc, concrete_path, current)
-            return current, True
-        if not isinstance(current, list):
-            raise OperationFailure(f"{operator_name} requires the target field to be an array")
-        return current, False
-
-    @staticmethod
-    def _apply_push(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        modified = False
-        for application in UpdateEngine._resolve_array_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-        ):
-            values, position, slice_value, sort_spec = UpdateEngine._normalize_push_modifiers(
-                application.instruction.value
-            )
-            for target in application.targets:
-                current, _created = UpdateEngine._get_or_create_array_target(
-                    doc,
-                    target.concrete_path,
-                    operator_name="$push",
-                )
-                if UpdateEngine._apply_push_values(
-                    current,
-                    values,
-                    position=position,
-                    slice_value=slice_value,
-                    sort_spec=sort_spec,
-                    dialect=context.dialect,
-                ):
-                    modified = True
-        return modified
-
-    @staticmethod
-    def _apply_add_to_set(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        modified = False
-        for application in UpdateEngine._resolve_array_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-        ):
-            values = UpdateEngine._expand_array_update_values(
-                "$addToSet",
-                application.instruction.value,
-            )
-            for target in application.targets:
-                current, created = UpdateEngine._get_or_create_array_target(
-                    doc,
-                    target.concrete_path,
-                    operator_name="$addToSet",
-                )
-                if created:
-                    unique_values: list[Any] = []
-                    for candidate in values:
-                        if any(
-                            QueryEngine._values_equal(
-                                existing,
-                                candidate,
-                                dialect=context.dialect,
-                            )
-                            for existing in unique_values
-                        ):
-                            continue
-                        unique_values.append(candidate)
-                    if set_document_value(doc, target.concrete_path, unique_values):
-                        modified = True
-                    continue
-                for candidate in values:
-                    if any(
-                        QueryEngine._values_equal(existing, candidate, dialect=context.dialect)
-                        for existing in current
-                    ):
-                        continue
-                    current.append(candidate)
-                    modified = True
-        return modified
-
-    @staticmethod
-    def _apply_pull(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        modified = False
-        for application in UpdateEngine._resolve_array_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-        ):
-            value = application.instruction.value
-            for target in application.targets:
-                found, current = get_document_value(doc, target.concrete_path)
-                if not found:
-                    continue
-                if not isinstance(current, list):
-                    raise OperationFailure("$pull requires the target field to be an array")
-                if isinstance(value, dict) or isinstance(value, (re.Pattern, Regex)):
-                    compiled_regex = value.compile() if isinstance(value, Regex) else value
-                    is_predicate = True if isinstance(value, (re.Pattern, Regex)) else (
-                        any(isinstance(key, str) and key.startswith("$") for key in value) or any(
-                            isinstance(candidate, dict) and any(isinstance(key, str) and key.startswith("$") for key in candidate)
-                            for candidate in value.values()
-                        )
-                    )
-                    filtered = [
-                        candidate
-                        for candidate in current
-                        if not (
-                            (
-                                isinstance(candidate, str) and compiled_regex.search(candidate) is not None
-                                if isinstance(value, (re.Pattern, Regex))
-                                else QueryEngine._match_elem_match_candidate(
-                                    candidate,
-                                    value,
-                                    dialect=context.dialect,
-                                )
-                            ) if is_predicate else QueryEngine._values_equal(
-                                candidate,
-                                value,
-                                dialect=context.dialect,
-                            )
-                        )
-                    ]
-                else:
-                    filtered = [
-                        candidate
-                        for candidate in current
-                        if not QueryEngine._values_equal(candidate, value, dialect=context.dialect)
-                    ]
-                if not _same_value_for_update(filtered, current):
-                    if set_document_value(doc, target.concrete_path, filtered):
-                        modified = True
-        return modified
-
-    @staticmethod
-    def _apply_pull_all(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        modified = False
-        for application in UpdateEngine._resolve_array_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-        ):
-            value = application.instruction.value
-            if not isinstance(value, list):
-                raise OperationFailure("$pullAll requires an array of values")
-            for target in application.targets:
-                found, current = get_document_value(doc, target.concrete_path)
-                if not found:
-                    continue
-                if not isinstance(current, list):
-                    raise OperationFailure("$pullAll requires the target field to be an array")
-                filtered = [
-                    candidate
-                    for candidate in current
-                    if not any(
-                        QueryEngine._values_equal(candidate, removal, dialect=context.dialect)
-                        for removal in value
-                    )
-                ]
-                if not _same_value_for_update(filtered, current):
-                    if set_document_value(doc, target.concrete_path, filtered):
-                        modified = True
-        return modified
-
-    @staticmethod
-    def _apply_pop(
-        doc: dict[str, Any],
-        instructions: tuple[CompiledUpdateInstruction, ...],
-        *,
-        context: UpdateExecutionContext,
-    ) -> bool:
-        modified = False
-        for application in UpdateEngine._resolve_array_instruction_applications(
-            doc,
-            instructions,
-            context=context,
-        ):
-            direction = application.instruction.value
-            if isinstance(direction, bool) or direction not in (-1, 1):
-                raise OperationFailure("$pop requires 1 or -1 as direction")
-            for target in application.targets:
-                found, current = get_document_value(doc, target.concrete_path)
-                if not found:
-                    continue
-                if not isinstance(current, list):
-                    raise OperationFailure("$pop requires the target field to be an array")
-                if not current:
-                    continue
-                updated = current[1:] if direction == -1 else current[:-1]
-                if set_document_value(doc, target.concrete_path, updated):
-                    modified = True
-        return modified

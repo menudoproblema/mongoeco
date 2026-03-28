@@ -475,6 +475,26 @@ class MongoClient:
             codec_options=codec_options,
         )
 
+    def get_default_database(
+        self,
+        default: str | None = None,
+        *,
+        write_concern: WriteConcern | None = None,
+        read_concern: ReadConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        codec_options: CodecOptions | None = None,
+    ) -> Database:
+        name = self.client_uri.default_database or default
+        if not isinstance(name, str) or not name:
+            raise InvalidOperation("No default database name defined or provided")
+        return self.get_database(
+            name,
+            write_concern=write_concern,
+            read_concern=read_concern,
+            read_preference=read_preference,
+            codec_options=codec_options,
+        )
+
     def start_session(
         self,
         *,

@@ -84,6 +84,178 @@
       "status": "covered",
       "note": "Existe cobertura local directa de parsing de seeds y host lists en URI."
     },
+    "test__bad_uri_raises": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de parse_mongo_uri rechazando URIs invalidas y bounds incompatibles."
+    },
+    "test__none_uri_host": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de parse_mongo_uri con host por defecto localhost."
+    },
+    "test__getting_default_database_valid": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de get_default_database a partir de la URI del cliente."
+    },
+    "test__getting_default_database_invalid": {
+      "status": "covered",
+      "note": "Existe cobertura local directa del fallo cuando no hay default database en URI ni fallback explicito."
+    },
+    "test__getting_default_database_with_default_parameter": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de get_default_database con fallback explicito."
+    },
+    "test__getting_default_database_ignoring_default_parameter": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de prioridad de la URI frente al fallback explicito en get_default_database."
+    },
+    "test__getting_default_database_preserves_options": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de get_default_database preservando opciones del cliente."
+    },
+    "test__database_names": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de list_database_names y visibilidad de nombres de bases de datos."
+    },
+    "test__write_concern": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de write_concern observable en cliente, database y collection."
+    },
+    "test__read_preference_default": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de read_preference por defecto y propagacion por opciones."
+    },
+    "test_list_collection_names_filter": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de list_collection_names con filtro en admin/database."
+    },
+    "test_snapshot_arg": {
+      "status": "outside-scope",
+      "note": "El argumento snapshot historico queda fuera del contrato principal local."
+    },
+    "test__bad_type_as_a_read_concern_returns_type_error": {
+      "status": "covered",
+      "note": "Existe cobertura local directa de validacion tipada de read_concern en cliente, database y collection."
+    },
+    "test__distinct_error": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de distinct con errores de shape y validacion de argumentos."
+    },
+    "test__cannot_insert_non_string_keys": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de rechazo de claves no string y errores BSON asociados."
+    },
+    "test__string_matching": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de matching string, regex y comparacion observable."
+    },
+    "test__avoid_change_data_after_set": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de copia defensiva al aplicar $set y al persistir documentos."
+    },
+    "test_update_bson_invalid_encode_type": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de errores BSON en updates."
+    },
+    "test__add_to_set_missing_value": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de addToSet sin valor y validacion observable."
+    },
+    "test_set_no_content": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de rechazo de updates vacios o malformados."
+    },
+    "test__inserting": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de inserciones simples y persistencia observable."
+    },
+    "test__bulk_insert": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de bulk insert y copia defensiva de documentos."
+    },
+    "test__insert": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de insert_one, insert_many y mutacion controlada del argumento."
+    },
+    "test__size": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de $size y operadores relacionados sobre arrays."
+    },
+    "test__fail_at_uuid_encoding": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de errores de codificacion UUID/BSON."
+    },
+    "test__default_fields_if_projection_empty": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de projection vacia y campos por defecto."
+    },
+    "test__update": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de updates principales y persistencia observable."
+    },
+    "test__max": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de $max."
+    },
+    "test__min": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de $min."
+    },
+    "test__drop": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de drop de colecciones e indices."
+    },
+    "test__ensure_index": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de create_index/ensure_index e informacion asociada."
+    },
+    "test__index_information": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de index_information."
+    },
+    "test__list_indexes": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de list_indexes y cursores asociados."
+    },
+    "test__empty_logical_operators": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de operadores logicos vacios y sus errores principales."
+    },
+    "test__rename": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de rename de campos y colecciones."
+    },
+    "test__rename_collection": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de rename_collection."
+    },
+    "test__create_duplicate_index": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de indices duplicados y validacion observable."
+    },
+    "test__partial_filter_expression_unique_index": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de indices parciales unicos."
+    },
+    "test__close": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de cierre de cursores y clientes."
+    },
+    "test__object_is_consistent": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de consistencia observable y copia defensiva de documentos insertados."
+    },
+    "test__inserting_changes_argument": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de mutacion controlada del argumento al insertar y preservacion del almacenado."
+    },
+    "test__data_is_copied": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de copia defensiva de datos insertados."
+    },
+    "test__equal_with_same_id": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de igualdad por valor en ObjectId y wrappers BSON."
+    },
     "test__command_ping": {
       "status": "equivalent",
       "note": "Existe cobertura local equivalente de ping y comandos admin basicos."
@@ -297,6 +469,56 @@
         "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
       },
       {
+        "prefix": "test__insert",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de insert_one, insert_many, errores BSON y copia defensiva observable."
+      },
+      {
+        "prefix": "test__count",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de count_documents y conteo observable en collection."
+      },
+      {
+        "prefix": "test__set",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de $set, setUnion, setEquals y variantes sobre rutas, arrays y agregacion."
+      },
+      {
+        "prefix": "test__regex",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de regex, opciones y filtros mixtos con candidatos no string."
+      },
+      {
+        "prefix": "test_filter_not_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de $not malformado, regex y filtros booleanos relacionados."
+      },
+      {
+        "prefix": "test__all_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de $all combinado con elemMatch y size."
+      },
+      {
+        "prefix": "test_insert_bson_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de validacion BSON en inserciones y updates."
+      },
+      {
+        "prefix": "test__strcmp_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de validacion de argumentos de operadores string en agregacion."
+      },
+      {
+        "prefix": "test__substr_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de validacion de argumentos de operadores substring en agregacion."
+      },
+      {
+        "prefix": "test__agregate_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de aggregate sobre casos vacios y expresiones basicas."
+      },
+      {
         "prefix": "test__find_",
         "status": "equivalent",
         "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
@@ -382,12 +604,62 @@
         "note": "Existe cobertura local equivalente de $currentDate y tipos asociados."
       },
       {
+        "prefix": "test__ordered_insert_find",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de orden observable entre insercion y lectura posterior."
+      },
+      {
+        "prefix": "test__empty_table_idx_information",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de index_information sobre colecciones vacias."
+      },
+      {
+        "prefix": "test__iterate_on_find_and_update",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de iteracion con find y escrituras posteriores."
+      },
+      {
+        "prefix": "test__collection_is_indexable",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de acceso indexado y por atributo a colecciones."
+      },
+      {
+        "prefix": "test_datetime_precision",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de precision y round-trip de datetimes."
+      },
+      {
+        "prefix": "test__mix_tz_naive_aware",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de datetimes naive y aware con codec options."
+      },
+      {
+        "prefix": "test__configure_client_tz_aware",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de configuracion tz_aware a nivel de cliente y collection."
+      },
+      {
+        "prefix": "test__list_of_dates",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de arrays de fechas y orden BSON observable."
+      },
+      {
+        "prefix": "test_elem_match",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de elemMatch en filtros y arrays."
+      },
+      {
         "prefix": "test__not_implemented_",
         "status": "outside-scope",
         "note": "APIs historicas explicitamente no implementadas por mongomock quedan fuera del contrato local."
       }
     ],
     "_mongomock": [
+      {
+        "prefix": "test__aggregate",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de agregacion historica de mongomock, incluidos replaceRoot, addFields y variantes numeradas."
+      },
       {
         "prefix": "test__aggregate_",
         "status": "equivalent",
@@ -412,6 +684,51 @@
         "prefix": "test__insert_",
         "status": "equivalent",
         "note": "Existe cobertura local equivalente de inserciones y copias documentales principales."
+      },
+      {
+        "prefix": "test__skip",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de skip, sort+skip y slicing de cursores."
+      },
+      {
+        "prefix": "test__limit",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de limit y ventanas de cursor."
+      },
+      {
+        "prefix": "test__negative_limit",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de rechazo de limites negativos."
+      },
+      {
+        "prefix": "test__replace_root",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de replaceRoot y replaceWith en agregacion."
+      },
+      {
+        "prefix": "test__add_fields",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de addFields/set en agregacion."
+      },
+      {
+        "prefix": "test__regex_match_non_string",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de regex sobre candidatos no string y arrays mixtos."
+      },
+      {
+        "prefix": "test__all_with_other_operators",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de $all combinado con otros operadores."
+      },
+      {
+        "prefix": "test_double_negation",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de negaciones anidadas y filtros booleanos."
+      },
+      {
+        "prefix": "test__sparse_unique_index",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de indices sparse unicos y parciales."
       },
       {
         "prefix": "test__projection_",
@@ -525,6 +842,16 @@
       }
     ],
     "_bulk_operations": [
+      {
+        "prefix": "test__update_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de updates en bulk_write, incluidos lotes que afectan multiples documentos."
+      },
+      {
+        "prefix": "test__ordered_insert",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de orden y errores parciales en bulk_write."
+      },
       {
         "prefix": "test__insert",
         "status": "equivalent",
