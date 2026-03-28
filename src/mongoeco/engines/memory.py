@@ -24,7 +24,9 @@ from mongoeco.engines.semantic_core import (
     compile_update_semantics,
     enforce_collection_document_validation,
     filter_documents,
+    iter_filtered_documents,
     finalize_documents,
+    stream_finalize_documents,
 )
 from mongoeco.engines.virtual_indexes import (
     describe_virtual_index_usage,
@@ -806,7 +808,7 @@ class MemoryEngine(AsyncStorageEngine):
                 if id_lookup is not None:
                     storage_key = self._storage_key(id_lookup)
                     data = coll.get(storage_key)
-                    documents = [self._decode_storage_document(data)] if data is not None else []
+                    document_source = [self._decode_storage_document(data)] if data is not None else []
                 else:
                     # Intento de optimización: Otros índices (igualdad simple)
                     target_index = None
@@ -827,17 +829,34 @@ class MemoryEngine(AsyncStorageEngine):
                     target_index, target_key = find_usable_index(semantics.query_plan)
                     if target_index and target_index["name"] in index_data:
                         storage_keys = index_data[target_index["name"]].get(target_key, set())
-                        documents = [self._decode_storage_document(coll[sk]) for sk in storage_keys if sk in coll]
+                        document_source = (
+                            self._decode_storage_document(data)
+                            for sk, data in coll.items()
+                            if sk in storage_keys
+                        )
                     else:
                         # Scan completo (lento)
                         enforce_deadline(deadline)
-                        documents = [
+                        storage_values = list(coll.values())
+                        document_source = (
                             self._decode_storage_document(data)
-                            for data in list(coll.values())
-                        ]
+                            for data in storage_values
+                        )
 
-            documents = filter_documents(documents, semantics)
-            documents = finalize_documents(documents, semantics)
+                # Pipeline de procesamiento perezoso (streaming)
+                filtered = iter_filtered_documents(document_source, semantics)
+
+                # Si no hay ordenación, podemos hacer streaming real y parar tras el limit
+                if not semantics.sort:
+                    final_stream = stream_finalize_documents(filtered, semantics)
+                    for document in final_stream:
+                        enforce_deadline(deadline)
+                        yield document
+                    return
+
+                # Si hay sort, tenemos que materializar para ordenar
+                documents = list(filtered)
+                documents = finalize_documents(documents, semantics, apply_sort_phase=True)
 
             for document in documents:
                 enforce_deadline(deadline)

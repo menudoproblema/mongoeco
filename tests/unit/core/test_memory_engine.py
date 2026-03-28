@@ -974,6 +974,58 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(documents, [{"_id": "3", "rank": 2}])
 
+    async def test_scan_collection_streams_skip_limit_and_projection_without_sort(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "rank": 3, "kind": "a"})
+            await engine.put_document("db", "coll", {"_id": "2", "rank": 1, "kind": "b"})
+            await engine.put_document("db", "coll", {"_id": "3", "rank": 2, "kind": "c"})
+
+            documents = [
+                doc async for doc in self._scan(
+                    engine,
+                    "db",
+                    "coll",
+                    projection={"_id": 0, "kind": 1},
+                    skip=1,
+                    limit=1,
+                )
+            ]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, [{"kind": "b"}])
+
+    async def test_scan_collection_preserves_storage_order_when_using_index_cache(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "kind": "view", "tag": "python"})
+            await engine.put_document("db", "coll", {"_id": "2", "kind": "view", "tag": "mongodb"})
+            await engine.put_document("db", "coll", {"_id": "3", "kind": "click", "tag": "python"})
+            await engine.create_index("db", "coll", ["kind"], name="kind_idx")
+
+            documents = [
+                doc async for doc in self._scan(
+                    engine,
+                    "db",
+                    "coll",
+                    {"kind": "view"},
+                    hint="kind_idx",
+                )
+            ]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(
+            documents,
+            [
+                {"_id": "1", "kind": "view", "tag": "python"},
+                {"_id": "2", "kind": "view", "tag": "mongodb"},
+            ],
+        )
+
     async def test_scan_collection_sorts_array_fields_by_min_and_max_element(self):
         engine = MemoryEngine()
         await engine.connect()
