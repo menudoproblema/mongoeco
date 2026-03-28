@@ -91,6 +91,7 @@ See:
 The repository currently uses the standard library test runner:
 
 ```bash
+python -m pip install -e .[dev]
 python -m unittest discover -s tests -p 'test*.py'
 ```
 
