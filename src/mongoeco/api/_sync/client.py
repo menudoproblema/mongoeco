@@ -1,4 +1,5 @@
 import asyncio
+import threading
 
 from mongoeco.change_streams import ChangeStreamCursor
 from mongoeco.api._sync.database_admin import DatabaseAdminService
@@ -34,6 +35,9 @@ class _SyncRunner:
     def __init__(self):
         self._runner = asyncio.Runner()
         self._closed = False
+        self._closing = False
+        self._state_condition = threading.Condition()
+        self._active_runs = 0
 
     def _cleanup_pending_tasks(self) -> None:
         if self._closed:
@@ -71,30 +75,43 @@ class _SyncRunner:
             self._runner.run(shutdown_default_executor())
 
     def run(self, awaitable):
-        if self._closed:
-            raise InvalidOperation("El cliente sincronico ya esta cerrado")
+        with self._state_condition:
+            if self._closed or self._closing:
+                raise InvalidOperation("El cliente sincronico ya esta cerrado")
+            self._active_runs += 1
 
         try:
-            asyncio.get_running_loop()
-        except RuntimeError:
             try:
-                return self._runner.run(awaitable)
-            except ExecutionTimeout as exc:
-                raise ExecutionTimeout(
-                    f"sync operation timed out: {exc}",
-                    code=exc.code,
-                    details=exc.details,
-                    error_labels=exc.error_labels,
-                ) from exc
-            except ServerSelectionTimeoutError as exc:
-                raise ServerSelectionTimeoutError(f"sync server selection timed out: {exc}") from exc
+                asyncio.get_running_loop()
+            except RuntimeError:
+                try:
+                    return self._runner.run(awaitable)
+                except ExecutionTimeout as exc:
+                    raise ExecutionTimeout(
+                        f"sync operation timed out: {exc}",
+                        code=exc.code,
+                        details=exc.details,
+                        error_labels=exc.error_labels,
+                    ) from exc
+                except ServerSelectionTimeoutError as exc:
+                    raise ServerSelectionTimeoutError(f"sync server selection timed out: {exc}") from exc
 
-        close = getattr(awaitable, "close", None)
-        if callable(close):
-            close()
-        raise InvalidOperation("MongoClient no puede usarse dentro de un event loop activo")
+            close = getattr(awaitable, "close", None)
+            if callable(close):
+                close()
+            raise InvalidOperation("MongoClient no puede usarse dentro de un event loop activo")
+        finally:
+            with self._state_condition:
+                self._active_runs -= 1
+                self._state_condition.notify_all()
 
     def close(self) -> None:
+        with self._state_condition:
+            if self._closed:
+                return
+            self._closing = True
+            while self._active_runs > 0:
+                self._state_condition.wait()
         if not self._closed:
             try:
                 try:
@@ -116,7 +133,10 @@ class _SyncRunner:
                     self._cleanup_pending_tasks()
                     self._runner.close()
             finally:
-                self._closed = True
+                with self._state_condition:
+                    self._closed = True
+                    self._closing = False
+                    self._state_condition.notify_all()
 
     def __del__(self):
         try:

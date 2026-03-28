@@ -526,6 +526,20 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             engine._shutdown_executor()
 
+    def test_lookup_collection_id_uses_cache(self):
+        engine = SQLiteEngine()
+        cursor = Mock()
+        cursor.fetchone.return_value = (7, 7)
+        connection = Mock()
+        connection.execute.return_value = cursor
+
+        first = engine._lookup_collection_id(connection, "db", "coll")
+        second = engine._lookup_collection_id(connection, "db", "coll")
+
+        self.assertEqual(first, 7)
+        self.assertEqual(second, 7)
+        self.assertEqual(connection.execute.call_count, 1)
+
     async def test_load_indexes_rejects_non_list_metadata(self):
         engine = SQLiteEngine()
         await engine.connect()
@@ -889,10 +903,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 """
                 SELECT collection_id, element_type, type_score, element_key
                 FROM multikey_entries
-                WHERE db_name = ? AND coll_name = ? AND index_name = ?
+                WHERE collection_id = ? AND index_name = ?
                 ORDER BY element_key
                 """,
-                ("db", "coll", "idx_tags"),
+                (1, "idx_tags"),
             ).fetchall()
             self.assertEqual(rows, [(1, "string", 3, "mongodb"), (1, "string", 3, "python")])
 
@@ -906,10 +920,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 """
                 SELECT collection_id, element_type, type_score, element_key
                 FROM multikey_entries
-                WHERE db_name = ? AND coll_name = ? AND index_name = ?
+                WHERE collection_id = ? AND index_name = ?
                 ORDER BY element_key
                 """,
-                ("db", "coll", "idx_tags"),
+                (1, "idx_tags"),
             ).fetchall()
             self.assertEqual(rows, [(1, "string", 3, "sqlite")])
 
@@ -919,9 +933,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 """
                 SELECT COUNT(*)
                 FROM multikey_entries
-                WHERE db_name = ? AND coll_name = ? AND index_name = ?
+                WHERE collection_id = ? AND index_name = ?
                 """,
-                ("db", "coll", "idx_tags"),
+                (1, "idx_tags"),
             ).fetchone()
             self.assertEqual(remaining[0], 0)
 
@@ -931,9 +945,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 """
                 SELECT COUNT(*)
                 FROM multikey_entries
-                WHERE db_name = ? AND coll_name = ?
+                WHERE collection_id = ?
                 """,
-                ("db", "coll"),
+                (1,),
             ).fetchone()
             self.assertEqual(leftover[0], 0)
         finally:
@@ -957,10 +971,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 """
                 SELECT index_name, element_key
                 FROM multikey_entries
-                WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                WHERE collection_id = ? AND storage_key = ?
                 ORDER BY index_name, element_key
                 """,
-                ("db", "coll", engine._storage_key("1")),
+                (1, engine._storage_key("1")),
             ).fetchall()
         finally:
             await engine.disconnect()

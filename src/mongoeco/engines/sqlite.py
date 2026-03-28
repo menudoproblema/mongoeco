@@ -137,6 +137,7 @@ class SQLiteEngine(AsyncStorageEngine):
         self._mvcc_version = 0
         self._index_cache: dict[tuple[str, str], tuple[int, list[EngineIndexRecord]]] = {}
         self._index_metadata_versions: dict[tuple[str, str], int] = {}
+        self._collection_id_cache: dict[tuple[str, str], int] = {}
 
     def _ensure_executor(self) -> ThreadPoolExecutor:
         executor = self._executor
@@ -166,6 +167,12 @@ class SQLiteEngine(AsyncStorageEngine):
             self._index_cache.clear()
             return
         self._index_cache.pop((db_name, coll_name), None)
+
+    def _invalidate_collection_id_cache(self, db_name: str | None = None, coll_name: str | None = None) -> None:
+        if db_name is None or coll_name is None:
+            self._collection_id_cache.clear()
+            return
+        self._collection_id_cache.pop((db_name, coll_name), None)
 
     def _index_cache_version(self, db_name: str, coll_name: str) -> int:
         return self._index_metadata_versions.get((db_name, coll_name), 0)
@@ -554,6 +561,10 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         create: bool = False,
     ) -> int | None:
+        cache_key = (db_name, coll_name)
+        cached = self._collection_id_cache.get(cache_key)
+        if cached is not None:
+            return cached
         row = conn.execute(
             """
             SELECT collection_id, rowid
@@ -589,7 +600,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 """,
                 (collection_id, db_name, coll_name),
             )
-        return int(collection_id)
+        resolved = int(collection_id)
+        self._collection_id_cache[cache_key] = resolved
+        return resolved
 
     def _translate_multikey_exists_clause(
         self,
@@ -1227,7 +1240,7 @@ class SQLiteEngine(AsyncStorageEngine):
         collection_id = self._lookup_collection_id(conn, db_name, coll_name, create=True)
         if collection_id is None:
             return
-        rows: list[tuple[int, str, str, str, int, str, str, str]] = []
+        rows: list[tuple[int, str, str, str, int, str]] = []
         for index in indexes:
             if not index.get("multikey"):
                 continue
@@ -1241,16 +1254,14 @@ class SQLiteEngine(AsyncStorageEngine):
                         element_type,
                         self._multikey_type_score(element_type),
                         element_key,
-                        db_name,
-                        coll_name,
                     )
                 )
         if rows:
             conn.executemany(
                 """
                 INSERT OR IGNORE INTO multikey_entries (
-                    collection_id, index_name, storage_key, element_type, type_score, element_key, db_name, coll_name
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    collection_id, index_name, storage_key, element_type, type_score, element_key
+                ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 rows,
             )
@@ -1287,8 +1298,6 @@ class SQLiteEngine(AsyncStorageEngine):
                 element_type,
                 self._multikey_type_score(element_type),
                 element_key,
-                db_name,
-                coll_name,
             )
             for element_type, element_key in self._extract_multikey_entries(document, field)
         ]
@@ -1296,8 +1305,8 @@ class SQLiteEngine(AsyncStorageEngine):
             conn.executemany(
                 """
                 INSERT OR IGNORE INTO multikey_entries (
-                    collection_id, index_name, storage_key, element_type, type_score, element_key, db_name, coll_name
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    collection_id, index_name, storage_key, element_type, type_score, element_key
+                ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 rows,
             )
@@ -1362,8 +1371,6 @@ class SQLiteEngine(AsyncStorageEngine):
                     """
                     CREATE TABLE IF NOT EXISTS multikey_entries (
                         collection_id INTEGER NOT NULL DEFAULT 0,
-                        db_name TEXT NOT NULL,
-                        coll_name TEXT NOT NULL,
                         index_name TEXT NOT NULL,
                         storage_key TEXT NOT NULL,
                         element_type TEXT NOT NULL,
@@ -1404,14 +1411,59 @@ class SQLiteEngine(AsyncStorageEngine):
                     row[1]
                     for row in connection.execute("PRAGMA table_info(multikey_entries)").fetchall()
                 }
-                if "collection_id" not in multikey_columns:
+                if (
+                    "collection_id" not in multikey_columns
+                    or "type_score" not in multikey_columns
+                    or "db_name" in multikey_columns
+                    or "coll_name" in multikey_columns
+                ):
                     connection.execute(
-                        "ALTER TABLE multikey_entries ADD COLUMN collection_id INTEGER NOT NULL DEFAULT 0"
+                        """
+                        CREATE TABLE multikey_entries_new (
+                            collection_id INTEGER NOT NULL,
+                            index_name TEXT NOT NULL,
+                            storage_key TEXT NOT NULL,
+                            element_type TEXT NOT NULL,
+                            type_score INTEGER NOT NULL DEFAULT 100,
+                            element_key TEXT NOT NULL
+                        )
+                        """
                     )
-                if "type_score" not in multikey_columns:
+                    select_type_score = (
+                        "multikey_entries.type_score"
+                        if "type_score" in multikey_columns
+                        else "100"
+                    )
+                    join_db_name = "multikey_entries.db_name" if "db_name" in multikey_columns else "collections.db_name"
+                    join_coll_name = "multikey_entries.coll_name" if "coll_name" in multikey_columns else "collections.coll_name"
+                    collection_id_sql = (
+                        "CASE "
+                        "WHEN multikey_entries.collection_id IS NOT NULL AND multikey_entries.collection_id != 0 "
+                        "THEN multikey_entries.collection_id "
+                        "ELSE collections.collection_id END"
+                        if "collection_id" in multikey_columns
+                        else "collections.collection_id"
+                    )
                     connection.execute(
-                        "ALTER TABLE multikey_entries ADD COLUMN type_score INTEGER NOT NULL DEFAULT 100"
+                        f"""
+                        INSERT INTO multikey_entries_new (
+                            collection_id, index_name, storage_key, element_type, type_score, element_key
+                        )
+                        SELECT
+                            {collection_id_sql},
+                            multikey_entries.index_name,
+                            multikey_entries.storage_key,
+                            multikey_entries.element_type,
+                            {select_type_score},
+                            multikey_entries.element_key
+                        FROM multikey_entries
+                        LEFT JOIN collections
+                          ON collections.db_name = {join_db_name}
+                         AND collections.coll_name = {join_coll_name}
+                        """
                     )
+                    connection.execute("DROP TABLE multikey_entries")
+                    connection.execute("ALTER TABLE multikey_entries_new RENAME TO multikey_entries")
                 connection.execute(
                     """
                     INSERT OR IGNORE INTO collections (db_name, coll_name, options_json)
@@ -1435,21 +1487,21 @@ class SQLiteEngine(AsyncStorageEngine):
                     ON collections (collection_id)
                     """
                 )
-                connection.execute(
+                for physical_name, in connection.execute(
                     """
-                    UPDATE multikey_entries
-                    SET collection_id = (
-                        SELECT collections.collection_id
-                        FROM collections
-                        WHERE collections.db_name = multikey_entries.db_name
-                          AND collections.coll_name = multikey_entries.coll_name
+                    SELECT multikey_physical_name
+                    FROM indexes
+                    WHERE multikey_flag = 1 AND multikey_physical_name IS NOT NULL
+                    """
+                ).fetchall():
+                    connection.execute(
+                        f"CREATE INDEX IF NOT EXISTS {self._quote_identifier(str(physical_name))} "
+                        "ON multikey_entries (collection_id, index_name, type_score, element_key, storage_key)"
                     )
-                    WHERE collection_id = 0
-                    """
-                )
                 connection.commit()
                 self._connection = connection
                 self._invalidate_index_cache()
+                self._invalidate_collection_id_cache()
             self._connection_count += 1
 
     def _create_sqlite_connection(self) -> sqlite3.Connection:
@@ -1579,6 +1631,7 @@ class SQLiteEngine(AsyncStorageEngine):
             self._connection = None
             self._transaction_owner_session_id = None
             self._invalidate_index_cache()
+            self._invalidate_collection_id_cache()
         if connection is not None:
             connection.close()
 
@@ -1701,6 +1754,98 @@ class SQLiteEngine(AsyncStorageEngine):
                 except sqlite3.IntegrityError as exc:
                     self._rollback_write(conn, context)
                     raise DuplicateKeyError(str(exc)) from exc
+
+    def _snapshot_bulk_insert_validation_options_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        context: ClientSession | None,
+    ) -> dict[str, object]:
+        with self._lock:
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
+                return self._collection_options_or_empty_sync(conn, db_name, coll_name)
+
+    def _put_documents_bulk_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        documents: list[Document],
+        context: ClientSession | None,
+        *,
+        bypass_document_validation: bool = False,
+        snapshot_options: dict[str, object] | None = None,
+    ) -> list[bool]:
+        serialized_documents = [self._serialize_document(document) for document in documents]
+        with self._lock:
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
+                collection_options = self._collection_options_or_empty_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                )
+                if (
+                    not bypass_document_validation
+                    and snapshot_options is not None
+                    and collection_options != snapshot_options
+                ):
+                    for document in documents:
+                        enforce_collection_document_validation(
+                            document,
+                            options=collection_options,
+                            original_document=None,
+                            dialect=MONGODB_DIALECT_70,
+                        )
+                indexes = self._load_indexes(db_name, coll_name)
+                results: list[bool] = []
+                try:
+                    self._begin_write(conn, context)
+                    self._ensure_collection_row(conn, db_name, coll_name)
+                    for index, (document, serialized_document) in enumerate(zip(documents, serialized_documents, strict=False)):
+                        storage_key = self._storage_key(document.get("_id"))
+                        savepoint = f"bulk_insert_{index}"
+                        conn.execute(f'SAVEPOINT "{savepoint}"')
+                        try:
+                            self._validate_document_against_unique_indexes(
+                                db_name,
+                                coll_name,
+                                document,
+                                exclude_storage_key=None,
+                            )
+                            cursor = conn.execute(
+                                """
+                                INSERT INTO documents (db_name, coll_name, storage_key, document)
+                                VALUES (?, ?, ?, ?)
+                                ON CONFLICT(db_name, coll_name, storage_key) DO NOTHING
+                                """,
+                                (db_name, coll_name, storage_key, serialized_document),
+                            )
+                            if cursor.rowcount == 0:
+                                conn.execute(f'ROLLBACK TO SAVEPOINT "{savepoint}"')
+                                conn.execute(f'RELEASE SAVEPOINT "{savepoint}"')
+                                results.append(False)
+                                break
+                            self._rebuild_multikey_entries_for_document(
+                                conn,
+                                db_name,
+                                coll_name,
+                                storage_key,
+                                document,
+                                indexes,
+                            )
+                            conn.execute(f'RELEASE SAVEPOINT "{savepoint}"')
+                            results.append(True)
+                        except sqlite3.IntegrityError:
+                            conn.execute(f'ROLLBACK TO SAVEPOINT "{savepoint}"')
+                            conn.execute(f'RELEASE SAVEPOINT "{savepoint}"')
+                            results.append(False)
+                            break
+                    self._commit_write(conn, context)
+                    return results
+                except Exception:
+                    self._rollback_write(conn, context)
+                    raise
 
     def _get_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, projection: Projection | None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
         effective_dialect = dialect or MONGODB_DIALECT_70
@@ -2552,7 +2697,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     raise CollectionInvalid(f"collection '{coll_name}' does not exist")
                 if self._collection_exists_sync(conn, db_name, new_name):
                     raise CollectionInvalid(f"collection '{new_name}' already exists")
-                for table_name in ("collections", "documents", "indexes", "search_indexes", "multikey_entries"):
+                for table_name in ("collections", "documents", "indexes", "search_indexes"):
                     conn.execute(
                         f"""
                         UPDATE {table_name}
@@ -2564,6 +2709,8 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._commit_write(conn, context)
                 self._mark_index_metadata_changed(db_name, coll_name)
                 self._mark_index_metadata_changed(db_name, new_name)
+                self._invalidate_collection_id_cache(db_name, coll_name)
+                self._invalidate_collection_id_cache(db_name, new_name)
             except Exception:
                 self._rollback_write(conn, context)
                 raise
@@ -2621,6 +2768,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     )
                     self._commit_write(conn, context)
                     self._mark_index_metadata_changed(db_name, coll_name)
+                    self._invalidate_collection_id_cache(db_name, coll_name)
                 except Exception:
                     self._rollback_write(conn, context)
                     raise
@@ -2666,6 +2814,48 @@ class SQLiteEngine(AsyncStorageEngine):
             overwrite,
             context,
             bypass_document_validation=bypass_document_validation,
+        )
+
+    async def put_documents_bulk(
+        self,
+        db_name: str,
+        coll_name: str,
+        documents: list[Document],
+        *,
+        context: ClientSession | None = None,
+        bypass_document_validation: bool = False,
+    ) -> list[bool]:
+        snapshot_options: dict[str, object] | None = None
+        if not bypass_document_validation:
+            snapshot_options = await self._run_blocking(
+                self._snapshot_bulk_insert_validation_options_sync,
+                db_name,
+                coll_name,
+                context,
+            )
+            loop = asyncio.get_running_loop()
+            validations = [
+                loop.run_in_executor(
+                    self._ensure_executor(),
+                    partial(
+                        enforce_collection_document_validation,
+                        document,
+                        options=snapshot_options,
+                        original_document=None,
+                        dialect=MONGODB_DIALECT_70,
+                    ),
+                )
+                for document in documents
+            ]
+            await asyncio.gather(*validations)
+        return await self._run_blocking(
+            self._put_documents_bulk_sync,
+            db_name,
+            coll_name,
+            documents,
+            context,
+            bypass_document_validation=bypass_document_validation,
+            snapshot_options=snapshot_options,
         )
 
     @override

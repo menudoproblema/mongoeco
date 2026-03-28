@@ -868,12 +868,58 @@ class AsyncCollection:
         inserted_ids: list[DocumentId] = []
         command_documents: list[Document] = []
         started_at = time.perf_counter_ns()
+        normalized_documents: list[Document] = []
         for original in self._require_documents(documents):
             if "_id" not in original:
                 original["_id"] = ObjectId()
             doc = deepcopy(original)
+            normalized_documents.append(doc)
             command_documents.append(deepcopy(doc))
 
+        bulk_put = getattr(self._engine, "put_documents_bulk", None)
+        if callable(bulk_put):
+            try:
+                results = await bulk_put(
+                    self._db_name,
+                    self._collection_name,
+                    normalized_documents,
+                    context=session,
+                    bypass_document_validation=bypass_document_validation,
+                )
+            except Exception as exc:
+                await self._profile_operation(
+                    op="insert",
+                    command={
+                        "insert": self._collection_name,
+                        "documents": command_documents,
+                        "bypassDocumentValidation": bypass_document_validation,
+                    },
+                    duration_ns=time.perf_counter_ns() - started_at,
+                    errmsg=str(exc),
+                )
+                raise
+            for doc, success in zip(normalized_documents, results, strict=False):
+                if not success:
+                    raise DuplicateKeyError(f"Duplicate key: _id={doc['_id']}")
+                inserted_ids.append(doc["_id"])
+            await self._profile_operation(
+                op="insert",
+                command={
+                    "insert": self._collection_name,
+                    "documents": command_documents,
+                    "bypassDocumentValidation": bypass_document_validation,
+                },
+                duration_ns=time.perf_counter_ns() - started_at,
+            )
+            for inserted in command_documents[: len(inserted_ids)]:
+                self._publish_change_event(
+                    operation_type="insert",
+                    document_key={"_id": deepcopy(inserted["_id"])},
+                    full_document=deepcopy(inserted),
+                )
+            return InsertManyResult(inserted_ids=inserted_ids)
+
+        for doc in normalized_documents:
             try:
                 success = await self._engine.put_document(
                     self._db_name,

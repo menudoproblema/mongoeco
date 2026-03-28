@@ -181,6 +181,26 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             ],
         )
 
+    def test_insert_many_prefers_bulk_engine_path_when_available(self):
+        class EngineStub:
+            def __init__(self):
+                self.bulk_calls = 0
+
+            async def put_documents_bulk(self, *args, **kwargs):
+                self.bulk_calls += 1
+                return [True, True]
+
+        async def _exercise():
+            engine = EngineStub()
+            collection = AsyncCollection(engine, "db", "coll")
+            result = await collection.insert_many([{"name": "Ada"}, {"name": "Grace"}])
+            return engine.bulk_calls, result.inserted_ids
+
+        bulk_calls, inserted_ids = asyncio.run(_exercise())
+
+        self.assertEqual(bulk_calls, 1)
+        self.assertEqual(len(inserted_ids), 2)
+
     def test_find_one_does_not_apply_projection_twice(self):
         async def _exercise():
             engine = MemoryEngine()

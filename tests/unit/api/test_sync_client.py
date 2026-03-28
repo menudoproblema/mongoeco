@@ -1,5 +1,7 @@
 import unittest
 import asyncio
+import threading
+import time
 from unittest.mock import patch
 
 from mongoeco import MongoDialect80, PyMongoProfile413
@@ -186,6 +188,48 @@ class SyncClientUnitTests(unittest.TestCase):
         runner.close = broken_close
         runner.__del__()
 
+        self.assertTrue(runner._closed)
+
+    def test_sync_runner_close_waits_for_active_run_to_finish(self):
+        runner = _SyncRunner()
+        started = threading.Event()
+        release = threading.Event()
+        original_run = runner._runner.run
+
+        def _wrapped(awaitable):
+            async def _gate():
+                started.set()
+                while not release.is_set():
+                    await asyncio.sleep(0.001)
+                return await awaitable
+
+            return original_run(_gate())
+
+        runner._runner.run = _wrapped  # type: ignore[method-assign]
+        result: list[str] = []
+
+        def _invoke_run():
+            result.append(runner.run(_noop()))
+
+        worker = threading.Thread(target=_invoke_run)
+        worker.start()
+        self.assertTrue(started.wait(1))
+
+        close_done = threading.Event()
+
+        def _invoke_close():
+            runner.close()
+            close_done.set()
+
+        closer = threading.Thread(target=_invoke_close)
+        closer.start()
+        time.sleep(0.05)
+        self.assertFalse(close_done.is_set())
+        release.set()
+        worker.join()
+        closer.join()
+
+        self.assertEqual(result, [None])
         self.assertTrue(runner._closed)
 
     def test_client_exposes_resolved_dialect_and_profile(self):
