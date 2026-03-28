@@ -1099,9 +1099,9 @@ Estado actual del contraste versionado con `mongomock`:
 
 * `872` casos inventariados;
 * `9` ya marcados como `covered`;
-* `401` ya marcados como `equivalent`;
-* `44` marcados como `outside-scope`;
-* `418` quedan como `review-needed`.
+* `587` ya marcados como `equivalent`;
+* `66` marcados como `outside-scope`;
+* `210` quedan como `review-needed`.
 
 Orden recomendado de refino continuo después del cierre de Fase 8:
 
@@ -1117,6 +1117,6 @@ Para evitar que los cierres históricos de cada fase se confundan con el estado 
 
 * la métrica viva de referencia debe tomarse siempre de la última ejecución real de la suite, no de snapshots antiguos incluidos en fases ya cerradas;
 * en el estado actual del repositorio, la verificación de referencia es:
-  * `python -m unittest discover -s tests -p 'test*.py'` -> `1446` tests, `OK (skipped=1)`
+  * `python -m unittest discover -s tests -p 'test*.py'` -> `1452` tests, `OK (skipped=1)`
   * cobertura total sobre `src/mongoeco` -> `92%`
 * cualquier mención anterior a `100%` o a snapshots de `726`/`831` tests debe leerse como contexto histórico del cierre de fase correspondiente, no como descripción del estado presente.

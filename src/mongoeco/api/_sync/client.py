@@ -54,9 +54,21 @@ class _SyncRunner:
             task.cancel()
 
         async def _drain_pending() -> None:
-            await asyncio.gather(*pending, return_exceptions=True)
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(*pending, return_exceptions=True),
+                    timeout=0.25,
+                )
+            except TimeoutError:
+                pass
 
         self._runner.run(_drain_pending())
+        shutdown_asyncgens = getattr(loop, "shutdown_asyncgens", None)
+        if callable(shutdown_asyncgens):
+            self._runner.run(shutdown_asyncgens())
+        shutdown_default_executor = getattr(loop, "shutdown_default_executor", None)
+        if callable(shutdown_default_executor):
+            self._runner.run(shutdown_default_executor())
 
     def run(self, awaitable):
         if self._closed:

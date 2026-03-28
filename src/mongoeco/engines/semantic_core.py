@@ -15,7 +15,7 @@ from mongoeco.core.schema_validation import (
     SchemaValidationResult,
     compile_collection_validator,
 )
-from mongoeco.core.sorting import sort_documents
+from mongoeco.core.sorting import sort_documents, sort_documents_limited
 from mongoeco.errors import DocumentValidationFailure
 from mongoeco.types import (
     Document,
@@ -235,12 +235,23 @@ def finalize_documents(
     deadline = semantics.deadline
     result = list(documents)
     if apply_sort_phase:
-        result = sort_documents(
-            result,
-            semantics.sort,
-            dialect=semantics.dialect,
-            collation=semantics.collation,
-        )
+        if apply_skip_limit_phase and semantics.limit is not None:
+            result = sort_documents_limited(
+                result,
+                semantics.sort,
+                skip=semantics.skip,
+                limit=semantics.limit,
+                dialect=semantics.dialect,
+                collation=semantics.collation,
+            )
+            apply_skip_limit_phase = False
+        else:
+            result = sort_documents(
+                result,
+                semantics.sort,
+                dialect=semantics.dialect,
+                collation=semantics.collation,
+            )
         enforce_deadline(deadline)
     if apply_skip_limit_phase:
         if semantics.skip:

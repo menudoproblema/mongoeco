@@ -117,10 +117,10 @@ class DriverRuntime:
             ),
         )
 
-    def prepare_request_execution(self, plan: RequestExecutionPlan) -> PreparedRequestExecution:
-        return self.prepare_request_execution_attempt(plan, attempt_number=1)
+    async def prepare_request_execution(self, plan: RequestExecutionPlan) -> PreparedRequestExecution:
+        return await self.prepare_request_execution_attempt(plan, attempt_number=1)
 
-    def prepare_request_execution_attempt(
+    async def prepare_request_execution_attempt(
         self,
         plan: RequestExecutionPlan,
         *,
@@ -129,7 +129,7 @@ class DriverRuntime:
         if not plan.candidate_servers:
             raise RuntimeError("no candidate servers available for request execution")
         selected_server = plan.candidate_servers[min(attempt_number - 1, len(plan.candidate_servers) - 1)]
-        lease = self._connections.checkout(selected_server)
+        lease = await self._connections.checkout_async(selected_server)
         execution = PreparedRequestExecution(
             plan=plan,
             selected_server=selected_server,
@@ -158,8 +158,8 @@ class DriverRuntime:
         )
         return execution
 
-    def complete_request_execution(self, execution: PreparedRequestExecution) -> None:
-        self._connections.checkin(execution.connection)
+    async def complete_request_execution(self, execution: PreparedRequestExecution) -> None:
+        await self._connections.checkin_async(execution.connection)
         self._monitor.emit(
             ConnectionCheckedInEvent(
                 database=execution.plan.request.database,
@@ -171,8 +171,8 @@ class DriverRuntime:
             )
         )
 
-    def discard_request_execution(self, execution: PreparedRequestExecution) -> None:
-        self._connections.discard(execution.connection)
+    async def discard_request_execution(self, execution: PreparedRequestExecution) -> None:
+        await self._connections.discard_async(execution.connection)
 
     def clear_connections(self) -> None:
         self._connections.clear()

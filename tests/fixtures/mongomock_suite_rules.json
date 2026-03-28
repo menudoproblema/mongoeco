@@ -271,6 +271,61 @@
         "prefix": "test__insert_",
         "status": "equivalent",
         "note": "Existe cobertura local equivalente de insert_one, insert_many y sus errores principales."
+      },
+      {
+        "prefix": "test__find_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
+      },
+      {
+        "prefix": "test__cursor_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
+      },
+      {
+        "prefix": "test__delete_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de delete_one, delete_many, validaciones y hints compatibles."
+      },
+      {
+        "prefix": "test__replace_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de replace_one, upsert y validaciones principales."
+      },
+      {
+        "prefix": "test__getting_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de acceso a colecciones via getitem/getattr y propagacion de opciones."
+      },
+      {
+        "prefix": "test_unique_index",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de indices unicos, sparse y parciales."
+      },
+      {
+        "prefix": "test_sparse_unique",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de indices sparse unicos."
+      },
+      {
+        "prefix": "test__ensure_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de creacion y validacion de indices unicos y parciales."
+      },
+      {
+        "prefix": "test__with_options_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de with_options y propagacion de concerns/preference."
+      },
+      {
+        "prefix": "test__filter_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de filtros, errores y operadores principales."
+      },
+      {
+        "prefix": "test__sort_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de ordenacion, mixed types y claves BSON observables."
       }
     ],
     "_mongomock": [
@@ -298,6 +353,66 @@
         "prefix": "test__insert_",
         "status": "equivalent",
         "note": "Existe cobertura local equivalente de inserciones y copias documentales principales."
+      },
+      {
+        "prefix": "test__projection_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de proyecciones inclusivas y exclusivas."
+      },
+      {
+        "prefix": "test__return_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de campos devueltos y formas principales de projection."
+      },
+      {
+        "prefix": "test__exclude_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de exclusiones de campos y variantes con _id."
+      },
+      {
+        "prefix": "test__sort_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de sort en cursores, mixed types y rutas principales."
+      },
+      {
+        "prefix": "test__count",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de count_documents y estimated_document_count en la superficie relevante."
+      },
+      {
+        "prefix": "test__set",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
+      },
+      {
+        "prefix": "test__unset",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de $unset y variantes sobre rutas y arrays."
+      },
+      {
+        "prefix": "test__inc",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de $inc y variantes sobre rutas y arrays."
+      },
+      {
+        "prefix": "test__addToSet",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de $addToSet y modificadores asociados."
+      },
+      {
+        "prefix": "test__pop",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de $pop y validaciones principales."
+      },
+      {
+        "prefix": "test__pull",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de $pull y $pullAll."
+      },
+      {
+        "prefix": "test__push",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
       }
     ]
   },
@@ -311,6 +426,21 @@
       "pattern": "allow_disk_use",
       "status": "equivalent",
       "note": "Existe cobertura contractual local para allow_disk_use en aggregate, explain y surface wire/admin."
+    },
+    {
+      "pattern": "ttl",
+      "status": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
+    },
+    {
+      "pattern": "test__save",
+      "status": "outside-scope",
+      "note": "La API historica save() queda fuera del contrato principal local."
+    },
+    {
+      "pattern": "test__remove",
+      "status": "outside-scope",
+      "note": "La API historica remove() queda fuera del contrato principal local."
     },
     {
       "pattern": "hashable",

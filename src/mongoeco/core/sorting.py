@@ -1,4 +1,5 @@
 from functools import cmp_to_key
+import heapq
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -93,3 +94,54 @@ def sort_documents(
             )
         ),
     )
+
+
+def sort_documents_window(
+    documents: list[Document] | tuple[Document, ...] | Any,
+    sort: SortSpec | None,
+    *,
+    window: int | None,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
+) -> list[Document]:
+    if not sort:
+        result = list(documents)
+        return result if window is None else result[:window]
+    if window is None:
+        return sort_documents(list(documents), sort, dialect=dialect, collation=collation)
+    if window <= 0:
+        return []
+    comparator = cmp_to_key(
+        lambda left, right: compare_documents(
+            left,
+            right,
+            sort,
+            dialect=dialect,
+            collation=collation,
+        )
+    )
+    return heapq.nsmallest(window, documents, key=comparator)
+
+
+def sort_documents_limited(
+    documents: list[Document] | tuple[Document, ...] | Any,
+    sort: SortSpec | None,
+    *,
+    skip: int = 0,
+    limit: int | None = None,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
+) -> list[Document]:
+    window = None if limit is None else skip + limit
+    result = sort_documents_window(
+        documents,
+        sort,
+        window=window,
+        dialect=dialect,
+        collation=collation,
+    )
+    if skip:
+        result = result[skip:]
+    if limit is not None:
+        result = result[:limit]
+    return result

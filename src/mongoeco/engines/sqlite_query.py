@@ -3,6 +3,7 @@ import json
 from typing import Any
 import uuid
 
+from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS
 from mongoeco.core.operators import CompiledUpdatePlan
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import (
@@ -161,20 +162,20 @@ def sort_type_expression_sql(field: str) -> str:
     tagged_type_path, _ = _tagged_paths(field)
     return (
         "CASE "
-        f"WHEN json_type(document, {path}) IS NULL OR json_type(document, {path}) = 'null' THEN 1 "
-        f"WHEN json_type(document, {path}) IN ('integer', 'real') THEN 2 "
-        f"WHEN json_type(document, {path}) = 'text' THEN 3 "
-        f"WHEN json_type(document, {path}) = 'object' AND json_extract(document, {_quote_sql_string(tagged_type_path)}) IS NULL THEN 4 "
-        f"WHEN json_type(document, {path}) = 'array' THEN 5 "
+        f"WHEN json_type(document, {path}) IS NULL OR json_type(document, {path}) = 'null' THEN {SQLITE_SORT_BUCKET_WEIGHTS['null']} "
+        f"WHEN json_type(document, {path}) IN ('integer', 'real') THEN {SQLITE_SORT_BUCKET_WEIGHTS['number']} "
+        f"WHEN json_type(document, {path}) = 'text' THEN {SQLITE_SORT_BUCKET_WEIGHTS['string']} "
+        f"WHEN json_type(document, {path}) = 'object' AND json_extract(document, {_quote_sql_string(tagged_type_path)}) IS NULL THEN {SQLITE_SORT_BUCKET_WEIGHTS['plain-object']} "
+        f"WHEN json_type(document, {path}) = 'array' THEN {SQLITE_SORT_BUCKET_WEIGHTS['array']} "
         # bytes tagged values intentionally stay out of the SQL fast-path bucket:
         # SQLite cannot preserve the same relative ordering/range semantics as the
         # in-memory BSONComparator when bytes and UUID share bracket 6, so the
         # engine falls back to Python whenever tagged bytes are present.
-        f"WHEN json_extract(document, {_quote_sql_string(tagged_type_path)}) = 'uuid' THEN 6 "
-        f"WHEN json_extract(document, {_quote_sql_string(tagged_type_path)}) = 'objectid' THEN 7 "
-        f"WHEN json_type(document, {path}) IN ('true', 'false') THEN 8 "
-        f"WHEN json_extract(document, {_quote_sql_string(tagged_type_path)}) = 'datetime' THEN 9 "
-        "ELSE 100 END"
+        f"WHEN json_extract(document, {_quote_sql_string(tagged_type_path)}) = 'uuid' THEN {SQLITE_SORT_BUCKET_WEIGHTS['uuid']} "
+        f"WHEN json_extract(document, {_quote_sql_string(tagged_type_path)}) = 'objectid' THEN {SQLITE_SORT_BUCKET_WEIGHTS['objectid']} "
+        f"WHEN json_type(document, {path}) IN ('true', 'false') THEN {SQLITE_SORT_BUCKET_WEIGHTS['bool']} "
+        f"WHEN json_extract(document, {_quote_sql_string(tagged_type_path)}) = 'datetime' THEN {SQLITE_SORT_BUCKET_WEIGHTS['datetime']} "
+        f"ELSE {SQLITE_SORT_BUCKET_WEIGHTS['fallback']} END"
     )
 
 

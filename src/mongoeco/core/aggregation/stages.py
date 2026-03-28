@@ -5,7 +5,7 @@ from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec
-from mongoeco.core.sorting import sort_documents
+from mongoeco.core.sorting import sort_documents, sort_documents_window
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
 
@@ -314,6 +314,19 @@ def apply_pipeline(
     for index, stage in enumerate(pipeline):
         operator, spec = _require_stage(stage)
         stage_spec = get_aggregation_stage_spec(operator, dialect=dialect)
+        if operator == "$sort":
+            optimized_window = _sort_window_for_following_slices(pipeline, index)
+            if optimized_window is not None:
+                result = sort_documents_window(
+                    result,
+                    _require_sort(spec),
+                    window=optimized_window,
+                    dialect=dialect,
+                    collation=collation,
+                )
+                if spill_policy is not None:
+                    result = spill_policy.maybe_spill(operator, result)
+                continue
         result = stage_spec.handler(
             result,
             spec,
@@ -329,3 +342,26 @@ def apply_pipeline(
         if spill_policy is not None:
             result = spill_policy.maybe_spill(operator, result)
     return result
+
+
+def _sort_window_for_following_slices(pipeline: Pipeline, stage_index: int) -> int | None:
+    remaining_skip = 0
+    limit: int | None = None
+    seen_slice = False
+    for stage in pipeline[stage_index + 1 :]:
+        operator, spec = _require_stage(stage)
+        if operator == "$skip":
+            if limit is not None:
+                return None
+            remaining_skip += _require_non_negative_int("$skip", spec)
+            seen_slice = True
+            continue
+        if operator == "$limit":
+            value = _require_non_negative_int("$limit", spec)
+            limit = value if limit is None else min(limit, value)
+            seen_slice = True
+            continue
+        break
+    if not seen_slice or limit is None:
+        return None
+    return remaining_skip + limit

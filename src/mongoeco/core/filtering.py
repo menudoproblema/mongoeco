@@ -41,23 +41,7 @@ from mongoeco.core.query_plan import (
 
 class BSONComparator:
     """Reglas de comparación de MongoDB (Type Brackets)."""
-    TYPE_ORDER: dict[type, int] = {
-        type(None): 1,
-        UndefinedType: 1,
-        int: 2, float: 2, decimal.Decimal: 2, Decimal128: 2,
-        str: 3,
-        dict: 4,
-        list: 5,
-        bytes: 6,
-        Binary: 6,
-        uuid.UUID: 6,
-        ObjectId: 7,
-        bool: 8,
-        datetime.datetime: 9,
-        Timestamp: 10,
-        re.Pattern: 11,
-        Regex: 11,
-    }
+    TYPE_ORDER = MONGODB_DIALECT_70.bson_type_order
 
     @staticmethod
     def compare(a: Any, b: Any) -> int:

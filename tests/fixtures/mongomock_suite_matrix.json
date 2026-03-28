@@ -3,9 +3,9 @@
   "inventory_total_cases": 872,
   "status_counts": {
     "covered": 9,
-    "equivalent": 401,
-    "outside-scope": 44,
-    "review-needed": 418
+    "equivalent": 587,
+    "outside-scope": 66,
+    "review-needed": 210
   },
   "cases": [
     {
@@ -84,9 +84,9 @@
       "class_name": "BulkOperationsTest",
       "test_name": "test__remove",
       "category": "_bulk_operations",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La API historica remove() queda fuera del contrato principal local."
     },
     {
       "id": "test__bulk_operations.py::BulkOperationsTest::test__remove_one",
@@ -94,9 +94,9 @@
       "class_name": "BulkOperationsTest",
       "test_name": "test__remove_one",
       "category": "_bulk_operations",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La API historica remove() queda fuera del contrato principal local."
     },
     {
       "id": "test__bulk_operations.py::BulkOperationsTest::test_upsert_replace_one_on_empty_set",
@@ -374,9 +374,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_collection",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_alive",
@@ -384,9 +384,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_alive",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_collation",
@@ -396,7 +396,7 @@
       "category": "collection",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura contractual local para collation en query, sort, update, delete, distinct y aggregate."
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__drop_collection",
@@ -434,9 +434,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_hint",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__distinct_nested_field",
@@ -514,9 +514,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_clone",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_clone_keep_limit_skip",
@@ -524,9 +524,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_clone_keep_limit_skip",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_cursor_returns_document_copies",
@@ -564,9 +564,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__remove_retval",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La API historica remove() queda fuera del contrato principal local."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__remove_write_concern",
@@ -574,9 +574,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__remove_write_concern",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La API historica remove() queda fuera del contrato principal local."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__remove_bad_write_concern",
@@ -584,9 +584,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__remove_bad_write_concern",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La API historica remove() queda fuera del contrato principal local."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__getting_collection_via_getattr",
@@ -594,9 +594,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__getting_collection_via_getattr",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de acceso a colecciones via getitem/getattr y propagacion de opciones."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__save_class_deriving_from_dict",
@@ -604,9 +604,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__save_class_deriving_from_dict",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La API historica save() queda fuera del contrato principal local."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__getting_collection_via_getitem",
@@ -614,9 +614,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__getting_collection_via_getitem",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de acceso a colecciones via getitem/getattr y propagacion de opciones."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cannot_insert_non_string_keys",
@@ -734,9 +734,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_returns_cursors",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_with_collation",
@@ -746,7 +746,7 @@
       "category": "collection",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura contractual local para collation en query, sort, update, delete, distinct y aggregate."
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_removed_and_changed_options",
@@ -754,9 +754,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_removed_and_changed_options",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_and_modify_cannot_remove_and_new",
@@ -764,9 +764,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_and_modify_cannot_remove_and_new",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_and_modify_cannot_remove_and_update",
@@ -774,9 +774,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_and_modify_cannot_remove_and_update",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_one_and_update_doc_with_zero_ids",
@@ -784,9 +784,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_one_and_update_doc_with_zero_ids",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_one_and_replace_return_document_after_upsert",
@@ -794,9 +794,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_one_and_replace_return_document_after_upsert",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_and_modify_no_projection_kwarg",
@@ -804,9 +804,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_and_modify_no_projection_kwarg",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_one_and_delete",
@@ -834,9 +834,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_one_sorting",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_one_and_update",
@@ -854,9 +854,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_in_empty_collection",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__regex_options",
@@ -1374,9 +1374,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__replace_one_upsert",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de replace_one, upsert y validaciones principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__replace_one_invalid",
@@ -1384,9 +1384,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__replace_one_invalid",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de replace_one, upsert y validaciones principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_one_invalid",
@@ -1414,9 +1414,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__delete_one_invalid_filter",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de delete_one, delete_many, validaciones y hints compatibles."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__delete_many",
@@ -1436,7 +1436,7 @@
       "category": "collection",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura contractual local para collation en query, sort, update, delete, distinct y aggregate."
+      "note": "Existe cobertura local equivalente amplia de delete_one, delete_many, validaciones y hints compatibles."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__delete_many_hint_option",
@@ -1444,9 +1444,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__delete_many_hint_option",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de delete_one, delete_many, validaciones y hints compatibles."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__string_matching",
@@ -1474,9 +1474,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_distinct",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_limit",
@@ -1484,9 +1484,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_limit",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_negative_limit",
@@ -1494,9 +1494,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_negative_limit",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_count_with_limit",
@@ -1504,9 +1504,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_count_with_limit",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_count_with_skip",
@@ -1514,9 +1514,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_count_with_skip",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_count_with_skip_init",
@@ -1524,9 +1524,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_count_with_skip_init",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_count_when_db_changes",
@@ -1534,9 +1534,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_count_when_db_changes",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_getitem_when_db_changes",
@@ -1544,9 +1544,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_getitem_when_db_changes",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_getitem",
@@ -1554,9 +1554,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_getitem",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_getitem_slice",
@@ -1564,9 +1564,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_getitem_slice",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_getitem_negative_index",
@@ -1574,9 +1574,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_getitem_negative_index",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_getitem_bad_index",
@@ -1584,9 +1584,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_getitem_bad_index",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_with_skip_param",
@@ -1594,9 +1594,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_with_skip_param",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ordered_insert_find",
@@ -1664,9 +1664,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ttl_index_ignores_record_in_the_future",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ttl_index_ignores_records_with_non_datetime_values",
@@ -1674,9 +1674,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ttl_index_ignores_records_with_non_datetime_values",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ttl_index_record_expiry",
@@ -1684,9 +1684,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ttl_index_record_expiry",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ttl_expiration_of_0",
@@ -1694,9 +1694,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ttl_expiration_of_0",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ttl_with_non_integer_value_is_ignored",
@@ -1704,9 +1704,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ttl_with_non_integer_value_is_ignored",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ttl_applied_to_compound_key_is_ignored",
@@ -1714,9 +1714,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ttl_applied_to_compound_key_is_ignored",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ttl_ignored_when_document_does_not_contain_indexed_field",
@@ -1724,9 +1724,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ttl_ignored_when_document_does_not_contain_indexed_field",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ttl_of_array_field_expiration",
@@ -1734,9 +1734,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ttl_of_array_field_expiration",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ttl_of_array_field_without_datetime_does_not_expire",
@@ -1744,9 +1744,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ttl_of_array_field_without_datetime_does_not_expire",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ttl_expiry_with_mock",
@@ -1754,9 +1754,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ttl_expiry_with_mock",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ttl_index_is_removed_if_collection_dropped",
@@ -1764,9 +1764,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ttl_index_is_removed_if_collection_dropped",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ttl_index_is_removed_when_index_is_dropped",
@@ -1774,9 +1774,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ttl_index_is_removed_when_index_is_dropped",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ttl_index_removes_expired_documents_prior_to_removal",
@@ -1784,9 +1784,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ttl_index_removes_expired_documents_prior_to_removal",
       "category": "collection",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La semantica historica de expiracion TTL de mongomock no forma parte del perimetro contractual local actual."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_indexes_with_expireAfterSeconds",
@@ -1834,9 +1834,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ensure_uniq_idxs_with_ascending_ordering",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de creacion y validacion de indices unicos y parciales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ensure_uniq_idxs_with_descending_ordering",
@@ -1844,9 +1844,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ensure_uniq_idxs_with_descending_ordering",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de creacion y validacion de indices unicos y parciales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ensure_uniq_idxs_on_nested_field",
@@ -1854,9 +1854,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ensure_uniq_idxs_on_nested_field",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de creacion y validacion de indices unicos y parciales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ensure_sparse_uniq_idxs_on_nested_field",
@@ -1864,9 +1864,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ensure_sparse_uniq_idxs_on_nested_field",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de creacion y validacion de indices unicos y parciales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ensure_partial_filter_expression_unique_index",
@@ -1874,9 +1874,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ensure_partial_filter_expression_unique_index",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de creacion y validacion de indices unicos y parciales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__ensure_uniq_idxs_without_ordering",
@@ -1884,9 +1884,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__ensure_uniq_idxs_without_ordering",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de creacion y validacion de indices unicos y parciales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__insert_empty_doc_uniq_idx",
@@ -1914,9 +1914,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_sparse_unique_index",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de indices sparse unicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_unique_index_with_upsert_insertion",
@@ -1924,9 +1924,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_unique_index_with_upsert_insertion",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de indices unicos, sparse y parciales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_unique_index_with_update",
@@ -1934,9 +1934,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_unique_index_with_update",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de indices unicos, sparse y parciales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_unique_index_with_update_on_nested_field",
@@ -1944,9 +1944,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_unique_index_with_update_on_nested_field",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de indices unicos, sparse y parciales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_unique_index_on_dict",
@@ -1954,9 +1954,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_unique_index_on_dict",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de indices unicos, sparse y parciales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_sparse_unique_index_dup",
@@ -1964,9 +1964,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test_sparse_unique_index_dup",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de indices sparse unicos."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__create_uniq_idxs_with_dupes_already_there",
@@ -2084,9 +2084,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_and_modify_with_sort",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_sort_kept_after_clone",
@@ -2094,9 +2094,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_sort_kept_after_clone",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__sort_mixed_types",
@@ -2104,9 +2104,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__sort_mixed_types",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de ordenacion, mixed types y claves BSON observables."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__sort_by_uuid",
@@ -2114,9 +2114,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__sort_by_uuid",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de ordenacion, mixed types y claves BSON observables."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__avoid_change_data_after_set",
@@ -2134,9 +2134,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__filter_with_ne",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de filtros, errores y operadores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__filter_with_ne_none",
@@ -2144,9 +2144,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__filter_with_ne_none",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de filtros, errores y operadores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__filter_unknown_top_level",
@@ -2154,9 +2154,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__filter_unknown_top_level",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de filtros, errores y operadores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__filter_unknown_op",
@@ -2164,9 +2164,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__filter_unknown_op",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de filtros, errores y operadores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__filter_on_dict",
@@ -2174,9 +2174,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__filter_on_dict",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de filtros, errores y operadores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_or",
@@ -2184,9 +2184,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_or",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_with_max_time_ms",
@@ -2194,9 +2194,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_with_max_time_ms",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_and_project_3_level_deep_nested_field",
@@ -2204,9 +2204,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_and_project_3_level_deep_nested_field",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_and_project_wrong_types",
@@ -2214,9 +2214,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_and_project_wrong_types",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_projection_with_subdoc_lists",
@@ -2224,9 +2224,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_projection_with_subdoc_lists",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_projection_with_subdoc_lists_refinements",
@@ -2234,9 +2234,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_projection_with_subdoc_lists_refinements",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_and_project",
@@ -2244,9 +2244,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_and_project",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_and_project_positional",
@@ -2254,9 +2254,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_and_project_positional",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_dict_in_nested_list",
@@ -2264,9 +2264,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_dict_in_nested_list",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_in_not_a_list",
@@ -2274,9 +2274,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_in_not_a_list",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__with_options",
@@ -2294,9 +2294,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__with_options_different_write_concern",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de with_options y propagacion de concerns/preference."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__with_options_different_read_concern",
@@ -2304,9 +2304,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__with_options_different_read_concern",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de with_options y propagacion de concerns/preference."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__with_options_different_read_preference",
@@ -2314,9 +2314,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__with_options_different_read_preference",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de with_options y propagacion de concerns/preference."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__codec_options",
@@ -2344,9 +2344,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__with_options_wrong_kwarg",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de with_options y propagacion de concerns/preference."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__with_options_not_implemented",
@@ -2354,9 +2354,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__with_options_not_implemented",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de with_options y propagacion de concerns/preference."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__with_options_wrong_type",
@@ -2364,9 +2364,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__with_options_wrong_type",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de with_options y propagacion de concerns/preference."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__update_current_date",
@@ -2494,9 +2494,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_rewind",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_sort",
@@ -2504,9 +2504,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_sort",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_sort_composed",
@@ -2514,9 +2514,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_sort_composed",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_sort_projection",
@@ -2524,9 +2524,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_sort_projection",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_sort_dicts",
@@ -2534,9 +2534,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_sort_dicts",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__cursor_max_time_ms",
@@ -2544,9 +2544,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__cursor_max_time_ms",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__bulk_write_insert_one",
@@ -2654,9 +2654,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_with_expr",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_or_and",
@@ -2664,9 +2664,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_or_and",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__aggregate_replace_root",
@@ -3594,9 +3594,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_type_array",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_type_object",
@@ -3604,9 +3604,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_type_object",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_type_number",
@@ -3614,9 +3614,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_type_number",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_unknown_type",
@@ -3624,9 +3624,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_unknown_type",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_unimplemented_type",
@@ -3634,9 +3634,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_unimplemented_type",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_eq_none",
@@ -3644,9 +3644,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_eq_none",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_too_much_nested",
@@ -3654,9 +3654,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_too_much_nested",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_too_far",
@@ -3664,9 +3664,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_too_far",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_elemmatch_none",
@@ -3674,9 +3674,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_elemmatch_none",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__find_where",
@@ -3684,9 +3684,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__find_where",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de find, sorting, projection y variantes principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__unwind_no_prefix",
@@ -3834,9 +3834,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__filter_eq_on_array",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de filtros, errores y operadores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__filter_ne_on_array",
@@ -3844,9 +3844,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__filter_ne_on_array",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de filtros, errores y operadores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__filter_ne_multiple_keys",
@@ -3854,9 +3854,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__filter_ne_multiple_keys",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de filtros, errores y operadores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__filter_objects_comparison",
@@ -3864,9 +3864,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__filter_objects_comparison",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de filtros, errores y operadores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__filter_bson_regex",
@@ -3874,9 +3874,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__filter_bson_regex",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de filtros, errores y operadores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__filter_objects_comparison_unknown_type",
@@ -3884,9 +3884,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__filter_objects_comparison_unknown_type",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de filtros, errores y operadores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test__filter_objects_nested_comparison",
@@ -3894,9 +3894,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__filter_objects_nested_comparison",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de filtros, errores y operadores principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_filter_not_bad_value",
@@ -3994,9 +3994,9 @@
       "class_name": "CollectionAPITest",
       "test_name": "test__replace_invalid_encode_type",
       "category": "collection",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de replace_one, upsert y validaciones principales."
     },
     {
       "id": "test__collection_api.py::CollectionAPITest::test_aggregate_unwind_push_first",
@@ -4596,7 +4596,7 @@
       "category": "collection",
       "status": "equivalent",
       "coverage": "unknown",
-      "note": "Existe cobertura contractual local para allow_disk_use en aggregate, explain y surface wire/admin."
+      "note": "Existe cobertura local equivalente amplia de cursores, clone, alive, hint y comportamiento observable principal."
     },
     {
       "id": "test__database_api.py::DatabaseAPITest::test__get_collection_by_attribute_underscore",
@@ -5344,9 +5344,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__save",
       "category": "_mongomock",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La API historica save() queda fuera del contrato principal local."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__insert_object_id_as_dict",
@@ -5364,9 +5364,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__count",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de count_documents y estimated_document_count en la superficie relevante."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__count_documents",
@@ -5914,9 +5914,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__sort_mixed_types",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de sort en cursores, mixed types y rutas principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__find_sort_uuid",
@@ -5954,9 +5954,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__return_only_selected_fields",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de campos devueltos y formas principales de projection."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__return_only_selected_fields_no_id",
@@ -5964,9 +5964,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__return_only_selected_fields_no_id",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de campos devueltos y formas principales de projection."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__return_only_selected_fields_nested_field_found",
@@ -5974,9 +5974,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__return_only_selected_fields_nested_field_found",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de campos devueltos y formas principales de projection."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__return_only_selected_fields_nested_field_not_found",
@@ -5984,9 +5984,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__return_only_selected_fields_nested_field_not_found",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de campos devueltos y formas principales de projection."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__return_only_selected_fields_nested_field_found_no_id",
@@ -5994,9 +5994,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__return_only_selected_fields_nested_field_found_no_id",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de campos devueltos y formas principales de projection."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__return_only_selected_fields_nested_field_not_found_no_id",
@@ -6004,9 +6004,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__return_only_selected_fields_nested_field_not_found_no_id",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de campos devueltos y formas principales de projection."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__exclude_selected_fields",
@@ -6014,9 +6014,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__exclude_selected_fields",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de exclusiones de campos y variantes con _id."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__exclude_selected_fields_including_id",
@@ -6024,9 +6024,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__exclude_selected_fields_including_id",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de exclusiones de campos y variantes con _id."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__exclude_all_fields_including_id",
@@ -6034,9 +6034,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__exclude_all_fields_including_id",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de exclusiones de campos y variantes con _id."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__exclude_selected_nested_fields",
@@ -6044,9 +6044,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__exclude_selected_nested_fields",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de exclusiones de campos y variantes con _id."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__exclude_all_selected_nested_fields",
@@ -6054,9 +6054,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__exclude_all_selected_nested_fields",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de exclusiones de campos y variantes con _id."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__default_fields_if_projection_empty",
@@ -6074,9 +6074,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__projection_slice_int_first",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de proyecciones inclusivas y exclusivas."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__projection_slice_int_last",
@@ -6084,9 +6084,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__projection_slice_int_last",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de proyecciones inclusivas y exclusivas."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__projection_slice_list_pos",
@@ -6094,9 +6094,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__projection_slice_list_pos",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de proyecciones inclusivas y exclusivas."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__projection_slice_list_neg",
@@ -6104,9 +6104,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__projection_slice_list_neg",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de proyecciones inclusivas y exclusivas."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__projection_slice_list_pos_to_end",
@@ -6114,9 +6114,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__projection_slice_list_pos_to_end",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de proyecciones inclusivas y exclusivas."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__projection_slice_list_neg_to_end",
@@ -6124,9 +6124,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__projection_slice_list_neg_to_end",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de proyecciones inclusivas y exclusivas."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__projection_slice_list_select_subfield",
@@ -6134,9 +6134,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__projection_slice_list_select_subfield",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de proyecciones inclusivas y exclusivas."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__projection_slice_list_wrong_num_slice",
@@ -6144,9 +6144,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__projection_slice_list_wrong_num_slice",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de proyecciones inclusivas y exclusivas."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__projection_slice_list_wrong_slice_type",
@@ -6154,9 +6154,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__projection_slice_list_wrong_slice_type",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de proyecciones inclusivas y exclusivas."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__projection_slice_list_wrong_slice_value_type",
@@ -6164,9 +6164,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__projection_slice_list_wrong_slice_value_type",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de proyecciones inclusivas y exclusivas."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__projection_slice_list_wrong_value_type",
@@ -6174,9 +6174,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__projection_slice_list_wrong_value_type",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de proyecciones inclusivas y exclusivas."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__remove",
@@ -6184,9 +6184,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__remove",
       "category": "_mongomock",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La API historica remove() queda fuera del contrato principal local."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__delete_one",
@@ -6314,9 +6314,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__set",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__unset",
@@ -6324,9 +6324,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__unset",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $unset y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__unset_nested",
@@ -6334,9 +6334,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__unset_nested",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $unset y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__unset_positional",
@@ -6344,9 +6344,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__unset_positional",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $unset y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__set_upsert",
@@ -6354,9 +6354,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__set_upsert",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__set_subdocument_array",
@@ -6364,9 +6364,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__set_subdocument_array",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__set_subdocument_array_bad_index_after_dot",
@@ -6374,9 +6374,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__set_subdocument_array_bad_index_after_dot",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__set_subdocument_array_bad_neg_index_after_dot",
@@ -6384,9 +6384,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__set_subdocument_array_bad_neg_index_after_dot",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__set_subdocuments_positional",
@@ -6394,9 +6394,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__set_subdocuments_positional",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__inc",
@@ -6404,9 +6404,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__inc",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $inc y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__max",
@@ -6434,9 +6434,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__inc_upsert",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $inc y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__inc_subdocument",
@@ -6444,9 +6444,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__inc_subdocument",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $inc y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__inc_subdocument_array",
@@ -6454,9 +6454,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__inc_subdocument_array",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $inc y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__inc_subdocument_array_bad_index_after_dot",
@@ -6464,9 +6464,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__inc_subdocument_array_bad_index_after_dot",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $inc y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__inc_subdocument_array_bad_neg_index_after_dot",
@@ -6474,9 +6474,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__inc_subdocument_array_bad_neg_index_after_dot",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $inc y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__inc_subdocument_positional",
@@ -6484,9 +6484,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__inc_subdocument_positional",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $inc y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__setOnInsert",
@@ -6494,9 +6494,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__setOnInsert",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__setOnInsert_upsert",
@@ -6504,9 +6504,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__setOnInsert_upsert",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__setOnInsert_subdocument",
@@ -6514,9 +6514,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__setOnInsert_subdocument",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__setOnInsert_subdocument_upsert",
@@ -6524,9 +6524,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__setOnInsert_subdocument_upsert",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__setOnInsert_subdocument_elemMatch",
@@ -6534,9 +6534,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__setOnInsert_subdocument_elemMatch",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__inc_subdocument_positional_upsert",
@@ -6544,9 +6544,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__inc_subdocument_positional_upsert",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $inc y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__set_dollar_operand",
@@ -6554,9 +6554,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__set_dollar_operand",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__addToSet",
@@ -6564,9 +6564,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__addToSet",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $addToSet y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__addToSet_nested",
@@ -6574,9 +6574,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__addToSet_nested",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $addToSet y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__addToSet_each",
@@ -6584,9 +6584,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__addToSet_each",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $addToSet y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__addToSet_dollar_operand",
@@ -6594,9 +6594,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__addToSet_dollar_operand",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $addToSet y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pop",
@@ -6604,9 +6604,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pop",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pop y validaciones principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pop_invalid_type",
@@ -6614,9 +6614,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pop_invalid_type",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pop y validaciones principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pop_invalid_syntax",
@@ -6624,9 +6624,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pop_invalid_syntax",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pop y validaciones principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pop_array_in_array",
@@ -6634,9 +6634,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pop_array_in_array",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pop y validaciones principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pop_too_far_in_array",
@@ -6644,9 +6644,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pop_too_far_in_array",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pop y validaciones principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pop_document_in_array",
@@ -6654,9 +6654,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pop_document_in_array",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pop y validaciones principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pop_invalid_document_in_array",
@@ -6664,9 +6664,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pop_invalid_document_in_array",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pop y validaciones principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pop_empty",
@@ -6674,9 +6674,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pop_empty",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pop y validaciones principales."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pull",
@@ -6684,9 +6684,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pull",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pull y $pullAll."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pull_query",
@@ -6694,9 +6694,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pull_query",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pull y $pullAll."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pull_in_query_operator",
@@ -6704,9 +6704,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pull_in_query_operator",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pull y $pullAll."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pull_in_nested_field",
@@ -6714,9 +6714,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pull_in_nested_field",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pull y $pullAll."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pull_nested_dict",
@@ -6724,9 +6724,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pull_nested_dict",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pull y $pullAll."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pull_nested_list",
@@ -6734,9 +6734,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pull_nested_list",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pull y $pullAll."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pullAll",
@@ -6744,9 +6744,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pullAll",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pull y $pullAll."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__pullAll_dollar_operand",
@@ -6754,9 +6754,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__pullAll_dollar_operand",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $pull y $pullAll."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__push",
@@ -6764,9 +6764,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__push",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__push_dict",
@@ -6774,9 +6774,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__push_dict",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__push_each",
@@ -6784,9 +6784,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__push_each",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__push_nested_dict",
@@ -6794,9 +6794,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__push_nested_dict",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__push_nested_dict_each",
@@ -6804,9 +6804,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__push_nested_dict_each",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__push_nested_dict_in_list",
@@ -6814,9 +6814,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__push_nested_dict_in_list",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__push_nested_list_each",
@@ -6824,9 +6824,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__push_nested_list_each",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__push_nested_attribute",
@@ -6834,9 +6834,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__push_nested_attribute",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__push_nested_attribute_each",
@@ -6844,9 +6844,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__push_nested_attribute_each",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__push_to_absent_nested_attribute",
@@ -6854,9 +6854,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__push_to_absent_nested_attribute",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__push_to_absent_field",
@@ -6864,9 +6864,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__push_to_absent_field",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__push_each_to_absent_field",
@@ -6874,9 +6874,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__push_each_to_absent_field",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__push_each_slice",
@@ -6884,9 +6884,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__push_each_slice",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__update_push_slice_nested_field",
@@ -7024,9 +7024,9 @@
       "class_name": "MongoClientCollectionTest",
       "test_name": "test__set_equals",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de $set y variantes sobre rutas y arrays."
     },
     {
       "id": "test__mongomock.py::MongoClientCollectionTest::test__map_reduce_fails",
@@ -8364,9 +8364,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__count",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de count_documents y estimated_document_count en la superficie relevante."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__count_fail",
@@ -8374,9 +8374,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__count_fail",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente de count_documents y estimated_document_count en la superficie relevante."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__sort_name",
@@ -8384,9 +8384,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__sort_name",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de sort en cursores, mixed types y rutas principales."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__sort_name_nested_doc",
@@ -8394,9 +8394,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__sort_name_nested_doc",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de sort en cursores, mixed types y rutas principales."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__sort_name_nested_list",
@@ -8404,9 +8404,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__sort_name_nested_list",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de sort en cursores, mixed types y rutas principales."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__sort_list",
@@ -8414,9 +8414,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__sort_list",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de sort en cursores, mixed types y rutas principales."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__sort_list_nested_doc",
@@ -8424,9 +8424,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__sort_list_nested_doc",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de sort en cursores, mixed types y rutas principales."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__sort_list_nested_list",
@@ -8434,9 +8434,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__sort_list_nested_list",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de sort en cursores, mixed types y rutas principales."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__sort_dict",
@@ -8444,9 +8444,9 @@
       "class_name": "MongoClientSortSkipLimitTest",
       "test_name": "test__sort_dict",
       "category": "_mongomock",
-      "status": "review-needed",
+      "status": "equivalent",
       "coverage": "unknown",
-      "note": ""
+      "note": "Existe cobertura local equivalente amplia de sort en cursores, mixed types y rutas principales."
     },
     {
       "id": "test__mongomock.py::MongoClientSortSkipLimitTest::test__close",
@@ -8524,9 +8524,9 @@
       "class_name": "InsertedDocumentTest",
       "test_name": "test__remove_by_id",
       "category": "_mongomock",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "La API historica remove() queda fuera del contrato principal local."
     },
     {
       "id": "test__mongomock.py::InsertedDocumentTest::test__inserting_changes_argument",

@@ -364,13 +364,14 @@ class TopologyAndPolicyTests(unittest.TestCase):
 
     def test_timeout_policy_is_derived_from_uri(self):
         uri = parse_mongo_uri(
-            "mongodb://localhost/?serverSelectionTimeoutMS=1200&connectTimeoutMS=700&socketTimeoutMS=5000"
+            "mongodb://localhost/?serverSelectionTimeoutMS=1200&connectTimeoutMS=700&socketTimeoutMS=5000&waitQueueTimeoutMS=900"
         )
         policy = build_timeout_policy(uri)
 
         self.assertEqual(policy.server_selection_timeout_ms, 1200)
         self.assertEqual(policy.connect_timeout_ms, 700)
         self.assertEqual(policy.socket_timeout_ms, 5000)
+        self.assertEqual(policy.wait_queue_timeout_ms, 900)
 
 
 class ConnectionArchitectureTests(unittest.TestCase):
@@ -430,6 +431,44 @@ class ConnectionArchitectureTests(unittest.TestCase):
 
         self.assertIsNone(registry.get_connection(lease))
 
+    def test_connection_registry_async_checkout_waits_for_released_connection(self):
+        uri = parse_mongo_uri("mongodb://db1:27017/?maxPoolSize=1&waitQueueTimeoutMS=100")
+        topology = build_local_topology_description(uri)
+        registry = ConnectionRegistry(uri)
+
+        async def _run() -> tuple[str, str]:
+            first = await registry.checkout_async(topology.servers[0])
+
+            async def _release() -> None:
+                await asyncio.sleep(0.01)
+                await registry.checkin_async(first)
+
+            release_task = asyncio.create_task(_release())
+            try:
+                second = await registry.checkout_async(topology.servers[0])
+            finally:
+                await release_task
+            return first.connection_id, second.connection_id
+
+        first_id, second_id = asyncio.run(_run())
+
+        self.assertEqual(first_id, second_id)
+
+    def test_connection_registry_async_checkout_times_out_when_pool_stays_full(self):
+        uri = parse_mongo_uri("mongodb://db1:27017/?maxPoolSize=1&waitQueueTimeoutMS=1")
+        topology = build_local_topology_description(uri)
+        registry = ConnectionRegistry(uri)
+
+        async def _run() -> None:
+            first = await registry.checkout_async(topology.servers[0])
+            try:
+                with self.assertRaises(RuntimeError):
+                    await registry.checkout_async(topology.servers[0])
+            finally:
+                await registry.checkin_async(first)
+
+        asyncio.run(_run())
+
 
 class ClientDriverArchitectureTests(unittest.TestCase):
     def test_async_client_exposes_driver_state_and_request_planning(self):
@@ -465,15 +504,18 @@ class ClientDriverArchitectureTests(unittest.TestCase):
             read_only=True,
         )
 
-        execution = runtime.prepare_request_execution(plan)
+        async def _run() -> None:
+            execution = await runtime.prepare_request_execution(plan)
 
-        self.assertIsInstance(execution, PreparedRequestExecution)
-        self.assertEqual(execution.selected_server.address, "db1:27017")
-        self.assertEqual(runtime.connection_snapshots[0].checked_out, 1)
+            self.assertIsInstance(execution, PreparedRequestExecution)
+            self.assertEqual(execution.selected_server.address, "db1:27017")
+            self.assertEqual(runtime.connection_snapshots[0].checked_out, 1)
 
-        runtime.complete_request_execution(execution)
+            await runtime.complete_request_execution(execution)
 
-        self.assertEqual(runtime.connection_snapshots[0].checked_out, 0)
+            self.assertEqual(runtime.connection_snapshots[0].checked_out, 0)
+
+        asyncio.run(_run())
 
     def test_driver_runtime_exposes_srv_auth_and_tls_state(self):
         runtime = DriverRuntime(
@@ -880,29 +922,32 @@ class RequestExecutionPipelineTests(unittest.TestCase):
         self.assertTrue(runtime.monitor.history[3].retryable)
 
     def test_local_command_transport_executes_database_commands_with_session(self):
-        client = AsyncMongoClient(uri="mongodb://db1:27017/")
-        session = client.start_session()
-        plan = client.plan_command_request(
-            "admin",
-            "ping",
-            {"ping": 1},
-            session=session,
-            read_only=True,
-        )
-        execution = client.prepare_command_request_execution(
-            "admin",
-            "ping",
-            {"ping": 1},
-            session=session,
-            read_only=True,
-        )
+        async def _run() -> tuple[str, dict[str, object]]:
+            client = AsyncMongoClient(uri="mongodb://db1:27017/")
+            session = client.start_session()
+            plan = client.plan_command_request(
+                "admin",
+                "ping",
+                {"ping": 1},
+                session=session,
+                read_only=True,
+            )
+            execution = await client.prepare_command_request_execution(
+                "admin",
+                "ping",
+                {"ping": 1},
+                session=session,
+                read_only=True,
+            )
+            try:
+                response = await LocalCommandTransport(client).send(execution)
+            finally:
+                await client.complete_command_request_execution(execution)
+            return plan.request.session_id or "", response
 
-        try:
-            response = asyncio.run(LocalCommandTransport(client).send(execution))
-        finally:
-            client.complete_command_request_execution(execution)
+        session_id, response = asyncio.run(_run())
 
-        self.assertEqual(plan.request.session_id, session.session_id)
+        self.assertTrue(session_id)
         self.assertEqual(response["ok"], 1.0)
 
     def test_wire_protocol_transport_is_constructible_from_runtime(self):
@@ -964,7 +1009,7 @@ class RequestExecutionPipelineTests(unittest.TestCase):
             ),
         )
 
-        def prepare(plan, *, attempt_number):
+        async def prepare(plan, *, attempt_number):
             del attempt_number
             return PreparedRequestExecution(
                 plan=plan,
@@ -980,7 +1025,7 @@ class RequestExecutionPipelineTests(unittest.TestCase):
                 )(),
             )
 
-        def complete(execution):
+        async def complete(execution):
             del execution
 
         class ReplicaSetHelloTransport:

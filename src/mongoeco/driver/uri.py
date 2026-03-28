@@ -54,6 +54,7 @@ class MongoClientOptions:
     server_selection_timeout_ms: int = 30_000
     connect_timeout_ms: int = 20_000
     socket_timeout_ms: int | None = None
+    wait_queue_timeout_ms: int | None = None
     max_pool_size: int = 100
     min_pool_size: int = 0
     max_idle_time_ms: int | None = None
@@ -270,6 +271,7 @@ def _parse_client_options(option_pairs: list[tuple[str, str]]) -> MongoClientOpt
         server_selection_timeout_ms=_get_int("serverSelectionTimeoutMS", 30_000) or 30_000,
         connect_timeout_ms=_get_int("connectTimeoutMS", 20_000) or 20_000,
         socket_timeout_ms=_get_int("socketTimeoutMS", None),
+        wait_queue_timeout_ms=_get_int("waitQueueTimeoutMS", None),
         max_pool_size=max_pool_size,
         min_pool_size=min_pool_size,
         max_idle_time_ms=_get_int("maxIdleTimeMS", None),
@@ -344,6 +346,7 @@ def _finalize_client_options(
         server_selection_timeout_ms=options.server_selection_timeout_ms,
         connect_timeout_ms=options.connect_timeout_ms,
         socket_timeout_ms=options.socket_timeout_ms,
+        wait_queue_timeout_ms=options.wait_queue_timeout_ms,
         max_pool_size=options.max_pool_size,
         min_pool_size=options.min_pool_size,
         max_idle_time_ms=options.max_idle_time_ms,

@@ -12,6 +12,7 @@ class TimeoutPolicy:
     server_selection_timeout_ms: int
     connect_timeout_ms: int
     socket_timeout_ms: int | None
+    wait_queue_timeout_ms: int | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,6 +125,7 @@ def build_timeout_policy(uri: MongoUri) -> TimeoutPolicy:
         server_selection_timeout_ms=options.server_selection_timeout_ms,
         connect_timeout_ms=options.connect_timeout_ms,
         socket_timeout_ms=options.socket_timeout_ms,
+        wait_queue_timeout_ms=options.wait_queue_timeout_ms,
     )
 
 

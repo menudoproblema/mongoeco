@@ -80,7 +80,7 @@ async def execute_request_pipeline(
     if _retry_enabled(plan):
         max_attempts = max(max_attempts, 2)
     for attempt_number in range(1, max_attempts + 1):
-        execution = prepare_execution(plan, attempt_number=attempt_number)
+        execution = await prepare_execution(plan, attempt_number=attempt_number)
         started_at = time.perf_counter()
         should_discard = False
         if monitor is not None:
@@ -143,9 +143,9 @@ async def execute_request_pipeline(
                 )
         finally:
             if discard_execution is not None and should_discard:
-                discard_execution(execution)
+                await discard_execution(execution)
             else:
-                complete_execution(execution)
+                await complete_execution(execution)
         attempts.append(
             RequestAttempt(
                 attempt_number=attempt_number,

@@ -15,6 +15,7 @@ from typing import Any, AsyncIterable, override
 
 from mongoeco.api.operations import FindOperation, UpdateOperation, compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect, MongoDialect70, MongoDialect80
+from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import canonical_document_id
@@ -767,33 +768,7 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @staticmethod
     def _typed_engine_key(value: Any) -> Any:
-        if value is None:
-            return ("none", None)
-        if isinstance(value, bool):
-            return ("bool", value)
-        if isinstance(value, int):
-            return ("int", value)
-        if isinstance(value, float):
-            return ("float", value)
-        if isinstance(value, str):
-            return ("str", value)
-        if isinstance(value, bytes):
-            return ("bytes", value)
-        if isinstance(value, uuid.UUID):
-            return ("uuid", value)
-        if isinstance(value, ObjectId):
-            return ("objectid", value)
-        if isinstance(value, datetime.datetime):
-            return ("datetime", value)
-        if isinstance(value, dict):
-            return ("dict", tuple((key, SQLiteEngine._typed_engine_key(item)) for key, item in value.items()))
-        if isinstance(value, list):
-            return ("list", tuple(SQLiteEngine._typed_engine_key(item) for item in value))
-        try:
-            hash(value)
-            return (value.__class__, value)
-        except TypeError:
-            return ("repr", repr(value))
+        return bson_engine_key(value)
 
     def _validate_document_against_unique_indexes(
         self,
@@ -1100,7 +1075,7 @@ class SQLiteEngine(AsyncStorageEngine):
     def _connect_sync(self) -> None:
         with self._lock:
             if self._connection_count == 0:
-                connection = sqlite3.connect(self._path, check_same_thread=False)
+                connection = self._create_sqlite_connection()
                 connection.execute(
                     """
                     CREATE TABLE IF NOT EXISTS collections (
@@ -1201,6 +1176,16 @@ class SQLiteEngine(AsyncStorageEngine):
                 connection.commit()
                 self._connection = connection
             self._connection_count += 1
+
+    def _create_sqlite_connection(self) -> sqlite3.Connection:
+        connection = sqlite3.connect(self._path, check_same_thread=False)
+        if self._path != ":memory:":
+            connection.execute("PRAGMA journal_mode=WAL")
+            connection.execute("PRAGMA synchronous=NORMAL")
+        return connection
+
+    def _can_use_dedicated_reader(self, context: ClientSession | None) -> bool:
+        return self._path != ":memory:" and not self._session_owns_transaction(context)
 
     def _ensure_collection_row(
         self,
@@ -1506,36 +1491,45 @@ class SQLiteEngine(AsyncStorageEngine):
                     break
                 yield document
             return
-        with self._lock:
-            conn: sqlite3.Connection | None = None
-            if self._session_owns_transaction(context):
-                conn = self._require_connection(context)
-            with self._bind_connection(conn) if conn is not None else nullcontext():
+        shared_connection: sqlite3.Connection | None = None
+        dedicated_reader: sqlite3.Connection | None = None
+        if self._session_owns_transaction(context):
+            with self._lock:
+                shared_connection = self._require_connection(context)
+        elif self._can_use_dedicated_reader(context):
+            dedicated_reader = self._create_sqlite_connection()
+
+        active_connection = dedicated_reader or shared_connection
+        try:
+            with self._bind_connection(active_connection) if active_connection is not None else nullcontext():
                 try:
-                    enforce_deadline(deadline)
-                    execution_plan = self._compile_read_execution_plan(
-                        db_name,
-                        coll_name,
-                        semantics,
-                        hint=hint,
-                    )
+                    if shared_connection is None:
+                        enforce_deadline(deadline)
+                        execution_plan = self._compile_read_execution_plan(
+                            db_name,
+                            coll_name,
+                            semantics,
+                            hint=hint,
+                        )
+                    else:
+                        with self._lock:
+                            enforce_deadline(deadline)
+                            execution_plan = self._compile_read_execution_plan(
+                                db_name,
+                                coll_name,
+                                semantics,
+                                hint=hint,
+                            )
                     sql, sql_params = execution_plan.require_sql()
-                    if conn is None:
-                        conn = self._require_connection(context)
-                    cursor = conn.execute(sql, tuple(sql_params))
+                    if active_connection is None:
+                        with self._lock:
+                            active_connection = self._require_connection(context)
+                    cursor = active_connection.execute(sql, tuple(sql_params))
                     try:
                         if execution_plan.apply_python_sort:
-                            documents = [self._deserialize_document(payload) for (payload,) in cursor]
-                            documents = sort_documents(
-                                documents,
-                                semantics.sort,
-                                dialect=semantics.dialect,
-                                collation=semantics.collation,
-                            )
                             documents = finalize_documents(
-                                documents,
+                                (self._deserialize_document(payload) for (payload,) in cursor),
                                 semantics,
-                                apply_sort_phase=False,
                             )
                             for document in documents:
                                 enforce_deadline(deadline)
@@ -1568,22 +1562,17 @@ class SQLiteEngine(AsyncStorageEngine):
                                 yield document
                             return
 
-                        documents = filter_documents(documents_iter, semantics)
-                        documents = sort_documents(
-                            documents,
-                            semantics.sort,
-                            dialect=semantics.dialect,
-                            collation=semantics.collation,
-                        )
                         documents = finalize_documents(
-                            documents,
+                            filter_documents(documents_iter, semantics),
                             semantics,
-                            apply_sort_phase=False,
                         )
                     finally:
                         close = getattr(documents_iter, "close", None)
                         if callable(close):
                             close()
+        finally:
+            if dedicated_reader is not None:
+                dedicated_reader.close()
 
         for document in documents:
             enforce_deadline(deadline)

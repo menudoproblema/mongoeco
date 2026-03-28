@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from enum import Enum
 import time
@@ -30,6 +31,7 @@ class ConnectionPoolOptions:
     min_pool_size: int
     connect_timeout_ms: int
     socket_timeout_ms: int | None = None
+    wait_queue_timeout_ms: int | None = None
     max_idle_time_ms: int | None = None
 
 
@@ -86,6 +88,7 @@ def build_connection_pool_options(uri: MongoUri) -> ConnectionPoolOptions:
         min_pool_size=options.min_pool_size,
         connect_timeout_ms=options.connect_timeout_ms,
         socket_timeout_ms=options.socket_timeout_ms,
+        wait_queue_timeout_ms=options.wait_queue_timeout_ms,
         max_idle_time_ms=options.max_idle_time_ms,
     )
 
@@ -95,6 +98,7 @@ class ConnectionPool:
         self._key = key
         self._options = options
         self._connections: dict[str, DriverConnection] = {}
+        self._wait_condition = asyncio.Condition()
 
     @property
     def key(self) -> PoolKey:
@@ -124,11 +128,50 @@ class ConnectionPool:
         self._connections[connection.connection_id] = connection
         return connection
 
+    async def checkout_async(self, server: ServerDescription) -> DriverConnection:
+        deadline = None
+        if self._options.wait_queue_timeout_ms is not None:
+            deadline = time.monotonic() + (self._options.wait_queue_timeout_ms / 1000)
+        async with self._wait_condition:
+            while True:
+                self._prune_idle()
+                for connection in self._connections.values():
+                    if connection.state is ConnectionState.READY:
+                        connection.mark_checked_out()
+                        return connection
+                if len(self._connections) < self._options.max_pool_size:
+                    now = time.monotonic()
+                    connection = DriverConnection(
+                        connection_id=str(uuid4()),
+                        server=server,
+                        pool_key=self._key,
+                        created_at_monotonic=now,
+                        last_used_at_monotonic=now,
+                    )
+                    connection.mark_checked_out()
+                    self._connections[connection.connection_id] = connection
+                    return connection
+                if deadline is None:
+                    await self._wait_condition.wait()
+                    continue
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise RuntimeError("connection pool exhausted")
+                try:
+                    await asyncio.wait_for(self._wait_condition.wait(), timeout=remaining)
+                except TimeoutError as exc:
+                    raise RuntimeError("connection pool exhausted") from exc
+
     def checkin(self, connection_id: str) -> None:
         connection = self._connections.get(connection_id)
         if connection is None or connection.state is ConnectionState.CLOSED:
             return
         connection.mark_ready()
+
+    async def checkin_async(self, connection_id: str) -> None:
+        async with self._wait_condition:
+            self.checkin(connection_id)
+            self._wait_condition.notify(1)
 
     def clear(self) -> None:
         for connection in self._connections.values():
@@ -145,6 +188,11 @@ class ConnectionPool:
             return
         _close_resource(connection.detach_resource())
         connection.mark_closed()
+
+    async def discard_async(self, connection_id: str) -> None:
+        async with self._wait_condition:
+            self.discard(connection_id)
+            self._wait_condition.notify(1)
 
     def _prune_idle(self) -> None:
         max_idle_time_ms = self._options.max_idle_time_ms
@@ -203,10 +251,24 @@ class ConnectionRegistry:
             server=connection.server,
         )
 
+    async def checkout_async(self, server: ServerDescription) -> ConnectionLease:
+        pool = self.pool_for_server(server)
+        connection = await pool.checkout_async(server)
+        return ConnectionLease(
+            pool_key=pool.key,
+            connection_id=connection.connection_id,
+            server=connection.server,
+        )
+
     def checkin(self, lease: ConnectionLease) -> None:
         pool = self._pools.get(lease.pool_key)
         if pool is not None:
             pool.checkin(lease.connection_id)
+
+    async def checkin_async(self, lease: ConnectionLease) -> None:
+        pool = self._pools.get(lease.pool_key)
+        if pool is not None:
+            await pool.checkin_async(lease.connection_id)
 
     def get_connection(self, lease: ConnectionLease) -> DriverConnection | None:
         pool = self._pools.get(lease.pool_key)
@@ -218,6 +280,11 @@ class ConnectionRegistry:
         pool = self._pools.get(lease.pool_key)
         if pool is not None:
             pool.discard(lease.connection_id)
+
+    async def discard_async(self, lease: ConnectionLease) -> None:
+        pool = self._pools.get(lease.pool_key)
+        if pool is not None:
+            await pool.discard_async(lease.connection_id)
 
     def clear(self) -> None:
         for pool in self._pools.values():

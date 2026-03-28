@@ -32,6 +32,7 @@ def build_probe_plan(server: ServerDescription) -> RequestExecutionPlan:
             server_selection_timeout_ms=30_000,
             connect_timeout_ms=20_000,
             socket_timeout_ms=None,
+            wait_queue_timeout_ms=None,
         ),
         retry_policy=RetryPolicy(retry_reads=False, retry_writes=False),
         selection_policy=SelectionPolicy(mode=ReadPreferenceMode.PRIMARY),
@@ -56,7 +57,7 @@ async def refresh_topology(
     refreshed_servers: list[ServerDescription] = []
     for server in current_topology.servers:
         plan = build_probe_plan(server)
-        execution = prepare_execution(plan, attempt_number=1)
+        execution = await prepare_execution(plan, attempt_number=1)
         started_at = time.perf_counter()
         try:
             response = await transport.send(execution)
@@ -76,7 +77,7 @@ async def refresh_topology(
                 )
             )
         finally:
-            complete_execution(execution)
+            await complete_execution(execution)
     topology_type = _derive_topology_type(tuple(refreshed_servers), fallback=current_topology.topology_type)
     set_name = next((server.set_name for server in refreshed_servers if server.set_name), None)
     logical_session_timeout = min(

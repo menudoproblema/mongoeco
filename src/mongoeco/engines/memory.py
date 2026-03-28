@@ -9,6 +9,7 @@ from typing import Any, AsyncIterable, override
 
 from mongoeco.api.operations import FindOperation, UpdateOperation, compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.collation import normalize_collation
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.mvcc import MemoryMvccState
@@ -380,33 +381,7 @@ class MemoryEngine(AsyncStorageEngine):
         return deepcopy(target_options.get(db_name, {}).get(coll_name, {}))
 
     def _typed_engine_key(self, value: Any) -> Any:
-        if value is None:
-            return ("none", None)
-        if isinstance(value, bool):
-            return ("bool", value)
-        if isinstance(value, int):
-            return ("int", value)
-        if isinstance(value, float):
-            return ("float", value)
-        if isinstance(value, str):
-            return ("str", value)
-        if isinstance(value, bytes):
-            return ("bytes", value)
-        if isinstance(value, uuid.UUID):
-            return ("uuid", value)
-        if isinstance(value, ObjectId):
-            return ("objectid", value)
-        if isinstance(value, datetime.datetime):
-            return ("datetime", value)
-        if isinstance(value, dict):
-            return ("dict", tuple((key, self._typed_engine_key(item)) for key, item in value.items()))
-        if isinstance(value, list):
-            return ("list", tuple(self._typed_engine_key(item) for item in value))
-        try:
-            hash(value)
-            return (value.__class__, value)
-        except TypeError:
-            return ("repr", repr(value))
+        return bson_engine_key(value)
 
     def _index_value(self, document: Document, field: str) -> Any:
         values = QueryEngine.extract_values(document, field)

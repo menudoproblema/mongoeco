@@ -1417,7 +1417,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         try:
             with (
                 patch.object(engine, "_load_documents", side_effect=_documents),
-                patch("mongoeco.engines.sqlite.sort_documents", side_effect=_sort),
+                patch("mongoeco.engines.semantic_core.sort_documents", side_effect=_sort),
             ):
                 documents = [
                     document
@@ -1433,6 +1433,51 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(documents, [{"_id": "3", "name": "Ana", "rank": [0, 5]}, {"_id": "1", "name": "Ada", "rank": [2, 3]}])
         self.assertEqual(captured_lengths, [2])
+
+    async def test_scan_collection_python_sort_fallback_keeps_only_skip_plus_limit_window(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+
+        def _documents(_db_name, _coll_name):
+            for document_id, payload in (
+                ("1", {"name": "Ada", "rank": [2, 3]}),
+                ("2", {"name": "Bob", "rank": [1, 4]}),
+                ("3", {"name": "Ana", "rank": [0, 5]}),
+                ("4", {"name": "Ari", "rank": [-1, 5]}),
+            ):
+                yield document_id, {"_id": document_id, **payload}
+
+        captured_lengths: list[int] = []
+
+        try:
+            with (
+                patch.object(engine, "_load_documents", side_effect=_documents),
+                patch("mongoeco.engines.semantic_core.sort_documents_limited") as limited_sort,
+            ):
+                from mongoeco.core.sorting import sort_documents_limited as real_sort_documents_limited
+
+                def _limited(documents, sort, **kwargs):
+                    materialized = list(documents)
+                    captured_lengths.append(len(materialized))
+                    return real_sort_documents_limited(materialized, sort, **kwargs)
+
+                limited_sort.side_effect = _limited
+                documents = [
+                    document
+                    async for document in engine.scan_collection(
+                        "db",
+                        "coll",
+                        {"name": {"$regex": "^A"}},
+                        sort=[("rank", 1)],
+                        skip=1,
+                        limit=1,
+                    )
+                ]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, [{"_id": "3", "name": "Ana", "rank": [0, 5]}])
+        self.assertEqual(captured_lengths, [3])
 
     async def test_scan_collection_automatically_falls_back_for_array_sort(self):
         engine = SQLiteEngine()

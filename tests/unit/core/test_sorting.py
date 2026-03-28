@@ -3,7 +3,7 @@ import unittest
 import uuid
 
 from mongoeco.compat import MongoDialect
-from mongoeco.core.sorting import compare_documents, sort_documents, sort_value
+from mongoeco.core.sorting import compare_documents, sort_documents, sort_documents_limited, sort_documents_window, sort_value
 from mongoeco.types import ObjectId
 
 
@@ -106,4 +106,31 @@ class SortingHelpersTests(unittest.TestCase):
         self.assertEqual(
             [document["_id"] for document in sort_documents(documents, [("mixed", 1)])],
             ["null", "number", "string", "uuid", "objectid", "bool", "datetime"],
+        )
+
+    def test_sort_documents_window_keeps_only_requested_prefix(self):
+        documents = [
+            {"_id": "3", "rank": 3},
+            {"_id": "1", "rank": 1},
+            {"_id": "4", "rank": 4},
+            {"_id": "2", "rank": 2},
+        ]
+
+        self.assertEqual(
+            [document["_id"] for document in sort_documents_window(documents, [("rank", 1)], window=2)],
+            ["1", "2"],
+        )
+
+    def test_sort_documents_limited_applies_skip_and_limit_without_full_tail(self):
+        documents = [
+            {"_id": "5", "rank": 5},
+            {"_id": "1", "rank": 1},
+            {"_id": "4", "rank": 4},
+            {"_id": "2", "rank": 2},
+            {"_id": "3", "rank": 3},
+        ]
+
+        self.assertEqual(
+            [document["_id"] for document in sort_documents_limited(documents, [("rank", 1)], skip=1, limit=2)],
+            ["2", "3"],
         )

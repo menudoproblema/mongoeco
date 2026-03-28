@@ -428,7 +428,7 @@ class AsyncMongoClient:
             read_only=read_only,
         )
 
-    def prepare_command_request_execution(
+    async def prepare_command_request_execution(
         self,
         database: str,
         command_name: str,
@@ -444,10 +444,10 @@ class AsyncMongoClient:
             session=session,
             read_only=read_only,
         )
-        return self._driver_runtime.prepare_request_execution(plan)
+        return await self._driver_runtime.prepare_request_execution(plan)
 
-    def complete_command_request_execution(self, execution: PreparedRequestExecution) -> None:
-        self._driver_runtime.complete_request_execution(execution)
+    async def complete_command_request_execution(self, execution: PreparedRequestExecution) -> None:
+        await self._driver_runtime.complete_request_execution(execution)
 
     async def execute_driver_command(
         self,
