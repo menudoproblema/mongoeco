@@ -540,6 +540,83 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second, 7)
         self.assertEqual(connection.execute.call_count, 1)
 
+    async def test_create_index_builds_multikey_entries_while_holding_engine_lock(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        lock_ownership: list[bool] = []
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "tags": ["python"]})
+            await engine.put_document("db", "coll", {"_id": "2", "tags": ["sqlite"]})
+
+            original = engine._replace_multikey_entries_for_index_for_document
+
+            def wrapped(*args, **kwargs):
+                is_owned = getattr(engine._lock, "_is_owned", lambda: True)
+                lock_ownership.append(bool(is_owned()))
+                return original(*args, **kwargs)
+
+            with patch.object(engine, "_replace_multikey_entries_for_index_for_document", side_effect=wrapped):
+                await engine.create_index("db", "coll", ["tags"], unique=False, name="idx_tags")
+        finally:
+            await engine.disconnect()
+
+        self.assertTrue(lock_ownership)
+        self.assertTrue(all(lock_ownership))
+
+    async def test_drop_and_rename_collection_invalidate_collection_id_cache(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        repopulated_cache_id: int | None = None
+        try:
+            await engine.put_document("db", "users", {"_id": "1"})
+            original_collection_id = engine._lookup_collection_id(engine._require_connection(), "db", "users")
+            self.assertEqual(engine._collection_id_cache[("db", "users")], original_collection_id)
+
+            await engine.rename_collection("db", "users", "users_archive")
+            self.assertNotIn(("db", "users"), engine._collection_id_cache)
+            renamed_collection_id = engine._lookup_collection_id(engine._require_connection(), "db", "users_archive")
+            self.assertEqual(engine._collection_id_cache[("db", "users_archive")], renamed_collection_id)
+
+            await engine.drop_collection("db", "users_archive")
+            self.assertNotIn(("db", "users_archive"), engine._collection_id_cache)
+
+            await engine.put_document("db", "users_archive", {"_id": "2"})
+            recreated_collection_id = engine._lookup_collection_id(engine._require_connection(), "db", "users_archive")
+            repopulated_cache_id = engine._collection_id_cache[("db", "users_archive")]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(recreated_collection_id, repopulated_cache_id)
+
+    async def test_put_documents_bulk_sync_uses_prepared_documents_without_serializing_inside_lock(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            documents = [{"_id": "1", "email": "a@example.com"}]
+            prepared_documents = [
+                (
+                    engine._storage_key("1"),
+                    engine._serialize_document(documents[0]),
+                )
+            ]
+            with patch.object(engine, "_serialize_document", side_effect=AssertionError("serialize-in-lock")):
+                results = await engine._run_blocking(
+                    engine._put_documents_bulk_sync,
+                    "db",
+                    "coll",
+                    documents,
+                    prepared_documents,
+                    None,
+                    bypass_document_validation=True,
+                    snapshot_options=None,
+                )
+                found = await engine.get_document("db", "coll", "1")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(results, [True])
+        self.assertEqual(found, documents[0])
+
     async def test_load_indexes_rejects_non_list_metadata(self):
         engine = SQLiteEngine()
         await engine.connect()

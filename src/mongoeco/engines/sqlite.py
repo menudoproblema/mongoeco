@@ -1771,12 +1771,12 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
         documents: list[Document],
+        prepared_documents: list[tuple[str, str]],
         context: ClientSession | None,
         *,
         bypass_document_validation: bool = False,
         snapshot_options: dict[str, object] | None = None,
     ) -> list[bool]:
-        serialized_documents = [self._serialize_document(document) for document in documents]
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -1802,8 +1802,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 try:
                     self._begin_write(conn, context)
                     self._ensure_collection_row(conn, db_name, coll_name)
-                    for index, (document, serialized_document) in enumerate(zip(documents, serialized_documents, strict=False)):
-                        storage_key = self._storage_key(document.get("_id"))
+                    for index, (document, (storage_key, serialized_document)) in enumerate(
+                        zip(documents, prepared_documents, strict=False)
+                    ):
                         savepoint = f"bulk_insert_{index}"
                         conn.execute(f'SAVEPOINT "{savepoint}"')
                         try:
@@ -1846,6 +1847,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 except Exception:
                     self._rollback_write(conn, context)
                     raise
+
+    def _prepare_bulk_document_sync(self, document: Document) -> tuple[str, str]:
+        return self._storage_key(document.get("_id")), self._serialize_document(document)
 
     def _get_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, projection: Projection | None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
         effective_dialect = dialect or MONGODB_DIALECT_70
@@ -2826,6 +2830,7 @@ class SQLiteEngine(AsyncStorageEngine):
         bypass_document_validation: bool = False,
     ) -> list[bool]:
         snapshot_options: dict[str, object] | None = None
+        loop = asyncio.get_running_loop()
         if not bypass_document_validation:
             snapshot_options = await self._run_blocking(
                 self._snapshot_bulk_insert_validation_options_sync,
@@ -2833,7 +2838,6 @@ class SQLiteEngine(AsyncStorageEngine):
                 coll_name,
                 context,
             )
-            loop = asyncio.get_running_loop()
             validations = [
                 loop.run_in_executor(
                     self._ensure_executor(),
@@ -2848,11 +2852,21 @@ class SQLiteEngine(AsyncStorageEngine):
                 for document in documents
             ]
             await asyncio.gather(*validations)
+        prepared_documents = await asyncio.gather(
+            *[
+                loop.run_in_executor(
+                    self._ensure_executor(),
+                    partial(self._prepare_bulk_document_sync, document),
+                )
+                for document in documents
+            ]
+        )
         return await self._run_blocking(
             self._put_documents_bulk_sync,
             db_name,
             coll_name,
             documents,
+            list(prepared_documents),
             context,
             bypass_document_validation=bypass_document_validation,
             snapshot_options=snapshot_options,
