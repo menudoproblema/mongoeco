@@ -863,11 +863,13 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * auth
     * ya existe `AuthPolicy` explícita derivada desde URI
     * ya valida mecanismos básicos como `SCRAM-*`, `PLAIN`, `GSSAPI` y `MONGODB-X509`
+    * la ejecución real de autenticación sobre conexiones de red sigue siendo refinamiento posterior, no cierre base de fase
   * TLS
     * ya existe `TlsPolicy` explícita derivada desde URI
     * `mongodb+srv` activa TLS por defecto y se validan invariantes básicas de certificados y X509
   * SRV
     * ya existe resolución SRV tipada y materialización de seeds efectivos para el runtime
+    * la resolución DNS real sigue fuera del cierre base y queda como refinamiento posterior
   * replica sets
   * sharding
   * pooling
@@ -877,6 +879,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * ya existe selección básica por topología y `readPreference`
     * ya existe degradación coherente para topologías no replicadas
     * ya soporta también filtrado básico por `readPreferenceTags`, `maxStalenessSeconds` y ordenación `nearest`
+    * la semántica SDAM completa de replica sets y sharding sigue siendo refinamiento posterior
 * concerns y preferencias con semántica de driver real:
   * timeouts
   * retries
@@ -930,6 +933,10 @@ Estado actual de Fase 7:
 * ya existe refresh de topología por `hello` y pooling con recursos vivos reutilizables;
 * ya existe descarte de conexiones rotas y timeout honesto cuando no hay servidor elegible;
 * con este cierre, la Fase 7 puede considerarse aplicada en su perímetro principal.
+* lo pendiente a partir de aquí ya no es infraestructura base, sino profundidad de cliente de red real:
+  * autenticación efectiva sobre conexiones wire
+  * resolución DNS SRV real
+  * SDAM/topología distribuida más completa
 
 ---
 
