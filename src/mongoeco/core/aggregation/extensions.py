@@ -30,11 +30,19 @@ type AggregationStageExtensionHandler = Callable[
     list[Document],
 ]
 
+type AggregationStageExecutionMode = str
+
+
+@dataclass(frozen=True, slots=True)
+class AggregationStageExtensionRegistration:
+    handler: AggregationStageExtensionHandler
+    execution_mode: AggregationStageExecutionMode = "materializing"
+
 
 _expression_lock = RLock()
 _stage_lock = RLock()
 _expression_handlers: dict[str, AggregationExpressionExtensionHandler] = {}
-_stage_handlers: dict[str, AggregationStageExtensionHandler] = {}
+_stage_handlers: dict[str, AggregationStageExtensionRegistration] = {}
 
 
 def _require_operator_name(name: str) -> str:
@@ -82,12 +90,19 @@ def registered_aggregation_expression_operator(
 def register_aggregation_stage(
     name: str,
     handler: AggregationStageExtensionHandler,
+    *,
+    execution_mode: AggregationStageExecutionMode = "materializing",
 ) -> None:
     operator = _require_operator_name(name)
     if not callable(handler):
         raise TypeError("handler must be callable")
+    if execution_mode not in {"streamable", "materializing"}:
+        raise ValueError("execution_mode must be 'streamable' or 'materializing'")
     with _stage_lock:
-        _stage_handlers[operator] = handler
+        _stage_handlers[operator] = AggregationStageExtensionRegistration(
+            handler=handler,
+            execution_mode=execution_mode,
+        )
 
 
 def unregister_aggregation_stage(name: str) -> None:
@@ -99,6 +114,15 @@ def unregister_aggregation_stage(name: str) -> None:
 def get_registered_aggregation_stage(
     name: str,
 ) -> AggregationStageExtensionHandler | None:
+    registration = get_registered_aggregation_stage_registration(name)
+    if registration is None:
+        return None
+    return registration.handler
+
+
+def get_registered_aggregation_stage_registration(
+    name: str,
+) -> AggregationStageExtensionRegistration | None:
     with _stage_lock:
         return _stage_handlers.get(name)
 

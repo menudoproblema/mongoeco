@@ -27,6 +27,7 @@ from mongoeco.core.aggregation.planning import (
 from mongoeco.core.aggregation.extensions import (
     AggregationExpressionExtensionContext,
     AggregationExpressionExtensionHandler,
+    AggregationStageExecutionMode,
     AggregationStageExtensionHandler,
     get_registered_aggregation_expression_operator,
     get_registered_aggregation_stage,
@@ -44,18 +45,25 @@ from mongoeco.core.aggregation.spill import (
 from mongoeco.core.aggregation.grouping_stages import _apply_group
 from mongoeco.core.aggregation.stages import (
     AGGREGATION_STAGE_HANDLERS,
+    AGGREGATION_STAGE_SPECS,
     AggregationStageHandler,
+    AggregationStageSpec,
     apply_pipeline,
+    get_aggregation_stage_spec,
+    is_streamable_aggregation_stage,
 )
 
 __all__ = [
     "AGGREGATION_STAGE_HANDLERS",
+    "AGGREGATION_STAGE_SPECS",
     "AggregationPushdown",
     "AggregationExpressionExtensionContext",
     "AggregationExpressionExtensionHandler",
+    "AggregationStageExecutionMode",
     "AggregationStageContext",
     "AggregationStageExtensionHandler",
     "AggregationStageHandler",
+    "AggregationStageSpec",
     "AggregationSpillPolicy",
     "BLOCKING_AGGREGATION_STAGES",
     "Pipeline",
@@ -77,8 +85,10 @@ __all__ = [
     "_resolve_aggregation_field_path",
     "apply_pipeline",
     "evaluate_expression",
+    "get_aggregation_stage_spec",
     "get_registered_aggregation_expression_operator",
     "get_registered_aggregation_stage",
+    "is_streamable_aggregation_stage",
     "register_aggregation_expression_operator",
     "register_aggregation_stage",
     "registered_aggregation_expression_operator",

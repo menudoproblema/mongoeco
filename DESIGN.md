@@ -626,6 +626,18 @@ Objetivos principales:
 * **Topología y comportamiento de driver real restantes**:
   * solo refinamientos de paridad fina de cliente de red que aparezcan después del cierre de Fase 7;
   * ampliaciones de superficie wire o de comportamiento de servidor que ya no exijan nueva infraestructura transversal;
+
+Estado de avance dentro de Fase 8:
+* ya están aplicados:
+  * capabilities semánticas explícitas en compatibilidad oficial;
+  * IR de lectura tipada hasta engines, con shims legacy solo como compatibilidad;
+  * distinción formal entre stages streamables y materializantes en el core de agregación;
+  * `find_raw_batches` y `aggregate_raw_batches`;
+* siguen pendientes los bloques más anchos:
+  * `collation`;
+  * `bypass_document_validation`;
+  * refinamiento BSON/índices virtuales/planning más fino;
+  * contraste exhaustivo contra la suite de `mongomock`.
   * todo lo que quede pendiente de la ambición más profunda de cliente de red, pero ya como refinamiento y no como base arquitectónica.
 
 Criterio de foco:

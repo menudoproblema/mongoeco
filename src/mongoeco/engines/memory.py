@@ -13,9 +13,11 @@ from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.mvcc import MemoryMvccState
 from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.engines.semantic_core import (
+    EngineFindSemantics,
     EngineReadExecutionPlan,
     build_query_plan_explanation,
     compile_find_semantics,
+    compile_find_semantics_from_operation,
     compile_update_semantics,
     enforce_collection_document_validation,
     filter_documents,
@@ -569,27 +571,22 @@ class MemoryEngine(AsyncStorageEngine):
             return False
 
     @override
-    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, hint: str | IndexKeySpec | None = None, comment: object | None = None, max_time_ms: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
+    def scan_find_semantics(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        context: ClientSession | None = None,
+    ) -> AsyncIterable[Document]:
         async def _scan():
-            semantics = compile_find_semantics(
-                filter_spec,
-                plan=plan,
-                projection=projection,
-                sort=sort,
-                skip=skip,
-                limit=limit,
-                hint=hint,
-                comment=comment,
-                max_time_ms=max_time_ms,
-                dialect=dialect,
-            )
             deadline = semantics.deadline
             self._record_operation_metadata(
                 context,
                 operation="scan_collection",
-                comment=comment,
-                max_time_ms=max_time_ms,
-                hint=hint,
+                comment=semantics.comment,
+                max_time_ms=semantics.max_time_ms,
+                hint=semantics.hint,
             )
             enforce_deadline(deadline)
 
@@ -607,7 +604,7 @@ class MemoryEngine(AsyncStorageEngine):
                 self._resolve_hint_index(
                     db_name,
                     coll_name,
-                    hint,
+                    semantics.hint,
                     indexes=indexes,
                     plan=semantics.query_plan,
                 )
@@ -626,6 +623,27 @@ class MemoryEngine(AsyncStorageEngine):
         return _scan()
 
     @override
+    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, hint: str | IndexKeySpec | None = None, comment: object | None = None, max_time_ms: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
+        semantics = compile_find_semantics(
+            filter_spec,
+            plan=plan,
+            projection=projection,
+            sort=sort,
+            skip=skip,
+            limit=limit,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            dialect=dialect,
+        )
+        return self.scan_find_semantics(
+            db_name,
+            coll_name,
+            semantics,
+            context=context,
+        )
+
+    @override
     def scan_find_operation(
         self,
         db_name: str,
@@ -635,19 +653,10 @@ class MemoryEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> AsyncIterable[Document]:
-        return self.scan_collection(
+        return self.scan_find_semantics(
             db_name,
             coll_name,
-            operation.filter_spec,
-            plan=operation.plan,
-            projection=operation.projection,
-            sort=operation.sort,
-            skip=operation.skip,
-            limit=operation.limit,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            dialect=dialect,
+            compile_find_semantics_from_operation(operation, dialect=dialect),
             context=context,
         )
 
@@ -805,19 +814,36 @@ class MemoryEngine(AsyncStorageEngine):
 
     @override
     async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int:
-        effective_dialect = dialect or MONGODB_DIALECT_70
-        query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
-        async with self._get_lock(db_name, coll_name):
-            coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
-            return sum(
-                1
-                for data in coll.values()
-                if QueryEngine.match_plan(
-                    self._decode_storage_document(data),
-                    query_plan,
-                    dialect=effective_dialect,
-                )
-            )
+        semantics = compile_find_semantics(
+            filter_spec,
+            plan=plan,
+            dialect=dialect,
+        )
+        return await self.count_find_semantics(
+            db_name,
+            coll_name,
+            semantics,
+            context=context,
+        )
+
+    @override
+    async def count_find_semantics(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        context: ClientSession | None = None,
+    ) -> int:
+        count = 0
+        async for _ in self.scan_find_semantics(
+            db_name,
+            coll_name,
+            semantics,
+            context=context,
+        ):
+            count += 1
+        return count
 
     @override
     async def count_find_operation(
@@ -829,16 +855,12 @@ class MemoryEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> int:
-        count = 0
-        async for _ in self.scan_find_operation(
+        return await self.count_find_semantics(
             db_name,
             coll_name,
-            operation,
-            dialect=dialect,
+            compile_find_semantics_from_operation(operation, dialect=dialect),
             context=context,
-        ):
-            count += 1
-        return count
+        )
 
     @override
     async def create_index(
@@ -1148,13 +1170,29 @@ class MemoryEngine(AsyncStorageEngine):
             max_time_ms=max_time_ms,
             dialect=dialect,
         )
+        return await self.explain_find_semantics(
+            db_name,
+            coll_name,
+            semantics,
+            context=context,
+        )
+
+    @override
+    async def explain_find_semantics(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        context: ClientSession | None = None,
+    ) -> QueryPlanExplanation:
         deadline = semantics.deadline
         self._record_operation_metadata(
             context,
             operation="explain_query_plan",
-            comment=comment,
-            max_time_ms=max_time_ms,
-            hint=hint,
+            comment=semantics.comment,
+            max_time_ms=semantics.max_time_ms,
+            hint=semantics.hint,
         )
         enforce_deadline(deadline)
         async with self._get_lock(db_name, coll_name):
@@ -1162,7 +1200,7 @@ class MemoryEngine(AsyncStorageEngine):
         hinted_index = self._resolve_hint_index(
             db_name,
             coll_name,
-            hint,
+            semantics.hint,
             indexes=indexes,
             plan=semantics.query_plan,
         )
@@ -1171,7 +1209,7 @@ class MemoryEngine(AsyncStorageEngine):
             db_name,
             coll_name,
             FindOperation(
-                filter_spec=semantics.filter_spec,
+                filter_spec=semantics.filter_spec or {},
                 projection=semantics.projection,
                 sort=semantics.sort,
                 skip=semantics.skip,
@@ -1182,7 +1220,7 @@ class MemoryEngine(AsyncStorageEngine):
                 batch_size=None,
                 plan=semantics.query_plan,
             ),
-            dialect=dialect,
+            dialect=semantics.dialect,
             context=context,
         )
         details = describe_virtual_index_usage(
@@ -1249,18 +1287,10 @@ class MemoryEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> QueryPlanExplanation:
-        return await self.explain_query_plan(
+        return await self.explain_find_semantics(
             db_name,
             coll_name,
-            operation.filter_spec,
-            plan=operation.plan,
-            sort=operation.sort,
-            skip=operation.skip,
-            limit=operation.limit,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            dialect=dialect,
+            compile_find_semantics_from_operation(operation, dialect=dialect),
             context=context,
         )
 

@@ -4,6 +4,7 @@ import time
 
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub, ChangeStreamScope
+from mongoeco.api._async.raw_batch_cursor import AsyncRawBatchCursor
 from mongoeco.api.operations import (
     AggregateOperation,
     FindOperation,
@@ -437,6 +438,20 @@ class AsyncCollection:
         session: ClientSession | None = None,
     ) -> AsyncIterable[Document]:
         self._ensure_operation_executable(operation)
+        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
+
+        semantics = compile_find_semantics_from_operation(
+            operation,
+            dialect=self._mongodb_dialect,
+        )
+        method = getattr(self._engine, "scan_find_semantics", None)
+        if callable(method):
+            return method(
+                self._db_name,
+                self._collection_name,
+                semantics,
+                context=session,
+            )
         method = getattr(self._engine, "scan_find_operation", None)
         if callable(method):
             return method(
@@ -526,24 +541,39 @@ class AsyncCollection:
     ) -> int:
         self._ensure_operation_executable(operation)
         started_at = time.perf_counter_ns()
-        method = getattr(self._engine, "count_find_operation", None)
+        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
+
+        semantics = compile_find_semantics_from_operation(
+            operation,
+            dialect=self._mongodb_dialect,
+        )
+        method = getattr(self._engine, "count_find_semantics", None)
         if callable(method):
             count = await method(
                 self._db_name,
                 self._collection_name,
-                operation,
-                dialect=self._mongodb_dialect,
+                semantics,
                 context=session,
             )
         else:
-            count = await self._engine.count_matching_documents(
-                self._db_name,
-                self._collection_name,
-                operation.filter_spec,
-                plan=operation.plan,
-                dialect=self._mongodb_dialect,
-                context=session,
-            )
+            method = getattr(self._engine, "count_find_operation", None)
+            if callable(method):
+                count = await method(
+                    self._db_name,
+                    self._collection_name,
+                    operation,
+                    dialect=self._mongodb_dialect,
+                    context=session,
+                )
+            else:
+                count = await self._engine.count_matching_documents(
+                    self._db_name,
+                    self._collection_name,
+                    operation.filter_spec,
+                    plan=operation.plan,
+                    dialect=self._mongodb_dialect,
+                    context=session,
+                )
         await self._profile_operation(
             op="command",
             command={"count": self._collection_name, "query": operation.filter_spec},
@@ -995,6 +1025,77 @@ class AsyncCollection:
             planning_mode=self._planning_mode,
         )
         return self._build_aggregation_cursor(operation, session=session)
+
+    def find_raw_batches(
+        self,
+        filter_spec: Filter | None = None,
+        projection: Projection | None = None,
+        *,
+        sort: SortSpec | None = None,
+        skip: int = 0,
+        limit: int | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        batch_size: int | None = None,
+        session: ClientSession | None = None,
+    ) -> AsyncRawBatchCursor:
+        cursor = self.find(
+            filter_spec,
+            projection,
+            sort=sort,
+            skip=skip,
+            limit=limit,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            batch_size=batch_size,
+            session=session,
+        )
+        offset = 0
+
+        async def _fetch(size: int) -> list[Document]:
+            nonlocal offset
+            page = await cursor._fetch_batch(offset, size)
+            offset += len(page)
+            return page
+
+        return AsyncRawBatchCursor(_fetch, batch_size=batch_size)
+
+    def aggregate_raw_batches(
+        self,
+        pipeline: Pipeline,
+        *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        batch_size: int | None = None,
+        allow_disk_use: bool | None = None,
+        let: dict[str, object] | None = None,
+        session: ClientSession | None = None,
+    ) -> AsyncRawBatchCursor:
+        cursor = self.aggregate(
+            pipeline,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            batch_size=batch_size,
+            allow_disk_use=allow_disk_use,
+            let=let,
+            session=session,
+        )
+        iterator = cursor.__aiter__()
+
+        async def _fetch(size: int) -> list[Document]:
+            documents: list[Document] = []
+            for _ in range(size):
+                try:
+                    documents.append(await iterator.__anext__())
+                except StopAsyncIteration:
+                    break
+            return documents
+
+        return AsyncRawBatchCursor(_fetch, batch_size=batch_size)
 
     def _build_aggregation_cursor(
         self,

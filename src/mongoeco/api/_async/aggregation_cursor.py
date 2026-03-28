@@ -19,6 +19,7 @@ from mongoeco.core.aggregation import (
     _CURRENT_COLLECTION_RESOLVER_KEY,
     AggregationSpillPolicy,
     apply_pipeline,
+    is_streamable_aggregation_stage,
     split_pushdown_pipeline,
 )
 from mongoeco.core.codec import DocumentCodec
@@ -68,18 +69,9 @@ class AsyncAggregationCursor:
     @staticmethod
     def _split_streamable_pipeline(
         pipeline: Pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
     ) -> tuple[Pipeline, int, int | None] | None:
-        streamable_operators = {
-            "$match",
-            "$project",
-            "$unset",
-            "$addFields",
-            "$set",
-            "$unwind",
-            "$replaceRoot",
-            "$replaceWith",
-            "$lookup",
-        }
         streamable_pipeline: Pipeline = []
         trailing_skip = 0
         trailing_limit: int | None = None
@@ -97,7 +89,7 @@ class AsyncAggregationCursor:
                 continue
             if seen_trailing_window:
                 return None
-            if operator not in streamable_operators:
+            if not is_streamable_aggregation_stage(operator, dialect=dialect):
                 return None
             streamable_pipeline.append(stage)
 
@@ -175,6 +167,17 @@ class AsyncAggregationCursor:
     ):
         engine = self._collection._engine
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
+        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
+
+        semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
+        scan_find_semantics = getattr(engine, "scan_find_semantics", None)
+        if callable(scan_find_semantics):
+            return scan_find_semantics(
+                self._collection._db_name,
+                collection_name,
+                semantics,
+                context=self._session,
+            )
         scan_find_operation = getattr(engine, "scan_find_operation", None)
         if callable(scan_find_operation):
             return scan_find_operation(
@@ -293,7 +296,10 @@ class AsyncAggregationCursor:
             self._pipeline,
             dialect=dialect,
         )
-        stream_plan = self._split_streamable_pipeline(pushdown.remaining_pipeline)
+        stream_plan = self._split_streamable_pipeline(
+            pushdown.remaining_pipeline,
+            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+        )
         if stream_plan is None:
             for document in await self._materialize():
                 yield document
@@ -429,34 +435,50 @@ class AsyncAggregationCursor:
             dialect=dialect,
         )
         operation = self._pushdown_find_operation()
-        explain_find_operation = getattr(
+        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
+
+        semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
+        explain_find_semantics = getattr(
             self._collection._engine,
-            "explain_find_operation",
+            "explain_find_semantics",
             None,
         )
-        if callable(explain_find_operation):
-            engine_plan = await explain_find_operation(
+        if callable(explain_find_semantics):
+            engine_plan = await explain_find_semantics(
                 self._collection._db_name,
                 self._collection._collection_name,
-                operation,
-                dialect=dialect,
+                semantics,
                 context=self._session,
             )
         else:
-            engine_plan = await self._collection._engine.explain_query_plan(
-                self._collection._db_name,
-                self._collection._collection_name,
-                operation.filter_spec,
-                plan=operation.plan,
-                sort=operation.sort,
-                skip=operation.skip,
-                limit=operation.limit,
-                hint=operation.hint,
-                comment=operation.comment,
-                max_time_ms=operation.max_time_ms,
-                dialect=dialect,
-                context=self._session,
+            explain_find_operation = getattr(
+                self._collection._engine,
+                "explain_find_operation",
+                None,
             )
+            if callable(explain_find_operation):
+                engine_plan = await explain_find_operation(
+                    self._collection._db_name,
+                    self._collection._collection_name,
+                    operation,
+                    dialect=dialect,
+                    context=self._session,
+                )
+            else:
+                engine_plan = await self._collection._engine.explain_query_plan(
+                    self._collection._db_name,
+                    self._collection._collection_name,
+                    operation.filter_spec,
+                    plan=operation.plan,
+                    sort=operation.sort,
+                    skip=operation.skip,
+                    limit=operation.limit,
+                    hint=operation.hint,
+                    comment=operation.comment,
+                    max_time_ms=operation.max_time_ms,
+                    dialect=dialect,
+                    context=self._session,
+                )
         return AggregateExplanation(
             engine_plan=engine_plan,
             remaining_pipeline=pushdown.remaining_pipeline,
@@ -467,7 +489,11 @@ class AsyncAggregationCursor:
             allow_disk_use=self._allow_disk_use,
             let=self._let,
             streaming_batch_execution=self._batch_size not in (None, 0)
-            and self._split_streamable_pipeline(pushdown.remaining_pipeline) is not None,
+            and self._split_streamable_pipeline(
+                pushdown.remaining_pipeline,
+                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+            )
+            is not None,
         ).to_document()
 
     def __aiter__(self) -> AsyncIterator[Document]:

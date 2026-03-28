@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Iterable
 
-from mongoeco.api.operations import UpdateOperation
+from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.operators import CompiledUpdatePlan
@@ -146,6 +146,25 @@ def compile_find_semantics(
         comment=comment,
         max_time_ms=max_time_ms,
         dialect=effective_dialect,
+    )
+
+
+def compile_find_semantics_from_operation(
+    operation: FindOperation,
+    *,
+    dialect: MongoDialect | None = None,
+) -> EngineFindSemantics:
+    return compile_find_semantics(
+        operation.filter_spec,
+        plan=operation.plan,
+        projection=operation.projection,
+        sort=operation.sort,
+        skip=operation.skip,
+        limit=operation.limit,
+        hint=operation.hint,
+        comment=operation.comment,
+        max_time_ms=operation.max_time_ms,
+        dialect=dialect,
     )
 
 

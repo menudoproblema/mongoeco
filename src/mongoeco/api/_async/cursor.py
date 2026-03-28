@@ -166,6 +166,20 @@ class AsyncCursor:
         engine = self._collection._engine
         operation = self.clone().limit(self._limit if limit is None else limit)._as_operation()
         _ensure_operation_executable(self._collection, operation)
+        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
+
+        semantics = compile_find_semantics_from_operation(
+            operation,
+            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+        )
+        scan_find_semantics = getattr(engine, "scan_find_semantics", None)
+        if callable(scan_find_semantics):
+            return scan_find_semantics(
+                self._collection._db_name,
+                self._collection._collection_name,
+                semantics,
+                context=self._session,
+            )
         scan_find_operation = getattr(engine, "scan_find_operation", None)
         if callable(scan_find_operation):
             return scan_find_operation(
@@ -202,31 +216,46 @@ class AsyncCursor:
         operation = self.clone().skip(effective_skip).limit(effective_limit)._as_operation()
         _ensure_operation_executable(self._collection, operation)
         engine = self._collection._engine
-        scan_find_operation = getattr(engine, "scan_find_operation", None)
-        if callable(scan_find_operation):
-            iterable = scan_find_operation(
+        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
+
+        semantics = compile_find_semantics_from_operation(
+            operation,
+            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+        )
+        scan_find_semantics = getattr(engine, "scan_find_semantics", None)
+        if callable(scan_find_semantics):
+            iterable = scan_find_semantics(
                 self._collection._db_name,
                 self._collection._collection_name,
-                operation,
-                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+                semantics,
                 context=self._session,
             )
         else:
-            iterable = engine.scan_collection(
-                self._collection._db_name,
-                self._collection._collection_name,
-                operation.filter_spec,
-                plan=operation.plan,
-                projection=operation.projection,
-                sort=operation.sort,
-                skip=operation.skip,
-                limit=operation.limit,
-                hint=operation.hint,
-                comment=operation.comment,
-                max_time_ms=operation.max_time_ms,
-                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-                context=self._session,
-            )
+            scan_find_operation = getattr(engine, "scan_find_operation", None)
+            if callable(scan_find_operation):
+                iterable = scan_find_operation(
+                    self._collection._db_name,
+                    self._collection._collection_name,
+                    operation,
+                    dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+                    context=self._session,
+                )
+            else:
+                iterable = engine.scan_collection(
+                    self._collection._db_name,
+                    self._collection._collection_name,
+                    operation.filter_spec,
+                    plan=operation.plan,
+                    projection=operation.projection,
+                    sort=operation.sort,
+                    skip=operation.skip,
+                    limit=operation.limit,
+                    hint=operation.hint,
+                    comment=operation.comment,
+                    max_time_ms=operation.max_time_ms,
+                    dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+                    context=self._session,
+                )
         return [document async for document in iterable]
 
     def _iter(self, *, limit: int | None = None, enforce_ownership: bool = True) -> _AsyncCursorIterator:
@@ -434,6 +463,21 @@ class AsyncCursor:
                 planning_issues=operation.planning_issues,
             ).to_document()
         engine = self._collection._engine
+        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
+
+        semantics = compile_find_semantics_from_operation(
+            operation,
+            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+        )
+        explain_find_semantics = getattr(engine, "explain_find_semantics", None)
+        if callable(explain_find_semantics):
+            result = await explain_find_semantics(
+                self._collection._db_name,
+                self._collection._collection_name,
+                semantics,
+                context=self._session,
+            )
+            return _serialize_explanation(result)
         explain_find_operation = getattr(engine, "explain_find_operation", None)
         if callable(explain_find_operation):
             result = await explain_find_operation(

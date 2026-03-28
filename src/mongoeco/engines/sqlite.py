@@ -44,6 +44,7 @@ from mongoeco.engines.semantic_core import (
     EngineReadExecutionPlan,
     build_query_plan_explanation,
     compile_find_semantics,
+    compile_find_semantics_from_operation,
     compile_update_semantics,
     enforce_collection_document_validation,
     filter_documents,
@@ -1648,18 +1649,21 @@ class SQLiteEngine(AsyncStorageEngine):
         self,
         db_name: str,
         coll_name: str,
-        filter_spec: Filter,
+        semantics_or_filter_spec: EngineFindSemantics | Filter,
         plan: QueryNode | None,
         context: ClientSession | None,
         dialect: MongoDialect | None = None,
     ) -> int:
-        effective_dialect = dialect or MONGODB_DIALECT_70
-        plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
-        semantics = compile_find_semantics(
-            filter_spec,
-            plan=plan,
-            dialect=effective_dialect,
+        semantics = (
+            semantics_or_filter_spec
+            if isinstance(semantics_or_filter_spec, EngineFindSemantics)
+            else compile_find_semantics(
+                semantics_or_filter_spec,
+                plan=plan,
+                dialect=dialect,
+            )
         )
+        effective_dialect = semantics.dialect
         with self._lock:
             conn: sqlite3.Connection | None = None
             if self._session_owns_transaction(context):
@@ -2311,14 +2315,30 @@ class SQLiteEngine(AsyncStorageEngine):
             max_time_ms=max_time_ms,
             dialect=dialect,
         )
+        return self.scan_find_semantics(
+            db_name,
+            coll_name,
+            semantics,
+            context=context,
+        )
+
+    @override
+    def scan_find_semantics(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        context: ClientSession | None = None,
+    ) -> AsyncIterable[Document]:
 
         async def _scan() -> AsyncIterable[Document]:
             self._record_operation_metadata(
                 context,
                 operation="scan_collection",
-                comment=comment,
-                max_time_ms=max_time_ms,
-                hint=hint,
+                comment=semantics.comment,
+                max_time_ms=semantics.max_time_ms,
+                hint=semantics.hint,
             )
             items: queue.Queue[object] = queue.Queue()
             sentinel = object()
@@ -2333,7 +2353,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         coll_name,
                         semantics,
                         context=context,
-                        hint=hint,
+                        hint=semantics.hint,
                         stop_event=stop_event,
                     ):
                         if stop_event.is_set():
@@ -2372,19 +2392,10 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> AsyncIterable[Document]:
-        return self.scan_collection(
+        return self.scan_find_semantics(
             db_name,
             coll_name,
-            operation.filter_spec,
-            plan=operation.plan,
-            projection=operation.projection,
-            sort=operation.sort,
-            skip=operation.skip,
-            limit=operation.limit,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            dialect=dialect,
+            compile_find_semantics_from_operation(operation, dialect=dialect),
             context=context,
         )
 
@@ -2644,14 +2655,30 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @override
     async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int:
+        return await self.count_find_semantics(
+            db_name,
+            coll_name,
+            compile_find_semantics(filter_spec, plan=plan, dialect=dialect),
+            context=context,
+        )
+
+    @override
+    async def count_find_semantics(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        context: ClientSession | None = None,
+    ) -> int:
         return await asyncio.to_thread(
             self._count_matching_documents_sync,
             db_name,
             coll_name,
-            filter_spec,
-            plan,
+            semantics,
+            None,
             context,
-            dialect,
+            None,
         )
 
     @override
@@ -2664,16 +2691,12 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> int:
-        count = 0
-        async for _ in self.scan_find_operation(
+        return await self.count_find_semantics(
             db_name,
             coll_name,
-            operation,
-            dialect=dialect,
+            compile_find_semantics_from_operation(operation, dialect=dialect),
             context=context,
-        ):
-            count += 1
-        return count
+        )
 
     @override
     async def create_index(
@@ -2835,18 +2858,34 @@ class SQLiteEngine(AsyncStorageEngine):
             max_time_ms=max_time_ms,
             dialect=dialect,
         )
+        return await self.explain_find_semantics(
+            db_name,
+            coll_name,
+            semantics,
+            context=context,
+        )
+
+    @override
+    async def explain_find_semantics(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        context: ClientSession | None = None,
+    ) -> QueryPlanExplanation:
         self._record_operation_metadata(
             context,
             operation="explain_query_plan",
-            comment=comment,
-            max_time_ms=max_time_ms,
-            hint=hint,
+            comment=semantics.comment,
+            max_time_ms=semantics.max_time_ms,
+            hint=semantics.hint,
         )
         hinted_index = await asyncio.to_thread(
             self._resolve_hint_index,
             db_name,
             coll_name,
-            hint,
+            semantics.hint,
         )
         execution_plan = await self.plan_find_execution(
             db_name,
@@ -2863,7 +2902,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 max_time_ms=semantics.max_time_ms,
                 batch_size=None,
             ),
-            dialect=dialect,
+            dialect=semantics.dialect,
             context=context,
         )
         details: object
@@ -2873,7 +2912,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 db_name,
                 coll_name,
                 semantics,
-                hint=hint,
+                hint=semantics.hint,
             )
         else:
             details = {"fallback_reason": execution_plan.fallback_reason}
@@ -2907,18 +2946,10 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> QueryPlanExplanation:
-        return await self.explain_query_plan(
+        return await self.explain_find_semantics(
             db_name,
             coll_name,
-            operation.filter_spec,
-            plan=operation.plan,
-            sort=operation.sort,
-            skip=operation.skip,
-            limit=operation.limit,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            dialect=dialect,
+            compile_find_semantics_from_operation(operation, dialect=dialect),
             context=context,
         )
 

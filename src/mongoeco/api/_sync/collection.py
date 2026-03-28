@@ -2,6 +2,7 @@ from mongoeco.api._async.cursor import HintSpec
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
 from mongoeco.api._sync.index_cursor import IndexCursor
+from mongoeco.api._sync.raw_batch_cursor import RawBatchCursor
 from mongoeco.api._sync.search_index_cursor import SearchIndexCursor
 from mongoeco.change_streams import ChangeStreamCursor
 from mongoeco.compat import (
@@ -165,6 +166,62 @@ class Collection:
         return AggregationCursor(
             self._client,
             self._async_collection().aggregate(
+                pipeline,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                batch_size=batch_size,
+                allow_disk_use=allow_disk_use,
+                let=let,
+                session=session,
+            ),
+        )
+
+    def find_raw_batches(
+        self,
+        filter_spec: Filter | None = None,
+        projection: Projection | None = None,
+        *,
+        sort: SortSpec | None = None,
+        skip: int = 0,
+        limit: int | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        batch_size: int | None = None,
+        session: ClientSession | None = None,
+    ) -> RawBatchCursor:
+        return RawBatchCursor(
+            self._client,
+            self._async_collection().find_raw_batches(
+                filter_spec,
+                projection,
+                sort=sort,
+                skip=skip,
+                limit=limit,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                batch_size=batch_size,
+                session=session,
+            ),
+        )
+
+    def aggregate_raw_batches(
+        self,
+        pipeline: Pipeline,
+        *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        batch_size: int | None = None,
+        allow_disk_use: bool | None = None,
+        let: dict[str, object] | None = None,
+        session: ClientSession | None = None,
+    ) -> RawBatchCursor:
+        return RawBatchCursor(
+            self._client,
+            self._async_collection().aggregate_raw_batches(
                 pipeline,
                 hint=hint,
                 comment=comment,

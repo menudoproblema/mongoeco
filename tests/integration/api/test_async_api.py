@@ -5,6 +5,7 @@ import re
 import threading
 import unittest
 import uuid
+from bson import decode_all
 
 from mongoeco import (
     AsyncMongoClient,
@@ -1401,6 +1402,32 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         await collection.find({}).sort([("rank", 1)]).first(),
                         {"_id": "2", "rank": 1},
                     )
+
+    async def test_find_and_aggregate_raw_batches_return_bson_batches(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "rank": 3})
+                    await collection.insert_one({"_id": "2", "rank": 1})
+                    await collection.insert_one({"_id": "3", "rank": 2})
+
+                    find_batches = await collection.find_raw_batches(
+                        {},
+                        sort=[("rank", 1)],
+                        batch_size=2,
+                    ).to_list()
+                    aggregate_batches = await collection.aggregate_raw_batches(
+                        [{"$sort": {"rank": 1}}, {"$project": {"_id": 1, "rank": 1}}],
+                        batch_size=2,
+                    ).to_list()
+
+                    self.assertEqual(len(find_batches), 2)
+                    self.assertEqual(decode_all(find_batches[0]), [{"_id": "2", "rank": 1}, {"_id": "3", "rank": 2}])
+                    self.assertEqual(decode_all(find_batches[1]), [{"_id": "1", "rank": 3}])
+                    self.assertEqual(len(aggregate_batches), 2)
+                    self.assertEqual(decode_all(aggregate_batches[0]), [{"_id": "2", "rank": 1}, {"_id": "3", "rank": 2}])
+                    self.assertEqual(decode_all(aggregate_batches[1]), [{"_id": "1", "rank": 3}])
 
     async def test_find_cursor_rejects_mutation_after_iteration_starts(self):
         for engine_name in ENGINE_FACTORIES:

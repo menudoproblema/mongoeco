@@ -4,7 +4,11 @@ from unittest.mock import patch
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api.operations import compile_aggregate_operation
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
-from mongoeco.core.aggregation import AggregationSpillPolicy
+from mongoeco.core.aggregation import (
+    AggregationSpillPolicy,
+    register_aggregation_stage,
+    unregister_aggregation_stage,
+)
 from mongoeco.core.bson_scalars import BsonInt32
 from mongoeco.core.aggregation import _CURRENT_COLLECTION_RESOLVER_KEY
 from mongoeco.core.projections import apply_projection
@@ -223,6 +227,21 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(names, {"archive"})
+
+    async def test_split_streamable_pipeline_uses_registered_stage_execution_mode(self):
+        register_aggregation_stage(
+            "$future",
+            lambda documents, _spec, _context: documents,
+            execution_mode="streamable",
+        )
+        try:
+            stream_plan = AsyncAggregationCursor._split_streamable_pipeline(
+                [{"$match": {"x": 1}}, {"$future": {}}, {"$limit": 1}]
+            )
+        finally:
+            unregister_aggregation_stage("$future")
+
+        self.assertEqual(stream_plan, ([{"$match": {"x": 1}}, {"$future": {}}], 0, 1))
 
     async def test_materialize_pushes_safe_prefix_to_find(self):
         collection = _FakeCollection(

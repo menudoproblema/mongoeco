@@ -1,5 +1,6 @@
 from collections.abc import Callable, Iterable
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -15,7 +16,10 @@ from mongoeco.core.aggregation.grouping_stages import (
     _apply_set_window_fields,
     _apply_sort_by_count,
 )
-from mongoeco.core.aggregation.extensions import get_registered_aggregation_stage
+from mongoeco.core.aggregation.extensions import (
+    AggregationStageExecutionMode,
+    get_registered_aggregation_stage_registration,
+)
 from mongoeco.core.aggregation.join_stages import (
     _apply_facet,
     _apply_lookup,
@@ -44,6 +48,12 @@ from mongoeco.core.aggregation.transform_stages import (
 
 
 type AggregationStageHandler = Callable[[list[Document], object, AggregationStageContext], list[Document]]
+
+
+@dataclass(frozen=True, slots=True)
+class AggregationStageSpec:
+    handler: AggregationStageHandler
+    execution_mode: AggregationStageExecutionMode
 
 
 def _stage_documents(
@@ -218,30 +228,61 @@ def _stage_set_window_fields(
     return _apply_set_window_fields(documents, spec, context.variables, dialect=context.dialect)
 
 
-AGGREGATION_STAGE_HANDLERS: dict[str, AggregationStageHandler] = {
-    "$documents": _stage_documents,
-    "$match": _stage_match,
-    "$project": _stage_project,
-    "$unset": _stage_unset,
-    "$sample": _stage_sample,
-    "$sort": _stage_sort,
-    "$skip": _stage_skip,
-    "$limit": _stage_limit,
-    "$addFields": _stage_add_fields,
-    "$set": _stage_add_fields,
-    "$unwind": _stage_unwind,
-    "$group": _stage_group,
-    "$bucket": _stage_bucket,
-    "$bucketAuto": _stage_bucket_auto,
-    "$lookup": _stage_lookup,
-    "$unionWith": _stage_union_with,
-    "$replaceRoot": _stage_replace_root,
-    "$replaceWith": _stage_replace_with,
-    "$facet": _stage_facet,
-    "$count": _stage_count,
-    "$sortByCount": _stage_sort_by_count,
-    "$setWindowFields": _stage_set_window_fields,
+AGGREGATION_STAGE_SPECS: dict[str, AggregationStageSpec] = {
+    "$documents": AggregationStageSpec(_stage_documents, "materializing"),
+    "$match": AggregationStageSpec(_stage_match, "streamable"),
+    "$project": AggregationStageSpec(_stage_project, "streamable"),
+    "$unset": AggregationStageSpec(_stage_unset, "streamable"),
+    "$sample": AggregationStageSpec(_stage_sample, "materializing"),
+    "$sort": AggregationStageSpec(_stage_sort, "materializing"),
+    "$skip": AggregationStageSpec(_stage_skip, "streamable"),
+    "$limit": AggregationStageSpec(_stage_limit, "streamable"),
+    "$addFields": AggregationStageSpec(_stage_add_fields, "streamable"),
+    "$set": AggregationStageSpec(_stage_add_fields, "streamable"),
+    "$unwind": AggregationStageSpec(_stage_unwind, "streamable"),
+    "$group": AggregationStageSpec(_stage_group, "materializing"),
+    "$bucket": AggregationStageSpec(_stage_bucket, "materializing"),
+    "$bucketAuto": AggregationStageSpec(_stage_bucket_auto, "materializing"),
+    "$lookup": AggregationStageSpec(_stage_lookup, "streamable"),
+    "$unionWith": AggregationStageSpec(_stage_union_with, "materializing"),
+    "$replaceRoot": AggregationStageSpec(_stage_replace_root, "streamable"),
+    "$replaceWith": AggregationStageSpec(_stage_replace_with, "streamable"),
+    "$facet": AggregationStageSpec(_stage_facet, "materializing"),
+    "$count": AggregationStageSpec(_stage_count, "materializing"),
+    "$sortByCount": AggregationStageSpec(_stage_sort_by_count, "materializing"),
+    "$setWindowFields": AggregationStageSpec(_stage_set_window_fields, "materializing"),
 }
+
+AGGREGATION_STAGE_HANDLERS: dict[str, AggregationStageHandler] = {
+    operator: spec.handler for operator, spec in AGGREGATION_STAGE_SPECS.items()
+}
+
+
+def get_aggregation_stage_spec(
+    operator: str,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> AggregationStageSpec:
+    registration = get_registered_aggregation_stage_registration(operator)
+    if registration is not None:
+        return AggregationStageSpec(
+            registration.handler,
+            registration.execution_mode,
+        )
+    if not dialect.supports_aggregation_stage(operator):
+        raise OperationFailure(f"Unsupported aggregation stage: {operator}")
+    spec = AGGREGATION_STAGE_SPECS.get(operator)
+    if spec is None:
+        raise OperationFailure(f"Unsupported aggregation stage: {operator}")
+    return spec
+
+
+def is_streamable_aggregation_stage(
+    operator: str,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> bool:
+    return get_aggregation_stage_spec(operator, dialect=dialect).execution_mode == "streamable"
 
 
 def apply_pipeline(
@@ -256,14 +297,8 @@ def apply_pipeline(
     result = [deepcopy(document) for document in documents]
     for index, stage in enumerate(pipeline):
         operator, spec = _require_stage(stage)
-        handler = get_registered_aggregation_stage(operator)
-        if handler is None:
-            if not dialect.supports_aggregation_stage(operator):
-                raise OperationFailure(f"Unsupported aggregation stage: {operator}")
-            handler = AGGREGATION_STAGE_HANDLERS.get(operator)
-        if handler is None:
-            raise OperationFailure(f"Unsupported aggregation stage: {operator}")
-        result = handler(
+        stage_spec = get_aggregation_stage_spec(operator, dialect=dialect)
+        result = stage_spec.handler(
             result,
             spec,
             AggregationStageContext(

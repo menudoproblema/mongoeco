@@ -307,6 +307,24 @@ class Cursor:
                 planning_issues=operation.planning_issues,
             ).to_document()
         dialect = getattr(self._async_collection, "mongodb_dialect", None)
+        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
+
+        semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
+        explain_find_semantics = getattr(
+            self._async_collection._engine,
+            "explain_find_semantics",
+            None,
+        )
+        if callable(explain_find_semantics):
+            result = self._client._run(
+                explain_find_semantics(
+                    self._async_collection._db_name,
+                    self._async_collection._collection_name,
+                    semantics,
+                    context=self._session,
+                )
+            )
+            return _serialize_explanation(result)
         explain_find_operation = getattr(
             self._async_collection._engine,
             "explain_find_operation",

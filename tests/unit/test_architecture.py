@@ -42,6 +42,9 @@ from mongoeco.compat.operation_support import (
 )
 from mongoeco.core.aggregation import (
     AGGREGATION_STAGE_HANDLERS,
+    AGGREGATION_STAGE_SPECS,
+    get_aggregation_stage_spec,
+    is_streamable_aggregation_stage,
     register_aggregation_stage,
     unregister_aggregation_stage,
 )
@@ -459,9 +462,25 @@ class ArchitectureUnitTests(unittest.TestCase):
 
     def test_aggregation_stage_registry_is_the_dispatch_source(self):
         self.assertIn("$match", AGGREGATION_STAGE_HANDLERS)
+        self.assertIn("$match", AGGREGATION_STAGE_SPECS)
         self.assertIn("$group", AGGREGATION_STAGE_HANDLERS)
         self.assertIn("$lookup", AGGREGATION_STAGE_HANDLERS)
         self.assertIs(AGGREGATION_STAGE_HANDLERS["$set"], AGGREGATION_STAGE_HANDLERS["$addFields"])
+        self.assertTrue(is_streamable_aggregation_stage("$match"))
+        self.assertFalse(is_streamable_aggregation_stage("$group"))
+
+    def test_registered_stage_can_publish_execution_mode(self):
+        register_aggregation_stage(
+            "$future",
+            lambda documents, _spec, _context: documents,
+            execution_mode="streamable",
+        )
+        try:
+            spec = get_aggregation_stage_spec("$future")
+        finally:
+            unregister_aggregation_stage("$future")
+
+        self.assertEqual(spec.execution_mode, "streamable")
 
     def test_index_definition_is_shared_source_for_public_metadata(self):
         index = IndexDefinition([("email", 1), ("created_at", -1)], name="email_created", unique=True)
