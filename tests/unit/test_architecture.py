@@ -144,8 +144,9 @@ class ArchitectureUnitTests(unittest.TestCase):
             await memory.connect()
             await sqlite.connect()
             try:
-                memory_explain = await memory.explain_query_plan("db", "users", {})
-                sqlite_explain = await sqlite.explain_query_plan("db", "users", {})
+                semantics = compile_find_semantics({})
+                memory_explain = await memory.explain_find_semantics("db", "users", semantics)
+                sqlite_explain = await sqlite.explain_find_semantics("db", "users", semantics)
                 self.assertIsInstance(memory_explain, QueryPlanExplanation)
                 self.assertIsInstance(sqlite_explain, QueryPlanExplanation)
                 self.assertEqual(memory_explain.to_document()["engine"], "memory")

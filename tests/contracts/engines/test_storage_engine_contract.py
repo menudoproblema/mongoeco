@@ -1,7 +1,9 @@
 import datetime
 import unittest
 
+from mongoeco.api.operations import compile_update_operation
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.engines.semantic_core import compile_find_semantics
 from tests.support import ENGINE_FACTORIES, open_engine
 
 
@@ -69,7 +71,7 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                     self.assertTrue(await engine.delete_document(db, coll, "del"))
                     self.assertIsNone(await engine.get_document(db, coll, "del"))
 
-    async def test_scan_collection_returns_all_documents_as_copies(self):
+    async def test_scan_find_semantics_returns_all_documents_as_copies(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_engine(engine_name) as engine:
@@ -77,7 +79,14 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                     await engine.put_document(db, coll, {"_id": "1", "nested": {"v": 1}})
                     await engine.put_document(db, coll, {"_id": "2", "nested": {"v": 2}})
 
-                    documents = [doc async for doc in engine.scan_collection(db, coll)]
+                    documents = [
+                        doc
+                        async for doc in engine.scan_find_semantics(
+                            db,
+                            coll,
+                            compile_find_semantics({}),
+                        )
+                    ]
 
                     self.assertEqual({doc["_id"] for doc in documents}, {"1", "2"})
 
@@ -85,7 +94,7 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                     stored = await engine.get_document(db, coll, documents[0]["_id"])
                     self.assertNotEqual(stored["nested"]["v"], 99)
 
-    async def test_scan_collection_accepts_filter_pushdown(self):
+    async def test_scan_find_semantics_accepts_filter_pushdown(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_engine(engine_name) as engine:
@@ -94,12 +103,17 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                     await engine.put_document(db, coll, {"_id": "2", "kind": "click"})
 
                     documents = [
-                        doc async for doc in engine.scan_collection(db, coll, {"kind": "view"})
+                        doc
+                        async for doc in engine.scan_find_semantics(
+                            db,
+                            coll,
+                            compile_find_semantics({"kind": "view"}),
+                        )
                     ]
 
                     self.assertEqual(documents, [{"_id": "1", "kind": "view"}])
 
-    async def test_scan_collection_accepts_projection_pushdown(self):
+    async def test_scan_find_semantics_accepts_projection_pushdown(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_engine(engine_name) as engine:
@@ -108,17 +122,19 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
 
                     documents = [
                         doc
-                        async for doc in engine.scan_collection(
+                        async for doc in engine.scan_find_semantics(
                             db,
                             coll,
-                            {"kind": "view"},
-                            projection={"payload.n": 1, "_id": 0},
+                            compile_find_semantics(
+                                {"kind": "view"},
+                                projection={"payload.n": 1, "_id": 0},
+                            ),
                         )
                     ]
 
                     self.assertEqual(documents, [{"payload": {"n": 1}}])
 
-    async def test_scan_collection_accepts_sort_skip_and_limit_pushdown(self):
+    async def test_scan_find_semantics_accepts_sort_skip_and_limit_pushdown(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_engine(engine_name) as engine:
@@ -129,12 +145,15 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
 
                     documents = [
                         doc
-                        async for doc in engine.scan_collection(
+                        async for doc in engine.scan_find_semantics(
                             db,
                             coll,
-                            sort=[("rank", 1)],
-                            skip=1,
-                            limit=1,
+                            compile_find_semantics(
+                                {},
+                                sort=[("rank", 1)],
+                                skip=1,
+                                limit=1,
+                            ),
                         )
                     ]
 
@@ -200,18 +219,20 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
 
                     self.assertEqual(found, doc)
 
-    async def test_engine_can_update_matching_document_atomically(self):
+    async def test_engine_can_update_with_operation_atomically(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_engine(engine_name) as engine:
                     db, coll = "test_db", "test_coll"
                     await engine.put_document(db, coll, {"_id": "1", "kind": "view"})
 
-                    result = await engine.update_matching_document(
+                    result = await engine.update_with_operation(
                         db,
                         coll,
-                        {"kind": "view"},
-                        {"$set": {"processed": True}},
+                        compile_update_operation(
+                            {"kind": "view"},
+                            update_spec={"$set": {"processed": True}},
+                        ),
                     )
                     found = await engine.get_document(db, coll, "1")
 
@@ -219,7 +240,7 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(result.modified_count, 1)
                     self.assertEqual(found, {"_id": "1", "kind": "view", "processed": True})
 
-    async def test_engine_can_delete_matching_document_atomically(self):
+    async def test_engine_can_delete_with_operation_atomically(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_engine(engine_name) as engine:
@@ -227,17 +248,17 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                     await engine.put_document(db, coll, {"_id": "1", "kind": "view"})
                     await engine.put_document(db, coll, {"_id": "2", "kind": "click"})
 
-                    result = await engine.delete_matching_document(
+                    result = await engine.delete_with_operation(
                         db,
                         coll,
-                        {"kind": "view"},
+                        compile_update_operation({"kind": "view"}),
                     )
 
                     self.assertEqual(result.deleted_count, 1)
                     self.assertIsNone(await engine.get_document(db, coll, "1"))
                     self.assertIsNotNone(await engine.get_document(db, coll, "2"))
 
-    async def test_engine_can_count_matching_documents_without_scanning_in_api(self):
+    async def test_engine_can_count_find_semantics_without_scanning_in_api(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_engine(engine_name) as engine:
@@ -246,7 +267,11 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                     await engine.put_document(db, coll, {"_id": "2", "kind": "click"})
                     await engine.put_document(db, coll, {"_id": "3", "kind": "view"})
 
-                    count = await engine.count_matching_documents(db, coll, {"kind": "view"})
+                    count = await engine.count_find_semantics(
+                        db,
+                        coll,
+                        compile_find_semantics({"kind": "view"}),
+                    )
 
                     self.assertEqual(count, 2)
 

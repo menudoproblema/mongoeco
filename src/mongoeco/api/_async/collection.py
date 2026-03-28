@@ -547,36 +547,11 @@ class AsyncCollection:
     ) -> DeleteResult:
         self._ensure_operation_executable(operation)
         started_at = time.perf_counter_ns()
-        method = getattr(self._engine, "delete_with_operation", None)
-        if callable(method):
-            try:
-                result = await method(
-                    self._db_name,
-                    self._collection_name,
-                    operation,
-                    dialect=self._mongodb_dialect,
-                    context=session,
-                )
-            except Exception as exc:
-                await self._profile_operation(
-                    op="remove",
-                    command={"delete": self._collection_name, "q": operation.filter_spec},
-                    duration_ns=time.perf_counter_ns() - started_at,
-                    errmsg=str(exc),
-                )
-                raise
-            await self._profile_operation(
-                op="remove",
-                command={"delete": self._collection_name, "q": operation.filter_spec},
-                duration_ns=time.perf_counter_ns() - started_at,
-            )
-            return result
         try:
-            result = await self._engine.delete_matching_document(
+            result = await self._engine.delete_with_operation(
                 self._db_name,
                 self._collection_name,
-                operation.filter_spec,
-                plan=operation.plan,
+                operation,
                 dialect=self._mongodb_dialect,
                 context=session,
             )
@@ -609,33 +584,12 @@ class AsyncCollection:
             operation,
             dialect=self._mongodb_dialect,
         )
-        method = getattr(self._engine, "count_find_semantics", None)
-        if callable(method):
-            count = await method(
-                self._db_name,
-                self._collection_name,
-                semantics,
-                context=session,
-            )
-        else:
-            method = getattr(self._engine, "count_find_operation", None)
-            if callable(method):
-                count = await method(
-                    self._db_name,
-                    self._collection_name,
-                    operation,
-                    dialect=self._mongodb_dialect,
-                    context=session,
-                )
-            else:
-                count = await self._engine.count_matching_documents(
-                    self._db_name,
-                    self._collection_name,
-                    operation.filter_spec,
-                    plan=operation.plan,
-                    dialect=self._mongodb_dialect,
-                    context=session,
-                )
+        count = await self._engine.count_find_semantics(
+            self._db_name,
+            self._collection_name,
+            semantics,
+            context=session,
+        )
         await self._profile_operation(
             op="command",
             command={"count": self._collection_name, "query": operation.filter_spec},

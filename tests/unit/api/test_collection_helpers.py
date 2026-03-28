@@ -1256,16 +1256,18 @@ class AsyncCollectionHelperTests(unittest.TestCase):
 
                 return UpdateResult(matched_count=0, modified_count=0)
 
-            async def delete_matching_document(self, *args, **kwargs):
-                self.delete_plan = kwargs["plan"]
+            async def delete_with_operation(self, *args, **kwargs):
+                operation = args[2]
+                self.delete_plan = operation.plan
                 self.delete_dialect = kwargs["dialect"]
                 from mongoeco.types import DeleteResult
 
                 return DeleteResult(deleted_count=0)
 
-            async def count_matching_documents(self, *args, **kwargs):
-                self.count_plan = kwargs["plan"]
-                self.count_dialect = kwargs["dialect"]
+            async def count_find_semantics(self, *args, **kwargs):
+                semantics = args[2]
+                self.count_plan = semantics.query_plan
+                self.count_dialect = semantics.dialect
                 return 0
 
             async def create_index(self, *args, **kwargs):

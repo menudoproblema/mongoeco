@@ -1185,6 +1185,7 @@ Refinamiento continuo ya aplicado después del cierre formal de Fase 8:
 * `SyncRunner` protegido frente a cierre concurrente mientras otra llamada sync sigue ejecutándose;
 * acceso real a `asyncio.Runner` serializado con lock para evitar carreras entre `run()`, drenado de tareas y `close()` cuando varias hebras sync comparten cliente;
 * la ruta canónica interna de lectura ya es `scan_find_semantics(...)` / `explain_find_semantics(...)`, y los cursores/colecciones dejan de caer a `scan_collection(...)`, `scan_find_operation(...)` o equivalentes; esos métodos quedan solo como shims legacy de compatibilidad en engines concretos y tests contractuales;
+* `count` y `delete` en la capa de colección también quedan ya anclados a `count_find_semantics(...)` y `delete_with_operation(...)` como rutas internas canónicas, en vez de depender de `count_matching_documents(...)` o `delete_matching_document(...)`;
 * los motores de lectura ya aceptan también `plan_find_semantics(...)` como ruta directa de planificación interna, evitando reconstruir `FindOperation` cuando la API ya dispone de semánticas compiladas;
 * `QueryEngine.match_plan(...)` mantiene un contrato explícito de exhaustividad frente a todos los nodos concretos de `QueryNode`, para que nuevos nodos no entren sin handler;
 * pool de conexiones del driver con espera FIFO real para reducir starvation bajo contención.
