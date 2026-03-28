@@ -432,6 +432,13 @@ class AsyncCollection:
             return ReturnDocument.BEFORE
         if isinstance(value, ReturnDocument):
             return value
+        enum_name = getattr(value, "name", None)
+        if isinstance(enum_name, str):
+            normalized_name = enum_name.upper()
+            if normalized_name == "BEFORE":
+                return ReturnDocument.BEFORE
+            if normalized_name == "AFTER":
+                return ReturnDocument.AFTER
         raise TypeError("return_document must be a ReturnDocument value")
 
     def _record_operation_metadata(

@@ -1,5 +1,6 @@
-import unittest
 import asyncio
+import unittest
+from enum import Enum
 from unittest.mock import patch
 
 from mongoeco.api._async.collection import AsyncCollection
@@ -974,6 +975,30 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                     let="bad",  # type: ignore[arg-type]
                 )
             )
+
+    def test_find_one_and_update_accepts_foreign_return_document_enum(self):
+        class _ForeignReturnDocument(Enum):
+            BEFORE = 0
+            AFTER = 1
+
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                await collection.insert_one({"_id": "1", "name": "Ada", "done": False})
+                return await collection.find_one_and_update(
+                    {"_id": "1"},
+                    {"$set": {"done": True}},
+                    return_document=_ForeignReturnDocument.AFTER,
+                    projection={"done": 1, "_id": 0},
+                )
+            finally:
+                await engine.disconnect()
+
+        result = asyncio.run(_exercise())
+
+        self.assertEqual(result, {"done": True})
 
     def test_find_one_and_update_returns_none_when_nothing_matches_without_upsert(self):
         class EngineStub(_SemanticsScanMixin):
