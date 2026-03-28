@@ -503,11 +503,25 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(connection.execute.call_count, 1)
         self.assertEqual(first, second)
 
-        engine._mvcc_version += 1
+        engine._mark_index_metadata_changed("other", "collection")
         third = engine._load_indexes("db", "coll")
 
-        self.assertEqual(connection.execute.call_count, 2)
+        self.assertEqual(connection.execute.call_count, 1)
         self.assertEqual(first, third)
+
+        engine._mark_index_metadata_changed("db", "coll")
+        fourth = engine._load_indexes("db", "coll")
+
+        self.assertEqual(connection.execute.call_count, 2)
+        self.assertEqual(first, fourth)
+
+    def test_ensure_executor_uses_configured_worker_count(self):
+        engine = SQLiteEngine(executor_workers=7)
+        try:
+            executor = engine._ensure_executor()
+            self.assertEqual(executor._max_workers, 7)
+        finally:
+            engine._shutdown_executor()
 
     async def test_load_indexes_rejects_non_list_metadata(self):
         engine = SQLiteEngine()

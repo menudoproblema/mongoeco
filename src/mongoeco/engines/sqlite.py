@@ -6,6 +6,7 @@ from functools import partial
 import hashlib
 import json
 import math
+import os
 import queue
 import sqlite3
 import threading
@@ -113,7 +114,12 @@ class SQLiteEngine(AsyncStorageEngine):
 
     _PROFILE_COLLECTION_NAME = "system.profile"
 
-    def __init__(self, path: str = ":memory:", codec: type[DocumentCodec] = DocumentCodec):
+    def __init__(
+        self,
+        path: str = ":memory:",
+        codec: type[DocumentCodec] = DocumentCodec,
+        executor_workers: int | None = None,
+    ):
         self._path = path
         self._codec = codec
         self._connection: sqlite3.Connection | None = None
@@ -124,14 +130,21 @@ class SQLiteEngine(AsyncStorageEngine):
         self._active_scan_count = 0
         self._thread_local = threading.local()
         self._executor: ThreadPoolExecutor | None = None
+        if executor_workers is not None and executor_workers < 1:
+            raise ValueError("executor_workers must be positive")
+        self._executor_workers = executor_workers or min(32, max(4, (os.cpu_count() or 1) + 4))
         self._profiler = EngineProfiler("sqlite")
         self._mvcc_version = 0
         self._index_cache: dict[tuple[str, str], tuple[int, list[EngineIndexRecord]]] = {}
+        self._index_metadata_versions: dict[tuple[str, str], int] = {}
 
     def _ensure_executor(self) -> ThreadPoolExecutor:
         executor = self._executor
         if executor is None:
-            executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="mongoeco-sqlite")
+            executor = ThreadPoolExecutor(
+                max_workers=self._executor_workers,
+                thread_name_prefix="mongoeco-sqlite",
+            )
             self._executor = executor
         return executor
 
@@ -153,6 +166,14 @@ class SQLiteEngine(AsyncStorageEngine):
             self._index_cache.clear()
             return
         self._index_cache.pop((db_name, coll_name), None)
+
+    def _index_cache_version(self, db_name: str, coll_name: str) -> int:
+        return self._index_metadata_versions.get((db_name, coll_name), 0)
+
+    def _mark_index_metadata_changed(self, db_name: str, coll_name: str) -> None:
+        cache_key = (db_name, coll_name)
+        self._index_metadata_versions[cache_key] = self._index_metadata_versions.get(cache_key, 0) + 1
+        self._invalidate_index_cache(db_name, coll_name)
 
     @staticmethod
     def _multikey_type_score(element_type: str) -> int:
@@ -1022,7 +1043,8 @@ class SQLiteEngine(AsyncStorageEngine):
     def _load_indexes(self, db_name: str, coll_name: str) -> list[EngineIndexRecord]:
         cache_key = (db_name, coll_name)
         cached = self._index_cache.get(cache_key)
-        if cached is not None and cached[0] == self._mvcc_version:
+        cache_version = self._index_cache_version(db_name, coll_name)
+        if cached is not None and cached[0] == cache_version:
             return deepcopy(cached[1])
         conn = self._require_connection()
         cursor = conn.execute(
@@ -1077,7 +1099,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     or self._physical_multikey_index_name(db_name, coll_name, name),
                 )
             )
-        self._index_cache[cache_key] = (self._mvcc_version, deepcopy(indexes))
+        self._index_cache[cache_key] = (cache_version, deepcopy(indexes))
         return indexes
 
     def _load_search_indexes(self, db_name: str, coll_name: str) -> list[SearchIndexDefinition]:
@@ -1912,22 +1934,6 @@ class SQLiteEngine(AsyncStorageEngine):
                         )
                     )
 
-    def _snapshot_documents_for_index_build(
-        self,
-        db_name: str,
-        coll_name: str,
-        *,
-        context: ClientSession | None,
-    ) -> list[tuple[str, Document]] | None:
-        if not self._can_use_dedicated_reader(context):
-            return None
-        reader = self._create_sqlite_connection()
-        try:
-            with self._bind_connection(reader):
-                return list(self._load_documents(db_name, coll_name))
-        finally:
-            reader.close()
-
     def _create_index_sync(
         self,
         db_name: str,
@@ -1954,14 +1960,11 @@ class SQLiteEngine(AsyncStorageEngine):
         physical_name = self._physical_index_name(db_name, coll_name, index_name)
         multikey = self._supports_multikey_index(fields, unique)
         multikey_physical_name = self._physical_multikey_index_name(db_name, coll_name, index_name)
-        snapshot_version: int | None = None
-        snapshot_documents: list[tuple[str, Document]] | None = None
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 enforce_deadline(deadline)
                 indexes = self._load_indexes(db_name, coll_name)
-                snapshot_version = self._mvcc_version
                 for index in indexes:
                     enforce_deadline(deadline)
                     if index["name"] == index_name:
@@ -1988,12 +1991,6 @@ class SQLiteEngine(AsyncStorageEngine):
                     for field in fields:
                         if self._field_traverses_array_in_collection(db_name, coll_name, field):
                             raise OperationFailure("SQLite unique indexes do not support paths that traverse arrays")
-        if multikey:
-            snapshot_documents = self._snapshot_documents_for_index_build(
-                db_name,
-                coll_name,
-                context=context,
-            )
         expressions = ", ".join(
             [
                 "db_name",
@@ -2010,8 +2007,6 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 enforce_deadline(deadline)
-                if snapshot_version is not None and self._mvcc_version != snapshot_version:
-                    snapshot_documents = None
                 try:
                     self._begin_write(conn, context)
                     conn.execute(
@@ -2058,10 +2053,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             multikey=True,
                             multikey_physical_name=multikey_physical_name,
                         )
-                        documents_for_build = snapshot_documents
-                        if documents_for_build is None:
-                            documents_for_build = list(self._load_documents(db_name, coll_name))
-                        for storage_key, document in documents_for_build:
+                        for storage_key, document in self._load_documents(db_name, coll_name):
                             enforce_deadline(deadline)
                             self._replace_multikey_entries_for_index_for_document(
                                 conn,
@@ -2073,11 +2065,11 @@ class SQLiteEngine(AsyncStorageEngine):
                             )
                     enforce_deadline(deadline)
                     self._commit_write(conn, context)
-                    self._invalidate_index_cache(db_name, coll_name)
+                    self._mark_index_metadata_changed(db_name, coll_name)
                     return index_name
                 except sqlite3.IntegrityError as exc:
                     self._rollback_write(conn, context)
-                    self._invalidate_index_cache(db_name, coll_name)
+                    self._mark_index_metadata_changed(db_name, coll_name)
                     raise DuplicateKeyError(str(exc)) from exc
 
     def _list_indexes_sync(self, db_name: str, coll_name: str, context: ClientSession | None) -> list[IndexDocument]:
@@ -2165,7 +2157,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         (db_name, coll_name, target["name"]),
                     )
                     self._commit_write(conn, context)
-                    self._invalidate_index_cache(db_name, coll_name)
+                    self._mark_index_metadata_changed(db_name, coll_name)
                 except Exception:
                     self._rollback_write(conn, context)
                     raise
@@ -2205,7 +2197,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         (db_name, coll_name),
                     )
                     self._commit_write(conn, context)
-                    self._invalidate_index_cache(db_name, coll_name)
+                    self._mark_index_metadata_changed(db_name, coll_name)
                 except Exception:
                     self._rollback_write(conn, context)
                     raise
@@ -2452,8 +2444,8 @@ class SQLiteEngine(AsyncStorageEngine):
                         (new_name, db_name, coll_name),
                     )
                 self._commit_write(conn, context)
-                self._invalidate_index_cache(db_name, coll_name)
-                self._invalidate_index_cache(db_name, new_name)
+                self._mark_index_metadata_changed(db_name, coll_name)
+                self._mark_index_metadata_changed(db_name, new_name)
             except Exception:
                 self._rollback_write(conn, context)
                 raise
@@ -2510,7 +2502,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         (db_name, coll_name),
                     )
                     self._commit_write(conn, context)
-                    self._invalidate_index_cache(db_name, coll_name)
+                    self._mark_index_metadata_changed(db_name, coll_name)
                 except Exception:
                     self._rollback_write(conn, context)
                     raise
