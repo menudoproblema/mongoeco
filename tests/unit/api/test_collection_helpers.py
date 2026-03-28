@@ -1000,6 +1000,34 @@ class AsyncCollectionHelperTests(unittest.TestCase):
 
         self.assertEqual(result, {"done": True})
 
+    def test_find_one_and_update_accepts_pymongo_style_bool_return_document(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                await collection.insert_one({"_id": "1", "name": "Ada", "done": False})
+                after = await collection.find_one_and_update(
+                    {"_id": "1"},
+                    {"$set": {"done": True}},
+                    return_document=True,
+                    projection={"done": 1, "_id": 0},
+                )
+                before = await collection.find_one_and_update(
+                    {"_id": "1"},
+                    {"$set": {"done": False}},
+                    return_document=False,
+                    projection={"done": 1, "_id": 0},
+                )
+                return after, before
+            finally:
+                await engine.disconnect()
+
+        after, before = asyncio.run(_exercise())
+
+        self.assertEqual(after, {"done": True})
+        self.assertEqual(before, {"done": True})
+
     def test_find_one_and_update_returns_none_when_nothing_matches_without_upsert(self):
         class EngineStub(_SemanticsScanMixin):
             _stub_documents = []

@@ -432,6 +432,8 @@ class AsyncCollection:
             return ReturnDocument.BEFORE
         if isinstance(value, ReturnDocument):
             return value
+        if isinstance(value, bool):
+            return ReturnDocument.AFTER if value else ReturnDocument.BEFORE
         enum_name = getattr(value, "name", None)
         if isinstance(enum_name, str):
             normalized_name = enum_name.upper()
