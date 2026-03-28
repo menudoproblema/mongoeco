@@ -41,6 +41,14 @@ from mongoeco.core.query_plan import (
     QueryNode,
     ensure_query_plan,
 )
+from mongoeco.core.search import (
+    build_search_index_document,
+    compile_search_stage,
+    iter_searchable_text_entries,
+    matches_search_text_query,
+    sqlite_fts5_query,
+    validate_search_index_definition,
+)
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.profiling import EngineProfiler
@@ -156,6 +164,8 @@ class SQLiteEngine(AsyncStorageEngine):
         self._index_metadata_versions: dict[tuple[str, str], int] = {}
         self._collection_id_cache: dict[tuple[str, str], int] = {}
         self._ensured_multikey_physical_indexes: set[str] = set()
+        self._fts5_available: bool | None = None
+        self._ensured_search_backends: set[str] = set()
 
     def _ensure_executor(self) -> ThreadPoolExecutor:
         executor = self._executor
@@ -416,6 +426,34 @@ class SQLiteEngine(AsyncStorageEngine):
     def _physical_multikey_index_name(self, db_name: str, coll_name: str, index_name: str) -> str:
         digest = hashlib.sha1(f"{db_name}:{coll_name}:{index_name}:multikey".encode("utf-8")).hexdigest()[:16]
         return f"mkidx_{digest}"
+
+    def _physical_search_index_name(self, db_name: str, coll_name: str, index_name: str) -> str:
+        digest = hashlib.sha1(f"{db_name}:{coll_name}:{index_name}:search".encode("utf-8")).hexdigest()[:16]
+        return f"fts_{digest}"
+
+    def _sqlite_table_exists(self, conn: sqlite3.Connection, table_name: str) -> bool:
+        row = conn.execute(
+            """
+            SELECT 1
+            FROM sqlite_master
+            WHERE type IN ('table', 'view') AND name = ?
+            """,
+            (table_name,),
+        ).fetchone()
+        return row is not None
+
+    def _supports_fts5(self, conn: sqlite3.Connection) -> bool:
+        if self._fts5_available is not None:
+            return self._fts5_available
+        try:
+            compile_options = {
+                row[0]
+                for row in conn.execute("PRAGMA compile_options").fetchall()
+            }
+        except sqlite3.DatabaseError:
+            compile_options = set()
+        self._fts5_available = "ENABLE_FTS5" in compile_options
+        return self._fts5_available
 
     @staticmethod
     def _is_builtin_id_index(keys: IndexKeySpec) -> bool:
@@ -1263,28 +1301,167 @@ class SQLiteEngine(AsyncStorageEngine):
                 )
         return rows
 
-    def _load_search_indexes(self, db_name: str, coll_name: str) -> list[SearchIndexDefinition]:
+    def _load_search_index_rows(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        name: str | None = None,
+    ) -> list[tuple[SearchIndexDefinition, str | None]]:
         conn = self._require_connection()
-        cursor = conn.execute(
-            """
-            SELECT name, index_type, definition_json
+        sql = """
+            SELECT name, index_type, definition_json, physical_name
             FROM search_indexes
             WHERE db_name = ? AND coll_name = ?
-            ORDER BY name
-            """,
-            (db_name, coll_name),
-        )
+        """
+        params: list[object] = [db_name, coll_name]
+        if name is not None:
+            sql += " AND name = ?"
+            params.append(name)
+        sql += " ORDER BY name"
+        cursor = conn.execute(sql, tuple(params))
+        if cursor is None:
+            return []
         try:
+            rows = cursor.fetchall()
+            if not isinstance(rows, list):
+                return []
             return [
-                SearchIndexDefinition(
-                    json.loads(definition_json),
-                    name=name,
-                    index_type=index_type,
+                (
+                    SearchIndexDefinition(
+                        json.loads(definition_json),
+                        name=row_name,
+                        index_type=index_type,
+                    ),
+                    physical_name,
                 )
-                for name, index_type, definition_json in cursor.fetchall()
+                for row_name, index_type, definition_json, physical_name in rows
             ]
         finally:
-            cursor.close()
+            close = getattr(cursor, "close", None)
+            if callable(close):
+                close()
+
+    def _load_search_indexes(self, db_name: str, coll_name: str) -> list[SearchIndexDefinition]:
+        return [definition for definition, _ in self._load_search_index_rows(db_name, coll_name)]
+
+    def _drop_search_backend_sync(self, conn: sqlite3.Connection, physical_name: str | None) -> None:
+        if not physical_name:
+            return
+        conn.execute(f"DROP TABLE IF EXISTS {self._quote_identifier(physical_name)}")
+        self._ensured_search_backends.discard(physical_name)
+
+    def _ensure_search_backend_sync(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        definition: SearchIndexDefinition,
+        physical_name: str | None,
+    ) -> str | None:
+        if definition.index_type != "search":
+            return None
+        resolved_physical_name = physical_name or self._physical_search_index_name(
+            db_name,
+            coll_name,
+            definition.name,
+        )
+        if not self._supports_fts5(conn):
+            return resolved_physical_name
+        if resolved_physical_name in self._ensured_search_backends and self._sqlite_table_exists(
+            conn,
+            resolved_physical_name,
+        ):
+            return resolved_physical_name
+        had_transaction = conn.in_transaction
+        conn.execute(
+            f"""
+            CREATE VIRTUAL TABLE IF NOT EXISTS {self._quote_identifier(resolved_physical_name)}
+            USING fts5(storage_key UNINDEXED, field_path UNINDEXED, content, tokenize='unicode61')
+            """
+        )
+        conn.execute(f"DELETE FROM {self._quote_identifier(resolved_physical_name)}")
+        rows: list[tuple[str, str, str]] = []
+        for storage_key, document in self._load_documents(db_name, coll_name):
+            rows.extend(
+                (storage_key, field_path, content)
+                for field_path, content in iter_searchable_text_entries(document, definition)
+            )
+        if rows:
+            conn.executemany(
+                f"""
+                INSERT INTO {self._quote_identifier(resolved_physical_name)} (
+                    storage_key, field_path, content
+                ) VALUES (?, ?, ?)
+                """,
+                rows,
+            )
+        self._ensured_search_backends.add(resolved_physical_name)
+        if not had_transaction and conn.in_transaction:
+            conn.commit()
+        return resolved_physical_name
+
+    def _delete_search_entries_for_storage_key(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        storage_key: str,
+        search_indexes: list[tuple[SearchIndexDefinition, str | None]] | None = None,
+    ) -> None:
+        rows = search_indexes if search_indexes is not None else self._load_search_index_rows(db_name, coll_name)
+        for definition, physical_name in rows:
+            if definition.index_type != "search" or not physical_name:
+                continue
+            if not self._sqlite_table_exists(conn, physical_name):
+                continue
+            conn.execute(
+                f"DELETE FROM {self._quote_identifier(physical_name)} WHERE storage_key = ?",
+                (storage_key,),
+            )
+
+    def _replace_search_entries_for_document(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        storage_key: str,
+        document: Document,
+        search_indexes: list[tuple[SearchIndexDefinition, str | None]] | None = None,
+    ) -> None:
+        rows = search_indexes if search_indexes is not None else self._load_search_index_rows(db_name, coll_name)
+        self._delete_search_entries_for_storage_key(
+            conn,
+            db_name,
+            coll_name,
+            storage_key,
+            search_indexes=rows,
+        )
+        for definition, physical_name in rows:
+            if definition.index_type != "search":
+                continue
+            resolved_physical_name = physical_name
+            if resolved_physical_name is not None and not self._sqlite_table_exists(conn, resolved_physical_name):
+                resolved_physical_name = self._ensure_search_backend_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                    definition,
+                    resolved_physical_name,
+                )
+            if not resolved_physical_name or not self._sqlite_table_exists(conn, resolved_physical_name):
+                continue
+            entries = iter_searchable_text_entries(document, definition)
+            if not entries:
+                continue
+            conn.executemany(
+                f"""
+                INSERT INTO {self._quote_identifier(resolved_physical_name)} (
+                    storage_key, field_path, content
+                ) VALUES (?, ?, ?)
+                """,
+                [(storage_key, field_path, content) for field_path, content in entries],
+            )
 
     def _delete_multikey_entries_for_storage_key(
         self,
@@ -1475,6 +1652,12 @@ class SQLiteEngine(AsyncStorageEngine):
                     connection.execute("ALTER TABLE indexes ADD COLUMN multikey_flag INTEGER NOT NULL DEFAULT 0")
                 if "multikey_physical_name" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN multikey_physical_name TEXT")
+                search_index_columns = {
+                    row[1]
+                    for row in connection.execute("PRAGMA table_info(search_indexes)").fetchall()
+                }
+                if "physical_name" not in search_index_columns:
+                    connection.execute("ALTER TABLE search_indexes ADD COLUMN physical_name TEXT")
                 multikey_columns = {
                     row[1]
                     for row in connection.execute("PRAGMA table_info(multikey_entries)").fetchall()
@@ -1555,9 +1738,33 @@ class SQLiteEngine(AsyncStorageEngine):
                     ON collections (collection_id)
                     """
                 )
+                search_index_rows = connection.execute(
+                    """
+                    SELECT db_name, coll_name, name
+                    FROM search_indexes
+                    WHERE index_type = 'search'
+                      AND (physical_name IS NULL OR physical_name = '')
+                    """
+                ).fetchall()
+                for db_name, coll_name, name in search_index_rows:
+                    connection.execute(
+                        """
+                        UPDATE search_indexes
+                        SET physical_name = ?
+                        WHERE db_name = ? AND coll_name = ? AND name = ?
+                        """,
+                        (
+                            self._physical_search_index_name(db_name, coll_name, name),
+                            db_name,
+                            coll_name,
+                            name,
+                        ),
+                    )
                 connection.commit()
                 self._connection = connection
                 self._ensured_multikey_physical_indexes.clear()
+                self._ensured_search_backends.clear()
+                self._fts5_available = None
                 self._invalidate_index_cache()
                 self._invalidate_collection_id_cache()
             self._connection_count += 1
@@ -1690,6 +1897,8 @@ class SQLiteEngine(AsyncStorageEngine):
             self._transaction_owner_session_id = None
             self._invalidate_index_cache()
             self._invalidate_collection_id_cache()
+            self._ensured_search_backends.clear()
+            self._fts5_available = None
         if connection is not None:
             connection.close()
 
@@ -1758,6 +1967,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         dialect=MONGODB_DIALECT_70,
                     )
                 indexes = self._load_indexes(db_name, coll_name)
+                search_indexes = self._load_search_index_rows(db_name, coll_name)
                 try:
                     self._validate_document_against_unique_indexes(
                         db_name,
@@ -1785,6 +1995,14 @@ class SQLiteEngine(AsyncStorageEngine):
                             document,
                             indexes,
                         )
+                        self._replace_search_entries_for_document(
+                            conn,
+                            db_name,
+                            coll_name,
+                            storage_key,
+                            document,
+                            search_indexes=search_indexes,
+                        )
                     else:
                         self._begin_write(conn, context)
                         self._ensure_collection_row(conn, db_name, coll_name)
@@ -1806,6 +2024,14 @@ class SQLiteEngine(AsyncStorageEngine):
                             storage_key,
                             document,
                             indexes,
+                        )
+                        self._replace_search_entries_for_document(
+                            conn,
+                            db_name,
+                            coll_name,
+                            storage_key,
+                            document,
+                            search_indexes=search_indexes,
                         )
                     self._commit_write(conn, context)
                     return True
@@ -1855,8 +2081,9 @@ class SQLiteEngine(AsyncStorageEngine):
                             options=collection_options,
                             original_document=None,
                             dialect=MONGODB_DIALECT_70,
-                )
+                        )
                 indexes = self._load_indexes(db_name, coll_name)
+                search_indexes = self._load_search_index_rows(db_name, coll_name)
                 results: list[bool] = []
                 try:
                     self._begin_write(conn, context)
@@ -1911,6 +2138,14 @@ class SQLiteEngine(AsyncStorageEngine):
                                         for index_name, element_type, type_score, element_key in effective_rows
                                     ],
                                 )
+                            self._replace_search_entries_for_document(
+                                conn,
+                                db_name,
+                                coll_name,
+                                storage_key,
+                                document,
+                                search_indexes=search_indexes,
+                            )
                             conn.execute(f'RELEASE SAVEPOINT "{savepoint}"')
                             results.append(True)
                         except sqlite3.IntegrityError:
@@ -1996,6 +2231,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         (db_name, coll_name, storage_key),
                     )
                     self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+                    self._delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
                     self._commit_write(conn, context)
                     return cursor.rowcount > 0
                 except Exception:
@@ -2226,6 +2462,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         (db_name, coll_name, storage_key),
                     )
                     self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+                    self._delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
                     self._commit_write(conn, context)
                     return DeleteResult(deleted_count=1)
                 except (NotImplementedError, TypeError):
@@ -2249,6 +2486,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         (db_name, coll_name, storage_key),
                     )
                     self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+                    self._delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
                     self._commit_write(conn, context)
                     return DeleteResult(deleted_count=1)
                 return DeleteResult(deleted_count=0)
@@ -2541,6 +2779,7 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 indexes = self._load_indexes(db_name, coll_name)
+                search_indexes = self._load_search_index_rows(db_name, coll_name)
                 try:
                     self._begin_write(conn, context)
                     for index in indexes:
@@ -2580,6 +2819,19 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
     ) -> str:
         deadline = operation_deadline(max_time_ms)
+        normalized_definition = SearchIndexDefinition(
+            validate_search_index_definition(
+                definition.definition,
+                index_type=definition.index_type,
+            ),
+            name=definition.name,
+            index_type=definition.index_type,
+        )
+        physical_name = (
+            self._physical_search_index_name(db_name, coll_name, normalized_definition.name)
+            if normalized_definition.index_type == "search"
+            else None
+        )
         with self._lock:
             conn = self._require_connection(context)
             try:
@@ -2591,37 +2843,45 @@ class SQLiteEngine(AsyncStorageEngine):
                     FROM search_indexes
                     WHERE db_name = ? AND coll_name = ? AND name = ?
                     """,
-                    (db_name, coll_name, definition.name),
+                    (db_name, coll_name, normalized_definition.name),
                 ).fetchone()
                 if row is not None:
                     existing = SearchIndexDefinition(
                         json.loads(row[1]),
-                        name=definition.name,
+                        name=normalized_definition.name,
                         index_type=row[0],
                     )
-                    if existing != definition:
+                    if existing != normalized_definition:
                         raise OperationFailure(
-                            f"Conflicting search index definition for '{definition.name}'"
+                            f"Conflicting search index definition for '{normalized_definition.name}'"
                         )
                     self._commit_write(conn, context)
-                    return definition.name
+                    return normalized_definition.name
                 enforce_deadline(deadline)
                 conn.execute(
                     """
                     INSERT INTO search_indexes (
-                        db_name, coll_name, name, index_type, definition_json
-                    ) VALUES (?, ?, ?, ?, ?)
+                        db_name, coll_name, name, index_type, definition_json, physical_name
+                    ) VALUES (?, ?, ?, ?, ?, ?)
                     """,
                     (
                         db_name,
                         coll_name,
-                        definition.name,
-                        definition.index_type,
-                        json.dumps(definition.definition, separators=(",", ":"), sort_keys=True),
+                        normalized_definition.name,
+                        normalized_definition.index_type,
+                        json.dumps(normalized_definition.definition, separators=(",", ":"), sort_keys=True),
+                        physical_name,
                     ),
                 )
+                self._ensure_search_backend_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                    normalized_definition,
+                    physical_name,
+                )
                 self._commit_write(conn, context)
-                return definition.name
+                return normalized_definition.name
             except Exception:
                 self._rollback_write(conn, context)
                 raise
@@ -2637,7 +2897,7 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 indexes = self._load_search_indexes(db_name, coll_name)
-        documents = [index.to_document() for index in indexes]
+        documents = [build_search_index_document(index) for index in indexes]
         if name is None:
             return documents
         return [document for document in documents if document["name"] == name]
@@ -2658,7 +2918,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._begin_write(conn, context)
                 row = conn.execute(
                     """
-                    SELECT index_type
+                    SELECT index_type, physical_name
                     FROM search_indexes
                     WHERE db_name = ? AND coll_name = ? AND name = ?
                     """,
@@ -2666,19 +2926,41 @@ class SQLiteEngine(AsyncStorageEngine):
                 ).fetchone()
                 if row is None:
                     raise OperationFailure(f"search index not found with name [{name}]")
+                normalized_definition = validate_search_index_definition(
+                    definition,
+                    index_type=row[0],
+                )
                 enforce_deadline(deadline)
+                self._drop_search_backend_sync(conn, row[1])
+                physical_name = (
+                    self._physical_search_index_name(db_name, coll_name, name)
+                    if row[0] == "search"
+                    else None
+                )
                 conn.execute(
                     """
                     UPDATE search_indexes
-                    SET definition_json = ?
+                    SET definition_json = ?, physical_name = ?
                     WHERE db_name = ? AND coll_name = ? AND name = ?
                     """,
                     (
-                        json.dumps(definition, separators=(",", ":"), sort_keys=True),
+                        json.dumps(normalized_definition, separators=(",", ":"), sort_keys=True),
+                        physical_name,
                         db_name,
                         coll_name,
                         name,
                     ),
+                )
+                self._ensure_search_backend_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                    SearchIndexDefinition(
+                        normalized_definition,
+                        name=name,
+                        index_type=row[0],
+                    ),
+                    physical_name,
                 )
                 self._commit_write(conn, context)
             except Exception:
@@ -2698,6 +2980,16 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             try:
                 self._begin_write(conn, context)
+                row = conn.execute(
+                    """
+                    SELECT physical_name
+                    FROM search_indexes
+                    WHERE db_name = ? AND coll_name = ? AND name = ?
+                    """,
+                    (db_name, coll_name, name),
+                ).fetchone()
+                if row is None:
+                    raise OperationFailure(f"search index not found with name [{name}]")
                 enforce_deadline(deadline)
                 cursor = conn.execute(
                     """
@@ -2706,12 +2998,126 @@ class SQLiteEngine(AsyncStorageEngine):
                     """,
                     (db_name, coll_name, name),
                 )
-                if cursor.rowcount == 0:
-                    raise OperationFailure(f"search index not found with name [{name}]")
+                self._drop_search_backend_sync(conn, row[0])
                 self._commit_write(conn, context)
             except Exception:
                 self._rollback_write(conn, context)
                 raise
+
+    def _search_documents_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        operator: str,
+        spec: object,
+        max_time_ms: int | None,
+        context: ClientSession | None,
+    ) -> list[Document]:
+        deadline = operation_deadline(max_time_ms)
+        query = compile_search_stage(operator, spec)
+        with self._lock:
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
+                rows = self._load_search_index_rows(db_name, coll_name, name=query.index_name)
+                if not rows:
+                    raise OperationFailure(f"search index not found with name [{query.index_name}]")
+                definition, physical_name = rows[0]
+                if definition.index_type != "search":
+                    raise OperationFailure(f"search index [{query.index_name}] is not queryable")
+                resolved_physical_name = self._ensure_search_backend_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                    definition,
+                    physical_name,
+                )
+                if resolved_physical_name and self._supports_fts5(conn) and self._sqlite_table_exists(
+                    conn,
+                    resolved_physical_name,
+                ):
+                    sql = (
+                        f"SELECT DISTINCT storage_key FROM {self._quote_identifier(resolved_physical_name)} "
+                        "WHERE content MATCH ?"
+                    )
+                    params: list[object] = [sqlite_fts5_query(query)]
+                    if query.paths is not None:
+                        placeholders = ", ".join("?" for _ in query.paths)
+                        sql += f" AND field_path IN ({placeholders})"
+                        params.extend(query.paths)
+                    storage_keys = [row[0] for row in conn.execute(sql, tuple(params)).fetchall()]
+                    if not storage_keys:
+                        return []
+                    storage_key_set = set(storage_keys)
+                    documents = {
+                        storage_key: document
+                        for storage_key, document in self._load_documents(db_name, coll_name)
+                        if storage_key in storage_key_set
+                    }
+                    enforce_deadline(deadline)
+                    return [documents[storage_key] for storage_key in storage_keys if storage_key in documents]
+
+                documents = [
+                    document
+                    for _, document in self._load_documents(db_name, coll_name)
+                    if matches_search_text_query(
+                        document,
+                        definition=definition,
+                        query=query,
+                    )
+                ]
+                enforce_deadline(deadline)
+                return documents
+
+    def _explain_search_documents_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        operator: str,
+        spec: object,
+        max_time_ms: int | None,
+        context: ClientSession | None,
+    ) -> QueryPlanExplanation:
+        query = compile_search_stage(operator, spec)
+        with self._lock:
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
+                rows = self._load_search_index_rows(db_name, coll_name, name=query.index_name)
+                if not rows:
+                    raise OperationFailure(f"search index not found with name [{query.index_name}]")
+                definition, physical_name = rows[0]
+                resolved_physical_name = self._ensure_search_backend_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                    definition,
+                    physical_name,
+                )
+                backend = (
+                    "fts5"
+                    if resolved_physical_name
+                    and self._supports_fts5(conn)
+                    and self._sqlite_table_exists(conn, resolved_physical_name)
+                    else "python"
+                )
+        return QueryPlanExplanation(
+            engine="sqlite",
+            strategy="search",
+            plan=f"{backend}-search",
+            sort=None,
+            skip=0,
+            limit=None,
+            hint=None,
+            hinted_index=query.index_name,
+            comment=None,
+            max_time_ms=max_time_ms,
+            details={
+                "operator": operator,
+                "index": query.index_name,
+                "backend": backend,
+                "query": query.raw_query,
+                "paths": list(query.paths) if query.paths is not None else None,
+            },
+        )
 
     def _list_databases_sync(self, context: ClientSession | None = None) -> list[str]:
         with self._lock:
@@ -2829,6 +3235,7 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 indexes = self._load_indexes(db_name, coll_name)
+                search_indexes = self._load_search_index_rows(db_name, coll_name)
                 try:
                     self._begin_write(conn, context)
                     for index in indexes:
@@ -2837,6 +3244,8 @@ class SQLiteEngine(AsyncStorageEngine):
                             conn.execute(
                                 f"DROP INDEX IF EXISTS {self._quote_identifier(index['multikey_physical_name'])}"
                             )
+                    for _definition, physical_name in search_indexes:
+                        self._drop_search_backend_sync(conn, physical_name)
                     conn.execute(
                         """
                         DELETE FROM documents
@@ -3232,6 +3641,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         exclude_storage_key=storage_key,
                     )
                     indexes = self._load_indexes(db_name, coll_name)
+                    search_indexes = self._load_search_index_rows(db_name, coll_name)
 
                     try:
                         if self._dialect_requires_python_fallback(semantics.dialect):
@@ -3259,6 +3669,14 @@ class SQLiteEngine(AsyncStorageEngine):
                             document,
                             indexes,
                         )
+                        self._replace_search_entries_for_document(
+                            conn,
+                            db_name,
+                            coll_name,
+                            storage_key,
+                            document,
+                            search_indexes=search_indexes,
+                        )
                         self._commit_write(conn, context)
                         return UpdateResult(matched_count=1, modified_count=1)
                     except (NotImplementedError, TypeError):
@@ -3285,6 +3703,14 @@ class SQLiteEngine(AsyncStorageEngine):
                             document,
                             indexes,
                         )
+                        self._replace_search_entries_for_document(
+                            conn,
+                            db_name,
+                            coll_name,
+                            storage_key,
+                            document,
+                            search_indexes=search_indexes,
+                        )
                         self._commit_write(conn, context)
                         return UpdateResult(matched_count=1, modified_count=1)
                     except sqlite3.IntegrityError as exc:
@@ -3310,6 +3736,7 @@ class SQLiteEngine(AsyncStorageEngine):
 
                 storage_key = self._storage_key(new_doc["_id"])
                 indexes = self._load_indexes(db_name, coll_name)
+                search_indexes = self._load_search_index_rows(db_name, coll_name)
                 try:
                     self._begin_write(conn, context)
                     conn.execute(
@@ -3326,6 +3753,14 @@ class SQLiteEngine(AsyncStorageEngine):
                         storage_key,
                         new_doc,
                         indexes,
+                    )
+                    self._replace_search_entries_for_document(
+                        conn,
+                        db_name,
+                        coll_name,
+                        storage_key,
+                        new_doc,
+                        search_indexes=search_indexes,
                     )
                     self._commit_write(conn, context)
                 except sqlite3.IntegrityError as exc:
@@ -3544,6 +3979,46 @@ class SQLiteEngine(AsyncStorageEngine):
             db_name,
             coll_name,
             name,
+            max_time_ms,
+            context,
+        )
+
+    async def search_documents(
+        self,
+        db_name: str,
+        coll_name: str,
+        operator: str,
+        spec: object,
+        *,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> list[Document]:
+        return await self._run_blocking(
+            self._search_documents_sync,
+            db_name,
+            coll_name,
+            operator,
+            spec,
+            max_time_ms,
+            context,
+        )
+
+    async def explain_search_documents(
+        self,
+        db_name: str,
+        coll_name: str,
+        operator: str,
+        spec: object,
+        *,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> QueryPlanExplanation:
+        return await self._run_blocking(
+            self._explain_search_documents_sync,
+            db_name,
+            coll_name,
+            operator,
+            spec,
             max_time_ms,
             context,
         )

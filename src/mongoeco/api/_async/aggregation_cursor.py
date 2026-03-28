@@ -24,6 +24,7 @@ from mongoeco.core.aggregation import (
 )
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
+from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import AggregateExplanation, Document, QueryPlanExplanation
 
@@ -69,6 +70,40 @@ class AsyncAggregationCursor:
         self._collation = normalize_collation(operation.collation)
         self._let = operation.let
         self._session = session
+
+    def _leading_search_stage(self) -> tuple[str, object] | None:
+        if not self._pipeline:
+            return None
+        stage = self._pipeline[0]
+        if not isinstance(stage, dict) or len(stage) != 1:
+            return None
+        operator, spec = next(iter(stage.items()))
+        if operator not in {"$search", "$vectorSearch"}:
+            return None
+        return operator, spec
+
+    def _effective_pipeline(self) -> Pipeline:
+        leading_search = self._leading_search_stage()
+        if leading_search is None:
+            return self._pipeline
+        return self._pipeline[1:]
+
+    async def _search_documents(self) -> list[Document]:
+        leading_search = self._leading_search_stage()
+        if leading_search is None:
+            raise OperationFailure("search stage was not present")
+        operator, spec = leading_search
+        search_documents = getattr(self._collection._engine, "search_documents", None)
+        if not callable(search_documents):
+            raise OperationFailure(f"{operator} is not supported by this engine")
+        return await search_documents(
+            self._collection._db_name,
+            self._collection._collection_name,
+            operator,
+            spec,
+            max_time_ms=self._max_time_ms,
+            context=self._session,
+        )
 
     @staticmethod
     def _split_streamable_pipeline(
@@ -150,7 +185,7 @@ class AsyncAggregationCursor:
         }
 
     async def _load_referenced_collections(self) -> dict[str, list[Document]]:
-        names = self._collect_collection_names(self._pipeline)
+        names = self._collect_collection_names(self._effective_pipeline())
         loaded: dict[str, list[Document]] = {}
         if _CURRENT_COLLECTION_RESOLVER_KEY in names:
             collection_name = getattr(self._collection, "_collection_name", None)
@@ -247,20 +282,26 @@ class AsyncAggregationCursor:
         _ensure_operation_executable(self._collection, self._operation)
         deadline = operation_deadline(self._max_time_ms)
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
-        pushdown = split_pushdown_pipeline(
-            self._pipeline,
-            dialect=dialect,
-        )
+        pipeline = self._effective_pipeline()
         enforce_deadline(deadline)
         referenced_collections = await self._load_referenced_collections()
         enforce_deadline(deadline)
-        documents = await self._build_pushdown_cursor(
-            self._pushdown_find_operation()
-        ).to_list()
+        if self._leading_search_stage() is not None:
+            documents = await self._search_documents()
+            remaining_pipeline = pipeline
+        else:
+            pushdown = split_pushdown_pipeline(
+                pipeline,
+                dialect=dialect,
+            )
+            documents = await self._build_pushdown_cursor(
+                self._pushdown_find_operation()
+            ).to_list()
+            remaining_pipeline = pushdown.remaining_pipeline
         enforce_deadline(deadline)
         result = apply_pipeline(
             documents,
-            pushdown.remaining_pipeline,
+            remaining_pipeline,
             collection_resolver=referenced_collections.get,
             variables=self._let,
             dialect=dialect,
@@ -273,7 +314,7 @@ class AsyncAggregationCursor:
     def _pushdown_find_operation(self, *, batch_size: int | None = None) -> FindOperation:
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
         pushdown = split_pushdown_pipeline(
-            self._pipeline,
+            self._effective_pipeline(),
             dialect=dialect,
         )
         return compile_find_operation(
@@ -292,6 +333,10 @@ class AsyncAggregationCursor:
 
     async def _stream_batches(self) -> AsyncIterator[Document]:
         _ensure_operation_executable(self._collection, self._operation)
+        if self._leading_search_stage() is not None:
+            for document in await self._materialize():
+                yield document
+            return
         if self._batch_size in (None, 0):
             for document in await self._materialize():
                 yield document
@@ -300,7 +345,7 @@ class AsyncAggregationCursor:
         deadline = operation_deadline(self._max_time_ms)
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
         pushdown = split_pushdown_pipeline(
-            self._pipeline,
+            self._effective_pipeline(),
             dialect=dialect,
         )
         stream_plan = self._split_streamable_pipeline(
@@ -438,58 +483,91 @@ class AsyncAggregationCursor:
                 planning_issues=self._operation.planning_issues,
             ).to_document()
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
-        pushdown = split_pushdown_pipeline(
-            self._pipeline,
-            dialect=dialect,
-        )
-        operation = self._pushdown_find_operation()
-        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
-
-        semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
-        explain_find_semantics = getattr(
-            self._collection._engine,
-            "explain_find_semantics",
-            None,
-        )
-        if callable(explain_find_semantics):
-            engine_plan = await explain_find_semantics(
-                self._collection._db_name,
-                self._collection._collection_name,
-                semantics,
-                context=self._session,
-            )
-        else:
-            explain_find_operation = getattr(
+        if self._leading_search_stage() is not None:
+            operator, spec = self._leading_search_stage()
+            remaining_pipeline = self._effective_pipeline()
+            explain_search_documents = getattr(
                 self._collection._engine,
-                "explain_find_operation",
+                "explain_search_documents",
                 None,
             )
-            if callable(explain_find_operation):
-                engine_plan = await explain_find_operation(
+            if callable(explain_search_documents):
+                engine_plan = await explain_search_documents(
                     self._collection._db_name,
                     self._collection._collection_name,
-                    operation,
-                    dialect=dialect,
+                    operator,
+                    spec,
+                    max_time_ms=self._max_time_ms,
                     context=self._session,
                 )
             else:
-                engine_plan = await self._collection._engine.explain_query_plan(
+                engine_plan = QueryPlanExplanation(
+                    engine="search",
+                    strategy="search",
+                    plan="unsupported-search-engine",
+                    sort=None,
+                    skip=0,
+                    limit=None,
+                    hint=self._hint,
+                    hinted_index=None,
+                    comment=self._comment,
+                    max_time_ms=self._max_time_ms,
+                    details={"operator": operator},
+                )
+        else:
+            pushdown = split_pushdown_pipeline(
+                self._effective_pipeline(),
+                dialect=dialect,
+            )
+            remaining_pipeline = pushdown.remaining_pipeline
+            operation = self._pushdown_find_operation()
+            from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
+
+            semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
+            explain_find_semantics = getattr(
+                self._collection._engine,
+                "explain_find_semantics",
+                None,
+            )
+            if callable(explain_find_semantics):
+                engine_plan = await explain_find_semantics(
                     self._collection._db_name,
                     self._collection._collection_name,
-                    operation.filter_spec,
-                    plan=operation.plan,
-                    sort=operation.sort,
-                    skip=operation.skip,
-                    limit=operation.limit,
-                    hint=operation.hint,
-                    comment=operation.comment,
-                    max_time_ms=operation.max_time_ms,
-                    dialect=dialect,
+                    semantics,
                     context=self._session,
                 )
+            else:
+                explain_find_operation = getattr(
+                    self._collection._engine,
+                    "explain_find_operation",
+                    None,
+                )
+                if callable(explain_find_operation):
+                    engine_plan = await explain_find_operation(
+                        self._collection._db_name,
+                        self._collection._collection_name,
+                        operation,
+                        dialect=dialect,
+                        context=self._session,
+                    )
+                else:
+                    engine_plan = await self._collection._engine.explain_query_plan(
+                        self._collection._db_name,
+                        self._collection._collection_name,
+                        operation.filter_spec,
+                        plan=operation.plan,
+                        sort=operation.sort,
+                        skip=operation.skip,
+                        limit=operation.limit,
+                        hint=operation.hint,
+                        comment=operation.comment,
+                        max_time_ms=operation.max_time_ms,
+                        dialect=dialect,
+                        context=self._session,
+                    )
         return AggregateExplanation(
             engine_plan=engine_plan,
-            remaining_pipeline=pushdown.remaining_pipeline,
+            remaining_pipeline=remaining_pipeline,
             hint=self._hint,
             comment=self._comment,
             max_time_ms=self._max_time_ms,

@@ -23,6 +23,10 @@
     "_thread": {
       "status": "outside-scope",
       "note": "Escenarios especificos de threading historicos de mongomock fuera del perimetro actual."
+    },
+    "helpers": {
+      "status": "outside-scope",
+      "note": "Helpers internos de la suite de mongomock fuera del contrato publico de mongoeco."
     }
   },
   "case_rules": {
@@ -231,6 +235,26 @@
     "test_insert_many_bulk_write_error_details": {
       "status": "equivalent",
       "note": "Existe cobertura local equivalente de detalles de BulkWriteError."
+    },
+    "test_find_with_comment": {
+      "status": "equivalent",
+      "note": "Existe cobertura local equivalente de propagation de comment en find y explain."
+    },
+    "test__alive": {
+      "status": "outside-scope",
+      "note": "La propiedad alive historica de cliente de mongomock no forma parte del contrato principal local."
+    },
+    "test__reindex": {
+      "status": "outside-scope",
+      "note": "reIndex queda fuera del perimetro contractual actual; existen metadatos e index admin equivalentes."
+    },
+    "test__map_reduce_fails": {
+      "status": "outside-scope",
+      "note": "map_reduce no forma parte del perimetro contractual actual de mongoeco."
+    },
+    "test__group_fails": {
+      "status": "outside-scope",
+      "note": "El comando group historico no forma parte del perimetro contractual actual."
     }
   },
   "test_name_prefix_rules": [
@@ -326,6 +350,41 @@
         "prefix": "test__sort_",
         "status": "equivalent",
         "note": "Existe cobertura local equivalente amplia de ordenacion, mixed types y claves BSON observables."
+      },
+      {
+        "prefix": "test_aggregate_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente amplia de stages avanzados de agregacion incluidos graphLookup, objectToArray y conversiones."
+      },
+      {
+        "prefix": "test__unwind_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de unwind y sus opciones principales."
+      },
+      {
+        "prefix": "test__array_size_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de $size y sus errores principales."
+      },
+      {
+        "prefix": "test__get_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de acceso a colecciones hijas, hermanas y metadata observable."
+      },
+      {
+        "prefix": "test_cursor_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de cursores y copia defensiva de documentos/proyecciones."
+      },
+      {
+        "prefix": "test__current_date_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de $currentDate y tipos asociados."
+      },
+      {
+        "prefix": "test__not_implemented_",
+        "status": "outside-scope",
+        "note": "APIs historicas explicitamente no implementadas por mongomock quedan fuera del contrato local."
       }
     ],
     "_mongomock": [
@@ -413,6 +472,88 @@
         "prefix": "test__push",
         "status": "equivalent",
         "note": "Existe cobertura local equivalente amplia de $push y modificadores asociados."
+      },
+      {
+        "prefix": "test__getting_database_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de get_database, default database y propagacion de opciones."
+      },
+      {
+        "prefix": "test__get_database_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de metadatos y opciones a nivel de database."
+      },
+      {
+        "prefix": "test_aggregate_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de agregacion avanzada y conversiones principales."
+      },
+      {
+        "prefix": "test_graphlookup_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de graphLookup en agregacion."
+      },
+      {
+        "prefix": "test__map_reduce",
+        "status": "outside-scope",
+        "note": "map_reduce no forma parte del perimetro contractual actual de mongoeco."
+      },
+      {
+        "prefix": "test__inline_map_reduce",
+        "status": "outside-scope",
+        "note": "map_reduce inline queda fuera del perimetro contractual actual."
+      },
+      {
+        "prefix": "test_mongomock_map_reduce",
+        "status": "outside-scope",
+        "note": "map_reduce historico de mongomock queda fuera del contrato local."
+      },
+      {
+        "prefix": "test__group",
+        "status": "outside-scope",
+        "note": "El comando group historico queda fuera del perimetro contractual actual."
+      },
+      {
+        "prefix": "test__can_create_db_with",
+        "status": "outside-scope",
+        "note": "La semantica historica de bases de datos por path fisico en mongomock no forma parte del contrato local."
+      },
+      {
+        "prefix": "test__can_create_db_without_path",
+        "status": "outside-scope",
+        "note": "La semantica historica de bases de datos por path fisico en mongomock no forma parte del contrato local."
+      }
+    ],
+    "_bulk_operations": [
+      {
+        "prefix": "test__insert",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de inserts en bulk y errores principales."
+      },
+      {
+        "prefix": "test__bulk_execute_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de validacion estructural de bulk_write."
+      },
+      {
+        "prefix": "test__bulk_update_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de update models y validacion en bulk_write."
+      },
+      {
+        "prefix": "test_update",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de updates en operaciones bulk."
+      },
+      {
+        "prefix": "test_upsert_",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de upserts con ReplaceOne y UpdateOne en bulk_write."
+      },
+      {
+        "prefix": "test__mixed_operations",
+        "status": "equivalent",
+        "note": "Existe cobertura local equivalente de lotes mixtos en bulk_write."
       }
     ]
   },

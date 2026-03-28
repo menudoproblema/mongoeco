@@ -689,6 +689,73 @@ Regla práctica:
 * si una funcionalidad exige comportarse como driver de red real, debe evaluarse para Fase 7 y no contaminar el roadmap principal del mock local
 * si una funcionalidad ya no exige arquitectura nueva, pero sí cerrar matices, bordes o profundidad contractual, debe evaluarse para Fase 8
 
+### Fase 9: Search Runtime Local
+Objetivo: pasar de la mera gestión de definiciones de search indexes a un runtime local ejecutable, honesto y observable.
+
+Estado actual: **iniciada y ya operativa para texto**.
+
+Perímetro:
+* **Search Contract**:
+  * validar definiciones de search index con un subset explícito y rechazando configuraciones que el runtime local no entiende;
+  * hacer que `$search` y `$vectorSearch` fallen de forma explícita cuando la consulta o el backend no están soportados;
+  * evitar que el CRUD de search indexes transmita una falsa sensación de compatibilidad completa con Atlas Search.
+* **Backend textual ejecutable**:
+  * introducir un backend local de texto completo para SQLite, idealmente sobre FTS5;
+  * sincronizar el índice de búsqueda con las escrituras de documentos y con el ciclo de vida de índices/colecciones;
+  * ejecutar `$search` como stage inicial real de `aggregate`, con explain y lineage coherentes.
+* **Lifecycle honesto**:
+  * modelar un estado observable del índice alineado con la realidad local del backend;
+  * priorizar un contrato sincero (`READY` inmediato cuando el backend local termina realmente) antes que simular asincronía opaca.
+* **Vector search**:
+  * queda explícitamente fuera del primer cierre del runtime local;
+  * solo deberá abrirse con un backend opcional dedicado o con una emulación declaradamente parcial/experimental.
+
+Aplicado ya en el estado actual:
+* validación explícita de definiciones de search index y rechazo de mappings no soportados;
+* `SearchIndexDocument` honesto (`queryable` / `status`) para `search` y `vectorSearch`;
+* `$search` soportado como primer stage real de `aggregate` en `MemoryEngine` y `SQLiteEngine`;
+* explain honesto del backend de búsqueda;
+* backend FTS5 para SQLite con sincronización en insert, update, delete, bulk insert y ciclo de vida de índices.
+
+Pendiente dentro de la propia fase:
+* ampliar el subset de mappings locales más allá del contrato textual actual;
+* decidir si se modela un lifecycle observable más rico que `READY` inmediato;
+* mantener `vectorSearch` como explícitamente no soportado hasta tener backend dedicado.
+
+Orden recomendado:
+1. contrato y validador de definiciones;
+2. `$search` inicial con errores explícitos y explain honesto;
+3. backend FTS5 para SQLite;
+4. ampliaciones de mappings, lifecycle y posible vector search opcional.
+
+### Fase 10: Mongomock Parity Closure
+Objetivo: vaciar de forma disciplinada la cola larga de casos `review-needed` frente a la suite histórica de `mongomock`.
+
+Estado actual: **en marcha**.
+
+Perímetro:
+* seguir clasificando la matriz versionada en:
+  * `covered`
+  * `equivalent`
+  * `outside-scope`
+  * `review-needed`
+* importar o reescribir solo los casos con valor contractual real, sin copiar ciegamente la suite ajena;
+* usar la matriz como instrumento de decisión y no como simple inventario estático;
+* regenerar periódicamente la distancia práctica frente a `mongomock`.
+
+Estado vivo actual de la matriz:
+* `872` casos inventariados;
+* `9` `covered`;
+* `644` `equivalent`;
+* `97` `outside-scope`;
+* `122` `review-needed`.
+
+Orden recomendado:
+1. descargar reglas conservadoras por familias ya cubiertas;
+2. portar tests de alto valor donde falte evidencia local;
+3. revisar cola residual de `_mongomock`, `collection`, `_bulk_operations` y `helpers`;
+4. recalcular distancia real y mantenerla visible en el documento.
+
 ### Mapa de Superficie PyMongo Pendiente por Fase
 Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este es el backlog de alto nivel ya repartido por crecimiento esperado.
 

@@ -1482,13 +1482,14 @@ class SearchIndexDefinition:
         object.__setattr__(self, "index_type", index_type)
 
     def to_document(self) -> SearchIndexDocument:
+        queryable = self.index_type == "search"
         return {
             "name": self.name,
             "type": self.index_type,
             "definition": deepcopy(self.definition),
             "latestDefinition": deepcopy(self.definition),
-            "queryable": True,
-            "status": "READY",
+            "queryable": queryable,
+            "status": "READY" if queryable else "UNSUPPORTED",
         }
 
 

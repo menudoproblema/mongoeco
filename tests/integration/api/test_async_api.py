@@ -93,6 +93,11 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [document["name"] for document in listed],
                         ["by_keyword", "by_text", "default"],
                     )
+                    by_keyword = next(
+                        document for document in listed if document["name"] == "by_keyword"
+                    )
+                    self.assertFalse(by_keyword["queryable"])
+                    self.assertEqual(by_keyword["status"], "UNSUPPORTED")
 
                     only_default = await collection.list_search_indexes("default").to_list()
                     self.assertEqual(len(only_default), 1)
@@ -105,6 +110,68 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     await collection.drop_search_index("by_keyword")
                     remaining = await collection.list_search_indexes().to_list()
                     self.assertEqual([document["name"] for document in remaining], ["by_text", "default"])
+
+    async def test_aggregate_search_executes_text_search_and_rejects_invalid_runtime(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.search_runtime.get_collection("docs")
+                    await collection.insert_many(
+                        [
+                            {"_id": 1, "title": "Ada", "body": "Analytical engine notes"},
+                            {"_id": 2, "title": "Grace", "body": "Compiler pioneer"},
+                            {"_id": 3, "title": "Notes", "body": "Ada wrote the first algorithm"},
+                        ]
+                    )
+                    await collection.create_search_index(
+                        SearchIndexModel(
+                            {
+                                "mappings": {
+                                    "dynamic": False,
+                                    "fields": {
+                                        "title": {"type": "string"},
+                                        "body": {"type": "string"},
+                                    },
+                                }
+                            },
+                            name="by_text",
+                        )
+                    )
+
+                    hits = await collection.aggregate(
+                        [
+                            {"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}},
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in hits], [1, 3])
+
+                    await collection.update_one({"_id": 2}, {"$set": {"body": "Ada and Grace built compilers"}})
+                    await collection.delete_one({"_id": 1})
+                    updated_hits = await collection.aggregate(
+                        [
+                            {"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}},
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in updated_hits], [2, 3])
+
+                    explanation = await collection.aggregate(
+                        [{"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}}]
+                    ).explain()
+                    self.assertEqual(explanation["engine_plan"]["strategy"], "search")
+
+                    with self.assertRaises(OperationFailure):
+                        collection.aggregate(
+                            [
+                                {"$match": {"_id": {"$gt": 0}}},
+                                {"$search": {"index": "by_text", "text": {"query": "ada"}}},
+                            ]
+                        )
+                    with self.assertRaises(OperationFailure):
+                        await collection.aggregate([{"$vectorSearch": {"index": "vec"}}]).to_list()
+                    with self.assertRaises(OperationFailure):
+                        await collection.create_search_index({"mappings": {"fields": {"title": {"type": "number"}}}})
 
     async def test_watch_surfaces_client_database_and_collection_scopes(self):
         for engine_name in ENGINE_FACTORIES:

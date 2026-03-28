@@ -13,6 +13,7 @@ from mongoeco.core.aggregation.extensions import get_registered_aggregation_stag
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
+from mongoeco.core.search import validate_search_stage_pipeline
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ArrayFilters, CollationDocument, Filter, PlanningIssue, PlanningMode, Projection, SortSpec
@@ -219,6 +220,7 @@ def compile_aggregate_operation(
 ) -> AggregateOperation:
     if not isinstance(pipeline, list):
         raise TypeError("pipeline must be a list")
+    validate_search_stage_pipeline(pipeline)
     return AggregateOperation(
         pipeline=pipeline,
         collation=_normalize_collation(collation),

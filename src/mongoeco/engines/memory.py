@@ -37,6 +37,12 @@ from mongoeco.core.projections import apply_projection
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import QueryNode, ensure_query_plan
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.core.search import (
+    build_search_index_document,
+    compile_search_stage,
+    matches_search_text_query,
+    validate_search_index_definition,
+)
 from mongoeco.core.aggregation import AggregationSpillPolicy
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, OperationFailure
 from mongoeco.session import ClientSession
@@ -1054,6 +1060,14 @@ class MemoryEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> str:
         deadline = operation_deadline(max_time_ms)
+        normalized_definition = SearchIndexDefinition(
+            validate_search_index_definition(
+                definition.definition,
+                index_type=definition.index_type,
+            ),
+            name=definition.name,
+            index_type=definition.index_type,
+        )
         async with self._get_lock(db_name, coll_name):
             search_indexes = self._search_indexes_view(context)
             collections = self._collections_view(context)
@@ -1069,14 +1083,14 @@ class MemoryEngine(AsyncStorageEngine):
                 db_search_indexes = search_indexes.setdefault(db_name, {})
                 coll_search_indexes = db_search_indexes.setdefault(coll_name, [])
                 for existing in coll_search_indexes:
-                    if existing.name == definition.name:
-                        if existing != definition:
+                    if existing.name == normalized_definition.name:
+                        if existing != normalized_definition:
                             raise OperationFailure(
-                                f"Conflicting search index definition for '{definition.name}'"
+                                f"Conflicting search index definition for '{normalized_definition.name}'"
                             )
-                        return definition.name
-                coll_search_indexes.append(definition)
-        return definition.name
+                        return normalized_definition.name
+                coll_search_indexes.append(normalized_definition)
+        return normalized_definition.name
 
     @override
     async def list_search_indexes(
@@ -1091,7 +1105,10 @@ class MemoryEngine(AsyncStorageEngine):
             indexes = deepcopy(
                 self._search_indexes_view(context).get(db_name, {}).get(coll_name, [])
             )
-        documents = [index.to_document() for index in sorted(indexes, key=lambda item: item.name)]
+        documents = [
+            build_search_index_document(index)
+            for index in sorted(indexes, key=lambda item: item.name)
+        ]
         if name is None:
             return documents
         return [document for document in documents if document["name"] == name]
@@ -1114,8 +1131,12 @@ class MemoryEngine(AsyncStorageEngine):
             enforce_deadline(deadline)
             for idx, existing in enumerate(coll_search_indexes):
                 if existing.name == name:
-                    coll_search_indexes[idx] = SearchIndexDefinition(
+                    normalized_definition = validate_search_index_definition(
                         definition,
+                        index_type=existing.index_type,
+                    )
+                    coll_search_indexes[idx] = SearchIndexDefinition(
+                        normalized_definition,
                         name=name,
                         index_type=existing.index_type,
                     )
@@ -1142,10 +1163,81 @@ class MemoryEngine(AsyncStorageEngine):
                     del coll_search_indexes[idx]
                     if not coll_search_indexes:
                         del search_indexes[db_name][coll_name]
-                        if not search_indexes[db_name]:
-                            del search_indexes[db_name]
+                    if not search_indexes[db_name]:
+                        del search_indexes[db_name]
                     return
         raise OperationFailure(f"search index not found with name [{name}]")
+
+    async def search_documents(
+        self,
+        db_name: str,
+        coll_name: str,
+        operator: str,
+        spec: object,
+        *,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> list[Document]:
+        deadline = operation_deadline(max_time_ms)
+        query = compile_search_stage(operator, spec)
+        async with self._get_lock(db_name, coll_name):
+            indexes = deepcopy(
+                self._search_indexes_view(context).get(db_name, {}).get(coll_name, [])
+            )
+            definition = next((item for item in indexes if item.name == query.index_name), None)
+            if definition is None:
+                raise OperationFailure(f"search index not found with name [{query.index_name}]")
+            documents = [
+                self._decode_storage_document(payload)
+                for payload in self._storage_view(context).get(db_name, {}).get(coll_name, {}).values()
+            ]
+        enforce_deadline(deadline)
+        return [
+            document
+            for document in documents
+            if matches_search_text_query(
+                document,
+                definition=definition,
+                query=query,
+            )
+        ]
+
+    async def explain_search_documents(
+        self,
+        db_name: str,
+        coll_name: str,
+        operator: str,
+        spec: object,
+        *,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> QueryPlanExplanation:
+        query = compile_search_stage(operator, spec)
+        async with self._get_lock(db_name, coll_name):
+            indexes = deepcopy(
+                self._search_indexes_view(context).get(db_name, {}).get(coll_name, [])
+            )
+        definition = next((item for item in indexes if item.name == query.index_name), None)
+        if definition is None:
+            raise OperationFailure(f"search index not found with name [{query.index_name}]")
+        return QueryPlanExplanation(
+            engine="memory",
+            strategy="search",
+            plan="python-search-scan",
+            sort=None,
+            skip=0,
+            limit=None,
+            hint=None,
+            hinted_index=query.index_name,
+            comment=None,
+            max_time_ms=max_time_ms,
+            details={
+                "operator": operator,
+                "index": query.index_name,
+                "backend": "python",
+                "definition": build_search_index_document(definition),
+            },
+        )
 
     @override
     async def explain_query_plan(
