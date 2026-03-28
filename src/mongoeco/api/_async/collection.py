@@ -58,6 +58,7 @@ from mongoeco.types import (
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure, WriteError
 
 _FILTER_UNSET = object()
+_UPDATE_UNSET = object()
 
 
 @dataclass(slots=True)
@@ -262,6 +263,16 @@ class AsyncCollection:
         if required:
             raise TypeError("missing required filter")
         return None
+
+    @staticmethod
+    def _resolve_update_argument(update_spec: object, update: object) -> Update:
+        if update_spec is not _UPDATE_UNSET and update is not _UPDATE_UNSET:
+            raise TypeError("cannot pass both update and update_spec")
+        if update is not _UPDATE_UNSET:
+            return AsyncCollection._require_update(update)
+        if update_spec is not _UPDATE_UNSET:
+            return AsyncCollection._require_update(update_spec)
+        raise TypeError("missing required update")
 
     @staticmethod
     def _normalize_projection(projection: object | None) -> Projection | None:
@@ -1328,10 +1339,12 @@ class AsyncCollection:
 
     async def update_one(
         self,
-        filter_spec: Filter,
-        update_spec: Update,
+        filter_spec: Filter | object = _FILTER_UNSET,
+        update_spec: Update | object = _UPDATE_UNSET,
         upsert: bool = False,
         *,
+        filter: Filter | object = _FILTER_UNSET,
+        update: Update | object = _UPDATE_UNSET,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         array_filters: ArrayFilters | None = None,
@@ -1341,6 +1354,8 @@ class AsyncCollection:
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
+        update_spec = self._resolve_update_argument(update_spec, update)
         operation = compile_update_operation(
             filter_spec,
             collation=collation,
@@ -1353,7 +1368,6 @@ class AsyncCollection:
             update_spec=update_spec,
             planning_mode=self._planning_mode,
         )
-        update_spec = self._require_update(update_spec)
         event_selected_id: DocumentId | None = None
         if self._change_hub is not None and operation.sort is None and operation.hint is None:
             selected = await self._build_cursor(
@@ -1536,10 +1550,12 @@ class AsyncCollection:
 
     async def update_many(
         self,
-        filter_spec: Filter,
-        update_spec: Update,
+        filter_spec: Filter | object = _FILTER_UNSET,
+        update_spec: Update | object = _UPDATE_UNSET,
         upsert: bool = False,
         *,
+        filter: Filter | object = _FILTER_UNSET,
+        update: Update | object = _UPDATE_UNSET,
         collation: CollationDocument | None = None,
         array_filters: ArrayFilters | None = None,
         hint: HintSpec | None = None,
@@ -1548,6 +1564,8 @@ class AsyncCollection:
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
+        update_spec = self._resolve_update_argument(update_spec, update)
         operation = compile_update_operation(
             filter_spec,
             collation=collation,
@@ -1559,7 +1577,6 @@ class AsyncCollection:
             update_spec=update_spec,
             planning_mode=self._planning_mode,
         )
-        update_spec = self._require_update(update_spec)
         matched_documents = await self._build_cursor(
             compile_find_selection_from_update_operation(
                 operation,
@@ -1709,9 +1726,11 @@ class AsyncCollection:
 
     async def find_one_and_update(
         self,
-        filter_spec: Filter,
-        update_spec: Update,
+        filter_spec: Filter | object = _FILTER_UNSET,
+        update_spec: Update | object = _UPDATE_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
+        update: Update | object = _UPDATE_UNSET,
         projection: Projection | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
@@ -1725,6 +1744,8 @@ class AsyncCollection:
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> Document | None:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
+        update_spec = self._resolve_update_argument(update_spec, update)
         projection = self._normalize_projection(projection)
         return_document = self._normalize_return_document(return_document)
         operation = compile_update_operation(
@@ -1740,8 +1761,6 @@ class AsyncCollection:
             update_spec=update_spec,
             planning_mode=self._planning_mode,
         )
-        update_spec = self._require_update(update_spec)
-
         before = await self._select_first_document(
             operation.filter_spec,
             plan=operation.plan,

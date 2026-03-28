@@ -8,6 +8,8 @@ from mongoeco.types import CollectionValidationDocument, Filter
 if TYPE_CHECKING:
     from mongoeco.api._sync.client import Database
 
+_FILTER_UNSET = object()
+
 
 class DatabaseAdminService:
     def __init__(self, database: "Database"):
@@ -28,10 +30,17 @@ class DatabaseAdminService:
 
     def list_collection_names(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         session: ClientSession | None = None,
     ) -> list[str]:
+        if filter_spec is not _FILTER_UNSET and filter is not _FILTER_UNSET:
+            raise TypeError("cannot pass both filter and filter_spec")
+        if filter is not _FILTER_UNSET:
+            filter_spec = filter
+        elif filter_spec is _FILTER_UNSET:
+            filter_spec = None
         return self._run_database_method(
             "list_collection_names",
             filter_spec,
@@ -40,10 +49,17 @@ class DatabaseAdminService:
 
     def list_collections(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         session: ClientSession | None = None,
     ) -> ListingCursor:
+        if filter_spec is not _FILTER_UNSET and filter is not _FILTER_UNSET:
+            raise TypeError("cannot pass both filter and filter_spec")
+        if filter is not _FILTER_UNSET:
+            filter_spec = filter
+        elif filter_spec is _FILTER_UNSET:
+            filter_spec = None
         async_database = self._async_database()
         return ListingCursor(
             self._client,

@@ -20,6 +20,7 @@ from mongoeco.types import (
 )
 
 _FILTER_UNSET = object()
+_UPDATE_UNSET = object()
 
 
 class Collection:
@@ -70,6 +71,16 @@ class Collection:
         if required:
             raise TypeError("missing required filter")
         return None
+
+    @staticmethod
+    def _resolve_update_argument(update_spec: object, update: object) -> Update:
+        if update_spec is not _UPDATE_UNSET and update is not _UPDATE_UNSET:
+            raise TypeError("cannot pass both update and update_spec")
+        if update is not _UPDATE_UNSET:
+            return update
+        if update_spec is not _UPDATE_UNSET:
+            return update_spec
+        raise TypeError("missing required update")
 
     def _async_collection(self):
         self._client._ensure_connected()
@@ -320,10 +331,12 @@ class Collection:
 
     def update_one(
         self,
-        filter_spec: Filter,
-        update_spec: Update,
+        filter_spec: Filter | object = _FILTER_UNSET,
+        update_spec: Update | object = _UPDATE_UNSET,
         upsert: bool = False,
         *,
+        filter: Filter | object = _FILTER_UNSET,
+        update: Update | object = _UPDATE_UNSET,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         array_filters: ArrayFilters | None = None,
@@ -333,6 +346,8 @@ class Collection:
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
+        update_spec = self._resolve_update_argument(update_spec, update)
         return self._run_collection_method(
             "update_one",
             filter_spec,
@@ -378,9 +393,11 @@ class Collection:
 
     def find_one_and_update(
         self,
-        filter_spec: Filter,
-        update_spec: Update,
+        filter_spec: Filter | object = _FILTER_UNSET,
+        update_spec: Update | object = _UPDATE_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
+        update: Update | object = _UPDATE_UNSET,
         projection: Projection | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
@@ -394,6 +411,8 @@ class Collection:
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> Document | None:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
+        update_spec = self._resolve_update_argument(update_spec, update)
         return self._run_collection_method(
             "find_one_and_update",
             filter_spec,
@@ -498,10 +517,12 @@ class Collection:
 
     def update_many(
         self,
-        filter_spec: Filter,
-        update_spec: Update,
+        filter_spec: Filter | object = _FILTER_UNSET,
+        update_spec: Update | object = _UPDATE_UNSET,
         upsert: bool = False,
         *,
+        filter: Filter | object = _FILTER_UNSET,
+        update: Update | object = _UPDATE_UNSET,
         collation: CollationDocument | None = None,
         array_filters: ArrayFilters | None = None,
         hint: HintSpec | None = None,
@@ -510,6 +531,8 @@ class Collection:
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> UpdateResult[DocumentId]:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
+        update_spec = self._resolve_update_argument(update_spec, update)
         return self._run_collection_method(
             "update_many",
             filter_spec,

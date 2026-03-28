@@ -4188,3 +4188,26 @@ class SyncApiFilterAliasTests(unittest.TestCase):
 
             with self.assertRaises(TypeError):
                 collection.find_one({"_id": "1"}, filter={"_id": "1"})
+
+    def test_sync_collection_supports_update_keyword_alias(self):
+        with MongoClient(MemoryEngine()) as client:
+            collection = client.test.users
+            collection.insert_one({"_id": "1", "name": "Ada", "count": 1})
+
+            collection.update_one(filter={"_id": "1"}, update={"$inc": {"count": 1}})
+
+            self.assertEqual(
+                collection.find_one({"_id": "1"}),
+                {"_id": "1", "name": "Ada", "count": 2},
+            )
+
+    def test_sync_database_supports_filter_keyword_alias(self):
+        with MongoClient(MemoryEngine()) as client:
+            database = client.get_database("test")
+            client.test.users.insert_one({"_id": "1"})
+
+            names = database.list_collection_names(filter={"name": "users"})
+            listings = database.list_collections(filter={"name": "users"}).to_list()
+
+            self.assertEqual(names, ["users"])
+            self.assertEqual([document["name"] for document in listings], ["users"])

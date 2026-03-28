@@ -76,6 +76,8 @@ if TYPE_CHECKING:
     from mongoeco.api._async.client import AsyncDatabase
     from mongoeco.compat import MongoDialect
 
+_FILTER_UNSET = object()
+
 
 class AsyncDatabaseAdminService:
     def __init__(self, database: "AsyncDatabase"):
@@ -98,12 +100,27 @@ class AsyncDatabaseAdminService:
     def _normalize_filter(filter_spec: object | None) -> Filter:
         return normalize_filter_document(filter_spec)
 
+    @staticmethod
+    def _resolve_filter_argument(
+        filter_spec: object,
+        filter: object,
+    ) -> Filter | None:
+        if filter_spec is not _FILTER_UNSET and filter is not _FILTER_UNSET:
+            raise TypeError("cannot pass both filter and filter_spec")
+        if filter is not _FILTER_UNSET:
+            return normalize_filter_document(filter)
+        if filter_spec is not _FILTER_UNSET:
+            return normalize_filter_document(filter_spec)
+        return None
+
     async def list_collection_names(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         session: ClientSession | None = None,
     ) -> list[str]:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter)
         if filter_spec is None:
             return await self._engine.list_collections(self._db_name, context=session)
         documents = await self.list_collections(filter_spec, session=session).to_list()
@@ -131,10 +148,12 @@ class AsyncDatabaseAdminService:
 
     def list_collections(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         session: ClientSession | None = None,
     ) -> AsyncListingCursor:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter)
         normalized_filter = self._normalize_filter(filter_spec)
 
         async def _load() -> list[CollectionListingDocument]:

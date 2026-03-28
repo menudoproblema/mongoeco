@@ -28,6 +28,8 @@ from mongoeco.types import (
     WriteConcern,
 )
 
+_FILTER_UNSET = object()
+
 
 class _SyncRunner:
     """Ejecuta la API async en un loop dedicado y estable."""
@@ -207,6 +209,16 @@ class Database:
         )
         self._admin = DatabaseAdminService(self)
 
+    @staticmethod
+    def _resolve_filter_argument(filter_spec: object, filter: object) -> Filter | None:
+        if filter_spec is not _FILTER_UNSET and filter is not _FILTER_UNSET:
+            raise TypeError("cannot pass both filter and filter_spec")
+        if filter is not _FILTER_UNSET:
+            return filter
+        if filter_spec is _FILTER_UNSET:
+            return None
+        return filter_spec
+
     def _async_database(self):
         self._client._ensure_connected()
         return self._client._async_client.get_database(
@@ -261,19 +273,23 @@ class Database:
 
     def list_collection_names(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         session: ClientSession | None = None,
     ) -> list[str]:
-        return self._admin.list_collection_names(filter_spec, session=session)
+        resolved_filter = self._resolve_filter_argument(filter_spec, filter)
+        return self._admin.list_collection_names(resolved_filter, session=session)
 
     def list_collections(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         session: ClientSession | None = None,
     ) -> ListingCursor:
-        return self._admin.list_collections(filter_spec, session=session)
+        resolved_filter = self._resolve_filter_argument(filter_spec, filter)
+        return self._admin.list_collections(resolved_filter, session=session)
 
     def create_collection(
         self,
