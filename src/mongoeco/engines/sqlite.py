@@ -2932,6 +2932,7 @@ class SQLiteEngine(AsyncStorageEngine):
             build_search_index_document(
                 definition,
                 ready=self._search_index_is_ready_sync(ready_at_epoch),
+                ready_at_epoch=ready_at_epoch,
             )
             for definition, _physical_name, ready_at_epoch in rows
         ]
@@ -3191,6 +3192,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 "definition": build_search_index_document(
                     definition,
                     ready=self._search_index_is_ready_sync(ready_at_epoch),
+                    ready_at_epoch=ready_at_epoch,
                 ),
                 "queryOperator": "phrase" if isinstance(query, SearchPhraseQuery) else "text" if isinstance(query, SearchTextQuery) else None,
                 "query": query.raw_query if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) else None,

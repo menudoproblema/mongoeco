@@ -1045,6 +1045,7 @@ class MemoryEngine(AsyncStorageEngine):
             build_search_index_document(
                 index,
                 ready=self._search_index_is_ready(db_name, coll_name, index.name),
+                ready_at_epoch=self._search_index_ready_at.get((db_name, coll_name, index.name)),
             )
             for index in sorted(indexes, key=lambda item: item.name)
         ]
@@ -1211,7 +1212,11 @@ class MemoryEngine(AsyncStorageEngine):
                 "index": query.index_name,
                 "backend": "python",
                 "status": "READY" if ready else "PENDING",
-                "definition": build_search_index_document(definition, ready=ready),
+                "definition": build_search_index_document(
+                    definition,
+                    ready=ready,
+                    ready_at_epoch=self._search_index_ready_at.get((db_name, coll_name, query.index_name)),
+                ),
                 "queryOperator": "phrase" if isinstance(query, SearchPhraseQuery) else "text" if isinstance(query, SearchTextQuery) else None,
                 "query": query.raw_query if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) else None,
                 "paths": list(query.paths) if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) and query.paths is not None else None,

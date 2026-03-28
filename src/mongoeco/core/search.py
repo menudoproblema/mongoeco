@@ -67,15 +67,31 @@ def build_search_index_document(
     definition: SearchIndexDefinition,
     *,
     ready: bool = True,
+    ready_at_epoch: float | None = None,
 ) -> SearchIndexDocument:
     queryable = is_queryable_search_definition(definition)
+    if definition.index_type == "vectorSearch":
+        capabilities: tuple[str, ...] = ("vectorSearch",)
+        query_mode = "vector"
+        experimental = True
+    else:
+        capabilities = ("text", "phrase")
+        query_mode = "text"
+        experimental = False
+    status = "READY" if queryable and ready else "PENDING" if queryable else "UNSUPPORTED"
+    status_detail = "ready" if status == "READY" else "pending-build" if status == "PENDING" else "unsupported-definition"
     return {
         "name": definition.name,
         "type": definition.index_type,
         "definition": deepcopy(definition.definition),
         "latestDefinition": deepcopy(definition.definition),
         "queryable": queryable,
-        "status": "READY" if queryable and ready else "PENDING" if queryable else "UNSUPPORTED",
+        "status": status,
+        "statusDetail": status_detail,
+        "queryMode": query_mode,
+        "experimental": experimental,
+        "capabilities": list(capabilities),
+        "readyAtEpoch": ready_at_epoch,
     }
 
 

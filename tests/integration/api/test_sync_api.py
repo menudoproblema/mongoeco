@@ -171,10 +171,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     )
                     self.assertTrue(by_keyword["queryable"])
                     self.assertEqual(by_keyword["status"], "READY")
+                    self.assertEqual(by_keyword["queryMode"], "vector")
+                    self.assertTrue(by_keyword["experimental"])
+                    self.assertEqual(by_keyword["capabilities"], ["vectorSearch"])
 
                     only_default = collection.list_search_indexes("default").to_list()
                     self.assertEqual(len(only_default), 1)
                     self.assertEqual(only_default[0]["name"], "default")
+                    self.assertEqual(only_default[0]["queryMode"], "text")
+                    self.assertEqual(only_default[0]["capabilities"], ["text", "phrase"])
 
                     collection.update_search_index("default", {"mappings": {"dynamic": True}})
                     updated = collection.list_search_indexes("default").first()
@@ -327,6 +332,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     )
                     listed = collection.list_search_indexes("by_text").to_list()
                     self.assertEqual(listed[0]["status"], "PENDING")
+                    self.assertEqual(listed[0]["statusDetail"], "pending-build")
+                    self.assertIsNotNone(listed[0]["readyAtEpoch"])
                     with self.assertRaises(OperationFailure):
                         collection.aggregate(
                             [{"$search": {"index": "by_text", "text": {"query": "ada", "path": "title"}}}]
@@ -334,6 +341,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     time.sleep(0.03)
                     ready = collection.list_search_indexes("by_text").to_list()
                     self.assertEqual(ready[0]["status"], "READY")
+                    self.assertEqual(ready[0]["statusDetail"], "ready")
 
     def test_watch_surfaces_client_database_and_collection_scopes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

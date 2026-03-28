@@ -111,10 +111,15 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     )
                     self.assertTrue(by_keyword["queryable"])
                     self.assertEqual(by_keyword["status"], "READY")
+                    self.assertEqual(by_keyword["queryMode"], "vector")
+                    self.assertTrue(by_keyword["experimental"])
+                    self.assertEqual(by_keyword["capabilities"], ["vectorSearch"])
 
                     only_default = await collection.list_search_indexes("default").to_list()
                     self.assertEqual(len(only_default), 1)
                     self.assertEqual(only_default[0]["name"], "default")
+                    self.assertEqual(only_default[0]["queryMode"], "text")
+                    self.assertEqual(only_default[0]["capabilities"], ["text", "phrase"])
 
                     await collection.update_search_index("default", {"mappings": {"dynamic": True}})
                     updated = await collection.list_search_indexes("default").first()
@@ -270,6 +275,8 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         )
                         listed = await collection.list_search_indexes("by_text").to_list()
                         self.assertEqual(listed[0]["status"], "PENDING")
+                        self.assertEqual(listed[0]["statusDetail"], "pending-build")
+                        self.assertIsNotNone(listed[0]["readyAtEpoch"])
                         with self.assertRaises(OperationFailure):
                             await collection.aggregate(
                                 [{"$search": {"index": "by_text", "text": {"query": "ada", "path": "title"}}}]
@@ -277,6 +284,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         await asyncio.sleep(0.03)
                         ready = await collection.list_search_indexes("by_text").to_list()
                         self.assertEqual(ready[0]["status"], "READY")
+                        self.assertEqual(ready[0]["statusDetail"], "ready")
                 finally:
                     await engine.disconnect()
 

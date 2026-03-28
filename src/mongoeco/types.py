@@ -1526,13 +1526,34 @@ class SearchIndexDefinition:
 
     def to_document(self) -> SearchIndexDocument:
         queryable = self.index_type == "search"
+        query_mode = "text"
+        experimental = False
+        capabilities: list[str] = ["text", "phrase"]
+        if self.index_type == "vectorSearch":
+            fields = self.definition.get("fields")
+            queryable = isinstance(fields, list) and any(
+                isinstance(field, dict)
+                and field.get("type") == "vector"
+                and isinstance(field.get("path"), str)
+                and bool(field.get("path"))
+                for field in fields
+            )
+            query_mode = "vector"
+            experimental = True
+            capabilities = ["vectorSearch"]
+        status = "READY" if queryable else "UNSUPPORTED"
         return {
             "name": self.name,
             "type": self.index_type,
             "definition": deepcopy(self.definition),
             "latestDefinition": deepcopy(self.definition),
             "queryable": queryable,
-            "status": "READY" if queryable else "UNSUPPORTED",
+            "status": status,
+            "statusDetail": "ready" if queryable else "unsupported-definition",
+            "queryMode": query_mode,
+            "experimental": experimental,
+            "capabilities": capabilities,
+            "readyAtEpoch": None,
         }
 
 

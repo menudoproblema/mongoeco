@@ -55,6 +55,36 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertTrue(document["queryable"])
         self.assertEqual(document["status"], "PENDING")
+        self.assertEqual(document["statusDetail"], "pending-build")
+        self.assertEqual(document["queryMode"], "vector")
+        self.assertTrue(document["experimental"])
+        self.assertEqual(document["capabilities"], ["vectorSearch"])
+        self.assertIsNone(document["readyAtEpoch"])
+
+    def test_search_index_definition_to_document_tracks_vector_queryability(self) -> None:
+        vector = SearchIndexDefinition(
+            {
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": 3,
+                        "similarity": "cosine",
+                    }
+                ]
+            },
+            name="vec",
+            index_type="vectorSearch",
+        ).to_document()
+        self.assertTrue(vector["queryable"])
+        self.assertEqual(vector["status"], "READY")
+        self.assertEqual(vector["queryMode"], "vector")
+        self.assertTrue(vector["experimental"])
+
+        unsupported = SearchIndexDefinition({"fields": []}, name="vec", index_type="vectorSearch").to_document()
+        self.assertFalse(unsupported["queryable"])
+        self.assertEqual(unsupported["status"], "UNSUPPORTED")
+        self.assertEqual(unsupported["statusDetail"], "unsupported-definition")
 
     def test_compile_search_text_query_supports_paths(self) -> None:
         query = compile_search_text_query(
@@ -123,6 +153,28 @@ class SearchCoreTests(unittest.TestCase):
             definition,
         )
         self.assertEqual(entries, [("title", "Ada"), ("nested.body", "Notes")])
+
+    def test_iter_searchable_text_entries_supports_autocomplete_and_token_mappings(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "autocomplete"},
+                        "slug": {"type": "token"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+        entries = iter_searchable_text_entries(
+            {
+                "title": "Ada Lovelace",
+                "slug": "ada-lovelace",
+            },
+            definition,
+        )
+        self.assertEqual(entries, [("title", "Ada Lovelace"), ("slug", "ada-lovelace")])
 
     def test_validate_search_stage_pipeline_requires_search_to_be_first(self) -> None:
         with self.assertRaises(OperationFailure):
@@ -319,6 +371,25 @@ class SearchCoreTests(unittest.TestCase):
                 {"mappings": {"fields": {"title": {"type": "string", "tokenizer": "x"}}}},
                 index_type="search",
             )
+
+    def test_validate_text_search_definition_accepts_local_text_mapping_family(self) -> None:
+        normalized = validate_search_index_definition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "string"},
+                        "slug": {"type": "token"},
+                        "suggest": {"type": "autocomplete"},
+                    },
+                }
+            },
+            index_type="search",
+        )
+        self.assertEqual(
+            normalized["mappings"]["fields"]["suggest"]["type"],
+            "autocomplete",
+        )
 
     def test_validate_vector_search_definition_rejects_invalid_similarity_and_path(self) -> None:
         with self.assertRaises(OperationFailure):
