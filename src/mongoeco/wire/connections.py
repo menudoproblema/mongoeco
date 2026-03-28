@@ -13,6 +13,8 @@ class WireConnectionContext:
     compression: tuple[str, ...] = ()
     hello_count: int = 0
     last_hello_command: str | None = None
+    authenticated_users: list[dict[str, object]] = field(default_factory=list)
+    authenticated_roles: list[dict[str, object]] = field(default_factory=list)
 
     @property
     def peer_address(self) -> str:
@@ -27,6 +29,23 @@ class WireConnectionContext:
         compression = body.get("compression")
         if isinstance(compression, list) and all(isinstance(item, str) for item in compression):
             self.compression = tuple(compression)
+
+    def authenticate(
+        self,
+        *,
+        username: str,
+        db: str,
+        mechanism: str,
+        roles: tuple[dict[str, object], ...] = (),
+    ) -> None:
+        self.authenticated_users = [
+            {"user": username, "db": db, "mechanism": mechanism},
+        ]
+        self.authenticated_roles = list(roles)
+
+    def logout(self) -> None:
+        self.authenticated_users = []
+        self.authenticated_roles = []
 
 
 class WireConnectionRegistry:

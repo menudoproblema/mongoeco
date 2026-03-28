@@ -129,6 +129,14 @@ def _server_description_from_hello(
             if isinstance(response.get("logicalSessionTimeoutMinutes"), int)
             else None
         ),
+        hidden=bool(response.get("hidden")),
+        arbiter_only=bool(response.get("arbiterOnly")),
+        topology_version=dict(response["topologyVersion"])
+        if isinstance(response.get("topologyVersion"), dict)
+        else None,
+        set_version=int(response["setVersion"]) if isinstance(response.get("setVersion"), int) else None,
+        election_id=response.get("electionId"),
+        last_update_time_monotonic=time.monotonic(),
     )
 
 

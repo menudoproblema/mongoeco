@@ -48,6 +48,16 @@ ABORT_TRANSACTION_CAPABILITY = WireCommandCapability(
     name="abortTransaction",
     kind="abort_transaction",
 )
+AUTHENTICATE_CAPABILITY = WireCommandCapability(
+    name="authenticate",
+    kind="authenticate",
+    binds_session=False,
+)
+LOGOUT_CAPABILITY = WireCommandCapability(
+    name="logout",
+    kind="logout",
+    binds_session=False,
+)
 
 _SPECIAL_CAPABILITIES: dict[str, WireCommandCapability] = {
     capability.name: capability
@@ -60,6 +70,8 @@ _SPECIAL_CAPABILITIES: dict[str, WireCommandCapability] = {
         ISMASTER_LOWER_CAPABILITY,
         COMMIT_TRANSACTION_CAPABILITY,
         ABORT_TRANSACTION_CAPABILITY,
+        AUTHENTICATE_CAPABILITY,
+        LOGOUT_CAPABILITY,
     )
 }
 

@@ -6,6 +6,7 @@ import struct
 from mongoeco.errors import ExecutionTimeout, MongoEcoError, OperationFailure, PyMongoError
 from mongoeco.wire.protocol import OP_MSG, OP_QUERY, parse_message_header
 from mongoeco.types import ObjectId
+from mongoeco.wire.auth import WireAuthenticationService, WireAuthUser
 from mongoeco.wire.connections import WireConnectionContext, WireConnectionRegistry
 from mongoeco.wire.capabilities import resolve_wire_command_capability
 from mongoeco.wire.handshake import WireHandshakeService
@@ -258,6 +259,86 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertEqual(document["logicalSessionTimeoutMinutes"], 12)
         self.assertEqual(document["compression"], ["snappy"])
         self.assertTrue(document["ismaster"])
+
+    def test_authentication_service_authenticates_logout_and_requires_auth(self):
+        service = WireAuthenticationService(
+            (
+                WireAuthUser(
+                    username="ada",
+                    password="secret",
+                    source="admin",
+                    mechanisms=("SCRAM-SHA-256",),
+                    roles=({"role": "root", "db": "admin"},),
+                ),
+            )
+        )
+        connection = WireConnectionContext(connection_id=1)
+
+        response = service.authenticate(
+            {
+                "authenticate": 1,
+                "mechanism": "SCRAM-SHA-256",
+                "user": "ada",
+                "pwd": "secret",
+                "db": "admin",
+            },
+            connection=connection,
+        )
+
+        self.assertEqual(response, {"ok": 1.0})
+        self.assertEqual(
+            connection.authenticated_users,
+            [{"user": "ada", "db": "admin", "mechanism": "SCRAM-SHA-256"}],
+        )
+        self.assertEqual(connection.authenticated_roles, [{"role": "root", "db": "admin"}])
+        service.require_authenticated(connection, "ping")
+        self.assertEqual(service.logout(connection), {"ok": 1.0})
+        self.assertEqual(connection.authenticated_users, [])
+        with self.assertRaisesRegex(OperationFailure, "Authentication required"):
+            service.require_authenticated(connection, "ping")
+
+    def test_authentication_service_validates_input_and_x509(self):
+        service = WireAuthenticationService(
+            (
+                WireAuthUser(
+                    username="client",
+                    password=None,
+                    source="$external",
+                    mechanisms=("MONGODB-X509",),
+                ),
+            )
+        )
+        connection = WireConnectionContext(connection_id=2)
+
+        with self.assertRaisesRegex(OperationFailure, "requires mechanism"):
+            service.authenticate({"authenticate": 1, "user": "client", "db": "$external"}, connection=connection)
+        with self.assertRaisesRegex(OperationFailure, "requires user"):
+            service.authenticate({"authenticate": 1, "mechanism": "SCRAM-SHA-256", "db": "admin"}, connection=connection)
+        with self.assertRaisesRegex(OperationFailure, "requires db"):
+            service.authenticate({"authenticate": 1, "mechanism": "SCRAM-SHA-256", "user": "client", "db": ""}, connection=connection)
+        with self.assertRaisesRegex(OperationFailure, "Authentication failed"):
+            service.authenticate(
+                {
+                    "authenticate": 1,
+                    "mechanism": "SCRAM-SHA-256",
+                    "user": "client",
+                    "pwd": "wrong",
+                    "db": "$external",
+                },
+                connection=connection,
+            )
+
+        response = service.authenticate(
+            {
+                "authenticate": 1,
+                "mechanism": "MONGODB-X509",
+                "user": "client",
+                "db": "$external",
+            },
+            connection=connection,
+        )
+
+        self.assertEqual(response, {"ok": 1.0})
 
 
 class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):

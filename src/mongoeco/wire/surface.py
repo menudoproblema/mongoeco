@@ -7,12 +7,14 @@ from mongoeco.api._async.database_commands import SUPPORTED_DATABASE_COMMANDS
 
 WIRE_SPECIAL_COMMANDS: tuple[str, ...] = (
     "abortTransaction",
+    "authenticate",
     "commitTransaction",
     "endSessions",
     "getMore",
     "isMaster",
     "ismaster",
     "killCursors",
+    "logout",
 )
 
 WIRE_SUPPORTED_OPCODES: tuple[int, ...] = (2004, 2013)
@@ -37,4 +39,3 @@ class WireSurface:
 
     def supports_opcode(self, op_code: int) -> bool:
         return op_code in self.supported_opcodes
-

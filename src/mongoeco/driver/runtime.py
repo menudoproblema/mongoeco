@@ -4,7 +4,7 @@ import asyncio
 from typing import Any
 
 from mongoeco.driver.connections import ConnectionLease, ConnectionPoolSnapshot, ConnectionRegistry
-from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_seeds
+from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_dns, resolve_srv_seeds
 from mongoeco.driver.execution import (
     RequestExecutionResult,
     RequestExecutionTrace,
@@ -54,14 +54,16 @@ class DriverRuntime:
         read_concern: ReadConcern,
         read_preference: ReadPreference,
         srv_records: tuple[tuple[str, int | None], ...] | None = None,
+        srv_resolver=None,
     ):
         self._uri = parse_mongo_uri(uri)
-        resolution = resolve_srv_seeds(
-            self._uri,
-            srv_records=None
-            if srv_records is None
-            else tuple(MongoUriSeed(host, port) for host, port in srv_records),
-        )
+        if srv_records is None:
+            resolution = resolve_srv_dns(self._uri, resolver=srv_resolver) if self._uri.scheme == "mongodb+srv" else None
+        else:
+            resolution = resolve_srv_seeds(
+                self._uri,
+                srv_records=tuple(MongoUriSeed(host, port) for host, port in srv_records),
+            )
         self._srv_resolution = resolution
         self._effective_uri = materialize_srv_uri(self._uri, resolution=resolution)
         effective_write_concern = build_write_concern_from_uri(self._effective_uri, write_concern)

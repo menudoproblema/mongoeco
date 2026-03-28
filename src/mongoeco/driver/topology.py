@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+import time
 
 from mongoeco.driver.uri import MongoUri
 
@@ -31,10 +32,18 @@ class ServerDescription:
     tags: dict[str, str] = field(default_factory=dict)
     wire_version_range: tuple[int, int] | None = None
     logical_session_timeout_minutes: int | None = None
+    hidden: bool = False
+    arbiter_only: bool = False
+    topology_version: dict[str, object] | None = None
+    set_version: int | None = None
+    election_id: object | None = None
+    last_update_time_monotonic: float | None = None
     error: str | None = None
 
     @property
     def is_readable(self) -> bool:
+        if self.error is not None or self.hidden or self.arbiter_only:
+            return False
         return self.server_type in {
             ServerType.STANDALONE,
             ServerType.MONGOS,
@@ -44,6 +53,8 @@ class ServerDescription:
 
     @property
     def is_writable(self) -> bool:
+        if self.error is not None or self.hidden or self.arbiter_only:
+            return False
         return self.server_type in {
             ServerType.STANDALONE,
             ServerType.MONGOS,
@@ -103,6 +114,7 @@ def build_local_topology_description(uri: MongoUri) -> TopologyDescription:
                 set_name=uri.options.replica_set,
                 logical_session_timeout_minutes=30,
                 wire_version_range=(0, 20),
+                last_update_time_monotonic=time.monotonic(),
             )
         )
     return TopologyDescription(

@@ -4,6 +4,7 @@ from typing import Any
 
 from mongoeco.api import AsyncMongoClient
 from mongoeco.errors import MongoEcoError, OperationFailure, PyMongoError
+from mongoeco.wire.auth import WireAuthenticationService
 from mongoeco.wire.capabilities import resolve_wire_command_capability
 from mongoeco.wire.connections import WireConnectionContext
 from mongoeco.wire.cursors import WireCursorStore
@@ -34,17 +35,21 @@ class WireCommandExecutor:
         cursor_store: WireCursorStore,
         session_store: WireSessionStore,
         surface: WireSurface | None = None,
+        auth: WireAuthenticationService | None = None,
     ) -> None:
         self._client = client
         self._cursor_store = cursor_store
         self._session_store = session_store
         self._surface = surface or WireSurface()
+        self._auth = auth or WireAuthenticationService()
         self._handshake = WireHandshakeService(client.mongodb_dialect, surface=self._surface)
         self._special_handlers = {
+            "authenticate": self._handle_authenticate,
             "handshake": self._handle_handshake,
             "end_sessions": self._handle_end_sessions,
             "get_more": self._handle_get_more,
             "kill_cursors": self._handle_kill_cursors,
+            "logout": self._handle_logout,
             "commit_transaction": self._handle_commit_transaction,
             "abort_transaction": self._handle_abort_transaction,
             "passthrough": self._handle_passthrough,
@@ -127,10 +132,18 @@ class WireCommandExecutor:
         return self._session_store.end_sessions(context.command_document.get("endSessions"))
 
     async def _handle_get_more(self, context: WireRequestContext) -> dict[str, Any]:
+        self._auth.require_authenticated(context.connection, context.command_name)
         return self._cursor_store.get_more(context.command_document, db_name=context.db_name)
 
     async def _handle_kill_cursors(self, context: WireRequestContext) -> dict[str, Any]:
+        self._auth.require_authenticated(context.connection, context.command_name)
         return self._cursor_store.kill_cursors(context.command_document)
+
+    async def _handle_authenticate(self, context: WireRequestContext) -> dict[str, Any]:
+        return self._auth.authenticate(context.command_document, connection=context.connection)
+
+    async def _handle_logout(self, context: WireRequestContext) -> dict[str, Any]:
+        return self._auth.logout(context.connection)
 
     async def _handle_commit_transaction(self, context: WireRequestContext) -> dict[str, Any]:
         return self._session_store.commit_transaction(context.raw_body)
@@ -139,6 +152,19 @@ class WireCommandExecutor:
         return self._session_store.abort_transaction(context.raw_body)
 
     async def _handle_passthrough(self, context: WireRequestContext) -> dict[str, Any]:
+        if context.command_name == "connectionStatus":
+            result = await self._client.get_database(context.db_name).command(
+                context.command_document,
+                session=context.session,
+            )
+            auth_info = result.get("authInfo")
+            if isinstance(auth_info, dict):
+                auth_info["authenticatedUsers"] = list(context.connection.authenticated_users)
+                auth_info["authenticatedUserRoles"] = list(context.connection.authenticated_roles)
+                if "authenticatedUserPrivileges" in auth_info:
+                    auth_info["authenticatedUserPrivileges"] = []
+            return result
+        self._auth.require_authenticated(context.connection, context.command_name)
         database = self._client.get_database(context.db_name)
         result = await database.command(context.command_document, session=context.session)
         if not isinstance(result, dict):

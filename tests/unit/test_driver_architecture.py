@@ -42,12 +42,13 @@ from mongoeco.driver import (
     classify_request_exception,
     build_local_topology_description,
     materialize_srv_uri,
+    resolve_srv_dns,
     resolve_srv_seeds,
     build_selection_policy,
     build_timeout_policy,
     refresh_topology,
 )
-from mongoeco.wire import AsyncMongoEcoProxyServer
+from mongoeco.wire import AsyncMongoEcoProxyServer, WireAuthUser
 
 
 class MongoUriTests(unittest.TestCase):
@@ -158,6 +159,50 @@ class MongoUriTests(unittest.TestCase):
         self.assertEqual([seed.address for seed in resolution.resolved_seeds], ["db1.example.net:27017", "db2.example.net:27018"])
         self.assertEqual([seed.address for seed in effective_uri.seeds], ["db1.example.net:27017", "db2.example.net:27018"])
 
+    def test_resolve_srv_dns_uses_resolver_and_applies_txt_options(self):
+        class _SrvAnswer:
+            def __init__(self, target: str, port: int):
+                self.target = target
+                self.port = port
+
+        class _TxtAnswer:
+            def __init__(self, *strings: bytes):
+                self.strings = strings
+
+        def _resolver(name: str, record_type: str):
+            if record_type == "SRV":
+                self.assertEqual(name, "_mongodb._tcp.cluster.example.net")
+                return (
+                    _SrvAnswer("db1.example.net.", 27017),
+                    _SrvAnswer("db2.example.net.", 27018),
+                )
+            if record_type == "TXT":
+                self.assertEqual(name, "cluster.example.net")
+                return (_TxtAnswer(b"replicaSet=rs0&readPreference=secondary"),)
+            raise AssertionError((name, record_type))
+
+        uri = parse_mongo_uri("mongodb+srv://cluster.example.net/?srvMaxHosts=1")
+
+        resolution = resolve_srv_dns(uri, resolver=_resolver)
+        effective_uri = materialize_srv_uri(uri, resolution=resolution)
+
+        self.assertIsNotNone(resolution)
+        self.assertEqual([seed.address for seed in resolution.resolved_seeds], ["db1.example.net:27017"])
+        self.assertEqual(resolution.txt_options, {"replicaSet": "rs0", "readPreference": "secondary"})
+        self.assertEqual(effective_uri.options.replica_set, "rs0")
+        self.assertEqual(effective_uri.options.read_preference, "secondary")
+
+    def test_resolve_srv_dns_falls_back_to_synthetic_seed_when_lookup_fails(self):
+        uri = parse_mongo_uri("mongodb+srv://cluster.example.net/")
+
+        def _resolver(name: str, record_type: str):
+            raise RuntimeError(f"lookup failed for {name} {record_type}")
+
+        resolution = resolve_srv_dns(uri, resolver=_resolver)
+
+        self.assertIsNotNone(resolution)
+        self.assertEqual([seed.address for seed in resolution.resolved_seeds], ["cluster.example.net:27017"])
+
     def test_build_auth_and_tls_policies_validate_mechanism_constraints(self):
         x509_uri = parse_mongo_uri(
             "mongodb://client@localhost/?authMechanism=MONGODB-X509&tls=true"
@@ -257,6 +302,24 @@ class TopologyAndPolicyTests(unittest.TestCase):
         )
 
         self.assertEqual([server.address for server in policy.select_servers(topology)], ["db2:27018"])
+
+    def test_selection_policy_ignores_hidden_and_arbiter_members(self):
+        uri = parse_mongo_uri("mongodb://db1:27017,db2:27018,db3:27019/?replicaSet=rs0&readPreference=secondaryPreferred")
+        topology = TopologyDescription(
+            topology_type=TopologyType.REPLICA_SET,
+            servers=(
+                ServerDescription("db1:27017", server_type=ServerType.RS_PRIMARY),
+                ServerDescription("db2:27018", server_type=ServerType.RS_SECONDARY, hidden=True),
+                ServerDescription("db3:27019", server_type=ServerType.RS_SECONDARY, arbiter_only=True),
+            ),
+            set_name="rs0",
+        )
+        policy = build_selection_policy(
+            uri,
+            read_preference=build_read_preference_from_uri(uri, ReadPreference(ReadPreferenceMode.PRIMARY)),
+        )
+
+        self.assertEqual([server.address for server in policy.select_servers(topology)], ["db1:27017"])
 
     def test_selection_policy_nearest_orders_by_round_trip_time(self):
         uri = parse_mongo_uri("mongodb://db1:27017,db2:27018,db3:27019/?replicaSet=rs0")
@@ -550,6 +613,31 @@ class ClientDriverArchitectureTests(unittest.TestCase):
         self.assertEqual(topology.servers[0].server_type, ServerType.STANDALONE)
         self.assertIsNone(topology.servers[0].error)
 
+    def test_refresh_topology_marks_hidden_and_arbiter_members_non_readable(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017,db2:27018,db3:27019/?replicaSet=rs0",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.SECONDARY_PREFERRED),
+        )
+
+        class HelloTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                address = execution.selected_server.address
+                if address == "db1:27017":
+                    return {"ok": 1.0, "setName": "rs0", "isWritablePrimary": True}
+                if address == "db2:27018":
+                    return {"ok": 1.0, "setName": "rs0", "secondary": True, "hidden": True}
+                return {"ok": 1.0, "setName": "rs0", "secondary": True, "arbiterOnly": True}
+
+        topology = asyncio.run(runtime.refresh_topology(transport=HelloTransport()))
+        policy = runtime.selection_policy
+
+        self.assertEqual(topology.topology_type, TopologyType.REPLICA_SET)
+        self.assertFalse(topology.servers[1].is_readable)
+        self.assertFalse(topology.servers[2].is_readable)
+        self.assertEqual([server.address for server in policy.select_servers(topology)], ["db1:27017"])
+
     def test_async_client_can_start_and_stop_topology_monitoring(self):
         async def _run() -> TopologyDescription:
             async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
@@ -566,6 +654,78 @@ class ClientDriverArchitectureTests(unittest.TestCase):
         topology = asyncio.run(_run())
 
         self.assertEqual(topology.topology_type, TopologyType.SINGLE)
+
+    def test_network_transport_authenticates_against_wire_proxy(self):
+        async def _run() -> tuple[dict[str, object], dict[str, object]]:
+            async with AsyncMongoEcoProxyServer(
+                engine=MemoryEngine(),
+                auth_users=(
+                    WireAuthUser(
+                        username="ada",
+                        password="secret",
+                        source="admin",
+                        mechanisms=("SCRAM-SHA-256",),
+                        roles=({"role": "root", "db": "admin"},),
+                    ),
+                ),
+            ) as proxy:
+                uri = (
+                    f"mongodb://ada:secret@{proxy.address.host}:{proxy.address.port}/admin"
+                    "?directConnection=true&authMechanism=SCRAM-SHA-256&authSource=admin"
+                )
+                client = AsyncMongoClient(uri=uri)
+                await client._engine.connect()
+                try:
+                    ping = await client.execute_network_command(
+                        "admin",
+                        "ping",
+                        {"ping": 1},
+                        read_only=True,
+                    )
+                    status = await client.execute_network_command(
+                        "admin",
+                        "connectionStatus",
+                        {"connectionStatus": 1},
+                        read_only=True,
+                    )
+                    return ping.outcome.response, status.outcome.response
+                finally:
+                    await client.close()
+
+        ping, status = asyncio.run(_run())
+
+        self.assertEqual(ping["ok"], 1.0)
+        self.assertEqual(
+            status["authInfo"]["authenticatedUsers"],
+            [{"user": "ada", "db": "admin", "mechanism": "SCRAM-SHA-256"}],
+        )
+        self.assertEqual(
+            status["authInfo"]["authenticatedUserRoles"],
+            [{"role": "root", "db": "admin"}],
+        )
+
+    def test_network_transport_requires_auth_when_proxy_enables_it(self):
+        async def _run() -> RequestExecutionResult:
+            async with AsyncMongoEcoProxyServer(
+                engine=MemoryEngine(),
+                auth_users=(WireAuthUser(username="ada", password="secret", source="admin"),),
+            ) as proxy:
+                client = AsyncMongoClient(uri=proxy.address.uri)
+                await client._engine.connect()
+                try:
+                    return await client.execute_network_command(
+                        "admin",
+                        "ping",
+                        {"ping": 1},
+                        read_only=True,
+                    )
+                finally:
+                    await client.close()
+
+        result = asyncio.run(_run())
+
+        self.assertFalse(result.outcome.ok)
+        self.assertIn("Authentication required", result.outcome.error)
 
 
 class RequestExecutionPipelineTests(unittest.TestCase):

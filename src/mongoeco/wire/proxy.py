@@ -8,6 +8,7 @@ from typing import Any
 from mongoeco.api import AsyncMongoClient
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import OperationFailure
+from mongoeco.wire.auth import WireAuthUser, WireAuthenticationService
 from mongoeco.wire.connections import WireConnectionRegistry
 from mongoeco.wire.cursors import WireCursorStore
 from mongoeco.wire.executor import WireCommandExecutor
@@ -44,6 +45,7 @@ class AsyncMongoEcoProxyServer:
         port: int = 0,
         mongodb_dialect: object | None = None,
         pymongo_profile: object | None = None,
+        auth_users: tuple[WireAuthUser, ...] = (),
     ) -> None:
         if client is not None and engine is not None:
             raise TypeError("client and engine are mutually exclusive")
@@ -61,11 +63,13 @@ class AsyncMongoEcoProxyServer:
         self._connections = WireConnectionRegistry()
         self._cursor_store = WireCursorStore()
         self._session_store = WireSessionStore()
+        self._auth = WireAuthenticationService(auth_users)
         self._executor = WireCommandExecutor(
             self._client,
             self._cursor_store,
             self._session_store,
             surface=self._surface,
+            auth=self._auth,
         )
 
     async def __aenter__(self) -> "AsyncMongoEcoProxyServer":

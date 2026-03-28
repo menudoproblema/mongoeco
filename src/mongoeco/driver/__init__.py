@@ -1,4 +1,4 @@
-from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_seeds
+from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_dns, resolve_srv_seeds
 from mongoeco.driver.execution import (
     AsyncCommandTransport,
     RequestAttempt,
@@ -70,6 +70,7 @@ __all__ = [
     "MongoUriSeed",
     "parse_mongo_uri",
     "SrvResolution",
+    "resolve_srv_dns",
     "resolve_srv_seeds",
     "materialize_srv_uri",
     "build_write_concern_from_uri",
