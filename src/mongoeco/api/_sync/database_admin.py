@@ -21,15 +21,21 @@ class DatabaseAdminService:
     def _async_database(self):
         return self._database._async_database()
 
+    def _run_database_method(self, method_name: str, /, *args, **kwargs):
+        async_database = self._async_database()
+        method = getattr(async_database, method_name)
+        return self._client._run(method(*args, **kwargs))
+
     def list_collection_names(
         self,
         filter_spec: Filter | None = None,
         *,
         session: ClientSession | None = None,
     ) -> list[str]:
-        async_database = self._async_database()
-        return self._client._run(
-            async_database.list_collection_names(filter_spec, session=session)
+        return self._run_database_method(
+            "list_collection_names",
+            filter_spec,
+            session=session,
         )
 
     def list_collections(
@@ -76,16 +82,14 @@ class DatabaseAdminService:
         session: ClientSession | None = None,
         comment: object | None = None,
     ) -> CollectionValidationDocument:
-        async_database = self._async_database()
-        return self._client._run(
-            async_database.validate_collection(
-                name_or_collection,
-                scandata=scandata,
-                full=full,
-                background=background,
-                session=session,
-                comment=comment,
-            )
+        return self._run_database_method(
+            "validate_collection",
+            name_or_collection,
+            scandata=scandata,
+            full=full,
+            background=background,
+            session=session,
+            comment=comment,
         )
 
     def command(

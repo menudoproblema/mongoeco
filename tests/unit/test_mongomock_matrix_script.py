@@ -53,6 +53,42 @@ class MongomockMatrixScriptTests(unittest.TestCase):
         )
         self.assertTrue(all(case["coverage"] == "unknown" for case in matrix["cases"]))
 
+    def test_build_matrix_applies_category_rules(self):
+        module = _load_script_module()
+
+        matrix = module.build_matrix(
+            {
+                "root": "/tmp/mongomock/tests",
+                "cases": [
+                    {
+                        "file": "test__gridfs.py",
+                        "class_name": None,
+                        "test_name": "test_gridfs_case",
+                        "category": "_gridfs",
+                    },
+                    {
+                        "file": "test_api.py",
+                        "class_name": None,
+                        "test_name": "test_collection_case",
+                        "category": "collection",
+                    },
+                ],
+            },
+            rules={
+                "category_rules": {
+                    "_gridfs": {
+                        "status": "outside-scope",
+                        "note": "GridFS fuera de alcance.",
+                    }
+                }
+            },
+        )
+
+        self.assertEqual(matrix["status_counts"], {"outside-scope": 1, "review-needed": 1})
+        self.assertEqual(matrix["cases"][0]["status"], "outside-scope")
+        self.assertEqual(matrix["cases"][0]["coverage"], "outside-scope")
+        self.assertEqual(matrix["cases"][1]["status"], "review-needed")
+
     def test_build_matrix_rejects_non_document_cases(self):
         module = _load_script_module()
 

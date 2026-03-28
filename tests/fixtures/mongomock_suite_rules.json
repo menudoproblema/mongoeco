@@ -1,0 +1,29 @@
+{
+  "category_rules": {
+    "_diff": {
+      "status": "outside-scope",
+      "note": "Helper interno de diff de mongomock fuera del perimetro contractual de mongoeco."
+    },
+    "_gridfs": {
+      "status": "outside-scope",
+      "note": "GridFS no forma parte del perimetro actual de paridad de mongoeco."
+    },
+    "_not_implemented": {
+      "status": "outside-scope",
+      "note": "Suite historica de casos no implementados en mongomock; fuera del cierre contractual local."
+    },
+    "_patch": {
+      "status": "outside-scope",
+      "note": "Helpers de monkeypatch internos de la suite de mongomock, no comportamiento publico contractual."
+    },
+    "_readme_doctest": {
+      "status": "outside-scope",
+      "note": "Doctests de README de mongomock fuera del perimetro de paridad contractual."
+    },
+    "_thread": {
+      "status": "outside-scope",
+      "note": "Escenarios especificos de threading historicos de mongomock fuera del perimetro actual."
+    }
+  },
+  "case_rules": {}
+}

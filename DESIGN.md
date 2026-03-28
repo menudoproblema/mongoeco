@@ -638,7 +638,9 @@ Estado de avance dentro de Fase 8:
   * type bracketing y comparación BSON aplicados también al razonamiento de índices virtuales;
   * degradación híbrida de SQLite cuando solo el `sort` requiere Python, manteniendo `scan` y `filter` en SQL;
   * centralización práctica de la capa sync en la superficie más amplia de colección, manteniendo la implementación maestra en async;
-  * inventario exhaustivo de la suite de `mongomock` y matriz base `cubierto / equivalente / no cubierto / fuera de alcance` como artefactos versionados.
+  * centralización adicional del wrapping sync en administración de base de datos, evitando más deriva manual en el borde sync;
+  * inventario exhaustivo de la suite de `mongomock` y matriz base `cubierto / equivalente / no cubierto / fuera de alcance` como artefactos versionados;
+  * reglas de triage inicial para marcar de forma explícita lo que queda fuera de alcance contractual en la propia suite de `mongomock`.
 * se consideran ya fuera del perímetro de cierre de esta fase y pasan a refino continuo:
   * refinamiento BSON restante en rutas menos frecuentes y comparación fina fuera de los caminos ya cerrados;
   * refinamiento de pool de conexiones y de concurrencia/locking de SQLite, si el proyecto decide perseguir comportamiento más cercano a producción y no solo paridad funcional fina;
@@ -1078,6 +1080,7 @@ Queda ya aplicada:
 * artefactos versionados para contraste exhaustivo con la suite de `mongomock`:
   * `tests/fixtures/mongomock_suite_inventory.json`
   * `tests/fixtures/mongomock_suite_matrix.json`
+  * `tests/fixtures/mongomock_suite_rules.json`
 
 Lo que quede a partir de aquí ya no forma parte del cierre de Fase 8, sino de refinamiento continuo:
 

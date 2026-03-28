@@ -2,7 +2,8 @@
   "inventory_root": "/Users/uve/Proyectos/mongoeco2/.tmp/mongomock/tests",
   "inventory_total_cases": 872,
   "status_counts": {
-    "review-needed": 872
+    "outside-scope": 26,
+    "review-needed": 846
   },
   "cases": [
     {
@@ -4871,9 +4872,9 @@
       "class_name": "DiffTest",
       "test_name": "test__assert_no_diff",
       "category": "_diff",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Helper interno de diff de mongomock fuera del perimetro contractual de mongoeco."
     },
     {
       "id": "test__diff.py::DiffTest::test__diff_values",
@@ -4881,9 +4882,9 @@
       "class_name": "DiffTest",
       "test_name": "test__diff_values",
       "category": "_diff",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Helper interno de diff de mongomock fuera del perimetro contractual de mongoeco."
     },
     {
       "id": "test__diff.py::DiffTest::test__diff_sequences",
@@ -4891,9 +4892,9 @@
       "class_name": "DiffTest",
       "test_name": "test__diff_sequences",
       "category": "_diff",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Helper interno de diff de mongomock fuera del perimetro contractual de mongoeco."
     },
     {
       "id": "test__diff.py::DiffTest::test__composite_diff",
@@ -4901,9 +4902,9 @@
       "class_name": "DiffTest",
       "test_name": "test__composite_diff",
       "category": "_diff",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Helper interno de diff de mongomock fuera del perimetro contractual de mongoeco."
     },
     {
       "id": "test__gridfs.py::GridFsTest::test__put_get_small",
@@ -4911,9 +4912,9 @@
       "class_name": "GridFsTest",
       "test_name": "test__put_get_small",
       "category": "_gridfs",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "GridFS no forma parte del perimetro actual de paridad de mongoeco."
     },
     {
       "id": "test__gridfs.py::GridFsTest::test__put_get_big",
@@ -4921,9 +4922,9 @@
       "class_name": "GridFsTest",
       "test_name": "test__put_get_big",
       "category": "_gridfs",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "GridFS no forma parte del perimetro actual de paridad de mongoeco."
     },
     {
       "id": "test__gridfs.py::GridFsTest::test__delete_exists_small",
@@ -4931,9 +4932,9 @@
       "class_name": "GridFsTest",
       "test_name": "test__delete_exists_small",
       "category": "_gridfs",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "GridFS no forma parte del perimetro actual de paridad de mongoeco."
     },
     {
       "id": "test__gridfs.py::GridFsTest::test__delete_exists_big",
@@ -4941,9 +4942,9 @@
       "class_name": "GridFsTest",
       "test_name": "test__delete_exists_big",
       "category": "_gridfs",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "GridFS no forma parte del perimetro actual de paridad de mongoeco."
     },
     {
       "id": "test__gridfs.py::GridFsTest::test__delete_no_file",
@@ -4951,9 +4952,9 @@
       "class_name": "GridFsTest",
       "test_name": "test__delete_no_file",
       "category": "_gridfs",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "GridFS no forma parte del perimetro actual de paridad de mongoeco."
     },
     {
       "id": "test__gridfs.py::GridFsTest::test__list_files",
@@ -4961,9 +4962,9 @@
       "class_name": "GridFsTest",
       "test_name": "test__list_files",
       "category": "_gridfs",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "GridFS no forma parte del perimetro actual de paridad de mongoeco."
     },
     {
       "id": "test__gridfs.py::GridFsTest::test__find_files",
@@ -4971,9 +4972,9 @@
       "class_name": "GridFsTest",
       "test_name": "test__find_files",
       "category": "_gridfs",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "GridFS no forma parte del perimetro actual de paridad de mongoeco."
     },
     {
       "id": "test__gridfs.py::GridFsTest::test__put_exists",
@@ -4981,9 +4982,9 @@
       "class_name": "GridFsTest",
       "test_name": "test__put_exists",
       "category": "_gridfs",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "GridFS no forma parte del perimetro actual de paridad de mongoeco."
     },
     {
       "id": "test__helpers.py::HashdictTest::test__hashdict",
@@ -8591,9 +8592,9 @@
       "class_name": "NotImplementedTests",
       "test_name": "test_raises",
       "category": "_not_implemented",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Suite historica de casos no implementados en mongomock; fuera del cierre contractual local."
     },
     {
       "id": "test__not_implemented.py::NotImplementedTests::test_ignores",
@@ -8601,9 +8602,9 @@
       "class_name": "NotImplementedTests",
       "test_name": "test_ignores",
       "category": "_not_implemented",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Suite historica de casos no implementados en mongomock; fuera del cierre contractual local."
     },
     {
       "id": "test__not_implemented.py::NotImplementedTests::test_on_and_off",
@@ -8611,9 +8612,9 @@
       "class_name": "NotImplementedTests",
       "test_name": "test_on_and_off",
       "category": "_not_implemented",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Suite historica de casos no implementados en mongomock; fuera del cierre contractual local."
     },
     {
       "id": "test__not_implemented.py::NotImplementedTests::test_wrong_key",
@@ -8621,9 +8622,9 @@
       "class_name": "NotImplementedTests",
       "test_name": "test_wrong_key",
       "category": "_not_implemented",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Suite historica de casos no implementados en mongomock; fuera del cierre contractual local."
     },
     {
       "id": "test__patch.py::PatchTest::test__decorator",
@@ -8631,9 +8632,9 @@
       "class_name": "PatchTest",
       "test_name": "test__decorator",
       "category": "_patch",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Helpers de monkeypatch internos de la suite de mongomock, no comportamiento publico contractual."
     },
     {
       "id": "test__patch.py::PatchTest::test__create_new",
@@ -8641,9 +8642,9 @@
       "class_name": "PatchTest",
       "test_name": "test__create_new",
       "category": "_patch",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Helpers de monkeypatch internos de la suite de mongomock, no comportamiento publico contractual."
     },
     {
       "id": "test__patch.py::PatchTest::test__error_new",
@@ -8651,9 +8652,9 @@
       "class_name": "PatchTest",
       "test_name": "test__error_new",
       "category": "_patch",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Helpers de monkeypatch internos de la suite de mongomock, no comportamiento publico contractual."
     },
     {
       "id": "test__patch.py::PatchTest::test__create_servers",
@@ -8661,9 +8662,9 @@
       "class_name": "PatchTest",
       "test_name": "test__create_servers",
       "category": "_patch",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Helpers de monkeypatch internos de la suite de mongomock, no comportamiento publico contractual."
     },
     {
       "id": "test__patch.py::PatchTest::test__create_timeout",
@@ -8671,9 +8672,9 @@
       "class_name": "PatchTest",
       "test_name": "test__create_timeout",
       "category": "_patch",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Helpers de monkeypatch internos de la suite de mongomock, no comportamiento publico contractual."
     },
     {
       "id": "test__patch.py::PatchTest::test__different_default_db",
@@ -8681,9 +8682,9 @@
       "class_name": "PatchTest",
       "test_name": "test__different_default_db",
       "category": "_patch",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Helpers de monkeypatch internos de la suite de mongomock, no comportamiento publico contractual."
     },
     {
       "id": "test__patch.py::PatchTest::test__rename_through_another_client",
@@ -8691,9 +8692,9 @@
       "class_name": "PatchTest",
       "test_name": "test__rename_through_another_client",
       "category": "_patch",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Helpers de monkeypatch internos de la suite de mongomock, no comportamiento publico contractual."
     },
     {
       "id": "test__patch.py::PatchTest::test__tuple_server_host_and_port",
@@ -8701,9 +8702,9 @@
       "class_name": "PatchTest",
       "test_name": "test__tuple_server_host_and_port",
       "category": "_patch",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Helpers de monkeypatch internos de la suite de mongomock, no comportamiento publico contractual."
     },
     {
       "id": "test__readme_doctest.py::ReadMeDocTest::test__readme_doctests",
@@ -8711,9 +8712,9 @@
       "class_name": "ReadMeDocTest",
       "test_name": "test__readme_doctests",
       "category": "_readme_doctest",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Doctests de README de mongomock fuera del perimetro de paridad contractual."
     },
     {
       "id": "test__thread.py::LockTestCase::test_rwlock_exception",
@@ -8721,9 +8722,9 @@
       "class_name": "LockTestCase",
       "test_name": "test_rwlock_exception",
       "category": "_thread",
-      "status": "review-needed",
-      "coverage": "unknown",
-      "note": ""
+      "status": "outside-scope",
+      "coverage": "outside-scope",
+      "note": "Escenarios especificos de threading historicos de mongomock fuera del perimetro actual."
     }
   ]
 }
