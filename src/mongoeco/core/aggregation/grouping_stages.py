@@ -29,6 +29,7 @@ from mongoeco.core.aggregation.runtime import (
     _evaluate_expression_with_missing,
 )
 from mongoeco.core.aggregation.planning import _require_sort
+from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 
 
 def _apply_group(
@@ -40,6 +41,10 @@ def _apply_group(
 ) -> list[Document]:
     if not isinstance(spec, dict) or "_id" not in spec:
         raise OperationFailure("$group requires a document specification with _id")
+
+    if CompiledGroup.supports(spec):
+        compiled = CompiledGroup(spec, dialect=dialect)
+        return compiled.apply(documents, variables)
 
     accumulator_specs = {key: value for key, value in spec.items() if key != "_id"}
     _initialize_accumulators(

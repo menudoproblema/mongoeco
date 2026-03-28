@@ -8,6 +8,7 @@ from unittest.mock import ANY
 
 from mongoeco.compat import MongoDialect
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
+from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 from mongoeco.core.aggregation import (
     _ACCUMULATOR_FLAGS_KEY,
     _MISSING,
@@ -533,6 +534,33 @@ class AggregationTests(unittest.TestCase):
         )
 
         self.assertEqual(grouped, [{"_id": "a", "__has_total": 1}])
+
+    def test_compiled_group_supports_only_implemented_accumulators(self):
+        self.assertTrue(
+            CompiledGroup.supports(
+                {"_id": "$kind", "total": {"$sum": "$value"}, "first": {"$first": "$value"}}
+            )
+        )
+        self.assertFalse(CompiledGroup.supports({"_id": "$kind", "roles": {"$addToSet": "$role"}}))
+        self.assertFalse(CompiledGroup.supports({"_id": "$kind", "items": {"$push": "$role"}}))
+
+    def test_apply_group_falls_back_for_accumulators_not_supported_by_compiler(self):
+        grouped = _apply_group(
+            [
+                {"kind": "a", "role": "admin"},
+                {"kind": "a", "role": "user"},
+            ],
+            {
+                "_id": "$kind",
+                "roles": {"$addToSet": "$role"},
+                "items": {"$push": "$role"},
+            },
+        )
+
+        self.assertEqual(
+            grouped,
+            [{"_id": "a", "roles": ["admin", "user"], "items": ["admin", "user"]}],
+        )
 
     def test_finalize_accumulators_preserves_user_fields_with_has_prefix(self):
         bucket = _initialize_accumulators({"__has_total": {"$first": "$value"}})
