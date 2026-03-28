@@ -3,25 +3,19 @@ from typing import AsyncIterable, Protocol, runtime_checkable
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MongoDialect
 from mongoeco.engines.semantic_core import EngineFindSemantics, EngineReadExecutionPlan
-from mongoeco.core.query_plan import QueryNode
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    ArrayFilters,
-    CollationDocument,
     DeleteResult,
     Document,
     DocumentId,
     Filter,
     IndexInformation,
     IndexDocument,
-    IndexKeySpec,
     ProfilingCommandResult,
     Projection,
     QueryPlanExplanation,
     SearchIndexDefinition,
     SearchIndexDocument,
-    SortSpec,
-    Update,
     UpdateResult,
 )
 
@@ -44,21 +38,11 @@ class AsyncReadSemanticsEngine(Protocol):
 
 
 @runtime_checkable
-class AsyncLegacyReadEngine(Protocol):
-    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, collation: CollationDocument | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, hint: str | IndexKeySpec | None = None, comment: object | None = None, max_time_ms: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]: ...
-    def scan_find_operation(self, db_name: str, coll_name: str, operation: FindOperation, *, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]: ...
-    async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, collation: CollationDocument | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int: ...
-    async def count_find_operation(self, db_name: str, coll_name: str, operation: FindOperation, *, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int: ...
-
-
-@runtime_checkable
 class AsyncCrudEngine(AsyncReadSemanticsEngine, Protocol):
     async def put_document(self, db_name: str, coll_name: str, document: Document, overwrite: bool = True, *, context: ClientSession | None = None, bypass_document_validation: bool = False) -> bool: ...
     async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None: ...
     async def delete_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, context: ClientSession | None = None) -> bool: ...
-    async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, selector_filter: Filter | None = None, array_filters: ArrayFilters | None = None, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None, bypass_document_validation: bool = False) -> UpdateResult[DocumentId]: ...
     async def update_with_operation(self, db_name: str, coll_name: str, operation: UpdateOperation, upsert: bool = False, upsert_seed: Document | None = None, *, selector_filter: Filter | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None, bypass_document_validation: bool = False) -> UpdateResult[DocumentId]: ...
-    async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, collation: CollationDocument | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult: ...
     async def delete_with_operation(self, db_name: str, coll_name: str, operation: UpdateOperation, *, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult: ...
 
 
@@ -114,12 +98,6 @@ class AsyncSearchIndexAdminEngine(Protocol):
 @runtime_checkable
 class AsyncExplainSemanticsEngine(Protocol):
     async def explain_find_semantics(self, db_name: str, coll_name: str, semantics: EngineFindSemantics, *, context: ClientSession | None = None) -> QueryPlanExplanation: ...
-
-
-@runtime_checkable
-class AsyncLegacyExplainEngine(Protocol):
-    async def explain_query_plan(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, collation: CollationDocument | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, hint: str | IndexKeySpec | None = None, comment: object | None = None, max_time_ms: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> QueryPlanExplanation: ...
-    async def explain_find_operation(self, db_name: str, coll_name: str, operation: FindOperation, *, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> QueryPlanExplanation: ...
 
 
 @runtime_checkable

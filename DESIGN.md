@@ -630,7 +630,7 @@ Objetivos principales:
 Estado de avance dentro de Fase 8:
 * ya están aplicados:
   * capabilities semánticas explícitas en compatibilidad oficial;
-  * IR de lectura tipada hasta engines, con shims legacy solo como compatibilidad;
+  * IR de lectura tipada hasta engines, sin superficie legacy paralela en el contrato interno del engine;
   * distinción formal entre stages streamables y materializantes en el core de agregación;
   * `find_raw_batches` y `aggregate_raw_batches`;
   * `collation` observable en query, sort, update, delete, aggregate y comandos administrativos compatibles, con fallback Python seguro cuando SQLite no puede preservar la semántica;
@@ -1184,7 +1184,7 @@ Refinamiento continuo ya aplicado después del cierre formal de Fase 8:
 * `SyncRunner` más explícito al propagar `ExecutionTimeout` y `ServerSelectionTimeoutError` en la capa sync;
 * `SyncRunner` protegido frente a cierre concurrente mientras otra llamada sync sigue ejecutándose;
 * acceso real a `asyncio.Runner` serializado con lock para evitar carreras entre `run()`, drenado de tareas y `close()` cuando varias hebras sync comparten cliente;
-* la ruta canónica interna de lectura ya es `scan_find_semantics(...)` / `explain_find_semantics(...)`, y los cursores/colecciones dejan de caer a `scan_collection(...)`, `scan_find_operation(...)` o equivalentes; esos métodos quedan solo como shims legacy de compatibilidad en engines concretos y tests contractuales;
+* la ruta canónica interna de lectura ya es `scan_find_semantics(...)` / `explain_find_semantics(...)`, y el contrato interno del engine elimina `scan_collection(...)`, `scan_find_operation(...)`, `explain_query_plan(...)` y equivalentes legacy;
 * `count` y `delete` en la capa de colección también quedan ya anclados a `count_find_semantics(...)` y `delete_with_operation(...)` como rutas internas canónicas, en vez de depender de `count_matching_documents(...)` o `delete_matching_document(...)`;
 * los motores de lectura ya aceptan también `plan_find_semantics(...)` como ruta directa de planificación interna, evitando reconstruir `FindOperation` cuando la API ya dispone de semánticas compiladas;
 * `QueryEngine.match_plan(...)` mantiene un contrato explícito de exhaustividad frente a todos los nodos concretos de `QueryNode`, para que nuevos nodos no entren sin handler;

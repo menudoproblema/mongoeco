@@ -3,9 +3,11 @@ import unittest
 import uuid
 from unittest.mock import patch
 
-from mongoeco.compat import MONGODB_DIALECT_80
+from mongoeco.api.operations import compile_update_operation
+from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import MatchAll, compile_filter
+from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, ExecutionTimeout, OperationFailure
 from mongoeco.session import ClientSession
@@ -20,6 +22,188 @@ class _UnhashableValue:
 
 
 class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
+    @staticmethod
+    def _scan(
+        engine: MemoryEngine,
+        db_name: str,
+        coll_name: str,
+        filter_spec: dict[str, object] | None = None,
+        *,
+        plan=None,
+        projection=None,
+        collation=None,
+        sort=None,
+        skip: int = 0,
+        limit: int | None = None,
+        hint=None,
+        comment=None,
+        max_time_ms: int | None = None,
+        dialect=None,
+        context=None,
+    ):
+        return engine.scan_find_semantics(
+            db_name,
+            coll_name,
+            compile_find_semantics(
+                filter_spec,
+                plan=plan,
+                projection=projection,
+                collation=collation,
+                sort=sort,
+                skip=skip,
+                limit=limit,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                dialect=dialect,
+            ),
+            context=context,
+        )
+
+    @staticmethod
+    async def _count(
+        engine: MemoryEngine,
+        db_name: str,
+        coll_name: str,
+        filter_spec: dict[str, object] | None = None,
+        *,
+        plan=None,
+        collation=None,
+        dialect=None,
+        context=None,
+    ) -> int:
+        return await engine.count_find_semantics(
+            db_name,
+            coll_name,
+            compile_find_semantics(
+                filter_spec,
+                plan=plan,
+                collation=collation,
+                dialect=dialect,
+            ),
+            context=context,
+        )
+
+    @staticmethod
+    async def _update(
+        engine: MemoryEngine,
+        db_name: str,
+        coll_name: str,
+        filter_spec: dict[str, object],
+        update_spec: dict[str, object],
+        *,
+        upsert: bool = False,
+        upsert_seed=None,
+        selector_filter=None,
+        array_filters=None,
+        plan=None,
+        collation=None,
+        sort=None,
+        hint=None,
+        comment=None,
+        max_time_ms=None,
+        let=None,
+        dialect=None,
+        context=None,
+        bypass_document_validation: bool = False,
+    ):
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        return await engine.update_with_operation(
+            db_name,
+            coll_name,
+            compile_update_operation(
+                filter_spec,
+                collation=collation,
+                sort=sort,
+                array_filters=array_filters,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                let=let,
+                dialect=effective_dialect,
+                plan=plan,
+                update_spec=update_spec,
+            ),
+            upsert=upsert,
+            upsert_seed=upsert_seed,
+            selector_filter=selector_filter,
+            dialect=effective_dialect,
+            context=context,
+            bypass_document_validation=bypass_document_validation,
+        )
+
+    @staticmethod
+    async def _delete(
+        engine: MemoryEngine,
+        db_name: str,
+        coll_name: str,
+        filter_spec: dict[str, object],
+        *,
+        plan=None,
+        collation=None,
+        sort=None,
+        hint=None,
+        comment=None,
+        max_time_ms=None,
+        let=None,
+        dialect=None,
+        context=None,
+    ):
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        return await engine.delete_with_operation(
+            db_name,
+            coll_name,
+            compile_update_operation(
+                filter_spec,
+                collation=collation,
+                sort=sort,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                let=let,
+                dialect=effective_dialect,
+                plan=plan,
+            ),
+            dialect=effective_dialect,
+            context=context,
+        )
+
+    @staticmethod
+    async def _explain(
+        engine: MemoryEngine,
+        db_name: str,
+        coll_name: str,
+        filter_spec: dict[str, object] | None = None,
+        *,
+        plan=None,
+        collation=None,
+        sort=None,
+        skip: int = 0,
+        limit: int | None = None,
+        hint=None,
+        comment=None,
+        max_time_ms=None,
+        dialect=None,
+        context=None,
+    ):
+        return await engine.explain_find_semantics(
+            db_name,
+            coll_name,
+            compile_find_semantics(
+                filter_spec,
+                plan=plan,
+                collation=collation,
+                sort=sort,
+                skip=skip,
+                limit=limit,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                dialect=dialect,
+            ),
+            context=context,
+        )
+
     async def test_scan_collection_records_comment_and_max_time_in_session_state(self):
         engine = MemoryEngine()
         await engine.connect()
@@ -30,7 +214,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
             documents = [
                 doc
-                async for doc in engine.scan_collection(
+                async for doc in self._scan(
+                    engine,
                     "db",
                     "coll",
                     {"kind": "view"},
@@ -57,7 +242,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(ExecutionTimeout):
                     [
                         doc
-                        async for doc in engine.scan_collection(
+                        async for doc in self._scan(
+                            engine,
                             "db",
                             "coll",
                             {"kind": "view"},
@@ -92,7 +278,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             await engine.put_document("db", "coll", {"_id": "legacy", "v": UNDEFINED})
-            count = await engine.count_matching_documents(
+            count = await self._count(
+                engine,
                 "db",
                 "coll",
                 {"v": None},
@@ -117,7 +304,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = MemoryEngine()
         await engine.connect()
         try:
-            result = await engine.update_matching_document(
+            result = await self._update(
+                engine,
                 "db",
                 "coll",
                 {"kind": "missing"},
@@ -134,7 +322,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = MemoryEngine()
         await engine.connect()
         try:
-            result = await engine.update_matching_document(
+            result = await self._update(
+                engine,
                 "db",
                 "coll",
                 {"kind": "view"},
@@ -160,7 +349,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "dup", "kind": "other"})
 
             with self.assertRaises(DuplicateKeyError):
-                await engine.update_matching_document(
+                await self._update(
+                    engine,
                     "db",
                     "coll",
                     {"kind": "view"},
@@ -179,7 +369,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index("db", "coll", ["email"], unique=True)
 
             with self.assertRaises(DuplicateKeyError):
-                await engine.update_matching_document(
+                await self._update(
+                    engine,
                     "db",
                     "coll",
                     {"kind": "missing"},
@@ -321,7 +512,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
             await engine.put_document("db", "coll", {"_id": "2", "email": "b@example.com"})
             with self.assertRaises(DuplicateKeyError):
-                await engine.update_matching_document(
+                await self._update(
+                    engine,
                     "db",
                     "coll",
                     {"_id": "2"},
@@ -497,7 +689,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 name="idx_email_active",
             )
             with self.assertRaises(OperationFailure):
-                await engine.explain_query_plan(
+                await self._explain(
+                    engine,
                     "db",
                     "coll",
                     {"email": "a@example.com"},
@@ -595,7 +788,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
-            result = await engine.delete_matching_document("db", "coll", {"kind": "click"})
+            result = await self._delete(engine, "db", "coll", {"kind": "click"})
         finally:
             await engine.disconnect()
 
@@ -608,7 +801,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
             await engine.put_document("db", "coll", {"_id": "2", "kind": "view"})
             await engine.put_document("db", "coll", {"_id": "3", "kind": "click"})
-            count = await engine.count_matching_documents("db", "coll", {"kind": "view"})
+            count = await self._count(engine, "db", "coll", {"kind": "view"})
         finally:
             await engine.disconnect()
 
@@ -641,7 +834,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "3", "rank": 2})
 
             documents = [
-                doc async for doc in engine.scan_collection(
+                doc async for doc in self._scan(
+                    engine,
                     "db",
                     "coll",
                     sort=[("rank", 1)],
@@ -664,11 +858,11 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
             ascending = [
                 doc["_id"]
-                async for doc in engine.scan_collection("db", "coll", sort=[("rank", 1)])
+                async for doc in self._scan(engine, "db", "coll", sort=[("rank", 1)])
             ]
             descending = [
                 doc["_id"]
-                async for doc in engine.scan_collection("db", "coll", sort=[("rank", -1)])
+                async for doc in self._scan(engine, "db", "coll", sort=[("rank", -1)])
             ]
         finally:
             await engine.disconnect()
@@ -681,11 +875,11 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             with self.assertRaises(ValueError):
-                async for _ in engine.scan_collection("db", "coll", skip=-1):
+                async for _ in self._scan(engine, "db", "coll", skip=-1):
                     pass
 
             with self.assertRaises(ValueError):
-                async for _ in engine.scan_collection("db", "coll", limit=-1):
+                async for _ in self._scan(engine, "db", "coll", limit=-1):
                     pass
         finally:
             await engine.disconnect()
@@ -747,7 +941,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = MemoryEngine()
         await engine.connect()
         try:
-            result = await engine.update_matching_document("db", "ghosts", {"_id": "1"}, {"$set": {"v": 1}})
+            result = await self._update(engine, "db", "ghosts", {"_id": "1"}, {"$set": {"v": 1}})
             self.assertEqual(result.matched_count, 0)
             self.assertEqual(await engine.list_databases(), [])
             self.assertEqual(await engine.list_collections("db"), [])
@@ -781,9 +975,9 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
             documents = [
                 doc
-                async for doc in engine.scan_collection("db", "coll", {"kind": "click"}, plan=plan)
+                async for doc in self._scan(engine, "db", "coll", {"kind": "click"}, plan=plan)
             ]
-            count = await engine.count_matching_documents("db", "coll", {"kind": "click"}, plan=plan)
+            count = await self._count(engine, "db", "coll", {"kind": "click"}, plan=plan)
         finally:
             await engine.disconnect()
 
@@ -796,7 +990,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         try:
             await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
             with patch("mongoeco.engines.memory.QueryEngine.match_plan", side_effect=AssertionError("match_plan")):
-                documents = [doc async for doc in engine.scan_collection("db", "coll", plan=MatchAll())]
+                documents = [doc async for doc in self._scan(engine, "db", "coll", plan=MatchAll())]
         finally:
             await engine.disconnect()
 

@@ -8,11 +8,13 @@ import unittest
 import uuid
 from unittest.mock import Mock, patch
 
-from mongoeco.compat import MongoDialect70
+from mongoeco.api.operations import compile_update_operation
+from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect70
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.core.sorting import sort_documents
+from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, ExecutionTimeout, OperationFailure
 from mongoeco.session import ClientSession
@@ -20,6 +22,188 @@ from mongoeco.types import ObjectId, UNDEFINED
 
 
 class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
+    @staticmethod
+    def _scan(
+        engine: SQLiteEngine,
+        db_name: str,
+        coll_name: str,
+        filter_spec: dict[str, object] | None = None,
+        *,
+        plan=None,
+        projection=None,
+        collation=None,
+        sort=None,
+        skip: int = 0,
+        limit: int | None = None,
+        hint=None,
+        comment=None,
+        max_time_ms: int | None = None,
+        dialect=None,
+        context=None,
+    ):
+        return engine.scan_find_semantics(
+            db_name,
+            coll_name,
+            compile_find_semantics(
+                filter_spec,
+                plan=plan,
+                projection=projection,
+                collation=collation,
+                sort=sort,
+                skip=skip,
+                limit=limit,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                dialect=dialect,
+            ),
+            context=context,
+        )
+
+    @staticmethod
+    async def _count(
+        engine: SQLiteEngine,
+        db_name: str,
+        coll_name: str,
+        filter_spec: dict[str, object] | None = None,
+        *,
+        plan=None,
+        collation=None,
+        dialect=None,
+        context=None,
+    ) -> int:
+        return await engine.count_find_semantics(
+            db_name,
+            coll_name,
+            compile_find_semantics(
+                filter_spec,
+                plan=plan,
+                collation=collation,
+                dialect=dialect,
+            ),
+            context=context,
+        )
+
+    @staticmethod
+    async def _update(
+        engine: SQLiteEngine,
+        db_name: str,
+        coll_name: str,
+        filter_spec: dict[str, object],
+        update_spec: dict[str, object],
+        *,
+        upsert: bool = False,
+        upsert_seed=None,
+        selector_filter=None,
+        array_filters=None,
+        plan=None,
+        collation=None,
+        sort=None,
+        hint=None,
+        comment=None,
+        max_time_ms=None,
+        let=None,
+        dialect=None,
+        context=None,
+        bypass_document_validation: bool = False,
+    ):
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        return await engine.update_with_operation(
+            db_name,
+            coll_name,
+            compile_update_operation(
+                filter_spec,
+                collation=collation,
+                sort=sort,
+                array_filters=array_filters,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                let=let,
+                dialect=effective_dialect,
+                plan=plan,
+                update_spec=update_spec,
+            ),
+            upsert=upsert,
+            upsert_seed=upsert_seed,
+            selector_filter=selector_filter,
+            dialect=effective_dialect,
+            context=context,
+            bypass_document_validation=bypass_document_validation,
+        )
+
+    @staticmethod
+    async def _delete(
+        engine: SQLiteEngine,
+        db_name: str,
+        coll_name: str,
+        filter_spec: dict[str, object],
+        *,
+        plan=None,
+        collation=None,
+        sort=None,
+        hint=None,
+        comment=None,
+        max_time_ms=None,
+        let=None,
+        dialect=None,
+        context=None,
+    ):
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        return await engine.delete_with_operation(
+            db_name,
+            coll_name,
+            compile_update_operation(
+                filter_spec,
+                collation=collation,
+                sort=sort,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                let=let,
+                dialect=effective_dialect,
+                plan=plan,
+            ),
+            dialect=effective_dialect,
+            context=context,
+        )
+
+    @staticmethod
+    async def _explain(
+        engine: SQLiteEngine,
+        db_name: str,
+        coll_name: str,
+        filter_spec: dict[str, object] | None = None,
+        *,
+        plan=None,
+        collation=None,
+        sort=None,
+        skip: int = 0,
+        limit: int | None = None,
+        hint=None,
+        comment=None,
+        max_time_ms=None,
+        dialect=None,
+        context=None,
+    ):
+        return await engine.explain_find_semantics(
+            db_name,
+            coll_name,
+            compile_find_semantics(
+                filter_spec,
+                plan=plan,
+                collation=collation,
+                sort=sort,
+                skip=skip,
+                limit=limit,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                dialect=dialect,
+            ),
+            context=context,
+        )
+
     async def test_scan_collection_records_comment_and_max_time_in_session_state(self):
         engine = SQLiteEngine()
         await engine.connect()
@@ -30,7 +214,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
             documents = [
                 doc
-                async for doc in engine.scan_collection(
+                async for doc in self._scan(engine, 
                     "db",
                     "coll",
                     {"kind": "view"},
@@ -57,7 +241,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(ExecutionTimeout):
                     [
                         doc
-                        async for doc in engine.scan_collection(
+                        async for doc in self._scan(engine, 
                             "db",
                             "coll",
                             {"kind": "view"},
@@ -256,7 +440,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         try:
             with patch.object(engine, "_iter_scan_documents_sync", side_effect=blocked_iter):
-                iterator = engine.scan_collection("db", "coll").__aiter__()
+                iterator = self._scan(engine, "db", "coll").__aiter__()
                 next_task = asyncio.create_task(iterator.__anext__())
                 await asyncio.to_thread(started.wait, 1)
 
@@ -283,11 +467,11 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             with self.assertRaises(ValueError):
-                async for _ in engine.scan_collection("db", "coll", skip=-1):
+                async for _ in self._scan(engine, "db", "coll", skip=-1):
                     pass
 
             with self.assertRaises(ValueError):
-                async for _ in engine.scan_collection("db", "coll", limit=-1):
+                async for _ in self._scan(engine, "db", "coll", limit=-1):
                     pass
         finally:
             await engine.disconnect()
@@ -296,7 +480,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            result = await engine.update_matching_document(
+            result = await self._update(engine, 
                 "db",
                 "coll",
                 {"kind": "view"},
@@ -316,7 +500,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            result = await engine.update_matching_document(
+            result = await self._update(engine, 
                 "db",
                 "coll",
                 {"kind": "view"},
@@ -416,7 +600,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index("db", "coll", ["email"], unique=True)
 
             with self.assertRaises(DuplicateKeyError):
-                await engine.update_matching_document(
+                await self._update(engine, 
                     "db",
                     "coll",
                     {"kind": "missing"},
@@ -432,7 +616,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             await engine.put_document("db", "coll", {"_id": "1", "kind": "existing"})
-            result = await engine.update_matching_document(
+            result = await self._update(engine, 
                 "db",
                 "coll",
                 {"kind": "missing"},
@@ -451,7 +635,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         try:
             await engine.put_document("db", "coll", {"_id": "1", "kind": "existing"})
             with patch.object(engine, "_load_documents", side_effect=AssertionError("loaded")):
-                result = await engine.update_matching_document(
+                result = await self._update(engine, 
                     "db",
                     "coll",
                     {"kind": "missing"},
@@ -746,7 +930,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             await engine.put_document("db", "coll", {"_id": "1", "kind": "existing"})
-            result = await engine.update_matching_document(
+            result = await self._update(engine, 
                 "db",
                 "coll",
                 {"_id": "1"},
@@ -765,7 +949,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "1", "profile": 1})
 
             with self.assertRaises(OperationFailure):
-                await engine.update_matching_document(
+                await self._update(engine, 
                     "db",
                     "coll",
                     {"_id": "1"},
@@ -784,7 +968,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "1", "kind": "skip"})
             await engine.put_document("db", "coll", {"_id": "2", "kind": "match"})
 
-            result = await engine.update_matching_document(
+            result = await self._update(engine, 
                 "db",
                 "coll",
                 {"kind": "match"},
@@ -793,7 +977,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             found = await engine.get_document("db", "coll", "2")
 
             with self.assertRaises(DuplicateKeyError):
-                await engine.update_matching_document(
+                await self._update(engine, 
                     "db",
                     "coll",
                     {"kind": "missing"},
@@ -814,7 +998,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "1", "kind": "skip"})
             await engine.put_document("db", "coll", {"_id": "2", "kind": "match"})
 
-            result = await engine.delete_matching_document("db", "coll", {"kind": "match"})
+            result = await self._delete(engine, "db", "coll", {"kind": "match"})
         finally:
             await engine.disconnect()
 
@@ -831,7 +1015,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 patch("mongoeco.engines.sqlite.QueryEngine.match_plan", side_effect=AssertionError("fallback")),
                 patch.object(engine, "_load_documents", side_effect=AssertionError("loaded")),
             ):
-                result = await engine.delete_matching_document("db", "coll", {"kind": "view"})
+                result = await self._delete(engine, "db", "coll", {"kind": "view"})
         finally:
             await engine.disconnect()
 
@@ -845,7 +1029,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "2", "items": [{"name": "b"}]})
 
             with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", wraps=QueryEngine.match_plan) as match_plan:
-                result = await engine.delete_matching_document("db", "coll", {"items.name": "a"})
+                result = await self._delete(engine, "db", "coll", {"items.name": "a"})
         finally:
             await engine.disconnect()
 
@@ -860,7 +1044,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "1", "data": {"b": 1}})
 
             with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", wraps=QueryEngine.match_plan) as match_plan:
-                result = await engine.delete_matching_document("db", "coll", {"data": {"b": 1}})
+                result = await self._delete(engine, "db", "coll", {"data": {"b": 1}})
         finally:
             await engine.disconnect()
 
@@ -872,7 +1056,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             await engine.put_document("db", "coll", {"_id": "1", "kind": "click"})
-            result = await engine.delete_matching_document("db", "coll", {"kind": "view"})
+            result = await self._delete(engine, "db", "coll", {"kind": "view"})
         finally:
             await engine.disconnect()
 
@@ -1035,7 +1219,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index("db", "coll", ["email"], unique=True)
 
             with self.assertRaises(DuplicateKeyError):
-                await engine.update_matching_document(
+                await self._update(engine, 
                     "db",
                     "coll",
                     {"_id": "2"},
@@ -1092,7 +1276,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             ).fetchall()
             self.assertEqual(rows, [(1, "string", 3, "mongodb"), (1, "string", 3, "python")])
 
-            await engine.update_matching_document(
+            await self._update(engine, 
                 "db",
                 "coll",
                 {"_id": "1"},
@@ -1109,7 +1293,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             ).fetchall()
             self.assertEqual(rows, [(1, "string", 3, "sqlite")])
 
-            deleted = await engine.delete_matching_document("db", "coll", {"tags": "sqlite"})
+            deleted = await self._delete(engine, "db", "coll", {"tags": "sqlite"})
             self.assertEqual(deleted.deleted_count, 1)
             remaining = conn.execute(
                 """
@@ -1147,8 +1331,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index("db", "coll", ["tags"], unique=False, name="idx_tags")
             await engine.create_index("db", "coll", ["cats"], unique=False, name="idx_cats")
 
-            count_tags = await engine.count_matching_documents("db", "coll", {"tags": "python"})
-            count_cats = await engine.count_matching_documents("db", "coll", {"cats": "backend"})
+            count_tags = await self._count(engine, "db", "coll", {"tags": "python"})
+            count_cats = await self._count(engine, "db", "coll", {"cats": "backend"})
             rows = engine._require_connection().execute(
                 """
                 SELECT index_name, element_key
@@ -1317,7 +1501,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 name="idx_email_active",
             )
             with self.assertRaises(OperationFailure):
-                await engine.explain_query_plan(
+                await self._explain(engine, 
                     "db",
                     "coll",
                     {"email": "a@example.com"},
@@ -1339,7 +1523,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 name="idx_email_sparse",
             )
             with self.assertRaises(OperationFailure):
-                await engine.explain_query_plan(
+                await self._explain(engine, 
                     "db",
                     "coll",
                     {},
@@ -1543,7 +1727,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", side_effect=AssertionError("fallback")):
                 documents = [
                     document
-                    async for document in engine.scan_collection("db", "coll", {"kind": "view"})
+                    async for document in self._scan(engine, "db", "coll", {"kind": "view"})
                 ]
         finally:
             await engine.disconnect()
@@ -1558,20 +1742,20 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "2", "kind": "click"})
             plan = compile_filter({"kind": "view"})
 
-            update_result = await engine.update_matching_document(
+            update_result = await self._update(engine, 
                 "db",
                 "coll",
                 {"kind": "click"},
                 {"$set": {"done": True}},
                 plan=plan,
             )
-            delete_result = await engine.delete_matching_document(
+            delete_result = await self._delete(engine, 
                 "db",
                 "coll",
                 {"kind": "click"},
                 plan=plan,
             )
-            remaining = [doc async for doc in engine.scan_collection("db", "coll", sort=[("_id", 1)])]
+            remaining = [doc async for doc in self._scan(engine, "db", "coll", sort=[("_id", 1)])]
         finally:
             await engine.disconnect()
 
@@ -1593,7 +1777,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             ):
                 documents = [
                     document
-                    async for document in engine.scan_collection(
+                    async for document in self._scan(engine, 
                         "db",
                         "coll",
                         {"kind": "view"},
@@ -1620,7 +1804,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             ):
                 documents = [
                     document
-                    async for document in engine.scan_collection("db", "coll", {"kind": "view"}, skip=1)
+                    async for document in self._scan(engine, "db", "coll", {"kind": "view"}, skip=1)
                 ]
         finally:
             await engine.disconnect()
@@ -1637,7 +1821,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", wraps=QueryEngine.match_plan) as match_plan:
                 documents = [
                     document
-                    async for document in engine.scan_collection("db", "coll", {"data": {"b": 1}})
+                    async for document in self._scan(engine, "db", "coll", {"data": {"b": 1}})
                 ]
         finally:
             await engine.disconnect()
@@ -1654,7 +1838,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             with patch.object(engine, "_load_documents", wraps=engine._load_documents) as load_documents:
                 documents = [
                     document
-                    async for document in engine.scan_collection("db", "coll", sort=[("rank", 1)], skip=1, limit=1)
+                    async for document in self._scan(engine, "db", "coll", sort=[("rank", 1)], skip=1, limit=1)
                 ]
         finally:
             await engine.disconnect()
@@ -1686,7 +1870,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             ):
                 documents = [
                     document
-                    async for document in engine.scan_collection(
+                    async for document in self._scan(engine, 
                         "db",
                         "coll",
                         {"name": {"$regex": "^A"}},
@@ -1729,7 +1913,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 limited_sort.side_effect = _limited
                 documents = [
                     document
-                    async for document in engine.scan_collection(
+                    async for document in self._scan(engine, 
                         "db",
                         "coll",
                         {"name": {"$regex": "^A"}},
@@ -1754,7 +1938,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             with patch.object(engine, "_load_documents", wraps=engine._load_documents) as load_documents:
                 documents = [
                     document
-                    async for document in engine.scan_collection("db", "coll", sort=[("rank", 1)])
+                    async for document in self._scan(engine, "db", "coll", sort=[("rank", 1)])
                 ]
         finally:
             await engine.disconnect()
@@ -1801,7 +1985,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "legacy", "v": UNDEFINED})
             documents = [
                 document
-                async for document in engine.scan_collection(
+                async for document in self._scan(engine, 
                     "db",
                     "coll",
                     {"v": {"$gt": 0}},
@@ -1817,7 +2001,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             await engine.put_document("db", "coll", {"_id": "legacy", "v": UNDEFINED})
-            result = await engine.delete_matching_document(
+            result = await self._delete(engine, 
                 "db",
                 "coll",
                 {"v": {"$gt": 0}},
@@ -1834,7 +2018,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             await engine.put_document("db", "coll", {"_id": "legacy", "v": UNDEFINED})
-            count = await engine.count_matching_documents(
+            count = await self._count(engine, 
                 "db",
                 "coll",
                 {"v": {"$gt": 0}},
@@ -1868,7 +2052,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             with patch.object(engine, "_load_documents", wraps=engine._load_documents) as load_documents:
                 documents = [
                     document
-                    async for document in engine.scan_collection("db", "coll", sort=[("profile", 1)])
+                    async for document in self._scan(engine, "db", "coll", sort=[("profile", 1)])
                 ]
         finally:
             await engine.disconnect()
@@ -1887,7 +2071,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "2", "kind": "click"})
 
             with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", side_effect=AssertionError("fallback")):
-                count = await engine.count_matching_documents("db", "coll", {"kind": "view"})
+                count = await self._count(engine, "db", "coll", {"kind": "view"})
         finally:
             await engine.disconnect()
 
@@ -1901,7 +2085,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "2", "data": {"b": 2}})
 
             with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", wraps=QueryEngine.match_plan) as match_plan:
-                count = await engine.count_matching_documents("db", "coll", {"data": {"b": 1}})
+                count = await self._count(engine, "db", "coll", {"data": {"b": 1}})
         finally:
             await engine.disconnect()
 
@@ -1916,7 +2100,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "2", "items": [{"name": "b"}]})
 
             with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", wraps=QueryEngine.match_plan) as match_plan:
-                count = await engine.count_matching_documents("db", "coll", {"items.name": "a"})
+                count = await self._count(engine, "db", "coll", {"items.name": "a"})
         finally:
             await engine.disconnect()
 
@@ -1928,7 +2112,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             await engine.put_document("db", "coll", {"_id": "1", "v": b"\x00"})
-            count = await engine.count_matching_documents(
+            count = await self._count(engine, 
                 "db",
                 "coll",
                 {"v": {"$gt": uuid.UUID("12345678-1234-5678-1234-567812345678")}},
@@ -2008,14 +2192,14 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             )
 
             with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", side_effect=AssertionError("fallback")):
-                by_id = [document async for document in engine.scan_collection("db", "coll", {"_id": object_id})]
+                by_id = [document async for document in self._scan(engine, "db", "coll", {"_id": object_id})]
                 by_datetime = [
                     document
-                    async for document in engine.scan_collection("db", "coll", {"created_at": created_at})
+                    async for document in self._scan(engine, "db", "coll", {"created_at": created_at})
                 ]
                 by_uuid = [
                     document
-                    async for document in engine.scan_collection("db", "coll", {"session_id": session_id})
+                    async for document in self._scan(engine, "db", "coll", {"session_id": session_id})
                 ]
         finally:
             await engine.disconnect()
@@ -2038,7 +2222,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": ObjectId("111111111111111111111111"), "kind": "third"})
 
             with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", side_effect=AssertionError("fallback")):
-                count = await engine.count_matching_documents("db", "coll", {"_id": {"$in": list(ids)}})
+                count = await self._count(engine, "db", "coll", {"_id": {"$in": list(ids)}})
         finally:
             await engine.disconnect()
 
@@ -2057,7 +2241,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             ):
                 documents = [
                     document["_id"]
-                    async for document in engine.scan_collection("db", "coll", sort=[("created_at", 1)])
+                    async for document in self._scan(engine, "db", "coll", sort=[("created_at", 1)])
                 ]
         finally:
             await engine.disconnect()
@@ -2072,7 +2256,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "2", "kind": "view"})
 
             async def _consume_first():
-                async for document in engine.scan_collection("db", "coll", {"kind": "view"}):
+                async for document in self._scan(engine, "db", "coll", {"kind": "view"}):
                     return document
                 return None
 
@@ -2096,7 +2280,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         try:
             with patch.object(engine, "_load_documents", side_effect=lambda *_args, **_kwargs: documents()):
-                async for _document in engine.scan_collection("db", "coll", {"data": {"b": 1}}):
+                async for _document in self._scan(engine, "db", "coll", {"data": {"b": 1}}):
                     break
                 await asyncio.sleep(0.05)
         finally:
@@ -2201,7 +2385,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         try:
             with patch.object(engine, "_iter_scan_documents_sync", side_effect=_wrapped):
-                seen = [document async for document in engine.scan_collection("db", "coll", {"kind": "view"})]
+                seen = [document async for document in self._scan(engine, "db", "coll", {"kind": "view"})]
         finally:
             await engine.disconnect()
 
@@ -2218,7 +2402,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", side_effect=AssertionError("fallback")):
                 documents = [
                     document["_id"]
-                    async for document in engine.scan_collection("db", "coll", {"name": {"$ne": "Ada"}}, sort=[("_id", 1)])
+                    async for document in self._scan(engine, "db", "coll", {"name": {"$ne": "Ada"}}, sort=[("_id", 1)])
                 ]
         finally:
             await engine.disconnect()
@@ -2238,7 +2422,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", side_effect=AssertionError("fallback")):
                 documents = [
                     document["_id"]
-                    async for document in engine.scan_collection("db", "coll", {"refs": {"$ne": oid1}}, sort=[("_id", 1)])
+                    async for document in self._scan(engine, "db", "coll", {"refs": {"$ne": oid1}}, sort=[("_id", 1)])
                 ]
         finally:
             await engine.disconnect()
@@ -2258,7 +2442,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             ):
                 documents = [
                     document["_id"]
-                    async for document in engine.scan_collection("db", "coll", sort=[("profile.rank", 1)])
+                    async for document in self._scan(engine, "db", "coll", sort=[("profile.rank", 1)])
                 ]
         finally:
             await engine.disconnect()
@@ -2275,7 +2459,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", wraps=QueryEngine.match_plan) as match_plan:
                 documents = [
                     document["_id"]
-                    async for document in engine.scan_collection("db", "coll", {"items.name": "a"}, sort=[("_id", 1)])
+                    async for document in self._scan(engine, "db", "coll", {"items.name": "a"}, sort=[("_id", 1)])
                 ]
         finally:
             await engine.disconnect()
@@ -2293,7 +2477,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             with patch.object(engine, "_load_documents", wraps=engine._load_documents) as load_documents:
                 documents = [
                     document["_id"]
-                    async for document in engine.scan_collection("db", "coll", sort=[("items.name", 1)])
+                    async for document in self._scan(engine, "db", "coll", sort=[("items.name", 1)])
                 ]
         finally:
             await engine.disconnect()
@@ -2315,7 +2499,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             ):
                 documents = [
                     document["_id"]
-                    async for document in engine.scan_collection(
+                    async for document in self._scan(engine, 
                         "db",
                         "coll",
                         {"kind": "view"},
@@ -2338,7 +2522,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 patch("mongoeco.engines.sqlite.QueryEngine.match_plan", side_effect=AssertionError("fallback")),
                 patch.object(engine, "_load_documents", side_effect=AssertionError("loaded")),
             ):
-                result = await engine.update_matching_document(
+                result = await self._update(engine, 
                     "db",
                     "coll",
                     {"kind": "match"},
@@ -2360,7 +2544,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "2", "data": {"b": 1}, "name": "old"})
 
             with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", wraps=QueryEngine.match_plan) as match_plan:
-                result = await engine.update_matching_document(
+                result = await self._update(engine, 
                     "db",
                     "coll",
                     {"data": {"b": 1}},
@@ -2385,7 +2569,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 patch("mongoeco.engines.sqlite.QueryEngine.match_plan", side_effect=AssertionError("fallback")),
                 patch.object(engine, "_load_documents", side_effect=AssertionError("loaded")),
             ):
-                result = await engine.update_matching_document(
+                result = await self._update(engine, 
                     "db",
                     "coll",
                     {"kind": "match"},
@@ -2409,7 +2593,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
             with patch("mongoeco.engines.sqlite.translate_compiled_update_plan", side_effect=NotImplementedError("nested")):
                 with self.assertRaises(DuplicateKeyError):
-                    await engine.update_matching_document(
+                    await self._update(engine, 
                         "db",
                         "coll",
                         {"_id": "2"},
@@ -2425,7 +2609,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.put_document("db", "coll", {"_id": "1", "kind": "match"})
 
             with patch("mongoeco.engines.sqlite.translate_compiled_update_plan", side_effect=NotImplementedError("fallback")):
-                result = await engine.update_matching_document(
+                result = await self._update(engine, 
                     "db",
                     "coll",
                     {"kind": "match"},

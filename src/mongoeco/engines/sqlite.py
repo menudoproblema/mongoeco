@@ -3464,45 +3464,6 @@ class SQLiteEngine(AsyncStorageEngine):
         return await self._run_blocking(self._delete_document_sync, db_name, coll_name, doc_id, context)
 
     @override
-    def scan_collection(
-        self,
-        db_name: str,
-        coll_name: str,
-        filter_spec: Filter | None = None,
-        *,
-        plan: QueryNode | None = None,
-        projection: Projection | None = None,
-        collation: CollationDocument | None = None,
-        sort: SortSpec | None = None,
-        skip: int = 0,
-        limit: int | None = None,
-        hint: str | IndexKeySpec | None = None,
-        comment: object | None = None,
-        max_time_ms: int | None = None,
-        dialect: MongoDialect | None = None,
-        context: ClientSession | None = None,
-    ) -> AsyncIterable[Document]:
-        semantics = compile_find_semantics(
-            filter_spec,
-            plan=plan,
-            projection=projection,
-            collation=collation,
-            sort=sort,
-            skip=skip,
-            limit=limit,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            dialect=dialect,
-        )
-        return self.scan_find_semantics(
-            db_name,
-            coll_name,
-            semantics,
-            context=context,
-        )
-
-    @override
     def scan_find_semantics(
         self,
         db_name: str,
@@ -3561,56 +3522,6 @@ class SQLiteEngine(AsyncStorageEngine):
                 await producer
 
         return _scan()
-
-    @override
-    def scan_find_operation(
-        self,
-        db_name: str,
-        coll_name: str,
-        operation: FindOperation,
-        *,
-        dialect: MongoDialect | None = None,
-        context: ClientSession | None = None,
-    ) -> AsyncIterable[Document]:
-        return self.scan_find_semantics(
-            db_name,
-            coll_name,
-            compile_find_semantics_from_operation(operation, dialect=dialect),
-            context=context,
-        )
-
-    @override
-    async def update_matching_document(
-        self,
-        db_name: str,
-        coll_name: str,
-        filter_spec: Filter,
-        update_spec: Update,
-        upsert: bool = False,
-        upsert_seed: Document | None = None,
-        *,
-        selector_filter: Filter | None = None,
-        array_filters: ArrayFilters | None = None,
-        plan: QueryNode | None = None,
-        dialect: MongoDialect | None = None,
-        context: ClientSession | None = None,
-        bypass_document_validation: bool = False,
-    ) -> UpdateResult[DocumentId]:
-        return await self._run_blocking(
-            self._update_matching_document_sync,
-            db_name,
-            coll_name,
-            filter_spec,
-            update_spec,
-            upsert,
-            upsert_seed,
-            selector_filter,
-            array_filters,
-            plan,
-            context,
-            dialect,
-            bypass_document_validation,
-        )
 
     @override
     async def update_with_operation(
@@ -3843,19 +3754,6 @@ class SQLiteEngine(AsyncStorageEngine):
                 )
 
     @override
-    async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, collation: CollationDocument | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult:
-        return await self._run_blocking(
-            self._delete_matching_document_sync,
-            db_name,
-            coll_name,
-            filter_spec,
-            plan,
-            context,
-            dialect,
-            collation,
-        )
-
-    @override
     async def delete_with_operation(
         self,
         db_name: str,
@@ -3865,23 +3763,15 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> DeleteResult:
-        return await self.delete_matching_document(
+        return await self._run_blocking(
+            self._delete_matching_document_sync,
             db_name,
             coll_name,
             operation.filter_spec,
-            plan=operation.plan,
-            collation=operation.collation,
-            dialect=dialect,
-            context=context,
-        )
-
-    @override
-    async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, collation: CollationDocument | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int:
-        return await self.count_find_semantics(
-            db_name,
-            coll_name,
-            compile_find_semantics(filter_spec, plan=plan, collation=collation, dialect=dialect),
-            context=context,
+            operation.plan,
+            context,
+            dialect,
+            operation.collation,
         )
 
     @override
@@ -3901,23 +3791,6 @@ class SQLiteEngine(AsyncStorageEngine):
             None,
             context,
             None,
-        )
-
-    @override
-    async def count_find_operation(
-        self,
-        db_name: str,
-        coll_name: str,
-        operation: FindOperation,
-        *,
-        dialect: MongoDialect | None = None,
-        context: ClientSession | None = None,
-    ) -> int:
-        return await self.count_find_semantics(
-            db_name,
-            coll_name,
-            compile_find_semantics_from_operation(operation, dialect=dialect),
-            context=context,
         )
 
     @override
@@ -4093,43 +3966,6 @@ class SQLiteEngine(AsyncStorageEngine):
         )
 
     @override
-    async def explain_query_plan(
-        self,
-        db_name: str,
-        coll_name: str,
-        filter_spec: Filter | None = None,
-        *,
-        plan: QueryNode | None = None,
-        collation: CollationDocument | None = None,
-        sort: SortSpec | None = None,
-        skip: int = 0,
-        limit: int | None = None,
-        hint: str | IndexKeySpec | None = None,
-        comment: object | None = None,
-        max_time_ms: int | None = None,
-        dialect: MongoDialect | None = None,
-        context: ClientSession | None = None,
-    ) -> QueryPlanExplanation:
-        semantics = compile_find_semantics(
-            filter_spec,
-            plan=plan,
-            collation=collation,
-            sort=sort,
-            skip=skip,
-            limit=limit,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            dialect=dialect,
-        )
-        return await self.explain_find_semantics(
-            db_name,
-            coll_name,
-            semantics,
-            context=context,
-        )
-
-    @override
     async def explain_find_semantics(
         self,
         db_name: str,
@@ -4194,23 +4030,6 @@ class SQLiteEngine(AsyncStorageEngine):
             hinted_index=None if hinted_index is None else hinted_index["name"],
             execution_lineage=execution_plan.execution_lineage,
             fallback_reason=execution_plan.fallback_reason,
-        )
-
-    @override
-    async def explain_find_operation(
-        self,
-        db_name: str,
-        coll_name: str,
-        operation: FindOperation,
-        *,
-        dialect: MongoDialect | None = None,
-        context: ClientSession | None = None,
-    ) -> QueryPlanExplanation:
-        return await self.explain_find_semantics(
-            db_name,
-            coll_name,
-            compile_find_semantics_from_operation(operation, dialect=dialect),
-            context=context,
         )
 
     @override

@@ -257,9 +257,9 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                 super().__init__()
                 self.update_calls = 0
 
-            async def update_matching_document(self, *args, **kwargs):
+            async def update_with_operation(self, *args, **kwargs):
                 self.update_calls += 1
-                return await super().update_matching_document(*args, **kwargs)
+                return await super().update_with_operation(*args, **kwargs)
 
         async def _exercise():
             engine = EngineStub()

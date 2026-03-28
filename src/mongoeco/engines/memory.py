@@ -7,7 +7,7 @@ import uuid
 from copy import deepcopy
 from typing import Any, AsyncIterable, override
 
-from mongoeco.api.operations import FindOperation, UpdateOperation, compile_update_operation
+from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.collation import normalize_collation
@@ -642,66 +642,6 @@ class MemoryEngine(AsyncStorageEngine):
         return _scan()
 
     @override
-    def scan_collection(self, db_name: str, coll_name: str, filter_spec: Filter | None = None, *, plan: QueryNode | None = None, projection: Projection | None = None, collation: CollationDocument | None = None, sort: SortSpec | None = None, skip: int = 0, limit: int | None = None, hint: str | IndexKeySpec | None = None, comment: object | None = None, max_time_ms: int | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> AsyncIterable[Document]:
-        semantics = compile_find_semantics(
-            filter_spec,
-            plan=plan,
-            projection=projection,
-            collation=collation,
-            sort=sort,
-            skip=skip,
-            limit=limit,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            dialect=dialect,
-        )
-        return self.scan_find_semantics(
-            db_name,
-            coll_name,
-            semantics,
-            context=context,
-        )
-
-    @override
-    def scan_find_operation(
-        self,
-        db_name: str,
-        coll_name: str,
-        operation: FindOperation,
-        *,
-        dialect: MongoDialect | None = None,
-        context: ClientSession | None = None,
-    ) -> AsyncIterable[Document]:
-        return self.scan_find_semantics(
-            db_name,
-            coll_name,
-            compile_find_semantics_from_operation(operation, dialect=dialect),
-            context=context,
-        )
-
-    @override
-    async def update_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, update_spec: Update, upsert: bool = False, upsert_seed: Document | None = None, *, selector_filter: Filter | None = None, array_filters: ArrayFilters | None = None, plan: QueryNode | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None, bypass_document_validation: bool = False) -> UpdateResult[DocumentId]:
-        operation = compile_update_operation(
-            filter_spec,
-            array_filters=array_filters,
-            dialect=dialect or MONGODB_DIALECT_70,
-            plan=plan,
-            update_spec=update_spec,
-        )
-        return await self.update_with_operation(
-            db_name,
-            coll_name,
-            operation,
-            upsert=upsert,
-            upsert_seed=upsert_seed,
-            selector_filter=selector_filter,
-            dialect=dialect,
-            context=context,
-            bypass_document_validation=bypass_document_validation,
-        )
-
-    @override
     async def update_with_operation(
         self,
         db_name: str,
@@ -809,25 +749,6 @@ class MemoryEngine(AsyncStorageEngine):
             )
 
     @override
-    async def delete_matching_document(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, collation: CollationDocument | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult:
-        effective_dialect = dialect or MONGODB_DIALECT_70
-        query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
-        async with self._get_lock(db_name, coll_name):
-            coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
-            for storage_key, data in list(coll.items()):
-                document = self._decode_storage_document(data)
-                if not QueryEngine.match_plan(
-                    document,
-                    query_plan,
-                    dialect=effective_dialect,
-                    collation=normalize_collation(collation),
-                ):
-                    continue
-                del coll[storage_key]
-                return DeleteResult(deleted_count=1)
-            return DeleteResult(deleted_count=0)
-
-    @override
     async def delete_with_operation(
         self,
         db_name: str,
@@ -837,30 +758,23 @@ class MemoryEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> DeleteResult:
-        return await self.delete_matching_document(
-            db_name,
-            coll_name,
-            operation.filter_spec,
-            plan=operation.plan,
-            collation=operation.collation,
-            dialect=dialect,
-            context=context,
-        )
-
-    @override
-    async def count_matching_documents(self, db_name: str, coll_name: str, filter_spec: Filter, *, plan: QueryNode | None = None, collation: CollationDocument | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> int:
-        semantics = compile_find_semantics(
-            filter_spec,
-            plan=plan,
-            collation=collation,
-            dialect=dialect,
-        )
-        return await self.count_find_semantics(
-            db_name,
-            coll_name,
-            semantics,
-            context=context,
-        )
+        effective_dialect = dialect or MONGODB_DIALECT_70
+        query_plan = ensure_query_plan(operation.filter_spec, operation.plan, dialect=effective_dialect)
+        effective_collation = normalize_collation(operation.collation)
+        async with self._get_lock(db_name, coll_name):
+            coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
+            for storage_key, data in list(coll.items()):
+                document = self._decode_storage_document(data)
+                if not QueryEngine.match_plan(
+                    document,
+                    query_plan,
+                    dialect=effective_dialect,
+                    collation=effective_collation,
+                ):
+                    continue
+                del coll[storage_key]
+                return DeleteResult(deleted_count=1)
+            return DeleteResult(deleted_count=0)
 
     @override
     async def count_find_semantics(
@@ -880,23 +794,6 @@ class MemoryEngine(AsyncStorageEngine):
         ):
             count += 1
         return count
-
-    @override
-    async def count_find_operation(
-        self,
-        db_name: str,
-        coll_name: str,
-        operation: FindOperation,
-        *,
-        dialect: MongoDialect | None = None,
-        context: ClientSession | None = None,
-    ) -> int:
-        return await self.count_find_semantics(
-            db_name,
-            coll_name,
-            compile_find_semantics_from_operation(operation, dialect=dialect),
-            context=context,
-        )
 
     @override
     async def create_index(
@@ -1303,43 +1200,6 @@ class MemoryEngine(AsyncStorageEngine):
         )
 
     @override
-    async def explain_query_plan(
-        self,
-        db_name: str,
-        coll_name: str,
-        filter_spec: Filter | None = None,
-        *,
-        plan: QueryNode | None = None,
-        collation: CollationDocument | None = None,
-        sort: SortSpec | None = None,
-        skip: int = 0,
-        limit: int | None = None,
-        hint: str | IndexKeySpec | None = None,
-        comment: object | None = None,
-        max_time_ms: int | None = None,
-        dialect: MongoDialect | None = None,
-        context: ClientSession | None = None,
-    ) -> QueryPlanExplanation:
-        semantics = compile_find_semantics(
-            filter_spec,
-            plan=plan,
-            collation=collation,
-            sort=sort,
-            skip=skip,
-            limit=limit,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            dialect=dialect,
-        )
-        return await self.explain_find_semantics(
-            db_name,
-            coll_name,
-            semantics,
-            context=context,
-        )
-
-    @override
     async def explain_find_semantics(
         self,
         db_name: str,
@@ -1433,23 +1293,6 @@ class MemoryEngine(AsyncStorageEngine):
             semantics=semantics,
             strategy="python",
             execution_lineage=tuple(lineage),
-        )
-
-    @override
-    async def explain_find_operation(
-        self,
-        db_name: str,
-        coll_name: str,
-        operation: FindOperation,
-        *,
-        dialect: MongoDialect | None = None,
-        context: ClientSession | None = None,
-    ) -> QueryPlanExplanation:
-        return await self.explain_find_semantics(
-            db_name,
-            coll_name,
-            compile_find_semantics_from_operation(operation, dialect=dialect),
-            context=context,
         )
 
     @override
