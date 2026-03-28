@@ -25,6 +25,7 @@ from mongoeco.driver import (
     TimeoutPolicy,
     TopologyDescription,
     RetryPolicy,
+    WireProtocolCommandTransport,
 )
 from mongoeco.driver.monitoring import DriverMonitor
 from mongoeco.driver.transports import LocalCommandTransport
@@ -314,7 +315,11 @@ class AsyncMongoClient:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        self._driver_runtime.clear_connections()
         await self._engine.disconnect()
+
+    async def close(self) -> None:
+        await self.__aexit__(None, None, None)
 
     def __getattr__(self, name: str) -> AsyncDatabase:
         return self.get_database(name)
@@ -465,6 +470,31 @@ class AsyncMongoClient:
             LocalCommandTransport(self) if transport is None else transport,
         )
 
+    async def execute_network_command(
+        self,
+        database: str,
+        command_name: str,
+        payload: dict[str, object],
+        *,
+        session: ClientSession | None = None,
+        read_only: bool = False,
+        transport: WireProtocolCommandTransport | None = None,
+    ) -> RequestExecutionResult:
+        plan = self.plan_command_request(
+            database,
+            command_name,
+            payload,
+            session=session,
+            read_only=read_only,
+        )
+        return await self._driver_runtime.execute_request(
+            plan,
+            self._driver_runtime.create_network_transport() if transport is None else transport,
+        )
+
+    async def refresh_topology(self, *, transport: WireProtocolCommandTransport | None = None) -> TopologyDescription:
+        return await self._driver_runtime.refresh_topology(transport=transport)
+
     def watch(
         self,
         pipeline: object | None = None,
@@ -575,3 +605,7 @@ class AsyncMongoClient:
     @property
     def driver_monitor(self) -> DriverMonitor:
         return self._driver_runtime.monitor
+
+    @property
+    def network_transport(self) -> WireProtocolCommandTransport:
+        return self._driver_runtime.create_network_transport()

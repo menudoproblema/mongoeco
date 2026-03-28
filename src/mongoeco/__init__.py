@@ -52,6 +52,7 @@ from mongoeco.driver import (
     build_concern_policy,
     build_connection_pool_options,
     build_local_topology_description,
+    refresh_topology,
     build_retry_policy,
     build_selection_policy,
     build_tls_policy,
@@ -61,6 +62,7 @@ from mongoeco.driver import (
     parse_mongo_uri,
     resolve_srv_seeds,
     LocalCommandTransport,
+    WireProtocolCommandTransport,
 )
 from mongoeco.compat import (
     AUTO_INSTALLED_PYMONGO_PROFILE,
@@ -213,6 +215,7 @@ __all__ = [
     "TopologyDescription",
     "TopologyType",
     "build_local_topology_description",
+    "refresh_topology",
     "TimeoutPolicy",
     "RetryPolicy",
     "SelectionPolicy",
@@ -234,6 +237,7 @@ __all__ = [
     "RequestOutcome",
     "DriverRuntime",
     "LocalCommandTransport",
+    "WireProtocolCommandTransport",
     "CollectionInvalid",
     "InsertOne",
     "UpdateOne",

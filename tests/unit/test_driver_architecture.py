@@ -8,6 +8,7 @@ from mongoeco import (
     ReadPreferenceMode,
     parse_mongo_uri,
 )
+from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.driver import (
     AuthPolicy,
@@ -32,6 +33,7 @@ from mongoeco.driver import (
     TlsPolicy,
     TopologyDescription,
     TopologyType,
+    WireProtocolCommandTransport,
     build_auth_policy,
     build_read_concern_from_uri,
     build_read_preference_from_uri,
@@ -43,7 +45,9 @@ from mongoeco.driver import (
     resolve_srv_seeds,
     build_selection_policy,
     build_timeout_policy,
+    refresh_topology,
 )
+from mongoeco.wire import AsyncMongoEcoProxyServer
 
 
 class MongoUriTests(unittest.TestCase):
@@ -337,6 +341,22 @@ class ConnectionArchitectureTests(unittest.TestCase):
 
         self.assertEqual(registry.snapshots(), ())
 
+    def test_connection_registry_prunes_idle_connections(self):
+        uri = parse_mongo_uri("mongodb://db1:27017/?maxIdleTimeMS=1")
+        topology = build_local_topology_description(uri)
+        registry = ConnectionRegistry(uri)
+
+        first = registry.checkout(topology.servers[0])
+        registry.checkin(first)
+        connection = registry.get_connection(first)
+        assert connection is not None
+        connection.last_used_at_monotonic -= 10
+
+        second = registry.checkout(topology.servers[0])
+
+        self.assertNotEqual(first.connection_id, second.connection_id)
+        registry.checkin(second)
+
 
 class ClientDriverArchitectureTests(unittest.TestCase):
     def test_async_client_exposes_driver_state_and_request_planning(self):
@@ -473,6 +493,52 @@ class ClientDriverArchitectureTests(unittest.TestCase):
 
         self.assertTrue(result.outcome.ok)
         self.assertEqual(result.outcome.response["ok"], 1.0)
+
+    def test_network_transport_executes_against_wire_proxy_and_reuses_pool(self):
+        async def _run() -> tuple[RequestExecutionResult, RequestExecutionResult, tuple]:
+            async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
+                client = AsyncMongoClient(uri=proxy.address.uri)
+                await client._engine.connect()
+                try:
+                    result_one = await client.execute_network_command(
+                        "admin",
+                        "ping",
+                        {"ping": 1},
+                        read_only=True,
+                    )
+                    result_two = await client.execute_network_command(
+                        "admin",
+                        "ping",
+                        {"ping": 1},
+                        read_only=True,
+                    )
+                    return result_one, result_two, client.driver_runtime.connection_snapshots
+                finally:
+                    await client.close()
+
+        result_one, result_two, snapshots = asyncio.run(_run())
+
+        self.assertTrue(result_one.outcome.ok)
+        self.assertTrue(result_two.outcome.ok)
+        self.assertEqual(len(snapshots), 1)
+        self.assertEqual(snapshots[0].total_size, 1)
+
+    def test_refresh_topology_uses_real_wire_hello(self):
+        async def _run() -> TopologyDescription:
+            async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
+                client = AsyncMongoClient(uri=proxy.address.uri)
+                await client._engine.connect()
+                try:
+                    return await client.refresh_topology()
+                finally:
+                    await client.close()
+
+        topology = asyncio.run(_run())
+
+        self.assertEqual(topology.topology_type, TopologyType.SINGLE)
+        self.assertEqual(len(topology.servers), 1)
+        self.assertEqual(topology.servers[0].server_type, ServerType.STANDALONE)
+        self.assertIsNone(topology.servers[0].error)
 
 
 class RequestExecutionPipelineTests(unittest.TestCase):
@@ -651,3 +717,78 @@ class RequestExecutionPipelineTests(unittest.TestCase):
 
         self.assertEqual(plan.request.session_id, session.session_id)
         self.assertEqual(response["ok"], 1.0)
+
+    def test_wire_protocol_transport_is_constructible_from_runtime(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+
+        transport = runtime.create_network_transport()
+
+        self.assertIsInstance(transport, WireProtocolCommandTransport)
+
+    def test_refresh_topology_derives_replica_set_membership_from_hello(self):
+        topology = TopologyDescription(
+            topology_type=TopologyType.UNKNOWN,
+            servers=(
+                ServerDescription("db1:27017"),
+                ServerDescription("db2:27018"),
+            ),
+        )
+
+        def prepare(plan, *, attempt_number):
+            del attempt_number
+            return PreparedRequestExecution(
+                plan=plan,
+                selected_server=plan.candidate_servers[0],
+                connection=type(
+                    "Lease",
+                    (),
+                    {
+                        "pool_key": None,
+                        "connection_id": plan.candidate_servers[0].address,
+                        "server": plan.candidate_servers[0],
+                    },
+                )(),
+            )
+
+        def complete(execution):
+            del execution
+
+        class ReplicaSetHelloTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                if execution.selected_server.address == "db1:27017":
+                    return {
+                        "ok": 1.0,
+                        "setName": "rs0",
+                        "isWritablePrimary": True,
+                        "minWireVersion": 0,
+                        "maxWireVersion": 20,
+                        "logicalSessionTimeoutMinutes": 30,
+                    }
+                return {
+                    "ok": 1.0,
+                    "setName": "rs0",
+                    "secondary": True,
+                    "minWireVersion": 0,
+                    "maxWireVersion": 20,
+                    "logicalSessionTimeoutMinutes": 30,
+                    "tags": {"region": "eu"},
+                }
+
+        refreshed = asyncio.run(
+            refresh_topology(
+                current_topology=topology,
+                prepare_execution=prepare,
+                complete_execution=complete,
+                transport=ReplicaSetHelloTransport(),
+            )
+        )
+
+        self.assertEqual(refreshed.topology_type, TopologyType.REPLICA_SET)
+        self.assertEqual(refreshed.servers[0].server_type, ServerType.RS_PRIMARY)
+        self.assertEqual(refreshed.servers[1].server_type, ServerType.RS_SECONDARY)
+        self.assertEqual(refreshed.servers[1].tags, {"region": "eu"})

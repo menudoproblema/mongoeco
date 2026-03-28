@@ -41,6 +41,15 @@ class OpQueryRequest:
     query: dict[str, Any]
 
 
+@dataclass(frozen=True, slots=True)
+class OpReplyResponse:
+    header: MessageHeader
+    response_flags: int
+    cursor_id: int
+    starting_from: int
+    documents: list[dict[str, Any]]
+
+
 def parse_message_header(data: bytes) -> MessageHeader:
     if len(data) != 16:
         raise ValueError("wire message header must be 16 bytes")
@@ -144,6 +153,17 @@ def encode_op_msg_response(
     return header + payload
 
 
+def encode_op_msg_request(
+    document: dict[str, Any],
+    *,
+    request_id: int,
+) -> bytes:
+    encoded_body = BSON.encode(encode_wire_value(document))
+    payload = struct.pack("<i", 0) + b"\x00" + encoded_body
+    header = struct.pack("<iiii", 16 + len(payload), request_id, 0, OP_MSG)
+    return header + payload
+
+
 def encode_op_reply(
     documents: list[dict[str, Any]],
     *,
@@ -154,3 +174,28 @@ def encode_op_reply(
     payload = struct.pack("<iqii", 0, 0, 0, len(documents)) + encoded_documents
     header = struct.pack("<iiii", 16 + len(payload), request_id, response_to, OP_REPLY)
     return header + payload
+
+
+def decode_op_reply(header: MessageHeader, payload: bytes) -> OpReplyResponse:
+    if header.op_code != OP_REPLY:
+        raise ValueError(f"unsupported wire opCode: {header.op_code}")
+    if len(payload) < 20:
+        raise ValueError("OP_REPLY payload is too short")
+    response_flags, cursor_id, starting_from, number_returned = struct.unpack("<iqii", payload[:20])
+    position = 20
+    documents: list[dict[str, Any]] = []
+    for _ in range(number_returned):
+        if position + 4 > len(payload):
+            raise ValueError("OP_REPLY document is truncated")
+        document_size = struct.unpack("<i", payload[position : position + 4])[0]
+        if document_size <= 0 or position + document_size > len(payload):
+            raise ValueError("OP_REPLY document has invalid size")
+        documents.append(decode_wire_value(BSON(payload[position : position + document_size]).decode()))
+        position += document_size
+    return OpReplyResponse(
+        header=header,
+        response_flags=response_flags,
+        cursor_id=cursor_id,
+        starting_from=starting_from,
+        documents=documents,
+    )

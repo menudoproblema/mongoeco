@@ -8,7 +8,7 @@ from mongoeco.compat import (
     PyMongoProfile,
     PyMongoProfileResolution,
 )
-from mongoeco.driver import AsyncCommandTransport, RequestExecutionResult
+from mongoeco.driver import AsyncCommandTransport, RequestExecutionResult, TopologyDescription, WireProtocolCommandTransport
 from mongoeco.driver.monitoring import DriverMonitor
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import InvalidOperation
@@ -576,3 +576,33 @@ class MongoClient:
                 transport=transport,
             )
         )
+
+    def execute_network_command(
+        self,
+        database: str,
+        command_name: str,
+        payload: dict[str, object],
+        *,
+        session: ClientSession | None = None,
+        read_only: bool = False,
+        transport: WireProtocolCommandTransport | None = None,
+    ) -> RequestExecutionResult:
+        self._ensure_connected()
+        return self._runner.run(
+            self._async_client.execute_network_command(
+                database,
+                command_name,
+                payload,
+                session=session,
+                read_only=read_only,
+                transport=transport,
+            )
+        )
+
+    def refresh_topology(self, *, transport: WireProtocolCommandTransport | None = None) -> TopologyDescription:
+        self._ensure_connected()
+        return self._runner.run(self._async_client.refresh_topology(transport=transport))
+
+    @property
+    def network_transport(self) -> WireProtocolCommandTransport:
+        return self._async_client.network_transport

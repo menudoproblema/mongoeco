@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+import time
 from uuid import uuid4
 
 from mongoeco.driver.topology import ServerDescription
@@ -37,18 +38,31 @@ class DriverConnection:
     connection_id: str
     server: ServerDescription
     pool_key: PoolKey
+    created_at_monotonic: float
+    last_used_at_monotonic: float
+    resource: object | None = None
     state: ConnectionState = ConnectionState.READY
     checkout_count: int = 0
 
     def mark_checked_out(self) -> None:
         self.state = ConnectionState.CHECKED_OUT
         self.checkout_count += 1
+        self.last_used_at_monotonic = time.monotonic()
 
     def mark_ready(self) -> None:
         self.state = ConnectionState.READY
+        self.last_used_at_monotonic = time.monotonic()
 
     def mark_closed(self) -> None:
         self.state = ConnectionState.CLOSED
+
+    def attach_resource(self, resource: object) -> None:
+        self.resource = resource
+
+    def detach_resource(self) -> object | None:
+        resource = self.resource
+        self.resource = None
+        return resource
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,16 +105,20 @@ class ConnectionPool:
         return self._options
 
     def checkout(self, server: ServerDescription) -> DriverConnection:
+        self._prune_idle()
         for connection in self._connections.values():
             if connection.state is ConnectionState.READY:
                 connection.mark_checked_out()
                 return connection
         if len(self._connections) >= self._options.max_pool_size:
             raise RuntimeError("connection pool exhausted")
+        now = time.monotonic()
         connection = DriverConnection(
             connection_id=str(uuid4()),
             server=server,
             pool_key=self._key,
+            created_at_monotonic=now,
+            last_used_at_monotonic=now,
         )
         connection.mark_checked_out()
         self._connections[connection.connection_id] = connection
@@ -114,8 +132,33 @@ class ConnectionPool:
 
     def clear(self) -> None:
         for connection in self._connections.values():
+            _close_resource(connection.detach_resource())
             connection.mark_closed()
         self._connections.clear()
+
+    def get_connection(self, connection_id: str) -> DriverConnection | None:
+        return self._connections.get(connection_id)
+
+    def discard(self, connection_id: str) -> None:
+        connection = self._connections.pop(connection_id, None)
+        if connection is None:
+            return
+        _close_resource(connection.detach_resource())
+        connection.mark_closed()
+
+    def _prune_idle(self) -> None:
+        max_idle_time_ms = self._options.max_idle_time_ms
+        if max_idle_time_ms is None:
+            return
+        now = time.monotonic()
+        to_remove = [
+            connection_id
+            for connection_id, connection in self._connections.items()
+            if connection.state is ConnectionState.READY
+            and (now - connection.last_used_at_monotonic) * 1000 > max_idle_time_ms
+        ]
+        for connection_id in to_remove:
+            self.discard(connection_id)
 
     def snapshot(self) -> ConnectionPoolSnapshot:
         checked_out = sum(
@@ -165,6 +208,17 @@ class ConnectionRegistry:
         if pool is not None:
             pool.checkin(lease.connection_id)
 
+    def get_connection(self, lease: ConnectionLease) -> DriverConnection | None:
+        pool = self._pools.get(lease.pool_key)
+        if pool is None:
+            return None
+        return pool.get_connection(lease.connection_id)
+
+    def discard(self, lease: ConnectionLease) -> None:
+        pool = self._pools.get(lease.pool_key)
+        if pool is not None:
+            pool.discard(lease.connection_id)
+
     def clear(self) -> None:
         for pool in self._pools.values():
             pool.clear()
@@ -172,3 +226,12 @@ class ConnectionRegistry:
 
     def snapshots(self) -> tuple[ConnectionPoolSnapshot, ...]:
         return tuple(pool.snapshot() for pool in self._pools.values())
+
+
+def _close_resource(resource: object | None) -> None:
+    if resource is None:
+        return
+    writer = getattr(resource, "writer", None)
+    close = getattr(writer, "close", None)
+    if callable(close):
+        close()

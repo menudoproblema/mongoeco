@@ -48,7 +48,8 @@ from mongoeco.driver.topology import (
     TopologyType,
     build_local_topology_description,
 )
-from mongoeco.driver.transports import CallbackCommandTransport, LocalCommandTransport
+from mongoeco.driver.topology_monitor import refresh_topology
+from mongoeco.driver.transports import CallbackCommandTransport, LocalCommandTransport, WireProtocolCommandTransport
 from mongoeco.driver.uri import (
     MongoAuthOptions,
     MongoClientOptions,
@@ -102,6 +103,7 @@ __all__ = [
     "TopologyDescription",
     "TopologyType",
     "build_local_topology_description",
+    "refresh_topology",
     "TimeoutPolicy",
     "RetryPolicy",
     "SelectionPolicy",
@@ -121,4 +123,5 @@ __all__ = [
     "DriverRuntime",
     "CallbackCommandTransport",
     "LocalCommandTransport",
+    "WireProtocolCommandTransport",
 ]

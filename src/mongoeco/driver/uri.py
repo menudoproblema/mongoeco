@@ -57,6 +57,7 @@ class MongoClientOptions:
     max_pool_size: int = 100
     min_pool_size: int = 0
     max_idle_time_ms: int | None = None
+    heartbeat_frequency_ms: int = 10_000
     compressors: tuple[str, ...] = ()
     read_preference: str | None = None
     read_preference_tags: tuple[dict[str, str], ...] | None = None
@@ -272,6 +273,7 @@ def _parse_client_options(option_pairs: list[tuple[str, str]]) -> MongoClientOpt
         max_pool_size=max_pool_size,
         min_pool_size=min_pool_size,
         max_idle_time_ms=_get_int("maxIdleTimeMS", None),
+        heartbeat_frequency_ms=_get_int("heartbeatFrequencyMS", 10_000) or 10_000,
         compressors=compressors,
         read_preference=raw_options.get("readPreference"),
         read_preference_tags=_parse_tag_sets(),
@@ -345,6 +347,7 @@ def _finalize_client_options(
         max_pool_size=options.max_pool_size,
         min_pool_size=options.min_pool_size,
         max_idle_time_ms=options.max_idle_time_ms,
+        heartbeat_frequency_ms=options.heartbeat_frequency_ms,
         compressors=options.compressors,
         read_preference=options.read_preference,
         read_preference_tags=options.read_preference_tags,

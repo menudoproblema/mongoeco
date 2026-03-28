@@ -871,6 +871,8 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * replica sets
   * sharding
   * pooling
+    * ya existe pooling con recursos de conexión vivos y reutilización real sobre sockets
+    * ya existe pruning por `maxIdleTimeMS`
   * selección de servidor
     * ya existe selección básica por topología y `readPreference`
     * ya existe degradación coherente para topologías no replicadas
@@ -887,6 +889,7 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * clasificación de errores
     * timeout de socket
     * retry básico para lecturas y escrituras
+  * ya existe también transporte wire real sobre sockets mediante `OP_MSG`
 * monitoring y comportamiento propio de un cliente de red completo
   * ya existe `DriverMonitor` tipado con eventos de:
     * selección de servidor
@@ -894,6 +897,8 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
     * inicio, éxito y fallo de comando
   * ya existe transporte local explícito sobre `Database.command(...)`
   * el cliente ya puede ejecutar peticiones a través del runtime completo con `execute_driver_command(...)`
+  * el cliente ya puede ejecutar también peticiones sobre transporte wire real con `execute_network_command(...)`
+  * ya existe refresh explícito de topología contra `hello` real sobre conexiones del runtime
 
 Arquitectura ya preparada antes de abrir la funcionalidad de red real:
 * `MongoUri` tipado y compilado, con semillas, credenciales y opciones normalizadas
@@ -920,8 +925,9 @@ Estado actual de Fase 7:
 * la URI deja de ser metadata pasiva y gobierna ya el runtime del cliente;
 * concerns, preferencias, auth/TLS, SRV, topología, selección y pools ya entran por un `DriverRuntime` común;
 * ya existe pipeline explícito de ejecución y monitoring de estilo driver;
-* el trabajo que quede en adelante ya no es abrir infraestructura base, sino ampliar semántica de red real y profundidad funcional sobre esta arquitectura.
-* con este cierre, la Fase 7 puede considerarse ya consolidada en su arquitectura base.
+* ya existen transporte local y transporte wire real sobre sockets;
+* ya existe refresh de topología por `hello` y pooling con recursos vivos reutilizables;
+* con este cierre, la Fase 7 puede considerarse aplicada en su perímetro principal.
 
 ---
 

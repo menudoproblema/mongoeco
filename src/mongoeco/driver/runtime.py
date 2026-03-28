@@ -23,7 +23,9 @@ from mongoeco.driver.policies import (
 )
 from mongoeco.driver.requests import CommandRequest, PreparedRequestExecution, RequestExecutionPlan
 from mongoeco.driver.security import AuthPolicy, TlsPolicy, build_auth_policy, build_tls_policy
+from mongoeco.driver.topology_monitor import refresh_topology
 from mongoeco.driver.topology import ServerDescription, TopologyDescription, build_local_topology_description
+from mongoeco.driver.transports import WireProtocolCommandTransport
 from mongoeco.driver.uri import (
     MongoUri,
     MongoUriSeed,
@@ -170,6 +172,22 @@ class DriverRuntime:
             transport=transport,
             monitor=self._monitor,
         )
+
+    def create_network_transport(self) -> WireProtocolCommandTransport:
+        return WireProtocolCommandTransport(
+            self._connections,
+            tls_policy=self._tls_policy,
+            connect_timeout_ms=self._timeout_policy.connect_timeout_ms,
+        )
+
+    async def refresh_topology(self, transport: WireProtocolCommandTransport | None = None) -> TopologyDescription:
+        self._topology = await refresh_topology(
+            current_topology=self._topology,
+            prepare_execution=self.prepare_request_execution_attempt,
+            complete_execution=self.complete_request_execution,
+            transport=self.create_network_transport() if transport is None else transport,
+        )
+        return self._topology
 
     @property
     def uri(self) -> MongoUri:
