@@ -1,6 +1,6 @@
 import datetime
 import json
-from typing import Any
+from typing import Any, assert_never
 import uuid
 
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS
@@ -28,11 +28,41 @@ from mongoeco.core.query_plan import (
     RegexCondition,
     SizeCondition,
     TypeCondition,
+    BitwiseCondition,
+    DeferredQueryNode,
+    ExprCondition,
+    is_concrete_query_node,
 )
 from mongoeco.types import SortSpec, Update
 
 
 type SqlFragment = tuple[str, list[object]]
+
+
+HANDLED_SQL_QUERY_NODE_TYPES: tuple[type[QueryNode], ...] = (
+    MatchAll,
+    DeferredQueryNode,
+    EqualsCondition,
+    NotEqualsCondition,
+    GreaterThanCondition,
+    GreaterThanOrEqualCondition,
+    LessThanCondition,
+    LessThanOrEqualCondition,
+    InCondition,
+    NotInCondition,
+    ExistsCondition,
+    TypeCondition,
+    NotCondition,
+    AllCondition,
+    SizeCondition,
+    ModCondition,
+    RegexCondition,
+    ElemMatchCondition,
+    BitwiseCondition,
+    ExprCondition,
+    AndCondition,
+    OrCondition,
+)
 
 
 class SQLiteQueryTranslator(BaseSQLTranslator):
@@ -672,64 +702,72 @@ def translate_compiled_update_plan(
 
 
 def translate_query_plan(plan: QueryNode) -> SqlFragment:
-    if isinstance(plan, MatchAll):
-        return "1 = 1", []
-    if isinstance(plan, EqualsCondition):
-        if not _is_translatable_equality_value(plan.value):
-            raise NotImplementedError("Unsupported equality value for SQL translation")
-        return _translate_equals(
-            plan.field,
-            plan.value,
-            null_matches_undefined=plan.null_matches_undefined,
-        )
-    if isinstance(plan, NotEqualsCondition):
-        if not _is_translatable_equality_value(plan.value):
-            raise NotImplementedError("Unsupported inequality value for SQL translation")
-        return _translate_not_equals(plan.field, plan.value)
-    if isinstance(plan, GreaterThanCondition):
-        return _translate_comparison(">", plan.field, plan.value)
-    if isinstance(plan, GreaterThanOrEqualCondition):
-        return _translate_comparison(">=", plan.field, plan.value)
-    if isinstance(plan, LessThanCondition):
-        return _translate_comparison("<", plan.field, plan.value)
-    if isinstance(plan, LessThanOrEqualCondition):
-        return _translate_comparison("<=", plan.field, plan.value)
-    if isinstance(plan, InCondition):
-        return _translate_membership(
-            plan.field,
-            plan.values,
-            negated=False,
-            null_matches_undefined=plan.null_matches_undefined,
-        )
-    if isinstance(plan, NotInCondition):
-        return _translate_membership(plan.field, plan.values, negated=True)
-    if isinstance(plan, ExistsCondition):
-        path = _path_literal(plan.field)
-        return (
-            f"json_type(document, {path}) IS NOT NULL" if plan.value else f"json_type(document, {path}) IS NULL",
-            [],
-        )
-    if isinstance(plan, TypeCondition):
-        return _translate_type_condition(plan)
-    if isinstance(plan, NotCondition):
-        clause_sql, clause_params = translate_query_plan(plan.clause)
-        return f"NOT COALESCE(({clause_sql}), 0)", clause_params
-    if isinstance(plan, AllCondition | SizeCondition | ModCondition | RegexCondition | ElemMatchCondition):
-        raise NotImplementedError("Query operator not yet translated to SQL")
-    if isinstance(plan, AndCondition):
-        clauses: list[str] = []
-        params: list[object] = []
-        for clause in plan.clauses:
+    if not is_concrete_query_node(plan):
+        raise TypeError(f"Unsupported query plan node: {type(plan)!r}")
+    match plan:
+        case MatchAll():
+            return "1 = 1", []
+        case DeferredQueryNode(issue=issue):
+            raise NotImplementedError(f"Deferred query nodes cannot be translated to SQL: {issue.message}")
+        case EqualsCondition(field=field, value=value, null_matches_undefined=null_matches_undefined):
+            if not _is_translatable_equality_value(value):
+                raise NotImplementedError("Unsupported equality value for SQL translation")
+            return _translate_equals(
+                field,
+                value,
+                null_matches_undefined=null_matches_undefined,
+            )
+        case NotEqualsCondition(field=field, value=value):
+            if not _is_translatable_equality_value(value):
+                raise NotImplementedError("Unsupported inequality value for SQL translation")
+            return _translate_not_equals(field, value)
+        case GreaterThanCondition(field=field, value=value):
+            return _translate_comparison(">", field, value)
+        case GreaterThanOrEqualCondition(field=field, value=value):
+            return _translate_comparison(">=", field, value)
+        case LessThanCondition(field=field, value=value):
+            return _translate_comparison("<", field, value)
+        case LessThanOrEqualCondition(field=field, value=value):
+            return _translate_comparison("<=", field, value)
+        case InCondition(field=field, values=values, null_matches_undefined=null_matches_undefined):
+            return _translate_membership(
+                field,
+                values,
+                negated=False,
+                null_matches_undefined=null_matches_undefined,
+            )
+        case NotInCondition(field=field, values=values):
+            return _translate_membership(field, values, negated=True)
+        case ExistsCondition(field=field, value=value):
+            path = _path_literal(field)
+            return (
+                f"json_type(document, {path}) IS NOT NULL" if value else f"json_type(document, {path}) IS NULL",
+                [],
+            )
+        case TypeCondition():
+            return _translate_type_condition(plan)
+        case NotCondition(clause=clause):
             clause_sql, clause_params = translate_query_plan(clause)
-            clauses.append(f"({clause_sql})")
-            params.extend(clause_params)
-        return " AND ".join(clauses), params
-    if isinstance(plan, OrCondition):
-        clauses = []
-        params: list[object] = []
-        for clause in plan.clauses:
-            clause_sql, clause_params = translate_query_plan(clause)
-            clauses.append(f"({clause_sql})")
-            params.extend(clause_params)
-        return " OR ".join(clauses), params
-    raise TypeError(f"Unsupported query plan node: {type(plan)!r}")
+            return f"NOT COALESCE(({clause_sql}), 0)", clause_params
+        case AllCondition() | SizeCondition() | ModCondition() | RegexCondition() | ElemMatchCondition():
+            raise NotImplementedError("Query operator not yet translated to SQL")
+        case BitwiseCondition() | ExprCondition():
+            raise NotImplementedError("Query operator not yet translated to SQL")
+        case AndCondition(clauses=clauses):
+            sql_clauses: list[str] = []
+            params: list[object] = []
+            for clause in clauses:
+                clause_sql, clause_params = translate_query_plan(clause)
+                sql_clauses.append(f"({clause_sql})")
+                params.extend(clause_params)
+            return " AND ".join(sql_clauses), params
+        case OrCondition(clauses=clauses):
+            sql_clauses: list[str] = []
+            params: list[object] = []
+            for clause in clauses:
+                clause_sql, clause_params = translate_query_plan(clause)
+                sql_clauses.append(f"({clause_sql})")
+                params.extend(clause_params)
+            return " OR ".join(sql_clauses), params
+        case _:
+            assert_never(plan)

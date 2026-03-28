@@ -17,7 +17,8 @@ class QueryEngineTests(unittest.TestCase):
         def _collect_concrete_subclasses(base: type[QueryNode]) -> set[type[QueryNode]]:
             concrete: set[type[QueryNode]] = set()
             for subclass in base.__subclasses__():
-                concrete.add(subclass)
+                if subclass.__module__ == "mongoeco.core.query_plan":
+                    concrete.add(subclass)
                 concrete.update(_collect_concrete_subclasses(subclass))
             return concrete
 

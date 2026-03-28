@@ -4,7 +4,7 @@ from typing import Any, TypeIs
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.errors import OperationFailure
-from mongoeco.types import BsonValue, Filter, PlanningIssue, PlanningMode, Regex
+from mongoeco.types import BsonBindings, BitwiseMaskOperand, BsonValue, Filter, PlanningIssue, PlanningMode, Regex
 
 
 class QueryNode:
@@ -105,7 +105,7 @@ class NotCondition(QueryNode):
 @dataclass(frozen=True)
 class ElemMatchCondition(QueryNode):
     field: str
-    condition: Any
+    condition: Filter
     dialect: MongoDialect = MONGODB_DIALECT_70
 
 
@@ -125,13 +125,13 @@ class TypeCondition(QueryNode):
 class BitwiseCondition(QueryNode):
     field: str
     operator: str
-    operand: Any
+    operand: BitwiseMaskOperand
 
 
 @dataclass(frozen=True)
 class ExprCondition(QueryNode):
     expression: Any
-    variables: dict[str, Any]
+    variables: BsonBindings
 
 
 @dataclass(frozen=True)
@@ -346,7 +346,7 @@ def compile_filter(
     filter_spec: Filter,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
-    variables: dict[str, Any] | None = None,
+    variables: BsonBindings | None = None,
     planning_mode: PlanningMode = PlanningMode.STRICT,
 ) -> QueryNode:
     try:
@@ -366,7 +366,7 @@ def _compile_filter_strict(
     filter_spec: Filter,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
-    variables: dict[str, Any] | None = None,
+    variables: BsonBindings | None = None,
     planning_mode: PlanningMode = PlanningMode.STRICT,
 ) -> QueryNode:
     if filter_spec is None:
@@ -450,7 +450,7 @@ def ensure_query_plan(
     plan: QueryNode | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
-    variables: dict[str, Any] | None = None,
+    variables: BsonBindings | None = None,
     planning_mode: PlanningMode = PlanningMode.STRICT,
 ) -> QueryNode:
     if plan is not None:

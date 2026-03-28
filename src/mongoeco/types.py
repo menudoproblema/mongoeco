@@ -223,6 +223,8 @@ type BsonScalar = (
     | UndefinedType
 )
 type BsonValue = BsonScalar | list["BsonValue"] | dict[str, "BsonValue"] | SON
+type BsonBindings = dict[str, BsonValue]
+type BitwiseMaskOperand = int | bytes | uuid.UUID | list[int]
 type SortDirection = Literal[1, -1]
 type SortSpec = list[tuple[str, SortDirection]]
 type CollationDocument = dict[str, object]

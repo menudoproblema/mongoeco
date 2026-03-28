@@ -1,8 +1,9 @@
 import unittest
 
-from mongoeco.core.query_plan import compile_filter
+from mongoeco.core.query_plan import DeferredQueryNode, QueryNode, compile_filter
 from mongoeco.core.sql_translation import BaseSQLTranslator
-from mongoeco.engines.sqlite_query import SQLiteQueryTranslator
+from mongoeco.engines.sqlite_query import HANDLED_SQL_QUERY_NODE_TYPES, SQLiteQueryTranslator
+from mongoeco.types import PlanningIssue
 
 
 class _MinimalTranslator(BaseSQLTranslator):
@@ -16,6 +17,20 @@ class _MinimalTranslator(BaseSQLTranslator):
 
 
 class SqlTranslationTests(unittest.TestCase):
+    def test_sqlite_query_translator_dispatch_covers_all_concrete_query_nodes(self):
+        def _collect_concrete_subclasses(base: type[QueryNode]) -> set[type[QueryNode]]:
+            concrete: set[type[QueryNode]] = set()
+            for subclass in base.__subclasses__():
+                if subclass.__module__ == "mongoeco.core.query_plan":
+                    concrete.add(subclass)
+                concrete.update(_collect_concrete_subclasses(subclass))
+            return concrete
+
+        self.assertEqual(
+            set(HANDLED_SQL_QUERY_NODE_TYPES),
+            _collect_concrete_subclasses(QueryNode),
+        )
+
     def test_base_sql_translator_builds_select_statement(self):
         translator = _MinimalTranslator()
 
@@ -42,3 +57,11 @@ class SqlTranslationTests(unittest.TestCase):
 
         self.assertIn("json_extract", sql)
         self.assertEqual(params[-1], "Ada")
+
+    def test_sqlite_query_translator_rejects_deferred_query_nodes_explicitly(self):
+        translator = SQLiteQueryTranslator()
+
+        with self.assertRaises(NotImplementedError):
+            translator.translate_query_plan(
+                DeferredQueryNode(PlanningIssue(scope="query", message="deferred")),
+            )
