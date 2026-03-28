@@ -277,8 +277,7 @@ La Fase 2 se considera cerrada cuando se acepta explícitamente este perímetro 
   * `MemoryEngine` y `SQLiteEngine` se comparan explícitamente en filtros, sorts, paginación, updates, deletes y pipelines de agregación representativos
 * **Verificación ejecutable del cierre**:
   * compilación del paquete y tests
-  * snapshot actual de referencia: `726` tests en `unittest`, `726 passed` y `437 subtests passed` en `pytest`
-  * cobertura actual de referencia: `100%` sobre `src/mongoeco`
+  * el snapshot concreto usado para cerrar la fase es histórico y no debe leerse como la métrica viva del repositorio actual
 
 ### Fuera de Alcance de Fase 2
 Estos puntos quedan ya movidos explícitamente a fases posteriores y no deben seguir ensanchando el cierre de Fase 2:
@@ -312,9 +311,9 @@ El cierre local de Fase 2 se considera ya satisfecho:
 1. **El corte de alcance está fijado** y la fase no sigue ensanchándose con superficie ajena al perímetro descrito arriba.
 2. **La documentación está alineada** con el estado real del código, la suite y la estrategia de compatibilidad.
 3. **La verificación local está cerrada**:
-   * `python -m unittest discover -s tests -p 'test*.py'` -> `726` tests, `OK (skipped=1)`
-   * `pytest --cov=src/mongoeco` -> `726 passed, 7 skipped, 437 subtests passed`
-   * cobertura -> `100%`
+   * la fase se cerró con suite y cobertura en verde en su momento
+   * esos números concretos se consideran históricos
+   * el estado vivo del repositorio se resume en la sección de reentrada consolidada
 
 La validación diferencial contra MongoDB real queda como capa adicional recomendada, pero ya no como requisito bloqueante para declarar completada la implementación local de Fase 2.
 
@@ -452,8 +451,7 @@ La Fase 3 se considera cerrada con este alcance ya implementado y verificado:
 * **Consistencia reforzada entre engines**:
   * más paridad observable entre `MemoryEngine` y `SQLiteEngine` en filtros, escrituras y agregación
 * **Verificación ejecutable del cierre**:
-  * snapshot actual de referencia: `831` tests en `unittest`, `831 passed` y `455 subtests passed` en `pytest`
-  * cobertura actual de referencia: `100%` sobre `src/mongoeco`
+  * el snapshot concreto usado para cerrar la fase es histórico y no debe confundirse con el estado vivo actual del repositorio
 
 ### Fase 4: Transacciones, Ergonomía PyMongo y Administración Local
 La Fase 4 se centra en cerrar primero la base que más condiciona el crecimiento posterior: sesiones reales, robustez de escritura y la primera gran ampliación de ergonomía PyMongo sobre la arquitectura local ya consolidada.
@@ -622,10 +620,9 @@ Objetivos principales:
   * ampliar la `WireSurface` cuando el crecimiento de comandos o semántica de servidor ya no quepa limpiamente en la capa actual;
   * seguir endureciendo compatibilidad con drivers externos, cursores, sesiones, errores y shape de respuestas.
 * **Topología y comportamiento de driver real restantes**:
-  * selección de servidor con tags y `maxStalenessSeconds` reales;
-  * SRV, TLS y auth completos;
-  * retries, timeouts y pipeline de envío/recepción ya contra conexiones reales;
-  * todo lo que quede pendiente de la ambición de Fase 7 pero no compense mezclar con la apertura inicial de esa fase.
+  * solo refinamientos de paridad fina de cliente de red que aparezcan después del cierre de Fase 7;
+  * ampliaciones de superficie wire o de comportamiento de servidor que ya no exijan nueva infraestructura transversal;
+  * todo lo que quede pendiente de la ambición más profunda de cliente de red, pero ya como refinamiento y no como base arquitectónica.
 
 Criterio de foco:
 * Esta fase existe para evitar que los “últimos 10-15%” de fidelidad y profundidad queden repartidos en notas marginales.
@@ -1041,3 +1038,13 @@ Mientras no aparezca una de esas señales, el criterio recomendado es:
 
 1. mantener `DESIGN.md` como visión consolidada;
 2. dedicar el siguiente esfuerzo principalmente a **superficie funcional, cobertura y paridad observable**, no a reabrir otra gran ola de refactor.
+
+### 7.5 Estado Vivo Actual del Repositorio
+
+Para evitar que los cierres históricos de cada fase se confundan con el estado corriente:
+
+* la métrica viva de referencia debe tomarse siempre de la última ejecución real de la suite, no de snapshots antiguos incluidos en fases ya cerradas;
+* en el estado actual del repositorio, la verificación de referencia es:
+  * `python -m unittest discover -s tests -p 'test*.py'` -> `1416` tests, `OK (skipped=1)`
+  * cobertura total sobre `src/mongoeco` -> `92%`
+* cualquier mención anterior a `100%` o a snapshots de `726`/`831` tests debe leerse como contexto histórico del cierre de fase correspondiente, no como descripción del estado presente.
