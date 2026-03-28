@@ -64,14 +64,14 @@ from mongoeco.types import (
 )
 
 
-class _AsyncThreadLock:
-    """Lock compatible con hilos que no bloquea directamente el event loop al adquirir."""
+class _AsyncLock:
+    """Lock compatible con asyncio para uso dentro del motor."""
 
     def __init__(self) -> None:
-        self._lock = threading.Lock()
+        self._lock = asyncio.Lock()
 
-    async def __aenter__(self) -> "_AsyncThreadLock":
-        await asyncio.to_thread(self._lock.acquire)
+    async def __aenter__(self) -> "_AsyncLock":
+        await self._lock.acquire()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> bool:
@@ -93,7 +93,7 @@ class MemoryEngine(AsyncStorageEngine):
         simulate_search_index_latency: float = 0.0,
     ):
         self._storage: dict[str, dict[str, dict[Any, Any]]] = {}
-        self._locks: dict[str, _AsyncThreadLock] = {}
+        self._locks: dict[str, _AsyncLock] = {}
         self._indexes: dict[str, dict[str, list[EngineIndexRecord]]] = {}
         self._index_data: dict[str, dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]]] = {}
         self._search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]] = {}
@@ -311,10 +311,10 @@ class MemoryEngine(AsyncStorageEngine):
     def _lock_key(self, db: str, coll: str) -> str:
         return f"{db}.{coll}"
 
-    def _get_lock(self, db: str, coll: str) -> _AsyncThreadLock:
+    def _get_lock(self, db: str, coll: str) -> _AsyncLock:
         key = f"{db}.{coll}"
         with self._meta_lock:
-            return self._locks.setdefault(key, _AsyncThreadLock())
+            return self._locks.setdefault(key, _AsyncLock())
 
     def _record_operation_metadata(
         self,
@@ -582,6 +582,7 @@ class MemoryEngine(AsyncStorageEngine):
                 return
             self._storage.clear()
             self._indexes.clear()
+            self._index_data.clear()
             self._search_indexes.clear()
             self._search_index_ready_at.clear()
             self._collections.clear()
@@ -732,8 +733,20 @@ class MemoryEngine(AsyncStorageEngine):
             return False
         async with self._get_lock(db_name, coll_name):
             coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
+            indexes_view = self._indexes_view(context)
+            index_data_view = self._index_data_view(context)
             storage_key = self._storage_key(doc_id)
             if storage_key in coll:
+                document = self._decode_storage_document(coll[storage_key])
+                self._update_indexes_locked(
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    document,
+                    action="delete",
+                    index_data_view=index_data_view,
+                    indexes_view=indexes_view,
+                )
                 del coll[storage_key]
                 return True
             return False
@@ -853,6 +866,9 @@ class MemoryEngine(AsyncStorageEngine):
         async with self._get_lock(db_name, coll_name):
             with self._meta_lock:
                 coll = self._storage_view(context).get(db_name, {}).get(coll_name)
+                indexes_view = self._indexes_view(context)
+                index_data_view = self._index_data_view(context)
+                storage_view = self._storage_view(context)
                 collection_options = self._collection_options_snapshot_locked(
                     db_name,
                     coll_name,
@@ -885,10 +901,29 @@ class MemoryEngine(AsyncStorageEngine):
                     coll_name,
                     document,
                     exclude_storage_key=storage_key,
-                    indexes_view=self._indexes_view(context),
-                    storage_view=self._storage_view(context),
+                    indexes_view=indexes_view,
+                    storage_view=storage_view,
+                    index_data_view=index_data_view,
+                )
+                self._update_indexes_locked(
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    original_document,
+                    action="delete",
+                    index_data_view=index_data_view,
+                    indexes_view=indexes_view,
                 )
                 coll[storage_key] = self._codec.encode(document)
+                self._update_indexes_locked(
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    document,
+                    action="insert",
+                    index_data_view=index_data_view,
+                    indexes_view=indexes_view,
+                )
                 return UpdateResult(
                     matched_count=1,
                     modified_count=1 if modified else 0,
@@ -928,10 +963,20 @@ class MemoryEngine(AsyncStorageEngine):
                 db_name,
                 coll_name,
                 new_doc,
-                indexes_view=self._indexes_view(context),
-                storage_view=self._storage_view(context),
+                indexes_view=indexes_view,
+                storage_view=storage_view,
+                index_data_view=index_data_view,
             )
             coll[storage_key] = self._codec.encode(new_doc)
+            self._update_indexes_locked(
+                db_name,
+                coll_name,
+                storage_key,
+                new_doc,
+                action="insert",
+                index_data_view=index_data_view,
+                indexes_view=indexes_view,
+            )
             return UpdateResult(
                 matched_count=0,
                 modified_count=0,
@@ -953,6 +998,8 @@ class MemoryEngine(AsyncStorageEngine):
         effective_collation = normalize_collation(operation.collation)
         async with self._get_lock(db_name, coll_name):
             coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
+            indexes_view = self._indexes_view(context)
+            index_data_view = self._index_data_view(context)
             for storage_key, data in list(coll.items()):
                 document = self._decode_storage_document(data)
                 if not QueryEngine.match_plan(
@@ -962,6 +1009,15 @@ class MemoryEngine(AsyncStorageEngine):
                     collation=effective_collation,
                 ):
                     continue
+                self._update_indexes_locked(
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    document,
+                    action="delete",
+                    index_data_view=index_data_view,
+                    indexes_view=indexes_view,
+                )
                 del coll[storage_key]
                 return DeleteResult(deleted_count=1)
             return DeleteResult(deleted_count=0)

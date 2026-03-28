@@ -708,10 +708,9 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("email_1", engine._index_data["db"]["coll"])
 
             await engine.drop_index("db", "coll", "email_1")
+            self.assertNotIn("db", engine._index_data)
         finally:
             await engine.disconnect()
-
-        self.assertNotIn("db", engine._index_data)
 
     async def test_drop_indexes_prunes_collection_index_data(self):
         engine = MemoryEngine()
@@ -722,10 +721,9 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index("db", "coll", ["_id", "email"], name="id_email_1")
 
             await engine.drop_indexes("db", "coll")
+            self.assertNotIn("db", engine._index_data)
         finally:
             await engine.disconnect()
-
-        self.assertNotIn("db", engine._index_data)
 
     async def test_rename_collection_moves_index_data(self):
         engine = MemoryEngine()
@@ -735,12 +733,11 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index("db", "coll", ["email"], name="email_1")
 
             await engine.rename_collection("db", "coll", "renamed")
+            self.assertNotIn("coll", engine._index_data.get("db", {}))
+            self.assertIn("renamed", engine._index_data.get("db", {}))
+            self.assertIn("email_1", engine._index_data["db"]["renamed"])
         finally:
             await engine.disconnect()
-
-        self.assertNotIn("coll", engine._index_data.get("db", {}))
-        self.assertIn("renamed", engine._index_data.get("db", {}))
-        self.assertIn("email_1", engine._index_data["db"]["renamed"])
 
     async def test_drop_collection_prunes_index_data(self):
         engine = MemoryEngine()
@@ -750,10 +747,83 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index("db", "coll", ["email"], name="email_1")
 
             await engine.drop_collection("db", "coll")
+            self.assertNotIn("db", engine._index_data)
         finally:
             await engine.disconnect()
 
-        self.assertNotIn("db", engine._index_data)
+    async def test_delete_document_prunes_unique_index_cache(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+            await engine.create_index("db", "coll", ["email"], unique=True)
+
+            deleted = await engine.delete_document("db", "coll", "1")
+            await engine.put_document("db", "coll", {"_id": "2", "email": "a@example.com"})
+        finally:
+            await engine.disconnect()
+
+        self.assertTrue(deleted)
+
+    async def test_delete_with_operation_prunes_unique_index_cache(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+            await engine.create_index("db", "coll", ["email"], unique=True)
+
+            result = await self._delete(engine, "db", "coll", {"_id": "1"})
+            await engine.put_document("db", "coll", {"_id": "2", "email": "a@example.com"})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(result.deleted_count, 1)
+
+    async def test_update_with_operation_refreshes_index_cache_for_updated_key(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+            await engine.create_index("db", "coll", ["email"], name="email_1")
+
+            result = await self._update(
+                engine,
+                "db",
+                "coll",
+                {"_id": "1"},
+                {"$set": {"email": "c@example.com"}},
+            )
+            old_matches = [doc async for doc in self._scan(engine, "db", "coll", {"email": "a@example.com"})]
+            new_matches = [doc async for doc in self._scan(engine, "db", "coll", {"email": "c@example.com"})]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(result.matched_count, 1)
+        self.assertEqual(old_matches, [])
+        self.assertEqual(new_matches, [{"_id": "1", "email": "c@example.com"}])
+
+    async def test_update_with_operation_upsert_populates_index_cache(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["email"], name="email_1", unique=True)
+
+            result = await self._update(
+                engine,
+                "db",
+                "coll",
+                {"kind": "missing"},
+                {"$set": {"email": "a@example.com"}},
+                upsert=True,
+                upsert_seed={"kind": "missing"},
+            )
+            matches = [doc async for doc in self._scan(engine, "db", "coll", {"email": "a@example.com"})]
+        finally:
+            await engine.disconnect()
+
+        self.assertIsNotNone(result.upserted_id)
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0]["email"], "a@example.com")
 
     async def test_builtin_id_index_cannot_be_dropped(self):
         engine = MemoryEngine()
