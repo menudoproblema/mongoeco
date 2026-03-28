@@ -1346,6 +1346,25 @@ class SQLiteEngine(AsyncStorageEngine):
             return {}
         return json.loads(row[0] or "{}")
 
+    def _load_existing_document_for_storage_key(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        storage_key: str,
+    ) -> Document | None:
+        row = conn.execute(
+            """
+            SELECT document
+            FROM documents
+            WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+            """,
+            (db_name, coll_name, storage_key),
+        ).fetchone()
+        if row is None:
+            return None
+        return self._deserialize_document(row[0])
+
     def _disconnect_sync(self) -> None:
         connection: sqlite3.Connection | None = None
         with self._lock:
@@ -1376,36 +1395,59 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         bypass_document_validation: bool = False,
     ) -> bool:
+        storage_key = self._storage_key(document.get("_id"))
+        snapshot_options: dict[str, object] = {}
+        snapshot_original: Document | None = None
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                storage_key = self._storage_key(document.get("_id"))
-                indexes = self._load_indexes(db_name, coll_name)
+                snapshot_options = self._collection_options_or_empty_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                )
+                snapshot_original = self._load_existing_document_for_storage_key(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                ) if overwrite else None
+
+        if not bypass_document_validation:
+            enforce_collection_document_validation(
+                document,
+                options=snapshot_options,
+                original_document=snapshot_original,
+                dialect=MONGODB_DIALECT_70,
+            )
+        serialized_document = self._serialize_document(document)
+
+        with self._lock:
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
                 collection_options = self._collection_options_or_empty_sync(
                     conn,
                     db_name,
                     coll_name,
                 )
-                original_document = None
-                if overwrite:
-                    row = conn.execute(
-                        """
-                        SELECT document
-                        FROM documents
-                        WHERE db_name = ? AND coll_name = ? AND storage_key = ?
-                        """,
-                        (db_name, coll_name, storage_key),
-                    ).fetchone()
-                    if row is not None:
-                        original_document = self._deserialize_document(row[0])
+                original_document = self._load_existing_document_for_storage_key(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                ) if overwrite else None
+                if (
+                    not bypass_document_validation
+                    and (collection_options != snapshot_options or original_document != snapshot_original)
+                ):
+                    enforce_collection_document_validation(
+                        document,
+                        options=collection_options,
+                        original_document=original_document,
+                        dialect=MONGODB_DIALECT_70,
+                    )
+                indexes = self._load_indexes(db_name, coll_name)
                 try:
-                    if not bypass_document_validation:
-                        enforce_collection_document_validation(
-                            document,
-                            options=collection_options,
-                            original_document=original_document,
-                            dialect=MONGODB_DIALECT_70,
-                        )
                     self._validate_document_against_unique_indexes(
                         db_name,
                         coll_name,
@@ -1422,7 +1464,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             ON CONFLICT(db_name, coll_name, storage_key)
                             DO UPDATE SET document = excluded.document
                             """,
-                            (db_name, coll_name, storage_key, self._serialize_document(document)),
+                            (db_name, coll_name, storage_key, serialized_document),
                         )
                         self._rebuild_multikey_entries_for_document(
                             conn,
@@ -1441,7 +1483,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             VALUES (?, ?, ?, ?)
                             ON CONFLICT(db_name, coll_name, storage_key) DO NOTHING
                             """,
-                            (db_name, coll_name, storage_key, self._serialize_document(document)),
+                            (db_name, coll_name, storage_key, serialized_document),
                         )
                         if cursor.rowcount == 0:
                             self._rollback_write(conn, context)

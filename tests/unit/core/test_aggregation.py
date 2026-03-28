@@ -714,6 +714,21 @@ class AggregationTests(unittest.TestCase):
             [{"_id": "1", "score": BsonInt32(1)}, {"_id": "2", "score": BsonInt32(2)}],
         )
 
+    def test_aggregation_spill_policy_can_external_sort_large_blocking_stage(self):
+        policy = AggregationSpillPolicy(threshold=2)
+
+        result = policy.sort_with_spill(
+            [
+                {"_id": "4", "score": BsonInt32(4)},
+                {"_id": "1", "score": BsonInt32(1)},
+                {"_id": "3", "score": BsonInt32(3)},
+                {"_id": "2", "score": BsonInt32(2)},
+            ],
+            [("score", 1)],
+        )
+
+        self.assertEqual([document["_id"] for document in result], ["1", "2", "3", "4"])
+
     def test_aggregation_spill_policy_skips_non_blocking_stages_and_invalid_thresholds(self):
         policy = AggregationSpillPolicy(threshold=10)
         documents = [{"_id": "1"}, {"_id": "2"}]

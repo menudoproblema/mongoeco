@@ -102,9 +102,18 @@ def _stage_sort(
     spec: object,
     context: AggregationStageContext,
 ) -> list[Document]:
+    sort_spec = _require_sort(spec)
+    sort_with_spill = getattr(context.spill_policy, "sort_with_spill", None)
+    if callable(sort_with_spill):
+        return sort_with_spill(
+            documents,
+            sort_spec,
+            dialect=context.dialect,
+            collation=context.collation,
+        )
     return sort_documents(
         documents,
-        _require_sort(spec),
+        sort_spec,
         dialect=context.dialect,
         collation=context.collation,
     )
