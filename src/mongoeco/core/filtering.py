@@ -66,6 +66,20 @@ HANDLED_QUERY_NODE_TYPES: tuple[type[QueryNode], ...] = (
 )
 
 
+_PATH_CACHE: dict[str, list[str]] = {}
+
+
+def _split_path(path: str) -> list[str]:
+    """Divide una ruta dot-notation y cachea el resultado."""
+    if not path:
+        return []
+    if path in _PATH_CACHE:
+        return _PATH_CACHE[path]
+    parts = path.split(".")
+    _PATH_CACHE[path] = parts
+    return parts
+
+
 class BSONComparator:
     """Reglas de comparación de MongoDB (Type Brackets)."""
     TYPE_ORDER = MONGODB_DIALECT_70.bson_type_order
@@ -233,86 +247,78 @@ class QueryEngine:
     @staticmethod
     def _extract_values(doc: Any, path: str) -> list[Any]:
         """
-        Resuelve dot notation sobre dicts y listas.
-        Devuelve candidatos observables para aproximar la semántica de Mongo.
+        Resuelve dot notation sobre dicts y listas de forma iterativa.
         """
-        if isinstance(doc, list):
-            if not path:
+        parts = _split_path(path)
+        if not parts:
+            if isinstance(doc, list):
                 values: list[Any] = [doc]
                 for item in doc:
                     values.extend(QueryEngine._extract_values(item, path))
                 return values
-
-            if "." in path:
-                first, rest = path.split(".", 1)
-            else:
-                first, rest = path, ""
-
-            if first.isdigit():
-                index = int(first)
-                if index >= len(doc):
-                    return []
-                value = doc[index]
-                if not rest:
-                    if isinstance(value, list):
-                        return [value, *value]
-                    return [value]
-                return QueryEngine._extract_values(value, rest)
-
-            values = []
-            for item in doc:
-                values.extend(QueryEngine._extract_values(item, path))
-            return values
-
-        if not isinstance(doc, dict):
             return []
 
-        if "." not in path:
-            if path not in doc:
+        current_level = [doc]
+        for part in parts:
+            next_level = []
+            is_digit = part.isdigit()
+            idx = int(part) if is_digit else -1
+
+            for item in current_level:
+                if isinstance(item, list):
+                    if is_digit:
+                        if 0 <= idx < len(item):
+                            value = item[idx]
+                            if isinstance(value, list):
+                                next_level.append(value)
+                                next_level.extend(value)
+                            else:
+                                next_level.append(value)
+                    else:
+                        for subitem in item:
+                            if isinstance(subitem, dict) and part in subitem:
+                                val = subitem[part]
+                                if isinstance(val, list):
+                                    next_level.append(val)
+                                    next_level.extend(val)
+                                else:
+                                    next_level.append(val)
+                elif isinstance(item, dict) and part in item:
+                    val = item[part]
+                    if isinstance(val, list):
+                        next_level.append(val)
+                        next_level.extend(val)
+                    else:
+                        next_level.append(val)
+
+            if not next_level:
                 return []
+            current_level = next_level
 
-            value = doc[path]
-            if isinstance(value, list):
-                return [value, *value]
-            return [value]
-
-        first, rest = path.split(".", 1)
-        if first not in doc:
-            return []
-        return QueryEngine._extract_values(doc[first], rest)
+        return current_level
 
     @staticmethod
     def _get_field_value(doc: Any, path: str) -> tuple[bool, Any]:
-        if isinstance(doc, list):
-            if "." not in path:
-                if not path.isdigit():
+        """Versión rápida de acceso a un único valor (sin expansión de arrays)."""
+        parts = _split_path(path)
+        if not parts:
+            return True, doc
+
+        current = doc
+        for part in parts:
+            if isinstance(current, list):
+                if not part.isdigit():
                     return False, None
-                index = int(path)
-                if index >= len(doc):
+                idx = int(part)
+                if 0 <= idx < len(current):
+                    current = current[idx]
+                else:
                     return False, None
-                return True, doc[index]
-            first, rest = path.split(".", 1)
-            if not first.isdigit():
+            elif isinstance(current, dict) and part in current:
+                current = current[part]
+            else:
                 return False, None
-            index = int(first)
-            if index >= len(doc):
-                return False, None
-            if not isinstance(doc[index], (dict, list)):
-                return False, None
-            return QueryEngine._get_field_value(doc[index], rest)
-
-        if not isinstance(doc, dict):
-            return False, None
-
-        if "." not in path:
-            if path not in doc:
-                return False, None
-            return True, doc[path]
-
-        first, rest = path.split(".", 1)
-        if first not in doc or not isinstance(doc[first], (dict, list)):
-            return False, None
-        return QueryEngine._get_field_value(doc[first], rest)
+        return True, current
 
     @staticmethod
     def extract_values(doc: Any, path: str) -> list[Any]:
