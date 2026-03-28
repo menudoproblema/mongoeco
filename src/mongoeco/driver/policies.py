@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from mongoeco.driver.topology import ServerDescription, TopologyDescription
+from mongoeco.driver.topology import ServerDescription, TopologyDescription, TopologyType
 from mongoeco.driver.uri import MongoClientOptions, MongoUri
-from mongoeco.types import ReadConcern, ReadPreference, WriteConcern
+from mongoeco.types import ReadConcern, ReadPreference, ReadPreferenceMode, WriteConcern
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,9 +22,11 @@ class RetryPolicy:
 
 @dataclass(frozen=True, slots=True)
 class SelectionPolicy:
-    mode: str
+    mode: ReadPreferenceMode
     direct_connection: bool | None = None
     replica_set: str | None = None
+    tag_sets: tuple[dict[str, str], ...] | None = None
+    max_staleness_seconds: int | None = None
 
     def select_servers(
         self,
@@ -36,7 +38,24 @@ class SelectionPolicy:
             return topology.servers[:1]
         if for_writes:
             return topology.writable_servers
-        return topology.readable_servers
+        if topology.topology_type is not TopologyType.REPLICA_SET:
+            return topology.readable_servers
+        readable = topology.readable_servers
+        secondaries = tuple(
+            server for server in readable if server.server_type.name == "RS_SECONDARY"
+        )
+        primaries = tuple(
+            server for server in readable if server.server_type.name in {"RS_PRIMARY", "STANDALONE", "MONGOS"}
+        )
+        if self.mode is ReadPreferenceMode.PRIMARY:
+            return primaries[:1]
+        if self.mode is ReadPreferenceMode.PRIMARY_PREFERRED:
+            return primaries or secondaries
+        if self.mode is ReadPreferenceMode.SECONDARY:
+            return secondaries
+        if self.mode is ReadPreferenceMode.SECONDARY_PREFERRED:
+            return secondaries or primaries
+        return readable
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,9 +85,11 @@ def build_retry_policy(uri: MongoUri) -> RetryPolicy:
 def build_selection_policy(uri: MongoUri, *, read_preference: ReadPreference) -> SelectionPolicy:
     options: MongoClientOptions = uri.options
     return SelectionPolicy(
-        mode=options.read_preference or read_preference.name,
+        mode=read_preference.mode,
         direct_connection=options.direct_connection,
         replica_set=options.replica_set,
+        tag_sets=read_preference.tag_sets,
+        max_staleness_seconds=read_preference.max_staleness_seconds,
     )
 
 

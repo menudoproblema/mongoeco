@@ -28,13 +28,28 @@ from mongoeco.driver.topology import (
     TopologyType,
     build_local_topology_description,
 )
-from mongoeco.driver.uri import MongoClientOptions, MongoUri, MongoUriSeed, parse_mongo_uri
+from mongoeco.driver.uri import (
+    MongoAuthOptions,
+    MongoClientOptions,
+    MongoTlsOptions,
+    MongoUri,
+    MongoUriSeed,
+    build_read_concern_from_uri,
+    build_read_preference_from_uri,
+    build_write_concern_from_uri,
+    parse_mongo_uri,
+)
 
 __all__ = [
     "MongoClientOptions",
+    "MongoAuthOptions",
+    "MongoTlsOptions",
     "MongoUri",
     "MongoUriSeed",
     "parse_mongo_uri",
+    "build_write_concern_from_uri",
+    "build_read_concern_from_uri",
+    "build_read_preference_from_uri",
     "PoolKey",
     "ConnectionState",
     "ConnectionPoolOptions",

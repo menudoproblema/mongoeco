@@ -74,29 +74,37 @@ class TopologyDescription:
 
 
 def build_local_topology_description(uri: MongoUri) -> TopologyDescription:
-    topology_type = (
-        TopologyType.REPLICA_SET
-        if uri.options.replica_set
-        else TopologyType.SINGLE if len(uri.seeds) == 1 else TopologyType.UNKNOWN
-    )
-    server_type = (
-        ServerType.RS_PRIMARY
-        if topology_type is TopologyType.REPLICA_SET
-        else ServerType.STANDALONE if topology_type is TopologyType.SINGLE else ServerType.UNKNOWN
-    )
-    servers = tuple(
-        ServerDescription(
-            address=seed.address,
-            server_type=server_type,
-            set_name=uri.options.replica_set,
-            logical_session_timeout_minutes=30,
-            wire_version_range=(0, 20),
+    if uri.options.load_balanced:
+        topology_type = TopologyType.SHARDED
+    elif uri.options.direct_connection or len(uri.seeds) == 1:
+        topology_type = TopologyType.SINGLE
+    elif uri.options.replica_set:
+        topology_type = TopologyType.REPLICA_SET
+    else:
+        topology_type = TopologyType.UNKNOWN
+
+    servers: list[ServerDescription] = []
+    for index, seed in enumerate(uri.seeds):
+        if topology_type is TopologyType.SHARDED:
+            server_type = ServerType.MONGOS
+        elif topology_type is TopologyType.REPLICA_SET:
+            server_type = ServerType.RS_PRIMARY if index == 0 else ServerType.RS_SECONDARY
+        elif topology_type is TopologyType.SINGLE:
+            server_type = ServerType.STANDALONE
+        else:
+            server_type = ServerType.UNKNOWN
+        servers.append(
+            ServerDescription(
+                address=seed.address,
+                server_type=server_type,
+                set_name=uri.options.replica_set,
+                logical_session_timeout_minutes=30,
+                wire_version_range=(0, 20),
+            )
         )
-        for seed in uri.seeds
-    )
     return TopologyDescription(
         topology_type=topology_type,
-        servers=servers,
+        servers=tuple(servers),
         set_name=uri.options.replica_set,
         logical_session_timeout_minutes=30,
     )

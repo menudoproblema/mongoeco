@@ -16,7 +16,13 @@ from mongoeco.driver.policies import (
 )
 from mongoeco.driver.requests import CommandRequest, RequestExecutionPlan
 from mongoeco.driver.topology import ServerDescription, TopologyDescription, build_local_topology_description
-from mongoeco.driver.uri import MongoUri, parse_mongo_uri
+from mongoeco.driver.uri import (
+    MongoUri,
+    build_read_concern_from_uri,
+    build_read_preference_from_uri,
+    build_write_concern_from_uri,
+    parse_mongo_uri,
+)
 from mongoeco.session import ClientSession
 from mongoeco.types import ReadConcern, ReadPreference, WriteConcern
 
@@ -38,17 +44,20 @@ class DriverRuntime:
         read_preference: ReadPreference,
     ):
         self._uri = parse_mongo_uri(uri)
+        effective_write_concern = build_write_concern_from_uri(self._uri, write_concern)
+        effective_read_concern = build_read_concern_from_uri(self._uri, read_concern)
+        effective_read_preference = build_read_preference_from_uri(self._uri, read_preference)
         self._topology = build_local_topology_description(self._uri)
         self._timeout_policy = build_timeout_policy(self._uri)
         self._retry_policy = build_retry_policy(self._uri)
         self._selection_policy = build_selection_policy(
             self._uri,
-            read_preference=read_preference,
+            read_preference=effective_read_preference,
         )
         self._concern_policy = build_concern_policy(
-            write_concern=write_concern,
-            read_concern=read_concern,
-            read_preference=read_preference,
+            write_concern=effective_write_concern,
+            read_concern=effective_read_concern,
+            read_preference=effective_read_preference,
         )
         self._connections = ConnectionRegistry(self._uri)
 

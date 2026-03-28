@@ -291,6 +291,9 @@ class AsyncMongoClient:
             read_concern=self._read_concern,
             read_preference=self._read_preference,
         )
+        self._write_concern = self._driver_runtime.concern_policy.write_concern
+        self._read_concern = self._driver_runtime.concern_policy.read_concern
+        self._read_preference = self._driver_runtime.concern_policy.read_preference
         self._change_hub = ChangeStreamHub()
 
     @staticmethod

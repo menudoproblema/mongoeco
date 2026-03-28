@@ -137,9 +137,9 @@ class ConnectionRegistry:
     def pool_key_for_server(self, server: ServerDescription) -> PoolKey:
         return PoolKey(
             address=server.address,
-            tls=self._uri.options.tls,
+            tls=self._uri.options.tls.enabled,
             replica_set=self._uri.options.replica_set,
-            auth_source=self._uri.options.auth_source,
+            auth_source=self._uri.options.auth.source,
             compressors=self._uri.options.compressors,
         )
 

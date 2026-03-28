@@ -10,12 +10,14 @@ from mongoeco import (
 from mongoeco.driver import (
     CommandRequest,
     ConnectionRegistry,
-    ConnectionState,
     DriverRuntime,
     PreparedRequestExecution,
     RequestExecutionPlan,
     ServerType,
     TopologyType,
+    build_read_concern_from_uri,
+    build_read_preference_from_uri,
+    build_write_concern_from_uri,
     build_local_topology_description,
     build_selection_policy,
     build_timeout_policy,
@@ -36,6 +38,10 @@ class MongoUriTests(unittest.TestCase):
             "?replicaSet=rs0&retryReads=false&retryWrites=true"
             "&serverSelectionTimeoutMS=1500&connectTimeoutMS=800"
             "&maxPoolSize=20&minPoolSize=5&readPreference=secondaryPreferred"
+            "&readPreferenceTags=region:eu,role:analytics"
+            "&maxStalenessSeconds=120&w=majority&journal=true&wtimeoutMS=6000"
+            "&readConcernLevel=majority&authMechanism=SCRAM-SHA-256"
+            "&tls=true&tlsAllowInvalidCertificates=true"
         )
 
         self.assertEqual(uri.username, "ada")
@@ -43,6 +49,10 @@ class MongoUriTests(unittest.TestCase):
         self.assertEqual(uri.default_database, "observe")
         self.assertEqual([seed.address for seed in uri.seeds], ["db1:27018", "db2:27019"])
         self.assertEqual(uri.options.replica_set, "rs0")
+        self.assertEqual(uri.options.auth.source, None)
+        self.assertEqual(uri.options.auth.mechanism, "SCRAM-SHA-256")
+        self.assertTrue(uri.options.tls.enabled)
+        self.assertTrue(uri.options.tls.allow_invalid_certificates)
         self.assertFalse(uri.options.retry_reads)
         self.assertTrue(uri.options.retry_writes)
         self.assertEqual(uri.options.server_selection_timeout_ms, 1500)
@@ -50,10 +60,42 @@ class MongoUriTests(unittest.TestCase):
         self.assertEqual(uri.options.max_pool_size, 20)
         self.assertEqual(uri.options.min_pool_size, 5)
         self.assertEqual(uri.options.read_preference, "secondaryPreferred")
+        self.assertEqual(uri.options.read_preference_tags, ({"region": "eu", "role": "analytics"},))
+        self.assertEqual(uri.options.max_staleness_seconds, 120)
+        self.assertEqual(uri.options.write_concern_w, "majority")
+        self.assertTrue(uri.options.write_concern_journal)
+        self.assertEqual(uri.options.write_concern_wtimeout_ms, 6000)
+        self.assertEqual(uri.options.read_concern_level, "majority")
 
     def test_parse_mongo_uri_rejects_invalid_pool_bounds(self):
         with self.assertRaises(ValueError):
             parse_mongo_uri("mongodb://localhost/?maxPoolSize=1&minPoolSize=2")
+
+    def test_parse_mongo_uri_rejects_conflicting_direct_connection_and_load_balanced(self):
+        with self.assertRaises(ValueError):
+            parse_mongo_uri("mongodb://localhost/?directConnection=true&loadBalanced=true")
+
+    def test_build_concerns_and_preference_from_uri(self):
+        uri = parse_mongo_uri(
+            "mongodb://localhost/?w=majority&journal=true&wtimeoutMS=5000"
+            "&readConcernLevel=snapshot&readPreference=secondary"
+            "&readPreferenceTags=region:eu&maxStalenessSeconds=90"
+        )
+
+        write_concern = build_write_concern_from_uri(uri, MongoClient().write_concern)
+        read_concern = build_read_concern_from_uri(uri, MongoClient().read_concern)
+        read_preference = build_read_preference_from_uri(
+            uri,
+            ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+
+        self.assertEqual(write_concern.w, "majority")
+        self.assertTrue(write_concern.j)
+        self.assertEqual(write_concern.wtimeout, 5000)
+        self.assertEqual(read_concern.level, "snapshot")
+        self.assertEqual(read_preference.mode, ReadPreferenceMode.SECONDARY)
+        self.assertEqual(read_preference.tag_sets, ({"region": "eu"},))
+        self.assertEqual(read_preference.max_staleness_seconds, 90)
 
 
 class TopologyAndPolicyTests(unittest.TestCase):
@@ -62,8 +104,16 @@ class TopologyAndPolicyTests(unittest.TestCase):
         topology = build_local_topology_description(uri)
 
         self.assertEqual(topology.topology_type, TopologyType.REPLICA_SET)
-        self.assertTrue(all(server.server_type is ServerType.RS_PRIMARY for server in topology.servers))
+        self.assertEqual(topology.servers[0].server_type, ServerType.RS_PRIMARY)
+        self.assertEqual(topology.servers[1].server_type, ServerType.RS_SECONDARY)
         self.assertEqual(topology.set_name, "rs0")
+
+    def test_build_local_topology_description_marks_load_balanced_as_sharded(self):
+        uri = parse_mongo_uri("mongodb://lb1/?loadBalanced=true")
+        topology = build_local_topology_description(uri)
+
+        self.assertEqual(topology.topology_type, TopologyType.SHARDED)
+        self.assertEqual(topology.servers[0].server_type, ServerType.MONGOS)
 
     def test_selection_policy_prefers_direct_connection_seed(self):
         uri = parse_mongo_uri("mongodb://db1:27017,db2:27018/?directConnection=true")
@@ -74,6 +124,16 @@ class TopologyAndPolicyTests(unittest.TestCase):
         )
 
         self.assertEqual([server.address for server in policy.select_servers(topology)], ["db1:27017"])
+
+    def test_selection_policy_for_secondary_prefers_secondaries_in_replica_set(self):
+        uri = parse_mongo_uri("mongodb://db1:27017,db2:27018/?replicaSet=rs0")
+        topology = build_local_topology_description(uri)
+        policy = build_selection_policy(
+            uri,
+            read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
+        )
+
+        self.assertEqual([server.address for server in policy.select_servers(topology)], ["db2:27018"])
 
     def test_timeout_policy_is_derived_from_uri(self):
         uri = parse_mongo_uri(
@@ -128,7 +188,7 @@ class ClientDriverArchitectureTests(unittest.TestCase):
         self.assertEqual(client.client_uri.options.app_name, "test-suite")
         self.assertEqual(client.topology_description.topology_type, TopologyType.SINGLE)
         self.assertFalse(client.retry_policy.retry_reads)
-        self.assertEqual(client.selection_policy.mode, "secondary")
+        self.assertEqual(client.selection_policy.mode, ReadPreferenceMode.SECONDARY)
 
         plan = client.plan_command_request("observe", "find", {"find": "events"}, read_only=True)
 
@@ -172,7 +232,7 @@ class ClientDriverArchitectureTests(unittest.TestCase):
 
         self.assertEqual(tuned.client_uri.original, client.client_uri.original)
         self.assertFalse(tuned.retry_policy.retry_writes)
-        self.assertEqual(tuned.selection_policy.mode, "nearest")
+        self.assertEqual(tuned.selection_policy.mode, ReadPreferenceMode.NEAREST)
 
     def test_sync_client_exposes_driver_runtime(self):
         client = MongoClient(uri="mongodb://db1:27017/")
@@ -180,3 +240,13 @@ class ClientDriverArchitectureTests(unittest.TestCase):
         snapshots = client.driver_runtime.connection_snapshots
 
         self.assertEqual(snapshots, ())
+
+    def test_client_derives_concerns_from_uri_when_present(self):
+        client = AsyncMongoClient(
+            uri="mongodb://db1:27017/?w=majority&journal=true&readConcernLevel=majority&readPreference=secondaryPreferred"
+        )
+
+        self.assertEqual(client.write_concern.w, "majority")
+        self.assertTrue(client.write_concern.j)
+        self.assertEqual(client.read_concern.level, "majority")
+        self.assertEqual(client.read_preference.mode, ReadPreferenceMode.SECONDARY_PREFERRED)

@@ -800,6 +800,8 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
 #### Fase 7
 * topología real de red:
   * parsing completo de URI
+    * ya soporta seeds, credenciales, `directConnection`, `loadBalanced`, `replicaSet`, compresores, auth y TLS tipados
+    * ya soporta también derivación de `readPreference`, `readPreferenceTags`, `maxStalenessSeconds`, `readConcernLevel`, `w`, `journal` y `wtimeoutMS`
   * auth
   * TLS
   * SRV
@@ -807,10 +809,13 @@ Para evitar que la diferencia con PyMongo quede dispersa en notas sueltas, este 
   * sharding
   * pooling
   * selección de servidor
+    * ya existe selección básica por topología y `readPreference`
+    * ya existe degradación coherente para topologías no replicadas
 * concerns y preferencias con semántica de driver real:
   * timeouts
   * retries
   * selección de lectura/escritura
+  * ya se derivan desde URI hacia el runtime del cliente antes de ejecutar peticiones
 * monitoring y comportamiento propio de un cliente de red completo
 
 Arquitectura ya preparada antes de abrir la funcionalidad de red real:
@@ -833,6 +838,14 @@ Arquitectura ya preparada antes de abrir la funcionalidad de red real:
   * leases y snapshots tipados
 
 Esto deja la Fase 7 lista para crecer sin repartir lógica de URI, topología, políticas y pools entre `MongoClient`, el proxy wire y futuros conectores de red.
+
+Primer bloque funcional ya abierto en Fase 7:
+* la URI deja de ser metadata pasiva y pasa a gobernar el runtime del cliente;
+* concerns, preferencias, auth/TLS y topología básica ya entran por un `DriverRuntime` común;
+* el siguiente corte natural es profundizar en:
+  * selección de servidor con tags y staleness reales;
+  * semántica de SRV/TLS/auth;
+  * y pipeline explícito de envío/retry/timeout sobre conexiones reales.
 
 ---
 
