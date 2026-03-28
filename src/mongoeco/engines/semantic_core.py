@@ -1,8 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Iterable
 
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.compiled_query import CompiledQuery
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import CollationSpec, normalize_collation
 from mongoeco.core.operators import CompiledUpdatePlan
@@ -42,6 +43,7 @@ class EngineFindSemantics:
     comment: object | None
     max_time_ms: int | None
     dialect: MongoDialect
+    compiled_query: CompiledQuery | None = field(default=None, compare=False, hash=False)
 
     @property
     def deadline(self) -> float | None:
@@ -142,11 +144,14 @@ def compile_find_semantics(
         raise ValueError("skip must be >= 0")
     if limit is not None and limit < 0:
         raise ValueError("limit must be >= 0")
+    effective_collation = normalize_collation(collation)
+    query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
+
     return EngineFindSemantics(
         filter_spec=filter_spec,
-        query_plan=ensure_query_plan(filter_spec, plan, dialect=effective_dialect),
+        query_plan=query_plan,
         projection=projection,
-        collation=normalize_collation(collation),
+        collation=effective_collation,
         sort=sort,
         skip=skip,
         limit=limit,
@@ -154,6 +159,11 @@ def compile_find_semantics(
         comment=comment,
         max_time_ms=max_time_ms,
         dialect=effective_dialect,
+        compiled_query=CompiledQuery(
+            query_plan,
+            dialect=effective_dialect,
+            collation=effective_collation,
+        ),
     )
 
 
@@ -215,6 +225,16 @@ def iter_filtered_documents(
             yield document
         enforce_deadline(deadline)
         return
+
+    compiled = semantics.compiled_query
+    if compiled is not None:
+        for document in documents:
+            enforce_deadline(deadline)
+            if compiled.match(document):
+                yield document
+        enforce_deadline(deadline)
+        return
+
     for document in documents:
         enforce_deadline(deadline)
         if QueryEngine.match_plan(

@@ -3,6 +3,7 @@ import atexit
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, nullcontext
 import datetime
+from dataclasses import replace
 from functools import partial
 import hashlib
 import json
@@ -2300,27 +2301,28 @@ class SQLiteEngine(AsyncStorageEngine):
                 dialect=dialect,
             )
         )
+        python_semantics = replace(semantics, compiled_query=None)
         deadline = semantics.deadline
         if self._is_profile_namespace(coll_name):
             documents_iter = iter(self._profile_documents(db_name))
-            if semantics.sort is None:
+            if python_semantics.sort is None:
                 for document in stream_finalize_documents(
-                    iter_filtered_documents(documents_iter, semantics),
-                    semantics,
+                    iter_filtered_documents(documents_iter, python_semantics),
+                    python_semantics,
                 ):
                     enforce_deadline(deadline)
                     if stop_event is not None and stop_event.is_set():
                         break
                     yield document
                 return
-            documents = filter_documents(documents_iter, semantics)
+            documents = filter_documents(documents_iter, python_semantics)
             documents = sort_documents(
                 documents,
-                semantics.sort,
-                dialect=semantics.dialect,
-                collation=semantics.collation,
+                python_semantics.sort,
+                dialect=python_semantics.dialect,
+                collation=python_semantics.collation,
             )
-            documents = finalize_documents(documents, semantics, apply_sort_phase=False)
+            documents = finalize_documents(documents, python_semantics, apply_sort_phase=False)
             for document in documents:
                 enforce_deadline(deadline)
                 if stop_event is not None and stop_event.is_set():
@@ -2388,10 +2390,10 @@ class SQLiteEngine(AsyncStorageEngine):
                 except (NotImplementedError, TypeError):
                     documents_iter = (document for _, document in self._load_documents(db_name, coll_name))
                     try:
-                        if semantics.sort is None:
+                        if python_semantics.sort is None:
                             for document in stream_finalize_documents(
-                                iter_filtered_documents(documents_iter, semantics),
-                                semantics,
+                                iter_filtered_documents(documents_iter, python_semantics),
+                                python_semantics,
                             ):
                                 if stop_event is not None and stop_event.is_set():
                                     break
@@ -2399,8 +2401,8 @@ class SQLiteEngine(AsyncStorageEngine):
                             return
 
                         documents = finalize_documents(
-                            filter_documents(documents_iter, semantics),
-                            semantics,
+                            filter_documents(documents_iter, python_semantics),
+                            python_semantics,
                         )
                     finally:
                         close = getattr(documents_iter, "close", None)
