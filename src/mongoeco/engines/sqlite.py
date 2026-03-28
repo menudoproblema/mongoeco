@@ -546,8 +546,54 @@ class SQLiteEngine(AsyncStorageEngine):
                 return index
         return None
 
+    def _lookup_collection_id(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        *,
+        create: bool = False,
+    ) -> int | None:
+        row = conn.execute(
+            """
+            SELECT collection_id, rowid
+            FROM collections
+            WHERE db_name = ? AND coll_name = ?
+            """,
+            (db_name, coll_name),
+        ).fetchone()
+        if row is None:
+            if not create:
+                return None
+            self._ensure_collection_row(conn, db_name, coll_name)
+            row = conn.execute(
+                """
+                SELECT collection_id, rowid
+                FROM collections
+                WHERE db_name = ? AND coll_name = ?
+                """,
+                (db_name, coll_name),
+            ).fetchone()
+        if row is None:
+            return None
+        if not isinstance(row, (tuple, list)) or len(row) < 2:
+            return None
+        collection_id, rowid = row
+        if collection_id is None or int(collection_id) == 0:
+            collection_id = int(rowid)
+            conn.execute(
+                """
+                UPDATE collections
+                SET collection_id = ?
+                WHERE db_name = ? AND coll_name = ?
+                """,
+                (collection_id, db_name, coll_name),
+            )
+        return int(collection_id)
+
     def _translate_multikey_exists_clause(
         self,
+        collection_id: int,
         db_name: str,
         coll_name: str,
         index: EngineIndexRecord,
@@ -560,15 +606,16 @@ class SQLiteEngine(AsyncStorageEngine):
             clauses.append(
                 "EXISTS ("
                 f"SELECT 1 FROM multikey_entries INDEXED BY {physical_name} "
-                "WHERE db_name = ? AND coll_name = ? AND index_name = ? "
+                "WHERE collection_id = ? AND index_name = ? "
                 "AND storage_key = documents.storage_key "
                 "AND element_type = ? AND element_key = ?)"
             )
-            params.extend([db_name, coll_name, index["name"], element_type, element_key])
+            params.extend([collection_id, index["name"], element_type, element_key])
         return "(" + " OR ".join(clauses) + ")", params
 
     def _translate_multikey_ordered_exists_clause(
         self,
+        collection_id: int,
         db_name: str,
         coll_name: str,
         index: EngineIndexRecord,
@@ -594,15 +641,16 @@ class SQLiteEngine(AsyncStorageEngine):
         return (
             "EXISTS ("
             f"SELECT 1 FROM multikey_entries INDEXED BY {physical_name} "
-            "WHERE db_name = ? AND coll_name = ? AND index_name = ? "
+            "WHERE collection_id = ? AND index_name = ? "
             "AND storage_key = documents.storage_key "
             "AND "
             f"{comparison_sql})",
-            [db_name, coll_name, index["name"], *params_tail],
+            [collection_id, index["name"], *params_tail],
         )
 
     def _translate_equals_with_multikey(
         self,
+        collection_id: int,
         db_name: str,
         coll_name: str,
         plan: EqualsCondition,
@@ -618,6 +666,7 @@ class SQLiteEngine(AsyncStorageEngine):
             null_matches_undefined=plan.null_matches_undefined,
         )
         array_sql, array_params = self._translate_multikey_exists_clause(
+            collection_id,
             db_name,
             coll_name,
             index,
@@ -627,6 +676,7 @@ class SQLiteEngine(AsyncStorageEngine):
 
     def _translate_in_with_multikey(
         self,
+        collection_id: int,
         db_name: str,
         coll_name: str,
         plan: InCondition,
@@ -636,6 +686,7 @@ class SQLiteEngine(AsyncStorageEngine):
         params: list[object] = []
         for value in plan.values:
             eq_sql, eq_params = self._translate_equals_with_multikey(
+                collection_id,
                 db_name,
                 coll_name,
                 EqualsCondition(
@@ -651,6 +702,7 @@ class SQLiteEngine(AsyncStorageEngine):
 
     def _translate_range_with_multikey(
         self,
+        collection_id: int,
         db_name: str,
         coll_name: str,
         plan: GreaterThanCondition | GreaterThanOrEqualCondition | LessThanCondition | LessThanOrEqualCondition,
@@ -663,6 +715,7 @@ class SQLiteEngine(AsyncStorageEngine):
             return translate_query_plan(plan)
         scalar_sql, scalar_params = translate_query_plan(plan)
         array_sql, array_params = self._translate_multikey_ordered_exists_clause(
+            collection_id,
             db_name,
             coll_name,
             index,
@@ -684,32 +737,50 @@ class SQLiteEngine(AsyncStorageEngine):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 return translate_query_plan(plan)
-            return self._translate_equals_with_multikey(db_name, coll_name, plan, index)
+            collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
+            if collection_id is None:
+                return translate_query_plan(plan)
+            return self._translate_equals_with_multikey(collection_id, db_name, coll_name, plan, index)
         if isinstance(plan, InCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 return translate_query_plan(plan)
-            return self._translate_in_with_multikey(db_name, coll_name, plan, index)
+            collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
+            if collection_id is None:
+                return translate_query_plan(plan)
+            return self._translate_in_with_multikey(collection_id, db_name, coll_name, plan, index)
         if isinstance(plan, GreaterThanCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 return translate_query_plan(plan)
-            return self._translate_range_with_multikey(db_name, coll_name, plan, index, operator=">")
+            collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
+            if collection_id is None:
+                return translate_query_plan(plan)
+            return self._translate_range_with_multikey(collection_id, db_name, coll_name, plan, index, operator=">")
         if isinstance(plan, GreaterThanOrEqualCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 return translate_query_plan(plan)
-            return self._translate_range_with_multikey(db_name, coll_name, plan, index, operator=">=")
+            collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
+            if collection_id is None:
+                return translate_query_plan(plan)
+            return self._translate_range_with_multikey(collection_id, db_name, coll_name, plan, index, operator=">=")
         if isinstance(plan, LessThanCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 return translate_query_plan(plan)
-            return self._translate_range_with_multikey(db_name, coll_name, plan, index, operator="<")
+            collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
+            if collection_id is None:
+                return translate_query_plan(plan)
+            return self._translate_range_with_multikey(collection_id, db_name, coll_name, plan, index, operator="<")
         if isinstance(plan, LessThanOrEqualCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 return translate_query_plan(plan)
-            return self._translate_range_with_multikey(db_name, coll_name, plan, index, operator="<=")
+            collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
+            if collection_id is None:
+                return translate_query_plan(plan)
+            return self._translate_range_with_multikey(collection_id, db_name, coll_name, plan, index, operator="<=")
         if isinstance(plan, AndCondition):
             fragments = [self._translate_query_plan_with_multikey(db_name, coll_name, clause) for clause in plan.clauses]
             sql = " AND ".join(f"({fragment_sql})" for fragment_sql, _ in fragments)
@@ -1132,12 +1203,15 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         storage_key: str,
     ) -> None:
+        collection_id = self._lookup_collection_id(conn, db_name, coll_name)
+        if collection_id is None:
+            return
         conn.execute(
             """
             DELETE FROM multikey_entries
-            WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+            WHERE collection_id = ? AND storage_key = ?
             """,
-            (db_name, coll_name, storage_key),
+            (collection_id, storage_key),
         )
 
     def _rebuild_multikey_entries_for_document(
@@ -1150,7 +1224,10 @@ class SQLiteEngine(AsyncStorageEngine):
         indexes: list[EngineIndexRecord],
     ) -> None:
         self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-        rows: list[tuple[str, str, str, str, str, int, str]] = []
+        collection_id = self._lookup_collection_id(conn, db_name, coll_name, create=True)
+        if collection_id is None:
+            return
+        rows: list[tuple[int, str, str, str, int, str, str, str]] = []
         for index in indexes:
             if not index.get("multikey"):
                 continue
@@ -1158,21 +1235,22 @@ class SQLiteEngine(AsyncStorageEngine):
             for element_type, element_key in self._extract_multikey_entries(document, field):
                 rows.append(
                     (
-                        db_name,
-                        coll_name,
+                        collection_id,
                         index["name"],
                         storage_key,
                         element_type,
                         self._multikey_type_score(element_type),
                         element_key,
+                        db_name,
+                        coll_name,
                     )
                 )
         if rows:
             conn.executemany(
                 """
                 INSERT OR IGNORE INTO multikey_entries (
-                    db_name, coll_name, index_name, storage_key, element_type, type_score, element_key
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    collection_id, index_name, storage_key, element_type, type_score, element_key, db_name, coll_name
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 rows,
             )
@@ -1186,12 +1264,15 @@ class SQLiteEngine(AsyncStorageEngine):
         document: Document,
         index: EngineIndexRecord,
     ) -> None:
+        collection_id = self._lookup_collection_id(conn, db_name, coll_name, create=True)
+        if collection_id is None:
+            return
         conn.execute(
             """
             DELETE FROM multikey_entries
-            WHERE db_name = ? AND coll_name = ? AND storage_key = ? AND index_name = ?
+            WHERE collection_id = ? AND storage_key = ? AND index_name = ?
             """,
-            (db_name, coll_name, storage_key, index["name"]),
+            (collection_id, storage_key, index["name"]),
         )
         if not document_in_virtual_index(document, index):
             return
@@ -1200,13 +1281,14 @@ class SQLiteEngine(AsyncStorageEngine):
         field = index["fields"][0]
         rows = [
             (
-                db_name,
-                coll_name,
+                collection_id,
                 index["name"],
                 storage_key,
                 element_type,
                 self._multikey_type_score(element_type),
                 element_key,
+                db_name,
+                coll_name,
             )
             for element_type, element_key in self._extract_multikey_entries(document, field)
         ]
@@ -1214,8 +1296,8 @@ class SQLiteEngine(AsyncStorageEngine):
             conn.executemany(
                 """
                 INSERT OR IGNORE INTO multikey_entries (
-                    db_name, coll_name, index_name, storage_key, element_type, type_score, element_key
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    collection_id, index_name, storage_key, element_type, type_score, element_key, db_name, coll_name
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 rows,
             )
@@ -1227,6 +1309,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 connection.execute(
                     """
                     CREATE TABLE IF NOT EXISTS collections (
+                        collection_id INTEGER,
                         db_name TEXT NOT NULL,
                         coll_name TEXT NOT NULL,
                         options_json TEXT NOT NULL DEFAULT '{}',
@@ -1278,6 +1361,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 connection.execute(
                     """
                     CREATE TABLE IF NOT EXISTS multikey_entries (
+                        collection_id INTEGER NOT NULL DEFAULT 0,
                         db_name TEXT NOT NULL,
                         coll_name TEXT NOT NULL,
                         index_name TEXT NOT NULL,
@@ -1295,6 +1379,10 @@ class SQLiteEngine(AsyncStorageEngine):
                 if "options_json" not in collection_columns:
                     connection.execute(
                         "ALTER TABLE collections ADD COLUMN options_json TEXT NOT NULL DEFAULT '{}'"
+                    )
+                if "collection_id" not in collection_columns:
+                    connection.execute(
+                        "ALTER TABLE collections ADD COLUMN collection_id INTEGER"
                     )
                 columns = {
                     row[1]
@@ -1316,6 +1404,10 @@ class SQLiteEngine(AsyncStorageEngine):
                     row[1]
                     for row in connection.execute("PRAGMA table_info(multikey_entries)").fetchall()
                 }
+                if "collection_id" not in multikey_columns:
+                    connection.execute(
+                        "ALTER TABLE multikey_entries ADD COLUMN collection_id INTEGER NOT NULL DEFAULT 0"
+                    )
                 if "type_score" not in multikey_columns:
                     connection.execute(
                         "ALTER TABLE multikey_entries ADD COLUMN type_score INTEGER NOT NULL DEFAULT 100"
@@ -1328,6 +1420,31 @@ class SQLiteEngine(AsyncStorageEngine):
                     SELECT db_name, coll_name, '{}' FROM indexes
                     UNION
                     SELECT db_name, coll_name, '{}' FROM search_indexes
+                    """
+                )
+                connection.execute(
+                    """
+                    UPDATE collections
+                    SET collection_id = rowid
+                    WHERE collection_id IS NULL OR collection_id = 0
+                    """
+                )
+                connection.execute(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS idx_collections_collection_id
+                    ON collections (collection_id)
+                    """
+                )
+                connection.execute(
+                    """
+                    UPDATE multikey_entries
+                    SET collection_id = (
+                        SELECT collections.collection_id
+                        FROM collections
+                        WHERE collections.db_name = multikey_entries.db_name
+                          AND collections.coll_name = multikey_entries.coll_name
+                    )
+                    WHERE collection_id = 0
                     """
                 )
                 connection.commit()
@@ -1360,6 +1477,7 @@ class SQLiteEngine(AsyncStorageEngine):
             """,
             (db_name, coll_name, json.dumps(options or {}, separators=(",", ":"), sort_keys=True)),
         )
+        self._lookup_collection_id(conn, db_name, coll_name, create=True)
 
     def _collection_exists_sync(self, conn: sqlite3.Connection, db_name: str, coll_name: str) -> bool:
         row = conn.execute(
@@ -2017,7 +2135,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         enforce_deadline(deadline)
                         conn.execute(
                             f"CREATE INDEX {self._quote_identifier(multikey_physical_name)} "
-                            "ON multikey_entries (db_name, coll_name, index_name, type_score, element_key, storage_key)"
+                            "ON multikey_entries (collection_id, index_name, type_score, element_key, storage_key)"
                         )
                     conn.execute(
                         """
@@ -2145,9 +2263,9 @@ class SQLiteEngine(AsyncStorageEngine):
                         conn.execute(
                             """
                             DELETE FROM multikey_entries
-                            WHERE db_name = ? AND coll_name = ? AND index_name = ?
+                            WHERE collection_id = ? AND index_name = ?
                             """,
-                            (db_name, coll_name, target["name"]),
+                            (self._lookup_collection_id(conn, db_name, coll_name), target["name"]),
                         )
                     conn.execute(
                         """
@@ -2185,9 +2303,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     conn.execute(
                         """
                         DELETE FROM multikey_entries
-                        WHERE db_name = ? AND coll_name = ?
+                        WHERE collection_id = ?
                         """,
-                        (db_name, coll_name),
+                        (self._lookup_collection_id(conn, db_name, coll_name),),
                     )
                     conn.execute(
                         """
@@ -2476,9 +2594,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     conn.execute(
                         """
                         DELETE FROM multikey_entries
-                        WHERE db_name = ? AND coll_name = ?
+                        WHERE collection_id = ?
                         """,
-                        (db_name, coll_name),
+                        (self._lookup_collection_id(conn, db_name, coll_name),),
                     )
                     conn.execute(
                         """

@@ -1100,6 +1100,7 @@ Refinamiento continuo ya aplicado después del cierre formal de Fase 8:
 * helper compartido para orden BSON y clave de índice numérica, usado ya tanto por el core como por `SQLiteEngine`;
 * soporte de rangos numéricos sobre índices multikey auxiliares en SQLite con orden textual estable;
 * `multikey_entries` endurecida con `type_score` para que la comparación mixta no dependa de la semántica nativa de orden de SQLite;
+* `multikey_entries` ya usa `collection_id` en las rutas calientes de búsqueda y mantenimiento, reduciendo dependencia física de `db_name`/`coll_name`;
 * cache en memoria de metadata de índices SQLite versionada por colección, para no invalidar `users` cuando cambia `logs`;
 * creación de índice multikey vuelta a priorizar integridad total sobre escaneo optimista, evitando la ventana de inconsistencia durante la construcción;
 * fallback de SQLite ejecutado sobre un ejecutor propio del engine, sin depender del pool global de `asyncio.to_thread`;
@@ -1108,6 +1109,7 @@ Refinamiento continuo ya aplicado después del cierre formal de Fase 8:
 * spill de agregación mejorado con ordenación externa por chunks para `$sort` cuando la política de spill lo pide;
 * `SyncRunner` más explícito al propagar `ExecutionTimeout` y `ServerSelectionTimeoutError` en la capa sync;
 * pool de conexiones del driver con espera FIFO real para reducir starvation bajo contención.
+* `bulk_write` y writes compuestos ya preparan y validan sus modelos en paralelo antes de entrar en la ruta de ejecución, sin perder la semántica actual de errores ordenados/no ordenados.
 
 Estado actual del contraste versionado con `mongomock`:
 

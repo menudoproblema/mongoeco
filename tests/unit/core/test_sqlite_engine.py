@@ -133,6 +133,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
     def test_multikey_helpers_cover_supported_unsupported_and_logical_translation_paths(self):
         engine = SQLiteEngine()
+        engine._connection = Mock()
 
         self.assertEqual(SQLiteEngine._normalize_multikey_number(1), SQLiteEngine._normalize_multikey_number(1.0))
         self.assertLess(
@@ -162,6 +163,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(NotImplementedError):
             SQLiteEngine._multikey_signatures_for_query_value({"x": 1})
 
+        engine._lookup_collection_id = Mock(return_value=1)
         engine._find_multikey_index = Mock(return_value={"name": "idx_tags", "multikey_physical_name": "mkidx_test"})
         eq_sql, _ = engine._translate_query_plan_with_multikey(
             "db",
@@ -184,6 +186,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             compile_filter({"tags": {"$gt": 2}}),
         )
         self.assertIn("multikey_entries", gt_sql)
+        self.assertIn("collection_id", gt_sql)
         self.assertIn("type_score", gt_sql)
         self.assertIn("element_key > ?", gt_sql)
         self.assertIn(SQLiteEngine._normalize_multikey_number(2), gt_params)
@@ -884,14 +887,14 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             conn = engine._require_connection()
             rows = conn.execute(
                 """
-                SELECT element_type, type_score, element_key
+                SELECT collection_id, element_type, type_score, element_key
                 FROM multikey_entries
                 WHERE db_name = ? AND coll_name = ? AND index_name = ?
                 ORDER BY element_key
                 """,
                 ("db", "coll", "idx_tags"),
             ).fetchall()
-            self.assertEqual(rows, [("string", 3, "mongodb"), ("string", 3, "python")])
+            self.assertEqual(rows, [(1, "string", 3, "mongodb"), (1, "string", 3, "python")])
 
             await engine.update_matching_document(
                 "db",
@@ -901,14 +904,14 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             )
             rows = conn.execute(
                 """
-                SELECT element_type, type_score, element_key
+                SELECT collection_id, element_type, type_score, element_key
                 FROM multikey_entries
                 WHERE db_name = ? AND coll_name = ? AND index_name = ?
                 ORDER BY element_key
                 """,
                 ("db", "coll", "idx_tags"),
             ).fetchall()
-            self.assertEqual(rows, [("string", 3, "sqlite")])
+            self.assertEqual(rows, [(1, "string", 3, "sqlite")])
 
             deleted = await engine.delete_matching_document("db", "coll", {"tags": "sqlite"})
             self.assertEqual(deleted.deleted_count, 1)

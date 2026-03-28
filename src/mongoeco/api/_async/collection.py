@@ -1,5 +1,8 @@
+import asyncio
 from collections.abc import AsyncIterable, Iterable, Sequence
 from copy import deepcopy
+from dataclasses import dataclass
+from functools import partial
 import time
 
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
@@ -53,6 +56,79 @@ from mongoeco.types import (
     normalize_read_concern, normalize_read_preference, normalize_write_concern,
 )
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure, WriteError
+
+
+@dataclass(slots=True)
+class _PreparedBulkWriteRequest:
+    index: int
+    request: WriteModel
+    insert_document: Document | None = None
+    replacement_document: Document | None = None
+    preparation_error: Exception | None = None
+
+
+class _BulkWriteContext:
+    def __init__(
+        self,
+        collection: "AsyncCollection",
+        requests: list[WriteModel],
+    ) -> None:
+        self._collection = collection
+        self._requests = requests
+
+    async def prepare(self) -> list[_PreparedBulkWriteRequest]:
+        loop = asyncio.get_running_loop()
+        tasks = [
+            loop.run_in_executor(None, partial(self._prepare_request, index, request))
+            for index, request in enumerate(self._requests)
+        ]
+        return list(await asyncio.gather(*tasks))
+
+    def _prepare_request(self, index: int, request: WriteModel) -> _PreparedBulkWriteRequest:
+        collection = self._collection
+        try:
+            collection._validate_bulk_write_request_against_profile(request)
+            if isinstance(request, InsertOne):
+                original = collection._require_document(request.document)
+                if "_id" not in original:
+                    original["_id"] = ObjectId()
+                return _PreparedBulkWriteRequest(
+                    index=index,
+                    request=request,
+                    insert_document=deepcopy(original),
+                )
+            if isinstance(request, ReplaceOne):
+                collection._normalize_filter(request.filter)
+                collection._normalize_hint(request.hint)
+                if request.sort is not None:
+                    collection._normalize_sort(request.sort)
+                if request.let is not None:
+                    collection._normalize_let(request.let)
+                return _PreparedBulkWriteRequest(
+                    index=index,
+                    request=request,
+                    replacement_document=deepcopy(collection._require_replacement(request.replacement)),
+                )
+            if isinstance(request, (UpdateOne, UpdateMany)):
+                collection._normalize_filter(request.filter)
+                collection._require_update(request.update)
+                collection._normalize_hint(request.hint)
+                if request.array_filters is not None:
+                    collection._normalize_array_filters(request.array_filters)
+                if request.let is not None:
+                    collection._normalize_let(request.let)
+                if isinstance(request, UpdateOne) and request.sort is not None:
+                    collection._normalize_sort(request.sort)
+                return _PreparedBulkWriteRequest(index=index, request=request)
+            if isinstance(request, (DeleteOne, DeleteMany)):
+                collection._normalize_filter(request.filter)
+                collection._normalize_hint(request.hint)
+                if request.let is not None:
+                    collection._normalize_let(request.let)
+                return _PreparedBulkWriteRequest(index=index, request=request)
+            raise TypeError("bulk_write requests must be write model instances")
+        except (TypeError, ValueError, OperationFailure, WriteError) as exc:
+            return _PreparedBulkWriteRequest(index=index, request=request, preparation_error=exc)
 
 
 class AsyncCollection:
@@ -854,6 +930,7 @@ class AsyncCollection:
         if not isinstance(ordered, bool):
             raise TypeError("ordered must be a bool")
         let = self._normalize_let(let)
+        prepared_requests = await _BulkWriteContext(self, requests).prepare()
 
         inserted_count = 0
         matched_count = 0
@@ -862,14 +939,28 @@ class AsyncCollection:
         upserted_ids: dict[int, DocumentId] = {}
         write_errors: list[WriteErrorEntry] = []
 
-        for index, request in enumerate(requests):
-            self._validate_bulk_write_request_against_profile(request)
+        for prepared in prepared_requests:
+            index = prepared.index
+            request = prepared.request
+            if prepared.preparation_error is not None:
+                exc = prepared.preparation_error
+                if ordered:
+                    raise exc
+                write_errors.append(
+                    WriteErrorEntry(
+                        index=index,
+                        code=getattr(exc, "code", None),
+                        errmsg=str(exc),
+                        operation=request.__class__.__name__,
+                    )
+                )
+                continue
             try:
                 if isinstance(request, InsertOne):
                     insert_kwargs = {"session": session}
                     if bypass_document_validation:
                         insert_kwargs["bypass_document_validation"] = True
-                    await self.insert_one(request.document, **insert_kwargs)
+                    await self.insert_one(prepared.insert_document or request.document, **insert_kwargs)
                     inserted_count += 1
                 elif isinstance(request, UpdateOne):
                     update_one_kwargs = {
@@ -924,7 +1015,7 @@ class AsyncCollection:
                         replace_one_kwargs["bypass_document_validation"] = True
                     result = await self.replace_one(
                         request.filter,
-                        request.replacement,
+                        prepared.replacement_document or request.replacement,
                         request.upsert,
                         **replace_one_kwargs,
                     )
