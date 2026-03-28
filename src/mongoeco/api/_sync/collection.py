@@ -19,6 +19,8 @@ from mongoeco.types import (
     PlanningMode, ReturnDocument, SearchIndexModel, SortSpec, Update, UpdateResult, WriteConcern, WriteModel,
 )
 
+_FILTER_UNSET = object()
+
 
 class Collection:
     """Adaptador sincronico sobre AsyncCollection."""
@@ -51,6 +53,23 @@ class Collection:
             client.codec_options if codec_options is None else codec_options
         )
         self._planning_mode = planning_mode
+
+    @staticmethod
+    def _resolve_filter_argument(
+        filter_spec: object,
+        filter: object,
+        *,
+        required: bool,
+    ) -> Filter | None:
+        if filter_spec is not _FILTER_UNSET and filter is not _FILTER_UNSET:
+            raise TypeError("cannot pass both filter and filter_spec")
+        if filter is not _FILTER_UNSET:
+            return filter
+        if filter_spec is not _FILTER_UNSET:
+            return filter_spec
+        if required:
+            raise TypeError("missing required filter")
+        return None
 
     def _async_collection(self):
         self._client._ensure_connected()
@@ -139,12 +158,14 @@ class Collection:
 
     def find_one(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         projection: Projection | None = None,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=False)
         return self._run_collection_method(
             "find_one",
             filter_spec,
@@ -175,9 +196,10 @@ class Collection:
 
     def find(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         projection: Projection | None = None,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
@@ -188,6 +210,7 @@ class Collection:
         batch_size: int | None = None,
         session: ClientSession | None = None,
     ) -> Cursor:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=False)
         async_collection = self._async_collection()
         return Cursor(
             self._client,
@@ -235,9 +258,10 @@ class Collection:
 
     def find_raw_batches(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         projection: Projection | None = None,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
@@ -248,6 +272,7 @@ class Collection:
         batch_size: int | None = None,
         session: ClientSession | None = None,
     ) -> RawBatchCursor:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=False)
         return RawBatchCursor(
             self._client,
             self._async_collection().find_raw_batches(
@@ -423,8 +448,9 @@ class Collection:
 
     def find_one_and_delete(
         self,
-        filter_spec: Filter,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         projection: Projection | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
@@ -434,6 +460,7 @@ class Collection:
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
         return self._run_collection_method(
             "find_one_and_delete",
             filter_spec,
@@ -449,14 +476,16 @@ class Collection:
 
     def delete_one(
         self,
-        filter_spec: Filter,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> DeleteResult:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
         return self._run_collection_method(
             "delete_one",
             filter_spec,
@@ -497,14 +526,16 @@ class Collection:
 
     def delete_many(
         self,
-        filter_spec: Filter,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> DeleteResult:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
         return self._run_collection_method(
             "delete_many",
             filter_spec,
@@ -517,8 +548,9 @@ class Collection:
 
     def count_documents(
         self,
-        filter_spec: Filter,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
@@ -527,6 +559,7 @@ class Collection:
         limit: int | None = None,
         session: ClientSession | None = None,
     ) -> int:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
         return self._run_collection_method(
             "count_documents",
             filter_spec,
@@ -556,14 +589,16 @@ class Collection:
     def distinct(
         self,
         key: str,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> list[object]:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=False)
         return self._run_collection_method(
             "distinct",
             key,

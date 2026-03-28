@@ -228,6 +228,32 @@ class AsyncCollectionHelperTests(unittest.TestCase):
 
         self.assertEqual(found, {"name": "Ada"})
 
+    def test_filter_keyword_alias_is_supported_in_async_collection(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                await collection.insert_one({"_id": "1", "name": "Ada", "kind": "view"})
+                found = await collection.find_one(filter={"_id": "1"})
+                count = await collection.count_documents(filter={"kind": "view"})
+                distinct = await collection.distinct("kind", filter={"_id": "1"})
+                return found, count, distinct
+            finally:
+                await engine.disconnect()
+
+        found, count, distinct = asyncio.run(_exercise())
+
+        self.assertEqual(found, {"_id": "1", "name": "Ada", "kind": "view"})
+        self.assertEqual(count, 1)
+        self.assertEqual(distinct, ["view"])
+
+    def test_filter_keyword_alias_conflicts_with_filter_spec(self):
+        collection = AsyncCollection(MemoryEngine(), "db", "coll")
+
+        with self.assertRaises(TypeError):
+            asyncio.run(collection.find_one({"_id": "1"}, filter={"_id": "1"}))
+
     def test_bulk_write_requires_non_empty_write_model_list(self):
         with self.assertRaises(TypeError):
             asyncio.run(self.collection.bulk_write(InsertOne({"name": "Ada"})))  # type: ignore[arg-type]

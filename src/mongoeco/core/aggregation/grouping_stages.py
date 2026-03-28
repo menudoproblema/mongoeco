@@ -43,8 +43,11 @@ def _apply_group(
         raise OperationFailure("$group requires a document specification with _id")
 
     if CompiledGroup.supports(spec):
-        compiled = CompiledGroup(spec, dialect=dialect)
-        return compiled.apply(documents, variables)
+        try:
+            compiled = CompiledGroup(spec, dialect=dialect)
+            return compiled.apply(documents, variables)
+        except Exception:
+            pass
 
     accumulator_specs = {key: value for key, value in spec.items() if key != "_id"}
     _initialize_accumulators(

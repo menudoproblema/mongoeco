@@ -5,7 +5,7 @@ import re
 import unittest
 import uuid
 from copy import deepcopy
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
 from mongoeco.compat import MongoDialect
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
@@ -587,6 +587,21 @@ class AggregationTests(unittest.TestCase):
             grouped,
             [{"_id": "a", "roles": ["admin", "user"], "items": ["admin", "user"]}],
         )
+
+    def test_apply_group_falls_back_when_compiler_raises(self):
+        with patch("mongoeco.core.aggregation.grouping_stages.CompiledGroup") as compiled_group:
+            compiled_group.supports.return_value = True
+            compiled_group.side_effect = RuntimeError("boom")
+
+            grouped = _apply_group(
+                [
+                    {"kind": "a", "value": 1},
+                    {"kind": "a", "value": 2},
+                ],
+                {"_id": "$kind", "total": {"$sum": "$value"}},
+            )
+
+        self.assertEqual(grouped, [{"_id": "a", "total": 3}])
 
     def test_finalize_accumulators_preserves_user_fields_with_has_prefix(self):
         bucket = _initialize_accumulators({"__has_total": {"$first": "$value"}})

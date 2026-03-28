@@ -57,6 +57,8 @@ from mongoeco.types import (
 )
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure, WriteError
 
+_FILTER_UNSET = object()
+
 
 @dataclass(slots=True)
 class _PreparedBulkWriteRequest:
@@ -243,6 +245,23 @@ class AsyncCollection:
         if not is_filter(filter_spec):
             raise TypeError("filter_spec must be a dict")
         return filter_spec
+
+    @staticmethod
+    def _resolve_filter_argument(
+        filter_spec: object,
+        filter: object,
+        *,
+        required: bool,
+    ) -> Filter | None:
+        if filter_spec is not _FILTER_UNSET and filter is not _FILTER_UNSET:
+            raise TypeError("cannot pass both filter and filter_spec")
+        if filter is not _FILTER_UNSET:
+            return AsyncCollection._normalize_filter(filter)
+        if filter_spec is not _FILTER_UNSET:
+            return AsyncCollection._normalize_filter(filter_spec)
+        if required:
+            raise TypeError("missing required filter")
+        return None
 
     @staticmethod
     def _normalize_projection(projection: object | None) -> Projection | None:
@@ -1105,12 +1124,14 @@ class AsyncCollection:
 
     async def find_one(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         projection: Projection | None = None,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=False)
         operation = compile_find_operation(
             filter_spec,
             projection=projection,
@@ -1155,9 +1176,10 @@ class AsyncCollection:
 
     def find(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         projection: Projection | None = None,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
@@ -1168,6 +1190,7 @@ class AsyncCollection:
         batch_size: int | None = None,
         session: ClientSession | None = None,
     ):
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=False)
         operation = compile_find_operation(
             filter_spec,
             projection=projection,
@@ -1216,9 +1239,10 @@ class AsyncCollection:
 
     def find_raw_batches(
         self,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         projection: Projection | None = None,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         skip: int = 0,
@@ -1229,6 +1253,7 @@ class AsyncCollection:
         batch_size: int | None = None,
         session: ClientSession | None = None,
     ) -> AsyncRawBatchCursor:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=False)
         cursor = self.find(
             filter_spec,
             projection,
@@ -1884,8 +1909,9 @@ class AsyncCollection:
 
     async def find_one_and_delete(
         self,
-        filter_spec: Filter,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         projection: Projection | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
@@ -1895,6 +1921,7 @@ class AsyncCollection:
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
         projection = self._normalize_projection(projection)
         operation = compile_update_operation(
             filter_spec,
@@ -1935,14 +1962,16 @@ class AsyncCollection:
 
     async def delete_one(
         self,
-        filter_spec: Filter,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> DeleteResult:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
         operation = compile_update_operation(
             filter_spec,
             collation=collation,
@@ -2009,14 +2038,16 @@ class AsyncCollection:
 
     async def delete_many(
         self,
-        filter_spec: Filter,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> DeleteResult:
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
         operation = compile_update_operation(
             filter_spec,
             collation=collation,
@@ -2057,8 +2088,9 @@ class AsyncCollection:
 
     async def count_documents(
         self,
-        filter_spec: Filter,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
@@ -2067,7 +2099,7 @@ class AsyncCollection:
         limit: int | None = None,
         session: ClientSession | None = None,
     ) -> int:
-        filter_spec = self._normalize_filter(filter_spec)
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=True)
         normalized_collation = normalize_collation(collation)
         hint = self._normalize_hint(hint)
         max_time_ms = self._normalize_max_time_ms(max_time_ms)
@@ -2127,8 +2159,9 @@ class AsyncCollection:
     async def distinct(
         self,
         key: str,
-        filter_spec: Filter | None = None,
+        filter_spec: Filter | object = _FILTER_UNSET,
         *,
+        filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
         hint: HintSpec | None = None,
         comment: object | None = None,
@@ -2137,7 +2170,7 @@ class AsyncCollection:
     ) -> list[object]:
         if not isinstance(key, str):
             raise TypeError("key must be a string")
-        filter_spec = self._normalize_filter(filter_spec)
+        filter_spec = self._resolve_filter_argument(filter_spec, filter, required=False)
         normalized_collation = normalize_collation(collation)
         hint = self._normalize_hint(hint)
         max_time_ms = self._normalize_max_time_ms(max_time_ms)

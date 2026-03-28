@@ -4166,3 +4166,25 @@ class SyncApiLoopSafetyTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(client.test.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
         finally:
             client.close()
+
+
+class SyncApiFilterAliasTests(unittest.TestCase):
+    def test_sync_collection_supports_filter_keyword_alias(self):
+        with MongoClient(MemoryEngine()) as client:
+            collection = client.test.users
+            collection.insert_one({"_id": "1", "name": "Ada", "kind": "view"})
+
+            found = collection.find_one(filter={"_id": "1"})
+            count = collection.count_documents(filter={"kind": "view"})
+            distinct = collection.distinct("kind", filter={"_id": "1"})
+
+            self.assertEqual(found, {"_id": "1", "name": "Ada", "kind": "view"})
+            self.assertEqual(count, 1)
+            self.assertEqual(distinct, ["view"])
+
+    def test_sync_collection_rejects_filter_alias_conflict(self):
+        with MongoClient(MemoryEngine()) as client:
+            collection = client.test.users
+
+            with self.assertRaises(TypeError):
+                collection.find_one({"_id": "1"}, filter={"_id": "1"})
