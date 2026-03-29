@@ -24,6 +24,7 @@ class DocumentCodec:
     _MARKER = "$mongoeco"
     _TYPE = "type"
     _VALUE = "value"
+    _BSON_WRAPPER_TYPES = (BsonInt32, BsonInt64, BsonDouble, BsonDecimal128)
 
     @staticmethod
     def _tagged_value(value_type: str, value: Any) -> dict[str, Any]:
@@ -197,13 +198,30 @@ class DocumentCodec:
             raise ValueError(f"Unsupported tagged value type: {value_type}")
 
         if isinstance(data, dict):
-            return {
-                k: DocumentCodec.decode(v, preserve_bson_wrappers=preserve_bson_wrappers)
-                for k, v in data.items()
-            }
+            decoded: dict[Any, Any] = {}
+            for key, value in data.items():
+                if isinstance(value, dict | list):
+                    decoded[key] = DocumentCodec.decode(
+                        value,
+                        preserve_bson_wrappers=preserve_bson_wrappers,
+                    )
+                else:
+                    decoded[key] = value
+            return decoded
 
         if isinstance(data, list):
-            return [DocumentCodec.decode(v, preserve_bson_wrappers=preserve_bson_wrappers) for v in data]
+            decoded_items: list[Any] = []
+            for value in data:
+                if isinstance(value, dict | list):
+                    decoded_items.append(
+                        DocumentCodec.decode(
+                            value,
+                            preserve_bson_wrappers=preserve_bson_wrappers,
+                        )
+                    )
+                else:
+                    decoded_items.append(value)
+            return decoded_items
 
         return data
 
@@ -214,6 +232,31 @@ class DocumentCodec:
     @staticmethod
     def _to_public_copy_on_write(data: Any) -> Any:
         if isinstance(data, dict):
+            flat_changed = False
+            flat_items: list[tuple[Any, Any]] = []
+            for key, value in data.items():
+                if isinstance(value, DocumentCodec._BSON_WRAPPER_TYPES):
+                    flat_changed = True
+                    flat_items.append((key, unwrap_bson_numeric(value)))
+                    continue
+                if isinstance(value, list):
+                    public_list, list_changed, contains_nested = DocumentCodec._to_public_flat_list(value)
+                    if contains_nested:
+                        break
+                    if list_changed:
+                        flat_changed = True
+                        flat_items.append((key, public_list))
+                    else:
+                        flat_items.append((key, value))
+                    continue
+                if isinstance(value, dict):
+                    break
+                flat_items.append((key, value))
+            else:
+                if not flat_changed:
+                    return data
+                return {key: value for key, value in flat_items}
+
             converted_items: list[tuple[Any, Any]] = []
             changed = False
             for key, value in data.items():
@@ -226,6 +269,10 @@ class DocumentCodec:
             return {key: value for key, value in converted_items}
 
         if isinstance(data, list):
+            flat_items, flat_changed, contains_nested = DocumentCodec._to_public_flat_list(data)
+            if not contains_nested:
+                return flat_items if flat_changed else data
+
             converted_items: list[Any] = []
             changed = False
             for value in data:
@@ -238,3 +285,17 @@ class DocumentCodec:
             return converted_items
 
         return unwrap_bson_numeric(data)
+
+    @staticmethod
+    def _to_public_flat_list(data: list[Any]) -> tuple[list[Any], bool, bool]:
+        converted_items: list[Any] = []
+        changed = False
+        for value in data:
+            if isinstance(value, DocumentCodec._BSON_WRAPPER_TYPES):
+                changed = True
+                converted_items.append(unwrap_bson_numeric(value))
+                continue
+            if isinstance(value, dict | list):
+                return converted_items, changed, True
+            converted_items.append(value)
+        return converted_items, changed, False

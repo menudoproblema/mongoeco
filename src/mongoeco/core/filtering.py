@@ -66,6 +66,9 @@ HANDLED_QUERY_NODE_TYPES: tuple[type[QueryNode], ...] = (
     OrCondition,
 )
 
+_FAST_SCALAR_TYPES = (str, bytes, bool, int, float)
+_FAST_NUMERIC_TYPES = (int, float)
+
 
 @lru_cache(maxsize=4096)
 def _split_path(path: str) -> tuple[str, ...]:
@@ -546,13 +549,13 @@ class QueryEngine:
             expected_type = type(expected)
             if (
                 candidate_type is expected_type
-                and candidate_type in {str, bytes, bool, int, float}
+                and candidate_type in _FAST_SCALAR_TYPES
                 and not (candidate_type is float and (math.isnan(candidate) or math.isnan(expected)))
             ):
                 return candidate == expected
             if (
-                candidate_type in {int, float}
-                and expected_type in {int, float}
+                candidate_type in _FAST_NUMERIC_TYPES
+                and expected_type in _FAST_NUMERIC_TYPES
                 and candidate_type is not bool
                 and expected_type is not bool
                 and not (
@@ -577,13 +580,13 @@ class QueryEngine:
             target_type = type(target)
             if (
                 candidate_type is target_type
-                and candidate_type in {str, bytes, bool, int, float}
+                and candidate_type in _FAST_SCALAR_TYPES
                 and not (candidate_type is float and (math.isnan(candidate) or math.isnan(target)))
             ):
                 comparison = -1 if candidate < target else 1 if candidate > target else 0
             elif (
-                candidate_type in {int, float}
-                and target_type in {int, float}
+                candidate_type in _FAST_NUMERIC_TYPES
+                and target_type in _FAST_NUMERIC_TYPES
                 and candidate_type is not bool
                 and target_type is not bool
                 and not (
