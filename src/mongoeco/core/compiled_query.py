@@ -29,7 +29,7 @@ from mongoeco.types import Document
 
 
 class CompiledQuery:
-    """Compile a QueryNode into a high-performance Python function."""
+    """Compile a QueryNode into a reusable Python matcher."""
 
     def __init__(
         self,
@@ -50,9 +50,7 @@ class CompiledQuery:
             "values_equal": values_equal_with_collation,
         }
 
-        # Deferred import avoids a circular dependency with filtering.
         from mongoeco.core.filtering import QueryEngine
-
         self._context["extract"] = QueryEngine.extract_values
         self._context["eq_matches"] = QueryEngine._query_equality_matches
         self._context["in_matches"] = QueryEngine._in_item_matches_candidate
@@ -64,15 +62,20 @@ class CompiledQuery:
         return self._match_func(document)
 
     def get_inline_code(self, prefix: str | None = None) -> str:
-        """Return the compiled expression string for inlining."""
         if prefix is not None:
             self._variable_prefix = prefix
         return self._node_to_code(self.plan, depth=0)
 
     def _compile(self, node: QueryNode) -> Any:
         expression = self.get_inline_code()
+        # Local variable binding for performance
         function_code = (
             "def match_logic(doc):\n"
+            "    _extract = extract\n"
+            "    _eq_matches = eq_matches\n"
+            "    _in_matches = in_matches\n"
+            "    _compare = compare\n"
+            "    _values_equal = values_equal\n"
             "    try:\n"
             f"        return {expression}\n"
             "    except (KeyError, TypeError, AttributeError):\n"
@@ -92,10 +95,10 @@ class CompiledQuery:
                 value_key = self._store(depth, "value", value)
                 return (
                     "any("
-                    f"eq_matches(candidate, {value_key}, "
+                    f"_eq_matches(candidate, {value_key}, "
                     f"null_matches_undefined={null_matches_undefined}, "
                     "dialect=dialect, collation=collation)"
-                    f" for candidate in (extract(doc, {field_key}) or [None])"
+                    f" for candidate in (_extract(doc, {field_key}) or [None])"
                     ")"
                 )
             case NotEqualsCondition(field=field, value=value):
@@ -103,8 +106,8 @@ class CompiledQuery:
                 value_key = self._store(depth, "value", value)
                 return (
                     "all("
-                    f"not values_equal(candidate, {value_key}, dialect=dialect, collation=collation)"
-                    f" for candidate in (extract(doc, {field_key}) or [None])"
+                    f"not _values_equal(candidate, {value_key}, dialect=dialect, collation=collation)"
+                    f" for candidate in (_extract(doc, {field_key}) or [None])"
                     ")"
                 )
             case GreaterThanCondition(field=field, value=value):
@@ -120,9 +123,9 @@ class CompiledQuery:
                 value_key = self._store(depth, "values", values)
                 return (
                     "any("
-                    f"in_matches(candidate, item, null_matches_undefined={null_matches_undefined}, "
+                    f"_in_matches(candidate, item, null_matches_undefined={null_matches_undefined}, "
                     "dialect=dialect, collation=collation)"
-                    f" for candidate in (extract(doc, {field_key}) or [None])"
+                    f" for candidate in (_extract(doc, {field_key}) or [None])"
                     f" for item in {value_key}"
                     ")"
                 )
@@ -131,9 +134,9 @@ class CompiledQuery:
                 value_key = self._store(depth, "values", values)
                 return (
                     "not any("
-                    "in_matches(candidate, item, null_matches_undefined=False, "
+                    "_in_matches(candidate, item, null_matches_undefined=False, "
                     "dialect=dialect, collation=collation)"
-                    f" for candidate in (extract(doc, {field_key}) or [None])"
+                    f" for candidate in (_extract(doc, {field_key}) or [None])"
                     f" for item in {value_key}"
                     ")"
                 )
@@ -155,20 +158,18 @@ class CompiledQuery:
                 return f"not ({self._node_to_code(clause, depth + 1)})"
             case ExistsCondition(field=field, value=value):
                 field_key = self._store(depth, "field", field)
-                return f"bool(extract(doc, {field_key})) == {value}"
+                return f"bool(_extract(doc, {field_key})) == {value}"
             case _:
                 node_key = self._store(depth, "node", node)
-                return (
-                    f"match_plan(doc, {node_key}, dialect=dialect, collation=collation)"
-                )
+                return f"match_plan(doc, {node_key}, dialect=dialect, collation=collation)"
 
     def _comparison_code(self, depth: int, field: str, value: Any, operator: str) -> str:
         field_key = self._store(depth, "field", field)
         value_key = self._store(depth, "value", value)
         return (
             "any("
-            f"compare(candidate, {value_key}, dialect=dialect, collation=collation) {operator} 0"
-            f" for candidate in extract(doc, {field_key})"
+            f"_compare(candidate, {value_key}, dialect=dialect, collation=collation) {operator} 0"
+            f" for candidate in _extract(doc, {field_key})"
             ")"
         )
 

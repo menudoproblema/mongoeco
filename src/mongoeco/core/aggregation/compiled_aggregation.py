@@ -80,9 +80,19 @@ class CompiledGroup:
     def _compile(self) -> Any:
         lines = [
             "def aggregate_func(documents, variables):",
+            "    _bson_add = bson_add",
+            "    _is_numeric = is_numeric",
+            "    _sum_operand = sum_operand",
+            "    _unwrap = unwrap",
+            "    _evaluate = evaluate_expression",
+            "    _agg_key = _aggregation_key",
+            "    _deepcopy = deepcopy",
+            "    _compare = dialect.policy.compare_values",
+            "    _avg_acc = _AverageAccumulator",
             "    groups = {}",
             "    for doc in documents:",
         ]
+
         logic_lines = self._compile_logic_only()
         for line in logic_lines:
             lines.append(f"        {line}")
@@ -96,21 +106,26 @@ class CompiledGroup:
         return local_vars["aggregate_func"]
 
     def _compile_logic_only(self) -> list[str]:
-        """Generate only the body of the aggregation loop."""
+        """Generate the body of the aggregation loop."""
         lines = []
         accumulator_fields = list(self.accumulator_specs.keys())
         accumulator_count = len(accumulator_fields)
 
-        id_code = self._compile_expression(self.id_expr, "id_expr")
-        lines.append(f"group_id = {id_code}")
-        lines.append("group_key = _aggregation_key(group_id)")
+        if isinstance(self.id_expr, str) and self.id_expr.startswith("$") and not self.id_expr.startswith("$$") and "." not in self.id_expr:
+            field_name = self.id_expr[1:]
+            lines.append(f"group_id = doc.get({field_name!r})")
+        else:
+            self._context["id_expr"] = self.id_expr
+            lines.append("group_id = _evaluate(doc, id_expr, variables, dialect=dialect)")
+
+        lines.append("group_key = _agg_key(group_id)")
 
         initial_states: list[str] = []
         for field in accumulator_fields:
             accumulator_spec = self.accumulator_specs[field]
             operator, _expression = next(iter(accumulator_spec.items()))
             if operator == "$avg":
-                initial_states.append("_AverageAccumulator()")
+                initial_states.append("_avg_acc()")
             elif operator in {"$sum", "$count"}:
                 initial_states.append("0")
             else:
@@ -137,44 +152,36 @@ class CompiledGroup:
 
             match operator:
                 case "$sum":
-                    lines.append("operand = sum_operand(value)")
-                    lines.append("if operand is not None:")
-                    lines.append(
-                        f"    state[{index}] = bson_add(state[{index}], operand)"
-                    )
+                    if expression == 1:
+                        lines.append(f"state[{index}] += 1")
+                    else:
+                        lines.append("operand = _sum_operand(value)")
+                        lines.append("if operand is not None:")
+                        lines.append(f"    state[{index}] = _bson_add(state[{index}], operand)")
                 case "$min" | "$max":
                     comparison = "<" if operator == "$min" else ">"
                     lines.append("if value is not None:")
                     lines.append(
                         f"    if not state[{accumulator_count + 1}].get({field!r}) or "
-                        f"dialect.policy.compare_values(value, state[{index}]) {comparison} 0:"
+                        f"_compare(value, state[{index}]) {comparison} 0:"
                     )
                     lines.append(
-                        f"        state[{index}] = value if isinstance(value, (int, float, str, bool)) else deepcopy(value)"
+                        f"        state[{index}] = value if isinstance(value, (int, float, str, bool)) else _deepcopy(value)"
                     )
-                    lines.append(
-                        f"        state[{accumulator_count + 1}][{field!r}] = True"
-                    )
+                    lines.append(f"        state[{accumulator_count + 1}][{field!r}] = True")
                 case "$avg":
-                    lines.append("if value is not None and is_numeric(value):")
-                    lines.append(
-                        f"    state[{index}].total = bson_add(state[{index}].total, value)"
-                    )
+                    lines.append("if value is not None and _is_numeric(value):")
+                    lines.append(f"    state[{index}].total = _bson_add(state[{index}].total, value)")
                     lines.append(f"    state[{index}].count += 1")
                 case "$first":
+                    lines.append(f"if not state[{accumulator_count + 1}].get({field!r}):")
                     lines.append(
-                        f"    if not state[{accumulator_count + 1}].get({field!r}):"
+                        f"    state[{index}] = value if isinstance(value, (int, float, str, bool)) else _deepcopy(value)"
                     )
-                    lines.append(
-                        f"        state[{index}] = value if isinstance(value, (int, float, str, bool)) else deepcopy(value)"
-                    )
-                    lines.append(
-                        f"        state[{accumulator_count + 1}][{field!r}] = True"
-                    )
+                    lines.append(f"    state[{accumulator_count + 1}][{field!r}] = True")
                 case "$last":
-                    lines.append(
-                        f"    state[{index}] = value if isinstance(value, (int, float, str, bool)) else deepcopy(value)"
-                    )
+                    lines.append(f"state[{index}] = value if isinstance(value, (int, float, str, bool)) else _deepcopy(value)")
+
         return lines
 
     def _compile_finalization_only(self) -> list[str]:
@@ -184,23 +191,18 @@ class CompiledGroup:
         lines = [
             "    results = []",
             "    for state in groups.values():",
-            f"        result = {{'_id': deepcopy(state[{accumulator_count}])}}",
+            f"        result = {{'_id': _deepcopy(state[{accumulator_count}])}}",
         ]
         for index, field in enumerate(accumulator_fields):
             operator, _expression = next(iter(self.accumulator_specs[field].items()))
             if operator == "$avg":
                 lines.append(f"        avg_state = state[{index}]")
                 lines.append(
-                    f"        result[{field!r}] = None if avg_state.count == 0 else unwrap(avg_state.total) / avg_state.count"
+                    f"        result[{field!r}] = None if avg_state.count == 0 else _unwrap(avg_state.total) / avg_state.count"
                 )
             else:
                 lines.append(f"        result[{field!r}] = state[{index}]")
-        lines.extend(
-            [
-                "        results.append(result)",
-                "    return results",
-            ]
-        )
+        lines.extend(["        results.append(result)", "    return results"])
         return lines
 
     def _compile_expression(self, expr: Any, prefix: str) -> str:
@@ -209,14 +211,14 @@ class CompiledGroup:
             if expr.startswith("$$"):
                 key = f"{prefix}_var"
                 self._context[key] = expr
-                return f"evaluate_expression(doc, {key}, variables, dialect=dialect)"
+                return f"_evaluate(doc, {key}, variables, dialect=dialect)"
             if expr.startswith("$"):
                 path = expr[1:]
                 if "." not in path:
                     return f"doc.get({path!r})"
                 key = f"{prefix}_path"
                 self._context[key] = expr
-                return f"evaluate_expression(doc, {key}, variables, dialect=dialect)"
+                return f"_evaluate(doc, {key}, variables, dialect=dialect)"
             return repr(expr)
 
         if not isinstance(expr, dict):
@@ -246,4 +248,4 @@ class CompiledGroup:
 
         key = f"{prefix}_expr"
         self._context[key] = expr
-        return f"evaluate_expression(doc, {key}, variables, dialect=dialect)"
+        return f"_evaluate(doc, {key}, variables, dialect=dialect)"
