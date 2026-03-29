@@ -42,6 +42,21 @@ class CompiledQueryTests(unittest.TestCase):
             CompiledQuery(nin_plan).match(document),
         )
 
+    def test_compiled_query_matches_query_engine_for_top_level_scalar_equality(self):
+        document = {"active": True, "city": "Madrid"}
+
+        active_plan = compile_filter({"active": True})
+        city_plan = compile_filter({"city": "Madrid"})
+
+        self.assertEqual(
+            QueryEngine.match_plan(document, active_plan),
+            CompiledQuery(active_plan).match(document),
+        )
+        self.assertEqual(
+            QueryEngine.match_plan(document, city_plan),
+            CompiledQuery(city_plan).match(document),
+        )
+
     def test_compiled_query_matches_query_engine_for_exists_with_null_and_nested_paths(self):
         document = {"value": None, "items": [{"kind": "a"}]}
 

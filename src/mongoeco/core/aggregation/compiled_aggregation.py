@@ -18,6 +18,7 @@ from mongoeco.types import Document
 
 _SUPPORTED_GROUP_ACCUMULATORS = frozenset(
     {
+        "$addToSet",
         "$avg",
         "$count",
         "$first",
@@ -83,6 +84,7 @@ class CompiledGroup:
             for field, accumulator_spec in self.accumulator_specs.items()
         ]
         self._context_counter = 0
+        from mongoeco.core.filtering import QueryEngine
         self._context: dict[str, Any] = {
             "dialect": dialect,
             "bson_add": bson_add,
@@ -97,6 +99,7 @@ class CompiledGroup:
             "_compiled_add": _compiled_add,
             "_compiled_multiply": _compiled_multiply,
             "_compiled_subtract": _compiled_subtract,
+            "_values_equal": QueryEngine._values_equal,
         }
         cache_key = self._cache_key(spec, dialect)
         cached = self._COMPILED_FUNCTION_CACHE.get(cache_key)
@@ -212,6 +215,8 @@ class CompiledGroup:
                 initial_states.append("_avg_acc()")
             elif operator in {"$sum", "$count"}:
                 initial_states.append("0")
+            elif operator == "$addToSet":
+                initial_states.append("[]")
             else:
                 initial_states.append("None")
 
@@ -255,6 +260,13 @@ class CompiledGroup:
                     lines.append("if value is not None and _is_numeric(value):")
                     lines.append(f"    state[{index}].total = _bson_add(state[{index}].total, value)")
                     lines.append(f"    state[{index}].count += 1")
+                case "$addToSet":
+                    lines.append(
+                        f"if not any(_values_equal(value, existing, dialect=dialect) for existing in state[{index}]):"
+                    )
+                    lines.append(
+                        f"    state[{index}].append(value if isinstance(value, (int, float, str, bool)) else _deepcopy(value))"
+                    )
                 case "$first":
                     lines.append(f"if not state[{accumulator_count + 1}].get({field!r}):")
                     lines.append(

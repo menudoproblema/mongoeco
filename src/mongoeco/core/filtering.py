@@ -541,7 +541,73 @@ class QueryEngine:
                 return True
         if null_matches_undefined and candidate is None and isinstance(expected, UndefinedType):
             return True
+        if collation is None and dialect is MONGODB_DIALECT_70:
+            candidate_type = type(candidate)
+            expected_type = type(expected)
+            if (
+                candidate_type is expected_type
+                and candidate_type in {str, bytes, bool, int, float}
+                and not (candidate_type is float and (math.isnan(candidate) or math.isnan(expected)))
+            ):
+                return candidate == expected
+            if (
+                candidate_type in {int, float}
+                and expected_type in {int, float}
+                and candidate_type is not bool
+                and expected_type is not bool
+                and not (
+                    (candidate_type is float and math.isnan(candidate))
+                    or (expected_type is float and math.isnan(expected))
+                )
+            ):
+                return candidate == expected
         return QueryEngine._values_equal(candidate, expected, dialect=dialect, collation=collation)
+
+    @staticmethod
+    def _match_top_level_equals(
+        doc: dict[str, Any],
+        field: str,
+        condition: Any,
+        *,
+        null_matches_undefined: bool = False,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
+    ) -> bool:
+        if field in doc:
+            value = doc[field]
+            if isinstance(value, list):
+                if QueryEngine._query_equality_matches(
+                    value,
+                    condition,
+                    null_matches_undefined=null_matches_undefined,
+                    dialect=dialect,
+                    collation=collation,
+                ):
+                    return True
+                return any(
+                    QueryEngine._query_equality_matches(
+                        item,
+                        condition,
+                        null_matches_undefined=null_matches_undefined,
+                        dialect=dialect,
+                        collation=collation,
+                    )
+                    for item in value
+                )
+            return QueryEngine._query_equality_matches(
+                value,
+                condition,
+                null_matches_undefined=null_matches_undefined,
+                dialect=dialect,
+                collation=collation,
+            )
+        return QueryEngine._query_equality_matches(
+            None,
+            condition,
+            null_matches_undefined=null_matches_undefined,
+            dialect=dialect,
+            collation=collation,
+        )
 
     @staticmethod
     def _evaluate_equals(
@@ -553,6 +619,15 @@ class QueryEngine:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
+        if "." not in field:
+            return QueryEngine._match_top_level_equals(
+                doc,
+                field,
+                condition,
+                null_matches_undefined=null_matches_undefined,
+                dialect=dialect,
+                collation=collation,
+            )
         values = QueryEngine._extract_values(doc, field)
         candidates = values or [None]
         return any(

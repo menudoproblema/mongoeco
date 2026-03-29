@@ -47,3 +47,20 @@
 
 - No incluido `P1`: hoy rompe semántica observable fijada por tests de `extract_values`.
 - No incluido `P10`: el fast path propuesto para `int` / `float` / `str` en `$in` no es seguro con collation y dialectos custom.
+
+## Benchmark 500
+
+Comparativa de la última tanda frente a la ejecución anterior. Valores más bajos son mejores.
+
+```mermaid
+xychart-beta
+    title "Benchmark 500: Memory deltas (%)"
+    x-axis ["cursor_mat_sync", "cursor_mat_async", "filter_low_sync", "filter_med_sync", "filter_high_sync", "filter_high_async"]
+    y-axis "Delta %" -55 0
+    bar [-39.1, -43.1, -49.3, -50.7, -39.0, -38.6]
+```
+
+- `cursor_consumption_materialized_200`: `memory-sync -39.1%`, `memory-async -43.1%`
+- `filter_selectivity_low_100`: `memory-sync -49.3%`, `memory-async -49.2%`
+- `filter_selectivity_medium_100`: `memory-sync -50.7%`, `memory-async -49.9%`
+- `filter_selectivity_high_100`: `memory-sync -39.0%`, `memory-async -38.6%`

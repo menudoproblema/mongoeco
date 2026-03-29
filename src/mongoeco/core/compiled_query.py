@@ -53,6 +53,7 @@ class CompiledQuery:
         from mongoeco.core.filtering import QueryEngine
         self._context["extract"] = QueryEngine.extract_values
         self._context["eq_matches"] = QueryEngine._query_equality_matches
+        self._context["top_eq"] = QueryEngine._match_top_level_equals
         self._context["in_matches"] = QueryEngine._in_item_matches_candidate
         self._context["match_plan"] = QueryEngine.match_plan
 
@@ -73,6 +74,7 @@ class CompiledQuery:
             "def match_logic(doc):\n"
             "    _extract = extract\n"
             "    _eq_matches = eq_matches\n"
+            "    _top_eq = top_eq\n"
             "    _in_matches = in_matches\n"
             "    _compare = compare\n"
             "    _values_equal = values_equal\n"
@@ -93,6 +95,12 @@ class CompiledQuery:
             case EqualsCondition(field=field, value=value, null_matches_undefined=null_matches_undefined):
                 field_key = self._store(depth, "field", field)
                 value_key = self._store(depth, "value", value)
+                if "." not in field:
+                    return (
+                        f"_top_eq(doc, {field_key}, {value_key}, "
+                        f"null_matches_undefined={null_matches_undefined}, "
+                        "dialect=dialect, collation=collation)"
+                    )
                 return (
                     "any("
                     f"_eq_matches(candidate, {value_key}, "

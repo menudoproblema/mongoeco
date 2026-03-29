@@ -570,8 +570,26 @@ class AggregationTests(unittest.TestCase):
                 {"_id": "$kind", "total": {"$sum": "$value"}, "first": {"$first": "$value"}}
             )
         )
-        self.assertFalse(CompiledGroup.supports({"_id": "$kind", "roles": {"$addToSet": "$role"}}))
+        self.assertTrue(CompiledGroup.supports({"_id": "$kind", "roles": {"$addToSet": "$role"}}))
         self.assertFalse(CompiledGroup.supports({"_id": "$kind", "items": {"$push": "$role"}}))
+
+    def test_apply_group_compiles_add_to_set_without_changing_uniqueness_or_order(self):
+        grouped = _apply_group(
+            [
+                {"kind": "a", "tag": {"code": 1}},
+                {"kind": "a", "tag": {"code": 1}},
+                {"kind": "a", "tag": {"code": 2}},
+            ],
+            {
+                "_id": "$kind",
+                "tags": {"$addToSet": "$tag"},
+            },
+        )
+
+        self.assertEqual(
+            grouped,
+            [{"_id": "a", "tags": [{"code": 1}, {"code": 2}]}],
+        )
 
     def test_apply_group_falls_back_for_accumulators_not_supported_by_compiler(self):
         grouped = _apply_group(
