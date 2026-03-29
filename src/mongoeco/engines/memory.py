@@ -829,11 +829,18 @@ class MemoryEngine(AsyncStorageEngine):
                     target_index_match, target_key = find_usable_index(semantics.query_plan)
                     if target_index_match and target_index_match["name"] in index_data:
                         storage_keys = index_data[target_index_match["name"]].get(target_key, set())
-                        document_source = (
-                            self._decode_storage_document(data)
-                            for sk, data in coll.items()
-                            if sk in storage_keys
-                        )
+                        if len(storage_keys) <= 1:
+                            document_source = (
+                                self._decode_storage_document(coll[sk])
+                                for sk in storage_keys
+                                if sk in coll
+                            )
+                        else:
+                            document_source = (
+                                self._decode_storage_document(data)
+                                for sk, data in coll.items()
+                                if sk in storage_keys
+                            )
                     else:
                         # Scan completo (lento)
                         enforce_deadline(deadline)

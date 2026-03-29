@@ -255,11 +255,10 @@ def finalize_documents(
     apply_skip_limit_phase: bool = True,
 ) -> list[Document]:
     deadline = semantics.deadline
-    result = list(documents)
     if apply_sort_phase:
         if apply_skip_limit_phase and semantics.limit is not None:
             result = sort_documents_limited(
-                result,
+                documents,
                 semantics.sort,
                 skip=semantics.skip,
                 limit=semantics.limit,
@@ -268,6 +267,7 @@ def finalize_documents(
             )
             apply_skip_limit_phase = False
         else:
+            result = list(documents)
             result = sort_documents(
                 result,
                 semantics.sort,
@@ -275,6 +275,8 @@ def finalize_documents(
                 collation=semantics.collation,
             )
         enforce_deadline(deadline)
+    else:
+        result = list(documents)
     if apply_skip_limit_phase:
         if semantics.skip:
             result = result[semantics.skip :]

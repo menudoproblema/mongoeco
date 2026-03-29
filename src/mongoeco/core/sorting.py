@@ -1,6 +1,6 @@
 from functools import cmp_to_key
 import heapq
-from typing import Any
+from typing import Any, Iterable
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec, compare_with_collation
@@ -41,6 +41,30 @@ def _compare_sort_keys(
     return 0
 
 
+def _extreme_value(
+    values: Iterable[Any],
+    *,
+    prefer_max: bool,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
+) -> Any:
+    iterator = iter(values)
+    try:
+        best = next(iterator)
+    except StopIteration:
+        return None
+    for candidate in iterator:
+        result = compare_with_collation(
+            candidate,
+            best,
+            dialect=dialect,
+            collation=collation,
+        )
+        if (prefer_max and result > 0) or (not prefer_max and result < 0):
+            best = candidate
+    return best
+
+
 def sort_value(
     document: Document,
     field: str,
@@ -58,31 +82,19 @@ def sort_value(
         if not primary:
             return []
         members = values[1:] or primary
-        ordered = sorted(
+        return _extreme_value(
             members,
-            key=cmp_to_key(
-                lambda left, right: compare_with_collation(
-                    left,
-                    right,
-                    dialect=dialect,
-                    collation=collation,
-                )
-            ),
+            prefer_max=direction == -1,
+            dialect=dialect,
+            collation=collation,
         )
-        return ordered[0] if direction == 1 else ordered[-1]
     if len(values) > 1:
-        ordered = sorted(
+        return _extreme_value(
             values,
-            key=cmp_to_key(
-                lambda left, right: compare_with_collation(
-                    left,
-                    right,
-                    dialect=dialect,
-                    collation=collation,
-                )
-            ),
+            prefer_max=direction == -1,
+            dialect=dialect,
+            collation=collation,
         )
-        return ordered[0] if direction == 1 else ordered[-1]
     return primary
 
 
@@ -138,7 +150,7 @@ def sort_documents(
 
 
 def sort_documents_window(
-    documents: list[Document] | tuple[Document, ...] | Any,
+    documents: Iterable[Document],
     sort: SortSpec | None,
     *,
     window: int | None,
@@ -152,27 +164,70 @@ def sort_documents_window(
         return sort_documents(list(documents), sort, dialect=dialect, collation=collation)
     if window <= 0:
         return []
-    decorated = [
-        (
-            _document_sort_keys(doc, sort, dialect=dialect, collation=collation),
-            doc,
-        )
-        for doc in documents
-    ]
 
-    def _compare_decorated(left_tuple: tuple[list[Any], Document], right_tuple: tuple[list[Any], Document]) -> int:
-        left_keys, _ = left_tuple
-        right_keys, _ = right_tuple
-        return _compare_sort_keys(
+    def _compare_decorated(
+        left_tuple: tuple[list[Any], Document, int],
+        right_tuple: tuple[list[Any], Document, int],
+    ) -> int:
+        left_keys = left_tuple[0]
+        right_keys = right_tuple[0]
+        result = _compare_sort_keys(
             left_keys,
             right_keys,
             sort,
             dialect=dialect,
             collation=collation,
         )
+        if result != 0:
+            return result
+        left_index = left_tuple[2]
+        right_index = right_tuple[2]
+        if left_index < right_index:
+            return -1
+        if left_index > right_index:
+            return 1
+        return 0
 
-    smallest = heapq.nsmallest(window, decorated, key=cmp_to_key(_compare_decorated))
-    return [doc for _keys, doc in smallest]
+    class _HeapItem:
+        __slots__ = ("keys", "doc", "index")
+
+        def __init__(self, keys: list[Any], doc: Document, index: int):
+            self.keys = keys
+            self.doc = doc
+            self.index = index
+
+        def __lt__(self, other: "_HeapItem") -> bool:
+            return _compare_decorated(
+                (self.keys, self.doc, self.index),
+                (other.keys, other.doc, other.index),
+            ) > 0
+
+    heap: list[_HeapItem] = []
+    for index, doc in enumerate(documents):
+        item = _HeapItem(
+            _document_sort_keys(doc, sort, dialect=dialect, collation=collation),
+            doc,
+            index,
+        )
+        if len(heap) < window:
+            heapq.heappush(heap, item)
+            continue
+        if _compare_decorated(
+            (item.keys, item.doc, item.index),
+            (heap[0].keys, heap[0].doc, heap[0].index),
+        ) < 0:
+            heapq.heapreplace(heap, item)
+
+    ordered = sorted(
+        heap,
+        key=cmp_to_key(
+            lambda left, right: _compare_decorated(
+                (left.keys, left.doc, left.index),
+                (right.keys, right.doc, right.index),
+            )
+        ),
+    )
+    return [item.doc for item in ordered]
 
 
 def sort_documents_limited(

@@ -156,7 +156,7 @@ def _apply_group(
         group_key = _aggregation_key(group_id)
         if group_key not in groups:
             groups[group_key] = _AccumulatorBucket(
-                bucket_id=deepcopy(group_id),
+                bucket_id=_copy_if_mutable(group_id),
                 values=_create_accumulator_state(
                     prepared_accumulators,
                     unsupported_message="Unsupported $group accumulator",
@@ -208,7 +208,7 @@ def _apply_bucket(
     for lower in boundaries[:-1]:
         buckets.append(
             _AccumulatorBucket(
-                bucket_id=deepcopy(lower),
+                bucket_id=_copy_if_mutable(lower),
                 values=_create_accumulator_state(prepared_output),
             )
         )
@@ -216,7 +216,7 @@ def _apply_bucket(
     default_state: _AccumulatorBucket | None = None
     if "default" in spec:
         default_state = _AccumulatorBucket(
-            bucket_id=deepcopy(default_bucket),
+            bucket_id=_copy_if_mutable(default_bucket),
             values=_create_accumulator_state(prepared_output),
         )
 
