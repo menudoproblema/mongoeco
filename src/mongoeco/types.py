@@ -12,6 +12,13 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Literal, NotRequired, Self, TypedDict
 
+try:
+    from bson.errors import InvalidId as _PyMongoInvalidId
+    from bson.objectid import ObjectId as _PyMongoObjectId
+except Exception:  # pragma: no cover - optional dependency
+    _PyMongoInvalidId = None
+    _PyMongoObjectId = None
+
 
 class UndefinedType:
     """Representa el tipo BSON `undefined` legado de MongoDB."""
@@ -31,86 +38,117 @@ class UndefinedType:
 UNDEFINED = UndefinedType()
 
 
-class ObjectId:
-    """
-    Implementacion nativa minima de ObjectId (BSON).
-    12 bytes: 4 de timestamp + 5 aleatorios + 3 de contador.
-    """
+if _PyMongoObjectId is not None:
+    class ObjectId(_PyMongoObjectId):
+        """Wrapper compatible con PyMongo ObjectId y con el contrato historico local."""
 
-    _inc_lock = threading.Lock()
-    _counter = int.from_bytes(os.urandom(3), "big")
-    _random = os.urandom(5)
+        __slots__ = ()
 
-    __slots__ = ("_oid",)
-
-    def __init__(self, oid: str | bytes | Self | None = None):
-        if oid is None:
-            self._oid = self._generate()
-        elif isinstance(oid, ObjectId):
-            self._oid = oid._oid
-        elif isinstance(oid, bytes):
-            if len(oid) != 12:
-                raise ValueError(f"bytes de ObjectId deben ser de 12, no {len(oid)}")
-            self._oid = oid
-        elif isinstance(oid, str):
-            if len(oid) != 24:
-                raise ValueError(f"string de ObjectId debe ser de 24 hex, no {len(oid)}")
+        def __init__(self, oid: str | bytes | Self | _PyMongoObjectId | None = None):
+            if oid is not None and not isinstance(oid, (str, bytes, ObjectId, _PyMongoObjectId)):
+                raise TypeError(f"ID invalido tipo {type(oid)}: {oid}")
             try:
-                self._oid = binascii.unhexlify(oid)
-            except binascii.Error as exc:
-                raise ValueError(f"'{oid}' no es un hexadecimal valido") from exc
-        else:
-            raise TypeError(f"ID invalido tipo {type(oid)}: {oid}")
+                super().__init__(oid)
+            except TypeError as exc:
+                if isinstance(oid, bytes):
+                    raise ValueError(f"bytes de ObjectId deben ser de 12, no {len(oid)}") from exc
+                raise
+            except _PyMongoInvalidId as exc:
+                text = str(oid)
+                if isinstance(oid, str) and len(oid) != 24:
+                    raise ValueError(f"string de ObjectId debe ser de 24 hex, no {len(oid)}") from exc
+                raise ValueError(f"'{text}' no es un hexadecimal valido") from exc
 
-    @classmethod
-    def _generate(cls) -> bytes:
-        timestamp = int(time.time())
-        with cls._inc_lock:
-            cls._counter = (cls._counter + 1) & 0xFFFFFF
-            counter = cls._counter
+        @classmethod
+        def is_valid(cls, oid: Any) -> bool:
+            if isinstance(oid, bytes):
+                return len(oid) == 12
+            return bool(_PyMongoObjectId.is_valid(oid))
 
-        return (
-            timestamp.to_bytes(4, "big")
-            + cls._random
-            + counter.to_bytes(3, "big")
-        )
+        @property
+        def generation_time(self) -> int:
+            return int(super().generation_time.timestamp())
+else:
+    class ObjectId:
+        """
+        Implementacion nativa minima de ObjectId (BSON).
+        12 bytes: 4 de timestamp + 5 aleatorios + 3 de contador.
+        """
 
-    @classmethod
-    def is_valid(cls, oid: Any) -> bool:
-        if isinstance(oid, ObjectId):
-            return True
-        if isinstance(oid, bytes):
-            return len(oid) == 12
-        if isinstance(oid, str) and len(oid) == 24:
-            return all(ch in "0123456789abcdefABCDEF" for ch in oid)
-        return False
+        _inc_lock = threading.Lock()
+        _counter = int.from_bytes(os.urandom(3), "big")
+        _random = os.urandom(5)
 
-    @property
-    def binary(self) -> bytes:
-        return self._oid
+        __slots__ = ("_oid",)
 
-    @property
-    def generation_time(self) -> int:
-        return int.from_bytes(self._oid[:4], "big")
+        def __init__(self, oid: str | bytes | Self | None = None):
+            if oid is None:
+                self._oid = self._generate()
+            elif isinstance(oid, ObjectId):
+                self._oid = oid._oid
+            elif isinstance(oid, bytes):
+                if len(oid) != 12:
+                    raise ValueError(f"bytes de ObjectId deben ser de 12, no {len(oid)}")
+                self._oid = oid
+            elif isinstance(oid, str):
+                if len(oid) != 24:
+                    raise ValueError(f"string de ObjectId debe ser de 24 hex, no {len(oid)}")
+                try:
+                    self._oid = binascii.unhexlify(oid)
+                except binascii.Error as exc:
+                    raise ValueError(f"'{oid}' no es un hexadecimal valido") from exc
+            else:
+                raise TypeError(f"ID invalido tipo {type(oid)}: {oid}")
 
-    def __str__(self) -> str:
-        return binascii.hexlify(self._oid).decode("ascii")
+        @classmethod
+        def _generate(cls) -> bytes:
+            timestamp = int(time.time())
+            with cls._inc_lock:
+                cls._counter = (cls._counter + 1) & 0xFFFFFF
+                counter = cls._counter
 
-    def __repr__(self) -> str:
-        return f"ObjectId('{self}')"
+            return (
+                timestamp.to_bytes(4, "big")
+                + cls._random
+                + counter.to_bytes(3, "big")
+            )
 
-    def __hash__(self) -> int:
-        return hash(self._oid)
-
-    def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, ObjectId):
+        @classmethod
+        def is_valid(cls, oid: Any) -> bool:
+            if isinstance(oid, ObjectId):
+                return True
+            if isinstance(oid, bytes):
+                return len(oid) == 12
+            if isinstance(oid, str) and len(oid) == 24:
+                return all(ch in "0123456789abcdefABCDEF" for ch in oid)
             return False
-        return self._oid == other._oid
 
-    def __lt__(self, other: Self) -> bool:
-        if not isinstance(other, ObjectId):
-            return NotImplemented
-        return self._oid < other._oid
+        @property
+        def binary(self) -> bytes:
+            return self._oid
+
+        @property
+        def generation_time(self) -> int:
+            return int.from_bytes(self._oid[:4], "big")
+
+        def __str__(self) -> str:
+            return binascii.hexlify(self._oid).decode("ascii")
+
+        def __repr__(self) -> str:
+            return f"ObjectId('{self}')"
+
+        def __hash__(self) -> int:
+            return hash(self._oid)
+
+        def __eq__(self, other: Any) -> bool:
+            if not isinstance(other, ObjectId):
+                return False
+            return self._oid == other._oid
+
+        def __lt__(self, other: Self) -> bool:
+            if not isinstance(other, ObjectId):
+                return NotImplemented
+            return self._oid < other._oid
 
 
 class Binary(bytes):

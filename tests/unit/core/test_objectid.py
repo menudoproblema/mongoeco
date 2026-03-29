@@ -2,6 +2,10 @@ import unittest
 import time
 
 from mongoeco.types import DeleteResult, InsertManyResult, InsertOneResult, ObjectId, UNDEFINED, UndefinedType, UpdateResult
+try:
+    from bson.objectid import ObjectId as BsonObjectId
+except Exception:  # pragma: no cover - optional dependency
+    BsonObjectId = None
 
 class TestObjectId(unittest.TestCase):
     def test_generation_is_unique(self):
@@ -60,6 +64,16 @@ class TestObjectId(unittest.TestCase):
         self.assertEqual(from_bytes, original)
         self.assertEqual(from_bytes.binary, original.binary)
         self.assertEqual(repr(original), f"ObjectId('{original}')")
+
+    def test_is_compatible_with_pymongo_objectid_constructor_when_available(self):
+        if BsonObjectId is None:
+            self.skipTest("bson is not installed")
+
+        original = ObjectId()
+        converted = BsonObjectId(original)
+
+        self.assertEqual(str(converted), str(original))
+        self.assertIsInstance(original, BsonObjectId)
 
     def test_equality_and_ordering_with_other_types(self):
         oid = ObjectId()
