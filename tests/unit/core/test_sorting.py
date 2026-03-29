@@ -145,6 +145,39 @@ class SortingHelpersTests(unittest.TestCase):
             expected,
         )
 
+    def test_sort_documents_window_matches_full_sort_prefix_for_single_key_with_ties(self):
+        documents = [
+            {"_id": "0", "other": 4},
+            {"_id": "1", "other": 3},
+            {"_id": "2", "other": 1},
+            {"_id": "3", "other": 4},
+            {"_id": "4", "other": 4},
+            {"_id": "5", "other": 0},
+            {"_id": "6", "other": 4},
+            {"_id": "7", "other": 4},
+            {"_id": "8", "other": 3},
+            {"_id": "9", "other": 4},
+            {"_id": "10", "other": 5},
+            {"_id": "11", "other": 0},
+        ]
+
+        expected = [
+            document["_id"]
+            for document in sort_documents(documents, [("other", 1)])[:8]
+        ]
+
+        self.assertEqual(
+            [
+                document["_id"]
+                for document in sort_documents_window(
+                    documents,
+                    [("other", 1)],
+                    window=8,
+                )
+            ],
+            expected,
+        )
+
     def test_sort_documents_limited_applies_skip_and_limit_without_full_tail(self):
         documents = [
             {"_id": "5", "rank": 5},
