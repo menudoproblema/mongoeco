@@ -164,6 +164,21 @@ class QueryEngineTests(unittest.TestCase):
         document = {"tags": ["python", "mongodb"]}
         self.assertTrue(QueryEngine.match(document, {"tags": "python"}))
 
+    def test_query_engine_all_matches_direct_array_members_without_considering_array_as_scalar(self):
+        document = {"tags": ["python", "mongodb"]}
+
+        self.assertTrue(QueryEngine.match(document, {"tags": {"$all": ["python", "mongodb"]}}))
+        self.assertFalse(QueryEngine.match(document, {"tags": {"$all": [["python", "mongodb"]]}}))
+
+    def test_query_engine_all_uses_single_resolution_for_array_traversal_and_hashable_fast_path(self):
+        document = {"items": [{"tags": [b"a", b"b"]}, {"tags": [b"c"]}]}
+
+        with (
+            patch.object(QueryEngine, "_get_field_value", side_effect=AssertionError("unexpected fast-path lookup")),
+            patch.object(QueryEngine, "_values_equal", side_effect=AssertionError("unexpected equality fallback")),
+        ):
+            self.assertTrue(QueryEngine.match(document, {"items.tags": {"$all": [b"a", b"c"]}}))
+
     def test_query_engine_supports_dot_notation_through_list_of_documents(self):
         document = {"items": [{"kind": "a"}, {"kind": "b"}]}
         self.assertTrue(QueryEngine.match(document, {"items.kind": "b"}))
@@ -278,6 +293,9 @@ class QueryEngineTests(unittest.TestCase):
             QueryEngine.match({"score": 7}, {"score": {"$type": []}})
         self.assertTrue(QueryEngine.match({"score": decimal.Decimal("7.5")}, {"score": {"$type": "decimal"}}))
         self.assertTrue(QueryEngine.match({"score": decimal.Decimal("7.5")}, {"score": {"$type": 19}}))
+        self.assertTrue(QueryEngine.match({"score": 7.5}, {"score": {"$type": "Double"}}))
+        self.assertTrue(QueryEngine.match({"score": 7}, {"score": {"$type": "INT"}}))
+        self.assertTrue(QueryEngine.match({"score": decimal.Decimal("7.5")}, {"score": {"$type": "Decimal"}}))
         with self.assertRaises(ValueError):
             QueryEngine.match({"score": 7}, {"score": {"$type": True}})
 
@@ -314,6 +332,7 @@ class QueryEngineTests(unittest.TestCase):
         document = {"tags": ["python", "mongodb", "sqlite"]}
         self.assertTrue(QueryEngine.match(document, {"tags": {"$all": ["python", "sqlite"]}}))
         self.assertFalse(QueryEngine.match(document, {"tags": {"$all": ["python", "redis"]}}))
+        self.assertFalse(QueryEngine.match(document, {"tags": {"$all": []}}))
         self.assertTrue(QueryEngine.match({"tags": "python"}, {"tags": {"$all": ["python"]}}))
         self.assertFalse(QueryEngine.match({"tags": "python"}, {"tags": {"$all": ["python", "mongodb"]}}))
         self.assertTrue(
@@ -487,6 +506,24 @@ class QueryEngineTests(unittest.TestCase):
                 {"items": {"$elemMatch": {"kind": "b", "qty": {"$gte": 4}, "price": {"$lt": 10}}}},
             )
         )
+
+    def test_query_engine_elem_match_reuses_compiled_plans(self):
+        scalar_plan = compile_filter({"scores": {"$elemMatch": {"$gt": 3, "$lt": 5}}})
+        document_plan = compile_filter({"items": {"$elemMatch": {"kind": "b", "qty": 2}}})
+
+        with patch.object(QueryEngine, "match", side_effect=AssertionError("unexpected runtime recompilation")):
+            self.assertTrue(
+                QueryEngine.match_plan(
+                    {"scores": [1, 4, 7]},
+                    scalar_plan,
+                )
+            )
+            self.assertTrue(
+                QueryEngine.match_plan(
+                    {"items": [{"kind": "a", "qty": 1}, {"kind": "b", "qty": 2}]},
+                    document_plan,
+                )
+            )
 
     def test_query_engine_elem_match_private_helper_supports_direct_scalar_condition(self):
         self.assertTrue(QueryEngine._match_elem_match_candidate("python", "python"))

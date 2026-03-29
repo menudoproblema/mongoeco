@@ -8,8 +8,12 @@ from mongoeco.core.bson_scalars import (
     BsonInt32,
     BsonInt64,
     BsonScalarOverflowError,
+    bson_add,
+    bson_bitwise,
     bson_mod,
+    bson_multiply,
     bson_numeric_alias,
+    bson_subtract,
     compare_bson_numeric,
     is_bson_numeric,
     unwrap_bson_numeric,
@@ -58,6 +62,23 @@ class BsonScalarTests(unittest.TestCase):
     def test_bson_mod_preserves_integer_precision_for_large_values(self):
         value = (1 << 62) + 5
         self.assertEqual(bson_mod(value, 3), value % 3)
+        self.assertEqual(bson_mod(-7, 3), -1)
+        self.assertEqual(bson_mod(7, -3), 1)
+
+    def test_compare_bson_numeric_handles_mixed_decimal_and_float_nan_infinities(self):
+        self.assertEqual(compare_bson_numeric(BsonDecimal128(decimal.Decimal("NaN")), float("nan")), 0)
+        self.assertGreater(compare_bson_numeric(BsonDecimal128(decimal.Decimal("Infinity")), 1.0), 0)
+        self.assertLess(compare_bson_numeric(BsonDecimal128(decimal.Decimal("-Infinity")), 1.0), 0)
+
+    def test_bson_float_arithmetic_preserves_double_promotion_and_wrappers(self):
+        self.assertEqual(bson_add(1.5, 2), 3.5)
+        self.assertEqual(bson_subtract(5.5, 2), 3.5)
+        self.assertEqual(bson_multiply(1.5, 2), 3.0)
+        self.assertEqual(bson_add(BsonInt32(2), 1.5), BsonDouble(3.5))
+
+    def test_bson_bitwise_rejects_non_integral_operands(self):
+        with self.assertRaises(TypeError):
+            bson_bitwise("and", BsonInt32(1), 1.5)
 
     def test_validate_bson_value_walks_nested_documents_and_lists(self):
         validate_bson_value(
@@ -68,3 +89,10 @@ class BsonScalarTests(unittest.TestCase):
                 ]
             }
         )
+
+    def test_validate_bson_value_handles_deep_nesting_iteratively(self):
+        nested: object = BsonDecimal128(decimal.Decimal("2.5"))
+        for _ in range(2000):
+            nested = {"value": [nested]}
+
+        validate_bson_value(nested)

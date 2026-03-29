@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import re
+import uuid
 from typing import Any, TypeIs
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -107,6 +108,8 @@ class ElemMatchCondition(QueryNode):
     field: str
     condition: Filter
     dialect: MongoDialect = MONGODB_DIALECT_70
+    compiled_plan: QueryNode | None = None
+    wrap_value: bool = False
 
 
 @dataclass(frozen=True)
@@ -119,6 +122,7 @@ class ExistsCondition(QueryNode):
 class TypeCondition(QueryNode):
     field: str
     values: tuple[BsonValue, ...]
+    aliases: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -126,6 +130,7 @@ class BitwiseCondition(QueryNode):
     field: str
     operator: str
     operand: BitwiseMaskOperand
+    mask: int | None = None
 
 
 @dataclass(frozen=True)
@@ -211,6 +216,86 @@ def _regex_options_from_pattern(pattern: re.Pattern[str]) -> str:
     if pattern.flags & re.VERBOSE:
         options += "x"
     return options
+
+
+def _normalize_type_specifier(type_spec: Any) -> tuple[str, ...]:
+    if isinstance(type_spec, bool):
+        raise ValueError("$type no acepta booleanos como identificadores de tipo")
+    if isinstance(type_spec, int):
+        numeric_mapping = {
+            1: ("double",),
+            2: ("string",),
+            3: ("object",),
+            4: ("array",),
+            5: ("binData",),
+            7: ("objectId",),
+            8: ("bool",),
+            9: ("date",),
+            10: ("null",),
+            11: ("regex",),
+            16: ("int",),
+            17: ("timestamp",),
+            18: ("long",),
+            19: ("decimal",),
+        }
+        if type_spec not in numeric_mapping:
+            raise ValueError("$type usa un codigo BSON no soportado")
+        return numeric_mapping[type_spec]
+    if not isinstance(type_spec, str):
+        raise ValueError("$type necesita alias string o codigo entero BSON")
+    alias_mapping = {
+        "double": ("double",),
+        "string": ("string",),
+        "object": ("object",),
+        "array": ("array",),
+        "bindata": ("binData",),
+        "objectid": ("objectId",),
+        "bool": ("bool",),
+        "date": ("date",),
+        "null": ("null",),
+        "regex": ("regex",),
+        "int": ("int",),
+        "timestamp": ("timestamp",),
+        "long": ("long",),
+        "decimal": ("decimal",),
+        "undefined": ("undefined",),
+        "number": ("double", "int", "long", "decimal"),
+    }
+    normalized = type_spec.strip().casefold()
+    if normalized not in alias_mapping:
+        raise ValueError("$type usa un alias BSON no soportado")
+    return alias_mapping[normalized]
+
+
+def _normalize_type_aliases(type_specs: tuple[BsonValue, ...]) -> frozenset[str]:
+    aliases: set[str] = set()
+    for type_spec in type_specs:
+        aliases.update(_normalize_type_specifier(type_spec))
+    return frozenset(aliases)
+
+
+def _coerce_bitwise_mask(operand: Any) -> int:
+    int64_max = (1 << 63) - 1
+    if isinstance(operand, bool):
+        raise ValueError("bitwise query operators do not accept boolean masks")
+    if isinstance(operand, int):
+        if operand < 0 or operand > int64_max:
+            raise ValueError("numeric bitmasks must be non-negative signed 64-bit integers")
+        return operand
+    if isinstance(operand, bytes):
+        return int.from_bytes(operand, byteorder="little", signed=False)
+    if isinstance(operand, uuid.UUID):
+        return int.from_bytes(operand.bytes, byteorder="little", signed=False)
+    if isinstance(operand, list):
+        mask = 0
+        for position in operand:
+            if not isinstance(position, int) or isinstance(position, bool) or position < 0:
+                raise ValueError("bit position lists must contain non-negative integers")
+            if position > 63:
+                raise ValueError("bit position lists must target signed 64-bit integers")
+            mask |= 1 << position
+        return mask
+    raise ValueError("bitwise query operators require a numeric mask, BinData, or list of bit positions")
 
 
 def _compile_field_condition(
@@ -317,18 +402,43 @@ def _compile_field_condition(
         elif operator == "$elemMatch":
             if not isinstance(value, dict):
                 raise ValueError("$elemMatch necesita una expresion de filtro")
-            clauses.append(ElemMatchCondition(field, value, dialect=dialect))
+            operator_keys = [
+                key
+                for key in value
+                if isinstance(key, str) and key.startswith("$")
+            ]
+            compiled_plan: QueryNode | None = None
+            wrap_value = False
+            try:
+                if operator_keys and len(operator_keys) == len(value):
+                    compiled_plan = _compile_field_condition("value", value, dialect=dialect)
+                    wrap_value = True
+                elif not operator_keys:
+                    compiled_plan = compile_filter(value, dialect=dialect)
+            except (OperationFailure, ValueError, TypeError):
+                compiled_plan = None
+                wrap_value = False
+            clauses.append(
+                ElemMatchCondition(
+                    field,
+                    value,
+                    dialect=dialect,
+                    compiled_plan=compiled_plan,
+                    wrap_value=wrap_value,
+                )
+            )
         elif operator == "$exists":
             clauses.append(ExistsCondition(field, bool(value)))
         elif operator == "$type":
             if isinstance(value, (list, tuple)):
                 if not value:
                     raise ValueError("$type necesita al menos un tipo")
-                clauses.append(TypeCondition(field, tuple(value)))
+                compiled_values = tuple(value)
+                clauses.append(TypeCondition(field, compiled_values, aliases=_normalize_type_aliases(compiled_values)))
             else:
-                clauses.append(TypeCondition(field, (value,)))
+                clauses.append(TypeCondition(field, (value,), aliases=_normalize_type_aliases((value,))))
         elif operator in {"$bitsAllSet", "$bitsAnySet", "$bitsAllClear", "$bitsAnyClear"}:
-            clauses.append(BitwiseCondition(field, operator, value))
+            clauses.append(BitwiseCondition(field, operator, value, mask=_coerce_bitwise_mask(value)))
         else:
             raise OperationFailure(f"Unsupported query operator: {operator}")
 

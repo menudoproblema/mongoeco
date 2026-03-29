@@ -11,8 +11,10 @@ from mongoeco.types import Document
 from mongoeco.core.aggregation.accumulators import (
     _AccumulatorBucket,
     _apply_accumulators,
+    _create_accumulator_state,
     _finalize_accumulators,
-    _initialize_accumulators,
+    _prepare_accumulator_specs,
+    _reset_accumulator_bucket,
     _resolve_range_value,
     _resolve_window_index,
     _require_range_bound,
@@ -30,6 +32,12 @@ from mongoeco.core.aggregation.runtime import (
 )
 from mongoeco.core.aggregation.planning import _require_sort
 from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
+
+
+def _copy_if_mutable(value: Any) -> Any:
+    if isinstance(value, (dict, list, set)):
+        return deepcopy(value)
+    return value
 
 
 def _build_accumulator_runtime(
@@ -73,6 +81,49 @@ def _build_accumulator_runtime(
     }
 
 
+def _find_bucket_index(
+    value: Any,
+    boundaries: list[Any],
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> int | None:
+    if dialect.policy.compare_values(value, boundaries[0]) < 0:
+        return None
+    if dialect.policy.compare_values(value, boundaries[-1]) >= 0:
+        return None
+    low = 0
+    high = len(boundaries) - 1
+    while low < high - 1:
+        mid = (low + high) // 2
+        if dialect.policy.compare_values(value, boundaries[mid]) < 0:
+            high = mid
+        else:
+            low = mid
+    return low
+
+
+def _precompute_window_ranks(
+    window_sort_keys: list[list[Any]],
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> tuple[list[int], list[int]]:
+    if not window_sort_keys:
+        return [], []
+    ranks = [1]
+    dense_ranks = [1]
+    previous_key = window_sort_keys[0]
+    rank = 1
+    dense_rank = 1
+    for index, candidate_key in enumerate(window_sort_keys[1:], start=1):
+        if not _window_sort_keys_equal(candidate_key, previous_key, dialect=dialect):
+            dense_rank += 1
+            rank = index + 1
+            previous_key = candidate_key
+        ranks.append(rank)
+        dense_ranks.append(dense_rank)
+    return ranks, dense_ranks
+
+
 def _apply_group(
     documents: list[Document],
     spec: object,
@@ -92,7 +143,7 @@ def _apply_group(
 
     accumulator_specs = {key: value for key, value in spec.items() if key != "_id"}
     accumulator_runtime = _build_accumulator_runtime(dialect=dialect)
-    _initialize_accumulators(
+    prepared_accumulators = _prepare_accumulator_specs(
         accumulator_specs,
         dialect=dialect,
         support_checker=dialect.supports_group_accumulator,
@@ -106,10 +157,8 @@ def _apply_group(
         if group_key not in groups:
             groups[group_key] = _AccumulatorBucket(
                 bucket_id=deepcopy(group_id),
-                values=_initialize_accumulators(
-                    accumulator_specs,
-                    dialect=dialect,
-                    support_checker=dialect.supports_group_accumulator,
+                values=_create_accumulator_state(
+                    prepared_accumulators,
                     unsupported_message="Unsupported $group accumulator",
                 ),
             )
@@ -117,7 +166,7 @@ def _apply_group(
         bucket = groups[group_key]
         _apply_accumulators(
             bucket,
-            accumulator_specs,
+            prepared_accumulators,
             document,
             variables,
             dialect=dialect,
@@ -146,6 +195,12 @@ def _apply_bucket(
     output = spec.get("output")
     if output is not None and not isinstance(output, dict):
         raise OperationFailure("$bucket output must be a document")
+    prepared_output = _prepare_accumulator_specs(
+        output,
+        default_sum=output is None,
+        dialect=dialect,
+        unsupported_message="Unsupported accumulator",
+    )
 
     default_bucket = spec.get("default")
     accumulator_runtime = _build_accumulator_runtime(dialect=dialect)
@@ -154,7 +209,7 @@ def _apply_bucket(
         buckets.append(
             _AccumulatorBucket(
                 bucket_id=deepcopy(lower),
-                values=_initialize_accumulators(output, default_sum=output is None, dialect=dialect),
+                values=_create_accumulator_state(prepared_output),
             )
         )
 
@@ -162,31 +217,26 @@ def _apply_bucket(
     if "default" in spec:
         default_state = _AccumulatorBucket(
             bucket_id=deepcopy(default_bucket),
-            values=_initialize_accumulators(output, default_sum=output is None, dialect=dialect),
+            values=_create_accumulator_state(prepared_output),
         )
 
     for document in documents:
         value = evaluate_expression(document, spec["groupBy"], variables, dialect=dialect)
-        matched = False
-        for index, lower in enumerate(boundaries[:-1]):
-            upper = boundaries[index + 1]
-            if dialect.policy.compare_values(value, lower) >= 0 and dialect.policy.compare_values(value, upper) < 0:
-                _apply_accumulators(
-                    buckets[index],
-                    output,
-                    document,
-                    variables,
-                    dialect=dialect,
-                    **accumulator_runtime,
-                )
-                matched = True
-                break
-        if matched:
+        bucket_index = _find_bucket_index(value, boundaries, dialect=dialect)
+        if bucket_index is not None:
+            _apply_accumulators(
+                buckets[bucket_index],
+                prepared_output,
+                document,
+                variables,
+                dialect=dialect,
+                **accumulator_runtime,
+            )
             continue
         if default_state is not None:
             _apply_accumulators(
                 default_state,
-                output,
+                prepared_output,
                 document,
                 variables,
                 dialect=dialect,
@@ -220,6 +270,12 @@ def _apply_bucket_auto(
     accumulator_runtime = _build_accumulator_runtime(dialect=dialect)
     if output is not None and not isinstance(output, dict):
         raise OperationFailure("$bucketAuto output must be a document")
+    prepared_output = _prepare_accumulator_specs(
+        output,
+        default_sum=output is None,
+        dialect=dialect,
+        unsupported_message="Unsupported accumulator",
+    )
 
     evaluated = [
         (evaluate_expression(document, spec["groupBy"], variables, dialect=dialect), document)
@@ -228,7 +284,8 @@ def _apply_bucket_auto(
     if not evaluated:
         return []
 
-    evaluated.sort(key=lambda item: cmp_to_key(dialect.policy.compare_values)(item[0]))
+    compare_key = cmp_to_key(dialect.policy.compare_values)
+    evaluated.sort(key=lambda item: compare_key(item[0]))
     bucket_count = min(buckets, len(evaluated))
     base = len(evaluated) // bucket_count
     remainder = len(evaluated) % bucket_count
@@ -239,20 +296,20 @@ def _apply_bucket_auto(
     for size_index, size in enumerate(sizes):
         chunk = evaluated[start:start + size]
         start += size
-        lower = deepcopy(chunk[0][0])
+        lower = _copy_if_mutable(chunk[0][0])
         upper = (
-            deepcopy(evaluated[start][0])
+            _copy_if_mutable(evaluated[start][0])
             if size_index + 1 < len(sizes) and start < len(evaluated)
-            else deepcopy(chunk[-1][0])
+            else _copy_if_mutable(chunk[-1][0])
         )
         bucket = _AccumulatorBucket(
             bucket_id={"min": lower, "max": upper},
-            values=_initialize_accumulators(output, default_sum=output is None, dialect=dialect),
+            values=_create_accumulator_state(prepared_output),
         )
         for _, document in chunk:
             _apply_accumulators(
                 bucket,
-                output,
+                prepared_output,
                 document,
                 variables,
                 dialect=dialect,
@@ -277,6 +334,32 @@ def _apply_set_window_fields(
 
     sort_spec = _require_sort(spec["sortBy"]) if "sortBy" in spec else None
     accumulator_runtime = _build_accumulator_runtime(dialect=dialect)
+    prepared_window_outputs: dict[str, tuple[str, object, dict[str, object] | None, tuple[tuple[str, str, object], ...]]] = {}
+    reusable_window_states: dict[str, _AccumulatorBucket] = {}
+    for field, field_spec in output.items():
+        if not isinstance(field, str):
+            raise OperationFailure("$setWindowFields output field names must be strings")
+        operator, expression, window = _require_window_output_spec(field_spec)
+        if not dialect.supports_window_accumulator(operator):
+            raise OperationFailure(f"Unsupported $setWindowFields accumulator: {operator}")
+        if operator in {"$rank", "$denseRank", "$documentNumber"}:
+            prepared_window_outputs[field] = (operator, expression, window, ())
+            continue
+        prepared_specs = _prepare_accumulator_specs(
+            {field: {operator: expression}},
+            dialect=dialect,
+            support_checker=dialect.supports_window_accumulator,
+            unsupported_message="Unsupported $setWindowFields accumulator",
+        )
+        prepared_window_outputs[field] = (operator, expression, window, prepared_specs)
+        reusable_window_states[field] = _AccumulatorBucket(
+            bucket_id=None,
+            values=_create_accumulator_state(
+                prepared_specs,
+                unsupported_message="Unsupported $setWindowFields accumulator",
+            ),
+            include_bucket_id=False,
+        )
     partitions: dict[Any, list[Document]] = {}
     for document in documents:
         partition_key = (
@@ -290,15 +373,11 @@ def _apply_set_window_fields(
     for partition_documents in partitions.values():
         ordered = sort_documents(partition_documents, sort_spec, dialect=dialect) if sort_spec is not None else partition_documents
         window_sort_keys = [_window_sort_key_values(document, sort_spec) for document in ordered] if sort_spec is not None else []
+        ranks, dense_ranks = _precompute_window_ranks(window_sort_keys, dialect=dialect)
         last_index = len(ordered) - 1
         for current_index, document in enumerate(ordered):
             enriched = deepcopy(document)
-            for field, field_spec in output.items():
-                if not isinstance(field, str):
-                    raise OperationFailure("$setWindowFields output field names must be strings")
-                operator, expression, window = _require_window_output_spec(field_spec)
-                if not dialect.supports_window_accumulator(operator):
-                    raise OperationFailure(f"Unsupported $setWindowFields accumulator: {operator}")
+            for field, (operator, expression, window, prepared_specs) in prepared_window_outputs.items():
                 if operator in {"$rank", "$denseRank", "$documentNumber"}:
                     if sort_spec is None:
                         raise OperationFailure(f"{operator} requires sortBy")
@@ -309,17 +388,7 @@ def _apply_set_window_fields(
                     if operator == "$documentNumber":
                         set_document_value(enriched, field, current_index + 1)
                         continue
-                    rank = 1
-                    dense_rank = 1
-                    previous_key = window_sort_keys[0]
-                    for index in range(1, current_index + 1):
-                        candidate_key = window_sort_keys[index]
-                        if _window_sort_keys_equal(candidate_key, previous_key, dialect=dialect):
-                            continue
-                        dense_rank += 1
-                        rank = index + 1
-                        previous_key = candidate_key
-                    set_document_value(enriched, field, rank if operator == "$rank" else dense_rank)
+                    set_document_value(enriched, field, ranks[current_index] if operator == "$rank" else dense_ranks[current_index])
                     continue
                 if window is None:
                     window_documents = ordered
@@ -357,20 +426,16 @@ def _apply_set_window_fields(
                             numeric_candidate = float(candidate_value)
                             if lower_value <= numeric_candidate <= upper_value:
                                 window_documents.append(candidate)
-                state = _AccumulatorBucket(
-                    bucket_id=None,
-                    values=_initialize_accumulators(
-                        {field: {operator: expression}},
-                        dialect=dialect,
-                        support_checker=dialect.supports_window_accumulator,
-                        unsupported_message="Unsupported $setWindowFields accumulator",
-                    ),
-                    include_bucket_id=False,
+                state = reusable_window_states[field]
+                _reset_accumulator_bucket(
+                    state,
+                    prepared_specs,
+                    unsupported_message="Unsupported $setWindowFields accumulator",
                 )
                 for window_document in window_documents:
                     _apply_accumulators(
                         state,
-                        {field: {operator: expression}},
+                        prepared_specs,
                         window_document,
                         variables,
                         dialect=dialect,

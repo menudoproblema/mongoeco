@@ -249,20 +249,28 @@ class QueryEngine:
                 return QueryEngine._evaluate_regex(document, field, pattern, options)
             case NotCondition(clause=clause):
                 return not QueryEngine.match_plan(document, clause, dialect=dialect, collation=collation)
-            case ElemMatchCondition(field=field, condition=condition, dialect=elem_dialect):
+            case ElemMatchCondition(
+                field=field,
+                condition=condition,
+                dialect=elem_dialect,
+                compiled_plan=compiled_plan,
+                wrap_value=wrap_value,
+            ):
                 return QueryEngine._evaluate_elem_match(
                     document,
                     field,
                     condition,
                     dialect=elem_dialect,
                     collation=collation,
+                    compiled_plan=compiled_plan,
+                    wrap_value=wrap_value,
                 )
             case ExistsCondition(field=field, value=value):
                 return QueryEngine._evaluate_exists(document, field, value)
-            case TypeCondition(field=field, values=values):
-                return QueryEngine._evaluate_type(document, field, values)
-            case BitwiseCondition(field=field, operator=operator, operand=operand):
-                return QueryEngine._evaluate_bitwise(document, field, operator, operand)
+            case TypeCondition(field=field, values=values, aliases=aliases):
+                return QueryEngine._evaluate_type(document, field, values, aliases=aliases)
+            case BitwiseCondition(field=field, operator=operator, operand=operand, mask=mask):
+                return QueryEngine._evaluate_bitwise(document, field, operator, operand, mask=mask)
             case ExprCondition(expression=expression, variables=variables):
                 from mongoeco.core.aggregation import _expression_truthy, evaluate_expression
 
@@ -382,6 +390,67 @@ class QueryEngine:
         return isinstance(candidate, str) and pattern.search(candidate) is not None
 
     @staticmethod
+    def _extract_all_candidates(doc: Any, field: str) -> list[Any]:
+        parts = _split_path(field)
+        if not parts:
+            return []
+
+        current_level = [doc]
+        for index, part in enumerate(parts):
+            next_level: list[Any] = []
+            is_digit = part.isdigit()
+            idx = int(part) if is_digit else -1
+            is_last = index == len(parts) - 1
+
+            for item in current_level:
+                if isinstance(item, list):
+                    if is_digit:
+                        if 0 <= idx < len(item):
+                            value = item[idx]
+                            if is_last:
+                                if isinstance(value, list):
+                                    next_level.extend(value)
+                                else:
+                                    next_level.append(value)
+                            elif isinstance(value, list):
+                                next_level.append(value)
+                                next_level.extend(value)
+                            else:
+                                next_level.append(value)
+                    else:
+                        for subitem in item:
+                            if isinstance(subitem, dict) and part in subitem:
+                                value = subitem[part]
+                                if is_last:
+                                    if isinstance(value, list):
+                                        next_level.extend(value)
+                                    else:
+                                        next_level.append(value)
+                                elif isinstance(value, list):
+                                    next_level.append(value)
+                                    next_level.extend(value)
+                                else:
+                                    next_level.append(value)
+                elif isinstance(item, dict) and part in item:
+                    value = item[part]
+                    if is_last:
+                        if isinstance(value, list):
+                            next_level.extend(value)
+                        else:
+                            next_level.append(value)
+                    elif isinstance(value, list):
+                        next_level.append(value)
+                        next_level.extend(value)
+                    else:
+                        next_level.append(value)
+
+            if not next_level:
+                return []
+            current_level = next_level
+
+        return current_level
+
+    @staticmethod
     def _in_item_matches_candidate(
         candidate: Any,
         item: Any,
@@ -400,6 +469,60 @@ class QueryEngine:
             null_matches_undefined=null_matches_undefined,
             dialect=dialect,
             collation=collation,
+        )
+
+    @staticmethod
+    def _prepare_membership_values(
+        values: tuple[Any, ...],
+        *,
+        null_matches_undefined: bool,
+        collation: CollationSpec | None = None,
+    ) -> tuple[set[tuple[str, Any]], list[re.Pattern[str]], list[Any]]:
+        literal_lookup: set[tuple[str, Any]] = set()
+        regex_values: list[re.Pattern[str]] = []
+        residual_values: list[Any] = []
+        for item in values:
+            if isinstance(item, Regex):
+                regex_values.append(item.compile())
+                continue
+            if isinstance(item, re.Pattern):
+                regex_values.append(item)
+                continue
+            if item is None and null_matches_undefined:
+                residual_values.append(item)
+                continue
+            key = QueryEngine._hashable_in_lookup_key(item, collation=collation)
+            if key is not None:
+                literal_lookup.add(key)
+                continue
+            residual_values.append(item)
+        return literal_lookup, regex_values, residual_values
+
+    @staticmethod
+    def _candidate_matches_membership(
+        candidate: Any,
+        *,
+        literal_lookup: set[tuple[str, Any]],
+        regex_values: list[re.Pattern[str]],
+        residual_values: list[Any],
+        null_matches_undefined: bool,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
+    ) -> bool:
+        key = QueryEngine._hashable_in_lookup_key(candidate, collation=collation)
+        if key is not None and key in literal_lookup:
+            return True
+        if any(QueryEngine._regex_item_matches_candidate(candidate, pattern) for pattern in regex_values):
+            return True
+        return any(
+            QueryEngine._query_equality_matches(
+                candidate,
+                item,
+                null_matches_undefined=null_matches_undefined,
+                dialect=dialect,
+                collation=collation,
+            )
+            for item in residual_values
         )
 
     @staticmethod
@@ -479,6 +602,22 @@ class QueryEngine:
         candidates = QueryEngine._extract_values(doc, field)
         if not candidates:
             return False
+        if len(candidates) == 1:
+            comparison = compare_with_collation(
+                candidates[0],
+                target,
+                dialect=dialect,
+                collation=collation,
+            )
+            if operator == "gt":
+                return comparison > 0
+            if operator == "gte":
+                return comparison >= 0
+            if operator == "lt":
+                return comparison < 0
+            if operator == "lte":
+                return comparison <= 0
+            raise ValueError(f"Unsupported comparison operator kind: {operator}")
         if operator == "gt":
             return any(compare_with_collation(value, target, dialect=dialect, collation=collation) > 0 for value in candidates)
         if operator == "gte":
@@ -500,43 +639,23 @@ class QueryEngine:
         collation: CollationSpec | None = None,
     ) -> bool:
         candidates = QueryEngine._extract_values(doc, field) or [None]
-        literal_lookup: set[tuple[str, Any]] = set()
-        regex_values: list[re.Pattern[str]] = []
-        residual_values: list[Any] = []
-        for item in values:
-            if isinstance(item, Regex):
-                regex_values.append(item.compile())
-                continue
-            if isinstance(item, re.Pattern):
-                regex_values.append(item)
-                continue
-            if item is None and null_matches_undefined:
-                residual_values.append(item)
-                continue
-            key = QueryEngine._hashable_in_lookup_key(item, collation=collation)
-            if key is not None:
-                literal_lookup.add(key)
-                continue
-            residual_values.append(item)
-
-        for candidate in candidates:
-            key = QueryEngine._hashable_in_lookup_key(candidate, collation=collation)
-            if key is not None and key in literal_lookup:
-                return True
-            if any(QueryEngine._regex_item_matches_candidate(candidate, pattern) for pattern in regex_values):
-                return True
-            if any(
-                QueryEngine._query_equality_matches(
-                    candidate,
-                    item,
-                    null_matches_undefined=null_matches_undefined,
-                    dialect=dialect,
-                    collation=collation,
-                )
-                for item in residual_values
-            ):
-                return True
-        return False
+        literal_lookup, regex_values, residual_values = QueryEngine._prepare_membership_values(
+            values,
+            null_matches_undefined=null_matches_undefined,
+            collation=collation,
+        )
+        return any(
+            QueryEngine._candidate_matches_membership(
+                candidate,
+                literal_lookup=literal_lookup,
+                regex_values=regex_values,
+                residual_values=residual_values,
+                null_matches_undefined=null_matches_undefined,
+                dialect=dialect,
+                collation=collation,
+            )
+            for candidate in candidates
+        )
 
     @staticmethod
     def _evaluate_not_in(
@@ -551,16 +670,22 @@ class QueryEngine:
         if not candidates:
             has_null = any(item is None for item in values)
             return not (has_null and dialect.policy.null_query_matches_undefined())
+        literal_lookup, regex_values, residual_values = QueryEngine._prepare_membership_values(
+            values,
+            null_matches_undefined=False,
+            collation=collation,
+        )
         return not any(
-            QueryEngine._in_item_matches_candidate(
+            QueryEngine._candidate_matches_membership(
                 candidate,
-                item,
+                literal_lookup=literal_lookup,
+                regex_values=regex_values,
+                residual_values=residual_values,
                 null_matches_undefined=False,
                 dialect=dialect,
                 collation=collation,
             )
             for candidate in candidates
-            for item in values
         )
 
     @staticmethod
@@ -660,13 +785,17 @@ class QueryEngine:
         doc: dict[str, Any],
         field: str,
         type_specs: tuple[Any, ...],
+        *,
+        aliases: frozenset[str] | None = None,
     ) -> bool:
         values = QueryEngine._extract_values(doc, field)
         if not values:
             return False
-        aliases: set[str] = set()
-        for type_spec in type_specs:
-            aliases.update(QueryEngine._normalize_type_specifier(type_spec))
+        if aliases is None:
+            resolved_aliases: set[str] = set()
+            for type_spec in type_specs:
+                resolved_aliases.update(QueryEngine._normalize_type_specifier(type_spec))
+            aliases = frozenset(resolved_aliases)
         return any(
             any(QueryEngine._matches_bson_type(candidate, alias) for alias in aliases)
             for candidate in values
@@ -726,23 +855,25 @@ class QueryEngine:
         field: str,
         operator: str,
         operand: Any,
+        *,
+        mask: int | None = None,
     ) -> bool:
         found, value = QueryEngine._get_field_value(doc, field)
         candidates = [value] if found else QueryEngine._extract_values(doc, field)
         if not candidates:
             return False
-        mask = QueryEngine._coerce_bitwise_mask(operand)
+        resolved_mask = QueryEngine._coerce_bitwise_mask(operand) if mask is None else mask
         for candidate in candidates:
             candidate_value = QueryEngine._coerce_bitwise_candidate(candidate)
             if candidate_value is None:
                 continue
-            if operator == "$bitsAllSet" and (candidate_value & mask) == mask:
+            if operator == "$bitsAllSet" and (candidate_value & resolved_mask) == resolved_mask:
                 return True
-            if operator == "$bitsAnySet" and (candidate_value & mask) != 0:
+            if operator == "$bitsAnySet" and (candidate_value & resolved_mask) != 0:
                 return True
-            if operator == "$bitsAllClear" and (candidate_value & mask) == 0:
+            if operator == "$bitsAllClear" and (candidate_value & resolved_mask) == 0:
                 return True
-            if operator == "$bitsAnyClear" and (~candidate_value & mask) != 0:
+            if operator == "$bitsAnyClear" and (~candidate_value & resolved_mask) != 0:
                 return True
         if operator in {"$bitsAllSet", "$bitsAnySet", "$bitsAllClear", "$bitsAnyClear"}:
             return False
@@ -759,15 +890,10 @@ class QueryEngine:
     ) -> bool:
         if not expected_values:
             return False
-        found, value = QueryEngine._get_field_value(doc, field)
-        if found and isinstance(value, list):
-            candidates = value
-        elif found:
-            candidates = [value]
-        else:
-            candidates = QueryEngine._extract_values(doc, field)
-            if not candidates:
-                return False
+        candidates = QueryEngine._extract_all_candidates(doc, field)
+        if not candidates:
+            return False
+        literal_lookup: set[tuple[str, Any]] | None = None
         for expected in expected_values:
             if isinstance(expected, dict) and set(expected) == {"$elemMatch"}:
                 if not any(
@@ -776,6 +902,16 @@ class QueryEngine:
                 ):
                     return False
                 continue
+            lookup_key = QueryEngine._hashable_in_lookup_key(expected, collation=collation)
+            if lookup_key is not None:
+                if literal_lookup is None:
+                    literal_lookup = {
+                        candidate_key
+                        for candidate in candidates
+                        if (candidate_key := QueryEngine._hashable_in_lookup_key(candidate, collation=collation)) is not None
+                    }
+                if lookup_key in literal_lookup:
+                    continue
             if not any(
                 QueryEngine._values_equal(candidate, expected, dialect=dialect, collation=collation)
                 for candidate in candidates
@@ -834,14 +970,20 @@ class QueryEngine:
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
+        compiled_plan: QueryNode | None = None,
+        wrap_value: bool = False,
     ) -> bool:
         values = QueryEngine._extract_values(doc, field)
-        array_candidates = [value for value in values if isinstance(value, list)]
-        if not array_candidates:
-            return False
-        for array_candidate in array_candidates:
+        for array_candidate in (value for value in values if isinstance(value, list)):
             if any(
-                QueryEngine._match_elem_match_candidate(candidate, condition, dialect=dialect, collation=collation)
+                QueryEngine._match_elem_match_candidate(
+                    candidate,
+                    condition,
+                    dialect=dialect,
+                    collation=collation,
+                    compiled_plan=compiled_plan,
+                    wrap_value=wrap_value,
+                )
                 for candidate in array_candidate
             ):
                 return True
@@ -854,9 +996,27 @@ class QueryEngine:
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
+        compiled_plan: QueryNode | None = None,
+        wrap_value: bool = False,
     ) -> bool:
         if not isinstance(condition, dict):
             return QueryEngine._values_equal(candidate, condition, dialect=dialect, collation=collation)
+        if compiled_plan is not None:
+            if wrap_value:
+                return QueryEngine.match_plan(
+                    {"value": candidate},
+                    compiled_plan,
+                    dialect=dialect,
+                    collation=collation,
+                )
+            if not isinstance(candidate, dict):
+                return False
+            return QueryEngine.match_plan(
+                candidate,
+                compiled_plan,
+                dialect=dialect,
+                collation=collation,
+            )
         operator_keys = [
             key
             for key in condition

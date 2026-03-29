@@ -42,6 +42,21 @@ class CompiledQueryTests(unittest.TestCase):
             CompiledQuery(nin_plan).match(document),
         )
 
+    def test_compiled_query_matches_query_engine_for_exists_with_null_and_nested_paths(self):
+        document = {"value": None, "items": [{"kind": "a"}]}
+
+        exists_null_plan = compile_filter({"value": {"$exists": True}})
+        nested_exists_plan = compile_filter({"items.kind": {"$exists": True}})
+
+        self.assertEqual(
+            QueryEngine.match_plan(document, exists_null_plan),
+            CompiledQuery(exists_null_plan).match(document),
+        )
+        self.assertEqual(
+            QueryEngine.match_plan(document, nested_exists_plan),
+            CompiledQuery(nested_exists_plan).match(document),
+        )
+
     def test_iter_filtered_documents_uses_compiled_query_without_changing_results(self):
         semantics = compile_find_semantics({"tags": {"$in": ["python"]}})
         documents = [

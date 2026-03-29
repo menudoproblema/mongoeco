@@ -24,6 +24,22 @@ type MissingExpressionEvaluator = Callable[[Document, object, dict[str, Any] | N
 
 
 _ACCUMULATOR_FLAGS_KEY = ("__mongoeco_internal__", "accumulator_flags")
+_ACCUMULATORS_WITH_INTERNAL_EVALUATION = frozenset(
+    {
+        "$firstN",
+        "$lastN",
+        "$maxN",
+        "$minN",
+        "$top",
+        "$bottom",
+        "$topN",
+        "$bottomN",
+        "$median",
+        "$percentile",
+    }
+)
+type PreparedAccumulatorSpecs = tuple[tuple[str, str, object], ...]
+type AccumulatorSpecsInput = dict[str, object] | PreparedAccumulatorSpecs | None
 
 
 @dataclass(slots=True)
@@ -161,6 +177,22 @@ def _evaluate_pick_n_input(
     return value, size
 
 
+def _evaluate_pick_n_size(
+    operator: str,
+    document: Document,
+    expression: object,
+    variables: dict[str, Any] | None,
+    *,
+    evaluate_expression: ExpressionEvaluator,
+) -> int:
+    if not isinstance(expression, dict) or "n" not in expression:
+        raise OperationFailure(f"{operator} requires input and n")
+    return _normalize_pick_n_size(
+        operator,
+        evaluate_expression(document, expression["n"], variables),
+    )
+
+
 def _evaluate_ordered_accumulator_input(
     operator: str,
     document: Document,
@@ -262,25 +294,36 @@ def _trim_ordered_accumulator(
         del state.items[keep:]
 
 
-def _initialize_accumulators(
+def _prepare_accumulator_specs(
     accumulator_specs: dict[str, object] | None,
     *,
     default_sum: bool = False,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     support_checker: Callable[[str], bool] | None = None,
     unsupported_message: str = "Unsupported accumulator",
-) -> dict[str, Any]:
-    initialized: dict[str, Any] = {}
+) -> PreparedAccumulatorSpecs:
     specs = {"count": {"$sum": 1}} if accumulator_specs is None and default_sum else (accumulator_specs or {})
     if support_checker is None:
         support_checker = dialect.supports_group_accumulator
+    prepared: list[tuple[str, str, object]] = []
     for field, accumulator in specs.items():
         if not isinstance(accumulator, dict) or len(accumulator) != 1:
             raise OperationFailure("Accumulator must be a single-key document")
-        operator, _ = next(iter(accumulator.items()))
+        operator, expression = next(iter(accumulator.items()))
         if not support_checker(operator):
             raise OperationFailure(f"{unsupported_message}: {operator}")
-        _validate_accumulator_expression(operator, accumulator[operator])
+        _validate_accumulator_expression(operator, expression)
+        prepared.append((field, operator, expression))
+    return tuple(prepared)
+
+
+def _create_accumulator_state(
+    prepared_specs: PreparedAccumulatorSpecs,
+    *,
+    unsupported_message: str = "Unsupported accumulator",
+) -> dict[str, Any]:
+    initialized: dict[str, Any] = {}
+    for field, operator, _expression in prepared_specs:
         if operator in {"$sum", "$count"}:
             initialized[field] = 0
         elif operator in {"$min", "$max", "$first", "$last"}:
@@ -306,9 +349,59 @@ def _initialize_accumulators(
     return initialized
 
 
+def _reset_accumulator_bucket(
+    bucket: _AccumulatorBucket,
+    prepared_specs: PreparedAccumulatorSpecs,
+    *,
+    unsupported_message: str = "Unsupported accumulator",
+) -> None:
+    bucket.values = _create_accumulator_state(
+        prepared_specs,
+        unsupported_message=unsupported_message,
+    )
+    bucket.flags.clear()
+
+
+def _initialize_accumulators(
+    accumulator_specs: dict[str, object] | None,
+    *,
+    default_sum: bool = False,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+    support_checker: Callable[[str], bool] | None = None,
+    unsupported_message: str = "Unsupported accumulator",
+) -> dict[str, Any]:
+    prepared_specs = _prepare_accumulator_specs(
+        accumulator_specs,
+        default_sum=default_sum,
+        dialect=dialect,
+        support_checker=support_checker,
+        unsupported_message=unsupported_message,
+    )
+    return _create_accumulator_state(
+        prepared_specs,
+        unsupported_message=unsupported_message,
+    )
+
+
+def _coerce_accumulator_specs(
+    accumulator_specs: AccumulatorSpecsInput,
+) -> PreparedAccumulatorSpecs:
+    if accumulator_specs is None:
+        return (("count", "$sum", 1),)
+    if isinstance(accumulator_specs, tuple):
+        return accumulator_specs
+    prepared: list[tuple[str, str, object]] = []
+    for field, accumulator in accumulator_specs.items():
+        if not isinstance(accumulator, dict) or len(accumulator) != 1:
+            raise OperationFailure("Accumulator must be a single-key document")
+        operator, expression = next(iter(accumulator.items()))
+        prepared.append((field, operator, expression))
+    return tuple(prepared)
+
+
 def _apply_accumulators(
     bucket: _AccumulatorBucket | dict[str, Any],
-    accumulator_specs: dict[str, object] | None,
+    accumulator_specs: AccumulatorSpecsInput,
     document: Document,
     variables: dict[str, Any] | None = None,
     *,
@@ -359,12 +452,11 @@ def _apply_accumulators(
         if missing_sentinel is None:
             missing_sentinel = _DEFAULT_MISSING
 
-    specs = {"count": {"$sum": 1}} if accumulator_specs is None else accumulator_specs
+    prepared_specs = _coerce_accumulator_specs(accumulator_specs)
     values = bucket.values if isinstance(bucket, _AccumulatorBucket) else bucket
     flags = bucket.flags if isinstance(bucket, _AccumulatorBucket) else _accumulator_flags(bucket)
-    for field, accumulator in specs.items():
-        operator, expression = next(iter(accumulator.items()))
-        value = None if operator == "$count" else evaluate_expression(document, expression, variables)
+    for field, operator, expression in prepared_specs:
+        value = None if operator == "$count" or operator in _ACCUMULATORS_WITH_INTERNAL_EVALUATION else evaluate_expression(document, expression, variables)
         if operator in {"$sum", "$count"}:
             if operator == "$count":
                 values[field] += 1
@@ -421,6 +513,18 @@ def _apply_accumulators(
             values[field] = deepcopy(value)
             flags[field] = True
         elif operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
+            state = values[field]
+            if operator == "$firstN" and state.n is not None and len(state.items) >= state.n:
+                size = _evaluate_pick_n_size(
+                    operator,
+                    document,
+                    expression,
+                    variables,
+                    evaluate_expression=evaluate_expression,
+                )
+                if state.n != size:
+                    raise OperationFailure(f"{operator} n must evaluate to a consistent positive integer within the group")
+                continue
             value, size = _evaluate_pick_n_input(
                 operator,
                 document,
@@ -431,7 +535,6 @@ def _apply_accumulators(
                 evaluate_expression_with_missing=evaluate_expression_with_missing,
                 missing_sentinel=missing_sentinel,
             )
-            state = values[field]
             if state.n is None:
                 state.n = size
             elif state.n != size:
@@ -535,14 +638,14 @@ def _finalize_accumulators(bucket: _AccumulatorBucket | dict[str, Any]) -> Docum
                 )
                 document[field] = math.sqrt(variance)
         elif isinstance(value, _PickNAccumulator):
-            document[field] = deepcopy(value.items)
+            document[field] = list(value.items)
         elif isinstance(value, _OrderedAccumulator):
             if not value.items:
                 document[field] = [] if value.n is not None else None
             elif value.n is None:
-                document[field] = deepcopy(value.items[0][1])
+                document[field] = value.items[0][1]
             else:
-                document[field] = [deepcopy(item[1]) for item in value.items]
+                document[field] = [item[1] for item in value.items]
         elif isinstance(value, _PercentileAccumulator):
             probabilities = value.probabilities or [0.5]
             percentiles = _compute_percentiles(value.values, probabilities)

@@ -8,6 +8,8 @@ from copy import deepcopy
 from unittest.mock import ANY, patch
 
 from mongoeco.compat import MongoDialect
+import mongoeco.core.aggregation.accumulators as accumulators_module
+import mongoeco.core.aggregation.grouping_stages as grouping_stages
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 from mongoeco.core.aggregation.accumulators import _AccumulatorBucket, _OrderedAccumulator
@@ -643,6 +645,128 @@ class AggregationTests(unittest.TestCase):
         self.assertEqual(documents, original)
         self.assertEqual([document["running"] for document in result], [2, 5])
 
+    def test_apply_accumulators_does_not_pre_evaluate_internal_pick_n_expressions(self):
+        expression = {"input": "$score", "n": 2}
+        bucket = _AccumulatorBucket(
+            bucket_id=None,
+            values=_initialize_accumulators({"firstTwo": {"$firstN": expression}}),
+            include_bucket_id=False,
+        )
+        evaluated: list[object] = []
+        missing_sentinel = object()
+
+        def _evaluate(current_document, current_expression, current_variables=None):
+            evaluated.append(current_expression)
+            if current_expression == "$score":
+                return current_document["score"]
+            if current_expression == 2:
+                return 2
+            raise AssertionError(f"unexpected expression: {current_expression!r}")
+
+        def _evaluate_with_missing(current_document, current_expression, current_variables=None):
+            evaluated.append(("missing", current_expression))
+            if current_expression == "$score":
+                return current_document["score"]
+            return missing_sentinel
+
+        _apply_accumulators(
+            bucket,
+            {"firstTwo": {"$firstN": expression}},
+            {"score": 7},
+            {},
+            evaluate_expression=_evaluate,
+            evaluate_expression_with_missing=_evaluate_with_missing,
+            append_unique_values=lambda target, values: target.extend(values),
+            require_sort=lambda _spec: [],
+            resolve_aggregation_field_path=lambda _document, _path: missing_sentinel,
+            missing_sentinel=missing_sentinel,
+        )
+
+        self.assertNotIn(expression, evaluated)
+        self.assertEqual(bucket.values["firstTwo"].items, [7])
+
+    def test_apply_accumulators_first_n_skips_input_evaluation_once_full_but_still_checks_n(self):
+        expression = {"input": "$score", "n": "$limit"}
+        bucket = _AccumulatorBucket(
+            bucket_id=None,
+            values={"firstOne": accumulators_module._PickNAccumulator(items=[1], n=1)},
+            include_bucket_id=False,
+        )
+        evaluated: list[object] = []
+
+        def _evaluate(current_document, current_expression, current_variables=None):
+            evaluated.append(current_expression)
+            if current_expression == "$limit":
+                return current_document["limit"]
+            raise AssertionError(f"unexpected expression: {current_expression!r}")
+
+        def _evaluate_with_missing(current_document, current_expression, current_variables=None):
+            raise AssertionError(f"unexpected missing expression: {current_expression!r}")
+
+        _apply_accumulators(
+            bucket,
+            {"firstOne": {"$firstN": expression}},
+            {"score": 7, "limit": 1},
+            {},
+            evaluate_expression=_evaluate,
+            evaluate_expression_with_missing=_evaluate_with_missing,
+            append_unique_values=lambda target, values: target.extend(values),
+            require_sort=lambda _spec: [],
+            resolve_aggregation_field_path=lambda _document, _path: None,
+            missing_sentinel=object(),
+        )
+
+        self.assertEqual(evaluated, ["$limit"])
+        self.assertEqual(bucket.values["firstOne"].items, [1])
+
+    def test_apply_group_validates_slow_path_accumulator_specs_once(self):
+        spec = {"_id": "$kind", "items": {"$push": "$value"}}
+
+        with patch(
+            "mongoeco.core.aggregation.accumulators._validate_accumulator_expression",
+            wraps=accumulators_module._validate_accumulator_expression,
+        ) as validate_expression:
+            result = _apply_group(
+                [
+                    {"kind": "a", "value": 1},
+                    {"kind": "b", "value": 2},
+                    {"kind": "a", "value": 3},
+                ],
+                spec,
+            )
+
+        self.assertEqual(result, [{"_id": "a", "items": [1, 3]}, {"_id": "b", "items": [2]}])
+        self.assertEqual(validate_expression.call_count, 1)
+
+    def test_set_window_fields_validates_accumulator_spec_once_per_field(self):
+        with patch(
+            "mongoeco.core.aggregation.accumulators._validate_accumulator_expression",
+            wraps=accumulators_module._validate_accumulator_expression,
+        ) as validate_expression:
+            result = apply_pipeline(
+                [
+                    {"_id": "1", "group": "a", "rank": 1, "score": 2},
+                    {"_id": "2", "group": "a", "rank": 2, "score": 3},
+                ],
+                [
+                    {
+                        "$setWindowFields": {
+                            "partitionBy": "$group",
+                            "sortBy": {"rank": 1},
+                            "output": {
+                                "runningTotal": {
+                                    "$sum": "$score",
+                                    "window": {"documents": ["unbounded", "current"]},
+                                }
+                            },
+                        }
+                    }
+                ],
+            )
+
+        self.assertEqual([document["runningTotal"] for document in result], [2, 5])
+        self.assertEqual(validate_expression.call_count, 1)
+
     def test_compiled_group_preserves_sum_add_null_semantics(self):
         spec = {"_id": "$kind", "total": {"$sum": {"$add": ["$left", "$right"]}}}
         documents = [
@@ -652,6 +776,23 @@ class AggregationTests(unittest.TestCase):
         ]
 
         self.assertTrue(CompiledGroup.supports(spec))
+        self.assertEqual(
+            CompiledGroup(spec).apply(documents),
+            apply_pipeline(documents, [{"$group": spec}]),
+        )
+
+    def test_compiled_group_compiles_common_arithmetic_expressions(self):
+        created_at = datetime.datetime(2026, 3, 29, 12, 0, 0)
+        spec = {
+            "_id": "$kind",
+            "sumValue": {"$sum": {"$multiply": [{"$add": ["$left", "$right"]}, "$factor"]}},
+            "shiftedDate": {"$first": {"$subtract": [{"$add": ["$createdAt", 1000]}, 500]}},
+        }
+        documents = [
+            {"kind": "a", "left": 2, "right": 3, "factor": 2, "createdAt": created_at},
+            {"kind": "a", "left": 1, "right": 4, "factor": 3, "createdAt": created_at},
+        ]
+
         self.assertEqual(
             CompiledGroup(spec).apply(documents),
             apply_pipeline(documents, [{"$group": spec}]),
@@ -685,6 +826,18 @@ class AggregationTests(unittest.TestCase):
             apply_pipeline(documents, [{"$group": spec}]),
         )
 
+    def test_compiled_group_supports_cond_dict_form(self):
+        spec = {"_id": "$kind", "total": {"$sum": {"$cond": {"if": "$flag", "then": "$value", "else": 0}}}}
+        documents = [
+            {"kind": "a", "flag": True, "value": 3},
+            {"kind": "a", "flag": False, "value": 5},
+        ]
+
+        self.assertEqual(
+            CompiledGroup(spec).apply(documents),
+            apply_pipeline(documents, [{"$group": spec}]),
+        )
+
     def test_compiled_group_uses_distinct_context_keys_for_variables(self):
         spec = {"_id": "$kind", "chosen": {"$first": {"$cond": ["$$flag", "$$yes", "$$no"]}}}
         documents = [{"kind": "a"}]
@@ -706,11 +859,49 @@ class AggregationTests(unittest.TestCase):
             apply_pipeline(documents, [{"$group": spec}]),
         )
 
+    def test_compiled_group_reuses_cached_compilation_for_same_spec_and_dialect(self):
+        CompiledGroup._COMPILED_FUNCTION_CACHE.clear()
+        spec = {"_id": "$kind", "cache_probe_total": {"$sum": "$value"}}
+
+        with patch.object(CompiledGroup, "_compile", autospec=True, wraps=CompiledGroup._compile) as compile_method:
+            first = CompiledGroup(spec)
+            second = CompiledGroup(spec)
+
+        self.assertEqual(compile_method.call_count, 1)
+        self.assertIs(first._aggregate_func, second._aggregate_func)
+
     def test_finalize_accumulators_preserves_user_fields_with_has_prefix(self):
         bucket = _initialize_accumulators({"__has_total": {"$first": "$value"}})
         _apply_accumulators(bucket, {"__has_total": {"$first": "$value"}}, {"value": 7})
 
         self.assertEqual(_finalize_accumulators(bucket), {"__has_total": 7})
+
+    def test_apply_accumulators_accepts_prepared_specs(self):
+        prepared_specs = accumulators_module._prepare_accumulator_specs({"total": {"$sum": "$value"}})
+        bucket = _AccumulatorBucket(bucket_id=None, values={"total": 0}, include_bucket_id=False)
+
+        _apply_accumulators(bucket, prepared_specs, {"value": 2})
+        _apply_accumulators(bucket, prepared_specs, {"value": 3})
+
+        self.assertEqual(_finalize_accumulators(bucket), {"total": 5})
+
+    def test_finalize_accumulators_reuses_pick_n_and_ordered_outputs_without_extra_deepcopy(self):
+        payload = {"nested": ["value"]}
+        bucket = {
+            "pick": accumulators_module._PickNAccumulator(items=[payload]),
+            "top": _OrderedAccumulator(items=[([], payload, 0)]),
+            "topn": _OrderedAccumulator(items=[([], payload, 0), ([], {"other": 1}, 1)], n=2),
+        }
+
+        with patch("mongoeco.core.aggregation.accumulators.deepcopy", side_effect=AssertionError("unexpected deepcopy")):
+            self.assertEqual(
+                _finalize_accumulators(bucket),
+                {
+                    "pick": [payload],
+                    "top": payload,
+                    "topn": [payload, {"other": 1}],
+                },
+            )
 
     def test_bucket_auto_rejects_unsupported_accumulator_for_default_and_custom_dialects(self):
         with self.assertRaises(OperationFailure):
@@ -761,6 +952,35 @@ class AggregationTests(unittest.TestCase):
                 {"_id": {"min": 3, "max": 4}, "count": 2},
             ],
         )
+
+    def test_bucket_supports_single_bucket_range(self):
+        self.assertEqual(
+            apply_pipeline(
+                [{"value": 10}, {"value": 30}, {"value": 90}],
+                [{"$bucket": {"groupBy": "$value", "boundaries": [0, 100]}}],
+            ),
+            [{"_id": 0, "count": 3}],
+        )
+
+    def test_bucket_auto_does_not_deepcopy_scalar_boundaries(self):
+        original_deepcopy = grouping_stages.deepcopy
+
+        def guarded_deepcopy(value):
+            if isinstance(value, int) and not isinstance(value, bool):
+                raise AssertionError("unexpected scalar deepcopy")
+            return original_deepcopy(value)
+
+        with patch("mongoeco.core.aggregation.grouping_stages.deepcopy", side_effect=guarded_deepcopy):
+            self.assertEqual(
+                apply_pipeline(
+                    [{"value": 1}, {"value": 2}, {"value": 3}, {"value": 4}],
+                    [{"$bucketAuto": {"groupBy": "$value", "buckets": 2}}],
+                ),
+                [
+                    {"_id": {"min": 1, "max": 3}, "count": 2},
+                    {"_id": {"min": 3, "max": 4}, "count": 2},
+                ],
+            )
 
     def test_finalize_accumulators_returns_empty_list_for_empty_topn(self):
         bucket = _AccumulatorBucket(
@@ -1913,6 +2133,23 @@ class AggregationTests(unittest.TestCase):
             evaluate_expression(document, {"$substr": ["$text", True, 1]})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$substr": ["$text", 0, True]})
+
+    def test_set_expressions_preserve_custom_dialect_equality_when_fast_path_is_disabled(self):
+        class _CaseInsensitiveDialect(MongoDialect):
+            def values_equal(self, left: object, right: object) -> bool:
+                if isinstance(left, str) and isinstance(right, str):
+                    return left.casefold() == right.casefold()
+                return super().values_equal(left, right)
+
+        dialect = _CaseInsensitiveDialect(key="test", server_version="test", label="Case Insensitive")
+        document = {"left": ["Ada", "Mongo"], "right": ["ada", "mongo"]}
+
+        self.assertEqual(
+            evaluate_expression(document, {"$setIntersection": ["$left", "$right"]}, dialect=dialect),
+            ["Ada", "Mongo"],
+        )
+        self.assertTrue(evaluate_expression(document, {"$setEquals": ["$left", "$right"]}, dialect=dialect))
+        self.assertTrue(evaluate_expression(document, {"$setIsSubset": [["ADA"], "$right"]}, dialect=dialect))
 
     def test_evaluate_expression_supports_cond_object_and_if_null_fallback_to_none(self):
         document = {"score": 2, "bonus": None}

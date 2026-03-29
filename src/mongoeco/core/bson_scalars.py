@@ -98,9 +98,11 @@ def bson_numeric_alias(value: object) -> str | None:
     if isinstance(value, bool):
         return None
     if isinstance(value, int):
+        if INT32_MIN <= value <= INT32_MAX:
+            return "int"
         if value < INT64_MIN or value > INT64_MAX:
             raise BsonScalarOverflowError("integer exceeds BSON int64 range")
-        return "int" if INT32_MIN <= value <= INT32_MAX else "long"
+        return "long"
     if isinstance(value, float):
         return "double"
     if isinstance(value, Decimal128 | decimal.Decimal):
@@ -136,6 +138,21 @@ def compare_bson_numeric(left: object, right: object) -> int:
     if _is_infinite_numeric_value(right_value):
         return 1 if right_value < 0 else -1
 
+    if (
+        isinstance(left_value, int)
+        and not isinstance(left_value, bool)
+        and isinstance(right_value, int)
+        and not isinstance(right_value, bool)
+    ):
+        if left_value == right_value:
+            return 0
+        return -1 if left_value < right_value else 1
+
+    if isinstance(left_value, float) and isinstance(right_value, float):
+        if left_value == right_value:
+            return 0
+        return -1 if left_value < right_value else 1
+
     left_decimal = _numeric_to_decimal(left_value)
     right_decimal = _numeric_to_decimal(right_value)
     if left_decimal == right_decimal:
@@ -154,17 +171,18 @@ def _numeric_to_decimal(value: int | float | decimal.Decimal) -> decimal.Decimal
 
 
 def validate_bson_value(value: object) -> None:
-    if isinstance(value, dict):
-        for item in value.values():
-            validate_bson_value(item)
-        return
-    if isinstance(value, list):
-        for item in value:
-            validate_bson_value(item)
-        return
-    wrapped = wrap_bson_numeric(value)
-    if isinstance(wrapped, BsonDecimal128):
-        _normalize_decimal128(wrapped.value)
+    pending = [value]
+    while pending:
+        current = pending.pop()
+        if isinstance(current, dict):
+            pending.extend(current.values())
+            continue
+        if isinstance(current, list):
+            pending.extend(current)
+            continue
+        wrapped = wrap_bson_numeric(current)
+        if isinstance(wrapped, BsonDecimal128):
+            _normalize_decimal128(wrapped.value)
 
 
 def bson_add(left: object, right: object) -> object:
@@ -178,6 +196,9 @@ def bson_add(left: object, right: object) -> object:
         if result < INT64_MIN or result > INT64_MAX:
             raise BsonScalarOverflowError("integer exceeds BSON int64 range")
         return result
+    float_result = _try_fast_float_arithmetic(left, right, "add")
+    if float_result is not None:
+        return float_result
     return _wrap_numeric_result(left, right, _numeric_to_decimal(unwrap_bson_numeric(left)) + _numeric_to_decimal(unwrap_bson_numeric(right)))
 
 
@@ -192,6 +213,9 @@ def bson_multiply(left: object, right: object) -> object:
         if result < INT64_MIN or result > INT64_MAX:
             raise BsonScalarOverflowError("integer exceeds BSON int64 range")
         return result
+    float_result = _try_fast_float_arithmetic(left, right, "multiply")
+    if float_result is not None:
+        return float_result
     return _wrap_numeric_result(left, right, _numeric_to_decimal(unwrap_bson_numeric(left)) * _numeric_to_decimal(unwrap_bson_numeric(right)))
 
 
@@ -206,6 +230,9 @@ def bson_subtract(left: object, right: object) -> object:
         if result < INT64_MIN or result > INT64_MAX:
             raise BsonScalarOverflowError("integer exceeds BSON int64 range")
         return result
+    float_result = _try_fast_float_arithmetic(left, right, "subtract")
+    if float_result is not None:
+        return float_result
     return _wrap_numeric_result(left, right, _numeric_to_decimal(unwrap_bson_numeric(left)) - _numeric_to_decimal(unwrap_bson_numeric(right)))
 
 
@@ -286,22 +313,69 @@ def _coerce_integral(value: object) -> int:
     return unwrapped
 
 
-def _wrap_numeric_result(left: object, right: object, result: decimal.Decimal) -> object:
+def _try_fast_float_arithmetic(left: object, right: object, operator: str) -> object | None:
     wrapped_left = wrap_bson_numeric(left)
     wrapped_right = wrap_bson_numeric(right)
     if wrapped_left is None or wrapped_right is None:
         raise TypeError("BSON arithmetic requires numeric values")
+    if isinstance(wrapped_left, BsonDecimal128) or isinstance(wrapped_right, BsonDecimal128):
+        return None
+    if not isinstance(wrapped_left, BsonDouble) and not isinstance(wrapped_right, BsonDouble):
+        return None
+
+    left_value = float(unwrap_bson_numeric(left))
+    right_value = float(unwrap_bson_numeric(right))
+    if operator == "add":
+        result = left_value + right_value
+    elif operator == "subtract":
+        result = left_value - right_value
+    elif operator == "multiply":
+        result = left_value * right_value
+    else:
+        raise ValueError(f"unsupported BSON float arithmetic operator: {operator}")
 
     preserve_wrappers = isinstance(left, BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128) or isinstance(
         right,
         BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128,
     )
+    return BsonDouble(result) if preserve_wrappers else result
 
-    if isinstance(wrapped_left, BsonDecimal128) or isinstance(wrapped_right, BsonDecimal128):
+
+def _numeric_template_metadata(value: object) -> tuple[str | None, bool]:
+    if isinstance(value, BsonDecimal128):
+        return "decimal", True
+    if isinstance(value, BsonDouble):
+        return "double", True
+    if isinstance(value, BsonInt64):
+        return "long", True
+    if isinstance(value, BsonInt32):
+        return "int", True
+    if isinstance(value, bool):
+        return None, False
+    if isinstance(value, Decimal128 | decimal.Decimal):
+        return "decimal", False
+    if isinstance(value, float):
+        return "double", False
+    if isinstance(value, int):
+        if value < INT64_MIN or value > INT64_MAX:
+            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
+        return ("int" if INT32_MIN <= value <= INT32_MAX else "long"), False
+    return None, False
+
+
+def _wrap_numeric_result(left: object, right: object, result: decimal.Decimal) -> object:
+    left_kind, preserve_left = _numeric_template_metadata(left)
+    right_kind, preserve_right = _numeric_template_metadata(right)
+    if left_kind is None or right_kind is None:
+        raise TypeError("BSON arithmetic requires numeric values")
+
+    preserve_wrappers = preserve_left or preserve_right
+
+    if left_kind == "decimal" or right_kind == "decimal":
         normalized = _normalize_decimal128(result)
         return BsonDecimal128(normalized) if preserve_wrappers else normalized
 
-    if isinstance(wrapped_left, BsonDouble) or isinstance(wrapped_right, BsonDouble):
+    if left_kind == "double" or right_kind == "double":
         normalized = float(result)
         return BsonDouble(normalized) if preserve_wrappers else normalized
 
@@ -320,13 +394,28 @@ def _wrap_numeric_result(left: object, right: object, result: decimal.Decimal) -
 
 
 def _wrap_from_templates(result: object, *templates: object) -> object:
-    preserve_wrappers = any(isinstance(template, BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128) for template in templates)
+    preserve_wrappers = False
+    has_decimal = False
+    has_double = False
+    has_int64 = False
+    for template in templates:
+        if isinstance(template, BsonDecimal128):
+            preserve_wrappers = True
+            has_decimal = True
+        elif isinstance(template, BsonDouble):
+            preserve_wrappers = True
+            has_double = True
+        elif isinstance(template, BsonInt64):
+            preserve_wrappers = True
+            has_int64 = True
+        elif isinstance(template, BsonInt32):
+            preserve_wrappers = True
     if not preserve_wrappers:
         return result
     unwrapped = unwrap_bson_numeric(result)
-    if any(isinstance(template, BsonDecimal128) for template in templates):
+    if has_decimal:
         return BsonDecimal128(_normalize_decimal128(_numeric_to_decimal(unwrapped)))
-    if any(isinstance(template, BsonDouble) for template in templates):
+    if has_double:
         return BsonDouble(float(unwrapped))
     if isinstance(unwrapped, decimal.Decimal):
         integer_result = int(unwrapped)
@@ -340,6 +429,6 @@ def _wrap_from_templates(result: object, *templates: object) -> object:
         integer_result = int(unwrapped)
     if integer_result < INT64_MIN or integer_result > INT64_MAX:
         raise BsonScalarOverflowError("integer exceeds BSON int64 range")
-    if any(isinstance(template, BsonInt64) for template in templates) or integer_result < INT32_MIN or integer_result > INT32_MAX:
+    if has_int64 or integer_result < INT32_MIN or integer_result > INT32_MAX:
         return BsonInt64(integer_result)
     return BsonInt32(integer_result)

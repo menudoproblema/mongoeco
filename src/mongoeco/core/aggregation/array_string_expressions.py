@@ -69,6 +69,47 @@ def _copy_if_mutable(value: Any) -> Any:
     return value
 
 
+def _hashable_set_lookup_key(value: Any, *, dialect: MongoDialect) -> tuple[str, Any] | None:
+    if dialect is not MONGODB_DIALECT_70:
+        return None
+    if value is None:
+        return ("none", None)
+    if isinstance(value, bool):
+        return ("bool", value)
+    if isinstance(value, str):
+        return ("str", value)
+    if isinstance(value, bytes):
+        return ("bytes", value)
+    if isinstance(value, uuid.UUID):
+        return ("uuid", value)
+    return None
+
+
+def _build_set_lookup(values: list[Any], *, dialect: MongoDialect) -> tuple[set[tuple[str, Any]], list[Any]]:
+    hashable_lookup: set[tuple[str, Any]] = set()
+    residual: list[Any] = []
+    for value in values:
+        lookup_key = _hashable_set_lookup_key(value, dialect=dialect)
+        if lookup_key is None:
+            residual.append(value)
+        else:
+            hashable_lookup.add(lookup_key)
+    return hashable_lookup, residual
+
+
+def _set_contains(
+    item: Any,
+    *,
+    lookup: set[tuple[str, Any]],
+    residual: list[Any],
+    dialect: MongoDialect,
+) -> bool:
+    lookup_key = _hashable_set_lookup_key(item, dialect=dialect)
+    if lookup_key is not None and lookup_key in lookup:
+        return True
+    return any(QueryEngine._values_equal(item, candidate, dialect=dialect) for candidate in residual)
+
+
 def evaluate_array_string_expression(
     operator: str,
     document: Document,
@@ -260,13 +301,19 @@ def evaluate_array_string_expression(
         right_unique: list[Any] = []
         _append_unique_values(left_unique, left_values, dialect=dialect)
         _append_unique_values(right_unique, right_values, dialect=dialect)
+        right_lookup, right_residual = _build_set_lookup(right_unique, dialect=dialect)
         result: list[Any] = []
         for item in left_unique:
-            in_right = any(QueryEngine._values_equal(item, candidate, dialect=dialect) for candidate in right_unique)
+            in_right = _set_contains(
+                item,
+                lookup=right_lookup,
+                residual=right_residual,
+                dialect=dialect,
+            )
             if operator == "$setDifference" and not in_right:
-                result.append(deepcopy(item))
+                result.append(_copy_if_mutable(item))
             if operator == "$setIntersection" and in_right:
-                result.append(deepcopy(item))
+                result.append(_copy_if_mutable(item))
         return result
 
     if operator in {"$setEquals", "$setIsSubset"}:
@@ -284,11 +331,29 @@ def evaluate_array_string_expression(
             for candidate in sets[1:]:
                 if len(base) != len(candidate):
                     return False
-                if any(not any(QueryEngine._values_equal(item, other, dialect=dialect) for other in candidate) for item in base):
+                candidate_lookup, candidate_residual = _build_set_lookup(candidate, dialect=dialect)
+                if any(
+                    not _set_contains(
+                        item,
+                        lookup=candidate_lookup,
+                        residual=candidate_residual,
+                        dialect=dialect,
+                    )
+                    for item in base
+                ):
                     return False
             return True
         for candidate in sets[1:]:
-            if any(not any(QueryEngine._values_equal(item, other, dialect=dialect) for other in candidate) for item in base):
+            candidate_lookup, candidate_residual = _build_set_lookup(candidate, dialect=dialect)
+            if any(
+                not _set_contains(
+                    item,
+                    lookup=candidate_lookup,
+                    residual=candidate_residual,
+                    dialect=dialect,
+                )
+                for item in base
+            ):
                 return False
         return True
 

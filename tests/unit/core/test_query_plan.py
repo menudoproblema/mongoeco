@@ -6,6 +6,7 @@ from mongoeco.errors import OperationFailure
 from mongoeco.core.query_plan import (
     AllCondition,
     AndCondition,
+    BitwiseCondition,
     DeferredQueryNode,
     ElemMatchCondition,
     EqualsCondition,
@@ -19,6 +20,7 @@ from mongoeco.core.query_plan import (
     OrCondition,
     RegexCondition,
     SizeCondition,
+    TypeCondition,
     compile_filter,
     ensure_query_plan,
 )
@@ -172,10 +174,12 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({"name": {"$not": {"$regex": "^ad", "$options": "i"}}}),
             NotCondition(RegexCondition("name", "^ad", "i")),
         )
-        self.assertEqual(
-            compile_filter({"items": {"$elemMatch": {"kind": "a"}}}),
-            ElemMatchCondition("items", {"kind": "a"}),
-        )
+        elem_match = compile_filter({"items": {"$elemMatch": {"kind": "a"}}})
+        self.assertIsInstance(elem_match, ElemMatchCondition)
+        self.assertEqual(elem_match.field, "items")
+        self.assertEqual(elem_match.condition, {"kind": "a"})
+        self.assertFalse(elem_match.wrap_value)
+        self.assertIsNotNone(elem_match.compiled_plan)
         self.assertEqual(
             compile_filter({"flag": {"$exists": False}}),
             ExistsCondition("flag", False),
@@ -191,6 +195,10 @@ class QueryPlanTests(unittest.TestCase):
         self.assertEqual(
             compile_filter({"flag": {"$exists": "yes"}}),
             ExistsCondition("flag", True),
+        )
+        self.assertEqual(
+            compile_filter({"flag": {"$type": ["number", "string"]}}),
+            TypeCondition("flag", ("number", "string"), aliases=frozenset({"double", "int", "long", "decimal", "string"})),
         )
 
     def test_compile_filter_rejects_invalid_all_size_and_regex_payloads(self):
@@ -278,10 +286,16 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({"location": {"$nearSphere": [0, 0]}})
 
     def test_compile_filter_accepts_bits_all_set_with_dedicated_test(self):
-        self.assertIsNotNone(compile_filter({"value": {"$bitsAllSet": 1}}))
+        self.assertEqual(
+            compile_filter({"value": {"$bitsAllSet": [0, 2]}}),
+            BitwiseCondition("value", "$bitsAllSet", [0, 2], mask=5),
+        )
 
     def test_compile_filter_accepts_bits_any_set_with_dedicated_test(self):
-        self.assertIsNotNone(compile_filter({"value": {"$bitsAnySet": 1}}))
+        self.assertEqual(
+            compile_filter({"value": {"$bitsAnySet": 1}}),
+            BitwiseCondition("value", "$bitsAnySet", 1, mask=1),
+        )
 
     def test_compile_filter_rejects_invalid_nor_payload(self):
         with self.assertRaises(ValueError):
