@@ -36,13 +36,19 @@ class DocumentCodec:
 
     @staticmethod
     def _is_tagged_value(data: Any) -> bool:
-        if not isinstance(data, dict) or set(data) != {DocumentCodec._MARKER}:
+        if (
+            not isinstance(data, dict)
+            or len(data) != 1
+            or DocumentCodec._MARKER not in data
+        ):
             return False
 
         payload = data[DocumentCodec._MARKER]
         return (
             isinstance(payload, dict)
-            and set(payload) == {DocumentCodec._TYPE, DocumentCodec._VALUE}
+            and len(payload) == 2
+            and DocumentCodec._TYPE in payload
+            and DocumentCodec._VALUE in payload
             and isinstance(payload[DocumentCodec._TYPE], str)
         )
 
@@ -203,8 +209,32 @@ class DocumentCodec:
 
     @staticmethod
     def to_public(data: Any) -> Any:
+        return DocumentCodec._to_public_copy_on_write(data)
+
+    @staticmethod
+    def _to_public_copy_on_write(data: Any) -> Any:
         if isinstance(data, dict):
-            return {key: DocumentCodec.to_public(value) for key, value in data.items()}
+            converted_items: list[tuple[Any, Any]] = []
+            changed = False
+            for key, value in data.items():
+                public_value = DocumentCodec._to_public_copy_on_write(value)
+                if public_value is not value:
+                    changed = True
+                converted_items.append((key, public_value))
+            if not changed:
+                return data
+            return {key: value for key, value in converted_items}
+
         if isinstance(data, list):
-            return [DocumentCodec.to_public(value) for value in data]
+            converted_items: list[Any] = []
+            changed = False
+            for value in data:
+                public_value = DocumentCodec._to_public_copy_on_write(value)
+                if public_value is not value:
+                    changed = True
+                converted_items.append(public_value)
+            if not changed:
+                return data
+            return converted_items
+
         return unwrap_bson_numeric(data)

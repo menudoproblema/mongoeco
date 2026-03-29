@@ -1,4 +1,5 @@
 import time
+from dataclasses import replace
 from collections.abc import Mapping, Sequence
 
 from mongoeco.compat import MONGODB_DIALECT_70
@@ -190,22 +191,47 @@ class AsyncCursor:
         self._started = False
         self._exhausted = False
         self._active_async_iterable: _AsyncCursorIterator | None = None
+        self._operation_cache = None
+        self._semantics_cache = None
 
     def _ensure_mutable(self) -> None:
         if self._started:
             raise InvalidOperation("cannot modify cursor after iteration has started")
 
+    def _invalidate_execution_cache(self) -> None:
+        self._operation_cache = None
+        self._semantics_cache = None
+
+    def _current_dialect(self):
+        return getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
+
+    def _base_operation(self):
+        if self._operation_cache is None:
+            self._operation_cache = self._as_operation()
+        return self._operation_cache
+
+    def _base_semantics(self):
+        if self._semantics_cache is None:
+            from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
+
+            self._semantics_cache = compile_find_semantics_from_operation(
+                self._base_operation(),
+                dialect=self._current_dialect(),
+            )
+        return self._semantics_cache
+
+    def _operation_with_overrides(self, **changes: object):
+        return self._base_operation().with_overrides(**changes)
+
+    def _semantics_with_overrides(self, **changes: object):
+        return replace(self._base_semantics(), **changes)
+
     def _scan(self, *, limit: int | None = None):
         self._started = True
         engine = self._collection._engine
-        operation = self.clone().limit(self._limit if limit is None else limit)._as_operation()
+        operation = self._operation_with_overrides(limit=self._limit if limit is None else limit)
         _ensure_operation_executable(self._collection, operation)
-        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
-
-        semantics = compile_find_semantics_from_operation(
-            operation,
-            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-        )
+        semantics = self._semantics_with_overrides(limit=operation.limit)
         return engine.scan_find_semantics(
             self._collection._db_name,
             self._collection._collection_name,
@@ -221,15 +247,10 @@ class AsyncCursor:
             if remaining <= 0:
                 return []
             effective_limit = min(batch_size, remaining)
-        operation = self.clone().skip(effective_skip).limit(effective_limit)._as_operation()
+        operation = self._operation_with_overrides(skip=effective_skip, limit=effective_limit)
         _ensure_operation_executable(self._collection, operation)
         engine = self._collection._engine
-        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
-
-        semantics = compile_find_semantics_from_operation(
-            operation,
-            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-        )
+        semantics = self._semantics_with_overrides(skip=effective_skip, limit=effective_limit)
         iterable = engine.scan_find_semantics(
             self._collection._db_name,
             self._collection._collection_name,
@@ -257,29 +278,34 @@ class AsyncCursor:
     def sort(self, sort: SortSpec) -> "AsyncCursor":
         self._ensure_mutable()
         self._sort = _normalize_sort_spec(sort)
+        self._invalidate_execution_cache()
         return self
 
     def hint(self, hint: HintSpec) -> "AsyncCursor":
         self._ensure_mutable()
         _validate_hint_spec(hint)
         self._hint = hint if isinstance(hint, str) else _normalize_sort_spec(hint)
+        self._invalidate_execution_cache()
         return self
 
     def comment(self, comment: object) -> "AsyncCursor":
         self._ensure_mutable()
         self._comment = comment
+        self._invalidate_execution_cache()
         return self
 
     def max_time_ms(self, max_time_ms: int) -> "AsyncCursor":
         self._ensure_mutable()
         _validate_max_time_ms(max_time_ms)
         self._max_time_ms = max_time_ms
+        self._invalidate_execution_cache()
         return self
 
     def batch_size(self, batch_size: int) -> "AsyncCursor":
         self._ensure_mutable()
         _validate_batch_size(batch_size)
         self._batch_size = batch_size
+        self._invalidate_execution_cache()
         return self
 
     def skip(self, skip: int) -> "AsyncCursor":
@@ -287,6 +313,7 @@ class AsyncCursor:
         if skip < 0:
             raise ValueError("skip must be >= 0")
         self._skip = skip
+        self._invalidate_execution_cache()
         return self
 
     def limit(self, limit: int | None) -> "AsyncCursor":
@@ -294,6 +321,7 @@ class AsyncCursor:
         if limit is not None and limit < 0:
             raise ValueError("limit must be >= 0")
         self._limit = limit
+        self._invalidate_execution_cache()
         return self
 
     async def to_list(self) -> list[Document]:
@@ -403,23 +431,25 @@ class AsyncCursor:
         )
 
     def _as_operation(self):
-        from mongoeco.api.operations import compile_find_operation
+        if self._operation_cache is None:
+            from mongoeco.api.operations import compile_find_operation
 
-        return compile_find_operation(
-            self._filter_spec,
-            projection=self._projection,
-            collation=self._collation,
-            sort=self._sort,
-            skip=self._skip,
-            limit=self._limit,
-            hint=self._hint,
-            comment=self._comment,
-            max_time_ms=self._max_time_ms,
-            batch_size=self._batch_size,
-            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-            planning_mode=_resolve_planning_mode(self._collection),
-            plan=self._plan,
-        )
+            self._operation_cache = compile_find_operation(
+                self._filter_spec,
+                projection=self._projection,
+                collation=self._collation,
+                sort=self._sort,
+                skip=self._skip,
+                limit=self._limit,
+                hint=self._hint,
+                comment=self._comment,
+                max_time_ms=self._max_time_ms,
+                batch_size=self._batch_size,
+                dialect=self._current_dialect(),
+                planning_mode=_resolve_planning_mode(self._collection),
+                plan=self._plan,
+            )
+        return self._operation_cache
 
     @property
     def alive(self) -> bool:
@@ -448,12 +478,7 @@ class AsyncCursor:
                 planning_issues=operation.planning_issues,
             ).to_document()
         engine = self._collection._engine
-        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
-
-        semantics = compile_find_semantics_from_operation(
-            operation,
-            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-        )
+        semantics = self._base_semantics()
         result = await engine.explain_find_semantics(
             self._collection._db_name,
             self._collection._collection_name,

@@ -373,6 +373,22 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(collection._engine.created_scans), 2)
         self.assertEqual(collection._engine.created_scans[0].yield_count, _DEFAULT_LOCAL_PREFETCH_SIZE)
 
+    async def test_async_cursor_reuses_compiled_semantics_across_local_batches(self):
+        documents = [{"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)]
+        collection = _BatchTrackingCollectionStub(documents)
+        cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=0)
+
+        from mongoeco.engines import semantic_core
+
+        original_compile = semantic_core.compile_find_semantics_from_operation
+        with patch(
+            "mongoeco.engines.semantic_core.compile_find_semantics_from_operation",
+            wraps=original_compile,
+        ) as compile_semantics:
+            self.assertEqual(await cursor.to_list(), documents)
+
+        self.assertEqual(compile_semantics.call_count, 1)
+
     async def test_async_cursor_stays_exhausted_until_rewind(self):
         cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}, {"_id": "2"}]), {}, MatchAll(), None)
 

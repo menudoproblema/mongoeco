@@ -138,6 +138,7 @@ def compile_find_semantics(
     comment: object | None = None,
     max_time_ms: int | None = None,
     dialect: MongoDialect | None = None,
+    compiled_query: CompiledQuery | None = None,
 ) -> EngineFindSemantics:
     effective_dialect = dialect or MONGODB_DIALECT_70
     if skip < 0:
@@ -159,7 +160,9 @@ def compile_find_semantics(
         comment=comment,
         max_time_ms=max_time_ms,
         dialect=effective_dialect,
-        compiled_query=CompiledQuery(
+        compiled_query=compiled_query
+        if compiled_query is not None
+        else CompiledQuery(
             query_plan,
             dialect=effective_dialect,
             collation=effective_collation,
@@ -171,6 +174,7 @@ def compile_find_semantics_from_operation(
     operation: FindOperation,
     *,
     dialect: MongoDialect | None = None,
+    compiled_query: CompiledQuery | None = None,
 ) -> EngineFindSemantics:
     return compile_find_semantics(
         operation.filter_spec,
@@ -184,6 +188,7 @@ def compile_find_semantics_from_operation(
         comment=operation.comment,
         max_time_ms=operation.max_time_ms,
         dialect=dialect,
+        compiled_query=compiled_query,
     )
 
 
@@ -220,6 +225,10 @@ def iter_filtered_documents(
 ) -> Iterable[Document]:
     deadline = semantics.deadline
     if isinstance(semantics.query_plan, MatchAll):
+        if deadline is None:
+            for document in documents:
+                yield document
+            return
         for document in documents:
             enforce_deadline(deadline)
             yield document
@@ -228,11 +237,27 @@ def iter_filtered_documents(
 
     compiled = semantics.compiled_query
     if compiled is not None:
+        if deadline is None:
+            for document in documents:
+                if compiled.match(document):
+                    yield document
+            return
         for document in documents:
             enforce_deadline(deadline)
             if compiled.match(document):
                 yield document
         enforce_deadline(deadline)
+        return
+
+    if deadline is None:
+        for document in documents:
+            if QueryEngine.match_plan(
+                document,
+                semantics.query_plan,
+                dialect=semantics.dialect,
+                collation=semantics.collation,
+            ):
+                yield document
         return
 
     for document in documents:
@@ -301,6 +326,24 @@ def stream_finalize_documents(
     deadline = semantics.deadline
     remaining_skip = semantics.skip if apply_skip_limit_phase else 0
     remaining_limit = semantics.limit if apply_skip_limit_phase else None
+    if deadline is None:
+        for document in documents:
+            if remaining_skip:
+                remaining_skip -= 1
+                continue
+            yield DocumentCodec.to_public(
+                apply_projection(
+                    document,
+                    semantics.projection,
+                    dialect=semantics.dialect,
+                )
+            )
+            if remaining_limit is not None:
+                remaining_limit -= 1
+                if remaining_limit == 0:
+                    return
+        return
+
     for document in documents:
         enforce_deadline(deadline)
         if remaining_skip:

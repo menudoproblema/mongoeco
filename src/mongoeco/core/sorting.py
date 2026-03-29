@@ -1,5 +1,6 @@
 from functools import cmp_to_key
 import heapq
+import math
 from typing import Any, Iterable
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -29,8 +30,19 @@ def _compare_sort_keys(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
 ) -> int:
+    if len(sort) == 1:
+        result = _compare_sort_values(
+            left_keys[0],
+            right_keys[0],
+            dialect=dialect,
+            collation=collation,
+        )
+        direction = sort[0][1]
+        if result != 0:
+            return result if direction == 1 else -result
+        return 0
     for index, (_field, direction) in enumerate(sort):
-        result = compare_with_collation(
+        result = _compare_sort_values(
             left_keys[index],
             right_keys[index],
             dialect=dialect,
@@ -39,6 +51,52 @@ def _compare_sort_keys(
         if result != 0:
             return result if direction == 1 else -result
     return 0
+
+
+def _compare_sort_values(
+    left: Any,
+    right: Any,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
+) -> int:
+    if collation is None and dialect is MONGODB_DIALECT_70:
+        native_result = _compare_native_sort_scalars(left, right)
+        if native_result is not None:
+            return native_result
+    return compare_with_collation(
+        left,
+        right,
+        dialect=dialect,
+        collation=collation,
+    )
+
+
+def _compare_native_sort_scalars(left: Any, right: Any) -> int | None:
+    if left is right:
+        return 0
+    left_type = type(left)
+    if left_type is not type(right):
+        return None
+    if left is None:
+        return 0
+    if left_type is int or left_type is bool or left_type is str or left_type is bytes:
+        if left < right:
+            return -1
+        if left > right:
+            return 1
+        return 0
+    if left_type is float:
+        if math.isnan(left):
+            return 0 if math.isnan(right) else -1
+        if math.isnan(right):
+            return 1
+        if left < right:
+            return -1
+        if left > right:
+            return 1
+        return 0
+    return None
 
 
 def _extreme_value(
@@ -54,7 +112,7 @@ def _extreme_value(
     except StopIteration:
         return None
     for candidate in iterator:
-        result = compare_with_collation(
+        result = _compare_sort_values(
             candidate,
             best,
             dialect=dialect,
@@ -184,19 +242,36 @@ def sort_documents_window(
         left_tuple: tuple[list[Any], Document, int],
         right_tuple: tuple[list[Any], Document, int],
     ) -> int:
-        left_keys = left_tuple[0]
-        right_keys = right_tuple[0]
+        result = _compare_decorated_values(
+            left_tuple[0],
+            right_tuple[0],
+            left_tuple[2],
+            right_tuple[2],
+            sort,
+            dialect=dialect,
+            collation=collation,
+        )
+        return result
+
+    def _compare_decorated_values(
+        left_keys: list[Any],
+        right_keys: list[Any],
+        left_index: int,
+        right_index: int,
+        sort_spec: SortSpec,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
+    ) -> int:
         result = _compare_sort_keys(
             left_keys,
             right_keys,
-            sort,
+            sort_spec,
             dialect=dialect,
             collation=collation,
         )
         if result != 0:
             return result
-        left_index = left_tuple[2]
-        right_index = right_tuple[2]
         if left_index < right_index:
             return -1
         if left_index > right_index:
@@ -212,9 +287,14 @@ def sort_documents_window(
             self.index = index
 
         def __lt__(self, other: "_HeapItem") -> bool:
-            return _compare_decorated(
-                (self.keys, self.doc, self.index),
-                (other.keys, other.doc, other.index),
+            return _compare_decorated_values(
+                self.keys,
+                other.keys,
+                self.index,
+                other.index,
+                sort,
+                dialect=dialect,
+                collation=collation,
             ) > 0
 
     heap: list[_HeapItem] = []
@@ -227,18 +307,28 @@ def sort_documents_window(
         if len(heap) < window:
             heapq.heappush(heap, item)
             continue
-        if _compare_decorated(
-            (item.keys, item.doc, item.index),
-            (heap[0].keys, heap[0].doc, heap[0].index),
+        if _compare_decorated_values(
+            item.keys,
+            heap[0].keys,
+            item.index,
+            heap[0].index,
+            sort,
+            dialect=dialect,
+            collation=collation,
         ) < 0:
             heapq.heapreplace(heap, item)
 
     ordered = sorted(
         heap,
         key=cmp_to_key(
-            lambda left, right: _compare_decorated(
-                (left.keys, left.doc, left.index),
-                (right.keys, right.doc, right.index),
+            lambda left, right: _compare_decorated_values(
+                left.keys,
+                right.keys,
+                left.index,
+                right.index,
+                sort,
+                dialect=dialect,
+                collation=collation,
             )
         ),
     )
