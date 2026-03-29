@@ -720,6 +720,25 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             engine._shutdown_executor()
 
+    async def test_put_document_invalidates_collection_feature_cache(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            feature_key = ("db", "coll", "traverses_array:items.name")
+            self.assertFalse(
+                engine._field_traverses_array_in_collection("db", "coll", "items.name")
+            )
+            self.assertIn(feature_key, engine._collection_features_cache)
+
+            await engine.put_document("db", "coll", {"_id": "1", "items": [{"name": "a"}]})
+
+            self.assertNotIn(feature_key, engine._collection_features_cache)
+            self.assertTrue(
+                engine._field_traverses_array_in_collection("db", "coll", "items.name")
+            )
+        finally:
+            await engine.disconnect()
+
     def test_default_sqlite_engines_share_process_executor(self):
         first = SQLiteEngine()
         second = SQLiteEngine()
@@ -1606,6 +1625,31 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 )
         finally:
             await engine.disconnect()
+
+    async def test_simple_equals_fast_path_does_not_use_partial_indexes(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com", "active": False})
+            await engine.create_index(
+                "db",
+                "coll",
+                ["email"],
+                partial_filter_expression={"active": True},
+                name="idx_email_active",
+            )
+            semantics = compile_find_semantics({"email": "a@example.com"})
+
+            with patch.object(
+                engine,
+                "_compile_read_execution_plan",
+                wraps=engine._compile_read_execution_plan,
+            ) as compile_plan:
+                await engine.plan_find_semantics("db", "coll", semantics)
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(compile_plan.call_count, 1)
 
     async def test_hint_rejects_sparse_index_when_query_does_not_imply_field_presence(self):
         engine = SQLiteEngine()

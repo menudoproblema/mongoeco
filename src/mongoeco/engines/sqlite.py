@@ -177,6 +177,7 @@ class SQLiteEngine(AsyncStorageEngine):
         self._index_cache: dict[tuple[str, str], tuple[int, list[EngineIndexRecord]]] = {}
         self._index_metadata_versions: dict[tuple[str, str], int] = {}
         self._collection_id_cache: dict[tuple[str, str], int] = {}
+        self._collection_features_cache: dict[tuple[str, str, str], bool] = {}
         self._ensured_multikey_physical_indexes: set[str] = set()
         self._fts5_available: bool | None = None
         self._ensured_search_backends: set[str] = set()
@@ -239,6 +240,23 @@ class SQLiteEngine(AsyncStorageEngine):
             self._collection_id_cache.clear()
             return
         self._collection_id_cache.pop((db_name, coll_name), None)
+
+    def _invalidate_collection_features_cache(
+        self,
+        db_name: str | None = None,
+        coll_name: str | None = None,
+    ) -> None:
+        if db_name is None or coll_name is None:
+            self._collection_features_cache.clear()
+            return
+        prefix = (db_name, coll_name)
+        stale_keys = [
+            key
+            for key in self._collection_features_cache
+            if key[:2] == prefix
+        ]
+        for key in stale_keys:
+            self._collection_features_cache.pop(key, None)
 
     def _index_cache_version(self, db_name: str, coll_name: str) -> int:
         return self._index_metadata_versions.get((db_name, coll_name), 0)
@@ -977,10 +995,14 @@ class SQLiteEngine(AsyncStorageEngine):
         return set()
 
     def _field_traverses_array_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
+        feature_key = (db_name, coll_name, f"traverses_array:{field}")
+        if feature_key in self._collection_features_cache:
+            return self._collection_features_cache[feature_key]
         prefixes = path_array_prefixes(field)
         if not prefixes:
             return False
         conn = self._require_connection()
+        result = False
         for prefix in prefixes:
             path_literal = "'" + json_path_for_field(prefix).replace("'", "''") + "'"
             row = conn.execute(
@@ -994,8 +1016,10 @@ class SQLiteEngine(AsyncStorageEngine):
                 (db_name, coll_name),
             ).fetchone()
             if row is not None:
-                return True
-        return False
+                result = True
+                break
+        self._collection_features_cache[feature_key] = result
+        return result
 
     def _plan_has_array_traversing_paths(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
         return any(
@@ -1023,6 +1047,9 @@ class SQLiteEngine(AsyncStorageEngine):
         field: str,
         value_type: str,
     ) -> bool:
+        feature_key = (db_name, coll_name, f"tagged_type:{field}:{value_type}")
+        if feature_key in self._collection_features_cache:
+            return self._collection_features_cache[feature_key]
         conn = self._require_connection()
         tagged_type_path = json_path_for_field(field) + f'."{DocumentCodec._MARKER}".{DocumentCodec._TYPE}'
         row = conn.execute(
@@ -1035,7 +1062,9 @@ class SQLiteEngine(AsyncStorageEngine):
             """,
             (db_name, coll_name, tagged_type_path, value_type),
         ).fetchone()
-        return row is not None
+        result = row is not None
+        self._collection_features_cache[feature_key] = result
+        return result
 
     def _field_contains_tagged_bytes_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
         return self._field_contains_tagged_value_type_in_collection(db_name, coll_name, field, 'bytes')
@@ -1188,6 +1217,65 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> EngineReadExecutionPlan:
         del context
+        query_plan = semantics.query_plan
+        if (
+            isinstance(query_plan, EqualsCondition)
+            and semantics.collation is None
+            and semantics.sort is None
+            and semantics.skip == 0
+            and (semantics.limit is None or semantics.limit >= 1)
+            and "." not in query_plan.field
+        ):
+            field = query_plan.field
+            if field == "_id":
+                storage_key = self._storage_key(query_plan.value)
+                sql = (
+                    "SELECT document FROM documents "
+                    "WHERE db_name = ? AND coll_name = ? AND storage_key = ?"
+                )
+                params = (db_name, coll_name, storage_key)
+                return SQLiteReadExecutionPlan(
+                    semantics=semantics,
+                    strategy="sql",
+                    execution_lineage=(),
+                    physical_plan=(),
+                    use_sql=True,
+                    sql=sql,
+                    params=params,
+                )
+
+            indexes = self._load_indexes(db_name, coll_name)
+            for index in indexes:
+                if (
+                    index["key"] == [(field, 1)]
+                    and not index.get("sparse")
+                    and not index.get("multikey")
+                    and not index.get("partial_filter_expression")
+                    and index.get("physical_name")
+                ):
+                    path = json_path_for_field(field)
+                    sql = (
+                        "SELECT document FROM documents "
+                        f"INDEXED BY {self._quote_identifier(str(index['physical_name']))} "
+                        "WHERE db_name = ? AND coll_name = ? "
+                        "AND json_extract(document, ?) = ?"
+                    )
+                    params = (
+                        db_name,
+                        coll_name,
+                        path,
+                        self._serialize_value_for_sql(query_plan.value),
+                    )
+                    return SQLiteReadExecutionPlan(
+                        semantics=semantics,
+                        strategy="sql",
+                        execution_lineage=(),
+                        physical_plan=(),
+                        use_sql=True,
+                        sql=sql,
+                        params=params,
+                    )
+
         return await self._run_blocking(
             self._compile_read_execution_plan,
             db_name,
@@ -1195,6 +1283,14 @@ class SQLiteEngine(AsyncStorageEngine):
             semantics,
             hint=semantics.hint,
         )
+
+    def _serialize_value_for_sql(self, value: Any) -> Any:
+        """Serialize a value for direct JSON comparisons in SQL."""
+        if value is None:
+            return None
+        if isinstance(value, (int, float, str, bool)):
+            return value
+        return self._codec.encode({"v": value})["v"]
 
     def _explain_query_plan_sync(
         self,
@@ -1802,6 +1898,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._fts5_available = None
                 self._invalidate_index_cache()
                 self._invalidate_collection_id_cache()
+                self._invalidate_collection_features_cache()
             self._connection_count += 1
 
     def _create_sqlite_connection(self) -> sqlite3.Connection:
@@ -1932,6 +2029,7 @@ class SQLiteEngine(AsyncStorageEngine):
             self._transaction_owner_session_id = None
             self._invalidate_index_cache()
             self._invalidate_collection_id_cache()
+            self._invalidate_collection_features_cache()
             self._ensured_search_backends.clear()
             self._fts5_available = None
         if connection is not None:
@@ -2014,6 +2112,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         self._replace_search_entries_for_document(conn, db_name, coll_name, storage_key, document, search_indexes=search_indexes)
                     
                     self._commit_write(conn, context)
+                    self._invalidate_collection_features_cache(db_name, coll_name)
                     return True
                 except Exception:
                     self._rollback_write(conn, context)
@@ -2127,6 +2226,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             results.append(False)
                             break
                     self._commit_write(conn, context)
+                    self._invalidate_collection_features_cache(db_name, coll_name)
                     return results
                 except Exception:
                     self._rollback_write(conn, context)
@@ -2206,6 +2306,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
                     self._delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
                     self._commit_write(conn, context)
+                    self._invalidate_collection_features_cache(db_name, coll_name)
                     return cursor.rowcount > 0
                 except Exception:
                     self._rollback_write(conn, context)
@@ -2438,6 +2539,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
                     self._delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
                     self._commit_write(conn, context)
+                    self._invalidate_collection_features_cache(db_name, coll_name)
                     return DeleteResult(deleted_count=1)
                 except (NotImplementedError, TypeError):
                     self._rollback_write(conn, context)
@@ -2462,6 +2564,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
                     self._delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
                     self._commit_write(conn, context)
+                    self._invalidate_collection_features_cache(db_name, coll_name)
                     return DeleteResult(deleted_count=1)
                 return DeleteResult(deleted_count=0)
 
@@ -2647,6 +2750,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     enforce_deadline(deadline)
                     self._commit_write(conn, context)
                     self._mark_index_metadata_changed(db_name, coll_name)
+                    self._invalidate_collection_features_cache(db_name, coll_name)
                     return index_name
                 except sqlite3.IntegrityError as exc:
                     self._rollback_write(conn, context)
@@ -2739,6 +2843,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     )
                     self._commit_write(conn, context)
                     self._mark_index_metadata_changed(db_name, coll_name)
+                    self._invalidate_collection_features_cache(db_name, coll_name)
                 except Exception:
                     self._rollback_write(conn, context)
                     raise
@@ -2780,6 +2885,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     )
                     self._commit_write(conn, context)
                     self._mark_index_metadata_changed(db_name, coll_name)
+                    self._invalidate_collection_features_cache(db_name, coll_name)
                 except Exception:
                     self._rollback_write(conn, context)
                     raise
@@ -3254,6 +3360,8 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._mark_index_metadata_changed(db_name, new_name)
                 self._invalidate_collection_id_cache(db_name, coll_name)
                 self._invalidate_collection_id_cache(db_name, new_name)
+                self._invalidate_collection_features_cache(db_name, coll_name)
+                self._invalidate_collection_features_cache(db_name, new_name)
             except Exception:
                 self._rollback_write(conn, context)
                 raise
@@ -3315,6 +3423,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     self._commit_write(conn, context)
                     self._mark_index_metadata_changed(db_name, coll_name)
                     self._invalidate_collection_id_cache(db_name, coll_name)
+                    self._invalidate_collection_features_cache(db_name, coll_name)
                 except Exception:
                     self._rollback_write(conn, context)
                     raise
@@ -3443,6 +3552,18 @@ class SQLiteEngine(AsyncStorageEngine):
                 max_time_ms=semantics.max_time_ms,
                 hint=semantics.hint,
             )
+
+            if self._path == ":memory:":
+                for document in self._iter_scan_documents_sync(
+                    db_name,
+                    coll_name,
+                    semantics,
+                    context=context,
+                    hint=semantics.hint,
+                ):
+                    yield document
+                return
+
             items: queue.Queue[object] = queue.Queue()
             sentinel = object()
             stop_event = threading.Event()
@@ -3620,6 +3741,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             search_indexes=search_indexes,
                         )
                         self._commit_write(conn, context)
+                        self._invalidate_collection_features_cache(db_name, coll_name)
                         return UpdateResult(matched_count=1, modified_count=1)
                     except (NotImplementedError, TypeError):
                         self._rollback_write(conn, context)
@@ -3654,6 +3776,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             search_indexes=search_indexes,
                         )
                         self._commit_write(conn, context)
+                        self._invalidate_collection_features_cache(db_name, coll_name)
                         return UpdateResult(matched_count=1, modified_count=1)
                     except sqlite3.IntegrityError as exc:
                         self._rollback_write(conn, context)
@@ -3705,6 +3828,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         search_indexes=search_indexes,
                     )
                     self._commit_write(conn, context)
+                    self._invalidate_collection_features_cache(db_name, coll_name)
                 except sqlite3.IntegrityError as exc:
                     self._rollback_write(conn, context)
                     raise DuplicateKeyError(str(exc)) from exc
