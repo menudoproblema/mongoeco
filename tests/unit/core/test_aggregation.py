@@ -603,6 +603,20 @@ class AggregationTests(unittest.TestCase):
 
         self.assertEqual(grouped, [{"_id": "a", "total": 3}])
 
+    def test_compiled_group_preserves_sum_add_null_semantics(self):
+        spec = {"_id": "$kind", "total": {"$sum": {"$add": ["$left", "$right"]}}}
+        documents = [
+            {"kind": "a", "left": 2, "right": 3},
+            {"kind": "a", "left": 4, "right": 5},
+            {"kind": "b", "left": None, "right": 1},
+        ]
+
+        self.assertTrue(CompiledGroup.supports(spec))
+        self.assertEqual(
+            CompiledGroup(spec).apply(documents),
+            apply_pipeline(documents, [{"$group": spec}]),
+        )
+
     def test_finalize_accumulators_preserves_user_fields_with_has_prefix(self):
         bucket = _initialize_accumulators({"__has_total": {"$first": "$value"}})
         _apply_accumulators(bucket, {"__has_total": {"$first": "$value"}}, {"value": 7})

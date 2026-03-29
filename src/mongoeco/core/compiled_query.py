@@ -1,10 +1,13 @@
 from typing import Any
-
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec, compare_with_collation, values_equal_with_collation
 from mongoeco.core.query_plan import (
+    AllCondition,
     AndCondition,
+    BitwiseCondition,
+    ElemMatchCondition,
     EqualsCondition,
+    ExprCondition,
     ExistsCondition,
     GreaterThanCondition,
     GreaterThanOrEqualCondition,
@@ -12,17 +15,21 @@ from mongoeco.core.query_plan import (
     LessThanCondition,
     LessThanOrEqualCondition,
     MatchAll,
-    NotCondition,
+    ModCondition,
     NotEqualsCondition,
+    NotCondition,
     NotInCondition,
     OrCondition,
     QueryNode,
+    RegexCondition,
+    SizeCondition,
+    TypeCondition,
 )
 from mongoeco.types import Document
 
 
 class CompiledQuery:
-    """Compile a query plan into a callable optimized for repeated evaluation."""
+    """Compile a QueryNode into a high-performance Python function."""
 
     def __init__(
         self,
@@ -30,10 +37,12 @@ class CompiledQuery:
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
+        variable_prefix: str = "",
     ) -> None:
         self.plan = plan
         self.dialect = dialect
         self.collation = collation
+        self._variable_prefix = variable_prefix
         self._context: dict[str, Any] = {
             "dialect": dialect,
             "collation": collation,
@@ -54,15 +63,22 @@ class CompiledQuery:
     def match(self, document: Document) -> bool:
         return self._match_func(document)
 
+    def get_inline_code(self, prefix: str | None = None) -> str:
+        """Return the compiled expression string for inlining."""
+        if prefix is not None:
+            self._variable_prefix = prefix
+        return self._node_to_code(self.plan, depth=0)
+
     def _compile(self, node: QueryNode) -> Any:
-        expression = self._node_to_code(node, depth=0)
+        expression = self.get_inline_code()
         function_code = (
             "def match_logic(doc):\n"
             "    try:\n"
             f"        return {expression}\n"
-            "    except (AttributeError, KeyError, TypeError, ValueError):\n"
-            "        return False\n"
+            "    except (KeyError, TypeError, AttributeError):\n"
+            "        return False"
         )
+
         local_vars: dict[str, Any] = {}
         exec(function_code, self._context, local_vars)
         return local_vars["match_logic"]
@@ -157,6 +173,6 @@ class CompiledQuery:
         )
 
     def _store(self, depth: int, prefix: str, value: Any) -> str:
-        key = f"{prefix}_{depth}"
+        key = f"{self._variable_prefix}{prefix}_{depth}"
         self._context[key] = value
         return key

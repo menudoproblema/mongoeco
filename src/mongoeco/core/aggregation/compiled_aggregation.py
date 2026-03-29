@@ -83,23 +83,27 @@ class CompiledGroup:
             "    groups = {}",
             "    for doc in documents:",
         ]
+        logic_lines = self._compile_logic_only()
+        for line in logic_lines:
+            lines.append(f"        {line}")
+
+        final_lines = self._compile_finalization_only()
+        lines.extend(final_lines)
+
+        function_code = "\n".join(lines)
+        local_vars: dict[str, Any] = {}
+        exec(function_code, self._context, local_vars)
+        return local_vars["aggregate_func"]
+
+    def _compile_logic_only(self) -> list[str]:
+        """Generate only the body of the aggregation loop."""
+        lines = []
         accumulator_fields = list(self.accumulator_specs.keys())
         accumulator_count = len(accumulator_fields)
 
-        if (
-            isinstance(self.id_expr, str)
-            and self.id_expr.startswith("$")
-            and not self.id_expr.startswith("$$")
-            and "." not in self.id_expr
-        ):
-            lines.append(f"        group_id = doc.get({self.id_expr[1:]!r})")
-        else:
-            self._context["id_expr"] = self.id_expr
-            lines.append(
-                "        group_id = evaluate_expression(doc, id_expr, variables, dialect=dialect)"
-            )
-
-        lines.append("        group_key = _aggregation_key(group_id)")
+        id_code = self._compile_expression(self.id_expr, "id_expr")
+        lines.append(f"group_id = {id_code}")
+        lines.append("group_key = _aggregation_key(group_id)")
 
         initial_states: list[str] = []
         for field in accumulator_fields:
@@ -112,77 +116,76 @@ class CompiledGroup:
             else:
                 initial_states.append("None")
 
-        lines.append("        if group_key not in groups:")
+        lines.append("if group_key not in groups:")
         lines.append(
-            "            groups[group_key] = ["
+            "    groups[group_key] = ["
             + ", ".join(initial_states)
             + ", group_id, {}]"
         )
-        lines.append("        state = groups[group_key]")
+        lines.append("state = groups[group_key]")
 
         for index, field in enumerate(accumulator_fields):
             accumulator_spec = self.accumulator_specs[field]
             operator, expression = next(iter(accumulator_spec.items()))
-            expression_line = self._expression_code(
-                depth=index,
-                expression=expression,
-            )
-            if expression_line is not None:
-                lines.append(f"        {expression_line}")
+
+            if operator == "$count":
+                lines.append(f"state[{index}] += 1")
+                continue
+
+            expression_code = self._compile_expression(expression, f"acc_{index}")
+            lines.append(f"value = {expression_code}")
 
             match operator:
                 case "$sum":
-                    if expression == 1:
-                        lines.append(f"        state[{index}] += 1")
-                    else:
-                        lines.append("        operand = sum_operand(value)")
-                        lines.append("        if operand is not None:")
-                        lines.append(
-                            f"            state[{index}] = bson_add(state[{index}], operand)"
-                        )
-                case "$count":
-                    lines.append(f"        state[{index}] += 1")
+                    lines.append("operand = sum_operand(value)")
+                    lines.append("if operand is not None:")
+                    lines.append(
+                        f"    state[{index}] = bson_add(state[{index}], operand)"
+                    )
                 case "$min" | "$max":
                     comparison = "<" if operator == "$min" else ">"
-                    lines.append("        if value is not None:")
+                    lines.append("if value is not None:")
                     lines.append(
-                        f"            if not state[{accumulator_count + 1}].get({field!r}) or "
+                        f"    if not state[{accumulator_count + 1}].get({field!r}) or "
                         f"dialect.policy.compare_values(value, state[{index}]) {comparison} 0:"
                     )
                     lines.append(
-                        f"                state[{index}] = value if isinstance(value, (int, float, str, bool)) else deepcopy(value)"
+                        f"        state[{index}] = value if isinstance(value, (int, float, str, bool)) else deepcopy(value)"
                     )
                     lines.append(
-                        f"                state[{accumulator_count + 1}][{field!r}] = True"
+                        f"        state[{accumulator_count + 1}][{field!r}] = True"
                     )
                 case "$avg":
-                    lines.append("        if value is not None and is_numeric(value):")
+                    lines.append("if value is not None and is_numeric(value):")
                     lines.append(
-                        f"            state[{index}].total = bson_add(state[{index}].total, value)"
+                        f"    state[{index}].total = bson_add(state[{index}].total, value)"
                     )
-                    lines.append(f"            state[{index}].count += 1")
+                    lines.append(f"    state[{index}].count += 1")
                 case "$first":
                     lines.append(
-                        f"        if not state[{accumulator_count + 1}].get({field!r}):"
+                        f"    if not state[{accumulator_count + 1}].get({field!r}):"
                     )
-                    lines.append(
-                        f"            state[{index}] = value if isinstance(value, (int, float, str, bool)) else deepcopy(value)"
-                    )
-                    lines.append(
-                        f"            state[{accumulator_count + 1}][{field!r}] = True"
-                    )
-                case "$last":
                     lines.append(
                         f"        state[{index}] = value if isinstance(value, (int, float, str, bool)) else deepcopy(value)"
                     )
+                    lines.append(
+                        f"        state[{accumulator_count + 1}][{field!r}] = True"
+                    )
+                case "$last":
+                    lines.append(
+                        f"    state[{index}] = value if isinstance(value, (int, float, str, bool)) else deepcopy(value)"
+                    )
+        return lines
 
-        lines.extend(
-            [
-                "    results = []",
-                "    for state in groups.values():",
-                f"        result = {{'_id': deepcopy(state[{accumulator_count}])}}",
-            ]
-        )
+    def _compile_finalization_only(self) -> list[str]:
+        """Generate the group finalization logic."""
+        accumulator_fields = list(self.accumulator_specs.keys())
+        accumulator_count = len(accumulator_fields)
+        lines = [
+            "    results = []",
+            "    for state in groups.values():",
+            f"        result = {{'_id': deepcopy(state[{accumulator_count}])}}",
+        ]
         for index, field in enumerate(accumulator_fields):
             operator, _expression = next(iter(self.accumulator_specs[field].items()))
             if operator == "$avg":
@@ -198,21 +201,49 @@ class CompiledGroup:
                 "    return results",
             ]
         )
+        return lines
 
-        function_code = "\n".join(lines)
-        local_vars: dict[str, Any] = {}
-        exec(function_code, self._context, local_vars)
-        return local_vars["aggregate_func"]
+    def _compile_expression(self, expr: Any, prefix: str) -> str:
+        """Translate a MongoDB expression into Python code when safe."""
+        if isinstance(expr, str):
+            if expr.startswith("$$"):
+                key = f"{prefix}_var"
+                self._context[key] = expr
+                return f"evaluate_expression(doc, {key}, variables, dialect=dialect)"
+            if expr.startswith("$"):
+                path = expr[1:]
+                if "." not in path:
+                    return f"doc.get({path!r})"
+                key = f"{prefix}_path"
+                self._context[key] = expr
+                return f"evaluate_expression(doc, {key}, variables, dialect=dialect)"
+            return repr(expr)
 
-    def _expression_code(self, *, depth: int, expression: object) -> str | None:
-        if (
-            isinstance(expression, str)
-            and expression.startswith("$")
-            and not expression.startswith("$$")
-            and "." not in expression
-        ):
-            return f"value = doc.get({expression[1:]!r})"
+        if not isinstance(expr, dict):
+            return repr(expr)
 
-        key = f"expr_{depth}"
-        self._context[key] = expression
-        return f"value = evaluate_expression(doc, {key}, variables, dialect=dialect)"
+        if len(expr) == 1:
+            op, val = next(iter(expr.items()))
+            if op.startswith("$"):
+                match op:
+                    case "$literal":
+                        return repr(val)
+                    case "$cond":
+                        if isinstance(val, list) and len(val) == 3:
+                            if_c = self._compile_expression(val[0], prefix)
+                            then_c = self._compile_expression(val[1], prefix)
+                            else_c = self._compile_expression(val[2], prefix)
+                            return f"({then_c} if {if_c} else {else_c})"
+                        elif isinstance(val, dict) and all(k in val for k in ("if", "then", "else")):
+                            if_c = self._compile_expression(val["if"], prefix)
+                            then_c = self._compile_expression(val["then"], prefix)
+                            else_c = self._compile_expression(val["else"], prefix)
+                            return f"({then_c} if {if_c} else {else_c})"
+                    case "$ifNull" if isinstance(val, list) and len(val) == 2:
+                        input_c = self._compile_expression(val[0], prefix)
+                        fallback_c = self._compile_expression(val[1], prefix)
+                        return f"({input_c} if {input_c} is not None else {fallback_c})"
+
+        key = f"{prefix}_expr"
+        self._context[key] = expr
+        return f"evaluate_expression(doc, {key}, variables, dialect=dialect)"
