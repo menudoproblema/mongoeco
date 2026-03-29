@@ -8,6 +8,7 @@ from mongoeco.core.bson_scalars import (
     BsonInt32,
     BsonInt64,
     BsonScalarOverflowError,
+    bson_mod,
     bson_numeric_alias,
     compare_bson_numeric,
     is_bson_numeric,
@@ -38,12 +39,23 @@ class BsonScalarTests(unittest.TestCase):
 
     def test_compare_bson_numeric_handles_nan_and_infinities(self):
         self.assertEqual(compare_bson_numeric(float("nan"), float("nan")), 0)
+        self.assertEqual(
+            compare_bson_numeric(
+                BsonDecimal128(decimal.Decimal("NaN")),
+                BsonDecimal128(decimal.Decimal("NaN")),
+            ),
+            0,
+        )
         self.assertLess(compare_bson_numeric(float("nan"), 1), 0)
         self.assertGreater(compare_bson_numeric(float("inf"), 1), 0)
         self.assertLess(compare_bson_numeric(float("-inf"), 1), 0)
         self.assertGreater(compare_bson_numeric(float("inf"), float("-inf")), 0)
         with self.assertRaises(TypeError):
             compare_bson_numeric("x", 1)
+
+    def test_bson_mod_preserves_integer_precision_for_large_values(self):
+        value = (1 << 62) + 5
+        self.assertEqual(bson_mod(value, 3), value % 3)
 
     def test_validate_bson_value_walks_nested_documents_and_lists(self):
         validate_bson_value(
@@ -54,4 +66,3 @@ class BsonScalarTests(unittest.TestCase):
                 ]
             }
         )
-

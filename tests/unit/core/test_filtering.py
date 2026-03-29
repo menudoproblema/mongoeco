@@ -629,6 +629,32 @@ class QueryEngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             QueryEngine.match({"flags": 1}, {"flags": {"$bitsAllSet": [64]}})
 
+    def test_query_engine_all_empty_never_matches(self):
+        self.assertFalse(QueryEngine.match({"tags": ["python"]}, {"tags": {"$all": []}}))
+
+    def test_query_engine_size_expands_nested_arrays(self):
+        self.assertTrue(
+            QueryEngine.match(
+                {"tags": [{"values": [1, 2, 3]}]},
+                {"tags.values": {"$size": 3}},
+            )
+        )
+
+    def test_query_engine_bitwise_expands_nested_array_candidates(self):
+        self.assertTrue(
+            QueryEngine.match(
+                {"items": [{"flags": 3}, {"flags": 5}]},
+                {"items.flags": {"$bitsAllSet": 1}},
+            )
+        )
+
+    def test_query_engine_elem_match_rejects_mixed_operator_and_field_conditions(self):
+        with self.assertRaises(OperationFailure):
+            QueryEngine._match_elem_match_candidate(
+                {"name": "x"},
+                {"$gt": 5, "name": "x"},
+            )
+
     def test_query_engine_regex_reuses_compiled_patterns(self):
         filtering_module._compile_regex.cache_clear()
         with patch("mongoeco.core.filtering.re.compile", wraps=re.compile) as compile_regex:
@@ -636,3 +662,13 @@ class QueryEngineTests(unittest.TestCase):
             self.assertTrue(QueryEngine.match({"name": "Alan"}, {"name": {"$regex": "^a", "$options": "i"}}))
 
         self.assertEqual(compile_regex.call_count, 1)
+
+    def test_query_engine_regex_rejects_duplicate_options(self):
+        with self.assertRaises(OperationFailure):
+            QueryEngine.match({"name": "Ada"}, {"name": {"$regex": "^a", "$options": "ii"}})
+
+    def test_bson_comparator_accepts_explicit_dialect(self):
+        self.assertEqual(
+            BSONComparator.compare(1, 1.0, dialect=MONGODB_DIALECT_80),
+            0,
+        )

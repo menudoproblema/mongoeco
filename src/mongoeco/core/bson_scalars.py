@@ -44,6 +44,22 @@ def _normalize_decimal128(value: decimal.Decimal) -> decimal.Decimal:
     return DECIMAL128_CONTEXT.create_decimal(value)
 
 
+def _is_nan_numeric_value(value: object) -> bool:
+    return (
+        isinstance(value, float) and math.isnan(value)
+    ) or (
+        isinstance(value, decimal.Decimal) and value.is_nan()
+    )
+
+
+def _is_infinite_numeric_value(value: object) -> bool:
+    return (
+        isinstance(value, float) and math.isinf(value)
+    ) or (
+        isinstance(value, decimal.Decimal) and value.is_infinite()
+    )
+
+
 def wrap_bson_numeric(value: object) -> BsonNumeric | None:
     if isinstance(value, bool):
         return None
@@ -96,19 +112,19 @@ def compare_bson_numeric(left: object, right: object) -> int:
     left_value = wrapped_left.value
     right_value = wrapped_right.value
 
-    if isinstance(left_value, float) and math.isnan(left_value):
-        return 0 if isinstance(right_value, float) and math.isnan(right_value) else -1
-    if isinstance(right_value, float) and math.isnan(right_value):
+    if _is_nan_numeric_value(left_value):
+        return 0 if _is_nan_numeric_value(right_value) else -1
+    if _is_nan_numeric_value(right_value):
         return 1
 
-    if isinstance(left_value, float) and math.isinf(left_value):
-        if isinstance(right_value, float) and math.isinf(right_value):
+    if _is_infinite_numeric_value(left_value):
+        if _is_infinite_numeric_value(right_value):
             if left_value == right_value:
                 return 0
             return -1 if left_value < right_value else 1
         return -1 if left_value < 0 else 1
 
-    if isinstance(right_value, float) and math.isinf(right_value):
+    if _is_infinite_numeric_value(right_value):
         return 1 if right_value < 0 else -1
 
     left_decimal = _numeric_to_decimal(left_value)
@@ -143,14 +159,44 @@ def validate_bson_value(value: object) -> None:
 
 
 def bson_add(left: object, right: object) -> object:
+    if (
+        isinstance(left, int)
+        and not isinstance(left, bool)
+        and isinstance(right, int)
+        and not isinstance(right, bool)
+    ):
+        result = left + right
+        if result < INT64_MIN or result > INT64_MAX:
+            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
+        return result
     return _wrap_numeric_result(left, right, _numeric_to_decimal(unwrap_bson_numeric(left)) + _numeric_to_decimal(unwrap_bson_numeric(right)))
 
 
 def bson_multiply(left: object, right: object) -> object:
+    if (
+        isinstance(left, int)
+        and not isinstance(left, bool)
+        and isinstance(right, int)
+        and not isinstance(right, bool)
+    ):
+        result = left * right
+        if result < INT64_MIN or result > INT64_MAX:
+            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
+        return result
     return _wrap_numeric_result(left, right, _numeric_to_decimal(unwrap_bson_numeric(left)) * _numeric_to_decimal(unwrap_bson_numeric(right)))
 
 
 def bson_subtract(left: object, right: object) -> object:
+    if (
+        isinstance(left, int)
+        and not isinstance(left, bool)
+        and isinstance(right, int)
+        and not isinstance(right, bool)
+    ):
+        result = left - right
+        if result < INT64_MIN or result > INT64_MAX:
+            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
+        return result
     return _wrap_numeric_result(left, right, _numeric_to_decimal(unwrap_bson_numeric(left)) - _numeric_to_decimal(unwrap_bson_numeric(right)))
 
 
@@ -179,6 +225,17 @@ def bson_mod(left: object, right: object) -> object:
         return _wrap_from_templates(result, left, right)
     left_value = unwrap_bson_numeric(left)
     right_value = unwrap_bson_numeric(right)
+    if (
+        isinstance(left_value, int)
+        and not isinstance(left_value, bool)
+        and isinstance(right_value, int)
+        and not isinstance(right_value, bool)
+    ):
+        quotient = abs(left_value) // abs(right_value)
+        if (left_value < 0) != (right_value < 0):
+            quotient = -quotient
+        result = left_value - right_value * quotient
+        return _wrap_from_templates(result, left, right)
     if isinstance(left_value, float) and not math.isfinite(left_value):
         return math.nan
     if isinstance(right_value, float) and not math.isfinite(right_value):
@@ -206,7 +263,8 @@ def bson_bitwise(operator: str, left: object, right: object) -> object:
     if not isinstance(left, BsonInt32 | BsonInt64) and not isinstance(right, BsonInt32 | BsonInt64):
         return result
     wrapped = wrap_bson_numeric(result)
-    assert isinstance(wrapped, BsonInt32 | BsonInt64)
+    if not isinstance(wrapped, BsonInt32 | BsonInt64):
+        raise TypeError("BSON bitwise operations require signed 64-bit integer results")
     return wrapped
 
 

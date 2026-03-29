@@ -39,6 +39,7 @@ class CompiledGroup:
         self.dialect = dialect
         self.id_expr = spec["_id"]
         self.accumulator_specs = {key: value for key, value in spec.items() if key != "_id"}
+        self._context_counter = 0
         self._context: dict[str, Any] = {
             "dialect": dialect,
             "bson_add": bson_add,
@@ -77,6 +78,12 @@ class CompiledGroup:
         variables: dict[str, Any] | None = None,
     ) -> list[Document]:
         return self._aggregate_func(documents, variables)
+
+    def _store_context_value(self, prefix: str, suffix: str, value: Any) -> str:
+        key = f"{prefix}_{suffix}_{self._context_counter}"
+        self._context_counter += 1
+        self._context[key] = value
+        return key
 
     def _compile(self) -> Any:
         lines = [
@@ -117,8 +124,8 @@ class CompiledGroup:
             field_name = self.id_expr[1:]
             lines.append(f"group_id = doc.get({field_name!r})")
         else:
-            self._context["id_expr"] = self.id_expr
-            lines.append("group_id = _evaluate(doc, id_expr, variables, dialect=dialect)")
+            id_expr_key = self._store_context_value("group", "id_expr", self.id_expr)
+            lines.append(f"group_id = _evaluate(doc, {id_expr_key}, variables, dialect=dialect)")
 
         lines.append("group_key = _agg_key(group_id)")
 
@@ -211,15 +218,13 @@ class CompiledGroup:
         """Translate a MongoDB expression into Python code when safe."""
         if isinstance(expr, str):
             if expr.startswith("$$"):
-                key = f"{prefix}_var"
-                self._context[key] = expr
+                key = self._store_context_value(prefix, "var", expr)
                 return f"_evaluate(doc, {key}, variables, dialect=dialect)"
             if expr.startswith("$"):
                 path = expr[1:]
                 if "." not in path:
                     return f"doc.get({path!r})"
-                key = f"{prefix}_path"
-                self._context[key] = expr
+                key = self._store_context_value(prefix, "path", expr)
                 return f"_evaluate(doc, {key}, variables, dialect=dialect)"
             return repr(expr)
 
@@ -238,7 +243,7 @@ class CompiledGroup:
                             then_c = self._compile_expression(val[1], prefix)
                             else_c = self._compile_expression(val[2], prefix)
                             return f"({then_c} if _truthy({if_c}) else {else_c})"
-                        elif isinstance(val, dict) and all(k in val for k in ("if", "then", "else")):
+                        elif isinstance(val, dict) and set(val) == {"if", "then", "else"}:
                             if_c = self._compile_expression(val["if"], prefix)
                             then_c = self._compile_expression(val["then"], prefix)
                             else_c = self._compile_expression(val["else"], prefix)
@@ -252,6 +257,5 @@ class CompiledGroup:
                             f"({input_c})"
                         )
 
-        key = f"{prefix}_expr"
-        self._context[key] = expr
+        key = self._store_context_value(prefix, "expr", expr)
         return f"_evaluate(doc, {key}, variables, dialect=dialect)"

@@ -10,6 +10,7 @@ from unittest.mock import ANY, patch
 from mongoeco.compat import MongoDialect
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
+from mongoeco.core.aggregation.accumulators import _AccumulatorBucket, _OrderedAccumulator
 from mongoeco.core.aggregation import (
     _ACCUMULATOR_FLAGS_KEY,
     _MISSING,
@@ -659,6 +660,27 @@ class AggregationTests(unittest.TestCase):
             apply_pipeline(documents, [{"$group": spec}]),
         )
 
+    def test_compiled_group_uses_distinct_context_keys_for_variables(self):
+        spec = {"_id": "$kind", "chosen": {"$first": {"$cond": ["$$flag", "$$yes", "$$no"]}}}
+        documents = [{"kind": "a"}]
+        variables = {"flag": True, "yes": "A", "no": "B"}
+
+        self.assertEqual(
+            CompiledGroup(spec).apply(documents, variables),
+            apply_pipeline(documents, [{"$group": spec}], variables=variables),
+        )
+
+    def test_compiled_group_uses_distinct_context_keys_for_dotted_paths(self):
+        spec = {"_id": "$kind", "chosen": {"$first": {"$cond": ["$left.flag", "$left.value", "$right.value"]}}}
+        documents = [
+            {"kind": "a", "left": {"flag": True, "value": "L"}, "right": {"value": "R"}},
+        ]
+
+        self.assertEqual(
+            CompiledGroup(spec).apply(documents),
+            apply_pipeline(documents, [{"$group": spec}]),
+        )
+
     def test_finalize_accumulators_preserves_user_fields_with_has_prefix(self):
         bucket = _initialize_accumulators({"__has_total": {"$first": "$value"}})
         _apply_accumulators(bucket, {"__has_total": {"$first": "$value"}}, {"value": 7})
@@ -714,6 +736,15 @@ class AggregationTests(unittest.TestCase):
                 {"_id": {"min": 3, "max": 4}, "count": 2},
             ],
         )
+
+    def test_finalize_accumulators_returns_empty_list_for_empty_topn(self):
+        bucket = _AccumulatorBucket(
+            bucket_id=None,
+            values={"top": _OrderedAccumulator(n=2)},
+            include_bucket_id=False,
+        )
+
+        self.assertEqual(_finalize_accumulators(bucket), {"top": []})
 
     def test_initialize_accumulators_directly_rejects_unsupported_accumulator_under_default_dialect(self):
         with self.assertRaises(OperationFailure):

@@ -7,6 +7,7 @@ from functools import cmp_to_key
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.paths import get_document_value
 from mongoeco.core.bson_scalars import bson_add, is_bson_numeric, unwrap_bson_numeric
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, SortSpec, UndefinedType
@@ -221,6 +222,19 @@ def _trim_ordered_accumulator(
     bottom: bool,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> None:
+    if len(state.items) <= keep:
+        state.items.sort(
+            key=cmp_to_key(
+                lambda left, right: _compare_ordered_accumulator_items(
+                    left,
+                    right,
+                    sort_spec,
+                    dialect=dialect,
+                )
+            )
+        )
+        return
+
     state.items.sort(
         key=cmp_to_key(
             lambda left, right: _compare_ordered_accumulator_items(
@@ -232,19 +246,6 @@ def _trim_ordered_accumulator(
             )
         )
     )
-    if len(state.items) <= keep:
-        if bottom:
-            state.items.sort(
-                key=cmp_to_key(
-                    lambda left, right: _compare_ordered_accumulator_items(
-                        left,
-                        right,
-                        sort_spec,
-                        dialect=dialect,
-                    )
-                )
-            )
-        return
     if bottom:
         del state.items[: len(state.items) - keep]
         state.items.sort(
@@ -537,7 +538,7 @@ def _finalize_accumulators(bucket: _AccumulatorBucket | dict[str, Any]) -> Docum
             document[field] = deepcopy(value.items)
         elif isinstance(value, _OrderedAccumulator):
             if not value.items:
-                document[field] = None
+                document[field] = [] if value.n is not None else None
             elif value.n is None:
                 document[field] = deepcopy(value.items[0][1])
             else:
@@ -596,8 +597,6 @@ def _resolve_range_value(current_value: object, bound: int | float | str, *, low
 def _window_sort_key_values(document: Document, sort_spec: SortSpec) -> list[Any]:
     values: list[Any] = []
     for field, _direction in sort_spec:
-        from mongoeco.core.paths import get_document_value
-
         found, value = get_document_value(document, field)
         values.append(value if found else None)
     return values

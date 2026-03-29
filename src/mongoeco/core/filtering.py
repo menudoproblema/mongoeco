@@ -84,9 +84,13 @@ def _compile_regex(pattern: str, options: str) -> re.Pattern[str]:
         "s": re.DOTALL,
         "x": re.VERBOSE,
     }
+    seen: set[str] = set()
     for option in options:
         if option not in supported:
             raise OperationFailure(f"Unsupported regex option: {option}")
+        if option in seen:
+            raise OperationFailure(f"Duplicate regex option: {option}")
+        seen.add(option)
         flags |= supported[option]
     return re.compile(pattern, flags)
 
@@ -96,8 +100,13 @@ class BSONComparator:
     TYPE_ORDER = MONGODB_DIALECT_70.bson_type_order
 
     @staticmethod
-    def compare(a: Any, b: Any) -> int:
-        return MONGODB_DIALECT_70.policy.compare_values(a, b)
+    def compare(
+        a: Any,
+        b: Any,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> int:
+        return dialect.policy.compare_values(a, b)
 
 class QueryEngine:
     """Motor central de filtrado de MongoDB."""
@@ -448,7 +457,6 @@ class QueryEngine:
         candidates = QueryEngine._extract_values(doc, field)
         if not candidates:
             return False
-        policy = dialect.policy
         if operator == "gt":
             return any(compare_with_collation(value, target, dialect=dialect, collation=collation) > 0 for value in candidates)
         if operator == "gte":
@@ -671,21 +679,25 @@ class QueryEngine:
         operator: str,
         operand: Any,
     ) -> bool:
-        found, candidate = QueryEngine._get_field_value(doc, field)
-        if not found:
-            return False
-        candidate_value = QueryEngine._coerce_bitwise_candidate(candidate)
-        if candidate_value is None:
+        found, value = QueryEngine._get_field_value(doc, field)
+        candidates = [value] if found else QueryEngine._extract_values(doc, field)
+        if not candidates:
             return False
         mask = QueryEngine._coerce_bitwise_mask(operand)
-        if operator == "$bitsAllSet":
-            return (candidate_value & mask) == mask
-        if operator == "$bitsAnySet":
-            return (candidate_value & mask) != 0
-        if operator == "$bitsAllClear":
-            return (candidate_value & mask) == 0
-        if operator == "$bitsAnyClear":
-            return (~candidate_value & mask) != 0
+        for candidate in candidates:
+            candidate_value = QueryEngine._coerce_bitwise_candidate(candidate)
+            if candidate_value is None:
+                continue
+            if operator == "$bitsAllSet" and (candidate_value & mask) == mask:
+                return True
+            if operator == "$bitsAnySet" and (candidate_value & mask) != 0:
+                return True
+            if operator == "$bitsAllClear" and (candidate_value & mask) == 0:
+                return True
+            if operator == "$bitsAnyClear" and (~candidate_value & mask) != 0:
+                return True
+        if operator in {"$bitsAllSet", "$bitsAnySet", "$bitsAllClear", "$bitsAnyClear"}:
+            return False
         raise ValueError(f"Unsupported bitwise query operator: {operator}")
 
     @staticmethod
@@ -697,6 +709,8 @@ class QueryEngine:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
+        if not expected_values:
+            return False
         found, value = QueryEngine._get_field_value(doc, field)
         if found and isinstance(value, list):
             candidates = value
@@ -724,7 +738,12 @@ class QueryEngine:
     @staticmethod
     def _evaluate_size(doc: dict[str, Any], field: str, expected_size: int) -> bool:
         found, value = QueryEngine._get_field_value(doc, field)
-        return found and isinstance(value, list) and len(value) == expected_size
+        if found:
+            return isinstance(value, list) and len(value) == expected_size
+        return any(
+            isinstance(value, list) and len(value) == expected_size
+            for value in QueryEngine._extract_values(doc, field)
+        )
 
     @staticmethod
     def _evaluate_mod(doc: dict[str, Any], field: str, divisor: int | float, remainder: int | float) -> bool:
@@ -790,7 +809,14 @@ class QueryEngine:
     ) -> bool:
         if not isinstance(condition, dict):
             return QueryEngine._values_equal(candidate, condition, dialect=dialect, collation=collation)
-        if any(isinstance(key, str) and key.startswith("$") for key in condition):
+        operator_keys = [
+            key
+            for key in condition
+            if isinstance(key, str) and key.startswith("$")
+        ]
+        if operator_keys:
+            if len(operator_keys) != len(condition):
+                raise OperationFailure("$elemMatch cannot mix operator and field conditions")
             wrapper = {"value": candidate}
             return QueryEngine.match(wrapper, {"value": condition}, dialect=dialect, collation=collation)
         if not isinstance(candidate, dict):
