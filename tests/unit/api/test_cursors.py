@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from mongoeco.api._async.cursor import AsyncCursor
+from mongoeco.api._async.cursor import AsyncCursor, _DEFAULT_LOCAL_PREFETCH_SIZE
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.api._sync.cursor import Cursor
@@ -354,6 +354,25 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(collection._engine.created_scans[0].yield_count, 2)
         self.assertEqual(await cursor.to_list(), [{"_id": "2"}, {"_id": "3"}])
 
+    async def test_async_cursor_uses_local_prefetch_when_batch_size_is_none(self):
+        documents = [{"_id": str(index)} for index in range(3)]
+        collection = _BatchTrackingCollectionStub(documents)
+        cursor = AsyncCursor(collection, {}, MatchAll(), None)
+
+        self.assertEqual(await cursor.to_list(), documents)
+        self.assertEqual(len(collection._engine.created_scans), 1)
+        self.assertEqual(collection._engine.created_scans[0].yield_count, len(documents))
+        self.assertIsNone(cursor._as_operation().batch_size)
+
+    async def test_async_cursor_uses_default_prefetch_size_when_batch_size_is_zero(self):
+        documents = [{"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)]
+        collection = _BatchTrackingCollectionStub(documents)
+        cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=0)
+
+        self.assertEqual(await cursor.to_list(), documents)
+        self.assertEqual(len(collection._engine.created_scans), 2)
+        self.assertEqual(collection._engine.created_scans[0].yield_count, _DEFAULT_LOCAL_PREFETCH_SIZE)
+
     async def test_async_cursor_stays_exhausted_until_rewind(self):
         cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}, {"_id": "2"}]), {}, MatchAll(), None)
 
@@ -506,6 +525,16 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(collection.last_scan)
         self.assertEqual(collection.last_scan.yield_count, 2)
         self.assertEqual(list(cursor), [{"_id": "2"}, {"_id": "3"}])
+
+    def test_sync_cursor_uses_local_prefetch_when_batch_size_is_none(self):
+        documents = [{"_id": str(index)} for index in range(3)]
+        collection = _BatchTrackingFindCollectionStub(documents)
+        cursor = Cursor(_SyncClientStub(), collection, {}, None)
+
+        self.assertEqual(cursor.to_list(), documents)
+        self.assertEqual(len(collection._collection._engine.created_scans), 1)
+        self.assertEqual(collection.last_scan.yield_count, len(documents))
+        self.assertIsNone(cursor._as_operation().batch_size)
 
     def test_sync_cursor_close_is_idempotent_and_blocks_further_use(self):
         cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)

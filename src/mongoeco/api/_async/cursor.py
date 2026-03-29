@@ -9,6 +9,7 @@ from mongoeco.types import CollationDocument, Document, Filter, PlanningMode, Pr
 
 
 type HintSpec = str | SortSpec
+_DEFAULT_LOCAL_PREFETCH_SIZE = 101
 
 
 def _serialize_explanation(result: object) -> dict[str, object]:
@@ -53,6 +54,9 @@ class _AsyncCursorIterator:
             self._closed = True
             raise StopAsyncIteration
         if not self._buffer:
+            if self._cursor._exhausted:
+                await self.close()
+                raise StopAsyncIteration
             await self._fill_buffer()
         if not self._buffer:
             await self.close()
@@ -60,11 +64,13 @@ class _AsyncCursorIterator:
         return self._buffer.pop(0)
 
     async def _fill_buffer(self) -> None:
-        target_size = self._batch_size if self._batch_size not in (None, 0) else 1
+        target_size = self._batch_size if self._batch_size not in (None, 0) else _DEFAULT_LOCAL_PREFETCH_SIZE
         page = await self._cursor._fetch_batch(self._position, target_size)
         if not page:
             self._cursor._exhausted = True
             return
+        if len(page) < target_size:
+            self._cursor._exhausted = True
         self._position += len(page)
         self._buffer.extend(page)
 
