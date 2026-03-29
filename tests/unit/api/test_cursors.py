@@ -355,7 +355,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await cursor.to_list(), [{"_id": "2"}, {"_id": "3"}])
 
     async def test_async_cursor_uses_local_prefetch_when_batch_size_is_none(self):
-        documents = [{"_id": str(index)} for index in range(3)]
+        documents = [{"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)]
         collection = _BatchTrackingCollectionStub(documents)
         cursor = AsyncCursor(collection, {}, MatchAll(), None)
 

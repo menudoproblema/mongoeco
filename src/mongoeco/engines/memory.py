@@ -789,7 +789,7 @@ class MemoryEngine(AsyncStorageEngine):
                     db_name,
                     coll_name,
                     semantics.hint,
-                    indexes=deepcopy(indexes),
+                    indexes=indexes,
                     plan=semantics.query_plan,
                     dialect=semantics.dialect,
                 )
@@ -844,10 +844,9 @@ class MemoryEngine(AsyncStorageEngine):
                     else:
                         # Scan completo (lento)
                         enforce_deadline(deadline)
-                        storage_values = list(coll.values())
                         document_source = (
                             self._decode_storage_document(data)
-                            for data in storage_values
+                            for data in coll.values()
                         )
 
                 # Pipeline de procesamiento perezoso (streaming)

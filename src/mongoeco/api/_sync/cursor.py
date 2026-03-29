@@ -195,7 +195,7 @@ class Cursor:
         self._started = True
         async_iterable = self._active_async_iterable
         if async_iterable is None:
-            async_iterable = self._async_collection.find(
+            async_cursor = self._async_collection.find(
                 self._filter_spec,
                 self._projection,
                 collation=self._collation,
@@ -207,7 +207,12 @@ class Cursor:
                 max_time_ms=self._max_time_ms,
                 batch_size=self._batch_size,
                 session=self._session,
-            ).__aiter__()
+            )
+            if self._batch_size is None:
+                set_batch_size = getattr(async_cursor, "batch_size", None)
+                if callable(set_batch_size):
+                    set_batch_size(0)
+            async_iterable = async_cursor.__aiter__()
             self._active_async_iterable = async_iterable
 
         return _CursorIterator(self, async_iterable)

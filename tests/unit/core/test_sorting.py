@@ -1,4 +1,5 @@
 import datetime
+import math
 import unittest
 import uuid
 
@@ -106,6 +107,18 @@ class SortingHelpersTests(unittest.TestCase):
         self.assertEqual(
             [document["_id"] for document in sort_documents(documents, [("mixed", 1)])],
             ["null", "number", "string", "uuid", "objectid", "bool", "datetime"],
+        )
+
+    def test_sort_documents_keeps_nan_ordering_consistent_for_default_dialect(self):
+        documents = [
+            {"_id": "nan", "score": math.nan},
+            {"_id": "low", "score": 1.5},
+            {"_id": "high", "score": 3.0},
+        ]
+
+        self.assertEqual(
+            [document["_id"] for document in sort_documents(documents, [("score", 1)])],
+            ["nan", "low", "high"],
         )
 
     def test_sort_documents_window_keeps_only_requested_prefix(self):

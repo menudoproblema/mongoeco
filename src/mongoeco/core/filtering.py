@@ -607,13 +607,13 @@ class QueryEngine:
                 collation=collation,
             )
 
-        if operator in {"gt", ">"}:
+        if operator == "gt" or operator == ">":
             return comparison > 0
-        if operator in {"gte", ">="}:
+        if operator == "gte" or operator == ">=":
             return comparison >= 0
-        if operator in {"lt", "<"}:
+        if operator == "lt" or operator == "<":
             return comparison < 0
-        if operator in {"lte", "<="}:
+        if operator == "lte" or operator == "<=":
             return comparison <= 0
         raise ValueError(f"Unsupported comparison operator kind: {operator}")
 

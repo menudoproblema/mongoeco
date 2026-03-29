@@ -1,5 +1,6 @@
 import time
 from dataclasses import replace
+from collections import deque
 from collections.abc import Mapping, Sequence
 
 from mongoeco.compat import MONGODB_DIALECT_70
@@ -37,13 +38,21 @@ def _ensure_operation_executable(collection, operation) -> None:
 
 
 class _AsyncCursorIterator:
-    def __init__(self, cursor: "AsyncCursor", *, batch_size: int | None, enforce_ownership: bool):
+    def __init__(
+        self,
+        cursor: "AsyncCursor",
+        *,
+        batch_size: int | None,
+        enforce_ownership: bool,
+        source=None,
+    ):
         self._cursor = cursor
         self._batch_size = batch_size
         self._enforce_ownership = enforce_ownership
-        self._buffer: list[Document] = []
+        self._buffer = deque()
         self._closed = False
         self._position = 0
+        self._source = source
 
     def __aiter__(self):
         return self
@@ -54,6 +63,13 @@ class _AsyncCursorIterator:
         if self._enforce_ownership and self._cursor._active_async_iterable is not self:
             self._closed = True
             raise StopAsyncIteration
+        if self._source is not None:
+            try:
+                return await self._source.__anext__()
+            except StopAsyncIteration:
+                self._cursor._exhausted = True
+                await self.close()
+                raise
         if not self._buffer:
             if self._cursor._exhausted:
                 await self.close()
@@ -62,7 +78,7 @@ class _AsyncCursorIterator:
         if not self._buffer:
             await self.close()
             raise StopAsyncIteration
-        return self._buffer.pop(0)
+        return self._buffer.popleft()
 
     async def _fill_buffer(self) -> None:
         target_size = self._batch_size if self._batch_size not in (None, 0) else _DEFAULT_LOCAL_PREFETCH_SIZE
@@ -79,6 +95,9 @@ class _AsyncCursorIterator:
         if self._closed:
             return
         self._closed = True
+        close = getattr(self._source, "aclose", None)
+        if callable(close):
+            await close()
         if self._cursor._active_async_iterable is self:
             self._cursor._active_async_iterable = None
         if self._cursor._active_async_iterable is None and self._cursor._exhausted:
@@ -261,6 +280,13 @@ class AsyncCursor:
 
     def _iter(self, *, limit: int | None = None, enforce_ownership: bool = True) -> _AsyncCursorIterator:
         self._started = True
+        if self._batch_size is None:
+            return _AsyncCursorIterator(
+                self,
+                batch_size=None,
+                enforce_ownership=enforce_ownership,
+                source=self._scan(limit=limit),
+            )
         batch_size = self._batch_size if limit is None else limit
         return _AsyncCursorIterator(self, batch_size=batch_size, enforce_ownership=enforce_ownership)
 
