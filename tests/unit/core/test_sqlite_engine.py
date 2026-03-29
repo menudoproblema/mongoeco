@@ -873,6 +873,95 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(results, [True])
         self.assertEqual(rows, [("idx_tags", "python"), ("idx_tags", "sqlite")])
 
+    async def test_put_documents_bulk_sync_respects_sparse_unique_indexes(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["email"], unique=True, sparse=True)
+            snapshot_options, snapshot_indexes = await engine._run_blocking(
+                engine._snapshot_bulk_insert_preparation_sync,
+                "db",
+                "coll",
+                None,
+            )
+            documents = [
+                {"_id": "1"},
+                {"_id": "2", "email": "a@example.com"},
+                {"_id": "3", "email": "a@example.com"},
+            ]
+            prepared_documents = [
+                engine._prepare_bulk_document_with_indexes_sync(document, snapshot_indexes)
+                for document in documents
+            ]
+            results = await engine._run_blocking(
+                engine._put_documents_bulk_sync,
+                "db",
+                "coll",
+                documents,
+                prepared_documents,
+                snapshot_indexes,
+                None,
+                bypass_document_validation=True,
+                snapshot_options=snapshot_options,
+            )
+            found = [await engine.get_document("db", "coll", doc_id) for doc_id in ("1", "2", "3")]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(results, [True, True, False])
+        self.assertEqual(found, [{"_id": "1"}, {"_id": "2", "email": "a@example.com"}, None])
+
+    async def test_put_documents_bulk_sync_respects_partial_unique_indexes(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index(
+                "db",
+                "coll",
+                ["email"],
+                unique=True,
+                partial_filter_expression={"active": True},
+            )
+            snapshot_options, snapshot_indexes = await engine._run_blocking(
+                engine._snapshot_bulk_insert_preparation_sync,
+                "db",
+                "coll",
+                None,
+            )
+            documents = [
+                {"_id": "1", "email": "a@example.com", "active": False},
+                {"_id": "2", "email": "a@example.com", "active": True},
+                {"_id": "3", "email": "a@example.com", "active": True},
+            ]
+            prepared_documents = [
+                engine._prepare_bulk_document_with_indexes_sync(document, snapshot_indexes)
+                for document in documents
+            ]
+            results = await engine._run_blocking(
+                engine._put_documents_bulk_sync,
+                "db",
+                "coll",
+                documents,
+                prepared_documents,
+                snapshot_indexes,
+                None,
+                bypass_document_validation=True,
+                snapshot_options=snapshot_options,
+            )
+            found = [await engine.get_document("db", "coll", doc_id) for doc_id in ("1", "2", "3")]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(results, [True, True, False])
+        self.assertEqual(
+            found,
+            [
+                {"_id": "1", "email": "a@example.com", "active": False},
+                {"_id": "2", "email": "a@example.com", "active": True},
+                None,
+            ],
+        )
+
     async def test_connect_defers_multikey_physical_index_recreation_until_index_metadata_load(self):
         handle = tempfile.NamedTemporaryFile(suffix=".sqlite3", delete=False)
         handle.close()

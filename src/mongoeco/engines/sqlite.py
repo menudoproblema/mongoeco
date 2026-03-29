@@ -2123,7 +2123,7 @@ class SQLiteEngine(AsyncStorageEngine):
                                 search_indexes=search_indexes,
                             )
                             results.append(True)
-                        except sqlite3.IntegrityError:
+                        except (DuplicateKeyError, sqlite3.IntegrityError):
                             results.append(False)
                             break
                     self._commit_write(conn, context)
