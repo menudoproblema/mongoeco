@@ -166,7 +166,11 @@ class SQLiteEngine(AsyncStorageEngine):
         self._owns_executor = False
         if executor_workers is not None and executor_workers < 1:
             raise ValueError("executor_workers must be positive")
-        self._executor_workers = executor_workers or min(32, max(4, (os.cpu_count() or 1) + 4))
+        self._executor_workers = executor_workers or (
+            min(32, max(4, (os.cpu_count() or 1) + 4))
+            if path != ":memory:"
+            else 1
+        )
         self._use_shared_executor = executor_workers is None
         self._profiler = EngineProfiler("sqlite")
         self._mvcc_version = 0
@@ -1947,128 +1951,73 @@ class SQLiteEngine(AsyncStorageEngine):
         bypass_document_validation: bool = False,
     ) -> bool:
         storage_key = self._storage_key(document.get("_id"))
-        snapshot_options: dict[str, object] = {}
-        snapshot_original: Document | None = None
-        with self._lock:
-            conn = self._require_connection(context)
-            with self._bind_connection(conn):
-                snapshot_options = self._collection_options_or_empty_sync(
-                    conn,
-                    db_name,
-                    coll_name,
-                )
-                snapshot_original = self._load_existing_document_for_storage_key(
-                    conn,
-                    db_name,
-                    coll_name,
-                    storage_key,
-                ) if overwrite else None
-
-        if not bypass_document_validation:
-            enforce_collection_document_validation(
-                document,
-                options=snapshot_options,
-                original_document=snapshot_original,
-                dialect=MONGODB_DIALECT_70,
-            )
         serialized_document = self._serialize_document(document)
 
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                collection_options = self._collection_options_or_empty_sync(
-                    conn,
-                    db_name,
-                    coll_name,
-                )
-                original_document = self._load_existing_document_for_storage_key(
-                    conn,
-                    db_name,
-                    coll_name,
-                    storage_key,
-                ) if overwrite else None
-                if (
-                    not bypass_document_validation
-                    and (collection_options != snapshot_options or original_document != snapshot_original)
-                ):
-                    enforce_collection_document_validation(
-                        document,
-                        options=collection_options,
-                        original_document=original_document,
-                        dialect=MONGODB_DIALECT_70,
-                    )
-                indexes = self._load_indexes(db_name, coll_name)
-                search_indexes = self._load_search_index_rows(db_name, coll_name)
+                self._begin_write(conn, context)
                 try:
+                    collection_options = self._collection_options_or_empty_sync(conn, db_name, coll_name)
+                    original_document = None
+                    if not bypass_document_validation or not overwrite:
+                        original_document = self._load_existing_document_for_storage_key(conn, db_name, coll_name, storage_key)
+
+                    if not overwrite and original_document is not None:
+                        self._rollback_write(conn, context)
+                        return False
+
+                    if not bypass_document_validation:
+                        enforce_collection_document_validation(
+                            document,
+                            options=collection_options,
+                            original_document=original_document,
+                            dialect=MONGODB_DIALECT_70,
+                        )
+
+                    self._ensure_collection_row(conn, db_name, coll_name, options=collection_options)
                     self._validate_document_against_unique_indexes(
                         db_name,
                         coll_name,
                         document,
                         exclude_storage_key=storage_key if overwrite else None,
                     )
-                    if overwrite:
-                        self._begin_write(conn, context)
-                        self._ensure_collection_row(conn, db_name, coll_name)
-                        conn.execute(
-                            """
-                            INSERT INTO documents (db_name, coll_name, storage_key, document)
-                            VALUES (?, ?, ?, ?)
-                            ON CONFLICT(db_name, coll_name, storage_key)
-                            DO UPDATE SET document = excluded.document
-                            """,
-                            (db_name, coll_name, storage_key, serialized_document),
-                        )
-                        self._rebuild_multikey_entries_for_document(
-                            conn,
-                            db_name,
-                            coll_name,
-                            storage_key,
-                            document,
-                            indexes,
-                        )
-                        self._replace_search_entries_for_document(
-                            conn,
-                            db_name,
-                            coll_name,
-                            storage_key,
-                            document,
-                            search_indexes=search_indexes,
-                        )
-                    else:
-                        self._begin_write(conn, context)
-                        self._ensure_collection_row(conn, db_name, coll_name)
-                        cursor = conn.execute(
-                            """
-                            INSERT INTO documents (db_name, coll_name, storage_key, document)
-                            VALUES (?, ?, ?, ?)
-                            ON CONFLICT(db_name, coll_name, storage_key) DO NOTHING
-                            """,
-                            (db_name, coll_name, storage_key, serialized_document),
-                        )
-                        if cursor.rowcount == 0:
-                            self._rollback_write(conn, context)
-                            return False
-                        self._rebuild_multikey_entries_for_document(
-                            conn,
-                            db_name,
-                            coll_name,
-                            storage_key,
-                            document,
-                            indexes,
-                        )
-                        self._replace_search_entries_for_document(
-                            conn,
-                            db_name,
-                            coll_name,
-                            storage_key,
-                            document,
-                            search_indexes=search_indexes,
-                        )
+                    
+                    try:
+                        if overwrite:
+                            conn.execute(
+                                """
+                                INSERT INTO documents (db_name, coll_name, storage_key, document)
+                                VALUES (?, ?, ?, ?)
+                                ON CONFLICT(db_name, coll_name, storage_key)
+                                DO UPDATE SET document = excluded.document
+                                """,
+                                (db_name, coll_name, storage_key, serialized_document),
+                            )
+                        else:
+                            conn.execute(
+                                """
+                                INSERT INTO documents (db_name, coll_name, storage_key, document)
+                                VALUES (?, ?, ?, ?)
+                                """,
+                                (db_name, coll_name, storage_key, serialized_document),
+                            )
+                    except sqlite3.IntegrityError as exc:
+                        raise DuplicateKeyError(f"Duplicate key error: {exc}") from exc
+
+                    indexes = self._load_indexes(db_name, coll_name)
+                    if any(idx.get("multikey") for idx in indexes):
+                        self._rebuild_multikey_entries_for_document(conn, db_name, coll_name, storage_key, document, indexes)
+                    
+                    search_indexes = self._load_search_index_rows(db_name, coll_name)
+                    if search_indexes:
+                        self._replace_search_entries_for_document(conn, db_name, coll_name, storage_key, document, search_indexes=search_indexes)
+                    
                     self._commit_write(conn, context)
                     return True
-                except sqlite3.IntegrityError as exc:
+                except Exception:
                     self._rollback_write(conn, context)
-                    raise DuplicateKeyError(str(exc)) from exc
+                    raise
 
     def _snapshot_bulk_insert_validation_options_sync(
         self,
@@ -2123,8 +2072,6 @@ class SQLiteEngine(AsyncStorageEngine):
                     for index, (document, (storage_key, serialized_document, prepared_multikey_rows)) in enumerate(
                         zip(documents, prepared_documents, strict=False)
                     ):
-                        savepoint = f"bulk_insert_{index}"
-                        conn.execute(f'SAVEPOINT "{savepoint}"')
                         try:
                             self._validate_document_against_unique_indexes(
                                 db_name,
@@ -2141,8 +2088,6 @@ class SQLiteEngine(AsyncStorageEngine):
                                 (db_name, coll_name, storage_key, serialized_document),
                             )
                             if cursor.rowcount == 0:
-                                conn.execute(f'ROLLBACK TO SAVEPOINT "{savepoint}"')
-                                conn.execute(f'RELEASE SAVEPOINT "{savepoint}"')
                                 results.append(False)
                                 break
                             self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
@@ -2177,11 +2122,8 @@ class SQLiteEngine(AsyncStorageEngine):
                                 document,
                                 search_indexes=search_indexes,
                             )
-                            conn.execute(f'RELEASE SAVEPOINT "{savepoint}"')
                             results.append(True)
                         except sqlite3.IntegrityError:
-                            conn.execute(f'ROLLBACK TO SAVEPOINT "{savepoint}"')
-                            conn.execute(f'RELEASE SAVEPOINT "{savepoint}"')
                             results.append(False)
                             break
                     self._commit_write(conn, context)

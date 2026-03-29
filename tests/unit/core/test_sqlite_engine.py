@@ -712,6 +712,14 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             engine._shutdown_executor()
 
+    def test_in_memory_sqlite_defaults_to_single_executor_worker(self):
+        engine = SQLiteEngine(path=":memory:")
+        try:
+            executor = engine._ensure_executor()
+            self.assertEqual(executor._max_workers, 1)
+        finally:
+            engine._shutdown_executor()
+
     def test_default_sqlite_engines_share_process_executor(self):
         first = SQLiteEngine()
         second = SQLiteEngine()
