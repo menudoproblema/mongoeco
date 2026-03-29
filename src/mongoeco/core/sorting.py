@@ -73,6 +73,21 @@ def sort_value(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
 ) -> Any:
+    if "." not in field:
+        if field not in document:
+            return None
+        primary = document[field]
+        if isinstance(primary, list):
+            if not primary:
+                return []
+            return _extreme_value(
+                primary,
+                prefer_max=direction == -1,
+                dialect=dialect,
+                collation=collation,
+            )
+        return primary
+
     values = QueryEngine.extract_values(document, field)
     if not values:
         return None

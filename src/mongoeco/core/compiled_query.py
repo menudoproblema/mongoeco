@@ -54,6 +54,7 @@ class CompiledQuery:
         self._context["extract"] = QueryEngine.extract_values
         self._context["eq_matches"] = QueryEngine._query_equality_matches
         self._context["top_eq"] = QueryEngine._match_top_level_equals
+        self._context["top_compare"] = QueryEngine._match_top_level_comparison
         self._context["in_matches"] = QueryEngine._in_item_matches_candidate
         self._context["match_plan"] = QueryEngine.match_plan
 
@@ -75,6 +76,7 @@ class CompiledQuery:
             "    _extract = extract\n"
             "    _eq_matches = eq_matches\n"
             "    _top_eq = top_eq\n"
+            "    _top_compare = top_compare\n"
             "    _in_matches = in_matches\n"
             "    _compare = compare\n"
             "    _values_equal = values_equal\n"
@@ -174,6 +176,11 @@ class CompiledQuery:
     def _comparison_code(self, depth: int, field: str, value: Any, operator: str) -> str:
         field_key = self._store(depth, "field", field)
         value_key = self._store(depth, "value", value)
+        if "." not in field:
+            return (
+                f"_top_compare(doc, {field_key}, {value_key}, {operator!r}, "
+                "dialect=dialect, collation=collation)"
+            )
         return (
             "any("
             f"_compare(candidate, {value_key}, dialect=dialect, collation=collation) {operator} 0"

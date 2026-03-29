@@ -564,6 +564,100 @@ class QueryEngine:
         return QueryEngine._values_equal(candidate, expected, dialect=dialect, collation=collation)
 
     @staticmethod
+    def _comparison_matches_candidate(
+        candidate: Any,
+        target: Any,
+        operator: str,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
+    ) -> bool:
+        if collation is None and dialect is MONGODB_DIALECT_70:
+            candidate_type = type(candidate)
+            target_type = type(target)
+            if (
+                candidate_type is target_type
+                and candidate_type in {str, bytes, bool, int, float}
+                and not (candidate_type is float and (math.isnan(candidate) or math.isnan(target)))
+            ):
+                comparison = -1 if candidate < target else 1 if candidate > target else 0
+            elif (
+                candidate_type in {int, float}
+                and target_type in {int, float}
+                and candidate_type is not bool
+                and target_type is not bool
+                and not (
+                    (candidate_type is float and math.isnan(candidate))
+                    or (target_type is float and math.isnan(target))
+                )
+            ):
+                comparison = -1 if candidate < target else 1 if candidate > target else 0
+            else:
+                comparison = compare_with_collation(
+                    candidate,
+                    target,
+                    dialect=dialect,
+                    collation=collation,
+                )
+        else:
+            comparison = compare_with_collation(
+                candidate,
+                target,
+                dialect=dialect,
+                collation=collation,
+            )
+
+        if operator in {"gt", ">"}:
+            return comparison > 0
+        if operator in {"gte", ">="}:
+            return comparison >= 0
+        if operator in {"lt", "<"}:
+            return comparison < 0
+        if operator in {"lte", "<="}:
+            return comparison <= 0
+        raise ValueError(f"Unsupported comparison operator kind: {operator}")
+
+    @staticmethod
+    def _match_top_level_comparison(
+        doc: dict[str, Any],
+        field: str,
+        target: Any,
+        operator: str,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
+    ) -> bool:
+        if field not in doc:
+            return False
+        value = doc[field]
+        if isinstance(value, list):
+            if QueryEngine._comparison_matches_candidate(
+                value,
+                target,
+                operator,
+                dialect=dialect,
+                collation=collation,
+            ):
+                return True
+            return any(
+                QueryEngine._comparison_matches_candidate(
+                    item,
+                    target,
+                    operator,
+                    dialect=dialect,
+                    collation=collation,
+                )
+                for item in value
+            )
+        return QueryEngine._comparison_matches_candidate(
+            value,
+            target,
+            operator,
+            dialect=dialect,
+            collation=collation,
+        )
+
+    @staticmethod
     def _match_top_level_equals(
         doc: dict[str, Any],
         field: str,
@@ -674,33 +768,70 @@ class QueryEngine:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
+        if "." not in field:
+            return QueryEngine._match_top_level_comparison(
+                doc,
+                field,
+                target,
+                operator,
+                dialect=dialect,
+                collation=collation,
+            )
         candidates = QueryEngine._extract_values(doc, field)
         if not candidates:
             return False
         if len(candidates) == 1:
-            comparison = compare_with_collation(
+            return QueryEngine._comparison_matches_candidate(
                 candidates[0],
                 target,
+                operator,
                 dialect=dialect,
                 collation=collation,
             )
-            if operator == "gt":
-                return comparison > 0
-            if operator == "gte":
-                return comparison >= 0
-            if operator == "lt":
-                return comparison < 0
-            if operator == "lte":
-                return comparison <= 0
-            raise ValueError(f"Unsupported comparison operator kind: {operator}")
         if operator == "gt":
-            return any(compare_with_collation(value, target, dialect=dialect, collation=collation) > 0 for value in candidates)
+            return any(
+                QueryEngine._comparison_matches_candidate(
+                    value,
+                    target,
+                    operator,
+                    dialect=dialect,
+                    collation=collation,
+                )
+                for value in candidates
+            )
         if operator == "gte":
-            return any(compare_with_collation(value, target, dialect=dialect, collation=collation) >= 0 for value in candidates)
+            return any(
+                QueryEngine._comparison_matches_candidate(
+                    value,
+                    target,
+                    operator,
+                    dialect=dialect,
+                    collation=collation,
+                )
+                for value in candidates
+            )
         if operator == "lt":
-            return any(compare_with_collation(value, target, dialect=dialect, collation=collation) < 0 for value in candidates)
+            return any(
+                QueryEngine._comparison_matches_candidate(
+                    value,
+                    target,
+                    operator,
+                    dialect=dialect,
+                    collation=collation,
+                )
+                for value in candidates
+            )
         if operator == "lte":
-            return any(compare_with_collation(value, target, dialect=dialect, collation=collation) <= 0 for value in candidates)
+            return any(
+                QueryEngine._comparison_matches_candidate(
+                    value,
+                    target,
+                    operator,
+                    dialect=dialect,
+                    collation=collation,
+                )
+                for value in candidates
+            )
         raise ValueError(f"Unsupported comparison operator kind: {operator}")
 
     @staticmethod

@@ -43,10 +43,11 @@ class CompiledQueryTests(unittest.TestCase):
         )
 
     def test_compiled_query_matches_query_engine_for_top_level_scalar_equality(self):
-        document = {"active": True, "city": "Madrid"}
+        document = {"active": True, "city": "Madrid", "age": 30}
 
         active_plan = compile_filter({"active": True})
         city_plan = compile_filter({"city": "Madrid"})
+        age_plan = compile_filter({"age": {"$gte": 18}})
 
         self.assertEqual(
             QueryEngine.match_plan(document, active_plan),
@@ -55,6 +56,10 @@ class CompiledQueryTests(unittest.TestCase):
         self.assertEqual(
             QueryEngine.match_plan(document, city_plan),
             CompiledQuery(city_plan).match(document),
+        )
+        self.assertEqual(
+            QueryEngine.match_plan(document, age_plan),
+            CompiledQuery(age_plan).match(document),
         )
 
     def test_compiled_query_matches_query_engine_for_exists_with_null_and_nested_paths(self):
