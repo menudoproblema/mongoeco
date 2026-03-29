@@ -36,6 +36,8 @@ class BsonScalarTests(unittest.TestCase):
         self.assertEqual(bson_numeric_alias(wrapped), "long")
         self.assertEqual(unwrap_bson_numeric(wrapped), 1 << 40)
         self.assertTrue(is_bson_numeric(BsonDouble(1.5)))
+        with self.assertRaises(BsonScalarOverflowError):
+            bson_numeric_alias(1 << 80)
 
     def test_compare_bson_numeric_handles_nan_and_infinities(self):
         self.assertEqual(compare_bson_numeric(float("nan"), float("nan")), 0)

@@ -8,6 +8,39 @@ from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.types import Document, SortSpec
 
 
+def _document_sort_keys(
+    document: Document,
+    sort: SortSpec,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
+) -> list[Any]:
+    return [
+        sort_value(document, field, direction, dialect=dialect, collation=collation)
+        for field, direction in sort
+    ]
+
+
+def _compare_sort_keys(
+    left_keys: list[Any],
+    right_keys: list[Any],
+    sort: SortSpec,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
+) -> int:
+    for index, (_field, direction) in enumerate(sort):
+        result = compare_with_collation(
+            left_keys[index],
+            right_keys[index],
+            dialect=dialect,
+            collation=collation,
+        )
+        if result != 0:
+            return result if direction == 1 else -result
+    return 0
+
+
 def sort_value(
     document: Document,
     field: str,
@@ -61,16 +94,13 @@ def compare_documents(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
 ) -> int:
-    for field, direction in sort:
-        result = compare_with_collation(
-            sort_value(left, field, direction, dialect=dialect, collation=collation),
-            sort_value(right, field, direction, dialect=dialect, collation=collation),
-            dialect=dialect,
-            collation=collation,
-        )
-        if result != 0:
-            return result if direction == 1 else -result
-    return 0
+    return _compare_sort_keys(
+        _document_sort_keys(left, sort, dialect=dialect, collation=collation),
+        _document_sort_keys(right, sort, dialect=dialect, collation=collation),
+        sort,
+        dialect=dialect,
+        collation=collation,
+    )
 
 
 def sort_documents(
@@ -86,10 +116,7 @@ def sort_documents(
     # Precompute sort keys so comparisons do not repeatedly traverse the document.
     decorated = [
         (
-            [
-                sort_value(doc, field, direction, dialect=dialect, collation=collation)
-                for field, direction in sort
-            ],
+            _document_sort_keys(doc, sort, dialect=dialect, collation=collation),
             doc,
         )
         for doc in documents
@@ -98,16 +125,13 @@ def sort_documents(
     def _compare_decorated(left_tuple: tuple[list[Any], Document], right_tuple: tuple[list[Any], Document]) -> int:
         left_keys, _ = left_tuple
         right_keys, _ = right_tuple
-        for index, (_field, direction) in enumerate(sort):
-            result = compare_with_collation(
-                left_keys[index],
-                right_keys[index],
-                dialect=dialect,
-                collation=collation,
-            )
-            if result != 0:
-                return result if direction == 1 else -result
-        return 0
+        return _compare_sort_keys(
+            left_keys,
+            right_keys,
+            sort,
+            dialect=dialect,
+            collation=collation,
+        )
 
     decorated.sort(key=cmp_to_key(_compare_decorated))
     return [doc for _keys, doc in decorated]
@@ -128,16 +152,27 @@ def sort_documents_window(
         return sort_documents(list(documents), sort, dialect=dialect, collation=collation)
     if window <= 0:
         return []
-    comparator = cmp_to_key(
-        lambda left, right: compare_documents(
-            left,
-            right,
+    decorated = [
+        (
+            _document_sort_keys(doc, sort, dialect=dialect, collation=collation),
+            doc,
+        )
+        for doc in documents
+    ]
+
+    def _compare_decorated(left_tuple: tuple[list[Any], Document], right_tuple: tuple[list[Any], Document]) -> int:
+        left_keys, _ = left_tuple
+        right_keys, _ = right_tuple
+        return _compare_sort_keys(
+            left_keys,
+            right_keys,
             sort,
             dialect=dialect,
             collation=collation,
         )
-    )
-    return heapq.nsmallest(window, documents, key=comparator)
+
+    smallest = heapq.nsmallest(window, decorated, key=cmp_to_key(_compare_decorated))
+    return [doc for _keys, doc in smallest]
 
 
 def sort_documents_limited(

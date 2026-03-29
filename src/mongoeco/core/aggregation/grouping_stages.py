@@ -32,6 +32,47 @@ from mongoeco.core.aggregation.planning import _require_sort
 from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 
 
+def _build_accumulator_runtime(
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> dict[str, Any]:
+    def _evaluate(
+        current_document: Document,
+        current_expression: object,
+        current_variables: dict[str, Any] | None = None,
+    ) -> Any:
+        return evaluate_expression(
+            current_document,
+            current_expression,
+            current_variables,
+            dialect=dialect,
+        )
+
+    def _evaluate_with_missing(
+        current_document: Document,
+        current_expression: object,
+        current_variables: dict[str, Any] | None = None,
+    ) -> Any:
+        return _evaluate_expression_with_missing(
+            current_document,
+            current_expression,
+            current_variables or {},
+            dialect=dialect,
+        )
+
+    def _append_unique(target: list[Any], values: list[Any]) -> None:
+        _append_unique_values(target, values, dialect=dialect)
+
+    return {
+        "evaluate_expression": _evaluate,
+        "evaluate_expression_with_missing": _evaluate_with_missing,
+        "append_unique_values": _append_unique,
+        "require_sort": _require_sort,
+        "resolve_aggregation_field_path": _resolve_aggregation_field_path,
+        "missing_sentinel": _MISSING,
+    }
+
+
 def _apply_group(
     documents: list[Document],
     spec: object,
@@ -50,6 +91,7 @@ def _apply_group(
             pass
 
     accumulator_specs = {key: value for key, value in spec.items() if key != "_id"}
+    accumulator_runtime = _build_accumulator_runtime(dialect=dialect)
     _initialize_accumulators(
         accumulator_specs,
         dialect=dialect,
@@ -79,26 +121,7 @@ def _apply_group(
             document,
             variables,
             dialect=dialect,
-            evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
-                current_document,
-                current_expression,
-                current_variables,
-                dialect=dialect,
-            ),
-            evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
-                current_document,
-                current_expression,
-                current_variables or {},
-                dialect=dialect,
-            ),
-            append_unique_values=lambda target, values: _append_unique_values(
-                target,
-                values,
-                dialect=dialect,
-            ),
-            require_sort=_require_sort,
-            resolve_aggregation_field_path=_resolve_aggregation_field_path,
-            missing_sentinel=_MISSING,
+            **accumulator_runtime,
         )
 
     return [_finalize_accumulators(bucket) for bucket in groups.values()]
@@ -125,6 +148,7 @@ def _apply_bucket(
         raise OperationFailure("$bucket output must be a document")
 
     default_bucket = spec.get("default")
+    accumulator_runtime = _build_accumulator_runtime(dialect=dialect)
     buckets: list[_AccumulatorBucket] = []
     for lower in boundaries[:-1]:
         buckets.append(
@@ -153,26 +177,7 @@ def _apply_bucket(
                     document,
                     variables,
                     dialect=dialect,
-                    evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
-                        current_document,
-                        current_expression,
-                        current_variables,
-                        dialect=dialect,
-                    ),
-                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
-                        current_document,
-                        current_expression,
-                        current_variables or {},
-                        dialect=dialect,
-                    ),
-                    append_unique_values=lambda target, values: _append_unique_values(
-                        target,
-                        values,
-                        dialect=dialect,
-                    ),
-                    require_sort=_require_sort,
-                    resolve_aggregation_field_path=_resolve_aggregation_field_path,
-                    missing_sentinel=_MISSING,
+                    **accumulator_runtime,
                 )
                 matched = True
                 break
@@ -185,26 +190,7 @@ def _apply_bucket(
                 document,
                 variables,
                 dialect=dialect,
-                evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
-                    current_document,
-                    current_expression,
-                    current_variables,
-                    dialect=dialect,
-                ),
-                evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
-                    current_document,
-                    current_expression,
-                    current_variables or {},
-                    dialect=dialect,
-                ),
-                append_unique_values=lambda target, values: _append_unique_values(
-                    target,
-                    values,
-                    dialect=dialect,
-                ),
-                require_sort=_require_sort,
-                resolve_aggregation_field_path=_resolve_aggregation_field_path,
-                missing_sentinel=_MISSING,
+                **accumulator_runtime,
             )
             continue
         raise OperationFailure("$bucket found a document outside of the specified boundaries")
@@ -231,6 +217,7 @@ def _apply_bucket_auto(
         raise OperationFailure("$bucketAuto granularity is not supported")
 
     output = spec.get("output")
+    accumulator_runtime = _build_accumulator_runtime(dialect=dialect)
     if output is not None and not isinstance(output, dict):
         raise OperationFailure("$bucketAuto output must be a document")
 
@@ -269,26 +256,7 @@ def _apply_bucket_auto(
                 document,
                 variables,
                 dialect=dialect,
-                evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
-                    current_document,
-                    current_expression,
-                    current_variables,
-                    dialect=dialect,
-                ),
-                evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
-                    current_document,
-                    current_expression,
-                    current_variables or {},
-                    dialect=dialect,
-                ),
-                append_unique_values=lambda target, values: _append_unique_values(
-                    target,
-                    values,
-                    dialect=dialect,
-                ),
-                require_sort=_require_sort,
-                resolve_aggregation_field_path=_resolve_aggregation_field_path,
-                missing_sentinel=_MISSING,
+                **accumulator_runtime,
             )
         result.append(_finalize_accumulators(bucket))
     return result
@@ -308,6 +276,7 @@ def _apply_set_window_fields(
         raise OperationFailure("$setWindowFields output must be a document")
 
     sort_spec = _require_sort(spec["sortBy"]) if "sortBy" in spec else None
+    accumulator_runtime = _build_accumulator_runtime(dialect=dialect)
     partitions: dict[Any, list[Document]] = {}
     for document in documents:
         partition_key = (
@@ -315,7 +284,7 @@ def _apply_set_window_fields(
             if "partitionBy" in spec
             else None
         )
-        partitions.setdefault(_aggregation_key(partition_key), []).append(deepcopy(document))
+        partitions.setdefault(_aggregation_key(partition_key), []).append(document)
 
     result: list[Document] = []
     for partition_documents in partitions.values():
@@ -405,26 +374,7 @@ def _apply_set_window_fields(
                         window_document,
                         variables,
                         dialect=dialect,
-                        evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
-                            current_document,
-                            current_expression,
-                            current_variables,
-                            dialect=dialect,
-                        ),
-                        evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
-                            current_document,
-                            current_expression,
-                            current_variables or {},
-                            dialect=dialect,
-                        ),
-                        append_unique_values=lambda target, values: _append_unique_values(
-                            target,
-                            values,
-                            dialect=dialect,
-                        ),
-                        require_sort=_require_sort,
-                        resolve_aggregation_field_path=_resolve_aggregation_field_path,
-                        missing_sentinel=_MISSING,
+                        **accumulator_runtime,
                     )
                 set_document_value(enriched, field, _finalize_accumulators(state)[field])
             result.append(enriched)

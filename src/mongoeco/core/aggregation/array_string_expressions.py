@@ -63,6 +63,12 @@ ARRAY_STRING_EXPRESSION_OPERATORS = frozenset(
 )
 
 
+def _copy_if_mutable(value: Any) -> Any:
+    if isinstance(value, (dict, list, set)):
+        return deepcopy(value)
+    return value
+
+
 def evaluate_array_string_expression(
     operator: str,
     document: Document,
@@ -307,7 +313,7 @@ def evaluate_array_string_expression(
         result = []
         for item in source:
             scoped = dict(variables or {})
-            scoped_item = deepcopy(item)
+            scoped_item = _copy_if_mutable(item)
             scoped[alias] = scoped_item
             if alias == "this":
                 scoped["this"] = scoped_item

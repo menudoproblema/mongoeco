@@ -87,14 +87,23 @@ def unwrap_bson_numeric(value: object) -> object:
 
 
 def bson_numeric_alias(value: object) -> str | None:
-    wrapped = wrap_bson_numeric(value)
-    if isinstance(wrapped, BsonInt32):
+    if isinstance(value, BsonInt32):
         return "int"
-    if isinstance(wrapped, BsonInt64):
+    if isinstance(value, BsonInt64):
         return "long"
-    if isinstance(wrapped, BsonDouble):
+    if isinstance(value, BsonDouble):
         return "double"
-    if isinstance(wrapped, BsonDecimal128):
+    if isinstance(value, BsonDecimal128):
+        return "decimal"
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        if value < INT64_MIN or value > INT64_MAX:
+            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
+        return "int" if INT32_MIN <= value <= INT32_MAX else "long"
+    if isinstance(value, float):
+        return "double"
+    if isinstance(value, Decimal128 | decimal.Decimal):
         return "decimal"
     return None
 

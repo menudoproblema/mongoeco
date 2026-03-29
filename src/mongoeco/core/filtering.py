@@ -112,6 +112,28 @@ class QueryEngine:
     """Motor central de filtrado de MongoDB."""
 
     @staticmethod
+    def _hashable_in_lookup_key(
+        value: Any,
+        *,
+        collation: CollationSpec | None = None,
+    ) -> tuple[str, Any] | None:
+        if value is None:
+            return ("none", None)
+        if isinstance(value, bool):
+            return ("bool", value)
+        if isinstance(value, bytes):
+            return ("bytes", value)
+        if isinstance(value, datetime.datetime):
+            return ("date", value)
+        if isinstance(value, uuid.UUID):
+            return ("uuid", value)
+        if isinstance(value, ObjectId):
+            return ("objectid", value)
+        if isinstance(value, Timestamp):
+            return ("timestamp", value)
+        return None
+
+    @staticmethod
     def match(
         document: dict[str, Any],
         filter_spec: dict[str, Any],
@@ -478,17 +500,43 @@ class QueryEngine:
         collation: CollationSpec | None = None,
     ) -> bool:
         candidates = QueryEngine._extract_values(doc, field) or [None]
-        return any(
-            QueryEngine._in_item_matches_candidate(
-                candidate,
-                item,
-                null_matches_undefined=null_matches_undefined,
-                dialect=dialect,
-                collation=collation,
-            )
-            for candidate in candidates
-            for item in values
-        )
+        literal_lookup: set[tuple[str, Any]] = set()
+        regex_values: list[re.Pattern[str]] = []
+        residual_values: list[Any] = []
+        for item in values:
+            if isinstance(item, Regex):
+                regex_values.append(item.compile())
+                continue
+            if isinstance(item, re.Pattern):
+                regex_values.append(item)
+                continue
+            if item is None and null_matches_undefined:
+                residual_values.append(item)
+                continue
+            key = QueryEngine._hashable_in_lookup_key(item, collation=collation)
+            if key is not None:
+                literal_lookup.add(key)
+                continue
+            residual_values.append(item)
+
+        for candidate in candidates:
+            key = QueryEngine._hashable_in_lookup_key(candidate, collation=collation)
+            if key is not None and key in literal_lookup:
+                return True
+            if any(QueryEngine._regex_item_matches_candidate(candidate, pattern) for pattern in regex_values):
+                return True
+            if any(
+                QueryEngine._query_equality_matches(
+                    candidate,
+                    item,
+                    null_matches_undefined=null_matches_undefined,
+                    dialect=dialect,
+                    collation=collation,
+                )
+                for item in residual_values
+            ):
+                return True
+        return False
 
     @staticmethod
     def _evaluate_not_in(

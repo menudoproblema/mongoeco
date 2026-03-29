@@ -618,6 +618,31 @@ class AggregationTests(unittest.TestCase):
                     {"_id": "$kind", "total": {"$sum": "$value"}},
                 )
 
+    def test_set_window_fields_does_not_mutate_input_documents(self):
+        documents = [{"_id": "1", "partition": "a", "value": 2}, {"_id": "2", "partition": "a", "value": 3}]
+        original = deepcopy(documents)
+
+        result = apply_pipeline(
+            documents,
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$partition",
+                        "sortBy": {"_id": 1},
+                        "output": {
+                            "running": {
+                                "$sum": "$value",
+                                "window": {"documents": ["unbounded", "current"]},
+                            }
+                        },
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(documents, original)
+        self.assertEqual([document["running"] for document in result], [2, 5])
+
     def test_compiled_group_preserves_sum_add_null_semantics(self):
         spec = {"_id": "$kind", "total": {"$sum": {"$add": ["$left", "$right"]}}}
         documents = [

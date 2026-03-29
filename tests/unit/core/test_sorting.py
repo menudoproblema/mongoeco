@@ -121,6 +121,30 @@ class SortingHelpersTests(unittest.TestCase):
             ["1", "2"],
         )
 
+    def test_sort_documents_window_matches_full_sort_prefix_for_array_paths(self):
+        documents = [
+            {"_id": "a", "scores": [{"value": 4}, {"value": 2}], "rank": 2},
+            {"_id": "b", "scores": [{"value": 1}, {"value": 5}], "rank": 1},
+            {"_id": "c", "scores": [{"value": 3}], "rank": 3},
+        ]
+
+        expected = [
+            document["_id"]
+            for document in sort_documents(documents, [("scores.value", 1), ("rank", -1)])[:2]
+        ]
+
+        self.assertEqual(
+            [
+                document["_id"]
+                for document in sort_documents_window(
+                    documents,
+                    [("scores.value", 1), ("rank", -1)],
+                    window=2,
+                )
+            ],
+            expected,
+        )
+
     def test_sort_documents_limited_applies_skip_and_limit_without_full_tail(self):
         documents = [
             {"_id": "5", "rank": 5},
