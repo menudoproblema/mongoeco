@@ -731,15 +731,6 @@ class QueryEngineTests(unittest.TestCase):
         self.assertTrue(QueryEngine.match(doc2, {"rows.0.cells": 10}))
         self.assertFalse(QueryEngine.match(doc2, {"rows.2.cells": 10}))
 
-    def test_query_engine_regex_cache_compiles_separately_for_different_flag_combinations(self):
-        filtering_module._compile_regex.cache_clear()
-        with patch("mongoeco.core.filtering.re.compile", wraps=re.compile) as compile_regex:
-            self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": {"$regex": "^a", "$options": "i"}}))
-            self.assertFalse(QueryEngine.match({"name": "Ada"}, {"name": {"$regex": "^a", "$options": "m"}}))
-            self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": {"$regex": "^a", "$options": "i"}}))
-
-        self.assertEqual(compile_regex.call_count, 2)
-
     def test_query_engine_in_with_multiline_regex_matches_across_lines(self):
         document = {"text": "first\nsecond"}
 

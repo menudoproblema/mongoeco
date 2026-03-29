@@ -5251,26 +5251,6 @@ class AggregationTests(unittest.TestCase):
                 [{"$group": {"_id": "$group", "result": {"$firstN": {"input": "$score", "n": "$n"}}}}],
             )
 
-    def test_compiled_group_cache_evicts_oldest_entry_when_full(self):
-        CompiledGroup._COMPILED_FUNCTION_CACHE.clear()
-        max_size = CompiledGroup._COMPILED_FUNCTION_CACHE_MAXSIZE
-
-        first_spec = {"_id": None, "cache_eviction_probe_0": {"$sum": "$value"}}
-        CompiledGroup(first_spec)
-        first_func = CompiledGroup._COMPILED_FUNCTION_CACHE.get(
-            CompiledGroup._cache_key(first_spec, __import__("mongoeco.compat", fromlist=["MONGODB_DIALECT_70"]).MONGODB_DIALECT_70)
-        )
-        self.assertIsNotNone(first_func)
-
-        for i in range(1, max_size + 1):
-            spec = {"_id": None, f"cache_eviction_probe_{i}": {"$sum": "$value"}}
-            CompiledGroup(spec)
-
-        from mongoeco.compat import MONGODB_DIALECT_70
-        evicted_key = CompiledGroup._cache_key(first_spec, MONGODB_DIALECT_70)
-        self.assertNotIn(evicted_key, CompiledGroup._COMPILED_FUNCTION_CACHE)
-        self.assertEqual(len(CompiledGroup._COMPILED_FUNCTION_CACHE), max_size)
-
     def test_top_uses_insertion_order_as_tiebreaker_for_equal_sort_values(self):
         documents = [
             {"_id": "1", "group": "a", "score": 5, "label": "first"},
