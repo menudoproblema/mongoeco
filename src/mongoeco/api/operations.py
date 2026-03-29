@@ -2,10 +2,9 @@ from dataclasses import dataclass, replace
 
 from mongoeco.api._async.cursor import (
     HintSpec,
+    _normalize_sort_spec,
     _validate_batch_size,
-    _validate_hint_spec,
     _validate_max_time_ms,
-    _validate_sort_spec,
 )
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import Pipeline
@@ -352,17 +351,17 @@ def _normalize_projection(projection: object | None) -> Projection | None:
 
 
 def _normalize_sort(sort: object | None) -> SortSpec | None:
-    if sort is None:
-        return None
-    _validate_sort_spec(sort)
-    return sort
+    return _normalize_sort_spec(sort)
 
 
 def _normalize_hint(hint: object | None) -> HintSpec | None:
     if hint is None:
         return None
-    _validate_hint_spec(hint)
-    return hint
+    if isinstance(hint, str):
+        if not hint:
+            raise ValueError("hint string must not be empty")
+        return hint
+    return _normalize_sort_spec(hint)
 
 
 def _normalize_array_filters(array_filters: object | None) -> ArrayFilters | None:

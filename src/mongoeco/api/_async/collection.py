@@ -38,9 +38,9 @@ from mongoeco.api._async.cursor import (
     AsyncCursor,
     HintSpec,
     _validate_batch_size,
+    _normalize_sort_spec,
     _validate_hint_spec,
     _validate_max_time_ms,
-    _validate_sort_spec,
 )
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
@@ -310,14 +310,11 @@ class AsyncCollection:
         if hint is None:
             return None
         _validate_hint_spec(hint)
-        return hint
+        return hint if isinstance(hint, str) else _normalize_sort_spec(hint)
 
     @staticmethod
     def _normalize_sort(sort: object | None) -> SortSpec | None:
-        if sort is None:
-            return None
-        _validate_sort_spec(sort)
-        return sort
+        return _normalize_sort_spec(sort)
 
     @staticmethod
     def _normalize_batch_size(batch_size: object | None) -> int | None:

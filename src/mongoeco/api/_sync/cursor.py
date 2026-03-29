@@ -1,12 +1,12 @@
 from mongoeco.api._async.cursor import (
     HintSpec,
     MONGODB_DIALECT_70,
+    _normalize_sort_spec,
     _resolve_planning_mode,
     _serialize_explanation,
     _validate_batch_size,
     _validate_hint_spec,
     _validate_max_time_ms,
-    _validate_sort_spec,
 )
 from mongoeco.api.operations import FindOperation, compile_find_operation
 from mongoeco.errors import InvalidOperation
@@ -103,15 +103,14 @@ class Cursor:
 
     def sort(self, sort: SortSpec) -> "Cursor":
         self._ensure_mutable()
-        _validate_sort_spec(sort)
-        self._sort = sort
+        self._sort = _normalize_sort_spec(sort)
         self._invalidate()
         return self
 
     def hint(self, hint: HintSpec) -> "Cursor":
         self._ensure_mutable()
         _validate_hint_spec(hint)
-        self._hint = hint
+        self._hint = hint if isinstance(hint, str) else _normalize_sort_spec(hint)
         self._invalidate()
         return self
 

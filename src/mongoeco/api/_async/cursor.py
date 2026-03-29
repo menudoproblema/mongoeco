@@ -1,4 +1,5 @@
 import time
+from collections.abc import Mapping, Sequence
 
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.query_plan import QueryNode
@@ -87,7 +88,32 @@ def _resolve_planning_mode(collection) -> object:
     return getattr(collection, "_planning_mode", None) or PlanningMode.STRICT
 
 
-def _validate_sort_spec(sort: SortSpec) -> None:
+def _normalize_sort_spec(sort: object | None) -> SortSpec | None:
+    if sort is None:
+        return None
+    if isinstance(sort, Mapping):
+        normalized = list(sort.items())
+        _validate_sort_spec(normalized)
+        return normalized
+    if (
+        isinstance(sort, tuple)
+        and len(sort) == 2
+        and isinstance(sort[0], str)
+        and sort[1] in (1, -1)
+        and not isinstance(sort[1], bool)
+    ):
+        normalized = [sort]
+        _validate_sort_spec(normalized)
+        return normalized
+    if isinstance(sort, Sequence) and not isinstance(sort, (str, bytes, bytearray, list)):
+        normalized = list(sort)
+        _validate_sort_spec(normalized)
+        return normalized
+    _validate_sort_spec(sort)
+    return sort
+
+
+def _validate_sort_spec(sort: object) -> None:
     if not isinstance(sort, list):
         raise TypeError("sort must be a list of (field, direction) tuples")
     for item in sort:
@@ -105,7 +131,7 @@ def _validate_hint_spec(hint: HintSpec) -> None:
         if not hint:
             raise ValueError("hint string must not be empty")
         return
-    _validate_sort_spec(hint)
+    _normalize_sort_spec(hint)
 
 
 def _validate_batch_size(batch_size: int) -> None:
@@ -224,14 +250,13 @@ class AsyncCursor:
 
     def sort(self, sort: SortSpec) -> "AsyncCursor":
         self._ensure_mutable()
-        _validate_sort_spec(sort)
-        self._sort = sort
+        self._sort = _normalize_sort_spec(sort)
         return self
 
     def hint(self, hint: HintSpec) -> "AsyncCursor":
         self._ensure_mutable()
         _validate_hint_spec(hint)
-        self._hint = hint
+        self._hint = hint if isinstance(hint, str) else _normalize_sort_spec(hint)
         return self
 
     def comment(self, comment: object) -> "AsyncCursor":

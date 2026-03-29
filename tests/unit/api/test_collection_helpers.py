@@ -275,6 +275,28 @@ class AsyncCollectionHelperTests(unittest.TestCase):
 
         self.assertEqual(found, {"_id": "1", "name": "Ada", "rank": 2})
 
+    def test_find_and_find_one_accept_dict_sort(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                await collection.insert_one({"_id": "1", "name": "Ada", "rank": 2})
+                await collection.insert_one({"_id": "2", "name": "Grace", "rank": 1})
+                found = await collection.find_one(
+                    {"name": {"$in": ["Ada", "Grace"]}},
+                    sort={"rank": 1},
+                )
+                listed = await collection.find({}, sort={"rank": 1}).to_list()
+                return found, listed
+            finally:
+                await engine.disconnect()
+
+        found, listed = asyncio.run(_exercise())
+
+        self.assertEqual(found, {"_id": "2", "name": "Grace", "rank": 1})
+        self.assertEqual([document["_id"] for document in listed], ["2", "1"])
+
     def test_find_one_rejects_unknown_public_kwargs(self):
         collection = AsyncCollection(MemoryEngine(), "db", "coll")
 

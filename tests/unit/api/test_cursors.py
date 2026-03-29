@@ -291,8 +291,8 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
     async def test_async_cursor_validates_sort_spec_eagerly(self):
         cursor = AsyncCursor(_AsyncCollectionStub([]), {}, MatchAll(), None)
 
-        with self.assertRaises(TypeError):
-            cursor.sort({"name": 1})  # type: ignore[arg-type]
+        cursor.sort({"name": 1})  # type: ignore[arg-type]
+        self.assertEqual(cursor._sort, [("name", 1)])
         with self.assertRaises(TypeError):
             cursor.sort([("name", 1), "bad"])  # type: ignore[list-item]
         with self.assertRaises(TypeError):
@@ -307,8 +307,8 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             cursor.max_time_ms("5")  # type: ignore[arg-type]
         with self.assertRaises(ValueError):
             cursor.max_time_ms(-1)
-        with self.assertRaises(TypeError):
-            cursor.hint({"name": 1})  # type: ignore[arg-type]
+        cursor.hint({"name": 1})  # type: ignore[arg-type]
+        self.assertEqual(cursor._hint, [("name", 1)])
         with self.assertRaises(ValueError):
             cursor.hint("")
 
@@ -404,6 +404,15 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(semantics.comment, "trace")
         self.assertEqual(semantics.max_time_ms, 5)
 
+    async def test_async_cursor_accepts_dict_sort_and_hint(self):
+        cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None)
+
+        cursor.sort({"_id": 1})  # type: ignore[arg-type]
+        cursor.hint({"name": 1})  # type: ignore[arg-type]
+
+        self.assertEqual(cursor._sort, [("_id", 1)])
+        self.assertEqual(cursor._hint, [("name", 1)])
+
 
     def test_sync_cursor_rejects_negative_skip_and_limit_and_supports_iteration(self):
         cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}]), {}, None)
@@ -416,11 +425,20 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(list(cursor), [{"_id": "1"}, {"_id": "2"}])
 
+    def test_sync_cursor_accepts_dict_sort_and_hint(self):
+        cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
+
+        cursor.sort({"_id": 1})  # type: ignore[arg-type]
+        cursor.hint({"name": 1})  # type: ignore[arg-type]
+
+        self.assertEqual(cursor._sort, [("_id", 1)])
+        self.assertEqual(cursor._hint, [("name", 1)])
+
     def test_sync_cursor_validates_sort_spec_eagerly(self):
         cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
 
-        with self.assertRaises(TypeError):
-            cursor.sort({"name": 1})  # type: ignore[arg-type]
+        cursor.sort({"name": 1})  # type: ignore[arg-type]
+        self.assertEqual(cursor._sort, [("name", 1)])
         with self.assertRaises(TypeError):
             cursor.sort([("name", 1), "bad"])  # type: ignore[list-item]
         with self.assertRaises(ValueError):
@@ -433,8 +451,8 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             cursor.max_time_ms("5")  # type: ignore[arg-type]
         with self.assertRaises(ValueError):
             cursor.max_time_ms(-1)
-        with self.assertRaises(TypeError):
-            cursor.hint({"name": 1})  # type: ignore[arg-type]
+        cursor.hint({"name": 1})  # type: ignore[arg-type]
+        self.assertEqual(cursor._hint, [("name", 1)])
         with self.assertRaises(ValueError):
             cursor.hint("")
 
