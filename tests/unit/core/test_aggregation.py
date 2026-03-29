@@ -5286,6 +5286,17 @@ class AggregationTests(unittest.TestCase):
             apply_pipeline(documents, [{"$group": spec}]),
         )
 
+    def test_compiled_group_matches_slow_path_for_constant_numeric_sum_literals(self):
+        documents = [{"kind": "x"}, {"kind": "x"}]
+
+        for literal in (2, 2.5):
+            with self.subTest(literal=literal):
+                spec = {"_id": "$kind", "total": {"$sum": literal}}
+                self.assertEqual(
+                    CompiledGroup(spec).apply(documents),
+                    apply_pipeline(documents, [{"$group": spec}]),
+                )
+
     def test_setwindowfields_range_window_includes_only_docs_within_numeric_bounds(self):
         documents = [
             {"_id": "1", "value": 1},

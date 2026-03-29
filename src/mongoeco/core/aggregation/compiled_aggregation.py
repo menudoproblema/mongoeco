@@ -234,8 +234,8 @@ class CompiledGroup:
 
             match operator:
                 case "$sum":
-                    if expression == 1:
-                        lines.append(f"state[{index}] += 1")
+                    if isinstance(expression, (int, float)):
+                        lines.append(f"state[{index}] += {expression!r}")
                     else:
                         lines.append("operand = _sum_operand(value)")
                         lines.append("if operand is not None:")
