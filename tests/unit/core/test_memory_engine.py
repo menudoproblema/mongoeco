@@ -1071,6 +1071,29 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ascending, ["2", "3", "1"])
         self.assertEqual(descending, ["2", "1", "3"])
 
+    async def test_scan_collection_sorts_scalar_field_when_sort_field_is_indexed(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "rank": 3})
+            await engine.put_document("db", "coll", {"_id": "2", "rank": 1})
+            await engine.put_document("db", "coll", {"_id": "3", "rank": 2})
+            await engine.create_index("db", "coll", ["rank"], name="rank_idx")
+
+            ascending = [
+                doc["_id"]
+                async for doc in self._scan(engine, "db", "coll", sort=[("rank", 1)])
+            ]
+            descending = [
+                doc["_id"]
+                async for doc in self._scan(engine, "db", "coll", sort=[("rank", -1)])
+            ]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(ascending, ["2", "3", "1"])
+        self.assertEqual(descending, ["1", "3", "2"])
+
     async def test_scan_collection_rejects_negative_skip_and_limit(self):
         engine = MemoryEngine()
         await engine.connect()
