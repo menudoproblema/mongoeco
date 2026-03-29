@@ -2,6 +2,7 @@ import unittest
 import datetime
 import uuid
 import json
+from unittest import mock
 
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.operators import UpdateEngine
@@ -198,7 +199,7 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
             _translate_array_contains_scalar("payload", object()),
             (
                 "(json_type(document, '$.payload') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.payload') WHERE json_each.value = ?))",
-                [unittest.mock.ANY],
+                [mock.ANY],
             ),
         )
 
@@ -206,7 +207,7 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
             _translate_scalar_equals("payload", object()),
             (
                 "(COALESCE(json_extract(document, '$.payload.\"$mongoeco\".type'), '') = ? AND COALESCE(json_extract(document, '$.payload.\"$mongoeco\".value'), json_extract(document, '$.payload')) = ?)",
-                ["", unittest.mock.ANY],
+                ["", mock.ANY],
             ),
         )
 

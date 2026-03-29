@@ -25,6 +25,7 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import canonical_document_id
+from mongoeco.core.json_compat import json_dumps_compact, json_loads
 from mongoeco.core.operators import UpdateEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.paths import get_document_value
@@ -84,6 +85,9 @@ from mongoeco.engines.virtual_indexes import (
     query_can_use_index,
 )
 from mongoeco.engines.sqlite_query import (
+    _normalize_comparable_value,
+    _translate_equals_scalar_only,
+    _translate_same_type_comparison,
     _translate_scalar_equals,
     index_expressions_sql,
     json_path_for_field,
@@ -551,7 +555,7 @@ class SQLiteEngine(AsyncStorageEngine):
         raise OperationFailure("hint does not correspond to an existing index")
 
     def _serialize_document(self, document: Document) -> str:
-        return json.dumps(self._codec.encode(document), separators=(",", ":"), sort_keys=False)
+        return json_dumps_compact(self._codec.encode(document), sort_keys=False)
 
     def _deserialize_document(
         self,
@@ -559,7 +563,9 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         preserve_bson_wrappers: bool = True,
     ) -> Document:
-        parsed = json.loads(payload)
+        parsed = json_loads(payload)
+        if DocumentCodec._MARKER not in payload:
+            return parsed
         try:
             return self._codec.decode(parsed, preserve_bson_wrappers=preserve_bson_wrappers)
         except TypeError:
@@ -815,6 +821,42 @@ class SQLiteEngine(AsyncStorageEngine):
         )
         return f"(({scalar_sql}) OR {array_sql})", [*scalar_params, *array_params]
 
+    def _field_has_comparison_type_mismatch_in_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+        expected_type: str,
+    ) -> bool:
+        feature_key = (db_name, coll_name, f"comparison_mismatch:{field}:{expected_type}")
+        if feature_key in self._collection_features_cache:
+            return self._collection_features_cache[feature_key]
+        if expected_type == "number":
+            mismatch_predicate = "json_type(document, {path}) IS NOT NULL AND json_type(document, {path}) NOT IN ('integer', 'real')"
+        elif expected_type == "string":
+            mismatch_predicate = "json_type(document, {path}) IS NOT NULL AND json_type(document, {path}) != 'text'"
+        elif expected_type == "bool":
+            mismatch_predicate = "json_type(document, {path}) IS NOT NULL AND json_type(document, {path}) NOT IN ('true', 'false')"
+        else:
+            # Tagged comparable values still need full BSON type ordering in SQL.
+            self._collection_features_cache[feature_key] = True
+            return True
+        conn = self._require_connection()
+        path_literal = "'" + json_path_for_field(field).replace("'", "''") + "'"
+        row = conn.execute(
+            f"""
+            SELECT 1
+            FROM documents
+            WHERE db_name = ? AND coll_name = ?
+              AND ({mismatch_predicate.format(path=path_literal)})
+            LIMIT 1
+            """,
+            (db_name, coll_name),
+        ).fetchone()
+        result = row is not None
+        self._collection_features_cache[feature_key] = result
+        return result
+
     def _translate_in_with_multikey(
         self,
         collection_id: int,
@@ -877,6 +919,12 @@ class SQLiteEngine(AsyncStorageEngine):
         if isinstance(plan, EqualsCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
+                if not self._field_is_top_level_array_in_collection(db_name, coll_name, plan.field):
+                    return _translate_equals_scalar_only(
+                        plan.field,
+                        plan.value,
+                        null_matches_undefined=plan.null_matches_undefined,
+                    )
                 return translate_query_plan(plan)
             collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
             if collection_id is None:
@@ -893,6 +941,14 @@ class SQLiteEngine(AsyncStorageEngine):
         if isinstance(plan, GreaterThanCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
+                expected_type, _ = _normalize_comparable_value(plan.value)
+                if not self._field_has_comparison_type_mismatch_in_collection(
+                    db_name,
+                    coll_name,
+                    plan.field,
+                    expected_type,
+                ):
+                    return _translate_same_type_comparison(">", plan.field, plan.value)
                 return translate_query_plan(plan)
             collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
             if collection_id is None:
@@ -901,6 +957,14 @@ class SQLiteEngine(AsyncStorageEngine):
         if isinstance(plan, GreaterThanOrEqualCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
+                expected_type, _ = _normalize_comparable_value(plan.value)
+                if not self._field_has_comparison_type_mismatch_in_collection(
+                    db_name,
+                    coll_name,
+                    plan.field,
+                    expected_type,
+                ):
+                    return _translate_same_type_comparison(">=", plan.field, plan.value)
                 return translate_query_plan(plan)
             collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
             if collection_id is None:
@@ -909,6 +973,14 @@ class SQLiteEngine(AsyncStorageEngine):
         if isinstance(plan, LessThanCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
+                expected_type, _ = _normalize_comparable_value(plan.value)
+                if not self._field_has_comparison_type_mismatch_in_collection(
+                    db_name,
+                    coll_name,
+                    plan.field,
+                    expected_type,
+                ):
+                    return _translate_same_type_comparison("<", plan.field, plan.value)
                 return translate_query_plan(plan)
             collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
             if collection_id is None:
@@ -917,6 +989,14 @@ class SQLiteEngine(AsyncStorageEngine):
         if isinstance(plan, LessThanOrEqualCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
+                expected_type, _ = _normalize_comparable_value(plan.value)
+                if not self._field_has_comparison_type_mismatch_in_collection(
+                    db_name,
+                    coll_name,
+                    plan.field,
+                    expected_type,
+                ):
+                    return _translate_same_type_comparison("<=", plan.field, plan.value)
                 return translate_query_plan(plan)
             collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
             if collection_id is None:
@@ -1085,6 +1165,9 @@ class SQLiteEngine(AsyncStorageEngine):
         )
 
     def _field_is_top_level_array_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
+        feature_key = (db_name, coll_name, f"top_level_array:{field}")
+        if feature_key in self._collection_features_cache:
+            return self._collection_features_cache[feature_key]
         conn = self._require_connection()
         path_literal = "'" + json_path_for_field(field).replace("'", "''") + "'"
         row = conn.execute(
@@ -1097,7 +1180,9 @@ class SQLiteEngine(AsyncStorageEngine):
             """,
             (db_name, coll_name),
         ).fetchone()
-        return row is not None
+        result = row is not None
+        self._collection_features_cache[feature_key] = result
+        return result
 
     def _plan_requires_python_for_array_comparisons(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
         return any(
@@ -1354,7 +1439,7 @@ class SQLiteEngine(AsyncStorageEngine):
         indexes: list[EngineIndexRecord] = []
         for name, physical_name, fields, keys, unique_flag, sparse_flag, partial_filter_json, multikey_flag, multikey_physical_name in cursor.fetchall():
             try:
-                parsed_fields = json.loads(fields)
+                parsed_fields = json_loads(fields)
             except json.JSONDecodeError as exc:
                 raise OperationFailure(
                     f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
@@ -1367,7 +1452,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 parsed_keys = [(field, 1) for field in parsed_fields]
             else:
                 try:
-                    parsed_keys = normalize_index_keys(json.loads(keys))
+                    parsed_keys = normalize_index_keys(json_loads(keys))
                 except (TypeError, ValueError, json.JSONDecodeError) as exc:
                     raise OperationFailure(
                         f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
@@ -1375,7 +1460,7 @@ class SQLiteEngine(AsyncStorageEngine):
             partial_filter_expression: Filter | None = None
             if partial_filter_json is not None:
                 try:
-                    partial_filter_expression = normalize_partial_filter_expression(json.loads(partial_filter_json))
+                    partial_filter_expression = normalize_partial_filter_expression(json_loads(partial_filter_json))
                 except (TypeError, ValueError, json.JSONDecodeError) as exc:
                     raise OperationFailure(
                         f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
@@ -1448,7 +1533,7 @@ class SQLiteEngine(AsyncStorageEngine):
             return [
                 (
                     SearchIndexDefinition(
-                        json.loads(definition_json),
+                        json_loads(definition_json),
                         name=row_name,
                         index_type=index_type,
                     ),
@@ -1924,7 +2009,7 @@ class SQLiteEngine(AsyncStorageEngine):
             INSERT OR IGNORE INTO collections (db_name, coll_name, options_json)
             VALUES (?, ?, ?)
             """,
-            (db_name, coll_name, json.dumps(options or {}, separators=(",", ":"), sort_keys=True)),
+            (db_name, coll_name, json_dumps_compact(options or {}, sort_keys=True)),
         )
         self._lookup_collection_id(conn, db_name, coll_name, create=True)
 
@@ -1971,7 +2056,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 (db_name, coll_name),
             ).fetchone()
             if row is not None:
-                return json.loads(row[0] or "{}")
+                return json_loads(row[0] or "{}")
             if self._collection_exists_sync(conn, db_name, coll_name):
                 return {}
             raise CollectionInvalid(f"collection '{coll_name}' does not exist")
@@ -1992,7 +2077,7 @@ class SQLiteEngine(AsyncStorageEngine):
         ).fetchone()
         if row is None:
             return {}
-        return json.loads(row[0] or "{}")
+        return json_loads(row[0] or "{}")
 
     def _load_existing_document_for_storage_key(
         self,
@@ -2715,11 +2800,11 @@ class SQLiteEngine(AsyncStorageEngine):
                             coll_name,
                             index_name,
                             physical_name,
-                            json.dumps(fields),
-                            json.dumps(normalized_keys),
+                            json_dumps_compact(fields),
+                            json_dumps_compact(normalized_keys),
                             1 if unique else 0,
                             1 if sparse else 0,
-                            json.dumps(partial_filter_expression) if partial_filter_expression is not None else None,
+                            json_dumps_compact(partial_filter_expression) if partial_filter_expression is not None else None,
                             1 if multikey else 0,
                             multikey_physical_name if multikey else None,
                         ),
@@ -2927,7 +3012,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 ).fetchone()
                 if row is not None:
                     existing = SearchIndexDefinition(
-                        json.loads(row[1]),
+                        json_loads(row[1]),
                         name=normalized_definition.name,
                         index_type=row[0],
                     )
@@ -2949,7 +3034,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         coll_name,
                         normalized_definition.name,
                         normalized_definition.index_type,
-                        json.dumps(normalized_definition.definition, separators=(",", ":"), sort_keys=True),
+                        json_dumps_compact(normalized_definition.definition, sort_keys=True),
                         physical_name,
                         self._pending_search_index_ready_at(),
                     ),
@@ -3032,7 +3117,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     WHERE db_name = ? AND coll_name = ? AND name = ?
                     """,
                     (
-                        json.dumps(normalized_definition, separators=(",", ":"), sort_keys=True),
+                        json_dumps_compact(normalized_definition, sort_keys=True),
                         physical_name,
                         self._pending_search_index_ready_at(),
                         db_name,

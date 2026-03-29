@@ -1,11 +1,11 @@
 import datetime
-import json
 from typing import Any, assert_never
 import uuid
 
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS
 from mongoeco.core.operators import CompiledUpdatePlan
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.json_compat import json_dumps_compact
 from mongoeco.core.sql_translation import BaseSQLTranslator
 from mongoeco.core.query_plan import (
     AllCondition,
@@ -347,6 +347,21 @@ def _translate_equals(
     return f"({scalar_sql} OR {array_sql})", [*scalar_params, *array_params]
 
 
+def _translate_equals_scalar_only(
+    field: str,
+    value: object,
+    *,
+    null_matches_undefined: bool = False,
+) -> SqlFragment:
+    if not _is_translatable_equality_value(value):
+        raise NotImplementedError("Unsupported equality value for SQL translation")
+    return _translate_scalar_equals(
+        field,
+        value,
+        null_matches_undefined=null_matches_undefined,
+    )
+
+
 def _translate_not_equals(field: str, value: object) -> SqlFragment:
     if not _is_translatable_equality_value(value):
         raise NotImplementedError("Unsupported equality value for SQL translation")
@@ -389,6 +404,36 @@ def _comparison_type_order(value_type: str) -> int:
     if value_type == "datetime":
         return 9
     raise NotImplementedError("Unsupported comparison type for SQL translation")
+
+
+def _translate_same_type_comparison(operator: str, field: str, value: object) -> SqlFragment:
+    value_type, comparable = _normalize_comparable_value(value)
+    sql_operator = {
+        ">": ">",
+        ">=": ">=",
+        "<": "<",
+        "<=": "<=",
+    }[operator]
+    path = _path_literal(field)
+    if value_type == "number":
+        return (
+            f"(json_type(document, {path}) IN ('integer', 'real') AND json_extract(document, {path}) {sql_operator} ?)",
+            [comparable],
+        )
+    if value_type == "string":
+        return (
+            f"(json_type(document, {path}) = 'text' AND json_extract(document, {path}) {sql_operator} ?)",
+            [comparable],
+        )
+    if value_type == "bool":
+        return (
+            f"(json_type(document, {path}) IN ('true', 'false') AND json_extract(document, {path}) {sql_operator} ?)",
+            [comparable],
+        )
+    return (
+        f"({type_expression_sql(field)} = ? AND {value_expression_sql(field)} {sql_operator} ?)",
+        [value_type, comparable],
+    )
 
 
 def _translate_comparison(operator: str, field: str, value: object) -> SqlFragment:
@@ -682,7 +727,7 @@ def translate_compiled_update_plan(
                 raise NotImplementedError("Scalar parent requires Python update fallback")
             args.append(_path_literal(path))
             args.append("json(?)")
-            params.append(json.dumps(DocumentCodec.encode(value), separators=(",", ":"), sort_keys=False))
+            params.append(json_dumps_compact(DocumentCodec.encode(value), sort_keys=False))
         expression = f"json_set({expression}, {', '.join(args)})"
 
     unset_instructions = next(

@@ -1875,6 +1875,82 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(documents, [{"_id": "1", "kind": "view"}])
 
+    async def test_build_select_sql_omits_json_each_for_scalar_only_equals_fields(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "active": True})
+            await engine.put_document("db", "coll", {"_id": "2", "active": False})
+
+            sql, params = engine._build_select_sql(
+                "db",
+                "coll",
+                compile_filter({"active": True}),
+                select_clause="document",
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertNotIn("json_each", sql)
+        self.assertIn("json_extract(document, '$.active') = ?", sql)
+        self.assertEqual(params[-1], 1)
+
+    async def test_build_select_sql_keeps_json_each_for_top_level_array_equals_fields(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "active": [True]})
+            await engine.put_document("db", "coll", {"_id": "2", "active": False})
+
+            sql, _ = engine._build_select_sql(
+                "db",
+                "coll",
+                compile_filter({"active": True}),
+                select_clause="document",
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertIn("json_each", sql)
+
+    async def test_build_select_sql_omits_type_order_case_for_homogeneous_numeric_comparisons(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.put_document("db", "coll", {"_id": "2", "age": 40})
+
+            sql, params = engine._build_select_sql(
+                "db",
+                "coll",
+                compile_filter({"age": {"$gte": 20}}),
+                select_clause="document",
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertNotIn("CASE WHEN", sql)
+        self.assertIn("json_extract(document, '$.age') >= ?", sql)
+        self.assertEqual(params[-1], 20)
+
+    async def test_build_select_sql_keeps_type_order_case_for_mixed_type_comparisons(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.put_document("db", "coll", {"_id": "2", "age": None})
+
+            sql, _ = engine._build_select_sql(
+                "db",
+                "coll",
+                compile_filter({"age": {"$lt": 20}}),
+                select_clause="document",
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertIn("CASE WHEN", sql)
+
     async def test_update_and_delete_prefer_explicit_plan_over_conflicting_filter(self):
         engine = SQLiteEngine()
         await engine.connect()
@@ -1951,6 +2027,18 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertEqual(documents, [{"_id": "2", "kind": "view"}])
+
+    def test_deserialize_document_skips_codec_decode_for_plain_json_payload(self):
+        engine = SQLiteEngine()
+        payload = '{"_id":"1","kind":"view","tags":["python","sqlite"]}'
+
+        with patch.object(engine._codec, "decode", side_effect=AssertionError("decode")):
+            document = engine._deserialize_document(payload)
+
+        self.assertEqual(
+            document,
+            {"_id": "1", "kind": "view", "tags": ["python", "sqlite"]},
+        )
 
     async def test_scan_collection_falls_back_to_query_engine_for_untranslatable_filters(self):
         engine = SQLiteEngine()
