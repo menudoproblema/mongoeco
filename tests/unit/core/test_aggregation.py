@@ -5217,3 +5217,140 @@ class AggregationTests(unittest.TestCase):
         self.assertFalse(_is_simple_projection([]))
         self.assertTrue(_is_simple_projection({"name": 1, "_id": 0}))
         self.assertFalse(_is_simple_projection({"name": {"$toString": "$score"}}))
+
+    def test_remove_variable_with_path_suffix_returns_null_not_sentinel(self):
+        documents = [{"_id": "1", "value": 1}]
+
+        self.assertEqual(
+            apply_pipeline(documents, [{"$addFields": {"extra": "$$REMOVE.field"}}]),
+            [{"_id": "1", "value": 1, "extra": None}],
+        )
+
+    def test_bucket_rejects_non_strictly_increasing_boundaries(self):
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"value": 1}],
+                [{"$bucket": {"groupBy": "$value", "boundaries": [0, 5, 5, 10]}}],
+            )
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"value": 1}],
+                [{"$bucket": {"groupBy": "$value", "boundaries": [0, 10, 5]}}],
+            )
+
+    def test_first_n_raises_when_n_evaluates_to_different_value_within_group(self):
+        documents = [
+            {"_id": "1", "group": "a", "score": 1, "n": 2},
+            {"_id": "2", "group": "a", "score": 2, "n": 3},
+        ]
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                documents,
+                [{"$group": {"_id": "$group", "result": {"$firstN": {"input": "$score", "n": "$n"}}}}],
+            )
+
+    def test_compiled_group_cache_evicts_oldest_entry_when_full(self):
+        CompiledGroup._COMPILED_FUNCTION_CACHE.clear()
+        max_size = CompiledGroup._COMPILED_FUNCTION_CACHE_MAXSIZE
+
+        first_spec = {"_id": None, "cache_eviction_probe_0": {"$sum": "$value"}}
+        CompiledGroup(first_spec)
+        first_func = CompiledGroup._COMPILED_FUNCTION_CACHE.get(
+            CompiledGroup._cache_key(first_spec, __import__("mongoeco.compat", fromlist=["MONGODB_DIALECT_70"]).MONGODB_DIALECT_70)
+        )
+        self.assertIsNotNone(first_func)
+
+        for i in range(1, max_size + 1):
+            spec = {"_id": None, f"cache_eviction_probe_{i}": {"$sum": "$value"}}
+            CompiledGroup(spec)
+
+        from mongoeco.compat import MONGODB_DIALECT_70
+        evicted_key = CompiledGroup._cache_key(first_spec, MONGODB_DIALECT_70)
+        self.assertNotIn(evicted_key, CompiledGroup._COMPILED_FUNCTION_CACHE)
+        self.assertEqual(len(CompiledGroup._COMPILED_FUNCTION_CACHE), max_size)
+
+    def test_top_uses_insertion_order_as_tiebreaker_for_equal_sort_values(self):
+        documents = [
+            {"_id": "1", "group": "a", "score": 5, "label": "first"},
+            {"_id": "2", "group": "a", "score": 5, "label": "second"},
+            {"_id": "3", "group": "a", "score": 5, "label": "third"},
+        ]
+
+        result = apply_pipeline(
+            documents,
+            [
+                {
+                    "$group": {
+                        "_id": "$group",
+                        "top_one": {"$top": {"sortBy": {"score": 1}, "output": "$label"}},
+                        "top_two": {"$topN": {"sortBy": {"score": 1}, "output": "$label", "n": 2}},
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(result[0]["top_one"], "first")
+        self.assertEqual(result[0]["top_two"], ["first", "second"])
+
+    def test_compiled_group_matches_slow_path_when_add_operand_is_missing(self):
+        spec = {"_id": "$kind", "total": {"$sum": {"$add": ["$a", "$missing_field"]}}}
+        documents = [
+            {"kind": "x", "a": 5},
+            {"kind": "x", "a": 3, "missing_field": 2},
+        ]
+
+        self.assertEqual(
+            CompiledGroup(spec).apply(documents),
+            apply_pipeline(documents, [{"$group": spec}]),
+        )
+
+    def test_setwindowfields_range_window_includes_only_docs_within_numeric_bounds(self):
+        documents = [
+            {"_id": "1", "value": 1},
+            {"_id": "2", "value": 4},
+            {"_id": "3", "value": 7},
+            {"_id": "4", "value": 10},
+        ]
+
+        result = apply_pipeline(
+            documents,
+            [
+                {
+                    "$setWindowFields": {
+                        "sortBy": {"value": 1},
+                        "output": {
+                            "rangeSum": {
+                                "$sum": "$value",
+                                "window": {"range": [-3, 3]},
+                            }
+                        },
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(result[0]["rangeSum"], 1 + 4)
+        self.assertEqual(result[1]["rangeSum"], 1 + 4 + 7)
+        self.assertEqual(result[2]["rangeSum"], 4 + 7 + 10)
+        self.assertEqual(result[3]["rangeSum"], 7 + 10)
+
+    def test_resolve_aggregation_field_path_returns_missing_for_unknown_key_at_any_depth(self):
+        from mongoeco.core.aggregation.runtime import _MISSING, _resolve_aggregation_field_path
+
+        self.assertIs(_resolve_aggregation_field_path({"a": 1}, "b"), _MISSING)
+        self.assertIs(_resolve_aggregation_field_path({"a": {"b": 1}}, "a.c"), _MISSING)
+        self.assertIs(_resolve_aggregation_field_path([], "name"), _MISSING)
+        self.assertIs(_resolve_aggregation_field_path([{}], "name"), _MISSING)
+
+    def test_pow_expression_returns_double_wrapper_for_integral_bson_inputs(self):
+        from mongoeco.core.bson_scalars import BsonDouble, BsonInt32
+
+        result = evaluate_expression(
+            {"base": BsonInt32(2), "exp": BsonInt32(10)},
+            {"$pow": ["$base", "$exp"]},
+        )
+
+        self.assertIsInstance(result, BsonDouble)
+        self.assertEqual(result.value, 1024.0)

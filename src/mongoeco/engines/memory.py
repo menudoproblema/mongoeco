@@ -811,7 +811,7 @@ class MemoryEngine(AsyncStorageEngine):
                     document_source = [self._decode_storage_document(data)] if data is not None else []
                 else:
                     # Intento de optimización: Otros índices (igualdad simple)
-                    target_index = None
+                    target_index_match = None
                     target_key = None
 
                     def find_usable_index(node):
@@ -826,9 +826,9 @@ class MemoryEngine(AsyncStorageEngine):
                                     return idx, key
                         return None, None
 
-                    target_index, target_key = find_usable_index(semantics.query_plan)
-                    if target_index and target_index["name"] in index_data:
-                        storage_keys = index_data[target_index["name"]].get(target_key, set())
+                    target_index_match, target_key = find_usable_index(semantics.query_plan)
+                    if target_index_match and target_index_match["name"] in index_data:
+                        storage_keys = index_data[target_index_match["name"]].get(target_key, set())
                         document_source = (
                             self._decode_storage_document(data)
                             for sk, data in coll.items()
@@ -846,7 +846,7 @@ class MemoryEngine(AsyncStorageEngine):
                 # Pipeline de procesamiento perezoso (streaming)
                 filtered = iter_filtered_documents(document_source, semantics)
 
-                # Si no hay ordenación, podemos hacer streaming real y parar tras el limit
+                # Si no hay ordenación, podemos hacer streaming real y parar tras el limit.
                 if not semantics.sort:
                     final_stream = stream_finalize_documents(filtered, semantics)
                     for document in final_stream:
@@ -854,7 +854,7 @@ class MemoryEngine(AsyncStorageEngine):
                         yield document
                     return
 
-                # Si hay sort, tenemos que materializar para ordenar
+                # Si hay sort, tenemos que materializar para ordenar.
                 documents = list(filtered)
                 documents = finalize_documents(documents, semantics, apply_sort_phase=True)
 

@@ -158,3 +158,13 @@ class SortingHelpersTests(unittest.TestCase):
             [document["_id"] for document in sort_documents_limited(documents, [("rank", 1)], skip=1, limit=2)],
             ["2", "3"],
         )
+
+    def test_sort_value_with_multiple_nested_arrays_picks_minimum_across_all_candidates(self):
+        document = {"scores": [{"values": [10, 1, 5]}, {"values": [3, 8]}]}
+
+        self.assertEqual(sort_value(document, "scores.values", 1), 1)
+
+    def test_sort_value_returns_none_when_path_does_not_exist_at_any_array_element(self):
+        document = {"items": [{"rank": 1}, {"rank": 2}]}
+
+        self.assertIsNone(sort_value(document, "items.value", 1))

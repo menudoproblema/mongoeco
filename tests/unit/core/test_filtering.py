@@ -11,7 +11,7 @@ from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.filtering import BSONComparator, HANDLED_QUERY_NODE_TYPES, QueryEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Binary, Decimal128, ObjectId, Regex, Timestamp, UNDEFINED
+from mongoeco.types import Binary, Decimal128, ObjectId, Regex, Timestamp, UNDEFINED, PlanningMode
 
 
 class QueryEngineTests(unittest.TestCase):
@@ -709,3 +709,56 @@ class QueryEngineTests(unittest.TestCase):
             BSONComparator.compare(1, 1.0, dialect=MONGODB_DIALECT_80),
             0,
         )
+
+    def test_query_engine_deferred_query_node_raises_operation_failure(self):
+        plan = compile_filter(
+            {"value": {"$unknownOperator": 1}},
+            planning_mode=PlanningMode.RELAXED,
+        )
+
+        with self.assertRaises(OperationFailure) as ctx:
+            QueryEngine.match_plan({"value": 1}, plan)
+
+        self.assertIn("deferred validation", str(ctx.exception))
+
+    def test_query_engine_numeric_index_access_on_nested_array_of_documents(self):
+        document = {"matrix": [[1, 2, 3], [4, 5, 6]]}
+
+        self.assertTrue(QueryEngine.match(document, {"matrix.0": [1, 2, 3]}))
+        self.assertFalse(QueryEngine.match(document, {"matrix.0": [4, 5, 6]}))
+
+        doc2 = {"rows": [{"cells": [10, 20]}, {"cells": [30, 40]}]}
+        self.assertTrue(QueryEngine.match(doc2, {"rows.0.cells": 10}))
+        self.assertFalse(QueryEngine.match(doc2, {"rows.2.cells": 10}))
+
+    def test_query_engine_regex_cache_compiles_separately_for_different_flag_combinations(self):
+        filtering_module._compile_regex.cache_clear()
+        with patch("mongoeco.core.filtering.re.compile", wraps=re.compile) as compile_regex:
+            self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": {"$regex": "^a", "$options": "i"}}))
+            self.assertFalse(QueryEngine.match({"name": "Ada"}, {"name": {"$regex": "^a", "$options": "m"}}))
+            self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": {"$regex": "^a", "$options": "i"}}))
+
+        self.assertEqual(compile_regex.call_count, 2)
+
+    def test_query_engine_in_with_multiline_regex_matches_across_lines(self):
+        document = {"text": "first\nsecond"}
+
+        self.assertTrue(
+            QueryEngine.match(
+                document,
+                {"text": {"$in": [Regex("^second", "m")]}},
+            )
+        )
+        self.assertFalse(
+            QueryEngine.match(
+                document,
+                {"text": {"$in": [Regex("^second")]}},
+            )
+        )
+
+    def test_query_engine_extract_values_traverses_arrays_at_non_terminal_path_segments(self):
+        document = {"a": [{"b": [{"c": 1}, {"c": 2}]}, {"b": [{"c": 3}]}]}
+
+        self.assertTrue(QueryEngine.match(document, {"a.b.c": 2}))
+        self.assertTrue(QueryEngine.match(document, {"a.b.c": 3}))
+        self.assertFalse(QueryEngine.match(document, {"a.b.c": 99}))

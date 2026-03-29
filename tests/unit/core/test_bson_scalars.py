@@ -96,3 +96,28 @@ class BsonScalarTests(unittest.TestCase):
             nested = {"value": [nested]}
 
         validate_bson_value(nested)
+
+    def test_decimal128_normalization_clamps_precision_to_34_significant_digits(self):
+        value = decimal.Decimal("1." + "1" * 40)
+        wrapped = wrap_bson_numeric(value)
+        assert isinstance(wrapped, BsonDecimal128)
+        self.assertEqual(len(wrapped.value.as_tuple().digits), 34)
+
+    def test_decimal128_normalization_handles_extreme_exponents(self):
+        very_large = decimal.Decimal("9.9E+6144")
+        wrapped_large = wrap_bson_numeric(very_large)
+        assert isinstance(wrapped_large, BsonDecimal128)
+        self.assertGreater(wrapped_large.value, 0)
+
+        very_small = decimal.Decimal("1E-6176")
+        wrapped_small = wrap_bson_numeric(very_small)
+        assert isinstance(wrapped_small, BsonDecimal128)
+        self.assertGreater(wrapped_small.value, 0)
+
+    def test_bson_mod_int_fast_path_matches_float_path_for_all_sign_combinations(self):
+        cases = [(7, 3), (-7, 3), (7, -3), (-7, -3)]
+        for left, right in cases:
+            with self.subTest(left=left, right=right):
+                int_result = bson_mod(left, right)
+                float_result = bson_mod(float(left), float(right))
+                self.assertEqual(int_result, float_result, msg=f"bson_mod({left}, {right})")
