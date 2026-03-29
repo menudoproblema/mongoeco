@@ -1,5 +1,6 @@
 import datetime
 import decimal
+from functools import lru_cache
 import math
 import re
 import uuid
@@ -66,18 +67,28 @@ HANDLED_QUERY_NODE_TYPES: tuple[type[QueryNode], ...] = (
 )
 
 
-_PATH_CACHE: dict[str, list[str]] = {}
-
-
-def _split_path(path: str) -> list[str]:
+@lru_cache(maxsize=4096)
+def _split_path(path: str) -> tuple[str, ...]:
     """Divide una ruta dot-notation y cachea el resultado."""
     if not path:
-        return []
-    if path in _PATH_CACHE:
-        return _PATH_CACHE[path]
-    parts = path.split(".")
-    _PATH_CACHE[path] = parts
-    return parts
+        return ()
+    return tuple(path.split("."))
+
+
+@lru_cache(maxsize=256)
+def _compile_regex(pattern: str, options: str) -> re.Pattern[str]:
+    flags = 0
+    supported = {
+        "i": re.IGNORECASE,
+        "m": re.MULTILINE,
+        "s": re.DOTALL,
+        "x": re.VERBOSE,
+    }
+    for option in options:
+        if option not in supported:
+            raise OperationFailure(f"Unsupported regex option: {option}")
+        flags |= supported[option]
+    return re.compile(pattern, flags)
 
 
 class BSONComparator:
@@ -413,10 +424,15 @@ class QueryEngine:
         values = QueryEngine._extract_values(doc, field)
         if not values:
             return not (condition is None and dialect.policy.null_query_matches_undefined())
-        candidates = values or [None]
         return all(
-            not QueryEngine._values_equal(value, condition, dialect=dialect, collation=collation)
-            for value in candidates
+            not QueryEngine._query_equality_matches(
+                value,
+                condition,
+                null_matches_undefined=dialect.policy.null_query_matches_undefined(),
+                dialect=dialect,
+                collation=collation,
+            )
+            for value in values
         )
 
     @staticmethod
@@ -528,8 +544,8 @@ class QueryEngine:
             "string": ("string",),
             "object": ("object",),
             "array": ("array",),
-            "binData": ("binData",),
-            "objectId": ("objectId",),
+            "bindata": ("binData",),
+            "objectid": ("objectId",),
             "bool": ("bool",),
             "date": ("date",),
             "null": ("null",),
@@ -541,7 +557,7 @@ class QueryEngine:
             "undefined": ("undefined",),
             "number": ("double", "int", "long", "decimal"),
         }
-        normalized = type_spec.strip()
+        normalized = type_spec.strip().casefold()
         if normalized not in alias_mapping:
             raise ValueError("$type usa un alias BSON no soportado")
         return alias_mapping[normalized]
@@ -619,6 +635,8 @@ class QueryEngine:
             for position in operand:
                 if not isinstance(position, int) or isinstance(position, bool) or position < 0:
                     raise ValueError("bit position lists must contain non-negative integers")
+                if position > 63:
+                    raise ValueError("bit position lists must target signed 64-bit integers")
                 mask |= 1 << position
             return mask
         raise ValueError("bitwise query operators require a numeric mask, BinData, or list of bit positions")
@@ -738,13 +756,7 @@ class QueryEngine:
 
     @staticmethod
     def _evaluate_regex(doc: dict[str, Any], field: str, pattern: str, options: str) -> bool:
-        flags = 0
-        supported = {"i": re.IGNORECASE, "m": re.MULTILINE, "s": re.DOTALL, "x": re.VERBOSE}
-        for option in options:
-            if option not in supported:
-                raise OperationFailure(f"Unsupported regex option: {option}")
-            flags |= supported[option]
-        regex = re.compile(pattern, flags)
+        regex = _compile_regex(pattern, options)
         return any(isinstance(value, str) and regex.search(value) is not None for value in QueryEngine._extract_values(doc, field))
 
     @staticmethod

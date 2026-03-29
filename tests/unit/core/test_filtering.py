@@ -4,7 +4,9 @@ import math
 import re
 import unittest
 import uuid
+from unittest.mock import patch
 
+import mongoeco.core.filtering as filtering_module
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.filtering import BSONComparator, HANDLED_QUERY_NODE_TYPES, QueryEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
@@ -614,3 +616,23 @@ class QueryEngineTests(unittest.TestCase):
         self.assertTrue(QueryEngine.match({"a": 1}, {"a": {"$exists": True}}))
         self.assertTrue(QueryEngine.match({}, {"a": {"$exists": False}}))
         self.assertFalse(QueryEngine.match({"a": 1}, {"a": {"$exists": False}}))
+
+    def test_query_engine_not_equals_treats_undefined_like_null(self):
+        self.assertFalse(QueryEngine.match({"value": UNDEFINED}, {"value": {"$ne": None}}))
+
+    def test_query_engine_type_accepts_case_insensitive_aliases(self):
+        self.assertTrue(QueryEngine.match({"value": 1}, {"value": {"$type": "INT"}}))
+        self.assertTrue(QueryEngine.match({"value": "Ada"}, {"value": {"$type": "STRING"}}))
+        self.assertTrue(QueryEngine.match({"value": ObjectId()}, {"value": {"$type": "OBJECTID"}}))
+
+    def test_query_engine_bitwise_rejects_out_of_range_bit_positions(self):
+        with self.assertRaises(ValueError):
+            QueryEngine.match({"flags": 1}, {"flags": {"$bitsAllSet": [64]}})
+
+    def test_query_engine_regex_reuses_compiled_patterns(self):
+        filtering_module._compile_regex.cache_clear()
+        with patch("mongoeco.core.filtering.re.compile", wraps=re.compile) as compile_regex:
+            self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": {"$regex": "^a", "$options": "i"}}))
+            self.assertTrue(QueryEngine.match({"name": "Alan"}, {"name": {"$regex": "^a", "$options": "i"}}))
+
+        self.assertEqual(compile_regex.call_count, 1)

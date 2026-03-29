@@ -591,7 +591,7 @@ class AggregationTests(unittest.TestCase):
     def test_apply_group_falls_back_when_compiler_raises(self):
         with patch("mongoeco.core.aggregation.grouping_stages.CompiledGroup") as compiled_group:
             compiled_group.supports.return_value = True
-            compiled_group.side_effect = RuntimeError("boom")
+            compiled_group.side_effect = OperationFailure("boom")
 
             grouped = _apply_group(
                 [
@@ -603,6 +603,20 @@ class AggregationTests(unittest.TestCase):
 
         self.assertEqual(grouped, [{"_id": "a", "total": 3}])
 
+    def test_apply_group_propagates_unexpected_compiler_errors(self):
+        with patch("mongoeco.core.aggregation.grouping_stages.CompiledGroup") as compiled_group:
+            compiled_group.supports.return_value = True
+            compiled_group.side_effect = RuntimeError("boom")
+
+            with self.assertRaises(RuntimeError):
+                _apply_group(
+                    [
+                        {"kind": "a", "value": 1},
+                        {"kind": "a", "value": 2},
+                    ],
+                    {"_id": "$kind", "total": {"$sum": "$value"}},
+                )
+
     def test_compiled_group_preserves_sum_add_null_semantics(self):
         spec = {"_id": "$kind", "total": {"$sum": {"$add": ["$left", "$right"]}}}
         documents = [
@@ -612,6 +626,34 @@ class AggregationTests(unittest.TestCase):
         ]
 
         self.assertTrue(CompiledGroup.supports(spec))
+        self.assertEqual(
+            CompiledGroup(spec).apply(documents),
+            apply_pipeline(documents, [{"$group": spec}]),
+        )
+
+    def test_compiled_group_ifnull_evaluates_fallback_expression_once(self):
+        spec = {"_id": "$kind", "total": {"$sum": {"$ifNull": [{"$unsupported": "$value"}, 1]}}}
+        documents = [{"kind": "a", "value": 7}]
+        calls: list[object] = []
+
+        def fake_evaluate_expression(document, expression, variables=None, *, dialect):
+            calls.append(expression)
+            if expression == {"$unsupported": "$value"}:
+                return None
+            raise AssertionError(f"unexpected expression: {expression!r}")
+
+        with patch(
+            "mongoeco.core.aggregation.compiled_aggregation.evaluate_expression",
+            side_effect=fake_evaluate_expression,
+        ):
+            self.assertEqual(CompiledGroup(spec).apply(documents), [{"_id": "a", "total": 1}])
+
+        self.assertEqual(calls, [{"$unsupported": "$value"}])
+
+    def test_compiled_group_cond_uses_mongo_truthiness(self):
+        spec = {"_id": "$kind", "total": {"$sum": {"$cond": ["$flag", 1, 0]}}}
+        documents = [{"kind": "a", "flag": ""}]
+
         self.assertEqual(
             CompiledGroup(spec).apply(documents),
             apply_pipeline(documents, [{"$group": spec}]),
@@ -660,6 +702,18 @@ class AggregationTests(unittest.TestCase):
                     label="Future Bucket",
                 ),
             )
+
+    def test_bucket_auto_handles_even_bucket_sizes_without_index_error(self):
+        self.assertEqual(
+            apply_pipeline(
+                [{"value": 1}, {"value": 2}, {"value": 3}, {"value": 4}],
+                [{"$bucketAuto": {"groupBy": "$value", "buckets": 2}}],
+            ),
+            [
+                {"_id": {"min": 1, "max": 3}, "count": 2},
+                {"_id": {"min": 3, "max": 4}, "count": 2},
+            ],
+        )
 
     def test_initialize_accumulators_directly_rejects_unsupported_accumulator_under_default_dialect(self):
         with self.assertRaises(OperationFailure):

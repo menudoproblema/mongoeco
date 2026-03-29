@@ -7,7 +7,7 @@ from mongoeco.core.aggregation.accumulators import (
     _sum_accumulator_operand,
     _validate_accumulator_expression,
 )
-from mongoeco.core.aggregation.runtime import _aggregation_key, evaluate_expression
+from mongoeco.core.aggregation.runtime import _aggregation_key, _expression_truthy, evaluate_expression
 from mongoeco.core.bson_scalars import bson_add, is_bson_numeric, unwrap_bson_numeric
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
@@ -46,6 +46,7 @@ class CompiledGroup:
             "sum_operand": _sum_accumulator_operand,
             "unwrap": unwrap_bson_numeric,
             "evaluate_expression": evaluate_expression,
+            "expression_truthy": _expression_truthy,
             "_aggregation_key": _aggregation_key,
             "deepcopy": deepcopy,
             "_AverageAccumulator": _AverageAccumulator,
@@ -85,6 +86,7 @@ class CompiledGroup:
             "    _sum_operand = sum_operand",
             "    _unwrap = unwrap",
             "    _evaluate = evaluate_expression",
+            "    _truthy = lambda value: expression_truthy(value, dialect=dialect)",
             "    _agg_key = _aggregation_key",
             "    _deepcopy = deepcopy",
             "    _compare = dialect.policy.compare_values",
@@ -235,16 +237,20 @@ class CompiledGroup:
                             if_c = self._compile_expression(val[0], prefix)
                             then_c = self._compile_expression(val[1], prefix)
                             else_c = self._compile_expression(val[2], prefix)
-                            return f"({then_c} if {if_c} else {else_c})"
+                            return f"({then_c} if _truthy({if_c}) else {else_c})"
                         elif isinstance(val, dict) and all(k in val for k in ("if", "then", "else")):
                             if_c = self._compile_expression(val["if"], prefix)
                             then_c = self._compile_expression(val["then"], prefix)
                             else_c = self._compile_expression(val["else"], prefix)
-                            return f"({then_c} if {if_c} else {else_c})"
+                            return f"({then_c} if _truthy({if_c}) else {else_c})"
                     case "$ifNull" if isinstance(val, list) and len(val) == 2:
                         input_c = self._compile_expression(val[0], prefix)
                         fallback_c = self._compile_expression(val[1], prefix)
-                        return f"({input_c} if {input_c} is not None else {fallback_c})"
+                        return (
+                            f"(lambda __mongoeco_value: "
+                            f"__mongoeco_value if __mongoeco_value is not None else {fallback_c})"
+                            f"({input_c})"
+                        )
 
         key = f"{prefix}_expr"
         self._context[key] = expr

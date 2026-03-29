@@ -46,7 +46,7 @@ def _apply_group(
         try:
             compiled = CompiledGroup(spec, dialect=dialect)
             return compiled.apply(documents, variables)
-        except Exception:
+        except (OperationFailure, SyntaxError, TypeError, ValueError):
             pass
 
     accumulator_specs = {key: value for key, value in spec.items() if key != "_id"}
@@ -253,7 +253,11 @@ def _apply_bucket_auto(
         chunk = evaluated[start:start + size]
         start += size
         lower = deepcopy(chunk[0][0])
-        upper = deepcopy(evaluated[start][0]) if size_index + 1 < len(sizes) else deepcopy(chunk[-1][0])
+        upper = (
+            deepcopy(evaluated[start][0])
+            if size_index + 1 < len(sizes) and start < len(evaluated)
+            else deepcopy(chunk[-1][0])
+        )
         bucket = _AccumulatorBucket(
             bucket_id={"min": lower, "max": upper},
             values=_initialize_accumulators(output, default_sum=output is None, dialect=dialect),
