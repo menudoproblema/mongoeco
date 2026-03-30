@@ -1,0 +1,598 @@
+import random
+from collections.abc import Callable
+from typing import Any
+
+from benchmarks.data.generator import generate_users
+from benchmarks.engines.base import BenchmarkEngine
+from benchmarks.runners.metrics import Metrics, measure
+
+
+type MetricDocument = dict[str, Any]
+
+
+def _load_users(
+    engine: BenchmarkEngine,
+    count: int,
+    *,
+    mutate_docs: Callable[[list[dict[str, Any]]], None] | None = None,
+) -> tuple[str, str, list[dict[str, Any]]]:
+    db_name = "test_db"
+    coll_name = "users"
+    docs = generate_users(count)
+    if mutate_docs is not None:
+        mutate_docs(docs)
+    engine.setup()
+    engine.drop_collection(db_name, coll_name)
+    engine.insert_many(db_name, coll_name, docs)
+    return db_name, coll_name, docs
+
+
+def _operation_summary(explain: dict[str, Any]) -> str:
+    plan = explain.get("engine_plan", explain)
+    engine = plan.get("engine", "?")
+    strategy = plan.get("strategy", "?")
+    physical_plan = plan.get("physical_plan")
+    if isinstance(physical_plan, list):
+        operations = [
+            str(step.get("operation"))
+            for step in physical_plan
+            if isinstance(step, dict) and step.get("operation") is not None
+        ]
+    else:
+        operations = []
+    suffix = ">".join(operations) if operations else "opaque"
+    return f"{engine}/{strategy} {suffix}"
+
+
+def _summarize_find_explain(explain: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "summary": _operation_summary(explain),
+        "engine": explain.get("engine"),
+        "strategy": explain.get("strategy"),
+        "planning_mode": explain.get("planning_mode"),
+        "limit": explain.get("limit"),
+        "physical_plan": explain.get("physical_plan"),
+    }
+
+
+def _summarize_aggregate_explain(explain: dict[str, Any]) -> dict[str, Any]:
+    engine_plan = explain.get("engine_plan")
+    plan = engine_plan if isinstance(engine_plan, dict) else explain
+    remaining_pipeline = explain.get("remaining_pipeline")
+    return {
+        "summary": _operation_summary(plan),
+        "engine": plan.get("engine"),
+        "strategy": plan.get("strategy"),
+        "planning_mode": explain.get("planning_mode", plan.get("planning_mode")),
+        "streaming_batch_execution": explain.get("streaming_batch_execution"),
+        "remaining_stage_count": len(remaining_pipeline) if isinstance(remaining_pipeline, list) else None,
+        "physical_plan": plan.get("physical_plan"),
+    }
+
+
+def _metrics_with_metadata(
+    metrics: Metrics,
+    *,
+    metadata: dict[str, Any] | None = None,
+) -> MetricDocument:
+    result = metrics.to_dict()
+    if metadata is not None:
+        result["metadata"] = metadata
+    return result
+
+
+def _measure_single_task(
+    metric_store: list[Metrics],
+    callback: Callable[[], Any],
+    *,
+    metadata: dict[str, Any] | None = None,
+) -> MetricDocument:
+    with measure(metric_store):
+        callback()
+    return _metrics_with_metadata(metric_store[0], metadata=metadata)
+
+
+def secondary_lookup_indexed(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+    """Lookup por campo secundario con indice explicito."""
+    lookup_metrics: list[Metrics] = []
+    db_name, coll_name, docs = _load_users(engine, count)
+    try:
+        engine.create_index(db_name, coll_name, [("username", 1)])
+        rng = random.Random(42)
+        target_ids = [rng.randint(0, count - 1) for _ in range(min(1000, count))]
+        target_usernames = [docs[i]["username"] for i in target_ids]
+        explain = engine.explain_find(
+            db_name,
+            coll_name,
+            {"username": target_usernames[0]},
+            limit=1,
+        )
+        metadata = {
+            **_summarize_find_explain(explain),
+            "query_shape": "username equality",
+            "index_expected": True,
+        }
+        return {
+            "secondary_lookup_indexed_1k": _measure_single_task(
+                lookup_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, {"username": username}, limit=1)
+                    for username in target_usernames
+                ],
+                metadata=metadata,
+            ),
+        }
+    finally:
+        engine.teardown()
+
+
+def secondary_lookup_unindexed(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+    """Lookup por campo secundario sin indice."""
+    lookup_metrics: list[Metrics] = []
+    db_name, coll_name, docs = _load_users(engine, count)
+    try:
+        rng = random.Random(42)
+        target_ids = [rng.randint(0, count - 1) for _ in range(min(1000, count))]
+        target_usernames = [docs[i]["username"] for i in target_ids]
+        explain = engine.explain_find(
+            db_name,
+            coll_name,
+            {"username": target_usernames[0]},
+            limit=1,
+        )
+        metadata = {
+            **_summarize_find_explain(explain),
+            "query_shape": "username equality",
+            "index_expected": False,
+        }
+        return {
+            "secondary_lookup_unindexed_1k": _measure_single_task(
+                lookup_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, {"username": username}, limit=1)
+                    for username in target_usernames
+                ],
+                metadata=metadata,
+            ),
+        }
+    finally:
+        engine.teardown()
+
+
+def secondary_lookup_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+    """Aisla lookup primario y lookups secundarios repetidos sobre el mismo valor."""
+    id_metrics: list[Metrics] = []
+    indexed_hot_metrics: list[Metrics] = []
+    unindexed_hot_metrics: list[Metrics] = []
+
+    db_name, coll_name, docs = _load_users(engine, count)
+    try:
+        target_doc = docs[min(3, len(docs) - 1)]
+        target_id = target_doc["_id"]
+        target_username = target_doc["username"]
+
+        id_metadata = {
+            **_summarize_find_explain(engine.explain_find(db_name, coll_name, {"_id": target_id}, limit=1)),
+            "query_shape": "_id equality",
+            "index_expected": True,
+            "lookup_pattern": "random-like stable",
+        }
+        engine.create_index(db_name, coll_name, [("username", 1)])
+        indexed_hot_metadata = {
+            **_summarize_find_explain(engine.explain_find(db_name, coll_name, {"username": target_username}, limit=1)),
+            "query_shape": "username equality",
+            "index_expected": True,
+            "lookup_pattern": "same value repeated",
+        }
+        indexed_hot_result = _measure_single_task(
+            indexed_hot_metrics,
+            callback=lambda: [
+                engine.find(db_name, coll_name, {"username": target_username}, limit=1)
+                for _ in range(min(1000, count))
+            ],
+            metadata=indexed_hot_metadata,
+        )
+        id_result = _measure_single_task(
+            id_metrics,
+            callback=lambda: [
+                engine.find(db_name, coll_name, {"_id": target_id}, limit=1)
+                for _ in range(min(1000, count))
+            ],
+            metadata=id_metadata,
+        )
+    finally:
+        engine.teardown()
+
+    db_name, coll_name, docs = _load_users(engine, count)
+    try:
+        target_doc = docs[min(3, len(docs) - 1)]
+        target_username = target_doc["username"]
+        unindexed_hot_metadata = {
+            **_summarize_find_explain(engine.explain_find(db_name, coll_name, {"username": target_username}, limit=1)),
+            "query_shape": "username equality",
+            "index_expected": False,
+            "lookup_pattern": "same value repeated",
+        }
+        unindexed_hot_result = _measure_single_task(
+            unindexed_hot_metrics,
+            callback=lambda: [
+                engine.find(db_name, coll_name, {"username": target_username}, limit=1)
+                for _ in range(min(1000, count))
+            ],
+            metadata=unindexed_hot_metadata,
+        )
+    finally:
+        engine.teardown()
+
+    return {
+        "primary_lookup_id_1k": id_result,
+        "secondary_lookup_indexed_hot_1k": indexed_hot_result,
+        "secondary_lookup_unindexed_hot_1k": unindexed_hot_result,
+    }
+
+
+def simple_aggregation(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+    """Agregacion mayoritariamente streamable."""
+    agg_metrics: list[Metrics] = []
+    db_name, coll_name, _docs = _load_users(engine, count)
+    try:
+        pipeline = [
+            {"$match": {"active": True, "age": {"$gte": 20}}},
+            {"$sort": {"score": -1}},
+            {"$limit": 10},
+            {"$project": {"_id": 1, "username": 1, "score": 1, "city": 1}},
+        ]
+        metadata = _summarize_aggregate_explain(
+            engine.explain_aggregate(db_name, coll_name, pipeline, allow_disk_use=True)
+        )
+        metadata["pipeline_shape"] = "match-sort-limit-project"
+        return {
+            "simple_aggregation_topk": _measure_single_task(
+                agg_metrics,
+                callback=lambda: engine.aggregate(
+                    db_name,
+                    coll_name,
+                    pipeline,
+                    allow_disk_use=True,
+                ),
+                metadata=metadata,
+            ),
+        }
+    finally:
+        engine.teardown()
+
+
+def materializing_aggregation(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+    """Agregacion con group y sort posteriores."""
+    agg_metrics: list[Metrics] = []
+    db_name, coll_name, _docs = _load_users(engine, count)
+    try:
+        pipeline = [
+            {"$match": {"active": True, "age": {"$gte": 20}}},
+            {
+                "$group": {
+                    "_id": "$city",
+                    "avg_score": {"$avg": "$score"},
+                    "total_users": {"$sum": 1},
+                    "roles": {"$addToSet": "$role"},
+                }
+            },
+            {"$sort": {"avg_score": -1}},
+            {"$limit": 10},
+        ]
+        metadata = _summarize_aggregate_explain(
+            engine.explain_aggregate(db_name, coll_name, pipeline, allow_disk_use=True)
+        )
+        metadata["pipeline_shape"] = "match-group-sort-limit"
+        return {
+            "materializing_aggregation_group_sort": _measure_single_task(
+                agg_metrics,
+                callback=lambda: engine.aggregate(
+                    db_name,
+                    coll_name,
+                    pipeline,
+                    allow_disk_use=True,
+                ),
+                metadata=metadata,
+            ),
+        }
+    finally:
+        engine.teardown()
+
+
+def sort_limit(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+    """Compara sort+limit con y sin indice sobre el campo de ordenacion."""
+    indexed_metrics: list[Metrics] = []
+    unindexed_metrics: list[Metrics] = []
+    db_name, coll_name, _docs = _load_users(engine, count)
+    try:
+        sort_spec = [("score", -1)]
+        indexed_metadata = {
+            **_summarize_find_explain(
+                engine.explain_find(db_name, coll_name, {}, sort=sort_spec, limit=10)
+            ),
+            "query_shape": "sort score desc + limit 10",
+            "index_expected": True,
+        }
+        unindexed_metadata = {
+            **indexed_metadata,
+            "index_expected": False,
+        }
+        engine.create_index(db_name, coll_name, [("score", -1)])
+        indexed = _measure_single_task(
+            indexed_metrics,
+            callback=lambda: [
+                engine.find(db_name, coll_name, {}, sort=sort_spec, limit=10)
+                for _ in range(200)
+            ],
+            metadata=indexed_metadata,
+        )
+    finally:
+        engine.teardown()
+
+    db_name, coll_name, _docs = _load_users(engine, count)
+    try:
+        sort_spec = [("score", -1)]
+        unindexed_metadata = {
+            **_summarize_find_explain(
+                engine.explain_find(db_name, coll_name, {}, sort=sort_spec, limit=10)
+            ),
+            "query_shape": "sort score desc + limit 10",
+            "index_expected": False,
+        }
+        unindexed = _measure_single_task(
+            unindexed_metrics,
+            callback=lambda: [
+                engine.find(db_name, coll_name, {}, sort=sort_spec, limit=10)
+                for _ in range(200)
+            ],
+            metadata=unindexed_metadata,
+        )
+    finally:
+        engine.teardown()
+
+    return {
+        "sort_limit_indexed_200": indexed,
+        "sort_limit_unindexed_200": unindexed,
+    }
+
+
+def cursor_consumption(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+    """Separa coste de consumir solo el primero frente a materializar."""
+    first_metrics: list[Metrics] = []
+    materialized_metrics: list[Metrics] = []
+    db_name, coll_name, _docs = _load_users(engine, count)
+    try:
+        engine.create_index(db_name, coll_name, [("city", 1)])
+        filter_spec = {"city": "Madrid"}
+        metadata = {
+            **_summarize_find_explain(engine.explain_find(db_name, coll_name, filter_spec)),
+            "query_shape": "city equality",
+            "index_expected": True,
+        }
+        first_result = _measure_single_task(
+            first_metrics,
+            callback=lambda: [
+                engine.find_first(db_name, coll_name, filter_spec)
+                for _ in range(200)
+            ],
+            metadata={**metadata, "consumption_mode": "first"},
+        )
+        materialized_result = _measure_single_task(
+            materialized_metrics,
+            callback=lambda: [
+                engine.find(db_name, coll_name, filter_spec)
+                for _ in range(200)
+            ],
+            metadata={**metadata, "consumption_mode": "materialized"},
+        )
+        return {
+            "cursor_consumption_first_200": first_result,
+            "cursor_consumption_materialized_200": materialized_result,
+        }
+    finally:
+        engine.teardown()
+
+
+def filter_selectivity(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+    """Mide el coste de materializar filtros con distinta selectividad."""
+    low_metrics: list[Metrics] = []
+    medium_metrics: list[Metrics] = []
+    high_metrics: list[Metrics] = []
+    db_name, coll_name, docs = _load_users(engine, count)
+    try:
+        low_filter = {"username": docs[min(3, len(docs) - 1)]["username"]}
+        medium_filter = {"city": "Madrid"}
+        high_filter = {"active": True}
+        low_metadata = {
+            **_summarize_find_explain(engine.explain_find(db_name, coll_name, low_filter)),
+            "query_shape": "username equality",
+            "selectivity": "low",
+        }
+        medium_metadata = {
+            **_summarize_find_explain(engine.explain_find(db_name, coll_name, medium_filter)),
+            "query_shape": "city equality",
+            "selectivity": "medium",
+        }
+        high_metadata = {
+            **_summarize_find_explain(engine.explain_find(db_name, coll_name, high_filter)),
+            "query_shape": "active equality",
+            "selectivity": "high",
+        }
+        return {
+            "filter_selectivity_low_100": _measure_single_task(
+                low_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, low_filter)
+                    for _ in range(100)
+                ],
+                metadata=low_metadata,
+            ),
+            "filter_selectivity_medium_100": _measure_single_task(
+                medium_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, medium_filter)
+                    for _ in range(100)
+                ],
+                metadata=medium_metadata,
+            ),
+            "filter_selectivity_high_100": _measure_single_task(
+                high_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, high_filter)
+                    for _ in range(100)
+                ],
+                metadata=high_metadata,
+            ),
+        }
+    finally:
+        engine.teardown()
+
+
+def predicate_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+    """Aisla predicados frecuentes para detectar mejoras en igualdad y comparación."""
+    eq_bool_metrics: list[Metrics] = []
+    eq_string_metrics: list[Metrics] = []
+    cmp_int_metrics: list[Metrics] = []
+    db_name, coll_name, docs = _load_users(engine, count)
+    try:
+        eq_bool_filter = {"active": True}
+        eq_string_filter = {"city": "Madrid"}
+        cmp_int_filter = {"age": {"$gte": 40}}
+
+        eq_bool_metadata = {
+            **_summarize_find_explain(engine.explain_find(db_name, coll_name, eq_bool_filter)),
+            "query_shape": "top-level bool equality",
+            "operator_shape": "$eq",
+            "field_shape": "top-level scalar",
+            "selectivity": "high",
+        }
+        eq_string_metadata = {
+            **_summarize_find_explain(engine.explain_find(db_name, coll_name, eq_string_filter)),
+            "query_shape": "top-level string equality",
+            "operator_shape": "$eq",
+            "field_shape": "top-level scalar",
+            "selectivity": "medium",
+        }
+        cmp_int_metadata = {
+            **_summarize_find_explain(engine.explain_find(db_name, coll_name, cmp_int_filter)),
+            "query_shape": "top-level int comparison",
+            "operator_shape": "$gte",
+            "field_shape": "top-level scalar",
+            "selectivity": "medium",
+        }
+
+        return {
+            "predicate_eq_bool_high_100": _measure_single_task(
+                eq_bool_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, eq_bool_filter)
+                    for _ in range(100)
+                ],
+                metadata=eq_bool_metadata,
+            ),
+            "predicate_eq_string_medium_100": _measure_single_task(
+                eq_string_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, eq_string_filter)
+                    for _ in range(100)
+                ],
+                metadata=eq_string_metadata,
+            ),
+            "predicate_cmp_int_medium_100": _measure_single_task(
+                cmp_int_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, cmp_int_filter)
+                    for _ in range(100)
+                ],
+                metadata=cmp_int_metadata,
+            ),
+        }
+    finally:
+        engine.teardown()
+
+
+def sort_shape_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+    """Compara sort por campo top-level frente a path anidado equivalente."""
+    top_level_metrics: list[Metrics] = []
+    nested_metrics: list[Metrics] = []
+    top_level_full_metrics: list[Metrics] = []
+    nested_full_metrics: list[Metrics] = []
+
+    def _add_nested_sort_fields(docs: list[dict[str, Any]]) -> None:
+        for doc in docs:
+            doc["profile"] = {
+                "score": doc["score"],
+                "city": doc["city"],
+            }
+
+    db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_add_nested_sort_fields)
+    try:
+        top_level_sort = [("score", -1)]
+        nested_sort = [("profile.score", -1)]
+
+        top_level_metadata = {
+            **_summarize_find_explain(
+                engine.explain_find(db_name, coll_name, {}, sort=top_level_sort, limit=10)
+            ),
+            "query_shape": "sort top-level score desc + limit 10",
+            "field_shape": "top-level scalar",
+        }
+        nested_metadata = {
+            **_summarize_find_explain(
+                engine.explain_find(db_name, coll_name, {}, sort=nested_sort, limit=10)
+            ),
+            "query_shape": "sort nested profile.score desc + limit 10",
+            "field_shape": "nested scalar path",
+        }
+        top_level_full_metadata = {
+            **_summarize_find_explain(
+                engine.explain_find(db_name, coll_name, {}, sort=top_level_sort)
+            ),
+            "query_shape": "sort top-level score desc",
+            "field_shape": "top-level scalar",
+        }
+        nested_full_metadata = {
+            **_summarize_find_explain(
+                engine.explain_find(db_name, coll_name, {}, sort=nested_sort)
+            ),
+            "query_shape": "sort nested profile.score desc",
+            "field_shape": "nested scalar path",
+        }
+
+        return {
+            "sort_shape_top_level_limit_200": _measure_single_task(
+                top_level_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, {}, sort=top_level_sort, limit=10)
+                    for _ in range(200)
+                ],
+                metadata=top_level_metadata,
+            ),
+            "sort_shape_nested_limit_200": _measure_single_task(
+                nested_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, {}, sort=nested_sort, limit=10)
+                    for _ in range(200)
+                ],
+                metadata=nested_metadata,
+            ),
+            "sort_shape_top_level_full_50": _measure_single_task(
+                top_level_full_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, {}, sort=top_level_sort)
+                    for _ in range(50)
+                ],
+                metadata=top_level_full_metadata,
+            ),
+            "sort_shape_nested_full_50": _measure_single_task(
+                nested_full_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, {}, sort=nested_sort)
+                    for _ in range(50)
+                ],
+                metadata=nested_full_metadata,
+            ),
+        }
+    finally:
+        engine.teardown()

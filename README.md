@@ -39,6 +39,26 @@ Development install:
 python -m pip install -e .[dev]
 ```
 
+Optional fast JSON backend:
+
+```bash
+python -m pip install -e .[json-fast]
+```
+
+`mongoeco` uses the standard library `json` module by default, even if
+`orjson` is installed. You can choose the backend at process start with
+`MONGOECO_JSON_BACKEND`:
+
+* `stdlib`: always use the standard library JSON backend
+* `orjson`: require `orjson` and use it
+* `auto`: use `orjson` when available, otherwise fall back to `stdlib`
+
+Example:
+
+```bash
+MONGOECO_JSON_BACKEND=orjson python your_app.py
+```
+
 ## Quick Start
 
 Async with the in-memory engine:
@@ -94,6 +114,38 @@ The repository currently uses the standard library test runner:
 python -m pip install -e .[dev]
 python -m unittest discover -s tests -p 'test*.py'
 ```
+
+## Benchmarks
+
+There is a benchmark harness under
+[benchmarks/README.md](benchmarks/README.md) intended for reproducible local
+profiling, regression tracking and community-facing performance analysis.
+
+Quick smoke run:
+
+```bash
+python -m benchmarks.run \
+  --engine all \
+  --size 1000 \
+  --warmup 0 \
+  --repetitions 1
+```
+
+Reproducible local report:
+
+```bash
+python -m benchmarks.report \
+  --engine all \
+  --size 10000 \
+  --warmup 1 \
+  --repetitions 5 \
+  --output-json benchmarks/reports/latest.json \
+  --output-markdown benchmarks/reports/latest.md
+```
+
+Benchmark outputs are treated as local artifacts and should stay out of git.
+The harness itself is versioned so anyone can reproduce the same workload mix,
+dataset seeds and report structure from a given revision.
 
 ## Project Status
 
