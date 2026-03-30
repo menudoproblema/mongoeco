@@ -67,6 +67,13 @@ usa Semantic Versioning.
   reforzando ramas de error, roundtrips wire, parsing de URI y helpers
   internos de actualizacion.
 
+### Changed
+
+- Se endurece el parser de `OP_MSG` para exigir un body kind 0 valido y
+  se simplifica `core.sorting` eliminando comparadores internos no
+  usados, priorizando correccion del protocolo y mantenibilidad frente a
+  cobertura artificial.
+
 ## [2.0.1] - 2026-03-30
 
 ### Fixed

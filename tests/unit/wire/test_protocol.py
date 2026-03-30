@@ -163,16 +163,34 @@ class WireProtocolTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "section kind"):
             decode_op_msg(header, struct.pack("<i", 0) + b"\x02")
 
-    def test_decode_op_msg_supports_sequence_only_payloads(self):
+    def test_decode_op_msg_rejects_sequence_only_payload_without_body(self):
         documents = BSON.encode({"_id": "1"}) + BSON.encode({"_id": "2"})
         identifier = b"documents\x00"
         section = struct.pack("<i", 4 + len(identifier) + len(documents)) + identifier + documents
         payload = struct.pack("<i", 0) + b"\x01" + section
         header = parse_message_header(struct.pack("<iiii", 16 + len(payload), 7, 0, OP_MSG))
 
-        request = decode_op_msg(header, payload)
+        with self.assertRaisesRegex(ValueError, "body document is required"):
+            decode_op_msg(header, payload)
 
-        self.assertEqual(request.body, {"documents": [{"_id": "1"}, {"_id": "2"}]})
+    def test_decode_op_msg_rejects_duplicate_body_or_sequence_identifier(self):
+        body_one = BSON.encode({"ping": 1})
+        body_two = BSON.encode({"hello": 1})
+        duplicate_body_payload = struct.pack("<i", 0) + b"\x00" + body_one + b"\x00" + body_two
+        header = parse_message_header(struct.pack("<iiii", 16 + len(duplicate_body_payload), 7, 0, OP_MSG))
+
+        with self.assertRaisesRegex(ValueError, "must not appear more than once"):
+            decode_op_msg(header, duplicate_body_payload)
+
+        body = BSON.encode({"documents": []})
+        sequence_docs = BSON.encode({"_id": "1"})
+        identifier = b"documents\x00"
+        section = struct.pack("<i", 4 + len(identifier) + len(sequence_docs)) + identifier + sequence_docs
+        duplicate_identifier_payload = struct.pack("<i", 0) + b"\x00" + body + b"\x01" + section
+        header = parse_message_header(struct.pack("<iiii", 16 + len(duplicate_identifier_payload), 7, 0, OP_MSG))
+
+        with self.assertRaisesRegex(ValueError, "must not duplicate a body field"):
+            decode_op_msg(header, duplicate_identifier_payload)
 
     def test_decode_op_query_rejects_wrong_opcode_short_and_invalid_documents(self):
         wrong_header = parse_message_header(struct.pack("<iiii", 0, 9, 0, OP_MSG))

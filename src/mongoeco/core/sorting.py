@@ -78,8 +78,6 @@ def _compare_native_sort_scalars(left: Any, right: Any) -> int | None:
     left_type = type(left)
     if left_type is not type(right):
         return None
-    if left is None:
-        return 0
     if left_type is int or left_type is bool or left_type is str or left_type is bytes:
         if left < right:
             return -1
@@ -237,21 +235,6 @@ def sort_documents_window(
         return sort_documents(list(documents), sort, dialect=dialect, collation=collation)
     if window <= 0:
         return []
-
-    def _compare_decorated(
-        left_tuple: tuple[list[Any], Document, int],
-        right_tuple: tuple[list[Any], Document, int],
-    ) -> int:
-        result = _compare_decorated_values(
-            left_tuple[0],
-            right_tuple[0],
-            left_tuple[2],
-            right_tuple[2],
-            sort,
-            dialect=dialect,
-            collation=collation,
-        )
-        return result
 
     def _compare_decorated_values(
         left_keys: list[Any],

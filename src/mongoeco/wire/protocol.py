@@ -66,10 +66,13 @@ def decode_op_msg(header: MessageHeader, payload: bytes) -> OpMsgRequest:
         raise ValueError(f"unsupported OP_MSG flags: {flag_bits}")
     position = 4
     body: dict[str, Any] | None = None
+    pending_sequences: dict[str, list[dict[str, Any]]] = {}
     while position < len(payload):
         kind = payload[position]
         position += 1
         if kind == 0:
+            if body is not None:
+                raise ValueError("OP_MSG body document section must not appear more than once")
             if position + 4 > len(payload):
                 raise ValueError("OP_MSG body section is truncated")
             document_size = struct.unpack("<i", payload[position : position + 4])[0]
@@ -77,6 +80,11 @@ def decode_op_msg(header: MessageHeader, payload: bytes) -> OpMsgRequest:
                 raise ValueError("OP_MSG body document has invalid size")
             raw_document = payload[position : position + document_size]
             body = decode_wire_value(BSON(raw_document).decode())
+            for identifier, sequence in pending_sequences.items():
+                if identifier in body:
+                    raise ValueError("OP_MSG document sequence identifier must not duplicate a body field")
+                body[identifier] = sequence
+            pending_sequences.clear()
             position += document_size
             continue
         if kind == 1:
@@ -102,8 +110,13 @@ def decode_op_msg(header: MessageHeader, payload: bytes) -> OpMsgRequest:
                 sequence.append(decode_wire_value(BSON(raw_document).decode()))
                 position += document_size
             if body is None:
-                body = {}
-            body[identifier] = sequence
+                if identifier in pending_sequences:
+                    raise ValueError("OP_MSG document sequence identifier must be unique")
+                pending_sequences[identifier] = sequence
+            else:
+                if identifier in body:
+                    raise ValueError("OP_MSG document sequence identifier must not duplicate a body field")
+                body[identifier] = sequence
             continue
         raise ValueError(f"unsupported OP_MSG section kind: {kind}")
     if body is None:

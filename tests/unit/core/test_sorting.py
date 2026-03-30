@@ -224,11 +224,14 @@ class SortingHelpersTests(unittest.TestCase):
         self.assertIsNone(sort_value(document, "items.value", 1))
 
     def test_compare_native_sort_scalars_handles_none_bytes_and_unsupported_types(self):
-        self.assertEqual(_compare_native_sort_scalars(None, None), 0)
         self.assertEqual(_compare_native_sort_scalars(b"a", b"b"), -1)
+        self.assertEqual(_compare_native_sort_scalars(bytes([97]), b"a"), 0)
         self.assertEqual(_compare_native_sort_scalars(2.0, 2.0), 0)
         self.assertIsNone(_compare_native_sort_scalars("a", 1))
         self.assertIsNone(_compare_native_sort_scalars(datetime.datetime.now(), datetime.datetime.now()))
+        self.assertEqual(_compare_native_sort_scalars(math.nan, math.nan), 0)
+        self.assertEqual(_compare_native_sort_scalars(math.nan, 1.0), -1)
+        self.assertEqual(_compare_native_sort_scalars(1.0, math.nan), 1)
 
     def test_extreme_value_returns_none_for_empty_iterable_and_prefers_max(self):
         self.assertIsNone(_extreme_value([], prefer_max=False))
@@ -244,3 +247,24 @@ class SortingHelpersTests(unittest.TestCase):
         self.assertEqual(sort_documents_window(documents, None, window=None), documents)
         self.assertEqual(sort_documents_window(documents, None, window=1), [{"_id": "2"}])
         self.assertEqual(sort_documents_window(documents, [("_id", 1)], window=0), [])
+
+    def test_compare_documents_returns_zero_when_all_sort_keys_tie(self):
+        self.assertEqual(
+            compare_documents(
+                {"_id": "1", "rank": 2, "name": "Ada"},
+                {"_id": "2", "rank": 2, "name": "Ada"},
+                [("rank", 1), ("name", 1)],
+            ),
+            0,
+        )
+
+    def test_sort_value_returns_single_nested_scalar_candidate(self):
+        self.assertEqual(sort_value({"scores": [{"value": 7}]}, "scores.value", 1), 7)
+
+    def test_sort_documents_window_with_none_window_matches_sort_documents(self):
+        documents = [{"_id": "2", "rank": 2}, {"_id": "1", "rank": 1}]
+
+        self.assertEqual(
+            sort_documents_window(documents, [("rank", 1)], window=None),
+            sort_documents(documents, [("rank", 1)]),
+        )
