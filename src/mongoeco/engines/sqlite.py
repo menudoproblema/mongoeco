@@ -93,6 +93,7 @@ from mongoeco.engines.sqlite_query import (
     json_path_for_field,
     path_array_prefixes,
     type_expression_sql,
+    value_expression_sql,
     translate_query_plan,
     translate_compiled_update_plan,
     SQLiteQueryTranslator,
@@ -1319,6 +1320,8 @@ class SQLiteEngine(AsyncStorageEngine):
                     "SELECT document FROM documents "
                     "WHERE db_name = ? AND coll_name = ? AND storage_key = ?"
                 )
+                if semantics.limit is not None:
+                    sql += f" LIMIT {int(semantics.limit)}"
                 params = (db_name, coll_name, storage_key)
                 return SQLiteReadExecutionPlan(
                     semantics=semantics,
@@ -1335,23 +1338,22 @@ class SQLiteEngine(AsyncStorageEngine):
                 if (
                     index["key"] == [(field, 1)]
                     and not index.get("sparse")
-                    and not index.get("multikey")
                     and not index.get("partial_filter_expression")
                     and index.get("physical_name")
+                    and not self._field_is_top_level_array_in_collection(db_name, coll_name, field)
                 ):
-                    path = json_path_for_field(field)
-                    sql = (
-                        "SELECT document FROM documents "
-                        f"INDEXED BY {self._quote_identifier(str(index['physical_name']))} "
-                        "WHERE db_name = ? AND coll_name = ? "
-                        "AND json_extract(document, ?) = ?"
-                    )
-                    params = (
+                    indexed_sql = self._build_indexed_top_level_equals_sql(
                         db_name,
                         coll_name,
-                        path,
-                        self._serialize_value_for_sql(query_plan.value),
+                        field=field,
+                        value=query_plan.value,
+                        physical_name=str(index["physical_name"]),
+                        limit=semantics.limit,
+                        null_matches_undefined=query_plan.null_matches_undefined,
                     )
+                    if indexed_sql is None:
+                        continue
+                    sql, params = indexed_sql
                     return SQLiteReadExecutionPlan(
                         semantics=semantics,
                         strategy="sql",
@@ -1377,6 +1379,77 @@ class SQLiteEngine(AsyncStorageEngine):
         if isinstance(value, (int, float, str, bool)):
             return value
         return self._codec.encode({"v": value})["v"]
+
+    def _build_indexed_top_level_equals_sql(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        field: str,
+        value: Any,
+        physical_name: str,
+        limit: int | None = None,
+        null_matches_undefined: bool = False,
+    ) -> tuple[str, tuple[object, ...]] | None:
+        type_sql = type_expression_sql(field)
+        value_sql = value_expression_sql(field)
+        path = json_path_for_field(field)
+        path_literal = "'" + path.replace("'", "''") + "'"
+        base_sql = (
+            "SELECT document FROM documents "
+            f"INDEXED BY {self._quote_identifier(physical_name)} "
+            "WHERE db_name = ? AND coll_name = ? "
+        )
+
+        if value is None:
+            return None
+        if isinstance(value, str):
+            sql = (
+                base_sql
+                + f"AND {type_sql} = '' "
+                + f"AND json_type(document, {path_literal}) = 'text' "
+                + f"AND {value_sql} = ?"
+            )
+            if limit is not None:
+                sql += f" LIMIT {int(limit)}"
+            return (sql, (db_name, coll_name, value))
+        if isinstance(value, bool):
+            sql = (
+                base_sql
+                + f"AND {type_sql} = '' "
+                + f"AND json_type(document, {path_literal}) IN ('true', 'false') "
+                + f"AND {value_sql} = ?"
+            )
+            if limit is not None:
+                sql += f" LIMIT {int(limit)}"
+            return (sql, (db_name, coll_name, int(value)))
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            sql = (
+                base_sql
+                + f"AND {type_sql} = '' "
+                + f"AND json_type(document, {path_literal}) IN ('integer', 'real') "
+                + f"AND {value_sql} = ?"
+            )
+            if limit is not None:
+                sql += f" LIMIT {int(limit)}"
+            return (sql, (db_name, coll_name, value))
+        encoded = self._codec.encode(value)
+        if DocumentCodec._is_tagged_value(encoded):
+            payload = encoded[DocumentCodec._MARKER]
+            sql = (
+                base_sql
+                + f"AND {type_sql} = ? "
+                + f"AND {value_sql} = ?"
+            )
+            if limit is not None:
+                sql += f" LIMIT {int(limit)}"
+            return (
+                sql,
+                (db_name, coll_name, payload[DocumentCodec._TYPE], payload[DocumentCodec._VALUE]),
+            )
+        if null_matches_undefined:
+            return None
+        return None
 
     def _explain_query_plan_sync(
         self,

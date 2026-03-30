@@ -80,6 +80,35 @@ class _AsyncCursorIterator:
             raise StopAsyncIteration
         return self._buffer.popleft()
 
+    async def pull_chunk(self, max_items: int) -> list[Document]:
+        if self._closed or max_items <= 0:
+            return []
+        if self._enforce_ownership and self._cursor._active_async_iterable is not self:
+            self._closed = True
+            return []
+
+        items: list[Document] = []
+        while len(items) < max_items:
+            if self._source is not None:
+                try:
+                    items.append(await self._source.__anext__())
+                    continue
+                except StopAsyncIteration:
+                    self._cursor._exhausted = True
+                    await self.close()
+                    break
+            if not self._buffer:
+                if self._cursor._exhausted:
+                    await self.close()
+                    break
+                await self._fill_buffer()
+            if not self._buffer:
+                await self.close()
+                break
+            while self._buffer and len(items) < max_items:
+                items.append(self._buffer.popleft())
+        return items
+
     async def _fill_buffer(self) -> None:
         target_size = self._batch_size if self._batch_size not in (None, 0) else _DEFAULT_LOCAL_PREFETCH_SIZE
         page = await self._cursor._fetch_batch(self._position, target_size)
@@ -351,6 +380,11 @@ class AsyncCursor:
         return self
 
     async def to_list(self) -> list[Document]:
+        if self._limit == 0:
+            return []
+        if self._limit == 1 and self._active_async_iterable is None and not self._started and not self._exhausted:
+            first = await self.first()
+            return [] if first is None else [first]
         operation = self._as_operation()
         started_at = time.perf_counter_ns()
         try:

@@ -1,6 +1,7 @@
 from mongoeco.api._async.cursor import (
     HintSpec,
     MONGODB_DIALECT_70,
+    _DEFAULT_LOCAL_PREFETCH_SIZE,
     _normalize_sort_spec,
     _resolve_planning_mode,
     _serialize_explanation,
@@ -20,6 +21,17 @@ class _CursorIterator:
         self._async_iterable = async_iterable
         self._closed = False
 
+    def _pull_chunk(self) -> bool:
+        if self._cursor._sync_buffer_index < len(self._cursor._sync_buffer):
+            return True
+        pull_chunk = getattr(self._async_iterable, "pull_chunk", None)
+        if not callable(pull_chunk):
+            return False
+        batch_size = self._cursor._batch_size or _DEFAULT_LOCAL_PREFETCH_SIZE
+        self._cursor._sync_buffer = self._cursor._client._run(pull_chunk(batch_size))
+        self._cursor._sync_buffer_index = 0
+        return self._cursor._sync_buffer_index < len(self._cursor._sync_buffer)
+
     def __iter__(self):
         return self
 
@@ -29,6 +41,13 @@ class _CursorIterator:
         if self._cursor._active_async_iterable is not self._async_iterable:
             self._closed = True
             raise StopIteration
+        if self._pull_chunk():
+            value = self._cursor._sync_buffer[self._cursor._sync_buffer_index]
+            self._cursor._sync_buffer_index += 1
+            if self._cursor._sync_buffer_index >= len(self._cursor._sync_buffer):
+                self._cursor._sync_buffer = []
+                self._cursor._sync_buffer_index = 0
+            return value
         try:
             return self._cursor._client._run(self._async_iterable.__anext__())
         except StopAsyncIteration:
@@ -87,6 +106,8 @@ class Cursor:
         self._closed = False
         self._active_async_iterable = None
         self._exhausted = False
+        self._sync_buffer: list[Document] = []
+        self._sync_buffer_index = 0
 
     def _ensure_open(self) -> None:
         if self._closed:
@@ -95,6 +116,8 @@ class Cursor:
     def _invalidate(self) -> None:
         self._cache = None
         self._exhausted = False
+        self._sync_buffer = []
+        self._sync_buffer_index = 0
 
     def _ensure_mutable(self) -> None:
         self._ensure_open()
@@ -156,6 +179,11 @@ class Cursor:
         if self._exhausted and self._cache is None:
             return []
         if self._cache is None:
+            if self._limit == 1:
+                first = self.first()
+                self._cache = [] if first is None else [first]
+                self._exhausted = True
+                return self._cache
             self._cache = self._client._run(
                 self._async_collection.find(
                     self._filter_spec,
@@ -182,6 +210,8 @@ class Cursor:
             if callable(close):
                 self._client._run(close())
         finally:
+            self._sync_buffer = []
+            self._sync_buffer_index = 0
             if self._active_async_iterable is async_iterable:
                 self._active_async_iterable = None
 
@@ -191,6 +221,8 @@ class Cursor:
             return iter(self._cache)
         if self._exhausted:
             return iter(())
+        if self._limit == 1 and self._active_async_iterable is None:
+            return iter(self._load())
 
         self._started = True
         async_iterable = self._active_async_iterable

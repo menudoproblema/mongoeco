@@ -1952,6 +1952,29 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn("CASE WHEN", sql)
 
+    async def test_plan_find_semantics_uses_index_expressions_for_top_level_string_equality(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "username": "ada"})
+            await engine.create_index("db", "coll", [("username", 1)])
+
+            plan = await engine.plan_find_semantics(
+                "db",
+                "coll",
+                compile_find_semantics({"username": "ada"}, limit=1),
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertTrue(plan.use_sql)
+        self.assertIsNotNone(plan.sql)
+        self.assertIn("INDEXED BY", plan.sql)
+        self.assertIn("COALESCE(json_extract(document, '$.username.\"$mongoeco\".type'), '') = ''", plan.sql)
+        self.assertIn("COALESCE(json_extract(document, '$.username.\"$mongoeco\".value'), json_extract(document, '$.username')) = ?", plan.sql)
+        self.assertIn("LIMIT 1", plan.sql)
+        self.assertEqual(plan.params[-1], "ada")
+
     async def test_update_and_delete_prefer_explicit_plan_over_conflicting_filter(self):
         engine = SQLiteEngine()
         await engine.connect()

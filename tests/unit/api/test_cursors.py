@@ -135,6 +135,17 @@ class _SyncClientStub:
         return asyncio.run(awaitable)
 
 
+class _CountingSyncClientStub:
+    def __init__(self):
+        self.run_calls = 0
+
+    def _run(self, awaitable):
+        import asyncio
+
+        self.run_calls += 1
+        return asyncio.run(awaitable)
+
+
 class _BrokenSyncClientStub:
     def _run(self, awaitable):
         close = getattr(awaitable, "close", None)
@@ -320,6 +331,14 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(first, {"_id": "1"})
         self.assertEqual(documents, [{"_id": "1"}, {"_id": "2"}])
+
+    async def test_async_cursor_to_list_uses_first_fast_path_for_limit_one(self):
+        factory = _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}])
+        cursor = factory.find().limit(1)
+
+        self.assertEqual(await cursor.to_list(), [{"_id": "1"}])
+        self.assertEqual(factory.calls, 1)
+        self.assertEqual(factory.first_calls, 1)
 
     async def test_async_cursor_first_respects_zero_limit(self):
         cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None).limit(0)
@@ -508,6 +527,14 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(factory.calls, 1)
         self.assertEqual(factory.first_calls, 1)
 
+    def test_sync_cursor_iteration_uses_first_fast_path_for_limit_one(self):
+        factory = _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}])
+        cursor = Cursor(_SyncClientStub(), factory, {}, None).limit(1)
+
+        self.assertEqual(list(cursor), [{"_id": "1"}])
+        self.assertEqual(factory.calls, 1)
+        self.assertEqual(factory.first_calls, 1)
+
     def test_sync_cursor_rejects_sort_change_after_materialization(self):
         factory = _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}])
         cursor = Cursor(_SyncClientStub(), factory, {}, None)
@@ -560,6 +587,15 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(list(cursor), documents)
         self.assertEqual(len(collection._collection._engine.created_scans), 1)
         self.assertEqual(collection.last_scan.yield_count, len(documents))
+
+    def test_sync_cursor_iteration_batches_runner_calls(self):
+        documents = [{"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)]
+        collection = _BatchTrackingFindCollectionStub(documents)
+        client = _CountingSyncClientStub()
+        cursor = Cursor(client, collection, {}, None)
+
+        self.assertEqual(list(cursor), documents)
+        self.assertLess(client.run_calls, len(documents))
 
     def test_sync_cursor_close_is_idempotent_and_blocks_further_use(self):
         cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
