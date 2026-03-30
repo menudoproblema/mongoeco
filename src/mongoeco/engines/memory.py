@@ -81,6 +81,14 @@ class _AsyncLock:
         return False
 
 
+class _StoredDocument:
+    __slots__ = ("payload", "decoded_wrapped")
+
+    def __init__(self, payload: object) -> None:
+        self.payload = payload
+        self.decoded_wrapped: Document | None = None
+
+
 class MemoryEngine(AsyncStorageEngine):
     """Motor de almacenamiento en memoria ultra-rápido."""
 
@@ -149,10 +157,47 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         preserve_bson_wrappers: bool = True,
     ) -> Document:
+        if isinstance(payload, _StoredDocument):
+            if preserve_bson_wrappers:
+                return self._copy_document_containers(self._borrow_storage_document(payload))
+            payload = payload.payload
         try:
             return self._codec.decode(payload, preserve_bson_wrappers=preserve_bson_wrappers)
         except TypeError:
             return self._codec.decode(payload)
+
+    def _borrow_storage_document(
+        self,
+        payload: object,
+        *,
+        preserve_bson_wrappers: bool = True,
+    ) -> Document:
+        if isinstance(payload, _StoredDocument):
+            if preserve_bson_wrappers and payload.decoded_wrapped is not None:
+                return payload.decoded_wrapped
+            raw_payload = payload.payload
+        else:
+            raw_payload = payload
+        try:
+            decoded = self._codec.decode(raw_payload, preserve_bson_wrappers=preserve_bson_wrappers)
+        except TypeError:
+            decoded = self._codec.decode(raw_payload)
+        if isinstance(payload, _StoredDocument) and preserve_bson_wrappers:
+            payload.decoded_wrapped = decoded
+        return decoded
+
+    def _encode_storage_document(self, document: Document) -> _StoredDocument:
+        return _StoredDocument(self._codec.encode(document))
+
+    def _copy_document_containers(self, value: object) -> object:
+        if isinstance(value, dict):
+            return {
+                key: self._copy_document_containers(item)
+                for key, item in value.items()
+            }
+        if isinstance(value, list):
+            return [self._copy_document_containers(item) for item in value]
+        return value
 
     @override
     def create_session_state(self, session: ClientSession) -> None:
@@ -274,7 +319,7 @@ class MemoryEngine(AsyncStorageEngine):
 
         coll_storage = storage_view.get(db_name, {}).get(coll_name, {})
         for storage_key, data in coll_storage.items():
-            doc = self._decode_storage_document(data)
+            doc = self._borrow_storage_document(data)
             if not document_in_virtual_index(doc, index):
                 continue
             key = self._index_key(doc, index["fields"])
@@ -560,7 +605,7 @@ class MemoryEngine(AsyncStorageEngine):
             for storage_key, data in coll.items():
                 if normalized_exclude is not None and storage_key == normalized_exclude:
                     continue
-                existing = self._decode_storage_document(data)
+                existing = self._borrow_storage_document(data)
                 if not document_in_virtual_index(existing, index):
                     continue
                 existing_key = self._index_key(existing, fields)
@@ -663,7 +708,7 @@ class MemoryEngine(AsyncStorageEngine):
                 storage_key = self._storage_key(doc_id)
                 original_document = None
                 if overwrite and storage_key in coll:
-                    original_document = self._decode_storage_document(coll[storage_key])
+                    original_document = self._borrow_storage_document(coll[storage_key])
                 if not overwrite and storage_key in coll:
                     results.append(False)
                     continue
@@ -697,7 +742,7 @@ class MemoryEngine(AsyncStorageEngine):
                         indexes_view=indexes_view,
                     )
 
-                coll[storage_key] = self._codec.encode(document)
+                coll[storage_key] = self._encode_storage_document(document)
                 self._update_indexes_locked(
                     db_name,
                     coll_name,
@@ -739,7 +784,7 @@ class MemoryEngine(AsyncStorageEngine):
             index_data_view = self._index_data_view(context)
             storage_key = self._storage_key(doc_id)
             if storage_key in coll:
-                document = self._decode_storage_document(coll[storage_key])
+                document = self._borrow_storage_document(coll[storage_key])
                 self._update_indexes_locked(
                     db_name,
                     coll_name,
@@ -808,7 +853,7 @@ class MemoryEngine(AsyncStorageEngine):
                 if id_lookup is not None:
                     storage_key = self._storage_key(id_lookup)
                     data = coll.get(storage_key)
-                    document_source = [self._decode_storage_document(data)] if data is not None else []
+                    document_source = [self._borrow_storage_document(data)] if data is not None else []
                 else:
                     # Intento de optimización: Otros índices (igualdad simple)
                     target_index_match = None
@@ -831,13 +876,13 @@ class MemoryEngine(AsyncStorageEngine):
                         storage_keys = index_data[target_index_match["name"]].get(target_key, set())
                         if len(storage_keys) <= 1:
                             document_source = (
-                                self._decode_storage_document(coll[sk])
+                                self._borrow_storage_document(coll[sk])
                                 for sk in storage_keys
                                 if sk in coll
                             )
                         else:
                             document_source = (
-                                self._decode_storage_document(data)
+                                self._borrow_storage_document(data)
                                 for sk, data in coll.items()
                                 if sk in storage_keys
                             )
@@ -845,7 +890,7 @@ class MemoryEngine(AsyncStorageEngine):
                         # Scan completo (lento)
                         enforce_deadline(deadline)
                         document_source = (
-                            self._decode_storage_document(data)
+                            self._borrow_storage_document(data)
                             for data in coll.values()
                         )
 
@@ -854,14 +899,17 @@ class MemoryEngine(AsyncStorageEngine):
 
                 # Si no hay ordenación, podemos hacer streaming real y parar tras el limit.
                 if not semantics.sort:
-                    final_stream = stream_finalize_documents(filtered, semantics)
+                    final_stream = stream_finalize_documents(
+                        (self._copy_document_containers(document) for document in filtered),
+                        semantics,
+                    )
                     for document in final_stream:
                         enforce_deadline(deadline)
                         yield document
                     return
 
                 # Si hay sort, tenemos que materializar para ordenar.
-                documents = list(filtered)
+                documents = [self._copy_document_containers(document) for document in filtered]
                 documents = finalize_documents(documents, semantics, apply_sort_phase=True)
 
             for document in documents:
@@ -903,16 +951,17 @@ class MemoryEngine(AsyncStorageEngine):
                 coll = {}
 
             for storage_key, data in list(coll.items()):
-                document = self._decode_storage_document(data)
+                borrowed_document = self._borrow_storage_document(data)
                 if not QueryEngine.match_plan(
-                    document,
+                    borrowed_document,
                     semantics.query_plan,
                     dialect=semantics.dialect,
                     collation=semantics.collation,
                 ):
                     continue
 
-                original_document = deepcopy(document)
+                document = deepcopy(borrowed_document)
+                original_document = deepcopy(borrowed_document)
                 modified = semantics.compiled_update_plan.apply(document)
                 if not bypass_document_validation:
                     enforce_collection_document_validation(
@@ -939,7 +988,7 @@ class MemoryEngine(AsyncStorageEngine):
                     index_data_view=index_data_view,
                     indexes_view=indexes_view,
                 )
-                coll[storage_key] = self._codec.encode(document)
+                coll[storage_key] = self._encode_storage_document(document)
                 self._update_indexes_locked(
                     db_name,
                     coll_name,
@@ -992,7 +1041,7 @@ class MemoryEngine(AsyncStorageEngine):
                 storage_view=storage_view,
                 index_data_view=index_data_view,
             )
-            coll[storage_key] = self._codec.encode(new_doc)
+            coll[storage_key] = self._encode_storage_document(new_doc)
             self._update_indexes_locked(
                 db_name,
                 coll_name,
@@ -1026,7 +1075,7 @@ class MemoryEngine(AsyncStorageEngine):
             indexes_view = self._indexes_view(context)
             index_data_view = self._index_data_view(context)
             for storage_key, data in list(coll.items()):
-                document = self._decode_storage_document(data)
+                document = self._borrow_storage_document(data)
                 if not QueryEngine.match_plan(
                     document,
                     query_plan,
@@ -1146,7 +1195,7 @@ class MemoryEngine(AsyncStorageEngine):
                 coll = storage_view.get(db_name, {}).get(coll_name, {})
                 for data in coll.values():
                     enforce_deadline(deadline)
-                    document = self._decode_storage_document(data)
+                    document = self._borrow_storage_document(data)
                     if not document_in_virtual_index(document, new_index):
                         continue
                     key = self._index_key(document, fields)
