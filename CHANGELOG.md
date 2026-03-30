@@ -29,6 +29,10 @@ usa Semantic Versioning.
 - Se amplia la cobertura de `change_streams` con pruebas de offsets,
   reanudacion, espera bloqueante, iteracion async y validacion de
   pipelines.
+- Se refuerzan `engines.virtual_indexes`, `core.filtering` y
+  `api._async.database_admin` con pruebas adicionales sobre helpers de
+  implicacion, claves hashables especiales, compilacion de comandos y
+  ramas de error en comandos administrativos.
 
 ## [2.0.1] - 2026-03-30
 

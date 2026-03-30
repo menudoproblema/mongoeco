@@ -7,6 +7,7 @@ from mongoeco.core.query_plan import (
     GreaterThanCondition,
     InCondition,
     LessThanOrEqualCondition,
+    LessThanCondition,
     MatchAll,
     RegexCondition,
     TypeCondition,
@@ -16,6 +17,7 @@ from mongoeco.core.query_plan import (
 from mongoeco.engines.virtual_indexes import (
     _compare_bounds,
     _compile_regex_condition,
+    _implies_same_field_condition,
     _plan_implies,
     _plan_implies_exists_true,
     _same_field_ordering_implies,
@@ -287,6 +289,18 @@ class VirtualIndexTests(unittest.TestCase):
                 ExistsCondition("email", False),
             )
         )
+        self.assertFalse(
+            _plan_implies(
+                EqualsCondition("email", "a@example.com"),
+                AndCondition((EqualsCondition("email", "a@example.com"), EqualsCondition("active", True))),
+            )
+        )
+        self.assertFalse(
+            _plan_implies(
+                EqualsCondition("other", 1),
+                ExistsCondition("email", True),
+            )
+        )
 
     def test_exists_and_type_regex_helpers_cover_remaining_implication_paths(self):
         self.assertTrue(_plan_implies_exists_true(GreaterThanCondition("score", 10), "score"))
@@ -316,9 +330,19 @@ class VirtualIndexTests(unittest.TestCase):
                 "string",
             )
         )
+        self.assertTrue(
+            _same_field_type_implies(
+                InCondition("value", ("ada", "grace")),
+                "value",
+                "string",
+            )
+        )
+        self.assertFalse(_same_field_type_implies(MatchAll(), "value", "string"))
         regex = RegexCondition("name", "^ad", "i")
         self.assertTrue(_same_field_regex_implies(RegexCondition("name", "^ad", "i"), regex))
         self.assertFalse(_same_field_regex_implies(EqualsCondition("name", 3), regex))
+        self.assertFalse(_same_field_regex_implies(InCondition("name", (1,)), regex))
+        self.assertFalse(_same_field_regex_implies(MatchAll(), regex))
         self.assertIsNotNone(_compile_regex_condition(RegexCondition("body", "^ada$", "imsx")).search("Ada\n"))
 
     def test_ordering_and_bound_helpers_cover_edge_comparisons(self):
@@ -354,7 +378,58 @@ class VirtualIndexTests(unittest.TestCase):
                 inclusive=True,
             )
         )
+        self.assertFalse(
+            _same_field_ordering_implies(
+                EqualsCondition("other", 10),
+                "score",
+                minimum=5,
+                inclusive=True,
+            )
+        )
+        self.assertFalse(
+            _same_field_ordering_implies(
+                InCondition("score", ()),
+                "score",
+                minimum=5,
+                inclusive=True,
+            )
+        )
+        self.assertFalse(
+            _same_field_ordering_implies(
+                GreaterThanCondition("other", 10),
+                "score",
+                minimum=5,
+                inclusive=True,
+            )
+        )
+        self.assertFalse(
+            _implies_same_field_condition(
+                MatchAll(),
+                LessThanCondition("score", 10),
+            )
+        )
+        self.assertTrue(
+            _implies_same_field_condition(
+                InCondition("score", (5,)),
+                EqualsCondition("score", 5),
+            )
+        )
+        self.assertTrue(
+            _implies_same_field_condition(
+                EqualsCondition("score", 5),
+                InCondition("score", (5, 6)),
+            )
+        )
+        self.assertFalse(
+            _implies_same_field_condition(
+                MatchAll(),
+                InCondition("score", (5, 6)),
+            )
+        )
         self.assertFalse(_compare_bounds(10, 10, False, True))
         self.assertTrue(_compare_bounds(10, 10, False, False, reverse=True))
+        self.assertFalse(_compare_bounds(11, 10, False, False, reverse=True))
+        self.assertFalse(_compare_bounds(9, 10, False, True))
         self.assertFalse(_value_satisfies_bounds(10, minimum=10, inclusive=False))
         self.assertTrue(_value_satisfies_bounds(10, maximum=10, inclusive=True))
+        self.assertFalse(_value_satisfies_bounds(11, maximum=10, inclusive=True))

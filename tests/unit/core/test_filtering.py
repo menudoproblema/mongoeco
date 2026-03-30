@@ -85,6 +85,21 @@ class QueryEngineTests(unittest.TestCase):
     def test_query_engine_matches_empty_filter(self):
         self.assertTrue(QueryEngine.match({"a": 1}, {}))
 
+    def test_query_engine_hashable_lookup_key_handles_special_scalar_types(self):
+        now = datetime.datetime(2024, 1, 1)
+        oid = ObjectId()
+        uid = uuid.uuid4()
+        timestamp = Timestamp(10, 1)
+
+        self.assertEqual(QueryEngine._hashable_in_lookup_key(None), ("none", None))
+        self.assertEqual(QueryEngine._hashable_in_lookup_key(True), ("bool", True))
+        self.assertEqual(QueryEngine._hashable_in_lookup_key(b"abc"), ("bytes", b"abc"))
+        self.assertEqual(QueryEngine._hashable_in_lookup_key(now), ("date", now))
+        self.assertEqual(QueryEngine._hashable_in_lookup_key(uid), ("uuid", uid))
+        self.assertEqual(QueryEngine._hashable_in_lookup_key(oid), ("objectid", oid))
+        self.assertEqual(QueryEngine._hashable_in_lookup_key(timestamp), ("timestamp", timestamp))
+        self.assertIsNone(QueryEngine._hashable_in_lookup_key("ada"))
+
     def test_query_engine_supports_dot_notation(self):
         document = {"user": {"profile": {"name": "Ada"}}}
         self.assertTrue(QueryEngine.match(document, {"user.profile.name": "Ada"}))
