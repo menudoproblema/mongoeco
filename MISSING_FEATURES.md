@@ -2,7 +2,6 @@
 
 | Prioridad | Nombre                                                            | Impacto     | Esfuerzo    | Refs                                                              |
 | --------- | ----------------------------------------------------------------- | ----------- | ----------- | ----------------------------------------------------------------- |
-| 4         | Joins correlacionados de lista con `$in` en pipeline de `$lookup` | Medio-Alto  | Medio       | `../gdynamics/mochuelo-framework/src/mochuelo/storages/mongodb/storage.py:404`<br>`../gdynamics/mochuelo-framework/src/mochuelo/queries/joins.py:232` |
 | 5         | TTL / `expireAfterSeconds`                                        | Alto        | Medio       | `admin_parsing.py:92`<br>`test_admin_parsing.py:79`               |
 | 6         | Query geoespacial e indexacion asociada                           | Alto        | Alto        | `test_query_plan.py:259`<br>`compat_catalog_snapshot.md:25`       |
 | 7         | Full-text clasico: `$text` y `$meta` / `textScore`                | Alto        | Alto        | `compat_catalog_snapshot.md:25`<br>`test_projections.py:139`      |

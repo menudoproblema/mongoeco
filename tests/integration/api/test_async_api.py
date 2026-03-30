@@ -3021,6 +3021,55 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [{"_id": "1", "tenant": "a", "users": [{"_id": "u1"}]}],
                     )
 
+    async def test_aggregate_supports_correlated_list_lookup_with_in_and_dotted_variable_path(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    events = client.analytics.events
+                    users = client.analytics.users
+                    await users.insert_one({"_id": "u1", "name": "Ada"})
+                    await users.insert_one({"_id": "u2", "name": "Grace"})
+                    await users.insert_one({"_id": "u3", "name": "Linus"})
+                    await events.insert_one({"_id": "1", "links": [{"id": "u1"}, {"id": "u3"}]})
+                    await events.insert_one({"_id": "2", "links": []})
+                    await events.insert_one({"_id": "3"})
+
+                    documents = await events.aggregate(
+                        [
+                            {
+                                "$lookup": {
+                                    "from": "users",
+                                    "let": {"ref_key": "$links"},
+                                    "pipeline": [
+                                        {
+                                            "$match": {
+                                                "$expr": {
+                                                    "$and": [
+                                                        {"$gt": [{"$size": {"$ifNull": ["$$ref_key.id", []]}}, 0]},
+                                                        {"$in": ["$_id", "$$ref_key.id"]},
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {"$project": {"_id": 0, "name": 1}},
+                                        {"$sort": {"name": 1}},
+                                    ],
+                                    "as": "users",
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {"_id": "1", "links": [{"id": "u1"}, {"id": "u3"}], "users": [{"name": "Ada"}, {"name": "Linus"}]},
+                            {"_id": "2", "links": [], "users": []},
+                            {"_id": "3", "users": []},
+                        ],
+                    )
+
     async def test_aggregate_supports_lookup_with_missing_foreign_collection(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

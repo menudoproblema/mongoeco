@@ -642,6 +642,58 @@ class AggregationPipelineCoreTests(unittest.TestCase):
             [{"_id": "1", "tenant": "a", "users": [{"_id": "u1"}]}],
         )
 
+    def test_pipeline_supports_correlated_list_lookup_with_in_and_dotted_variable_path(self):
+        documents = [
+            {"_id": "1", "links": [{"id": "u1"}, {"id": "u3"}]},
+            {"_id": "2", "links": []},
+            {"_id": "3"},
+        ]
+        foreign = {
+            "users": [
+                {"_id": "u1", "name": "Ada"},
+                {"_id": "u2", "name": "Grace"},
+                {"_id": "u3", "name": "Linus"},
+            ]
+        }
+
+        result = apply_pipeline(
+            documents,
+            [
+                {
+                    "$lookup": {
+                        "from": "users",
+                        "let": {"ref_key": "$links"},
+                        "pipeline": [
+                            {
+                                "$match": {
+                                    "$expr": {
+                                        "$and": [
+                                            {"$gt": [{"$size": {"$ifNull": ["$$ref_key.id", []]}}, 0]},
+                                            {"$in": ["$_id", "$$ref_key.id"]},
+                                        ]
+                                    }
+                                }
+                            },
+                            {"$project": {"_id": 0, "name": 1}},
+                            {"$sort": {"name": 1}},
+                        ],
+                        "as": "users",
+                    }
+                },
+                {"$sort": {"_id": 1}},
+            ],
+            collection_resolver=foreign.get,
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {"_id": "1", "links": [{"id": "u1"}, {"id": "u3"}], "users": [{"name": "Ada"}, {"name": "Linus"}]},
+                {"_id": "2", "links": [], "users": []},
+                {"_id": "3", "users": []},
+            ],
+        )
+
     def test_pipeline_supports_lookup_with_missing_foreign_collection(self):
         result = apply_pipeline(
             [{"_id": "1", "tenant": "a"}],

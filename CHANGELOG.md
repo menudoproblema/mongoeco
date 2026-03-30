@@ -26,6 +26,9 @@ usa Semantic Versioning.
   (`$exists`, `$all`, `$nin` y `$elemMatch`) dentro de `$expr` en
   pipelines `$lookup`, reutilizando la semantica de `QueryEngine` y
   actualizando los snapshots de compatibilidad.
+- Se blindan con pruebas los joins correlacionados de lista que usan
+  `$in` dentro de `$lookup`, incluyendo la variante con rutas
+  variables punteadas sobre listas de subdocumentos.
 - Se anade una prueba en interprete limpio para validar que las
   anotaciones de `AsyncDatabaseCommandService` se resuelven
   correctamente.

@@ -2867,6 +2867,55 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"_id": "1", "tenant": "a", "users": [{"_id": "u1"}]}],
                     )
 
+    def test_aggregate_supports_correlated_list_lookup_with_in_and_dotted_variable_path(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    events = client.test.events
+                    users = client.test.users
+                    users.insert_one({"_id": "u1", "name": "Ada"})
+                    users.insert_one({"_id": "u2", "name": "Grace"})
+                    users.insert_one({"_id": "u3", "name": "Linus"})
+                    events.insert_one({"_id": "1", "links": [{"id": "u1"}, {"id": "u3"}]})
+                    events.insert_one({"_id": "2", "links": []})
+                    events.insert_one({"_id": "3"})
+
+                    documents = events.aggregate(
+                        [
+                            {
+                                "$lookup": {
+                                    "from": "users",
+                                    "let": {"ref_key": "$links"},
+                                    "pipeline": [
+                                        {
+                                            "$match": {
+                                                "$expr": {
+                                                    "$and": [
+                                                        {"$gt": [{"$size": {"$ifNull": ["$$ref_key.id", []]}}, 0]},
+                                                        {"$in": ["$_id", "$$ref_key.id"]},
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {"$project": {"_id": 0, "name": 1}},
+                                        {"$sort": {"name": 1}},
+                                    ],
+                                    "as": "users",
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {"_id": "1", "links": [{"id": "u1"}, {"id": "u3"}], "users": [{"name": "Ada"}, {"name": "Linus"}]},
+                            {"_id": "2", "links": [], "users": []},
+                            {"_id": "3", "users": []},
+                        ],
+                    )
+
     def test_aggregate_supports_lookup_with_missing_foreign_collection(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
