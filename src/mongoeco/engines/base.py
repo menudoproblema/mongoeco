@@ -11,6 +11,7 @@ from mongoeco.types import (
     Filter,
     IndexInformation,
     IndexDocument,
+    IndexKeySpec,
     ProfilingCommandResult,
     Projection,
     QueryPlanExplanation,
