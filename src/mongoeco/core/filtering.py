@@ -633,6 +633,40 @@ class QueryEngine:
         if field not in doc:
             return False
         value = doc[field]
+        if collation is None and dialect is MONGODB_DIALECT_70 and not isinstance(value, list):
+            value_type = type(value)
+            target_type = type(target)
+            if (
+                value_type is target_type
+                and value_type in _FAST_SCALAR_TYPES
+                and not (value_type is float and (math.isnan(value) or math.isnan(target)))
+            ):
+                if operator == "gt" or operator == ">":
+                    return value > target
+                if operator == "gte" or operator == ">=":
+                    return value >= target
+                if operator == "lt" or operator == "<":
+                    return value < target
+                if operator == "lte" or operator == "<=":
+                    return value <= target
+            elif (
+                value_type in _FAST_NUMERIC_TYPES
+                and target_type in _FAST_NUMERIC_TYPES
+                and value_type is not bool
+                and target_type is not bool
+                and not (
+                    (value_type is float and math.isnan(value))
+                    or (target_type is float and math.isnan(target))
+                )
+            ):
+                if operator == "gt" or operator == ">":
+                    return value > target
+                if operator == "gte" or operator == ">=":
+                    return value >= target
+                if operator == "lt" or operator == "<":
+                    return value < target
+                if operator == "lte" or operator == "<=":
+                    return value <= target
         if isinstance(value, list):
             if QueryEngine._comparison_matches_candidate(
                 value,
@@ -672,6 +706,31 @@ class QueryEngine:
     ) -> bool:
         if field in doc:
             value = doc[field]
+            if (
+                collation is None
+                and dialect is MONGODB_DIALECT_70
+                and not null_matches_undefined
+                and not isinstance(value, list)
+            ):
+                value_type = type(value)
+                condition_type = type(condition)
+                if (
+                    value_type is condition_type
+                    and value_type in _FAST_SCALAR_TYPES
+                    and not (value_type is float and (math.isnan(value) or math.isnan(condition)))
+                ):
+                    return value == condition
+                if (
+                    value_type in _FAST_NUMERIC_TYPES
+                    and condition_type in _FAST_NUMERIC_TYPES
+                    and value_type is not bool
+                    and condition_type is not bool
+                    and not (
+                        (value_type is float and math.isnan(value))
+                        or (condition_type is float and math.isnan(condition))
+                    )
+                ):
+                    return value == condition
             if isinstance(value, list):
                 if QueryEngine._query_equality_matches(
                     value,

@@ -198,32 +198,61 @@ class DocumentCodec:
             raise ValueError(f"Unsupported tagged value type: {value_type}")
 
         if isinstance(data, dict):
+            flat_dict: dict[Any, Any] = {}
+            for key, value in data.items():
+                if isinstance(value, dict):
+                    break
+                if isinstance(value, list):
+                    if any(isinstance(item, dict | list) for item in value):
+                        break
+                    flat_dict[key] = list(value)
+                    continue
+                flat_dict[key] = value
+            else:
+                return flat_dict
             decoded: dict[Any, Any] = {}
             for key, value in data.items():
-                if isinstance(value, dict | list):
+                if isinstance(value, dict):
                     decoded[key] = DocumentCodec.decode(
                         value,
                         preserve_bson_wrappers=preserve_bson_wrappers,
                     )
-                else:
-                    decoded[key] = value
+                    continue
+                if isinstance(value, list):
+                    decoded[key] = DocumentCodec._decode_list_fast(
+                        value,
+                        preserve_bson_wrappers=preserve_bson_wrappers,
+                    )
+                    continue
+                decoded[key] = value
             return decoded
 
         if isinstance(data, list):
-            decoded_items: list[Any] = []
-            for value in data:
-                if isinstance(value, dict | list):
-                    decoded_items.append(
-                        DocumentCodec.decode(
-                            value,
-                            preserve_bson_wrappers=preserve_bson_wrappers,
-                        )
-                    )
-                else:
-                    decoded_items.append(value)
-            return decoded_items
+            return DocumentCodec._decode_list_fast(
+                data,
+                preserve_bson_wrappers=preserve_bson_wrappers,
+            )
 
         return data
+
+    @staticmethod
+    def _decode_list_fast(data: list[Any], *, preserve_bson_wrappers: bool) -> list[Any]:
+        if not data:
+            return []
+        if not any(isinstance(value, dict | list) for value in data):
+            return list(data)
+        decoded_items: list[Any] = []
+        for value in data:
+            if isinstance(value, dict | list):
+                decoded_items.append(
+                    DocumentCodec.decode(
+                        value,
+                        preserve_bson_wrappers=preserve_bson_wrappers,
+                    )
+                )
+                continue
+            decoded_items.append(value)
+        return decoded_items
 
     @staticmethod
     def to_public(data: Any) -> Any:

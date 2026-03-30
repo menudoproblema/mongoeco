@@ -26,6 +26,15 @@ class DocumentCodecTests(unittest.TestCase):
         self.assertIsNot(decoded, original)
         self.assertIsNot(decoded["nested"][0], original["nested"][0])
 
+    def test_document_codec_decode_copies_flat_scalar_lists(self):
+        payload = {"name": "Ada", "tags": ["python", "mongo"]}
+
+        decoded = DocumentCodec.decode(payload)
+
+        self.assertEqual(decoded, payload)
+        self.assertIsNot(decoded, payload)
+        self.assertIsNot(decoded["tags"], payload["tags"])
+
     def test_document_codec_does_not_mutate_original_input(self):
         original = {"items": [{"when": datetime.datetime(2026, 3, 23, 12, 0, 0)}]}
 

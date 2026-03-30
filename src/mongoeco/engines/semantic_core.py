@@ -324,6 +324,8 @@ def stream_finalize_documents(
     apply_skip_limit_phase: bool = True,
 ) -> Iterable[Document]:
     deadline = semantics.deadline
+    projection = semantics.projection
+    dialect = semantics.dialect
     remaining_skip = semantics.skip if apply_skip_limit_phase else 0
     remaining_limit = semantics.limit if apply_skip_limit_phase else None
     if deadline is None:
@@ -331,13 +333,8 @@ def stream_finalize_documents(
             if remaining_skip:
                 remaining_skip -= 1
                 continue
-            yield DocumentCodec.to_public(
-                apply_projection(
-                    document,
-                    semantics.projection,
-                    dialect=semantics.dialect,
-                )
-            )
+            projected = document if projection is None else apply_projection(document, projection, dialect=dialect)
+            yield DocumentCodec.to_public(projected)
             if remaining_limit is not None:
                 remaining_limit -= 1
                 if remaining_limit == 0:
@@ -349,13 +346,8 @@ def stream_finalize_documents(
         if remaining_skip:
             remaining_skip -= 1
             continue
-        yield DocumentCodec.to_public(
-            apply_projection(
-                document,
-                semantics.projection,
-                dialect=semantics.dialect,
-            )
-        )
+        projected = document if projection is None else apply_projection(document, projection, dialect=dialect)
+        yield DocumentCodec.to_public(projected)
         if remaining_limit is not None:
             remaining_limit -= 1
             if remaining_limit == 0:
