@@ -131,6 +131,7 @@ from mongoeco.types import (
 
 _SQLITE_SHARED_EXECUTOR_LOCK = threading.Lock()
 _SQLITE_SHARED_EXECUTORS: dict[int, ThreadPoolExecutor] = {}
+_ASYNC_SCAN_QUEUE_BATCH_SIZE = 64
 
 
 def _shutdown_sqlite_shared_executors() -> None:
@@ -3656,6 +3657,7 @@ class SQLiteEngine(AsyncStorageEngine):
             def _produce() -> None:
                 with self._scan_condition:
                     self._active_scan_count += 1
+                batch: list[Document] = []
                 try:
                     for document in self._iter_scan_documents_sync(
                         db_name,
@@ -3667,10 +3669,17 @@ class SQLiteEngine(AsyncStorageEngine):
                     ):
                         if stop_event.is_set():
                             break
-                        items.put(document)
+                        batch.append(document)
+                        if len(batch) >= _ASYNC_SCAN_QUEUE_BATCH_SIZE:
+                            items.put(batch)
+                            batch = []
                 except Exception as exc:
+                    if batch:
+                        items.put(batch)
                     items.put(exc)
                 finally:
+                    if batch:
+                        items.put(batch)
                     with self._scan_condition:
                         self._active_scan_count -= 1
                         self._scan_condition.notify_all()
@@ -3684,7 +3693,8 @@ class SQLiteEngine(AsyncStorageEngine):
                         break
                     if isinstance(item, Exception):
                         raise item
-                    yield item
+                    for document in item:
+                        yield document
             finally:
                 stop_event.set()
                 await producer

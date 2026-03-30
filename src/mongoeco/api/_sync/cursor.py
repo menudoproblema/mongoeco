@@ -208,10 +208,6 @@ class Cursor:
                 batch_size=self._batch_size,
                 session=self._session,
             )
-            if self._batch_size is None:
-                set_batch_size = getattr(async_cursor, "batch_size", None)
-                if callable(set_batch_size):
-                    set_batch_size(0)
             async_iterable = async_cursor.__aiter__()
             self._active_async_iterable = async_iterable
 

@@ -6,6 +6,7 @@ import threading
 import tempfile
 import unittest
 import uuid
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 from mongoeco.api.operations import compile_update_operation
@@ -2601,7 +2602,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(yielded, ["1"])
 
     async def test_scan_collection_does_not_enqueue_document_after_stop_event_is_set(self):
-        engine = SQLiteEngine()
+        with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as handle:
+            sqlite_path = handle.name
+        engine = SQLiteEngine(path=sqlite_path)
         await engine.connect()
 
         def _wrapped(*args, **kwargs):
@@ -2617,8 +2620,41 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 seen = [document async for document in self._scan(engine, "db", "coll", {"kind": "view"})]
         finally:
             await engine.disconnect()
+            Path(sqlite_path).unlink(missing_ok=True)
 
         self.assertEqual(seen, [])
+
+    async def test_scan_collection_file_backend_batches_queue_reads(self):
+        with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as handle:
+            sqlite_path = handle.name
+        engine = SQLiteEngine(path=sqlite_path)
+        await engine.connect()
+        documents = [{"_id": str(index)} for index in range(5)]
+        get_call_count = 0
+        original_run_blocking = engine._run_blocking
+
+        async def _counting_run_blocking(func, *args, **kwargs):
+            nonlocal get_call_count
+            if getattr(func, "__name__", "") == "get":
+                get_call_count += 1
+            return await original_run_blocking(func, *args, **kwargs)
+
+        def _wrapped(*args, **kwargs):
+            yield from documents
+
+        try:
+            with (
+                patch("mongoeco.engines.sqlite._ASYNC_SCAN_QUEUE_BATCH_SIZE", 2),
+                patch.object(engine, "_run_blocking", side_effect=_counting_run_blocking),
+                patch.object(engine, "_iter_scan_documents_sync", side_effect=_wrapped),
+            ):
+                seen = [document async for document in self._scan(engine, "db", "coll", {"kind": "view"})]
+        finally:
+            await engine.disconnect()
+            Path(sqlite_path).unlink(missing_ok=True)
+
+        self.assertEqual(seen, documents)
+        self.assertEqual(get_call_count, 4)
 
     async def test_scan_collection_uses_sql_translation_for_scalar_not_equals_with_mixed_types(self):
         engine = SQLiteEngine()

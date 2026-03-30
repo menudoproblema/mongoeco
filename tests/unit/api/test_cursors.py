@@ -552,6 +552,15 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(collection.last_scan.yield_count, len(documents))
         self.assertIsNone(cursor._as_operation().batch_size)
 
+    def test_sync_cursor_iteration_streams_without_forcing_prefetch_when_batch_size_is_none(self):
+        documents = [{"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)]
+        collection = _BatchTrackingFindCollectionStub(documents)
+        cursor = Cursor(_SyncClientStub(), collection, {}, None)
+
+        self.assertEqual(list(cursor), documents)
+        self.assertEqual(len(collection._collection._engine.created_scans), 1)
+        self.assertEqual(collection.last_scan.yield_count, len(documents))
+
     def test_sync_cursor_close_is_idempotent_and_blocks_further_use(self):
         cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
 
