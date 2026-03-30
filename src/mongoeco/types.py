@@ -489,6 +489,7 @@ class EngineIndexRecord:
     partial_filter_expression: Filter | None = None
     multikey: bool = False
     multikey_physical_name: str | None = None
+    scalar_physical_name: str | None = None
 
     def __getitem__(self, key: str) -> object:
         return getattr(self, key)

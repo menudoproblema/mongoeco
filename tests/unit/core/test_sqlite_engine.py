@@ -428,7 +428,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(engine._connection)
 
     async def test_disconnect_waits_for_active_scan_to_finish_before_closing_connection(self):
-        engine = SQLiteEngine()
+        fd, path = tempfile.mkstemp(suffix=".sqlite")
+        os.close(fd)
+        engine = SQLiteEngine(path)
         await engine.connect()
         started = threading.Event()
         release = threading.Event()
@@ -459,6 +461,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             release.set()
             if engine._connection is not None or engine._connection_count:
                 await engine.disconnect()
+            if os.path.exists(path):
+                os.remove(path)
 
         self.assertIsNone(engine._connection)
         self.assertEqual(engine._connection_count, 0)
@@ -1952,7 +1956,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn("CASE WHEN", sql)
 
-    async def test_plan_find_semantics_uses_index_expressions_for_top_level_string_equality(self):
+    async def test_plan_find_semantics_uses_scalar_entries_for_top_level_string_equality(self):
         engine = SQLiteEngine()
         await engine.connect()
         try:
@@ -1970,10 +1974,38 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(plan.use_sql)
         self.assertIsNotNone(plan.sql)
         self.assertIn("INDEXED BY", plan.sql)
-        self.assertIn("COALESCE(json_extract(document, '$.username.\"$mongoeco\".type'), '') = ''", plan.sql)
-        self.assertIn("COALESCE(json_extract(document, '$.username.\"$mongoeco\".value'), json_extract(document, '$.username')) = ?", plan.sql)
+        self.assertIn("FROM scalar_index_entries", plan.sql)
+        self.assertIn("JOIN documents", plan.sql)
+        self.assertIn("scalar_index_entries.collection_id = ?", plan.sql)
+        self.assertIn("scalar_index_entries.index_name = ?", plan.sql)
         self.assertIn("LIMIT 1", plan.sql)
-        self.assertEqual(plan.params[-1], "ada")
+        self.assertEqual(list(plan.params[-2:]), [3, "ada"])
+
+    async def test_scalar_index_entries_track_updates_for_top_level_scalar_indexes(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "username": "ada"})
+            await engine.create_index("db", "coll", [("username", 1)])
+
+            initial_match = [doc async for doc in self._scan(engine, "db", "coll", {"username": "ada"})]
+
+            await self._update(
+                engine,
+                "db",
+                "coll",
+                {"_id": "1"},
+                {"$set": {"username": "bea"}},
+            )
+
+            old_match = [doc async for doc in self._scan(engine, "db", "coll", {"username": "ada"})]
+            new_match = [doc async for doc in self._scan(engine, "db", "coll", {"username": "bea"})]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(initial_match, [{"_id": "1", "username": "ada"}])
+        self.assertEqual(old_match, [])
+        self.assertEqual(new_match, [{"_id": "1", "username": "bea"}])
 
     async def test_update_and_delete_prefer_explicit_plan_over_conflicting_filter(self):
         engine = SQLiteEngine()
