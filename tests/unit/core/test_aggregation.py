@@ -3358,6 +3358,30 @@ class AggregationTests(unittest.TestCase):
             ),
             {"name": "Ada"},
         )
+        self.assertEqual(
+            evaluate_expression(
+                {"meta": [{"name": "Ada"}, {"city": "Sevilla"}]},
+                {"$mergeObjects": "$meta"},
+            ),
+            {"name": "Ada", "city": "Sevilla"},
+        )
+        self.assertEqual(
+            evaluate_expression(
+                {"meta": [{"name": "Ada"}, None, {"city": "Sevilla"}]},
+                {"$mergeObjects": "$meta"},
+            ),
+            {"name": "Ada", "city": "Sevilla"},
+        )
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(
+                {"meta": [{"name": "Ada"}, 1]},
+                {"$mergeObjects": "$meta"},
+            )
+        with self.assertRaises(OperationFailure):
+            evaluate_expression(
+                {"meta": [{"name": "Ada"}]},
+                {"$mergeObjects": ["$meta", {"city": "Sevilla"}]},
+            )
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$getField": {}})
         with self.assertRaises(OperationFailure):
@@ -4330,6 +4354,32 @@ class AggregationTests(unittest.TestCase):
         )
 
         self.assertEqual(result, [{"merged": {"city": "Sevilla", "name": "Ada"}}])
+
+    def test_pipeline_supports_merge_objects_with_single_array_operand(self):
+        documents = [
+            {
+                "_id": "1",
+                "profile_list": [
+                    {"name": "Ada"},
+                    None,
+                    {"city": "Sevilla"},
+                ],
+            }
+        ]
+
+        result = apply_pipeline(
+            documents,
+            [
+                {
+                    "$project": {
+                        "_id": 0,
+                        "merged": {"$mergeObjects": "$profile_list"},
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(result, [{"merged": {"name": "Ada", "city": "Sevilla"}}])
 
     def test_pipeline_supports_array_to_object_index_of_array_and_sort_array(self):
         documents = [

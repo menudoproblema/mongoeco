@@ -2603,6 +2603,48 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_aggregate_supports_merge_objects_over_lookup_result_array(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    deliveries = client.test.deliveries
+                    units = client.test.units
+                    deliveries.insert_one({"_id": "d1", "tenant": "a"})
+                    units.insert_one({"_id": "u1", "fulfillment_id": "d1", "name": "Box"})
+                    units.insert_one({"_id": "u2", "fulfillment_id": "d1", "status": "packed"})
+
+                    documents = deliveries.aggregate(
+                        [
+                            {
+                                "$lookup": {
+                                    "from": "units",
+                                    "as": "unit",
+                                    "let": {"ref_key": "$_id"},
+                                    "pipeline": [
+                                        {
+                                            "$match": {
+                                                "$expr": {
+                                                    "$and": [
+                                                        {"$eq": ["$fulfillment_id", "$$ref_key"]},
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    ],
+                                }
+                            },
+                            {"$match": {"$expr": {"$gt": [{"$size": "$unit"}, 0]}}},
+                            {"$addFields": {"unit_list": "$unit", "unit": {"$mergeObjects": "$unit"}}},
+                            {"$project": {"_id": 0, "unit_list": 1, "unit": 1}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(len(documents), 1)
+                    self.assertIsInstance(documents[0]["unit_list"], list)
+                    self.assertEqual(len(documents[0]["unit_list"]), 2)
+                    self.assertEqual(documents[0]["unit"]["name"], "Box")
+                    self.assertEqual(documents[0]["unit"]["status"], "packed")
+
     def test_aggregate_supports_array_transform_expressions(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

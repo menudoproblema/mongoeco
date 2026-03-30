@@ -189,9 +189,18 @@ def evaluate_control_object_expression(
         if not args:
             raise OperationFailure("$mergeObjects requires at least 1 arguments")
         merged: dict[str, Any] = {}
+        allow_array_operand = not isinstance(spec, list)
         for item in args:
             value = evaluate_expression(document, item, variables)
             if value is None:
+                continue
+            if allow_array_operand and isinstance(value, list):
+                for element in value:
+                    if element is None:
+                        continue
+                    if not isinstance(element, dict):
+                        raise OperationFailure("$mergeObjects requires document operands")
+                    merged.update(deepcopy(element))
                 continue
             if not isinstance(value, dict):
                 raise OperationFailure("$mergeObjects requires document operands")

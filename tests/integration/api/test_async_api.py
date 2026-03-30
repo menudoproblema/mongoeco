@@ -2693,6 +2693,48 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ],
                     )
 
+    async def test_aggregate_supports_merge_objects_over_lookup_result_array(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    deliveries = client.analytics.deliveries
+                    units = client.analytics.units
+                    await deliveries.insert_one({"_id": "d1", "tenant": "a"})
+                    await units.insert_one({"_id": "u1", "fulfillment_id": "d1", "name": "Box"})
+                    await units.insert_one({"_id": "u2", "fulfillment_id": "d1", "status": "packed"})
+
+                    documents = await deliveries.aggregate(
+                        [
+                            {
+                                "$lookup": {
+                                    "from": "units",
+                                    "as": "unit",
+                                    "let": {"ref_key": "$_id"},
+                                    "pipeline": [
+                                        {
+                                            "$match": {
+                                                "$expr": {
+                                                    "$and": [
+                                                        {"$eq": ["$fulfillment_id", "$$ref_key"]},
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    ],
+                                }
+                            },
+                            {"$match": {"$expr": {"$gt": [{"$size": "$unit"}, 0]}}},
+                            {"$addFields": {"unit_list": "$unit", "unit": {"$mergeObjects": "$unit"}}},
+                            {"$project": {"_id": 0, "unit_list": 1, "unit": 1}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(len(documents), 1)
+                    self.assertIsInstance(documents[0]["unit_list"], list)
+                    self.assertEqual(len(documents[0]["unit_list"]), 2)
+                    self.assertEqual(documents[0]["unit"]["name"], "Box")
+                    self.assertEqual(documents[0]["unit"]["status"], "packed")
+
     async def test_aggregate_supports_array_transform_expressions(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
