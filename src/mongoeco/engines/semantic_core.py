@@ -278,6 +278,7 @@ def finalize_documents(
     *,
     apply_sort_phase: bool = True,
     apply_skip_limit_phase: bool = True,
+    emit_public_documents: bool = True,
 ) -> list[Document]:
     deadline = semantics.deadline
     if apply_sort_phase:
@@ -312,6 +313,7 @@ def finalize_documents(
         result,
         semantics,
         apply_skip_limit_phase=False,
+        emit_public_documents=emit_public_documents,
     ):
         projected.append(document)
     return projected
@@ -322,6 +324,7 @@ def stream_finalize_documents(
     semantics: EngineFindSemantics,
     *,
     apply_skip_limit_phase: bool = True,
+    emit_public_documents: bool = True,
 ) -> Iterable[Document]:
     deadline = semantics.deadline
     projection = semantics.projection
@@ -334,7 +337,7 @@ def stream_finalize_documents(
                 remaining_skip -= 1
                 continue
             projected = document if projection is None else apply_projection(document, projection, dialect=dialect)
-            yield DocumentCodec.to_public(projected)
+            yield DocumentCodec.to_public(projected) if emit_public_documents else projected
             if remaining_limit is not None:
                 remaining_limit -= 1
                 if remaining_limit == 0:
@@ -347,7 +350,7 @@ def stream_finalize_documents(
             remaining_skip -= 1
             continue
         projected = document if projection is None else apply_projection(document, projection, dialect=dialect)
-        yield DocumentCodec.to_public(projected)
+        yield DocumentCodec.to_public(projected) if emit_public_documents else projected
         if remaining_limit is not None:
             remaining_limit -= 1
             if remaining_limit == 0:

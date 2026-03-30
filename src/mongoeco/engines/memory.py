@@ -82,11 +82,12 @@ class _AsyncLock:
 
 
 class _StoredDocument:
-    __slots__ = ("payload", "decoded_wrapped")
+    __slots__ = ("payload", "decoded_wrapped", "decoded_public")
 
     def __init__(self, payload: object) -> None:
         self.payload = payload
         self.decoded_wrapped: Document | None = None
+        self.decoded_public: Document | None = None
 
 
 class MemoryEngine(AsyncStorageEngine):
@@ -185,6 +186,15 @@ class MemoryEngine(AsyncStorageEngine):
         if isinstance(payload, _StoredDocument) and preserve_bson_wrappers:
             payload.decoded_wrapped = decoded
         return decoded
+
+    def _borrow_public_storage_document(self, payload: object) -> Document:
+        if isinstance(payload, _StoredDocument):
+            if payload.decoded_public is not None:
+                return payload.decoded_public
+            public_document = DocumentCodec.to_public(self._borrow_storage_document(payload))
+            payload.decoded_public = public_document
+            return public_document
+        return DocumentCodec.to_public(self._borrow_storage_document(payload, preserve_bson_wrappers=False))
 
     def _encode_storage_document(self, document: Document) -> _StoredDocument:
         return _StoredDocument(self._codec.encode(document))
@@ -769,7 +779,7 @@ class MemoryEngine(AsyncStorageEngine):
         if data is None:
             return None
         return apply_projection(
-            DocumentCodec.to_public(self._decode_storage_document(data)),
+            self._copy_document_containers(self._borrow_public_storage_document(data)),
             projection,
             dialect=effective_dialect,
         )
@@ -900,8 +910,9 @@ class MemoryEngine(AsyncStorageEngine):
                 # Si no hay ordenación, podemos hacer streaming real y parar tras el limit.
                 if not semantics.sort:
                     final_stream = stream_finalize_documents(
-                        (self._copy_document_containers(document) for document in filtered),
+                        (self._copy_document_containers(DocumentCodec.to_public(document)) for document in filtered),
                         semantics,
+                        emit_public_documents=False,
                     )
                     for document in final_stream:
                         enforce_deadline(deadline)
@@ -909,8 +920,16 @@ class MemoryEngine(AsyncStorageEngine):
                     return
 
                 # Si hay sort, tenemos que materializar para ordenar.
-                documents = [self._copy_document_containers(document) for document in filtered]
-                documents = finalize_documents(documents, semantics, apply_sort_phase=True)
+                documents = [
+                    self._copy_document_containers(DocumentCodec.to_public(document))
+                    for document in filtered
+                ]
+                documents = finalize_documents(
+                    documents,
+                    semantics,
+                    apply_sort_phase=True,
+                    emit_public_documents=False,
+                )
 
             for document in documents:
                 enforce_deadline(deadline)
