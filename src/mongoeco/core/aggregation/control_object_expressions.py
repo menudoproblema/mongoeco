@@ -44,6 +44,27 @@ CONTROL_OBJECT_EXPRESSION_OPERATORS = frozenset(
 )
 
 
+def _is_field_path_expression(value: object) -> bool:
+    return isinstance(value, str) and value.startswith("$") and not value.startswith("$$") and value != "$"
+
+
+def _evaluate_field_bound_match_expression(
+    operator: str,
+    document: Document,
+    spec: object,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> bool | None:
+    if not isinstance(spec, list) or len(spec) != 2:
+        return None
+    field_expression, raw_conditions = spec
+    if not _is_field_path_expression(field_expression) or not isinstance(raw_conditions, list):
+        return None
+    field_path = field_expression[1:]
+    clauses = [{field_path: deepcopy(condition)} for condition in raw_conditions]
+    return QueryEngine.match(document, {operator: clauses}, dialect=dialect)
+
+
 def evaluate_control_object_expression(
     operator: str,
     document: Document,
@@ -67,10 +88,26 @@ def evaluate_control_object_expression(
         return compare_values(left, right, operator)
 
     if operator == "$and":
+        field_bound = _evaluate_field_bound_match_expression(
+            operator,
+            document,
+            spec,
+            dialect=dialect,
+        )
+        if field_bound is not None:
+            return field_bound
         args = require_expression_args(operator, spec, 0, None)
         return all(expression_truthy(evaluate_expression(document, item, variables)) for item in args)
 
     if operator == "$or":
+        field_bound = _evaluate_field_bound_match_expression(
+            operator,
+            document,
+            spec,
+            dialect=dialect,
+        )
+        if field_bound is not None:
+            return field_bound
         args = require_expression_args(operator, spec, 0, None)
         return any(expression_truthy(evaluate_expression(document, item, variables)) for item in args)
 

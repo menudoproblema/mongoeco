@@ -2908,6 +2908,59 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ],
                     )
 
+    async def test_aggregate_supports_field_bound_logical_expr_conditions_inside_lookup(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    events = client.analytics.events
+                    users = client.analytics.users
+                    await users.insert_one({"_id": "u1", "tenant": "a", "role": "admin", "score": 3})
+                    await users.insert_one({"_id": "u2", "tenant": "a", "role": "staff", "score": 4})
+                    await users.insert_one({"_id": "u3", "tenant": "a", "role": "guest", "score": 4})
+                    await users.insert_one({"_id": "u4", "tenant": "a", "role": "admin", "score": 7})
+                    await events.insert_one({"_id": "1", "tenant": "a"})
+
+                    documents = await events.aggregate(
+                        [
+                            {
+                                "$lookup": {
+                                    "from": "users",
+                                    "let": {"tenantId": "$tenant"},
+                                    "pipeline": [
+                                        {
+                                            "$match": {
+                                                "$expr": {
+                                                    "$and": [
+                                                        {"$eq": ["$tenant", "$$tenantId"]},
+                                                        {"$or": ["$role", [{"$eq": "admin"}, {"$eq": "staff"}]]},
+                                                        {"$and": ["$score", [{"$gte": 3}, {"$lt": 5}]]},
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {"$project": {"_id": 0, "role": 1, "score": 1}},
+                                        {"$sort": {"role": 1}},
+                                    ],
+                                    "as": "users",
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [
+                            {
+                                "_id": "1",
+                                "tenant": "a",
+                                "users": [
+                                    {"role": "admin", "score": 3},
+                                    {"role": "staff", "score": 4},
+                                ],
+                            }
+                        ],
+                    )
+
     async def test_aggregate_supports_lookup_with_missing_foreign_collection(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

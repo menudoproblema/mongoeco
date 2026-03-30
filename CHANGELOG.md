@@ -19,6 +19,9 @@ usa Semantic Versioning.
 
 ### Added
 
+- Se anade soporte para la forma generada por joins correlacionados que
+  fijan condiciones de campo con `$and` y `$or` dentro de `$expr`,
+  junto con pruebas de unidad e integracion para pipelines `$lookup`.
 - Se anade una prueba en interprete limpio para validar que las
   anotaciones de `AsyncDatabaseCommandService` se resuelven
   correctamente.

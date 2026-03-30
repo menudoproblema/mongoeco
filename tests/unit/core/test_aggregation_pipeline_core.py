@@ -531,6 +531,60 @@ class AggregationPipelineCoreTests(unittest.TestCase):
             ],
         )
 
+    def test_pipeline_supports_field_bound_logical_expr_conditions_inside_lookup(self):
+        documents = [{"_id": "1", "tenant": "a"}]
+        foreign = {
+            "users": [
+                {"_id": "u1", "tenant": "a", "role": "admin", "score": 3},
+                {"_id": "u2", "tenant": "a", "role": "staff", "score": 4},
+                {"_id": "u3", "tenant": "a", "role": "guest", "score": 4},
+                {"_id": "u4", "tenant": "a", "role": "admin", "score": 7},
+            ]
+        }
+
+        result = apply_pipeline(
+            documents,
+            [
+                {
+                    "$lookup": {
+                        "from": "users",
+                        "let": {"tenantId": "$tenant"},
+                        "pipeline": [
+                            {
+                                "$match": {
+                                    "$expr": {
+                                        "$and": [
+                                            {"$eq": ["$tenant", "$$tenantId"]},
+                                            {"$or": ["$role", [{"$eq": "admin"}, {"$eq": "staff"}]]},
+                                            {"$and": ["$score", [{"$gte": 3}, {"$lt": 5}]]},
+                                        ]
+                                    }
+                                }
+                            },
+                            {"$project": {"_id": 0, "role": 1, "score": 1}},
+                            {"$sort": {"role": 1}},
+                        ],
+                        "as": "users",
+                    }
+                }
+            ],
+            collection_resolver=foreign.get,
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {
+                    "_id": "1",
+                    "tenant": "a",
+                    "users": [
+                        {"role": "admin", "score": 3},
+                        {"role": "staff", "score": 4},
+                    ],
+                }
+            ],
+        )
+
     def test_pipeline_supports_lookup_with_missing_foreign_collection(self):
         result = apply_pipeline(
             [{"_id": "1", "tenant": "a"}],
