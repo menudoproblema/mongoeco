@@ -62,6 +62,10 @@ usa Semantic Versioning.
 - Se amplian las pruebas de `bson_scalars` sobre overflows, division y
   modulo, rewrap interno, helpers de metadata numerica y rutas bitwise
   con wrappers BSON.
+- Se amplia la cobertura de `json_compat`, `driver.topology_monitor`,
+  `core.sorting`, `wire.protocol`, `driver.uri` y `core.operators`,
+  reforzando ramas de error, roundtrips wire, parsing de URI y helpers
+  internos de actualizacion.
 
 ## [2.0.1] - 2026-03-30
 

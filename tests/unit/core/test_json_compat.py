@@ -1,5 +1,6 @@
 import os
 import unittest
+from unittest.mock import patch
 
 from mongoeco.core import json_compat
 from mongoeco.core.json_compat import get_json_backend_name, json_dumps_compact, json_loads
@@ -65,3 +66,33 @@ class JsonCompatTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             get_json_backend_name()
+
+    def test_explicit_orjson_backend_raises_when_dependency_is_unavailable(self):
+        os.environ["MONGOECO_JSON_BACKEND"] = "orjson"
+        json_compat._resolve_json_backend_name.cache_clear()
+
+        with patch.object(json_compat, "orjson", None):
+            with self.assertRaises(RuntimeError):
+                get_json_backend_name()
+
+    def test_orjson_backend_uses_mocked_backend_for_dump_and_load(self):
+        class _FakeOrjson:
+            OPT_SORT_KEYS = 8
+
+            @staticmethod
+            def dumps(value, option=0):
+                self.assertEqual(option, _FakeOrjson.OPT_SORT_KEYS)
+                self.assertEqual(value, {"b": 1, "a": 2})
+                return b'{"a":2,"b":1}'
+
+            @staticmethod
+            def loads(value):
+                self.assertEqual(value, memoryview(b'{"a":2,"b":1}'))
+                return {"a": 2, "b": 1}
+
+        os.environ["MONGOECO_JSON_BACKEND"] = "orjson"
+        json_compat._resolve_json_backend_name.cache_clear()
+
+        with patch.object(json_compat, "orjson", _FakeOrjson):
+            self.assertEqual(json_dumps_compact({"b": 1, "a": 2}, sort_keys=True), '{"a":2,"b":1}')
+            self.assertEqual(json_loads(memoryview(b'{"a":2,"b":1}')), {"a": 2, "b": 1})

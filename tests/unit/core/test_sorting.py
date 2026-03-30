@@ -4,7 +4,15 @@ import unittest
 import uuid
 
 from mongoeco.compat import MongoDialect
-from mongoeco.core.sorting import compare_documents, sort_documents, sort_documents_limited, sort_documents_window, sort_value
+from mongoeco.core.sorting import (
+    _compare_native_sort_scalars,
+    _extreme_value,
+    compare_documents,
+    sort_documents,
+    sort_documents_limited,
+    sort_documents_window,
+    sort_value,
+)
 from mongoeco.types import ObjectId
 
 
@@ -214,3 +222,25 @@ class SortingHelpersTests(unittest.TestCase):
         document = {"items": [{"rank": 1}, {"rank": 2}]}
 
         self.assertIsNone(sort_value(document, "items.value", 1))
+
+    def test_compare_native_sort_scalars_handles_none_bytes_and_unsupported_types(self):
+        self.assertEqual(_compare_native_sort_scalars(None, None), 0)
+        self.assertEqual(_compare_native_sort_scalars(b"a", b"b"), -1)
+        self.assertEqual(_compare_native_sort_scalars(2.0, 2.0), 0)
+        self.assertIsNone(_compare_native_sort_scalars("a", 1))
+        self.assertIsNone(_compare_native_sort_scalars(datetime.datetime.now(), datetime.datetime.now()))
+
+    def test_extreme_value_returns_none_for_empty_iterable_and_prefers_max(self):
+        self.assertIsNone(_extreme_value([], prefer_max=False))
+        self.assertEqual(_extreme_value([3, 1, 2], prefer_max=True), 3)
+
+    def test_sort_value_handles_single_nested_candidate_and_empty_nested_list(self):
+        self.assertEqual(sort_value({"scores": [{"value": 7}]}, "scores.value", 1), 7)
+        self.assertEqual(sort_value({"scores": [{"value": []}]}, "scores.value", 1), [])
+
+    def test_sort_documents_window_handles_unsorted_documents_and_non_positive_windows(self):
+        documents = [{"_id": "2"}, {"_id": "1"}]
+
+        self.assertEqual(sort_documents_window(documents, None, window=None), documents)
+        self.assertEqual(sort_documents_window(documents, None, window=1), [{"_id": "2"}])
+        self.assertEqual(sort_documents_window(documents, [("_id", 1)], window=0), [])

@@ -6,9 +6,12 @@ from bson import BSON
 from mongoeco.types import ObjectId
 from mongoeco.wire.protocol import (
     OP_MSG,
+    OP_REPLY,
     OP_QUERY,
+    decode_op_reply,
     decode_op_msg,
     decode_op_query,
+    encode_op_msg_request,
     encode_op_msg_response,
     encode_op_reply,
     parse_message_header,
@@ -19,6 +22,14 @@ class WireProtocolTests(unittest.TestCase):
     def test_parse_message_header_requires_exact_size(self):
         with self.assertRaisesRegex(ValueError, "16 bytes"):
             parse_message_header(b"short")
+
+    def test_parse_message_header_decodes_valid_headers(self):
+        header = parse_message_header(struct.pack("<iiii", 48, 11, 7, OP_MSG))
+
+        self.assertEqual(header.message_length, 48)
+        self.assertEqual(header.request_id, 11)
+        self.assertEqual(header.response_to, 7)
+        self.assertEqual(header.op_code, OP_MSG)
 
     def test_decode_op_msg_supports_body_and_document_sequence(self):
         body = BSON.encode({"insert": "events", "$db": "alpha", "ordered": True})
@@ -54,6 +65,18 @@ class WireProtocolTests(unittest.TestCase):
         decoded = BSON(response[21:]).decode()
         self.assertEqual(decoded["ok"], 1.0)
         self.assertEqual(str(decoded["value"]["_id"]), "507f1f77bcf86cd799439011")
+
+    def test_encode_op_msg_request_round_trips_command_body(self):
+        request = encode_op_msg_request(
+            {"ping": 1, "$db": "admin"},
+            request_id=12,
+        )
+
+        header = parse_message_header(request[:16])
+        self.assertEqual(header.op_code, OP_MSG)
+        self.assertEqual(header.request_id, 12)
+        decoded = decode_op_msg(header, request[16:])
+        self.assertEqual(decoded.body, {"ping": 1, "$db": "admin"})
 
     def test_decode_op_query_supports_legacy_command_handshake(self):
         query = BSON.encode({"ismaster": 1, "helloOk": True})
@@ -140,6 +163,17 @@ class WireProtocolTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "section kind"):
             decode_op_msg(header, struct.pack("<i", 0) + b"\x02")
 
+    def test_decode_op_msg_supports_sequence_only_payloads(self):
+        documents = BSON.encode({"_id": "1"}) + BSON.encode({"_id": "2"})
+        identifier = b"documents\x00"
+        section = struct.pack("<i", 4 + len(identifier) + len(documents)) + identifier + documents
+        payload = struct.pack("<i", 0) + b"\x01" + section
+        header = parse_message_header(struct.pack("<iiii", 16 + len(payload), 7, 0, OP_MSG))
+
+        request = decode_op_msg(header, payload)
+
+        self.assertEqual(request.body, {"documents": [{"_id": "1"}, {"_id": "2"}]})
+
     def test_decode_op_query_rejects_wrong_opcode_short_and_invalid_documents(self):
         wrong_header = parse_message_header(struct.pack("<iiii", 0, 9, 0, OP_MSG))
         with self.assertRaisesRegex(ValueError, "unsupported wire opCode"):
@@ -157,3 +191,29 @@ class WireProtocolTests(unittest.TestCase):
         invalid_doc = truncated_doc + struct.pack("<i", 999)
         with self.assertRaisesRegex(ValueError, "invalid size"):
             decode_op_query(header, invalid_doc)
+
+    def test_decode_op_reply_round_trips_and_validates_errors(self):
+        payload = encode_op_reply([{"ok": 1.0}, {"n": 2}], request_id=4, response_to=9)
+        header = parse_message_header(payload[:16])
+        decoded = decode_op_reply(header, payload[16:])
+
+        self.assertEqual(decoded.response_flags, 0)
+        self.assertEqual(decoded.cursor_id, 0)
+        self.assertEqual(decoded.starting_from, 0)
+        self.assertEqual(decoded.documents, [{"ok": 1.0}, {"n": 2}])
+
+        wrong_header = parse_message_header(struct.pack("<iiii", 0, 9, 0, OP_MSG))
+        with self.assertRaisesRegex(ValueError, "unsupported wire opCode"):
+            decode_op_reply(wrong_header, b"\x00" * 20)
+
+        header = parse_message_header(struct.pack("<iiii", 0, 9, 0, OP_REPLY))
+        with self.assertRaisesRegex(ValueError, "payload is too short"):
+            decode_op_reply(header, b"\x00" * 19)
+
+        truncated = struct.pack("<iqii", 0, 0, 0, 1)
+        with self.assertRaisesRegex(ValueError, "document is truncated"):
+            decode_op_reply(header, truncated)
+
+        invalid = truncated + struct.pack("<i", 999)
+        with self.assertRaisesRegex(ValueError, "invalid size"):
+            decode_op_reply(header, invalid)

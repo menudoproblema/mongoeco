@@ -180,6 +180,10 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(plan.context.selector_filter, {"_id": "user-1"})
         self.assertEqual(plan.compiled_operators[0].operator, "$set")
 
+    def test_compile_update_plan_rejects_empty_spec_directly(self):
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.compile_update_plan({})
+
     def test_set_same_value_is_noop(self):
         document = {"field": 1}
 
@@ -202,6 +206,96 @@ class UpdateEngineTests(unittest.TestCase):
 
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(document, {"$set": {"profile.name": "Ada"}})
+
+    def test_compile_update_spec_rejects_non_string_rename_target(self):
+        with self.assertRaisesRegex(OperationFailure, "requires string target paths"):
+            UpdateEngine._compile_update_spec({"$rename": {"name": 1}}, {})
+
+    def test_compile_array_filters_rejects_invalid_shapes(self):
+        invalid_specs = [
+            ([{1: {"$gt": 0}}], "field names must be strings"),
+            ([{"$and": [{"i.qty": {"$gt": 0}}]}], "Top-level operators"),
+            ([{"9.qty": {"$gt": 0}}], "identifiers must begin with a lowercase letter"),
+            ([{"i.qty": {"$gt": 0}, "j.qty": {"$lt": 5}}], "exactly one identifier"),
+            ([{"i.qty": {"$gt": 0}}, {"i.name": "Ada"}], "duplicate array filter identifiers"),
+        ]
+
+        for array_filters, message in invalid_specs:
+            with self.subTest(array_filters=array_filters):
+                with self.assertRaisesRegex(OperationFailure, message):
+                    UpdateEngine._compile_array_filters(array_filters)  # type: ignore[arg-type]
+
+    def test_array_filter_matches_handles_missing_identifier_and_non_document_candidates(self):
+        self.assertFalse(UpdateEngine._array_filter_matches("i", {"qty": 2}, array_filters={}))
+        self.assertFalse(
+            UpdateEngine._array_filter_matches(
+                "i",
+                "not-a-document",
+                array_filters={"i": {"qty": {"$gt": 1}}},
+            )
+        )
+        self.assertTrue(
+            UpdateEngine._array_filter_matches(
+                "i",
+                {"qty": 2},
+                array_filters={"i": {"qty": {"$gt": 1}}},
+            )
+        )
+
+    def test_resolve_update_targets_rejects_positional_paths_when_disabled(self):
+        with self.assertRaisesRegex(OperationFailure, "Positional and array-filter update paths are not supported"):
+            UpdateEngine._resolve_update_targets(
+                {"items": [{"qty": 1}]},
+                "items.$[].qty",
+                array_filters={},
+                allow_positional=False,
+            )
+
+    def test_legacy_positional_matcher_covers_and_recursion_and_elem_match(self):
+        matcher = UpdateEngine._build_legacy_positional_matcher(
+            "items",
+            {"$and": [{"items": {"$elemMatch": {"qty": {"$gte": 2}}}}]},
+        )
+
+        self.assertTrue(matcher({"qty": 2}))
+        self.assertFalse(matcher({"qty": 1}))
+
+    def test_legacy_positional_matcher_rejects_missing_predicates_and_scalar_subpaths(self):
+        with self.assertRaisesRegex(OperationFailure, "did not find the match needed"):
+            UpdateEngine._build_legacy_positional_matcher("items", {"$or": [{"other": 1}]})
+
+        matcher = UpdateEngine._build_legacy_positional_matcher(
+            "items",
+            {"items.name": "Ada"},
+        )
+        self.assertFalse(matcher("not-a-document"))
+        self.assertFalse(matcher({"name": "Grace"}))
+
+    def test_update_path_guards_reject_conflicts_and_unsupported_rename_shapes(self):
+        seen_paths = ["profile"]
+        with self.assertRaisesRegex(OperationFailure, "conflicting update paths"):
+            UpdateEngine._register_update_path(seen_paths, "profile.name")
+        with self.assertRaisesRegex(OperationFailure, "immutable field '_id'"):
+            UpdateEngine._assert_mutable_path("_id")
+        with self.assertRaisesRegex(OperationFailure, "Positional and array-filter update paths are not supported"):
+            UpdateEngine._assert_mutable_path("items.$[].qty")
+        with self.assertRaisesRegex(OperationFailure, "immutable field '_id'"):
+            UpdateEngine._assert_rename_path("_id")
+        with self.assertRaisesRegex(OperationFailure, "Positional and array-filter update paths are not supported"):
+            UpdateEngine._assert_rename_path("items.$[].qty")
+        with self.assertRaisesRegex(OperationFailure, "embedded documents in arrays"):
+            UpdateEngine._assert_rename_path("items.0.name")
+
+    def test_iter_ordered_update_items_wraps_type_errors_from_dialect_policy(self):
+        class _BrokenDialect(MongoDialect):
+            def sort_update_path_items(self, params: dict[str, object]) -> list[tuple[str, object]]:
+                raise TypeError("broken sorter")
+
+        with self.assertRaisesRegex(OperationFailure, "field names must be strings"):
+            UpdateEngine._iter_ordered_update_items(
+                {"name": "Ada"},
+                dialect=_BrokenDialect(key="test", server_version="test", label="Broken"),
+            )
 
     def test_unset_existing_and_missing_fields(self):
         document = {"profile": {"name": "Ada"}, "role": "admin"}
