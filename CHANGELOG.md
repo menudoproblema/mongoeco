@@ -8,6 +8,21 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+
+- Se corrige la resolucion de anotaciones en
+  `mongoeco.api._async.database_commands` para evitar errores en
+  Python 3.13+ al combinar forward refs internas con el operador `|`.
+
+### Added
+
+- Se anade una prueba en interprete limpio para validar que las
+  anotaciones de `AsyncDatabaseCommandService` se resuelven
+  correctamente.
+- Se amplian las pruebas de `admin_parsing` y `core.search` para cubrir
+  validaciones, normalizacion de entradas y edge cases de busqueda
+  textual y vectorial.
+
 ## [2.0.1] - 2026-03-30
 
 ### Fixed

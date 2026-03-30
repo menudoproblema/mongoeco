@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import os
 import platform
@@ -443,7 +445,7 @@ class AsyncDatabaseCommandService:
 
     @dataclass(frozen=True, slots=True)
     class DelegatedAdminCommand(AdminCommand[object]):
-        route: "AsyncDatabaseCommandService.Route | None" = None
+        route: AsyncDatabaseCommandService.Route | None = None
 
     @dataclass(frozen=True, slots=True)
     class Route:
@@ -482,7 +484,7 @@ class AsyncDatabaseCommandService:
         self,
         command: object,
         **kwargs: object,
-    ) -> "AsyncDatabaseCommandService.AdminCommand[object]":
+    ) -> AsyncDatabaseCommandService.AdminCommand[object]:
         spec = normalize_command_document(command, kwargs)
         command_name = next(iter(spec))
         if not isinstance(command_name, str):
@@ -645,7 +647,7 @@ class AsyncDatabaseCommandService:
 
     async def execute(
         self,
-        command: "AsyncDatabaseCommandService.AdminCommand[CommandResultT]",
+        command: AsyncDatabaseCommandService.AdminCommand[CommandResultT],
         *,
         session: ClientSession | None = None,
     ) -> CommandResultT:
@@ -728,7 +730,7 @@ class AsyncDatabaseCommandService:
 
     def _execute_static(
         self,
-        command: "AsyncDatabaseCommandService.StaticAdminCommand",
+        command: AsyncDatabaseCommandService.StaticAdminCommand,
     ) -> object:
         if command.command_name == "ping":
             return OkResult()
@@ -765,7 +767,7 @@ class AsyncDatabaseCommandService:
 
     async def execute_document(
         self,
-        command: object | "AsyncDatabaseCommandService.AdminCommand[object]",
+        command: object | AsyncDatabaseCommandService.AdminCommand[object],
         *,
         session: ClientSession | None = None,
         **kwargs: object,

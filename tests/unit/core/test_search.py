@@ -5,6 +5,7 @@ from mongoeco.core.search import (
     SearchTextQuery,
     SearchVectorQuery,
     build_search_index_document,
+    compile_search_text_like_query,
     compile_search_phrase_query,
     compile_search_stage,
     compile_search_text_query,
@@ -16,6 +17,7 @@ from mongoeco.core.search import (
     sqlite_fts5_query,
     validate_search_index_definition,
     validate_search_stage_pipeline,
+    vector_field_paths,
 )
 from mongoeco.errors import OperationFailure
 from mongoeco.types import SearchIndexDefinition
@@ -194,6 +196,16 @@ class SearchCoreTests(unittest.TestCase):
                 ]
             )
 
+    def test_validate_search_stage_pipeline_ignores_non_list_and_non_search_stages(self) -> None:
+        validate_search_stage_pipeline({"$search": {"text": {"query": "ada"}}})
+        validate_search_stage_pipeline(
+            [
+                {"$project": {"title": 1}},
+                ["not-a-stage"],
+                {"$match": {"title": "Ada"}},
+            ]
+        )
+
     def test_compile_search_stage_supports_phrase_operator(self) -> None:
         self.assertEqual(
             compile_search_stage(
@@ -226,6 +238,22 @@ class SearchCoreTests(unittest.TestCase):
                     "phrase": {"query": "ada"},
                 },
             )
+
+    def test_compile_search_stage_rejects_invalid_operator_and_search_shapes(self) -> None:
+        with self.assertRaises(OperationFailure):
+            compile_search_stage("$rankFusion", {})
+        with self.assertRaises(OperationFailure):
+            compile_search_text_like_query([])
+        with self.assertRaises(OperationFailure):
+            compile_search_text_like_query({"index": "", "text": {"query": "ada"}})
+        with self.assertRaises(OperationFailure):
+            compile_search_text_like_query({"text": []})
+        with self.assertRaises(OperationFailure):
+            compile_search_text_like_query({"text": {"query": "   "}})
+        with self.assertRaises(OperationFailure):
+            compile_search_text_query({"phrase": {"query": "ada"}})
+        with self.assertRaises(OperationFailure):
+            compile_search_phrase_query({"text": {"query": "ada"}})
 
     def test_compile_search_phrase_query_rejects_unsupported_options(self) -> None:
         with self.assertRaises(OperationFailure):
@@ -266,12 +294,39 @@ class SearchCoreTests(unittest.TestCase):
             ),
         )
 
+    def test_compile_vector_search_query_rejects_invalid_payload_shapes(self) -> None:
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query([])
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query(
+                {"path": "embedding", "queryVector": [1, True], "limit": 1}
+            )
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query(
+                {"path": "embedding", "queryVector": [1], "limit": 0}
+            )
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query(
+                {
+                    "path": "embedding",
+                    "queryVector": [1],
+                    "limit": 2,
+                    "numCandidates": 1,
+                }
+            )
+
     def test_validate_vector_search_index_definition_requires_vector_fields(self) -> None:
         with self.assertRaises(OperationFailure):
             validate_search_index_definition(
                 {"analyzer": "keyword"},
                 index_type="vectorSearch",
             )
+
+    def test_validate_search_index_definition_rejects_non_documents_and_unknown_types(self) -> None:
+        with self.assertRaises(TypeError):
+            validate_search_index_definition([], index_type="search")
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition({}, index_type="hybrid")
 
     def test_score_vector_document_uses_cosine_similarity(self) -> None:
         definition = SearchIndexDefinition(
@@ -300,6 +355,43 @@ class SearchCoreTests(unittest.TestCase):
             ),
         )
         self.assertEqual(score, 1.0)
+
+    def test_score_vector_document_returns_none_for_missing_invalid_or_zero_norm_candidates(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": 3,
+                        "similarity": "cosine",
+                    }
+                ]
+            },
+            name="vec",
+            index_type="vectorSearch",
+        )
+        query = SearchVectorQuery(
+            index_name="vec",
+            path="embedding",
+            query_vector=(1.0, 0.0, 0.0),
+            limit=1,
+            num_candidates=1,
+        )
+
+        self.assertIsNone(score_vector_document({}, definition=definition, query=query))
+        self.assertIsNone(
+            score_vector_document({"embedding": "bad"}, definition=definition, query=query)
+        )
+        self.assertIsNone(
+            score_vector_document({"embedding": [1.0, True, 0.0]}, definition=definition, query=query)
+        )
+        self.assertIsNone(
+            score_vector_document({"embedding": [1.0, 0.0]}, definition=definition, query=query)
+        )
+        self.assertIsNone(
+            score_vector_document({"embedding": [0.0, 0.0, 0.0]}, definition=definition, query=query)
+        )
 
     def test_matches_search_text_and_phrase_queries_against_mapping(self) -> None:
         definition = SearchIndexDefinition(
@@ -351,6 +443,72 @@ class SearchCoreTests(unittest.TestCase):
                     paths=("title",),
                 ),
             )
+        )
+
+    def test_iter_searchable_text_entries_supports_dynamic_mappings_and_path_filters(self) -> None:
+        definition = SearchIndexDefinition({}, name="by_text")
+        entries = iter_searchable_text_entries(
+            {
+                "title": "Ada Lovelace",
+                "tags": ["math", "engine"],
+                "nested": {"body": "Notes"},
+            },
+            definition,
+        )
+
+        self.assertEqual(
+            entries,
+            [
+                ("title", "Ada Lovelace"),
+                ("tags", "math"),
+                ("tags", "engine"),
+                ("nested.body", "Notes"),
+            ],
+        )
+        self.assertFalse(
+            matches_search_text_query(
+                {"title": "Ada Lovelace"},
+                definition=definition,
+                query=SearchTextQuery(
+                    index_name="by_text",
+                    raw_query="Ada",
+                    terms=("Ada",),
+                    paths=("body",),
+                ),
+            )
+        )
+
+    def test_vector_field_paths_and_sqlite_query_handle_escaping(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": 3,
+                    },
+                    {
+                        "type": "vector",
+                        "path": "secondary",
+                        "numDimensions": 2,
+                    },
+                ]
+            },
+            name="vec",
+            index_type="vectorSearch",
+        )
+
+        self.assertEqual(vector_field_paths(definition), ("embedding", "secondary"))
+        self.assertEqual(
+            sqlite_fts5_query(
+                SearchTextQuery(
+                    index_name="by_text",
+                    raw_query='ada "lovelace"',
+                    terms=('ada', '"lovelace"'),
+                    paths=None,
+                )
+            ),
+            '"ada" AND """lovelace"""',
         )
 
     def test_build_search_index_document_marks_unqueryable_vector_as_unsupported(self) -> None:
