@@ -24,6 +24,10 @@ from mongoeco.core.aggregation.planning import (
     _require_projection,
     split_pushdown_pipeline,
 )
+from mongoeco.core.aggregation.compiled_pipeline import (
+    CompiledPipelinePlan,
+    compile_pipeline,
+)
 from mongoeco.core.aggregation.extensions import (
     AggregationExpressionExtensionContext,
     AggregationExpressionExtensionHandler,
@@ -69,6 +73,7 @@ __all__ = [
     "AggregationSpillPolicy",
     "AggregationCostPolicy",
     "BLOCKING_AGGREGATION_STAGES",
+    "CompiledPipelinePlan",
     "Pipeline",
     "PipelineStage",
     "_ACCUMULATOR_FLAGS_KEY",
@@ -87,6 +92,7 @@ __all__ = [
     "_require_projection",
     "_resolve_aggregation_field_path",
     "apply_pipeline",
+    "compile_pipeline",
     "evaluate_expression",
     "get_aggregation_stage_spec",
     "has_materializing_aggregation_stage",

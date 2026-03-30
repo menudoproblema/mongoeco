@@ -26,6 +26,7 @@ from mongoeco.core.aggregation.join_stages import (
     _apply_lookup,
     _apply_union_with,
 )
+from mongoeco.core.aggregation.compiled_pipeline import compile_pipeline
 from mongoeco.core.aggregation.planning import (
     Pipeline,
     _require_documents_stage,
@@ -330,6 +331,20 @@ def apply_pipeline(
     collation: CollationSpec | None = None,
     spill_policy: AggregationSpillPolicy | None = None,
 ) -> list[Document]:
+    compiled_plan = compile_pipeline(
+        pipeline,
+        dialect=dialect,
+        collation=collation,
+        spill_policy=spill_policy,
+    )
+    if compiled_plan is not None:
+        return compiled_plan.execute(
+            documents,
+            variables=variables,
+            collection_resolver=collection_resolver,
+            spill_policy=spill_policy,
+        )
+
     result = list(documents)
     for index, stage in enumerate(pipeline):
         operator, spec = _require_stage(stage)

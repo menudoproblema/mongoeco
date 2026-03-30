@@ -12,6 +12,7 @@ import mongoeco.core.aggregation.accumulators as accumulators_module
 import mongoeco.core.aggregation.grouping_stages as grouping_stages
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
+from mongoeco.core.collation import CollationSpec
 from mongoeco.core.aggregation.accumulators import _AccumulatorBucket, _OrderedAccumulator
 from mongoeco.core.aggregation import (
     _ACCUMULATOR_FLAGS_KEY,
@@ -27,7 +28,9 @@ from mongoeco.core.aggregation import (
     _require_projection,
     _resolve_aggregation_field_path,
     AggregationSpillPolicy,
+    CompiledPipelinePlan,
     apply_pipeline,
+    compile_pipeline,
     evaluate_expression,
     register_aggregation_expression_operator,
     register_aggregation_stage,
@@ -1071,6 +1074,78 @@ class AggregationTests(unittest.TestCase):
             )
         finally:
             unregister_aggregation_stage("$annotate")
+
+    def test_compile_pipeline_executes_streamable_pipeline_with_same_result(self):
+        documents = [
+            {"_id": "1", "name": "Ada", "city": "London", "active": True, "score": 7},
+            {"_id": "2", "name": "Grace", "city": "Paris", "active": False, "score": 8},
+            {"_id": "3", "name": "Linus", "city": "Madrid", "active": True, "score": 5},
+        ]
+        pipeline = [
+            {"$match": {"active": True}},
+            {"$addFields": {"label": {"$concat": ["$name", "-", "$city"]}}},
+            {"$unset": "city"},
+            {"$project": {"_id": 1, "label": 1, "score": 1}},
+        ]
+
+        plan = compile_pipeline(pipeline)
+
+        self.assertIsInstance(plan, CompiledPipelinePlan)
+        self.assertEqual(plan.execute(documents), apply_pipeline(documents, pipeline))
+        self.assertEqual(
+            plan.explain()["nodes"],
+            [
+                {
+                    "kind": "streamable_block",
+                    "operators": ["$match", "$addFields", "$unset", "$project"],
+                }
+            ],
+        )
+
+    def test_compile_pipeline_executes_sort_window_pipeline_with_same_result(self):
+        documents = [
+            {"_id": "1", "active": True, "score": 3},
+            {"_id": "2", "active": False, "score": 9},
+            {"_id": "3", "active": True, "score": 8},
+            {"_id": "4", "active": True, "score": 5},
+        ]
+        pipeline = [
+            {"$match": {"active": True}},
+            {"$sort": {"score": -1}},
+            {"$skip": 1},
+            {"$limit": 1},
+        ]
+
+        plan = compile_pipeline(pipeline)
+
+        self.assertIsInstance(plan, CompiledPipelinePlan)
+        self.assertEqual(plan.execute(documents), apply_pipeline(documents, pipeline))
+        self.assertEqual(plan.explain()["nodes"][1]["window"], 2)
+
+    def test_compile_pipeline_returns_none_for_unsupported_stages_extensions_and_collation(self):
+        self.assertIsNone(compile_pipeline([{"$lookup": {"from": "users", "localField": "a", "foreignField": "b", "as": "hits"}}]))
+        self.assertIsNone(compile_pipeline([{"$group": {"_id": "$kind", "count": {"$sum": 1}}}]))
+        self.assertIsNone(compile_pipeline([{"$match": {"name": "ada"}}], collation=CollationSpec(locale="en")))
+
+        register_aggregation_stage("$annotate", lambda documents, spec, _context: documents)
+        try:
+            self.assertIsNone(compile_pipeline([{"$annotate": {"tag": "x"}}]))
+        finally:
+            unregister_aggregation_stage("$annotate")
+
+    def test_apply_pipeline_uses_compiled_pipeline_when_available(self):
+        class _StubPlan:
+            def execute(self, documents, *, variables=None, collection_resolver=None, spill_policy=None):
+                del variables
+                del collection_resolver
+                del spill_policy
+                return [{"count": len(list(documents))}]
+
+        with patch("mongoeco.core.aggregation.stages.compile_pipeline", return_value=_StubPlan()):
+            self.assertEqual(
+                apply_pipeline([{"_id": "1"}, {"_id": "2"}], [{"$match": {"_id": "1"}}]),
+                [{"count": 2}],
+            )
 
     def test_apply_pipeline_spills_after_blocking_stage_when_threshold_is_exceeded(self):
         class _CountingPolicy:
