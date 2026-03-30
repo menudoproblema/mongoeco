@@ -26,6 +26,9 @@ usa Semantic Versioning.
   `engines.virtual_indexes` y los adaptadores `raw_batch_cursor`,
   elevando la cobertura de esos modulos y reforzando caminos de error,
   roundtrips wire y helpers internos de implicacion.
+- Se amplia la cobertura de `change_streams` con pruebas de offsets,
+  reanudacion, espera bloqueante, iteracion async y validacion de
+  pipelines.
 
 ## [2.0.1] - 2026-03-30
 
