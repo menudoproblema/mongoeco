@@ -51,6 +51,9 @@ mongodb-real = [
 wire = [
     "pymongo>=4.9,<5",
 ]
+json-fast = [
+    "orjson>=3.11,<4",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

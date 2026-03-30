@@ -1,4 +1,3 @@
-import json
 import os
 import tempfile
 from dataclasses import dataclass
@@ -6,6 +5,7 @@ import heapq
 from typing import TYPE_CHECKING
 
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.json_compat import json_dumps_compact, json_loads
 from mongoeco.core.sorting import compare_documents, sort_documents
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec
@@ -69,9 +69,8 @@ class AggregationSpillPolicy:
         try:
             with handle:
                 for document in documents:
-                    payload = json.dumps(
+                    payload = json_dumps_compact(
                         self.codec.encode(document),
-                        separators=(",", ":"),
                         sort_keys=False,
                     )
                     handle.write(payload)
@@ -81,7 +80,7 @@ class AggregationSpillPolicy:
                 for line in spilled:
                     reloaded.append(
                         self.codec.decode(
-                            json.loads(line),
+                            json_loads(line),
                             preserve_bson_wrappers=True,
                         )
                     )
@@ -118,9 +117,8 @@ class AggregationSpillPolicy:
                 chunk_paths.append(handle.name)
                 with handle:
                     for document in chunk:
-                        payload = json.dumps(
+                        payload = json_dumps_compact(
                             self.codec.encode(document),
-                            separators=(",", ":"),
                             sort_keys=False,
                         )
                         handle.write(payload)
@@ -149,7 +147,7 @@ class AggregationSpillPolicy:
                     line = stream.readline()
                     if not line:
                         continue
-                    document = self.codec.decode(json.loads(line), preserve_bson_wrappers=True)
+                    document = self.codec.decode(json_loads(line), preserve_bson_wrappers=True)
                     heapq.heappush(heap, _HeapItem(document, index))
                 merged: list[Document] = []
                 while heap:
@@ -157,7 +155,7 @@ class AggregationSpillPolicy:
                     merged.append(item.document)
                     line = streams[item.index].readline()
                     if line:
-                        document = self.codec.decode(json.loads(line), preserve_bson_wrappers=True)
+                        document = self.codec.decode(json_loads(line), preserve_bson_wrappers=True)
                         heapq.heappush(heap, _HeapItem(document, item.index))
                 return merged
             finally:
