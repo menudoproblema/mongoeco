@@ -3,11 +3,25 @@ import unittest
 from mongoeco.core.query_plan import (
     AndCondition,
     EqualsCondition,
+    ExistsCondition,
+    GreaterThanCondition,
     InCondition,
+    LessThanOrEqualCondition,
     MatchAll,
+    RegexCondition,
+    TypeCondition,
+    OrCondition,
     compile_filter,
 )
 from mongoeco.engines.virtual_indexes import (
+    _compare_bounds,
+    _compile_regex_condition,
+    _plan_implies,
+    _plan_implies_exists_true,
+    _same_field_ordering_implies,
+    _same_field_regex_implies,
+    _same_field_type_implies,
+    _value_satisfies_bounds,
     collect_usable_virtual_index_names,
     describe_virtual_index_usage,
     document_in_virtual_index,
@@ -247,3 +261,100 @@ class VirtualIndexTests(unittest.TestCase):
         self.assertTrue(query_can_use_index(typed_index, compile_filter({"value": None})))
         self.assertTrue(query_can_use_index(typed_index, compile_filter({"value": "ada"})))
         self.assertFalse(query_can_use_index(typed_index, compile_filter({"value": 2})))
+
+    def test_plan_implication_helpers_cover_match_all_and_boolean_composition(self):
+        self.assertTrue(_plan_implies(EqualsCondition("email", "a@example.com"), MatchAll()))
+        self.assertTrue(
+            _plan_implies(
+                AndCondition((EqualsCondition("tier", "premium"), EqualsCondition("active", True))),
+                EqualsCondition("active", True),
+            )
+        )
+        self.assertTrue(
+            _plan_implies(
+                OrCondition(
+                    (
+                        ExistsCondition("email", True),
+                        EqualsCondition("email", "a@example.com"),
+                    )
+                ),
+                ExistsCondition("email", True),
+            )
+        )
+        self.assertFalse(
+            _plan_implies(
+                EqualsCondition("email", "a@example.com"),
+                ExistsCondition("email", False),
+            )
+        )
+
+    def test_exists_and_type_regex_helpers_cover_remaining_implication_paths(self):
+        self.assertTrue(_plan_implies_exists_true(GreaterThanCondition("score", 10), "score"))
+        self.assertTrue(
+            _plan_implies_exists_true(
+                AndCondition((EqualsCondition("score", 1), EqualsCondition("other", 2))),
+                "score",
+            )
+        )
+        self.assertFalse(
+            _plan_implies_exists_true(
+                OrCondition((EqualsCondition("score", 1), EqualsCondition("score", None))),
+                "score",
+            )
+        )
+        self.assertTrue(
+            _same_field_type_implies(
+                TypeCondition("value", ("string",)),
+                "value",
+                ("string", "null"),
+            )
+        )
+        self.assertFalse(
+            _same_field_type_implies(
+                TypeCondition("value", ("int",)),
+                "value",
+                "string",
+            )
+        )
+        regex = RegexCondition("name", "^ad", "i")
+        self.assertTrue(_same_field_regex_implies(RegexCondition("name", "^ad", "i"), regex))
+        self.assertFalse(_same_field_regex_implies(EqualsCondition("name", 3), regex))
+        self.assertIsNotNone(_compile_regex_condition(RegexCondition("body", "^ada$", "imsx")).search("Ada\n"))
+
+    def test_ordering_and_bound_helpers_cover_edge_comparisons(self):
+        self.assertTrue(
+            _same_field_ordering_implies(
+                InCondition("score", (5, 10)),
+                "score",
+                minimum=5,
+                inclusive=True,
+            )
+        )
+        self.assertFalse(
+            _same_field_ordering_implies(
+                InCondition("score", (4, 10)),
+                "score",
+                minimum=5,
+                inclusive=True,
+            )
+        )
+        self.assertTrue(
+            _same_field_ordering_implies(
+                GreaterThanCondition("score", 11),
+                "score",
+                minimum=10,
+                inclusive=True,
+            )
+        )
+        self.assertTrue(
+            _same_field_ordering_implies(
+                LessThanOrEqualCondition("score", 10),
+                "score",
+                maximum=10,
+                inclusive=True,
+            )
+        )
+        self.assertFalse(_compare_bounds(10, 10, False, True))
+        self.assertTrue(_compare_bounds(10, 10, False, False, reverse=True))
+        self.assertFalse(_value_satisfies_bounds(10, minimum=10, inclusive=False))
+        self.assertTrue(_value_satisfies_bounds(10, maximum=10, inclusive=True))

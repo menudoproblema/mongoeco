@@ -22,6 +22,10 @@ usa Semantic Versioning.
 - Se amplian las pruebas de `admin_parsing` y `core.search` para cubrir
   validaciones, normalizacion de entradas y edge cases de busqueda
   textual y vectorial.
+- Se anaden pruebas especificas para `driver.transports`,
+  `engines.virtual_indexes` y los adaptadores `raw_batch_cursor`,
+  elevando la cobertura de esos modulos y reforzando caminos de error,
+  roundtrips wire y helpers internos de implicacion.
 
 ## [2.0.1] - 2026-03-30
 
