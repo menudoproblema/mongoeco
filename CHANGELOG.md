@@ -45,6 +45,13 @@ usa Semantic Versioning.
   `scalar_expressions`, cubriendo el camino interpretado, optimizaciones
   de ventana para `sort`, helpers BSON y conversiones escalares
   internas.
+- Se reorganizan las pruebas de `filtering` separando consultas y
+  helpers internos en ficheros distintos, y se amplian los casos de
+  cobertura sobre comparacion, tipos BSON, bitwise, membership y
+  resolucion de rutas anidadas.
+- Se amplian las pruebas de `bson_scalars` sobre overflows, division y
+  modulo, rewrap interno, helpers de metadata numerica y rutas bitwise
+  con wrappers BSON.
 
 ## [2.0.1] - 2026-03-30
 
