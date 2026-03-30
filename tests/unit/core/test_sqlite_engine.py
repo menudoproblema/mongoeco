@@ -1981,6 +1981,83 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("LIMIT 1", plan.sql)
         self.assertEqual(list(plan.params[-2:]), [3, "ada"])
 
+    async def test_plan_find_semantics_uses_scalar_entries_for_top_level_numeric_range(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.put_document("db", "coll", {"_id": "2", "age": 40})
+            await engine.create_index("db", "coll", [("age", 1)])
+
+            plan = await engine.plan_find_semantics(
+                "db",
+                "coll",
+                compile_find_semantics({"age": {"$gte": 20}}, limit=1),
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertTrue(plan.use_sql)
+        self.assertIsNotNone(plan.sql)
+        self.assertIn("FROM scalar_index_entries", plan.sql)
+        self.assertIn("scalar_index_entries.type_score = ?", plan.sql)
+        self.assertIn("scalar_index_entries.element_key >= ?", plan.sql)
+        self.assertIn("LIMIT 1", plan.sql)
+
+    async def test_plan_find_semantics_keeps_generic_sql_for_mixed_type_top_level_numeric_range(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.put_document("db", "coll", {"_id": "2", "age": "40"})
+            await engine.create_index("db", "coll", [("age", 1)])
+
+            plan = await engine.plan_find_semantics(
+                "db",
+                "coll",
+                compile_find_semantics({"age": {"$gte": 20}}, limit=1),
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertTrue(plan.use_sql)
+        self.assertIsNotNone(plan.sql)
+        self.assertNotIn("FROM scalar_index_entries", plan.sql)
+
+    async def test_explain_query_plan_uses_scalar_entries_for_top_level_numeric_range(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.put_document("db", "coll", {"_id": "2", "age": 40})
+            await engine.create_index("db", "coll", [("age", 1)])
+
+            explained = engine._explain_query_plan_sync("db", "coll", {"age": {"$gte": 20}}, limit=1)
+        finally:
+            await engine.disconnect()
+
+        self.assertTrue(any("scalar_index_entries" in row for row in explained))
+
+    async def test_select_first_document_for_plan_uses_scalar_entries_for_top_level_numeric_range(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.put_document("db", "coll", {"_id": "2", "age": 40})
+            await engine.create_index("db", "coll", [("age", 1)])
+
+            selected = engine._select_first_document_for_plan(
+                "db",
+                "coll",
+                compile_filter({"age": {"$gte": 20}}),
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertIsNotNone(selected)
+        assert selected is not None
+        self.assertEqual(selected[1]["_id"], "2")
+
     async def test_scalar_index_entries_track_updates_for_top_level_scalar_indexes(self):
         engine = SQLiteEngine()
         await engine.connect()

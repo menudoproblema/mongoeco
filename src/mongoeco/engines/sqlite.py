@@ -726,6 +726,59 @@ class SQLiteEngine(AsyncStorageEngine):
                 return index
         return None
 
+    @staticmethod
+    def _scalar_range_signature(value: object) -> tuple[str, int, str] | None:
+        signature = SQLiteEngine._multikey_value_signature(value)
+        if signature is None:
+            return None
+        element_type, element_key = signature
+        if element_type not in {"number", "string", "bool"}:
+            return None
+        return element_type, SQLiteEngine._multikey_type_score(element_type), element_key
+
+    def _find_scalar_fast_path_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+    ) -> EngineIndexRecord | None:
+        for index in self._load_indexes(db_name, coll_name):
+            if index["key"] != [(field, 1)]:
+                continue
+            if index.get("sparse") or index.get("partial_filter_expression"):
+                continue
+            if not index.get("scalar_physical_name"):
+                continue
+            return index
+        return None
+
+    def _can_use_scalar_range_fast_path(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+        value: object,
+    ) -> tuple[EngineIndexRecord, int, str] | None:
+        if "." in field:
+            return None
+        if self._field_is_top_level_array_in_collection(db_name, coll_name, field):
+            return None
+        signature = self._scalar_range_signature(value)
+        if signature is None:
+            return None
+        element_type, type_score, element_key = signature
+        if self._field_has_comparison_type_mismatch_in_collection(
+            db_name,
+            coll_name,
+            field,
+            element_type,
+        ):
+            return None
+        index = self._find_scalar_fast_path_index(db_name, coll_name, field)
+        if index is None:
+            return None
+        return index, type_score, element_key
+
     def _lookup_collection_id(
         self,
         conn: sqlite3.Connection,
@@ -1298,6 +1351,22 @@ class SQLiteEngine(AsyncStorageEngine):
             )
             if selected is not None:
                 return selected
+        if isinstance(plan, (GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition)) and "." not in plan.field:
+            operator = (
+                ">" if isinstance(plan, GreaterThanCondition)
+                else ">=" if isinstance(plan, GreaterThanOrEqualCondition)
+                else "<" if isinstance(plan, LessThanCondition)
+                else "<="
+            )
+            selected = self._select_first_document_for_scalar_range(
+                db_name,
+                coll_name,
+                field=plan.field,
+                value=plan.value,
+                operator=operator,
+            )
+            if selected is not None:
+                return selected
         conn = self._require_connection()
         execution_plan = self._compile_read_execution_plan(
             db_name,
@@ -1356,6 +1425,84 @@ class SQLiteEngine(AsyncStorageEngine):
         storage_key, document = row
         return storage_key, self._deserialize_document(document)
 
+    def _build_scalar_indexed_top_level_range_sql(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        field: str,
+        value: Any,
+        operator: str,
+        index_name: str,
+        physical_name: str,
+        limit: int | None = None,
+    ) -> tuple[str, tuple[object, ...]] | None:
+        scalar_path = self._can_use_scalar_range_fast_path(
+            db_name,
+            coll_name,
+            field,
+            value,
+        )
+        if scalar_path is None:
+            return None
+        _index, type_score, element_key = scalar_path
+        conn = self._require_connection()
+        collection_id = self._lookup_collection_id(conn, db_name, coll_name)
+        if collection_id is None:
+            return None
+        sql = (
+            "SELECT documents.document "
+            f"FROM scalar_index_entries INDEXED BY {self._quote_identifier(physical_name)} "
+            "JOIN documents ON documents.db_name = ? AND documents.coll_name = ? "
+            "AND documents.storage_key = scalar_index_entries.storage_key "
+            "WHERE scalar_index_entries.collection_id = ? AND scalar_index_entries.index_name = ? "
+            "AND scalar_index_entries.type_score = ? "
+            f"AND scalar_index_entries.element_key {operator} ?"
+        )
+        if limit is not None:
+            sql += f" LIMIT {int(limit)}"
+        return sql, (db_name, coll_name, collection_id, index_name, type_score, element_key)
+
+    def _select_first_document_for_scalar_range(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        field: str,
+        value: Any,
+        operator: str,
+    ) -> tuple[str, Document] | None:
+        scalar_path = self._can_use_scalar_range_fast_path(
+            db_name,
+            coll_name,
+            field,
+            value,
+        )
+        if scalar_path is None:
+            return None
+        index, type_score, element_key = scalar_path
+        if not index.get("scalar_physical_name"):
+            return None
+        conn = self._require_connection()
+        collection_id = self._lookup_collection_id(conn, db_name, coll_name)
+        if collection_id is None:
+            return None
+        row = conn.execute(
+            "SELECT documents.storage_key, documents.document "
+            f"FROM scalar_index_entries INDEXED BY {self._quote_identifier(str(index['scalar_physical_name']))} "
+            "JOIN documents ON documents.db_name = ? AND documents.coll_name = ? "
+            "AND documents.storage_key = scalar_index_entries.storage_key "
+            "WHERE scalar_index_entries.collection_id = ? AND scalar_index_entries.index_name = ? "
+            "AND scalar_index_entries.type_score = ? "
+            f"AND scalar_index_entries.element_key {operator} ? "
+            "LIMIT 1",
+            (db_name, coll_name, collection_id, index["name"], type_score, element_key),
+        ).fetchone()
+        if row is None:
+            return None
+        storage_key, document = row
+        return storage_key, self._deserialize_document(document)
+
     def _compile_read_execution_plan(
         self,
         db_name: str,
@@ -1397,66 +1544,29 @@ class SQLiteEngine(AsyncStorageEngine):
             context=context,
         )
 
-    async def plan_find_semantics(
+    def _plan_find_semantics_sync(
         self,
         db_name: str,
         coll_name: str,
         semantics: EngineFindSemantics,
-        *,
-        context: ClientSession | None = None,
     ) -> EngineReadExecutionPlan:
-        del context
         query_plan = semantics.query_plan
-        if (
-            isinstance(query_plan, EqualsCondition)
-            and semantics.collation is None
-            and semantics.sort is None
-            and semantics.skip == 0
-            and (semantics.limit is None or semantics.limit >= 1)
-            and "." not in query_plan.field
-        ):
-            field = query_plan.field
-            if field == "_id":
-                storage_key = self._storage_key(query_plan.value)
-                sql = (
-                    "SELECT document FROM documents "
-                    "WHERE db_name = ? AND coll_name = ? AND storage_key = ?"
-                )
-                if semantics.limit is not None:
-                    sql += f" LIMIT {int(semantics.limit)}"
-                params = (db_name, coll_name, storage_key)
-                return SQLiteReadExecutionPlan(
-                    semantics=semantics,
-                    strategy="sql",
-                    execution_lineage=(),
-                    physical_plan=(),
-                    use_sql=True,
-                    sql=sql,
-                    params=params,
-                )
-
-            indexes = self._load_indexes(db_name, coll_name)
-            for index in indexes:
-                if (
-                    index["key"] == [(field, 1)]
-                    and not index.get("sparse")
-                    and not index.get("partial_filter_expression")
-                    and index.get("scalar_physical_name")
-                    and not self._field_is_top_level_array_in_collection(db_name, coll_name, field)
-                ):
-                    indexed_sql = self._build_scalar_indexed_top_level_equals_sql(
-                        db_name,
-                        coll_name,
-                        field=field,
-                        value=query_plan.value,
-                        index_name=str(index["name"]),
-                        physical_name=str(index["scalar_physical_name"]),
-                        limit=semantics.limit,
-                        null_matches_undefined=query_plan.null_matches_undefined,
+        if semantics.collation is None and semantics.sort is None and semantics.skip == 0:
+            if (
+                isinstance(query_plan, EqualsCondition)
+                and "." not in query_plan.field
+                and (semantics.limit is None or semantics.limit >= 1)
+            ):
+                field = query_plan.field
+                if field == "_id":
+                    storage_key = self._storage_key(query_plan.value)
+                    sql = (
+                        "SELECT document FROM documents "
+                        "WHERE db_name = ? AND coll_name = ? AND storage_key = ?"
                     )
-                    if indexed_sql is None:
-                        continue
-                    sql, params = indexed_sql
+                    if semantics.limit is not None:
+                        sql += f" LIMIT {int(semantics.limit)}"
+                    params = (db_name, coll_name, storage_key)
                     return SQLiteReadExecutionPlan(
                         semantics=semantics,
                         strategy="sql",
@@ -1467,12 +1577,82 @@ class SQLiteEngine(AsyncStorageEngine):
                         params=params,
                     )
 
-        return await self._run_blocking(
-            self._compile_read_execution_plan,
+                index = self._find_scalar_fast_path_index(db_name, coll_name, field)
+                if index is not None and not self._field_is_top_level_array_in_collection(db_name, coll_name, field):
+                    indexed_sql = self._build_scalar_indexed_top_level_equals_sql(
+                        db_name,
+                        coll_name,
+                        field=field,
+                        value=query_plan.value,
+                        index_name=str(index["name"]),
+                        physical_name=str(index["scalar_physical_name"]),
+                        limit=semantics.limit,
+                        null_matches_undefined=query_plan.null_matches_undefined,
+                    )
+                    if indexed_sql is not None:
+                        sql, params = indexed_sql
+                        return SQLiteReadExecutionPlan(
+                            semantics=semantics,
+                            strategy="sql",
+                            execution_lineage=(),
+                            physical_plan=(),
+                            use_sql=True,
+                            sql=sql,
+                            params=params,
+                        )
+
+            if isinstance(query_plan, (GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition)):
+                operator = (
+                    ">" if isinstance(query_plan, GreaterThanCondition)
+                    else ">=" if isinstance(query_plan, GreaterThanOrEqualCondition)
+                    else "<" if isinstance(query_plan, LessThanCondition)
+                    else "<="
+                )
+                index = self._find_scalar_fast_path_index(db_name, coll_name, query_plan.field)
+                if index is not None:
+                    indexed_sql = self._build_scalar_indexed_top_level_range_sql(
+                        db_name,
+                        coll_name,
+                        field=query_plan.field,
+                        value=query_plan.value,
+                        operator=operator,
+                        index_name=str(index["name"]),
+                        physical_name=str(index["scalar_physical_name"]),
+                        limit=semantics.limit,
+                    )
+                    if indexed_sql is not None:
+                        sql, params = indexed_sql
+                        return SQLiteReadExecutionPlan(
+                            semantics=semantics,
+                            strategy="sql",
+                            execution_lineage=(),
+                            physical_plan=(),
+                            use_sql=True,
+                            sql=sql,
+                            params=params,
+                        )
+
+        return self._compile_read_execution_plan(
             db_name,
             coll_name,
             semantics,
             hint=semantics.hint,
+        )
+
+    async def plan_find_semantics(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        context: ClientSession | None = None,
+    ) -> EngineReadExecutionPlan:
+        del context
+        return await self._run_blocking(
+            self._plan_find_semantics_sync,
+            db_name,
+            coll_name,
+            semantics,
         )
 
     def _serialize_value_for_sql(self, value: Any) -> Any:
@@ -1556,11 +1736,10 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection()
             enforce_deadline(deadline)
-            execution_plan = self._compile_read_execution_plan(
+            execution_plan = self._plan_find_semantics_sync(
                 db_name,
                 coll_name,
                 semantics,
-                hint=hint,
             )
             sql, params = execution_plan.require_sql()
             rows = conn.execute(f"EXPLAIN QUERY PLAN {sql}", tuple(params)).fetchall()
