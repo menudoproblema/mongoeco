@@ -2,7 +2,6 @@
 
 | Prioridad | Nombre                                                            | Impacto     | Esfuerzo    | Refs                                                              |
 | --------- | ----------------------------------------------------------------- | ----------- | ----------- | ----------------------------------------------------------------- |
-| 3         | Joins con `$elemMatch`, `$exists`, `$all` y `$nin` en `query_filter` | Alto        | Medio-Alto  | `../gdynamics/mochuelo-framework/src/mochuelo/storages/mongodb/storage.py:389`<br>`../gdynamics/mochuelo-framework/src/mochuelo/queries/matchs.py:331`<br>`../gdynamics/mochuelo-framework/src/mochuelo/queries/matchs.py:355`<br>`../gdynamics/mochuelo-framework/src/mochuelo/queries/matchs.py:459`<br>`../gdynamics/mochuelo-framework/src/mochuelo/queries/matchs.py:474` |
 | 4         | Joins correlacionados de lista con `$in` en pipeline de `$lookup` | Medio-Alto  | Medio       | `../gdynamics/mochuelo-framework/src/mochuelo/storages/mongodb/storage.py:404`<br>`../gdynamics/mochuelo-framework/src/mochuelo/queries/joins.py:232` |
 | 5         | TTL / `expireAfterSeconds`                                        | Alto        | Medio       | `admin_parsing.py:92`<br>`test_admin_parsing.py:79`               |
 | 6         | Query geoespacial e indexacion asociada                           | Alto        | Alto        | `test_query_plan.py:259`<br>`compat_catalog_snapshot.md:25`       |

@@ -28,6 +28,10 @@ CONTROL_OBJECT_EXPRESSION_OPERATORS = frozenset(
         "$and",
         "$or",
         "$in",
+        "$nin",
+        "$all",
+        "$exists",
+        "$elemMatch",
         "$ifNull",
         "$cond",
         "$setField",
@@ -63,6 +67,26 @@ def _evaluate_field_bound_match_expression(
     field_path = field_expression[1:]
     clauses = [{field_path: deepcopy(condition)} for condition in raw_conditions]
     return QueryEngine.match(document, {operator: clauses}, dialect=dialect)
+
+
+def _evaluate_field_bound_query_operator(
+    operator: str,
+    document: Document,
+    spec: object,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> bool | None:
+    if not isinstance(spec, list) or len(spec) != 2:
+        return None
+    field_expression, operand = spec
+    if not _is_field_path_expression(field_expression):
+        return None
+    field_path = field_expression[1:]
+    return QueryEngine.match(
+        document,
+        {field_path: {operator: deepcopy(operand)}},
+        dialect=dialect,
+    )
 
 
 def evaluate_control_object_expression(
@@ -120,6 +144,19 @@ def evaluate_control_object_expression(
         if not isinstance(haystack, list):
             raise OperationFailure("$in requires the second argument to evaluate to a list")
         return any(QueryEngine._values_equal(needle, item, dialect=dialect) for item in haystack)
+
+    if operator in {"$nin", "$all", "$exists", "$elemMatch"}:
+        field_bound = _evaluate_field_bound_query_operator(
+            operator,
+            document,
+            spec,
+            dialect=dialect,
+        )
+        if field_bound is not None:
+            return field_bound
+        raise OperationFailure(
+            f"{operator} only supports the field-bound form inside aggregation expressions"
+        )
 
     if operator == "$ifNull":
         args = require_expression_args(operator, spec, 2, None)

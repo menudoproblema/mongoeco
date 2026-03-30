@@ -22,6 +22,10 @@ usa Semantic Versioning.
 - Se anade soporte para la forma generada por joins correlacionados que
   fijan condiciones de campo con `$and` y `$or` dentro de `$expr`,
   junto con pruebas de unidad e integracion para pipelines `$lookup`.
+- Se anade soporte para reutilizar operadores de `query_filter`
+  (`$exists`, `$all`, `$nin` y `$elemMatch`) dentro de `$expr` en
+  pipelines `$lookup`, reutilizando la semantica de `QueryEngine` y
+  actualizando los snapshots de compatibilidad.
 - Se anade una prueba en interprete limpio para validar que las
   anotaciones de `AsyncDatabaseCommandService` se resuelven
   correctamente.

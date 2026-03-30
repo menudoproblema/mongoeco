@@ -2807,6 +2807,66 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_aggregate_supports_field_bound_query_filter_expr_conditions_inside_lookup(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    events = client.test.events
+                    users = client.test.users
+                    users.insert_one(
+                        {
+                            "_id": "u1",
+                            "tenant": "a",
+                            "tags": ["a", "b"],
+                            "status": "active",
+                            "items": [{"kind": "x", "qty": 1}, {"kind": "y", "qty": 3}],
+                        }
+                    )
+                    users.insert_one(
+                        {
+                            "_id": "u2",
+                            "tenant": "a",
+                            "tags": ["a"],
+                            "status": "archived",
+                            "items": [{"kind": "y", "qty": 1}],
+                        }
+                    )
+                    users.insert_one({"_id": "u3", "tenant": "a", "status": "active"})
+                    events.insert_one({"_id": "1", "tenant": "a"})
+
+                    documents = events.aggregate(
+                        [
+                            {
+                                "$lookup": {
+                                    "from": "users",
+                                    "let": {"tenantId": "$tenant"},
+                                    "pipeline": [
+                                        {
+                                            "$match": {
+                                                "$expr": {
+                                                    "$and": [
+                                                        {"$eq": ["$tenant", "$$tenantId"]},
+                                                        {"$exists": ["$tags", True]},
+                                                        {"$all": ["$tags", ["a", "b"]]},
+                                                        {"$nin": ["$status", ["archived"]]},
+                                                        {"$elemMatch": ["$items", {"kind": "y", "qty": {"$gte": 2}}]},
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {"$project": {"_id": 1}},
+                                    ],
+                                    "as": "users",
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "tenant": "a", "users": [{"_id": "u1"}]}],
+                    )
+
     def test_aggregate_supports_lookup_with_missing_foreign_collection(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

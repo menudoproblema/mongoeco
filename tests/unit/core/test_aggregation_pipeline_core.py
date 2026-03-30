@@ -585,6 +585,63 @@ class AggregationPipelineCoreTests(unittest.TestCase):
             ],
         )
 
+    def test_pipeline_supports_field_bound_query_filter_expr_conditions_inside_lookup(self):
+        documents = [{"_id": "1", "tenant": "a"}]
+        foreign = {
+            "users": [
+                {
+                    "_id": "u1",
+                    "tenant": "a",
+                    "tags": ["a", "b"],
+                    "status": "active",
+                    "items": [{"kind": "x", "qty": 1}, {"kind": "y", "qty": 3}],
+                },
+                {
+                    "_id": "u2",
+                    "tenant": "a",
+                    "tags": ["a"],
+                    "status": "archived",
+                    "items": [{"kind": "y", "qty": 1}],
+                },
+                {"_id": "u3", "tenant": "a", "status": "active"},
+            ]
+        }
+
+        result = apply_pipeline(
+            documents,
+            [
+                {
+                    "$lookup": {
+                        "from": "users",
+                        "let": {"tenantId": "$tenant"},
+                        "pipeline": [
+                            {
+                                "$match": {
+                                    "$expr": {
+                                        "$and": [
+                                            {"$eq": ["$tenant", "$$tenantId"]},
+                                            {"$exists": ["$tags", True]},
+                                            {"$all": ["$tags", ["a", "b"]]},
+                                            {"$nin": ["$status", ["archived"]]},
+                                            {"$elemMatch": ["$items", {"kind": "y", "qty": {"$gte": 2}}]},
+                                        ]
+                                    }
+                                }
+                            },
+                            {"$project": {"_id": 1}},
+                        ],
+                        "as": "users",
+                    }
+                }
+            ],
+            collection_resolver=foreign.get,
+        )
+
+        self.assertEqual(
+            result,
+            [{"_id": "1", "tenant": "a", "users": [{"_id": "u1"}]}],
+        )
+
     def test_pipeline_supports_lookup_with_missing_foreign_collection(self):
         result = apply_pipeline(
             [{"_id": "1", "tenant": "a"}],
