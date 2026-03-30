@@ -92,6 +92,49 @@ Smoke check:
 python -m benchmarks.run --engine all --size 1000 --warmup 0 --repetitions 1
 ```
 
+Recommended community matrix:
+
+```bash
+python -m benchmarks.report \
+  --engine all \
+  --size 100 \
+  --warmup 1 \
+  --repetitions 5 \
+  --output-json benchmarks/reports/matrix-100.json \
+  --output-markdown benchmarks/reports/matrix-100.md
+
+python -m benchmarks.report \
+  --engine all \
+  --size 1000 \
+  --warmup 1 \
+  --repetitions 5 \
+  --output-json benchmarks/reports/matrix-1000.json \
+  --output-markdown benchmarks/reports/matrix-1000.md
+
+python -m benchmarks.report \
+  --engine all \
+  --size 5000 \
+  --warmup 1 \
+  --repetitions 5 \
+  --output-json benchmarks/reports/matrix-5000.json \
+  --output-markdown benchmarks/reports/matrix-5000.md
+```
+
+This is the default matrix we currently recommend for community-facing
+discussions:
+
+- `100` captures small-dataset overhead and planner/runtime setup costs
+- `1000` is the main reference point for balanced comparisons
+- `5000` shows larger-scale behavior without making the default workflow too
+  expensive
+
+We do not currently recommend `50` or `500` as part of the default published
+matrix:
+
+- `50` is more useful for local smoke checks than for community-facing claims
+- `500` can still be useful for local diagnosis, but usually does not change
+  the main story enough to justify the extra matrix size
+
 Publication-quality local snapshot:
 
 ```bash
@@ -117,6 +160,48 @@ python -m benchmarks.report \
   --output-json benchmarks/reports/diagnostics.json \
   --output-markdown benchmarks/reports/diagnostics.md
 ```
+
+SQLite JSON backend A/B:
+
+If you want to discuss the impact of `orjson`, keep the comparison narrow and
+explicit:
+
+```bash
+python -m benchmarks.report \
+  --engine sqlite \
+  --size 1000 \
+  --warmup 1 \
+  --repetitions 5 \
+  --workload secondary_lookup_indexed \
+  --workload secondary_lookup_unindexed \
+  --workload secondary_lookup_diagnostics \
+  --workload cursor_consumption \
+  --workload filter_selectivity \
+  --workload predicate_diagnostics \
+  --output-json benchmarks/reports/sqlite-stdlib.json \
+  --output-markdown benchmarks/reports/sqlite-stdlib.md
+
+MONGOECO_JSON_BACKEND=orjson python -m benchmarks.report \
+  --engine sqlite \
+  --size 1000 \
+  --warmup 1 \
+  --repetitions 5 \
+  --workload secondary_lookup_indexed \
+  --workload secondary_lookup_unindexed \
+  --workload secondary_lookup_diagnostics \
+  --workload cursor_consumption \
+  --workload filter_selectivity \
+  --workload predicate_diagnostics \
+  --output-json benchmarks/reports/sqlite-orjson.json \
+  --output-markdown benchmarks/reports/sqlite-orjson.md
+```
+
+Current rule of thumb from local A/B runs:
+
+- `orjson` is worth measuring for SQLite filter/materialization-heavy workloads
+- `orjson` is not a universal win for lookup-heavy workloads
+- benchmark writeups should state the JSON backend explicitly whenever SQLite is
+  involved
 
 Baseline comparison:
 
