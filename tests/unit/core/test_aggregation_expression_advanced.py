@@ -14,6 +14,11 @@ from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, Bs
 from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.aggregation.accumulators import _AccumulatorBucket, _OrderedAccumulator
+from mongoeco.core.aggregation.scalar_expressions import (
+    _aggregation_type_name,
+    _convert_aggregation_scalar,
+    evaluate_scalar_expression,
+)
 from mongoeco.core.aggregation import (
     _ACCUMULATOR_FLAGS_KEY,
     _MISSING,
@@ -1241,3 +1246,139 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
         self.assertEqual(pushdown.projection, {"name": True, "_id": False})
         self.assertEqual(pushdown.remaining_pipeline, [])
 
+    def test_scalar_helpers_cover_direct_type_conversion_and_error_paths(self):
+        missing_sentinel = object()
+        object_id = ObjectId("0123456789abcdef01234567")
+        created_at = datetime.datetime(2026, 3, 25, 10, 5, 6, tzinfo=datetime.timezone.utc)
+
+        self.assertEqual(_aggregation_type_name(BsonInt32(1), missing_sentinel=missing_sentinel), "int")
+        self.assertEqual(_aggregation_type_name(BsonInt64(1 << 40), missing_sentinel=missing_sentinel), "long")
+        self.assertEqual(_aggregation_type_name(BsonDouble(1.5), missing_sentinel=missing_sentinel), "double")
+        self.assertEqual(
+            _aggregation_type_name(BsonDecimal128(decimal.Decimal("1.5")), missing_sentinel=missing_sentinel),
+            "decimal",
+        )
+        self.assertEqual(_aggregation_type_name(Decimal128("2.5"), missing_sentinel=missing_sentinel), "decimal")
+
+        self.assertTrue(_convert_aggregation_scalar("$convert", object_id, "bool", stringify_value=str))
+        self.assertEqual(
+            _convert_aggregation_scalar("$convert", created_at, "long", stringify_value=str),
+            int(created_at.timestamp() * 1000),
+        )
+        self.assertEqual(
+            _convert_aggregation_scalar("$convert", created_at, "double", stringify_value=str),
+            float(int(created_at.timestamp() * 1000)),
+        )
+        self.assertEqual(
+            _convert_aggregation_scalar("$convert", object_id, "date", stringify_value=str),
+            datetime.datetime.fromtimestamp(object_id.generation_time, tz=datetime.UTC).replace(tzinfo=None),
+        )
+        self.assertEqual(
+            _convert_aggregation_scalar("$convert", Decimal128("10.25"), "decimal", stringify_value=str),
+            decimal.Decimal("10.25"),
+        )
+        self.assertEqual(
+            _convert_aggregation_scalar(
+                "$convert",
+                "12345678-1234-5678-1234-567812345678",
+                "uuid",
+                stringify_value=str,
+            ),
+            uuid.UUID("12345678-1234-5678-1234-567812345678"),
+        )
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", float(1 << 40), "int", stringify_value=str)
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", float("inf"), "date", stringify_value=str)
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", "bad", "objectId", stringify_value=str)
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", "   ", "decimal", stringify_value=str)
+
+    def test_evaluate_scalar_expression_rejects_unknown_operator(self):
+        with self.assertRaises(OperationFailure):
+            evaluate_scalar_expression(
+                "$unsupported",
+                {},
+                None,
+                None,
+                evaluate_expression=lambda document, expression, variables: expression,
+                evaluate_expression_with_missing=lambda document, expression, variables: expression,
+                require_expression_args=lambda operator, spec, minimum, maximum: [],
+                stringify_value=str,
+                bson_document_size=lambda document: 0,
+                missing_sentinel=object(),
+            )
+
+    def test_scalar_helpers_cover_direct_expression_and_conversion_edges(self):
+        missing_sentinel = object()
+
+        with self.assertRaises(OperationFailure):
+            evaluate_scalar_expression(
+                "$convert",
+                {},
+                {"input": 1},
+                None,
+                evaluate_expression=lambda document, expression, variables: expression,
+                evaluate_expression_with_missing=lambda document, expression, variables: expression,
+                require_expression_args=lambda operator, spec, minimum, maximum: spec,
+                stringify_value=str,
+                bson_document_size=lambda document: 0,
+                missing_sentinel=missing_sentinel,
+            )
+        self.assertEqual(
+            evaluate_scalar_expression(
+                "$convert",
+                {},
+                {"input": 5, "to": {"type": "string"}},
+                None,
+                evaluate_expression=lambda document, expression, variables: expression,
+                evaluate_expression_with_missing=lambda document, expression, variables: expression,
+                require_expression_args=lambda operator, spec, minimum, maximum: spec,
+                stringify_value=str,
+                bson_document_size=lambda document: 0,
+                missing_sentinel=missing_sentinel,
+            ),
+            "5",
+        )
+        self.assertIsNone(
+            evaluate_scalar_expression(
+                "$bsonSize",
+                {},
+                "$missing",
+                None,
+                evaluate_expression=lambda document, expression, variables: expression,
+                evaluate_expression_with_missing=lambda document, expression, variables: missing_sentinel,
+                require_expression_args=lambda operator, spec, minimum, maximum: spec,
+                stringify_value=str,
+                bson_document_size=lambda document: 0,
+                missing_sentinel=missing_sentinel,
+            )
+        )
+
+        self.assertTrue(_convert_aggregation_scalar("$convert", True, "bool", stringify_value=str))
+        self.assertEqual(_convert_aggregation_scalar("$convert", 12.0, "int", stringify_value=str), 12)
+        self.assertEqual(_convert_aggregation_scalar("$convert", 12.0, "long", stringify_value=str), 12)
+        self.assertEqual(_convert_aggregation_scalar("$convert", 7, "decimal", stringify_value=str), decimal.Decimal("7"))
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", str(1 << 40), "int", stringify_value=str)
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", str(1 << 80), "long", stringify_value=str)
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", {"a": 1}, "int", stringify_value=str)
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", {"a": 1}, "long", stringify_value=str)
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", "bad-float", "double", stringify_value=str)
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", {"a": 1}, "date", stringify_value=str)
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", 1, "objectId", stringify_value=str)
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", 1, "uuid", stringify_value=str)
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", float("inf"), "decimal", stringify_value=str)
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", [], "decimal", stringify_value=str)
+        with self.assertRaises(OperationFailure):
+            _convert_aggregation_scalar("$convert", 1, "unsupported", stringify_value=str)

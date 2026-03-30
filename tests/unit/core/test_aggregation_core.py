@@ -14,6 +14,15 @@ from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, Bs
 from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.aggregation.accumulators import _AccumulatorBucket, _OrderedAccumulator
+from mongoeco.core.aggregation.runtime import (
+    _bson_value_size,
+    _mongo_mod,
+    _normalize_numeric_place,
+    _round_numeric,
+    _stringify_aggregation_value,
+    _subtract_values,
+    _trunc_numeric,
+)
 from mongoeco.core.aggregation import (
     _ACCUMULATOR_FLAGS_KEY,
     _MISSING,
@@ -1237,3 +1246,68 @@ class AggregationCoreTests(unittest.TestCase):
 
         self.assertEqual([document["_id"] for document in result], ["1", "2", "3", "4"])
 
+    def test_runtime_numeric_and_string_helpers_cover_edge_cases(self):
+        aware = datetime.datetime(
+            2026,
+            3,
+            25,
+            10,
+            5,
+            6,
+            789000,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=2)),
+        )
+
+        self.assertEqual(_stringify_aggregation_value(decimal.Decimal("10.50")), "10.50")
+        self.assertEqual(_stringify_aggregation_value(float("inf")), "Infinity")
+        self.assertEqual(_stringify_aggregation_value(float("-inf")), "-Infinity")
+        self.assertEqual(_stringify_aggregation_value(aware), "2026-03-25T08:05:06.789Z")
+        self.assertEqual(_stringify_aggregation_value(Binary(b"\x00\x01", subtype=4)), "AAE=")
+        self.assertEqual(_stringify_aggregation_value(Regex("^a", "im")), "/^a/im")
+        self.assertEqual(_stringify_aggregation_value(Timestamp(10, 2)), "Timestamp(10, 2)")
+        self.assertTrue(math.isnan(_mongo_mod(float("inf"), 2)))
+        self.assertEqual(_mongo_mod(-5, 3), -2)
+        self.assertEqual(_normalize_numeric_place("$round", 2), 2)
+        with self.assertRaises(OperationFailure):
+            _normalize_numeric_place("$round", True)
+        with self.assertRaises(OperationFailure):
+            _normalize_numeric_place("$round", 101)
+        self.assertEqual(_round_numeric(12, 2), 12)
+        self.assertEqual(_round_numeric(12.345, 2), 12.34)
+        self.assertEqual(_round_numeric(125, -1), 120)
+        self.assertEqual(_trunc_numeric(12, 2), 12)
+        self.assertEqual(_trunc_numeric(12.987, 2), 12.98)
+        self.assertEqual(_trunc_numeric(127, -1), 120)
+
+    def test_runtime_bson_size_and_subtract_helpers_cover_special_types(self):
+        session_id = uuid.UUID("12345678-1234-5678-1234-567812345678")
+        object_id = ObjectId("0123456789abcdef01234567")
+        created_at = datetime.datetime(2026, 3, 25, 10, 0, 0)
+
+        self.assertEqual(_bson_value_size(1.5), 8)
+        self.assertEqual(_bson_value_size("Ada"), 8)
+        self.assertEqual(_bson_value_size({"name": "Ada"}), 19)
+        self.assertEqual(_bson_value_size([1, "x"]), 21)
+        self.assertEqual(_bson_value_size(Binary(b"ab", subtype=4)), 7)
+        self.assertEqual(_bson_value_size(session_id), 21)
+        self.assertEqual(_bson_value_size(object_id), 12)
+        self.assertEqual(_bson_value_size(True), 1)
+        self.assertEqual(_bson_value_size(created_at), 8)
+        self.assertEqual(_bson_value_size(None), 0)
+        self.assertEqual(_bson_value_size(UNDEFINED), 0)
+        self.assertEqual(_bson_value_size(re.compile("^a")), 4)
+        self.assertEqual(_bson_value_size(Regex("^a", "im")), 6)
+        self.assertEqual(_bson_value_size(Timestamp(1, 2)), 8)
+        self.assertEqual(_bson_value_size(1 << 40), 8)
+        with self.assertRaises(OperationFailure):
+            _bson_value_size(decimal.Decimal("1.5"))
+
+        earlier = datetime.datetime(2026, 3, 25, 9, 59, 30)
+        self.assertEqual(_subtract_values(created_at, earlier), 30000)
+        self.assertEqual(
+            _subtract_values(created_at, 2500),
+            datetime.datetime(2026, 3, 25, 9, 59, 57, 500000),
+        )
+        self.assertEqual(_subtract_values(10, 3), 7)
+        with self.assertRaises(OperationFailure):
+            _subtract_values(1, created_at)

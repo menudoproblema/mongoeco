@@ -29,6 +29,7 @@ from mongoeco.core.aggregation.date_expressions import (
 )
 from mongoeco.core.aggregation.numeric_expressions import (
     NUMERIC_EXPRESSION_OPERATORS,
+    _require_numeric,
     evaluate_numeric_expression,
 )
 from mongoeco.core.aggregation.scalar_expressions import (

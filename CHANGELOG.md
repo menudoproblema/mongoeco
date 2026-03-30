@@ -13,6 +13,9 @@ usa Semantic Versioning.
 - Se corrige la resolucion de anotaciones en
   `mongoeco.api._async.database_commands` para evitar errores en
   Python 3.13+ al combinar forward refs internas con el operador `|`.
+- Se corrige un `NameError` en `mongoeco.core.aggregation.runtime`:
+  `_subtract_values` dependia de `_require_numeric` sin importarlo,
+  rompiendo la ruta interna de resta numero-numero.
 
 ### Added
 
@@ -38,6 +41,10 @@ usa Semantic Versioning.
   mueve a `tests/support.py`, `test_aggregation.py` se divide por
   familias funcionales y `test_architecture.py` se separa por
   responsabilidades.
+- Se amplian las pruebas de agregacion sobre `stages`, `runtime` y
+  `scalar_expressions`, cubriendo el camino interpretado, optimizaciones
+  de ventana para `sort`, helpers BSON y conversiones escalares
+  internas.
 
 ## [2.0.1] - 2026-03-30
 

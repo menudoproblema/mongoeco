@@ -14,6 +14,7 @@ from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, Bs
 from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.aggregation.accumulators import _AccumulatorBucket, _OrderedAccumulator
+from mongoeco.core.aggregation.stages import _sort_window_for_following_slices
 from mongoeco.core.aggregation import (
     _ACCUMULATOR_FLAGS_KEY,
     _MISSING,
@@ -952,3 +953,92 @@ class AggregationPipelineCoreTests(unittest.TestCase):
 
         self.assertEqual(result, [{"merged": {"name": "Ada", "city": "Sevilla"}}])
 
+    def test_interpreted_pipeline_covers_sample_unset_skip_limit_and_sort_window(self):
+        documents = [
+            {"_id": "3", "score": 3, "secret": "c"},
+            {"_id": "1", "score": 1, "secret": "a"},
+            {"_id": "2", "score": 2, "secret": "b"},
+        ]
+
+        class _Policy:
+            def __init__(self) -> None:
+                self.operators: list[str] = []
+
+            def maybe_spill(self, operator, documents):
+                self.operators.append(operator)
+                return documents
+
+        policy = _Policy()
+        with patch("mongoeco.core.aggregation.stages.compile_pipeline", return_value=None):
+            result = apply_pipeline(
+                documents,
+                [
+                    {"$sample": {"size": 3}},
+                    {"$unset": "secret"},
+                    {"$sort": {"score": 1}},
+                    {"$skip": 1},
+                    {"$limit": 1},
+                ],
+                spill_policy=policy,
+            )
+
+        self.assertEqual(result, [{"_id": "2", "score": 2}])
+        self.assertEqual(policy.operators, ["$sample", "$unset", "$sort", "$skip", "$limit"])
+
+    def test_interpreted_sort_uses_spill_policy_sort_with_spill(self):
+        documents = [{"_id": "2", "score": 2}, {"_id": "1", "score": 1}]
+
+        class _Policy:
+            def __init__(self) -> None:
+                self.sort_calls: list[list[tuple[str, int]]] = []
+
+            def sort_with_spill(self, documents, sort_spec, *, dialect, collation):
+                del dialect
+                del collation
+                self.sort_calls.append(sort_spec)
+                return sorted(documents, key=lambda document: document["score"])
+
+            def maybe_spill(self, operator, documents):
+                del operator
+                return documents
+
+        policy = _Policy()
+        with patch("mongoeco.core.aggregation.stages.compile_pipeline", return_value=None):
+            result = apply_pipeline(
+                documents,
+                [{"$sort": {"score": 1}}],
+                spill_policy=policy,
+            )
+
+        self.assertEqual(result, [{"_id": "1", "score": 1}, {"_id": "2", "score": 2}])
+        self.assertEqual(policy.sort_calls, [[("score", 1)]])
+
+    def test_sort_window_for_following_slices_requires_contiguous_skip_and_limit(self):
+        self.assertEqual(
+            _sort_window_for_following_slices(
+                [
+                    {"$sort": {"score": 1}},
+                    {"$skip": 2},
+                    {"$limit": 5},
+                    {"$limit": 3},
+                ],
+                0,
+            ),
+            5,
+        )
+        self.assertIsNone(
+            _sort_window_for_following_slices(
+                [
+                    {"$sort": {"score": 1}},
+                    {"$limit": 5},
+                    {"$skip": 1},
+                ],
+                0,
+            )
+        )
+        self.assertIsNone(
+            _sort_window_for_following_slices(
+                [{"$sort": {"score": 1}}],
+                0,
+            )
+        )
