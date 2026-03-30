@@ -919,13 +919,10 @@ class MemoryEngine(AsyncStorageEngine):
                         yield document
                     return
 
-                # Si hay sort, tenemos que materializar para ordenar.
-                documents = [
-                    self._copy_document_containers(DocumentCodec.to_public(document))
-                    for document in filtered
-                ]
+                # Si hay sort, ordenamos/sliceamos sobre documentos prestados y
+                # solo publicamos/copamos el subconjunto final que se devuelve.
                 documents = finalize_documents(
-                    documents,
+                    filtered,
                     semantics,
                     apply_sort_phase=True,
                     emit_public_documents=False,
@@ -933,7 +930,7 @@ class MemoryEngine(AsyncStorageEngine):
 
             for document in documents:
                 enforce_deadline(deadline)
-                yield document
+                yield self._copy_document_containers(DocumentCodec.to_public(document))
         return _scan()
 
     @override
