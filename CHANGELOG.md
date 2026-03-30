@@ -33,6 +33,11 @@ usa Semantic Versioning.
   `api._async.database_admin` con pruebas adicionales sobre helpers de
   implicacion, claves hashables especiales, compilacion de comandos y
   ramas de error en comandos administrativos.
+- Se reorganiza la suite para facilitar mantenimiento y nuevas tandas
+  de cobertura: la infraestructura sync compartida de integracion se
+  mueve a `tests/support.py`, `test_aggregation.py` se divide por
+  familias funcionales y `test_architecture.py` se separa por
+  responsabilidades.
 
 ## [2.0.1] - 2026-03-30
 
