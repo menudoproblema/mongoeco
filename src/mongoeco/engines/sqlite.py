@@ -627,6 +627,18 @@ class SQLiteEngine(AsyncStorageEngine):
         hint: str | IndexKeySpec | None = None,
         dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> tuple[str, list[object]]:
+        scalar_sort_sql = self._build_scalar_sort_select_sql(
+            db_name,
+            coll_name,
+            plan,
+            select_clause=select_clause,
+            sort=sort,
+            skip=skip,
+            limit=limit,
+            hint=hint,
+        )
+        if scalar_sort_sql is not None:
+            return scalar_sort_sql
         hinted_index = self._resolve_hint_index(db_name, coll_name, hint, plan=plan, dialect=dialect)
         where_fragment = self._translate_query_plan_with_multikey(db_name, coll_name, plan)
         from_clause = "documents"
@@ -646,6 +658,167 @@ class SQLiteEngine(AsyncStorageEngine):
             limit=limit,
         )
         return statement.sql, list(statement.params)
+
+    def _field_has_uniform_scalar_sort_type_in_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+    ) -> str | None:
+        feature_key = (db_name, coll_name, f"uniform_scalar_sort_type:{field}")
+        if feature_key in self._collection_features_cache:
+            cached = self._collection_features_cache[feature_key]
+            return cached if isinstance(cached, str) else None
+
+        conn = self._require_connection()
+        path_literal = "'" + json_path_for_field(field).replace("'", "''") + "'"
+        row = conn.execute(
+            f"""
+            SELECT
+                COUNT(*),
+                SUM(CASE WHEN json_type(document, {path_literal}) IN ('integer', 'real') THEN 1 ELSE 0 END),
+                SUM(CASE WHEN json_type(document, {path_literal}) = 'text' THEN 1 ELSE 0 END),
+                SUM(CASE WHEN json_type(document, {path_literal}) IN ('true', 'false') THEN 1 ELSE 0 END)
+            FROM documents
+            WHERE db_name = ? AND coll_name = ?
+            """,
+            (db_name, coll_name),
+        ).fetchone()
+        if row is None:
+            self._collection_features_cache[feature_key] = False
+            return None
+        total_count, numeric_count, string_count, bool_count = (int(value or 0) for value in row)
+        if total_count == 0:
+            self._collection_features_cache[feature_key] = False
+            return None
+        if numeric_count == total_count:
+            self._collection_features_cache[feature_key] = "number"
+            return "number"
+        if string_count == total_count:
+            self._collection_features_cache[feature_key] = "string"
+            return "string"
+        if bool_count == total_count:
+            self._collection_features_cache[feature_key] = "bool"
+            return "bool"
+        self._collection_features_cache[feature_key] = False
+        return None
+
+    def _find_scalar_sort_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+    ) -> EngineIndexRecord | None:
+        for index in self._load_indexes(db_name, coll_name):
+            if index["fields"] != [field]:
+                continue
+            if index.get("sparse") or index.get("partial_filter_expression"):
+                continue
+            if not index.get("scalar_physical_name"):
+                continue
+            return index
+        return None
+
+    def _resolve_select_clause_for_scalar_sort(self, select_clause: str) -> str:
+        if select_clause == "document":
+            return "documents.document"
+        if select_clause == "storage_key, document":
+            return "documents.storage_key, documents.document"
+        return select_clause
+
+    def _build_select_statement_with_custom_order(
+        self,
+        *,
+        select_clause: str,
+        from_clause: str,
+        namespace_sql: str,
+        namespace_params: tuple[object, ...],
+        where_fragment: tuple[str, list[object]],
+        order_sql: str,
+        skip: int = 0,
+        limit: int | None = None,
+    ) -> tuple[str, list[object]]:
+        where_sql, where_params = where_fragment
+        sql = (
+            f"SELECT {select_clause} "
+            f"FROM {from_clause} "
+            f"WHERE {namespace_sql} AND ({where_sql}) "
+            f"{order_sql}"
+        )
+        params: list[object] = [*namespace_params, *where_params]
+        if limit is not None:
+            sql += " LIMIT ?"
+            params.append(limit)
+        elif skip:
+            sql += " LIMIT -1"
+        if skip:
+            sql += " OFFSET ?"
+            params.append(skip)
+        return sql, params
+
+    def _build_scalar_sort_select_sql(
+        self,
+        db_name: str,
+        coll_name: str,
+        plan: QueryNode,
+        *,
+        select_clause: str,
+        sort: SortSpec | None,
+        skip: int,
+        limit: int | None,
+        hint: str | IndexKeySpec | None,
+    ) -> tuple[str, list[object]] | None:
+        if hint is not None or not sort or len(sort) != 1:
+            return None
+
+        field, direction = sort[0]
+        if direction not in (1, -1):
+            return None
+        if self._field_traverses_array_in_collection(db_name, coll_name, field):
+            return None
+        if self._field_contains_tagged_bytes_in_collection(db_name, coll_name, field):
+            return None
+        if self._field_contains_tagged_undefined_in_collection(db_name, coll_name, field):
+            return None
+        if self._field_has_uniform_scalar_sort_type_in_collection(db_name, coll_name, field) is None:
+            return None
+
+        order = "ASC" if direction == 1 else "DESC"
+        where_fragment = self._translate_query_plan_with_multikey(db_name, coll_name, plan)
+
+        index = self._find_scalar_sort_index(db_name, coll_name, field)
+        if index is not None and index.get("scalar_physical_name"):
+            conn = self._require_connection()
+            collection_id = self._lookup_collection_id(conn, db_name, coll_name)
+            if collection_id is not None:
+                return self._build_select_statement_with_custom_order(
+                    select_clause=self._resolve_select_clause_for_scalar_sort(select_clause),
+                    from_clause=(
+                        f"scalar_index_entries INDEXED BY {self._quote_identifier(str(index['scalar_physical_name']))} "
+                        "JOIN documents ON documents.db_name = ? AND documents.coll_name = ? "
+                        "AND documents.storage_key = scalar_index_entries.storage_key"
+                    ),
+                    namespace_sql="scalar_index_entries.collection_id = ? AND scalar_index_entries.index_name = ?",
+                    namespace_params=(db_name, coll_name, collection_id, index["name"]),
+                    where_fragment=where_fragment,
+                    order_sql=(
+                        f" ORDER BY scalar_index_entries.element_key {order}, "
+                        "documents.storage_key ASC"
+                    ),
+                    skip=skip,
+                    limit=limit,
+                )
+
+        return self._build_select_statement_with_custom_order(
+            select_clause=select_clause,
+            from_clause="documents",
+            namespace_sql="db_name = ? AND coll_name = ?",
+            namespace_params=(db_name, coll_name),
+            where_fragment=where_fragment,
+            order_sql=f" ORDER BY {value_expression_sql(field)} {order}",
+            skip=skip,
+            limit=limit,
+        )
 
     @staticmethod
     def _normalize_multikey_number(value: int | float) -> str:

@@ -1956,6 +1956,69 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn("CASE WHEN", sql)
 
+    async def test_build_select_sql_uses_scalar_index_entries_for_homogeneous_single_field_sort(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "score": 10})
+            await engine.put_document("db", "coll", {"_id": "2", "score": 30})
+            await engine.create_index("db", "coll", [("score", -1)])
+
+            sql, _ = engine._build_select_sql(
+                "db",
+                "coll",
+                MatchAll(),
+                select_clause="document",
+                sort=[("score", -1)],
+                limit=5,
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertIn("FROM scalar_index_entries", sql)
+        self.assertIn("ORDER BY scalar_index_entries.element_key DESC", sql)
+        self.assertNotIn("CASE WHEN", sql)
+
+    async def test_build_select_sql_uses_plain_value_order_for_uniform_unindexed_scalar_sort(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "score": 10})
+            await engine.put_document("db", "coll", {"_id": "2", "score": 30})
+
+            sql, _ = engine._build_select_sql(
+                "db",
+                "coll",
+                MatchAll(),
+                select_clause="document",
+                sort=[("score", -1)],
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertNotIn("FROM scalar_index_entries", sql)
+        self.assertIn("ORDER BY COALESCE(json_extract(document, '$.score.\"$mongoeco\".value'), json_extract(document, '$.score')) DESC", sql)
+        self.assertNotIn("CASE WHEN", sql)
+
+    async def test_build_select_sql_keeps_type_order_case_for_sorts_with_nulls(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "score": 10})
+            await engine.put_document("db", "coll", {"_id": "2", "score": None})
+
+            sql, _ = engine._build_select_sql(
+                "db",
+                "coll",
+                MatchAll(),
+                select_clause="document",
+                sort=[("score", -1)],
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertIn("CASE WHEN", sql)
+
     async def test_plan_find_semantics_uses_scalar_entries_for_top_level_string_equality(self):
         engine = SQLiteEngine()
         await engine.connect()
