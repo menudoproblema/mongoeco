@@ -100,7 +100,7 @@ SUPPORTED_QUERY_FIELD_OPERATORS = frozenset(
     }
 )
 
-SUPPORTED_QUERY_TOP_LEVEL_OPERATORS = frozenset({"$and", "$or", "$nor", "$expr"})
+SUPPORTED_QUERY_TOP_LEVEL_OPERATORS = frozenset({"$and", "$or", "$nor", "$expr", "$jsonSchema"})
 
 SUPPORTED_UPDATE_OPERATORS = frozenset(
     {

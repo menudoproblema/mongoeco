@@ -140,6 +140,11 @@ class ExprCondition(QueryNode):
 
 
 @dataclass(frozen=True)
+class JsonSchemaCondition(QueryNode):
+    schema: Filter
+
+
+@dataclass(frozen=True)
 class AndCondition(QueryNode):
     clauses: tuple[QueryNode, ...]
 
@@ -170,6 +175,7 @@ type ConcreteQueryNode = (
     | TypeCondition
     | BitwiseCondition
     | ExprCondition
+    | JsonSchemaCondition
     | AndCondition
     | OrCondition
 )
@@ -199,6 +205,7 @@ def is_concrete_query_node(node: QueryNode) -> TypeIs[ConcreteQueryNode]:
             TypeCondition,
             BitwiseCondition,
             ExprCondition,
+            JsonSchemaCondition,
             AndCondition,
             OrCondition,
         ),
@@ -492,6 +499,14 @@ def _compile_filter_strict(
             raise OperationFailure(f"Unsupported top-level query operator: {key}")
         if key == "$expr":
             clauses.append(ExprCondition(value, {} if variables is None else dict(variables)))
+            continue
+        if key == "$jsonSchema":
+            if not isinstance(value, dict):
+                raise OperationFailure("$jsonSchema validator must be a document")
+            from mongoeco.core.schema_validation import CompiledJsonSchema
+
+            CompiledJsonSchema(value)
+            clauses.append(JsonSchemaCondition(value))
             continue
         if key == "$and":
             if not isinstance(value, list):

@@ -13,6 +13,7 @@ from mongoeco.core.query_plan import (
     ExistsCondition,
     GreaterThanOrEqualCondition,
     InCondition,
+    JsonSchemaCondition,
     LessThanOrEqualCondition,
     MatchAll,
     ModCondition,
@@ -245,12 +246,17 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({"$foo": 1})
         with self.assertRaises(OperationFailure):
             compile_filter({"$where": "this.a > 1"})
-        with self.assertRaises(OperationFailure):
-            compile_filter({"$jsonSchema": {"required": ["name"]}})
+    def test_compile_filter_accepts_top_level_json_schema(self):
+        self.assertEqual(
+            compile_filter({"$jsonSchema": {"required": ["name"]}}),
+            JsonSchemaCondition({"required": ["name"]}),
+        )
 
-    def test_compile_filter_rejects_json_schema_with_dedicated_test(self):
+    def test_compile_filter_rejects_invalid_json_schema_payloads(self):
         with self.assertRaises(OperationFailure):
-            compile_filter({"$jsonSchema": {"required": ["name"]}})
+            compile_filter({"$jsonSchema": 1})
+        with self.assertRaises(OperationFailure):
+            compile_filter({"$jsonSchema": {"required": "name"}})
 
     def test_compile_filter_rejects_where_with_dedicated_test(self):
         with self.assertRaises(OperationFailure):

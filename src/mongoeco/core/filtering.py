@@ -21,6 +21,7 @@ from mongoeco.core.query_plan import (
     ExprCondition,
     ExistsCondition,
     DeferredQueryNode,
+    JsonSchemaCondition,
     GreaterThanCondition,
     GreaterThanOrEqualCondition,
     InCondition,
@@ -62,6 +63,7 @@ HANDLED_QUERY_NODE_TYPES: tuple[type[QueryNode], ...] = (
     TypeCondition,
     BitwiseCondition,
     ExprCondition,
+    JsonSchemaCondition,
     AndCondition,
     OrCondition,
 )
@@ -284,6 +286,10 @@ class QueryEngine:
                     dialect=dialect,
                 )
                 return _expression_truthy(value, dialect=dialect)
+            case JsonSchemaCondition(schema=schema):
+                from mongoeco.core.schema_validation import CompiledJsonSchema
+
+                return CompiledJsonSchema(schema).validate(document).valid
             case AndCondition(clauses=clauses):
                 return all(
                     QueryEngine.match_plan(document, clause, dialect=dialect, collation=collation)

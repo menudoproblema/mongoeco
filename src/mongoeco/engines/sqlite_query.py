@@ -13,6 +13,7 @@ from mongoeco.core.query_plan import (
     ElemMatchCondition,
     EqualsCondition,
     ExistsCondition,
+    JsonSchemaCondition,
     GreaterThanCondition,
     GreaterThanOrEqualCondition,
     InCondition,
@@ -60,6 +61,7 @@ HANDLED_SQL_QUERY_NODE_TYPES: tuple[type[QueryNode], ...] = (
     ElemMatchCondition,
     BitwiseCondition,
     ExprCondition,
+    JsonSchemaCondition,
     AndCondition,
     OrCondition,
 )
@@ -796,7 +798,7 @@ def translate_query_plan(plan: QueryNode) -> SqlFragment:
             return f"NOT COALESCE(({clause_sql}), 0)", clause_params
         case AllCondition() | SizeCondition() | ModCondition() | RegexCondition() | ElemMatchCondition():
             raise NotImplementedError("Query operator not yet translated to SQL")
-        case BitwiseCondition() | ExprCondition():
+        case BitwiseCondition() | ExprCondition() | JsonSchemaCondition():
             raise NotImplementedError("Query operator not yet translated to SQL")
         case AndCondition(clauses=clauses):
             sql_clauses: list[str] = []

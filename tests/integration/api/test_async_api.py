@@ -371,6 +371,33 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     await collection.insert_one({"_id": "1"})
                     self.assertEqual(await collection.find_one({"_id": "1"}), {"_id": "1"})
 
+    async def test_find_supports_top_level_json_schema_filter(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.validation.get_collection("query_users")
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "name": "Ada", "age": 10},
+                            {"_id": "2", "name": "Bob", "age": "old"},
+                            {"_id": "3", "age": 11},
+                        ]
+                    )
+
+                    result = await collection.find(
+                        {
+                            "$jsonSchema": {
+                                "required": ["name"],
+                                "properties": {
+                                    "name": {"bsonType": "string"},
+                                    "age": {"bsonType": "int"},
+                                },
+                            }
+                        }
+                    ).to_list()
+
+                    self.assertEqual(result, [{"_id": "1", "name": "Ada", "age": 10}])
+
     async def test_bypass_document_validation_allows_invalid_writes(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

@@ -359,3 +359,34 @@ class FilteringHelperTests(unittest.TestCase):
 
     def test_elem_match_candidate_returns_false_for_non_document_candidate(self):
         self.assertFalse(QueryEngine._match_elem_match_candidate("python", {"kind": "book"}))
+
+    def test_query_engine_supports_top_level_json_schema(self):
+        schema_filter = {
+            "$jsonSchema": {
+                "required": ["name"],
+                "properties": {
+                    "name": {"bsonType": "string"},
+                    "age": {"bsonType": "int"},
+                },
+            }
+        }
+
+        self.assertTrue(QueryEngine.match({"name": "Ada", "age": 10}, schema_filter))
+        self.assertFalse(QueryEngine.match({"age": 10}, schema_filter))
+        self.assertFalse(QueryEngine.match({"name": "Ada", "age": "old"}, schema_filter))
+
+    def test_query_engine_combines_top_level_json_schema_with_other_clauses(self):
+        filter_spec = {
+            "$jsonSchema": {
+                "required": ["tenant", "name"],
+                "properties": {
+                    "tenant": {"bsonType": "string"},
+                    "name": {"bsonType": "string"},
+                },
+            },
+            "tenant": "a",
+        }
+
+        self.assertTrue(QueryEngine.match({"tenant": "a", "name": "Ada"}, filter_spec))
+        self.assertFalse(QueryEngine.match({"tenant": "b", "name": "Ada"}, filter_spec))
+        self.assertFalse(QueryEngine.match({"tenant": "a"}, filter_spec))

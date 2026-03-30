@@ -364,6 +364,33 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection.insert_one({"_id": "1"})
                     self.assertEqual(collection.find_one({"_id": "1"}), {"_id": "1"})
 
+    def test_find_supports_top_level_json_schema_filter(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.validation.get_collection("query_users")
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "name": "Ada", "age": 10},
+                            {"_id": "2", "name": "Bob", "age": "old"},
+                            {"_id": "3", "age": 11},
+                        ]
+                    )
+
+                    result = collection.find(
+                        {
+                            "$jsonSchema": {
+                                "required": ["name"],
+                                "properties": {
+                                    "name": {"bsonType": "string"},
+                                    "age": {"bsonType": "int"},
+                                },
+                            }
+                        }
+                    ).to_list()
+
+                    self.assertEqual(result, [{"_id": "1", "name": "Ada", "age": 10}])
+
     def test_bypass_document_validation_allows_invalid_writes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
