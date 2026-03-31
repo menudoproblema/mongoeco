@@ -883,6 +883,12 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
             apply_pipeline([{"score": 1}, {"score": "x"}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": 1, "window": {"range": [0, "current"]}}}}}])
 
         with self.assertRaises(OperationFailure):
+            apply_pipeline([{"score": float("nan")}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": 1, "window": {"range": [0, 1]}}}}}])
+
+        with self.assertRaises(OperationFailure):
+            apply_pipeline([{"score": 1}, {"score": float("inf")}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": 1, "window": {"range": [0, 1]}}}}}])
+
+        with self.assertRaises(OperationFailure):
             apply_pipeline([{"_id": "1"}], [{"$count": ""}])
 
         with self.assertRaises(OperationFailure):

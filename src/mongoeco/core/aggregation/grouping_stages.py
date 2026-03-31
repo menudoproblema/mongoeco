@@ -1,5 +1,6 @@
 from functools import cmp_to_key
 from copy import deepcopy
+import math
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -414,14 +415,24 @@ def _apply_set_window_fields(
                         upper_bound = _require_range_bound(range_window[1])
                         sort_field = sort_spec[0][0]
                         found_current, current_value = get_document_value(document, sort_field)
-                        if not found_current or not isinstance(current_value, (int, float)) or isinstance(current_value, bool):
+                        if (
+                            not found_current
+                            or not isinstance(current_value, (int, float))
+                            or isinstance(current_value, bool)
+                            or not math.isfinite(float(current_value))
+                        ):
                             raise OperationFailure("$setWindowFields numeric range windows require numeric sort values")
                         lower_value = _resolve_range_value(current_value, lower_bound, lower=True)
                         upper_value = _resolve_range_value(current_value, upper_bound, lower=False)
                         window_documents = []
                         for candidate in ordered:
                             found_candidate, candidate_value = get_document_value(candidate, sort_field)
-                            if not found_candidate or not isinstance(candidate_value, (int, float)) or isinstance(candidate_value, bool):
+                            if (
+                                not found_candidate
+                                or not isinstance(candidate_value, (int, float))
+                                or isinstance(candidate_value, bool)
+                                or not math.isfinite(float(candidate_value))
+                            ):
                                 raise OperationFailure("$setWindowFields numeric range windows require numeric sort values")
                             numeric_candidate = float(candidate_value)
                             if lower_value <= numeric_candidate <= upper_value:

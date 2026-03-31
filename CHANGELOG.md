@@ -13,6 +13,9 @@ usa Semantic Versioning.
 - Se endurece la aritmetica BSON y la validacion de `$mod`: `bson_divide`
   y `bson_mod` rechazan ya divisores cero con `OperationFailure`, y los
   filtros `$mod` dejan de aceptar divisores `NaN` o infinitos.
+- Se validan ya como no soportados los valores `NaN` e infinitos en
+  ventanas `range` de `$setWindowFields`, evitando comparaciones
+  inconsistentes sobre el campo de ordenacion.
 
 ## [2.2.0] - 2026-03-31
 
