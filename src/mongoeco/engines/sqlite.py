@@ -1522,6 +1522,8 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         exclude_storage_key: str | None = None,
     ) -> None:
+        conn = self._require_connection()
+        collection_id = self._lookup_collection_id(conn, db_name, coll_name)
         for index in self._load_indexes(db_name, coll_name):
             if not index["unique"]:
                 continue
@@ -1530,6 +1532,19 @@ class SQLiteEngine(AsyncStorageEngine):
             fields = index["fields"]
             if any(self._document_traverses_array_on_field(document, field) for field in fields):
                 raise OperationFailure("SQLite unique indexes do not support paths that traverse arrays")
+            scalar_conflict = self._unique_index_conflict_via_scalar_entries(
+                conn,
+                collection_id,
+                index,
+                document,
+                exclude_storage_key=exclude_storage_key,
+            )
+            if scalar_conflict is True:
+                raise DuplicateKeyError(
+                    f"Duplicate key for unique index '{index['name']}': {fields}={tuple(self._index_value(document, field) for field in fields)!r}"
+                )
+            if scalar_conflict is False:
+                continue
             key = tuple(self._index_value(document, field) for field in fields)
             for storage_key, existing_document in self._load_documents(db_name, coll_name):
                 if exclude_storage_key is not None and storage_key == exclude_storage_key:
@@ -1541,6 +1556,41 @@ class SQLiteEngine(AsyncStorageEngine):
                     raise DuplicateKeyError(
                         f"Duplicate key for unique index '{index['name']}': {fields}={key!r}"
                     )
+
+    def _unique_index_conflict_via_scalar_entries(
+        self,
+        conn: sqlite3.Connection,
+        collection_id: int | None,
+        index: EngineIndexRecord,
+        document: Document,
+        *,
+        exclude_storage_key: str | None,
+    ) -> bool | None:
+        if collection_id is None or not self._supports_scalar_index(index):
+            return None
+        physical_name = index.get("scalar_physical_name")
+        if not physical_name:
+            return None
+        field = index["fields"][0]
+        signature = self._scalar_value_signature_for_document(document, field)
+        if signature is None:
+            return None
+        element_type, element_key = signature
+        params: list[object] = [
+            collection_id,
+            str(index["name"]),
+            self._multikey_type_score(element_type),
+            element_key,
+        ]
+        sql = (
+            f"SELECT 1 FROM scalar_index_entries INDEXED BY {self._quote_identifier(str(physical_name))} "
+            "WHERE collection_id = ? AND index_name = ? AND type_score = ? AND element_key = ?"
+        )
+        if exclude_storage_key is not None:
+            sql += " AND storage_key != ?"
+            params.append(exclude_storage_key)
+        sql += " LIMIT 1"
+        return conn.execute(sql, tuple(params)).fetchone() is not None
 
     def _index_value(self, document: Document, field: str) -> Any:
         values = QueryEngine.extract_values(document, field)

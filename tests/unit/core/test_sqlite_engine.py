@@ -1231,6 +1231,39 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_validate_document_against_unique_indexes_uses_scalar_entries_for_simple_unique_indexes(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["email"], unique=True, name="email_unique")
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+
+            with patch.object(engine, "_load_documents", side_effect=AssertionError("full-scan")):
+                with self.assertRaises(DuplicateKeyError):
+                    engine._validate_document_against_unique_indexes(
+                        "db",
+                        "coll",
+                        {"_id": "2", "email": "a@example.com"},
+                    )
+        finally:
+            await engine.disconnect()
+
+    async def test_validate_document_against_unique_indexes_skips_full_scan_when_scalar_fast_path_finds_no_conflict(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["email"], unique=True, name="email_unique")
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+
+            with patch.object(engine, "_load_documents", side_effect=AssertionError("full-scan")):
+                engine._validate_document_against_unique_indexes(
+                    "db",
+                    "coll",
+                    {"_id": "2", "email": "b@example.com"},
+                )
+        finally:
+            await engine.disconnect()
+
     async def test_unique_index_rejects_future_documents_that_traverse_arrays(self):
         engine = SQLiteEngine()
         await engine.connect()
