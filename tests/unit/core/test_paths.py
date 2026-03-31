@@ -4,6 +4,7 @@ import math
 import mongoeco.core.paths as paths_module
 from mongoeco.core.paths import delete_document_value, get_document_value, set_document_value
 from mongoeco.errors import OperationFailure
+from mongoeco.types import DBRef
 
 
 class PathHelpersTests(unittest.TestCase):
@@ -196,3 +197,19 @@ class PathHelpersTests(unittest.TestCase):
         self.assertEqual(get_document_value([1], "0.name"), (False, None))
         self.assertEqual(get_document_value(document, "items.2.name"), (False, None))
         self.assertEqual(get_document_value(document, "items.x"), (False, None))
+
+    def test_get_document_value_supports_dbref_subfields_and_extras(self):
+        document = {
+            "author": DBRef(
+                "users",
+                "ada",
+                database="observe",
+                extras={"tenant": "t1", "meta": {"region": "eu"}},
+            )
+        }
+
+        self.assertEqual(get_document_value(document, "author.$ref"), (True, "users"))
+        self.assertEqual(get_document_value(document, "author.$id"), (True, "ada"))
+        self.assertEqual(get_document_value(document, "author.$db"), (True, "observe"))
+        self.assertEqual(get_document_value(document, "author.tenant"), (True, "t1"))
+        self.assertEqual(get_document_value(document, "author.meta.region"), (True, "eu"))

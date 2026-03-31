@@ -2,6 +2,7 @@ import math
 from typing import Any
 
 from mongoeco.errors import OperationFailure
+from mongoeco.types import DBRef
 
 
 DEFAULT_MAX_ARRAY_INDEX = 10_000
@@ -22,6 +23,14 @@ def _make_container(next_path: str) -> dict[str, Any] | list[Any]:
 def _ensure_array_index_within_limit(index: int) -> None:
     if index > MAX_ARRAY_INDEX:
         raise OperationFailure(f"Array index {index} exceeds the maximum supported index of {MAX_ARRAY_INDEX}")
+
+
+def _path_mapping(value: Any) -> dict[str, Any] | None:
+    if isinstance(value, DBRef):
+        return value.as_document()
+    if isinstance(value, dict):
+        return value
+    return None
 
 
 def _same_value_for_update(left: Any, right: Any) -> bool:
@@ -52,6 +61,10 @@ def set_max_array_index(limit: int) -> None:
 
 
 def get_document_value(doc: dict[str, Any] | list[Any], path: str) -> tuple[bool, Any]:
+    doc_mapping = _path_mapping(doc)
+    if doc_mapping is not None and doc_mapping is not doc:
+        return get_document_value(doc_mapping, path)
+
     if isinstance(doc, list):
         if "." not in path:
             index = _parse_index(path)
@@ -63,6 +76,9 @@ def get_document_value(doc: dict[str, Any] | list[Any], path: str) -> tuple[bool
         index = _parse_index(first)
         if index is None or index >= len(doc):
             return False, None
+        nested = _path_mapping(doc[index])
+        if nested is not None:
+            return get_document_value(nested, rest)
         if not isinstance(doc[index], (dict, list)):
             return False, None
         return get_document_value(doc[index], rest)
@@ -73,7 +89,12 @@ def get_document_value(doc: dict[str, Any] | list[Any], path: str) -> tuple[bool
         return True, doc[path]
 
     first, rest = path.split(".", 1)
-    if first not in doc or not isinstance(doc[first], (dict, list)):
+    if first not in doc:
+        return False, None
+    nested = _path_mapping(doc[first])
+    if nested is not None:
+        return get_document_value(nested, rest)
+    if not isinstance(doc[first], (dict, list)):
         return False, None
     return get_document_value(doc[first], rest)
 

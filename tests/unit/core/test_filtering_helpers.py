@@ -11,7 +11,7 @@ from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Binary, Decimal128, ObjectId, Regex, Timestamp, UNDEFINED, PlanningMode
+from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, Timestamp, UNDEFINED, PlanningMode
 
 
 class FilteringHelperTests(unittest.TestCase):
@@ -93,6 +93,22 @@ class FilteringHelperTests(unittest.TestCase):
         self.assertEqual(QueryEngine._get_field_value([{"name": "Ada"}], "0.name"), (True, "Ada"))
         self.assertEqual(QueryEngine._get_field_value(1, "a"), (False, None))
         self.assertEqual(QueryEngine._get_field_value({"items": 1}, "items.name"), (False, None))
+
+    def test_get_field_value_and_extract_values_support_dbref_subfields(self):
+        document = {
+            "author": DBRef(
+                "users",
+                "ada",
+                database="observe",
+                extras={"tenant": "t1", "meta": {"region": "eu"}},
+            ),
+            "authors": [DBRef("users", "ada"), DBRef("users", "grace", extras={"tenant": "t2"})],
+        }
+
+        self.assertEqual(QueryEngine._get_field_value(document, "author.$id"), (True, "ada"))
+        self.assertEqual(QueryEngine._get_field_value(document, "author.meta.region"), (True, "eu"))
+        self.assertEqual(QueryEngine.extract_values(document, "authors.$id"), ["ada", "grace"])
+        self.assertEqual(QueryEngine.extract_values(document, "authors.tenant"), ["t2"])
 
     def test_get_field_value_returns_document_for_empty_path(self):
         document = {"name": "Ada"}
@@ -390,6 +406,27 @@ class FilteringHelperTests(unittest.TestCase):
         self.assertTrue(QueryEngine.match({"tenant": "a", "name": "Ada"}, filter_spec))
         self.assertFalse(QueryEngine.match({"tenant": "b", "name": "Ada"}, filter_spec))
         self.assertFalse(QueryEngine.match({"tenant": "a"}, filter_spec))
+
+    def test_query_engine_matches_dbref_subfields_in_filters(self):
+        document = {
+            "author": DBRef(
+                "users",
+                ObjectId("0123456789abcdef01234567"),
+                database="observe",
+                extras={"tenant": "t1"},
+            )
+        }
+
+        self.assertTrue(QueryEngine.match(document, {"author.$ref": "users"}))
+        self.assertTrue(
+            QueryEngine.match(
+                document,
+                {"author.$id": ObjectId("0123456789abcdef01234567")},
+            )
+        )
+        self.assertTrue(QueryEngine.match(document, {"author.$db": "observe"}))
+        self.assertTrue(QueryEngine.match(document, {"author.tenant": "t1"}))
+        self.assertFalse(QueryEngine.match(document, {"author.$id": "0123456789abcdef01234567"}))
 
     def test_query_engine_supports_json_schema_inside_logical_top_level_clauses(self):
         schema_clause = {

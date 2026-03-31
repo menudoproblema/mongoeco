@@ -11,7 +11,7 @@ from mongoeco.core.bson_scalars import bson_numeric_alias
 from mongoeco.core.collation import CollationSpec, compare_with_collation, values_equal_with_collation
 from mongoeco.core.identity import canonical_document_id
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Binary, Decimal128, ObjectId, Regex, Timestamp, UndefinedType
+from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, Timestamp, UndefinedType
 from mongoeco.core.query_plan import (
     AllCondition,
     AndCondition,
@@ -136,6 +136,14 @@ class QueryEngine:
             return ("objectid", value)
         if isinstance(value, Timestamp):
             return ("timestamp", value)
+        return None
+
+    @staticmethod
+    def _path_mapping(value: Any) -> dict[str, Any] | None:
+        if isinstance(value, DBRef):
+            return value.as_document()
+        if isinstance(value, dict):
+            return value
         return None
 
     @staticmethod
@@ -308,6 +316,10 @@ class QueryEngine:
         """
         Resuelve dot notation sobre dicts y listas de forma iterativa.
         """
+        doc_mapping = QueryEngine._path_mapping(doc)
+        if doc_mapping is not None and doc_mapping is not doc:
+            return QueryEngine._extract_values(doc_mapping, path)
+
         parts = _split_path(path)
         if not parts:
             if isinstance(doc, list):
@@ -318,10 +330,11 @@ class QueryEngine:
             return []
 
         current_level = [doc]
-        for part in parts:
+        for index, part in enumerate(parts):
             next_level = []
             is_digit = part.isdigit()
             idx = int(part) if is_digit else -1
+            is_terminal = index == len(parts) - 1
 
             for item in current_level:
                 if isinstance(item, list):
@@ -330,23 +343,30 @@ class QueryEngine:
                             value = item[idx]
                             if isinstance(value, list):
                                 next_level.append(value)
-                                next_level.extend(value)
+                                if is_terminal:
+                                    next_level.extend(value)
                             else:
                                 next_level.append(value)
                     else:
                         for subitem in item:
-                            if isinstance(subitem, dict) and part in subitem:
-                                val = subitem[part]
+                            mapping = QueryEngine._path_mapping(subitem)
+                            if mapping is not None and part in mapping:
+                                val = mapping[part]
                                 if isinstance(val, list):
                                     next_level.append(val)
-                                    next_level.extend(val)
+                                    if is_terminal:
+                                        next_level.extend(val)
                                 else:
                                     next_level.append(val)
-                elif isinstance(item, dict) and part in item:
-                    val = item[part]
+                else:
+                    mapping = QueryEngine._path_mapping(item)
+                    if mapping is None or part not in mapping:
+                        continue
+                    val = mapping[part]
                     if isinstance(val, list):
                         next_level.append(val)
-                        next_level.extend(val)
+                        if is_terminal:
+                            next_level.extend(val)
                     else:
                         next_level.append(val)
 
@@ -359,6 +379,10 @@ class QueryEngine:
     @staticmethod
     def _get_field_value(doc: Any, path: str) -> tuple[bool, Any]:
         """Versión rápida de acceso a un único valor (sin expansión de arrays)."""
+        doc_mapping = QueryEngine._path_mapping(doc)
+        if doc_mapping is not None and doc_mapping is not doc:
+            return QueryEngine._get_field_value(doc_mapping, path)
+
         parts = _split_path(path)
         if not parts:
             return True, doc
@@ -373,10 +397,11 @@ class QueryEngine:
                     current = current[idx]
                 else:
                     return False, None
-            elif isinstance(current, dict) and part in current:
-                current = current[part]
             else:
-                return False, None
+                mapping = QueryEngine._path_mapping(current)
+                if mapping is None or part not in mapping:
+                    return False, None
+                current = mapping[part]
         return True, current
 
     @staticmethod
@@ -428,8 +453,9 @@ class QueryEngine:
                                 next_level.append(value)
                     else:
                         for subitem in item:
-                            if isinstance(subitem, dict) and part in subitem:
-                                value = subitem[part]
+                            mapping = QueryEngine._path_mapping(subitem)
+                            if mapping is not None and part in mapping:
+                                value = mapping[part]
                                 if is_last:
                                     if isinstance(value, list):
                                         next_level.extend(value)
@@ -440,8 +466,11 @@ class QueryEngine:
                                     next_level.extend(value)
                                 else:
                                     next_level.append(value)
-                elif isinstance(item, dict) and part in item:
-                    value = item[part]
+                else:
+                    mapping = QueryEngine._path_mapping(item)
+                    if mapping is None or part not in mapping:
+                        continue
+                    value = mapping[part]
                     if is_last:
                         if isinstance(value, list):
                             next_level.extend(value)

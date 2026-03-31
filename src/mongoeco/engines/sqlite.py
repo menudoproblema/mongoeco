@@ -1372,6 +1372,40 @@ class SQLiteEngine(AsyncStorageEngine):
             for field in self._plan_fields(plan)
         )
 
+    def _field_traverses_dbref_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
+        if "." not in field:
+            return False
+        feature_key = (db_name, coll_name, f"traverses_dbref:{field}")
+        if feature_key in self._collection_features_cache:
+            return self._collection_features_cache[feature_key]
+        conn = self._require_connection()
+        parts = field.split(".")
+        result = False
+        for prefix_length in range(1, len(parts)):
+            prefix = ".".join(parts[:prefix_length])
+            tagged_type_path = json_path_for_field(prefix) + f'."{DocumentCodec._MARKER}".{DocumentCodec._TYPE}'
+            row = conn.execute(
+                """
+                SELECT 1
+                FROM documents
+                WHERE db_name = ? AND coll_name = ?
+                  AND json_extract(document, ?) = 'dbref'
+                LIMIT 1
+                """,
+                (db_name, coll_name, tagged_type_path),
+            ).fetchone()
+            if row is not None:
+                result = True
+                break
+        self._collection_features_cache[feature_key] = result
+        return result
+
+    def _plan_requires_python_for_dbref_paths(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
+        return any(
+            self._field_traverses_dbref_in_collection(db_name, coll_name, field)
+            for field in self._plan_fields(plan)
+        )
+
     @staticmethod
     def _comparison_fields(plan: QueryNode) -> set[str]:
         if isinstance(plan, (GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition)):
@@ -1693,6 +1727,7 @@ class SQLiteEngine(AsyncStorageEngine):
             hint=hint,
             dialect_requires_python_fallback=self._dialect_requires_python_fallback,
             plan_has_array_traversing_paths=self._plan_has_array_traversing_paths,
+            plan_requires_python_for_dbref_paths=self._plan_requires_python_for_dbref_paths,
             plan_requires_python_for_array_comparisons=self._plan_requires_python_for_array_comparisons,
             plan_requires_python_for_undefined=self._plan_requires_python_for_undefined,
             plan_requires_python_for_bytes=self._plan_requires_python_for_bytes,

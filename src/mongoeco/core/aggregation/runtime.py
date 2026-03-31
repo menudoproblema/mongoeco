@@ -45,7 +45,7 @@ from mongoeco.core.paths import delete_document_value, get_document_value, set_d
 from mongoeco.core.projections import apply_projection, validate_projection_spec
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Binary, Decimal128, Document, ObjectId, Regex, Timestamp, UndefinedType
+from mongoeco.types import Binary, DBRef, Decimal128, Document, ObjectId, Regex, Timestamp, UndefinedType
 from mongoeco.core.aggregation.accumulators import _evaluate_pick_n_input
 from mongoeco.core.aggregation.planning import Pipeline, _require_sort
 from mongoeco.core.aggregation.spill import AggregationSpillPolicy
@@ -346,6 +346,9 @@ _REMOVE = object()
 def _resolve_aggregation_field_path(value: Any, path: str) -> Any:
     if not path:
         return value
+
+    if isinstance(value, DBRef):
+        return _resolve_aggregation_field_path(value.as_document(), path)
 
     if isinstance(value, list):
         head, _, tail = path.partition(".")

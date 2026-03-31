@@ -98,6 +98,10 @@ def _path_has_numeric_segment(path: str) -> bool:
     return any(part.isdigit() for part in path.split("."))
 
 
+def _path_uses_dbref_special_segment(path: str) -> bool:
+    return any(part in {"$ref", "$id", "$db"} for part in path.split("."))
+
+
 def path_array_prefixes(path: str) -> tuple[str, ...]:
     parts = path.split(".")
     prefixes: list[str] = []
@@ -751,6 +755,9 @@ def translate_compiled_update_plan(
 def translate_query_plan(plan: QueryNode) -> SqlFragment:
     if not is_concrete_query_node(plan):
         raise TypeError(f"Unsupported query plan node: {type(plan)!r}")
+    field = getattr(plan, "field", None)
+    if isinstance(field, str) and _path_uses_dbref_special_segment(field):
+        raise NotImplementedError("DBRef special subfields require Python query fallback")
     match plan:
         case MatchAll():
             return "1 = 1", []

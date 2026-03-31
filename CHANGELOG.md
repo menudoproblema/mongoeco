@@ -81,6 +81,9 @@ usa Semantic Versioning.
 - Se anade `scripts/smoke_installed_wheel.py` para reproducir el smoke
   del wheel instalado en un entorno limpio sin reconstruir los comandos
   manualmente.
+- Se anade soporte de lectura por subcampo sobre `DBRef` en filtros y
+  joins, incluyendo acceso a `"$ref"`, `"$id"`, `"$db"` y `extras`
+  mediante dot-paths.
 
 ### Changed
 

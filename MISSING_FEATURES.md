@@ -14,7 +14,6 @@
 | 14        | Hacer `vectorSearch` algo mas que un runtime experimental         | Medio-Alto  | Alto        | `README.md:20`<br>`search.py:187`<br>`TODO.md:25`                 |
 | 15        | `$collStats` como stage de agregacion                             | Medio       | Bajo-Medio  | `database_commands.py:51`<br>`stages.py:256`                      |
 | 16        | Stages analiticos `$densify` y `$fill`                            | Medio       | Medio-Alto  | `stages.py:256`<br>`compat_catalog_snapshot.md:29`                |
-| 17        | Acceso por subcampo sobre `DBRef` en filtros y joins              | Medio-Bajo  | Bajo-Medio  | `types.py:227`<br>`paths.py:48`<br>`filtering.py:301`             |
 | 18        | `codec options` avanzadas                                         | Medio       | Medio       | `types.py:1244`                                                   |
 | 19        | Window functions avanzadas en `$setWindowFields`                  | Medio       | Medio-Alto  | `test_aggregation_expression_basics.py:684`                       |
 | 20        | `$redact` en agregacion                                           | Medio-Bajo  | Medio-Alto  | `stages.py:256`                                                   |

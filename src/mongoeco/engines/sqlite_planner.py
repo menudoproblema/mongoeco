@@ -27,6 +27,7 @@ def compile_sqlite_read_execution_plan(
     hint: str | IndexKeySpec | None,
     dialect_requires_python_fallback: Callable[[object], bool],
     plan_has_array_traversing_paths: Callable[[str, str, object], bool],
+    plan_requires_python_for_dbref_paths: Callable[[str, str, object], bool],
     plan_requires_python_for_array_comparisons: Callable[[str, str, object], bool],
     plan_requires_python_for_undefined: Callable[[str, str, object], bool],
     plan_requires_python_for_bytes: Callable[[str, str, object], bool],
@@ -59,6 +60,15 @@ def compile_sqlite_read_execution_plan(
             physical_plan=_python_physical_plan(semantics, "array-traversal"),
             use_sql=False,
             fallback_reason="Array traversal requires Python fallback",
+        )
+    if plan_requires_python_for_dbref_paths(db_name, coll_name, semantics.query_plan):
+        return SQLiteReadExecutionPlan(
+            semantics=semantics,
+            strategy="python",
+            execution_lineage=_python_lineage(semantics, "DBRef subfield access requires Python fallback"),
+            physical_plan=_python_physical_plan(semantics, "dbref-subfield"),
+            use_sql=False,
+            fallback_reason="DBRef subfield access requires Python fallback",
         )
     if plan_requires_python_for_array_comparisons(db_name, coll_name, semantics.query_plan):
         return SQLiteReadExecutionPlan(

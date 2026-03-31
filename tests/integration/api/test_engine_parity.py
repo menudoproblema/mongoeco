@@ -7,7 +7,7 @@ from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import DuplicateKeyError
-from mongoeco.types import ObjectId, UNDEFINED
+from mongoeco.types import DBRef, ObjectId, UNDEFINED
 from tests.support import open_client
 
 
@@ -69,6 +69,70 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(memory_documents, sqlite_documents)
+
+    async def test_dbref_subfield_filter_and_lookup_match_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, list[object]]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                users = client.get_database("db").get_collection("users")
+                posts = client.get_database("db").get_collection("posts")
+
+                await users.insert_one({"_id": "u1", "name": "Ada", "tenant": "a"})
+                await users.insert_one({"_id": "u2", "name": "Grace", "tenant": "b"})
+                await posts.insert_one(
+                    {
+                        "_id": "p1",
+                        "author": DBRef("users", "u1", database="db", extras={"tenant": "a", "meta": {"region": "eu"}}),
+                    }
+                )
+                await posts.insert_one(
+                    {
+                        "_id": "p2",
+                        "author": DBRef("users", "u2", database="db", extras={"tenant": "b"}),
+                    }
+                )
+
+                results[engine_name] = {
+                    "filter": [
+                        document["_id"]
+                        async for document in posts.find(
+                            {"author.$id": "u1"},
+                            sort=[("_id", 1)],
+                        )
+                    ],
+                    "filter_by_tenant": [
+                        document["_id"]
+                        async for document in posts.find(
+                            {"author.tenant": "a"},
+                            sort=[("_id", 1)],
+                        )
+                    ],
+                    "filter_by_region": [
+                        document["_id"]
+                        async for document in posts.find(
+                            {"author.meta.region": "eu"},
+                            sort=[("_id", 1)],
+                        )
+                    ],
+                    "lookup": await posts.aggregate(
+                        [
+                            {"$lookup": {"from": "users", "localField": "author.$id", "foreignField": "_id", "as": "user"}},
+                            {"$lookup": {"from": "users", "localField": "author.tenant", "foreignField": "tenant", "as": "tenant_user"}},
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "author_id": "$author.$id",
+                                    "author_region": "$author.meta.region",
+                                    "user_names": "$user.name",
+                                    "tenant_user_names": "$tenant_user.name",
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list(),
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
 
     async def test_find_has_same_results_in_memory_and_sqlite_for_array_scalar_equality(self):
         results: dict[str, list[str]] = {}
