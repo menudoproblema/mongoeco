@@ -273,6 +273,10 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
                 explanation = await cursor.explain()
                 self.assertEqual(explanation["planning_mode"], "relaxed")
                 self.assertTrue(explanation["planning_issues"])
+                self.assertEqual(
+                    explanation["details"]["reason"],
+                    "operation has deferred planning issues (relaxed): query: Unsupported top-level query operator: $where",
+                )
                 with self.assertRaises(Exception):
                     await cursor.to_list()
             finally:

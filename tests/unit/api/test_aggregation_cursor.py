@@ -16,6 +16,7 @@ from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import ExecutionTimeout, InvalidOperation, OperationFailure
+from mongoeco.types import PlanningIssue, PlanningMode
 
 
 class _FakeAsyncFindCursor:
@@ -462,6 +463,23 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explain_semantics.hint, "kind_1")
         self.assertEqual(explain_semantics.comment, "trace")
         self.assertEqual(explain_semantics.max_time_ms, 5)
+
+    async def test_async_aggregation_cursor_explain_surfaces_deferred_reason_details(self):
+        collection = _FakeCollection([{"_id": "1", "kind": "view"}])
+        cursor = AsyncAggregationCursor(collection, [{"$match": {"kind": "view"}}])
+        cursor._operation = cursor._operation.with_overrides(
+            planning_mode=PlanningMode.RELAXED,
+            planning_issues=(PlanningIssue(scope="aggregate", message="unsupported stage"),),
+        )
+
+        explanation = await cursor.explain()
+
+        self.assertEqual(explanation["planning_mode"], "relaxed")
+        self.assertEqual(explanation["planning_issues"][0]["scope"], "aggregate")
+        self.assertEqual(
+            explanation["engine_plan"]["details"]["reason"],
+            "operation has deferred planning issues (relaxed): aggregate: unsupported stage",
+        )
 
     async def test_stream_batches_use_compiled_pushdown_operations(self):
         collection = _FakeCollection(

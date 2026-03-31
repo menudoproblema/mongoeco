@@ -35,3 +35,7 @@ jobs:
 
       - name: Build distributions
         run: python -m build --sdist --wheel
+
+      - name: Smoke installed wheel
+        if: matrix.python-version == '3.14'
+        run: python scripts/smoke_installed_wheel.py
