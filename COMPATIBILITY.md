@@ -273,6 +273,10 @@ Matriz práctica de capacidades:
 * sin backend Unicode
   * solo `simple`
 
+Los change streams locales mantienen además un historial en memoria acotado.
+El tamaño de esa retención es configurable desde cliente y determina hasta qué
+token o `startAtOperationTime` se puede reanudar sin error.
+
 La API runtime expone esta información en
 `mongoeco.core.collation.collation_backend_info()`, que devuelve:
 

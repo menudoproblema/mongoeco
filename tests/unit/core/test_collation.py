@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 
 import mongoeco.core.collation as collation_module
+from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.collation import (
     collation_backend_info,
     CollationBackendInfo,
@@ -186,6 +187,25 @@ class CollationTests(unittest.TestCase):
 
         compare_icu.assert_not_called()
         compare_pyuca.assert_not_called()
+
+    def test_simple_collation_matches_baseline_string_semantics(self):
+        spec = normalize_collation({"locale": "simple", "strength": 3})
+        samples = [
+            ("A", "a"),
+            ("10", "2"),
+            ("Á", "A"),
+            ("hello", "hello"),
+        ]
+
+        for left, right in samples:
+            self.assertEqual(
+                compare_with_collation(left, right, collation=spec),
+                MONGODB_DIALECT_70.policy.compare_values(left, right),
+            )
+            self.assertEqual(
+                values_equal_with_collation(left, right, collation=spec),
+                MONGODB_DIALECT_70.policy.values_equal(left, right),
+            )
 
     def test_icu_collation_available_exposes_backend_presence(self):
         self.assertIsInstance(icu_collation_available(), bool)

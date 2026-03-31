@@ -131,6 +131,9 @@ usa Semantic Versioning.
   directos comparten ya un `ChangeStreamHub` persistente y el historial
   retenido en memoria queda acotado, con errores explicitos cuando un
   cursor o un resume token apuntan a eventos ya expirados.
+- El tamaño de retención del historial local de change streams pasa a
+  poder configurarse desde los clientes async/sync y desde constructores
+  directos de base de datos o colección.
 - `watch()` acepta ya `fullDocument` (`default`, `updateLookup`,
   `whenAvailable`, `required`), los resume tokens dejan de exponerse
   como enteros decimales simples y `drop_database()` insiste hasta

@@ -171,6 +171,7 @@ class AsyncCollection:
         codec_options: CodecOptions | None = None,
         planning_mode: PlanningMode = PlanningMode.STRICT,
         change_hub: ChangeStreamHub | None = None,
+        change_stream_history_size: int | None = 10_000,
     ):
         self._engine = engine
         self._db_name = db_name
@@ -192,7 +193,12 @@ class AsyncCollection:
         self._read_preference = normalize_read_preference(read_preference)
         self._codec_options = normalize_codec_options(codec_options)
         self._planning_mode = planning_mode
-        self._change_hub = ChangeStreamHub() if change_hub is None else change_hub
+        self._change_stream_history_size = change_stream_history_size
+        self._change_hub = (
+            ChangeStreamHub(max_retained_events=change_stream_history_size)
+            if change_hub is None
+            else change_hub
+        )
 
     def with_options(
         self,
@@ -217,6 +223,7 @@ class AsyncCollection:
             codec_options=self._codec_options if codec_options is None else codec_options,
             planning_mode=self._planning_mode if planning_mode is None else planning_mode,
             change_hub=self._change_hub,
+            change_stream_history_size=self._change_stream_history_size,
         )
 
     def __getattr__(self, name: str) -> "AsyncCollection":

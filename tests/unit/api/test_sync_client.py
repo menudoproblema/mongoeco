@@ -188,6 +188,14 @@ class SyncClientUnitTests(unittest.TestCase):
 
         self.assertFalse(client.__exit__(None, None, None))
 
+    def test_client_preserves_configured_change_stream_history_size(self):
+        client = MongoClient(MemoryEngine(), change_stream_history_size=321)
+        try:
+            self.assertEqual(client.change_stream_history_size, 321)
+            self.assertEqual(client.with_options().change_stream_history_size, 321)
+        finally:
+            client.close()
+
     def test_client_drop_database_prefers_engine_fast_path(self):
         class EngineStub:
             def __init__(self):

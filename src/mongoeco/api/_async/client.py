@@ -78,6 +78,7 @@ class AsyncDatabase:
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
         change_hub: ChangeStreamHub | None = None,
+        change_stream_history_size: int | None = 10_000,
     ):
         self._engine = engine
         self._db_name = db_name
@@ -97,7 +98,12 @@ class AsyncDatabase:
         self._read_concern = normalize_read_concern(read_concern)
         self._read_preference = normalize_read_preference(read_preference)
         self._codec_options = normalize_codec_options(codec_options)
-        self._change_hub = ChangeStreamHub() if change_hub is None else change_hub
+        self._change_stream_history_size = change_stream_history_size
+        self._change_hub = (
+            ChangeStreamHub(max_retained_events=change_stream_history_size)
+            if change_hub is None
+            else change_hub
+        )
         self._admin = AsyncDatabaseAdminService(self)
 
     def __getattr__(self, name: str) -> AsyncCollection:
@@ -128,6 +134,7 @@ class AsyncDatabase:
             read_preference=self._read_preference if read_preference is None else read_preference,
             codec_options=self._codec_options if codec_options is None else codec_options,
             change_hub=self._change_hub,
+            change_stream_history_size=self._change_stream_history_size,
         )
 
     def with_options(
@@ -310,6 +317,7 @@ class AsyncMongoClient:
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
         transaction_options: TransactionOptions | None = None,
+        change_stream_history_size: int | None = 10_000,
     ):
         self._engine = engine or self._create_default_engine()
         self._mongodb_dialect_resolution = resolve_mongodb_dialect_resolution(
@@ -334,7 +342,8 @@ class AsyncMongoClient:
         self._write_concern = self._driver_runtime.concern_policy.write_concern
         self._read_concern = self._driver_runtime.concern_policy.read_concern
         self._read_preference = self._driver_runtime.concern_policy.read_preference
-        self._change_hub = ChangeStreamHub()
+        self._change_stream_history_size = change_stream_history_size
+        self._change_hub = ChangeStreamHub(max_retained_events=change_stream_history_size)
 
     @staticmethod
     def _create_default_engine() -> AsyncStorageEngine:
@@ -383,6 +392,7 @@ class AsyncMongoClient:
                 if transaction_options is None
                 else transaction_options
             ),
+            change_stream_history_size=self._change_stream_history_size,
         )
 
     def get_database(
@@ -406,6 +416,7 @@ class AsyncMongoClient:
             read_preference=self._read_preference if read_preference is None else read_preference,
             codec_options=self._codec_options if codec_options is None else codec_options,
             change_hub=self._change_hub,
+            change_stream_history_size=self._change_stream_history_size,
         )
 
     def get_default_database(
@@ -634,6 +645,10 @@ class AsyncMongoClient:
     @property
     def transaction_options(self) -> TransactionOptions:
         return self._transaction_options
+
+    @property
+    def change_stream_history_size(self) -> int | None:
+        return self._change_stream_history_size
 
     @property
     def client_uri(self) -> MongoUri:

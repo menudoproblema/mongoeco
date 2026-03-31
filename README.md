@@ -83,6 +83,9 @@ Unicode collation backend:
 * `numericOrdering` and `caseLevel` are supported for `locale=en`
 * `PyICU` and `pyuca` are intentionally close, but may still differ on
   advanced tailoring details outside the currently supported locale surface
+* local change streams retain a bounded in-memory history; the retention size
+  can be tuned with `change_stream_history_size` on async/sync clients and on
+  direct async database/collection constructors
 
 ## Quick Start
 
