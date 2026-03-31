@@ -79,7 +79,7 @@ async def refresh_topology(
         finally:
             await complete_execution(execution)
     topology_type = _derive_topology_type(tuple(refreshed_servers), fallback=current_topology.topology_type)
-    set_name = next((server.set_name for server in refreshed_servers if server.set_name), None)
+    set_name = _derive_set_name(tuple(refreshed_servers), topology_type=topology_type)
     logical_session_timeout = min(
         (server.logical_session_timeout_minutes for server in refreshed_servers if server.logical_session_timeout_minutes),
         default=None,
@@ -88,7 +88,8 @@ async def refresh_topology(
         topology_type=topology_type,
         servers=tuple(refreshed_servers),
         set_name=set_name,
-        compatible=all(server.error is None for server in refreshed_servers),
+        compatible=all(server.error is None for server in refreshed_servers)
+        and _topology_is_compatible(tuple(refreshed_servers), topology_type=topology_type),
         logical_session_timeout_minutes=logical_session_timeout,
     )
 
@@ -146,11 +147,62 @@ def _derive_topology_type(
     *,
     fallback: TopologyType,
 ) -> TopologyType:
-    server_types = {server.server_type for server in servers}
-    if ServerType.MONGOS in server_types:
+    families = {
+        family
+        for server in servers
+        if (family := _server_family(server.server_type)) is not None
+    }
+    if not families:
+        return fallback
+    if len(families) > 1:
+        return TopologyType.UNKNOWN
+    family = next(iter(families))
+    if family is TopologyType.SHARDED:
         return TopologyType.SHARDED
-    if ServerType.RS_PRIMARY in server_types or ServerType.RS_SECONDARY in server_types:
+    if family is TopologyType.REPLICA_SET:
         return TopologyType.REPLICA_SET
-    if server_types == {ServerType.STANDALONE}:
+    if family is TopologyType.SINGLE:
         return TopologyType.SINGLE
     return fallback
+
+
+def _server_family(server_type: ServerType) -> TopologyType | None:
+    if server_type is ServerType.MONGOS:
+        return TopologyType.SHARDED
+    if server_type in {ServerType.RS_PRIMARY, ServerType.RS_SECONDARY}:
+        return TopologyType.REPLICA_SET
+    if server_type is ServerType.STANDALONE:
+        return TopologyType.SINGLE
+    return None
+
+
+def _derive_set_name(
+    servers: tuple[ServerDescription, ...],
+    *,
+    topology_type: TopologyType,
+) -> str | None:
+    if topology_type is not TopologyType.REPLICA_SET:
+        return None
+    set_names = {server.set_name for server in servers if server.set_name}
+    if len(set_names) != 1:
+        return None
+    return next(iter(set_names))
+
+
+def _topology_is_compatible(
+    servers: tuple[ServerDescription, ...],
+    *,
+    topology_type: TopologyType,
+) -> bool:
+    families = {
+        family
+        for server in servers
+        if (family := _server_family(server.server_type)) is not None
+    }
+    if len(families) > 1:
+        return False
+    if topology_type is TopologyType.REPLICA_SET:
+        set_names = {server.set_name for server in servers if server.set_name}
+        if len(set_names) > 1:
+            return False
+    return True

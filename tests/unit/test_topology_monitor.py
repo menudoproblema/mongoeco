@@ -4,6 +4,7 @@ from mongoeco.driver.topology import ServerDescription, ServerType, TopologyDesc
 from mongoeco.driver.topology_monitor import (
     _derive_topology_type,
     _server_description_from_hello,
+    _topology_is_compatible,
     build_probe_plan,
     refresh_topology,
 )
@@ -101,3 +102,68 @@ class TopologyMonitorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(sharded, TopologyType.SHARDED)
         self.assertEqual(fallback, TopologyType.REPLICA_SET)
+
+    def test_derive_topology_type_marks_mixed_families_unknown(self):
+        topology_type = _derive_topology_type(
+            (
+                ServerDescription(address="router:27017", server_type=ServerType.MONGOS),
+                ServerDescription(address="db1:27017", server_type=ServerType.STANDALONE),
+            ),
+            fallback=TopologyType.SINGLE,
+        )
+
+        self.assertEqual(topology_type, TopologyType.UNKNOWN)
+
+    def test_topology_compatibility_rejects_mixed_families_and_conflicting_set_names(self):
+        self.assertFalse(
+            _topology_is_compatible(
+                (
+                    ServerDescription(address="router:27017", server_type=ServerType.MONGOS),
+                    ServerDescription(address="db1:27017", server_type=ServerType.STANDALONE),
+                ),
+                topology_type=TopologyType.UNKNOWN,
+            )
+        )
+        self.assertFalse(
+            _topology_is_compatible(
+                (
+                    ServerDescription(address="db1:27017", server_type=ServerType.RS_PRIMARY, set_name="rs0"),
+                    ServerDescription(address="db2:27018", server_type=ServerType.RS_SECONDARY, set_name="rs1"),
+                ),
+                topology_type=TopologyType.REPLICA_SET,
+            )
+        )
+
+    async def test_refresh_topology_marks_mixed_server_families_incompatible(self):
+        topology = TopologyDescription(
+            topology_type=TopologyType.UNKNOWN,
+            servers=(
+                ServerDescription(address="router:27017", server_type=ServerType.UNKNOWN),
+                ServerDescription(address="db1:27017", server_type=ServerType.UNKNOWN),
+            ),
+        )
+        prepared: list[object] = []
+
+        async def prepare_execution(plan, attempt_number):
+            token = object()
+            prepared.append(token)
+            return token
+
+        async def complete_execution(_execution):
+            return None
+
+        class _MixedTransport:
+            async def send(self, execution):
+                if execution is prepared[0]:
+                    return {"msg": "isdbgrid"}
+                return {"isWritablePrimary": True}
+
+        refreshed = await refresh_topology(
+            current_topology=topology,
+            prepare_execution=prepare_execution,
+            complete_execution=complete_execution,
+            transport=_MixedTransport(),
+        )
+
+        self.assertEqual(refreshed.topology_type, TopologyType.UNKNOWN)
+        self.assertFalse(refreshed.compatible)
