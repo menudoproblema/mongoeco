@@ -21,10 +21,22 @@ class BsonScalarOverflowError(OverflowError):
 class BsonInt32:
     value: int
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.value, int) or isinstance(self.value, bool):
+            raise TypeError("BsonInt32 requires an integer value")
+        if self.value < INT32_MIN or self.value > INT32_MAX:
+            raise BsonScalarOverflowError("integer exceeds BSON int32 range")
+
 
 @dataclass(frozen=True, slots=True)
 class BsonInt64:
     value: int
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.value, int) or isinstance(self.value, bool):
+            raise TypeError("BsonInt64 requires an integer value")
+        if self.value < INT64_MIN or self.value > INT64_MAX:
+            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
 
 
 @dataclass(frozen=True, slots=True)

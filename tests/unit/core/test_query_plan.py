@@ -25,7 +25,7 @@ from mongoeco.core.query_plan import (
     compile_filter,
     ensure_query_plan,
 )
-from mongoeco.types import PlanningMode
+from mongoeco.types import PlanningMode, Regex
 
 
 class QueryPlanTests(unittest.TestCase):
@@ -168,6 +168,10 @@ class QueryPlanTests(unittest.TestCase):
             RegexCondition("name", "^ad", "i"),
         )
         self.assertEqual(
+            compile_filter({"name": {"$regex": Regex("^ad", "i"), "$options": "m"}}),
+            RegexCondition("name", "^ad", "im"),
+        )
+        self.assertEqual(
             compile_filter({"name": re.compile("^ad", re.IGNORECASE)}),
             RegexCondition("name", "^ad", "i"),
         )
@@ -201,6 +205,15 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({"flag": {"$type": ["number", "string"]}}),
             TypeCondition("flag", ("number", "string"), aliases=frozenset({"double", "int", "long", "decimal", "string"})),
         )
+        self.assertEqual(
+            compile_filter({"flag": {"$type": [13, 14, 15]}}),
+            TypeCondition(
+                "flag",
+                (13, 14, 15),
+                aliases=frozenset({"javascript", "symbol", "javascriptWithScope"}),
+            ),
+        )
+        self.assertIsInstance(compile_filter({"$comment": "trace-only"}), MatchAll)
 
     def test_compile_filter_rejects_invalid_all_size_and_regex_payloads(self):
         with self.assertRaises(ValueError):
@@ -223,6 +236,8 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({"name": {"$not": {}}})
         with self.assertRaises(ValueError):
             compile_filter({"name": {"$not": {"x": 1}}})
+        with self.assertRaises(ValueError):
+            compile_filter({"name": {"$not": {"$regex": "^ad", "x": 1}}})
         with self.assertRaises(ValueError):
             compile_filter({"items": {"$elemMatch": 1}})
 
@@ -306,6 +321,12 @@ class QueryPlanTests(unittest.TestCase):
     def test_compile_filter_rejects_invalid_nor_payload(self):
         with self.assertRaises(ValueError):
             compile_filter({"$nor": {"name": "Ada"}})
+        with self.assertRaises(ValueError):
+            compile_filter({"$and": []})
+        with self.assertRaises(ValueError):
+            compile_filter({"$or": []})
+        with self.assertRaises(ValueError):
+            compile_filter({"$nor": []})
         with self.assertRaises(ValueError):
             compile_filter({"$and": [[]]})  # type: ignore[list-item]
         with self.assertRaises(ValueError):

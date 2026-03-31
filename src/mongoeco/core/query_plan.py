@@ -235,11 +235,15 @@ def _normalize_type_specifier(type_spec: Any) -> tuple[str, ...]:
             3: ("object",),
             4: ("array",),
             5: ("binData",),
+            6: ("dbPointer",),
             7: ("objectId",),
             8: ("bool",),
             9: ("date",),
             10: ("null",),
             11: ("regex",),
+            13: ("javascript",),
+            14: ("symbol",),
+            15: ("javascriptWithScope",),
             16: ("int",),
             17: ("timestamp",),
             18: ("long",),
@@ -261,6 +265,10 @@ def _normalize_type_specifier(type_spec: Any) -> tuple[str, ...]:
         "date": ("date",),
         "null": ("null",),
         "regex": ("regex",),
+        "dbpointer": ("dbPointer",),
+        "javascript": ("javascript",),
+        "symbol": ("symbol",),
+        "javascriptwithscope": ("javascriptWithScope",),
         "int": ("int",),
         "timestamp": ("timestamp",),
         "long": ("long",),
@@ -406,9 +414,9 @@ def _compile_field_condition(
         elif operator == "$options":
             if not isinstance(value, str):
                 raise ValueError("$options necesita un string")
-            regex_options = value
+            regex_options += value
         elif operator == "$not":
-            if not isinstance(value, dict) or not any(isinstance(key, str) and key.startswith("$") for key in value):
+            if not isinstance(value, dict) or not value or not all(isinstance(key, str) and key.startswith("$") for key in value):
                 raise ValueError("$not necesita una expresion de operador")
             clauses.append(NotCondition(_compile_field_condition(field, value, dialect=dialect)))
         elif operator == "$elemMatch":
@@ -502,6 +510,8 @@ def _compile_filter_strict(
     for key, value in filter_spec.items():
         if isinstance(key, str) and key.startswith("$") and not dialect.supports_query_top_level_operator(key):
             raise OperationFailure(f"Unsupported top-level query operator: {key}")
+        if key == "$comment":
+            continue
         if key == "$expr":
             clauses.append(ExprCondition(value, {} if variables is None else dict(variables)))
             continue
@@ -516,6 +526,8 @@ def _compile_filter_strict(
         if key == "$and":
             if not isinstance(value, list):
                 raise ValueError("$and necesita una lista de filtros")
+            if not value:
+                raise ValueError("$and debe recibir una lista no vacia")
             clauses.append(
                 AndCondition(
                     tuple(
@@ -533,6 +545,8 @@ def _compile_filter_strict(
         if key == "$or":
             if not isinstance(value, list):
                 raise ValueError("$or necesita una lista de filtros")
+            if not value:
+                raise ValueError("$or debe recibir una lista no vacia")
             clauses.append(
                 OrCondition(
                     tuple(
@@ -550,6 +564,8 @@ def _compile_filter_strict(
         if key == "$nor":
             if not isinstance(value, list):
                 raise ValueError("$nor necesita una lista de filtros")
+            if not value:
+                raise ValueError("$nor debe recibir una lista no vacia")
             clauses.append(
                 NotCondition(
                     OrCondition(
@@ -570,6 +586,8 @@ def _compile_filter_strict(
             raise OperationFailure(f"Unsupported top-level query operator: {key}")
         clauses.append(_compile_field_condition(key, value, dialect=dialect))
 
+    if not clauses:
+        return MatchAll()
     if len(clauses) == 1:
         return clauses[0]
     return AndCondition(tuple(clauses))

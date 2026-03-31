@@ -6,6 +6,11 @@ import re
 import uuid
 from typing import Any, assert_never
 
+try:
+    from bson.code import Code as BsonCode
+except Exception:  # pragma: no cover - optional dependency
+    BsonCode = None
+
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_scalars import bson_numeric_alias
 from mongoeco.core.collation import CollationSpec, compare_with_collation, values_equal_with_collation
@@ -980,12 +985,13 @@ class QueryEngine:
         collation: CollationSpec | None = None,
     ) -> bool:
         candidates = QueryEngine._extract_values(doc, field)
+        null_matches_undefined = any(item is None for item in values) and dialect.policy.null_query_matches_undefined()
         if not candidates:
             has_null = any(item is None for item in values)
             return not (has_null and dialect.policy.null_query_matches_undefined())
         literal_lookup, regex_values, residual_values = QueryEngine._prepare_membership_values(
             values,
-            null_matches_undefined=False,
+            null_matches_undefined=null_matches_undefined,
             collation=collation,
         )
         return not any(
@@ -994,7 +1000,7 @@ class QueryEngine:
                 literal_lookup=literal_lookup,
                 regex_values=regex_values,
                 residual_values=residual_values,
-                null_matches_undefined=False,
+                null_matches_undefined=null_matches_undefined,
                 dialect=dialect,
                 collation=collation,
             )
@@ -1018,11 +1024,15 @@ class QueryEngine:
                 3: ("object",),
                 4: ("array",),
                 5: ("binData",),
+                6: ("dbPointer",),
                 7: ("objectId",),
                 8: ("bool",),
                 9: ("date",),
                 10: ("null",),
                 11: ("regex",),
+                13: ("javascript",),
+                14: ("symbol",),
+                15: ("javascriptWithScope",),
                 16: ("int",),
                 17: ("timestamp",),
                 18: ("long",),
@@ -1044,6 +1054,10 @@ class QueryEngine:
             "date": ("date",),
             "null": ("null",),
             "regex": ("regex",),
+            "dbpointer": ("dbPointer",),
+            "javascript": ("javascript",),
+            "symbol": ("symbol",),
+            "javascriptwithscope": ("javascriptWithScope",),
             "int": ("int",),
             "timestamp": ("timestamp",),
             "long": ("long",),
@@ -1089,6 +1103,10 @@ class QueryEngine:
             return candidate is None
         if alias == "regex":
             return isinstance(candidate, (re.Pattern, Regex))
+        if alias == "javascript":
+            return BsonCode is not None and isinstance(candidate, BsonCode) and candidate.scope is None
+        if alias == "javascriptWithScope":
+            return BsonCode is not None and isinstance(candidate, BsonCode) and candidate.scope is not None
         if alias == "undefined":
             return isinstance(candidate, UndefinedType)
         return False
@@ -1249,7 +1267,6 @@ class QueryEngine:
             isinstance(value, (int, float))
             and not isinstance(value, bool)
             and math.isfinite(value)
-            and math.isfinite(divisor)
             and divisor != 0
             and QueryEngine._mongo_remainder(value, divisor) == remainder
             for value in values

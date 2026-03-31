@@ -6,6 +6,11 @@ import unittest
 import uuid
 from unittest.mock import patch
 
+try:
+    from bson.code import Code as BsonCode
+except Exception:  # pragma: no cover - optional dependency
+    BsonCode = None
+
 import mongoeco.core.filtering as filtering_module
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.filtering import BSONComparator, HANDLED_QUERY_NODE_TYPES, QueryEngine
@@ -126,6 +131,14 @@ class QueryEngineTests(unittest.TestCase):
         self.assertTrue(QueryEngine.match({"value": Decimal128("1.5")}, {"value": {"$type": "decimal"}}))
         self.assertTrue(QueryEngine.match({"value": Regex("^ad", "i")}, {"value": {"$type": "regex"}}))
         self.assertTrue(QueryEngine.match({"value": Timestamp(10, 1)}, {"value": {"$type": "timestamp"}}))
+        if BsonCode is not None:
+            self.assertTrue(QueryEngine.match({"value": BsonCode("function() { return 1; }")}, {"value": {"$type": 13}}))
+            self.assertTrue(
+                QueryEngine.match(
+                    {"value": BsonCode("function() { return x; }", {"x": 1})},
+                    {"value": {"$type": "javascriptWithScope"}},
+                )
+            )
 
     def test_query_plan_accepts_public_regex(self):
         self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": Regex("^ad", "i")}))
@@ -159,6 +172,12 @@ class QueryEngineTests(unittest.TestCase):
 
     def test_query_nin_null_on_missing_field_differs_between_7_and_8(self):
         document = {}
+
+        self.assertFalse(QueryEngine.match(document, {"value": {"$nin": [None]}}, dialect=MONGODB_DIALECT_70))
+        self.assertTrue(QueryEngine.match(document, {"value": {"$nin": [None]}}, dialect=MONGODB_DIALECT_80))
+
+    def test_query_nin_null_treats_undefined_like_null_in_7_but_not_in_8(self):
+        document = {"value": UNDEFINED}
 
         self.assertFalse(QueryEngine.match(document, {"value": {"$nin": [None]}}, dialect=MONGODB_DIALECT_70))
         self.assertTrue(QueryEngine.match(document, {"value": {"$nin": [None]}}, dialect=MONGODB_DIALECT_80))

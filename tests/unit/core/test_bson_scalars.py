@@ -44,6 +44,14 @@ class BsonScalarTests(unittest.TestCase):
         with self.assertRaises(BsonScalarOverflowError):
             wrap_bson_numeric(1 << 80)
 
+    def test_direct_bson_integer_wrappers_validate_range_and_type(self):
+        with self.assertRaises(BsonScalarOverflowError):
+            BsonInt32((1 << 31))
+        with self.assertRaises(BsonScalarOverflowError):
+            BsonInt64(1 << 80)
+        with self.assertRaises(TypeError):
+            BsonInt32(True)
+
     def test_bson_numeric_alias_and_unwrap_support_wrappers(self):
         wrapped = BsonInt64(1 << 40)
         self.assertEqual(bson_numeric_alias(wrapped), "long")

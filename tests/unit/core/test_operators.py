@@ -12,7 +12,7 @@ from mongoeco.core.bson_scalars import BsonInt32, BsonInt64
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.operators import UpdateEngine
 from mongoeco.errors import OperationFailure
-from mongoeco.types import ObjectId
+from mongoeco.types import ObjectId, Timestamp
 
 
 class UpdateEngineTests(unittest.TestCase):
@@ -452,6 +452,10 @@ class UpdateEngineTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"items": [{"name": "Ada"}]}, {"$rename": {"items.0.name": "items.0.alias"}})
         with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"items": [{"name": "Ada"}]}, {"$rename": {"items.name": "names"}})
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"items": [{"name": "Ada"}], "name": "Ada"}, {"$rename": {"name": "items.alias"}})
+        with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"name": "Ada"}, {"$rename": {"name": "name"}})
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"profile": {"name": "Ada"}}, {"$rename": {"profile": "profile.name"}})
@@ -461,14 +465,18 @@ class UpdateEngineTests(unittest.TestCase):
 
         modified = UpdateEngine.apply_update(
             document,
-            {"$currentDate": {"updated_at": True, "reviewed_at": {"$type": "date"}}},
+            {
+                "$currentDate": {
+                    "updated_at": True,
+                    "reviewed_at": {"$type": "date"},
+                    "clustered_at": {"$type": "timestamp"},
+                }
+            },
         )
 
         self.assertTrue(modified)
         self.assertIsInstance(document["updated_at"], type(document["reviewed_at"]))
-
-        with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({}, {"$currentDate": {"updated_at": {"$type": "timestamp"}}})
+        self.assertIsInstance(document["clustered_at"], Timestamp)
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({}, {"$currentDate": {"updated_at": {"$type": "date", "extra": 1}}})
 
@@ -632,6 +640,10 @@ class UpdateEngineTests(unittest.TestCase):
             UpdateEngine.apply_update({"score": 1}, {"$bit": {"score": {"shift": 1}}})
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"score": 1}, {"$bit": {"score": {"and": 1, "or": 2}}})
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"score": 1}, {"$bit": {"score": {"and": 1 << 80}}})
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update({"score": 1 << 80}, {"$bit": {"score": {"and": 1}}})
 
     def test_bit_allows_empty_field_spec_as_noop(self):
         document = {"score": 7}
