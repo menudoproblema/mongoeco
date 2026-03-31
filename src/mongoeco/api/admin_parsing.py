@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from mongoeco.api._async.cursor import (
-    _validate_batch_size,
-    _validate_hint_spec,
-    _validate_max_time_ms,
-    _validate_sort_spec,
+from mongoeco.api.argument_validation import (
+    validate_batch_size as _validate_batch_size,
+    validate_hint_spec as _validate_hint_spec,
+    validate_max_time_ms as _validate_max_time_ms,
+    validate_sort_spec as _validate_sort_spec,
 )
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.errors import OperationFailure

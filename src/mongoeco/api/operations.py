@@ -1,10 +1,10 @@
 from dataclasses import dataclass, replace
 
-from mongoeco.api._async.cursor import (
+from mongoeco.api.argument_validation import (
     HintSpec,
-    _normalize_sort_spec,
-    _validate_batch_size,
-    _validate_max_time_ms,
+    normalize_sort_spec as _normalize_sort_spec,
+    validate_batch_size as _validate_batch_size,
+    validate_max_time_ms as _validate_max_time_ms,
 )
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import Pipeline

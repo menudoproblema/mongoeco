@@ -1,4 +1,4 @@
-from mongoeco.api._async.cursor import HintSpec
+from mongoeco.api.argument_validation import HintSpec
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
 from mongoeco.api._sync.index_cursor import IndexCursor

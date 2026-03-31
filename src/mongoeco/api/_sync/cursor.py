@@ -1,14 +1,16 @@
-from mongoeco.api._async.cursor import (
+from mongoeco.api.argument_validation import (
     HintSpec,
+    normalize_sort_spec as _normalize_sort_spec,
+    validate_batch_size as _validate_batch_size,
+    validate_hint_spec as _validate_hint_spec,
+    validate_max_time_ms as _validate_max_time_ms,
+)
+from mongoeco.api._async.cursor import (
     MONGODB_DIALECT_70,
     _DEFAULT_LOCAL_PREFETCH_SIZE,
-    _normalize_sort_spec,
     _operation_issue_message,
     _resolve_planning_mode,
     _serialize_explanation,
-    _validate_batch_size,
-    _validate_hint_spec,
-    _validate_max_time_ms,
 )
 from mongoeco.api.operations import FindOperation, compile_find_operation
 from mongoeco.errors import InvalidOperation

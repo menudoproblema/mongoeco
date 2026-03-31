@@ -8,6 +8,13 @@ from functools import partial
 import time
 
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
+from mongoeco.api.argument_validation import (
+    HintSpec,
+    normalize_sort_spec as _normalize_sort_spec,
+    validate_batch_size as _validate_batch_size,
+    validate_hint_spec as _validate_hint_spec,
+    validate_max_time_ms as _validate_max_time_ms,
+)
 from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub, ChangeStreamScope
 from mongoeco.api.public_api import (
     ARG_UNSET,
@@ -35,15 +42,7 @@ from mongoeco.api.operations import (
     compile_find_selection_from_update_operation,
     compile_update_operation,
 )
-from mongoeco.api._async.cursor import (
-    AsyncCursor,
-    HintSpec,
-    _validate_batch_size,
-    _normalize_sort_spec,
-    _operation_issue_message,
-    _validate_hint_spec,
-    _validate_max_time_ms,
-)
+from mongoeco.api._async.cursor import AsyncCursor, _operation_issue_message
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
 from mongoeco.compat import (
@@ -193,7 +192,7 @@ class AsyncCollection:
         self._read_preference = normalize_read_preference(read_preference)
         self._codec_options = normalize_codec_options(codec_options)
         self._planning_mode = planning_mode
-        self._change_hub = change_hub
+        self._change_hub = ChangeStreamHub() if change_hub is None else change_hub
 
     def with_options(
         self,
@@ -2870,7 +2869,7 @@ class AsyncCollection:
         ):
             raise TypeError("max_await_time_ms must be a non-negative integer")
         return AsyncChangeStreamCursor(
-            self._change_hub or ChangeStreamHub(),
+            self._change_hub,
             scope=ChangeStreamScope(db_name=self._db_name, coll_name=self._collection_name),
             pipeline=pipeline,
             max_await_time_ms=max_await_time_ms,

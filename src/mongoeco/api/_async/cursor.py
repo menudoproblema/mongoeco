@@ -1,16 +1,21 @@
 import time
 from dataclasses import replace
 from collections import deque
-from collections.abc import Mapping, Sequence
 
+from mongoeco.api.argument_validation import (
+    HintSpec,
+    normalize_sort_spec as _normalize_sort_spec,
+    validate_batch_size as _validate_batch_size,
+    validate_hint_spec as _validate_hint_spec,
+    validate_max_time_ms as _validate_max_time_ms,
+    validate_sort_spec as _validate_sort_spec,
+)
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.query_plan import QueryNode
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import CollationDocument, Document, Filter, PlanningMode, Projection, QueryPlanExplanation, SortSpec
 
-
-type HintSpec = str | SortSpec
 _DEFAULT_LOCAL_PREFETCH_SIZE = 101
 
 
@@ -155,67 +160,6 @@ def _resolve_planning_mode(collection) -> object:
     if planning_mode is not None:
         return planning_mode
     return getattr(collection, "_planning_mode", None) or PlanningMode.STRICT
-
-
-def _normalize_sort_spec(sort: object | None) -> SortSpec | None:
-    if sort is None:
-        return None
-    if isinstance(sort, Mapping):
-        normalized = list(sort.items())
-        _validate_sort_spec(normalized)
-        return normalized
-    if (
-        isinstance(sort, tuple)
-        and len(sort) == 2
-        and isinstance(sort[0], str)
-        and sort[1] in (1, -1)
-        and not isinstance(sort[1], bool)
-    ):
-        normalized = [sort]
-        _validate_sort_spec(normalized)
-        return normalized
-    if isinstance(sort, Sequence) and not isinstance(sort, (str, bytes, bytearray, list)):
-        normalized = list(sort)
-        _validate_sort_spec(normalized)
-        return normalized
-    _validate_sort_spec(sort)
-    return sort
-
-
-def _validate_sort_spec(sort: object) -> None:
-    if not isinstance(sort, list):
-        raise TypeError("sort must be a list of (field, direction) tuples")
-    for item in sort:
-        if not isinstance(item, tuple) or len(item) != 2:
-            raise TypeError("sort must be a list of (field, direction) tuples")
-        field, direction = item
-        if not isinstance(field, str):
-            raise TypeError("sort fields must be strings")
-        if direction not in (1, -1) or isinstance(direction, bool):
-            raise ValueError("sort directions must be 1 or -1")
-
-
-def _validate_hint_spec(hint: HintSpec) -> None:
-    if isinstance(hint, str):
-        if not hint:
-            raise ValueError("hint string must not be empty")
-        return
-    _normalize_sort_spec(hint)
-
-
-def _validate_batch_size(batch_size: int) -> None:
-    if not isinstance(batch_size, int) or isinstance(batch_size, bool):
-        raise TypeError("batch_size must be an integer")
-    if batch_size < 0:
-        raise ValueError("batch_size must be >= 0")
-
-
-def _validate_max_time_ms(max_time_ms: int) -> None:
-    if not isinstance(max_time_ms, int) or isinstance(max_time_ms, bool):
-        raise TypeError("max_time_ms must be an integer")
-    if max_time_ms < 0:
-        raise ValueError("max_time_ms must be >= 0")
-
 
 class AsyncCursor:
     """Cursor async mínimo y explícito sobre una colección."""
