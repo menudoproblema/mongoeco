@@ -28,7 +28,7 @@ from mongoeco.compat.catalog import (
     SUPPORTED_WINDOW_ACCUMULATORS,
 )
 from mongoeco.core.bson_scalars import compare_bson_numeric, unwrap_bson_numeric, wrap_bson_numeric
-from mongoeco.types import ObjectId, UndefinedType
+from mongoeco.types import ObjectId, UndefinedType, normalize_object_id
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,8 +104,8 @@ def _compare_values_default(
     if wrapped_left is not None and wrapped_right is not None:
         return compare_bson_numeric(wrapped_left, wrapped_right)
 
-    normalized_left = unwrap_bson_numeric(left)
-    normalized_right = unwrap_bson_numeric(right)
+    normalized_left = normalize_object_id(unwrap_bson_numeric(left))
+    normalized_right = normalize_object_id(unwrap_bson_numeric(right))
 
     type_left = bson_type_order.get(type(normalized_left), 100)
     type_right = bson_type_order.get(type(normalized_right), 100)
@@ -394,8 +394,8 @@ class MongoDialect:
         if wrapped_left is not None and wrapped_right is not None:
             return compare_bson_numeric(wrapped_left, wrapped_right)
 
-        normalized_left = unwrap_bson_numeric(left)
-        normalized_right = unwrap_bson_numeric(right)
+        normalized_left = normalize_object_id(unwrap_bson_numeric(left))
+        normalized_right = normalize_object_id(unwrap_bson_numeric(right))
 
         type_left = self.bson_type_order.get(type(normalized_left), 100)
         type_right = self.bson_type_order.get(type(normalized_right), 100)

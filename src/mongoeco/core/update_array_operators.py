@@ -256,25 +256,13 @@ def apply_pull(
                 raise OperationFailure("$pull requires the target field to be an array")
             if isinstance(value, dict) or isinstance(value, (re.Pattern, Regex)):
                 compiled_regex = value.compile() if isinstance(value, Regex) else value
-                is_predicate = True if isinstance(value, (re.Pattern, Regex)) else (
-                    any(isinstance(key, str) and key.startswith("$") for key in value) or any(
-                        isinstance(candidate, dict) and any(isinstance(key, str) and key.startswith("$") for key in candidate)
-                        for candidate in value.values()
-                    )
-                )
                 filtered = [
                     candidate
                     for candidate in current
                     if not (
-                        (
-                            isinstance(candidate, str) and compiled_regex.search(candidate) is not None
-                            if isinstance(value, (re.Pattern, Regex))
-                            else QueryEngine._match_elem_match_candidate(
-                                candidate,
-                                value,
-                                dialect=context.dialect,
-                            )
-                        ) if is_predicate else QueryEngine._values_equal(
+                        isinstance(candidate, str) and compiled_regex.search(candidate) is not None
+                        if isinstance(value, (re.Pattern, Regex))
+                        else QueryEngine._match_elem_match_candidate(
                             candidate,
                             value,
                             dialect=context.dialect,

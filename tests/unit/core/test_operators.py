@@ -1,11 +1,17 @@
-import unittest
-import re
 import math
+import re
+import unittest
+
+try:
+    from bson.objectid import ObjectId as BsonObjectId
+except Exception:  # pragma: no cover - optional dependency
+    BsonObjectId = None
 
 from mongoeco.compat import MongoDialect
 from mongoeco.core.bson_scalars import BsonInt32, BsonInt64
 from mongoeco.core.operators import UpdateEngine
 from mongoeco.errors import OperationFailure
+from mongoeco.types import ObjectId
 
 
 class UpdateEngineTests(unittest.TestCase):
@@ -800,7 +806,7 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertTrue(modified)
         self.assertEqual(document, {"tags": ["mongodb"]})
 
-    def test_pull_with_plain_document_requires_exact_document_match(self):
+    def test_pull_matches_embedded_documents_by_field_conditions(self):
         document = {
             "items": [
                 {"kind": "a"},
@@ -812,7 +818,7 @@ class UpdateEngineTests(unittest.TestCase):
         modified = UpdateEngine.apply_update(document, {"$pull": {"items": {"kind": "a"}}})
 
         self.assertTrue(modified)
-        self.assertEqual(document, {"items": [{"kind": "a", "qty": 1}, {"kind": "b"}]})
+        self.assertEqual(document, {"items": [{"kind": "b"}]})
 
     def test_pull_does_not_report_modification_when_nan_array_is_unchanged(self):
         document = {"values": [math.nan]}
@@ -844,8 +850,15 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertTrue(removed)
         self.assertEqual(document, {"items": [{"flag": True}]})
 
-    def test_pull_with_plain_document_respects_embedded_document_key_order(self):
-        document = {"items": [{"kind": "a", "qty": 1}, {"qty": 1, "kind": "a"}]}
+    def test_pull_ignores_embedded_document_key_order_and_extra_fields(self):
+        document = {
+            "items": [
+                {"kind": "a", "qty": 1},
+                {"qty": 1, "kind": "a"},
+                {"kind": "a", "qty": 1, "extra": True},
+                {"kind": "b", "qty": 1},
+            ]
+        }
 
         modified = UpdateEngine.apply_update(
             document,
@@ -853,7 +866,85 @@ class UpdateEngineTests(unittest.TestCase):
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {"items": [{"qty": 1, "kind": "a"}]})
+        self.assertEqual(document, {"items": [{"kind": "b", "qty": 1}]})
+
+    def test_pull_matches_embedded_documents_with_objectid_subset_across_objectid_types(self):
+        if BsonObjectId is None:
+            self.skipTest("bson is not installed")
+
+        object_id = ObjectId("65f0a1000000000000000000")
+        document = {
+            "tasks": [
+                {
+                    "enrollment_task_id": object_id,
+                    "name": "Ada",
+                    "studied_at": None,
+                },
+                {
+                    "enrollment_task_id": ObjectId("65f0a1000000000000000001"),
+                    "name": "Grace",
+                    "studied_at": None,
+                },
+            ]
+        }
+
+        modified = UpdateEngine.apply_update(
+            document,
+            {
+                "$pull": {
+                    "tasks": {
+                        "enrollment_task_id": BsonObjectId(str(object_id)),
+                    }
+                }
+            },
+        )
+
+        self.assertTrue(modified)
+        self.assertEqual(
+            document,
+            {
+                "tasks": [
+                    {
+                        "enrollment_task_id": ObjectId("65f0a1000000000000000001"),
+                        "name": "Grace",
+                        "studied_at": None,
+                    }
+                ]
+            },
+        )
+
+    def test_add_to_set_treats_local_and_pymongo_objectids_as_same_value(self):
+        if BsonObjectId is None:
+            self.skipTest("bson is not installed")
+
+        object_id = ObjectId("65f0a1000000000000000000")
+        document = {"items": [object_id]}
+
+        modified = UpdateEngine.apply_update(
+            document,
+            {"$addToSet": {"items": BsonObjectId(str(object_id))}},
+        )
+
+        self.assertFalse(modified)
+        self.assertEqual(document, {"items": [object_id]})
+
+    def test_pull_all_matches_local_and_pymongo_objectids_as_same_value(self):
+        if BsonObjectId is None:
+            self.skipTest("bson is not installed")
+
+        object_id = ObjectId("65f0a1000000000000000000")
+        document = {"items": [object_id, ObjectId("65f0a1000000000000000001")]}
+
+        modified = UpdateEngine.apply_update(
+            document,
+            {"$pullAll": {"items": [BsonObjectId(str(object_id))]}},
+        )
+
+        self.assertTrue(modified)
+        self.assertEqual(
+            document,
+            {"items": [ObjectId("65f0a1000000000000000001")]},
+        )
 
     def test_push_and_add_to_set_create_missing_arrays(self):
         document = {}

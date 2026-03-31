@@ -3,9 +3,14 @@ import decimal
 import unittest
 import uuid
 
+try:
+    from bson.objectid import ObjectId as BsonObjectId
+except Exception:  # pragma: no cover - optional dependency
+    BsonObjectId = None
+
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.codec import DocumentCodec
-from mongoeco.types import Binary, DBRef, Decimal128, Regex, SON, Timestamp, UNDEFINED
+from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, SON, Timestamp, UNDEFINED
 
 
 class DocumentCodecTests(unittest.TestCase):
@@ -179,3 +184,39 @@ class DocumentCodecTests(unittest.TestCase):
         self.assertEqual(decoded["decimal128"], original["decimal128"])
         self.assertEqual(list(decoded["son"].items()), [("b", 2), ("a", 1)])
         self.assertEqual(decoded["ref"], original["ref"])
+
+    def test_document_codec_normalizes_pymongo_objectids_when_available(self):
+        if BsonObjectId is None:
+            self.skipTest("bson is not installed")
+
+        original = {
+            "_id": BsonObjectId("507f1f77bcf86cd799439011"),
+            "tasks": [{"enrollment_task_id": BsonObjectId("65f0a1000000000000000000")}],
+        }
+
+        encoded = DocumentCodec.encode(original)
+        decoded = DocumentCodec.decode(encoded)
+
+        self.assertEqual(
+            encoded,
+            {
+                "_id": {"$mongoeco": {"type": "objectid", "value": "507f1f77bcf86cd799439011"}},
+                "tasks": [
+                    {
+                        "enrollment_task_id": {
+                            "$mongoeco": {
+                                "type": "objectid",
+                                "value": "65f0a1000000000000000000",
+                            }
+                        }
+                    }
+                ],
+            },
+        )
+        self.assertEqual(
+            decoded,
+            {
+                "_id": ObjectId("507f1f77bcf86cd799439011"),
+                "tasks": [{"enrollment_task_id": ObjectId("65f0a1000000000000000000")}],
+            },
+        )

@@ -5,7 +5,7 @@ from decimal import Decimal
 import uuid
 from typing import Any
 
-from mongoeco.types import ObjectId
+from mongoeco.types import normalize_object_id, is_object_id_like
 
 
 SQLITE_SORT_BUCKET_WEIGHTS: dict[str, int] = {
@@ -43,8 +43,8 @@ def bson_engine_key(value: Any) -> Any:
         return ("bytes", value)
     if isinstance(value, uuid.UUID):
         return ("uuid", value)
-    if isinstance(value, ObjectId):
-        return ("objectid", value)
+    if is_object_id_like(value):
+        return ("objectid", normalize_object_id(value))
     if isinstance(value, datetime.datetime):
         return ("datetime", value)
     if isinstance(value, dict):

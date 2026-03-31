@@ -11,7 +11,17 @@ from mongoeco.core.bson_scalars import bson_numeric_alias
 from mongoeco.core.collation import CollationSpec, compare_with_collation, values_equal_with_collation
 from mongoeco.core.identity import canonical_document_id
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, Timestamp, UndefinedType
+from mongoeco.types import (
+    Binary,
+    DBRef,
+    Decimal128,
+    ObjectId,
+    Regex,
+    Timestamp,
+    UndefinedType,
+    is_object_id_like,
+    normalize_object_id,
+)
 from mongoeco.core.query_plan import (
     AllCondition,
     AndCondition,
@@ -132,8 +142,8 @@ class QueryEngine:
             return ("date", value)
         if isinstance(value, uuid.UUID):
             return ("uuid", value)
-        if isinstance(value, ObjectId):
-            return ("objectid", value)
+        if is_object_id_like(value):
+            return ("objectid", normalize_object_id(value))
         if isinstance(value, Timestamp):
             return ("timestamp", value)
         return None

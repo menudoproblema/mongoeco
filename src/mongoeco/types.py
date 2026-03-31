@@ -151,6 +151,25 @@ else:
             return self._oid < other._oid
 
 
+OBJECT_ID_TYPES = (
+    (ObjectId,)
+    if _PyMongoObjectId is None
+    else (ObjectId, _PyMongoObjectId)
+)
+
+
+def is_object_id_like(value: Any) -> bool:
+    return isinstance(value, OBJECT_ID_TYPES)
+
+
+def normalize_object_id(value: Any) -> ObjectId | Any:
+    if isinstance(value, ObjectId):
+        return value
+    if is_object_id_like(value):
+        return ObjectId(value)
+    return value
+
+
 class Binary(bytes):
     """Representa BinData BSON con subtipo explícito."""
 

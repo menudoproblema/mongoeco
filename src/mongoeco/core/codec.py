@@ -12,7 +12,19 @@ from mongoeco.core.bson_scalars import (
     unwrap_bson_numeric,
     validate_bson_value,
 )
-from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, SON, Timestamp, UndefinedType, UNDEFINED
+from mongoeco.types import (
+    Binary,
+    DBRef,
+    Decimal128,
+    ObjectId,
+    Regex,
+    SON,
+    Timestamp,
+    UndefinedType,
+    UNDEFINED,
+    is_object_id_like,
+    normalize_object_id,
+)
 
 
 class DocumentCodec:
@@ -79,8 +91,11 @@ class DocumentCodec:
         if isinstance(data, uuid.UUID):
             return DocumentCodec._tagged_value("uuid", str(data))
 
-        if isinstance(data, ObjectId):
-            return DocumentCodec._tagged_value("objectid", str(data))
+        if is_object_id_like(data):
+            return DocumentCodec._tagged_value(
+                "objectid",
+                str(normalize_object_id(data)),
+            )
 
         if isinstance(data, Binary):
             return DocumentCodec._tagged_value(

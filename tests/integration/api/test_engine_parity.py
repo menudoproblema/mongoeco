@@ -2,6 +2,11 @@ import datetime
 import unittest
 import uuid
 
+try:
+    from bson.objectid import ObjectId as BsonObjectId
+except Exception:  # pragma: no cover - optional dependency
+    BsonObjectId = None
+
 from mongoeco import AsyncMongoClient, MongoClient
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.engines.memory import MemoryEngine
@@ -872,6 +877,60 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                 results[engine_name] = await collection.find_one({"_id": "1"})
 
         self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_pull_with_embedded_objectid_subset_matches_in_memory_and_sqlite(self):
+        if BsonObjectId is None:
+            self.skipTest("bson is not installed")
+
+        results: dict[str, dict] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                await collection.insert_one(
+                    {
+                        "_id": "1",
+                        "tasks": [
+                            {
+                                "enrollment_task_id": BsonObjectId("65f0a1000000000000000000"),
+                                "name": "Ada",
+                                "studied_at": None,
+                            },
+                            {
+                                "enrollment_task_id": BsonObjectId("65f0a1000000000000000001"),
+                                "name": "Grace",
+                                "studied_at": None,
+                            },
+                        ],
+                    }
+                )
+
+                await collection.update_one(
+                    {"_id": "1"},
+                    {
+                        "$pull": {
+                            "tasks": {
+                                "enrollment_task_id": BsonObjectId("65f0a1000000000000000000"),
+                            }
+                        }
+                    },
+                )
+
+                results[engine_name] = await collection.find_one({"_id": "1"})
+
+        self.assertEqual(results["memory"], results["sqlite"])
+        self.assertEqual(
+            results["memory"],
+            {
+                "_id": "1",
+                "tasks": [
+                    {
+                        "enrollment_task_id": ObjectId("65f0a1000000000000000001"),
+                        "name": "Grace",
+                        "studied_at": None,
+                    }
+                ],
+            },
+        )
 
     async def test_pull_duplicates_and_add_to_set_embedded_document_order_match_in_memory_and_sqlite(self):
         results: dict[str, dict] = {}
