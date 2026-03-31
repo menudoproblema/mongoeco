@@ -670,6 +670,19 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(list(cursor), [{"_id": "1"}, {"_id": "2"}])
 
+    def test_sync_cursor_explain_surfaces_deferred_reason_details(self):
+        collection = _PlanningIssueCollectionStub([{"_id": "1"}])
+        cursor = Cursor(_SyncClientStub(), collection, {"$where": "this.a > 1"}, None)
+
+        explanation = cursor.explain()
+
+        self.assertEqual(explanation["engine"], "planner")
+        self.assertEqual(explanation["planning_mode"], "relaxed")
+        self.assertEqual(
+            explanation["details"]["reason"],
+            "operation has deferred planning issues (relaxed): query: Unsupported top-level query operator: $where",
+        )
+
     def test_sync_cursor_accepts_dict_sort_and_hint(self):
         cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
 

@@ -325,6 +325,23 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
             (operations_module.PlanningIssue(scope="update", message="Unsupported update pipeline stage: $future"),),
         )
 
+    def test_private_update_planning_issue_collector_reports_invalid_update_type(self):
+        issues = operations_module._collect_update_planning_issues(
+            1,
+            dialect=operations_module.MONGODB_DIALECT_70,
+            planning_mode=PlanningMode.RELAXED,
+        )
+
+        self.assertEqual(
+            issues,
+            (
+                operations_module.PlanningIssue(
+                    scope="update",
+                    message="update specification must be a document or pipeline",
+                ),
+            ),
+        )
+
     def test_private_update_planning_issue_collector_reports_validation_failures(self):
         with mock.patch.object(
             operations_module.UpdateEngine,

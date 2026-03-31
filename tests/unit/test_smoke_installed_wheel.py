@@ -21,6 +21,15 @@ def _load_module():
 
 
 class SmokeInstalledWheelScriptTests(unittest.TestCase):
+    def test_resolve_distribution_supports_wheel_and_sdist(self):
+        module = _load_module()
+
+        wheel = module._resolve_distribution(None, kind="wheel")
+        sdist = module._resolve_distribution(None, kind="sdist")
+
+        self.assertEqual(wheel.suffix, ".whl")
+        self.assertEqual(sdist.suffixes[-2:], [".tar", ".gz"])
+
     def test_smoke_script_checks_unicode_collation_runtime(self):
         module = _load_module()
         script = module._smoke_script()
@@ -52,3 +61,14 @@ class SmokeInstalledWheelScriptTests(unittest.TestCase):
 
         self.assertIn("unicode_collation True", completed.stdout)
         self.assertIn("find_one", completed.stdout)
+
+    def test_script_rejects_wheel_and_sdist_at_the_same_time(self):
+        completed = subprocess.run(
+            [sys.executable, str(_SCRIPT_PATH), "--wheel", "a.whl", "--sdist", "b.tar.gz"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("Usa solo una de --wheel o --sdist", completed.stderr or completed.stdout)

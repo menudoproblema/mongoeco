@@ -14,16 +14,20 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DIST_ROOT = PROJECT_ROOT / "dist"
 
 
-def _resolve_wheel(path: str | None) -> Path:
+def _resolve_distribution(path: str | None, *, kind: str) -> Path:
+    artifact_label = "wheel" if kind == "wheel" else "sdist"
     if path is not None:
-        wheel = Path(path).expanduser().resolve()
-        if not wheel.is_file():
-            raise FileNotFoundError(f"Wheel no encontrado: {wheel}")
-        return wheel
-    candidates = sorted(DIST_ROOT.glob("mongoeco-*.whl"))
+        artifact = Path(path).expanduser().resolve()
+        if not artifact.is_file():
+            raise FileNotFoundError(f"{artifact_label} no encontrado: {artifact}")
+        return artifact
+    pattern = "mongoeco-*.whl" if kind == "wheel" else "mongoeco-*.tar.gz"
+    candidates = list(DIST_ROOT.glob(pattern))
     if not candidates:
-        raise FileNotFoundError("No hay wheels en dist/. Ejecuta primero `python3 -m build`.")
-    return candidates[-1]
+        raise FileNotFoundError(
+            f"No hay {artifact_label}s en dist/. Ejecuta primero `python3 -m build`."
+        )
+    return max(candidates, key=lambda candidate: candidate.stat().st_mtime)
 
 
 def _run(command: list[str], *, cwd: Path | None = None) -> None:
@@ -60,11 +64,19 @@ asyncio.run(main())
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Instala un wheel de mongoeco en un venv limpio y ejecuta un smoke real.",
+        description="Instala una distribucion de mongoeco en un venv limpio y ejecuta un smoke real.",
     )
     parser.add_argument(
         "--wheel",
+        nargs="?",
+        const="",
         help="Ruta al wheel. Si se omite, usa el ultimo mongoeco-*.whl de dist/.",
+    )
+    parser.add_argument(
+        "--sdist",
+        nargs="?",
+        const="",
+        help="Ruta al sdist. Si se omite, usa el ultimo mongoeco-*.tar.gz de dist/.",
     )
     parser.add_argument(
         "--venv",
@@ -77,12 +89,22 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    wheel = _resolve_wheel(args.wheel)
+    if args.wheel is not None and args.sdist is not None:
+        raise SystemExit("Usa solo una de --wheel o --sdist")
+    distribution_kind = "sdist" if args.sdist is not None else "wheel"
+    distribution = _resolve_distribution(
+        (
+            None
+            if ((distribution_kind == "sdist" and args.sdist == "") or (distribution_kind == "wheel" and args.wheel == ""))
+            else args.sdist if distribution_kind == "sdist" else args.wheel
+        ),
+        kind=distribution_kind,
+    )
     if args.venv:
         venv_root = Path(args.venv).expanduser().resolve()
         keep_venv = True
     else:
-        venv_root = Path(tempfile.mkdtemp(prefix="mongoeco-wheel-smoke-"))
+        venv_root = Path(tempfile.mkdtemp(prefix=f"mongoeco-{distribution_kind}-smoke-"))
         keep_venv = args.keep_venv
 
     python_bin = venv_root / "bin" / "python"
@@ -93,7 +115,7 @@ def main() -> int:
             shutil.rmtree(venv_root)
         _run([sys.executable, "-m", "venv", str(venv_root)])
         _run([str(pip_bin), "install", "--upgrade", "pip"])
-        _run([str(pip_bin), "install", str(wheel)])
+        _run([str(pip_bin), "install", str(distribution)])
         _run([str(python_bin), "-c", _smoke_script()], cwd=Path("/tmp"))
     finally:
         if not keep_venv:
