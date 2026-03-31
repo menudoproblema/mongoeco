@@ -234,8 +234,6 @@ class ProjectionTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             apply_projection(doc, {"items": {"$slice": [1]}})  # type: ignore[dict-item]
         with self.assertRaises(OperationFailure):
-            apply_projection(doc, {"items": {"$slice": [-1, 1]}})  # type: ignore[dict-item]
-        with self.assertRaises(OperationFailure):
             apply_projection(doc, {"items": {"$elemMatch": 1}})  # type: ignore[dict-item]
         with self.assertRaises(OperationFailure):
             apply_projection(doc, {"items": {"$elemMatch": {"kind": "a"}}, "name": 0})  # type: ignore[dict-item]

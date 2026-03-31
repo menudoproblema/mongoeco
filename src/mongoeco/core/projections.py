@@ -200,7 +200,6 @@ def _validate_projection_slice_operand(value: object) -> None:
         if (
             isinstance(skip, int)
             and not isinstance(skip, bool)
-            and skip >= 0
             and isinstance(limit, int)
             and not isinstance(limit, bool)
             and limit > 0

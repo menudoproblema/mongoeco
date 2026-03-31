@@ -14,9 +14,7 @@ usa Semantic Versioning.
   y `bson_mod` rechazan ya divisores cero con `OperationFailure`, y los
   filtros `$mod` dejan de aceptar divisores `NaN` o infinitos.
 - Se corrige la semantica base de proyeccion: una proyeccion vacia `{}`
-  vuelve a devolver el documento completo, y `$slice` en forma
-  `[skip, limit]` rechaza ya offsets negativos en lugar de heredar el
-  slicing negativo de Python.
+  vuelve a devolver el documento completo.
 - `insert_many()` deja de truncar silenciosamente la verificacion de
   resultados cuando un engine bulk devuelve un numero de respuestas
   distinto al de documentos enviados.
