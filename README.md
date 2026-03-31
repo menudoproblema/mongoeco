@@ -39,6 +39,10 @@ Development install:
 python -m pip install -e .[dev]
 ```
 
+The base package now includes `pyuca` as a runtime dependency so Unicode
+collations keep a deterministic UCA-backed behavior even when `PyICU` is not
+installed.
+
 Optional fast JSON backend:
 
 ```bash
@@ -58,6 +62,12 @@ Example:
 ```bash
 MONGOECO_JSON_BACKEND=orjson python your_app.py
 ```
+
+Unicode collation backend:
+
+* `mongoeco` prefers `PyICU` when it is available
+* otherwise it uses the bundled `pyuca` dependency
+* the `simple` collation keeps using the BSON/Python baseline comparator
 
 ## Quick Start
 
@@ -100,6 +110,13 @@ with MongoClient(SQLiteEngine("mongoeco.db")) as client:
 
 * MongoDB server semantics through `mongodb_dialect`
 * PyMongo surface compatibility through `pymongo_profile`
+
+Planning mode is a third, separate concern:
+
+* `STRICT` fails fast when a query, update or aggregation shape is not
+  executable under the current runtime
+* `RELAXED` preserves the request metadata and reports `planning_issues`
+  instead of compiling an executable plan for unsupported shapes
 
 See:
 

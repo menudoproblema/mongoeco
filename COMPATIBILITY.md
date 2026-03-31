@@ -223,7 +223,24 @@ Para CI y suites de compatibilidad:
 * `mongodb_dialect` fijado explícitamente
 * `pymongo_profile` fijado explícitamente, o `strict-auto-installed`
 
-## 8. Verificación contractual contra PyMongo real
+## 8. Modo de planning
+
+La compatibilidad semántica y la compatibilidad de API no sustituyen al modo de
+planning.
+
+`mongoeco` expone dos políticas:
+
+* `PlanningMode.STRICT`
+  * es la baseline recomendada
+  * falla en compilación cuando el shape recibido no es ejecutable de forma
+    coherente
+* `PlanningMode.RELAXED`
+  * conserva metadata de la operación y deja visibles `planning_issues`
+  * no convierte documentos inválidos o no soportados en no-ops silenciosos
+  * es útil para explain, tooling y superficies que prefieren degradación
+    explícita frente a error inmediato
+
+## 9. Verificación contractual contra PyMongo real
 
 La ampliación de superficie pública no debe decidirse por memoria ni por lectura
 aislada de firmas.

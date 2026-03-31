@@ -97,8 +97,9 @@ usa Semantic Versioning.
   tolera ahora claves extra dentro de cada branch siempre que existan
   `case` y `then`.
 - La collation prefiere ya un backend Unicode real (`ICU` cuando esta
-  disponible y `pyuca` en caso contrario), reduciendo desajustes de
-  ordenacion y comparacion frente al fallback aproximado anterior.
+  disponible y `pyuca` en caso contrario), y el paquete base incorpora
+  `pyuca` como dependencia runtime para evitar caer al fallback
+  aproximado anterior en entornos sin `PyICU`.
 - `create_index()` acepta ya key patterns especiales como `"text"`,
   `"hashed"`, `"2d"` y `"2dsphere"` en metadata publica y round-trips de
   indices. Mientras no exista un planner especializado para ellos,
