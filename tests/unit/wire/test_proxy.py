@@ -216,6 +216,38 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertEqual(store.end_sessions([lsid]), {"ok": 1.0})
         self.assertFalse(session.active)
 
+    def test_session_store_clear_closes_sessions_and_aborts_active_transactions(self):
+        proxy = AsyncMongoEcoProxyServer()
+        store = WireSessionStore()
+        capability = resolve_wire_command_capability("find")
+        transactional_lsid = "session-3"
+
+        session = store.resolve_for_command(
+            proxy._client,
+            {
+                "lsid": transactional_lsid,
+                "find": "events",
+                "startTransaction": True,
+                "autocommit": False,
+            },
+            capability=capability,
+        )
+        assert session is not None
+        self.assertTrue(session.transaction_active)
+        self.assertEqual(store.abort_transaction({"lsid": transactional_lsid}), {"ok": 1.0})
+        self.assertFalse(session.transaction_active)
+
+        second = store.resolve_for_command(
+            proxy._client,
+            {"lsid": {"id": "session-4"}, "find": "events"},
+            capability=capability,
+        )
+        assert second is not None
+
+        store.clear()
+        self.assertFalse(session.active)
+        self.assertFalse(second.active)
+
     def test_session_store_freezes_supported_lsid_scalar_types(self):
         proxy = AsyncMongoEcoProxyServer()
         store = WireSessionStore()
@@ -339,6 +371,69 @@ class WireProxyUnitTests(unittest.TestCase):
         )
 
         self.assertEqual(response, {"ok": 1.0})
+
+    def test_authentication_service_accepts_dollar_db_and_default_admin_database(self):
+        service = WireAuthenticationService(
+            (
+                WireAuthUser(
+                    username="ada",
+                    password="secret",
+                    source="admin",
+                    mechanisms=("SCRAM-SHA-256",),
+                ),
+            )
+        )
+        connection = WireConnectionContext(connection_id=3)
+
+        with self.assertRaisesRegex(OperationFailure, "Authentication failed"):
+            service.authenticate(
+                {
+                    "authenticate": 1,
+                    "mechanism": "SCRAM-SHA-256",
+                    "user": "ada",
+                    "pwd": "secret",
+                    "$db": "$external",
+                },
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "Authentication failed"):
+            service.authenticate(
+                {
+                    "authenticate": 1,
+                    "mechanism": "SCRAM-SHA-256",
+                    "user": "ada",
+                    "pwd": "wrong",
+                    "$db": "admin",
+                },
+                connection=connection,
+            )
+
+        response = service.authenticate(
+            {
+                "authenticate": 1,
+                "mechanism": "SCRAM-SHA-256",
+                "user": "ada",
+                "pwd": "secret",
+                "$db": "admin",
+            },
+            connection=connection,
+        )
+        self.assertEqual(response, {"ok": 1.0})
+        self.assertEqual(connection.authenticated_users[0]["db"], "admin")
+
+        service.logout(connection)
+        response = service.authenticate(
+            {
+                "authenticate": 1,
+                "mechanism": "SCRAM-SHA-256",
+                "user": "ada",
+                "pwd": "secret",
+            },
+            connection=connection,
+        )
+        self.assertEqual(response, {"ok": 1.0})
+        self.assertEqual(connection.authenticated_users[0]["db"], "admin")
 
 
 class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
@@ -473,6 +568,103 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                     connection=connection,
                 )
 
+    async def test_executor_connection_status_rewrites_auth_info_from_connection(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+        connection.authenticate(
+            username="ada",
+            db="admin",
+            mechanism="SCRAM-SHA-256",
+            roles=({"role": "root", "db": "admin"},),
+        )
+
+        class _Database:
+            async def command(self, command_document, session=None):
+                return {
+                    "authInfo": {
+                        "authenticatedUsers": [{"user": "ignored"}],
+                        "authenticatedUserRoles": [{"role": "ignored"}],
+                        "authenticatedUserPrivileges": [{"resource": {"db": "admin"}}],
+                    },
+                    "ok": 1.0,
+                }
+
+        with patch.object(proxy._client, "get_database", return_value=_Database()):
+            result = await proxy._executor.execute_command(
+                {"connectionStatus": 1, "$db": "admin"},
+                connection=connection,
+            )
+
+        self.assertEqual(
+            result["authInfo"]["authenticatedUsers"],
+            [{"user": "ada", "db": "admin", "mechanism": "SCRAM-SHA-256"}],
+        )
+        self.assertEqual(
+            result["authInfo"]["authenticatedUserRoles"],
+            [{"role": "root", "db": "admin"}],
+        )
+        self.assertEqual(result["authInfo"]["authenticatedUserPrivileges"], [])
+
+    async def test_executor_handles_kill_logout_and_transaction_commands(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+        connection.authenticate(
+            username="ada",
+            db="admin",
+            mechanism="SCRAM-SHA-256",
+        )
+        cursor_result = proxy._cursor_store.materialize_command_result(
+            {"find": "events", "batchSize": 1},
+            {
+                "cursor": {
+                    "id": 0,
+                    "ns": "alpha.events",
+                    "firstBatch": [{"seq": 1}, {"seq": 2}],
+                },
+                "ok": 1.0,
+            },
+        )
+        cursor_id = cursor_result["cursor"]["id"]
+        lsid = {"id": "wire-txn"}
+        session = proxy._session_store.resolve_for_command(
+            proxy._client,
+            {"lsid": lsid, "find": "events", "startTransaction": True, "autocommit": False},
+            capability=resolve_wire_command_capability("find"),
+        )
+        assert session is not None
+
+        killed = await proxy._executor.execute_command(
+            {"killCursors": "events", "cursors": [cursor_id], "$db": "alpha"},
+            connection=connection,
+        )
+        self.assertEqual(killed["cursorsKilled"], [cursor_id])
+
+        committed = await proxy._executor.execute_command(
+            {"commitTransaction": 1, "$db": "admin", "lsid": lsid},
+            connection=connection,
+        )
+        self.assertEqual(committed, {"ok": 1.0})
+        self.assertFalse(session.transaction_active)
+
+        proxy._session_store.resolve_for_command(
+            proxy._client,
+            {"lsid": lsid, "find": "events", "startTransaction": True, "autocommit": False},
+            capability=resolve_wire_command_capability("find"),
+        )
+        aborted = await proxy._executor.execute_command(
+            {"abortTransaction": 1, "$db": "admin", "lsid": lsid},
+            connection=connection,
+        )
+        self.assertEqual(aborted, {"ok": 1.0})
+        self.assertFalse(session.transaction_active)
+
+        logged_out = await proxy._executor.execute_command(
+            {"logout": 1, "$db": "admin"},
+            connection=connection,
+        )
+        self.assertEqual(logged_out, {"ok": 1.0})
+        self.assertEqual(connection.authenticated_users, [])
+
     async def test_proxy_start_returns_existing_address_when_already_running(self):
         async with AsyncMongoEcoProxyServer() as proxy:
             first = proxy.address
@@ -493,6 +685,28 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         query_payload = b"\x00" * 12
         query_response = await proxy._dispatch_wire_request(query_header, query_payload, connection=connection)
         self.assertEqual(query_response[12:16], struct.pack("<i", 1))
+
+    async def test_executor_normalizes_legacy_queries_rejects_invalid_shapes_and_updates_cursor_specs(self):
+        with self.assertRaisesRegex(OperationFailure, "must be a document"):
+            WireCommandExecutor._normalize_legacy_query_body([], number_to_return=None)  # type: ignore[arg-type]
+
+        with self.assertRaisesRegex(OperationFailure, "wrapper must contain a document"):
+            WireCommandExecutor._normalize_legacy_query_body(
+                {"$query": []},
+                number_to_return=None,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "must contain a document"):
+            WireCommandExecutor._normalize_legacy_query_body(
+                {},
+                number_to_return=None,
+            )
+
+        normalized = WireCommandExecutor._normalize_legacy_query_body(
+            {"aggregate": "events", "pipeline": [], "cursor": {}},
+            number_to_return=5,
+        )
+        self.assertEqual(normalized["cursor"], {"batchSize": 5})
 
     async def test_proxy_handle_connection_closes_writer_on_incomplete_read(self):
         proxy = AsyncMongoEcoProxyServer()

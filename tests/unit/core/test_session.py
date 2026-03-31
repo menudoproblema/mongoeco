@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 
 from mongoeco.api._async.client import AsyncMongoClient
@@ -43,6 +44,34 @@ class ClientSessionTests(unittest.TestCase):
                 "connected": True,
                 "supports_transactions": True,
                 "path": ":memory:",
+            },
+        )
+
+    def test_engine_transaction_context_handles_non_dicts_instances_and_updates(self):
+        existing = EngineTransactionContext(engine_key="memory", connected=True)
+
+        self.assertIs(
+            EngineTransactionContext.from_document("memory", existing),
+            existing,
+        )
+        self.assertEqual(
+            EngineTransactionContext.from_document("memory", "bad-state").to_document(),
+            {},
+        )
+
+        existing.update(
+            connected=0,
+            supports_transactions=1,
+            transaction_active=1,
+            snapshot_version=3,
+        )
+        self.assertEqual(
+            existing.to_document(),
+            {
+                "connected": False,
+                "supports_transactions": True,
+                "transaction_active": True,
+                "snapshot_version": 3,
             },
         )
 
@@ -201,6 +230,18 @@ class ClientSessionTests(unittest.TestCase):
         session.abort_transaction()
         self.assertFalse(session.transaction_active)
 
+    def test_end_transaction_is_commit_alias_and_close_is_idempotent(self):
+        session = ClientSession()
+
+        session.start_transaction()
+        session.end_transaction()
+        self.assertFalse(session.transaction_active)
+        self.assertEqual(session.transaction_number, 1)
+
+        session.close()
+        session.close()
+        self.assertTrue(session.has_ended)
+
     def test_session_rejects_nested_transactions(self):
         session = ClientSession()
 
@@ -282,10 +323,20 @@ class ClientSessionTests(unittest.TestCase):
             active.abort_transaction()
             return "done"
 
-        import asyncio
-
         self.assertEqual(asyncio.run(session.with_transaction(_run)), "done")
         self.assertFalse(session.in_transaction)
+
+    def test_async_session_with_transaction_aborts_on_async_error(self):
+        session = ClientSession()
+
+        async def _run(active: ClientSession):
+            raise RuntimeError(f"boom:{active.session_id}")
+
+        with self.assertRaisesRegex(RuntimeError, "boom:"):
+            asyncio.run(session.with_transaction(_run))
+
+        self.assertFalse(session.in_transaction)
+        self.assertEqual(session.transaction_number, 1)
 
     def test_session_close_aborts_active_transaction(self):
         session = ClientSession()
