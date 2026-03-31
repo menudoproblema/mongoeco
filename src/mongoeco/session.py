@@ -252,21 +252,17 @@ class ClientSession:
         self.ensure_active()
         if not self.transaction_active:
             raise InvalidOperation("No hay una transaccion activa en esta sesion")
-        try:
-            self._run_transaction_hooks("commit")
-        finally:
-            self._state.transaction.active = False
-            self._state.transaction.options = None
+        self._run_transaction_hooks("commit")
+        self._state.transaction.active = False
+        self._state.transaction.options = None
 
     def abort_transaction(self) -> None:
         self.ensure_active()
         if not self.transaction_active:
             raise InvalidOperation("No hay una transaccion activa en esta sesion")
-        try:
-            self._run_transaction_hooks("abort")
-        finally:
-            self._state.transaction.active = False
-            self._state.transaction.options = None
+        self._run_transaction_hooks("abort")
+        self._state.transaction.active = False
+        self._state.transaction.options = None
 
     def end_transaction(self) -> None:
         self.commit_transaction()

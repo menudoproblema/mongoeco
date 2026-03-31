@@ -67,6 +67,9 @@ usa Semantic Versioning.
 - El catálogo de compatibilidad permite ya declarar inventarios de
   operadores de query y update por dialecto, en lugar de forzar un
   conjunto global estático para todas las versiones de MongoDB.
+- `commit_transaction()` y `abort_transaction()` ya no limpian el estado
+  local de la sesion si el hook del engine falla, evitando ocultar
+  transacciones que han quedado en estado ambiguo.
 
 ## [2.2.0] - 2026-03-31
 

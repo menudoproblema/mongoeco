@@ -360,7 +360,7 @@ class ClientSessionTests(unittest.TestCase):
         self.assertEqual(session.transaction_number, 0)
         self.assertFalse(session.in_transaction)
 
-    def test_commit_and_abort_clear_transaction_even_if_hook_fails(self):
+    def test_commit_and_abort_keep_transaction_open_if_hook_fails(self):
         for phase in ("commit", "abort"):
             with self.subTest(phase=phase):
                 session = ClientSession()
@@ -373,7 +373,8 @@ class ClientSessionTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, phase):
                     getattr(session, f"{phase}_transaction")()
 
-                self.assertFalse(session.in_transaction)
+                self.assertTrue(session.in_transaction)
+                self.assertIsNotNone(session.transaction_options)
 
     def test_close_marks_session_closed_even_if_abort_hook_fails(self):
         session = ClientSession()
