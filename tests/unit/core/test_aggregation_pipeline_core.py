@@ -704,15 +704,17 @@ class AggregationPipelineCoreTests(unittest.TestCase):
         self.assertEqual(result, [{"_id": "1", "tenant": "a", "users": []}])
 
     def test_pipeline_lookup_without_filters_does_not_alias_joined_arrays(self):
+        foreign_documents = [{"_id": "u1", "name": "Ada"}]
         result = apply_pipeline(
             [{"_id": "1"}, {"_id": "2"}],
             [{"$lookup": {"from": "users", "as": "users", "pipeline": [], "let": {}}}],
-            collection_resolver=lambda name: [{"_id": "u1", "name": "Ada"}] if name == "users" else None,
+            collection_resolver=lambda name: foreign_documents if name == "users" else None,
         )
 
         result[0]["users"][0]["name"] = "Changed"
 
         self.assertEqual(result[1]["users"], [{"_id": "u1", "name": "Ada"}])
+        self.assertEqual(foreign_documents, [{"_id": "u1", "name": "Ada"}])
 
     def test_pipeline_supports_nested_lookup_inside_lookup_pipeline(self):
         documents = [{"_id": "1", "tenant": "a"}]

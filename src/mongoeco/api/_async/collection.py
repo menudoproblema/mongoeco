@@ -2496,15 +2496,12 @@ class AsyncCollection:
             session=options.get("session"),
         ):
             values = QueryEngine.extract_values(document, key)
-            if not values:
-                found, value = QueryEngine._get_field_value(document, key)
-                if not found:
-                    values = [None]
-                elif isinstance(value, list):
-                    continue
-                else:
-                    values = [value]
-            candidates = _distinct_candidates(values)
+            found, value = QueryEngine._get_field_value(document, key)
+            candidates = _resolve_distinct_candidates(
+                values,
+                exact_found=found,
+                exact_value=value,
+            )
             for candidate in candidates:
                 if not any(
                     QueryEngine._values_equal(
@@ -2945,11 +2942,26 @@ class AsyncCollection:
         return self._codec_options
 
 
-def _distinct_candidates(values: list[object]) -> list[object]:
+def _resolve_distinct_candidates(
+    values: list[object],
+    *,
+    exact_found: bool,
+    exact_value: object,
+) -> list[object]:
     if not values:
+        if not exact_found:
+            return [None]
+        if isinstance(exact_value, list):
+            return []
+        return [exact_value]
+    if exact_found and exact_value == [] and values == [[]]:
         return []
-    if len(values) == 1 and values[0] == []:
-        return []
-    if isinstance(values[0], list) and len(values) > 1 and values[1:] == list(values[0]):
+    if (
+        exact_found
+        and isinstance(exact_value, list)
+        and len(values) > 1
+        and values[0] == exact_value
+        and values[1:] == list(exact_value)
+    ):
         return values[1:]
     return values

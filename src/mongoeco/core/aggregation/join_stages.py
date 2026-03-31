@@ -31,15 +31,14 @@ def _apply_lookup(
     if collection_resolver is None:
         raise OperationFailure("$lookup requires collection resolver support")
 
-    resolved_foreign_documents = collection_resolver(lookup["from"]) or []
-    foreign_documents = [deepcopy(document) for document in resolved_foreign_documents]
+    foreign_documents = list(collection_resolver(lookup["from"]) or [])
     result: list[Document] = []
     for document in documents:
         candidate_documents = foreign_documents
         if "localField" in lookup and "foreignField" in lookup:
             local_values = QueryEngine.extract_values(document, lookup["localField"])
             candidate_documents = [
-                deepcopy(foreign_document)
+                foreign_document
                 for foreign_document in foreign_documents
                 if _lookup_matches(
                     local_values,
@@ -55,7 +54,7 @@ def _apply_lookup(
             from mongoeco.core.aggregation.stages import apply_pipeline
 
             matches = apply_pipeline(
-                candidate_documents,
+                [deepcopy(candidate) for candidate in candidate_documents],
                 lookup["pipeline"],
                 collection_resolver=collection_resolver,
                 variables=scoped,
@@ -64,9 +63,9 @@ def _apply_lookup(
                 spill_policy=spill_policy,
             )
         else:
-            matches = candidate_documents
+            matches = [deepcopy(candidate) for candidate in candidate_documents]
         joined = deepcopy(document)
-        joined[lookup["as"]] = deepcopy(matches)
+        joined[lookup["as"]] = matches
         result.append(joined)
     return result
 
@@ -88,8 +87,9 @@ def _apply_union_with(
     resolver_key = union_with["coll"] if union_with["coll"] is not None else _CURRENT_COLLECTION_RESOLVER_KEY
     resolved_foreign_documents = collection_resolver(resolver_key)
     if resolved_foreign_documents is None:
-        resolved_foreign_documents = [deepcopy(document) for document in documents]
-    foreign_documents = [deepcopy(document) for document in resolved_foreign_documents]
+        foreign_documents = [deepcopy(document) for document in documents]
+    else:
+        foreign_documents = [deepcopy(document) for document in resolved_foreign_documents]
     if union_with["pipeline"]:
         from mongoeco.core.aggregation.stages import apply_pipeline
 

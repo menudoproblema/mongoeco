@@ -688,13 +688,25 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
 
         self.assertEqual(result, [[1, 2, 3]])
 
-    def test_distinct_candidates_covers_array_unwrap_edge_cases(self):
-        from mongoeco.api._async.collection import _distinct_candidates
+    def test_resolve_distinct_candidates_covers_array_and_missing_edge_cases(self):
+        from mongoeco.api._async.collection import _resolve_distinct_candidates
 
-        self.assertEqual(_distinct_candidates([]), [])
-        self.assertEqual(_distinct_candidates([[]]), [])
-        self.assertEqual(_distinct_candidates([[1, 2], 1, 2]), [1, 2])
-        self.assertEqual(_distinct_candidates([1, 2]), [1, 2])
+        self.assertEqual(
+            _resolve_distinct_candidates([], exact_found=False, exact_value=None),
+            [None],
+        )
+        self.assertEqual(
+            _resolve_distinct_candidates([], exact_found=True, exact_value=[]),
+            [],
+        )
+        self.assertEqual(
+            _resolve_distinct_candidates([[1, 2], 1, 2], exact_found=True, exact_value=[1, 2]),
+            [1, 2],
+        )
+        self.assertEqual(
+            _resolve_distinct_candidates([1, 2], exact_found=False, exact_value=None),
+            [1, 2],
+        )
 
     def test_bulk_write_records_upserted_ids_for_update_many_and_replace_one(self):
         async def _exercise():
