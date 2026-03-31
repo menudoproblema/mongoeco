@@ -533,6 +533,14 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
             evaluate_expression(document, {"$dateFromParts": {"year": 2026, "timezone": 1}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$dateFromParts": {"year": 2026, "hour": "x"}})
+        with self.assertRaisesRegex(OperationFailure, "hour must be in range \\[0, 23\\]"):
+            evaluate_expression(document, {"$dateFromParts": {"year": 2026, "hour": 24}})
+        with self.assertRaisesRegex(OperationFailure, "minute must be in range \\[0, 59\\]"):
+            evaluate_expression(document, {"$dateFromParts": {"year": 2026, "minute": -1}})
+        with self.assertRaisesRegex(OperationFailure, "second must be in range \\[0, 59\\]"):
+            evaluate_expression(document, {"$dateFromParts": {"year": 2026, "second": 60}})
+        with self.assertRaisesRegex(OperationFailure, "millisecond must be in range \\[0, 999\\]"):
+            evaluate_expression(document, {"$dateFromParts": {"year": 2026, "millisecond": 1000}})
 
     def test_evaluate_expression_supports_switch_and_bitwise_variants(self):
         document = {"value": 5}

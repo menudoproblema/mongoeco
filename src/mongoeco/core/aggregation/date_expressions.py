@@ -422,6 +422,20 @@ def _require_int_part(operator: str, name: str, value: Any) -> int:
     return value
 
 
+def _require_int_part_in_range(
+    operator: str,
+    name: str,
+    value: Any,
+    *,
+    minimum: int,
+    maximum: int,
+) -> int:
+    integer = _require_int_part(operator, name, value)
+    if integer < minimum or integer > maximum:
+        raise OperationFailure(f"{operator} {name} must be in range [{minimum}, {maximum}]")
+    return integer
+
+
 def _build_date_from_parts(
     operator: str,
     spec: dict[str, Any],
@@ -448,13 +462,33 @@ def _build_date_from_parts(
     if has_iso and "isoWeekYear" not in spec:
         raise OperationFailure(f"{operator} isoWeekYear must be specified for iso week date parts")
 
-    hour = _require_int_part(operator, "hour", evaluate_expression(document, spec.get("hour", 0), variables))
-    minute = _require_int_part(operator, "minute", evaluate_expression(document, spec.get("minute", 0), variables))
-    second = _require_int_part(operator, "second", evaluate_expression(document, spec.get("second", 0), variables))
-    millisecond = _require_int_part(
+    hour = _require_int_part_in_range(
+        operator,
+        "hour",
+        evaluate_expression(document, spec.get("hour", 0), variables),
+        minimum=0,
+        maximum=23,
+    )
+    minute = _require_int_part_in_range(
+        operator,
+        "minute",
+        evaluate_expression(document, spec.get("minute", 0), variables),
+        minimum=0,
+        maximum=59,
+    )
+    second = _require_int_part_in_range(
+        operator,
+        "second",
+        evaluate_expression(document, spec.get("second", 0), variables),
+        minimum=0,
+        maximum=59,
+    )
+    millisecond = _require_int_part_in_range(
         operator,
         "millisecond",
         evaluate_expression(document, spec.get("millisecond", 0), variables),
+        minimum=0,
+        maximum=999,
     )
 
     try:

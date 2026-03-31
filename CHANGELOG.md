@@ -23,6 +23,9 @@ usa Semantic Versioning.
   protocolo soportados.
 - El seed de upsert extrae ya igualdades seedables desde `$and`
   top-level y desde condiciones `$in` con un unico valor.
+- `$dateFromParts` valida ya de forma explicita los rangos de `hour`,
+  `minute`, `second` y `millisecond`, devolviendo errores estables en
+  vez de propagar `ValueError` genericos del constructor de `datetime`.
 - La compilacion de pipelines valida ya las especificaciones de
   `$addFields` y `$set` antes de ejecutar documentos, evitando que
   claves invalidas se acepten y fallen tarde en runtime.
