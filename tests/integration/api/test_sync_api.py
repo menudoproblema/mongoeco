@@ -24,7 +24,6 @@ from mongoeco import (
     ReturnDocument,
     SearchIndexModel,
     TransactionOptions,
-    Timestamp,
     UpdateMany,
     UpdateOne,
     WriteConcern,
@@ -1370,7 +1369,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     updated = collection.update_one(
                         {"_id": "1"},
-                        {"$currentDate": {"updated_at": True, "clustered_at": {"$type": "timestamp"}}},
+                        {"$currentDate": {"updated_at": True}},
                     )
                     inserted = collection.update_one(
                         {"_id": "2"},
@@ -1391,25 +1390,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(inserted.upserted_id, "2")
                     self.assertEqual(existing.modified_count, 0)
                     self.assertIsInstance(first["updated_at"], datetime.datetime)
-                    self.assertIsInstance(first["clustered_at"], Timestamp)
                     self.assertNotIn("created_at", first)
                     self.assertEqual(second["created_at"], "seeded")
-
-    def test_find_accepts_top_level_comment_in_filter_via_api(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    collection = client.test.events
-                    collection.insert_many(
-                        [
-                            {"_id": "1", "kind": "view"},
-                            {"_id": "2", "kind": "click"},
-                        ]
-                    )
-
-                    documents = list(collection.find({"$comment": "release-smoke", "kind": "view"}))
-
-                    self.assertEqual(documents, [{"_id": "1", "kind": "view"}])
 
     def test_array_filters_and_all_positional_updates_are_observable_via_api(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

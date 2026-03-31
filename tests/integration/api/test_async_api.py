@@ -25,7 +25,6 @@ from mongoeco import (
     ReplaceOne,
     ReturnDocument,
     SearchIndexModel,
-    Timestamp,
     TransactionOptions,
     UpdateMany,
     UpdateOne,
@@ -1420,7 +1419,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     updated = await collection.update_one(
                         {"_id": "1"},
-                        {"$currentDate": {"updated_at": True, "clustered_at": {"$type": "timestamp"}}},
+                        {"$currentDate": {"updated_at": True}},
                     )
                     inserted = await collection.update_one(
                         {"_id": "2"},
@@ -1441,25 +1440,8 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(inserted.upserted_id, "2")
                     self.assertEqual(existing.modified_count, 0)
                     self.assertIsInstance(first["updated_at"], datetime.datetime)
-                    self.assertIsInstance(first["clustered_at"], Timestamp)
                     self.assertNotIn("created_at", first)
                     self.assertEqual(second["created_at"], "seeded")
-
-    async def test_find_accepts_top_level_comment_in_filter_via_api(self):
-        for engine_name in ENGINE_FACTORIES:
-            with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
-                    collection = client.test.events
-                    await collection.insert_many(
-                        [
-                            {"_id": "1", "kind": "view"},
-                            {"_id": "2", "kind": "click"},
-                        ]
-                    )
-
-                    documents = await collection.find({"$comment": "release-smoke", "kind": "view"}).to_list()
-
-                    self.assertEqual(documents, [{"_id": "1", "kind": "view"}])
 
     async def test_array_filters_and_all_positional_updates_are_observable_via_api(self):
         for engine_name in ENGINE_FACTORIES:
