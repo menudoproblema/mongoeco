@@ -91,6 +91,11 @@ usa Semantic Versioning.
   `whenAvailable`, `required`), los resume tokens dejan de exponerse
   como enteros decimales simples y `drop_database()` insiste hasta
   vaciar las colecciones visibles del database.
+- Las sesiones validan ya `writeConcern(w=0)` al abrir transacciones,
+  reintentan `commit`/`abort` cuando el error llega etiquetado como
+  transitorio o con resultado ambiguo, y exponen estado causal basico
+  (`cluster_time` / `operation_time`) que se actualiza en operaciones
+  locales y respuestas wire.
 
 ## [2.2.0] - 2026-03-31
 

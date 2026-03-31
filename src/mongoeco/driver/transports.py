@@ -59,6 +59,7 @@ class LocalCommandTransport:
         )
         if not isinstance(response, dict):
             raise OperationFailure("driver local transport expected a document response")
+        _advance_session_from_response(request.session, response)
         return response
 
 
@@ -85,6 +86,7 @@ class WireProtocolCommandTransport:
         request_document.setdefault("$db", execution.plan.request.database)
         result = await self._roundtrip(resource, request_document, lease=execution.connection)
         self._raise_if_error_document(result)
+        _advance_session_from_response(execution.plan.request.session, result)
         return result
 
     async def _ensure_resource(self, connection: DriverConnection) -> StreamConnectionResource:
@@ -258,3 +260,25 @@ class WireProtocolCommandTransport:
             details=result,
             error_labels=error_labels,
         )
+
+
+def _advance_session_from_response(session: Any, response: dict[str, Any]) -> None:
+    if session is None:
+        return
+    advance_cluster = getattr(session, "advance_cluster_time", None)
+    advance_operation = getattr(session, "advance_operation_time", None)
+    if not callable(advance_cluster) or not callable(advance_operation):
+        return
+    cluster_time = response.get("clusterTime")
+    if not isinstance(cluster_time, int) or isinstance(cluster_time, bool):
+        cluster_time = None
+        cluster_document = response.get("$clusterTime")
+        if isinstance(cluster_document, dict):
+            candidate = cluster_document.get("clusterTime")
+            if isinstance(candidate, int) and not isinstance(candidate, bool):
+                cluster_time = candidate
+    if cluster_time is not None:
+        advance_cluster(cluster_time)
+    operation_time = response.get("operationTime")
+    if isinstance(operation_time, int) and not isinstance(operation_time, bool):
+        advance_operation(operation_time)

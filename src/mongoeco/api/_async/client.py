@@ -432,13 +432,15 @@ class AsyncMongoClient:
         self,
         *,
         default_transaction_options: TransactionOptions | None = None,
+        causal_consistency: bool = True,
     ) -> ClientSession:
         session = ClientSession(
             default_transaction_options=(
                 self._transaction_options
                 if default_transaction_options is None
                 else normalize_transaction_options(default_transaction_options)
-            )
+            ),
+            causal_consistency=causal_consistency,
         )
         self._engine.create_session_state(session)
         return session

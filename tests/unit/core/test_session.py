@@ -4,7 +4,7 @@ import unittest
 from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import InvalidOperation
+from mongoeco.errors import ConnectionFailure, InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.session import EngineTransactionContext, SessionState, TransactionState
 from mongoeco.types import (
@@ -211,6 +211,25 @@ class ClientSessionTests(unittest.TestCase):
         self.assertIn(f"sqlite:{id(sqlite_a)}", session.engine_state)
         self.assertIn(f"sqlite:{id(sqlite_b)}", session.engine_state)
 
+    def test_session_tracks_causal_times_monotonically(self):
+        session = ClientSession()
+
+        session.advance_cluster_time(5)
+        session.advance_cluster_time(3)
+        session.advance_operation_time(7)
+        session.advance_operation_time(6)
+
+        observed = session.observe_operation(11)
+
+        self.assertEqual(observed, 11)
+        self.assertEqual(session.cluster_time, 11)
+        self.assertEqual(session.operation_time, 11)
+
+    def test_client_can_start_non_causal_session(self):
+        session = AsyncMongoClient(MemoryEngine()).start_session(causal_consistency=False)
+
+        self.assertFalse(session.causal_consistency)
+
     def test_session_context_manager_closes_session(self):
         session = ClientSession()
 
@@ -249,6 +268,12 @@ class ClientSessionTests(unittest.TestCase):
 
         with self.assertRaises(InvalidOperation):
             session.start_transaction()
+
+    def test_session_rejects_unacknowledged_write_concern_in_transactions(self):
+        session = ClientSession()
+
+        with self.assertRaisesRegex(InvalidOperation, "w=0"):
+            session.start_transaction(write_concern=WriteConcern(0))
 
     def test_session_rejects_commit_without_active_transaction(self):
         session = ClientSession()
@@ -375,6 +400,29 @@ class ClientSessionTests(unittest.TestCase):
 
                 self.assertTrue(session.in_transaction)
                 self.assertIsNotNone(session.transaction_options)
+
+    def test_commit_and_abort_retry_transient_labeled_errors(self):
+        for phase, error in (
+            ("commit", ConnectionFailure("down", error_labels=("TransientTransactionError",))),
+            ("abort", OperationFailure("retry", error_labels=("TransientTransactionError",))),
+        ):
+            with self.subTest(phase=phase):
+                session = ClientSession()
+                calls = {"count": 0}
+
+                def _hook(active: ClientSession) -> None:
+                    del active
+                    calls["count"] += 1
+                    if calls["count"] == 1:
+                        raise error
+
+                session.register_transaction_hooks("memory", **{phase: _hook})
+                session.start_transaction()
+
+                getattr(session, f"{phase}_transaction")()
+
+                self.assertEqual(calls["count"], 2)
+                self.assertFalse(session.in_transaction)
 
     def test_close_marks_session_closed_even_if_abort_hook_fails(self):
         session = ClientSession()

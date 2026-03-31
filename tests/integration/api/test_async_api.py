@@ -770,6 +770,19 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(await client.alpha.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
 
+    async def test_session_observes_operation_times_after_successful_collection_ops(self):
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            session = client.start_session()
+
+            self.assertIsNone(session.operation_time)
+            self.assertIsNone(session.cluster_time)
+
+            await client.alpha.users.insert_one({"_id": "1", "name": "Ada"}, session=session)
+
+            self.assertIsNotNone(session.operation_time)
+            self.assertIsNotNone(session.cluster_time)
+            self.assertGreaterEqual(session.cluster_time, session.operation_time)
+
     async def test_client_propagates_dialect_and_profile_to_database_and_collection(self):
         engine = MemoryEngine()
 

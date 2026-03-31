@@ -760,6 +760,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
             self.assertEqual(client.alpha.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
 
+    def test_session_observes_operation_times_after_successful_collection_ops(self):
+        with MongoClient(MemoryEngine()) as client:
+            session = client.start_session()
+
+            self.assertIsNone(session.operation_time)
+            self.assertIsNone(session.cluster_time)
+
+            client.alpha.users.insert_one({"_id": "1", "name": "Ada"}, session=session)
+
+            self.assertIsNotNone(session.operation_time)
+            self.assertIsNotNone(session.cluster_time)
+            self.assertGreaterEqual(session.cluster_time, session.operation_time)
+
     def test_client_supports_attribute_and_item_access_with_lazy_connect(self):
         client = MongoClient()
         try:

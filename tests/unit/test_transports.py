@@ -14,6 +14,7 @@ from mongoeco.driver.transports import (
     WireProtocolCommandTransport,
 )
 from mongoeco.errors import OperationFailure
+from mongoeco.session import ClientSession
 from mongoeco.types import Binary
 from mongoeco.wire.protocol import OP_REPLY
 
@@ -100,6 +101,25 @@ class CommandTransportTests(unittest.IsolatedAsyncioTestCase):
             await LocalCommandTransport(client).send(execution)
 
         self.assertEqual(database.calls, [({"ping": 1}, "session-1")])
+
+    async def test_local_command_transport_advances_session_from_response(self):
+        session = ClientSession()
+        database = _FakeDatabase({"ok": 1.0, "operationTime": 9, "$clusterTime": {"clusterTime": 12}})
+        client = _FakeClient(database)
+        execution = SimpleNamespace(
+            plan=SimpleNamespace(
+                request=SimpleNamespace(
+                    database="admin",
+                    payload={"ping": 1},
+                    session=session,
+                )
+            )
+        )
+
+        await LocalCommandTransport(client).send(execution)
+
+        self.assertEqual(session.operation_time, 9)
+        self.assertEqual(session.cluster_time, 12)
 
     async def test_wire_transport_rejects_invalid_connection_leases(self):
         transport = WireProtocolCommandTransport(
@@ -352,6 +372,45 @@ class CommandTransportTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(exc_info.exception.code, 42)
         self.assertEqual(exc_info.exception.error_labels, ("RetryableWriteError",))
         self.assertEqual(exc_info.exception.details["errmsg"], "boom")
+
+    async def test_wire_transport_send_advances_session_from_response(self):
+        session = ClientSession()
+        connection = DriverConnection(
+            connection_id="conn-1",
+            server=ServerDescription("db1:27017"),
+            pool_key=PoolKey(address="db1:27017", tls=False),
+            created_at_monotonic=0.0,
+            last_used_at_monotonic=0.0,
+            resource=StreamConnectionResource(reader=asyncio.StreamReader(), writer=_FakeWriter(), authenticated=True),
+        )
+        registry = _FakeRegistry(connection)
+        transport = WireProtocolCommandTransport(
+            registry,
+            tls_policy=TlsPolicy(enabled=False, verify_certificates=True),
+            connect_timeout_ms=250,
+        )
+        execution = SimpleNamespace(
+            connection="lease-1",
+            plan=SimpleNamespace(
+                auth_policy=SimpleNamespace(enabled=False),
+                request=SimpleNamespace(
+                    payload={"ping": 1},
+                    database="admin",
+                    session=session,
+                ),
+            ),
+        )
+
+        with patch.object(
+            transport,
+            "_roundtrip",
+            new=AsyncMock(return_value={"ok": 1.0, "operationTime": 15, "$clusterTime": {"clusterTime": 18}}),
+        ):
+            response = await transport.send(execution)
+
+        self.assertEqual(response["ok"], 1.0)
+        self.assertEqual(session.operation_time, 15)
+        self.assertEqual(session.cluster_time, 18)
 
 
 if __name__ == "__main__":

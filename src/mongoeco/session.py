@@ -1,6 +1,7 @@
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 import inspect
+import time
 import uuid
 
 from mongoeco.errors import InvalidOperation
@@ -17,6 +18,9 @@ from mongoeco.types import (
 
 
 type SessionCallback = Callable[["ClientSession"], None]
+_TRANSIENT_TRANSACTION_ERROR = "TransientTransactionError"
+_UNKNOWN_TRANSACTION_COMMIT_RESULT = "UnknownTransactionCommitResult"
+_TRANSACTION_RETRY_ATTEMPTS = 3
 
 
 @dataclass
@@ -110,6 +114,9 @@ class ClientSession:
 
     session_id: str = field(default_factory=lambda: uuid.uuid4().hex)
     default_transaction_options: TransactionOptions = field(default_factory=TransactionOptions)
+    causal_consistency: bool = True
+    cluster_time: int | None = None
+    operation_time: int | None = None
     _state: SessionState = field(default_factory=SessionState, repr=False)
     _transaction_hooks: dict[str, _TransactionHooks] = field(default_factory=dict, repr=False)
 
@@ -195,11 +202,68 @@ class ClientSession:
             abort=abort,
         )
 
+    def advance_cluster_time(self, value: int | None) -> None:
+        self.ensure_active()
+        if value is None:
+            return
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            raise TypeError("cluster_time must be a non-negative int or None")
+        if self.cluster_time is None or value > self.cluster_time:
+            self.cluster_time = value
+
+    def advance_operation_time(self, value: int | None) -> None:
+        self.ensure_active()
+        if value is None:
+            return
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            raise TypeError("operation_time must be a non-negative int or None")
+        if self.operation_time is None or value > self.operation_time:
+            self.operation_time = value
+
+    def observe_operation(self, value: int | None = None) -> int:
+        self.ensure_active()
+        observed = int(time.time_ns() // 1_000_000) if value is None else value
+        self.advance_operation_time(observed)
+        self.advance_cluster_time(observed)
+        return observed
+
+    @staticmethod
+    def _error_labels(exc: Exception) -> tuple[str, ...]:
+        labels = getattr(exc, "error_labels", ())
+        if isinstance(labels, tuple):
+            return labels
+        if isinstance(labels, list):
+            return tuple(label for label in labels if isinstance(label, str))
+        return ()
+
+    @classmethod
+    def _should_retry_transaction_phase(cls, phase: str, exc: Exception) -> bool:
+        labels = cls._error_labels(exc)
+        if phase == "commit":
+            return (
+                _TRANSIENT_TRANSACTION_ERROR in labels
+                or _UNKNOWN_TRANSACTION_COMMIT_RESULT in labels
+            )
+        if phase == "abort":
+            return _TRANSIENT_TRANSACTION_ERROR in labels
+        return False
+
     def _run_transaction_hooks(self, phase: str) -> None:
         for hooks in self._transaction_hooks.values():
             callback = getattr(hooks, phase)
             if callback is not None:
                 callback(self)
+
+    def _run_transaction_phase(self, phase: str) -> None:
+        attempts = 0
+        while True:
+            attempts += 1
+            try:
+                self._run_transaction_hooks(phase)
+                return
+            except Exception as exc:
+                if attempts >= _TRANSACTION_RETRY_ATTEMPTS or not self._should_retry_transaction_phase(phase, exc):
+                    raise
 
     def start_transaction(
         self,
@@ -240,6 +304,15 @@ class ClientSession:
             read_preference=resolved_read_preference,
             max_commit_time_ms=resolved_max_commit_time_ms,
         )
+        if (
+            resolved_write_concern.w is not None
+            and isinstance(resolved_write_concern.w, int)
+            and resolved_write_concern.w == 0
+        ):
+            self._state.transaction.active = False
+            self._state.transaction.number -= 1
+            self._state.transaction.options = None
+            raise InvalidOperation("transactions do not support unacknowledged write concern w=0")
         try:
             self._run_transaction_hooks("start")
         except Exception:
@@ -252,7 +325,7 @@ class ClientSession:
         self.ensure_active()
         if not self.transaction_active:
             raise InvalidOperation("No hay una transaccion activa en esta sesion")
-        self._run_transaction_hooks("commit")
+        self._run_transaction_phase("commit")
         self._state.transaction.active = False
         self._state.transaction.options = None
 
@@ -260,7 +333,7 @@ class ClientSession:
         self.ensure_active()
         if not self.transaction_active:
             raise InvalidOperation("No hay una transaccion activa en esta sesion")
-        self._run_transaction_hooks("abort")
+        self._run_transaction_phase("abort")
         self._state.transaction.active = False
         self._state.transaction.options = None
 

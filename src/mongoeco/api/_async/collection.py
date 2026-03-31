@@ -485,6 +485,7 @@ class AsyncCollection:
                 max_time_ms=max_time_ms,
                 hint=hint,
             )
+        session.observe_operation()
 
     async def _profile_operation(
         self,
@@ -876,6 +877,8 @@ class AsyncCollection:
             },
             duration_ns=time.perf_counter_ns() - started_at,
         )
+        if session is not None:
+            session.observe_operation()
         self._publish_change_event(
             operation_type="insert",
             document_key={"_id": deepcopy(doc["_id"])},
@@ -940,6 +943,8 @@ class AsyncCollection:
                 },
                 duration_ns=time.perf_counter_ns() - started_at,
             )
+            if session is not None:
+                session.observe_operation()
             for inserted in command_documents[: len(inserted_ids)]:
                 self._publish_change_event(
                     operation_type="insert",
@@ -983,6 +988,8 @@ class AsyncCollection:
             },
             duration_ns=time.perf_counter_ns() - started_at,
         )
+        if session is not None:
+            session.observe_operation()
         for inserted in command_documents:
             self._publish_change_event(
                 operation_type="insert",

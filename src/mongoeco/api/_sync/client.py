@@ -566,9 +566,11 @@ class MongoClient:
         self,
         *,
         default_transaction_options: TransactionOptions | None = None,
+        causal_consistency: bool = True,
     ) -> ClientSession:
         return self._async_client.start_session(
-            default_transaction_options=default_transaction_options
+            default_transaction_options=default_transaction_options,
+            causal_consistency=causal_consistency,
         )
 
     def list_database_names(self, *, session: ClientSession | None = None) -> list[str]:
