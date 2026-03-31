@@ -345,13 +345,13 @@ class TopologyAndPolicyTests(unittest.TestCase):
     def test_secondary_preferred_falls_back_to_primary_when_staleness_filters_all_secondaries(self):
         uri = parse_mongo_uri(
             "mongodb://db1:27017,db2:27018/?replicaSet=rs0"
-            "&readPreference=secondaryPreferred&maxStalenessSeconds=10"
+            "&readPreference=secondaryPreferred&maxStalenessSeconds=90"
         )
         topology = TopologyDescription(
             topology_type=TopologyType.REPLICA_SET,
             servers=(
                 ServerDescription("db1:27017", server_type=ServerType.RS_PRIMARY),
-                ServerDescription("db2:27018", server_type=ServerType.RS_SECONDARY, staleness_seconds=30),
+                ServerDescription("db2:27018", server_type=ServerType.RS_SECONDARY, staleness_seconds=120),
             ),
             set_name="rs0",
         )
@@ -361,6 +361,23 @@ class TopologyAndPolicyTests(unittest.TestCase):
         )
 
         self.assertEqual([server.address for server in policy.select_servers(topology)], ["db1:27017"])
+
+    def test_selection_policy_replica_set_primary_mode_ignores_standalone_and_mongos_members(self):
+        topology = TopologyDescription(
+            topology_type=TopologyType.REPLICA_SET,
+            servers=(
+                ServerDescription("db1:27017", server_type=ServerType.STANDALONE),
+                ServerDescription("db2:27018", server_type=ServerType.MONGOS),
+                ServerDescription("db3:27019", server_type=ServerType.RS_PRIMARY),
+            ),
+            set_name="rs0",
+        )
+        policy = build_selection_policy(
+            parse_mongo_uri("mongodb://db1:27017,db2:27018,db3:27019/?replicaSet=rs0"),
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+
+        self.assertEqual([server.address for server in policy.select_servers(topology)], ["db3:27019"])
 
     def test_timeout_policy_is_derived_from_uri(self):
         uri = parse_mongo_uri(

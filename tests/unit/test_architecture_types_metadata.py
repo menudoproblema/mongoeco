@@ -304,7 +304,7 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         preference = ReadPreference(
             "nearest",
             tag_sets=[{"region": "eu", "rack": "a"}],
-            max_staleness_seconds=30,
+            max_staleness_seconds=90,
         )
 
         self.assertEqual(preference.name, "nearest")
@@ -313,7 +313,7 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             {
                 "mode": "nearest",
                 "tag_sets": [{"region": "eu", "rack": "a"}],
-                "maxStalenessSeconds": 30,
+                "maxStalenessSeconds": 90,
             },
         )
 
@@ -329,6 +329,8 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             ReadPreference(tag_sets=[{"region": 1}])  # type: ignore[dict-item]
         with self.assertRaises(ValueError):
             ReadPreference(max_staleness_seconds=0)
+        with self.assertRaises(ValueError):
+            ReadPreference(max_staleness_seconds=30)
 
     def test_normalize_configuration_helpers_require_matching_types(self):
         self.assertEqual(normalize_write_concern(None).document, {})

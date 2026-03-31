@@ -1246,8 +1246,8 @@ class ReadPreference:
                 max_staleness_seconds,
                 "max_staleness_seconds",
             )
-            if max_staleness_seconds <= 0:
-                raise ValueError("max_staleness_seconds must be > 0")
+            if max_staleness_seconds < 90:
+                raise ValueError("max_staleness_seconds must be >= 90")
 
         object.__setattr__(self, "mode", mode)
         object.__setattr__(self, "tag_sets", normalized_tag_sets)

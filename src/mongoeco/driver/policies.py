@@ -47,7 +47,7 @@ class SelectionPolicy:
             server for server in readable if server.server_type.name == "RS_SECONDARY"
         )
         primaries = tuple(
-            server for server in readable if server.server_type.name in {"RS_PRIMARY", "STANDALONE", "MONGOS"}
+            server for server in readable if server.server_type.name == "RS_PRIMARY"
         )
         eligible_secondaries = self._apply_secondary_filters(secondaries)
         if self.mode is ReadPreferenceMode.PRIMARY:
