@@ -610,10 +610,13 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
             apply_pipeline([], [{"match": {}}])
 
     def test_pipeline_rejects_unsupported_stage(self):
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$lookup": {"from": "other"}}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$densify": {}}])
+        for pipeline in (
+            [{"$lookup": {"from": "other"}}],
+            [{"$densify": {}}],
+        ):
+            with self.subTest(pipeline=pipeline):
+                with self.assertRaises(OperationFailure):
+                    apply_pipeline([], pipeline)
 
     def test_pipeline_rejects_invalid_match_payload(self):
         with self.assertRaises(OperationFailure):
@@ -624,275 +627,129 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
             apply_pipeline([], [{"$project": []}])
 
     def test_pipeline_rejects_invalid_unwind_payload(self):
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$unwind": []}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$unwind": "tags"}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$unwind": {"path": "$tags", "includeArrayIndex": 1}}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$unwind": {"path": "$tags", "includeArrayIndex": "$idx"}}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$unset": {}}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$unset": ["ok", ""]}])
+        for pipeline in (
+            [{"$unwind": []}],
+            [{"$unwind": "tags"}],
+            [{"$unwind": {"path": "$tags", "includeArrayIndex": 1}}],
+            [{"$unwind": {"path": "$tags", "includeArrayIndex": "$idx"}}],
+            [{"$unset": {}}],
+            [{"$unset": ["ok", ""]}],
+        ):
+            with self.subTest(pipeline=pipeline):
+                with self.assertRaises(OperationFailure):
+                    apply_pipeline([], pipeline)
 
     def test_pipeline_rejects_invalid_sort_direction(self):
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$sort": {"rank": 2}}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$sort": {"rank": True}}])
+        for pipeline in (
+            [{"$sort": {"rank": 2}}],
+            [{"$sort": {"rank": True}}],
+        ):
+            with self.subTest(pipeline=pipeline):
+                with self.assertRaises(OperationFailure):
+                    apply_pipeline([], pipeline)
 
     def test_pipeline_rejects_invalid_sort_payload_and_field(self):
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$sort": []}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$sort": {1: 1}}])
+        for pipeline in (
+            [{"$sort": []}],
+            [{"$sort": {1: 1}}],
+        ):
+            with self.subTest(pipeline=pipeline):
+                with self.assertRaises(OperationFailure):
+                    apply_pipeline([], pipeline)
 
     def test_pipeline_rejects_invalid_skip_and_limit(self):
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$skip": -1}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$limit": True}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$sample": []}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$sample": {"size": True}}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$sample": {"size": 1, "extra": 2}}])
+        for pipeline in (
+            [{"$skip": -1}],
+            [{"$limit": True}],
+            [{"$sample": []}],
+            [{"$sample": {"size": True}}],
+            [{"$sample": {"size": 1, "extra": 2}}],
+        ):
+            with self.subTest(pipeline=pipeline):
+                with self.assertRaises(OperationFailure):
+                    apply_pipeline([], pipeline)
 
     def test_pipeline_rejects_invalid_group_and_expression_payloads(self):
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$group": []}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([], [{"$group": {"total": {"$sum": 1}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$group": {"_id": None, "total": 1}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$group": {"_id": None, "total": {"$unknown": 1}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$match": {"$expr": {"$divide": [1, "x"]}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$addFields": []}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$addFields": {1: "bad"}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$project": {1: "$_id"}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": []}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users"}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": "user"}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": 1}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "", "localField": "x", "foreignField": "_id", "as": "user"}}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "$users", "localField": "x", "foreignField": "_id", "as": "user"}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "", "foreignField": "_id", "as": "user"}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": ""}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "$x", "foreignField": "_id", "as": "user"}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "$_id", "as": "user"}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": "$user"}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "as": "user", "pipeline": [], "let": []}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "as": "user", "pipeline": {}, "let": {}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "as": "user", "localField": "x"}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "as": "user", "let": {"x": 1}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": 1, "foreignField": "_id", "as": "user"}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline(
-                [{"_id": "1"}],
-                [{"$lookup": {"from": "users", "as": "user", "pipeline": [], "localField": 1, "foreignField": "_id"}}],
-            )
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline(
-                [{"_id": "1"}],
-                [{"$lookup": {"from": "users", "as": "user", "pipeline": [], "localField": "x"}}],
-            )
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline(
-                [{"_id": "1"}],
-                [{"$lookup": {"from": "users", "as": "user", "pipeline": [], "localField": "$x", "foreignField": "_id"}}],
-            )
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline(
-                [{"_id": "1"}],
-                [{"$lookup": {"from": "users", "as": "user", "pipeline": [], "foreignField": "_id"}}],
-            )
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline(
-                [{"_id": "1"}],
-                [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": "user", "let": {"x": 1}}}],
-            )
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$unionWith": []}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$unionWith": {}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$unionWith": {"coll": "", "pipeline": []}}])
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$unionWith": {"coll": "$users", "pipeline": []}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$unionWith": ""}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$unionWith": {"coll": "users", "pipeline": {}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$unionWith": {"coll": "users", "extra": 1}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$unionWith": "users"}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$replaceRoot": []}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$replaceWith": 1}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$facet": []}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$facet": {1: []}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$facet": {"bad": {}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$match": {}}, {"$documents": [{"_id": "2"}]}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$documents": [1]}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$bucket": []}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}], [{"$bucket": {"groupBy": "$score", "boundaries": [10]}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}], [{"$bucket": {"groupBy": "$score", "boundaries": [10, 5]}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}], [{"$bucket": {"groupBy": "$score", "boundaries": [0, 10], "output": []}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}], [{"$bucket": {"groupBy": "$score", "boundaries": [0, 10], "output": {"count": 1}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 50}], [{"$bucket": {"groupBy": "$score", "boundaries": [0, 10]}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}], [{"$bucketAuto": []}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}], [{"$bucketAuto": {"groupBy": "$score", "buckets": 0}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}], [{"$bucketAuto": {"groupBy": "$score", "buckets": 1, "granularity": "R5"}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}], [{"$bucketAuto": {"groupBy": "$score", "buckets": 1, "output": []}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$setWindowFields": []}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$setWindowFields": {"output": []}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"x": {"$sum": 1, "window": []}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$setWindowFields": {"output": {1: {"$sum": 1}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$setWindowFields": {"output": {"x": 1}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$setWindowFields": {"output": {"x": {"$sum": 1, "$max": 2}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$setWindowFields": {"output": {"x": {"$sum": 1, "window": {"documents": [0]}}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$setWindowFields": {"output": {"x": {"$sum": 1, "window": {"documents": [0, "later"]}}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}], [{"$setWindowFields": {"output": {"x": {"$sum": "$score", "window": {"range": [0, 1]}}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}], [{"$setWindowFields": {"sortBy": {"score": 1, "_id": 1}, "output": {"x": {"$sum": "$score", "window": {"range": [0, 1]}}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": "$score", "window": {"documents": [0, 0], "range": [0, 1]}}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": "$score", "window": {"range": [0]}}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": "x"}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": 1, "window": {"range": [0, 1]}}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": 1, "window": {"range": [True, 1]}}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}, {"score": "x"}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": 1, "window": {"range": [0, "current"]}}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": float("nan")}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": 1, "window": {"range": [0, 1]}}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"score": 1}, {"score": float("inf")}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": 1, "window": {"range": [0, 1]}}}}}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$count": ""}])
-
-        with self.assertRaises(OperationFailure):
-            apply_pipeline([{"_id": "1"}], [{"$count": "$total"}])
+        cases = (
+            ([], [{"$group": []}]),
+            ([], [{"$group": {"total": {"$sum": 1}}}]),
+            ([{"_id": "1"}], [{"$group": {"_id": None, "total": 1}}]),
+            ([{"_id": "1"}], [{"$group": {"_id": None, "total": {"$unknown": 1}}}]),
+            ([{"_id": "1"}], [{"$match": {"$expr": {"$divide": [1, "x"]}}}]),
+            ([{"_id": "1"}], [{"$addFields": []}]),
+            ([{"_id": "1"}], [{"$addFields": {1: "bad"}}]),
+            ([{"_id": "1"}], [{"$project": {1: "$_id"}}]),
+            ([{"_id": "1"}], [{"$lookup": []}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": "user"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": 1}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "", "localField": "x", "foreignField": "_id", "as": "user"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "$users", "localField": "x", "foreignField": "_id", "as": "user"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "", "foreignField": "_id", "as": "user"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": ""}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "$x", "foreignField": "_id", "as": "user"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "$_id", "as": "user"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": "$user"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "as": "user", "pipeline": [], "let": []}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "as": "user", "pipeline": {}, "let": {}}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "as": "user", "localField": "x"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "as": "user", "let": {"x": 1}}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": 1, "foreignField": "_id", "as": "user"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "as": "user", "pipeline": [], "localField": 1, "foreignField": "_id"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "as": "user", "pipeline": [], "localField": "x"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "as": "user", "pipeline": [], "localField": "$x", "foreignField": "_id"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "as": "user", "pipeline": [], "foreignField": "_id"}}]),
+            ([{"_id": "1"}], [{"$lookup": {"from": "users", "localField": "x", "foreignField": "_id", "as": "user", "let": {"x": 1}}}]),
+            ([{"_id": "1"}], [{"$unionWith": []}]),
+            ([{"_id": "1"}], [{"$unionWith": {}}]),
+            ([{"_id": "1"}], [{"$unionWith": {"coll": "", "pipeline": []}}]),
+            ([{"_id": "1"}], [{"$unionWith": {"coll": "$users", "pipeline": []}}]),
+            ([{"_id": "1"}], [{"$unionWith": ""}]),
+            ([{"_id": "1"}], [{"$unionWith": {"coll": "users", "pipeline": {}}}]),
+            ([{"_id": "1"}], [{"$unionWith": {"coll": "users", "extra": 1}}]),
+            ([{"_id": "1"}], [{"$unionWith": "users"}]),
+            ([{"_id": "1"}], [{"$replaceRoot": []}]),
+            ([{"_id": "1"}], [{"$replaceWith": 1}]),
+            ([{"_id": "1"}], [{"$facet": []}]),
+            ([{"_id": "1"}], [{"$facet": {1: []}}]),
+            ([{"_id": "1"}], [{"$facet": {"bad": {}}}]),
+            ([{"_id": "1"}], [{"$match": {}}, {"$documents": [{"_id": "2"}]}]),
+            ([{"_id": "1"}], [{"$documents": [1]}]),
+            ([{"_id": "1"}], [{"$bucket": []}]),
+            ([{"score": 1}], [{"$bucket": {"groupBy": "$score", "boundaries": [10]}}]),
+            ([{"score": 1}], [{"$bucket": {"groupBy": "$score", "boundaries": [10, 5]}}]),
+            ([{"score": 1}], [{"$bucket": {"groupBy": "$score", "boundaries": [0, 10], "output": []}}]),
+            ([{"score": 1}], [{"$bucket": {"groupBy": "$score", "boundaries": [0, 10], "output": {"count": 1}}}]),
+            ([{"score": 50}], [{"$bucket": {"groupBy": "$score", "boundaries": [0, 10]}}]),
+            ([{"score": 1}], [{"$bucketAuto": []}]),
+            ([{"score": 1}], [{"$bucketAuto": {"groupBy": "$score", "buckets": 0}}]),
+            ([{"score": 1}], [{"$bucketAuto": {"groupBy": "$score", "buckets": 1, "granularity": "R5"}}]),
+            ([{"score": 1}], [{"$bucketAuto": {"groupBy": "$score", "buckets": 1, "output": []}}]),
+            ([{"_id": "1"}], [{"$setWindowFields": []}]),
+            ([{"_id": "1"}], [{"$setWindowFields": {"output": []}}]),
+            ([{"_id": "1"}], [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"x": {"$sum": 1, "window": []}}}}]),
+            ([{"_id": "1"}], [{"$setWindowFields": {"output": {1: {"$sum": 1}}}}]),
+            ([{"_id": "1"}], [{"$setWindowFields": {"output": {"x": 1}}}]),
+            ([{"_id": "1"}], [{"$setWindowFields": {"output": {"x": {"$sum": 1, "$max": 2}}}}]),
+            ([{"_id": "1"}], [{"$setWindowFields": {"output": {"x": {"$sum": 1, "window": {"documents": [0]}}}}}]),
+            ([{"_id": "1"}], [{"$setWindowFields": {"output": {"x": {"$sum": 1, "window": {"documents": [0, "later"]}}}}}]),
+            ([{"score": 1}], [{"$setWindowFields": {"output": {"x": {"$sum": "$score", "window": {"range": [0, 1]}}}}}]),
+            ([{"score": 1}], [{"$setWindowFields": {"sortBy": {"score": 1, "_id": 1}, "output": {"x": {"$sum": "$score", "window": {"range": [0, 1]}}}}}]),
+            ([{"score": 1}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": "$score", "window": {"documents": [0, 0], "range": [0, 1]}}}}}]),
+            ([{"score": 1}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": "$score", "window": {"range": [0]}}}}}]),
+            ([{"score": "x"}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": 1, "window": {"range": [0, 1]}}}}}]),
+            ([{"score": 1}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": 1, "window": {"range": [True, 1]}}}}}]),
+            ([{"score": 1}, {"score": "x"}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": 1, "window": {"range": [0, "current"]}}}}}]),
+            ([{"score": float("nan")}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": 1, "window": {"range": [0, 1]}}}}}]),
+            ([{"score": 1}, {"score": float("inf")}], [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"x": {"$sum": 1, "window": {"range": [0, 1]}}}}}]),
+            ([{"_id": "1"}], [{"$count": ""}]),
+            ([{"_id": "1"}], [{"$count": "$total"}]),
+        )
+
+        for documents, pipeline in cases:
+            with self.subTest(pipeline=pipeline):
+                with self.assertRaises(OperationFailure):
+                    apply_pipeline(documents, pipeline)
 
     def test_split_pushdown_pipeline_extracts_safe_prefix(self):
         pushdown = split_pushdown_pipeline(
