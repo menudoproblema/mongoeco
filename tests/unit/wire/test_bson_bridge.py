@@ -3,10 +3,13 @@ import unittest
 import uuid
 from unittest.mock import patch
 
+from bson.code import Code as BsonCode
 from bson import Decimal128
 from bson.binary import Binary, STANDARD
 from bson.dbref import DBRef as BsonDBRef
 from bson.int64 import Int64
+from bson.max_key import MaxKey as BsonMaxKey
+from bson.min_key import MinKey as BsonMinKey
 from bson.objectid import ObjectId as BsonObjectId
 from bson.regex import Regex
 from bson.timestamp import Timestamp as BsonTimestamp
@@ -27,6 +30,9 @@ class WireBsonBridgeTests(unittest.TestCase):
                 "uuid": Binary.from_uuid(session_id, uuid_representation=STANDARD),
                 "regex": Regex("^ab", "im"),
                 "timestamp": BsonTimestamp(12, 3),
+                "code": BsonCode("function() { return tenant; }", {"tenant": Binary(b"t1")}),
+                "min": BsonMinKey(),
+                "max": BsonMaxKey(),
                 "dbref": BsonDBRef("users", "ada", "observe", tenant="t1"),
             }
         )
@@ -37,6 +43,9 @@ class WireBsonBridgeTests(unittest.TestCase):
         self.assertEqual(decoded["uuid"], session_id)
         self.assertEqual(decoded["regex"], MongoecoRegex("^ab", "im"))
         self.assertEqual(decoded["timestamp"], Timestamp(12, 3))
+        self.assertEqual(decoded["code"], BsonCode("function() { return tenant; }", {"tenant": MongoecoBinary(b"t1")}))
+        self.assertIsInstance(decoded["min"], BsonMinKey)
+        self.assertIsInstance(decoded["max"], BsonMaxKey)
         self.assertEqual(decoded["dbref"], DBRef("users", "ada", database="observe", extras={"tenant": "t1"}))
 
     def test_encode_wire_value_handles_internal_special_values(self):
@@ -55,6 +64,9 @@ class WireBsonBridgeTests(unittest.TestCase):
                 "timestamp": Timestamp(12, 3),
                 "public_decimal": MongoecoDecimal128("8.5"),
                 "ref": DBRef("users", "ada", database="observe", extras={"tenant": "t1"}),
+                "code": BsonCode("function() { return tenant; }", {"tenant": MongoecoBinary(b"t1")}),
+                "min": BsonMinKey(),
+                "max": BsonMaxKey(),
                 "son": SON([("b", 2), ("a", 1)]),
                 "undefined": UNDEFINED,
             }
@@ -73,6 +85,9 @@ class WireBsonBridgeTests(unittest.TestCase):
         self.assertEqual(encoded["timestamp"], BsonTimestamp(12, 3))
         self.assertEqual(encoded["public_decimal"], Decimal128("8.5"))
         self.assertEqual(encoded["ref"], BsonDBRef("users", "ada", "observe", tenant="t1"))
+        self.assertEqual(encoded["code"], BsonCode("function() { return tenant; }", {"tenant": Binary(b"t1")}))
+        self.assertIsInstance(encoded["min"], BsonMinKey)
+        self.assertIsInstance(encoded["max"], BsonMaxKey)
         self.assertEqual(list(encoded["son"].items()), [("b", 2), ("a", 1)])
         self.assertIsNone(encoded["undefined"])
 

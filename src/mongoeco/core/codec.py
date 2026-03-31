@@ -4,6 +4,15 @@ import decimal
 import uuid
 from typing import Any
 
+try:
+    from bson.code import Code as BsonCode
+    from bson.max_key import MaxKey as BsonMaxKey
+    from bson.min_key import MinKey as BsonMinKey
+except Exception:  # pragma: no cover - optional dependency
+    BsonCode = None
+    BsonMaxKey = None
+    BsonMinKey = None
+
 from mongoeco.core.bson_scalars import (
     BsonDecimal128,
     BsonDouble,
@@ -85,6 +94,12 @@ class DocumentCodec:
         if isinstance(data, datetime.datetime):
             return DocumentCodec._tagged_value("datetime", data.isoformat())
 
+        if BsonMinKey is not None and isinstance(data, BsonMinKey):
+            return DocumentCodec._tagged_value("minkey", True)
+
+        if BsonMaxKey is not None and isinstance(data, BsonMaxKey):
+            return DocumentCodec._tagged_value("maxkey", True)
+
         if isinstance(data, decimal.Decimal):
             return DocumentCodec._tagged_value("decimal", str(data))
 
@@ -123,6 +138,15 @@ class DocumentCodec:
 
         if isinstance(data, Decimal128):
             return DocumentCodec._tagged_value("decimal128_public", str(data.value))
+
+        if BsonCode is not None and isinstance(data, BsonCode):
+            return DocumentCodec._tagged_value(
+                "code",
+                {
+                    "code": str(data),
+                    "scope": DocumentCodec.encode(data.scope) if data.scope is not None else None,
+                },
+            )
 
         if isinstance(data, DBRef):
             return DocumentCodec._tagged_value(
@@ -164,6 +188,14 @@ class DocumentCodec:
 
             if value_type == "datetime":
                 return datetime.datetime.fromisoformat(value)
+            if value_type == "minkey":
+                if BsonMinKey is None:
+                    raise ValueError("MinKey requires bson support")
+                return BsonMinKey()
+            if value_type == "maxkey":
+                if BsonMaxKey is None:
+                    raise ValueError("MaxKey requires bson support")
+                return BsonMaxKey()
             if value_type == "decimal":
                 return decimal.Decimal(value)
             if value_type == "uuid":
@@ -178,6 +210,16 @@ class DocumentCodec:
                 return Timestamp(int(value["time"]), int(value["inc"]))
             if value_type == "decimal128_public":
                 return Decimal128(value)
+            if value_type == "code":
+                if BsonCode is None:
+                    raise ValueError("Code requires bson support")
+                scope = value["scope"]
+                return BsonCode(
+                    value["code"],
+                    DocumentCodec.decode(scope, preserve_bson_wrappers=preserve_bson_wrappers)
+                    if scope is not None
+                    else None,
+                )
             if value_type == "dbref":
                 return DBRef(
                     collection=str(value["collection"]),

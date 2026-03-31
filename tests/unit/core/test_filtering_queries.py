@@ -8,8 +8,12 @@ from unittest.mock import patch
 
 try:
     from bson.code import Code as BsonCode
+    from bson.max_key import MaxKey as BsonMaxKey
+    from bson.min_key import MinKey as BsonMinKey
 except Exception:  # pragma: no cover - optional dependency
     BsonCode = None
+    BsonMaxKey = None
+    BsonMinKey = None
 
 import mongoeco.core.filtering as filtering_module
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
@@ -89,6 +93,24 @@ class QueryEngineTests(unittest.TestCase):
 
     def test_query_engine_matches_empty_filter(self):
         self.assertTrue(QueryEngine.match({"a": 1}, {}))
+
+    def test_query_engine_supports_minmax_and_code_bson_types_when_available(self):
+        if BsonCode is None or BsonMinKey is None or BsonMaxKey is None:
+            self.skipTest("bson is not installed")
+
+        document = {
+            "min": BsonMinKey(),
+            "max": BsonMaxKey(),
+            "plainCode": BsonCode("function() { return 1; }"),
+            "scopedCode": BsonCode("function() { return x; }", {"x": 1}),
+        }
+
+        self.assertTrue(QueryEngine.match(document, {"min": {"$type": "minKey"}}))
+        self.assertTrue(QueryEngine.match(document, {"max": {"$type": "maxKey"}}))
+        self.assertTrue(QueryEngine.match(document, {"plainCode": {"$type": "javascript"}}))
+        self.assertTrue(QueryEngine.match(document, {"scopedCode": {"$type": "javascriptWithScope"}}))
+        self.assertLess(MONGODB_DIALECT_70.policy.compare_values(BsonMinKey(), 1), 0)
+        self.assertGreater(MONGODB_DIALECT_70.policy.compare_values(BsonMaxKey(), 1), 0)
 
     def test_query_engine_hashable_lookup_key_handles_special_scalar_types(self):
         now = datetime.datetime(2024, 1, 1)

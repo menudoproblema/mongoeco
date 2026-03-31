@@ -10,6 +10,15 @@ from types import MappingProxyType
 from typing import Any
 import uuid
 
+try:
+    from bson.code import Code as BsonCode
+    from bson.max_key import MaxKey as BsonMaxKey
+    from bson.min_key import MinKey as BsonMinKey
+except Exception:  # pragma: no cover - optional dependency
+    BsonCode = None
+    BsonMaxKey = None
+    BsonMinKey = None
+
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, SON, Timestamp, UndefinedType
 
@@ -340,34 +349,39 @@ SUPPORTED_WINDOW_ACCUMULATORS = frozenset(
     }
 )
 
-DEFAULT_BSON_TYPE_ORDER = MappingProxyType(
-    {
-        type(None): 1,
-        UndefinedType: 1,
-        int: 2,
-        float: 2,
-        decimal.Decimal: 2,
-        Decimal128: 2,
-        BsonInt32: 2,
-        BsonInt64: 2,
-        BsonDouble: 2,
-        BsonDecimal128: 2,
-        str: 3,
-        dict: 4,
-        SON: 4,
-        DBRef: 4,
-        list: 5,
-        bytes: 6,
-        Binary: 6,
-        uuid.UUID: 6,
-        ObjectId: 7,
-        bool: 8,
-        datetime.datetime: 9,
-        Timestamp: 10,
-        re.Pattern: 11,
-        Regex: 11,
-    }
-)
+_DEFAULT_BSON_TYPE_ORDER = {
+    type(None): 1,
+    UndefinedType: 1,
+    int: 2,
+    float: 2,
+    decimal.Decimal: 2,
+    Decimal128: 2,
+    BsonInt32: 2,
+    BsonInt64: 2,
+    BsonDouble: 2,
+    BsonDecimal128: 2,
+    str: 3,
+    dict: 4,
+    SON: 4,
+    DBRef: 4,
+    list: 5,
+    bytes: 6,
+    Binary: 6,
+    uuid.UUID: 6,
+    ObjectId: 7,
+    bool: 8,
+    datetime.datetime: 9,
+    Timestamp: 10,
+    re.Pattern: 11,
+    Regex: 11,
+}
+if BsonMinKey is not None:
+    _DEFAULT_BSON_TYPE_ORDER[BsonMinKey] = 0
+if BsonCode is not None:
+    _DEFAULT_BSON_TYPE_ORDER[BsonCode] = 12
+if BsonMaxKey is not None:
+    _DEFAULT_BSON_TYPE_ORDER[BsonMaxKey] = 127
+DEFAULT_BSON_TYPE_ORDER = MappingProxyType(_DEFAULT_BSON_TYPE_ORDER)
 
 MONGODB_DIALECT_CATALOG = MappingProxyType(
     {

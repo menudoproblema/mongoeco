@@ -25,6 +25,9 @@ usa Semantic Versioning.
   para autenticacion SCRAM, y el proxy wire entiende ahora esa
   conversacion multi-step moderna ademas del comando legacy
   `authenticate`.
+- El bridge wire, el codec interno y la semantica de `$type` preservan
+  ya `MinKey`, `MaxKey` y `Code/CodeWithScope`, evitando perder esos
+  valores BSON especiales en round-trips y comparaciones basicas.
 - El seed de upsert extrae ya igualdades seedables desde `$and`
   top-level y desde condiciones `$in` con un unico valor.
 - `$dateFromParts` valida ya de forma explicita los rangos de `hour`,

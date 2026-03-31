@@ -5,10 +5,13 @@ import re
 import uuid
 from typing import Any
 
+from bson.code import Code as BsonCode
 from bson import Decimal128 as BsonDecimal128Public
 from bson.binary import Binary as BsonBinary, STANDARD
 from bson.dbref import DBRef as BsonDBRef
 from bson.int64 import Int64
+from bson.max_key import MaxKey as BsonMaxKey
+from bson.min_key import MinKey as BsonMinKey
 from bson.objectid import ObjectId as BsonObjectId
 from bson.regex import Regex as BsonRegex
 from bson.son import SON as BsonSON
@@ -27,6 +30,8 @@ def decode_wire_value(value: Any) -> Any:
         return [decode_wire_value(item) for item in value]
     if isinstance(value, BsonObjectId):
         return ObjectId(str(value))
+    if isinstance(value, BsonMinKey | BsonMaxKey):
+        return value
     if isinstance(value, BsonDecimal128Public):
         return Decimal128(value.to_decimal())
     if isinstance(value, Int64):
@@ -49,6 +54,10 @@ def decode_wire_value(value: Any) -> Any:
         return Regex(value.pattern, _regex_flags_to_string(value.flags))
     if isinstance(value, BsonTimestamp):
         return Timestamp(value.time, value.inc)
+    if isinstance(value, BsonCode):
+        if value.scope is None:
+            return BsonCode(str(value))
+        return BsonCode(str(value), decode_wire_value(value.scope))
     return value
 
 
@@ -61,6 +70,8 @@ def encode_wire_value(value: Any) -> Any:
         return [encode_wire_value(item) for item in value]
     if isinstance(value, ObjectId):
         return BsonObjectId(str(value))
+    if isinstance(value, BsonMinKey | BsonMaxKey):
+        return value
     if isinstance(value, DBRef):
         return BsonDBRef(
             value.collection,
@@ -88,6 +99,10 @@ def encode_wire_value(value: Any) -> Any:
         return BsonRegex(value.pattern, value.flags)
     if isinstance(value, Timestamp):
         return BsonTimestamp(value.time, value.inc)
+    if isinstance(value, BsonCode):
+        if value.scope is None:
+            return BsonCode(str(value))
+        return BsonCode(str(value), encode_wire_value(value.scope))
     if isinstance(value, bytes):
         return BsonBinary(value)
     if isinstance(value, UndefinedType):

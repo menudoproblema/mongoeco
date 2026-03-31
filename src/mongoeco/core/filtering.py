@@ -8,8 +8,12 @@ from typing import Any, assert_never
 
 try:
     from bson.code import Code as BsonCode
+    from bson.max_key import MaxKey as BsonMaxKey
+    from bson.min_key import MinKey as BsonMinKey
 except Exception:  # pragma: no cover - optional dependency
     BsonCode = None
+    BsonMaxKey = None
+    BsonMinKey = None
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_scalars import bson_numeric_alias
@@ -1063,6 +1067,8 @@ class QueryEngine:
             "javascript": ("javascript",),
             "symbol": ("symbol",),
             "javascriptwithscope": ("javascriptWithScope",),
+            "minkey": ("minKey",),
+            "maxkey": ("maxKey",),
             "int": ("int",),
             "timestamp": ("timestamp",),
             "long": ("long",),
@@ -1112,6 +1118,10 @@ class QueryEngine:
             return BsonCode is not None and isinstance(candidate, BsonCode) and candidate.scope is None
         if alias == "javascriptWithScope":
             return BsonCode is not None and isinstance(candidate, BsonCode) and candidate.scope is not None
+        if alias == "minKey":
+            return BsonMinKey is not None and isinstance(candidate, BsonMinKey)
+        if alias == "maxKey":
+            return BsonMaxKey is not None and isinstance(candidate, BsonMaxKey)
         if alias == "undefined":
             return isinstance(candidate, UndefinedType)
         return False

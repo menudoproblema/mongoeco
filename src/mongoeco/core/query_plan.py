@@ -232,6 +232,7 @@ def _normalize_type_specifier(type_spec: Any) -> tuple[str, ...]:
         raise ValueError("$type no acepta booleanos como identificadores de tipo")
     if isinstance(type_spec, int):
         numeric_mapping = {
+            -1: ("minKey",),
             1: ("double",),
             2: ("string",),
             3: ("object",),
@@ -250,6 +251,7 @@ def _normalize_type_specifier(type_spec: Any) -> tuple[str, ...]:
             17: ("timestamp",),
             18: ("long",),
             19: ("decimal",),
+            127: ("maxKey",),
         }
         if type_spec not in numeric_mapping:
             raise ValueError("$type usa un codigo BSON no soportado")
@@ -271,6 +273,8 @@ def _normalize_type_specifier(type_spec: Any) -> tuple[str, ...]:
         "javascript": ("javascript",),
         "symbol": ("symbol",),
         "javascriptwithscope": ("javascriptWithScope",),
+        "minkey": ("minKey",),
+        "maxkey": ("maxKey",),
         "int": ("int",),
         "timestamp": ("timestamp",),
         "long": ("long",),

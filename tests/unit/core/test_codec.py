@@ -4,8 +4,14 @@ import unittest
 import uuid
 
 try:
+    from bson.code import Code as BsonCode
+    from bson.max_key import MaxKey as BsonMaxKey
+    from bson.min_key import MinKey as BsonMinKey
     from bson.objectid import ObjectId as BsonObjectId
 except Exception:  # pragma: no cover - optional dependency
+    BsonCode = None
+    BsonMaxKey = None
+    BsonMinKey = None
     BsonObjectId = None
 
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
@@ -232,3 +238,20 @@ class DocumentCodecTests(unittest.TestCase):
         )
 
         self.assertEqual(str(decoded), "1.234567890123456789012345678901234")
+
+    def test_document_codec_round_trip_restores_pymongo_code_and_minmax(self):
+        if BsonCode is None or BsonMinKey is None or BsonMaxKey is None:
+            self.skipTest("bson is not installed")
+
+        original = {
+            "code": BsonCode("function() { return tenant; }", {"tenant": Binary(b"t1")}),
+            "min": BsonMinKey(),
+            "max": BsonMaxKey(),
+        }
+
+        decoded = DocumentCodec.decode(DocumentCodec.encode(original))
+
+        self.assertEqual(decoded["code"], original["code"])
+        self.assertEqual(decoded["code"].scope, original["code"].scope)
+        self.assertEqual(decoded["min"], original["min"])
+        self.assertEqual(decoded["max"], original["max"])
