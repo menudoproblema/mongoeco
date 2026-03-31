@@ -252,6 +252,18 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_load_documents_generator_can_finalize_after_disconnect(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
+            loader = engine._load_documents("db", "coll")
+            self.assertEqual(next(loader)[1], {"_id": "1", "kind": "view"})
+        finally:
+            await engine.disconnect()
+
+        loader.close()
+
     async def test_create_index_enforces_max_time_ms_deadline(self):
         engine = SQLiteEngine()
         await engine.connect()

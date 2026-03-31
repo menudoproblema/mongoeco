@@ -706,7 +706,12 @@ class SQLiteEngine(AsyncStorageEngine):
             for storage_key, document in cursor:
                 yield storage_key, self._deserialize_document(document)
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except sqlite3.ProgrammingError:
+                # The connection may already be closed if the generator is
+                # finalized after engine shutdown.
+                pass
 
     def _build_select_sql(
         self,
