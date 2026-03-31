@@ -289,17 +289,18 @@ class QueryEngine:
             case ElemMatchCondition(
                 field=field,
                 condition=condition,
-                dialect=elem_dialect,
                 compiled_plan=compiled_plan,
+                compiled_dialect_key=compiled_dialect_key,
                 wrap_value=wrap_value,
             ):
                 return QueryEngine._evaluate_elem_match(
                     document,
                     field,
                     condition,
-                    dialect=elem_dialect,
+                    dialect=dialect,
                     collation=collation,
                     compiled_plan=compiled_plan,
+                    compiled_dialect_key=compiled_dialect_key,
                     wrap_value=wrap_value,
                 )
             case ExistsCondition(field=field, value=value):
@@ -1317,6 +1318,7 @@ class QueryEngine:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
         compiled_plan: QueryNode | None = None,
+        compiled_dialect_key: str | None = None,
         wrap_value: bool = False,
     ) -> bool:
         values = QueryEngine._extract_values(doc, field)
@@ -1328,6 +1330,7 @@ class QueryEngine:
                     dialect=dialect,
                     collation=collation,
                     compiled_plan=compiled_plan,
+                    compiled_dialect_key=compiled_dialect_key,
                     wrap_value=wrap_value,
                 )
                 for candidate in array_candidate
@@ -1343,11 +1346,12 @@ class QueryEngine:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
         compiled_plan: QueryNode | None = None,
+        compiled_dialect_key: str | None = None,
         wrap_value: bool = False,
     ) -> bool:
         if not isinstance(condition, dict):
             return QueryEngine._values_equal(candidate, condition, dialect=dialect, collation=collation)
-        if compiled_plan is not None:
+        if compiled_plan is not None and compiled_dialect_key == dialect.key:
             if wrap_value:
                 return QueryEngine.match_plan(
                     {"value": candidate},

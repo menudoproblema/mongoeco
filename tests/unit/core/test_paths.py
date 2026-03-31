@@ -112,6 +112,14 @@ class PathHelpersTests(unittest.TestCase):
         self.assertTrue(changed)
         self.assertEqual(document, {"items": [None, None, {"name": "Ada"}]})
 
+    def test_set_document_value_creates_nested_documents_for_missing_numeric_segments_under_dicts(self):
+        document = {}
+
+        changed = set_document_value(document, "items.2.name", "Ada")
+
+        self.assertTrue(changed)
+        self.assertEqual(document, {"items": {"2": {"name": "Ada"}}})
+
     def test_set_document_value_rejects_crossing_scalar_parent(self):
         with self.assertRaises(OperationFailure):
             set_document_value({"profile": 1}, "profile.name", "Ada")

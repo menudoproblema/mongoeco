@@ -134,7 +134,7 @@ def set_document_value(doc: dict[str, Any] | list[Any], path: str, value: Any) -
 
     first, rest = path.split(".", 1)
     if first not in doc:
-        doc[first] = _make_container(rest)
+        doc[first] = {}
     elif not isinstance(doc[first], (dict, list)):
         raise OperationFailure(f"Cannot create field '{rest}' in element {{{first}: {doc[first]!r}}}")
 

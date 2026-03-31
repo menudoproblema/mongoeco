@@ -88,7 +88,8 @@ class AggregationCoreTests(unittest.TestCase):
             def __repr__(self) -> str:
                 return "unhashable"
 
-        self.assertEqual(_aggregation_key(_Unhashable()), ("repr", "unhashable"))
+        with self.assertRaisesRegex(OperationFailure, "BSON-compatible values"):
+            _aggregation_key(_Unhashable())
 
     def test_match_spec_contains_expr_and_field_path_resolution_cover_edge_cases(self):
         self.assertFalse(_match_spec_contains_expr("invalid"))

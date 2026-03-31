@@ -109,8 +109,8 @@ class NotCondition(QueryNode):
 class ElemMatchCondition(QueryNode):
     field: str
     condition: Filter
-    dialect: MongoDialect = MONGODB_DIALECT_70
     compiled_plan: QueryNode | None = None
+    compiled_dialect_key: str | None = None
     wrap_value: bool = False
 
 
@@ -470,8 +470,8 @@ def _compile_field_condition(
                 ElemMatchCondition(
                     field,
                     value,
-                    dialect=dialect,
                     compiled_plan=compiled_plan,
+                    compiled_dialect_key=dialect.key if compiled_plan is not None else None,
                     wrap_value=wrap_value,
                 )
             )

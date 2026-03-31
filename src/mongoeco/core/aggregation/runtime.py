@@ -90,7 +90,7 @@ def _aggregation_key(value: Any) -> Any:
         hash(value)
         return (value.__class__, value)
     except TypeError:
-        return ("repr", repr(value))
+        raise OperationFailure("$group _id must resolve to BSON-compatible values")
 
 
 @dataclass(frozen=True, slots=True)

@@ -54,6 +54,16 @@ usa Semantic Versioning.
 - Se validan ya como no soportados los valores `NaN` e infinitos en
   ventanas `range` de `$setWindowFields`, evitando comparaciones
   inconsistentes sobre el campo de ordenacion.
+- La creacion de rutas sobre documentos faltantes deja de inferir
+  arrays solo porque el siguiente segmento sea numerico, evitando
+  estructuras ambiguas al escribir paths como `"a.0.b"` desde un padre
+  inexistente.
+- `$elemMatch` deja de reutilizar planes compilados cuando el dialecto
+  de ejecucion no coincide con el de compilacion, evitando congelar
+  semanticas como `null` vs `undefined` entre MongoDB 7 y 8.
+- `$group` rechaza ya claves `_id` no BSON no hashables en vez de
+  agruparlas por `repr()`, eliminando colisiones silenciosas entre
+  objetos Python arbitrarios.
 
 ## [2.2.0] - 2026-03-31
 

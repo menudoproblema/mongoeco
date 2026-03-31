@@ -202,6 +202,7 @@ class QueryPlanTests(unittest.TestCase):
         self.assertEqual(elem_match.condition, {"kind": "a"})
         self.assertFalse(elem_match.wrap_value)
         self.assertIsNotNone(elem_match.compiled_plan)
+        self.assertEqual(elem_match.compiled_dialect_key, MONGODB_DIALECT_70.key)
         self.assertEqual(
             compile_filter({"flag": {"$exists": False}}),
             ExistsCondition("flag", False),

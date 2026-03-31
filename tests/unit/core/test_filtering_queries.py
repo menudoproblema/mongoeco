@@ -591,6 +591,14 @@ class QueryEngineTests(unittest.TestCase):
                 )
             )
 
+    def test_query_engine_elem_match_falls_back_when_runtime_dialect_differs(self):
+        document = {"items": [UNDEFINED]}
+        plan_70 = compile_filter({"items": {"$elemMatch": {"$eq": None}}}, dialect=MONGODB_DIALECT_70)
+        plan_80 = compile_filter({"items": {"$elemMatch": {"$eq": None}}}, dialect=MONGODB_DIALECT_80)
+
+        self.assertFalse(QueryEngine.match_plan(document, plan_70, dialect=MONGODB_DIALECT_80))
+        self.assertTrue(QueryEngine.match_plan(document, plan_80, dialect=MONGODB_DIALECT_70))
+
     def test_query_engine_elem_match_private_helper_supports_direct_scalar_condition(self):
         self.assertTrue(QueryEngine._match_elem_match_candidate("python", "python"))
         self.assertFalse(QueryEngine._match_elem_match_candidate("python", "mongodb"))
