@@ -19,6 +19,7 @@ from mongoeco.compat import (
     MONGODB_DIALECT_POLICY_SPECS,
     MONGODB_DIALECTS,
     MongoBehaviorPolicySpec,
+    MongoDialect,
     MongoDialect70,
     MongoDialect80,
     MongoDialectResolution,
@@ -156,6 +157,22 @@ class CompatResolutionTests(unittest.TestCase):
                 "comparison_mode": "bson-total-order",
             },
         )
+
+    def test_base_dialect_can_override_operator_catalogs_declaratively(self):
+        dialect = MongoDialect(
+            key="test",
+            server_version="test",
+            label="Test",
+            catalog_query_field_operators=frozenset({"$eq"}),
+            catalog_update_operators=frozenset({"$set"}),
+        )
+
+        self.assertEqual(dialect.query_field_operators, frozenset({"$eq"}))
+        self.assertEqual(dialect.update_operators, frozenset({"$set"}))
+        self.assertTrue(dialect.supports_query_field_operator("$eq"))
+        self.assertFalse(dialect.supports_query_field_operator("$in"))
+        self.assertTrue(dialect.supports_update_operator("$set"))
+        self.assertFalse(dialect.supports_update_operator("$inc"))
 
     def test_exported_catalog_matches_public_runtime_catalogs(self):
         mongodb_catalog = export_mongodb_dialect_catalog()

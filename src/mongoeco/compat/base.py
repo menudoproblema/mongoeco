@@ -241,6 +241,8 @@ class MongoDialect:
     catalog_behavior_flags: MappingProxyType = MappingProxyType({})
     catalog_policy_spec: MongoBehaviorPolicySpec = MongoBehaviorPolicySpec()
     catalog_capabilities: frozenset[str] = frozenset()
+    catalog_query_field_operators: frozenset[str] | None = None
+    catalog_update_operators: frozenset[str] | None = None
     _base_policy_cache: MongoBehaviorPolicy | None = field(default=None, init=False, repr=False, compare=False)
     _policy_cache: MongoBehaviorPolicy | None = field(default=None, init=False, repr=False, compare=False)
     _SEMANTIC_OVERRIDE_NAMES: ClassVar[tuple[str, ...]] = (
@@ -317,7 +319,7 @@ class MongoDialect:
 
     @property
     def query_field_operators(self) -> frozenset[str]:
-        return SUPPORTED_QUERY_FIELD_OPERATORS
+        return self.catalog_query_field_operators or SUPPORTED_QUERY_FIELD_OPERATORS
 
     @property
     def query_top_level_operators(self) -> frozenset[str]:
@@ -325,7 +327,7 @@ class MongoDialect:
 
     @property
     def update_operators(self) -> frozenset[str]:
-        return SUPPORTED_UPDATE_OPERATORS
+        return self.catalog_update_operators or SUPPORTED_UPDATE_OPERATORS
 
     @property
     def aggregation_expression_operators(self) -> frozenset[str]:
@@ -471,6 +473,8 @@ class MongoDialect70(MongoDialect):
     catalog_behavior_flags: MappingProxyType = MONGODB_DIALECT_CATALOG['7.0'].behavior_flags
     catalog_policy_spec: MongoBehaviorPolicySpec = MONGODB_DIALECT_CATALOG['7.0'].policy_spec or MongoBehaviorPolicySpec()
     catalog_capabilities: frozenset[str] = MONGODB_DIALECT_CATALOG['7.0'].capabilities
+    catalog_query_field_operators: frozenset[str] | None = MONGODB_DIALECT_CATALOG['7.0'].query_field_operators
+    catalog_update_operators: frozenset[str] | None = MONGODB_DIALECT_CATALOG['7.0'].update_operators
 
 
 @dataclass(frozen=True, slots=True)
@@ -481,6 +485,8 @@ class MongoDialect80(MongoDialect):
     catalog_behavior_flags: MappingProxyType = MONGODB_DIALECT_CATALOG['8.0'].behavior_flags
     catalog_policy_spec: MongoBehaviorPolicySpec = MONGODB_DIALECT_CATALOG['8.0'].policy_spec or MongoBehaviorPolicySpec()
     catalog_capabilities: frozenset[str] = MONGODB_DIALECT_CATALOG['8.0'].capabilities
+    catalog_query_field_operators: frozenset[str] | None = MONGODB_DIALECT_CATALOG['8.0'].query_field_operators
+    catalog_update_operators: frozenset[str] | None = MONGODB_DIALECT_CATALOG['8.0'].update_operators
 
 
 @dataclass(frozen=True, slots=True)

@@ -64,6 +64,9 @@ usa Semantic Versioning.
 - `$group` rechaza ya claves `_id` no BSON no hashables en vez de
   agruparlas por `repr()`, eliminando colisiones silenciosas entre
   objetos Python arbitrarios.
+- El catálogo de compatibilidad permite ya declarar inventarios de
+  operadores de query y update por dialecto, en lugar de forzar un
+  conjunto global estático para todas las versiones de MongoDB.
 
 ## [2.2.0] - 2026-03-31
 
