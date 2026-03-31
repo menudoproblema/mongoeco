@@ -15,6 +15,7 @@ from mongoeco.core.query_plan import (
     GreaterThanCondition,
     GreaterThanOrEqualCondition,
     InCondition,
+    JsonSchemaCondition,
     LessThanCondition,
     LessThanOrEqualCondition,
     MatchAll,
@@ -66,6 +67,17 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
 
     def test_translate_match_all(self):
         self.assertEqual(translate_query_plan(MatchAll()), ("1 = 1", []))
+
+    def test_translate_json_schema_condition_is_explicitly_deferred_to_python(self):
+        with self.assertRaisesRegex(NotImplementedError, "not yet translated to SQL"):
+            translate_query_plan(
+                JsonSchemaCondition(
+                    {
+                        "required": ["name"],
+                        "properties": {"name": {"bsonType": "string"}},
+                    }
+                )
+            )
 
     def test_translate_equals_and_not_equals(self):
         self.assertEqual(

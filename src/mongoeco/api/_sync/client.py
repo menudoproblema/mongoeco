@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 import threading
+from typing import TYPE_CHECKING
 
 from mongoeco.api.public_api import (
     ARG_UNSET,
@@ -15,7 +18,7 @@ from mongoeco.compat import (
     PyMongoProfile,
     PyMongoProfileResolution,
 )
-from mongoeco.driver import AsyncCommandTransport, RequestExecutionResult, TopologyDescription, WireProtocolCommandTransport
+from mongoeco.driver import AsyncCommandTransport, RequestExecutionResult, TopologyDescription
 from mongoeco.driver.monitoring import DriverMonitor
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import ExecutionTimeout, InvalidOperation, ServerSelectionTimeoutError
@@ -33,6 +36,9 @@ from mongoeco.types import (
     TransactionOptions,
     WriteConcern,
 )
+
+if TYPE_CHECKING:
+    from mongoeco.driver.transports import WireProtocolCommandTransport
 
 _FILTER_UNSET = ARG_UNSET
 

@@ -4,7 +4,6 @@ from mongoeco.errors import CollectionInvalid
 from mongoeco.driver import (
     AsyncCommandTransport,
     AuthPolicy,
-    CallbackCommandTransport,
     CommandFailedEvent,
     CommandStartedEvent,
     CommandSucceededEvent,
@@ -61,8 +60,6 @@ from mongoeco.driver import (
     materialize_srv_uri,
     parse_mongo_uri,
     resolve_srv_seeds,
-    LocalCommandTransport,
-    WireProtocolCommandTransport,
 )
 from mongoeco.compat import (
     AUTO_INSTALLED_PYMONGO_PROFILE,
@@ -268,3 +265,17 @@ __all__ = [
     "UNDEFINED",
     "__version__",
 ]
+
+
+def __getattr__(name: str):
+    if name in {
+        "CallbackCommandTransport",
+        "LocalCommandTransport",
+        "WireProtocolCommandTransport",
+    }:
+        from mongoeco.driver import __getattr__ as _driver_getattr
+
+        value = _driver_getattr(name)
+        globals()[name] = value
+        return value
+    raise AttributeError(name)

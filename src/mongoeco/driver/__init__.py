@@ -49,7 +49,6 @@ from mongoeco.driver.topology import (
     build_local_topology_description,
 )
 from mongoeco.driver.topology_monitor import refresh_topology
-from mongoeco.driver.transports import CallbackCommandTransport, LocalCommandTransport, WireProtocolCommandTransport
 from mongoeco.driver.uri import (
     MongoAuthOptions,
     MongoClientOptions,
@@ -126,3 +125,22 @@ __all__ = [
     "LocalCommandTransport",
     "WireProtocolCommandTransport",
 ]
+
+
+def __getattr__(name: str):
+    if name in {"CallbackCommandTransport", "LocalCommandTransport", "WireProtocolCommandTransport"}:
+        from mongoeco.driver.transports import (
+            CallbackCommandTransport,
+            LocalCommandTransport,
+            WireProtocolCommandTransport,
+        )
+
+        mapping = {
+            "CallbackCommandTransport": CallbackCommandTransport,
+            "LocalCommandTransport": LocalCommandTransport,
+            "WireProtocolCommandTransport": WireProtocolCommandTransport,
+        }
+        value = mapping[name]
+        globals()[name] = value
+        return value
+    raise AttributeError(name)

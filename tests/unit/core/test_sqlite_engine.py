@@ -2254,6 +2254,39 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(documents, [{"_id": "1", "data": {"b": 1}}])
         self.assertGreater(match_plan.call_count, 0)
 
+    async def test_scan_collection_falls_back_to_query_engine_for_top_level_json_schema(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "name": "Ada", "age": 10})
+            await engine.put_document("db", "coll", {"_id": "2", "name": "Bob", "age": "old"})
+            await engine.put_document("db", "coll", {"_id": "3", "age": 11})
+
+            with patch("mongoeco.engines.sqlite.QueryEngine.match_plan", wraps=QueryEngine.match_plan) as match_plan:
+                documents = [
+                    document
+                    async for document in self._scan(
+                        engine,
+                        "db",
+                        "coll",
+                        {
+                            "$jsonSchema": {
+                                "required": ["name"],
+                                "properties": {
+                                    "name": {"bsonType": "string"},
+                                    "age": {"bsonType": "int"},
+                                },
+                            }
+                        },
+                        sort=[("_id", 1)],
+                    )
+                ]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, [{"_id": "1", "name": "Ada", "age": 10}])
+        self.assertGreater(match_plan.call_count, 0)
+
     async def test_scan_collection_falls_back_for_array_sort_with_skip_and_limit(self):
         engine = SQLiteEngine()
         await engine.connect()

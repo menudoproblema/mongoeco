@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
 from mongoeco.api.public_api import ARG_UNSET
@@ -26,10 +30,8 @@ from mongoeco.driver import (
     TimeoutPolicy,
     TopologyDescription,
     RetryPolicy,
-    WireProtocolCommandTransport,
 )
 from mongoeco.driver.monitoring import DriverMonitor
-from mongoeco.driver.transports import LocalCommandTransport
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
@@ -49,6 +51,9 @@ from mongoeco.types import (
     normalize_transaction_options,
     normalize_write_concern,
 )
+
+if TYPE_CHECKING:
+    from mongoeco.driver.transports import WireProtocolCommandTransport
 
 
 class AsyncDatabase:
@@ -499,6 +504,8 @@ class AsyncMongoClient:
         read_only: bool = False,
         transport: AsyncCommandTransport | None = None,
     ) -> RequestExecutionResult:
+        from mongoeco.driver.transports import LocalCommandTransport
+
         plan = self.plan_command_request(
             database,
             command_name,

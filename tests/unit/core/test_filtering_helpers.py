@@ -390,3 +390,39 @@ class FilteringHelperTests(unittest.TestCase):
         self.assertTrue(QueryEngine.match({"tenant": "a", "name": "Ada"}, filter_spec))
         self.assertFalse(QueryEngine.match({"tenant": "b", "name": "Ada"}, filter_spec))
         self.assertFalse(QueryEngine.match({"tenant": "a"}, filter_spec))
+
+    def test_query_engine_supports_json_schema_inside_logical_top_level_clauses(self):
+        schema_clause = {
+            "$jsonSchema": {
+                "required": ["name", "age"],
+                "properties": {
+                    "name": {"bsonType": "string"},
+                    "age": {"bsonType": "int"},
+                },
+            }
+        }
+
+        self.assertTrue(
+            QueryEngine.match(
+                {"tenant": "a", "name": "Ada", "age": 10},
+                {"$and": [schema_clause, {"tenant": "a"}]},
+            )
+        )
+        self.assertTrue(
+            QueryEngine.match(
+                {"tenant": "b", "age": 11},
+                {"$or": [schema_clause, {"tenant": "b"}]},
+            )
+        )
+        self.assertFalse(
+            QueryEngine.match(
+                {"tenant": "a", "name": "Ada", "age": 10},
+                {"$nor": [schema_clause]},
+            )
+        )
+        self.assertTrue(
+            QueryEngine.match(
+                {"tenant": "b", "age": 11},
+                {"$nor": [schema_clause]},
+            )
+        )

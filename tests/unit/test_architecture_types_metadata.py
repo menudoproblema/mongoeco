@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+from typing import get_type_hints
 import unittest
 
 from mongoeco.api._async.collection import AsyncCollection
@@ -192,20 +193,25 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         )
 
     def test_index_information_annotations_share_type_alias(self):
+        async_index_hints = get_type_hints(AsyncCollection.index_information)
+        sync_index_hints = get_type_hints(Collection.index_information)
+        memory_index_hints = get_type_hints(MemoryEngine.index_information)
+        sqlite_index_hints = get_type_hints(SQLiteEngine.index_information)
+
         self.assertIs(
-            inspect.signature(AsyncCollection.index_information).return_annotation,
+            async_index_hints["return"],
             IndexInformation,
         )
         self.assertIs(
-            inspect.signature(Collection.index_information).return_annotation,
+            sync_index_hints["return"],
             IndexInformation,
         )
         self.assertIs(
-            inspect.signature(MemoryEngine.index_information).return_annotation,
+            memory_index_hints["return"],
             IndexInformation,
         )
         self.assertIs(
-            inspect.signature(SQLiteEngine.index_information).return_annotation,
+            sqlite_index_hints["return"],
             IndexInformation,
         )
 
@@ -246,10 +252,15 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
     def test_admin_surface_uses_structured_metadata_annotations(self):
         from mongoeco.api._sync.client import Database, MongoClient
 
-        self.assertIs(AsyncDatabase.validate_collection.__annotations__["return"], CollectionValidationDocument)
-        self.assertIs(Database.validate_collection.__annotations__["return"], CollectionValidationDocument)
-        self.assertIs(AsyncMongoClient.server_info.__annotations__["return"], BuildInfoDocument)
-        self.assertIs(MongoClient.server_info.__annotations__["return"], BuildInfoDocument)
+        async_database_hints = get_type_hints(AsyncDatabase.validate_collection)
+        sync_database_hints = get_type_hints(Database.validate_collection)
+        async_client_hints = get_type_hints(AsyncMongoClient.server_info)
+        sync_client_hints = get_type_hints(MongoClient.server_info)
+
+        self.assertIs(async_database_hints["return"], CollectionValidationDocument)
+        self.assertIs(sync_database_hints["return"], CollectionValidationDocument)
+        self.assertIs(async_client_hints["return"], BuildInfoDocument)
+        self.assertIs(sync_client_hints["return"], BuildInfoDocument)
 
     def test_admin_internal_stats_use_typed_snapshots(self):
         listing_snapshot = CollectionListingSnapshot(name="users")
@@ -350,4 +361,3 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             DropDatabaseCommandResult("db").to_document()["dropped"],
             "db",
         )
-

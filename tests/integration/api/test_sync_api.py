@@ -391,6 +391,60 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     self.assertEqual(result, [{"_id": "1", "name": "Ada", "age": 10}])
 
+    def test_find_supports_top_level_json_schema_inside_logical_clauses(self):
+        schema_clause = {
+            "$jsonSchema": {
+                "required": ["name", "age"],
+                "properties": {
+                    "name": {"bsonType": "string"},
+                    "age": {"bsonType": "int"},
+                },
+            }
+        }
+
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.validation.get_collection("logical_query_users")
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "tenant": "a", "name": "Ada", "age": 10},
+                            {"_id": "2", "tenant": "a", "name": "Bob", "age": "old"},
+                            {"_id": "3", "tenant": "b", "age": 11},
+                            {"_id": "4", "tenant": "c", "name": "Cora", "age": 12},
+                        ]
+                    )
+
+                    and_result = collection.find(
+                        {"$and": [schema_clause, {"tenant": "a"}]},
+                        sort=[("_id", 1)],
+                    ).to_list()
+                    or_result = collection.find(
+                        {"$or": [schema_clause, {"tenant": "b"}]},
+                        sort=[("_id", 1)],
+                    ).to_list()
+                    nor_result = collection.find(
+                        {"$nor": [schema_clause]},
+                        sort=[("_id", 1)],
+                    ).to_list()
+
+                    self.assertEqual(and_result, [{"_id": "1", "tenant": "a", "name": "Ada", "age": 10}])
+                    self.assertEqual(
+                        or_result,
+                        [
+                            {"_id": "1", "tenant": "a", "name": "Ada", "age": 10},
+                            {"_id": "3", "tenant": "b", "age": 11},
+                            {"_id": "4", "tenant": "c", "name": "Cora", "age": 12},
+                        ],
+                    )
+                    self.assertEqual(
+                        nor_result,
+                        [
+                            {"_id": "2", "tenant": "a", "name": "Bob", "age": "old"},
+                            {"_id": "3", "tenant": "b", "age": 11},
+                        ],
+                    )
+
     def test_bypass_document_validation_allows_invalid_writes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

@@ -8,6 +8,8 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-03-30
+
 ### Fixed
 
 - Se corrige la resolucion de anotaciones en
@@ -16,6 +18,10 @@ usa Semantic Versioning.
 - Se corrige un `NameError` en `mongoeco.core.aggregation.runtime`:
   `_subtract_values` dependia de `_require_numeric` sin importarlo,
   rompiendo la ruta interna de resta numero-numero.
+- Se elimina la dependencia ansiosa de `bson` sobre la superficie base
+  del paquete: `mongoeco`, `AsyncMongoClient` y el quick start con
+  `MemoryEngine` vuelven a funcionar desde un wheel instalado en un
+  entorno limpio sin extras wire.
 
 ### Added
 
@@ -66,6 +72,15 @@ usa Semantic Versioning.
   `core.sorting`, `wire.protocol`, `driver.uri` y `core.operators`,
   reforzando ramas de error, roundtrips wire, parsing de URI y helpers
   internos de actualizacion.
+- Se anade una prueba de regresion que bloquea `bson` en un subprocess y
+  valida que la API base sigue importando y ejecutando operaciones
+  simples sin depender de imports ansiosos del runtime wire.
+- Se blindan los filtros top-level con `$jsonSchema` dentro de
+  `$and`, `$or` y `$nor`, y se fija con pruebas el fallback Python de
+  SQLite para esa condicion no traducible a SQL.
+- Se anade `scripts/smoke_installed_wheel.py` para reproducir el smoke
+  del wheel instalado en un entorno limpio sin reconstruir los comandos
+  manualmente.
 
 ### Changed
 
@@ -73,6 +88,9 @@ usa Semantic Versioning.
   se simplifica `core.sorting` eliminando comparadores internos no
   usados, priorizando correccion del protocolo y mantenibilidad frente a
   cobertura artificial.
+- Se desacoplan `raw batches` y el transporte wire de la importacion
+  base del paquete moviendo esos imports a resolucion perezosa, lo que
+  mantiene `pymongo` como dependencia opcional para esas rutas.
 
 ## [2.0.1] - 2026-03-30
 

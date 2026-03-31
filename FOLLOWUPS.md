@@ -17,15 +17,8 @@ unitaria e integracion `async`/`sync`.
 
 Pendientes recomendados:
 
-- anadir pruebas explicitas combinando `$jsonSchema` con:
-  - `$and`
-  - `$or`
-  - `$nor`
 - anadir pruebas de mezcla de `$jsonSchema` con filtros de campo
   sobre documentos validos e invalidos en la misma consulta;
-- anadir un test explicito de fallback SQLite para dejar fijado que
-  `JsonSchemaCondition` no se traduce a SQL y se resuelve en Python
-  sin romper resultados;
 - anadir algun caso de schema mas rico en filtro top-level:
   - `additionalProperties`
   - `items`
@@ -36,13 +29,19 @@ Pendientes recomendados:
 
 Motivacion: ya hubo un bug que solo aparecia en `site-packages`.
 
+Estado actual:
+
+- ya existe una validacion manual reproducible que:
+  - construye `dist/*.whl`
+  - crea un entorno limpio
+  - instala el wheel
+  - ejecuta una operacion minima real con `AsyncMongoClient` y
+    `MemoryEngine`
+- este smoke ya detecto una regresion real de imports ansiosos a
+  `bson`, que quedo corregida antes de preparar `2.1.0`
+
 Pendientes recomendados:
 
-- crear un smoke reproducible que:
-  - construya `dist/*.whl`
-  - cree un entorno limpio
-  - instale el wheel
-  - verifique imports criticos desde el paquete instalado
 - si se usa CI en el futuro, ejecutar ese smoke sobre el artefacto
   construido, no solo sobre `src/`.
 
@@ -66,17 +65,19 @@ Pendientes recomendados:
 - [search.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/core/search.py)
   Motivo: sigue siendo una zona de producto visible y con retorno real
   por test nuevo.
-- [sorting.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/core/sorting.py)
-  Motivo: modulo acotado y barato de subir.
+- [api/_async/cursor.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/api/_async/cursor.py)
+  Motivo: sigue siendo una superficie publica grande con bastantes ramas
+  y retorno razonable por tanda de tests.
 
 ### Prioridad media
 
 - [compat/base.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/compat/base.py)
   Motivo: rutas de error y resolucion de estrategias.
-- [driver/uri.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/driver/uri.py)
-  Motivo: parser con muchas ramas y bajo coste relativo.
-- [wire/protocol.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/wire/protocol.py)
-  Motivo: superficies de framing con buena señal por caso nuevo.
+- [types.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/types.py)
+  Motivo: volumen grande y varias rutas publicas todavia poco
+  ejercitadas.
+- [engines/sqlite.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/engines/sqlite.py)
+  Motivo: modulo grande con retorno alto, aunque mas caro de atacar.
 
 ### No perseguir por ahora
 

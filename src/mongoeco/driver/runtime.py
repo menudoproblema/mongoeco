@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mongoeco.driver.connections import ConnectionLease, ConnectionPoolSnapshot, ConnectionRegistry
 from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_dns, resolve_srv_seeds
@@ -31,7 +31,6 @@ from mongoeco.driver.requests import CommandRequest, PreparedRequestExecution, R
 from mongoeco.driver.security import AuthPolicy, TlsPolicy, build_auth_policy, build_tls_policy
 from mongoeco.driver.topology_monitor import refresh_topology
 from mongoeco.driver.topology import ServerDescription, TopologyDescription, build_local_topology_description
-from mongoeco.driver.transports import WireProtocolCommandTransport
 from mongoeco.driver.uri import (
     MongoUri,
     MongoUriSeed,
@@ -43,6 +42,9 @@ from mongoeco.driver.uri import (
 from mongoeco.session import ClientSession
 from mongoeco.types import ReadConcern, ReadPreference, WriteConcern
 from mongoeco.errors import ServerSelectionTimeoutError
+
+if TYPE_CHECKING:
+    from mongoeco.driver.transports import WireProtocolCommandTransport
 
 
 class DriverRuntime:
@@ -196,6 +198,8 @@ class DriverRuntime:
         )
 
     def create_network_transport(self) -> WireProtocolCommandTransport:
+        from mongoeco.driver.transports import WireProtocolCommandTransport
+
         return WireProtocolCommandTransport(
             self._connections,
             tls_policy=self._tls_policy,

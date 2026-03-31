@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from collections.abc import AsyncIterable, Iterable, Sequence
 from copy import deepcopy
@@ -7,7 +9,6 @@ import time
 
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub, ChangeStreamScope
-from mongoeco.api._async.raw_batch_cursor import AsyncRawBatchCursor
 from mongoeco.api.public_api import (
     ARG_UNSET,
     COLLECTION_COUNT_DOCUMENTS_SPEC,
@@ -1306,6 +1307,8 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> AsyncRawBatchCursor:
+        from mongoeco.api._async.raw_batch_cursor import AsyncRawBatchCursor
+
         options = normalize_public_operation_arguments(
             COLLECTION_FIND_RAW_BATCHES_SPEC,
             explicit={
@@ -1360,6 +1363,8 @@ class AsyncCollection:
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> AsyncRawBatchCursor:
+        from mongoeco.api._async.raw_batch_cursor import AsyncRawBatchCursor
+
         cursor = self.aggregate(
             pipeline,
             collation=collation,
