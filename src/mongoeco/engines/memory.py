@@ -63,7 +63,8 @@ from mongoeco.types import (
     ProfilingCommandResult,
     Projection, QueryPlanExplanation, SortSpec, Update, UpdateResult, default_index_name,
     default_id_index_definition, default_id_index_document, default_id_index_information, index_fields,
-    EngineIndexRecord, SearchIndexDefinition, SearchIndexDocument, normalize_index_keys,
+    EngineIndexRecord, SearchIndexDefinition, SearchIndexDocument, is_ordered_index_spec,
+    normalize_index_keys, special_index_directions,
 )
 
 
@@ -1278,6 +1279,7 @@ class MemoryEngine(AsyncStorageEngine):
         partial_filter_expression = normalize_partial_filter_expression(partial_filter_expression)
         fields = index_fields(normalized_keys)
         index_name = name or default_index_name(normalized_keys)
+        special_directions = special_index_directions(normalized_keys)
         deadline = operation_deadline(max_time_ms)
         if expire_after_seconds is not None:
             if (
@@ -1290,6 +1292,11 @@ class MemoryEngine(AsyncStorageEngine):
                 raise OperationFailure("TTL indexes require a single-field key pattern")
             if fields[0] == "_id":
                 raise OperationFailure("TTL indexes cannot be created on _id")
+        if special_directions:
+            if len(normalized_keys) != 1:
+                raise OperationFailure("special index types currently require a single-field key pattern")
+            if unique:
+                raise OperationFailure(f"{special_directions[0]} indexes do not support unique")
         if self._is_builtin_id_index(normalized_keys):
             if (
                 name not in (None, "_id_")
@@ -1343,7 +1350,7 @@ class MemoryEngine(AsyncStorageEngine):
                         raise OperationFailure(
                             f"Conflicting index definition for key pattern '{normalized_keys!r}'"
                         )
-                    return index["name"]
+                    continue
 
             new_index = EngineIndexRecord(
                 name=index_name,
@@ -1372,13 +1379,14 @@ class MemoryEngine(AsyncStorageEngine):
 
             enforce_deadline(deadline)
             coll_indexes.append(new_index)
-            self._rebuild_index_data_locked(
-                db_name,
-                coll_name,
-                new_index,
-                index_data_view=index_data_view,
-                storage_view=storage_view,
-            )
+            if is_ordered_index_spec(normalized_keys):
+                self._rebuild_index_data_locked(
+                    db_name,
+                    coll_name,
+                    new_index,
+                    index_data_view=index_data_view,
+                    storage_view=storage_view,
+                )
             self._purge_expired_documents_locked(
                 db_name,
                 coll_name,

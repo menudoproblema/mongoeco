@@ -111,12 +111,14 @@ from mongoeco.types import (
     WriteCommandResult,
     default_id_index_document,
     default_id_index_information,
+    is_ordered_index_spec,
     normalize_codec_options,
     normalize_index_keys,
     normalize_read_concern,
     normalize_read_preference,
     normalize_transaction_options,
     normalize_write_concern,
+    special_index_directions,
 )
 from mongoeco.core.operators import UpdateEngine
 
@@ -352,6 +354,15 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         self.assertEqual(normalize_index_keys("email"), [("email", 1)])
         self.assertEqual(normalize_index_keys({"email": 1, "age": -1}), [("email", 1), ("age", -1)])
         self.assertEqual(normalize_index_keys(["email", ("age", -1)]), [("email", 1), ("age", -1)])
+        self.assertEqual(
+            normalize_index_keys({"content": "text", "location": "2dsphere"}),
+            [("content", "text"), ("location", "2dsphere")],
+        )
+        self.assertFalse(is_ordered_index_spec(normalize_index_keys({"content": "text"})))
+        self.assertEqual(
+            special_index_directions(normalize_index_keys([("content", "text")])),
+            ("text",),
+        )
 
         with self.assertRaises(ValueError):
             normalize_index_keys("")
@@ -363,6 +374,8 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             normalize_index_keys([])
         with self.assertRaises(ValueError):
             normalize_index_keys({"email": 0})
+        with self.assertRaises(ValueError):
+            normalize_index_keys({"email": "ascending"})
         with self.assertRaises(TypeError):
             normalize_index_keys({1: 1})  # type: ignore[dict-item]
         with self.assertRaises(ValueError):

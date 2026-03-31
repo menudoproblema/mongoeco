@@ -4110,6 +4110,45 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"key": [("email", 1), ("created_at", -1)]},
                     )
 
+    def test_collection_accepts_special_index_key_types_as_metadata_only(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "content": "Ada", "location": [40.0, -3.0]})
+
+                    text_name = collection.create_index({"content": "text"})
+                    geo_name = collection.create_index([("location", "2dsphere")])
+                    indexes = collection.list_indexes().to_list()
+                    info = collection.index_information()
+
+                    self.assertEqual(text_name, "content_text")
+                    self.assertEqual(geo_name, "location_2dsphere")
+                    self.assertIn(
+                        {"name": "content_text", "key": {"content": "text"}, "unique": False},
+                        indexes,
+                    )
+                    self.assertIn(
+                        {"name": "location_2dsphere", "key": {"location": "2dsphere"}, "unique": False},
+                        indexes,
+                    )
+                    self.assertEqual(info["content_text"], {"key": [("content", "text")]})
+                    self.assertEqual(info["location_2dsphere"], {"key": [("location", "2dsphere")]})
+
+                    with self.assertRaises(OperationFailure):
+                        collection.find({"content": "Ada"}, hint="content_text").to_list()
+
+    def test_collection_rejects_unsupported_special_index_shapes(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+
+                    with self.assertRaises(OperationFailure):
+                        collection.create_index([("tenant", 1), ("content", "text")])
+                    with self.assertRaises(OperationFailure):
+                        collection.create_index([("content", "hashed")], unique=True)
+
     def test_create_index_supports_ttl_and_expires_documents(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

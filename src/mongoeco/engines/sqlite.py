@@ -128,7 +128,9 @@ from mongoeco.types import (
     default_id_index_information,
     default_index_name,
     index_fields,
+    is_ordered_index_spec,
     normalize_index_keys,
+    special_index_directions,
 )
 
 _SQLITE_SHARED_EXECUTOR_LOCK = threading.Lock()
@@ -973,7 +975,7 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @staticmethod
     def _supports_scalar_index(index: EngineIndexRecord) -> bool:
-        return len(index["fields"]) == 1
+        return len(index["fields"]) == 1 and is_ordered_index_spec(index["key"])
 
     def _find_multikey_index(self, db_name: str, coll_name: str, field: str) -> EngineIndexRecord | None:
         for index in self._load_indexes(db_name, coll_name):
@@ -3837,6 +3839,7 @@ class SQLiteEngine(AsyncStorageEngine):
         partial_filter_expression = normalize_partial_filter_expression(partial_filter_expression)
         fields = index_fields(normalized_keys)
         index_name = name or default_index_name(normalized_keys)
+        special_directions = special_index_directions(normalized_keys)
         deadline = operation_deadline(max_time_ms)
         if expire_after_seconds is not None:
             if (
@@ -3849,6 +3852,11 @@ class SQLiteEngine(AsyncStorageEngine):
                 raise OperationFailure("TTL indexes require a single-field key pattern")
             if fields[0] == "_id":
                 raise OperationFailure("TTL indexes cannot be created on _id")
+        if special_directions:
+            if len(normalized_keys) != 1:
+                raise OperationFailure("special index types currently require a single-field key pattern")
+            if unique:
+                raise OperationFailure(f"{special_directions[0]} indexes do not support unique")
         if self._is_builtin_id_index(normalized_keys):
             if (
                 name not in (None, "_id_")
@@ -3861,12 +3869,21 @@ class SQLiteEngine(AsyncStorageEngine):
             return "_id_"
         if index_name == "_id_":
             raise OperationFailure("Conflicting index definition for '_id_'")
-        physical_name = self._physical_index_name(db_name, coll_name, index_name)
-        multikey = self._supports_multikey_index(fields, unique)
-        multikey_physical_name = self._physical_multikey_index_name(db_name, coll_name, index_name)
+        ordered_index = is_ordered_index_spec(normalized_keys)
+        physical_name = (
+            self._physical_index_name(db_name, coll_name, index_name)
+            if ordered_index
+            else None
+        )
+        multikey = ordered_index and self._supports_multikey_index(fields, unique)
+        multikey_physical_name = (
+            self._physical_multikey_index_name(db_name, coll_name, index_name)
+            if multikey
+            else None
+        )
         scalar_physical_name = (
             self._physical_scalar_index_name(db_name, coll_name, index_name)
-            if len(fields) == 1
+            if ordered_index and len(fields) == 1
             else None
         )
         with self._lock:
@@ -3896,23 +3913,25 @@ class SQLiteEngine(AsyncStorageEngine):
                             raise OperationFailure(
                                 f"Conflicting index definition for key pattern '{normalized_keys!r}'"
                             )
-                        return str(index["name"])
+                        continue
 
                 if unique:
                     for field in fields:
                         if self._field_traverses_array_in_collection(db_name, coll_name, field):
                             raise OperationFailure("SQLite unique indexes do not support paths that traverse arrays")
-        expressions = ", ".join(
-            [
-                "db_name",
-                "coll_name",
-                *[
-                    f"{expression}{' DESC' if direction == -1 else ''}"
-                    for field, direction in normalized_keys
-                    for expression in index_expressions_sql(field)
-                ],
-            ]
-        )
+        expressions = None
+        if ordered_index:
+            expressions = ", ".join(
+                [
+                    "db_name",
+                    "coll_name",
+                    *[
+                        f"{expression}{' DESC' if direction == -1 else ''}"
+                        for field, direction in normalized_keys
+                        for expression in index_expressions_sql(field)
+                    ],
+                ]
+            )
         unique_sql = "UNIQUE " if unique and not (sparse or partial_filter_expression is not None) else ""
         with self._lock:
             conn = self._require_connection(context)
@@ -3920,10 +3939,11 @@ class SQLiteEngine(AsyncStorageEngine):
                 enforce_deadline(deadline)
                 try:
                     self._begin_write(conn, context)
-                    conn.execute(
-                        f"CREATE {unique_sql}INDEX {self._quote_identifier(physical_name)} "
-                        f"ON documents ({expressions})"
-                    )
+                    if physical_name is not None and expressions is not None:
+                        conn.execute(
+                            f"CREATE {unique_sql}INDEX {self._quote_identifier(physical_name)} "
+                            f"ON documents ({expressions})"
+                        )
                     if multikey:
                         enforce_deadline(deadline)
                         conn.execute(

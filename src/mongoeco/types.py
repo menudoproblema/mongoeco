@@ -291,9 +291,11 @@ type BsonValue = BsonScalar | list["BsonValue"] | dict[str, "BsonValue"] | SON
 type BsonBindings = dict[str, BsonValue]
 type BitwiseMaskOperand = int | bytes | uuid.UUID | list[int]
 type SortDirection = Literal[1, -1]
+type SpecialIndexDirection = Literal["text", "hashed", "2dsphere", "2d"]
+type IndexDirection = SortDirection | SpecialIndexDirection
 type SortSpec = list[tuple[str, SortDirection]]
 type CollationDocument = dict[str, object]
-type IndexKeySpec = SortSpec
+type IndexKeySpec = list[tuple[str, IndexDirection]]
 type IndexDocument = dict[str, object]
 type IndexInformationEntry = dict[str, object]
 type IndexInformation = dict[str, IndexInformationEntry]
@@ -1375,6 +1377,39 @@ def normalize_transaction_options(value: TransactionOptions | None) -> Transacti
     return value
 
 
+_SPECIAL_INDEX_DIRECTIONS = frozenset({"text", "hashed", "2dsphere", "2d"})
+
+
+def normalize_index_direction(direction: object) -> IndexDirection:
+    if isinstance(direction, bool):
+        raise ValueError("index directions must be 1, -1, or a supported index type string")
+    if direction in (1, -1):
+        return direction
+    if isinstance(direction, str) and direction in _SPECIAL_INDEX_DIRECTIONS:
+        return direction
+    raise ValueError("index directions must be 1, -1, or a supported index type string")
+
+
+def is_ordered_index_direction(direction: object) -> bool:
+    return direction in (1, -1) and not isinstance(direction, bool)
+
+
+def is_special_index_direction(direction: object) -> bool:
+    return isinstance(direction, str) and direction in _SPECIAL_INDEX_DIRECTIONS
+
+
+def is_ordered_index_spec(keys: IndexKeySpec) -> bool:
+    return all(is_ordered_index_direction(direction) for _field, direction in keys)
+
+
+def special_index_directions(keys: IndexKeySpec) -> tuple[SpecialIndexDirection, ...]:
+    return tuple(
+        direction
+        for _field, direction in keys
+        if is_special_index_direction(direction)
+    )
+
+
 def normalize_index_keys(keys: object) -> IndexKeySpec:
     if isinstance(keys, str):
         if not keys:
@@ -1388,9 +1423,7 @@ def normalize_index_keys(keys: object) -> IndexKeySpec:
         for field, direction in keys.items():
             if not isinstance(field, str) or not field:
                 raise TypeError("index field names must be non-empty strings")
-            if direction not in (1, -1) or isinstance(direction, bool):
-                raise ValueError("index directions must be 1 or -1")
-            normalized.append((field, direction))
+            normalized.append((field, normalize_index_direction(direction)))
         return normalized
 
     if not isinstance(keys, Sequence) or isinstance(keys, (bytes, bytearray, dict)):
@@ -1416,9 +1449,7 @@ def normalize_index_keys(keys: object) -> IndexKeySpec:
         field, direction = item
         if not isinstance(field, str) or not field:
             raise TypeError("index field names must be non-empty strings")
-        if direction not in (1, -1) or isinstance(direction, bool):
-            raise ValueError("index directions must be 1 or -1")
-        normalized.append((field, direction))
+        normalized.append((field, normalize_index_direction(direction)))
     return normalized
 
 
@@ -1430,7 +1461,7 @@ def index_fields(keys: IndexKeySpec) -> list[str]:
     return [field for field, _direction in keys]
 
 
-def index_key_document(keys: IndexKeySpec) -> dict[str, SortDirection]:
+def index_key_document(keys: IndexKeySpec) -> dict[str, IndexDirection]:
     return {field: direction for field, direction in keys}
 
 

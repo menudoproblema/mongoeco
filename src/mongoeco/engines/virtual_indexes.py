@@ -23,7 +23,7 @@ from mongoeco.core.query_plan import (
     TypeCondition,
     compile_filter,
 )
-from mongoeco.types import Document, EngineIndexRecord, Filter
+from mongoeco.types import Document, EngineIndexRecord, Filter, is_ordered_index_spec
 
 
 def normalize_partial_filter_expression(
@@ -66,6 +66,9 @@ def query_can_use_index(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> bool:
+    keys = index.key if isinstance(index, EngineIndexRecord) else index.get("key")
+    if not isinstance(keys, list) or not is_ordered_index_spec(keys):
+        return False
     if _index_sparse(index) and not any(
         _plan_implies_exists_true(query_plan, field)
         for field in _index_fields(index)

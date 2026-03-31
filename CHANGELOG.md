@@ -78,6 +78,11 @@ usa Semantic Versioning.
 - Los documentos publicos de `list_indexes()` e `IndexDefinition` dejan
   tambien de exponer el campo no estandar `fields`; esa metadata queda
   reservada a los registros internos del engine.
+- `create_index()` acepta ya key patterns especiales como `"text"`,
+  `"hashed"`, `"2d"` y `"2dsphere"` en metadata publica y round-trips de
+  indices. Mientras no exista un planner especializado para ellos,
+  `mongoeco` evita reutilizarlos como indices ordenados normales para
+  `hint` o aceleracion B-tree.
 - Los change streams aceptan ya stages adicionales compatibles en
   pipeline (`$addFields`, `$set`, `$unset`, `$replaceRoot`,
   `$replaceWith`) y se cierran automaticamente tras recibir

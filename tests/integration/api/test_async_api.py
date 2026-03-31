@@ -4541,6 +4541,45 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         {"key": [("email", 1), ("created_at", -1)]},
                     )
 
+    async def test_collection_accepts_special_index_key_types_as_metadata_only(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_one({"_id": "1", "content": "Ada", "location": [40.0, -3.0]})
+
+                    text_name = await collection.create_index({"content": "text"})
+                    geo_name = await collection.create_index([("location", "2dsphere")])
+                    indexes = await collection.list_indexes().to_list()
+                    info = await collection.index_information()
+
+                    self.assertEqual(text_name, "content_text")
+                    self.assertEqual(geo_name, "location_2dsphere")
+                    self.assertIn(
+                        {"name": "content_text", "key": {"content": "text"}, "unique": False},
+                        indexes,
+                    )
+                    self.assertIn(
+                        {"name": "location_2dsphere", "key": {"location": "2dsphere"}, "unique": False},
+                        indexes,
+                    )
+                    self.assertEqual(info["content_text"], {"key": [("content", "text")]})
+                    self.assertEqual(info["location_2dsphere"], {"key": [("location", "2dsphere")]})
+
+                    with self.assertRaises(OperationFailure):
+                        await collection.find({"content": "Ada"}, hint="content_text").to_list()
+
+    async def test_collection_rejects_unsupported_special_index_shapes(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+
+                    with self.assertRaises(OperationFailure):
+                        await collection.create_index([("tenant", 1), ("content", "text")])
+                    with self.assertRaises(OperationFailure):
+                        await collection.create_index([("content", "hashed")], unique=True)
+
     async def test_create_index_supports_ttl_and_expires_documents(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
