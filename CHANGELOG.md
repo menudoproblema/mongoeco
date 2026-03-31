@@ -26,6 +26,8 @@ usa Semantic Versioning.
 - `$dateFromParts` valida ya de forma explicita los rangos de `hour`,
   `minute`, `second` y `millisecond`, devolviendo errores estables en
   vez de propagar `ValueError` genericos del constructor de `datetime`.
+- La compilacion de queries corta ya filtros con anidacion logica
+  excesiva en `$and`/`$or`/`$nor`, evitando `RecursionError` tardios.
 - La compilacion de pipelines valida ya las especificaciones de
   `$addFields` y `$set` antes de ejecutar documentos, evitando que
   claves invalidas se acepten y fallen tarde en runtime.

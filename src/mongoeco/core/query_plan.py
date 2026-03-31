@@ -320,6 +320,7 @@ def _compile_field_condition(
     condition: Any,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    depth: int = 0,
 ) -> QueryNode:
     if isinstance(condition, Regex):
         return RegexCondition(
@@ -432,7 +433,16 @@ def _compile_field_condition(
         elif operator == "$not":
             if not isinstance(value, dict) or not value or not all(isinstance(key, str) and key.startswith("$") for key in value):
                 raise ValueError("$not necesita una expresion de operador")
-            clauses.append(NotCondition(_compile_field_condition(field, value, dialect=dialect)))
+            clauses.append(
+                NotCondition(
+                    _compile_field_condition(
+                        field,
+                        value,
+                        dialect=dialect,
+                        depth=depth + 1,
+                    )
+                )
+            )
         elif operator == "$elemMatch":
             if not isinstance(value, dict):
                 raise ValueError("$elemMatch necesita una expresion de filtro")
@@ -445,10 +455,10 @@ def _compile_field_condition(
             wrap_value = False
             try:
                 if operator_keys and len(operator_keys) == len(value):
-                    compiled_plan = _compile_field_condition("value", value, dialect=dialect)
+                    compiled_plan = _compile_field_condition("value", value, dialect=dialect, depth=depth + 1)
                     wrap_value = True
                 elif not operator_keys:
-                    compiled_plan = compile_filter(value, dialect=dialect)
+                    compiled_plan = compile_filter(value, dialect=dialect, _depth=depth + 1)
             except (OperationFailure, ValueError, TypeError):
                 compiled_plan = None
                 wrap_value = False
@@ -492,6 +502,7 @@ def compile_filter(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     variables: BsonBindings | None = None,
     planning_mode: PlanningMode = PlanningMode.STRICT,
+    _depth: int = 0,
 ) -> QueryNode:
     try:
         return _compile_filter_strict(
@@ -499,6 +510,7 @@ def compile_filter(
             dialect=dialect,
             variables=variables,
             planning_mode=planning_mode,
+            depth=_depth,
         )
     except (OperationFailure, ValueError, TypeError) as exc:
         if planning_mode is PlanningMode.RELAXED:
@@ -512,7 +524,10 @@ def _compile_filter_strict(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     variables: BsonBindings | None = None,
     planning_mode: PlanningMode = PlanningMode.STRICT,
+    depth: int = 0,
 ) -> QueryNode:
+    if depth > 100:
+        raise OperationFailure("query filter exceeds maximum nesting depth")
     if filter_spec is None:
         return MatchAll()
     if not isinstance(filter_spec, dict):
@@ -550,6 +565,7 @@ def _compile_filter_strict(
                             dialect=dialect,
                             variables=variables,
                             planning_mode=planning_mode,
+                            _depth=depth + 1,
                         )
                         for clause in value
                     )
@@ -569,6 +585,7 @@ def _compile_filter_strict(
                             dialect=dialect,
                             variables=variables,
                             planning_mode=planning_mode,
+                            _depth=depth + 1,
                         )
                         for clause in value
                     )
@@ -589,6 +606,7 @@ def _compile_filter_strict(
                                 dialect=dialect,
                                 variables=variables,
                                 planning_mode=planning_mode,
+                                _depth=depth + 1,
                             )
                             for clause in value
                         )
@@ -598,7 +616,7 @@ def _compile_filter_strict(
             continue
         if isinstance(key, str) and key.startswith("$"):
             raise OperationFailure(f"Unsupported top-level query operator: {key}")
-        clauses.append(_compile_field_condition(key, value, dialect=dialect))
+        clauses.append(_compile_field_condition(key, value, dialect=dialect, depth=depth))
 
     if not clauses:
         return MatchAll()

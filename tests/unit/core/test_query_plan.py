@@ -119,6 +119,14 @@ class QueryPlanTests(unittest.TestCase):
             ),
         )
 
+    def test_compile_filter_rejects_excessive_logical_nesting_depth(self):
+        nested = {"name": "Ada"}
+        for _ in range(101):
+            nested = {"$and": [nested]}
+
+        with self.assertRaisesRegex(OperationFailure, "maximum nesting depth"):
+            compile_filter(nested)
+
     def test_compile_filter_expands_in_operator_to_typed_leaf(self):
         plan = compile_filter({"role": {"$in": ["admin", "staff"]}})
 
