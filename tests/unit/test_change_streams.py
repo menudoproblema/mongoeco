@@ -13,7 +13,7 @@ from mongoeco.change_streams import (
     compile_change_stream_pipeline,
 )
 from mongoeco.errors import OperationFailure
-from mongoeco.types import ChangeEventSnapshot
+from mongoeco.types import ChangeEventSnapshot, encode_change_stream_token
 
 
 class ChangeStreamPipelineTests(unittest.TestCase):
@@ -156,7 +156,12 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
         event = await cursor.try_next()
         self.assertEqual(
             event,
-            {"_id": {"_data": "3"}, "operationType": "insert", "documentKey": {"_id": 3}, "kind": "insert"},
+            {
+                "_id": {"_data": encode_change_stream_token(3)},
+                "operationType": "insert",
+                "documentKey": {"_id": 3},
+                "kind": "insert",
+            },
         )
 
         cursor.close()
@@ -183,7 +188,7 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
         resumed = AsyncChangeStreamCursor(
             hub,
             scope=ChangeStreamScope(),
-            resume_after={"_data": "1"},
+            resume_after={"_data": encode_change_stream_token(1)},
             max_await_time_ms=10,
         )
         started = AsyncChangeStreamCursor(
@@ -202,7 +207,7 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
         started_after = AsyncChangeStreamCursor(
             hub,
             scope=ChangeStreamScope(),
-            start_after={"_data": "1"},
+            start_after={"_data": encode_change_stream_token(1)},
             max_await_time_ms=10,
         )
         started_after_event = await started_after.try_next()
@@ -214,8 +219,8 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
             AsyncChangeStreamCursor(
                 hub,
                 scope=ChangeStreamScope(),
-                resume_after={"_data": "1"},
-                start_after={"_data": "2"},
+                resume_after={"_data": encode_change_stream_token(1)},
+                start_after={"_data": encode_change_stream_token(2)},
             )
         with self.assertRaises(OperationFailure):
             AsyncChangeStreamCursor(
@@ -293,6 +298,31 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(OperationFailure):
             await cursor.try_next()
 
+    async def test_cursor_hides_update_full_document_by_default_and_can_require_it(self):
+        hub = ChangeStreamHub()
+        default_cursor = AsyncChangeStreamCursor(hub, scope=ChangeStreamScope(), max_await_time_ms=10)
+        lookup_cursor = AsyncChangeStreamCursor(
+            hub,
+            scope=ChangeStreamScope(),
+            full_document="updateLookup",
+            max_await_time_ms=10,
+        )
+
+        hub.publish(
+            operation_type="update",
+            db_name="alpha",
+            coll_name="users",
+            document_key={"_id": 1},
+            full_document={"_id": 1, "name": "Ada"},
+            update_description={"updatedFields": {"name": "Ada"}},
+        )
+
+        default_event = await default_cursor.try_next()
+        lookup_event = await lookup_cursor.try_next()
+
+        self.assertNotIn("fullDocument", default_event)
+        self.assertEqual(lookup_event["fullDocument"], {"_id": 1, "name": "Ada"})
+
     async def test_cursor_next_ignores_none_events_returned_by_wait_helper(self):
         hub = ChangeStreamHub()
         cursor = AsyncChangeStreamCursor(hub, scope=ChangeStreamScope())
@@ -364,11 +394,12 @@ class ChangeStreamOffsetHelpersTests(unittest.TestCase):
         )
 
         self.assertEqual(_parse_resume_token({"_data": "1"}), 1)
+        self.assertEqual(_parse_resume_token({"_data": encode_change_stream_token(1)}), 1)
         self.assertEqual(
             _resolve_change_stream_offset(
                 hub,
                 resume_after=None,
-                start_after={"_data": "1"},
+                start_after={"_data": encode_change_stream_token(1)},
                 start_at_operation_time=None,
             ),
             1,

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import json
 import threading
 import time
 from dataclasses import dataclass
@@ -11,6 +13,7 @@ from mongoeco.types import ChangeEventDocument, ChangeEventSnapshot, Document
 _ALLOWED_CHANGE_STREAM_STAGES = frozenset(
     {"$match", "$project", "$addFields", "$set", "$unset", "$replaceRoot", "$replaceWith"}
 )
+_ALLOWED_FULL_DOCUMENT_MODES = frozenset({"default", "updateLookup", "whenAvailable", "required"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -130,7 +133,8 @@ class AsyncChangeStreamCursor:
         resume_after: dict[str, object] | None = None,
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
-        ) -> None:
+        full_document: str = "default",
+    ) -> None:
         self._hub = hub
         self._scope = scope
         self._offset = _resolve_change_stream_offset(
@@ -141,6 +145,7 @@ class AsyncChangeStreamCursor:
         )
         self._pipeline = compile_change_stream_pipeline(pipeline)
         self._max_await_time_ms = max_await_time_ms
+        self._full_document = _normalize_full_document_mode(full_document)
         self._closed = False
 
     def _ensure_open(self) -> None:
@@ -151,6 +156,7 @@ class AsyncChangeStreamCursor:
         if not self._scope.matches(event):
             return None
         document = event.to_document()
+        document = _apply_full_document_mode(document, self._full_document)
         if self._pipeline is not None:
             from mongoeco.core.aggregation import apply_pipeline
 
@@ -262,6 +268,40 @@ def _resolve_change_stream_offset(
 
 def _parse_resume_token(token: dict[str, object]) -> int:
     raw = token.get("_data")
-    if not isinstance(raw, str) or not raw.isdigit():
-        raise OperationFailure("resume token must contain a numeric _data field")
-    return int(raw)
+    if not isinstance(raw, str):
+        raise OperationFailure("resume token must contain a string _data field")
+    if raw.isdigit():
+        return int(raw)
+    padding = "=" * (-len(raw) % 4)
+    try:
+        payload = base64.urlsafe_b64decode((raw + padding).encode("ascii"))
+        document = json.loads(payload.decode("utf-8"))
+    except Exception as exc:
+        raise OperationFailure("resume token must contain a valid _data field") from exc
+    token_value = document.get("t")
+    if document.get("v") != 1 or not isinstance(token_value, int) or isinstance(token_value, bool):
+        raise OperationFailure("resume token must contain a valid _data field")
+    return token_value
+
+
+def _normalize_full_document_mode(mode: str) -> str:
+    if not isinstance(mode, str):
+        raise TypeError("full_document must be a string")
+    if mode not in _ALLOWED_FULL_DOCUMENT_MODES:
+        raise OperationFailure("full_document must be one of default, updateLookup, whenAvailable, or required")
+    return mode
+
+
+def _apply_full_document_mode(document: ChangeEventDocument, mode: str) -> ChangeEventDocument:
+    if document.get("operationType") != "update":
+        return document
+    normalized = dict(document)
+    full_document = normalized.get("fullDocument")
+    if mode == "default":
+        normalized.pop("fullDocument", None)
+        return normalized
+    if mode in {"updateLookup", "whenAvailable"}:
+        return normalized
+    if full_document is None:
+        raise OperationFailure("change stream fullDocument is required but was not available")
+    return normalized

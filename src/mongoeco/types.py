@@ -1,6 +1,8 @@
+import base64
 import binascii
 import datetime
 import decimal
+import json
 import os
 import re
 import threading
@@ -457,7 +459,7 @@ class ChangeEventSnapshot:
 
     def to_document(self) -> ChangeEventDocument:
         document: ChangeEventDocument = {
-            "_id": {"_data": str(self.token)},
+            "_id": {"_data": encode_change_stream_token(self.token)},
             "operationType": self.operation_type,
             "ns": {"db": self.db_name, "coll": self.coll_name},
             "documentKey": deepcopy(self.document_key),
@@ -468,6 +470,11 @@ class ChangeEventSnapshot:
         if self.update_description is not None:
             document["updateDescription"] = deepcopy(self.update_description)
         return document
+
+
+def encode_change_stream_token(token: int) -> str:
+    payload = json.dumps({"v": 1, "t": token}, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(payload).decode("ascii").rstrip("=")
 
 
 class CollectionStatsDocument(TypedDict):

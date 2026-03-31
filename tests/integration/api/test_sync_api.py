@@ -288,6 +288,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.observe.get_collection("items")
                     other = client.observe.get_collection("other")
                     client_stream = client.watch(max_await_time_ms=100)
+                    lookup_stream = client.watch(max_await_time_ms=100, full_document="updateLookup")
                     database_stream = client.observe.watch(max_await_time_ms=100)
                     collection_stream = collection.watch(
                         [{"$match": {"operationType": "insert"}}],
@@ -313,12 +314,24 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertIsNotNone(second_insert)
                     self.assertEqual(second_insert["operationType"], "insert")
 
+                    lookup_stream = client.observe.watch(max_await_time_ms=100, full_document="updateLookup")
                     collection.update_one({"_id": 1}, {"$set": {"name": "Ada Lovelace"}})
                     collection.delete_one({"_id": 1})
                     update_event = client_stream.try_next()
+                    update_lookup_event = lookup_stream.try_next()
                     delete_event = client_stream.try_next()
                     self.assertEqual(update_event["operationType"], "update")
+                    self.assertNotIn("fullDocument", update_event)
+                    self.assertEqual(update_lookup_event["fullDocument"]["name"], "Ada Lovelace")
                     self.assertEqual(delete_event["operationType"], "delete")
+
+                    invalidate_stream = collection.watch(max_await_time_ms=100)
+                    other.drop()
+                    self.assertIsNone(invalidate_stream.try_next())
+                    collection.drop()
+                    invalidate_event = invalidate_stream.try_next()
+                    self.assertEqual(invalidate_event["operationType"], "invalidate")
+                    self.assertFalse(invalidate_stream.alive)
 
     def test_collection_json_schema_validator_rejects_invalid_inserts_and_updates(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

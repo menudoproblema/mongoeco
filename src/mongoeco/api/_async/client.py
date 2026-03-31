@@ -235,6 +235,7 @@ class AsyncDatabase:
         resume_after: dict[str, object] | None = None,
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
+        full_document: str = "default",
         session: ClientSession | None = None,
     ) -> AsyncChangeStreamCursor:
         _validate_watch_session(session)
@@ -252,6 +253,7 @@ class AsyncDatabase:
             resume_after=resume_after,
             start_after=start_after,
             start_at_operation_time=start_at_operation_time,
+            full_document=full_document,
         )
 
     @property
@@ -454,9 +456,13 @@ class AsyncMongoClient:
         *,
         session: ClientSession | None = None,
     ) -> None:
-        collection_names = await self._engine.list_collections(name, context=session)
-        for collection_name in collection_names:
-            await self._engine.drop_collection(name, collection_name, context=session)
+        database = self.get_database(name)
+        while True:
+            collection_names = await self._engine.list_collections(name, context=session)
+            if not collection_names:
+                return
+            for collection_name in collection_names:
+                await database.drop_collection(collection_name, session=session)
 
     async def server_info(self) -> BuildInfoDocument:
         return build_info_document(self._mongodb_dialect)
@@ -566,6 +572,7 @@ class AsyncMongoClient:
         resume_after: dict[str, object] | None = None,
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
+        full_document: str = "default",
         session: ClientSession | None = None,
     ) -> AsyncChangeStreamCursor:
         _validate_watch_session(session)
@@ -583,6 +590,7 @@ class AsyncMongoClient:
             resume_after=resume_after,
             start_after=start_after,
             start_at_operation_time=start_at_operation_time,
+            full_document=full_document,
         )
 
     @property

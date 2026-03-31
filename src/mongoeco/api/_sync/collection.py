@@ -1035,6 +1035,7 @@ class Collection:
         resume_after: dict[str, object] | None = None,
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
+        full_document: str = "default",
         session: ClientSession | None = None,
     ) -> ChangeStreamCursor:
         return ChangeStreamCursor(
@@ -1045,6 +1046,7 @@ class Collection:
                 resume_after=resume_after,
                 start_after=start_after,
                 start_at_operation_time=start_at_operation_time,
+                full_document=full_document,
                 session=session,
             ),
         )

@@ -240,7 +240,7 @@ class AsyncDatabaseAdminService:
         *,
         session: ClientSession | None = None,
     ) -> None:
-        await self._engine.drop_collection(self._db_name, name, context=session)
+        await self._database.get_collection(name).drop(session=session)
 
     @staticmethod
     def _normalize_command(command: object, kwargs: dict[str, object]) -> dict[str, object]:
@@ -1577,14 +1577,13 @@ class AsyncDatabaseAdminService:
         *,
         session: ClientSession | None = None,
     ) -> object:
-        collection_names = await self._engine.list_collections(
-            self._db_name,
-            context=session,
-        )
-        for collection_name in collection_names:
-            await self._engine.drop_collection(
+        while True:
+            collection_names = await self._engine.list_collections(
                 self._db_name,
-                collection_name,
                 context=session,
             )
+            if not collection_names:
+                break
+            for collection_name in collection_names:
+                await self.drop_collection(collection_name, session=session)
         return DropDatabaseCommandResult(database_name=self._db_name)

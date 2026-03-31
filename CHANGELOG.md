@@ -79,6 +79,10 @@ usa Semantic Versioning.
   pipeline (`$addFields`, `$set`, `$unset`, `$replaceRoot`,
   `$replaceWith`) y se cierran automaticamente tras recibir
   `invalidate`.
+- `watch()` acepta ya `fullDocument` (`default`, `updateLookup`,
+  `whenAvailable`, `required`), los resume tokens dejan de exponerse
+  como enteros decimales simples y `drop_database()` insiste hasta
+  vaciar las colecciones visibles del database.
 
 ## [2.2.0] - 2026-03-31
 

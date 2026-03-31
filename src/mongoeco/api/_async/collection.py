@@ -2809,6 +2809,10 @@ class AsyncCollection:
             self._collection_name,
             context=session,
         )
+        self._publish_change_event(
+            operation_type="invalidate",
+            document_key={"_id": self.full_name},
+        )
 
     async def rename(
         self,
@@ -2849,6 +2853,7 @@ class AsyncCollection:
         resume_after: dict[str, object] | None = None,
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
+        full_document: str = "default",
         session: ClientSession | None = None,
     ) -> AsyncChangeStreamCursor:
         if session is not None:
@@ -2867,6 +2872,7 @@ class AsyncCollection:
             resume_after=resume_after,
             start_after=start_after,
             start_at_operation_time=start_at_operation_time,
+            full_document=full_document,
         )
 
     @property
