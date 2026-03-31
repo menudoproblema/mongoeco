@@ -8,7 +8,7 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
-## [2.1.0] - 2026-03-30
+## [2.1.0] - 2026-03-31
 
 ### Fixed
 
