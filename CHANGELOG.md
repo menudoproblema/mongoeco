@@ -78,6 +78,10 @@ usa Semantic Versioning.
 - Los documentos publicos de `list_indexes()` e `IndexDefinition` dejan
   tambien de exponer el campo no estandar `fields`; esa metadata queda
   reservada a los registros internos del engine.
+- `drop_database()` aprovecha ya fast paths nativos de engine cuando
+  existen, y los engines permiten aliases con el mismo key pattern si
+  la definicion es identica; en esos casos `drop_index()` por key
+  pattern falla solo cuando hay ambiguedad real y pide usar el nombre.
 - `create_index()` acepta ya key patterns especiales como `"text"`,
   `"hashed"`, `"2d"` y `"2dsphere"` en metadata publica y round-trips de
   indices. Mientras no exista un planner especializado para ellos,

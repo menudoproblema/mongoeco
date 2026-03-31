@@ -188,6 +188,43 @@ class SyncClientUnitTests(unittest.TestCase):
 
         self.assertFalse(client.__exit__(None, None, None))
 
+    def test_client_drop_database_prefers_engine_fast_path(self):
+        class EngineStub:
+            def __init__(self):
+                self.fast_drop_calls = []
+                self.fallback_calls = []
+
+            def create_session_state(self, session):
+                return None
+
+            async def connect(self):
+                return None
+
+            async def disconnect(self):
+                return None
+
+            async def list_databases(self, *, context=None):
+                return []
+
+            async def list_collections(self, db_name, *, context=None):
+                self.fallback_calls.append(("list", db_name, context))
+                return ["users"]
+
+            async def drop_collection(self, db_name, coll_name, *, context=None):
+                self.fallback_calls.append(("drop", db_name, coll_name, context))
+
+            async def drop_database(self, db_name, *, context=None):
+                self.fast_drop_calls.append((db_name, context))
+
+        client = MongoClient(EngineStub())
+        try:
+            client.drop_database("alpha")
+        finally:
+            client.close()
+
+        self.assertEqual(client._async_client._engine.fast_drop_calls, [("alpha", None)])
+        self.assertEqual(client._async_client._engine.fallback_calls, [])
+
     def test_client_del_suppresses_close_errors(self):
         client = MongoClient()
 

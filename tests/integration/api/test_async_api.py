@@ -4717,15 +4717,40 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
                     )
 
-    async def test_drop_index_by_spec_rejects_custom_named_index(self):
+    async def test_drop_index_by_spec_supports_single_custom_named_index(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     collection = client.analytics.events
                     await collection.create_index([("email", 1)], name="idx_email")
 
-                    with self.assertRaises(OperationFailure):
+                    await collection.drop_index([("email", 1)])
+
+                    self.assertEqual(
+                        await collection.list_indexes().to_list(),
+                        [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
+                    )
+
+    async def test_drop_index_by_spec_rejects_ambiguous_index_aliases(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.create_index([("email", 1)], name="idx_email")
+                    await collection.create_index([("email", 1)], name="idx_email_alias")
+
+                    with self.assertRaisesRegex(OperationFailure, "multiple indexes found with key pattern"):
                         await collection.drop_index([("email", 1)])
+
+                    await collection.drop_index("idx_email")
+
+                    self.assertEqual(
+                        await collection.list_indexes().to_list(),
+                        [
+                            {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                            {"name": "idx_email_alias", "key": {"email": 1}, "unique": False},
+                        ],
+                    )
 
     async def test_unique_index_is_enforced_via_public_api(self):
         for engine_name in ENGINE_FACTORIES:

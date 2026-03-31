@@ -458,6 +458,10 @@ class AsyncMongoClient:
         *,
         session: ClientSession | None = None,
     ) -> None:
+        fast_drop = getattr(self._engine, "drop_database", None)
+        if callable(fast_drop):
+            await fast_drop(name, context=session)
+            return
         database = self.get_database(name)
         while True:
             collection_names = await self._engine.list_collections(name, context=session)

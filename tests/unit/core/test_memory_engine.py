@@ -685,6 +685,29 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(indexes, [{"name": "_id_", "key": {"_id": 1}, "unique": True}])
 
+    async def test_drop_index_by_key_pattern_rejects_ambiguous_aliases(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["email"], name="email_primary")
+            await engine.create_index("db", "coll", ["email"], name="email_alias")
+
+            with self.assertRaisesRegex(OperationFailure, "multiple indexes found with key pattern"):
+                await engine.drop_index("db", "coll", [("email", 1)])
+
+            await engine.drop_index("db", "coll", "email_primary")
+            indexes = await engine.list_indexes("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(
+            indexes,
+            [
+                {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                {"name": "email_alias", "key": {"email": 1}, "unique": False},
+            ],
+        )
+
     async def test_list_indexes_and_index_information_include_virtual_index_metadata(self):
         engine = MemoryEngine()
         await engine.connect()

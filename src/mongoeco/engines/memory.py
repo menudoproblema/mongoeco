@@ -1430,20 +1430,28 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> None:
-        target_name: str | None = None
-        if isinstance(index_or_name, str):
-            if index_or_name == "_id_":
-                raise OperationFailure("cannot drop _id index")
-            target_name = index_or_name
-        else:
-            normalized_keys = normalize_index_keys(index_or_name)
-            if self._is_builtin_id_index(normalized_keys):
-                raise OperationFailure("cannot drop _id index")
-            target_name = default_index_name(normalized_keys)
         async with self._get_lock(db_name, coll_name):
             indexes_view = self._indexes_view(context)
             index_data_view = self._index_data_view(context)
             indexes = indexes_view.get(db_name, {}).get(coll_name, [])
+            normalized_keys: IndexKeySpec | None = None
+            target_name: str | None = None
+            if isinstance(index_or_name, str):
+                if index_or_name == "_id_":
+                    raise OperationFailure("cannot drop _id index")
+                target_name = index_or_name
+            else:
+                normalized_keys = normalize_index_keys(index_or_name)
+                if self._is_builtin_id_index(normalized_keys):
+                    raise OperationFailure("cannot drop _id index")
+                matches = [index for index in indexes if index["key"] == normalized_keys]
+                if not matches:
+                    raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
+                if len(matches) > 1:
+                    raise OperationFailure(
+                        f"multiple indexes found with key pattern {normalized_keys!r}; drop by name instead"
+                    )
+                target_name = str(matches[0]["name"])
             for idx, index in enumerate(indexes):
                 if index["name"] == target_name:
                     del indexes[idx]
@@ -1463,6 +1471,47 @@ class MemoryEngine(AsyncStorageEngine):
                 del indexes_view[db_name][coll_name]
                 if not indexes_view[db_name]:
                     del indexes_view[db_name]
+
+    async def drop_database(
+        self,
+        db_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> None:
+        lock_names: list[str] = []
+        storage = self._storage_view(context)
+        indexes = self._indexes_view(context)
+        search_indexes = self._search_indexes_view(context)
+        collections = self._collections_view(context)
+        options = self._collection_options_view(context)
+        with self._meta_lock:
+            lock_names = sorted(
+                set(storage.get(db_name, {}).keys())
+                | set(indexes.get(db_name, {}).keys())
+                | set(search_indexes.get(db_name, {}).keys())
+                | set(collections.get(db_name, set()))
+                | set(options.get(db_name, {}).keys())
+            )
+        async with AsyncExitStack() as stack:
+            for coll_name in lock_names:
+                await stack.enter_async_context(self._get_lock(db_name, coll_name))
+            storage = self._storage_view(context)
+            indexes = self._indexes_view(context)
+            index_data = self._index_data_view(context)
+            search_indexes = self._search_indexes_view(context)
+            collections = self._collections_view(context)
+            options = self._collection_options_view(context)
+            with self._meta_lock:
+                storage.pop(db_name, None)
+                indexes.pop(db_name, None)
+                index_data.pop(db_name, None)
+                search_indexes.pop(db_name, None)
+                collections.pop(db_name, None)
+                options.pop(db_name, None)
+                ready_keys = [key for key in self._search_index_ready_at if key[0] == db_name]
+                for key in ready_keys:
+                    del self._search_index_ready_at[key]
+        self._profiler.clear(db_name)
 
     @override
     async def drop_indexes(

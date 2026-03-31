@@ -1758,6 +1758,29 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
         )
 
+    async def test_drop_index_by_key_pattern_rejects_ambiguous_aliases(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["email"], unique=False, name="email_primary")
+            await engine.create_index("db", "coll", ["email"], unique=False, name="email_alias")
+
+            with self.assertRaisesRegex(OperationFailure, "multiple indexes found with key pattern"):
+                await engine.drop_index("db", "coll", [("email", 1)])
+
+            await engine.drop_index("db", "coll", "email_primary")
+            indexes = await engine.list_indexes("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(
+            indexes,
+            [
+                {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                {"name": "email_alias", "key": {"email": 1}, "unique": False},
+            ],
+        )
+
     async def test_builtin_id_index_cannot_be_dropped(self):
         engine = SQLiteEngine()
         await engine.connect()

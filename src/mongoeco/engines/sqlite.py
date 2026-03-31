@@ -4097,6 +4097,15 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 indexes = self._load_indexes(db_name, coll_name)
+                if normalized_keys is not None:
+                    matches = [index for index in indexes if index["key"] == normalized_keys]
+                    if not matches:
+                        raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
+                    if len(matches) > 1:
+                        raise OperationFailure(
+                            f"multiple indexes found with key pattern {normalized_keys!r}; drop by name instead"
+                        )
+                    target_name = str(matches[0]["name"])
                 target: EngineIndexRecord | None = None
                 for index in indexes:
                     if index["name"] == target_name:
@@ -4146,6 +4155,109 @@ class SQLiteEngine(AsyncStorageEngine):
                 except Exception:
                     self._rollback_write(conn, context)
                     raise
+
+    def _drop_database_sync(
+        self,
+        db_name: str,
+        context: ClientSession | None = None,
+    ) -> None:
+        with self._lock:
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
+                index_rows = conn.execute(
+                    """
+                    SELECT physical_name, multikey_physical_name, scalar_physical_name
+                    FROM indexes
+                    WHERE db_name = ?
+                    """,
+                    (db_name,),
+                ).fetchall()
+                search_rows = conn.execute(
+                    """
+                    SELECT physical_name
+                    FROM search_indexes
+                    WHERE db_name = ?
+                    """,
+                    (db_name,),
+                ).fetchall()
+                try:
+                    self._begin_write(conn, context)
+                    for physical_name, multikey_physical_name, scalar_physical_name in index_rows:
+                        if physical_name:
+                            conn.execute(
+                                f"DROP INDEX IF EXISTS {self._quote_identifier(str(physical_name))}"
+                            )
+                        if scalar_physical_name:
+                            conn.execute(
+                                f"DROP INDEX IF EXISTS {self._quote_identifier(str(scalar_physical_name))}"
+                            )
+                        if multikey_physical_name:
+                            conn.execute(
+                                f"DROP INDEX IF EXISTS {self._quote_identifier(str(multikey_physical_name))}"
+                            )
+                    for (physical_name,) in search_rows:
+                        self._drop_search_backend_sync(conn, physical_name)
+                    conn.execute(
+                        """
+                        DELETE FROM scalar_index_entries
+                        WHERE collection_id IN (
+                            SELECT collection_id FROM collections WHERE db_name = ?
+                        )
+                        """,
+                        (db_name,),
+                    )
+                    conn.execute(
+                        """
+                        DELETE FROM multikey_entries
+                        WHERE collection_id IN (
+                            SELECT collection_id FROM collections WHERE db_name = ?
+                        )
+                        """,
+                        (db_name,),
+                    )
+                    conn.execute(
+                        """
+                        DELETE FROM documents
+                        WHERE db_name = ?
+                        """,
+                        (db_name,),
+                    )
+                    conn.execute(
+                        """
+                        DELETE FROM indexes
+                        WHERE db_name = ?
+                        """,
+                        (db_name,),
+                    )
+                    conn.execute(
+                        """
+                        DELETE FROM search_indexes
+                        WHERE db_name = ?
+                        """,
+                        (db_name,),
+                    )
+                    conn.execute(
+                        """
+                        DELETE FROM collections
+                        WHERE db_name = ?
+                        """,
+                        (db_name,),
+                    )
+                    self._commit_write(conn, context)
+                except Exception:
+                    self._rollback_write(conn, context)
+                    raise
+        stale_index_keys = [
+            key
+            for key in self._index_metadata_versions
+            if key[0] == db_name
+        ]
+        for key in stale_index_keys:
+            self._index_metadata_versions.pop(key, None)
+        self._invalidate_index_cache()
+        self._invalidate_collection_id_cache()
+        self._invalidate_collection_features_cache()
+        self._profiler.clear(db_name)
 
     def _drop_indexes_sync(
         self,
@@ -5481,6 +5593,14 @@ class SQLiteEngine(AsyncStorageEngine):
     @override
     async def list_databases(self, *, context: ClientSession | None = None) -> list[str]:
         return await self._run_blocking(self._list_databases_sync, context)
+
+    async def drop_database(
+        self,
+        db_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> None:
+        await self._run_blocking(self._drop_database_sync, db_name, context)
 
     @override
     async def list_collections(self, db_name: str, *, context: ClientSession | None = None) -> list[str]:

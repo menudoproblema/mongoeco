@@ -4,6 +4,7 @@ import unittest
 from mongoeco.api.operations import compile_update_operation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.engines.semantic_core import compile_find_semantics
+from mongoeco.errors import OperationFailure
 from tests.support import ENGINE_FACTORIES, open_engine
 
 
@@ -329,9 +330,26 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                             },
                         },
                     )
+
+    async def test_engine_allows_index_aliases_and_requires_names_for_ambiguous_key_drops(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_engine(engine_name) as engine:
+                    await engine.create_index("test_db", "test_coll", [("email", 1)], name="email_primary")
+                    await engine.create_index("test_db", "test_coll", [("email", 1)], name="email_alias")
+
+                    with self.assertRaisesRegex(OperationFailure, "multiple indexes found with key pattern"):
+                        await engine.drop_index("test_db", "test_coll", [("email", 1)])
+
+                    await engine.drop_index("test_db", "test_coll", "email_primary")
+                    indexes = await engine.list_indexes("test_db", "test_coll")
+
                     self.assertEqual(
-                        indexes_after_drop,
-                        [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
+                        indexes,
+                        [
+                            {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                            {"name": "email_alias", "key": {"email": 1}, "unique": False},
+                        ],
                     )
 
     async def test_engine_preserves_virtual_index_metadata(self):
