@@ -2236,6 +2236,14 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             {"_id": "1", "kind": "view", "tags": ["python", "sqlite"]},
         )
 
+    def test_deserialize_document_propagates_codec_type_errors(self):
+        engine = SQLiteEngine()
+        payload = '{"wrapped":{"$mongoeco":{"type":"int32","value":1}}}'
+
+        with patch.object(engine._codec, "decode", side_effect=TypeError("broken")):
+            with self.assertRaisesRegex(TypeError, "broken"):
+                engine._deserialize_document(payload)
+
     async def test_scan_collection_falls_back_to_query_engine_for_untranslatable_filters(self):
         engine = SQLiteEngine()
         await engine.connect()

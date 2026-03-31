@@ -6,6 +6,7 @@ import datetime
 from dataclasses import replace
 from functools import partial
 import hashlib
+import inspect
 import json
 import math
 import os
@@ -593,10 +594,22 @@ class SQLiteEngine(AsyncStorageEngine):
         parsed = json_loads(payload)
         if DocumentCodec._MARKER not in payload:
             return parsed
+        return self._decode_codec_payload(parsed, preserve_bson_wrappers=preserve_bson_wrappers)
+
+    def _decode_codec_payload(
+        self,
+        payload: object,
+        *,
+        preserve_bson_wrappers: bool,
+    ) -> Document:
+        decode = self._codec.decode
         try:
-            return self._codec.decode(parsed, preserve_bson_wrappers=preserve_bson_wrappers)
-        except TypeError:
-            return self._codec.decode(parsed)
+            parameters = inspect.signature(decode).parameters
+        except (TypeError, ValueError):
+            parameters = {}
+        if "preserve_bson_wrappers" not in parameters:
+            return decode(payload)
+        return decode(payload, preserve_bson_wrappers=preserve_bson_wrappers)
 
     def _load_documents(self, db_name: str, coll_name: str):
         conn = self._require_connection()

@@ -157,6 +157,8 @@ OBJECT_ID_TYPES = (
     else (ObjectId, _PyMongoObjectId)
 )
 
+_DECIMAL128_CONTEXT = decimal.Context(prec=34, Emin=-6143, Emax=6144)
+
 
 def is_object_id_like(value: Any) -> bool:
     return isinstance(value, OBJECT_ID_TYPES)
@@ -226,7 +228,8 @@ class Decimal128:
     value: decimal.Decimal
 
     def __init__(self, value: decimal.Decimal | int | float | str) -> None:
-        object.__setattr__(self, "value", decimal.Decimal(str(value)) if not isinstance(value, decimal.Decimal) else value)
+        decimal_value = value if isinstance(value, decimal.Decimal) else decimal.Decimal(str(value))
+        object.__setattr__(self, "value", _DECIMAL128_CONTEXT.create_decimal(decimal_value))
 
     def to_decimal(self) -> decimal.Decimal:
         return self.value

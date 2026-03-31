@@ -95,6 +95,7 @@ class AggregationCoreTests(unittest.TestCase):
         self.assertTrue(_match_spec_contains_expr({"$and": [{"a": 1}, {"$expr": True}]}))
         self.assertTrue(_match_spec_contains_expr({"$nor": [{"a": 1}, {"$expr": True}]}))
         self.assertEqual(_resolve_aggregation_field_path([{"name": "Ada"}], "0.name"), "Ada")
+        self.assertIs(_resolve_aggregation_field_path([{"name": "Ada"}], "-1.name"), _MISSING)
         self.assertIs(_resolve_aggregation_field_path([{"name": "Ada"}], "2.name"), _MISSING)
         self.assertEqual(_resolve_aggregation_field_path([{"name": "Ada"}, 1], "name"), ["Ada"])
 

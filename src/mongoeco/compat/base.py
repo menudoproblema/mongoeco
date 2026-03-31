@@ -28,7 +28,7 @@ from mongoeco.compat.catalog import (
     SUPPORTED_WINDOW_ACCUMULATORS,
 )
 from mongoeco.core.bson_scalars import compare_bson_numeric, unwrap_bson_numeric, wrap_bson_numeric
-from mongoeco.types import ObjectId, UndefinedType, normalize_object_id
+from mongoeco.types import ObjectId, UndefinedType, is_object_id_like, normalize_object_id
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,13 +104,16 @@ def _compare_values_default(
     if wrapped_left is not None and wrapped_right is not None:
         return compare_bson_numeric(wrapped_left, wrapped_right)
 
-    normalized_left = normalize_object_id(unwrap_bson_numeric(left))
-    normalized_right = normalize_object_id(unwrap_bson_numeric(right))
+    comparable_left = unwrap_bson_numeric(left)
+    comparable_right = unwrap_bson_numeric(right)
 
-    type_left = bson_type_order.get(type(normalized_left), 100)
-    type_right = bson_type_order.get(type(normalized_right), 100)
+    type_left = _bson_type_rank(left, comparable_left, bson_type_order)
+    type_right = _bson_type_rank(right, comparable_right, bson_type_order)
     if type_left != type_right:
         return -1 if type_left < type_right else 1
+
+    normalized_left = normalize_object_id(comparable_left)
+    normalized_right = normalize_object_id(comparable_right)
 
     if isinstance(normalized_left, dict) and isinstance(normalized_right, dict):
         left_items = list(normalized_left.items())
@@ -154,6 +157,16 @@ def _compare_values_default(
         if left_repr == right_repr:
             return 0
         return -1 if left_repr < right_repr else 1
+
+
+def _bson_type_rank(
+    original_value: Any,
+    comparable_value: Any,
+    bson_type_order: MappingProxyType,
+) -> int:
+    if is_object_id_like(original_value) or is_object_id_like(comparable_value):
+        return bson_type_order.get(ObjectId, 100)
+    return bson_type_order.get(type(original_value), bson_type_order.get(type(comparable_value), 100))
 
 
 def _values_equal_default(

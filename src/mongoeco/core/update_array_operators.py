@@ -214,6 +214,7 @@ def apply_add_to_set(
                             existing,
                             candidate,
                             dialect=context.dialect,
+                            collation=context.collation,
                         )
                         for existing in unique_values
                     ):
@@ -224,7 +225,12 @@ def apply_add_to_set(
                 continue
             for candidate in values:
                 if any(
-                    QueryEngine._values_equal(existing, candidate, dialect=context.dialect)
+                    QueryEngine._values_equal(
+                        existing,
+                        candidate,
+                        dialect=context.dialect,
+                        collation=context.collation,
+                    )
                     for existing in current
                 ):
                     continue
@@ -266,6 +272,7 @@ def apply_pull(
                             candidate,
                             value,
                             dialect=context.dialect,
+                            collation=context.collation,
                         )
                     )
                 ]
@@ -273,7 +280,12 @@ def apply_pull(
                 filtered = [
                     candidate
                     for candidate in current
-                    if not QueryEngine._values_equal(candidate, value, dialect=context.dialect)
+                    if not QueryEngine._values_equal(
+                        candidate,
+                        value,
+                        dialect=context.dialect,
+                        collation=context.collation,
+                    )
                 ]
             if not _same_value_for_update(filtered, current):
                 if set_document_value(doc, target.concrete_path, filtered):
@@ -308,7 +320,12 @@ def apply_pull_all(
                 candidate
                 for candidate in current
                 if not any(
-                    QueryEngine._values_equal(candidate, removal, dialect=context.dialect)
+                    QueryEngine._values_equal(
+                        candidate,
+                        removal,
+                        dialect=context.dialect,
+                        collation=context.collation,
+                    )
                     for removal in value
                 )
             ]

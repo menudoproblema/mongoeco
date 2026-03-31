@@ -168,6 +168,7 @@ def compile_update_operation(
         update_spec,
         dialect=dialect,
         selector_filter=normalized_filter,
+        collation=normalized_collation,
         array_filters=normalized_array_filters,
         planning_mode=planning_mode,
     )
@@ -272,6 +273,7 @@ def _compile_update_plans(
     *,
     dialect: MongoDialect,
     selector_filter: Filter,
+    collation: CollationDocument | None,
     array_filters: ArrayFilters | None,
     planning_mode: PlanningMode,
 ) -> tuple[CompiledUpdatePlan | None, CompiledUpdatePlan | None]:
@@ -287,12 +289,14 @@ def _compile_update_plans(
                 update_spec,
                 dialect=dialect,
                 selector_filter=selector_filter,
+                collation=collation,
                 array_filters=array_filters,
             ),
             UpdateEngine.compile_update_plan(
                 update_spec,
                 dialect=dialect,
                 selector_filter=selector_filter,
+                collation=collation,
                 array_filters=array_filters,
                 is_upsert_insert=True,
             ),

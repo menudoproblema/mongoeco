@@ -247,6 +247,13 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(documents, [{"_id": "1", "tags": ["a", "b"]}])
         self.assertEqual(stored, {"_id": "1", "tags": ["a"]})
 
+    def test_decode_storage_document_propagates_codec_type_errors(self):
+        engine = MemoryEngine()
+
+        with patch.object(engine._codec, "decode", side_effect=TypeError("broken")):
+            with self.assertRaisesRegex(TypeError, "broken"):
+                engine._decode_storage_document({"wrapped": {"$mongoeco": {"type": "int32", "value": 1}}})
+
     async def test_sorted_scan_returns_isolated_documents_when_storage_uses_borrowed_decode_cache(self):
         engine = MemoryEngine()
         await engine.connect()

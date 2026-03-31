@@ -189,7 +189,7 @@ def evaluate_control_object_expression(
         if not isinstance(field_name, str):
             raise OperationFailure("$setField field must resolve to a string")
         input_value = evaluate_expression_with_missing(document, spec["input"], variables)
-        if input_value is missing_sentinel or input_value is None:
+        if input_value is missing_sentinel or input_value is None or isinstance(input_value, UndefinedType):
             return None
         if not isinstance(input_value, dict):
             raise OperationFailure("$setField input must resolve to an object")

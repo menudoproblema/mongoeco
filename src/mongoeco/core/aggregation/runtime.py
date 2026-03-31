@@ -352,6 +352,8 @@ def _resolve_aggregation_field_path(value: Any, path: str) -> Any:
 
     if isinstance(value, list):
         head, _, tail = path.partition(".")
+        if head.startswith("-") and head[1:].isdigit():
+            return _MISSING
         if head.isdigit():
             index = int(head)
             if index >= len(value):

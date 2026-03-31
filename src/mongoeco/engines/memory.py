@@ -1,6 +1,7 @@
 import asyncio
 from contextlib import AsyncExitStack
 import datetime
+import inspect
 import threading
 import time
 import uuid
@@ -162,10 +163,7 @@ class MemoryEngine(AsyncStorageEngine):
             if preserve_bson_wrappers:
                 return self._copy_document_containers(self._borrow_storage_document(payload))
             payload = payload.payload
-        try:
-            return self._codec.decode(payload, preserve_bson_wrappers=preserve_bson_wrappers)
-        except TypeError:
-            return self._codec.decode(payload)
+        return self._decode_codec_payload(payload, preserve_bson_wrappers=preserve_bson_wrappers)
 
     def _borrow_storage_document(
         self,
@@ -179,13 +177,25 @@ class MemoryEngine(AsyncStorageEngine):
             raw_payload = payload.payload
         else:
             raw_payload = payload
-        try:
-            decoded = self._codec.decode(raw_payload, preserve_bson_wrappers=preserve_bson_wrappers)
-        except TypeError:
-            decoded = self._codec.decode(raw_payload)
+        decoded = self._decode_codec_payload(raw_payload, preserve_bson_wrappers=preserve_bson_wrappers)
         if isinstance(payload, _StoredDocument) and preserve_bson_wrappers:
             payload.decoded_wrapped = decoded
         return decoded
+
+    def _decode_codec_payload(
+        self,
+        payload: object,
+        *,
+        preserve_bson_wrappers: bool,
+    ) -> Document:
+        decode = self._codec.decode
+        try:
+            parameters = inspect.signature(decode).parameters
+        except (TypeError, ValueError):
+            parameters = {}
+        if "preserve_bson_wrappers" not in parameters:
+            return decode(payload)
+        return decode(payload, preserve_bson_wrappers=preserve_bson_wrappers)
 
     def _borrow_public_storage_document(self, payload: object) -> Document:
         if isinstance(payload, _StoredDocument):

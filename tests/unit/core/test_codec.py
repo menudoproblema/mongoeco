@@ -220,3 +220,15 @@ class DocumentCodecTests(unittest.TestCase):
                 "tasks": [{"enrollment_task_id": ObjectId("65f0a1000000000000000000")}],
             },
         )
+
+    def test_document_codec_decimal128_public_decode_applies_decimal128_context(self):
+        decoded = DocumentCodec.decode(
+            {
+                "$mongoeco": {
+                    "type": "decimal128_public",
+                    "value": "1.2345678901234567890123456789012345",
+                }
+            }
+        )
+
+        self.assertEqual(str(decoded), "1.234567890123456789012345678901234")

@@ -9,6 +9,7 @@ except Exception:  # pragma: no cover - optional dependency
 
 from mongoeco.compat import MongoDialect
 from mongoeco.core.bson_scalars import BsonInt32, BsonInt64
+from mongoeco.core.collation import normalize_collation
 from mongoeco.core.operators import UpdateEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ObjectId
@@ -245,6 +246,16 @@ class UpdateEngineTests(unittest.TestCase):
                 "i",
                 {"qty": 2},
                 array_filters={"i": {"qty": {"$gt": 1}}},
+            )
+        )
+
+    def test_array_filter_matches_honors_collation(self):
+        self.assertTrue(
+            UpdateEngine._array_filter_matches(
+                "item",
+                {"kind": "Ada"},
+                array_filters={"item": {"kind": "ada"}},
+                collation=normalize_collation({"locale": "en", "strength": 2}),
             )
         )
 
@@ -850,6 +861,18 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertTrue(removed)
         self.assertEqual(document, {"items": [{"flag": True}]})
 
+    def test_add_to_set_honors_collation(self):
+        document = {"tags": ["Ada"]}
+
+        modified = UpdateEngine.apply_update(
+            document,
+            {"$addToSet": {"tags": "ada"}},
+            collation=normalize_collation({"locale": "en", "strength": 2}),
+        )
+
+        self.assertFalse(modified)
+        self.assertEqual(document, {"tags": ["Ada"]})
+
     def test_pull_ignores_embedded_document_key_order_and_extra_fields(self):
         document = {
             "items": [
@@ -913,6 +936,18 @@ class UpdateEngineTests(unittest.TestCase):
             },
         )
 
+    def test_pull_honors_collation_for_scalar_values(self):
+        document = {"tags": ["Ada", "Grace"]}
+
+        modified = UpdateEngine.apply_update(
+            document,
+            {"$pull": {"tags": "ada"}},
+            collation=normalize_collation({"locale": "en", "strength": 2}),
+        )
+
+        self.assertTrue(modified)
+        self.assertEqual(document, {"tags": ["Grace"]})
+
     def test_add_to_set_treats_local_and_pymongo_objectids_as_same_value(self):
         if BsonObjectId is None:
             self.skipTest("bson is not installed")
@@ -945,6 +980,18 @@ class UpdateEngineTests(unittest.TestCase):
             document,
             {"items": [ObjectId("65f0a1000000000000000001")]},
         )
+
+    def test_pull_all_honors_collation(self):
+        document = {"tags": ["Ada", "Grace"]}
+
+        modified = UpdateEngine.apply_update(
+            document,
+            {"$pullAll": {"tags": ["ada"]}},
+            collation=normalize_collation({"locale": "en", "strength": 2}),
+        )
+
+        self.assertTrue(modified)
+        self.assertEqual(document, {"tags": ["Grace"]})
 
     def test_push_and_add_to_set_create_missing_arrays(self):
         document = {}

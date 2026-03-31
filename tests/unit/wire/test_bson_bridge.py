@@ -1,6 +1,7 @@
 import decimal
 import unittest
 import uuid
+from unittest.mock import patch
 
 from bson import Decimal128
 from bson.binary import Binary, STANDARD
@@ -74,3 +75,13 @@ class WireBsonBridgeTests(unittest.TestCase):
         self.assertEqual(encoded["ref"], BsonDBRef("users", "ada", "observe", tenant="t1"))
         self.assertEqual(list(encoded["son"].items()), [("b", 2), ("a", 1)])
         self.assertIsNone(encoded["undefined"])
+
+    def test_decode_wire_value_propagates_unexpected_uuid_decoding_errors(self):
+        payload = Binary.from_uuid(
+            uuid.UUID("12345678-1234-5678-1234-567812345678"),
+            uuid_representation=STANDARD,
+        )
+
+        with patch.object(Binary, "as_uuid", side_effect=RuntimeError("boom")):
+            with self.assertRaisesRegex(RuntimeError, "boom"):
+                decode_wire_value(payload)

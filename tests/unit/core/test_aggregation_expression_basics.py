@@ -593,6 +593,12 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
                 {"$unsetField": {"field": "a", "input": "$nested"}},
             )
         )
+        self.assertIsNone(
+            evaluate_expression(
+                {"nested": UNDEFINED},
+                {"$setField": {"field": "name", "input": "$nested", "value": "Ada"}},
+            )
+        )
 
     def test_evaluate_expression_convert_and_set_field_reject_invalid_values(self):
         document = {"value": "Ada", "nested": {"a": 1}, "text": "not-an-object"}
@@ -1162,4 +1168,3 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
             [{"rank": 1, "name": "a"}, {"rank": 2, "name": "b"}, {"rank": 3, "name": "c"}],
         )
         self.assertIsNone(evaluate_expression(document, {"$sortArray": {"input": "$missing", "sortBy": 1}}))
-

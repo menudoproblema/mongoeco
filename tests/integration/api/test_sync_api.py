@@ -568,6 +568,56 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         },
                     )
 
+    def test_collation_applies_to_array_update_operators_and_array_filters(self):
+        collation = {"locale": "en", "strength": 2}
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.alpha.tags
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "tags": ["Ada", "Grace"],
+                            "items": [{"kind": "Ada"}, {"kind": "Grace"}],
+                        }
+                    )
+
+                    add_result = collection.update_one(
+                        {"_id": "1"},
+                        {"$addToSet": {"tags": "ada"}},
+                        collation=collation,
+                    )
+                    pull_result = collection.update_one(
+                        {"_id": "1"},
+                        {"$pull": {"tags": "ada"}},
+                        collation=collation,
+                    )
+                    filter_result = collection.update_one(
+                        {"_id": "1"},
+                        {"$set": {"items.$[item].matched": True}},
+                        array_filters=[{"item.kind": "ada"}],
+                        collation=collation,
+                    )
+                    pull_all_result = collection.update_one(
+                        {"_id": "1"},
+                        {"$pullAll": {"tags": ["grace"]}},
+                        collation=collation,
+                    )
+                    updated = collection.find_one({"_id": "1"})
+
+                    self.assertEqual(add_result.modified_count, 0)
+                    self.assertEqual(pull_result.modified_count, 1)
+                    self.assertEqual(filter_result.modified_count, 1)
+                    self.assertEqual(pull_all_result.modified_count, 1)
+                    self.assertEqual(
+                        updated,
+                        {
+                            "_id": "1",
+                            "tags": [],
+                            "items": [{"kind": "Ada", "matched": True}, {"kind": "Grace"}],
+                        },
+                    )
+
     def test_database_command_supports_bypass_document_validation_and_collation(self):
         collation = {"locale": "en", "strength": 2}
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

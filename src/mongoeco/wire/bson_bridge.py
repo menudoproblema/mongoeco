@@ -42,7 +42,7 @@ def decode_wire_value(value: Any) -> Any:
         if value.subtype == STANDARD and len(value) == 16:
             try:
                 return value.as_uuid(uuid_representation=STANDARD)
-            except Exception:
+            except (TypeError, ValueError):
                 return Binary(bytes(value), subtype=value.subtype)
         return Binary(bytes(value), subtype=value.subtype)
     if isinstance(value, BsonRegex):

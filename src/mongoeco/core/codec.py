@@ -177,7 +177,7 @@ class DocumentCodec:
             if value_type == "timestamp":
                 return Timestamp(int(value["time"]), int(value["inc"]))
             if value_type == "decimal128_public":
-                return Decimal128(decimal.Decimal(value))
+                return Decimal128(value)
             if value_type == "dbref":
                 return DBRef(
                     collection=str(value["collection"]),

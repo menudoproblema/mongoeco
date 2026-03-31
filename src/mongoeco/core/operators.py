@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.collation import CollationSpec, normalize_collation
 from mongoeco.core.bson_scalars import is_bson_numeric, unwrap_bson_numeric
 from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.errors import OperationFailure
@@ -71,6 +72,7 @@ class CompiledUpdateOperator:
 @dataclass(frozen=True, slots=True)
 class UpdateExecutionContext:
     dialect: MongoDialect = MONGODB_DIALECT_70
+    collation: CollationSpec | None = None
     selector_filter: Filter | None = None
     raw_array_filters: ArrayFilters | None = None
     compiled_array_filters: dict[str, dict[str, Any]] = field(default_factory=dict)
@@ -124,6 +126,7 @@ class UpdateEngine:
         update_spec: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
         selector_filter: Filter | None = None,
         array_filters: ArrayFilters | None = None,
         is_upsert_insert: bool = False,
@@ -140,6 +143,7 @@ class UpdateEngine:
             UpdateEngine.compile_update_plan(
                 update_spec,
                 dialect=dialect,
+                collation=collation,
                 selector_filter=selector_filter,
                 array_filters=array_filters,
                 is_upsert_insert=is_upsert_insert,
@@ -152,6 +156,7 @@ class UpdateEngine:
         update_spec: dict[str, Any],
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
         selector_filter: Filter | None = None,
         array_filters: ArrayFilters | None = None,
         is_upsert_insert: bool = False,
@@ -161,6 +166,7 @@ class UpdateEngine:
             raise OperationFailure("update specification must be a non-empty document")
         execution = context or UpdateEngine.build_execution_context(
             dialect=dialect,
+            collation=collation,
             selector_filter=selector_filter,
             array_filters=array_filters,
             is_upsert_insert=is_upsert_insert,
@@ -186,12 +192,14 @@ class UpdateEngine:
     def build_execution_context(
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
         selector_filter: Filter | None = None,
         array_filters: ArrayFilters | None = None,
         is_upsert_insert: bool = False,
     ) -> UpdateExecutionContext:
         return UpdateExecutionContext(
             dialect=dialect,
+            collation=_normalize_update_collation(collation),
             selector_filter=selector_filter,
             raw_array_filters=array_filters,
             compiled_array_filters=UpdateEngine._compile_array_filters(array_filters),
@@ -292,18 +300,29 @@ class UpdateEngine:
         *,
         array_filters: dict[str, dict[str, Any]],
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> bool:
         filter_spec = array_filters.get(identifier)
         if filter_spec is None:
             return False
         for path, condition in filter_spec.items():
             if path == "":
-                if not QueryEngine._match_elem_match_candidate(candidate, condition, dialect=dialect):
+                if not QueryEngine._match_elem_match_candidate(
+                    candidate,
+                    condition,
+                    dialect=dialect,
+                    collation=collation,
+                ):
                     return False
                 continue
             if not isinstance(candidate, dict):
                 return False
-            if not QueryEngine.match(candidate, {path: condition}, dialect=dialect):
+            if not QueryEngine.match(
+                candidate,
+                {path: condition},
+                dialect=dialect,
+                collation=collation,
+            ):
                 return False
         return True
 
@@ -316,6 +335,7 @@ class UpdateEngine:
         array_filters: dict[str, dict[str, Any]],
         allow_positional: bool,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
     ) -> list[ResolvedUpdatePath]:
         compiled_path = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
         segments = compiled_path.segments
@@ -345,6 +365,7 @@ class UpdateEngine:
                 candidate,
                 array_filters=array_filters,
                 dialect=dialect,
+                collation=collation,
             ),
         )
         deduplicated: list[ResolvedUpdatePath] = []
@@ -375,6 +396,7 @@ class UpdateEngine:
                         array_filters=context.compiled_array_filters,
                         allow_positional=allow_positional,
                         dialect=context.dialect,
+                        collation=context.collation,
                     )
                 ),
             )
@@ -523,3 +545,9 @@ class UpdateEngine:
             return [(path, value) for path, value in dialect.policy.sort_update_path_items(params)]
         except TypeError as exc:
             raise OperationFailure("update field names must be strings") from exc
+
+
+def _normalize_update_collation(collation: object | None) -> CollationSpec | None:
+    if collation is None or isinstance(collation, CollationSpec):
+        return collation
+    return normalize_collation(collation)
