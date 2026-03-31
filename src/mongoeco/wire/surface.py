@@ -15,6 +15,8 @@ WIRE_SPECIAL_COMMANDS: tuple[str, ...] = (
     "ismaster",
     "killCursors",
     "logout",
+    "saslContinue",
+    "saslStart",
 )
 
 WIRE_SUPPORTED_OPCODES: tuple[int, ...] = (2004, 2013)

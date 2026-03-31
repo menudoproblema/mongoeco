@@ -15,6 +15,7 @@ class WireConnectionContext:
     last_hello_command: str | None = None
     authenticated_users: list[dict[str, object]] = field(default_factory=list)
     authenticated_roles: list[dict[str, object]] = field(default_factory=list)
+    auth_conversations: dict[int, object] = field(default_factory=dict)
 
     @property
     def peer_address(self) -> str:
@@ -46,6 +47,7 @@ class WireConnectionContext:
     def logout(self) -> None:
         self.authenticated_users = []
         self.authenticated_roles = []
+        self.auth_conversations.clear()
 
 
 class WireConnectionRegistry:

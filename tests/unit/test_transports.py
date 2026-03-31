@@ -14,6 +14,7 @@ from mongoeco.driver.transports import (
     WireProtocolCommandTransport,
 )
 from mongoeco.errors import OperationFailure
+from mongoeco.types import Binary
 from mongoeco.wire.protocol import OP_REPLY
 
 
@@ -179,16 +180,52 @@ class CommandTransportTests(unittest.IsolatedAsyncioTestCase):
             ),
         )
 
-        with patch.object(transport, "_roundtrip", new=AsyncMock(return_value={"ok": 1.0})) as roundtrip:
+        with patch.object(
+            transport,
+            "_roundtrip",
+            new=AsyncMock(
+                side_effect=[
+                    {
+                        "ok": 1.0,
+                        "conversationId": 1,
+                        "payload": Binary(
+                            b"r=clientnonce-servernonce,s=YWRtaW46YWRh,i=15000",
+                        ),
+                    },
+                    {
+                        "ok": 1.0,
+                        "conversationId": 1,
+                        "done": True,
+                        "payload": Binary(b"v=expected-server-signature"),
+                    },
+                ]
+            ),
+        ) as roundtrip, patch(
+            "mongoeco.driver.transports.build_scram_client_start",
+            return_value=SimpleNamespace(
+                nonce="clientnonce",
+                first_bare="n=ada,r=clientnonce",
+                payload=b"n,,n=ada,r=clientnonce",
+            ),
+        ), patch(
+            "mongoeco.driver.transports.build_scram_client_final",
+            return_value=SimpleNamespace(
+                payload=b"c=biws,r=clientnonce-servernonce,p=proof",
+                expected_server_signature="expected-server-signature",
+            ),
+        ):
             await transport._authenticate_resource(resource, execution)
 
         self.assertTrue(resource.authenticated)
-        roundtrip.assert_awaited_once()
-        command = roundtrip.await_args.args[1]
-        self.assertEqual(command["authenticate"], 1)
-        self.assertEqual(command["mechanism"], "SCRAM-SHA-256")
-        self.assertEqual(command["db"], "admin")
-        self.assertEqual(command["$db"], "admin")
+        self.assertEqual(roundtrip.await_count, 2)
+        start_command = roundtrip.await_args_list[0].args[1]
+        continue_command = roundtrip.await_args_list[1].args[1]
+        self.assertEqual(start_command["saslStart"], 1)
+        self.assertEqual(start_command["mechanism"], "SCRAM-SHA-256")
+        self.assertEqual(start_command["db"], "admin")
+        self.assertEqual(start_command["$db"], "admin")
+        self.assertEqual(continue_command["saslContinue"], 1)
+        self.assertEqual(continue_command["conversationId"], 1)
 
     async def test_wire_transport_roundtrip_discards_broken_leases(self):
         registry = _FakeRegistry()

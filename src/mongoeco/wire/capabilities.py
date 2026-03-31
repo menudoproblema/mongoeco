@@ -53,6 +53,16 @@ AUTHENTICATE_CAPABILITY = WireCommandCapability(
     kind="authenticate",
     binds_session=False,
 )
+SASL_START_CAPABILITY = WireCommandCapability(
+    name="saslStart",
+    kind="sasl_start",
+    binds_session=False,
+)
+SASL_CONTINUE_CAPABILITY = WireCommandCapability(
+    name="saslContinue",
+    kind="sasl_continue",
+    binds_session=False,
+)
 LOGOUT_CAPABILITY = WireCommandCapability(
     name="logout",
     kind="logout",
@@ -71,6 +81,8 @@ _SPECIAL_CAPABILITIES: dict[str, WireCommandCapability] = {
         COMMIT_TRANSACTION_CAPABILITY,
         ABORT_TRANSACTION_CAPABILITY,
         AUTHENTICATE_CAPABILITY,
+        SASL_START_CAPABILITY,
+        SASL_CONTINUE_CAPABILITY,
         LOGOUT_CAPABILITY,
     )
 }

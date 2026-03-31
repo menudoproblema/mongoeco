@@ -5,13 +5,14 @@ import struct
 
 from mongoeco.errors import ExecutionTimeout, MongoEcoError, OperationFailure, PyMongoError
 from mongoeco.wire.protocol import OP_MSG, OP_QUERY, parse_message_header
-from mongoeco.types import ObjectId
+from mongoeco.types import Binary, ObjectId
 from mongoeco.wire.auth import WireAuthenticationService, WireAuthUser
 from mongoeco.wire.connections import WireConnectionContext, WireConnectionRegistry
 from mongoeco.wire.capabilities import resolve_wire_command_capability
 from mongoeco.wire.handshake import WireHandshakeService
 from mongoeco.wire.executor import WireCommandExecutor
 from mongoeco.wire.proxy import AsyncMongoEcoProxyServer
+from mongoeco.wire.scram import build_scram_client_final
 from mongoeco.wire.surface import WireSurface
 from mongoeco.wire.sessions import WireSessionStore
 
@@ -26,6 +27,8 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertEqual(resolve_wire_command_capability("killCursors").kind, "kill_cursors")
         self.assertEqual(resolve_wire_command_capability("commitTransaction").kind, "commit_transaction")
         self.assertEqual(resolve_wire_command_capability("hello").kind, "handshake")
+        self.assertEqual(resolve_wire_command_capability("saslStart").kind, "sasl_start")
+        self.assertEqual(resolve_wire_command_capability("saslContinue").kind, "sasl_continue")
         self.assertEqual(resolve_wire_command_capability("find").kind, "passthrough")
 
     def test_error_document_includes_catalog_metadata_and_labels(self):
@@ -328,6 +331,65 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertEqual(connection.authenticated_users, [])
         with self.assertRaisesRegex(OperationFailure, "Authentication required"):
             service.require_authenticated(connection, "ping")
+
+    def test_authentication_service_supports_scram_sasl_conversation(self):
+        service = WireAuthenticationService(
+            (
+                WireAuthUser(
+                    username="ada",
+                    password="secret",
+                    source="admin",
+                    mechanisms=("SCRAM-SHA-256",),
+                    roles=({"role": "root", "db": "admin"},),
+                ),
+            )
+        )
+        connection = WireConnectionContext(connection_id=9)
+
+        start = service.sasl_start(
+            {
+                "saslStart": 1,
+                "mechanism": "SCRAM-SHA-256",
+                "payload": Binary(b"n,,n=ada,r=clientnonce"),
+                "db": "admin",
+            },
+            connection=connection,
+        )
+
+        self.assertEqual(start["ok"], 1.0)
+        self.assertFalse(start["done"])
+        conversation_id = start["conversationId"]
+        server_first = bytes(start["payload"]).decode("utf-8")
+        self.assertIn("r=clientnonce", server_first)
+        client_final = build_scram_client_final(
+            password="secret",
+            mechanism="SCRAM-SHA-256",
+            client_first_bare="n=ada,r=clientnonce",
+            server_first_message=server_first,
+            combined_nonce=next(
+                part[2:]
+                for part in server_first.split(",")
+                if part.startswith("r=")
+            ),
+        )
+
+        continue_response = service.sasl_continue(
+            {
+                "saslContinue": 1,
+                "conversationId": conversation_id,
+                "payload": Binary(client_final.payload),
+            },
+            connection=connection,
+        )
+
+        self.assertEqual(continue_response["ok"], 1.0)
+        self.assertTrue(continue_response["done"])
+        self.assertEqual(
+            connection.authenticated_users,
+            [{"user": "ada", "db": "admin", "mechanism": "SCRAM-SHA-256"}],
+        )
+        self.assertEqual(connection.authenticated_roles, [{"role": "root", "db": "admin"}])
+        self.assertEqual(connection.auth_conversations, {})
 
     def test_authentication_service_validates_input_and_x509(self):
         service = WireAuthenticationService(

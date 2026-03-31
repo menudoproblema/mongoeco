@@ -45,6 +45,8 @@ class WireCommandExecutor:
         self._handshake = WireHandshakeService(client.mongodb_dialect, surface=self._surface)
         self._special_handlers = {
             "authenticate": self._handle_authenticate,
+            "sasl_start": self._handle_sasl_start,
+            "sasl_continue": self._handle_sasl_continue,
             "handshake": self._handle_handshake,
             "end_sessions": self._handle_end_sessions,
             "get_more": self._handle_get_more,
@@ -141,6 +143,12 @@ class WireCommandExecutor:
 
     async def _handle_authenticate(self, context: WireRequestContext) -> dict[str, Any]:
         return self._auth.authenticate(context.command_document, connection=context.connection)
+
+    async def _handle_sasl_start(self, context: WireRequestContext) -> dict[str, Any]:
+        return self._auth.sasl_start(context.command_document, connection=context.connection)
+
+    async def _handle_sasl_continue(self, context: WireRequestContext) -> dict[str, Any]:
+        return self._auth.sasl_continue(context.command_document, connection=context.connection)
 
     async def _handle_logout(self, context: WireRequestContext) -> dict[str, Any]:
         return self._auth.logout(context.connection)

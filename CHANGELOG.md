@@ -21,6 +21,10 @@ usa Semantic Versioning.
 - El parser wire acepta ya los flags validos reconocidos de `OP_MSG` y
   `OP_QUERY`, en lugar de rechazar cualquier request con flags de
   protocolo soportados.
+- El transporte wire del driver usa ya `saslStart` y `saslContinue`
+  para autenticacion SCRAM, y el proxy wire entiende ahora esa
+  conversacion multi-step moderna ademas del comando legacy
+  `authenticate`.
 - El seed de upsert extrae ya igualdades seedables desde `$and`
   top-level y desde condiciones `$in` con un unico valor.
 - `$dateFromParts` valida ya de forma explicita los rangos de `hour`,

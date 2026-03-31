@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from bson.binary import Binary as BsonBinary
 from dataclasses import dataclass, field
 import itertools
 import ssl
@@ -10,6 +11,12 @@ from mongoeco.driver.connections import ConnectionRegistry, DriverConnection
 from mongoeco.driver.security import TlsPolicy
 from mongoeco.driver.requests import PreparedRequestExecution
 from mongoeco.errors import OperationFailure
+from mongoeco.types import Binary
+from mongoeco.wire.scram import (
+    build_scram_client_final,
+    build_scram_client_start,
+    verify_scram_server_final,
+)
 from mongoeco.wire.protocol import (
     OP_MSG,
     OP_REPLY,
@@ -107,23 +114,112 @@ class WireProtocolCommandTransport:
         execution: PreparedRequestExecution,
     ) -> None:
         auth = execution.plan.auth_policy
-        command = {
-            "authenticate": 1,
-            "mechanism": auth.mechanism or "SCRAM-SHA-256",
-            "user": auth.username,
-            "pwd": auth.password,
-            "db": auth.source or execution.plan.request.database,
-            "$db": auth.source or execution.plan.request.database,
-        }
-        if command["user"] is None:
+        mechanism = auth.mechanism or "SCRAM-SHA-256"
+        username = auth.username
+        password = auth.password
+        database = auth.source or execution.plan.request.database
+        if username is None:
             raise OperationFailure("wire authentication requires a username")
+        if password is None and mechanism != "MONGODB-X509":
+            raise OperationFailure("wire authentication requires a password")
         try:
-            result = await self._roundtrip(resource, command, lease=execution.connection)
-            self._raise_if_error_document(result)
+            if mechanism.startswith("SCRAM-SHA-"):
+                await self._authenticate_resource_with_scram(
+                    resource,
+                    execution=execution,
+                    mechanism=mechanism,
+                    username=username,
+                    password=password or "",
+                    database=database,
+                )
+            else:
+                result = await self._roundtrip(
+                    resource,
+                    {
+                        "authenticate": 1,
+                        "mechanism": mechanism,
+                        "user": username,
+                        "pwd": password,
+                        "db": database,
+                        "$db": database,
+                    },
+                    lease=execution.connection,
+                )
+                self._raise_if_error_document(result)
         except Exception:  # noqa: BLE001
             self._registry.discard(execution.connection)
             raise
         resource.authenticated = True
+
+    async def _authenticate_resource_with_scram(
+        self,
+        resource: StreamConnectionResource,
+        *,
+        execution: PreparedRequestExecution,
+        mechanism: str,
+        username: str,
+        password: str,
+        database: str,
+    ) -> None:
+        client_start = build_scram_client_start(username=username)
+        start_result = await self._roundtrip(
+            resource,
+            {
+                "saslStart": 1,
+                "mechanism": mechanism,
+                "payload": client_start.payload,
+                "$db": database,
+                "db": database,
+            },
+            lease=execution.connection,
+        )
+        self._raise_if_error_document(start_result)
+        server_first_payload = self._binary_payload_bytes(start_result.get("payload"), "saslStart")
+        server_first_message = server_first_payload.decode("utf-8")
+        client_final = build_scram_client_final(
+            password=password,
+            mechanism=mechanism,
+            client_first_bare=client_start.first_bare,
+            server_first_message=server_first_message,
+            combined_nonce=self._extract_scram_nonce(server_first_message),
+        )
+        conversation_id = start_result.get("conversationId")
+        if not isinstance(conversation_id, int):
+            raise OperationFailure("saslStart response requires integer conversationId")
+        continue_result = await self._roundtrip(
+            resource,
+            {
+                "saslContinue": 1,
+                "conversationId": conversation_id,
+                "payload": client_final.payload,
+                "$db": database,
+                "db": database,
+            },
+            lease=execution.connection,
+        )
+        self._raise_if_error_document(continue_result)
+        server_final_payload = self._binary_payload_bytes(continue_result.get("payload"), "saslContinue")
+        verify_scram_server_final(
+            server_final_payload,
+            expected_server_signature=client_final.expected_server_signature,
+        )
+
+    @staticmethod
+    def _binary_payload_bytes(payload: Any, command_name: str) -> bytes:
+        if isinstance(payload, Binary):
+            return bytes(payload)
+        if isinstance(payload, BsonBinary):
+            return bytes(payload)
+        if isinstance(payload, bytes):
+            return payload
+        raise OperationFailure(f"{command_name} response requires binary payload")
+
+    @staticmethod
+    def _extract_scram_nonce(server_first_message: str) -> str:
+        for part in server_first_message.split(","):
+            if part.startswith("r="):
+                return part[2:]
+        raise OperationFailure("SCRAM server-first message requires nonce")
 
     async def _roundtrip(
         self,
