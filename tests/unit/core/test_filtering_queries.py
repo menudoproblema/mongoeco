@@ -182,6 +182,14 @@ class QueryEngineTests(unittest.TestCase):
         self.assertFalse(QueryEngine.match(document, {"value": {"$nin": [None]}}, dialect=MONGODB_DIALECT_70))
         self.assertTrue(QueryEngine.match(document, {"value": {"$nin": [None]}}, dialect=MONGODB_DIALECT_80))
 
+    def test_query_nin_plan_preserves_compiled_null_semantics_across_runtime_dialects(self):
+        document = {"value": UNDEFINED}
+        plan_70 = compile_filter({"value": {"$nin": [None]}}, dialect=MONGODB_DIALECT_70)
+        plan_80 = compile_filter({"value": {"$nin": [None]}}, dialect=MONGODB_DIALECT_80)
+
+        self.assertFalse(QueryEngine.match_plan(document, plan_70, dialect=MONGODB_DIALECT_80))
+        self.assertTrue(QueryEngine.match_plan(document, plan_80, dialect=MONGODB_DIALECT_70))
+
     def test_query_ne_and_nin_on_missing_field_still_match_non_null_values(self):
         document = {}
 

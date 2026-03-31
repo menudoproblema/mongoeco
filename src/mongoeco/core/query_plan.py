@@ -71,6 +71,7 @@ class InCondition(QueryNode):
 class NotInCondition(QueryNode):
     field: str
     values: tuple[BsonValue, ...]
+    null_matches_undefined: bool = False
 
 
 @dataclass(frozen=True)
@@ -383,7 +384,14 @@ def _compile_field_condition(
         elif operator == "$nin":
             if not isinstance(value, (list, tuple)):
                 raise ValueError("$nin necesita una lista")
-            clauses.append(NotInCondition(field, tuple(value)))
+            clauses.append(
+                NotInCondition(
+                    field,
+                    tuple(value),
+                    null_matches_undefined=any(item is None for item in value)
+                    and dialect.policy.null_query_matches_undefined(),
+                )
+            )
         elif operator == "$all":
             if not isinstance(value, (list, tuple)):
                 raise ValueError("$all necesita una lista")

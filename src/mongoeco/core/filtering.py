@@ -253,11 +253,16 @@ class QueryEngine:
                     dialect=dialect,
                     collation=collation,
                 )
-            case NotInCondition(field=field, values=values):
+            case NotInCondition(
+                field=field,
+                values=values,
+                null_matches_undefined=null_matches_undefined,
+            ):
                 return QueryEngine._evaluate_not_in(
                     document,
                     field,
                     values,
+                    null_matches_undefined=null_matches_undefined,
                     dialect=dialect,
                     collation=collation,
                 )
@@ -981,14 +986,14 @@ class QueryEngine:
         field: str,
         values: tuple[Any, ...],
         *,
+        null_matches_undefined: bool = False,
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
         candidates = QueryEngine._extract_values(doc, field)
-        null_matches_undefined = any(item is None for item in values) and dialect.policy.null_query_matches_undefined()
         if not candidates:
             has_null = any(item is None for item in values)
-            return not (has_null and dialect.policy.null_query_matches_undefined())
+            return not (has_null and null_matches_undefined)
         literal_lookup, regex_values, residual_values = QueryEngine._prepare_membership_values(
             values,
             null_matches_undefined=null_matches_undefined,

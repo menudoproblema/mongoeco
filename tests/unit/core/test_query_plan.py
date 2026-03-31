@@ -18,6 +18,7 @@ from mongoeco.core.query_plan import (
     MatchAll,
     ModCondition,
     NotCondition,
+    NotInCondition,
     OrCondition,
     RegexCondition,
     SizeCondition,
@@ -135,6 +136,14 @@ class QueryPlanTests(unittest.TestCase):
         self.assertEqual(
             compile_filter({"role": {"$in": [None]}}, dialect=MONGODB_DIALECT_70),
             InCondition("role", (None,), null_matches_undefined=True),
+        )
+        self.assertEqual(
+            compile_filter({"role": {"$nin": [None]}}, dialect=MONGODB_DIALECT_70),
+            NotInCondition("role", (None,), null_matches_undefined=True),
+        )
+        self.assertEqual(
+            compile_filter({"role": {"$nin": [None]}}, dialect=MONGODB_DIALECT_80),
+            NotInCondition("role", (None,), null_matches_undefined=False),
         )
 
     def test_compile_filter_returns_and_condition_for_multiple_field_operators(self):
