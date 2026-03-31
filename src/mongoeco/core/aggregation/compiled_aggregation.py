@@ -4,6 +4,7 @@ import re
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.collation import CollationSpec
 from mongoeco.core.aggregation.accumulators import (
     _AverageAccumulator,
     _sum_accumulator_operand,
@@ -134,8 +135,9 @@ class CompiledGroup:
         self,
         documents: list[Document],
         variables: dict[str, Any] | None = None,
+        collation: CollationSpec | None = None,
     ) -> list[Document]:
-        return self._aggregate_func(documents, variables)
+        return self._aggregate_func(documents, variables, collation)
 
     @classmethod
     def _cache_key(cls, spec: dict[str, Any], dialect: MongoDialect) -> tuple[Any, int]:
@@ -167,7 +169,7 @@ class CompiledGroup:
 
     def _compile(self) -> Any:
         lines = [
-            "def aggregate_func(documents, variables):",
+            "def aggregate_func(documents, variables, collation=None):",
             "    _bson_add = bson_add",
             "    _is_numeric = is_numeric",
             "    _sum_operand = sum_operand",
@@ -262,7 +264,7 @@ class CompiledGroup:
                     lines.append(f"    state[{index}].count += 1")
                 case "$addToSet":
                     lines.append(
-                        f"if not any(_values_equal(value, existing, dialect=dialect) for existing in state[{index}]):"
+                        f"if not any(_values_equal(value, existing, dialect=dialect, collation=collation) for existing in state[{index}]):"
                     )
                     lines.append(
                         f"    state[{index}].append(value if isinstance(value, (int, float, str, bool)) else _deepcopy(value))"

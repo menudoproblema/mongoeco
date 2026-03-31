@@ -100,7 +100,7 @@ def build_local_topology_description(uri: MongoUri) -> TopologyDescription:
         if topology_type is TopologyType.SHARDED:
             server_type = ServerType.MONGOS
         elif topology_type is TopologyType.REPLICA_SET:
-            server_type = ServerType.RS_PRIMARY if index == 0 else ServerType.RS_SECONDARY
+            server_type = ServerType.UNKNOWN
         elif topology_type is TopologyType.SINGLE:
             server_type = ServerType.STANDALONE
         else:
@@ -110,7 +110,7 @@ def build_local_topology_description(uri: MongoUri) -> TopologyDescription:
                 address=seed.address,
                 server_type=server_type,
                 round_trip_time_ms=1.0 + index,
-                staleness_seconds=0 if server_type is not ServerType.RS_SECONDARY else 15 * index,
+                staleness_seconds=None if server_type is ServerType.UNKNOWN else 0,
                 set_name=uri.options.replica_set,
                 logical_session_timeout_minutes=30,
                 wire_version_range=(0, 20),

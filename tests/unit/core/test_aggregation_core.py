@@ -606,6 +606,36 @@ class AggregationCoreTests(unittest.TestCase):
             [{"_id": "a", "tags": [{"code": 1}, {"code": 2}]}],
         )
 
+    def test_apply_group_add_to_set_respects_collation(self):
+        grouped = _apply_group(
+            [
+                {"kind": "a", "tag": "Ada"},
+                {"kind": "a", "tag": "ada"},
+                {"kind": "a", "tag": "Grace"},
+            ],
+            {
+                "_id": "$kind",
+                "tags": {"$addToSet": "$tag"},
+            },
+            collation=CollationSpec(locale="en", strength=2),
+        )
+
+        self.assertEqual(grouped, [{"_id": "a", "tags": ["Ada", "Grace"]}])
+
+    def test_compiled_group_add_to_set_respects_collation(self):
+        grouped = CompiledGroup(
+            {"_id": "$kind", "tags": {"$addToSet": "$tag"}}
+        ).apply(
+            [
+                {"kind": "a", "tag": "Ada"},
+                {"kind": "a", "tag": "ada"},
+                {"kind": "a", "tag": "Grace"},
+            ],
+            collation=CollationSpec(locale="en", strength=2),
+        )
+
+        self.assertEqual(grouped, [{"_id": "a", "tags": ["Ada", "Grace"]}])
+
     def test_apply_group_falls_back_for_accumulators_not_supported_by_compiler(self):
         grouped = _apply_group(
             [

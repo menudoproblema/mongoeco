@@ -7,6 +7,7 @@ from functools import cmp_to_key
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.collation import CollationSpec
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.bson_scalars import bson_add, is_bson_numeric, unwrap_bson_numeric
 from mongoeco.errors import OperationFailure
@@ -406,6 +407,7 @@ def _apply_accumulators(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
     evaluate_expression: ExpressionEvaluator | None = None,
     evaluate_expression_with_missing: MissingExpressionEvaluator | None = None,
     append_unique_values: Callable[[list[Any], list[Any]], None] | None = None,
@@ -444,6 +446,7 @@ def _apply_accumulators(
                 target,
                 values,
                 dialect=dialect,
+                collation=collation,
             )
         if require_sort is None:
             require_sort = _default_require_sort

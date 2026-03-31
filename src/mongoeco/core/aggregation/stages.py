@@ -145,7 +145,13 @@ def _stage_group(
     spec: object,
     context: AggregationStageContext,
 ) -> list[Document]:
-    return _apply_group(documents, spec, context.variables, dialect=context.dialect)
+    return _apply_group(
+        documents,
+        spec,
+        context.variables,
+        dialect=context.dialect,
+        collation=context.collation,
+    )
 
 
 def _stage_bucket(
@@ -250,7 +256,13 @@ def _stage_set_window_fields(
     spec: object,
     context: AggregationStageContext,
 ) -> list[Document]:
-    return _apply_set_window_fields(documents, spec, context.variables, dialect=context.dialect)
+    return _apply_set_window_fields(
+        documents,
+        spec,
+        context.variables,
+        dialect=context.dialect,
+        collation=context.collation,
+    )
 
 
 AGGREGATION_STAGE_SPECS: dict[str, AggregationStageSpec] = {

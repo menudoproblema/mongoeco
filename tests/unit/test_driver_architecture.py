@@ -230,8 +230,8 @@ class TopologyAndPolicyTests(unittest.TestCase):
         topology = build_local_topology_description(uri)
 
         self.assertEqual(topology.topology_type, TopologyType.REPLICA_SET)
-        self.assertEqual(topology.servers[0].server_type, ServerType.RS_PRIMARY)
-        self.assertEqual(topology.servers[1].server_type, ServerType.RS_SECONDARY)
+        self.assertEqual(topology.servers[0].server_type, ServerType.UNKNOWN)
+        self.assertEqual(topology.servers[1].server_type, ServerType.UNKNOWN)
         self.assertEqual(topology.set_name, "rs0")
 
     def test_build_local_topology_description_marks_load_balanced_as_sharded(self):
@@ -253,13 +253,33 @@ class TopologyAndPolicyTests(unittest.TestCase):
 
     def test_selection_policy_for_secondary_prefers_secondaries_in_replica_set(self):
         uri = parse_mongo_uri("mongodb://db1:27017,db2:27018/?replicaSet=rs0")
-        topology = build_local_topology_description(uri)
+        topology = TopologyDescription(
+            topology_type=TopologyType.REPLICA_SET,
+            servers=(
+                ServerDescription("db1:27017", server_type=ServerType.RS_PRIMARY),
+                ServerDescription("db2:27018", server_type=ServerType.RS_SECONDARY),
+            ),
+            set_name="rs0",
+        )
         policy = build_selection_policy(
             uri,
             read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
         )
 
         self.assertEqual([server.address for server in policy.select_servers(topology)], ["db2:27018"])
+
+    def test_selection_policy_uses_all_replica_set_seeds_before_discovery(self):
+        uri = parse_mongo_uri("mongodb://db1:27017,db2:27018,db3:27019/?replicaSet=rs0")
+        topology = build_local_topology_description(uri)
+        policy = build_selection_policy(
+            uri,
+            read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
+        )
+
+        self.assertEqual(
+            [server.address for server in policy.select_servers(topology)],
+            ["db1:27017", "db2:27018", "db3:27019"],
+        )
 
     def test_selection_policy_filters_replica_set_secondaries_by_tags(self):
         uri = parse_mongo_uri(
@@ -839,7 +859,7 @@ class RequestExecutionPipelineTests(unittest.TestCase):
 
         self.assertIsInstance(result, RequestExecutionResult)
         self.assertTrue(result.outcome.ok)
-        self.assertEqual(seen, ["db2:27018", "db3:27019"])
+        self.assertEqual(seen, ["db1:27017", "db2:27018"])
         self.assertEqual(len(result.trace.attempts), 2)
 
     def test_execute_request_retries_connection_failures_for_writes(self):
@@ -862,7 +882,7 @@ class RequestExecutionPipelineTests(unittest.TestCase):
         result = asyncio.run(runtime.execute_request(plan, RetryWriteTransport()))
 
         self.assertTrue(result.outcome.ok)
-        self.assertEqual(seen, ["db1:27017", "db1:27017"])
+        self.assertEqual(seen, ["db1:27017", "db2:27018"])
 
     def test_execute_request_honors_socket_timeout(self):
         runtime = DriverRuntime(

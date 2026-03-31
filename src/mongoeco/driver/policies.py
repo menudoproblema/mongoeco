@@ -38,7 +38,10 @@ class SelectionPolicy:
         if self.direct_connection:
             return topology.servers[:1]
         if for_writes:
-            return topology.writable_servers
+            writable = topology.writable_servers
+            if writable or topology.topology_type is not TopologyType.REPLICA_SET:
+                return writable
+            return self._order_nearest(self._provisional_replica_set_servers(topology))
         if topology.topology_type is not TopologyType.REPLICA_SET:
             readable = topology.readable_servers
             return self._order_nearest(readable) if self.mode is ReadPreferenceMode.NEAREST else readable
@@ -49,6 +52,8 @@ class SelectionPolicy:
         primaries = tuple(
             server for server in readable if server.server_type.name == "RS_PRIMARY"
         )
+        if not primaries and not secondaries:
+            return self._order_nearest(self._provisional_replica_set_servers(topology))
         eligible_secondaries = self._apply_secondary_filters(secondaries)
         if self.mode is ReadPreferenceMode.PRIMARY:
             return primaries[:1]
@@ -103,6 +108,14 @@ class SelectionPolicy:
                     server.address,
                 ),
             )
+        )
+
+    @staticmethod
+    def _provisional_replica_set_servers(topology: TopologyDescription) -> tuple[ServerDescription, ...]:
+        return tuple(
+            server
+            for server in topology.servers
+            if server.error is None and not server.hidden and not server.arbiter_only
         )
 
 

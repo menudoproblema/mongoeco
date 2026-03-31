@@ -33,6 +33,11 @@ usa Semantic Versioning.
   Python, reduciendo desajustes de orden en sorts pushdown.
 - `watch(session=...)` deja de ignorar sesiones explicitamente y falla
   ahora con un error claro en cliente, base de datos y coleccion.
+- La topologia local de `replica set` deja de inventar un primario antes
+  del handshake y usa los seeds como candidatos provisionales hasta que
+  llegue discovery real.
+- `$addToSet` en agregacion respeta ya `collation` al deduplicar,
+  tanto en el camino interpretado como en el compilado.
 - El seed de upsert extrae ya igualdades seedables desde `$and`
   top-level y desde condiciones `$in` con un unico valor.
 - `$dateFromParts` valida ya de forma explicita los rangos de `hour`,

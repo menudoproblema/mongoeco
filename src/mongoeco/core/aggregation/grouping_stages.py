@@ -4,6 +4,7 @@ import math
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.collation import CollationSpec
 from mongoeco.core.paths import get_document_value, set_document_value
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import OperationFailure
@@ -44,6 +45,7 @@ def _copy_if_mutable(value: Any) -> Any:
 def _build_accumulator_runtime(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> dict[str, Any]:
     def _evaluate(
         current_document: Document,
@@ -70,7 +72,7 @@ def _build_accumulator_runtime(
         )
 
     def _append_unique(target: list[Any], values: list[Any]) -> None:
-        _append_unique_values(target, values, dialect=dialect)
+        _append_unique_values(target, values, dialect=dialect, collation=collation)
 
     return {
         "evaluate_expression": _evaluate,
@@ -131,6 +133,7 @@ def _apply_group(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> list[Document]:
     if not isinstance(spec, dict) or "_id" not in spec:
         raise OperationFailure("$group requires a document specification with _id")
@@ -138,12 +141,12 @@ def _apply_group(
     if CompiledGroup.supports(spec):
         try:
             compiled = CompiledGroup(spec, dialect=dialect)
-            return compiled.apply(documents, variables)
+            return compiled.apply(documents, variables, collation=collation)
         except (OperationFailure, SyntaxError, TypeError, ValueError):
             pass
 
     accumulator_specs = {key: value for key, value in spec.items() if key != "_id"}
-    accumulator_runtime = _build_accumulator_runtime(dialect=dialect)
+    accumulator_runtime = _build_accumulator_runtime(dialect=dialect, collation=collation)
     prepared_accumulators = _prepare_accumulator_specs(
         accumulator_specs,
         dialect=dialect,
@@ -171,6 +174,7 @@ def _apply_group(
             document,
             variables,
             dialect=dialect,
+            collation=collation,
             **accumulator_runtime,
         )
 
@@ -204,7 +208,7 @@ def _apply_bucket(
     )
 
     default_bucket = spec.get("default")
-    accumulator_runtime = _build_accumulator_runtime(dialect=dialect)
+    accumulator_runtime = _build_accumulator_runtime(dialect=dialect, collation=None)
     buckets: list[_AccumulatorBucket] = []
     for lower in boundaries[:-1]:
         buckets.append(
@@ -231,6 +235,7 @@ def _apply_bucket(
                 document,
                 variables,
                 dialect=dialect,
+                collation=None,
                 **accumulator_runtime,
             )
             continue
@@ -241,6 +246,7 @@ def _apply_bucket(
                 document,
                 variables,
                 dialect=dialect,
+                collation=None,
                 **accumulator_runtime,
             )
             continue
@@ -268,7 +274,7 @@ def _apply_bucket_auto(
         raise OperationFailure("$bucketAuto granularity is not supported")
 
     output = spec.get("output")
-    accumulator_runtime = _build_accumulator_runtime(dialect=dialect)
+    accumulator_runtime = _build_accumulator_runtime(dialect=dialect, collation=None)
     if output is not None and not isinstance(output, dict):
         raise OperationFailure("$bucketAuto output must be a document")
     prepared_output = _prepare_accumulator_specs(
@@ -314,6 +320,7 @@ def _apply_bucket_auto(
                 document,
                 variables,
                 dialect=dialect,
+                collation=None,
                 **accumulator_runtime,
             )
         result.append(_finalize_accumulators(bucket))
@@ -326,6 +333,7 @@ def _apply_set_window_fields(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> list[Document]:
     if not isinstance(spec, dict) or "output" not in spec:
         raise OperationFailure("$setWindowFields requires output")
@@ -334,7 +342,7 @@ def _apply_set_window_fields(
         raise OperationFailure("$setWindowFields output must be a document")
 
     sort_spec = _require_sort(spec["sortBy"]) if "sortBy" in spec else None
-    accumulator_runtime = _build_accumulator_runtime(dialect=dialect)
+    accumulator_runtime = _build_accumulator_runtime(dialect=dialect, collation=collation)
     prepared_window_outputs: dict[str, tuple[str, object, dict[str, object] | None, tuple[tuple[str, str, object], ...]]] = {}
     reusable_window_states: dict[str, _AccumulatorBucket] = {}
     for field, field_spec in output.items():
@@ -450,6 +458,7 @@ def _apply_set_window_fields(
                         window_document,
                         variables,
                         dialect=dialect,
+                        collation=collation,
                         **accumulator_runtime,
                     )
                 set_document_value(enriched, field, _finalize_accumulators(state)[field])
@@ -475,5 +484,6 @@ def _apply_sort_by_count(
         {"_id": spec, "count": {"$sum": 1}},
         variables,
         dialect=dialect,
+        collation=None,
     )
     return sort_documents(grouped, [("count", -1), ("_id", 1)], dialect=dialect)

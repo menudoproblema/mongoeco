@@ -315,10 +315,11 @@ def _append_unique_values(
     values: list[Any],
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> None:
     for value in values:
         if any(
-            QueryEngine._values_equal(value, existing, dialect=dialect)
+            QueryEngine._values_equal(value, existing, dialect=dialect, collation=collation)
             for existing in target
         ):
             continue
