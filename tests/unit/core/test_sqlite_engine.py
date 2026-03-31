@@ -1563,10 +1563,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             indexes,
             [
-                {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
+                {"name": "_id_", "key": {"_id": 1}, "unique": True},
                 {
                     "name": "email_1_created_at_-1",
-                    "fields": ["email", "created_at"],
                     "key": {"email": 1, "created_at": -1},
                     "unique": True,
                 },
@@ -1600,7 +1599,6 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             indexes[1],
             {
                 "name": "email_1",
-                "fields": ["email"],
                 "key": {"email": 1},
                 "unique": False,
                 "sparse": True,
@@ -1628,7 +1626,6 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             indexes[1],
             {
                 "name": "expires_at_1",
-                "fields": ["expires_at"],
                 "key": {"expires_at": 1},
                 "unique": False,
                 "expireAfterSeconds": 30,
@@ -1752,13 +1749,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             after_single_drop,
             [
-                {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
-                {"name": "idx_kind", "fields": ["kind"], "key": {"kind": 1}, "unique": False},
+                {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                {"name": "idx_kind", "key": {"kind": 1}, "unique": False},
             ],
         )
         self.assertEqual(
             after_drop_all,
-            [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
+            [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
         )
 
     async def test_builtin_id_index_cannot_be_dropped(self):

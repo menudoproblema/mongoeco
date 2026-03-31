@@ -192,7 +192,6 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             {
                 "name": "email_idx",
                 "key": {"email": 1},
-                "fields": ["email"],
                 "unique": True,
             },
         )
@@ -220,7 +219,6 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             {
                 "name": "expires_at_1",
                 "key": {"expires_at": 1},
-                "fields": ["expires_at"],
                 "unique": False,
                 "expireAfterSeconds": 30,
             },
@@ -564,7 +562,6 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             {
                 "name": "ttl_sparse",
                 "key": {"expires_at": 1},
-                "fields": ["expires_at"],
                 "unique": True,
                 "sparse": True,
                 "partialFilterExpression": {"expires_at": {"$exists": True}},

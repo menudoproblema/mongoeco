@@ -4079,10 +4079,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         indexes,
                         [
-                            {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
+                            {"name": "_id_", "key": {"_id": 1}, "unique": True},
                             {
                                 "name": "profile.name_-1",
-                                "fields": ["profile.name"],
                                 "key": {"profile.name": -1},
                                 "unique": False,
                             },
@@ -4171,13 +4170,13 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         indexes_after_drop,
                         [
-                            {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
-                            {"name": "email_1", "fields": ["email"], "key": {"email": 1}, "unique": True},
+                            {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                            {"name": "email_1", "key": {"email": 1}, "unique": True},
                         ],
                     )
                     self.assertEqual(
                         indexes_after_drop_all,
-                        [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
+                        [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
                     )
 
     def test_hint_requires_existing_index_and_is_reflected_in_explain(self):
@@ -4232,7 +4231,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     self.assertEqual(
                         collection.list_indexes().to_list(),
-                        [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
+                        [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
                     )
 
     def test_drop_index_by_spec_rejects_custom_named_index(self):

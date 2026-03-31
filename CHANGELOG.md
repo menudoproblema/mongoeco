@@ -75,6 +75,9 @@ usa Semantic Versioning.
   rechazan tambien `max <= 0`.
 - El comando `listIndexes` deja de exponer el campo no estandar
   `fields` en su salida wire, alineando mejor la respuesta con MongoDB.
+- Los documentos publicos de `list_indexes()` e `IndexDefinition` dejan
+  tambien de exponer el campo no estandar `fields`; esa metadata queda
+  reservada a los registros internos del engine.
 - Los change streams aceptan ya stages adicionales compatibles en
   pipeline (`$addFields`, `$set`, `$unset`, `$replaceRoot`,
   `$replaceWith`) y se cierran automaticamente tras recibir

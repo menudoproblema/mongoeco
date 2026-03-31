@@ -514,8 +514,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             indexes_again,
             [
-                {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
-                {"name": "kind_1", "fields": ["kind"], "key": {"kind": 1}, "unique": False},
+                {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                {"name": "kind_1", "key": {"kind": 1}, "unique": False},
             ],
         )
 
@@ -628,7 +628,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(await engine.get_document("db", "coll", "1"))
             self.assertEqual(
                 await engine.list_indexes("db", "coll"),
-                [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
+                [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
             )
         finally:
             await engine.disconnect()
@@ -646,7 +646,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertIsNone(found)
-        self.assertEqual(indexes, [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}])
+        self.assertEqual(indexes, [{"name": "_id_", "key": {"_id": 1}, "unique": True}])
 
     async def test_drop_collection_prunes_empty_database_metadata(self):
         engine = MemoryEngine()
@@ -683,7 +683,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 "kind_1_rank_-1": {"key": [("kind", 1), ("rank", -1)], "unique": True},
             },
         )
-        self.assertEqual(indexes, [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}])
+        self.assertEqual(indexes, [{"name": "_id_", "key": {"_id": 1}, "unique": True}])
 
     async def test_list_indexes_and_index_information_include_virtual_index_metadata(self):
         engine = MemoryEngine()
@@ -705,7 +705,6 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             indexes[1],
             {
                 "name": "email_1",
-                "fields": ["email"],
                 "key": {"email": 1},
                 "unique": False,
                 "sparse": True,
@@ -733,7 +732,6 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             indexes[1],
             {
                 "name": "expires_at_1",
-                "fields": ["expires_at"],
                 "key": {"expires_at": 1},
                 "unique": False,
                 "expireAfterSeconds": 30,

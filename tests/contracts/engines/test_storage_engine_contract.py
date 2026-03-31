@@ -293,13 +293,11 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                         [
                             {
                                 "name": "_id_",
-                                "fields": ["_id"],
                                 "key": {"_id": 1},
                                 "unique": True,
                             },
                             {
                                 "name": "kind_1_created_at_1",
-                                "fields": ["kind", "created_at"],
                                 "key": {"kind": 1, "created_at": 1},
                                 "unique": False,
                             }
@@ -333,7 +331,7 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                     )
                     self.assertEqual(
                         indexes_after_drop,
-                        [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
+                        [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
                     )
 
     async def test_engine_preserves_virtual_index_metadata(self):
@@ -355,7 +353,6 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                         indexes[1],
                         {
                             "name": "email_1",
-                            "fields": ["email"],
                             "key": {"email": 1},
                             "unique": False,
                             "sparse": True,

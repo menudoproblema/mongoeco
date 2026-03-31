@@ -4510,10 +4510,9 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(
                         indexes,
                         [
-                            {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
+                            {"name": "_id_", "key": {"_id": 1}, "unique": True},
                             {
                                 "name": "payload.kind_-1",
-                                "fields": ["payload.kind"],
                                 "key": {"payload.kind": -1},
                                 "unique": False,
                             },
@@ -4602,13 +4601,13 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(
                         indexes_after_drop,
                         [
-                            {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
-                            {"name": "email_1", "fields": ["email"], "key": {"email": 1}, "unique": True},
+                            {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                            {"name": "email_1", "key": {"email": 1}, "unique": True},
                         ],
                     )
                     self.assertEqual(
                         indexes_after_drop_all,
-                        [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
+                        [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
                     )
 
     async def test_hint_requires_existing_index_and_is_reflected_in_explain(self):
@@ -4663,7 +4662,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     self.assertEqual(
                         await collection.list_indexes().to_list(),
-                        [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}],
+                        [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
                     )
 
     async def test_drop_index_by_spec_rejects_custom_named_index(self):

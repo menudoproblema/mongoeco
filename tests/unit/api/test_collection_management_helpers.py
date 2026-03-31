@@ -76,7 +76,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
             async def list_indexes(self, *args, **kwargs):
                 self.list_indexes_args = args
                 self.list_indexes_kwargs = kwargs
-                return [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}]
+                return [{"name": "_id_", "key": {"_id": 1}, "unique": True}]
 
             async def index_information(self, *args, **kwargs):
                 self.index_information_args = args
@@ -120,7 +120,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
             async def list_indexes(self, *args, **kwargs):
                 self.list_indexes_args = args
                 self.list_indexes_kwargs = kwargs
-                return [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}]
+                return [{"name": "_id_", "key": {"_id": 1}, "unique": True}]
 
             async def index_information(self, *args, **kwargs):
                 self.index_information_args = args
@@ -168,7 +168,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                 "context": None,
             },
         )
-        self.assertEqual(indexes, [{"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True}])
+        self.assertEqual(indexes, [{"name": "_id_", "key": {"_id": 1}, "unique": True}])
         self.assertEqual(info, {"_id_": {"key": [("_id", 1)], "unique": True}})
         self.assertEqual(engine.drop_index_args, ("db", "coll", [("email", 1), ("created_at", -1)]))
         self.assertEqual(engine.drop_index_kwargs, {"context": None})
@@ -179,8 +179,8 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         class EngineStub:
             async def list_indexes(self, *args, **kwargs):
                 return [
-                    {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
-                    {"name": "email_1", "fields": ["email"], "key": {"email": 1}, "unique": False},
+                    {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                    {"name": "email_1", "key": {"email": 1}, "unique": False},
                 ]
 
         collection = AsyncCollection(EngineStub(), "db", "coll")
@@ -191,12 +191,12 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
 
         first, indexes = asyncio.run(_exercise())
 
-        self.assertEqual(first, {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True})
+        self.assertEqual(first, {"name": "_id_", "key": {"_id": 1}, "unique": True})
         self.assertEqual(
             indexes,
             [
-                {"name": "_id_", "fields": ["_id"], "key": {"_id": 1}, "unique": True},
-                {"name": "email_1", "fields": ["email"], "key": {"email": 1}, "unique": False},
+                {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                {"name": "email_1", "key": {"email": 1}, "unique": False},
             ],
         )
 

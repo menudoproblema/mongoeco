@@ -1491,7 +1491,6 @@ class IndexDefinition:
         document: IndexDocument = {
             "name": self.name,
             "key": index_key_document(self.keys),
-            "fields": self.fields,
             "unique": self.unique,
         }
         if self.sparse:

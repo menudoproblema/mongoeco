@@ -742,7 +742,6 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
             {
                 "name": "email_created",
                 "key": {"email": 1, "created_at": -1},
-                "fields": ["email", "created_at"],
                 "unique": True,
             },
         )
