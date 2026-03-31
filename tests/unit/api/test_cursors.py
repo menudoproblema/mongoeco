@@ -216,11 +216,18 @@ class _StreamingAsyncCollectionStub:
 
 class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
     async def test_async_cursor_private_helpers_cover_issue_messages_and_planning_mode_resolution(self):
-        operation = type("Operation", (), {"planning_issues": (PlanningIssue(scope="find", message="blocked"),)})()
+        operation = type(
+            "Operation",
+            (),
+            {
+                "planning_mode": PlanningMode.RELAXED,
+                "planning_issues": (PlanningIssue(scope="find", message="blocked"),),
+            },
+        )()
 
         self.assertEqual(
             async_cursor_module._operation_issue_message(operation),
-            "operation has deferred planning issues: blocked",
+            "operation has deferred planning issues (relaxed): find: blocked",
         )
         with self.assertRaisesRegex(OperationFailure, "blocked"):
             async_cursor_module._ensure_operation_executable(object(), operation)
@@ -637,6 +644,10 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explanation["engine"], "planner")
         self.assertEqual(explanation["planning_mode"], "relaxed")
         self.assertEqual(explanation["planning_issues"][0]["message"], "unsupported")
+        self.assertEqual(
+            explanation["details"]["reason"],
+            "operation has deferred planning issues (relaxed): find: unsupported",
+        )
 
         self.assertIs(cursor.skip(1), cursor)
         self.assertEqual(cursor._skip, 1)

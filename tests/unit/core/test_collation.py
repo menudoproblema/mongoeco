@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
+import mongoeco.core.collation as collation_module
 from mongoeco.core.collation import (
     CollationSpec,
     compare_with_collation,
@@ -108,6 +109,18 @@ class CollationTests(unittest.TestCase):
 
         compare_pyuca.assert_called_once_with("b", "a", spec)
 
+    def test_compare_with_simple_collation_skips_unicode_backends(self):
+        spec = normalize_collation({"locale": "simple", "strength": 3})
+
+        with (
+            patch("mongoeco.core.collation._compare_with_icu") as compare_icu,
+            patch("mongoeco.core.collation._compare_with_pyuca") as compare_pyuca,
+        ):
+            self.assertLess(compare_with_collation("A", "b", collation=spec), 0)
+
+        compare_icu.assert_not_called()
+        compare_pyuca.assert_not_called()
+
     def test_icu_collation_available_exposes_backend_presence(self):
         self.assertIsInstance(icu_collation_available(), bool)
         self.assertIsInstance(unicode_collation_available(), bool)
@@ -125,3 +138,21 @@ class CollationTests(unittest.TestCase):
 
         self.assertEqual(compare_with_collation("Álvaro", "alvaro", collation=spec), 0)
         self.assertLess(compare_with_collation("file2", "file10", collation=spec), 0)
+
+    def test_actual_pyuca_backend_handles_accent_and_numeric_ordering(self):
+        if collation_module._pyuca is None:
+            self.skipTest("pyuca backend unavailable")
+
+        spec = normalize_collation({"locale": "en", "strength": 1, "numericOrdering": True})
+
+        self.assertEqual(collation_module._compare_with_pyuca("Álvaro", "alvaro", spec), 0)
+        self.assertLess(collation_module._compare_with_pyuca("file2", "file10", spec), 0)
+
+    def test_actual_icu_backend_handles_accent_and_numeric_ordering_when_available(self):
+        if collation_module._icu is None:
+            self.skipTest("ICU backend unavailable")
+
+        spec = normalize_collation({"locale": "en", "strength": 1, "numericOrdering": True})
+
+        self.assertEqual(collation_module._compare_with_icu("Álvaro", "alvaro", spec), 0)
+        self.assertLess(collation_module._compare_with_icu("file2", "file10", spec), 0)

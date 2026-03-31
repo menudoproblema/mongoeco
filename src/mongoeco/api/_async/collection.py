@@ -40,6 +40,7 @@ from mongoeco.api._async.cursor import (
     HintSpec,
     _validate_batch_size,
     _normalize_sort_spec,
+    _operation_issue_message,
     _validate_hint_spec,
     _validate_max_time_ms,
 )
@@ -733,14 +734,9 @@ class AsyncCollection:
         )
         return await self._build_cursor(operation, session=session).first()
 
-    @staticmethod
-    def _operation_issue_message(operation: FindOperation | UpdateOperation | AggregateOperation) -> str:
-        messages = ", ".join(issue.message for issue in operation.planning_issues)
-        return f"operation has deferred planning issues: {messages}"
-
     def _ensure_operation_executable(self, operation: FindOperation | UpdateOperation | AggregateOperation) -> None:
         if operation.planning_issues:
-            raise OperationFailure(self._operation_issue_message(operation))
+            raise OperationFailure(_operation_issue_message(operation))
 
     def _build_cursor(
         self,

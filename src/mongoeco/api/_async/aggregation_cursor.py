@@ -4,6 +4,7 @@ import time
 from mongoeco.api._async.cursor import (
     HintSpec,
     _ensure_operation_executable,
+    _operation_issue_message,
     _resolve_planning_mode,
 )
 from mongoeco.api.operations import (
@@ -473,7 +474,7 @@ class AsyncAggregationCursor:
                     hinted_index=None,
                     comment=self._comment,
                     max_time_ms=self._max_time_ms,
-                    details={"reason": "execution blocked by deferred planning issues"},
+                    details={"reason": _operation_issue_message(self._operation)},
                     planning_mode=self._operation.planning_mode,
                     planning_issues=self._operation.planning_issues,
                 ),

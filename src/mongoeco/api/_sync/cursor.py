@@ -3,6 +3,7 @@ from mongoeco.api._async.cursor import (
     MONGODB_DIALECT_70,
     _DEFAULT_LOCAL_PREFETCH_SIZE,
     _normalize_sort_spec,
+    _operation_issue_message,
     _resolve_planning_mode,
     _serialize_explanation,
     _validate_batch_size,
@@ -356,7 +357,7 @@ class Cursor:
                 hinted_index=None,
                 comment=operation.comment,
                 max_time_ms=operation.max_time_ms,
-                details={"reason": "execution blocked by deferred planning issues"},
+                details={"reason": _operation_issue_message(operation)},
                 planning_mode=operation.planning_mode,
                 planning_issues=operation.planning_issues,
             ).to_document()

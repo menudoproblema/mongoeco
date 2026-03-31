@@ -240,7 +240,26 @@ planning.
   * es útil para explain, tooling y superficies que prefieren degradación
     explícita frente a error inmediato
 
-## 9. Verificación contractual contra PyMongo real
+## 9. Alcance actual de collation
+
+La implementación actual no intenta exponer toda la superficie de collation de
+MongoDB.
+
+Hoy el contrato soportado y testeado es:
+
+* locales `simple` y `en`
+* `strength` `1`, `2` y `3`
+* `numericOrdering`
+* `caseLevel`
+
+Para collation Unicode:
+
+* `mongoeco` prefiere `PyICU` cuando está disponible
+* si `PyICU` no está instalado, usa `pyuca` como backend runtime de base
+* ambas rutas quedan cubiertas por tests, pero pueden existir diferencias
+  menores en tailoring avanzado fuera de este subconjunto soportado
+
+## 10. Verificación contractual contra PyMongo real
 
 La ampliación de superficie pública no debe decidirse por memoria ni por lectura
 aislada de firmas.

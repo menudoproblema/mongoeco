@@ -24,8 +24,22 @@ def _serialize_explanation(result: object) -> dict[str, object]:
 
 
 def _operation_issue_message(operation) -> str:
-    messages = ", ".join(issue.message for issue in operation.planning_issues)
-    return f"operation has deferred planning issues: {messages}"
+    mode = getattr(getattr(operation, "planning_mode", None), "value", None)
+    prefix = "operation has deferred planning issues"
+    if isinstance(mode, str) and mode:
+        prefix = f"{prefix} ({mode})"
+    issues = getattr(operation, "planning_issues", ())
+    details: list[str] = []
+    for issue in issues:
+        scope = getattr(issue, "scope", None)
+        message = getattr(issue, "message", None)
+        if isinstance(scope, str) and scope:
+            details.append(f"{scope}: {message}")
+        else:
+            details.append(str(message))
+    if not details:
+        return prefix
+    return f"{prefix}: {', '.join(details)}"
 
 
 def _ensure_operation_executable(collection, operation) -> None:
@@ -533,7 +547,7 @@ class AsyncCursor:
                 hinted_index=None,
                 comment=operation.comment,
                 max_time_ms=operation.max_time_ms,
-                details={"reason": "execution blocked by deferred planning issues"},
+                details={"reason": _operation_issue_message(operation)},
                 planning_mode=operation.planning_mode,
                 planning_issues=operation.planning_issues,
             ).to_document()

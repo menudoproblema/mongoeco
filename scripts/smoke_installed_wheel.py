@@ -35,6 +35,7 @@ def _smoke_script() -> str:
 import asyncio
 import mongoeco
 from mongoeco import AsyncMongoClient
+from mongoeco.core.collation import compare_with_collation, normalize_collation, unicode_collation_available
 from mongoeco.engines.memory import MemoryEngine
 
 async def main() -> None:
@@ -43,8 +44,13 @@ async def main() -> None:
         await collection.insert_one({"_id": "1", "kind": "view", "count": 1})
         found = await collection.find_one({"$jsonSchema": {"required": ["kind"]}})
         docs = await collection.find({}, sort=[("count", 1)]).to_list()
+        spec = normalize_collation({"locale": "en", "strength": 1, "numericOrdering": True})
+        assert unicode_collation_available()
+        assert compare_with_collation("Álvaro", "alvaro", collation=spec) == 0
+        assert compare_with_collation("file2", "file10", collation=spec) < 0
         print("version", mongoeco.__version__)
         print("module", mongoeco.__file__)
+        print("unicode_collation", unicode_collation_available())
         print("find_one", found)
         print("docs", docs)
 
