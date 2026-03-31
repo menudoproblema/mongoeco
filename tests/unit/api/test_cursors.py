@@ -229,6 +229,30 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             async_cursor_module._operation_issue_message(operation),
             "operation has deferred planning issues (relaxed): find: blocked",
         )
+        no_scope_operation = type(
+            "Operation",
+            (),
+            {
+                "planning_mode": PlanningMode.RELAXED,
+                "planning_issues": (type("Issue", (), {"message": "fallback only"})(),),
+            },
+        )()
+        self.assertEqual(
+            async_cursor_module._operation_issue_message(no_scope_operation),
+            "operation has deferred planning issues (relaxed): fallback only",
+        )
+        no_details_operation = type(
+            "Operation",
+            (),
+            {
+                "planning_mode": PlanningMode.RELAXED,
+                "planning_issues": (),
+            },
+        )()
+        self.assertEqual(
+            async_cursor_module._operation_issue_message(no_details_operation),
+            "operation has deferred planning issues (relaxed)",
+        )
         with self.assertRaisesRegex(OperationFailure, "blocked"):
             async_cursor_module._ensure_operation_executable(object(), operation)
         self.assertEqual(
