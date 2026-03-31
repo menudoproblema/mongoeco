@@ -8,6 +8,7 @@ from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_scalars import (
+    INT64_MIN,
     BsonDecimal128,
     BsonDouble,
     BsonInt32,
@@ -139,6 +140,8 @@ def evaluate_numeric_expression(
             return None
         value = unwrap_bson_numeric(_require_numeric(operator, raw_value))
         if operator == "$abs":
+            if isinstance(value, int) and not isinstance(value, bool) and value == INT64_MIN:
+                raise OperationFailure("$abs overflow")
             return bson_rewrap_numeric(abs(value), raw_value)
         if math.isnan(value):
             return value

@@ -31,6 +31,10 @@ usa Semantic Versioning.
 - El fast path de ordenacion SQL en SQLite clasifica ya `Binary`,
   `Timestamp` y `Regex` en los mismos brackets BSON que el runtime
   Python, reduciendo desajustes de orden en sorts pushdown.
+- Los tipos BSON publicos endurecen ya su semantica observable:
+  `Binary` distingue el `subtype`, `Regex` normaliza el orden de flags,
+  `Timestamp` recupera orden total por `(time, inc)` y `Decimal128`
+  trata `NaN` como igual a `NaN`.
 - `watch(session=...)` deja de ignorar sesiones explicitamente y falla
   ahora con un error claro en cliente, base de datos y coleccion.
 - La topologia local de `replica set` deja de inventar un primario antes
@@ -82,6 +86,11 @@ usa Semantic Versioning.
   existen, y los engines permiten aliases con el mismo key pattern si
   la definicion es identica; en esos casos `drop_index()` por key
   pattern falla solo cuando hay ambiguedad real y pide usar el nombre.
+- El codec valida ya que las claves BSON sean strings, rechaza sets no
+  serializables, acepta tuplas como arrays BSON y normaliza `bytearray`
+  a `bytes`; ademas, `$abs` detecta overflow de `int64`, `$jsonSchema`
+  reutiliza el schema compilado y SQLite indexa ya elementos
+  `Decimal128` dentro de arrays multikey.
 - `create_index()` acepta ya key patterns especiales como `"text"`,
   `"hashed"`, `"2d"` y `"2dsphere"` en metadata publica y round-trips de
   indices. Mientras no exista un planner especializado para ellos,

@@ -187,6 +187,19 @@ class Binary(bytes):
     def __repr__(self) -> str:
         return f"Binary({bytes(self)!r}, subtype={self.subtype})"
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, Binary)
+            and bytes(self) == bytes(other)
+            and self.subtype == other.subtype
+        )
+
+    def __ne__(self, other: object) -> bool:
+        return not self.__eq__(other)
+
+    def __hash__(self) -> int:
+        return hash((bytes(self), self.subtype))
+
 
 @dataclass(frozen=True, slots=True)
 class Regex:
@@ -198,6 +211,8 @@ class Regex:
         if invalid:
             joined = "".join(invalid)
             raise ValueError(f"unsupported regex flags: {joined}")
+        canonical = "".join(flag for flag in "imsx" if flag in self.flags)
+        object.__setattr__(self, "flags", canonical)
 
     def compile(self) -> re.Pattern[str]:
         compiled_flags = 0
@@ -212,7 +227,7 @@ class Regex:
         return re.compile(self.pattern, compiled_flags)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, order=True)
 class Timestamp:
     time: int
     inc: int
@@ -235,6 +250,18 @@ class Decimal128:
 
     def to_decimal(self) -> decimal.Decimal:
         return self.value
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Decimal128):
+            return NotImplemented
+        if self.value.is_nan() and other.value.is_nan():
+            return True
+        return self.value == other.value
+
+    def __hash__(self) -> int:
+        if self.value.is_nan():
+            return hash(("Decimal128", "NaN"))
+        return hash(self.value)
 
     def __str__(self) -> str:
         return format(self.value, "f")

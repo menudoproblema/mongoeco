@@ -144,6 +144,7 @@ class ExprCondition(QueryNode):
 @dataclass(frozen=True)
 class JsonSchemaCondition(QueryNode):
     schema: Filter
+    compiled_schema: object | None = None
 
 
 @dataclass(frozen=True)
@@ -554,7 +555,7 @@ def _compile_filter_strict(
             from mongoeco.core.schema_validation import CompiledJsonSchema
 
             CompiledJsonSchema(value)
-            clauses.append(JsonSchemaCondition(value))
+            clauses.append(JsonSchemaCondition(value, compiled_schema=CompiledJsonSchema(value)))
             continue
         if key == "$and":
             if not isinstance(value, list):

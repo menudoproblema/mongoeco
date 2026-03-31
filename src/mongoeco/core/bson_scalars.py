@@ -188,11 +188,16 @@ def validate_bson_value(value: object) -> None:
     while pending:
         current = pending.pop()
         if isinstance(current, dict):
+            for key in current:
+                if not isinstance(key, str):
+                    raise TypeError("BSON document keys must be strings")
             pending.extend(current.values())
             continue
-        if isinstance(current, list):
+        if isinstance(current, (list, tuple)):
             pending.extend(current)
             continue
+        if isinstance(current, (set, frozenset)):
+            raise TypeError("set values are not BSON-serializable")
         wrapped = wrap_bson_numeric(current)
         if isinstance(wrapped, BsonDecimal128):
             _normalize_decimal128(wrapped.value)

@@ -89,6 +89,20 @@ class DocumentCodecTests(unittest.TestCase):
 
         self.assertEqual(decoded, original)
 
+    def test_document_codec_coerces_tuple_and_bytearray_to_bson_compatible_types(self):
+        original = {"items": (1, 2, 3), "payload": bytearray(b"\x00\x01\xff")}
+
+        decoded = DocumentCodec.decode(DocumentCodec.encode(original))
+
+        self.assertEqual(decoded, {"items": [1, 2, 3], "payload": b"\x00\x01\xff"})
+
+    def test_document_codec_rejects_non_string_keys_and_set_values(self):
+        with self.assertRaisesRegex(TypeError, "keys must be strings"):
+            DocumentCodec.encode({1: "value"})  # type: ignore[dict-item]
+
+        with self.assertRaisesRegex(TypeError, "set values are not BSON-serializable"):
+            DocumentCodec.encode({"items": {1, 2}})
+
     def test_document_codec_round_trip_restores_undefined(self):
         original = {"value": UNDEFINED, "items": [1, UNDEFINED]}
 

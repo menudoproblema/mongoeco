@@ -319,10 +319,15 @@ class QueryEngine:
                     dialect=dialect,
                 )
                 return _expression_truthy(value, dialect=dialect)
-            case JsonSchemaCondition(schema=schema):
+            case JsonSchemaCondition(schema=schema, compiled_schema=compiled_schema):
                 from mongoeco.core.schema_validation import CompiledJsonSchema
 
-                return CompiledJsonSchema(schema).validate(document).valid
+                validator = (
+                    compiled_schema
+                    if compiled_schema is not None
+                    else CompiledJsonSchema(schema)
+                )
+                return validator.validate(document).valid
             case AndCondition(clauses=clauses):
                 return all(
                     QueryEngine.match_plan(document, clause, dialect=dialect, collation=collation)

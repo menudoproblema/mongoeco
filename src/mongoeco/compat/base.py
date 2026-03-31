@@ -28,7 +28,7 @@ from mongoeco.compat.catalog import (
     SUPPORTED_WINDOW_ACCUMULATORS,
 )
 from mongoeco.core.bson_scalars import compare_bson_numeric, unwrap_bson_numeric, wrap_bson_numeric
-from mongoeco.types import ObjectId, UndefinedType, is_object_id_like, normalize_object_id
+from mongoeco.types import Binary, ObjectId, Timestamp, UndefinedType, is_object_id_like, normalize_object_id
 
 
 @dataclass(frozen=True, slots=True)
@@ -136,6 +136,22 @@ def _compare_values_default(
         if len(normalized_left) == len(normalized_right):
             return 0
         return -1 if len(normalized_left) < len(normalized_right) else 1
+
+    if isinstance(normalized_left, Binary) and isinstance(normalized_right, Binary):
+        if normalized_left.subtype != normalized_right.subtype:
+            return -1 if normalized_left.subtype < normalized_right.subtype else 1
+        left_bytes = bytes(normalized_left)
+        right_bytes = bytes(normalized_right)
+        if left_bytes == right_bytes:
+            return 0
+        return -1 if left_bytes < right_bytes else 1
+
+    if isinstance(normalized_left, Timestamp) and isinstance(normalized_right, Timestamp):
+        left_key = (normalized_left.time, normalized_left.inc)
+        right_key = (normalized_right.time, normalized_right.inc)
+        if left_key == right_key:
+            return 0
+        return -1 if left_key < right_key else 1
 
     if isinstance(normalized_left, float) and math.isnan(normalized_left):
         return 0 if isinstance(normalized_right, float) and math.isnan(normalized_right) else -1

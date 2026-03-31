@@ -77,17 +77,23 @@ class DocumentCodec:
     @staticmethod
     def encode(data: Any) -> Any:
         if isinstance(data, SON):
+            validate_bson_value(data)
             return DocumentCodec._tagged_value(
                 "son",
                 [[key, DocumentCodec.encode(value)] for key, value in data.items()],
             )
         if isinstance(data, dict):
+            validate_bson_value(data)
             encoded = {k: DocumentCodec.encode(v) for k, v in data.items()}
             if DocumentCodec._is_tagged_value(encoded):
                 return DocumentCodec._tagged_value("dict", encoded)
             return encoded
-        if isinstance(data, list):
+        if isinstance(data, (list, tuple)):
             return [DocumentCodec.encode(v) for v in data]
+        if isinstance(data, bytearray):
+            data = bytes(data)
+        if isinstance(data, (set, frozenset)):
+            raise TypeError("set values are not BSON-serializable")
 
         validate_bson_value(data)
 

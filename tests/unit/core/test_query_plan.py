@@ -280,10 +280,10 @@ class QueryPlanTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             compile_filter({"$where": "this.a > 1"})
     def test_compile_filter_accepts_top_level_json_schema(self):
-        self.assertEqual(
-            compile_filter({"$jsonSchema": {"required": ["name"]}}),
-            JsonSchemaCondition({"required": ["name"]}),
-        )
+        compiled = compile_filter({"$jsonSchema": {"required": ["name"]}})
+
+        self.assertEqual(compiled.schema, {"required": ["name"]})
+        self.assertIsNotNone(compiled.compiled_schema)
 
     def test_compile_filter_rejects_invalid_json_schema_payloads(self):
         with self.assertRaises(OperationFailure):

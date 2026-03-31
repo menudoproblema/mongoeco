@@ -108,6 +108,10 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         self.assertEqual(evaluate_expression(document, {"$type": "$legacy"}), "undefined")
         self.assertEqual(evaluate_expression(document, {"$type": "$missing"}), "missing")
 
+    def test_evaluate_expression_abs_rejects_int64_overflow(self):
+        with self.assertRaisesRegex(OperationFailure, "\\$abs overflow"):
+            evaluate_expression({"value": -(1 << 63)}, {"$abs": "$value"})
+
     def test_evaluate_expression_supports_scalar_coercions(self):
         document = {
             "int_text": "42",

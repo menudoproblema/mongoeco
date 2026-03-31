@@ -937,6 +937,8 @@ class SQLiteEngine(AsyncStorageEngine):
         payload = encoded[DocumentCodec._MARKER]
         value_type = payload[DocumentCodec._TYPE]
         raw_value = payload[DocumentCodec._VALUE]
+        if value_type in {"decimal128_public", "decimal128"}:
+            return ("number", bson_numeric_index_key(Decimal(str(raw_value))))
         if value_type in {"datetime", "uuid", "objectid", "bytes"}:
             return (value_type, str(raw_value))
         if value_type == "undefined":

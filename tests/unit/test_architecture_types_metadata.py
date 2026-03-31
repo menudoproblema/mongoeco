@@ -1,4 +1,5 @@
 import asyncio
+import decimal
 import inspect
 from typing import get_type_hints
 import unittest
@@ -126,6 +127,15 @@ from mongoeco.core.operators import UpdateEngine
 
 
 class ArchitectureTypeMetadataTests(unittest.TestCase):
+    def test_public_bson_value_types_normalize_equality_and_ordering(self):
+        from mongoeco.types import Binary, Decimal128, Regex, Timestamp
+
+        self.assertNotEqual(Binary(b"x", subtype=0), Binary(b"x", subtype=5))
+        self.assertEqual(Regex("^a", "mi"), Regex("^a", "im"))
+        self.assertEqual(Regex("^a", "mi").flags, "im")
+        self.assertGreater(Timestamp(10, 0), Timestamp(2, 0))
+        self.assertEqual(Decimal128(decimal.Decimal("NaN")), Decimal128(decimal.Decimal("NaN")))
+
     def test_operation_option_support_exposes_effective_and_noop_statuses(self):
         self.assertEqual(
             get_operation_option_support("find", "hint"),

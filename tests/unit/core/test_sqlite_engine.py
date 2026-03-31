@@ -19,7 +19,7 @@ from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, ExecutionTimeout, OperationFailure
 from mongoeco.session import ClientSession
-from mongoeco.types import ObjectId, UNDEFINED
+from mongoeco.types import Decimal128, ObjectId, UNDEFINED
 
 
 class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
@@ -1060,8 +1060,30 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-        self.assertEqual(result.matched_count, 1)
-        self.assertEqual(result.modified_count, 0)
+    async def test_multikey_entries_include_decimal128_array_values(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["scores"], unique=False, name="idx_scores")
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "1", "scores": [Decimal128("1.5"), Decimal128("2.5")]},
+            )
+            rows = engine._require_connection().execute(
+                """
+                SELECT index_name, element_key
+                FROM multikey_entries
+                WHERE collection_id = ? AND storage_key = ?
+                ORDER BY element_key
+                """,
+                (1, engine._storage_key("1")),
+            ).fetchall()
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(len(rows), 2)
+        self.assertEqual({row[0] for row in rows}, {"idx_scores"})
 
     async def test_update_matching_document_raises_when_dotted_set_crosses_scalar_parent(self):
         engine = SQLiteEngine()

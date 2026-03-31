@@ -528,10 +528,32 @@ class QueryEngineTests(unittest.TestCase):
             )
         )
 
+    def test_query_engine_distinguishes_binary_subtypes(self):
+        self.assertFalse(
+            QueryEngine.match(
+                {"value": Binary(b"x", subtype=4)},
+                {"value": Binary(b"x", subtype=0)},
+            )
+        )
+
     def test_query_engine_supports_not_operator(self):
         self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": {"$not": {"$regex": "^Gr"}}}))
         self.assertFalse(QueryEngine.match({"name": "Ada"}, {"name": {"$not": {"$regex": "^Ad"}}}))
         self.assertTrue(QueryEngine.match({"value": 2}, {"value": {"$not": {"$gt": 3}}}))
+
+    def test_query_engine_orders_timestamps_numerically(self):
+        self.assertTrue(
+            QueryEngine.match(
+                {"value": Timestamp(10, 0)},
+                {"value": {"$gt": Timestamp(2, 0)}},
+            )
+        )
+        self.assertFalse(
+            QueryEngine.match(
+                {"value": Timestamp(2, 0)},
+                {"value": {"$gt": Timestamp(10, 0)}},
+            )
+        )
 
     def test_query_engine_supports_not_with_elem_match(self):
         document = {"scores": [1, 4, 7]}
@@ -598,6 +620,12 @@ class QueryEngineTests(unittest.TestCase):
 
         self.assertFalse(QueryEngine.match_plan(document, plan_70, dialect=MONGODB_DIALECT_80))
         self.assertTrue(QueryEngine.match_plan(document, plan_80, dialect=MONGODB_DIALECT_70))
+
+    def test_query_engine_reuses_compiled_json_schema_validator(self):
+        plan = compile_filter({"$jsonSchema": {"required": ["name"]}})
+
+        with patch("mongoeco.core.schema_validation.CompiledJsonSchema", side_effect=AssertionError("unexpected recompilation")):
+            self.assertTrue(QueryEngine.match_plan({"name": "Ada"}, plan))
 
     def test_query_engine_elem_match_private_helper_supports_direct_scalar_condition(self):
         self.assertTrue(QueryEngine._match_elem_match_candidate("python", "python"))
