@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import unittest
 
 
@@ -23,12 +24,21 @@ def _load_module():
 class SmokeInstalledWheelScriptTests(unittest.TestCase):
     def test_resolve_distribution_supports_wheel_and_sdist(self):
         module = _load_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            dist_root = Path(temp_dir)
+            wheel_path = dist_root / "mongoeco-9.9.9-py3-none-any.whl"
+            sdist_path = dist_root / "mongoeco-9.9.9.tar.gz"
+            wheel_path.write_bytes(b"wheel")
+            sdist_path.write_bytes(b"sdist")
+            module.DIST_ROOT = dist_root
 
-        wheel = module._resolve_distribution(None, kind="wheel")
-        sdist = module._resolve_distribution(None, kind="sdist")
+            wheel = module._resolve_distribution(None, kind="wheel")
+            sdist = module._resolve_distribution(None, kind="sdist")
 
-        self.assertEqual(wheel.suffix, ".whl")
-        self.assertEqual(sdist.suffixes[-2:], [".tar", ".gz"])
+            self.assertEqual(wheel, wheel_path)
+            self.assertEqual(sdist, sdist_path)
+            self.assertEqual(wheel.suffix, ".whl")
+            self.assertEqual(sdist.suffixes[-2:], [".tar", ".gz"])
 
     def test_smoke_script_checks_unicode_collation_runtime(self):
         module = _load_module()
