@@ -4806,6 +4806,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 search_indexes = self._load_search_index_rows(db_name, coll_name)
                 try:
                     self._begin_write(conn, context)
+                    collection_id = self._lookup_collection_id(conn, db_name, coll_name)
                     for index in indexes:
                         conn.execute(f"DROP INDEX IF EXISTS {self._quote_identifier(index['physical_name'])}")
                         if index.get("scalar_physical_name"):
@@ -4825,20 +4826,21 @@ class SQLiteEngine(AsyncStorageEngine):
                         """,
                         (db_name, coll_name),
                     )
-                    conn.execute(
-                        """
-                        DELETE FROM scalar_index_entries
-                        WHERE collection_id = ?
-                        """,
-                        (self._lookup_collection_id(conn, db_name, coll_name),),
-                    )
-                    conn.execute(
-                        """
-                        DELETE FROM multikey_entries
-                        WHERE collection_id = ?
-                        """,
-                        (self._lookup_collection_id(conn, db_name, coll_name),),
-                    )
+                    if collection_id is not None:
+                        conn.execute(
+                            """
+                            DELETE FROM scalar_index_entries
+                            WHERE collection_id = ?
+                            """,
+                            (collection_id,),
+                        )
+                        conn.execute(
+                            """
+                            DELETE FROM multikey_entries
+                            WHERE collection_id = ?
+                            """,
+                            (collection_id,),
+                        )
                     conn.execute(
                         """
                         DELETE FROM indexes
