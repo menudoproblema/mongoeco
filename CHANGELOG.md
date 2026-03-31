@@ -73,6 +73,8 @@ usa Semantic Versioning.
 - `create_collection()` y el comando `create` validan ya las opciones de
   colecciones `capped`: exigen `size > 0` cuando `capped=True` y
   rechazan tambien `max <= 0`.
+- El comando `listIndexes` deja de exponer el campo no estandar
+  `fields` en su salida wire, alineando mejor la respuesta con MongoDB.
 
 ## [2.2.0] - 2026-03-31
 

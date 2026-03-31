@@ -107,6 +107,12 @@ class AsyncDatabaseAdminService:
         return normalize_filter_document(filter_spec)
 
     @staticmethod
+    def _normalize_list_indexes_document(document: dict[str, object]) -> dict[str, object]:
+        normalized = dict(document)
+        normalized.pop("fields", None)
+        return normalized
+
+    @staticmethod
     def _validate_create_collection_options(options: dict[str, object]) -> None:
         capped = options.get("capped")
         if capped is not None and not isinstance(capped, bool):
@@ -1494,10 +1500,14 @@ class AsyncDatabaseAdminService:
         comment: object | None = None,
         session: ClientSession | None = None,
     ) -> CommandCursorResult:
-        first_batch = await self._database.get_collection(collection_name).list_indexes(
+        raw_first_batch = await self._database.get_collection(collection_name).list_indexes(
             comment=comment,
             session=session,
         ).to_list()
+        first_batch = [
+            self._normalize_list_indexes_document(document)
+            for document in raw_first_batch
+        ]
         return CommandCursorResult(
             namespace=f"{self._db_name}.{collection_name}",
             first_batch=first_batch,

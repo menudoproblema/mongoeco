@@ -226,8 +226,8 @@ async def assert_database_command_supports_collection_index_count_and_distinct_c
                             "id": 0,
                             "ns": "alpha.events",
                             "firstBatch": [
-                                {"name": "_id_", "key": {"_id": 1}, "fields": ["_id"], "unique": True},
-                                {"name": "kind_idx", "key": {"kind": 1}, "fields": ["kind"], "unique": False},
+                                {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                                {"name": "kind_idx", "key": {"kind": 1}, "unique": False},
                             ],
                         },
                         "ok": 1.0,
