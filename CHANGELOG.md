@@ -8,6 +8,53 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-03-31
+
+### Fixed
+
+- Se corrige la semantica de `$pull` sobre arrays de subdocumentos para
+  que los documentos parciales se traten como condiciones de matching,
+  igual que en MongoDB, en lugar de exigir igualdad exacta del
+  subdocumento completo.
+- Se normaliza el manejo de `ObjectId` externos de PyMongo en
+  comparacion, actualizacion, codec y bridge wire, evitando fallos de
+  serializacion y desajustes entre `mongoeco.types.ObjectId` y
+  `bson.ObjectId`.
+- Se propaga correctamente `collation` a `$addToSet`, `$pull`,
+  `$pullAll` y `arrayFilters`, y se endurecen varios edge cases de
+  decode/encode en `SQLite`, `MemoryEngine`, `Decimal128`,
+  `UndefinedType` y el bridge BSON.
+- Se corrige la semantica de campos ausentes en agregacion para
+  `$getField`, `$ifNull`, `$project` y `$addFields`, junto con la
+  igualdad por regex en consultas y el manejo de arrays escalares
+  anidados en `distinct()`.
+- Se detectan conflictos de escritura entre commits concurrentes en el
+  motor MVCC en memoria, evitando que una transaccion sobrescriba en
+  silencio el trabajo de otra.
+- Se anade soporte a `$comment` como operador top-level de consulta, se
+  valida que `$and`, `$or` y `$nor` reciban listas no vacias, y se
+  endurece `$not` para aceptar solo expresiones de operador puras.
+- Se corrige la semantica de `$nin` con `null` y `undefined`, se
+  amplian los aliases y codigos BSON soportados por `$type`, y se
+  reconocen expresiones `javascript` y `javascriptWithScope` basadas en
+  wrappers de PyMongo.
+- `$currentDate` ya soporta `{$type: "timestamp"}`, `$rename` rechaza
+  rutas que crucen arrays existentes y `$bit` exige operandos y campos
+  signed 64-bit.
+- Los wrappers `BsonInt32` y `BsonInt64` validan rango y tipo en su
+  construccion directa, evitando estados BSON invalidos creados fuera
+  de `wrap_bson_numeric()`.
+
+### Changed
+
+- La validacion de indices unicos simples en `SQLiteEngine` usa ahora
+  `scalar_index_entries` como fast path, evitando full scans de la
+  coleccion cuando el conflicto puede resolverse directamente por
+  indice.
+- Las snapshots del catalogo de compatibilidad se regeneran para
+  reflejar el soporte adicional de `$comment` y los cambios recientes
+  sobre operadores de consulta.
+
 ## [2.1.0] - 2026-03-31
 
 ### Fixed

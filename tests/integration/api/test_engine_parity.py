@@ -75,6 +75,37 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(memory_documents, sqlite_documents)
 
+    async def test_external_bson_object_id_smoke_matches_in_memory_and_sqlite(self):
+        if BsonObjectId is None:
+            self.skipTest("PyMongo bson no esta instalado")
+
+        canonical = ObjectId("0123456789abcdef01234567")
+        external = BsonObjectId(str(canonical))
+        results: dict[str, dict[str, object]] = {}
+
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                await collection.insert_one({"_id": "1", "owner_id": canonical, "owners": [canonical]})
+
+                matched = await collection.find_one({"owner_id": external})
+                updated = await collection.update_one({"_id": "1"}, {"$addToSet": {"owners": external}})
+                final_document = await collection.find_one({"_id": "1"})
+
+                results[engine_name] = {
+                    "matched_id": None if matched is None else matched["_id"],
+                    "modified_count": updated.modified_count,
+                    "owners": final_document["owners"],
+                }
+
+        self.assertEqual(
+            results,
+            {
+                "memory": {"matched_id": "1", "modified_count": 0, "owners": [canonical]},
+                "sqlite": {"matched_id": "1", "modified_count": 0, "owners": [canonical]},
+            },
+        )
+
     async def test_dbref_subfield_filter_and_lookup_match_in_memory_and_sqlite(self):
         results: dict[str, dict[str, list[object]]] = {}
         for engine_name in ("memory", "sqlite"):
