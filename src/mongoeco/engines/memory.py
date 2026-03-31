@@ -279,6 +279,8 @@ class MemoryEngine(AsyncStorageEngine):
         with self._meta_lock:
             snapshot = self._mvcc_states.pop(session.session_id, None)
             if snapshot is not None:
+                if snapshot.snapshot_version != self._mvcc_version:
+                    raise OperationFailure("Write conflict during transaction commit")
                 self._storage = snapshot.storage
                 self._indexes = snapshot.indexes
                 self._index_data = snapshot.index_data

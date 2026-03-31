@@ -741,6 +741,22 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(await client.alpha.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
 
+    async def test_memory_engine_transactions_detect_write_conflicts_on_commit(self):
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            first = client.start_session()
+            second = client.start_session()
+            first.start_transaction()
+            second.start_transaction()
+
+            await client.alpha.users.insert_one({"_id": "1", "name": "Ada"}, session=first)
+            await client.alpha.users.insert_one({"_id": "1", "name": "Grace"}, session=second)
+
+            first.commit_transaction()
+            with self.assertRaisesRegex(OperationFailure, "Write conflict"):
+                second.commit_transaction()
+
+            self.assertEqual(await client.alpha.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
+
     async def test_client_propagates_dialect_and_profile_to_database_and_collection(self):
         engine = MemoryEngine()
 
@@ -1176,12 +1192,17 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         {"name": re.compile("^mongo", re.IGNORECASE)},
                         sort=[("_id", 1)],
                     ).to_list()
+                    eq_regex = await client.alpha.users.find(
+                        {"name": {"$eq": re.compile("^mongo", re.IGNORECASE)}},
+                        sort=[("_id", 1)],
+                    ).to_list()
                     in_regex = await client.alpha.users.find(
                         {"tags": {"$in": [re.compile("^be"), re.compile("^zz")]}},
                         sort=[("_id", 1)],
                     ).to_list()
 
                     self.assertEqual([document["_id"] for document in implicit], ["1"])
+                    self.assertEqual([document["_id"] for document in eq_regex], ["1"])
                     self.assertEqual([document["_id"] for document in in_regex], ["1"])
 
     async def test_update_one_sort_is_profile_gated(self):
@@ -1701,6 +1722,22 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [{"code": "a"}, {"code": "b"}, {"code": "c"}],
                     )
                     self.assertEqual(nested_codes, ["a", "b", "c"])
+
+    async def test_distinct_supports_nested_scalar_arrays(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.users
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "matrix": [[1, 2, 3], [3, 4]]},
+                            {"_id": "2", "matrix": [[1, 2, 3], [5, 6]]},
+                        ]
+                    )
+
+                    values = await collection.distinct("matrix")
+
+                    self.assertEqual(values, [[1, 2, 3], [3, 4], [5, 6]])
 
     async def test_distinct_supports_hint_comment_and_max_time(self):
         for engine_name in ENGINE_FACTORIES:

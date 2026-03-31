@@ -338,13 +338,18 @@ def _compile_field_condition(
         if not dialect.supports_query_field_operator(operator):
             raise OperationFailure(f"Unsupported query operator: {operator}")
         if operator == "$eq":
-            clauses.append(
-                EqualsCondition(
-                    field,
-                    value,
-                    null_matches_undefined=value is None and dialect.policy.null_query_matches_undefined(),
+            if isinstance(value, Regex):
+                clauses.append(RegexCondition(field, value.pattern, value.flags))
+            elif isinstance(value, re.Pattern):
+                clauses.append(RegexCondition(field, value.pattern, _regex_options_from_pattern(value)))
+            else:
+                clauses.append(
+                    EqualsCondition(
+                        field,
+                        value,
+                        null_matches_undefined=value is None and dialect.policy.null_query_matches_undefined(),
+                    )
                 )
-            )
         elif operator == "$ne":
             clauses.append(NotEqualsCondition(field, value))
         elif operator == "$gt":

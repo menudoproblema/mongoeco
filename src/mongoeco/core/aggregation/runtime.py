@@ -747,10 +747,13 @@ def evaluate_expression(
                 )
             raise OperationFailure(f"Unsupported aggregation expression: {operator}")
 
-    return {
-        key: evaluate_expression(document, value, variables, dialect=dialect)
-        for key, value in expression.items()
-    }
+    rendered: dict[str, Any] = {}
+    for key, value in expression.items():
+        resolved = evaluate_expression(document, value, variables, dialect=dialect)
+        if resolved is _MISSING:
+            continue
+        rendered[key] = resolved
+    return rendered
 
 
 from mongoeco.core.aggregation.grouping_stages import (  # noqa: E402

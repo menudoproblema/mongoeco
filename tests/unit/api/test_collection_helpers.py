@@ -716,6 +716,16 @@ class AsyncCollectionHelperTests(unittest.TestCase):
 
         self.assertEqual(result, [])
 
+    def test_distinct_keeps_nested_array_values_when_extract_values_returns_only_one_list(self):
+        class EngineStub(_SemanticsScanMixin):
+            _stub_documents = [{"matrix": [[1, 2, 3]]}]
+
+        collection = AsyncCollection(EngineStub(), "db", "coll")
+
+        result = asyncio.run(collection.distinct("matrix"))
+
+        self.assertEqual(result, [[1, 2, 3]])
+
     def test_bulk_write_records_upserted_ids_for_update_many_and_replace_one(self):
         async def _exercise():
             engine = MemoryEngine()

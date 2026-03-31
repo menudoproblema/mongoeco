@@ -1121,6 +1121,24 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
                 {"$getField": {"field": "$missing", "input": "$$CURRENT"}},
             )
         )
+        self.assertEqual(
+            evaluate_expression(
+                {"profile": {}},
+                {"$ifNull": [{"$getField": {"field": "name", "input": "$profile"}}, "fallback"]},
+            ),
+            "fallback",
+        )
+
+    def test_pipeline_omits_missing_values_returned_by_get_field(self):
+        documents = [{"_id": "1", "profile": {}}]
+
+        self.assertEqual(
+            apply_pipeline(
+                documents,
+                [{"$project": {"_id": 0, "name": {"$getField": {"field": "name", "input": "$profile"}}}}],
+            ),
+            [{}],
+        )
 
     def test_pipeline_supports_remove_variable_in_add_fields_and_project(self):
         documents = [{"_id": "1", "keep": 1, "drop": 2}]

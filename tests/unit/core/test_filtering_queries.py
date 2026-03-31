@@ -447,15 +447,10 @@ class QueryEngineTests(unittest.TestCase):
         self.assertTrue(QueryEngine.match({"name": "ada"}, {"name": {"$regex": re.compile("^ad", re.IGNORECASE)}}))
         self.assertFalse(QueryEngine.match({"name": "Grace"}, {"name": {"$regex": "^Ad"}}))
 
-    def test_query_engine_supports_implicit_regex_literals_but_not_explicit_eq(self):
+    def test_query_engine_supports_implicit_and_explicit_eq_regex_literals(self):
         self.assertTrue(QueryEngine.match({"name": "MongoDB2"}, {"name": re.compile("MongoDB")}))
-        self.assertFalse(QueryEngine.match({"name": "MongoDB2"}, {"name": {"$eq": re.compile("MongoDB")}}))
-        self.assertTrue(
-            QueryEngine.match(
-                {"name": re.compile("MongoDB")},
-                {"name": {"$eq": re.compile("MongoDB")}},
-            )
-        )
+        self.assertTrue(QueryEngine.match({"name": "MongoDB2"}, {"name": {"$eq": re.compile("MongoDB")}}))
+        self.assertFalse(QueryEngine.match({"name": re.compile("MongoDB")}, {"name": {"$eq": re.compile("MongoDB")}}))
 
     def test_query_engine_supports_regex_literals_inside_in_and_nin(self):
         self.assertTrue(
@@ -543,6 +538,10 @@ class QueryEngineTests(unittest.TestCase):
     def test_query_engine_elem_match_private_helper_supports_direct_scalar_condition(self):
         self.assertTrue(QueryEngine._match_elem_match_candidate("python", "python"))
         self.assertFalse(QueryEngine._match_elem_match_candidate("python", "mongodb"))
+
+    def test_query_engine_supports_eq_with_regex_literals(self):
+        self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": {"$eq": re.compile("^Ad")}}))
+        self.assertFalse(QueryEngine.match({"name": "Grace"}, {"name": {"$eq": re.compile("^Ad")}}))
 
     def test_query_engine_rejects_unsupported_regex_option(self):
         with self.assertRaises(OperationFailure):

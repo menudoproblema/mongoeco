@@ -731,6 +731,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
             self.assertEqual(client.alpha.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
 
+    def test_memory_engine_transactions_detect_write_conflicts_on_commit(self):
+        with MongoClient(MemoryEngine()) as client:
+            first = client.start_session()
+            second = client.start_session()
+            first.start_transaction()
+            second.start_transaction()
+
+            client.alpha.users.insert_one({"_id": "1", "name": "Ada"}, session=first)
+            client.alpha.users.insert_one({"_id": "1", "name": "Grace"}, session=second)
+
+            first.commit_transaction()
+            with self.assertRaisesRegex(OperationFailure, "Write conflict"):
+                second.commit_transaction()
+
+            self.assertEqual(client.alpha.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
+
     def test_client_supports_attribute_and_item_access_with_lazy_connect(self):
         client = MongoClient()
         try:
@@ -794,12 +810,17 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"name": re.compile("^mongo", re.IGNORECASE)},
                         sort=[("_id", 1)],
                     ).to_list()
+                    eq_regex = client.alpha.users.find(
+                        {"name": {"$eq": re.compile("^mongo", re.IGNORECASE)}},
+                        sort=[("_id", 1)],
+                    ).to_list()
                     in_regex = client.alpha.users.find(
                         {"tags": {"$in": [re.compile("^be"), re.compile("^zz")]}},
                         sort=[("_id", 1)],
                     ).to_list()
 
                     self.assertEqual([document["_id"] for document in implicit], ["1"])
+                    self.assertEqual([document["_id"] for document in eq_regex], ["1"])
                     self.assertEqual([document["_id"] for document in in_regex], ["1"])
 
     def test_create_collection_registers_empty_namespace_and_rejects_duplicates(self):
@@ -1571,6 +1592,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"code": "a"}, {"code": "b"}, {"code": "c"}],
                     )
                     self.assertEqual(nested_codes, ["a", "b", "c"])
+
+    def test_distinct_supports_nested_scalar_arrays(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "matrix": [[1, 2, 3], [3, 4]]},
+                            {"_id": "2", "matrix": [[1, 2, 3], [5, 6]]},
+                        ]
+                    )
+
+                    values = collection.distinct("matrix")
+
+                    self.assertEqual(values, [[1, 2, 3], [3, 4], [5, 6]])
 
     def test_distinct_supports_hint_comment_and_max_time(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

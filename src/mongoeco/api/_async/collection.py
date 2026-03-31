@@ -2449,7 +2449,7 @@ class AsyncCollection:
                     continue
                 else:
                     values = [value]
-            candidates = values[1:] if isinstance(values[0], list) else values
+            candidates = _distinct_candidates(values)
             for candidate in candidates:
                 if not any(
                     QueryEngine._values_equal(
@@ -2877,3 +2877,13 @@ class AsyncCollection:
     @property
     def codec_options(self) -> CodecOptions:
         return self._codec_options
+
+
+def _distinct_candidates(values: list[object]) -> list[object]:
+    if not values:
+        return []
+    if len(values) == 1 and values[0] == []:
+        return []
+    if isinstance(values[0], list) and len(values) > 1 and values[1:] == list(values[0]):
+        return values[1:]
+    return values

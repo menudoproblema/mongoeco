@@ -162,7 +162,11 @@ def evaluate_control_object_expression(
         args = require_expression_args(operator, spec, 2, None)
         for item in args:
             value = evaluate_expression(document, item, variables)
-            if value is not None and not isinstance(value, UndefinedType):
+            if (
+                value is not None
+                and value is not missing_sentinel
+                and not isinstance(value, UndefinedType)
+            ):
                 return value
         return None
 
@@ -289,15 +293,19 @@ def evaluate_control_object_expression(
             if "field" not in spec:
                 raise OperationFailure("$getField requires field")
             field_name = evaluate_expression(document, spec["field"], variables)
-            source = evaluate_expression(document, spec.get("input", "$$CURRENT"), variables)
+            source = evaluate_expression_with_missing(document, spec.get("input", "$$CURRENT"), variables)
         else:
             raise OperationFailure("$getField requires a string or document specification")
         if field_name is None:
             return None
         if not isinstance(field_name, str):
             raise OperationFailure("$getField field must evaluate to a string")
+        if source is missing_sentinel or source is None or isinstance(source, UndefinedType):
+            return None
         if not isinstance(source, dict):
             return None
-        return deepcopy(source.get(field_name))
+        if field_name not in source:
+            return missing_sentinel
+        return deepcopy(source[field_name])
 
     raise OperationFailure(f"Unsupported control/object expression operator: {operator}")

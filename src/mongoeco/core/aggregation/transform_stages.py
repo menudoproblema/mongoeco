@@ -106,6 +106,8 @@ def _apply_add_fields(
             if evaluated[path] is _REMOVE:
                 delete_document_value(enriched, path)
                 continue
+            if evaluated[path] is _MISSING:
+                continue
             set_document_value(enriched, path, evaluated[path])
         result.append(enriched)
     return result
@@ -171,6 +173,8 @@ def _apply_project(
             if value is _REMOVE:
                 delete_document_value(projected, path)
                 continue
+            if value is _MISSING:
+                continue
             set_document_value(projected, path, value)
         result.append(projected)
     return result
@@ -194,4 +198,4 @@ def _apply_replace_root(
     return result
 
 
-from mongoeco.core.aggregation.runtime import _REMOVE  # noqa: E402
+from mongoeco.core.aggregation.runtime import _MISSING, _REMOVE  # noqa: E402
