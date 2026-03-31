@@ -106,6 +106,24 @@ class AsyncDatabaseAdminService:
     def _normalize_filter(filter_spec: object | None) -> Filter:
         return normalize_filter_document(filter_spec)
 
+    @staticmethod
+    def _validate_create_collection_options(options: dict[str, object]) -> None:
+        capped = options.get("capped")
+        if capped is not None and not isinstance(capped, bool):
+            raise TypeError("capped must be a bool")
+
+        for field_name in ("size", "max"):
+            value = options.get(field_name)
+            if value is None:
+                continue
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise TypeError(f"{field_name} must be a positive integer")
+            if value <= 0:
+                raise ValueError(f"{field_name} must be > 0")
+
+        if capped and "size" not in options:
+            raise OperationFailure("capped collections require a positive size option")
+
     async def list_collection_names(
         self,
         filter_spec: Filter | object = _FILTER_UNSET,
@@ -197,6 +215,7 @@ class AsyncDatabaseAdminService:
         **options: object,
     ):
         normalized_options = dict(options)
+        self._validate_create_collection_options(normalized_options)
         compile_collection_validation_semantics(
             normalized_options,
             dialect=self._mongodb_dialect,

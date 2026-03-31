@@ -70,6 +70,9 @@ usa Semantic Versioning.
 - `commit_transaction()` y `abort_transaction()` ya no limpian el estado
   local de la sesion si el hook del engine falla, evitando ocultar
   transacciones que han quedado en estado ambiguo.
+- `create_collection()` y el comando `create` validan ya las opciones de
+  colecciones `capped`: exigen `size > 0` cuando `capped=True` y
+  rechazan tambien `max <= 0`.
 
 ## [2.2.0] - 2026-03-31
 

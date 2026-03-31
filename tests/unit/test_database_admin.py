@@ -63,6 +63,22 @@ class _FakeCollection:
 
 
 class AsyncDatabaseAdminServiceTests(unittest.TestCase):
+    def test_create_collection_rejects_invalid_capped_options(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin
+
+        async def _run():
+            with self.assertRaisesRegex(OperationFailure, "positive size option"):
+                await service.create_collection("events", capped=True)
+            with self.assertRaisesRegex(TypeError, "size must be a positive integer"):
+                await service.create_collection("events", capped=True, size="1024")
+            with self.assertRaisesRegex(ValueError, "size must be > 0"):
+                await service.create_collection("events", capped=True, size=0)
+            with self.assertRaisesRegex(ValueError, "max must be > 0"):
+                await service.create_collection("events", capped=True, size=1024, max=0)
+
+        asyncio.run(_run())
+
     def test_compile_command_helpers_validate_find_and_aggregate_shapes(self):
         service = AsyncDatabase(MemoryEngine(), "db")._admin
 

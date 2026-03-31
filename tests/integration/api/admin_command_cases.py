@@ -130,7 +130,9 @@ async def assert_database_command_supports_ping_list_collections_and_drop_databa
     for engine_name in engine_names:
         with case.subTest(engine=engine_name):
             async with open_client(engine_name) as client:
-                await _maybe_await(client.alpha.create_collection("events", capped=True))
+                with case.assertRaisesRegex(OperationFailure, "positive size option"):
+                    await _maybe_await(client.alpha.create_collection("events", capped=True))
+                await _maybe_await(client.alpha.create_collection("events", capped=True, size=512))
                 await _maybe_await(client.beta.create_collection("logs"))
 
                 case.assertEqual(await _maybe_await(client.alpha.command("ping")), {"ok": 1.0})
@@ -144,7 +146,7 @@ async def assert_database_command_supports_ping_list_collections_and_drop_databa
                                 {
                                     "name": "events",
                                     "type": "collection",
-                                    "options": {"capped": True},
+                                    "options": {"capped": True, "size": 512},
                                     "info": {"readOnly": False},
                                 }
                             ],
@@ -179,8 +181,10 @@ async def assert_database_command_supports_collection_index_count_and_distinct_c
     for engine_name in engine_names:
         with case.subTest(engine=engine_name):
             async with open_client(engine_name) as client:
+                with case.assertRaisesRegex(OperationFailure, "positive size option"):
+                    await _maybe_await(client.alpha.command({"create": "events", "capped": True}))
                 case.assertEqual(
-                    await _maybe_await(client.alpha.command({"create": "events", "capped": True})),
+                    await _maybe_await(client.alpha.command({"create": "events", "capped": True, "size": 512})),
                     {"ok": 1.0},
                 )
                 await _maybe_await(
