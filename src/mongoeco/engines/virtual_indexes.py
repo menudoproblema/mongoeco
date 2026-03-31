@@ -66,7 +66,7 @@ def query_can_use_index(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> bool:
-    keys = index.key if isinstance(index, EngineIndexRecord) else index.get("key")
+    keys = _index_key(index)
     if not isinstance(keys, list) or not is_ordered_index_spec(keys):
         return False
     if _index_sparse(index) and not any(
@@ -127,6 +127,18 @@ def _index_fields(index: EngineIndexRecord | dict[str, object]) -> list[str]:
     if isinstance(index, EngineIndexRecord):
         return index.fields
     return list(index.get("fields", []))
+
+
+def _index_key(index: EngineIndexRecord | dict[str, object]) -> list[tuple[str, int]] | object:
+    if isinstance(index, EngineIndexRecord):
+        return index.key
+    key = index.get("key")
+    if key is not None:
+        return key
+    fields = _index_fields(index)
+    if fields:
+        return [(field, 1) for field in fields]
+    return None
 
 
 def _index_name(index: EngineIndexRecord | dict[str, object]) -> str | None:

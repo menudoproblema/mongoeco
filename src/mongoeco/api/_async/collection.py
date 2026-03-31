@@ -486,7 +486,9 @@ class AsyncCollection:
                 max_time_ms=max_time_ms,
                 hint=hint,
             )
-        session.observe_operation()
+        observe_operation = getattr(session, "observe_operation", None)
+        if callable(observe_operation):
+            observe_operation()
 
     async def _profile_operation(
         self,

@@ -4,8 +4,12 @@ from dataclasses import dataclass
 import struct
 from typing import Any
 
-from bson import BSON
+try:  # pragma: no cover - optional dependency
+    from bson import BSON
+except Exception:  # pragma: no cover - bson is optional
+    BSON = None
 
+from mongoeco.errors import OperationFailure
 from mongoeco.wire.bson_bridge import decode_wire_value, encode_wire_value
 
 
@@ -37,6 +41,11 @@ OP_QUERY_ALLOWED_FLAGS_MASK = (
     | OP_QUERY_EXHAUST
     | OP_QUERY_PARTIAL
 )
+
+
+def _require_bson() -> None:
+    if BSON is None:  # pragma: no cover - guarded by callers
+        raise OperationFailure("wire protocol requires the optional 'pymongo'/'bson' dependency")
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,6 +89,7 @@ def parse_message_header(data: bytes) -> MessageHeader:
 
 
 def decode_op_msg(header: MessageHeader, payload: bytes) -> OpMsgRequest:
+    _require_bson()
     if header.op_code != OP_MSG:
         raise ValueError(f"unsupported wire opCode: {header.op_code}")
     if len(payload) < 5:
@@ -148,6 +158,7 @@ def decode_op_msg(header: MessageHeader, payload: bytes) -> OpMsgRequest:
 
 
 def decode_op_query(header: MessageHeader, payload: bytes) -> OpQueryRequest:
+    _require_bson()
     if header.op_code != OP_QUERY:
         raise ValueError(f"unsupported wire opCode: {header.op_code}")
     if len(payload) < 12:
@@ -183,6 +194,7 @@ def encode_op_msg_response(
     request_id: int,
     response_to: int,
 ) -> bytes:
+    _require_bson()
     encoded_body = BSON.encode(encode_wire_value(document))
     payload = struct.pack("<i", 0) + b"\x00" + encoded_body
     header = struct.pack("<iiii", 16 + len(payload), request_id, response_to, OP_MSG)
@@ -194,6 +206,7 @@ def encode_op_msg_request(
     *,
     request_id: int,
 ) -> bytes:
+    _require_bson()
     encoded_body = BSON.encode(encode_wire_value(document))
     payload = struct.pack("<i", 0) + b"\x00" + encoded_body
     header = struct.pack("<iiii", 16 + len(payload), request_id, 0, OP_MSG)
@@ -206,6 +219,7 @@ def encode_op_reply(
     request_id: int,
     response_to: int,
 ) -> bytes:
+    _require_bson()
     encoded_documents = b"".join(BSON.encode(encode_wire_value(document)) for document in documents)
     payload = struct.pack("<iqii", 0, 0, 0, len(documents)) + encoded_documents
     header = struct.pack("<iiii", 16 + len(payload), request_id, response_to, OP_REPLY)
@@ -213,6 +227,7 @@ def encode_op_reply(
 
 
 def decode_op_reply(header: MessageHeader, payload: bytes) -> OpReplyResponse:
+    _require_bson()
     if header.op_code != OP_REPLY:
         raise ValueError(f"unsupported wire opCode: {header.op_code}")
     if len(payload) < 20:

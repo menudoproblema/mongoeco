@@ -1,12 +1,18 @@
 from collections.abc import Awaitable, Callable
 
-from bson import BSON
+try:  # pragma: no cover - optional dependency
+    from bson import BSON
+except Exception:  # pragma: no cover - bson is optional
+    BSON = None
 
+from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
 from mongoeco.wire.bson_bridge import encode_wire_value
 
 
 def _encode_batch(documents: list[Document]) -> bytes:
+    if BSON is None:  # pragma: no cover - guarded by callers
+        raise OperationFailure("raw BSON batches require the optional 'pymongo'/'bson' dependency")
     return b"".join(BSON.encode(encode_wire_value(document)) for document in documents)
 
 
@@ -46,4 +52,3 @@ class AsyncRawBatchCursor:
             return await self.__anext__()
         except StopAsyncIteration:
             return None
-

@@ -638,7 +638,7 @@ class AsyncDatabaseAdminService:
             ),
             index_count=len(indexes),
             keys_per_index={
-                str(index["name"]): len(index.get("fields", []))
+                str(index["name"]): len(index.get("key", index.get("fields", [])))
                 for index in indexes
             },
         )

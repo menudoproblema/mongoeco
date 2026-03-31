@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-from bson.binary import Binary as BsonBinary
 from dataclasses import dataclass, field
 import itertools
 import ssl
 from typing import TYPE_CHECKING, Any, Awaitable, Callable
+
+try:  # pragma: no cover - optional dependency
+    from bson.binary import Binary as BsonBinary
+except Exception:  # pragma: no cover - bson is optional
+    BsonBinary = type("_MissingBsonBinary", (bytes,), {})
 
 from mongoeco.driver.connections import ConnectionRegistry, DriverConnection
 from mongoeco.driver.security import TlsPolicy
@@ -115,6 +119,7 @@ class WireProtocolCommandTransport:
         resource: StreamConnectionResource,
         execution: PreparedRequestExecution,
     ) -> None:
+        _require_bson()
         auth = execution.plan.auth_policy
         mechanism = auth.mechanism or "SCRAM-SHA-256"
         username = auth.username
@@ -282,3 +287,8 @@ def _advance_session_from_response(session: Any, response: dict[str, Any]) -> No
     operation_time = response.get("operationTime")
     if isinstance(operation_time, int) and not isinstance(operation_time, bool):
         advance_operation(operation_time)
+
+
+def _require_bson() -> None:
+    if BsonBinary.__name__ == "_MissingBsonBinary":  # pragma: no cover - guarded by callers
+        raise OperationFailure("wire transports require the optional 'pymongo'/'bson' dependency")

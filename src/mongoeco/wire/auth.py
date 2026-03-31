@@ -3,7 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from bson.binary import Binary as BsonBinary
+try:  # pragma: no cover - optional dependency
+    from bson.binary import Binary as BsonBinary
+except Exception:  # pragma: no cover - bson is optional
+    BsonBinary = type("_MissingBsonBinary", (bytes,), {})
 
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Binary
@@ -90,6 +93,7 @@ class WireAuthenticationService:
         *,
         connection: WireConnectionContext,
     ) -> dict[str, Any]:
+        _require_bson()
         mechanism = body.get("mechanism")
         if not isinstance(mechanism, str) or not mechanism:
             raise OperationFailure("saslStart requires mechanism")
@@ -126,6 +130,7 @@ class WireAuthenticationService:
         *,
         connection: WireConnectionContext,
     ) -> dict[str, Any]:
+        _require_bson()
         conversation_id = body.get("conversationId")
         if not isinstance(conversation_id, int):
             raise OperationFailure("saslContinue requires conversationId")
@@ -199,3 +204,8 @@ class WireAuthenticationService:
         if isinstance(payload, bytes):
             return payload
         raise OperationFailure(f"{command_name} requires binary payload")
+
+
+def _require_bson() -> None:
+    if BsonBinary.__name__ == "_MissingBsonBinary":  # pragma: no cover - guarded by callers
+        raise OperationFailure("wire authentication requires the optional 'pymongo'/'bson' dependency")

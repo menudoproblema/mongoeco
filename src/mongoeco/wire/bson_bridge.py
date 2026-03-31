@@ -5,23 +5,47 @@ import re
 import uuid
 from typing import Any
 
-from bson.code import Code as BsonCode
-from bson import Decimal128 as BsonDecimal128Public
-from bson.binary import Binary as BsonBinary, STANDARD
-from bson.dbref import DBRef as BsonDBRef
-from bson.int64 import Int64
-from bson.max_key import MaxKey as BsonMaxKey
-from bson.min_key import MinKey as BsonMinKey
-from bson.objectid import ObjectId as BsonObjectId
-from bson.regex import Regex as BsonRegex
-from bson.son import SON as BsonSON
-from bson.timestamp import Timestamp as BsonTimestamp
-
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
+from mongoeco.errors import OperationFailure
 from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, SON, Timestamp, UndefinedType
+
+try:  # pragma: no cover - optional dependency
+    from bson import Decimal128 as BsonDecimal128Public
+    from bson.binary import Binary as BsonBinary, STANDARD
+    from bson.code import Code as BsonCode
+    from bson.dbref import DBRef as BsonDBRef
+    from bson.int64 import Int64
+    from bson.max_key import MaxKey as BsonMaxKey
+    from bson.min_key import MinKey as BsonMinKey
+    from bson.objectid import ObjectId as BsonObjectId
+    from bson.regex import Regex as BsonRegex
+    from bson.son import SON as BsonSON
+    from bson.timestamp import Timestamp as BsonTimestamp
+except Exception:  # pragma: no cover - bson is optional
+    BsonDecimal128Public = type("_MissingBsonDecimal128Public", (), {})
+    BsonBinary = type("_MissingBsonBinary", (bytes,), {})
+    STANDARD = 4
+    BsonCode = type("_MissingBsonCode", (str,), {"scope": None})
+    BsonDBRef = type("_MissingBsonDBRef", (), {})
+    Int64 = type("_MissingInt64", (), {})
+    BsonMaxKey = type("_MissingBsonMaxKey", (), {})
+    BsonMinKey = type("_MissingBsonMinKey", (), {})
+    BsonObjectId = type("_MissingBsonObjectId", (), {})
+    BsonRegex = type("_MissingBsonRegex", (), {})
+    BsonSON = type("_MissingBsonSON", (dict,), {})
+    BsonTimestamp = type("_MissingBsonTimestamp", (), {})
+    _HAS_BSON = False
+else:  # pragma: no cover - exercised when bson is installed
+    _HAS_BSON = True
+
+
+def _require_bson() -> None:
+    if not _HAS_BSON:  # pragma: no cover - guarded by callers
+        raise OperationFailure("wire BSON bridge requires the optional 'pymongo'/'bson' dependency")
 
 
 def decode_wire_value(value: Any) -> Any:
+    _require_bson()
     if isinstance(value, BsonSON):
         return SON((key, decode_wire_value(item)) for key, item in value.items())
     if isinstance(value, dict):
@@ -62,6 +86,7 @@ def decode_wire_value(value: Any) -> Any:
 
 
 def encode_wire_value(value: Any) -> Any:
+    _require_bson()
     if isinstance(value, SON):
         return BsonSON((key, encode_wire_value(item)) for key, item in value.items())
     if isinstance(value, dict):

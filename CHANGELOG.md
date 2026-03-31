@@ -100,6 +100,11 @@ usa Semantic Versioning.
   disponible y `pyuca` en caso contrario), y el paquete base incorpora
   `pyuca` como dependencia runtime para evitar caer al fallback
   aproximado anterior en entornos sin `PyICU`.
+- Los modulos wire y de transporte dejan ya de importar `bson` de forma
+  ansiosa en un interprete limpio: el paquete puede exponerse e
+  importarse sin extras wire instalados, y solo falla con un error claro
+  cuando se ejecuta funcionalidad que realmente necesita `pymongo` o
+  `bson`.
 - `create_index()` acepta ya key patterns especiales como `"text"`,
   `"hashed"`, `"2d"` y `"2dsphere"` en metadata publica y round-trips de
   indices. Mientras no exista un planner especializado para ellos,

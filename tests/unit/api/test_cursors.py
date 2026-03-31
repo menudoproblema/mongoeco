@@ -5,9 +5,11 @@ import mongoeco.api._async.cursor as async_cursor_module
 from mongoeco.api._async.cursor import AsyncCursor, _DEFAULT_LOCAL_PREFETCH_SIZE
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
+from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
 from mongoeco.api._sync.cursor import Cursor
 from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.api._sync.listing_cursor import ListingCursor
+from mongoeco.api._sync.search_index_cursor import SearchIndexCursor
 from mongoeco.core.query_plan import MatchAll
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.types import PlanningIssue, PlanningMode
@@ -347,6 +349,37 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
                 {"name": "email_1", "key": {"email": 1}},
             ],
         )
+
+    async def test_async_search_index_cursor_supports_first_to_list_rewind_clone_and_close(self):
+        cursor = AsyncSearchIndexCursor(
+            lambda: self._load_indexes_async(
+                [
+                    {"name": "default", "type": "search", "queryable": True},
+                    {"name": "by_text", "type": "search", "queryable": False},
+                ]
+            )
+        )
+
+        self.assertTrue(cursor.alive)
+        self.assertEqual(
+            await cursor.first(),
+            {"name": "default", "type": "search", "queryable": True},
+        )
+        self.assertTrue(cursor.alive)
+        clone = cursor.clone()
+        self.assertEqual(
+            await clone.to_list(),
+            [
+                {"name": "default", "type": "search", "queryable": True},
+                {"name": "by_text", "type": "search", "queryable": False},
+            ],
+        )
+        cursor.rewind()
+        self.assertTrue(cursor.alive)
+        cursor.close()
+        self.assertFalse(cursor.alive)
+        with self.assertRaises(InvalidOperation):
+            await cursor.to_list()
 
     async def test_async_listing_cursor_supports_first_to_list_and_close(self):
         cursor = AsyncListingCursor(
@@ -1093,6 +1126,43 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(cursor.alive)
         clone = cursor.clone()
         self.assertEqual(clone.to_list(), [{"name": "events", "type": "collection"}])
+        cursor.close()
+        self.assertFalse(cursor.alive)
+        with self.assertRaises(InvalidOperation):
+            cursor.to_list()
+
+    def test_sync_search_index_cursor_supports_first_to_list_rewind_clone_and_close(self):
+        async_cursor = AsyncSearchIndexCursor(
+            lambda: self._load_indexes_async(
+                [
+                    {"name": "default", "type": "search", "queryable": True},
+                    {"name": "by_text", "type": "search", "queryable": False},
+                ]
+            )
+        )
+        cursor = SearchIndexCursor(_SyncClientStub(), async_cursor)
+
+        self.assertTrue(cursor.alive)
+        self.assertEqual(
+            cursor.first(),
+            {"name": "default", "type": "search", "queryable": True},
+        )
+        self.assertEqual(
+            cursor.to_list(),
+            [
+                {"name": "default", "type": "search", "queryable": True},
+                {"name": "by_text", "type": "search", "queryable": False},
+            ],
+        )
+        cursor.rewind()
+        clone = cursor.clone()
+        self.assertEqual(
+            clone.to_list(),
+            [
+                {"name": "default", "type": "search", "queryable": True},
+                {"name": "by_text", "type": "search", "queryable": False},
+            ],
+        )
         cursor.close()
         self.assertFalse(cursor.alive)
         with self.assertRaises(InvalidOperation):
