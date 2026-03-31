@@ -904,13 +904,13 @@ class AsyncCollection:
         bulk_put = getattr(self._engine, "put_documents_bulk", None)
         if callable(bulk_put):
             try:
-                results = await bulk_put(
+                results = list(await bulk_put(
                     self._db_name,
                     self._collection_name,
                     normalized_documents,
                     context=session,
                     bypass_document_validation=bypass_document_validation,
-                )
+                ))
             except Exception as exc:
                 await self._profile_operation(
                     op="insert",
@@ -923,7 +923,11 @@ class AsyncCollection:
                     errmsg=str(exc),
                 )
                 raise
-            for doc, success in zip(normalized_documents, results, strict=False):
+            if len(results) != len(normalized_documents):
+                raise RuntimeError(
+                    "bulk insert engine returned a result count different from the number of documents"
+                )
+            for doc, success in zip(normalized_documents, results, strict=True):
                 if not success:
                     raise DuplicateKeyError(f"Duplicate key: _id={doc['_id']}")
                 inserted_ids.append(doc["_id"])

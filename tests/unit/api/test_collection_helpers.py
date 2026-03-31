@@ -322,6 +322,18 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "bulk boom"):
             asyncio.run(_exercise())
 
+    def test_insert_many_rejects_bulk_result_length_mismatch(self):
+        class EngineStub:
+            async def put_documents_bulk(self, *args, **kwargs):
+                return [True]
+
+        async def _exercise():
+            collection = AsyncCollection(EngineStub(), "db", "coll")
+            await collection.insert_many([{"name": "Ada"}, {"name": "Grace"}])
+
+        with self.assertRaisesRegex(RuntimeError, "result count different"):
+            asyncio.run(_exercise())
+
     def test_find_one_profiles_direct_id_lookup_errors(self):
         class EngineStub:
             async def get_document(self, *args, **kwargs):

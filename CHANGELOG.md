@@ -17,6 +17,9 @@ usa Semantic Versioning.
   vuelve a devolver el documento completo, y `$slice` en forma
   `[skip, limit]` rechaza ya offsets negativos en lugar de heredar el
   slicing negativo de Python.
+- `insert_many()` deja de truncar silenciosamente la verificacion de
+  resultados cuando un engine bulk devuelve un numero de respuestas
+  distinto al de documentos enviados.
 - Se validan ya como no soportados los valores `NaN` e infinitos en
   ventanas `range` de `$setWindowFields`, evitando comparaciones
   inconsistentes sobre el campo de ordenacion.
