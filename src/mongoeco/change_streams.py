@@ -30,28 +30,62 @@ class ChangeStreamScope:
 
 
 class ChangeStreamHub:
-    def __init__(self) -> None:
+    def __init__(self, *, max_retained_events: int | None = 10_000) -> None:
+        if (
+            max_retained_events is not None
+            and (
+                not isinstance(max_retained_events, int)
+                or isinstance(max_retained_events, bool)
+                or max_retained_events <= 0
+            )
+        ):
+            raise TypeError("max_retained_events must be a positive integer or None")
         self._condition = threading.Condition()
         self._events: list[ChangeEventSnapshot] = []
+        self._base_offset = 0
         self._next_token = 1
+        self._max_retained_events = max_retained_events
+
+    def _end_offset_locked(self) -> int:
+        return self._base_offset + len(self._events)
+
+    def _retained_start_token_locked(self) -> int | None:
+        if not self._events:
+            return None
+        return self._events[0].token
+
+    def _prune_locked(self) -> None:
+        if self._max_retained_events is None:
+            return
+        excess = len(self._events) - self._max_retained_events
+        if excess <= 0:
+            return
+        del self._events[:excess]
+        self._base_offset += excess
 
     def current_offset(self) -> int:
         with self._condition:
-            return len(self._events)
+            return self._end_offset_locked()
 
     def offset_after_token(self, token: int) -> int:
         with self._condition:
+            retained_start = self._retained_start_token_locked()
+            if retained_start is not None and token < retained_start and self._base_offset > 0:
+                raise OperationFailure("resume token is no longer available in retained change stream history")
             for index, event in enumerate(self._events):
                 if event.token > token:
-                    return index
-            return len(self._events)
+                    return self._base_offset + index
+            return self._end_offset_locked()
 
     def offset_at_or_after_cluster_time(self, cluster_time: int) -> int:
         with self._condition:
+            retained_start = self._retained_start_token_locked()
+            if retained_start is not None and cluster_time < retained_start and self._base_offset > 0:
+                raise OperationFailure("start_at_operation_time is no longer available in retained change stream history")
             for index, event in enumerate(self._events):
                 if event.token >= cluster_time:
-                    return index
-            return len(self._events)
+                    return self._base_offset + index
+            return self._end_offset_locked()
 
     def publish(
         self,
@@ -76,6 +110,7 @@ class ChangeStreamHub:
                 )
             )
             self._next_token += 1
+            self._prune_locked()
             self._condition.notify_all()
 
     def wait_for_event(
@@ -85,19 +120,23 @@ class ChangeStreamHub:
         timeout_seconds: float | None,
     ) -> tuple[int, ChangeEventSnapshot | None]:
         with self._condition:
+            if offset < self._base_offset:
+                raise OperationFailure("change stream history is no longer available")
             if timeout_seconds is None:
-                while len(self._events) <= offset:
+                while self._end_offset_locked() <= offset:
                     self._condition.wait()
             else:
                 deadline = time.monotonic() + timeout_seconds
-                while len(self._events) <= offset:
+                while self._end_offset_locked() <= offset:
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
                         return offset, None
                     self._condition.wait(remaining)
-            if len(self._events) <= offset:
+            if offset < self._base_offset:
+                raise OperationFailure("change stream history is no longer available")
+            if self._end_offset_locked() <= offset:
                 return offset, None
-            return offset + 1, self._events[offset]
+            return offset + 1, self._events[offset - self._base_offset]
 
 
 def compile_change_stream_pipeline(

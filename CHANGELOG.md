@@ -104,6 +104,9 @@ usa Semantic Versioning.
   entre backend `ICU`, fallback `pyuca` y ausencia de backend Unicode, y
   documenta de forma explicita que las opciones avanzadas de tailoring
   solo quedan soportadas cuando `PyICU` esta disponible.
+- La collation `simple` vuelve a quedar cerrada sobre el comparador BSON
+  base: `caseLevel`, `numericOrdering` y el resto de knobs Unicode ya no
+  se aceptan bajo `locale="simple"`.
 - `$jsonSchema` valida ya operadores lógicos (`allOf`, `anyOf`,
   `oneOf`, `not`), `$bucket` y `$bucketAuto` heredan la `collation`
   del pipeline, y las conversiones de agregación endurecen su
@@ -124,6 +127,10 @@ usa Semantic Versioning.
   pipeline (`$addFields`, `$set`, `$unset`, `$replaceRoot`,
   `$replaceWith`) y se cierran automaticamente tras recibir
   `invalidate`.
+- Los change streams creados desde `AsyncCollection` o `AsyncDatabase`
+  directos comparten ya un `ChangeStreamHub` persistente y el historial
+  retenido en memoria queda acotado, con errores explicitos cuando un
+  cursor o un resume token apuntan a eventos ya expirados.
 - `watch()` acepta ya `fullDocument` (`default`, `updateLookup`,
   `whenAvailable`, `required`), los resume tokens dejan de exponerse
   como enteros decimales simples y `drop_database()` insiste hasta

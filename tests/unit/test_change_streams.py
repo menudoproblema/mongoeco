@@ -114,6 +114,37 @@ class ChangeStreamHubTests(unittest.TestCase):
         self.assertEqual(hub.offset_after_token(1), 1)
         self.assertEqual(hub.offset_at_or_after_cluster_time(1), 0)
 
+    def test_hub_prunes_retained_history_and_rejects_stale_offsets(self):
+        hub = ChangeStreamHub(max_retained_events=2)
+        hub.publish(
+            operation_type="insert",
+            db_name="alpha",
+            coll_name="users",
+            document_key={"_id": 1},
+        )
+        hub.publish(
+            operation_type="insert",
+            db_name="alpha",
+            coll_name="users",
+            document_key={"_id": 2},
+        )
+        hub.publish(
+            operation_type="insert",
+            db_name="alpha",
+            coll_name="users",
+            document_key={"_id": 3},
+        )
+
+        self.assertEqual(hub.current_offset(), 3)
+        self.assertEqual(hub.offset_after_token(2), 2)
+        self.assertEqual(hub.offset_at_or_after_cluster_time(2), 1)
+        with self.assertRaisesRegex(OperationFailure, "history is no longer available"):
+            hub.wait_for_event(0, timeout_seconds=0)
+        with self.assertRaisesRegex(OperationFailure, "resume token is no longer available"):
+            hub.offset_after_token(1)
+        with self.assertRaisesRegex(OperationFailure, "start_at_operation_time is no longer available"):
+            hub.offset_at_or_after_cluster_time(1)
+
 
 class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
     async def test_cursor_filters_by_scope_pipeline_and_timeout(self):

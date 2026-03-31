@@ -97,7 +97,7 @@ class AsyncDatabase:
         self._read_concern = normalize_read_concern(read_concern)
         self._read_preference = normalize_read_preference(read_preference)
         self._codec_options = normalize_codec_options(codec_options)
-        self._change_hub = change_hub
+        self._change_hub = ChangeStreamHub() if change_hub is None else change_hub
         self._admin = AsyncDatabaseAdminService(self)
 
     def __getattr__(self, name: str) -> AsyncCollection:
@@ -246,7 +246,7 @@ class AsyncDatabase:
         ):
             raise TypeError("max_await_time_ms must be a non-negative integer")
         return AsyncChangeStreamCursor(
-            self._change_hub or ChangeStreamHub(),
+            self._change_hub,
             scope=ChangeStreamScope(db_name=self._db_name),
             pipeline=pipeline,
             max_await_time_ms=max_await_time_ms,
