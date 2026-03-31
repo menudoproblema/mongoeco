@@ -223,7 +223,7 @@ def evaluate_control_object_expression(
         if not isinstance(branches, list) or not branches:
             raise OperationFailure("$switch branches must be a non-empty array")
         for branch in branches:
-            if not isinstance(branch, dict) or set(branch) != {"case", "then"}:
+            if not isinstance(branch, dict) or "case" not in branch or "then" not in branch:
                 raise OperationFailure("$switch branches must contain case and then")
             condition_value = evaluate_expression(document, branch["case"], variables)
             if expression_truthy(condition_value):

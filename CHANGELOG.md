@@ -91,6 +91,14 @@ usa Semantic Versioning.
   a `bytes`; ademas, `$abs` detecta overflow de `int64`, `$jsonSchema`
   reutiliza el schema compilado y SQLite indexa ya elementos
   `Decimal128` dentro de arrays multikey.
+- La compilacion interna de updates deja ya de aceptar en silencio
+  documentos de update invalidos en modo `STRICT`, mientras que
+  `RELAXED` los reporta como `planning_issues`; ademas, `$switch`
+  tolera ahora claves extra dentro de cada branch siempre que existan
+  `case` y `then`.
+- La collation prefiere ya un backend ICU real cuando esta disponible,
+  manteniendo la ruta aproximada existente como fallback cuando el
+  runtime no expone soporte ICU.
 - `create_index()` acepta ya key patterns especiales como `"text"`,
   `"hashed"`, `"2d"` y `"2dsphere"` en metadata publica y round-trips de
   indices. Mientras no exista un planner especializado para ellos,

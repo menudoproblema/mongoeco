@@ -260,10 +260,11 @@ def _collect_update_planning_issues(
 ) -> tuple[PlanningIssue, ...]:
     if planning_mode is not PlanningMode.RELAXED or update_spec is None:
         return ()
+    shape_issue = _validate_update_spec_shape(update_spec)
+    if shape_issue is not None:
+        return (PlanningIssue(scope="update", message=shape_issue),)
     issues: list[PlanningIssue] = []
     if isinstance(update_spec, list):
-        if not update_spec:
-            return (PlanningIssue(scope="update", message="update pipeline must be a non-empty list"),)
         for stage in update_spec:
             if not isinstance(stage, dict) or len(stage) != 1:
                 issues.append(PlanningIssue(scope="update", message="Each update pipeline stage must be a single-key document"))
@@ -301,15 +302,11 @@ def _compile_update_plans(
 ) -> tuple[CompiledExecutableUpdatePlan | None, CompiledExecutableUpdatePlan | None]:
     if update_spec is None:
         return None, None
-    if isinstance(update_spec, dict):
-        if not update_spec:
+    shape_issue = _validate_update_spec_shape(update_spec)
+    if shape_issue is not None:
+        if planning_mode is PlanningMode.RELAXED:
             return None, None
-        if not all(isinstance(operator, str) and operator.startswith("$") for operator in update_spec):
-            return None, None
-        if not all(isinstance(params, dict) for params in update_spec.values()):
-            return None, None
-    elif not isinstance(update_spec, list) or not update_spec:
-        return None, None
+        raise OperationFailure(shape_issue)
     try:
         return (
             UpdateEngine.compile_update_plan(
@@ -334,6 +331,30 @@ def _compile_update_plans(
         if planning_mode is PlanningMode.RELAXED:
             return None, None
         raise
+
+
+def _validate_update_spec_shape(update_spec: Update) -> str | None:
+    if isinstance(update_spec, list):
+        if not update_spec:
+            return "update pipeline must be a non-empty list"
+        return None
+    if not isinstance(update_spec, dict):
+        return "update specification must be a document or pipeline"
+    if not update_spec:
+        return "update_spec must not be empty"
+    if not all(isinstance(operator, str) and operator.startswith("$") for operator in update_spec):
+        return "update_spec must contain only update operators"
+    invalid_operator = next(
+        (
+            operator
+            for operator, params in update_spec.items()
+            if not isinstance(params, dict)
+        ),
+        None,
+    )
+    if invalid_operator is not None:
+        return f"{invalid_operator} value must be a dict"
+    return None
 
 
 def _collect_aggregate_planning_issues(

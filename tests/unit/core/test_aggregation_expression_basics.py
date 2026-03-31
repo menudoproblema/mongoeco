@@ -240,6 +240,25 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$dateDiff": {"startDate": "$start", "endDate": "$start", "unit": "week", "startOfWeek": 1}})
 
+    def test_evaluate_expression_switch_ignores_extra_branch_metadata(self):
+        document = {"value": 2}
+
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {
+                    "$switch": {
+                        "branches": [
+                            {"case": {"$gt": ["$value", 3]}, "then": "high", "comment": "ignored"},
+                            {"case": {"$eq": ["$value", 2]}, "then": "two", "meta": {"rank": 1}},
+                        ],
+                        "default": "other",
+                    }
+                },
+            ),
+            "two",
+        )
+
     def test_evaluate_expression_supports_substr_and_strlen_byte_and_codepoint_variants(self):
         document = {"text": "é寿司A"}
 

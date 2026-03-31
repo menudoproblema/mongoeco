@@ -373,26 +373,57 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         )
 
     def test_update_operation_skips_compilation_for_non_operator_documents_and_invalid_param_shapes(self):
+        with self.assertRaisesRegex(operations_module.OperationFailure, "update_spec must contain only update operators"):
+            compile_update_operation(
+                {"name": "Ada"},
+                update_spec={"name": "Ada"},
+            )
+        with self.assertRaisesRegex(operations_module.OperationFailure, "\\$set value must be a dict"):
+            compile_update_operation(
+                {"name": "Ada"},
+                update_spec={"$set": 1},  # type: ignore[dict-item]
+            )
+        with self.assertRaisesRegex(operations_module.OperationFailure, "update specification must be a document or pipeline"):
+            compile_update_operation(
+                {"name": "Ada"},
+                update_spec="bad",  # type: ignore[arg-type]
+            )
+
+    def test_relaxed_update_operation_reports_invalid_non_operator_documents_and_param_shapes(self):
         replacement_style = compile_update_operation(
             {"name": "Ada"},
             update_spec={"name": "Ada"},
+            planning_mode=PlanningMode.RELAXED,
         )
         invalid_params = compile_update_operation(
             {"name": "Ada"},
             update_spec={"$set": 1},  # type: ignore[dict-item]
+            planning_mode=PlanningMode.RELAXED,
         )
         invalid_pipeline_type = compile_update_operation(
             {"name": "Ada"},
             update_spec="bad",  # type: ignore[arg-type]
+            planning_mode=PlanningMode.RELAXED,
         )
 
         self.assertIsNone(replacement_style.compiled_update_plan)
-        self.assertIsNone(replacement_style.compiled_upsert_plan)
+        self.assertEqual(
+            replacement_style.planning_issues,
+            (operations_module.PlanningIssue(scope="update", message="update_spec must contain only update operators"),),
+        )
         self.assertIsNone(invalid_params.compiled_update_plan)
+        self.assertEqual(
+            invalid_params.planning_issues,
+            (operations_module.PlanningIssue(scope="update", message="$set value must be a dict"),),
+        )
         self.assertIsNone(invalid_pipeline_type.compiled_update_plan)
+        self.assertEqual(
+            invalid_pipeline_type.planning_issues,
+            (operations_module.PlanningIssue(scope="update", message="update specification must be a document or pipeline"),),
+        )
 
     def test_private_update_compilation_and_normalizers_cover_invalid_inputs(self):
-        self.assertEqual(
+        with self.assertRaisesRegex(operations_module.OperationFailure, "update_spec must not be empty"):
             operations_module._compile_update_plans(
                 {},
                 dialect=operations_module.MONGODB_DIALECT_70,
@@ -401,9 +432,7 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
                 array_filters=None,
                 variables=None,
                 planning_mode=PlanningMode.STRICT,
-            ),
-            (None, None),
-        )
+            )
         self.assertEqual(operations_module._normalize_filter(None), {})
         self.assertIsNone(operations_module._normalize_collation(None))
         self.assertEqual(
@@ -434,6 +463,20 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
             operations_module._normalize_allow_disk_use("yes")
         with self.assertRaises(TypeError):
             operations_module._normalize_skip(True)
+
+    def test_private_update_compilation_returns_none_in_relaxed_mode_for_invalid_shapes(self):
+        self.assertEqual(
+            operations_module._compile_update_plans(
+                {},
+                dialect=operations_module.MONGODB_DIALECT_70,
+                selector_filter={},
+                collation=None,
+                array_filters=None,
+                variables=None,
+                planning_mode=PlanningMode.RELAXED,
+            ),
+            (None, None),
+        )
 
     def test_private_update_compilation_returns_none_in_relaxed_mode_after_engine_failure(self):
         with mock.patch.object(
