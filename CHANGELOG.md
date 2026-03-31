@@ -75,6 +75,10 @@ usa Semantic Versioning.
   rechazan tambien `max <= 0`.
 - El comando `listIndexes` deja de exponer el campo no estandar
   `fields` en su salida wire, alineando mejor la respuesta con MongoDB.
+- Los change streams aceptan ya stages adicionales compatibles en
+  pipeline (`$addFields`, `$set`, `$unset`, `$replaceRoot`,
+  `$replaceWith`) y se cierran automaticamente tras recibir
+  `invalidate`.
 
 ## [2.2.0] - 2026-03-31
 

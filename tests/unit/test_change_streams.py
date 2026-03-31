@@ -18,8 +18,8 @@ from mongoeco.types import ChangeEventSnapshot
 
 class ChangeStreamPipelineTests(unittest.TestCase):
     def test_compile_change_stream_pipeline_accepts_none_and_combines_multiple_matches(self):
-        self.assertEqual(compile_change_stream_pipeline(None), (None, None))
-        match_filter, projection = compile_change_stream_pipeline(
+        self.assertIsNone(compile_change_stream_pipeline(None))
+        pipeline = compile_change_stream_pipeline(
             [
                 {"$match": {"operationType": "insert"}},
                 {"$match": {"ns.coll": "users"}},
@@ -27,21 +27,38 @@ class ChangeStreamPipelineTests(unittest.TestCase):
             ]
         )
         self.assertEqual(
-            match_filter,
-            {"$and": [{"operationType": "insert"}, {"ns.coll": "users"}]},
+            pipeline,
+            [
+                {"$match": {"operationType": "insert"}},
+                {"$match": {"ns.coll": "users"}},
+                {"$project": {"operationType": 1}},
+            ],
         )
-        self.assertEqual(projection, {"operationType": 1})
 
     def test_compile_change_stream_pipeline_rejects_unsupported_stage(self):
         with self.assertRaises(OperationFailure):
             compile_change_stream_pipeline([{"$group": {"_id": "$operationType"}}])
 
-    def test_compile_change_stream_pipeline_accepts_match_and_project(self):
-        match_filter, projection = compile_change_stream_pipeline(
-            [{"$match": {"operationType": "insert"}}, {"$project": {"operationType": 1}}]
+    def test_compile_change_stream_pipeline_accepts_supported_transform_stages(self):
+        pipeline = compile_change_stream_pipeline(
+            [
+                {"$match": {"operationType": "insert"}},
+                {"$addFields": {"kind": "$operationType"}},
+                {"$set": {"alias": "$kind"}},
+                {"$unset": "kind"},
+                {"$replaceRoot": {"newRoot": {"alias": "$alias"}}},
+            ]
         )
-        self.assertEqual(match_filter, {"operationType": "insert"})
-        self.assertEqual(projection, {"operationType": 1})
+        self.assertEqual(
+            pipeline,
+            [
+                {"$match": {"operationType": "insert"}},
+                {"$addFields": {"kind": "$operationType"}},
+                {"$set": {"alias": "$kind"}},
+                {"$unset": "kind"},
+                {"$replaceRoot": {"newRoot": {"alias": "$alias"}}},
+            ],
+        )
 
     def test_compile_change_stream_pipeline_rejects_invalid_stage_shape(self):
         with self.assertRaises(TypeError):
@@ -106,7 +123,8 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
             scope=ChangeStreamScope(db_name="alpha", coll_name="users"),
             pipeline=[
                 {"$match": {"operationType": "insert"}},
-                {"$project": {"operationType": 1, "documentKey": 1}},
+                {"$addFields": {"kind": "$operationType"}},
+                {"$project": {"operationType": 1, "documentKey": 1, "kind": 1}},
             ],
             max_await_time_ms=25,
         )
@@ -138,7 +156,7 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
         event = await cursor.try_next()
         self.assertEqual(
             event,
-            {"_id": {"_data": "3"}, "operationType": "insert", "documentKey": {"_id": 3}},
+            {"_id": {"_data": "3"}, "operationType": "insert", "documentKey": {"_id": 3}, "kind": "insert"},
         )
 
         cursor.close()
@@ -256,6 +274,24 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
         cursor.close()
         with self.assertRaises(StopAsyncIteration):
             await iterator.__anext__()
+
+    async def test_cursor_closes_after_invalidate_event(self):
+        hub = ChangeStreamHub()
+        cursor = AsyncChangeStreamCursor(hub, scope=ChangeStreamScope())
+
+        hub.publish(
+            operation_type="invalidate",
+            db_name="alpha",
+            coll_name="users",
+            document_key={"_id": "users"},
+        )
+
+        event = await cursor.try_next()
+
+        self.assertEqual(event["operationType"], "invalidate")
+        self.assertFalse(cursor.alive)
+        with self.assertRaises(OperationFailure):
+            await cursor.try_next()
 
     async def test_cursor_next_ignores_none_events_returned_by_wait_helper(self):
         hub = ChangeStreamHub()

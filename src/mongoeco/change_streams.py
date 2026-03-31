@@ -5,10 +5,12 @@ import threading
 import time
 from dataclasses import dataclass
 
-from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.projections import apply_projection
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ChangeEventDocument, ChangeEventSnapshot, Document
+
+_ALLOWED_CHANGE_STREAM_STAGES = frozenset(
+    {"$match", "$project", "$addFields", "$set", "$unset", "$replaceRoot", "$replaceWith"}
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,29 +99,24 @@ class ChangeStreamHub:
 
 def compile_change_stream_pipeline(
     pipeline: object | None,
-) -> tuple[dict[str, object] | None, dict[str, object] | None]:
+) -> list[dict[str, object]] | None:
     if pipeline is None:
-        return None, None
+        return None
     if not isinstance(pipeline, list):
         raise TypeError("pipeline must be a list of stages")
-    match_filter: dict[str, object] | None = None
-    projection: dict[str, object] | None = None
+    normalized: list[dict[str, object]] = []
     for stage in pipeline:
         if not isinstance(stage, dict) or len(stage) != 1:
             raise TypeError("pipeline stages must be single-key dicts")
         operator, spec = next(iter(stage.items()))
-        if operator == "$match":
-            if not isinstance(spec, dict):
-                raise TypeError("$match stage must be a dict")
-            match_filter = spec if match_filter is None else {"$and": [match_filter, spec]}
-            continue
-        if operator == "$project":
-            if not isinstance(spec, dict):
-                raise TypeError("$project stage must be a dict")
-            projection = spec
-            continue
-        raise OperationFailure("watch only supports $match and $project stages")
-    return match_filter, projection
+        if operator not in _ALLOWED_CHANGE_STREAM_STAGES:
+            raise OperationFailure(
+                "watch only supports $match, $project, $addFields, $set, $unset, $replaceRoot, and $replaceWith stages"
+            )
+        if operator in {"$match", "$project", "$addFields", "$set", "$replaceRoot", "$replaceWith"} and not isinstance(spec, dict):
+            raise TypeError(f"{operator} stage must be a dict")
+        normalized.append(stage)
+    return normalized
 
 
 class AsyncChangeStreamCursor:
@@ -133,7 +130,7 @@ class AsyncChangeStreamCursor:
         resume_after: dict[str, object] | None = None,
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
-    ) -> None:
+        ) -> None:
         self._hub = hub
         self._scope = scope
         self._offset = _resolve_change_stream_offset(
@@ -142,7 +139,7 @@ class AsyncChangeStreamCursor:
             start_after=start_after,
             start_at_operation_time=start_at_operation_time,
         )
-        self._match_filter, self._projection = compile_change_stream_pipeline(pipeline)
+        self._pipeline = compile_change_stream_pipeline(pipeline)
         self._max_await_time_ms = max_await_time_ms
         self._closed = False
 
@@ -154,10 +151,13 @@ class AsyncChangeStreamCursor:
         if not self._scope.matches(event):
             return None
         document = event.to_document()
-        if self._match_filter is not None and not QueryEngine.match(document, self._match_filter):
-            return None
-        if self._projection is not None:
-            return apply_projection(document, self._projection)
+        if self._pipeline is not None:
+            from mongoeco.core.aggregation import apply_pipeline
+
+            transformed = apply_pipeline([document], self._pipeline)
+            if not transformed:
+                return None
+            return transformed[0]
         return document
 
     async def try_next(self) -> ChangeEventDocument | None:
@@ -178,6 +178,8 @@ class AsyncChangeStreamCursor:
             if event is None:
                 return None
             transformed = self._transform(event)
+            if event.operation_type == "invalidate" and self._scope.matches(event):
+                self.close()
             if transformed is not None:
                 return transformed
 
@@ -193,6 +195,8 @@ class AsyncChangeStreamCursor:
             if event is None:
                 continue
             transformed = self._transform(event)
+            if event.operation_type == "invalidate" and self._scope.matches(event):
+                self.close()
             if transformed is not None:
                 return transformed
 
