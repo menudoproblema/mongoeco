@@ -73,7 +73,7 @@ from mongoeco.types import (
     normalize_codec_options, normalize_index_keys,
     normalize_read_concern, normalize_read_preference, normalize_write_concern,
 )
-from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure, WriteError
+from mongoeco.errors import BulkWriteError, DuplicateKeyError, InvalidOperation, OperationFailure, WriteError
 
 _FILTER_UNSET = ARG_UNSET
 _UPDATE_UNSET = ARG_UNSET
@@ -2851,7 +2851,8 @@ class AsyncCollection:
         start_at_operation_time: int | None = None,
         session: ClientSession | None = None,
     ) -> AsyncChangeStreamCursor:
-        del session
+        if session is not None:
+            raise InvalidOperation("watch does not support explicit sessions")
         if max_await_time_ms is not None and (
             not isinstance(max_await_time_ms, int)
             or isinstance(max_await_time_ms, bool)

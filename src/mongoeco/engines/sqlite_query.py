@@ -215,10 +215,13 @@ def sort_type_expression_sql(field: str) -> str:
         # SQLite cannot preserve the same relative ordering/range semantics as the
         # in-memory BSONComparator when bytes and UUID share bracket 6, so the
         # engine falls back to Python whenever tagged bytes are present.
+        f"WHEN json_extract(document, {_quote_sql_string(tagged_type_path)}) = 'binary' THEN {SQLITE_SORT_BUCKET_WEIGHTS['binary']} "
         f"WHEN json_extract(document, {_quote_sql_string(tagged_type_path)}) = 'uuid' THEN {SQLITE_SORT_BUCKET_WEIGHTS['uuid']} "
         f"WHEN json_extract(document, {_quote_sql_string(tagged_type_path)}) = 'objectid' THEN {SQLITE_SORT_BUCKET_WEIGHTS['objectid']} "
         f"WHEN json_type(document, {path}) IN ('true', 'false') THEN {SQLITE_SORT_BUCKET_WEIGHTS['bool']} "
         f"WHEN json_extract(document, {_quote_sql_string(tagged_type_path)}) = 'datetime' THEN {SQLITE_SORT_BUCKET_WEIGHTS['datetime']} "
+        f"WHEN json_extract(document, {_quote_sql_string(tagged_type_path)}) = 'timestamp' THEN {SQLITE_SORT_BUCKET_WEIGHTS['timestamp']} "
+        f"WHEN json_extract(document, {_quote_sql_string(tagged_type_path)}) = 'regex' THEN {SQLITE_SORT_BUCKET_WEIGHTS['regex']} "
         f"ELSE {SQLITE_SORT_BUCKET_WEIGHTS['fallback']} END"
     )
 
@@ -408,6 +411,10 @@ def _comparison_type_order(value_type: str) -> int:
         return 7
     if value_type == "datetime":
         return 9
+    if value_type == "timestamp":
+        return 10
+    if value_type == "regex":
+        return 11
     raise NotImplementedError("Unsupported comparison type for SQL translation")
 
 
@@ -458,10 +465,13 @@ def _translate_comparison(operator: str, field: str, value: object) -> SqlFragme
         f"WHEN json_type(document, {path}) = 'text' THEN 3 "
         f"WHEN json_type(document, {path}) = 'object' AND json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) IS NULL THEN 4 "
         f"WHEN json_type(document, {path}) = 'array' THEN 5 "
+        f"WHEN json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) = 'binary' THEN 6 "
         f"WHEN json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) = 'uuid' THEN 6 "
         f"WHEN json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) = 'objectid' THEN 7 "
         f"WHEN json_type(document, {path}) IN ('true', 'false') THEN 8 "
         f"WHEN json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) = 'datetime' THEN 9 "
+        f"WHEN json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) = 'timestamp' THEN 10 "
+        f"WHEN json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) = 'regex' THEN 11 "
         "ELSE 100 END"
     )
     if value_type == "number":

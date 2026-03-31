@@ -28,6 +28,11 @@ usa Semantic Versioning.
 - El bridge wire, el codec interno y la semantica de `$type` preservan
   ya `MinKey`, `MaxKey` y `Code/CodeWithScope`, evitando perder esos
   valores BSON especiales en round-trips y comparaciones basicas.
+- El fast path de ordenacion SQL en SQLite clasifica ya `Binary`,
+  `Timestamp` y `Regex` en los mismos brackets BSON que el runtime
+  Python, reduciendo desajustes de orden en sorts pushdown.
+- `watch(session=...)` deja de ignorar sesiones explicitamente y falla
+  ahora con un error claro en cliente, base de datos y coleccion.
 - El seed de upsert extrae ya igualdades seedables desde `$and`
   top-level y desde condiciones `$in` con un unico valor.
 - `$dateFromParts` valida ya de forma explicita los rangos de `hour`,

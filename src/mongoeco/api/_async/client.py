@@ -56,6 +56,11 @@ if TYPE_CHECKING:
     from mongoeco.driver.transports import WireProtocolCommandTransport
 
 
+def _validate_watch_session(session: ClientSession | None) -> None:
+    if session is not None:
+        raise InvalidOperation("watch does not support explicit sessions")
+
+
 class AsyncDatabase:
     """Representa una base de datos de MongoDB."""
 
@@ -232,7 +237,7 @@ class AsyncDatabase:
         start_at_operation_time: int | None = None,
         session: ClientSession | None = None,
     ) -> AsyncChangeStreamCursor:
-        del session
+        _validate_watch_session(session)
         if max_await_time_ms is not None and (
             not isinstance(max_await_time_ms, int)
             or isinstance(max_await_time_ms, bool)
@@ -563,7 +568,7 @@ class AsyncMongoClient:
         start_at_operation_time: int | None = None,
         session: ClientSession | None = None,
     ) -> AsyncChangeStreamCursor:
-        del session
+        _validate_watch_session(session)
         if max_await_time_ms is not None and (
             not isinstance(max_await_time_ms, int)
             or isinstance(max_await_time_ms, bool)

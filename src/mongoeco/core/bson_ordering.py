@@ -14,10 +14,13 @@ SQLITE_SORT_BUCKET_WEIGHTS: dict[str, int] = {
     "string": 3,
     "plain-object": 4,
     "array": 5,
+    "binary": 6,
     "uuid": 6,
     "objectid": 7,
     "bool": 8,
     "datetime": 9,
+    "timestamp": 10,
+    "regex": 11,
     "fallback": 100,
 }
 
