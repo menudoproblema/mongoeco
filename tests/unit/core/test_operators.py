@@ -11,6 +11,7 @@ from mongoeco.compat import MongoDialect
 from mongoeco.core.bson_scalars import BsonInt32, BsonInt64
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.operators import UpdateEngine
+from mongoeco.core.update_scalar_operators import _path_array_prefixes
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ObjectId, Timestamp
 
@@ -459,6 +460,10 @@ class UpdateEngineTests(unittest.TestCase):
             UpdateEngine.apply_update({"name": "Ada"}, {"$rename": {"name": "name"}})
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"profile": {"name": "Ada"}}, {"$rename": {"profile": "profile.name"}})
+
+    def test_path_array_prefixes_keep_non_numeric_prefixes_before_index_segments(self):
+        self.assertEqual(_path_array_prefixes("a.0.b.c"), ("a", "a.0.b"))
+        self.assertEqual(_path_array_prefixes("items.0"), ("items",))
 
     def test_current_date_sets_datetime_and_rejects_unsupported_shapes(self):
         document = {"name": "Ada"}

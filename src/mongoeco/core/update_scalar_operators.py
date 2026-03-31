@@ -22,10 +22,9 @@ def _path_array_prefixes(path: str) -> tuple[str, ...]:
     parts = path.split(".")
     prefixes: list[str] = []
     current: list[str] = []
-    for index, part in enumerate(parts[:-1]):
+    for part in parts[:-1]:
         current.append(part)
-        next_part = parts[index + 1]
-        if not part.isdigit() and not next_part.isdigit():
+        if not part.isdigit():
             prefixes.append(".".join(current))
     return tuple(prefixes)
 

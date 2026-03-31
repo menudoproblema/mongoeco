@@ -39,6 +39,7 @@ from mongoeco.engines.sqlite_query import (
     _translate_scalar_equals,
     index_expressions_sql,
     json_path_for_field,
+    path_array_prefixes,
     sort_type_expression_sql,
     translate_query_plan,
     translate_compiled_update_plan,
@@ -51,6 +52,10 @@ from mongoeco.types import ObjectId, UNDEFINED
 
 
 class SQLiteQueryTranslationTests(unittest.TestCase):
+    def test_path_array_prefixes_keep_non_numeric_prefixes_before_index_segments(self):
+        self.assertEqual(path_array_prefixes("a.0.b.c"), ("a", "a.0.b"))
+        self.assertEqual(path_array_prefixes("items.0"), ("items",))
+
     def test_path_crosses_scalar_parent_detects_scalar_none_list_and_missing_cases(self):
         self.assertFalse(_path_crosses_scalar_parent({"profile": None}, "profile.name"))
         self.assertTrue(_path_crosses_scalar_parent({"profile": 1}, "profile.name"))
