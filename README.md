@@ -43,6 +43,15 @@ The base package now includes `pyuca` as a runtime dependency so Unicode
 collations keep a deterministic UCA-backed behavior even when `PyICU` is not
 installed.
 
+Collation backend policy:
+
+* `PyICU` if available: preferred backend, including advanced collation knobs
+  such as `backwards`, `alternate`, `maxVariable` and `normalization`
+* `pyuca` fallback: Unicode collation for the supported basic subset
+  (`locale=en`, `strength`, `caseLevel`, `numericOrdering`)
+* if advanced knobs are requested without `PyICU`, `mongoeco` raises an error
+  instead of silently ignoring them
+
 Optional fast JSON backend:
 
 ```bash

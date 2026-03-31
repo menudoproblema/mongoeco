@@ -46,6 +46,22 @@ class CollationSpec:
         return document
 
 
+@dataclass(frozen=True, slots=True)
+class CollationBackendInfo:
+    selected_backend: str
+    available_backends: tuple[str, ...]
+    unicode_available: bool
+    advanced_options_available: bool
+
+    def to_document(self) -> dict[str, object]:
+        return {
+            "selectedBackend": self.selected_backend,
+            "availableBackends": list(self.available_backends),
+            "unicodeAvailable": self.unicode_available,
+            "advancedOptionsAvailable": self.advanced_options_available,
+        }
+
+
 def normalize_collation(collation: object | None) -> CollationSpec | None:
     if collation is None:
         return None
@@ -138,6 +154,26 @@ def icu_collation_available() -> bool:
 
 def unicode_collation_available() -> bool:
     return _icu is not None or _pyuca is not None
+
+
+def collation_backend_info() -> CollationBackendInfo:
+    available: list[str] = []
+    if _icu is not None:
+        available.append("icu")
+    if _pyuca is not None:
+        available.append("pyuca")
+    if _icu is not None:
+        selected = "icu"
+    elif _pyuca is not None:
+        selected = "pyuca"
+    else:
+        selected = "none"
+    return CollationBackendInfo(
+        selected_backend=selected,
+        available_backends=tuple(available),
+        unicode_available=bool(available),
+        advanced_options_available=_icu is not None,
+    )
 
 
 _NUMERIC_SEGMENT_RE = re.compile(r"\d+|\D+")

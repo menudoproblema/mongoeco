@@ -259,6 +259,28 @@ Para collation Unicode:
 * ambas rutas quedan cubiertas por tests, pero pueden existir diferencias
   menores en tailoring avanzado fuera de este subconjunto soportado
 
+Matriz práctica de capacidades:
+
+* backend `icu`
+  * soporta el subconjunto básico anterior
+  * soporta también `backwards`, `alternate`, `maxVariable` y
+    `normalization`
+* backend `pyuca`
+  * soporta Unicode collation básica
+  * no soporta tailoring avanzado compatible con ICU
+  * si el usuario pide `backwards`, `alternate`, `maxVariable` o
+    `normalization`, `mongoeco` falla explícitamente
+* sin backend Unicode
+  * solo `simple`
+
+La API runtime expone esta información en
+`mongoeco.core.collation.collation_backend_info()`, que devuelve:
+
+* `selected_backend`
+* `available_backends`
+* `unicode_available`
+* `advanced_options_available`
+
 ## 10. Verificación contractual contra PyMongo real
 
 La ampliación de superficie pública no debe decidirse por memoria ni por lectura

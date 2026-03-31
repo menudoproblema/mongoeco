@@ -5,6 +5,8 @@ from unittest.mock import patch
 
 import mongoeco.core.collation as collation_module
 from mongoeco.core.collation import (
+    collation_backend_info,
+    CollationBackendInfo,
     CollationSpec,
     compare_with_collation,
     icu_collation_available,
@@ -154,6 +156,9 @@ class CollationTests(unittest.TestCase):
     def test_icu_collation_available_exposes_backend_presence(self):
         self.assertIsInstance(icu_collation_available(), bool)
         self.assertIsInstance(unicode_collation_available(), bool)
+        info = collation_backend_info()
+        self.assertIsInstance(info, CollationBackendInfo)
+        self.assertIsInstance(info.to_document(), dict)
         self.assertTrue(values_equal_with_collation(3, 3))
         self.assertFalse(
             values_equal_with_collation(
@@ -162,6 +167,37 @@ class CollationTests(unittest.TestCase):
                 collation=normalize_collation({"locale": "en", "strength": 2}),
             )
         )
+
+    def test_collation_backend_info_prefers_icu_then_pyuca_then_none(self):
+        with (
+            patch.object(collation_module, "_icu", object()),
+            patch.object(collation_module, "_pyuca", object()),
+        ):
+            info = collation_module.collation_backend_info()
+            self.assertEqual(info.selected_backend, "icu")
+            self.assertEqual(info.available_backends, ("icu", "pyuca"))
+            self.assertTrue(info.unicode_available)
+            self.assertTrue(info.advanced_options_available)
+
+        with (
+            patch.object(collation_module, "_icu", None),
+            patch.object(collation_module, "_pyuca", object()),
+        ):
+            info = collation_module.collation_backend_info()
+            self.assertEqual(info.selected_backend, "pyuca")
+            self.assertEqual(info.available_backends, ("pyuca",))
+            self.assertTrue(info.unicode_available)
+            self.assertFalse(info.advanced_options_available)
+
+        with (
+            patch.object(collation_module, "_icu", None),
+            patch.object(collation_module, "_pyuca", None),
+        ):
+            info = collation_module.collation_backend_info()
+            self.assertEqual(info.selected_backend, "none")
+            self.assertEqual(info.available_backends, ())
+            self.assertFalse(info.unicode_available)
+            self.assertFalse(info.advanced_options_available)
 
     def test_actual_unicode_backend_handles_accent_and_numeric_ordering(self):
         spec = normalize_collation({"locale": "en", "strength": 1, "numericOrdering": True})

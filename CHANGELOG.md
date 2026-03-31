@@ -100,6 +100,10 @@ usa Semantic Versioning.
   disponible y `pyuca` en caso contrario), y el paquete base incorpora
   `pyuca` como dependencia runtime para evitar caer al fallback
   aproximado anterior en entornos sin `PyICU`.
+- La collation expone ya metadata de capacidad en runtime para distinguir
+  entre backend `ICU`, fallback `pyuca` y ausencia de backend Unicode, y
+  documenta de forma explicita que las opciones avanzadas de tailoring
+  solo quedan soportadas cuando `PyICU` esta disponible.
 - `$jsonSchema` valida ya operadores lógicos (`allOf`, `anyOf`,
   `oneOf`, `not`), `$bucket` y `$bucketAuto` heredan la `collation`
   del pipeline, y las conversiones de agregación endurecen su
