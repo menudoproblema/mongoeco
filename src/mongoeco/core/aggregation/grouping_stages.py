@@ -4,7 +4,7 @@ import math
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.collation import CollationSpec
+from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.core.paths import get_document_value, set_document_value
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import OperationFailure
@@ -89,16 +89,17 @@ def _find_bucket_index(
     boundaries: list[Any],
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> int | None:
-    if dialect.policy.compare_values(value, boundaries[0]) < 0:
+    if compare_with_collation(value, boundaries[0], dialect=dialect, collation=collation) < 0:
         return None
-    if dialect.policy.compare_values(value, boundaries[-1]) >= 0:
+    if compare_with_collation(value, boundaries[-1], dialect=dialect, collation=collation) >= 0:
         return None
     low = 0
     high = len(boundaries) - 1
     while low < high - 1:
         mid = (low + high) // 2
-        if dialect.policy.compare_values(value, boundaries[mid]) < 0:
+        if compare_with_collation(value, boundaries[mid], dialect=dialect, collation=collation) < 0:
             high = mid
         else:
             low = mid
@@ -187,6 +188,7 @@ def _apply_bucket(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> list[Document]:
     if not isinstance(spec, dict) or "groupBy" not in spec or "boundaries" not in spec:
         raise OperationFailure("$bucket requires groupBy and boundaries")
@@ -194,7 +196,12 @@ def _apply_bucket(
     if not isinstance(boundaries, list) or len(boundaries) < 2:
         raise OperationFailure("$bucket boundaries must be a list with at least two values")
     for index in range(len(boundaries) - 1):
-        if dialect.policy.compare_values(boundaries[index], boundaries[index + 1]) >= 0:
+        if compare_with_collation(
+            boundaries[index],
+            boundaries[index + 1],
+            dialect=dialect,
+            collation=collation,
+        ) >= 0:
             raise OperationFailure("$bucket boundaries must be strictly increasing")
 
     output = spec.get("output")
@@ -208,7 +215,7 @@ def _apply_bucket(
     )
 
     default_bucket = spec.get("default")
-    accumulator_runtime = _build_accumulator_runtime(dialect=dialect, collation=None)
+    accumulator_runtime = _build_accumulator_runtime(dialect=dialect, collation=collation)
     buckets: list[_AccumulatorBucket] = []
     for lower in boundaries[:-1]:
         buckets.append(
@@ -227,7 +234,7 @@ def _apply_bucket(
 
     for document in documents:
         value = evaluate_expression(document, spec["groupBy"], variables, dialect=dialect)
-        bucket_index = _find_bucket_index(value, boundaries, dialect=dialect)
+        bucket_index = _find_bucket_index(value, boundaries, dialect=dialect, collation=collation)
         if bucket_index is not None:
             _apply_accumulators(
                 buckets[bucket_index],
@@ -235,7 +242,7 @@ def _apply_bucket(
                 document,
                 variables,
                 dialect=dialect,
-                collation=None,
+                collation=collation,
                 **accumulator_runtime,
             )
             continue
@@ -246,7 +253,7 @@ def _apply_bucket(
                 document,
                 variables,
                 dialect=dialect,
-                collation=None,
+                collation=collation,
                 **accumulator_runtime,
             )
             continue
@@ -264,6 +271,7 @@ def _apply_bucket_auto(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> list[Document]:
     if not isinstance(spec, dict) or "groupBy" not in spec or "buckets" not in spec:
         raise OperationFailure("$bucketAuto requires groupBy and buckets")
@@ -274,7 +282,7 @@ def _apply_bucket_auto(
         raise OperationFailure("$bucketAuto granularity is not supported")
 
     output = spec.get("output")
-    accumulator_runtime = _build_accumulator_runtime(dialect=dialect, collation=None)
+    accumulator_runtime = _build_accumulator_runtime(dialect=dialect, collation=collation)
     if output is not None and not isinstance(output, dict):
         raise OperationFailure("$bucketAuto output must be a document")
     prepared_output = _prepare_accumulator_specs(
@@ -291,7 +299,14 @@ def _apply_bucket_auto(
     if not evaluated:
         return []
 
-    compare_key = cmp_to_key(dialect.policy.compare_values)
+    compare_key = cmp_to_key(
+        lambda left, right: compare_with_collation(
+            left,
+            right,
+            dialect=dialect,
+            collation=collation,
+        )
+    )
     evaluated.sort(key=lambda item: compare_key(item[0]))
     bucket_count = min(buckets, len(evaluated))
     base = len(evaluated) // bucket_count
@@ -320,7 +335,7 @@ def _apply_bucket_auto(
                 document,
                 variables,
                 dialect=dialect,
-                collation=None,
+                collation=collation,
                 **accumulator_runtime,
             )
         result.append(_finalize_accumulators(bucket))

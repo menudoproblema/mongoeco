@@ -22,6 +22,10 @@ class CollationTests(unittest.TestCase):
                 "strength": 2,
                 "caseLevel": True,
                 "numericOrdering": True,
+                "backwards": True,
+                "alternate": "shifted",
+                "maxVariable": "space",
+                "normalization": True,
             }
         )
 
@@ -32,6 +36,10 @@ class CollationTests(unittest.TestCase):
                 strength=2,
                 case_level=True,
                 numeric_ordering=True,
+                backwards=True,
+                alternate="shifted",
+                max_variable="space",
+                normalization=True,
             ),
         )
         self.assertEqual(
@@ -41,6 +49,10 @@ class CollationTests(unittest.TestCase):
                 "strength": 2,
                 "caseLevel": True,
                 "numericOrdering": True,
+                "backwards": True,
+                "alternate": "shifted",
+                "maxVariable": "space",
+                "normalization": True,
             },
         )
 
@@ -57,6 +69,14 @@ class CollationTests(unittest.TestCase):
             normalize_collation({"caseLevel": 1})
         with self.assertRaises(TypeError):
             normalize_collation({"numericOrdering": 1})
+        with self.assertRaises(TypeError):
+            normalize_collation({"backwards": 1})
+        with self.assertRaises(ValueError):
+            normalize_collation({"alternate": "ignored"})
+        with self.assertRaises(ValueError):
+            normalize_collation({"maxVariable": "symbol"})
+        with self.assertRaises(TypeError):
+            normalize_collation({"normalization": 1})
 
     def test_compare_with_collation_honours_strength_and_case_level(self):
         strength_one = normalize_collation({"locale": "en", "strength": 1})
@@ -108,6 +128,16 @@ class CollationTests(unittest.TestCase):
             self.assertEqual(compare_with_collation("b", "a", collation=spec), 1)
 
         compare_pyuca.assert_called_once_with("b", "a", spec)
+
+    def test_compare_with_collation_rejects_icu_only_options_without_icu(self):
+        spec = normalize_collation({"locale": "en", "strength": 2, "backwards": True})
+
+        with (
+            patch("mongoeco.core.collation._can_use_icu_collation", return_value=False),
+            patch("mongoeco.core.collation._can_use_pyuca_collation", return_value=True),
+        ):
+            with self.assertRaisesRegex(ValueError, "require an ICU backend"):
+                compare_with_collation("b", "a", collation=spec)
 
     def test_compare_with_simple_collation_skips_unicode_backends(self):
         spec = normalize_collation({"locale": "simple", "strength": 3})

@@ -125,6 +125,34 @@ class SchemaValidationTests(unittest.TestCase):
         self.assertTrue(any("value is not in enum" in message for message in rendered))
         self.assertTrue(any("additional properties are not allowed" in message for message in rendered))
 
+    def test_json_schema_supports_logical_operators(self):
+        schema = CompiledJsonSchema(
+            {
+                "allOf": [
+                    {"bsonType": "object"},
+                    {"required": ["name"]},
+                ],
+                "anyOf": [
+                    {"properties": {"name": {"bsonType": "string"}}},
+                    {"properties": {"age": {"bsonType": "int"}}},
+                ],
+                "oneOf": [
+                    {"required": ["name"]},
+                    {"required": ["age"]},
+                ],
+                "not": {"required": ["blocked"]},
+            }
+        )
+
+        valid = schema.validate({"name": "Ada"})
+        invalid = schema.validate({"name": "Ada", "age": 3, "blocked": True})
+
+        self.assertTrue(valid.valid)
+        self.assertFalse(invalid.valid)
+        rendered = [issue.render() for issue in invalid.issues]
+        self.assertTrue(any("oneOf" in message for message in rendered))
+        self.assertTrue(any("must not satisfy not" in message for message in rendered))
+
     def test_json_schema_accepts_public_bson_helper_classes(self):
         schema = CompiledJsonSchema(
             {
@@ -208,6 +236,10 @@ class SchemaValidationTests(unittest.TestCase):
             {"minItems": -1},
             {"pattern": 1},
             {"minimum": "x"},
+            {"not": []},
+            {"anyOf": []},
+            {"allOf": [1]},
+            {"oneOf": "bad"},
         ):
             with self.subTest(schema=schema):
                 with self.assertRaises(OperationFailure):

@@ -136,6 +136,7 @@ class CompiledJsonSchema:
         elif self._is_numeric(value):
             issues.extend(self._validate_numeric(schema, value, path))
 
+        issues.extend(self._validate_logical_operators(schema, value, path))
         return issues
 
     def _validate_schema_definition(self, schema: Mapping[str, object]) -> None:
@@ -172,6 +173,8 @@ class CompiledJsonSchema:
             if not isinstance(items_schema, dict):
                 raise OperationFailure("$jsonSchema items must be a document")
             self._validate_schema_definition(items_schema)
+
+        self._validate_logical_schema_definition(schema)
 
         for field_name in ("minItems", "maxItems", "minLength", "maxLength"):
             value = schema.get(field_name)
@@ -391,6 +394,59 @@ class CompiledJsonSchema:
         return isinstance(value, expected) and not (
             type_name in {"bool", "boolean"} and isinstance(value, bool) is False
         )
+
+    def _validate_logical_operators(
+        self,
+        schema: Mapping[str, object],
+        value: object,
+        path: tuple[str, ...],
+    ) -> list[SchemaValidationIssue]:
+        issues: list[SchemaValidationIssue] = []
+
+        all_of = schema.get("allOf")
+        if isinstance(all_of, list):
+            for sub_schema in all_of:
+                assert isinstance(sub_schema, dict)
+                issues.extend(self._validate_schema(sub_schema, value, path))
+
+        any_of = schema.get("anyOf")
+        if isinstance(any_of, list):
+            if not any(not self._validate_schema(sub_schema, value, path) for sub_schema in any_of if isinstance(sub_schema, dict)):
+                issues.append(SchemaValidationIssue(path, "value does not satisfy anyOf"))
+
+        one_of = schema.get("oneOf")
+        if isinstance(one_of, list):
+            matches = 0
+            for sub_schema in one_of:
+                assert isinstance(sub_schema, dict)
+                if not self._validate_schema(sub_schema, value, path):
+                    matches += 1
+            if matches != 1:
+                issues.append(SchemaValidationIssue(path, "value does not satisfy oneOf"))
+
+        not_schema = schema.get("not")
+        if isinstance(not_schema, dict) and not self._validate_schema(not_schema, value, path):
+            issues.append(SchemaValidationIssue(path, "value must not satisfy not"))
+
+        return issues
+
+    def _validate_logical_schema_definition(self, schema: Mapping[str, object]) -> None:
+        not_schema = schema.get("not")
+        if not_schema is not None:
+            if not isinstance(not_schema, dict):
+                raise OperationFailure("$jsonSchema not must be a document")
+            self._validate_schema_definition(not_schema)
+
+        for field_name in ("allOf", "anyOf", "oneOf"):
+            raw_value = schema.get(field_name)
+            if raw_value is None:
+                continue
+            if not isinstance(raw_value, list) or not raw_value:
+                raise OperationFailure(f"$jsonSchema {field_name} must be a non-empty list of documents")
+            for sub_schema in raw_value:
+                if not isinstance(sub_schema, dict):
+                    raise OperationFailure(f"$jsonSchema {field_name} entries must be documents")
+                self._validate_schema_definition(sub_schema)
 
 
 @dataclass(frozen=True, slots=True)

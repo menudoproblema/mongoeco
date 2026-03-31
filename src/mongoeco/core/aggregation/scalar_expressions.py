@@ -98,7 +98,7 @@ def evaluate_scalar_expression(
             if target not in aliases:
                 raise OperationFailure("$convert target type is not supported")
             return _convert_aggregation_scalar(operator, value, aliases[target], stringify_value=stringify_value)
-        except OperationFailure:
+        except Exception:
             if "onError" in spec:
                 return evaluate_expression(document, spec["onError"], variables)
             raise
@@ -296,7 +296,7 @@ def _convert_aggregation_scalar(
                 raise OperationFailure(f"{operator} overflow")
             return BsonInt32(value) if preserve_numeric_wrappers else value
         if isinstance(value, float):
-            if not math.isfinite(value) or not value.is_integer():
+            if not math.isfinite(value):
                 raise OperationFailure(f"{operator} cannot convert the value")
             integer = int(value)
             if integer < INT32_MIN or integer > INT32_MAX:
@@ -317,7 +317,7 @@ def _convert_aggregation_scalar(
                 raise OperationFailure(f"{operator} overflow")
             return BsonInt64(value) if preserve_numeric_wrappers else value
         if isinstance(value, float):
-            if not math.isfinite(value) or not value.is_integer():
+            if not math.isfinite(value):
                 raise OperationFailure(f"{operator} cannot convert the value")
             integer = int(value)
             if integer < INT64_MIN or integer > INT64_MAX:

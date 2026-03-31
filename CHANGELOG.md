@@ -100,6 +100,12 @@ usa Semantic Versioning.
   disponible y `pyuca` en caso contrario), y el paquete base incorpora
   `pyuca` como dependencia runtime para evitar caer al fallback
   aproximado anterior en entornos sin `PyICU`.
+- `$jsonSchema` valida ya operadores lógicos (`allOf`, `anyOf`,
+  `oneOf`, `not`), `$bucket` y `$bucketAuto` heredan la `collation`
+  del pipeline, y las conversiones de agregación endurecen su
+  compatibilidad con MongoDB: `$convert` aplica `onError` ante fallos
+  de conversión no envueltos y `$toInt`/`$toLong` truncan `double`
+  finitos hacia cero en vez de rechazarlos por fraccionales.
 - Los modulos wire y de transporte dejan ya de importar `bson` de forma
   ansiosa en un interprete limpio: el paquete puede exponerse e
   importarse sin extras wire instalados, y solo falla con un error claro

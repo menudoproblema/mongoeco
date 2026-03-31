@@ -159,7 +159,13 @@ def _stage_bucket(
     spec: object,
     context: AggregationStageContext,
 ) -> list[Document]:
-    return _apply_bucket(documents, spec, context.variables, dialect=context.dialect)
+    return _apply_bucket(
+        documents,
+        spec,
+        context.variables,
+        dialect=context.dialect,
+        collation=context.collation,
+    )
 
 
 def _stage_bucket_auto(
@@ -167,7 +173,13 @@ def _stage_bucket_auto(
     spec: object,
     context: AggregationStageContext,
 ) -> list[Document]:
-    return _apply_bucket_auto(documents, spec, context.variables, dialect=context.dialect)
+    return _apply_bucket_auto(
+        documents,
+        spec,
+        context.variables,
+        dialect=context.dialect,
+        collation=context.collation,
+    )
 
 
 def _stage_lookup(

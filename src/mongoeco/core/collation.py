@@ -23,14 +23,27 @@ class CollationSpec:
     strength: int = 3
     case_level: bool = False
     numeric_ordering: bool = False
+    backwards: bool = False
+    alternate: str = "non-ignorable"
+    max_variable: str = "punct"
+    normalization: bool = False
 
     def to_document(self) -> CollationDocument:
-        return {
+        document: CollationDocument = {
             "locale": self.locale,
             "strength": self.strength,
             "caseLevel": self.case_level,
             "numericOrdering": self.numeric_ordering,
         }
+        if self.backwards:
+            document["backwards"] = True
+        if self.alternate != "non-ignorable":
+            document["alternate"] = self.alternate
+        if self.max_variable != "punct":
+            document["maxVariable"] = self.max_variable
+        if self.normalization:
+            document["normalization"] = True
+        return document
 
 
 def normalize_collation(collation: object | None) -> CollationSpec | None:
@@ -52,11 +65,27 @@ def normalize_collation(collation: object | None) -> CollationSpec | None:
     numeric_ordering = collation.get("numericOrdering", False)
     if not isinstance(numeric_ordering, bool):
         raise TypeError("collation numericOrdering must be a boolean")
+    backwards = collation.get("backwards", False)
+    if not isinstance(backwards, bool):
+        raise TypeError("collation backwards must be a boolean")
+    alternate = collation.get("alternate", "non-ignorable")
+    if alternate not in {"non-ignorable", "shifted"}:
+        raise ValueError("collation alternate must be 'non-ignorable' or 'shifted'")
+    max_variable = collation.get("maxVariable", "punct")
+    if max_variable not in {"punct", "space"}:
+        raise ValueError("collation maxVariable must be 'punct' or 'space'")
+    normalization = collation.get("normalization", False)
+    if not isinstance(normalization, bool):
+        raise TypeError("collation normalization must be a boolean")
     return CollationSpec(
         locale=locale,
         strength=strength,
         case_level=case_level,
         numeric_ordering=numeric_ordering,
+        backwards=backwards,
+        alternate=alternate,
+        max_variable=max_variable,
+        normalization=normalization,
     )
 
 
@@ -69,6 +98,8 @@ def compare_with_collation(
 ) -> int:
     if collation is None or not isinstance(left, str) or not isinstance(right, str):
         return dialect.policy.compare_values(left, right)
+    if _requires_icu_backend(collation) and not _can_use_icu_collation(collation):
+        raise ValueError("requested collation options require an ICU backend")
     if _can_use_icu_collation(collation):
         return _compare_with_icu(left, right, collation)
     if _can_use_pyuca_collation(collation):
@@ -139,12 +170,25 @@ def _can_use_pyuca_collation(collation: CollationSpec) -> bool:
     return _pyuca is not None and collation.locale != "simple"
 
 
+def _requires_icu_backend(collation: CollationSpec) -> bool:
+    return (
+        collation.backwards
+        or collation.alternate != "non-ignorable"
+        or collation.max_variable != "punct"
+        or collation.normalization
+    )
+
+
 @lru_cache(maxsize=32)
 def _get_icu_collator(
     locale: str,
     strength: int,
     case_level: bool,
     numeric_ordering: bool,
+    backwards: bool,
+    alternate: str,
+    max_variable: str,
+    normalization: bool,
 ):
     if _icu is None:  # pragma: no cover - guarded by caller
         raise RuntimeError("ICU collation backend is unavailable")
@@ -158,7 +202,7 @@ def _get_icu_collator(
     if hasattr(_icu, "UCollAttribute") and hasattr(_icu, "UCollAttributeValue"):
         collator.setAttribute(
             _icu.UCollAttribute.NORMALIZATION_MODE,
-            _icu.UCollAttributeValue.ON,
+            _icu.UCollAttributeValue.ON if normalization else _icu.UCollAttributeValue.OFF,
         )
         collator.setAttribute(
             _icu.UCollAttribute.CASE_LEVEL,
@@ -168,11 +212,28 @@ def _get_icu_collator(
             _icu.UCollAttribute.NUMERIC_COLLATION,
             _icu.UCollAttributeValue.ON if numeric_ordering else _icu.UCollAttributeValue.OFF,
         )
-        if strength == 1:
+        if hasattr(_icu.UCollAttribute, "FRENCH_COLLATION"):
+            collator.setAttribute(
+                _icu.UCollAttribute.FRENCH_COLLATION,
+                _icu.UCollAttributeValue.ON if backwards else _icu.UCollAttributeValue.OFF,
+            )
+        if hasattr(_icu.UCollAttribute, "ALTERNATE_HANDLING"):
             collator.setAttribute(
                 _icu.UCollAttribute.ALTERNATE_HANDLING,
-                _icu.UCollAttributeValue.SHIFTED,
+                (
+                    _icu.UCollAttributeValue.SHIFTED
+                    if alternate == "shifted"
+                    else _icu.UCollAttributeValue.NON_IGNORABLE
+                ),
             )
+        if alternate == "shifted" and hasattr(_icu.UCollAttribute, "MAX_VARIABLE"):
+            max_variable_value = getattr(
+                _icu.UCollAttributeValue,
+                "SPACE" if max_variable == "space" else "PUNCT",
+                None,
+            )
+            if max_variable_value is not None:
+                collator.setAttribute(_icu.UCollAttribute.MAX_VARIABLE, max_variable_value)
     return collator
 
 
@@ -182,6 +243,10 @@ def _compare_with_icu(left: str, right: str, collation: CollationSpec) -> int:
         collation.strength,
         collation.case_level,
         collation.numeric_ordering,
+        collation.backwards,
+        collation.alternate,
+        collation.max_variable,
+        collation.normalization,
     )
     comparison = collator.compare(left, right)
     if comparison < 0:

@@ -143,8 +143,7 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
 
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$toInt": "$bad_text"})
-        with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$toInt": "$fractional"})
+        self.assertEqual(evaluate_expression(document, {"$toInt": "$fractional"}), 3)
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$toLong": "$huge"})
         with self.assertRaises(OperationFailure):

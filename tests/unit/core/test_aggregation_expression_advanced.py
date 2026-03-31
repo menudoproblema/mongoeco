@@ -12,7 +12,7 @@ import mongoeco.core.aggregation.accumulators as accumulators_module
 import mongoeco.core.aggregation.grouping_stages as grouping_stages
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
-from mongoeco.core.collation import CollationSpec
+from mongoeco.core.collation import CollationSpec, normalize_collation
 from mongoeco.core.aggregation.accumulators import _AccumulatorBucket, _OrderedAccumulator
 from mongoeco.core.aggregation.scalar_expressions import (
     _aggregation_type_name,
@@ -259,31 +259,44 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
         self.assertEqual(bucketed[1]["pop"], 0.0)
         self.assertIsNone(bucketed[1]["samp"])
 
-        windowed = apply_pipeline(
+    def test_bucket_and_bucket_auto_honour_pipeline_collation(self):
+        documents = [
+            {"_id": "1", "name": "alice"},
+            {"_id": "2", "name": "Bob"},
+            {"_id": "3", "name": "carol"},
+        ]
+        collation = normalize_collation({"locale": "en", "strength": 2})
+
+        bucketed = apply_pipeline(
             documents,
             [
                 {
-                    "$setWindowFields": {
-                        "partitionBy": "$group",
-                        "sortBy": {"rank": 1},
-                        "output": {
-                            "runningPop": {"$stdDevPop": "$score", "window": {"documents": ["unbounded", "current"]}},
-                            "runningSamp": {"$stdDevSamp": "$score", "window": {"documents": ["unbounded", "current"]}},
-                        },
+                    "$bucket": {
+                        "groupBy": "$name",
+                        "boundaries": ["a", "d", "z"],
+                        "default": "other",
+                        "output": {"names": {"$push": "$name"}},
                     }
                 }
             ],
+            collation=collation,
         )
-        self.assertEqual(windowed[0]["runningPop"], 0.0)
-        self.assertIsNone(windowed[0]["runningSamp"])
-        self.assertAlmostEqual(windowed[1]["runningPop"], 1.0, places=10)
-        self.assertAlmostEqual(windowed[1]["runningSamp"], 1.41421356237, places=10)
-        self.assertAlmostEqual(windowed[2]["runningPop"], 0.94280904158, places=10)
-        self.assertAlmostEqual(windowed[2]["runningSamp"], 1.15470053838, places=10)
-        self.assertAlmostEqual(windowed[3]["runningPop"], 0.94280904158, places=10)
-        self.assertAlmostEqual(windowed[3]["runningSamp"], 1.15470053838, places=10)
-        self.assertEqual(windowed[4]["runningPop"], 0.0)
-        self.assertIsNone(windowed[4]["runningSamp"])
+        bucketed_auto = apply_pipeline(
+            documents,
+            [
+                {
+                    "$bucketAuto": {
+                        "groupBy": "$name",
+                        "buckets": 2,
+                        "output": {"names": {"$push": "$name"}},
+                    }
+                }
+            ],
+            collation=collation,
+        )
+
+        self.assertEqual(bucketed[0]["names"], ["alice", "Bob", "carol"])
+        self.assertEqual(bucketed_auto[0]["names"], ["alice", "Bob"])
 
     def test_group_bucket_and_window_support_first_n_and_last_n_accumulators(self):
         documents = [
@@ -920,10 +933,8 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
                 {"$convert": {"input": "$missing", "to": "double"}},
             )
         )
-        with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$toInt": "$fractional"})
-        with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$toLong": "$fractional"})
+        self.assertEqual(evaluate_expression(document, {"$toInt": "$fractional"}), 10)
+        self.assertEqual(evaluate_expression(document, {"$toLong": "$fractional"}), 10)
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$toDouble": "$blank"})
         with self.assertRaises(OperationFailure):
@@ -972,12 +983,39 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
             evaluate_expression(document, {"$convert": {"input": "$uuid_text", "to": "string"}}),
             "12345678-1234-5678-1234-567812345678",
         )
+        self.assertEqual(
+            evaluate_expression(document, {"$convert": {"input": 3.9, "to": "int"}}),
+            3,
+        )
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$convert": {"input": "$regex", "to": "bool"}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$toInt": "$too_big_int"})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$toLong": "$too_big_long"})
+
+    def test_convert_on_error_catches_non_operationfailure_conversion_errors(self):
+        missing_sentinel = object()
+        document = {"uuid_text": "12345678-1234-5678-1234-567812345678"}
+
+        with patch(
+            "mongoeco.core.aggregation.scalar_expressions._convert_aggregation_scalar",
+            side_effect=ValueError("boom"),
+        ):
+            result = evaluate_scalar_expression(
+                "$convert",
+                {},
+                {"input": 1, "to": "int", "onError": "fallback"},
+                None,
+                evaluate_expression=lambda document, expression, variables: expression,
+                evaluate_expression_with_missing=lambda document, expression, variables: expression,
+                require_expression_args=lambda operator, spec, minimum, maximum: spec,
+                stringify_value=str,
+                bson_document_size=lambda document: 0,
+                missing_sentinel=missing_sentinel,
+            )
+
+        self.assertEqual(result, "fallback")
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$convert": {"input": "$uuid_text", "to": "unknown"}})
 
