@@ -114,6 +114,15 @@ class ProjectionTests(unittest.TestCase):
         self.assertEqual(projected, {"profile": {"city": "Berlin"}})
         self.assertEqual(doc, {"_id": 1, "profile": {"city": "Madrid"}})
 
+    def test_empty_projection_returns_full_document(self):
+        doc = {"_id": 1, "name": "Ada", "profile": {"city": "Madrid"}}
+
+        projected = apply_projection(doc, {})
+        projected["profile"]["city"] = "Berlin"
+
+        self.assertEqual(projected, {"_id": 1, "name": "Ada", "profile": {"city": "Berlin"}})
+        self.assertEqual(doc, {"_id": 1, "name": "Ada", "profile": {"city": "Madrid"}})
+
     def test_projection_rejects_mixed_inclusion_exclusion_and_invalid_flags(self):
         doc = {"_id": 1, "a": 1, "b": 2}
 
@@ -224,6 +233,8 @@ class ProjectionTests(unittest.TestCase):
             apply_projection(doc, {"items": {"$slice": "bad"}})  # type: ignore[dict-item]
         with self.assertRaises(OperationFailure):
             apply_projection(doc, {"items": {"$slice": [1]}})  # type: ignore[dict-item]
+        with self.assertRaises(OperationFailure):
+            apply_projection(doc, {"items": {"$slice": [-1, 1]}})  # type: ignore[dict-item]
         with self.assertRaises(OperationFailure):
             apply_projection(doc, {"items": {"$elemMatch": 1}})  # type: ignore[dict-item]
         with self.assertRaises(OperationFailure):

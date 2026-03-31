@@ -43,12 +43,12 @@ def apply_projection(
     selector_filter: Filter | None = None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> Document:
-    if not projection:
+    if projection is None:
         return doc
     parsed = _parse_projection_spec(projection, dialect=dialect)
 
     if not parsed.regular_fields and not parsed.operator_fields:
-        result = deepcopy(doc) if not parsed.include_id else {"_id": doc.get("_id")}
+        result = deepcopy(doc)
         if not parsed.include_id and "_id" in result:
             del result["_id"]
         return result
@@ -200,6 +200,7 @@ def _validate_projection_slice_operand(value: object) -> None:
         if (
             isinstance(skip, int)
             and not isinstance(skip, bool)
+            and skip >= 0
             and isinstance(limit, int)
             and not isinstance(limit, bool)
             and limit > 0

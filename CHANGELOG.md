@@ -13,6 +13,10 @@ usa Semantic Versioning.
 - Se endurece la aritmetica BSON y la validacion de `$mod`: `bson_divide`
   y `bson_mod` rechazan ya divisores cero con `OperationFailure`, y los
   filtros `$mod` dejan de aceptar divisores `NaN` o infinitos.
+- Se corrige la semantica base de proyeccion: una proyeccion vacia `{}`
+  vuelve a devolver el documento completo, y `$slice` en forma
+  `[skip, limit]` rechaza ya offsets negativos en lugar de heredar el
+  slicing negativo de Python.
 - Se validan ya como no soportados los valores `NaN` e infinitos en
   ventanas `range` de `$setWindowFields`, evitando comparaciones
   inconsistentes sobre el campo de ordenacion.
