@@ -8,6 +8,10 @@ try:
     import icu as _icu
 except Exception:  # pragma: no cover - optional dependency
     _icu = None
+try:
+    import pyuca as _pyuca
+except Exception:  # pragma: no cover - optional dependency
+    _pyuca = None
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.types import CollationDocument
@@ -67,6 +71,8 @@ def compare_with_collation(
         return dialect.policy.compare_values(left, right)
     if _can_use_icu_collation(collation):
         return _compare_with_icu(left, right, collation)
+    if _can_use_pyuca_collation(collation):
+        return _compare_with_pyuca(left, right, collation)
 
     primary_left = _collation_primary_key(left, collation)
     primary_right = _collation_primary_key(right, collation)
@@ -99,6 +105,10 @@ def icu_collation_available() -> bool:
     return _icu is not None
 
 
+def unicode_collation_available() -> bool:
+    return _icu is not None or _pyuca is not None
+
+
 _NUMERIC_SEGMENT_RE = re.compile(r"\d+|\D+")
 
 
@@ -123,6 +133,10 @@ def _collation_primary_key(value: str, collation: CollationSpec) -> tuple[object
 
 def _can_use_icu_collation(collation: CollationSpec) -> bool:
     return _icu is not None and collation.locale != "simple"
+
+
+def _can_use_pyuca_collation(collation: CollationSpec) -> bool:
+    return _pyuca is not None and collation.locale != "simple"
 
 
 @lru_cache(maxsize=32)
@@ -175,6 +189,61 @@ def _compare_with_icu(left: str, right: str, collation: CollationSpec) -> int:
     if comparison > 0:
         return 1
     return 0
+
+
+@lru_cache(maxsize=1)
+def _get_pyuca_collator():
+    if _pyuca is None:  # pragma: no cover - guarded by caller
+        raise RuntimeError('pyuca collation backend is unavailable')
+    return _pyuca.Collator()
+
+
+def _compare_with_pyuca(left: str, right: str, collation: CollationSpec) -> int:
+    left_key = _pyuca_collation_key(left, collation)
+    right_key = _pyuca_collation_key(right, collation)
+    if left_key < right_key:
+        return -1
+    if left_key > right_key:
+        return 1
+    return 0
+
+
+def _pyuca_collation_key(value: str, collation: CollationSpec) -> tuple[object, ...]:
+    if not collation.numeric_ordering:
+        return _truncate_uca_key(_get_pyuca_collator().sort_key(value), collation)
+    parts: list[object] = []
+    for segment in _NUMERIC_SEGMENT_RE.findall(value):
+        if segment.isdigit():
+            parts.append((0, int(segment)))
+        else:
+            parts.append((1, _truncate_uca_key(_get_pyuca_collator().sort_key(segment), collation)))
+    return tuple(parts)
+
+
+def _truncate_uca_key(key: tuple[int, ...], collation: CollationSpec) -> tuple[object, ...]:
+    levels = _split_uca_levels(key)
+    truncated: list[object] = []
+    if levels:
+        truncated.append(levels[0])
+    if collation.strength >= 2 and len(levels) >= 2:
+        truncated.append(levels[1])
+    if (collation.case_level or collation.strength >= 3) and len(levels) >= 3:
+        truncated.append(levels[2])
+    return tuple(truncated)
+
+
+def _split_uca_levels(key: tuple[int, ...]) -> tuple[tuple[int, ...], ...]:
+    levels: list[tuple[int, ...]] = []
+    current: list[int] = []
+    for value in key:
+        if value == 0:
+            levels.append(tuple(current))
+            current = []
+            continue
+        current.append(value)
+    if current:
+        levels.append(tuple(current))
+    return tuple(levels)
 
 
 def _strip_accents(value: str) -> str:

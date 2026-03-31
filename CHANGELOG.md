@@ -96,9 +96,9 @@ usa Semantic Versioning.
   `RELAXED` los reporta como `planning_issues`; ademas, `$switch`
   tolera ahora claves extra dentro de cada branch siempre que existan
   `case` y `then`.
-- La collation prefiere ya un backend ICU real cuando esta disponible,
-  manteniendo la ruta aproximada existente como fallback cuando el
-  runtime no expone soporte ICU.
+- La collation prefiere ya un backend Unicode real (`ICU` cuando esta
+  disponible y `pyuca` en caso contrario), reduciendo desajustes de
+  ordenacion y comparacion frente al fallback aproximado anterior.
 - `create_index()` acepta ya key patterns especiales como `"text"`,
   `"hashed"`, `"2d"` y `"2dsphere"` en metadata publica y round-trips de
   indices. Mientras no exista un planner especializado para ellos,

@@ -8,6 +8,7 @@ from mongoeco.core.collation import (
     compare_with_collation,
     icu_collation_available,
     normalize_collation,
+    unicode_collation_available,
     values_equal_with_collation,
 )
 
@@ -95,8 +96,21 @@ class CollationTests(unittest.TestCase):
 
         compare_icu.assert_called_once_with("b", "a", spec)
 
+    def test_compare_with_collation_uses_pyuca_backend_when_icu_is_unavailable(self):
+        spec = normalize_collation({"locale": "en", "strength": 2})
+
+        with (
+            patch("mongoeco.core.collation._can_use_icu_collation", return_value=False),
+            patch("mongoeco.core.collation._can_use_pyuca_collation", return_value=True),
+            patch("mongoeco.core.collation._compare_with_pyuca", return_value=1) as compare_pyuca,
+        ):
+            self.assertEqual(compare_with_collation("b", "a", collation=spec), 1)
+
+        compare_pyuca.assert_called_once_with("b", "a", spec)
+
     def test_icu_collation_available_exposes_backend_presence(self):
         self.assertIsInstance(icu_collation_available(), bool)
+        self.assertIsInstance(unicode_collation_available(), bool)
         self.assertTrue(values_equal_with_collation(3, 3))
         self.assertFalse(
             values_equal_with_collation(
@@ -105,3 +119,9 @@ class CollationTests(unittest.TestCase):
                 collation=normalize_collation({"locale": "en", "strength": 2}),
             )
         )
+
+    def test_actual_unicode_backend_handles_accent_and_numeric_ordering(self):
+        spec = normalize_collation({"locale": "en", "strength": 1, "numericOrdering": True})
+
+        self.assertEqual(compare_with_collation("Álvaro", "alvaro", collation=spec), 0)
+        self.assertLess(compare_with_collation("file2", "file10", collation=spec), 0)

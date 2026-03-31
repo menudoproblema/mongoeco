@@ -10,7 +10,9 @@ readme = "README.md"
 license = "Apache-2.0"
 authors = [{name = "Vicente Ruiz"}]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pyuca>=1.2,<2",
+]
 keywords = [
     "mongodb",
     "pymongo",
