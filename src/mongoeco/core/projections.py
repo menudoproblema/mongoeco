@@ -48,9 +48,14 @@ def apply_projection(
     parsed = _parse_projection_spec(projection, dialect=dialect)
 
     if not parsed.regular_fields and not parsed.operator_fields:
+        if projection:
+            result = {"_id": deepcopy(doc["_id"])} if parsed.include_id and "_id" in doc else {}
+            if not parsed.include_id:
+                result = deepcopy(doc)
+                if "_id" in result:
+                    del result["_id"]
+            return result
         result = deepcopy(doc)
-        if not parsed.include_id and "_id" in result:
-            del result["_id"]
         return result
 
     if parsed.is_inclusion:

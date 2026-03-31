@@ -18,6 +18,9 @@ usa Semantic Versioning.
 - `insert_many()` deja de truncar silenciosamente la verificacion de
   resultados cuando un engine bulk devuelve un numero de respuestas
   distinto al de documentos enviados.
+- La compilacion de pipelines valida ya las especificaciones de
+  `$addFields` y `$set` antes de ejecutar documentos, evitando que
+  claves invalidas se acepten y fallen tarde en runtime.
 - Se validan ya como no soportados los valores `NaN` e infinitos en
   ventanas `range` de `$setWindowFields`, evitando comparaciones
   inconsistentes sobre el campo de ordenacion.

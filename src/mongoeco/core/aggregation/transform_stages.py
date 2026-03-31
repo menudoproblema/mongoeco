@@ -93,6 +93,9 @@ def _apply_add_fields(
 ) -> list[Document]:
     if not isinstance(spec, dict):
         raise OperationFailure("$addFields requires a document specification")
+    for path in spec:
+        if not isinstance(path, str):
+            raise OperationFailure("$addFields field names must be strings")
     result: list[Document] = []
     for document in documents:
         enriched = deepcopy(document)
@@ -101,8 +104,6 @@ def _apply_add_fields(
             for path, expression in spec.items()
         }
         for path in spec:
-            if not isinstance(path, str):
-                raise OperationFailure("$addFields field names must be strings")
             if evaluated[path] is _REMOVE:
                 delete_document_value(enriched, path)
                 continue

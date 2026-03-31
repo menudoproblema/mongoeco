@@ -1145,6 +1145,12 @@ class AggregationCoreTests(unittest.TestCase):
         finally:
             unregister_aggregation_stage("$annotate")
 
+    def test_compile_pipeline_validates_add_fields_and_set_specs_before_execution(self):
+        with self.assertRaisesRegex(OperationFailure, "field names must be strings"):
+            compile_pipeline([{"$addFields": {1: "x"}}])  # type: ignore[dict-item]
+        with self.assertRaisesRegex(OperationFailure, "field names must be strings"):
+            compile_pipeline([{"$set": {1: "x"}}])  # type: ignore[dict-item]
+
     def test_apply_pipeline_uses_compiled_pipeline_when_available(self):
         class _StubPlan:
             def execute(self, documents, *, variables=None, collection_resolver=None, spill_policy=None):

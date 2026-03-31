@@ -96,6 +96,7 @@ class ProjectionTests(unittest.TestCase):
     def test_id_projection(self):
         doc = {"_id": 1, "name": "Val"}
 
+        self.assertEqual(apply_projection(doc, {"_id": 1}), {"_id": 1})
         self.assertEqual(apply_projection(doc, {"_id": 0}), {"name": "Val"})
         self.assertEqual(apply_projection(doc, {"name": 1, "_id": 0}), {"name": "Val"})
         self.assertEqual(apply_projection(doc, {"name": 0, "_id": 0}), {})
