@@ -266,7 +266,7 @@ class BulkWriteError(WriteError, _BulkWriteErrorBase):
             labels = _labels_from_details(results)
             _set_error_labels(self, labels or error_labels)
             if code is not None:
-                self.code = code
+                setattr(self, "_OperationFailure__code", code)
             return
         WriteError.__init__(
             self,

@@ -6,7 +6,7 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import get_document_value, set_document_value
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, Projection
+from mongoeco.types import Document, Filter, Projection
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,6 +40,7 @@ def apply_projection(
     doc: Document,
     projection: Projection | None,
     *,
+    selector_filter: Filter | None = None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> Document:
     if not projection:
@@ -60,6 +61,14 @@ def apply_projection(
         for path, spec in parsed.operator_fields.items():
             if spec.operator == "$slice":
                 _apply_slice_projection(result, doc, path, spec.value)
+            elif spec.operator == "$positional":
+                _apply_positional_projection(
+                    result,
+                    doc,
+                    path,
+                    selector_filter=selector_filter,
+                    dialect=dialect,
+                )
         # MongoDB returns $elemMatch projected fields after the other inclusions.
         for path, spec in parsed.operator_fields.items():
             if spec.operator == "$elemMatch":
@@ -93,12 +102,22 @@ def _parse_projection_spec(
     has_regular_inclusion = False
     has_regular_exclusion = False
     has_elem_match = False
+    has_positional = False
     has_slice = False
     for key, value in projection.items():
         if not isinstance(key, str):
             raise OperationFailure("projection field names must be strings")
-        if any(segment == "$" for segment in key.split(".")):
-            raise OperationFailure("positional projection is not supported")
+        positional_path = _parse_positional_projection_path(key)
+        if positional_path is not None:
+            flag = _projection_flag(value, dialect=dialect)
+            if flag != 1:
+                raise OperationFailure("positional projection requires an inclusion flag")
+            operator_fields[positional_path] = _ProjectionOperatorSpec(
+                operator="$positional",
+                value=True,
+            )
+            has_positional = True
+            continue
         operator_spec = _parse_projection_operator_value(key, value)
         if operator_spec is not None:
             operator_fields[key] = operator_spec
@@ -123,8 +142,14 @@ def _parse_projection_spec(
         raise OperationFailure("cannot mix inclusion and exclusion in projection")
     if has_elem_match and has_regular_exclusion:
         raise OperationFailure("cannot mix exclusion with $elemMatch projection")
+    if has_positional and has_regular_exclusion:
+        raise OperationFailure("cannot mix exclusion with positional projection")
+    if has_positional and sum(
+        1 for spec in operator_fields.values() if spec.operator == "$positional"
+    ) > 1:
+        raise OperationFailure("only one positional projection is supported")
     _validate_projection_operator_path_collisions({*regular_fields, *operator_fields})
-    is_inclusion = has_regular_inclusion or has_elem_match
+    is_inclusion = has_regular_inclusion or has_elem_match or has_positional
     if not is_inclusion and has_slice:
         is_inclusion = False
     return _ParsedProjection(
@@ -153,6 +178,18 @@ def _parse_projection_operator_value(
             raise OperationFailure("$elemMatch projection requires a document specification")
         return _ProjectionOperatorSpec(operator=operator, value=operand)
     raise OperationFailure(f"Unsupported projection operator: {operator} for field {path}")
+
+
+def _parse_positional_projection_path(path: str) -> str | None:
+    segments = path.split(".")
+    positional_indexes = [index for index, segment in enumerate(segments) if segment == "$"]
+    if not positional_indexes:
+        return None
+    if len(positional_indexes) != 1 or positional_indexes[0] != len(segments) - 1:
+        raise OperationFailure("positional projection requires a single terminal '$' segment")
+    if len(segments) < 2:
+        raise OperationFailure("positional projection requires an array field path")
+    return ".".join(segments[:-1])
 
 
 def _validate_projection_slice_operand(value: object) -> None:
@@ -216,6 +253,32 @@ def _apply_elem_match_projection(
         return
     for candidate in value:
         if QueryEngine._match_elem_match_candidate(candidate, operand, dialect=dialect):
+            set_document_value(target, path, [deepcopy(candidate)])
+            return
+
+
+def _apply_positional_projection(
+    target: Document,
+    source: Document,
+    path: str,
+    *,
+    selector_filter: Filter | None,
+    dialect: MongoDialect,
+) -> None:
+    from mongoeco.core.operators import UpdateEngine
+
+    if selector_filter is None:
+        raise OperationFailure("positional projection requires a selector filter")
+    found, value = get_document_value(source, path)
+    if not found or not isinstance(value, list):
+        return
+    matcher = UpdateEngine._build_legacy_positional_matcher(
+        path,
+        selector_filter,
+        dialect=dialect,
+    )
+    for candidate in value:
+        if matcher(candidate):
             set_document_value(target, path, [deepcopy(candidate)])
             return
 

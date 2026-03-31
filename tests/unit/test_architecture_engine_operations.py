@@ -1,7 +1,9 @@
 import asyncio
 import inspect
 import unittest
+from unittest import mock
 
+import mongoeco.api.operations as operations_module
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.database_commands import (
     AsyncDatabaseCommandService,
@@ -289,6 +291,185 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         self.assertEqual(len(operation.planning_issues), 1)
         self.assertEqual(operation.planning_issues[0].scope, "update")
 
+    def test_private_update_planning_issue_collector_reports_invalid_pipeline_shapes(self):
+        malformed_stage = operations_module._collect_update_planning_issues(
+            [1],
+            dialect=operations_module.MONGODB_DIALECT_70,
+            planning_mode=PlanningMode.RELAXED,
+        )
+        malformed_operator = operations_module._collect_update_planning_issues(
+            [{"name": "Ada"}],
+            dialect=operations_module.MONGODB_DIALECT_70,
+            planning_mode=PlanningMode.RELAXED,
+        )
+        unsupported_stage = operations_module._collect_update_planning_issues(
+            [{"$future": {}}],
+            dialect=operations_module.MONGODB_DIALECT_70,
+            planning_mode=PlanningMode.RELAXED,
+        )
+
+        self.assertEqual(
+            malformed_stage,
+            (operations_module.PlanningIssue(scope="update", message="Each update pipeline stage must be a single-key document"),),
+        )
+        self.assertEqual(
+            malformed_operator,
+            (operations_module.PlanningIssue(scope="update", message="Update pipeline stage operator must start with '$'"),),
+        )
+        self.assertEqual(
+            unsupported_stage,
+            (operations_module.PlanningIssue(scope="update", message="Unsupported update pipeline stage: $future"),),
+        )
+
+    def test_private_update_planning_issue_collector_reports_validation_failures(self):
+        with mock.patch.object(
+            operations_module.UpdateEngine,
+            "validate_update_pipeline",
+            side_effect=operations_module.OperationFailure("broken pipeline"),
+        ):
+            issues = operations_module._collect_update_planning_issues(
+                [{"$set": {"name": "Ada"}}],
+                dialect=operations_module.MONGODB_DIALECT_70,
+                planning_mode=PlanningMode.RELAXED,
+            )
+
+        self.assertEqual(
+            issues,
+            (operations_module.PlanningIssue(scope="update", message="broken pipeline"),),
+        )
+
+    def test_relaxed_update_operation_leaves_malformed_pipeline_stage_non_executable(self):
+        operation = compile_update_operation(
+            {"name": "Ada"},
+            update_spec=[{"$set": 1}],
+            planning_mode=PlanningMode.RELAXED,
+        )
+
+        self.assertIsNone(operation.compiled_update_plan)
+        self.assertIsNone(operation.compiled_upsert_plan)
+        self.assertEqual(operation.planning_issues, ())
+
+    def test_relaxed_update_operation_collects_invalid_pipeline_container_issues(self):
+        empty_pipeline = compile_update_operation(
+            {"name": "Ada"},
+            update_spec=[],
+            planning_mode=PlanningMode.RELAXED,
+        )
+        wrong_type = compile_update_operation(
+            {"name": "Ada"},
+            update_spec="bad",  # type: ignore[arg-type]
+            planning_mode=PlanningMode.RELAXED,
+        )
+
+        self.assertIsNone(empty_pipeline.compiled_update_plan)
+        self.assertEqual(
+            empty_pipeline.planning_issues,
+            (operations_module.PlanningIssue(scope="update", message="update pipeline must be a non-empty list"),),
+        )
+        self.assertIsNone(wrong_type.compiled_update_plan)
+        self.assertEqual(
+            wrong_type.planning_issues,
+            (operations_module.PlanningIssue(scope="update", message="update specification must be a document or pipeline"),),
+        )
+
+    def test_update_operation_skips_compilation_for_non_operator_documents_and_invalid_param_shapes(self):
+        replacement_style = compile_update_operation(
+            {"name": "Ada"},
+            update_spec={"name": "Ada"},
+        )
+        invalid_params = compile_update_operation(
+            {"name": "Ada"},
+            update_spec={"$set": 1},  # type: ignore[dict-item]
+        )
+        invalid_pipeline_type = compile_update_operation(
+            {"name": "Ada"},
+            update_spec="bad",  # type: ignore[arg-type]
+        )
+
+        self.assertIsNone(replacement_style.compiled_update_plan)
+        self.assertIsNone(replacement_style.compiled_upsert_plan)
+        self.assertIsNone(invalid_params.compiled_update_plan)
+        self.assertIsNone(invalid_pipeline_type.compiled_update_plan)
+
+    def test_private_update_compilation_and_normalizers_cover_invalid_inputs(self):
+        self.assertEqual(
+            operations_module._compile_update_plans(
+                {},
+                dialect=operations_module.MONGODB_DIALECT_70,
+                selector_filter={},
+                collation=None,
+                array_filters=None,
+                variables=None,
+                planning_mode=PlanningMode.STRICT,
+            ),
+            (None, None),
+        )
+        self.assertEqual(operations_module._normalize_filter(None), {})
+        self.assertIsNone(operations_module._normalize_collation(None))
+        self.assertEqual(
+            operations_module._normalize_collation({"locale": "en", "strength": 1}),
+            {
+                "locale": "en",
+                "strength": 1,
+                "caseLevel": False,
+                "numericOrdering": False,
+            },
+        )
+        self.assertIsNone(operations_module._normalize_projection(None))
+        self.assertEqual(operations_module._normalize_hint("name_1"), "name_1")
+        self.assertIsNone(operations_module._normalize_array_filters(None))
+        self.assertEqual(operations_module._normalize_batch_size(0), 0)
+        self.assertEqual(operations_module._normalize_skip(0), 0)
+        self.assertIsNone(operations_module._normalize_limit(None))
+
+        with self.assertRaises(TypeError):
+            operations_module._normalize_filter([])
+        with self.assertRaises(TypeError):
+            operations_module._normalize_projection([])
+        with self.assertRaises(ValueError):
+            operations_module._normalize_hint("")
+        with self.assertRaises(TypeError):
+            operations_module._normalize_array_filters({})
+        with self.assertRaises(TypeError):
+            operations_module._normalize_allow_disk_use("yes")
+        with self.assertRaises(TypeError):
+            operations_module._normalize_skip(True)
+
+    def test_private_update_compilation_returns_none_in_relaxed_mode_after_engine_failure(self):
+        with mock.patch.object(
+            operations_module.UpdateEngine,
+            "compile_update_plan",
+            side_effect=operations_module.OperationFailure("cannot compile"),
+        ):
+            compiled = operations_module._compile_update_plans(
+                {"$set": {"name": "Ada"}},
+                dialect=operations_module.MONGODB_DIALECT_70,
+                selector_filter={},
+                collation=None,
+                array_filters=None,
+                variables=None,
+                planning_mode=PlanningMode.RELAXED,
+            )
+
+        self.assertEqual(compiled, (None, None))
+
+    def test_private_update_compilation_reraises_in_strict_mode_after_engine_failure(self):
+        with mock.patch.object(
+            operations_module.UpdateEngine,
+            "compile_update_plan",
+            side_effect=operations_module.OperationFailure("cannot compile"),
+        ):
+            with self.assertRaisesRegex(operations_module.OperationFailure, "cannot compile"):
+                operations_module._compile_update_plans(
+                    {"$set": {"name": "Ada"}},
+                    dialect=operations_module.MONGODB_DIALECT_70,
+                    selector_filter={},
+                    collation=None,
+                    array_filters=None,
+                    variables=None,
+                    planning_mode=PlanningMode.STRICT,
+                )
+
     def test_relaxed_aggregate_operation_collects_stage_shape_and_support_issues(self):
         operation = compile_aggregate_operation(
             [{"$future": {}}, {"bad": 1}, {"$match": {}, "$sort": {}}],
@@ -323,6 +504,27 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         self.assertEqual(operation.batch_size, 10)
         self.assertEqual(operation.planning_mode, PlanningMode.RELAXED)
         self.assertEqual(len(operation.planning_issues), 1)
+
+    def test_operation_with_overrides_preserves_dataclass_contracts(self):
+        find = compile_find_operation({"name": "Ada"}).with_overrides(limit=1)
+        update = compile_update_operation({"name": "Ada"}).with_overrides(comment="patched")
+        aggregate = compile_aggregate_operation([{"$match": {"name": "Ada"}}]).with_overrides(batch_size=5)
+
+        self.assertEqual(find.limit, 1)
+        self.assertEqual(update.comment, "patched")
+        self.assertEqual(aggregate.batch_size, 5)
+
+    def test_private_aggregate_planning_issue_collector_reports_non_list_pipeline(self):
+        issues = operations_module._collect_aggregate_planning_issues(
+            {"$match": {"name": "Ada"}},
+            dialect=operations_module.MONGODB_DIALECT_70,
+            planning_mode=PlanningMode.RELAXED,
+        )
+
+        self.assertEqual(
+            issues,
+            (operations_module.PlanningIssue(scope="aggregate", message="pipeline must be a list"),),
+        )
 
     def test_engines_plan_read_execution_before_explain(self):
         async def _run() -> None:
@@ -390,6 +592,18 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
     def test_find_operation_rejects_invalid_skip(self):
         with self.assertRaises(TypeError):
             compile_find_operation({"name": "Ada"}, skip=-1)
+
+    def test_find_and_aggregate_operations_reject_invalid_limit_hint_and_options(self):
+        with self.assertRaises(TypeError):
+            compile_find_operation({"name": "Ada"}, limit=-1)
+        with self.assertRaises(TypeError):
+            compile_find_operation({"name": "Ada"}, limit=True)  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            compile_find_operation({"name": "Ada"}, hint="")
+        with self.assertRaises(TypeError):
+            compile_update_operation({"name": "Ada"}, let="bad")  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            compile_aggregate_operation([{"$match": {"name": "Ada"}}], batch_size=-1)
 
     def test_update_operation_compiles_normalized_write_plan(self):
         operation = compile_update_operation(

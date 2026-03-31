@@ -126,8 +126,6 @@ class ProjectionTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             apply_projection(doc, {1: 1})  # type: ignore[dict-item]
         with self.assertRaises(OperationFailure):
-            apply_projection(doc, {"items.$": 1})
-        with self.assertRaises(OperationFailure):
             apply_projection(doc, {"score": {"$meta": "textScore"}})  # type: ignore[dict-item]
 
     def test_projection_supports_slice_as_exclusion_style_projection(self):
@@ -188,6 +186,36 @@ class ProjectionTests(unittest.TestCase):
             apply_projection(missing, {"students": {"$elemMatch": {"school": 102}}}),
             {"_id": 2},
         )
+
+    def test_projection_supports_positional_operator_with_selector_filter(self):
+        doc = {
+            "_id": 1,
+            "students": [
+                {"school": 100, "age": 7},
+                {"school": 102, "age": 10},
+                {"school": 102, "age": 11},
+            ],
+            "name": "Ada",
+        }
+
+        self.assertEqual(
+            apply_projection(
+                doc,
+                {"students.$": 1, "_id": 0},
+                selector_filter={"students.school": 102, "students.age": {"$gt": 10}},
+            ),
+            {"students": [{"school": 102, "age": 11}]},
+        )
+
+    def test_positional_projection_requires_selector_filter_and_terminal_segment(self):
+        doc = {"_id": 1, "students": [{"school": 102}]}
+
+        with self.assertRaises(OperationFailure):
+            apply_projection(doc, {"students.$": 1})
+        with self.assertRaises(OperationFailure):
+            apply_projection(doc, {"students.$.school": 1}, selector_filter={"students.school": 102})
+        with self.assertRaises(OperationFailure):
+            apply_projection(doc, {"students.$": 0}, selector_filter={"students.school": 102})
 
     def test_projection_rejects_invalid_projection_operator_specs_and_collisions(self):
         doc = {"_id": 1, "items": [{"kind": "a"}], "profile": {"colors": [1, 2, 3]}}

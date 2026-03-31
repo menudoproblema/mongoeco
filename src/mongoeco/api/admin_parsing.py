@@ -89,7 +89,14 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
         if "key" not in raw_index:
             raise OperationFailure("index specification must contain 'key'")
 
-        unsupported = set(raw_index) - {"key", "name", "unique", "sparse", "partialFilterExpression"}
+        unsupported = set(raw_index) - {
+            "key",
+            "name",
+            "unique",
+            "sparse",
+            "partialFilterExpression",
+            "expireAfterSeconds",
+        }
         if unsupported:
             unsupported_names = ", ".join(sorted(unsupported))
             raise TypeError(
@@ -105,6 +112,8 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
             kwargs["sparse"] = raw_index["sparse"]
         if "partialFilterExpression" in raw_index:
             kwargs["partialFilterExpression"] = raw_index["partialFilterExpression"]
+        if "expireAfterSeconds" in raw_index:
+            kwargs["expireAfterSeconds"] = raw_index["expireAfterSeconds"]
         normalized.append(IndexModel(raw_index["key"], **kwargs))
     return normalized
 

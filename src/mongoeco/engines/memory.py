@@ -153,6 +153,81 @@ class MemoryEngine(AsyncStorageEngine):
             return True
         return False
 
+    @staticmethod
+    def _coerce_ttl_datetime(value: object) -> datetime.datetime | None:
+        if not isinstance(value, datetime.datetime):
+            return None
+        if value.tzinfo is None:
+            return value.replace(tzinfo=datetime.timezone.utc)
+        return value.astimezone(datetime.timezone.utc)
+
+    def _document_expired_by_ttl(
+        self,
+        document: Document,
+        index: EngineIndexRecord,
+        *,
+        now: datetime.datetime,
+    ) -> bool:
+        if index.expire_after_seconds is None or len(index.fields) != 1:
+            return False
+        field = index.fields[0]
+        values = QueryEngine.extract_values(document, field)
+        ttl_candidates = [
+            candidate
+            for candidate in (
+                self._coerce_ttl_datetime(value)
+                for value in values
+            )
+            if candidate is not None
+        ]
+        if not ttl_candidates:
+            return False
+        expires_at = min(ttl_candidates) + datetime.timedelta(seconds=index.expire_after_seconds)
+        return expires_at <= now
+
+    def _purge_expired_documents_locked(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+        indexes_view: dict[str, dict[str, list[EngineIndexRecord]]] | None = None,
+        index_data_view: dict[str, dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]]] | None = None,
+        storage_view: dict[str, dict[str, dict[Any, Any]]] | None = None,
+    ) -> int:
+        indexes_source = indexes_view if indexes_view is not None else self._indexes_view(context)
+        storage_source = storage_view if storage_view is not None else self._storage_view(context)
+        index_data_source = index_data_view if index_data_view is not None else self._index_data_view(context)
+        coll_indexes = indexes_source.get(db_name, {}).get(coll_name, [])
+        ttl_indexes = [index for index in coll_indexes if index.expire_after_seconds is not None]
+        if not ttl_indexes:
+            return 0
+        coll = storage_source.get(db_name, {}).get(coll_name, {})
+        if not coll:
+            return 0
+        now = datetime.datetime.now(datetime.timezone.utc)
+        expired_storage_keys: list[Any] = []
+        for storage_key, data in coll.items():
+            document = self._borrow_storage_document(data)
+            if any(
+                self._document_expired_by_ttl(document, index, now=now)
+                for index in ttl_indexes
+            ):
+                expired_storage_keys.append(storage_key)
+        for storage_key in expired_storage_keys:
+            document = self._borrow_storage_document(coll[storage_key])
+            self._update_indexes_locked(
+                db_name,
+                coll_name,
+                storage_key,
+                document,
+                action="delete",
+                index_data_view=index_data_source,
+                indexes_view=indexes_source,
+            )
+            del coll[storage_key]
+        return len(expired_storage_keys)
+
     def _decode_storage_document(
         self,
         payload: object,
@@ -708,6 +783,14 @@ class MemoryEngine(AsyncStorageEngine):
             option_store = self._collection_options_view(context)
             indexes_view = self._indexes_view(context)
             index_data_view = self._index_data_view(context)
+            self._purge_expired_documents_locked(
+                db_name,
+                coll_name,
+                context=context,
+                indexes_view=indexes_view,
+                index_data_view=index_data_view,
+                storage_view=storage,
+            )
 
             with self._meta_lock:
                 db = storage.setdefault(db_name, {})
@@ -786,6 +869,7 @@ class MemoryEngine(AsyncStorageEngine):
                 return None
             return apply_projection(document, projection, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
+            self._purge_expired_documents_locked(db_name, coll_name, context=context)
             storage_key = self._storage_key(doc_id)
             data = self._storage_view(context).get(db_name, {}).get(coll_name, {}).get(storage_key)
         if data is None:
@@ -804,6 +888,14 @@ class MemoryEngine(AsyncStorageEngine):
             coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
             indexes_view = self._indexes_view(context)
             index_data_view = self._index_data_view(context)
+            self._purge_expired_documents_locked(
+                db_name,
+                coll_name,
+                context=context,
+                indexes_view=indexes_view,
+                index_data_view=index_data_view,
+                storage_view=self._storage_view(context),
+            )
             storage_key = self._storage_key(doc_id)
             if storage_key in coll:
                 document = self._borrow_storage_document(coll[storage_key])
@@ -852,6 +944,14 @@ class MemoryEngine(AsyncStorageEngine):
                 coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
                 indexes = self._indexes_view(context).get(db_name, {}).get(coll_name, [])
                 index_data = self._index_data_view(context).get(db_name, {}).get(coll_name, {})
+                self._purge_expired_documents_locked(
+                    db_name,
+                    coll_name,
+                    context=context,
+                    indexes_view=self._indexes_view(context),
+                    index_data_view=self._index_data_view(context),
+                    storage_view=self._storage_view(context),
+                )
                 self._resolve_hint_index(
                     db_name,
                     coll_name,
@@ -975,6 +1075,14 @@ class MemoryEngine(AsyncStorageEngine):
                     coll_name,
                     collection_options=self._collection_options_view(context),
                 )
+            self._purge_expired_documents_locked(
+                db_name,
+                coll_name,
+                context=context,
+                indexes_view=indexes_view,
+                index_data_view=index_data_view,
+                storage_view=storage_view,
+            )
             if coll is None:
                 coll = {}
 
@@ -1102,6 +1210,14 @@ class MemoryEngine(AsyncStorageEngine):
             coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
             indexes_view = self._indexes_view(context)
             index_data_view = self._index_data_view(context)
+            self._purge_expired_documents_locked(
+                db_name,
+                coll_name,
+                context=context,
+                indexes_view=indexes_view,
+                index_data_view=index_data_view,
+                storage_view=self._storage_view(context),
+            )
             for storage_key, data in list(coll.items()):
                 document = self._borrow_storage_document(data)
                 if not QueryEngine.match_plan(
@@ -1154,6 +1270,7 @@ class MemoryEngine(AsyncStorageEngine):
         name: str | None = None,
         sparse: bool = False,
         partial_filter_expression: Filter | None = None,
+        expire_after_seconds: int | None = None,
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> str:
@@ -1162,8 +1279,25 @@ class MemoryEngine(AsyncStorageEngine):
         fields = index_fields(normalized_keys)
         index_name = name or default_index_name(normalized_keys)
         deadline = operation_deadline(max_time_ms)
+        if expire_after_seconds is not None:
+            if (
+                not isinstance(expire_after_seconds, int)
+                or isinstance(expire_after_seconds, bool)
+                or expire_after_seconds < 0
+            ):
+                raise TypeError("expire_after_seconds must be a non-negative int or None")
+            if len(fields) != 1:
+                raise OperationFailure("TTL indexes require a single-field key pattern")
+            if fields[0] == "_id":
+                raise OperationFailure("TTL indexes cannot be created on _id")
         if self._is_builtin_id_index(normalized_keys):
-            if name not in (None, "_id_") or sparse or partial_filter_expression is not None or not unique:
+            if (
+                name not in (None, "_id_")
+                or sparse
+                or partial_filter_expression is not None
+                or expire_after_seconds is not None
+                or not unique
+            ):
                 raise OperationFailure("Conflicting index definition for '_id_'")
             return "_id_"
         if index_name == "_id_":
@@ -1193,6 +1327,7 @@ class MemoryEngine(AsyncStorageEngine):
                         or index["unique"] != unique
                         or index.get("sparse") != sparse
                         or index.get("partial_filter_expression") != partial_filter_expression
+                        or index.get("expire_after_seconds") != expire_after_seconds
                     ):
                         raise OperationFailure(
                             f"Conflicting index definition for '{index_name}'"
@@ -1203,6 +1338,7 @@ class MemoryEngine(AsyncStorageEngine):
                         index["unique"] != unique
                         or index.get("sparse") != sparse
                         or index.get("partial_filter_expression") != partial_filter_expression
+                        or index.get("expire_after_seconds") != expire_after_seconds
                     ):
                         raise OperationFailure(
                             f"Conflicting index definition for key pattern '{normalized_keys!r}'"
@@ -1216,6 +1352,7 @@ class MemoryEngine(AsyncStorageEngine):
                 unique=unique,
                 sparse=sparse,
                 partial_filter_expression=deepcopy(partial_filter_expression),
+                expire_after_seconds=expire_after_seconds,
             )
 
             if unique:
@@ -1239,6 +1376,14 @@ class MemoryEngine(AsyncStorageEngine):
                 db_name,
                 coll_name,
                 new_index,
+                index_data_view=index_data_view,
+                storage_view=storage_view,
+            )
+            self._purge_expired_documents_locked(
+                db_name,
+                coll_name,
+                context=context,
+                indexes_view=indexes_view,
                 index_data_view=index_data_view,
                 storage_view=storage_view,
             )

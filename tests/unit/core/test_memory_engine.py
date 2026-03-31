@@ -712,14 +712,39 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 "partialFilterExpression": {"active": True},
             },
         )
+
+    async def test_ttl_index_metadata_and_opportunistic_expiration_round_trip(self):
+        engine = MemoryEngine()
+        past = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=120)
+        future = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=120)
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "expired", "expires_at": past, "name": "old"})
+            await engine.put_document("db", "coll", {"_id": "fresh", "expires_at": future, "name": "new"})
+            await engine.create_index("db", "coll", ["expires_at"], expire_after_seconds=30)
+            indexes = await engine.list_indexes("db", "coll")
+            info = await engine.index_information("db", "coll")
+            found = await engine.get_document("db", "coll", "expired")
+            remaining = [document async for document in self._scan(engine, "db", "coll", {})]
+        finally:
+            await engine.disconnect()
+
         self.assertEqual(
-            info["email_1"],
+            indexes[1],
             {
-                "key": [("email", 1)],
-                "sparse": True,
-                "partialFilterExpression": {"active": True},
+                "name": "expires_at_1",
+                "fields": ["expires_at"],
+                "key": {"expires_at": 1},
+                "unique": False,
+                "expireAfterSeconds": 30,
             },
         )
+        self.assertEqual(
+            info["expires_at_1"],
+            {"key": [("expires_at", 1)], "expireAfterSeconds": 30},
+        )
+        self.assertIsNone(found)
+        self.assertEqual(remaining, [{"_id": "fresh", "expires_at": future, "name": "new"}])
 
     async def test_hint_rejects_partial_index_when_query_does_not_imply_filter(self):
         engine = MemoryEngine()

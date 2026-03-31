@@ -98,7 +98,6 @@ def build_search_index_document(
 def validate_search_stage_pipeline(pipeline: object) -> None:
     if not isinstance(pipeline, list):
         return
-    found_search_operator: str | None = None
     for index, stage in enumerate(pipeline):
         if not isinstance(stage, dict) or len(stage) != 1:
             continue
@@ -107,9 +106,6 @@ def validate_search_stage_pipeline(pipeline: object) -> None:
             continue
         if index != 0:
             raise OperationFailure(f"{operator} must be the first stage in the pipeline")
-        if found_search_operator is not None:
-            raise OperationFailure("only one of $search or $vectorSearch may appear in a pipeline")
-        found_search_operator = operator
 
 
 def compile_search_stage(
@@ -160,8 +156,6 @@ def compile_search_text_like_query(spec: object) -> SearchTextQuery | SearchPhra
             paths=paths,
         )
     terms = tuple(term for term in raw_query.strip().split() if term)
-    if not terms:
-        raise OperationFailure("$search.text.query must contain at least one term")
     return SearchTextQuery(
         index_name=index_name,
         raw_query=raw_query,

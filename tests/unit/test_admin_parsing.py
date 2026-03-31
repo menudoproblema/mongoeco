@@ -68,6 +68,10 @@ class AdminParsingTests(unittest.TestCase):
         self.assertTrue(model.unique)
         self.assertTrue(model.sparse)
         self.assertEqual(model.partial_filter_expression, {"active": True})
+        ttl_models = normalize_index_models_from_command(
+            [{"key": {"expires_at": 1}, "expireAfterSeconds": 60}]
+        )
+        self.assertEqual(ttl_models[0].expire_after_seconds, 60)
 
         with self.assertRaises(TypeError):
             normalize_index_models_from_command("email_1")
@@ -77,7 +81,7 @@ class AdminParsingTests(unittest.TestCase):
             normalize_index_models_from_command([{"name": "email_1"}])
         with self.assertRaises(TypeError):
             normalize_index_models_from_command(
-                [{"key": {"email": 1}, "expireAfterSeconds": 60}]
+                [{"key": {"email": 1}, "unsupported": True}]
             )
 
     def test_namespace_and_write_spec_normalizers_accept_valid_lists_and_reject_invalid_shapes(self):

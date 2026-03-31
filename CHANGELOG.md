@@ -8,6 +8,55 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-03-31
+
+### Fixed
+
+- Se corrige la semantica de operadores de actualizacion sobre arrays y
+  subdocumentos para acercarla a MongoDB real: `$pull` con dicts
+  parciales, `collation` en `$addToSet`/`$pull`/`$pullAll`,
+  `arrayFilters`, `UndefinedType` en expresiones de control y varios
+  edge cases de query/update.
+- Se normaliza el tratamiento de `ObjectId`, `Decimal128` y otros
+  wrappers BSON a traves de codec, comparacion, wire bridge y motores,
+  evitando diferencias entre `mongoeco` y objetos BSON externos y
+  eliminando fallbacks silenciosos que enmascaraban errores reales.
+- Se corrigen varias rutas de agregacion y query para respetar mejor la
+  semantica MongoDB, incluyendo `missing` en `$getField`, regex en
+  `$eq`, `$comment` top-level, validacion de `$and/$or/$nor`,
+  validacion de `$not`, soporte de `timestamp` en `$currentDate` y
+  validaciones de `$rename`/`$bit`.
+- El motor en memoria detecta ya conflictos MVCC entre commits
+  concurrentes en lugar de sobrescribir silenciosamente cambios.
+- Las excepciones publicas de `mongoeco.errors` quedan alineadas con la
+  jerarquia de `pymongo.errors`, de modo que `except
+  pymongo.errors.X` captura tambien las equivalentes de `mongoeco`
+  cuando PyMongo esta instalado.
+
+### Added
+
+- Se anade soporte para updates por pipeline de agregacion en
+  `update_one`, `update_many`, `find_one_and_update` y `bulk_write`,
+  reutilizando el runtime de agregacion por documento y con fallback
+  Python en SQLite cuando no hay traduccion SQL.
+- Se amplia la proyeccion avanzada de `find` y `find_one` con soporte
+  para `$slice`, `$elemMatch` y proyeccion posicional `"field.$"`,
+  incluyendo los caminos manuales de `find_one_and_update` y
+  `find_one_and_delete`.
+- Se anade soporte para indices TTL con `expireAfterSeconds` en la API
+  publica, metadatos de indices, `list_indexes()` e
+  `index_information()`, junto con purga oportunista de documentos
+  vencidos en los motores `MemoryEngine` y `SQLiteEngine`.
+- Se amplia la cobertura sobre `types.py`, helpers de indices,
+  validacion de TTL, proyeccion posicional, API de indices y contratos
+  de errores compatibles con PyMongo.
+
+### Changed
+
+- La validacion de indices unicos en SQLite incorpora un fast path sobre
+  `scalar_index_entries` para indices simples de un campo, reduciendo el
+  coste de validacion frente al escaneo completo.
+
 ## [2.1.0] - 2026-03-31
 
 ### Fixed

@@ -3,6 +3,8 @@ import unittest
 from enum import Enum
 from unittest.mock import patch
 
+import mongoeco.api._async.collection as async_collection_module
+from mongoeco.api.operations import compile_update_operation
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.compat import MongoDialect70
 from mongoeco.core.query_plan import MatchAll
@@ -12,7 +14,7 @@ from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure
 from mongoeco.types import (
     DeleteMany, DeleteOne, DeleteResult, IndexModel, InsertOne, ReplaceOne,
-    ReturnDocument, UpdateMany, UpdateOne, UpdateResult,
+    ReturnDocument, SearchIndexModel, UpdateMany, UpdateOne, UpdateResult,
 )
 
 
@@ -127,6 +129,95 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             _seed_filter_value({"a": 1}, "a", True)
 
+    def test_collection_helper_normalizers_and_subcollection_access(self):
+        class _ForeignReturnDocument(Enum):
+            BEFORE = "before"
+            AFTER = "after"
+
+        child = self.collection["events"]
+
+        self.assertEqual(child.full_name, "db.coll.events")
+        self.assertEqual(self.collection.events.full_name, "db.coll.events")
+        self.assertEqual(child.planning_mode, self.collection.planning_mode)
+        self.assertEqual(AsyncCollection._normalize_filter(None), {})
+        self.assertIsNone(AsyncCollection._normalize_projection(None))
+        self.assertIsNone(AsyncCollection._normalize_batch_size(None))
+        normalized_collation = AsyncCollection._normalize_collation({"locale": "en", "strength": 1})
+        self.assertEqual(normalized_collation["locale"], "en")
+        self.assertEqual(normalized_collation["strength"], 1)
+        self.assertEqual(AsyncCollection._normalize_let({"tenant": "a"}), {"tenant": "a"})
+        self.assertEqual(AsyncCollection._normalize_search_index_name("idx"), "idx")
+        self.assertEqual(AsyncCollection._normalize_return_document(False), ReturnDocument.BEFORE)
+        self.assertEqual(AsyncCollection._normalize_return_document(True), ReturnDocument.AFTER)
+        self.assertEqual(
+            AsyncCollection._normalize_return_document(_ForeignReturnDocument.BEFORE),
+            ReturnDocument.BEFORE,
+        )
+        self.assertIsInstance(
+            AsyncCollection._normalize_search_index_model({"mappings": {"dynamic": True}}),
+            SearchIndexModel,
+        )
+        self.assertEqual(AsyncCollection._normalize_expire_after_seconds(0), 0)
+        self.assertEqual(
+            AsyncCollection._normalize_index_model(IndexModel([("email", 1)], unique=True)).keys,
+            [("email", 1)],
+        )
+
+        with self.assertRaises(AttributeError):
+            getattr(self.collection, "_private")
+        with self.assertRaises(TypeError):
+            _ = self.collection[""]  # type: ignore[index]
+        with self.assertRaises(TypeError):
+            AsyncCollection._normalize_filter([])  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            AsyncCollection._normalize_projection([])  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            AsyncCollection._normalize_let("bad")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            AsyncCollection._normalize_array_filters("bad")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            AsyncCollection._normalize_search_index_model("bad")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            AsyncCollection._normalize_search_index_name("")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            AsyncCollection._normalize_expire_after_seconds(True)  # type: ignore[arg-type]
+
+    def test_collection_require_helpers_reject_invalid_inputs(self):
+        self.assertEqual(AsyncCollection._require_documents(({"_id": "1"},)), [{"_id": "1"}])
+
+        with self.assertRaises(TypeError):
+            AsyncCollection._require_documents({"_id": "1"})  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            AsyncCollection._require_documents([])
+        with self.assertRaises(ValueError):
+            AsyncCollection._require_update([])
+        with self.assertRaises(TypeError):
+            AsyncCollection._require_update([1])  # type: ignore[list-item]
+        with self.assertRaises(ValueError):
+            AsyncCollection._require_update([{"$set": {}, "$unset": {}}])
+        with self.assertRaises(ValueError):
+            AsyncCollection._require_update([{"field": 1}])
+        with self.assertRaises(TypeError):
+            AsyncCollection._require_update(1)  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            AsyncCollection._require_update({})  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            AsyncCollection._require_update({"field": 1})  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            AsyncCollection._require_update({"$set": 1})  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            AsyncCollection._require_replacement({"$set": {"x": 1}})
+        with self.assertRaises(TypeError):
+            AsyncCollection._normalize_batch_size("bad")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            AsyncCollection._normalize_array_filters([1])  # type: ignore[list-item]
+        self.assertIsNone(AsyncCollection._normalize_collation(None))
+        self.assertIsNone(AsyncCollection._normalize_array_filters(None))
+        with self.assertRaises(TypeError):
+            AsyncCollection._normalize_search_index_models("bad")  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            AsyncCollection._normalize_search_index_models([])
+
     def test_insert_many_requires_non_empty_document_list(self):
         with self.assertRaises(TypeError):
             asyncio.run(self.collection.insert_many({"name": "Ada"}))  # type: ignore[arg-type]
@@ -212,6 +303,42 @@ class AsyncCollectionHelperTests(unittest.TestCase):
 
         self.assertEqual(bulk_calls, 1)
         self.assertEqual(len(inserted_ids), 2)
+
+    def test_insert_many_profiles_bulk_engine_errors(self):
+        class EngineStub:
+            async def put_documents_bulk(self, *args, **kwargs):
+                raise RuntimeError("bulk boom")
+
+        async def _exercise():
+            collection = AsyncCollection(EngineStub(), "db", "coll")
+            profiled = []
+
+            async def _profile_operation(**payload):
+                profiled.append(payload)
+
+            collection._profile_operation = _profile_operation  # type: ignore[method-assign]
+            await collection.insert_many([{"_id": "1"}])
+
+        with self.assertRaisesRegex(RuntimeError, "bulk boom"):
+            asyncio.run(_exercise())
+
+    def test_find_one_profiles_direct_id_lookup_errors(self):
+        class EngineStub:
+            async def get_document(self, *args, **kwargs):
+                raise RuntimeError("lookup boom")
+
+        async def _exercise():
+            collection = AsyncCollection(EngineStub(), "db", "coll")
+            profiled = []
+
+            async def _profile_operation(**payload):
+                profiled.append(payload)
+
+            collection._profile_operation = _profile_operation  # type: ignore[method-assign]
+            await collection.find_one({"_id": "1"})
+
+        with self.assertRaisesRegex(RuntimeError, "lookup boom"):
+            asyncio.run(_exercise())
 
     def test_find_one_does_not_apply_projection_twice(self):
         async def _exercise():
@@ -665,6 +792,46 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             ],
         )
 
+    def test_bulk_write_propagates_bypass_document_validation_to_wrapped_calls(self):
+        class EngineStub:
+            pass
+
+        async def _exercise():
+            collection = AsyncCollection(EngineStub(), "db", "coll")
+            recorded = {}
+
+            async def _update_one(*args, **kwargs):
+                recorded["update_one"] = kwargs
+                return UpdateResult(matched_count=1, modified_count=1)
+
+            async def _update_many(*args, **kwargs):
+                recorded["update_many"] = kwargs
+                return UpdateResult(matched_count=1, modified_count=1)
+
+            async def _replace_one(*args, **kwargs):
+                recorded["replace_one"] = kwargs
+                return UpdateResult(matched_count=1, modified_count=1)
+
+            collection.update_one = _update_one  # type: ignore[method-assign]
+            collection.update_many = _update_many  # type: ignore[method-assign]
+            collection.replace_one = _replace_one  # type: ignore[method-assign]
+
+            await collection.bulk_write(
+                [
+                    UpdateOne({"_id": "1"}, {"$set": {"done": True}}),
+                    UpdateMany({"done": False}, {"$set": {"done": True}}),
+                    ReplaceOne({"_id": "1"}, {"done": True}),
+                ],
+                bypass_document_validation=True,
+            )
+            return recorded
+
+        recorded = asyncio.run(_exercise())
+
+        self.assertTrue(recorded["update_one"]["bypass_document_validation"])
+        self.assertTrue(recorded["update_many"]["bypass_document_validation"])
+        self.assertTrue(recorded["replace_one"]["bypass_document_validation"])
+
     def test_update_methods_reject_invalid_array_filters_shapes(self):
         with self.assertRaises(TypeError):
             asyncio.run(self.collection.update_one({}, {"$set": {"done": True}}, array_filters="bad"))  # type: ignore[arg-type]
@@ -725,6 +892,14 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         result = asyncio.run(collection.distinct("matrix"))
 
         self.assertEqual(result, [[1, 2, 3]])
+
+    def test_distinct_candidates_covers_array_unwrap_edge_cases(self):
+        from mongoeco.api._async.collection import _distinct_candidates
+
+        self.assertEqual(_distinct_candidates([]), [])
+        self.assertEqual(_distinct_candidates([[]]), [])
+        self.assertEqual(_distinct_candidates([[1, 2], 1, 2]), [1, 2])
+        self.assertEqual(_distinct_candidates([1, 2]), [1, 2])
 
     def test_bulk_write_records_upserted_ids_for_update_many_and_replace_one(self):
         async def _exercise():
@@ -794,6 +969,51 @@ class AsyncCollectionHelperTests(unittest.TestCase):
             comment=None,
             max_time_ms=None,
             session=None,
+        )
+
+    def test_metadata_and_change_notifications_delegate_to_engine_and_hub(self):
+        class EngineStub:
+            def __init__(self):
+                self.metadata_calls = []
+
+            def _record_operation_metadata(self, session, **kwargs):
+                self.metadata_calls.append((session, kwargs))
+
+        class HubStub:
+            def __init__(self):
+                self.events = []
+
+            def publish(self, **payload):
+                self.events.append(payload)
+
+        engine = EngineStub()
+        hub = HubStub()
+        collection = AsyncCollection(engine, "db", "coll", change_hub=hub)
+        session = object()
+
+        collection._record_operation_metadata(operation="find", comment="trace", max_time_ms=5, session=session)
+        collection._publish_change_event(
+            operation_type="update",
+            document_key={"_id": "1"},
+            full_document={"_id": "1", "done": True},
+        )
+
+        self.assertEqual(
+            engine.metadata_calls,
+            [(session, {"operation": "find", "comment": "trace", "max_time_ms": 5, "hint": None})],
+        )
+        self.assertEqual(
+            hub.events,
+            [
+                {
+                    "operation_type": "update",
+                    "db_name": "db",
+                    "coll_name": "coll",
+                    "document_key": {"_id": "1"},
+                    "full_document": {"_id": "1", "done": True},
+                    "update_description": None,
+                }
+            ],
         )
 
     def test_replace_one_rejects_update_operator_document(self):
@@ -1094,6 +1314,41 @@ class AsyncCollectionHelperTests(unittest.TestCase):
         result = asyncio.run(_exercise())
 
         self.assertEqual(result, {"done": True})
+
+    def test_find_one_and_update_and_delete_support_positional_projection(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll", pymongo_profile="4.11")
+                await collection.insert_one(
+                    {
+                        "_id": "1",
+                        "students": [
+                            {"school": 100, "age": 7},
+                            {"school": 102, "age": 10},
+                            {"school": 102, "age": 11},
+                        ],
+                    }
+                )
+                before = await collection.find_one_and_update(
+                    {"_id": "1", "students.school": 102, "students.age": {"$gt": 10}},
+                    {"$set": {"flag": True}},
+                    return_document=ReturnDocument.BEFORE,
+                    projection={"students.$": 1, "_id": 0},
+                )
+                deleted = await collection.find_one_and_delete(
+                    {"_id": "1", "students.school": 102, "students.age": {"$gt": 10}},
+                    projection={"students.$": 1, "_id": 0},
+                )
+                return before, deleted
+            finally:
+                await engine.disconnect()
+
+        before, deleted = asyncio.run(_exercise())
+
+        self.assertEqual(before, {"students": [{"school": 102, "age": 11}]})
+        self.assertEqual(deleted, {"students": [{"school": 102, "age": 11}]})
 
     def test_find_one_and_replace_covers_before_after_and_none_branches(self):
         async def _exercise():
@@ -1533,6 +1788,7 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                 "name": "idx_email",
                 "sparse": False,
                 "partial_filter_expression": None,
+                "expire_after_seconds": None,
                 "max_time_ms": None,
                 "context": None,
             },
@@ -1626,6 +1882,7 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                         "name": "email_idx",
                         "sparse": False,
                         "partial_filter_expression": {"active": True},
+                        "expire_after_seconds": None,
                         "max_time_ms": None,
                         "context": None,
                     },
@@ -1711,6 +1968,7 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                         "name": None,
                         "sparse": False,
                         "partial_filter_expression": None,
+                        "expire_after_seconds": None,
                         "max_time_ms": None,
                         "context": None,
                     },
@@ -1722,6 +1980,7 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                         "name": "tenant_created",
                         "sparse": False,
                         "partial_filter_expression": None,
+                        "expire_after_seconds": None,
                         "max_time_ms": None,
                         "context": None,
                     },
@@ -1753,10 +2012,49 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                 "name": None,
                 "sparse": True,
                 "partial_filter_expression": {"active": True},
+                "expire_after_seconds": None,
                 "max_time_ms": None,
                 "context": None,
             },
         )
+
+    def test_create_index_forwards_expire_after_seconds(self):
+        class EngineStub:
+            async def create_index(self, *args, **kwargs):
+                self.kwargs = kwargs
+                return "expires_at_1"
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        asyncio.run(
+            collection.create_index(
+                [("expires_at", 1)],
+                expire_after_seconds=30,
+            )
+        )
+
+        self.assertEqual(
+            engine.kwargs,
+            {
+                "unique": False,
+                "name": None,
+                "sparse": False,
+                "partial_filter_expression": None,
+                "expire_after_seconds": 30,
+                "max_time_ms": None,
+                "context": None,
+            },
+        )
+
+    def test_create_index_rejects_invalid_expire_after_seconds_type(self):
+        collection = AsyncCollection(MemoryEngine(), "db", "coll")
+
+        with self.assertRaises(TypeError):
+            asyncio.run(collection.create_index([("expires_at", 1)], expire_after_seconds=-1))
+
+        with self.assertRaises(TypeError):
+            asyncio.run(collection.create_index([("expires_at", 1)], expire_after_seconds=True))
 
     def test_create_index_forwards_max_time_ms(self):
         class EngineStub:
@@ -1964,3 +2262,429 @@ class AsyncCollectionHelperTests(unittest.TestCase):
                 direct, scanned = asyncio.run(_exercise(engine))
                 self.assertEqual(direct, {"name": "Ada"})
                 self.assertEqual(scanned, [{"name": "Ada"}])
+
+    def test_engine_update_and_delete_with_operation_profile_errors(self):
+        class EngineStub:
+            async def update_with_operation(self, *args, **kwargs):
+                raise RuntimeError("update boom")
+
+            async def delete_with_operation(self, *args, **kwargs):
+                raise RuntimeError("delete boom")
+
+        async def _exercise():
+            collection = AsyncCollection(EngineStub(), "db", "coll")
+            update_operation = compile_update_operation(
+                {"_id": "1"},
+                update_spec={"$set": {"done": True}},
+                dialect=collection.mongodb_dialect,
+            )
+            delete_operation = compile_update_operation(
+                {"_id": "1"},
+                dialect=collection.mongodb_dialect,
+            )
+            profiled = []
+
+            async def _profile_operation(**payload):
+                profiled.append(payload)
+
+            collection._profile_operation = _profile_operation  # type: ignore[method-assign]
+            with self.assertRaisesRegex(RuntimeError, "update boom"):
+                await collection._engine_update_with_operation(update_operation)
+            with self.assertRaisesRegex(RuntimeError, "delete boom"):
+                await collection._engine_delete_with_operation(delete_operation)
+            return profiled
+
+        profiled = asyncio.run(_exercise())
+
+        self.assertEqual([entry["op"] for entry in profiled], ["update", "remove"])
+        self.assertEqual(profiled[0]["errmsg"], "update boom")
+        self.assertEqual(profiled[1]["errmsg"], "delete boom")
+
+    def test_raw_batch_helpers_wrap_find_and_aggregate_results(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                await collection.insert_many(
+                    [
+                        {"_id": "1", "kind": "view"},
+                        {"_id": "2", "kind": "view"},
+                    ]
+                )
+                find_batches = await collection.find_raw_batches({}, batch_size=1).to_list()
+                aggregate_batches = await collection.aggregate_raw_batches(
+                    [{"$match": {"kind": "view"}}],
+                    batch_size=1,
+                ).to_list()
+                return len(find_batches), len(aggregate_batches)
+            finally:
+                await engine.disconnect()
+
+        find_count, aggregate_count = asyncio.run(_exercise())
+
+        self.assertEqual(find_count, 2)
+        self.assertEqual(aggregate_count, 2)
+
+    def test_search_index_helpers_rename_watch_and_options_delegate_correctly(self):
+        class EngineStub:
+            def __init__(self):
+                self.rename_calls = []
+                self.search_calls = []
+
+            async def create_search_index(self, *args, **kwargs):
+                self.search_calls.append(("create", args, kwargs))
+                return "search_idx"
+
+            async def list_search_indexes(self, *args, **kwargs):
+                self.search_calls.append(("list", args, kwargs))
+                return [{"name": "search_idx"}]
+
+            async def update_search_index(self, *args, **kwargs):
+                self.search_calls.append(("update", args, kwargs))
+
+            async def drop_search_index(self, *args, **kwargs):
+                self.search_calls.append(("drop", args, kwargs))
+
+            async def rename_collection(self, *args, **kwargs):
+                self.rename_calls.append((args, kwargs))
+
+            async def collection_options(self, *args, **kwargs):
+                return {"validator": {"$jsonSchema": {"bsonType": "object"}}}
+
+        async def _exercise():
+            engine = EngineStub()
+            collection = AsyncCollection(engine, "db", "coll")
+            created = await collection.create_search_index({"mappings": {"dynamic": True}}, max_time_ms=25)
+            created_many = await collection.create_search_indexes(
+                [{"mappings": {"dynamic": True}}],
+                max_time_ms=25,
+            )
+            listed = await collection.list_search_indexes("search_idx").to_list()
+            await collection.update_search_index("search_idx", {"mappings": {"dynamic": False}}, max_time_ms=10)
+            await collection.drop_search_index("search_idx", max_time_ms=10)
+            renamed = await collection.rename("renamed")
+            options = await collection.options()
+            stream = collection.watch(max_await_time_ms=5)
+            return engine, created, created_many, listed, renamed, options, stream
+
+        engine, created, created_many, listed, renamed, options, stream = asyncio.run(_exercise())
+
+        self.assertEqual(created, "search_idx")
+        self.assertEqual(created_many, ["search_idx"])
+        self.assertEqual(listed, [{"name": "search_idx"}])
+        self.assertEqual(renamed.full_name, "db.renamed")
+        self.assertEqual(options, {"validator": {"$jsonSchema": {"bsonType": "object"}}})
+        self.assertEqual(type(stream).__name__, "AsyncChangeStreamCursor")
+        self.assertEqual(engine.rename_calls[0][0], ("db", "coll", "renamed"))
+        self.assertEqual(engine.search_calls[0][0], "create")
+        self.assertEqual(engine.search_calls[1][0], "create")
+        self.assertEqual(engine.search_calls[2][0], "list")
+        self.assertEqual(engine.search_calls[3][0], "update")
+        self.assertEqual(engine.search_calls[4][0], "drop")
+
+        with self.assertRaises(TypeError):
+            self.collection.watch(max_await_time_ms=-1)
+
+    def test_collection_properties_and_with_options_expose_normalized_configuration(self):
+        collection = self.collection.with_options(planning_mode=Enum("Mode", {"RELAXED": "relaxed"}).RELAXED)
+
+        self.assertEqual(self.collection.name, "coll")
+        self.assertEqual(self.collection.full_name, "db.coll")
+        self.assertIsNotNone(self.collection.mongodb_dialect)
+        self.assertIsNotNone(self.collection.mongodb_dialect_resolution)
+        self.assertIsNotNone(self.collection.pymongo_profile)
+        self.assertIsNotNone(self.collection.pymongo_profile_resolution)
+        self.assertIsNotNone(self.collection.write_concern)
+        self.assertIsNotNone(self.collection.read_concern)
+        self.assertIsNotNone(self.collection.read_preference)
+        self.assertIsNotNone(self.collection.codec_options)
+        self.assertEqual(collection.full_name, "db.coll")
+
+    def test_bulk_write_context_prepare_request_covers_variants_and_errors(self):
+        collection = AsyncCollection(MemoryEngine(), "db", "coll", pymongo_profile="4.11")
+        context = async_collection_module._BulkWriteContext(collection, [])
+
+        prepared_insert = context._prepare_request(0, InsertOne({"name": "Ada"}))
+        prepared_replace = context._prepare_request(
+            1,
+            ReplaceOne({"_id": "1"}, {"name": "Ada"}, sort=[("rank", 1)], let={"tenant": "a"}),
+        )
+        prepared_update_error = context._prepare_request(
+            2,
+            UpdateOne({"_id": "1"}, {"$set": {"done": True}}, array_filters="bad"),  # type: ignore[arg-type]
+        )
+        prepared_delete = context._prepare_request(
+            3,
+            DeleteOne({"_id": "1"}, hint="idx", let={"tenant": "a"}),
+        )
+        prepared_unknown = context._prepare_request(4, object())  # type: ignore[arg-type]
+
+        self.assertIn("_id", prepared_insert.insert_document)
+        self.assertEqual(prepared_replace.replacement_document, {"name": "Ada"})
+        self.assertIsInstance(prepared_update_error.preparation_error, TypeError)
+        self.assertIsNone(prepared_delete.preparation_error)
+        self.assertIsInstance(prepared_unknown.preparation_error, TypeError)
+
+    def test_profile_operation_handles_system_profile_and_planner_failures(self):
+        class EngineStub:
+            def __init__(self):
+                self.events = []
+
+            def _record_profile_event(self, *args, **kwargs):
+                self.events.append((args, kwargs))
+
+            async def plan_find_execution(self, *args, **kwargs):
+                raise RuntimeError("planner boom")
+
+        async def _exercise():
+            engine = EngineStub()
+            regular = AsyncCollection(engine, "db", "coll")
+            system_profile = AsyncCollection(engine, "db", "system.profile")
+            operation = regular.find({"kind": "view"})._as_operation()
+            await regular._profile_operation(
+                op="query",
+                command={"find": "coll"},
+                duration_ns=1000,
+                operation=operation,
+            )
+            await system_profile._profile_operation(
+                op="query",
+                command={"find": "system.profile"},
+                duration_ns=1000,
+            )
+            return engine.events
+
+        events = asyncio.run(_exercise())
+
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0][1]["fallback_reason"], None)
+        self.assertEqual(events[0][1]["execution_lineage"], ())
+
+    def test_engine_update_requires_update_with_operation_and_rejects_deferred_issues(self):
+        async def _exercise_missing_method():
+            collection = AsyncCollection(object(), "db", "coll")
+            operation = compile_update_operation(
+                {"_id": "1"},
+                update_spec={"$set": {"done": True}},
+                dialect=collection.mongodb_dialect,
+            )
+            await collection._engine_update_with_operation(operation)
+
+        async def _exercise_planning_issues():
+            collection = AsyncCollection(MemoryEngine(), "db", "coll")
+            operation = collection.find({"_id": "1"})._as_operation().with_overrides(
+                planning_issues=(type("Issue", (), {"message": "blocked"})(),),
+            )
+            collection._ensure_operation_executable(operation)
+
+        with self.assertRaisesRegex(TypeError, "update_with_operation"):
+            asyncio.run(_exercise_missing_method())
+        with self.assertRaisesRegex(OperationFailure, "blocked"):
+            asyncio.run(_exercise_planning_issues())
+
+    def test_create_indexes_rolls_back_created_indexes_when_later_creation_fails(self):
+        class EngineStub:
+            def __init__(self):
+                self.created = []
+                self.dropped = []
+
+            async def index_information(self, *args, **kwargs):
+                return {}
+
+            async def create_index(self, _db, _coll, keys, **kwargs):
+                if not self.created:
+                    self.created.append("idx_a")
+                    return "idx_a"
+                raise RuntimeError("boom")
+
+            async def drop_index(self, _db, _coll, name, **kwargs):
+                self.dropped.append(name)
+
+        holder = {}
+
+        async def _exercise():
+            engine = EngineStub()
+            holder["engine"] = engine
+            collection = AsyncCollection(engine, "db", "coll")
+            await collection.create_indexes(
+                [IndexModel([("a", 1)], name="idx_a"), IndexModel([("b", 1)], name="idx_b")]
+            )
+
+        with self.assertRaisesRegex(RuntimeError, "boom"):
+            asyncio.run(_exercise())
+        self.assertEqual(holder["engine"].dropped, ["idx_a"])
+
+    def test_update_one_hint_and_change_hub_paths_publish_expected_events(self):
+        class HubStub:
+            def __init__(self):
+                self.events = []
+
+            def publish(self, **payload):
+                self.events.append(payload)
+
+        class CursorStub:
+            def __init__(self, document):
+                self._document = document
+
+            async def first(self):
+                return self._document
+
+        async def _exercise():
+            hub = HubStub()
+            collection = AsyncCollection(MemoryEngine(), "db", "coll", change_hub=hub)
+
+            selected = {"_id": "1"}
+            updated = {"_id": "1", "done": True}
+
+            collection._build_cursor = lambda *args, **kwargs: CursorStub(selected)  # type: ignore[method-assign]
+            collection._engine_update_with_operation = lambda *args, **kwargs: asyncio.sleep(0, result=UpdateResult(matched_count=1, modified_count=1))  # type: ignore[method-assign]
+            collection._document_by_id = lambda *args, **kwargs: asyncio.sleep(0, result=updated)  # type: ignore[method-assign]
+
+            hinted = await collection.update_one({"_id": "1"}, {"$set": {"done": True}}, hint="idx")
+            plain = await collection.update_one({"_id": "1"}, {"$set": {"done": True}})
+            return hinted, plain, hub.events
+
+        hinted, plain, events = asyncio.run(_exercise())
+
+        self.assertEqual(hinted.modified_count, 1)
+        self.assertEqual(plain.modified_count, 1)
+        self.assertEqual([event["operation_type"] for event in events], ["update", "update"])
+
+    def test_update_one_hint_upserts_when_no_document_matches(self):
+        class CursorStub:
+            async def first(self):
+                return None
+
+        async def _exercise():
+            collection = AsyncCollection(MemoryEngine(), "db", "coll")
+            collection._build_cursor = lambda *args, **kwargs: CursorStub()  # type: ignore[method-assign]
+            collection._perform_upsert_update = lambda *args, **kwargs: asyncio.sleep(0, result=UpdateResult(matched_count=0, modified_count=0, upserted_id="1"))  # type: ignore[method-assign]
+            return await collection.update_one(
+                {"_id": "1"},
+                {"$set": {"done": True}},
+                hint="idx",
+                upsert=True,
+            )
+
+        result = asyncio.run(_exercise())
+
+        self.assertEqual(result.upserted_id, "1")
+
+    def test_find_one_and_update_handles_upsert_after_lookup_and_missing_after_document(self):
+        class CursorStub:
+            def __init__(self, document):
+                self._document = document
+
+            async def first(self):
+                return self._document
+
+        async def _exercise_upsert():
+            collection = AsyncCollection(MemoryEngine(), "db", "coll")
+            collection._select_first_document = lambda *args, **kwargs: asyncio.sleep(0, result=None)  # type: ignore[method-assign]
+            collection.update_one = lambda *args, **kwargs: asyncio.sleep(0, result=UpdateResult(matched_count=0, modified_count=0, upserted_id="1"))  # type: ignore[method-assign]
+            collection.find = lambda *args, **kwargs: CursorStub({"_id": "1", "done": True})  # type: ignore[method-assign]
+            return await collection.find_one_and_update(
+                {"_id": "1"},
+                {"$set": {"done": True}},
+                upsert=True,
+                return_document=ReturnDocument.AFTER,
+            )
+
+        async def _exercise_missing_after():
+            collection = AsyncCollection(MemoryEngine(), "db", "coll")
+            collection._select_first_document = lambda *args, **kwargs: asyncio.sleep(0, result={"_id": "1", "done": False})  # type: ignore[method-assign]
+            collection._engine_update_with_operation = lambda *args, **kwargs: asyncio.sleep(0, result=UpdateResult(matched_count=1, modified_count=1))  # type: ignore[method-assign]
+            collection._document_by_id = lambda *args, **kwargs: asyncio.sleep(0, result=None)  # type: ignore[method-assign]
+            return await collection.find_one_and_update(
+                {"_id": "1"},
+                {"$set": {"done": True}},
+                return_document=ReturnDocument.AFTER,
+            )
+
+        self.assertEqual(asyncio.run(_exercise_upsert()), {"_id": "1", "done": True})
+        self.assertIsNone(asyncio.run(_exercise_missing_after()))
+
+    def test_find_one_and_replace_returns_none_when_after_document_disappears(self):
+        async def _exercise():
+            collection = AsyncCollection(MemoryEngine(), "db", "coll")
+            collection._select_first_document = lambda *args, **kwargs: asyncio.sleep(0, result={"_id": "1", "done": False})  # type: ignore[method-assign]
+            collection.replace_one = lambda *args, **kwargs: asyncio.sleep(0, result=UpdateResult(matched_count=1, modified_count=1))  # type: ignore[method-assign]
+            collection._document_by_id = lambda *args, **kwargs: asyncio.sleep(0, result=None)  # type: ignore[method-assign]
+            return await collection.find_one_and_replace(
+                {"_id": "1"},
+                {"done": True},
+                return_document=ReturnDocument.AFTER,
+            )
+
+        self.assertIsNone(asyncio.run(_exercise()))
+
+    def test_delete_one_change_hub_and_hint_paths_cover_selection_branches(self):
+        class HubStub:
+            def __init__(self):
+                self.events = []
+
+            def publish(self, **payload):
+                self.events.append(payload)
+
+        class CursorStub:
+            def __init__(self, document):
+                self._document = document
+
+            async def first(self):
+                return self._document
+
+        async def _exercise():
+            hub = HubStub()
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll", change_hub=hub)
+                collection._build_cursor = lambda *args, **kwargs: CursorStub({"_id": "1"})  # type: ignore[method-assign]
+                collection._engine_delete_with_operation = lambda *args, **kwargs: asyncio.sleep(0, result=DeleteResult(deleted_count=1))  # type: ignore[method-assign]
+
+                plain = await collection.delete_one({"_id": "1"})
+                hinted_none = await collection.delete_one({"_id": "missing"}, hint="idx")
+                return plain, hinted_none, hub.events
+            finally:
+                await engine.disconnect()
+
+        plain, hinted_none, events = asyncio.run(_exercise())
+
+        self.assertEqual(plain.deleted_count, 1)
+        self.assertIn(hinted_none.deleted_count, (0, 1))
+        self.assertEqual(events[0]["operation_type"], "delete")
+
+    def test_delete_one_hint_returns_zero_when_selection_is_empty(self):
+        class CursorStub:
+            async def first(self):
+                return None
+
+        async def _exercise():
+            collection = AsyncCollection(MemoryEngine(), "db", "coll")
+            collection._build_cursor = lambda *args, **kwargs: CursorStub()  # type: ignore[method-assign]
+            return await collection.delete_one({"_id": "missing"}, hint="idx")
+
+        result = asyncio.run(_exercise())
+
+        self.assertEqual(result.deleted_count, 0)
+
+    def test_drop_index_accepts_string_names_and_rename_rejects_empty_name(self):
+        class EngineStub:
+            def __init__(self):
+                self.drop_calls = []
+
+            async def drop_index(self, *args, **kwargs):
+                self.drop_calls.append((args, kwargs))
+
+        async def _exercise():
+            engine = EngineStub()
+            collection = AsyncCollection(engine, "db", "coll")
+            await collection.drop_index("name_1")
+            return engine.drop_calls
+
+        calls = asyncio.run(_exercise())
+
+        self.assertEqual(calls[0][0], ("db", "coll", "name_1"))
+        with self.assertRaises(TypeError):
+            asyncio.run(self.collection.rename(""))

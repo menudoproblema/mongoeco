@@ -1,10 +1,12 @@
 import unittest
 
+import mongoeco.core.search as search_module
 from mongoeco.core.search import (
     SearchPhraseQuery,
     SearchTextQuery,
     SearchVectorQuery,
     build_search_index_document,
+    is_queryable_search_definition,
     compile_search_text_like_query,
     compile_search_phrase_query,
     compile_search_stage,
@@ -87,6 +89,27 @@ class SearchCoreTests(unittest.TestCase):
         self.assertFalse(unsupported["queryable"])
         self.assertEqual(unsupported["status"], "UNSUPPORTED")
         self.assertEqual(unsupported["statusDetail"], "unsupported-definition")
+
+    def test_is_queryable_search_definition_returns_false_for_unknown_index_type(self) -> None:
+        self.assertFalse(
+            is_queryable_search_definition(
+                SearchIndexDefinition({}, name="hybrid", index_type="hybrid")
+            )
+        )
+        self.assertTrue(is_queryable_search_definition(SearchIndexDefinition({}, name="by_text")))
+
+    def test_build_search_index_document_tracks_ready_text_indexes(self) -> None:
+        document = build_search_index_document(
+            SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text"),
+            ready=True,
+            ready_at_epoch=12.5,
+        )
+
+        self.assertEqual(document["status"], "READY")
+        self.assertEqual(document["statusDetail"], "ready")
+        self.assertEqual(document["queryMode"], "text")
+        self.assertFalse(document["experimental"])
+        self.assertEqual(document["readyAtEpoch"], 12.5)
 
     def test_compile_search_text_query_supports_paths(self) -> None:
         query = compile_search_text_query(
@@ -218,6 +241,19 @@ class SearchCoreTests(unittest.TestCase):
                 paths=("title",),
             ),
         )
+        self.assertEqual(
+            compile_search_stage(
+                "$vectorSearch",
+                {"index": "vec", "path": "embedding", "queryVector": [1], "limit": 1},
+            ),
+            SearchVectorQuery(
+                index_name="vec",
+                path="embedding",
+                query_vector=(1.0,),
+                limit=1,
+                num_candidates=1,
+            ),
+        )
 
     def test_compile_search_stage_rejects_unsupported_search_operator_keys(self) -> None:
         with self.assertRaises(OperationFailure):
@@ -250,6 +286,10 @@ class SearchCoreTests(unittest.TestCase):
             compile_search_text_like_query({"text": []})
         with self.assertRaises(OperationFailure):
             compile_search_text_like_query({"text": {"query": "   "}})
+        with self.assertRaises(OperationFailure):
+            compile_search_text_like_query({"text": {"query": "ada", "path": ""}})
+        with self.assertRaises(OperationFailure):
+            compile_search_text_like_query({"text": {"query": "ada", "path": []}})
         with self.assertRaises(OperationFailure):
             compile_search_text_query({"phrase": {"query": "ada"}})
         with self.assertRaises(OperationFailure):
@@ -299,6 +339,10 @@ class SearchCoreTests(unittest.TestCase):
             compile_vector_search_query([])
         with self.assertRaises(OperationFailure):
             compile_vector_search_query(
+                {"path": "", "queryVector": [1], "limit": 1}
+            )
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query(
                 {"path": "embedding", "queryVector": [1, True], "limit": 1}
             )
         with self.assertRaises(OperationFailure):
@@ -313,6 +357,26 @@ class SearchCoreTests(unittest.TestCase):
                     "limit": 2,
                     "numCandidates": 1,
                 }
+            )
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query(
+                {"index": "", "path": "embedding", "queryVector": [1], "limit": 1}
+            )
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query(
+                {"path": "embedding", "queryVector": [], "limit": 1}
+            )
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query(
+                {"path": "embedding", "queryVector": [1], "limit": True}  # type: ignore[arg-type]
+            )
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query(
+                {"path": "embedding", "queryVector": [1], "limit": 1, "numCandidates": True}  # type: ignore[arg-type]
+            )
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query(
+                {"path": "embedding", "queryVector": [1], "limit": 1, "boost": 2}
             )
 
     def test_validate_vector_search_index_definition_requires_vector_fields(self) -> None:
@@ -392,6 +456,22 @@ class SearchCoreTests(unittest.TestCase):
         self.assertIsNone(
             score_vector_document({"embedding": [0.0, 0.0, 0.0]}, definition=definition, query=query)
         )
+        self.assertIsNone(
+            score_vector_document({"other": [1.0, 0.0, 0.0]}, definition=definition, query=query)
+        )
+        self.assertIsNone(
+            score_vector_document(
+                {"embedding": [1.0, 0.0, 0.0]},
+                definition=definition,
+                query=SearchVectorQuery(
+                    index_name="vec",
+                    path="other",
+                    query_vector=(1.0, 0.0, 0.0),
+                    limit=1,
+                    num_candidates=1,
+                ),
+            )
+        )
 
     def test_matches_search_text_and_phrase_queries_against_mapping(self) -> None:
         definition = SearchIndexDefinition(
@@ -444,6 +524,17 @@ class SearchCoreTests(unittest.TestCase):
                 ),
             )
         )
+        self.assertFalse(
+            matches_search_phrase_query(
+                {"other": "Ada Lovelace"},
+                definition=definition,
+                query=SearchPhraseQuery(
+                    index_name="by_text",
+                    raw_query="Ada",
+                    paths=("title",),
+                ),
+            )
+        )
 
     def test_iter_searchable_text_entries_supports_dynamic_mappings_and_path_filters(self) -> None:
         definition = SearchIndexDefinition({}, name="by_text")
@@ -476,6 +567,41 @@ class SearchCoreTests(unittest.TestCase):
                     paths=("body",),
                 ),
             )
+        )
+        self.assertEqual(search_module._quote_fts_term('ada "lovelace"'), '"ada ""lovelace"""')
+
+    def test_iter_searchable_text_entries_returns_empty_for_vector_indexes_and_non_document_mappings(self) -> None:
+        self.assertEqual(
+            iter_searchable_text_entries(
+                {"title": "Ada"},
+                SearchIndexDefinition(
+                    {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 3}]},
+                    name="vec",
+                    index_type="vectorSearch",
+                ),
+            ),
+            [],
+        )
+        self.assertEqual(
+            iter_searchable_text_entries(
+                "Ada",  # type: ignore[arg-type]
+                SearchIndexDefinition(
+                    {"mappings": {"dynamic": True, "fields": {"title": {"type": "string"}}}},
+                    name="by_text",
+                ),
+            ),
+            [],
+        )
+        self.assertEqual(search_module._collect_text_leaf_entries("Ada", ""), [])
+        self.assertEqual(search_module._collect_text_leaf_entries(1, "title"), [])
+        self.assertEqual(search_module._collect_text_leaf_entries(["Ada", 1], "title"), [("title", "Ada")])
+        self.assertEqual(search_module._collect_dynamic_text_entries({"ok": "Ada", 1: "skip"}), [("ok", "Ada")])
+        self.assertEqual(
+            search_module._collect_entries_from_mapping(
+                {"nested": {"title": "Ada"}},
+                {"dynamic": False, "fields": {"nested": {"fields": {"title": {"type": "string"}}}}},
+            ),
+            [("nested.title", "Ada")],
         )
 
     def test_vector_field_paths_and_sqlite_query_handle_escaping(self) -> None:
@@ -525,8 +651,21 @@ class SearchCoreTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             validate_search_index_definition({"mappings": {"fields": []}}, index_type="search")
         with self.assertRaises(OperationFailure):
+            validate_search_index_definition({"unsupported": True}, index_type="search")
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition({"mappings": []}, index_type="search")
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition({"mappings": {"fields": {"": {"type": "string"}}}}, index_type="search")
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition({"mappings": {"fields": {"title": []}}}, index_type="search")
+        with self.assertRaises(OperationFailure):
             validate_search_index_definition(
                 {"mappings": {"fields": {"title": {"type": "string", "tokenizer": "x"}}}},
+                index_type="search",
+            )
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition(
+                {"mappings": {"fields": {"title": {"type": "document", "extra": True}}}},
                 index_type="search",
             )
 
@@ -548,6 +687,19 @@ class SearchCoreTests(unittest.TestCase):
             normalized["mappings"]["fields"]["suggest"]["type"],
             "autocomplete",
         )
+        nested = validate_search_index_definition(
+            {"mappings": {"fields": {"nested": {"fields": {"title": {"type": "string"}}}}}},
+            index_type="search",
+        )
+        self.assertEqual(
+            nested["mappings"]["fields"]["nested"]["fields"]["title"]["type"],
+            "string",
+        )
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition(
+                {"mappings": {"fields": {"nested": {"type": "document", "fields": {"title": {"type": "string"}}}}}},
+                index_type="search",
+            )
 
     def test_validate_vector_search_definition_rejects_invalid_similarity_and_path(self) -> None:
         with self.assertRaises(OperationFailure):
@@ -560,6 +712,52 @@ class SearchCoreTests(unittest.TestCase):
                 {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 3, "similarity": "dotProduct"}]},
                 index_type="vectorSearch",
             )
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition(
+                {"fields": ["embedding"]},
+                index_type="vectorSearch",
+            )
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition(
+                {"fields": [{"type": "text", "path": "embedding", "numDimensions": 3}]},
+                index_type="vectorSearch",
+            )
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition(
+                {"fields": [{"type": "vector", "path": "embedding", "numDimensions": True}]},
+                index_type="vectorSearch",
+            )
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition(
+                {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 3, "extra": 1}]},
+                index_type="vectorSearch",
+            )
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition({"fields": []}, index_type="vectorSearch")
+
+    def test_search_private_helpers_cover_empty_and_invalid_vector_specs(self) -> None:
+        self.assertEqual(
+            search_module._vector_field_specs(SearchIndexDefinition({}, name="by_text")),
+            {},
+        )
+        self.assertEqual(
+            search_module._vector_field_specs(
+                SearchIndexDefinition({"fields": "bad"}, name="vec", index_type="vectorSearch")
+            ),
+            {},
+        )
+        self.assertEqual(
+            search_module._vector_field_specs(
+                SearchIndexDefinition(
+                    {"fields": ["bad", {"type": "vector", "path": "", "numDimensions": 2}]},
+                    name="vec",
+                    index_type="vectorSearch",
+                )
+            ),
+            {},
+        )
+        self.assertIsNone(search_module._cosine_similarity((0.0,), (1.0,)))
+        self.assertAlmostEqual(search_module._cosine_similarity((1.0, 0.0), (1.0, 0.0)) or 0.0, 1.0)
 
 
 if __name__ == "__main__":

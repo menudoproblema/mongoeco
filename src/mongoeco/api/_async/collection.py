@@ -372,6 +372,14 @@ class AsyncCollection:
     def _normalize_index_keys(keys: object) -> IndexKeySpec:
         return normalize_index_keys(keys)
 
+    @staticmethod
+    def _normalize_expire_after_seconds(value: object | None) -> int | None:
+        if value is None:
+            return None
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            raise TypeError("expire_after_seconds must be a non-negative int or None")
+        return value
+
     @classmethod
     def _normalize_index_models(cls, indexes: object) -> list[IndexModel]:
         if not isinstance(indexes, list):
@@ -397,6 +405,8 @@ class AsyncCollection:
             "sparse",
             "partialFilterExpression",
             "partial_filter_expression",
+            "expireAfterSeconds",
+            "expire_after_seconds",
         }
         if unsupported:
             unsupported_names = ", ".join(sorted(unsupported))
@@ -408,6 +418,8 @@ class AsyncCollection:
             "sparse",
             "partialFilterExpression",
             "partial_filter_expression",
+            "expireAfterSeconds",
+            "expire_after_seconds",
         ):
             if field in document:
                 kwargs[field] = document[field]
@@ -1983,17 +1995,20 @@ class AsyncCollection:
                 full_document=deepcopy(after),
             )
         if return_document is ReturnDocument.BEFORE:
-            return apply_projection(before, projection, dialect=self._mongodb_dialect)
-        return await self.find(
-            identity_filter,
+            return apply_projection(
+                before,
+                projection,
+                selector_filter=operation.filter_spec,
+                dialect=self._mongodb_dialect,
+            )
+        if after is None:
+            return None
+        return apply_projection(
+            after,
             projection,
-            collation=operation.collation,
-            limit=1,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            session=session,
-        ).first()
+            selector_filter=operation.filter_spec,
+            dialect=self._mongodb_dialect,
+        )
 
     async def find_one_and_replace(
         self,
@@ -2101,17 +2116,21 @@ class AsyncCollection:
             session=session,
         )
         if return_document is ReturnDocument.BEFORE:
-            return apply_projection(before, projection, dialect=self._mongodb_dialect)
-        return await self.find(
-            identity_filter,
+            return apply_projection(
+                before,
+                projection,
+                selector_filter=operation.filter_spec,
+                dialect=self._mongodb_dialect,
+            )
+        after = await self._document_by_id(before["_id"], session=session)
+        if after is None:
+            return None
+        return apply_projection(
+            after,
             projection,
-            collation=operation.collation,
-            limit=1,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            session=session,
-        ).first()
+            selector_filter=operation.filter_spec,
+            dialect=self._mongodb_dialect,
+        )
 
     async def find_one_and_delete(
         self,
@@ -2182,7 +2201,12 @@ class AsyncCollection:
             operation_type="delete",
             document_key={"_id": deepcopy(before["_id"])},
         )
-        return apply_projection(before, projection, dialect=self._mongodb_dialect)
+        return apply_projection(
+            before,
+            projection,
+            selector_filter=operation.filter_spec,
+            dialect=self._mongodb_dialect,
+        )
 
     async def delete_one(
         self,
@@ -2494,11 +2518,13 @@ class AsyncCollection:
         name: str | None = None,
         sparse: bool = False,
         partial_filter_expression: dict[str, object] | None = None,
+        expire_after_seconds: int | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> str:
         normalized_keys = self._normalize_index_keys(keys)
+        expire_after_seconds = self._normalize_expire_after_seconds(expire_after_seconds)
         max_time_ms = self._normalize_max_time_ms(max_time_ms)
         created_name = await self._engine.create_index(
             self._db_name,
@@ -2508,6 +2534,7 @@ class AsyncCollection:
             name=name,
             sparse=sparse,
             partial_filter_expression=partial_filter_expression,
+            expire_after_seconds=expire_after_seconds,
             max_time_ms=max_time_ms,
             context=session,
         )
@@ -2548,6 +2575,7 @@ class AsyncCollection:
                     name=index.name,
                     sparse=index.sparse,
                     partial_filter_expression=index.partial_filter_expression,
+                    expire_after_seconds=index.expire_after_seconds,
                     max_time_ms=None if deadline is None else max(
                         1,
                         int((deadline - time.monotonic()) * 1000),

@@ -71,11 +71,16 @@ from mongoeco.engines.semantic_core import (
     compile_update_semantics,
 )
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.types import EngineIndexRecord, IndexDefinition, IndexInformation, default_id_index_definition
+from mongoeco.types import EngineIndexRecord, IndexDefinition, IndexInformation, IndexModel, default_id_index_definition
 from mongoeco.types import (
+    AggregateExplanation,
     BulkWriteErrorDetails,
     CodecOptions,
     ExecutionLineageStep,
+    PhysicalPlanStep,
+    PlanningIssue,
+    SearchIndexDefinition,
+    SearchIndexModel,
     PlanningMode,
     QueryPlanExplanation,
     ReadConcern,
@@ -104,6 +109,14 @@ from mongoeco.types import (
     UpsertedWriteEntry,
     WriteErrorEntry,
     WriteCommandResult,
+    default_id_index_document,
+    default_id_index_information,
+    normalize_codec_options,
+    normalize_index_keys,
+    normalize_read_concern,
+    normalize_read_preference,
+    normalize_transaction_options,
+    normalize_write_concern,
 )
 from mongoeco.core.operators import UpdateEngine
 
@@ -192,6 +205,44 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             },
         )
 
+    def test_index_definition_and_model_round_trip_expire_after_seconds(self):
+        from mongoeco.types import IndexModel
+
+        definition = IndexDefinition(
+            [("expires_at", 1)],
+            name="expires_at_1",
+            expire_after_seconds=30,
+        )
+        model = IndexModel([("expires_at", 1)], expireAfterSeconds=30)
+
+        self.assertEqual(
+            definition.to_list_document(),
+            {
+                "name": "expires_at_1",
+                "key": {"expires_at": 1},
+                "fields": ["expires_at"],
+                "unique": False,
+                "expireAfterSeconds": 30,
+            },
+        )
+        self.assertEqual(
+            definition.to_information_entry(),
+            {"key": [("expires_at", 1)], "expireAfterSeconds": 30},
+        )
+        self.assertEqual(model.expire_after_seconds, 30)
+        self.assertEqual(model.document["expireAfterSeconds"], 30)
+        self.assertEqual(model.definition.expire_after_seconds, 30)
+
+    def test_index_definition_and_model_reject_invalid_expire_after_seconds(self):
+        from mongoeco.types import IndexModel
+
+        with self.assertRaises(TypeError):
+            IndexDefinition([("expires_at", 1)], name="expires_at_1", expire_after_seconds=-1)
+        with self.assertRaises(TypeError):
+            IndexModel([("expires_at", 1)], expireAfterSeconds=-1)
+        with self.assertRaises(TypeError):
+            IndexModel([("expires_at", 1)], expireAfterSeconds=True)
+
     def test_index_information_annotations_share_type_alias(self):
         async_index_hints = get_type_hints(AsyncCollection.index_information)
         sync_index_hints = get_type_hints(Collection.index_information)
@@ -249,6 +300,80 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             TransactionOptions(max_commit_time_ms=0)
 
+    def test_read_preference_normalizes_document_and_rejects_invalid_shapes(self):
+        preference = ReadPreference(
+            "nearest",
+            tag_sets=[{"region": "eu", "rack": "a"}],
+            max_staleness_seconds=30,
+        )
+
+        self.assertEqual(preference.name, "nearest")
+        self.assertEqual(
+            preference.document,
+            {
+                "mode": "nearest",
+                "tag_sets": [{"region": "eu", "rack": "a"}],
+                "maxStalenessSeconds": 30,
+            },
+        )
+
+        with self.assertRaises(TypeError):
+            ReadPreference(object())  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            ReadPreference(tag_sets="bad")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            ReadPreference(tag_sets=[("region", "eu")])  # type: ignore[list-item]
+        with self.assertRaises(TypeError):
+            ReadPreference(tag_sets=[{"": "eu"}])
+        with self.assertRaises(TypeError):
+            ReadPreference(tag_sets=[{"region": 1}])  # type: ignore[dict-item]
+        with self.assertRaises(ValueError):
+            ReadPreference(max_staleness_seconds=0)
+
+    def test_normalize_configuration_helpers_require_matching_types(self):
+        self.assertEqual(normalize_write_concern(None).document, {})
+        self.assertEqual(normalize_read_concern(None).document, {})
+        self.assertEqual(normalize_read_preference(None).document, {"mode": "primary"})
+        self.assertEqual(normalize_codec_options(None).document_class, dict)
+        self.assertIsNone(normalize_transaction_options(None).max_commit_time_ms)
+
+        with self.assertRaises(TypeError):
+            normalize_write_concern("majority")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            normalize_read_concern("majority")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            normalize_read_preference("primary")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            normalize_codec_options(dict)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            normalize_transaction_options({})  # type: ignore[arg-type]
+
+    def test_normalize_index_keys_supports_multiple_forms_and_rejects_invalid_values(self):
+        self.assertEqual(normalize_index_keys("email"), [("email", 1)])
+        self.assertEqual(normalize_index_keys({"email": 1, "age": -1}), [("email", 1), ("age", -1)])
+        self.assertEqual(normalize_index_keys(["email", ("age", -1)]), [("email", 1), ("age", -1)])
+
+        with self.assertRaises(ValueError):
+            normalize_index_keys("")
+        with self.assertRaises(ValueError):
+            normalize_index_keys({})
+        with self.assertRaises(TypeError):
+            normalize_index_keys(1)  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            normalize_index_keys([])
+        with self.assertRaises(ValueError):
+            normalize_index_keys({"email": 0})
+        with self.assertRaises(TypeError):
+            normalize_index_keys({1: 1})  # type: ignore[dict-item]
+        with self.assertRaises(ValueError):
+            normalize_index_keys([""])
+        with self.assertRaises(TypeError):
+            normalize_index_keys([("email", 1, "extra")])  # type: ignore[list-item]
+        with self.assertRaises(TypeError):
+            normalize_index_keys([(1, 1)])  # type: ignore[list-item]
+        with self.assertRaises(ValueError):
+            normalize_index_keys([("email", True)])  # type: ignore[list-item]
+
     def test_admin_surface_uses_structured_metadata_annotations(self):
         from mongoeco.api._sync.client import Database, MongoClient
 
@@ -289,6 +414,62 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         self.assertEqual(database_listing_snapshot.to_document()["sizeOnDisk"], 128)
         self.assertEqual(collection_snapshot.to_document()["size"], 20)
         self.assertEqual(database_snapshot.to_document()["dataSize"], 20)
+
+    def test_explanation_types_serialize_optional_metadata(self):
+        explanation = QueryPlanExplanation(
+            engine="memory",
+            strategy="scan",
+            plan="collection_scan",
+            sort=[("score", -1)],
+            skip=2,
+            limit=5,
+            hint="score_-1",
+            hinted_index="score_-1",
+            comment="trace",
+            max_time_ms=10,
+            details={"stage": "scan"},
+            indexes=[{"name": "score_-1"}],
+            planning_mode=PlanningMode.RELAXED,
+            planning_issues=(PlanningIssue(scope="planner", message="fallback"),),
+            execution_lineage=(ExecutionLineageStep(runtime="python", phase="match", detail="full scan"),),
+            physical_plan=(PhysicalPlanStep(runtime="python", operation="scan", detail="seq"),),
+            fallback_reason="unsupported filter",
+        )
+        aggregate = AggregateExplanation(
+            engine_plan=explanation,
+            remaining_pipeline=[{"$project": {"_id": 0}}],
+            hint="score_-1",
+            comment="trace",
+            max_time_ms=10,
+            batch_size=50,
+            allow_disk_use=True,
+            let={"tenant": "a"},
+            streaming_batch_execution=True,
+            planning_mode=PlanningMode.RELAXED,
+            planning_issues=(PlanningIssue(scope="aggregate", message="streamed"),),
+        )
+
+        self.assertEqual(explanation.to_document()["planning_mode"], "relaxed")
+        self.assertEqual(explanation.to_document()["planning_issues"][0]["scope"], "planner")
+        self.assertEqual(explanation.to_document()["execution_lineage"][0]["phase"], "match")
+        self.assertEqual(explanation.to_document()["physical_plan"][0]["operation"], "scan")
+        self.assertEqual(explanation.to_document()["fallback_reason"], "unsupported filter")
+        self.assertEqual(aggregate.to_document()["engine_plan"]["engine"], "memory")
+        self.assertEqual(aggregate.to_document()["planning_issues"][0]["scope"], "aggregate")
+
+    def test_stats_snapshots_reject_invalid_values(self):
+        with self.assertRaises(ValueError):
+            CollectionStatsSnapshot(namespace="", count=1, data_size=1, index_count=1)
+        with self.assertRaises(ValueError):
+            CollectionStatsSnapshot(namespace="db.users", count=-1, data_size=1, index_count=1)
+        with self.assertRaises(ValueError):
+            CollectionStatsSnapshot(namespace="db.users", count=1, data_size=1, index_count=1, scale=0)
+        with self.assertRaises(ValueError):
+            DatabaseStatsSnapshot(db_name="", collection_count=1, object_count=1, data_size=1, index_count=1)
+        with self.assertRaises(ValueError):
+            DatabaseStatsSnapshot(db_name="db", collection_count=-1, object_count=1, data_size=1, index_count=1)
+        with self.assertRaises(ValueError):
+            DatabaseStatsSnapshot(db_name="db", collection_count=1, object_count=1, data_size=1, index_count=1, scale=0)
 
     def test_admin_internal_results_use_typed_snapshots(self):
         cursor_result = CommandCursorResult(
@@ -361,3 +542,139 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             DropDatabaseCommandResult("db").to_document()["dropped"],
             "db",
         )
+
+    def test_index_definition_and_model_include_sparse_partial_and_default_id_helpers(self):
+        partial_filter = {"expires_at": {"$exists": True}}
+        definition = IndexDefinition(
+            [("expires_at", 1)],
+            name="ttl_sparse",
+            unique=True,
+            sparse=True,
+            partial_filter_expression=partial_filter,
+            expire_after_seconds=60,
+        )
+        partial_filter["expires_at"]["$exists"] = False
+        model = definition.to_model_document()
+        info = definition.to_information_entry()
+
+        self.assertEqual(
+            definition.to_list_document(),
+            {
+                "name": "ttl_sparse",
+                "key": {"expires_at": 1},
+                "fields": ["expires_at"],
+                "unique": True,
+                "sparse": True,
+                "partialFilterExpression": {"expires_at": {"$exists": True}},
+                "expireAfterSeconds": 60,
+            },
+        )
+        self.assertEqual(
+            model,
+            {
+                "name": "ttl_sparse",
+                "key": {"expires_at": 1},
+                "unique": True,
+                "sparse": True,
+                "partialFilterExpression": {"expires_at": {"$exists": True}},
+                "expireAfterSeconds": 60,
+            },
+        )
+        self.assertEqual(
+            info,
+            {
+                "key": [("expires_at", 1)],
+                "unique": True,
+                "sparse": True,
+                "partialFilterExpression": {"expires_at": {"$exists": True}},
+                "expireAfterSeconds": 60,
+            },
+        )
+        self.assertEqual(default_id_index_document()["name"], "_id_")
+        self.assertEqual(default_id_index_information()["_id_"]["key"], [("_id", 1)])
+
+        sparse_model = IndexModel(
+            [("tenant", 1)],
+            sparse=True,
+            partialFilterExpression={"tenant": {"$exists": True}},
+        )
+        self.assertEqual(sparse_model.resolved_name, "tenant_1")
+        self.assertTrue(sparse_model.document["sparse"])
+        self.assertEqual(
+            sparse_model.definition.partial_filter_expression,
+            {"tenant": {"$exists": True}},
+        )
+
+        with self.assertRaises(TypeError):
+            IndexDefinition([("tenant", 1)], name="bad", unique=1)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            IndexDefinition([("tenant", 1)], name="bad", sparse=1)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            IndexDefinition([("tenant", 1)], name="bad", partial_filter_expression="x")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            IndexModel([("tenant", 1)], unique=1)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            IndexModel([("tenant", 1)], sparse=1)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            IndexModel([("tenant", 1)], partialFilterExpression="x")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            IndexModel([("tenant", 1)], unexpected=True)  # type: ignore[arg-type]
+
+    def test_search_index_types_expose_search_and_vector_snapshots(self):
+        search_definition = SearchIndexDefinition(
+            {"mappings": {"dynamic": True}},
+            name="search_idx",
+        )
+        vector_definition = SearchIndexDefinition(
+            {"fields": [{"type": "vector", "path": "embedding"}]},
+            name="vector_idx",
+            index_type="vectorSearch",
+        )
+        unsupported_vector = SearchIndexDefinition(
+            {"fields": [{"type": "text", "path": "title"}]},
+            name="broken_vector",
+            index_type="vectorSearch",
+        )
+        model = SearchIndexModel(
+            {"fields": [{"type": "vector", "path": "embedding"}]},
+            type="vectorSearch",
+        )
+
+        self.assertEqual(search_definition.to_document()["status"], "READY")
+        self.assertEqual(search_definition.to_document()["capabilities"], ["text", "phrase"])
+        self.assertTrue(vector_definition.to_document()["queryable"])
+        self.assertEqual(vector_definition.to_document()["queryMode"], "vector")
+        self.assertEqual(vector_definition.to_document()["capabilities"], ["vectorSearch"])
+        self.assertFalse(unsupported_vector.to_document()["queryable"])
+        self.assertEqual(unsupported_vector.to_document()["status"], "UNSUPPORTED")
+        self.assertEqual(model.resolved_name, "default")
+        self.assertEqual(model.definition_snapshot.index_type, "vectorSearch")
+
+        with self.assertRaises(TypeError):
+            SearchIndexDefinition([], name="bad")  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            SearchIndexDefinition({}, name="")
+        with self.assertRaises(ValueError):
+            SearchIndexDefinition({}, name="bad", index_type="")
+        with self.assertRaises(TypeError):
+            SearchIndexModel([], name="bad")  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            SearchIndexModel({}, name="")
+        with self.assertRaises(ValueError):
+            SearchIndexModel({}, index_type="")
+        with self.assertRaises(TypeError):
+            SearchIndexModel({}, unexpected=True)  # type: ignore[arg-type]
+
+    def test_write_concern_rejects_non_int_timeouts_and_invalid_w_values(self):
+        with self.assertRaises(ValueError):
+            WriteConcern(-1)
+        with self.assertRaises(ValueError):
+            WriteConcern("")
+        with self.assertRaises(TypeError):
+            WriteConcern(1.5)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            WriteConcern(wtimeout=True)
+        with self.assertRaises(ValueError):
+            WriteConcern(wtimeout=-1)
+        with self.assertRaises(TypeError):
+            WriteConcern(j="yes")  # type: ignore[arg-type]

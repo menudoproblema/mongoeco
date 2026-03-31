@@ -512,6 +512,7 @@ class EngineIndexRecord:
     physical_name: str | None = None
     sparse: bool = False
     partial_filter_expression: Filter | None = None
+    expire_after_seconds: int | None = None
     multikey: bool = False
     multikey_physical_name: str | None = None
     scalar_physical_name: str | None = None
@@ -529,6 +530,7 @@ class EngineIndexRecord:
             unique=self.unique,
             sparse=self.sparse,
             partial_filter_expression=deepcopy(self.partial_filter_expression),
+            expire_after_seconds=self.expire_after_seconds,
         )
 
 
@@ -1440,6 +1442,7 @@ class IndexDefinition:
     unique: bool = False
     sparse: bool = False
     partial_filter_expression: Filter | None = None
+    expire_after_seconds: int | None = None
 
     def __init__(
         self,
@@ -1449,6 +1452,7 @@ class IndexDefinition:
         unique: bool = False,
         sparse: bool = False,
         partial_filter_expression: Filter | None = None,
+        expire_after_seconds: int | None = None,
     ):
         normalized = normalize_index_keys(keys)
         if not isinstance(name, str) or not name:
@@ -1459,11 +1463,18 @@ class IndexDefinition:
             raise TypeError("sparse must be a bool")
         if partial_filter_expression is not None and not isinstance(partial_filter_expression, dict):
             raise TypeError("partial_filter_expression must be a dict or None")
+        if expire_after_seconds is not None and (
+            not isinstance(expire_after_seconds, int)
+            or isinstance(expire_after_seconds, bool)
+            or expire_after_seconds < 0
+        ):
+            raise TypeError("expire_after_seconds must be a non-negative int or None")
         object.__setattr__(self, "keys", normalized)
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "unique", unique)
         object.__setattr__(self, "sparse", sparse)
         object.__setattr__(self, "partial_filter_expression", deepcopy(partial_filter_expression))
+        object.__setattr__(self, "expire_after_seconds", expire_after_seconds)
 
     @property
     def fields(self) -> list[str]:
@@ -1480,6 +1491,8 @@ class IndexDefinition:
             document["sparse"] = True
         if self.partial_filter_expression is not None:
             document["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
+        if self.expire_after_seconds is not None:
+            document["expireAfterSeconds"] = self.expire_after_seconds
         return document
 
     def to_model_document(self) -> IndexDocument:
@@ -1493,6 +1506,8 @@ class IndexDefinition:
             document["sparse"] = True
         if self.partial_filter_expression is not None:
             document["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
+        if self.expire_after_seconds is not None:
+            document["expireAfterSeconds"] = self.expire_after_seconds
         return document
 
     def to_information_entry(self) -> IndexInformationEntry:
@@ -1503,6 +1518,8 @@ class IndexDefinition:
             entry["sparse"] = True
         if self.partial_filter_expression is not None:
             entry["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
+        if self.expire_after_seconds is not None:
+            entry["expireAfterSeconds"] = self.expire_after_seconds
         return entry
 
     def to_information_entry_map(self) -> IndexInformation:
@@ -1520,6 +1537,7 @@ class IndexModel:
     unique: bool = False
     sparse: bool = False
     partial_filter_expression: Filter | None = None
+    expire_after_seconds: int | None = None
 
     def __init__(self, keys: object, **kwargs: Any):
         normalized = normalize_index_keys(keys)
@@ -1529,6 +1547,9 @@ class IndexModel:
         partial_filter_expression = kwargs.pop("partialFilterExpression", None)
         if partial_filter_expression is None:
             partial_filter_expression = kwargs.pop("partial_filter_expression", None)
+        expire_after_seconds = kwargs.pop("expireAfterSeconds", None)
+        if expire_after_seconds is None:
+            expire_after_seconds = kwargs.pop("expire_after_seconds", None)
         if name is not None and (not isinstance(name, str) or not name):
             raise ValueError("name must be a non-empty string")
         if not isinstance(unique, bool):
@@ -1537,6 +1558,12 @@ class IndexModel:
             raise TypeError("sparse must be a bool")
         if partial_filter_expression is not None and not isinstance(partial_filter_expression, dict):
             raise TypeError("partial_filter_expression must be a dict or None")
+        if expire_after_seconds is not None and (
+            not isinstance(expire_after_seconds, int)
+            or isinstance(expire_after_seconds, bool)
+            or expire_after_seconds < 0
+        ):
+            raise TypeError("expire_after_seconds must be a non-negative int or None")
         if kwargs:
             unsupported = ", ".join(sorted(kwargs))
             raise TypeError(f"unsupported IndexModel options: {unsupported}")
@@ -1545,6 +1572,7 @@ class IndexModel:
         object.__setattr__(self, "unique", unique)
         object.__setattr__(self, "sparse", sparse)
         object.__setattr__(self, "partial_filter_expression", deepcopy(partial_filter_expression))
+        object.__setattr__(self, "expire_after_seconds", expire_after_seconds)
 
     @property
     def resolved_name(self) -> str:
@@ -1558,6 +1586,7 @@ class IndexModel:
             unique=self.unique,
             sparse=self.sparse,
             partial_filter_expression=self.partial_filter_expression,
+            expire_after_seconds=self.expire_after_seconds,
         )
 
     @property

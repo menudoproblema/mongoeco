@@ -1300,6 +1300,36 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"_id": "2", "kind": "view", "rank": 1, "done": True, "tag": "after"}],
                     )
 
+    def test_find_one_and_update_and_delete_support_positional_projection(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory(), pymongo_profile='4.11') as client:
+                    collection = client.test.users
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "students": [
+                                {"school": 100, "age": 7},
+                                {"school": 102, "age": 10},
+                                {"school": 102, "age": 11},
+                            ],
+                        }
+                    )
+
+                    before = collection.find_one_and_update(
+                        {"_id": "1", "students.school": 102, "students.age": {"$gt": 10}},
+                        {"$set": {"flag": True}},
+                        return_document=ReturnDocument.BEFORE,
+                        projection={"students.$": 1, "_id": 0},
+                    )
+                    deleted = collection.find_one_and_delete(
+                        {"_id": "1", "students.school": 102, "students.age": {"$gt": 10}},
+                        projection={"students.$": 1, "_id": 0},
+                    )
+
+                    self.assertEqual(before, {"students": [{"school": 102, "age": 11}]})
+                    self.assertEqual(deleted, {"students": [{"school": 102, "age": 11}]})
+
     def test_find_one_and_update_upsert_returns_none_or_after_document(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -4068,6 +4098,45 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"key": [("email", 1), ("created_at", -1)]},
                     )
 
+    def test_create_index_supports_ttl_and_expires_documents(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.events
+                    past = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=120)
+                    future = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=120)
+                    collection.insert_many(
+                        [
+                            {"_id": "expired", "expires_at": past, "kind": "old"},
+                            {"_id": "fresh", "expires_at": future, "kind": "new"},
+                        ]
+                    )
+
+                    name = collection.create_index([("expires_at", 1)], expire_after_seconds=30)
+                    indexes = collection.list_indexes().to_list()
+                    info = collection.index_information()
+                    found = collection.find_one({"_id": "expired"})
+                    documents = collection.find({}, {"kind": 1, "_id": 0}).to_list()
+
+                    self.assertEqual(name, "expires_at_1")
+                    self.assertEqual(indexes[1]["expireAfterSeconds"], 30)
+                    self.assertEqual(info["expires_at_1"]["expireAfterSeconds"], 30)
+                    self.assertIsNone(found)
+                    self.assertEqual(documents, [{"kind": "new"}])
+
+    def test_create_index_rejects_invalid_ttl_definitions(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.events
+
+                    with self.assertRaises(TypeError):
+                        collection.create_index([("expires_at", 1)], expire_after_seconds=-1)
+                    with self.assertRaises(OperationFailure):
+                        collection.create_index([("tenant", 1), ("expires_at", 1)], expire_after_seconds=30)
+                    with self.assertRaises(OperationFailure):
+                        collection.create_index([("_id", 1)], expire_after_seconds=30)
+
     def test_collection_can_create_and_drop_multiple_indexes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -4360,7 +4429,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     self.assertEqual(found, {"name": "Ada"})
 
-    def test_find_projection_supports_slice_and_elem_match_operators(self):
+    def test_find_projection_supports_slice_elem_match_and_positional_operators(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -4384,6 +4453,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"_id": "user-1"},
                         {"name": 1, "students": {"$elemMatch": {"school": 102, "age": {"$gt": 10}}}, "_id": 0},
                     )
+                    positional = collection.find_one(
+                        {"_id": "user-1", "students.school": 102, "students.age": {"$gt": 10}},
+                        {"students.$": 1, "_id": 0},
+                    )
 
                     self.assertEqual(
                         sliced,
@@ -4399,6 +4472,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         },
                     )
                     self.assertEqual(matched, {"name": "Ada", "students": [{"school": 102, "age": 11}]})
+                    self.assertEqual(positional, {"students": [{"school": 102, "age": 11}]})
 
     def test_shared_memory_engine_is_safe_across_sync_threads(self):
         engine = MemoryEngine()

@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
 
+import mongoeco.api._async.cursor as async_cursor_module
 from mongoeco.api._async.cursor import AsyncCursor, _DEFAULT_LOCAL_PREFETCH_SIZE
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
@@ -8,7 +9,8 @@ from mongoeco.api._sync.cursor import Cursor
 from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.core.query_plan import MatchAll
-from mongoeco.errors import InvalidOperation
+from mongoeco.errors import InvalidOperation, OperationFailure
+from mongoeco.types import PlanningIssue, PlanningMode
 
 
 class _AsyncEngineStub:
@@ -39,6 +41,34 @@ class _AsyncCollectionStub:
 
     def find(self, *args, **kwargs):
         return AsyncCursor(self, {}, MatchAll(), None)
+
+
+class _ProfiledAsyncCollectionStub(_AsyncCollectionStub):
+    def __init__(self, documents):
+        super().__init__(documents)
+        self.profile_calls = []
+
+    async def _profile_operation(self, **payload):
+        self.profile_calls.append(payload)
+
+
+class _PlanningIssueCollectionStub(_AsyncCollectionStub):
+    planning_mode = PlanningMode.RELAXED
+
+    def _ensure_operation_executable(self, operation):
+        if operation.planning_issues:
+            raise OperationFailure(async_cursor_module._operation_issue_message(operation))
+
+
+class _UnsupportedExplainEngineStub(_AsyncEngineStub):
+    async def explain_find_semantics(self, *args, **kwargs):
+        return object()
+
+
+class _UnsupportedExplainCollectionStub(_AsyncCollectionStub):
+    def __init__(self, documents):
+        super().__init__(documents)
+        self._engine = _UnsupportedExplainEngineStub(documents)
 
 
 class _BatchTrackingScanStub:
@@ -185,6 +215,48 @@ class _StreamingAsyncCollectionStub:
 
 
 class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
+    async def test_async_cursor_private_helpers_cover_issue_messages_and_planning_mode_resolution(self):
+        operation = type("Operation", (), {"planning_issues": (PlanningIssue(scope="find", message="blocked"),)})()
+
+        self.assertEqual(
+            async_cursor_module._operation_issue_message(operation),
+            "operation has deferred planning issues: blocked",
+        )
+        with self.assertRaisesRegex(OperationFailure, "blocked"):
+            async_cursor_module._ensure_operation_executable(object(), operation)
+        self.assertEqual(
+            async_cursor_module._resolve_planning_mode(type("Collection", (), {"planning_mode": PlanningMode.RELAXED})()),
+            PlanningMode.RELAXED,
+        )
+        self.assertEqual(
+            async_cursor_module._resolve_planning_mode(type("Collection", (), {"_planning_mode": PlanningMode.RELAXED})()),
+            PlanningMode.RELAXED,
+        )
+        self.assertEqual(
+            async_cursor_module._resolve_planning_mode(object()),
+            PlanningMode.STRICT,
+        )
+
+    async def test_async_cursor_private_helpers_cover_sort_normalization_and_serialization_errors(self):
+        self.assertEqual(async_cursor_module._normalize_sort_spec(("_id", 1)), [("_id", 1)])
+        self.assertEqual(
+            async_cursor_module._normalize_sort_spec((("name", 1),)),
+            [("name", 1)],
+        )
+        with self.assertRaises(TypeError):
+            async_cursor_module._serialize_explanation(object())
+
+    async def test_async_cursor_private_helpers_accept_to_document_and_cover_limit_exhaustion(self):
+        class _ExplainStub:
+            def to_document(self):
+                return {"ok": 1}
+
+        cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None, limit=1)
+
+        self.assertEqual(async_cursor_module._serialize_explanation(_ExplainStub()), {"ok": 1})
+        self.assertEqual(await cursor._fetch_batch(1, 5), [])
+        self.assertIs(cursor.collection, cursor._collection)
+
     async def test_async_index_cursor_supports_first_and_to_list(self):
         cursor = AsyncIndexCursor(
             lambda: self._load_indexes_async(
@@ -373,6 +445,20 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(collection._engine.created_scans[0].yield_count, 2)
         self.assertEqual(await cursor.to_list(), [{"_id": "2"}, {"_id": "3"}])
 
+    async def test_async_cursor_batch_iterator_stops_when_ownership_is_lost(self):
+        collection = _BatchTrackingCollectionStub([{"_id": "1"}])
+        cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=1)
+        iterator = cursor._iter()
+        cursor._active_async_iterable = object()
+
+        self.assertEqual(await iterator.pull_chunk(1), [])
+
+    async def test_async_cursor_batch_iterator_closes_when_fetch_batch_returns_no_documents(self):
+        cursor = AsyncCursor(_AsyncCollectionStub([]), {}, MatchAll(), None, batch_size=1)
+        iterator = cursor._iter()
+
+        self.assertEqual(await iterator.pull_chunk(1), [])
+
     async def test_async_cursor_uses_local_prefetch_when_batch_size_is_none(self):
         documents = [{"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)]
         collection = _BatchTrackingCollectionStub(documents)
@@ -466,6 +552,100 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(cursor._sort, [("_id", 1)])
         self.assertEqual(cursor._hint, [("name", 1)])
+
+    async def test_async_cursor_comment_batch_size_and_max_time_ms_mutators_invalidate_caches(self):
+        cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None)
+        cursor._operation_cache = object()
+        cursor._semantics_cache = object()
+
+        self.assertIs(cursor.comment("trace"), cursor)
+        self.assertEqual(cursor._comment, "trace")
+        self.assertIsNone(cursor._operation_cache)
+        self.assertIsNone(cursor._semantics_cache)
+
+        cursor._operation_cache = object()
+        cursor._semantics_cache = object()
+        self.assertIs(cursor.max_time_ms(5), cursor)
+        self.assertEqual(cursor._max_time_ms, 5)
+        self.assertIsNone(cursor._operation_cache)
+        self.assertIsNone(cursor._semantics_cache)
+
+        cursor._operation_cache = object()
+        cursor._semantics_cache = object()
+        self.assertIs(cursor.batch_size(2), cursor)
+        self.assertEqual(cursor._batch_size, 2)
+        self.assertIsNone(cursor._operation_cache)
+        self.assertIsNone(cursor._semantics_cache)
+
+    async def test_async_cursor_iterator_stops_when_replaced_or_closed(self):
+        cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None, batch_size=1)
+        iterator = cursor._iter()
+
+        cursor._active_async_iterable = object()
+        with self.assertRaises(StopAsyncIteration):
+            await iterator.__anext__()
+
+        cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None, batch_size=1)
+        iterator = cursor._iter()
+        self.assertEqual(await iterator.pull_chunk(0), [])
+        await iterator.close()
+        self.assertEqual(await iterator.pull_chunk(1), [])
+
+    async def test_async_cursor_first_profiles_active_iterator_results_and_errors(self):
+        collection = _ProfiledAsyncCollectionStub([{"_id": "1"}])
+        cursor = AsyncCursor(collection, {}, MatchAll(), None)
+        active = cursor._iter(limit=1, enforce_ownership=False)
+        cursor._active_async_iterable = active
+
+        self.assertEqual(await cursor.first(), {"_id": "1"})
+        self.assertEqual(collection.profile_calls[-1]["op"], "query")
+        self.assertNotIn("errmsg", collection.profile_calls[-1])
+
+        collection = _ProfiledAsyncCollectionStub([{"_id": "1"}])
+        cursor = AsyncCursor(collection, {}, MatchAll(), None)
+
+        class _BrokenIterator:
+            async def __anext__(self):
+                raise RuntimeError("boom")
+
+        cursor._active_async_iterable = _BrokenIterator()
+        with self.assertRaisesRegex(RuntimeError, "boom"):
+            await cursor.first()
+        self.assertEqual(collection.profile_calls[-1]["errmsg"], "boom")
+
+    async def test_async_cursor_first_returns_none_when_active_iterator_is_exhausted(self):
+        cursor = AsyncCursor(_AsyncCollectionStub([]), {}, MatchAll(), None, batch_size=1)
+        active = cursor._iter()
+        cursor._active_async_iterable = active
+
+        self.assertIsNone(await cursor.first())
+
+    async def test_async_cursor_rewind_clears_active_iterator_and_explain_handles_planning_issues(self):
+        collection = _AsyncCollectionStub([{"_id": "1"}])
+        cursor = AsyncCursor(collection, {}, MatchAll(), None)
+        operation = cursor._as_operation().with_overrides(
+            planning_mode=PlanningMode.RELAXED,
+            planning_issues=(PlanningIssue(scope="find", message="unsupported"),),
+        )
+        cursor._operation_cache = operation
+        cursor._active_async_iterable = object()
+
+        cursor.rewind()
+        self.assertIsNone(cursor._active_async_iterable)
+
+        explanation = await cursor.explain()
+        self.assertEqual(explanation["engine"], "planner")
+        self.assertEqual(explanation["planning_mode"], "relaxed")
+        self.assertEqual(explanation["planning_issues"][0]["message"], "unsupported")
+
+        self.assertIs(cursor.skip(1), cursor)
+        self.assertEqual(cursor._skip, 1)
+
+    async def test_async_cursor_explain_rejects_unsupported_engine_result_shape(self):
+        cursor = AsyncCursor(_UnsupportedExplainCollectionStub([{"_id": "1"}]), {}, MatchAll(), None)
+
+        with self.assertRaises(TypeError):
+            await cursor.explain()
 
 
     def test_sync_cursor_rejects_negative_skip_and_limit_and_supports_iteration(self):

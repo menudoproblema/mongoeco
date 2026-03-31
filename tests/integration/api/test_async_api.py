@@ -1647,6 +1647,36 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [{"_id": "2", "kind": "view", "rank": 1, "done": True, "tag": "after"}],
                     )
 
+    async def test_find_one_and_update_and_delete_support_positional_projection(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with AsyncMongoClient(ENGINE_FACTORIES[engine_name](), pymongo_profile='4.11') as client:
+                    collection = client.test.users
+                    await collection.insert_one(
+                        {
+                            "_id": "1",
+                            "students": [
+                                {"school": 100, "age": 7},
+                                {"school": 102, "age": 10},
+                                {"school": 102, "age": 11},
+                            ],
+                        }
+                    )
+
+                    before = await collection.find_one_and_update(
+                        {"_id": "1", "students.school": 102, "students.age": {"$gt": 10}},
+                        {"$set": {"flag": True}},
+                        return_document=ReturnDocument.BEFORE,
+                        projection={"students.$": 1, "_id": 0},
+                    )
+                    deleted = await collection.find_one_and_delete(
+                        {"_id": "1", "students.school": 102, "students.age": {"$gt": 10}},
+                        projection={"students.$": 1, "_id": 0},
+                    )
+
+                    self.assertEqual(before, {"students": [{"school": 102, "age": 11}]})
+                    self.assertEqual(deleted, {"students": [{"school": 102, "age": 11}]})
+
     async def test_find_one_and_update_upsert_returns_none_or_after_document(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -1833,7 +1863,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     self.assertEqual(found, {"_id": "user-1", "name": "Ada"})
 
-    async def test_find_projection_supports_slice_and_elem_match_operators(self):
+    async def test_find_projection_supports_slice_elem_match_and_positional_operators(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
@@ -1857,6 +1887,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         {"_id": "user-1"},
                         {"name": 1, "students": {"$elemMatch": {"school": 102, "age": {"$gt": 10}}}, "_id": 0},
                     )
+                    positional = await collection.find_one(
+                        {"_id": "user-1", "students.school": 102, "students.age": {"$gt": 10}},
+                        {"students.$": 1, "_id": 0},
+                    )
 
                     self.assertEqual(
                         sliced,
@@ -1872,6 +1906,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         },
                     )
                     self.assertEqual(matched, {"name": "Ada", "students": [{"school": 102, "age": 11}]})
+                    self.assertEqual(positional, {"students": [{"school": 102, "age": 11}]})
 
     async def test_find_one_supports_id_operator_filter_without_direct_lookup_crash(self):
         for engine_name in ENGINE_FACTORIES:
@@ -4493,6 +4528,45 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         info["email_1_created_at_-1"],
                         {"key": [("email", 1), ("created_at", -1)]},
                     )
+
+    async def test_create_index_supports_ttl_and_expires_documents(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    past = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=120)
+                    future = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=120)
+                    await collection.insert_many(
+                        [
+                            {"_id": "expired", "expires_at": past, "kind": "old"},
+                            {"_id": "fresh", "expires_at": future, "kind": "new"},
+                        ]
+                    )
+
+                    name = await collection.create_index([("expires_at", 1)], expire_after_seconds=30)
+                    indexes = await collection.list_indexes().to_list()
+                    info = await collection.index_information()
+                    found = await collection.find_one({"_id": "expired"})
+                    documents = await collection.find({}, {"kind": 1, "_id": 0}).to_list()
+
+                    self.assertEqual(name, "expires_at_1")
+                    self.assertEqual(indexes[1]["expireAfterSeconds"], 30)
+                    self.assertEqual(info["expires_at_1"]["expireAfterSeconds"], 30)
+                    self.assertIsNone(found)
+                    self.assertEqual(documents, [{"kind": "new"}])
+
+    async def test_create_index_rejects_invalid_ttl_definitions(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+
+                    with self.assertRaises(TypeError):
+                        await collection.create_index([("expires_at", 1)], expire_after_seconds=-1)
+                    with self.assertRaises(OperationFailure):
+                        await collection.create_index([("tenant", 1), ("expires_at", 1)], expire_after_seconds=30)
+                    with self.assertRaises(OperationFailure):
+                        await collection.create_index([("_id", 1)], expire_after_seconds=30)
 
     async def test_collection_can_create_and_drop_multiple_indexes(self):
         for engine_name in ENGINE_FACTORIES:

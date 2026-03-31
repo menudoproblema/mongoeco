@@ -482,6 +482,85 @@ class SQLiteEngine(AsyncStorageEngine):
     def _dialect_requires_python_fallback(self, dialect: MongoDialect) -> bool:
         return type(dialect) not in (MongoDialect70, MongoDialect80)
 
+    @staticmethod
+    def _coerce_ttl_datetime(value: object) -> datetime.datetime | None:
+        if not isinstance(value, datetime.datetime):
+            return None
+        if value.tzinfo is None:
+            return value.replace(tzinfo=datetime.timezone.utc)
+        return value.astimezone(datetime.timezone.utc)
+
+    def _document_expired_by_ttl(
+        self,
+        document: Document,
+        index: EngineIndexRecord,
+        *,
+        now: datetime.datetime,
+    ) -> bool:
+        if index.expire_after_seconds is None or len(index.fields) != 1:
+            return False
+        values = QueryEngine.extract_values(document, index.fields[0])
+        ttl_candidates = [
+            candidate
+            for candidate in (
+                self._coerce_ttl_datetime(value)
+                for value in values
+            )
+            if candidate is not None
+        ]
+        if not ttl_candidates:
+            return False
+        expires_at = min(ttl_candidates) + datetime.timedelta(seconds=index.expire_after_seconds)
+        return expires_at <= now
+
+    def _purge_expired_documents_sync(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None,
+    ) -> int:
+        try:
+            ttl_indexes = [
+                index
+                for index in self._load_indexes(db_name, coll_name)
+                if index.expire_after_seconds is not None
+            ]
+        except (RuntimeError, TypeError, ValueError, AttributeError):
+            return 0
+        if not ttl_indexes:
+            return 0
+        now = datetime.datetime.now(datetime.timezone.utc)
+        expired: list[tuple[str, Document]] = []
+        for storage_key, document in self._load_documents(db_name, coll_name):
+            if any(
+                self._document_expired_by_ttl(document, index, now=now)
+                for index in ttl_indexes
+            ):
+                expired.append((storage_key, document))
+        if not expired:
+            return 0
+        self._begin_write(conn, context)
+        try:
+            for storage_key, _document in expired:
+                conn.execute(
+                    """
+                    DELETE FROM documents
+                    WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                    """,
+                    (db_name, coll_name, storage_key),
+                )
+                self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+                self._delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+                self._delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+            self._commit_write(conn, context)
+        except Exception:
+            self._rollback_write(conn, context)
+            raise
+        self._invalidate_collection_features_cache(db_name, coll_name)
+        return len(expired)
+
     def _storage_key(self, value: Any) -> str:
         return repr(canonical_document_id(value))
 
@@ -2026,7 +2105,7 @@ class SQLiteEngine(AsyncStorageEngine):
         conn = self._require_connection()
         cursor = conn.execute(
             """
-            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, partial_filter_json, multikey_flag, multikey_physical_name, scalar_physical_name
+            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
             FROM indexes
             WHERE db_name = ? AND coll_name = ?
             ORDER BY name
@@ -2047,6 +2126,21 @@ class SQLiteEngine(AsyncStorageEngine):
                     multikey_flag,
                     multikey_physical_name,
                 ) = row
+                expire_after_seconds = None
+                scalar_physical_name = None
+            elif len(row) == 10:
+                (
+                    name,
+                    physical_name,
+                    fields,
+                    keys,
+                    unique_flag,
+                    sparse_flag,
+                    partial_filter_json,
+                    multikey_flag,
+                    multikey_physical_name,
+                ) = row
+                expire_after_seconds = None
                 scalar_physical_name = None
             else:
                 (
@@ -2057,6 +2151,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     unique_flag,
                     sparse_flag,
                     partial_filter_json,
+                    expire_after_seconds,
                     multikey_flag,
                     multikey_physical_name,
                     scalar_physical_name,
@@ -2097,6 +2192,11 @@ class SQLiteEngine(AsyncStorageEngine):
                     unique=bool(unique_flag),
                     sparse=bool(sparse_flag),
                     partial_filter_expression=partial_filter_expression,
+                    expire_after_seconds=(
+                        int(expire_after_seconds)
+                        if expire_after_seconds is not None
+                        else None
+                    ),
                     multikey=bool(multikey_flag),
                     multikey_physical_name=multikey_physical_name
                     or self._physical_multikey_index_name(db_name, coll_name, name),
@@ -2530,7 +2630,7 @@ class SQLiteEngine(AsyncStorageEngine):
         indexes = conn.execute(
             """
             SELECT db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag,
-                   partial_filter_json, multikey_flag, multikey_physical_name, scalar_physical_name
+                   partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
             FROM indexes
             ORDER BY db_name, coll_name, name
             """
@@ -2548,6 +2648,7 @@ class SQLiteEngine(AsyncStorageEngine):
             unique_flag,
             sparse_flag,
             partial_filter_json,
+            expire_after_seconds,
             multikey_flag,
             multikey_physical_name,
             scalar_physical_name,
@@ -2579,6 +2680,11 @@ class SQLiteEngine(AsyncStorageEngine):
                     unique=bool(unique_flag),
                     sparse=bool(sparse_flag),
                     partial_filter_expression=partial_filter_expression,
+                    expire_after_seconds=(
+                        int(expire_after_seconds)
+                        if expire_after_seconds is not None
+                        else None
+                    ),
                     multikey=bool(multikey_flag),
                     multikey_physical_name=multikey_physical_name or self._physical_multikey_index_name(db_name, coll_name, name),
                     scalar_physical_name=resolved_scalar_name,
@@ -2654,6 +2760,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         unique_flag INTEGER NOT NULL,
                         sparse_flag INTEGER NOT NULL DEFAULT 0,
                         partial_filter_json TEXT,
+                        expire_after_seconds INTEGER,
                         multikey_flag INTEGER NOT NULL DEFAULT 0,
                         multikey_physical_name TEXT,
                         PRIMARY KEY (db_name, coll_name, name)
@@ -2721,6 +2828,8 @@ class SQLiteEngine(AsyncStorageEngine):
                     connection.execute("ALTER TABLE indexes ADD COLUMN sparse_flag INTEGER NOT NULL DEFAULT 0")
                 if "partial_filter_json" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN partial_filter_json TEXT")
+                if "expire_after_seconds" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN expire_after_seconds INTEGER")
                 if "multikey_flag" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN multikey_flag INTEGER NOT NULL DEFAULT 0")
                 if "multikey_physical_name" not in columns:
@@ -3068,6 +3177,7 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
+                self._purge_expired_documents_sync(conn, db_name, coll_name, context=context)
                 self._begin_write(conn, context)
                 try:
                     collection_options = self._collection_options_or_empty_sync(conn, db_name, coll_name)
@@ -3160,6 +3270,7 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
+                self._purge_expired_documents_sync(conn, db_name, coll_name, context=context)
                 collection_options = self._collection_options_or_empty_sync(
                     conn,
                     db_name,
@@ -3309,6 +3420,7 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
+                self._purge_expired_documents_sync(conn, db_name, coll_name, context=context)
                 row = conn.execute(
                     """
                     SELECT document
@@ -3411,6 +3523,19 @@ class SQLiteEngine(AsyncStorageEngine):
                     break
                 yield document
             return
+        with self._lock:
+            try:
+                purge_connection = self._require_connection(context)
+            except RuntimeError:
+                purge_connection = None
+            if purge_connection is not None:
+                with self._bind_connection(purge_connection):
+                    self._purge_expired_documents_sync(
+                        purge_connection,
+                        db_name,
+                        coll_name,
+                        context=context,
+                    )
         if (
             semantics.sort is None
             and semantics.skip == 0
@@ -3435,6 +3560,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 yield apply_projection(
                     document,
                     semantics.projection,
+                    selector_filter=semantics.filter_spec,
                     dialect=semantics.dialect,
                 )
                 return
@@ -3491,6 +3617,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             yield apply_projection(
                                 self._deserialize_document(payload),
                                 semantics.projection,
+                                selector_filter=semantics.filter_spec,
                                 dialect=semantics.dialect,
                             )
                     finally:
@@ -3587,6 +3714,7 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
+                self._purge_expired_documents_sync(conn, db_name, coll_name, context=context)
                 try:
                     if semantics.collation is not None:
                         raise NotImplementedError("Collation requires Python delete fallback")
@@ -3664,6 +3792,8 @@ class SQLiteEngine(AsyncStorageEngine):
             if self._session_owns_transaction(context):
                 conn = self._require_connection(context)
             with self._bind_connection(conn) if conn is not None else nullcontext():
+                if conn is not None:
+                    self._purge_expired_documents_sync(conn, db_name, coll_name, context=context)
                 try:
                     execution_plan = self._compile_read_execution_plan(
                         db_name,
@@ -3699,6 +3829,7 @@ class SQLiteEngine(AsyncStorageEngine):
         name: str | None,
         sparse: bool,
         partial_filter_expression: Filter | None,
+        expire_after_seconds: int | None,
         max_time_ms: int | None,
         context: ClientSession | None,
     ) -> str:
@@ -3707,8 +3838,25 @@ class SQLiteEngine(AsyncStorageEngine):
         fields = index_fields(normalized_keys)
         index_name = name or default_index_name(normalized_keys)
         deadline = operation_deadline(max_time_ms)
+        if expire_after_seconds is not None:
+            if (
+                not isinstance(expire_after_seconds, int)
+                or isinstance(expire_after_seconds, bool)
+                or expire_after_seconds < 0
+            ):
+                raise TypeError("expire_after_seconds must be a non-negative int or None")
+            if len(fields) != 1:
+                raise OperationFailure("TTL indexes require a single-field key pattern")
+            if fields[0] == "_id":
+                raise OperationFailure("TTL indexes cannot be created on _id")
         if self._is_builtin_id_index(normalized_keys):
-            if name not in (None, "_id_") or sparse or partial_filter_expression is not None or not unique:
+            if (
+                name not in (None, "_id_")
+                or sparse
+                or partial_filter_expression is not None
+                or expire_after_seconds is not None
+                or not unique
+            ):
                 raise OperationFailure("Conflicting index definition for '_id_'")
             return "_id_"
         if index_name == "_id_":
@@ -3734,6 +3882,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             or index["unique"] != unique
                             or index.get("sparse") != sparse
                             or index.get("partial_filter_expression") != partial_filter_expression
+                            or index.get("expire_after_seconds") != expire_after_seconds
                         ):
                             raise OperationFailure(f"Conflicting index definition for '{index_name}'")
                         return index_name
@@ -3742,6 +3891,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             index["unique"] != unique
                             or index.get("sparse") != sparse
                             or index.get("partial_filter_expression") != partial_filter_expression
+                            or index.get("expire_after_seconds") != expire_after_seconds
                         ):
                             raise OperationFailure(
                                 f"Conflicting index definition for key pattern '{normalized_keys!r}'"
@@ -3789,9 +3939,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     conn.execute(
                         """
                         INSERT INTO indexes (
-                            db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, partial_filter_json, multikey_flag, multikey_physical_name, scalar_physical_name
+                            db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             db_name,
@@ -3803,6 +3953,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             1 if unique else 0,
                             1 if sparse else 0,
                             json_dumps_compact(partial_filter_expression) if partial_filter_expression is not None else None,
+                            expire_after_seconds,
                             1 if multikey else 0,
                             multikey_physical_name if multikey else None,
                             scalar_physical_name,
@@ -3818,6 +3969,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             unique=unique,
                             sparse=sparse,
                             partial_filter_expression=deepcopy(partial_filter_expression),
+                            expire_after_seconds=expire_after_seconds,
                             multikey=True,
                             multikey_physical_name=multikey_physical_name,
                             scalar_physical_name=scalar_physical_name,
@@ -3842,6 +3994,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             unique=unique,
                             sparse=sparse,
                             partial_filter_expression=deepcopy(partial_filter_expression),
+                            expire_after_seconds=expire_after_seconds,
                             multikey=multikey,
                             multikey_physical_name=multikey_physical_name,
                             scalar_physical_name=scalar_physical_name,
@@ -3858,6 +4011,12 @@ class SQLiteEngine(AsyncStorageEngine):
                             )
                     enforce_deadline(deadline)
                     self._commit_write(conn, context)
+                    self._purge_expired_documents_sync(
+                        conn,
+                        db_name,
+                        coll_name,
+                        context=context,
+                    )
                     self._mark_index_metadata_changed(db_name, coll_name)
                     self._invalidate_collection_features_cache(db_name, coll_name)
                     return index_name
@@ -4806,6 +4965,7 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
+                self._purge_expired_documents_sync(conn, db_name, coll_name, context=context)
                 selected: tuple[str, Document] | None = None
                 sql_selection_supported = False
                 collection_options = self._collection_options_or_empty_sync(
@@ -5067,6 +5227,7 @@ class SQLiteEngine(AsyncStorageEngine):
         name: str | None = None,
         sparse: bool = False,
         partial_filter_expression: Filter | None = None,
+        expire_after_seconds: int | None = None,
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> str:
@@ -5079,6 +5240,7 @@ class SQLiteEngine(AsyncStorageEngine):
             name,
             sparse,
             partial_filter_expression,
+            expire_after_seconds,
             max_time_ms,
             context,
         )

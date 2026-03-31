@@ -336,7 +336,16 @@ def stream_finalize_documents(
             if remaining_skip:
                 remaining_skip -= 1
                 continue
-            projected = document if projection is None else apply_projection(document, projection, dialect=dialect)
+            projected = (
+                document
+                if projection is None
+                else apply_projection(
+                    document,
+                    projection,
+                    selector_filter=semantics.filter_spec,
+                    dialect=dialect,
+                )
+            )
             yield DocumentCodec.to_public(projected) if emit_public_documents else projected
             if remaining_limit is not None:
                 remaining_limit -= 1
@@ -349,7 +358,16 @@ def stream_finalize_documents(
         if remaining_skip:
             remaining_skip -= 1
             continue
-        projected = document if projection is None else apply_projection(document, projection, dialect=dialect)
+        projected = (
+            document
+            if projection is None
+            else apply_projection(
+                document,
+                projection,
+                selector_filter=semantics.filter_spec,
+                dialect=dialect,
+            )
+        )
         yield DocumentCodec.to_public(projected) if emit_public_documents else projected
         if remaining_limit is not None:
             remaining_limit -= 1
