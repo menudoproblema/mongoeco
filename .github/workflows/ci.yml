@@ -7,6 +7,30 @@ on:
   pull_request:
 
 jobs:
+  minimal-imports:
+    name: Minimal imports (Python 3.13)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install minimal test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[dev]
+
+      - name: Run clean-import smoke tests without wire extras
+        run: |
+          python -m unittest \
+            tests.unit.test_optional_bson_imports \
+            tests.unit.test_module_imports \
+            tests.unit.test_public_exports
+
   test:
     name: Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -28,7 +52,7 @@ jobs:
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e .[dev]
+          python -m pip install -e .[dev,wire]
 
       - name: Run unit and integration tests
         run: python -m unittest discover -s tests -p 'test*.py'

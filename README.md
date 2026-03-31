@@ -133,7 +133,7 @@ See:
 The repository currently uses the standard library test runner:
 
 ```bash
-python -m pip install -e .[dev]
+python -m pip install -e .[dev,wire]
 python -m unittest discover -s tests -p 'test*.py'
 ```
 
