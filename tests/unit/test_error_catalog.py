@@ -6,12 +6,23 @@ from mongoeco.error_catalog import (
     build_error_metadata,
     descriptor_for,
 )
-from mongoeco.errors import DuplicateKeyError, ExecutionTimeout, OperationFailure
+from mongoeco.errors import (
+    BulkWriteError,
+    CollectionInvalid,
+    ConnectionFailure,
+    DuplicateKeyError,
+    ExecutionTimeout,
+    InvalidOperation,
+    OperationFailure,
+    PyMongoError,
+    ServerSelectionTimeoutError,
+    WriteError,
+)
 
 try:
-    from pymongo.errors import DuplicateKeyError as PyMongoDuplicateKeyError
+    import pymongo.errors as pymongo_errors
 except Exception:  # pragma: no cover - pymongo is optional
-    PyMongoDuplicateKeyError = None
+    pymongo_errors = None
 
 
 class ErrorCatalogUnitTests(unittest.TestCase):
@@ -59,8 +70,21 @@ class ErrorCatalogUnitTests(unittest.TestCase):
             },
         )
 
-    @unittest.skipIf(PyMongoDuplicateKeyError is None, "pymongo is not installed")
-    def test_duplicate_key_error_is_compatible_with_pymongo_duplicate_key_error(self):
-        error = DuplicateKeyError("duplicate key")
+    @unittest.skipIf(pymongo_errors is None, "pymongo is not installed")
+    def test_errors_are_compatible_with_matching_pymongo_exceptions(self):
+        cases = [
+            (PyMongoError("bad"), pymongo_errors.PyMongoError),
+            (ConnectionFailure("down"), pymongo_errors.ConnectionFailure),
+            (ServerSelectionTimeoutError("timeout"), pymongo_errors.ServerSelectionTimeoutError),
+            (InvalidOperation("invalid"), pymongo_errors.InvalidOperation),
+            (CollectionInvalid("invalid coll"), pymongo_errors.CollectionInvalid),
+            (OperationFailure("failed", code=42, details={"stage": "find"}), pymongo_errors.OperationFailure),
+            (WriteError("write failed", code=64, details={"path": "email"}), pymongo_errors.WriteError),
+            (DuplicateKeyError("duplicate key"), pymongo_errors.DuplicateKeyError),
+            (BulkWriteError("bulk failed", details={"writeErrors": [], "writeConcernErrors": []}), pymongo_errors.BulkWriteError),
+            (ExecutionTimeout("timed out"), pymongo_errors.ExecutionTimeout),
+        ]
 
-        self.assertIsInstance(error, PyMongoDuplicateKeyError)
+        for error, expected_type in cases:
+            with self.subTest(error=type(error).__name__):
+                self.assertIsInstance(error, expected_type)
