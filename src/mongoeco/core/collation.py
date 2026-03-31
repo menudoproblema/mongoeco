@@ -93,6 +93,19 @@ def normalize_collation(collation: object | None) -> CollationSpec | None:
     normalization = collation.get("normalization", False)
     if not isinstance(normalization, bool):
         raise TypeError("collation normalization must be a boolean")
+    if locale == "simple":
+        if case_level:
+            raise ValueError("simple collation does not support caseLevel")
+        if numeric_ordering:
+            raise ValueError("simple collation does not support numericOrdering")
+        if backwards:
+            raise ValueError("simple collation does not support backwards")
+        if alternate != "non-ignorable":
+            raise ValueError("simple collation does not support alternate")
+        if max_variable != "punct":
+            raise ValueError("simple collation does not support maxVariable")
+        if normalization:
+            raise ValueError("simple collation does not support normalization")
     spec = CollationSpec(
         locale=locale,
         strength=strength,

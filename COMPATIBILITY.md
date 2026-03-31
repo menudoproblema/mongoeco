@@ -249,8 +249,8 @@ Hoy el contrato soportado y testeado es:
 
 * locales `simple` y `en`
 * `strength` `1`, `2` y `3`
-* `numericOrdering`
-* `caseLevel`
+* `numericOrdering` y `caseLevel` para `locale=en`
+* `simple` se mantiene como comparador BSON/Python base sin tailoring extra
 
 Para collation Unicode:
 

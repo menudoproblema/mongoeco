@@ -76,10 +76,11 @@ Unicode collation backend:
 
 * `mongoeco` prefers `PyICU` when it is available
 * otherwise it uses the bundled `pyuca` dependency
-* the `simple` collation keeps using the BSON/Python baseline comparator
+* the `simple` collation keeps using the BSON/Python baseline comparator and
+  rejects Unicode tailoring knobs such as `caseLevel` or `numericOrdering`
 * the currently supported locale surface is `simple` and `en`
 * the currently supported strengths are `1`, `2` and `3`
-* `numericOrdering` and `caseLevel` are supported inside that subset
+* `numericOrdering` and `caseLevel` are supported for `locale=en`
 * `PyICU` and `pyuca` are intentionally close, but may still differ on
   advanced tailoring details outside the currently supported locale surface
 

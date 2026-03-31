@@ -106,6 +106,14 @@ class CollationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "PyICU backend"):
                 normalize_collation({"locale": "en", "strength": 2, "normalization": True})
 
+    def test_simple_collation_rejects_unicode_tailoring_knobs(self):
+        with self.assertRaisesRegex(ValueError, "simple collation does not support caseLevel"):
+            normalize_collation({"locale": "simple", "caseLevel": True})
+        with self.assertRaisesRegex(ValueError, "simple collation does not support numericOrdering"):
+            normalize_collation({"locale": "simple", "numericOrdering": True})
+        with self.assertRaisesRegex(ValueError, "simple collation does not support normalization"):
+            normalize_collation({"locale": "simple", "normalization": True})
+
     def test_compare_with_collation_honours_strength_and_case_level(self):
         strength_one = normalize_collation({"locale": "en", "strength": 1})
         strength_two = normalize_collation({"locale": "en", "strength": 2})
