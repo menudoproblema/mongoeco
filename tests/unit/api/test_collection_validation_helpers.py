@@ -29,6 +29,22 @@ class AsyncCollectionValidationTests(AsyncCollectionHelperBase):
 
         self.assertEqual(document, {"profile": {"nested": "x"}, "empty": {}})
 
+    def test_seed_upsert_document_extracts_singleton_in_and_top_level_and_equalities(self):
+        document = {}
+
+        seed_upsert_document(
+            document,
+            {
+                "$and": [
+                    {"kind": {"$in": ["user"]}},
+                    {"tenant": "eu"},
+                    {"ignored": {"$gt": 1}},
+                ]
+            },
+        )
+
+        self.assertEqual(document, {"kind": "user", "tenant": "eu"})
+
     def test_direct_id_lookup_only_applies_to_literal_id_selector(self):
         self.assertTrue(self.collection._can_use_direct_id_lookup({"_id": "user-1"}))
         self.assertTrue(self.collection._can_use_direct_id_lookup({"_id": [1, 2, 3]}))

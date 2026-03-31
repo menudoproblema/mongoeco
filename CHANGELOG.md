@@ -18,6 +18,11 @@ usa Semantic Versioning.
 - `insert_many()` deja de truncar silenciosamente la verificacion de
   resultados cuando un engine bulk devuelve un numero de respuestas
   distinto al de documentos enviados.
+- El parser wire acepta ya los flags validos reconocidos de `OP_MSG` y
+  `OP_QUERY`, en lugar de rechazar cualquier request con flags de
+  protocolo soportados.
+- El seed de upsert extrae ya igualdades seedables desde `$and`
+  top-level y desde condiciones `$in` con un unico valor.
 - La compilacion de pipelines valida ya las especificaciones de
   `$addFields` y `$set` antes de ejecutar documentos, evitando que
   claves invalidas se acepten y fallen tarde en runtime.

@@ -8,6 +8,10 @@ from mongoeco.wire.protocol import (
     OP_MSG,
     OP_REPLY,
     OP_QUERY,
+    OP_MSG_CHECKSUM_PRESENT,
+    OP_MSG_EXHAUST_ALLOWED,
+    OP_QUERY_AWAIT_DATA,
+    OP_QUERY_SECONDARY_OK,
     decode_op_reply,
     decode_op_msg,
     decode_op_query,
@@ -101,7 +105,7 @@ class WireProtocolTests(unittest.TestCase):
         self.assertEqual(number_returned, 1)
 
     def test_decode_op_msg_rejects_unsupported_flags(self):
-        payload = struct.pack("<i", 1) + b"\x00" + BSON.encode({"ping": 1})
+        payload = struct.pack("<i", 4) + b"\x00" + BSON.encode({"ping": 1})
         header = parse_message_header(struct.pack("<iiii", 16 + len(payload), 7, 0, OP_MSG))
 
         with self.assertRaisesRegex(ValueError, "unsupported OP_MSG flags"):
@@ -115,6 +119,27 @@ class WireProtocolTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "unsupported OP_QUERY flags"):
             decode_op_query(header, payload)
+
+    def test_decode_op_msg_accepts_known_protocol_flags(self):
+        payload = struct.pack("<i", OP_MSG_CHECKSUM_PRESENT | OP_MSG_EXHAUST_ALLOWED) + b"\x00" + BSON.encode({"ping": 1})
+        header = parse_message_header(struct.pack("<iiii", 16 + len(payload), 7, 0, OP_MSG))
+
+        request = decode_op_msg(header, payload)
+
+        self.assertEqual(request.flag_bits, OP_MSG_CHECKSUM_PRESENT | OP_MSG_EXHAUST_ALLOWED)
+        self.assertEqual(request.body, {"ping": 1})
+
+    def test_decode_op_query_accepts_known_protocol_flags(self):
+        query = BSON.encode({"ismaster": 1})
+        namespace = b"admin.$cmd\x00"
+        flags = OP_QUERY_SECONDARY_OK | OP_QUERY_AWAIT_DATA
+        payload = struct.pack("<i", flags) + namespace + struct.pack("<ii", 0, -1) + query
+        header = parse_message_header(struct.pack("<iiii", 16 + len(payload), 9, 0, OP_QUERY))
+
+        request = decode_op_query(header, payload)
+
+        self.assertEqual(request.flags, flags)
+        self.assertEqual(request.query, {"ismaster": 1})
 
     def test_decode_op_msg_rejects_wrong_opcode_and_short_payload(self):
         wrong_header = parse_message_header(struct.pack("<iiii", 21, 7, 0, OP_QUERY))

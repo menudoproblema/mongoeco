@@ -66,6 +66,23 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(doc["profile"]["name"], "Val")
                     self.assertEqual(doc["profile"]["age"], 30)
 
+    async def test_update_one_upsert_seeds_singleton_in_and_top_level_and_fields(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    coll = client.test_db.test_coll
+
+                    result = await coll.update_one(
+                        {"$and": [{"kind": {"$in": ["user"]}}, {"tenant": "eu"}]},
+                        {"$set": {"done": True}},
+                        upsert=True,
+                    )
+
+                    doc = await coll.find_one({"_id": result.upserted_id})
+                    self.assertEqual(doc["kind"], "user")
+                    self.assertEqual(doc["tenant"], "eu")
+                    self.assertEqual(doc["done"], True)
+
     async def test_update_one_set_none_creates_field(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
