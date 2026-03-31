@@ -14,5 +14,7 @@ class PackageInitTests(unittest.TestCase):
 
         self.assertIn("AsyncMongoClient", module.__all__)
         self.assertIn("CollectionInvalid", module.__all__)
+        self.assertIn("CollationBackendInfo", module.__all__)
+        self.assertIn("collation_backend_info", module.__all__)
         self.assertIn("WriteConcern", module.__all__)
         self.assertIn("__version__", module.__all__)

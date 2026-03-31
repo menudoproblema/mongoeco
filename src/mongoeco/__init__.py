@@ -1,5 +1,6 @@
 from mongoeco.api import AsyncMongoClient, MongoClient
 from mongoeco._version import __version__
+from mongoeco.core.collation import CollationBackendInfo, collation_backend_info
 from mongoeco.errors import CollectionInvalid
 from mongoeco.driver import (
     AsyncCommandTransport,
@@ -263,6 +264,8 @@ __all__ = [
     "ReturnDocument",
     "UndefinedType",
     "UNDEFINED",
+    "CollationBackendInfo",
+    "collation_backend_info",
     "__version__",
 ]
 

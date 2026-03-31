@@ -93,7 +93,7 @@ def normalize_collation(collation: object | None) -> CollationSpec | None:
     normalization = collation.get("normalization", False)
     if not isinstance(normalization, bool):
         raise TypeError("collation normalization must be a boolean")
-    return CollationSpec(
+    spec = CollationSpec(
         locale=locale,
         strength=strength,
         case_level=case_level,
@@ -103,6 +103,9 @@ def normalize_collation(collation: object | None) -> CollationSpec | None:
         max_variable=max_variable,
         normalization=normalization,
     )
+    if _requires_icu_backend(spec) and _icu is None:
+        raise ValueError("requested collation options require a PyICU backend")
+    return spec
 
 
 def compare_with_collation(

@@ -24,12 +24,42 @@ class CollationTests(unittest.TestCase):
                 "strength": 2,
                 "caseLevel": True,
                 "numericOrdering": True,
-                "backwards": True,
-                "alternate": "shifted",
-                "maxVariable": "space",
-                "normalization": True,
             }
         )
+
+        self.assertEqual(
+            spec,
+            CollationSpec(
+                locale="en",
+                strength=2,
+                case_level=True,
+                numeric_ordering=True,
+            ),
+        )
+        self.assertEqual(
+            spec.to_document(),
+            {
+                "locale": "en",
+                "strength": 2,
+                "caseLevel": True,
+                "numericOrdering": True,
+            },
+        )
+
+    def test_normalize_collation_accepts_advanced_document_when_icu_is_available(self):
+        with patch.object(collation_module, "_icu", object()):
+            spec = normalize_collation(
+                {
+                    "locale": "en",
+                    "strength": 2,
+                    "caseLevel": True,
+                    "numericOrdering": True,
+                    "backwards": True,
+                    "alternate": "shifted",
+                    "maxVariable": "space",
+                    "normalization": True,
+                }
+            )
 
         self.assertEqual(
             spec,
@@ -43,19 +73,6 @@ class CollationTests(unittest.TestCase):
                 max_variable="space",
                 normalization=True,
             ),
-        )
-        self.assertEqual(
-            spec.to_document(),
-            {
-                "locale": "en",
-                "strength": 2,
-                "caseLevel": True,
-                "numericOrdering": True,
-                "backwards": True,
-                "alternate": "shifted",
-                "maxVariable": "space",
-                "normalization": True,
-            },
         )
 
     def test_normalize_collation_rejects_invalid_documents(self):
@@ -79,6 +96,15 @@ class CollationTests(unittest.TestCase):
             normalize_collation({"maxVariable": "symbol"})
         with self.assertRaises(TypeError):
             normalize_collation({"normalization": 1})
+
+    def test_normalize_collation_rejects_icu_only_options_without_icu(self):
+        with patch.object(collation_module, "_icu", None):
+            with self.assertRaisesRegex(ValueError, "PyICU backend"):
+                normalize_collation({"locale": "en", "strength": 2, "backwards": True})
+            with self.assertRaisesRegex(ValueError, "PyICU backend"):
+                normalize_collation({"locale": "en", "strength": 2, "alternate": "shifted"})
+            with self.assertRaisesRegex(ValueError, "PyICU backend"):
+                normalize_collation({"locale": "en", "strength": 2, "normalization": True})
 
     def test_compare_with_collation_honours_strength_and_case_level(self):
         strength_one = normalize_collation({"locale": "en", "strength": 1})
@@ -132,7 +158,7 @@ class CollationTests(unittest.TestCase):
         compare_pyuca.assert_called_once_with("b", "a", spec)
 
     def test_compare_with_collation_rejects_icu_only_options_without_icu(self):
-        spec = normalize_collation({"locale": "en", "strength": 2, "backwards": True})
+        spec = CollationSpec(locale="en", strength=2, backwards=True)
 
         with (
             patch("mongoeco.core.collation._can_use_icu_collation", return_value=False),
