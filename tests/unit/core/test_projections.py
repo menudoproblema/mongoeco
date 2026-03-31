@@ -128,13 +128,77 @@ class ProjectionTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             apply_projection(doc, {"items.$": 1})
         with self.assertRaises(OperationFailure):
-            apply_projection(doc, {"items": {"$slice": 1}})  # type: ignore[dict-item]
-        with self.assertRaises(OperationFailure):
-            apply_projection(doc, {"items": {"$elemMatch": {"kind": "a"}}})  # type: ignore[dict-item]
-        with self.assertRaises(OperationFailure):
+            apply_projection(doc, {"score": {"$meta": "textScore"}})  # type: ignore[dict-item]
+
+    def test_projection_supports_slice_as_exclusion_style_projection(self):
+        doc = {"_id": 1, "name": "Ada", "items": [1, 2, 3, 4], "role": "admin"}
+
+        self.assertEqual(
+            apply_projection(doc, {"items": {"$slice": 2}}),
+            {"_id": 1, "name": "Ada", "items": [1, 2], "role": "admin"},
+        )
+        self.assertEqual(
+            apply_projection(doc, {"items": {"$slice": -2}, "role": 0}),
+            {"_id": 1, "name": "Ada", "items": [3, 4]},
+        )
+
+    def test_projection_supports_slice_as_inclusion_style_projection(self):
+        doc = {
+            "_id": 1,
+            "name": "Ada",
+            "profile": {"colors": ["red", "blue", "green"], "city": "Madrid"},
+            "role": "admin",
+        }
+
+        self.assertEqual(
+            apply_projection(doc, {"name": 1, "profile.colors": {"$slice": [1, 2]}, "_id": 0}),
+            {"name": "Ada", "profile": {"colors": ["blue", "green"]}},
+        )
+
+    def test_projection_supports_elem_match_and_omits_field_when_there_is_no_match(self):
+        doc = {
+            "_id": 1,
+            "students": [
+                {"name": "john", "school": 102, "age": 10},
+                {"name": "jess", "school": 102, "age": 11},
+            ],
+            "zipcode": "63109",
+        }
+        missing = {
+            "_id": 2,
+            "students": [
+                {"name": "ajax", "school": 100, "age": 7},
+                {"name": "achilles", "school": 100, "age": 8},
+            ],
+            "zipcode": "63109",
+        }
+
+        self.assertEqual(
+            apply_projection(doc, {"students": {"$elemMatch": {"school": 102}}}),
+            {"_id": 1, "students": [{"name": "john", "school": 102, "age": 10}]},
+        )
+        self.assertEqual(
             apply_projection(
                 doc,
-                {"items": {"$slice": 1}, "items.name": 1},  # type: ignore[dict-item]
-            )
+                {"zipcode": 1, "students": {"$elemMatch": {"school": 102, "age": {"$gt": 10}}}},
+            ),
+            {"_id": 1, "zipcode": "63109", "students": [{"name": "jess", "school": 102, "age": 11}]},
+        )
+        self.assertEqual(
+            apply_projection(missing, {"students": {"$elemMatch": {"school": 102}}}),
+            {"_id": 2},
+        )
+
+    def test_projection_rejects_invalid_projection_operator_specs_and_collisions(self):
+        doc = {"_id": 1, "items": [{"kind": "a"}], "profile": {"colors": [1, 2, 3]}}
+
         with self.assertRaises(OperationFailure):
-            apply_projection(doc, {"score": {"$meta": "textScore"}})  # type: ignore[dict-item]
+            apply_projection(doc, {"items": {"$slice": "bad"}})  # type: ignore[dict-item]
+        with self.assertRaises(OperationFailure):
+            apply_projection(doc, {"items": {"$slice": [1]}})  # type: ignore[dict-item]
+        with self.assertRaises(OperationFailure):
+            apply_projection(doc, {"items": {"$elemMatch": 1}})  # type: ignore[dict-item]
+        with self.assertRaises(OperationFailure):
+            apply_projection(doc, {"items": {"$elemMatch": {"kind": "a"}}, "name": 0})  # type: ignore[dict-item]
+        with self.assertRaises(OperationFailure):
+            apply_projection(doc, {"profile": {"$slice": 1}, "profile.colors": 1})  # type: ignore[dict-item]

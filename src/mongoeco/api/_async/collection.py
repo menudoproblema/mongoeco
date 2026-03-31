@@ -287,8 +287,20 @@ class AsyncCollection:
 
     @staticmethod
     def _require_update(update_spec: object) -> Update:
+        if isinstance(update_spec, list):
+            if not update_spec:
+                raise ValueError("update_spec must not be empty")
+            for stage in update_spec:
+                if not is_document(stage):
+                    raise TypeError("update pipeline stages must be dicts")
+                if len(stage) != 1:
+                    raise ValueError("update pipeline stages must be single-key documents")
+                operator = next(iter(stage))
+                if not isinstance(operator, str) or not operator.startswith("$"):
+                    raise ValueError("update pipeline stages must start with '$'")
+            return update_spec
         if not is_update(update_spec):
-            raise TypeError("update_spec must be a dict")
+            raise TypeError("update_spec must be a dict or list")
         if not update_spec:
             raise ValueError("update_spec must not be empty")
         if not all(isinstance(key, str) and key.startswith("$") for key in update_spec):
@@ -1507,6 +1519,7 @@ class AsyncCollection:
                 update_spec,
                 session=session,
                 array_filters=operation.array_filters,
+                let=operation.let,
                 bypass_document_validation=bypass_document_validation,
             )
         if operation.hint is not None:
@@ -1525,6 +1538,7 @@ class AsyncCollection:
                         update_spec,
                         session=session,
                         array_filters=operation.array_filters,
+                        let=operation.let,
                         bypass_document_validation=bypass_document_validation,
                     )
                 return UpdateResult(matched_count=0, modified_count=0)
@@ -1599,6 +1613,7 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
         array_filters: ArrayFilters | None = None,
+        let: dict[str, object] | None = None,
         bypass_document_validation: bool = False,
     ) -> UpdateResult[DocumentId]:
         new_doc: Document = {}
@@ -1609,6 +1624,7 @@ class AsyncCollection:
             dialect=self._mongodb_dialect,
             array_filters=array_filters,
             is_upsert_insert=True,
+            variables=let,
         )
         if "_id" not in new_doc:
             new_doc["_id"] = ObjectId()

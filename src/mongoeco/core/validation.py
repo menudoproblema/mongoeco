@@ -16,4 +16,7 @@ def is_projection(value: Any) -> TypeIs[Projection]:
 
 
 def is_update(value: Any) -> TypeIs[Update]:
-    return isinstance(value, dict)
+    return isinstance(value, dict) or (
+        isinstance(value, list)
+        and all(isinstance(stage, dict) for stage in value)
+    )

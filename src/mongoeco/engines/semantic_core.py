@@ -6,7 +6,7 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.compiled_query import CompiledQuery
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import CollationSpec, normalize_collation
-from mongoeco.core.operators import CompiledUpdatePlan
+from mongoeco.core.operators import CompiledExecutableUpdatePlan
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.projections import apply_projection
@@ -63,8 +63,8 @@ class EngineReadExecutionPlan:
 class EngineUpdateSemantics:
     filter_spec: Filter
     query_plan: QueryNode
-    compiled_update_plan: CompiledUpdatePlan
-    compiled_upsert_plan: CompiledUpdatePlan
+    compiled_update_plan: CompiledExecutableUpdatePlan
+    compiled_upsert_plan: CompiledExecutableUpdatePlan
     selector_filter: Filter
     collation: CollationSpec | None
     dialect: MongoDialect

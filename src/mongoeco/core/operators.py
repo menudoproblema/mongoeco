@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.aggregation import CompiledPipelinePlan, Pipeline, apply_pipeline, compile_pipeline
 from mongoeco.core.collation import CollationSpec, normalize_collation
 from mongoeco.core.bson_scalars import is_bson_numeric, unwrap_bson_numeric
 from mongoeco.core.filtering import BSONComparator, QueryEngine
@@ -17,7 +18,7 @@ from mongoeco.core.update_paths import (
     ResolvedUpdatePath,
     resolve_positional_update_paths,
 )
-from mongoeco.types import ArrayFilters, Filter, Regex, SortSpec
+from mongoeco.types import ArrayFilters, Filter, Regex, SortSpec, Update
 from mongoeco.core.update_array_operators import (
     apply_add_to_set,
     apply_pop,
@@ -94,6 +95,39 @@ class CompiledUpdatePlan:
 
 
 @dataclass(frozen=True, slots=True)
+class CompiledUpdatePipelinePlan:
+    update_spec: Pipeline
+    context: UpdateExecutionContext
+    variables: dict[str, Any] | None = None
+    compiled_pipeline: CompiledPipelinePlan | None = None
+
+    def apply(self, doc: dict[str, Any]) -> bool:
+        original = deepcopy(doc)
+        working = deepcopy(doc)
+        if self.compiled_pipeline is not None:
+            result = self.compiled_pipeline.execute([working], variables=self.variables)
+        else:
+            result = apply_pipeline(
+                [working],
+                self.update_spec,
+                variables=self.variables,
+                dialect=self.context.dialect,
+                collation=self.context.collation,
+            )
+        if len(result) != 1 or not isinstance(result[0], dict):
+            raise OperationFailure("Update pipeline must produce a single document")
+        replacement = result[0]
+        modified = not self.context.dialect.values_equal(original, replacement)
+        if modified:
+            doc.clear()
+            doc.update(replacement)
+        return modified
+
+
+type CompiledExecutableUpdatePlan = CompiledUpdatePlan | CompiledUpdatePipelinePlan
+
+
+@dataclass(frozen=True, slots=True)
 class ResolvedInstructionApplication:
     instruction: CompiledUpdateInstruction
     targets: tuple[ResolvedUpdatePath, ...]
@@ -101,6 +135,10 @@ class ResolvedInstructionApplication:
 
 class UpdateEngine:
     """Motor central para aplicar operadores de actualización de MongoDB."""
+
+    _UPDATE_PIPELINE_STAGE_OPERATORS = frozenset(
+        {"$addFields", "$set", "$project", "$unset", "$replaceRoot", "$replaceWith"}
+    )
 
     _OPERATOR_HANDLERS: dict[str, UpdateOperatorHandler] = {
         "$set": lambda doc, instructions, context: apply_set(doc, instructions, context=context, helpers=UpdateEngine),
@@ -123,21 +161,20 @@ class UpdateEngine:
     @staticmethod
     def apply_update(
         doc: dict[str, Any],
-        update_spec: dict[str, Any],
+        update_spec: Update,
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
         selector_filter: Filter | None = None,
         array_filters: ArrayFilters | None = None,
         is_upsert_insert: bool = False,
+        variables: dict[str, Any] | None = None,
         context: UpdateExecutionContext | None = None,
     ) -> bool:
         """
         Aplica las operaciones de actualización a un documento (in-place).
         Devuelve True si hubo cambios (parcialmente simplificado para v1).
         """
-        if not isinstance(update_spec, dict) or not update_spec:
-            raise OperationFailure("update specification must be a non-empty document")
         return UpdateEngine.apply_compiled_update(
             doc,
             UpdateEngine.compile_update_plan(
@@ -147,23 +184,23 @@ class UpdateEngine:
                 selector_filter=selector_filter,
                 array_filters=array_filters,
                 is_upsert_insert=is_upsert_insert,
+                variables=variables,
                 context=context,
             ),
         )
 
     @staticmethod
     def compile_update_plan(
-        update_spec: dict[str, Any],
+        update_spec: Update,
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
         selector_filter: Filter | None = None,
         array_filters: ArrayFilters | None = None,
         is_upsert_insert: bool = False,
+        variables: dict[str, Any] | None = None,
         context: UpdateExecutionContext | None = None,
-    ) -> CompiledUpdatePlan:
-        if not isinstance(update_spec, dict) or not update_spec:
-            raise OperationFailure("update specification must be a non-empty document")
+    ) -> CompiledExecutableUpdatePlan:
         execution = context or UpdateEngine.build_execution_context(
             dialect=dialect,
             collation=collation,
@@ -171,6 +208,14 @@ class UpdateEngine:
             array_filters=array_filters,
             is_upsert_insert=is_upsert_insert,
         )
+        if isinstance(update_spec, list):
+            return UpdateEngine.compile_update_pipeline_plan(
+                update_spec,
+                context=execution,
+                variables=variables,
+            )
+        if not isinstance(update_spec, dict) or not update_spec:
+            raise OperationFailure("update specification must be a non-empty document")
         return CompiledUpdatePlan(
             update_spec=update_spec,
             compiled_operators=UpdateEngine._compile_update_spec(
@@ -184,9 +229,37 @@ class UpdateEngine:
     @staticmethod
     def apply_compiled_update(
         doc: dict[str, Any],
-        plan: CompiledUpdatePlan,
+        plan: CompiledExecutableUpdatePlan,
     ) -> bool:
         return plan.apply(doc)
+
+    @staticmethod
+    def compile_update_pipeline_plan(
+        update_spec: Pipeline,
+        *,
+        context: UpdateExecutionContext,
+        variables: dict[str, Any] | None = None,
+    ) -> CompiledUpdatePipelinePlan:
+        UpdateEngine.validate_update_pipeline(update_spec, dialect=context.dialect)
+        if context.raw_array_filters is not None:
+            raise OperationFailure("arrayFilters may not be specified for pipeline-style updates")
+        apply_pipeline(
+            [],
+            update_spec,
+            variables=variables,
+            dialect=context.dialect,
+            collation=context.collation,
+        )
+        return CompiledUpdatePipelinePlan(
+            update_spec=list(update_spec),
+            context=context,
+            variables=variables,
+            compiled_pipeline=compile_pipeline(
+                update_spec,
+                dialect=context.dialect,
+                collation=context.collation,
+            ),
+        )
 
     @staticmethod
     def build_execution_context(
@@ -205,6 +278,25 @@ class UpdateEngine:
             compiled_array_filters=UpdateEngine._compile_array_filters(array_filters),
             is_upsert_insert=is_upsert_insert,
         )
+
+    @staticmethod
+    def validate_update_pipeline(
+        update_spec: object,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> None:
+        if not isinstance(update_spec, list) or not update_spec:
+            raise OperationFailure("update pipeline must be a non-empty list")
+        for stage in update_spec:
+            if not isinstance(stage, dict) or len(stage) != 1:
+                raise OperationFailure("Each update pipeline stage must be a single-key document")
+            operator = next(iter(stage))
+            if not isinstance(operator, str) or not operator.startswith("$"):
+                raise OperationFailure("Update pipeline stage operator must start with '$'")
+            if operator not in UpdateEngine._UPDATE_PIPELINE_STAGE_OPERATORS:
+                raise OperationFailure(f"Unsupported update pipeline stage: {operator}")
+            if not dialect.supports_aggregation_stage(operator):
+                raise OperationFailure(f"Unsupported update pipeline stage: {operator}")
 
     @staticmethod
     def _compile_update_spec(

@@ -3,7 +3,7 @@ from typing import Any, assert_never
 import uuid
 
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS
-from mongoeco.core.operators import CompiledUpdatePlan
+from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.json_compat import json_dumps_compact
 from mongoeco.core.sql_translation import BaseSQLTranslator
@@ -697,12 +697,12 @@ def translate_sort_spec(sort: SortSpec | None) -> str:
 
 
 def translate_update_spec(update_spec: Update, *, current_document: dict[str, Any] | None = None) -> SqlFragment:
-    from mongoeco.core.operators import UpdateEngine
-
     try:
         plan = UpdateEngine.compile_update_plan(update_spec)
     except Exception as exc:  # pragma: no cover - compatibility shim
         raise NotImplementedError(str(exc)) from exc
+    if not isinstance(plan, CompiledUpdatePlan):
+        raise NotImplementedError("Aggregation pipeline updates require Python update fallback")
     return translate_compiled_update_plan(plan, current_document=current_document)
 
 

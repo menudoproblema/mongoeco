@@ -4360,6 +4360,46 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     self.assertEqual(found, {"name": "Ada"})
 
+    def test_find_projection_supports_slice_and_elem_match_operators(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one(
+                        {
+                            "_id": "user-1",
+                            "name": "Ada",
+                            "tags": ["a", "b", "c", "d"],
+                            "students": [
+                                {"school": 100, "age": 7},
+                                {"school": 102, "age": 10},
+                                {"school": 102, "age": 11},
+                            ],
+                            "role": "admin",
+                        }
+                    )
+
+                    sliced = collection.find_one({"_id": "user-1"}, {"tags": {"$slice": [1, 2]}, "role": 0})
+                    matched = collection.find_one(
+                        {"_id": "user-1"},
+                        {"name": 1, "students": {"$elemMatch": {"school": 102, "age": {"$gt": 10}}}, "_id": 0},
+                    )
+
+                    self.assertEqual(
+                        sliced,
+                        {
+                            "_id": "user-1",
+                            "name": "Ada",
+                            "tags": ["b", "c"],
+                            "students": [
+                                {"school": 100, "age": 7},
+                                {"school": 102, "age": 10},
+                                {"school": 102, "age": 11},
+                            ],
+                        },
+                    )
+                    self.assertEqual(matched, {"name": "Ada", "students": [{"school": 102, "age": 11}]})
+
     def test_shared_memory_engine_is_safe_across_sync_threads(self):
         engine = MemoryEngine()
         errors: list[tuple[int, object]] = []
@@ -4401,7 +4441,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         collection.update_one([], {})
 
                     with self.assertRaises(TypeError):
-                        collection.update_one({}, [])
+                        collection.update_one({}, [1])
 
                     with self.assertRaises(TypeError):
                         collection.delete_one([])
@@ -4452,8 +4492,109 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         collection.update_one({}, {"name": "Ada"})
 
+                    with self.assertRaises(ValueError):
+                        collection.update_one({}, [])
+
                     with self.assertRaises(TypeError):
                         collection.update_one({}, {"$set": []})
+
+    def test_update_operations_support_aggregation_pipeline_updates(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "tenant": "a", "name": "Ada", "points": 2, "bonus": 3, "legacy": "x"},
+                            {"_id": "2", "tenant": "a", "name": "Bob", "points": 5, "bonus": 1, "legacy": "y"},
+                        ]
+                    )
+
+                    first = collection.update_one(
+                        {"_id": "1"},
+                        [
+                            {"$set": {"total": {"$add": ["$points", "$bonus"]}, "label": "$$tag"}},
+                            {"$unset": "legacy"},
+                        ],
+                        let={"tag": "single"},
+                    )
+                    many = collection.update_many(
+                        {"tenant": "a"},
+                        [{"$set": {"tenant_label": {"$concat": ["$tenant", "-active"]}}}],
+                    )
+                    after = collection.find_one_and_update(
+                        {"_id": "2"},
+                        [
+                            {
+                                "$replaceWith": {
+                                    "$mergeObjects": [
+                                        "$$ROOT",
+                                        {"summary": {"$concat": ["$name", ":", "$$suffix"]}},
+                                    ]
+                                }
+                            }
+                        ],
+                        let={"suffix": "done"},
+                        return_document=ReturnDocument.AFTER,
+                    )
+                    bulk = collection.bulk_write(
+                        [
+                            UpdateOne({"_id": "1"}, [{"$set": {"bulk_rank": {"$literal": 1}}}]),
+                            UpdateMany({"tenant": "a"}, [{"$set": {"bulk_tag": {"$literal": "batch"}}}]),
+                            UpdateOne(
+                                {"tenant": "b", "kind": {"$eq": "new"}},
+                                [{"$set": {"created_from_filter": "$tenant", "state": {"$literal": "upserted"}}}],
+                                upsert=True,
+                            ),
+                        ]
+                    )
+
+                    documents = collection.find({}, sort=[("_id", 1)]).to_list()
+
+                    self.assertEqual(first.matched_count, 1)
+                    self.assertEqual(first.modified_count, 1)
+                    self.assertEqual(many.matched_count, 2)
+                    self.assertEqual(many.modified_count, 2)
+                    self.assertEqual(after["_id"], "2")
+                    self.assertEqual(after["summary"], "Bob:done")
+                    self.assertEqual(bulk.matched_count, 3)
+                    self.assertEqual(bulk.modified_count, 3)
+                    self.assertEqual(bulk.upserted_count, 1)
+                    self.assertEqual(
+                        documents,
+                        [
+                            {
+                                "_id": "1",
+                                "tenant": "a",
+                                "name": "Ada",
+                                "points": 2,
+                                "bonus": 3,
+                                "total": 5,
+                                "label": "single",
+                                "tenant_label": "a-active",
+                                "bulk_rank": 1,
+                                "bulk_tag": "batch",
+                            },
+                            {
+                                "_id": "2",
+                                "tenant": "a",
+                                "name": "Bob",
+                                "points": 5,
+                                "bonus": 1,
+                                "legacy": "y",
+                                "tenant_label": "a-active",
+                                "summary": "Bob:done",
+                                "bulk_tag": "batch",
+                            },
+                            {
+                                "_id": bulk.upserted_ids[2],
+                                "tenant": "b",
+                                "kind": "new",
+                                "created_from_filter": "b",
+                                "state": "upserted",
+                            },
+                        ],
+                    )
 
     def test_operations_after_close_raise_invalid_operation(self):
         client = MongoClient()

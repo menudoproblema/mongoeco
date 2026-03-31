@@ -27,7 +27,7 @@ from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import canonical_document_id
 from mongoeco.core.json_compat import json_dumps_compact, json_loads
-from mongoeco.core.operators import UpdateEngine
+from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.projections import apply_projection
@@ -4862,6 +4862,8 @@ class SQLiteEngine(AsyncStorageEngine):
                             raise NotImplementedError("Custom dialect requires Python fallback")
                         if operation.array_filters is not None:
                             raise NotImplementedError("array_filters require Python update fallback")
+                        if not isinstance(semantics.compiled_update_plan, CompiledUpdatePlan):
+                            raise NotImplementedError("Aggregation pipeline updates require Python update fallback")
                         update_sql, update_params = translate_compiled_update_plan(
                             semantics.compiled_update_plan,
                             current_document=original_document,

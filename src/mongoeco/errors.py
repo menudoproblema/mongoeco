@@ -1,5 +1,14 @@
 from typing import Any
 
+try:  # pragma: no cover - optional dependency bridge
+    from pymongo import errors as _pymongo_errors
+except Exception:  # pragma: no cover - pymongo is optional
+    _PyMongoDuplicateKeyErrorBase = Exception
+    _HAS_PYMONGO_DUPLICATE_KEY_ERROR = False
+else:  # pragma: no cover - behavior exercised indirectly in environments with pymongo
+    _PyMongoDuplicateKeyErrorBase = _pymongo_errors.DuplicateKeyError
+    _HAS_PYMONGO_DUPLICATE_KEY_ERROR = True
+
 from mongoeco.error_catalog import (
     DOCUMENT_VALIDATION_ERROR,
     DUPLICATE_KEY_ERROR,
@@ -65,7 +74,7 @@ class WriteError(PyMongoError):
         )
         self.error_labels = tuple(self.details.get("errorLabels", ())) if self.details else ()
 
-class DuplicateKeyError(WriteError):
+class DuplicateKeyError(WriteError, _PyMongoDuplicateKeyErrorBase):
     """Se produce cuando se intenta insertar un documento con un _id que ya existe."""
 
     def __init__(
@@ -75,11 +84,31 @@ class DuplicateKeyError(WriteError):
         details: dict[str, Any] | None = None,
         error_labels: tuple[str, ...] = (),
     ):
-        super().__init__(
-            message,
+        resolved_code, resolved_code_name, resolved_details = build_error_metadata(
+            DUPLICATE_KEY_ERROR,
             code=DUPLICATE_KEY_ERROR.code if code is None else code,
             details=details,
             error_labels=error_labels or DUPLICATE_KEY_ERROR.error_labels,
+        )
+        if _HAS_PYMONGO_DUPLICATE_KEY_ERROR:
+            _PyMongoDuplicateKeyErrorBase.__init__(
+                self,
+                message,
+                code=resolved_code,
+                details=resolved_details,
+            )
+            self.code_name = resolved_code_name
+            labels = tuple(resolved_details.get("errorLabels", ())) if resolved_details else ()
+            self.error_labels = labels
+            if hasattr(self, "_error_labels"):
+                self._error_labels = set(labels)
+            return
+        WriteError.__init__(
+            self,
+            message,
+            code=resolved_code,
+            details=resolved_details,
+            error_labels=tuple(resolved_details.get("errorLabels", ())) if resolved_details else (),
             descriptor=DUPLICATE_KEY_ERROR,
         )
 

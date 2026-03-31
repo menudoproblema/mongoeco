@@ -104,7 +104,7 @@ from mongoeco.types import (
     WriteErrorEntry,
     WriteCommandResult,
 )
-from mongoeco.core.operators import UpdateEngine
+from mongoeco.core.operators import CompiledUpdatePipelinePlan, UpdateEngine
 
 
 
@@ -449,6 +449,21 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         self.assertTrue(modified)
         self.assertEqual(document["name"], "Ada")
 
+    def test_compiled_update_pipeline_plan_is_executable_object(self):
+        plan = UpdateEngine.compile_update_plan(
+            [
+                {"$set": {"name": {"$concat": ["$first", " ", "$last"]}}},
+                {"$unset": ["first", "last"]},
+            ]
+        )
+        document = {"_id": "1", "first": "Ada", "last": "Lovelace"}
+
+        modified = plan.apply(document)
+
+        self.assertIsInstance(plan, CompiledUpdatePipelinePlan)
+        self.assertTrue(modified)
+        self.assertEqual(document, {"_id": "1", "name": "Ada Lovelace"})
+
     def test_aggregate_operation_compiles_normalized_pipeline_plan(self):
         operation = compile_aggregate_operation(
             [{"$match": {"name": "Ada"}}],
@@ -543,4 +558,3 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
             record.to_definition().to_list_document()["key"],
             {"email": 1},
         )
-

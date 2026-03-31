@@ -10,12 +10,12 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.core.aggregation.extensions import get_registered_aggregation_stage
 from mongoeco.core.collation import normalize_collation
-from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
+from mongoeco.core.operators import CompiledExecutableUpdatePlan, UpdateEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.core.search import validate_search_stage_pipeline
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.errors import OperationFailure
-from mongoeco.types import ArrayFilters, CollationDocument, Filter, PlanningIssue, PlanningMode, Projection, SortSpec
+from mongoeco.types import ArrayFilters, CollationDocument, Filter, PlanningIssue, PlanningMode, Projection, SortSpec, Update
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,9 +42,9 @@ class FindOperation:
 class UpdateOperation:
     filter_spec: Filter
     plan: QueryNode
-    update_spec: dict[str, object] | None = None
-    compiled_update_plan: CompiledUpdatePlan | None = None
-    compiled_upsert_plan: CompiledUpdatePlan | None = None
+    update_spec: Update | None = None
+    compiled_update_plan: CompiledExecutableUpdatePlan | None = None
+    compiled_upsert_plan: CompiledExecutableUpdatePlan | None = None
     collation: CollationDocument | None = None
     sort: SortSpec | None = None
     array_filters: ArrayFilters | None = None
@@ -154,7 +154,7 @@ def compile_update_operation(
     let: object | None = None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     plan: QueryNode | None = None,
-    update_spec: dict[str, object] | None = None,
+    update_spec: Update | None = None,
     planning_mode: PlanningMode = PlanningMode.STRICT,
 ) -> UpdateOperation:
     normalized_filter = _normalize_filter(filter_spec)
@@ -170,6 +170,7 @@ def compile_update_operation(
         selector_filter=normalized_filter,
         collation=normalized_collation,
         array_filters=normalized_array_filters,
+        variables=normalized_let,
         planning_mode=planning_mode,
     )
     return UpdateOperation(
@@ -252,7 +253,7 @@ def _collect_query_planning_issues(
 
 
 def _collect_update_planning_issues(
-    update_spec: dict[str, object] | None,
+    update_spec: Update | None,
     *,
     dialect: MongoDialect,
     planning_mode: PlanningMode,
@@ -260,8 +261,28 @@ def _collect_update_planning_issues(
     if planning_mode is not PlanningMode.RELAXED or update_spec is None:
         return ()
     issues: list[PlanningIssue] = []
+    if isinstance(update_spec, list):
+        if not update_spec:
+            return (PlanningIssue(scope="update", message="update pipeline must be a non-empty list"),)
+        for stage in update_spec:
+            if not isinstance(stage, dict) or len(stage) != 1:
+                issues.append(PlanningIssue(scope="update", message="Each update pipeline stage must be a single-key document"))
+                continue
+            operator = next(iter(stage))
+            if not isinstance(operator, str) or not operator.startswith("$"):
+                issues.append(PlanningIssue(scope="update", message="Update pipeline stage operator must start with '$'"))
+                continue
+            if operator not in UpdateEngine._UPDATE_PIPELINE_STAGE_OPERATORS:
+                issues.append(PlanningIssue(scope="update", message=f"Unsupported update pipeline stage: {operator}"))
+        if issues:
+            return tuple(issues)
+        try:
+            UpdateEngine.validate_update_pipeline(update_spec, dialect=dialect)
+        except OperationFailure as exc:
+            issues.append(PlanningIssue(scope="update", message=str(exc)))
+        return tuple(issues)
     if not isinstance(update_spec, dict):
-        return (PlanningIssue(scope="update", message="update specification must be a document"),)
+        return (PlanningIssue(scope="update", message="update specification must be a document or pipeline"),)
     for operator in update_spec:
         if isinstance(operator, str) and operator.startswith("$") and not dialect.supports_update_operator(operator):
             issues.append(PlanningIssue(scope="update", message=f"Unsupported update operator: {operator}"))
@@ -269,19 +290,25 @@ def _collect_update_planning_issues(
 
 
 def _compile_update_plans(
-    update_spec: dict[str, object] | None,
+    update_spec: Update | None,
     *,
     dialect: MongoDialect,
     selector_filter: Filter,
     collation: CollationDocument | None,
     array_filters: ArrayFilters | None,
+    variables: dict[str, object] | None,
     planning_mode: PlanningMode,
-) -> tuple[CompiledUpdatePlan | None, CompiledUpdatePlan | None]:
-    if not isinstance(update_spec, dict) or not update_spec:
+) -> tuple[CompiledExecutableUpdatePlan | None, CompiledExecutableUpdatePlan | None]:
+    if update_spec is None:
         return None, None
-    if not all(isinstance(operator, str) and operator.startswith("$") for operator in update_spec):
-        return None, None
-    if not all(isinstance(params, dict) for params in update_spec.values()):
+    if isinstance(update_spec, dict):
+        if not update_spec:
+            return None, None
+        if not all(isinstance(operator, str) and operator.startswith("$") for operator in update_spec):
+            return None, None
+        if not all(isinstance(params, dict) for params in update_spec.values()):
+            return None, None
+    elif not isinstance(update_spec, list) or not update_spec:
         return None, None
     try:
         return (
@@ -291,6 +318,7 @@ def _compile_update_plans(
                 selector_filter=selector_filter,
                 collation=collation,
                 array_filters=array_filters,
+                variables=variables,
             ),
             UpdateEngine.compile_update_plan(
                 update_spec,
@@ -299,6 +327,7 @@ def _compile_update_plans(
                 collation=collation,
                 array_filters=array_filters,
                 is_upsert_insert=True,
+                variables=variables,
             ),
         )
     except OperationFailure:

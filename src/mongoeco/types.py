@@ -263,7 +263,10 @@ class DBRef:
 
 type Document = dict[str, Any]
 type Filter = dict[str, Any]
-type Update = dict[str, Any]
+type UpdateDocument = dict[str, Any]
+type UpdatePipelineStage = dict[str, Any]
+type UpdatePipeline = list[UpdatePipelineStage]
+type Update = UpdateDocument | UpdatePipeline
 type ArrayFilters = list[Filter]
 type Projection = dict[str, Any]
 type BsonScalar = (

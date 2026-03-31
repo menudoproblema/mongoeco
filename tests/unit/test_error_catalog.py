@@ -8,6 +8,11 @@ from mongoeco.error_catalog import (
 )
 from mongoeco.errors import DuplicateKeyError, ExecutionTimeout, OperationFailure
 
+try:
+    from pymongo.errors import DuplicateKeyError as PyMongoDuplicateKeyError
+except Exception:  # pragma: no cover - pymongo is optional
+    PyMongoDuplicateKeyError = None
+
 
 class ErrorCatalogUnitTests(unittest.TestCase):
     def test_error_catalog_assigns_stable_default_codes(self):
@@ -53,3 +58,9 @@ class ErrorCatalogUnitTests(unittest.TestCase):
                 "errorLabels": ["RetryableWriteError"],
             },
         )
+
+    @unittest.skipIf(PyMongoDuplicateKeyError is None, "pymongo is not installed")
+    def test_duplicate_key_error_is_compatible_with_pymongo_duplicate_key_error(self):
+        error = DuplicateKeyError("duplicate key")
+
+        self.assertIsInstance(error, PyMongoDuplicateKeyError)
