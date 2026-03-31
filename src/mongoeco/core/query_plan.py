@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import math
 import re
 import uuid
 from typing import Any, TypeIs
@@ -395,7 +396,12 @@ def _compile_field_condition(
             if not isinstance(value, (list, tuple)) or len(value) != 2:
                 raise ValueError("$mod necesita una lista de dos numeros")
             divisor, remainder = value
-            if not isinstance(divisor, (int, float)) or isinstance(divisor, bool) or divisor == 0:
+            if (
+                not isinstance(divisor, (int, float))
+                or isinstance(divisor, bool)
+                or not math.isfinite(divisor)
+                or divisor == 0
+            ):
                 raise ValueError("$mod necesita un divisor numerico distinto de cero")
             if not isinstance(remainder, (int, float)) or isinstance(remainder, bool):
                 raise ValueError("$mod necesita un resto numerico")

@@ -2,6 +2,7 @@ import decimal
 import math
 import unittest
 
+from mongoeco.errors import OperationFailure
 from mongoeco.types import Decimal128
 from mongoeco.core.bson_scalars import (
     BsonDecimal128,
@@ -168,6 +169,16 @@ class BsonScalarTests(unittest.TestCase):
         self.assertEqual(bson_mod(BsonInt32(-7), BsonInt32(3)), BsonInt32(-1))
         self.assertTrue(math.isnan(bson_mod(float("inf"), 3.0)))
         self.assertTrue(math.isnan(bson_mod(3.0, float("inf"))))
+
+    def test_bson_divide_and_mod_reject_zero_divisors(self):
+        with self.assertRaisesRegex(OperationFailure, "divide by zero"):
+            bson_divide(5, 0)
+        with self.assertRaisesRegex(OperationFailure, "divide by zero"):
+            bson_divide(BsonDecimal128(decimal.Decimal("5")), decimal.Decimal("0"))
+        with self.assertRaisesRegex(OperationFailure, "divide by zero"):
+            bson_mod(5, 0)
+        with self.assertRaisesRegex(OperationFailure, "divide by zero"):
+            bson_mod(BsonDecimal128(decimal.Decimal("5.5")), decimal.Decimal("0"))
 
     def test_bson_bitwise_and_integral_helpers_cover_wrapped_and_error_paths(self):
         self.assertEqual(bson_bitwise("and", 0b1100, 0b1010), 0b1000)

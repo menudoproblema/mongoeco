@@ -1267,6 +1267,7 @@ class QueryEngine:
             isinstance(value, (int, float))
             and not isinstance(value, bool)
             and math.isfinite(value)
+            and math.isfinite(divisor)
             and divisor != 0
             and QueryEngine._mongo_remainder(value, divisor) == remainder
             for value in values

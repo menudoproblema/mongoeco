@@ -291,6 +291,12 @@ class QueryEngineTests(unittest.TestCase):
             )
         )
 
+    def test_query_engine_mod_rejects_non_finite_divisors(self):
+        with self.assertRaises(ValueError):
+            QueryEngine.match({"value": 5}, {"value": {"$mod": [float("inf"), 1]}})
+        with self.assertRaises(ValueError):
+            QueryEngine.match({"value": 5}, {"value": {"$mod": [float("nan"), 1]}})
+
     def test_query_engine_rejects_unknown_operator(self):
         with self.assertRaises(OperationFailure):
             QueryEngine.match({"a": 1}, {"a": {"$unknown": 1}})
@@ -446,7 +452,8 @@ class QueryEngineTests(unittest.TestCase):
         self.assertFalse(QueryEngine.match({"count": 10}, {"count": {"$mod": [3, 0]}}))
         self.assertFalse(QueryEngine.match({"count": "10"}, {"count": {"$mod": [3, 1]}}))
         self.assertFalse(QueryEngine.match({"count": float("inf")}, {"count": {"$mod": [3, 1]}}))
-        self.assertFalse(QueryEngine.match({"count": 10}, {"count": {"$mod": [float("inf"), 1]}}))
+        with self.assertRaises(ValueError):
+            QueryEngine.match({"count": 10}, {"count": {"$mod": [float("inf"), 1]}})
 
     def test_query_engine_supports_lte_operator(self):
         self.assertTrue(QueryEngine.match({"count": 10}, {"count": {"$lte": 10}}))

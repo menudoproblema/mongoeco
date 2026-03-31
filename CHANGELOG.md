@@ -8,6 +8,12 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+
+- Se endurece la aritmetica BSON y la validacion de `$mod`: `bson_divide`
+  y `bson_mod` rechazan ya divisores cero con `OperationFailure`, y los
+  filtros `$mod` dejan de aceptar divisores `NaN` o infinitos.
+
 ## [2.2.0] - 2026-03-31
 
 ### Fixed
