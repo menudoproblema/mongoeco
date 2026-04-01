@@ -13,8 +13,11 @@ from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure
 from mongoeco.types import (
+    CodecOptions,
     DeleteMany, DeleteOne, DeleteResult, IndexModel, InsertOne, ReplaceOne,
+    PlanningMode, ReadConcern, ReadPreference, ReadPreferenceMode,
     ReturnDocument, SearchIndexModel, UpdateMany, UpdateOne, UpdateResult,
+    WriteConcern,
 )
 
 __all__ = [
@@ -32,6 +35,7 @@ __all__ = [
     "MemoryEngine",
     "SQLiteEngine",
     "BulkWriteError",
+    "CodecOptions",
     "DuplicateKeyError",
     "OperationFailure",
     "DeleteMany",
@@ -39,12 +43,17 @@ __all__ = [
     "DeleteResult",
     "IndexModel",
     "InsertOne",
+    "PlanningMode",
+    "ReadConcern",
+    "ReadPreference",
+    "ReadPreferenceMode",
     "ReplaceOne",
     "ReturnDocument",
     "SearchIndexModel",
     "UpdateMany",
     "UpdateOne",
     "UpdateResult",
+    "WriteConcern",
     "_scan_stub_documents",
     "_SemanticsScanMixin",
     "AsyncCollectionHelperBase",

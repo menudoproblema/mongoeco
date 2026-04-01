@@ -46,6 +46,14 @@ usa Semantic Versioning.
   `Binary` distingue el `subtype`, `Regex` normaliza el orden de flags,
   `Timestamp` recupera orden total por `(time, inc)` y `Decimal128`
   trata `NaN` como igual a `NaN`.
+- La validacion de queries y pipelines endurece varios edge cases:
+  `$size` rechaza ya valores fuera de `int32`, los field paths de
+  filtros no aceptan nombres vacios, segmentos vacios ni `null bytes`,
+  los operadores bitwise aceptan wrappers BSON y se limitan a 64 bits,
+  `$lookup let` valida nombres de variable al estilo MongoDB,
+  `$replaceRoot` falla antes ante `newRoot` claramente invalido y los
+  updates sobre arrays con segmentos no numericos dejan ya de fallar en
+  silencio.
 - `$strcasecmp` trata ya operandos `null` o ausentes como cadenas
   vacias, alineando las comparaciones con el comportamiento observado en
   MongoDB real en lugar de devolver `null`.
@@ -148,6 +156,11 @@ usa Semantic Versioning.
 - El tamaño de retención del historial local de change streams pasa a
   poder configurarse desde los clientes async/sync y desde constructores
   directos de base de datos o colección.
+- Las fachadas async/sync preservan ya correctamente la configuracion
+  derivada de colección y base de datos: `rename()` mantiene concerns,
+  codec, planning y parametros locales de change streams, y los
+  accesores de `database` / propiedades de runtime dejan de perder o
+  esconder ajustes de journal e historial tras caer por `__getattr__`.
 - Los change streams locales pueden persistir ahora su historial retenido
   a un journal en fichero mediante `change_stream_journal_path`, lo que
   permite reanudar cursores con `resume_after` o `start_after` tras

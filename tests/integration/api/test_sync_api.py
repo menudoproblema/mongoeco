@@ -28,6 +28,7 @@ from mongoeco import (
     UpdateOne,
     WriteConcern,
 )
+from mongoeco.types import PlanningMode
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
 from mongoeco.engines.memory import MemoryEngine
@@ -1031,6 +1032,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         renamed.options(),
                         {"capped": True, "size": 512},
                     )
+
+    def test_collection_rename_preserves_collection_configuration(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.alpha.get_collection(
+                        "events",
+                        write_concern=WriteConcern("majority"),
+                        read_concern=ReadConcern("majority"),
+                        read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
+                        codec_options=CodecOptions(dict, tz_aware=True),
+                    ).with_options(planning_mode=PlanningMode.RELAXED)
+                    collection.insert_one({"_id": "1"})
+
+                    renamed = collection.rename("archived")
+
+                    self.assertEqual(renamed.write_concern, collection.write_concern)
+                    self.assertEqual(renamed.read_concern, collection.read_concern)
+                    self.assertEqual(renamed.read_preference, collection.read_preference)
+                    self.assertEqual(renamed.codec_options, collection.codec_options)
+                    self.assertEqual(renamed.planning_mode, collection.planning_mode)
 
     def test_collection_rename_rejects_conflicting_or_identical_names(self):
         with MongoClient(MemoryEngine()) as client:

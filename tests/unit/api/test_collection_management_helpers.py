@@ -776,6 +776,61 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertIsNotNone(self.collection.codec_options)
         self.assertEqual(collection.full_name, "db.coll")
 
+    def test_rename_preserves_collection_configuration(self):
+        class EngineStub(MemoryEngine):
+            async def rename_collection(self, *args, **kwargs):
+                return None
+
+        async def _exercise():
+            engine = EngineStub()
+            collection = AsyncCollection(
+                engine,
+                "db",
+                "coll",
+                write_concern=WriteConcern("majority"),
+                read_concern=ReadConcern("majority"),
+                read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
+                codec_options=CodecOptions(dict, tz_aware=True),
+                planning_mode=PlanningMode.RELAXED,
+                change_stream_history_size=7,
+                change_stream_journal_path="/tmp/mongoeco-journal.json",
+                change_stream_journal_fsync=True,
+                change_stream_journal_max_bytes=2048,
+            )
+            renamed = await collection.rename("renamed")
+            return collection, renamed
+
+        collection, renamed = asyncio.run(_exercise())
+
+        self.assertEqual(renamed.full_name, "db.renamed")
+        self.assertEqual(renamed.write_concern, collection.write_concern)
+        self.assertEqual(renamed.read_concern, collection.read_concern)
+        self.assertEqual(renamed.read_preference, collection.read_preference)
+        self.assertEqual(renamed.codec_options, collection.codec_options)
+        self.assertEqual(renamed.planning_mode, collection.planning_mode)
+        self.assertEqual(renamed.change_stream_history_size, collection.change_stream_history_size)
+        self.assertEqual(renamed.change_stream_journal_path, collection.change_stream_journal_path)
+        self.assertEqual(renamed.change_stream_journal_fsync, collection.change_stream_journal_fsync)
+        self.assertEqual(renamed.change_stream_journal_max_bytes, collection.change_stream_journal_max_bytes)
+
+    def test_database_preserves_change_stream_journal_configuration(self):
+        collection = AsyncCollection(
+            MemoryEngine(),
+            "db",
+            "coll",
+            change_stream_history_size=7,
+            change_stream_journal_path="/tmp/mongoeco-journal.json",
+            change_stream_journal_fsync=True,
+            change_stream_journal_max_bytes=2048,
+        )
+
+        database = collection.database
+
+        self.assertEqual(database.change_stream_history_size, 7)
+        self.assertEqual(database.change_stream_journal_path, "/tmp/mongoeco-journal.json")
+        self.assertTrue(database.change_stream_journal_fsync)
+        self.assertEqual(database.change_stream_journal_max_bytes, 2048)
+
     def test_bulk_write_context_prepare_request_covers_variants_and_errors(self):
         collection = AsyncCollection(MemoryEngine(), "db", "coll", pymongo_profile="4.11")
         context = async_collection_module._BulkWriteContext(collection, [])

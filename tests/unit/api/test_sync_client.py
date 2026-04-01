@@ -219,6 +219,23 @@ class SyncClientUnitTests(unittest.TestCase):
         finally:
             client.close()
 
+    def test_database_exposes_client_change_stream_settings(self):
+        client = MongoClient(
+            MemoryEngine(),
+            change_stream_history_size=321,
+            change_stream_journal_path="/tmp/mongoeco-db-changes.json",
+            change_stream_journal_fsync=True,
+            change_stream_journal_max_bytes=8192,
+        )
+        try:
+            database = client.get_database("alpha")
+            self.assertEqual(database.change_stream_history_size, 321)
+            self.assertEqual(database.change_stream_journal_path, "/tmp/mongoeco-db-changes.json")
+            self.assertTrue(database.change_stream_journal_fsync)
+            self.assertEqual(database.change_stream_journal_max_bytes, 8192)
+        finally:
+            client.close()
+
     def test_client_exposes_change_stream_state(self):
         client = MongoClient(MemoryEngine(), change_stream_history_size=7)
         try:

@@ -1740,6 +1740,16 @@ class AsyncCollection:
             mongodb_dialect_resolution=self._mongodb_dialect_resolution,
             pymongo_profile=self._pymongo_profile,
             pymongo_profile_resolution=self._pymongo_profile_resolution,
+            write_concern=self._write_concern,
+            read_concern=self._read_concern,
+            read_preference=self._read_preference,
+            codec_options=self._codec_options,
+            planning_mode=self._planning_mode,
+            change_hub=self._change_hub,
+            change_stream_history_size=self._change_stream_history_size,
+            change_stream_journal_path=self._change_stream_journal_path,
+            change_stream_journal_fsync=self._change_stream_journal_fsync,
+            change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
         )
 
     async def options(self, *, session: ClientSession | None = None) -> dict[str, object]:
@@ -1803,6 +1813,8 @@ class AsyncCollection:
             change_hub=self._change_hub,
             change_stream_history_size=self._change_stream_history_size,
             change_stream_journal_path=self._change_stream_journal_path,
+            change_stream_journal_fsync=self._change_stream_journal_fsync,
+            change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
         )
 
     @property
@@ -1836,6 +1848,10 @@ class AsyncCollection:
     @property
     def codec_options(self) -> CodecOptions:
         return self._codec_options
+
+    @property
+    def change_stream_history_size(self) -> int | None:
+        return self._change_stream_history_size
 
     @property
     def change_stream_journal_path(self) -> str | None:

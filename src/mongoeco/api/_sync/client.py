@@ -415,6 +415,22 @@ class Database:
     def name(self) -> str:
         return self._name
 
+    @property
+    def change_stream_history_size(self) -> int | None:
+        return self._client.change_stream_history_size
+
+    @property
+    def change_stream_journal_path(self) -> str | None:
+        return self._client.change_stream_journal_path
+
+    @property
+    def change_stream_journal_fsync(self) -> bool:
+        return self._client.change_stream_journal_fsync
+
+    @property
+    def change_stream_journal_max_bytes(self) -> int | None:
+        return self._client.change_stream_journal_max_bytes
+
 
 class MongoClient:
     """Cliente sincronico que adapta la implementacion async."""
