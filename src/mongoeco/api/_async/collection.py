@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-import asyncio
 from collections.abc import AsyncIterable, Iterable, Sequence
 from copy import deepcopy
-from dataclasses import dataclass
-from functools import partial
 import time
 
+from mongoeco.api._async._collection_bulk import execute_bulk_write
+from mongoeco.api._async._collection_watch import (
+    CollectionChangeStreamConfig,
+    create_change_stream_hub,
+    open_collection_change_stream,
+)
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api.argument_validation import (
     HintSpec,
@@ -15,7 +18,7 @@ from mongoeco.api.argument_validation import (
     validate_hint_spec as _validate_hint_spec,
     validate_max_time_ms as _validate_max_time_ms,
 )
-from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub, ChangeStreamScope
+from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub
 from mongoeco.api.public_api import (
     ARG_UNSET,
     COLLECTION_COUNT_DOCUMENTS_SPEC,
@@ -65,92 +68,18 @@ from mongoeco.core.upserts import seed_upsert_document
 from mongoeco.core.validation import is_document, is_filter, is_projection, is_update
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    ArrayFilters, BulkWriteErrorDetails, BulkWriteResult, CodecOptions, CollationDocument, DeleteResult, Document, DocumentId, Filter,
+    ArrayFilters, BulkWriteResult, CodecOptions, CollationDocument, DeleteResult, Document, DocumentId, Filter,
     IndexInformation, IndexKeySpec, IndexModel, InsertManyResult, InsertOne, InsertOneResult, ObjectId, Projection,
     PlanningMode, ReadConcern, ReadPreference, ReplaceOne, ReturnDocument, SearchIndexDefinition, SearchIndexDocument,
     SearchIndexModel, SortSpec, Update, UpdateMany, UpdateOne, UpdateResult,
-    UpsertedWriteEntry, WriteConcern, WriteErrorEntry, WriteModel, DeleteOne, DeleteMany,
+    WriteConcern, WriteModel, DeleteOne, DeleteMany,
     normalize_codec_options, normalize_index_keys,
     normalize_read_concern, normalize_read_preference, normalize_write_concern,
 )
-from mongoeco.errors import BulkWriteError, DuplicateKeyError, InvalidOperation, OperationFailure, WriteError
+from mongoeco.errors import DuplicateKeyError, OperationFailure
 
 _FILTER_UNSET = ARG_UNSET
 _UPDATE_UNSET = ARG_UNSET
-
-
-@dataclass(slots=True)
-class _PreparedBulkWriteRequest:
-    index: int
-    request: WriteModel
-    insert_document: Document | None = None
-    replacement_document: Document | None = None
-    preparation_error: Exception | None = None
-
-
-class _BulkWriteContext:
-    def __init__(
-        self,
-        collection: "AsyncCollection",
-        requests: list[WriteModel],
-    ) -> None:
-        self._collection = collection
-        self._requests = requests
-
-    async def prepare(self) -> list[_PreparedBulkWriteRequest]:
-        loop = asyncio.get_running_loop()
-        tasks = [
-            loop.run_in_executor(None, partial(self._prepare_request, index, request))
-            for index, request in enumerate(self._requests)
-        ]
-        return list(await asyncio.gather(*tasks))
-
-    def _prepare_request(self, index: int, request: WriteModel) -> _PreparedBulkWriteRequest:
-        collection = self._collection
-        try:
-            collection._validate_bulk_write_request_against_profile(request)
-            if isinstance(request, InsertOne):
-                original = collection._require_document(request.document)
-                if "_id" not in original:
-                    original["_id"] = ObjectId()
-                return _PreparedBulkWriteRequest(
-                    index=index,
-                    request=request,
-                    insert_document=deepcopy(original),
-                )
-            if isinstance(request, ReplaceOne):
-                collection._normalize_filter(request.filter)
-                collection._normalize_hint(request.hint)
-                if request.sort is not None:
-                    collection._normalize_sort(request.sort)
-                if request.let is not None:
-                    collection._normalize_let(request.let)
-                return _PreparedBulkWriteRequest(
-                    index=index,
-                    request=request,
-                    replacement_document=deepcopy(collection._require_replacement(request.replacement)),
-                )
-            if isinstance(request, (UpdateOne, UpdateMany)):
-                collection._normalize_filter(request.filter)
-                collection._require_update(request.update)
-                collection._normalize_hint(request.hint)
-                if request.array_filters is not None:
-                    collection._normalize_array_filters(request.array_filters)
-                if request.let is not None:
-                    collection._normalize_let(request.let)
-                if isinstance(request, UpdateOne) and request.sort is not None:
-                    collection._normalize_sort(request.sort)
-                return _PreparedBulkWriteRequest(index=index, request=request)
-            if isinstance(request, (DeleteOne, DeleteMany)):
-                collection._normalize_filter(request.filter)
-                collection._normalize_hint(request.hint)
-                if request.let is not None:
-                    collection._normalize_let(request.let)
-                return _PreparedBulkWriteRequest(index=index, request=request)
-            raise TypeError("bulk_write requests must be write model instances")
-        except (TypeError, ValueError, OperationFailure, WriteError) as exc:
-            return _PreparedBulkWriteRequest(index=index, request=request, preparation_error=exc)
-
 
 class AsyncCollection:
     """Representa una colección de MongoDB."""
@@ -200,15 +129,14 @@ class AsyncCollection:
         self._change_stream_journal_path = change_stream_journal_path
         self._change_stream_journal_fsync = change_stream_journal_fsync
         self._change_stream_journal_max_bytes = change_stream_journal_max_bytes
-        self._change_hub = (
-            ChangeStreamHub(
-                max_retained_events=change_stream_history_size,
+        self._change_hub = create_change_stream_hub(
+            change_hub=change_hub,
+            config=CollectionChangeStreamConfig(
+                history_size=change_stream_history_size,
                 journal_path=change_stream_journal_path,
                 journal_fsync=change_stream_journal_fsync,
-                journal_max_log_bytes=change_stream_journal_max_bytes,
-            )
-            if change_hub is None
-            else change_hub
+                journal_max_bytes=change_stream_journal_max_bytes,
+            ),
         )
 
     def with_options(
@@ -1030,152 +958,15 @@ class AsyncCollection:
         if not isinstance(ordered, bool):
             raise TypeError("ordered must be a bool")
         let = self._normalize_let(let)
-        prepared_requests = await _BulkWriteContext(self, requests).prepare()
-
-        inserted_count = 0
-        matched_count = 0
-        modified_count = 0
-        deleted_count = 0
-        upserted_ids: dict[int, DocumentId] = {}
-        write_errors: list[WriteErrorEntry] = []
-
-        for prepared in prepared_requests:
-            index = prepared.index
-            request = prepared.request
-            if prepared.preparation_error is not None:
-                exc = prepared.preparation_error
-                if ordered:
-                    raise exc
-                write_errors.append(
-                    WriteErrorEntry(
-                        index=index,
-                        code=getattr(exc, "code", None),
-                        errmsg=str(exc),
-                        operation=request.__class__.__name__,
-                    )
-                )
-                continue
-            try:
-                if isinstance(request, InsertOne):
-                    insert_kwargs = {"session": session}
-                    if bypass_document_validation:
-                        insert_kwargs["bypass_document_validation"] = True
-                    await self.insert_one(prepared.insert_document or request.document, **insert_kwargs)
-                    inserted_count += 1
-                elif isinstance(request, UpdateOne):
-                    update_one_kwargs = {
-                        "sort": request.sort,
-                        "array_filters": request.array_filters,
-                        "hint": request.hint,
-                        "comment": request.comment if request.comment is not None else comment,
-                        "let": request.let if request.let is not None else let,
-                        "session": session,
-                    }
-                    if bypass_document_validation:
-                        update_one_kwargs["bypass_document_validation"] = True
-                    result = await self.update_one(
-                        request.filter,
-                        request.update,
-                        request.upsert,
-                        **update_one_kwargs,
-                    )
-                    matched_count += result.matched_count
-                    modified_count += result.modified_count
-                    if result.upserted_id is not None:
-                        upserted_ids[index] = result.upserted_id
-                elif isinstance(request, UpdateMany):
-                    update_many_kwargs = {
-                        "array_filters": request.array_filters,
-                        "hint": request.hint,
-                        "comment": request.comment if request.comment is not None else comment,
-                        "let": request.let if request.let is not None else let,
-                        "session": session,
-                    }
-                    if bypass_document_validation:
-                        update_many_kwargs["bypass_document_validation"] = True
-                    result = await self.update_many(
-                        request.filter,
-                        request.update,
-                        request.upsert,
-                        **update_many_kwargs,
-                    )
-                    matched_count += result.matched_count
-                    modified_count += result.modified_count
-                    if result.upserted_id is not None:
-                        upserted_ids[index] = result.upserted_id
-                elif isinstance(request, ReplaceOne):
-                    replace_one_kwargs = {
-                        "sort": request.sort,
-                        "hint": request.hint,
-                        "comment": request.comment if request.comment is not None else comment,
-                        "let": request.let if request.let is not None else let,
-                        "session": session,
-                    }
-                    if bypass_document_validation:
-                        replace_one_kwargs["bypass_document_validation"] = True
-                    result = await self.replace_one(
-                        request.filter,
-                        prepared.replacement_document or request.replacement,
-                        request.upsert,
-                        **replace_one_kwargs,
-                    )
-                    matched_count += result.matched_count
-                    modified_count += result.modified_count
-                    if result.upserted_id is not None:
-                        upserted_ids[index] = result.upserted_id
-                elif isinstance(request, DeleteOne):
-                    result = await self.delete_one(
-                        request.filter,
-                        hint=request.hint,
-                        comment=request.comment if request.comment is not None else comment,
-                        let=request.let if request.let is not None else let,
-                        session=session,
-                    )
-                    deleted_count += result.deleted_count
-                elif isinstance(request, DeleteMany):
-                    result = await self.delete_many(
-                        request.filter,
-                        hint=request.hint,
-                        comment=request.comment if request.comment is not None else comment,
-                        let=request.let if request.let is not None else let,
-                        session=session,
-                    )
-                    deleted_count += result.deleted_count
-            except (WriteError, OperationFailure, TypeError, ValueError) as exc:
-                write_errors.append(
-                    WriteErrorEntry(
-                        index=index,
-                        code=getattr(exc, "code", None),
-                        errmsg=str(exc),
-                        operation=request.__class__.__name__,
-                    )
-                )
-                if ordered:
-                    break
-
-        result = BulkWriteResult(
-            inserted_count=inserted_count,
-            matched_count=matched_count,
-            modified_count=modified_count,
-            deleted_count=deleted_count,
-            upserted_count=len(upserted_ids),
-            upserted_ids=upserted_ids,
+        result = await execute_bulk_write(
+            self,
+            requests,
+            ordered=ordered,
+            bypass_document_validation=bypass_document_validation,
+            comment=comment,
+            let=let,
+            session=session,
         )
-        if write_errors:
-            raise BulkWriteError(
-                "bulk write failed",
-                details=BulkWriteErrorDetails(
-                    write_errors=write_errors,
-                    inserted_count=result.inserted_count,
-                    matched_count=result.matched_count,
-                    modified_count=result.modified_count,
-                    removed_count=result.deleted_count,
-                    upserted=[
-                        UpsertedWriteEntry(index=op_index, document_id=upserted_id)
-                        for op_index, upserted_id in upserted_ids.items()
-                    ],
-                ).to_document(),
-            )
         self._record_operation_metadata(
             operation="bulk_write",
             comment=comment,
@@ -2878,23 +2669,15 @@ class AsyncCollection:
         full_document: str = "default",
         session: ClientSession | None = None,
     ) -> AsyncChangeStreamCursor:
-        if session is not None:
-            raise InvalidOperation("watch does not support explicit sessions")
-        if max_await_time_ms is not None and (
-            not isinstance(max_await_time_ms, int)
-            or isinstance(max_await_time_ms, bool)
-            or max_await_time_ms < 0
-        ):
-            raise TypeError("max_await_time_ms must be a non-negative integer")
-        return AsyncChangeStreamCursor(
-            self._change_hub,
-            scope=ChangeStreamScope(db_name=self._db_name, coll_name=self._collection_name),
+        return open_collection_change_stream(
+            self,
             pipeline=pipeline,
             max_await_time_ms=max_await_time_ms,
             resume_after=resume_after,
             start_after=start_after,
             start_at_operation_time=start_at_operation_time,
             full_document=full_document,
+            session=session,
         )
 
     def change_stream_state(self) -> dict[str, object]:
