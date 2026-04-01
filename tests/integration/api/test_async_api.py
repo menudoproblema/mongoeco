@@ -904,6 +904,22 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ],
                     )
 
+    async def test_delete_one_is_allowed_on_capped_collections(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = await client.alpha.create_collection(
+                        "events",
+                        capped=True,
+                        size=1024,
+                    )
+                    await collection.insert_many([{"_id": "1"}, {"_id": "2"}])
+
+                    result = await collection.delete_one({"_id": "1"})
+
+                    self.assertEqual(result.deleted_count, 1)
+                    self.assertEqual(await collection.find({}, sort=[("_id", 1)]).to_list(), [{"_id": "2"}])
+
     async def test_client_database_and_collection_expose_configured_pymongo_options(self):
         write_concern = WriteConcern("majority", j=True)
         read_concern = ReadConcern("majority")

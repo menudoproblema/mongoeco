@@ -200,8 +200,10 @@ def evaluate_array_string_expression(
         args = require_expression_args(operator, spec, 2, 2)
         left = evaluate_expression(document, args[0], variables)
         right = evaluate_expression(document, args[1], variables)
-        if left is None or right is None:
-            return None
+        if left is None:
+            left = ""
+        if right is None:
+            right = ""
         if not isinstance(left, str) or not isinstance(right, str):
             raise OperationFailure("$strcasecmp requires string arguments")
         return _compare_strings_case_insensitive(left, right)

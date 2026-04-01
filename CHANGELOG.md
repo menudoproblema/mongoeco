@@ -35,6 +35,9 @@ usa Semantic Versioning.
   `Binary` distingue el `subtype`, `Regex` normaliza el orden de flags,
   `Timestamp` recupera orden total por `(time, inc)` y `Decimal128`
   trata `NaN` como igual a `NaN`.
+- `$strcasecmp` trata ya operandos `null` o ausentes como cadenas
+  vacias, alineando las comparaciones con el comportamiento observado en
+  MongoDB real en lugar de devolver `null`.
 - `watch(session=...)` deja de ignorar sesiones explicitamente y falla
   ahora con un error claro en cliente, base de datos y coleccion.
 - La topologia local de `replica set` deja de inventar un primario antes

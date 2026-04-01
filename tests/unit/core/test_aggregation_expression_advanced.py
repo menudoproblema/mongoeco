@@ -953,6 +953,7 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
         document = {
             "zero": 0,
             "empty_list": [],
+            "empty_dict": {},
             "regex": re.compile("^a"),
             "none_value": None,
             "bool_value": False,
@@ -969,6 +970,7 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
 
         self.assertFalse(evaluate_expression(document, {"$toBool": "$zero"}))
         self.assertTrue(evaluate_expression(document, {"$toBool": "$empty_list"}))
+        self.assertTrue(evaluate_expression(document, {"$toBool": "$empty_dict"}))
         self.assertEqual(evaluate_expression(document, {"$type": "$none_value"}), "null")
         self.assertEqual(evaluate_expression(document, {"$type": "$bool_value"}), "bool")
         self.assertEqual(evaluate_expression(document, {"$type": "$decimal_value"}), "decimal")

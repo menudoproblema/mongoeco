@@ -913,6 +913,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+    def test_delete_one_is_allowed_on_capped_collections(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.alpha.create_collection(
+                        "events",
+                        capped=True,
+                        size=1024,
+                    )
+                    collection.insert_many([{"_id": "1"}, {"_id": "2"}])
+
+                    result = collection.delete_one({"_id": "1"})
+
+                    self.assertEqual(result.deleted_count, 1)
+                    self.assertEqual(collection.find({}, sort=[("_id", 1)]).to_list(), [{"_id": "2"}])
+
     def test_list_collections_rejects_invalid_filter(self):
         with MongoClient(MemoryEngine()) as client:
             with self.assertRaises(TypeError):

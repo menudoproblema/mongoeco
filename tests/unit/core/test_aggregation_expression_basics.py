@@ -1049,6 +1049,8 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         self.assertFalse(evaluate_expression(document, {"$setEquals": [["a", "c"], ["a", "b"]]}))
         self.assertFalse(evaluate_expression(document, {"$setIsSubset": [["a", "z"], ["a", "b"]]}))
         self.assertIsNone(evaluate_expression(document, {"$trim": {"input": "$text", "chars": "$none_chars"}}))
+        self.assertEqual(evaluate_expression(document, {"$strcasecmp": ["$none_chars", "A"]}), -1)
+        self.assertEqual(evaluate_expression(document, {"$strcasecmp": ["$none_chars", "$none_chars"]}), 0)
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$setIsSubset": [["a"], ["a", "b"], ["a"]]})
 
