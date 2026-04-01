@@ -167,3 +167,31 @@ class TopologyMonitorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(refreshed.topology_type, TopologyType.UNKNOWN)
         self.assertFalse(refreshed.compatible)
+
+    async def test_refresh_topology_marks_replica_set_name_mismatch_incompatible(self):
+        topology = TopologyDescription(
+            topology_type=TopologyType.REPLICA_SET,
+            servers=(ServerDescription(address="db1:27017", set_name="rs0"),),
+            set_name="rs0",
+        )
+
+        async def prepare_execution(plan, attempt_number):
+            del attempt_number
+            return object()
+
+        async def complete_execution(_execution):
+            return None
+
+        class _MismatchTransport:
+            async def send(self, _execution):
+                return {"setName": "rs1", "isWritablePrimary": True}
+
+        refreshed = await refresh_topology(
+            current_topology=topology,
+            prepare_execution=prepare_execution,
+            complete_execution=complete_execution,
+            transport=_MismatchTransport(),
+        )
+
+        self.assertFalse(refreshed.compatible)
+        self.assertIn("replica set name mismatch", refreshed.servers[0].error or "")

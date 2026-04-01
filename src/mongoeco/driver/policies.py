@@ -37,6 +37,13 @@ class SelectionPolicy:
     ) -> tuple[ServerDescription, ...]:
         if self.direct_connection:
             return topology.servers[:1]
+        if topology.topology_type is TopologyType.UNKNOWN:
+            provisional = self._order_nearest(self._provisional_replica_set_servers(topology))
+            if for_writes:
+                return provisional
+            if self.mode is ReadPreferenceMode.NEAREST:
+                return provisional
+            return provisional
         if for_writes:
             writable = topology.writable_servers
             if writable or topology.topology_type is not TopologyType.REPLICA_SET:

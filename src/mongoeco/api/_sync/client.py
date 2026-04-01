@@ -426,6 +426,7 @@ class MongoClient:
         codec_options: CodecOptions | None = None,
         transaction_options: TransactionOptions | None = None,
         change_stream_history_size: int | None = 10_000,
+        change_stream_journal_path: str | None = None,
     ):
         self._async_client = AsyncMongoClient(
             engine,
@@ -438,6 +439,7 @@ class MongoClient:
             codec_options=codec_options,
             transaction_options=transaction_options,
             change_stream_history_size=change_stream_history_size,
+            change_stream_journal_path=change_stream_journal_path,
         )
         self._runner = _SyncRunner()
         self._connected = False
@@ -525,6 +527,7 @@ class MongoClient:
                 else transaction_options
             ),
             change_stream_history_size=self.change_stream_history_size,
+            change_stream_journal_path=self.change_stream_journal_path,
         )
 
     def get_database(
@@ -652,6 +655,10 @@ class MongoClient:
     @property
     def change_stream_history_size(self) -> int | None:
         return self._async_client.change_stream_history_size
+
+    @property
+    def change_stream_journal_path(self) -> str | None:
+        return self._async_client.change_stream_journal_path
 
     @property
     def client_uri(self):

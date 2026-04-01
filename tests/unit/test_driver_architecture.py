@@ -241,6 +241,20 @@ class TopologyAndPolicyTests(unittest.TestCase):
         self.assertEqual(topology.topology_type, TopologyType.SHARDED)
         self.assertEqual(topology.servers[0].server_type, ServerType.MONGOS)
 
+    def test_build_local_topology_description_keeps_single_seed_unknown_without_direct_connection(self):
+        uri = parse_mongo_uri("mongodb://db1:27017/")
+        topology = build_local_topology_description(uri)
+
+        self.assertEqual(topology.topology_type, TopologyType.UNKNOWN)
+        self.assertEqual(topology.servers[0].server_type, ServerType.UNKNOWN)
+
+    def test_build_local_topology_description_prefers_replica_set_over_single_seed_shape(self):
+        uri = parse_mongo_uri("mongodb://db1:27017/?replicaSet=rs0")
+        topology = build_local_topology_description(uri)
+
+        self.assertEqual(topology.topology_type, TopologyType.REPLICA_SET)
+        self.assertEqual(topology.servers[0].server_type, ServerType.UNKNOWN)
+
     def test_selection_policy_prefers_direct_connection_seed(self):
         uri = parse_mongo_uri("mongodb://db1:27017,db2:27018/?directConnection=true")
         topology = build_local_topology_description(uri)
@@ -542,7 +556,7 @@ class ClientDriverArchitectureTests(unittest.TestCase):
         )
 
         self.assertEqual(client.client_uri.options.app_name, "test-suite")
-        self.assertEqual(client.topology_description.topology_type, TopologyType.SINGLE)
+        self.assertEqual(client.topology_description.topology_type, TopologyType.UNKNOWN)
         self.assertFalse(client.retry_policy.retry_reads)
         self.assertEqual(client.selection_policy.mode, ReadPreferenceMode.SECONDARY)
 
@@ -1046,6 +1060,18 @@ class RequestExecutionPipelineTests(unittest.TestCase):
         self.assertFalse(result.outcome.ok)
         self.assertIn("no eligible servers", result.outcome.error or "")
 
+    def test_unknown_topology_still_uses_provisional_seed_selection(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+
+        plan = runtime.plan_command_request("admin", "ping", {"ping": 1}, read_only=True)
+
+        self.assertEqual([server.address for server in plan.candidate_servers], ["db1:27017"])
+
     def test_execute_request_discards_broken_connection_on_failure(self):
         runtime = DriverRuntime(
             uri="mongodb://db1:27017/?retryReads=false",
@@ -1126,3 +1152,59 @@ class RequestExecutionPipelineTests(unittest.TestCase):
         self.assertEqual(refreshed.servers[0].server_type, ServerType.RS_PRIMARY)
         self.assertEqual(refreshed.servers[1].server_type, ServerType.RS_SECONDARY)
         self.assertEqual(refreshed.servers[1].tags, {"region": "eu"})
+
+    def test_refresh_topology_discovers_additional_replica_set_members_from_hello(self):
+        topology = TopologyDescription(
+            topology_type=TopologyType.REPLICA_SET,
+            servers=(ServerDescription("db1:27017", set_name="rs0"),),
+            set_name="rs0",
+        )
+
+        async def prepare(plan, *, attempt_number):
+            del attempt_number
+            return PreparedRequestExecution(
+                plan=plan,
+                selected_server=plan.candidate_servers[0],
+                connection=type(
+                    "Lease",
+                    (),
+                    {
+                        "pool_key": None,
+                        "connection_id": plan.candidate_servers[0].address,
+                        "server": plan.candidate_servers[0],
+                    },
+                )(),
+            )
+
+        async def complete(execution):
+            del execution
+
+        class DiscoveryTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                if execution.selected_server.address == "db1:27017":
+                    return {
+                        "ok": 1.0,
+                        "setName": "rs0",
+                        "isWritablePrimary": True,
+                        "hosts": ["db1:27017", "db2:27018"],
+                    }
+                return {
+                    "ok": 1.0,
+                    "setName": "rs0",
+                    "secondary": True,
+                    "hosts": ["db1:27017", "db2:27018"],
+                    "tags": {"region": "eu"},
+                }
+
+        refreshed = asyncio.run(
+            refresh_topology(
+                current_topology=topology,
+                prepare_execution=prepare,
+                complete_execution=complete,
+                transport=DiscoveryTransport(),
+            )
+        )
+
+        self.assertEqual(refreshed.topology_type, TopologyType.REPLICA_SET)
+        self.assertEqual([server.address for server in refreshed.servers], ["db1:27017", "db2:27018"])
+        self.assertEqual(refreshed.servers[1].server_type, ServerType.RS_SECONDARY)

@@ -1,3 +1,5 @@
+import os
+import tempfile
 import unittest
 
 from mongoeco.api._async.client import AsyncDatabase, AsyncMongoClient
@@ -71,3 +73,42 @@ class DirectWatchHubTests(unittest.IsolatedAsyncioTestCase):
         client = AsyncMongoClient(MemoryEngine(), change_stream_history_size=123)
         self.assertEqual(client.change_stream_history_size, 123)
         self.assertEqual(client.with_options().change_stream_history_size, 123)
+
+    def test_async_client_exposes_configured_change_stream_journal_path(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            client = AsyncMongoClient(MemoryEngine(), change_stream_journal_path=journal_path)
+            self.assertEqual(client.change_stream_journal_path, journal_path)
+            self.assertEqual(client.with_options().change_stream_journal_path, journal_path)
+
+    async def test_direct_collection_can_resume_from_persisted_change_stream_journal(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                writer = AsyncCollection(
+                    engine,
+                    "db",
+                    "coll",
+                    change_stream_journal_path=journal_path,
+                )
+                await writer.insert_one({"_id": 1, "name": "Ada"})
+                await writer.insert_one({"_id": 2, "name": "Grace"})
+
+                reader = AsyncCollection(
+                    engine,
+                    "db",
+                    "coll",
+                    change_stream_journal_path=journal_path,
+                )
+                stream = reader.watch(
+                    resume_after={"_data": "1"},
+                    max_await_time_ms=25,
+                )
+                event = await stream.try_next()
+            finally:
+                await engine.disconnect()
+
+        self.assertIsNotNone(event)
+        self.assertEqual(event["documentKey"], {"_id": 2})

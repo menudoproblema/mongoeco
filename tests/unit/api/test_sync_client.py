@@ -196,6 +196,14 @@ class SyncClientUnitTests(unittest.TestCase):
         finally:
             client.close()
 
+    def test_client_preserves_configured_change_stream_journal_path(self):
+        client = MongoClient(MemoryEngine(), change_stream_journal_path="/tmp/mongoeco-changes.json")
+        try:
+            self.assertEqual(client.change_stream_journal_path, "/tmp/mongoeco-changes.json")
+            self.assertEqual(client.with_options().change_stream_journal_path, "/tmp/mongoeco-changes.json")
+        finally:
+            client.close()
+
     def test_client_drop_database_prefers_engine_fast_path(self):
         class EngineStub:
             def __init__(self):

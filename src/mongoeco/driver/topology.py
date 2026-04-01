@@ -39,6 +39,11 @@ class ServerDescription:
     election_id: object | None = None
     last_update_time_monotonic: float | None = None
     error: str | None = None
+    hosts: tuple[str, ...] = ()
+    passives: tuple[str, ...] = ()
+    arbiters: tuple[str, ...] = ()
+    primary: str | None = None
+    me: str | None = None
 
     @property
     def is_readable(self) -> bool:
@@ -88,7 +93,7 @@ class TopologyDescription:
 def build_local_topology_description(uri: MongoUri) -> TopologyDescription:
     if uri.options.load_balanced:
         topology_type = TopologyType.SHARDED
-    elif uri.options.direct_connection or len(uri.seeds) == 1:
+    elif uri.options.direct_connection:
         topology_type = TopologyType.SINGLE
     elif uri.options.replica_set:
         topology_type = TopologyType.REPLICA_SET

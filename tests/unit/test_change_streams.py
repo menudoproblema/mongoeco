@@ -1,4 +1,6 @@
 import asyncio
+import os
+import tempfile
 import threading
 import unittest
 from unittest.mock import patch
@@ -144,6 +146,43 @@ class ChangeStreamHubTests(unittest.TestCase):
             hub.offset_after_token(1)
         with self.assertRaisesRegex(OperationFailure, "start_at_operation_time is no longer available"):
             hub.offset_at_or_after_cluster_time(1)
+
+    def test_hub_persists_history_to_journal_and_rehydrates_resume_state(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            hub = ChangeStreamHub(max_retained_events=3, journal_path=journal_path)
+            hub.publish(
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 1},
+                full_document={"_id": 1},
+            )
+            hub.publish(
+                operation_type="update",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 1},
+                full_document={"_id": 1, "name": "Ada"},
+                update_description={"updatedFields": {"name": "Ada"}},
+            )
+
+            reloaded = ChangeStreamHub(max_retained_events=3, journal_path=journal_path)
+
+            self.assertEqual(reloaded.current_offset(), 2)
+            self.assertEqual(reloaded.offset_after_token(1), 1)
+            next_offset, event = reloaded.wait_for_event(1, timeout_seconds=0)
+            self.assertEqual(next_offset, 2)
+            self.assertEqual(event.operation_type, "update")
+
+    def test_hub_rejects_invalid_journal_payload(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            with open(journal_path, "w", encoding="utf-8") as handle:
+                handle.write("{bad json")
+
+            with self.assertRaisesRegex(OperationFailure, "journal could not be loaded"):
+                ChangeStreamHub(journal_path=journal_path)
 
 
 class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):

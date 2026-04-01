@@ -134,6 +134,10 @@ usa Semantic Versioning.
 - El tamaño de retención del historial local de change streams pasa a
   poder configurarse desde los clientes async/sync y desde constructores
   directos de base de datos o colección.
+- Los change streams locales pueden persistir ahora su historial retenido
+  a un journal en fichero mediante `change_stream_journal_path`, lo que
+  permite reanudar cursores con `resume_after` o `start_after` tras
+  recrear clientes o colecciones dentro del mismo entorno local.
 - `watch()` acepta ya `fullDocument` (`default`, `updateLookup`,
   `whenAvailable`, `required`), los resume tokens dejan de exponerse
   como enteros decimales simples y `drop_database()` insiste hasta
@@ -143,6 +147,11 @@ usa Semantic Versioning.
   transitorio o con resultado ambiguo, y exponen estado causal basico
   (`cluster_time` / `operation_time`) que se actualiza en operaciones
   locales y respuestas wire.
+- El driver local arranca ya seeds únicos no directos como topología
+  provisional `UNKNOWN` en lugar de fijarlos a `single`, usa selección
+  provisional mientras no haya handshake y `refresh_topology()` descubre
+  miembros adicionales de replica set desde `hello`, marcando además
+  incompatibilidades por familias mezcladas o `setName` conflictivos.
 
 ## [2.2.0] - 2026-03-31
 

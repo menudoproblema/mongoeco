@@ -86,6 +86,12 @@ Unicode collation backend:
 * local change streams retain a bounded in-memory history; the retention size
   can be tuned with `change_stream_history_size` on async/sync clients and on
   direct async database/collection constructors
+* local change streams can also persist that retained history to a journal file
+  with `change_stream_journal_path`, allowing `resume_after` / `start_after`
+  to survive client recreation inside the same local environment
+* the local driver now starts non-direct single-seed topologies as
+  provisional `UNKNOWN` and relies on `hello` discovery to converge towards
+  `standalone`, `replicaSet` or `sharded` topology shapes
 
 ## Quick Start
 

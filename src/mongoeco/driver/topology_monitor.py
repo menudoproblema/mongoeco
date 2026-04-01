@@ -54,30 +54,55 @@ async def refresh_topology(
     complete_execution,
     transport,
 ) -> TopologyDescription:
-    refreshed_servers: list[ServerDescription] = []
-    for server in current_topology.servers:
+    seed_set_name = current_topology.set_name
+    current_by_address = {server.address: server for server in current_topology.servers}
+    pending_addresses = [server.address for server in current_topology.servers]
+    ordered_addresses = list(pending_addresses)
+    seen_addresses = set(pending_addresses)
+    refreshed_by_address: dict[str, ServerDescription] = {}
+
+    while pending_addresses:
+        address = pending_addresses.pop(0)
+        server = current_by_address.get(address) or refreshed_by_address.get(address) or ServerDescription(address=address)
         plan = build_probe_plan(server)
         execution = await prepare_execution(plan, attempt_number=1)
         started_at = time.perf_counter()
         try:
             response = await transport.send(execution)
-            refreshed_servers.append(
-                _server_description_from_hello(
-                    server.address,
-                    response,
-                    round_trip_time_ms=(time.perf_counter() - started_at) * 1000,
-                )
+            description = _server_description_from_hello(
+                address,
+                response,
+                round_trip_time_ms=(time.perf_counter() - started_at) * 1000,
             )
-        except Exception as exc:  # noqa: BLE001
-            refreshed_servers.append(
-                ServerDescription(
-                    address=server.address,
+            if (
+                seed_set_name is not None
+                and description.set_name is not None
+                and description.set_name != seed_set_name
+            ):
+                description = ServerDescription(
+                    address=address,
                     server_type=ServerType.UNKNOWN,
-                    error=f"{type(exc).__name__}: {exc}",
+                    set_name=description.set_name,
+                    round_trip_time_ms=description.round_trip_time_ms,
+                    last_update_time_monotonic=description.last_update_time_monotonic,
+                    error=f"replica set name mismatch: expected {seed_set_name}, got {description.set_name}",
                 )
+            refreshed_by_address[address] = description
+            for discovered_address in _discovered_addresses(description):
+                if discovered_address not in seen_addresses:
+                    seen_addresses.add(discovered_address)
+                    ordered_addresses.append(discovered_address)
+                    pending_addresses.append(discovered_address)
+        except Exception as exc:  # noqa: BLE001
+            refreshed_by_address[address] = ServerDescription(
+                address=address,
+                server_type=ServerType.UNKNOWN,
+                set_name=seed_set_name,
+                error=f"{type(exc).__name__}: {exc}",
             )
         finally:
             await complete_execution(execution)
+    refreshed_servers = tuple(refreshed_by_address[address] for address in ordered_addresses)
     topology_type = _derive_topology_type(tuple(refreshed_servers), fallback=current_topology.topology_type)
     set_name = _derive_set_name(tuple(refreshed_servers), topology_type=topology_type)
     logical_session_timeout = min(
@@ -139,6 +164,11 @@ def _server_description_from_hello(
         set_version=int(response["setVersion"]) if isinstance(response.get("setVersion"), int) else None,
         election_id=response.get("electionId"),
         last_update_time_monotonic=time.monotonic(),
+        hosts=_string_tuple(response.get("hosts")),
+        passives=_string_tuple(response.get("passives")),
+        arbiters=_string_tuple(response.get("arbiters")),
+        primary=response.get("primary") if isinstance(response.get("primary"), str) else None,
+        me=response.get("me") if isinstance(response.get("me"), str) else None,
     )
 
 
@@ -206,3 +236,17 @@ def _topology_is_compatible(
         if len(set_names) > 1:
             return False
     return True
+
+
+def _string_tuple(value: object) -> tuple[str, ...]:
+    if not isinstance(value, list):
+        return ()
+    return tuple(item for item in value if isinstance(item, str))
+
+
+def _discovered_addresses(server: ServerDescription) -> tuple[str, ...]:
+    addresses: list[str] = []
+    for candidate in (*server.hosts, *server.passives, *server.arbiters):
+        if candidate not in addresses:
+            addresses.append(candidate)
+    return tuple(addresses)

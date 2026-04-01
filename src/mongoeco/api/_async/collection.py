@@ -172,6 +172,7 @@ class AsyncCollection:
         planning_mode: PlanningMode = PlanningMode.STRICT,
         change_hub: ChangeStreamHub | None = None,
         change_stream_history_size: int | None = 10_000,
+        change_stream_journal_path: str | None = None,
     ):
         self._engine = engine
         self._db_name = db_name
@@ -194,8 +195,12 @@ class AsyncCollection:
         self._codec_options = normalize_codec_options(codec_options)
         self._planning_mode = planning_mode
         self._change_stream_history_size = change_stream_history_size
+        self._change_stream_journal_path = change_stream_journal_path
         self._change_hub = (
-            ChangeStreamHub(max_retained_events=change_stream_history_size)
+            ChangeStreamHub(
+                max_retained_events=change_stream_history_size,
+                journal_path=change_stream_journal_path,
+            )
             if change_hub is None
             else change_hub
         )
@@ -224,6 +229,7 @@ class AsyncCollection:
             planning_mode=self._planning_mode if planning_mode is None else planning_mode,
             change_hub=self._change_hub,
             change_stream_history_size=self._change_stream_history_size,
+            change_stream_journal_path=self._change_stream_journal_path,
         )
 
     def __getattr__(self, name: str) -> "AsyncCollection":
@@ -2907,6 +2913,8 @@ class AsyncCollection:
             read_preference=self._read_preference,
             codec_options=self._codec_options,
             change_hub=self._change_hub,
+            change_stream_history_size=self._change_stream_history_size,
+            change_stream_journal_path=self._change_stream_journal_path,
         )
 
     @property
@@ -2940,6 +2948,10 @@ class AsyncCollection:
     @property
     def codec_options(self) -> CodecOptions:
         return self._codec_options
+
+    @property
+    def change_stream_journal_path(self) -> str | None:
+        return self._change_stream_journal_path
 
 
 def _resolve_distinct_candidates(

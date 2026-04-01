@@ -277,6 +277,12 @@ Los change streams locales mantienen además un historial en memoria acotado.
 El tamaño de esa retención es configurable desde cliente y determina hasta qué
 token o `startAtOperationTime` se puede reanudar sin error.
 
+Ese historial retenido puede persistirse opcionalmente a un journal local
+mediante `change_stream_journal_path`. Cuando se configura, los cursores
+pueden reanudar desde `resume_after` o `start_after` incluso tras recrear el
+cliente o la colección dentro del mismo entorno local, siempre dentro de la
+ventana retenida.
+
 La API runtime expone esta información en
 `mongoeco.core.collation.collation_backend_info()`, que devuelve:
 
@@ -285,7 +291,28 @@ La API runtime expone esta información en
 * `unicode_available`
 * `advanced_options_available`
 
-## 10. Verificación contractual contra PyMongo real
+## 10. Topología local y discovery
+
+La capa driver no implementa SDAM completo, pero ya no trata un seed único
+normal como topología `single` definitiva salvo que el usuario pida
+`directConnection=true`.
+
+Contrato actual:
+
+* `directConnection=true`
+  * arranca como `single`
+* `replicaSet=...`
+  * arranca como `replicaSet` provisional
+* seed único sin `directConnection`
+  * arranca como `unknown`
+  * la selección usa el seed como candidato provisional
+  * `refresh_topology()` usa `hello` para converger a `standalone`,
+    `replicaSet` o `sharded`
+* en `replicaSet`, `refresh_topology()` descubre ya miembros adicionales desde
+  `hosts`, `passives` y `arbiters`, y marca la topología como incompatible si
+  aparecen familias mezcladas o `setName` conflictivos
+
+## 11. Verificación contractual contra PyMongo real
 
 La ampliación de superficie pública no debe decidirse por memoria ni por lectura
 aislada de firmas.
@@ -321,7 +348,7 @@ Matriz ya verificada:
   * `hint`, `comment` y `let` en `update_*`, `replace_one`, `delete_*`
   * `comment` y `let` en `bulk_write`
 
-## 9. Superficie aceptada frente a semántica efectiva
+## 12. Superficie aceptada frente a semántica efectiva
 
 No toda opción aceptada por la API pública tiene ya un efecto real en los
 engines locales.

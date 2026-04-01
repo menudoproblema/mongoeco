@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import os
 import threading
 import time
 from dataclasses import dataclass
@@ -30,7 +31,12 @@ class ChangeStreamScope:
 
 
 class ChangeStreamHub:
-    def __init__(self, *, max_retained_events: int | None = 10_000) -> None:
+    def __init__(
+        self,
+        *,
+        max_retained_events: int | None = 10_000,
+        journal_path: str | None = None,
+    ) -> None:
         if (
             max_retained_events is not None
             and (
@@ -40,11 +46,15 @@ class ChangeStreamHub:
             )
         ):
             raise TypeError("max_retained_events must be a positive integer or None")
+        if journal_path is not None and (not isinstance(journal_path, str) or not journal_path):
+            raise TypeError("journal_path must be a non-empty string or None")
         self._condition = threading.Condition()
         self._events: list[ChangeEventSnapshot] = []
         self._base_offset = 0
         self._next_token = 1
         self._max_retained_events = max_retained_events
+        self._journal_path = journal_path
+        self._load_journal()
 
     def _end_offset_locked(self) -> int:
         return self._base_offset + len(self._events)
@@ -62,6 +72,64 @@ class ChangeStreamHub:
             return
         del self._events[:excess]
         self._base_offset += excess
+
+    def _journal_document_locked(self) -> dict[str, object]:
+        return {
+            "version": 1,
+            "base_offset": self._base_offset,
+            "next_token": self._next_token,
+            "events": [_snapshot_to_document(event) for event in self._events],
+        }
+
+    def _persist_locked(self) -> None:
+        if self._journal_path is None:
+            return
+        journal_dir = os.path.dirname(self._journal_path)
+        if journal_dir:
+            os.makedirs(journal_dir, exist_ok=True)
+        payload = json.dumps(
+            self._journal_document_locked(),
+            separators=(",", ":"),
+            ensure_ascii=True,
+            sort_keys=True,
+        )
+        temp_path = f"{self._journal_path}.tmp"
+        with open(temp_path, "w", encoding="utf-8") as handle:
+            handle.write(payload)
+        os.replace(temp_path, self._journal_path)
+
+    def _load_journal(self) -> None:
+        if self._journal_path is None or not os.path.exists(self._journal_path):
+            return
+        try:
+            with open(self._journal_path, "r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+        except Exception as exc:  # noqa: BLE001
+            raise OperationFailure("change stream journal could not be loaded") from exc
+        if not isinstance(payload, dict) or payload.get("version") != 1:
+            raise OperationFailure("change stream journal could not be loaded")
+        base_offset = payload.get("base_offset")
+        next_token = payload.get("next_token")
+        raw_events = payload.get("events")
+        if (
+            not isinstance(base_offset, int)
+            or isinstance(base_offset, bool)
+            or base_offset < 0
+            or not isinstance(next_token, int)
+            or isinstance(next_token, bool)
+            or next_token < 1
+            or not isinstance(raw_events, list)
+        ):
+            raise OperationFailure("change stream journal could not be loaded")
+        events = [_snapshot_from_document(item) for item in raw_events]
+        self._events = events
+        self._base_offset = base_offset
+        self._next_token = next_token
+        self._prune_locked()
+
+    @property
+    def journal_path(self) -> str | None:
+        return self._journal_path
 
     def current_offset(self) -> int:
         with self._condition:
@@ -111,6 +179,7 @@ class ChangeStreamHub:
             )
             self._next_token += 1
             self._prune_locked()
+            self._persist_locked()
             self._condition.notify_all()
 
     def wait_for_event(
@@ -344,3 +413,52 @@ def _apply_full_document_mode(document: ChangeEventDocument, mode: str) -> Chang
     if full_document is None:
         raise OperationFailure("change stream fullDocument is required but was not available")
     return normalized
+
+
+def _snapshot_to_document(snapshot: ChangeEventSnapshot) -> dict[str, object]:
+    document: dict[str, object] = {
+        "token": snapshot.token,
+        "operation_type": snapshot.operation_type,
+        "db_name": snapshot.db_name,
+        "coll_name": snapshot.coll_name,
+        "document_key": snapshot.document_key,
+    }
+    if snapshot.full_document is not None:
+        document["full_document"] = snapshot.full_document
+    if snapshot.update_description is not None:
+        document["update_description"] = snapshot.update_description
+    return document
+
+
+def _snapshot_from_document(document: object) -> ChangeEventSnapshot:
+    if not isinstance(document, dict):
+        raise OperationFailure("change stream journal could not be loaded")
+    token = document.get("token")
+    operation_type = document.get("operation_type")
+    db_name = document.get("db_name")
+    coll_name = document.get("coll_name")
+    document_key = document.get("document_key")
+    update_description = document.get("update_description")
+    if (
+        not isinstance(token, int)
+        or isinstance(token, bool)
+        or token < 1
+        or not isinstance(operation_type, str)
+        or not isinstance(db_name, str)
+        or not isinstance(coll_name, str)
+        or not isinstance(document_key, dict)
+        or (update_description is not None and not isinstance(update_description, dict))
+    ):
+        raise OperationFailure("change stream journal could not be loaded")
+    full_document = document.get("full_document")
+    if full_document is not None and not isinstance(full_document, dict):
+        raise OperationFailure("change stream journal could not be loaded")
+    return ChangeEventSnapshot(
+        token=token,
+        operation_type=operation_type,
+        db_name=db_name,
+        coll_name=coll_name,
+        document_key=document_key,
+        full_document=full_document,
+        update_description=update_description,
+    )
