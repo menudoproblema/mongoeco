@@ -43,8 +43,16 @@ The base package now includes `pyuca` as a runtime dependency so Unicode
 collations keep a deterministic UCA-backed behavior even when `PyICU` is not
 installed.
 
+Advanced ICU collation backend (optional):
+
+```bash
+python -m pip install PyICU
+```
+
 Collation backend policy:
 
+* `PyICU` stays optional by contract: it is never required for the supported
+  baseline subset
 * `PyICU` if available: preferred backend, including advanced collation knobs
   such as `backwards`, `alternate`, `maxVariable` and `normalization`
 * `pyuca` fallback: Unicode collation for the supported basic subset
@@ -89,8 +97,12 @@ Unicode collation backend:
 * local change streams can also persist that retained history to a journal file
   with `change_stream_journal_path`, allowing `resume_after` / `start_after`
   to survive client recreation inside the same local environment
+* the journal can also be hardened with `change_stream_journal_fsync=True`
+  and bounded by size with `change_stream_journal_max_bytes`
 * when journaling is enabled, `mongoeco` keeps an incremental event log and
-  compacts it back into a retained snapshot as the local history rolls forward
+  compacts it back into a retained snapshot as the local history rolls forward;
+  each log entry carries an integrity checksum and truncated tail writes are
+  ignored on reload
 * the local driver now starts non-direct single-seed topologies as
   provisional `UNKNOWN` and relies on `hello` discovery to converge towards
   `standalone`, `replicaSet` or `sharded` topology shapes

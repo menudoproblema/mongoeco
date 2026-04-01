@@ -81,6 +81,32 @@ class DirectWatchHubTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(client.change_stream_journal_path, journal_path)
             self.assertEqual(client.with_options().change_stream_journal_path, journal_path)
 
+    def test_async_client_exposes_journal_durability_settings(self):
+        client = AsyncMongoClient(
+            MemoryEngine(),
+            change_stream_journal_fsync=True,
+            change_stream_journal_max_bytes=2048,
+        )
+        self.assertTrue(client.change_stream_journal_fsync)
+        self.assertEqual(client.change_stream_journal_max_bytes, 2048)
+        clone = client.with_options()
+        self.assertTrue(clone.change_stream_journal_fsync)
+        self.assertEqual(clone.change_stream_journal_max_bytes, 2048)
+
+    def test_direct_collection_exposes_journal_durability_settings(self):
+        collection = AsyncCollection(
+            MemoryEngine(),
+            "db",
+            "coll",
+            change_stream_journal_fsync=True,
+            change_stream_journal_max_bytes=4096,
+        )
+        self.assertTrue(collection.change_stream_journal_fsync)
+        self.assertEqual(collection.change_stream_journal_max_bytes, 4096)
+        clone = collection.with_options()
+        self.assertTrue(clone.change_stream_journal_fsync)
+        self.assertEqual(clone.change_stream_journal_max_bytes, 4096)
+
     async def test_direct_collection_can_resume_from_persisted_change_stream_journal(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             journal_path = os.path.join(temp_dir, "changes.json")

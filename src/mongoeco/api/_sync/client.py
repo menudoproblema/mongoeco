@@ -427,6 +427,8 @@ class MongoClient:
         transaction_options: TransactionOptions | None = None,
         change_stream_history_size: int | None = 10_000,
         change_stream_journal_path: str | None = None,
+        change_stream_journal_fsync: bool = False,
+        change_stream_journal_max_bytes: int | None = 1_048_576,
     ):
         self._async_client = AsyncMongoClient(
             engine,
@@ -440,6 +442,8 @@ class MongoClient:
             transaction_options=transaction_options,
             change_stream_history_size=change_stream_history_size,
             change_stream_journal_path=change_stream_journal_path,
+            change_stream_journal_fsync=change_stream_journal_fsync,
+            change_stream_journal_max_bytes=change_stream_journal_max_bytes,
         )
         self._runner = _SyncRunner()
         self._connected = False
@@ -528,6 +532,8 @@ class MongoClient:
             ),
             change_stream_history_size=self.change_stream_history_size,
             change_stream_journal_path=self.change_stream_journal_path,
+            change_stream_journal_fsync=self.change_stream_journal_fsync,
+            change_stream_journal_max_bytes=self.change_stream_journal_max_bytes,
         )
 
     def get_database(
@@ -659,6 +665,14 @@ class MongoClient:
     @property
     def change_stream_journal_path(self) -> str | None:
         return self._async_client.change_stream_journal_path
+
+    @property
+    def change_stream_journal_fsync(self) -> bool:
+        return self._async_client.change_stream_journal_fsync
+
+    @property
+    def change_stream_journal_max_bytes(self) -> int | None:
+        return self._async_client.change_stream_journal_max_bytes
 
     @property
     def client_uri(self):

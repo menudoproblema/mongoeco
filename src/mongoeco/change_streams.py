@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import hashlib
 import json
 import os
 import threading
@@ -36,6 +37,8 @@ class ChangeStreamHub:
         *,
         max_retained_events: int | None = 10_000,
         journal_path: str | None = None,
+        journal_fsync: bool = False,
+        journal_max_log_bytes: int | None = 1_048_576,
     ) -> None:
         if (
             max_retained_events is not None
@@ -48,16 +51,30 @@ class ChangeStreamHub:
             raise TypeError("max_retained_events must be a positive integer or None")
         if journal_path is not None and (not isinstance(journal_path, str) or not journal_path):
             raise TypeError("journal_path must be a non-empty string or None")
+        if not isinstance(journal_fsync, bool):
+            raise TypeError("journal_fsync must be a boolean")
+        if (
+            journal_max_log_bytes is not None
+            and (
+                not isinstance(journal_max_log_bytes, int)
+                or isinstance(journal_max_log_bytes, bool)
+                or journal_max_log_bytes <= 0
+            )
+        ):
+            raise TypeError("journal_max_log_bytes must be a positive integer or None")
         self._condition = threading.Condition()
         self._events: list[ChangeEventSnapshot] = []
         self._base_offset = 0
         self._next_token = 1
         self._max_retained_events = max_retained_events
         self._journal_path = journal_path
+        self._journal_fsync = journal_fsync
+        self._journal_max_log_bytes = journal_max_log_bytes
         self._journal_event_log_path = (
             None if journal_path is None else f"{journal_path}.events"
         )
         self._journal_log_entries_since_compaction = 0
+        self._journal_log_bytes_since_compaction = 0
         self._load_journal()
 
     def _end_offset_locked(self) -> int:
@@ -101,7 +118,28 @@ class ChangeStreamHub:
         temp_path = f"{self._journal_path}.tmp"
         with open(temp_path, "w", encoding="utf-8") as handle:
             handle.write(payload)
+            if self._journal_fsync:
+                handle.flush()
+                os.fsync(handle.fileno())
         os.replace(temp_path, self._journal_path)
+        if self._journal_fsync:
+            _fsync_parent_directory(self._journal_path)
+
+    def _journal_event_entry_locked(self, event: ChangeEventSnapshot) -> str:
+        payload = json.dumps(
+            _snapshot_to_document(event),
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        return json.dumps(
+            {
+                "version": 1,
+                "event": json.loads(payload),
+                "checksum": hashlib.sha256(payload.encode("utf-8")).hexdigest(),
+            },
+            separators=(",", ":"),
+            sort_keys=True,
+        )
 
     def _append_journal_event_locked(self, event: ChangeEventSnapshot) -> None:
         if self._journal_event_log_path is None:
@@ -109,10 +147,17 @@ class ChangeStreamHub:
         journal_dir = os.path.dirname(self._journal_event_log_path)
         if journal_dir:
             os.makedirs(journal_dir, exist_ok=True)
+        payload = self._journal_event_entry_locked(event)
         with open(self._journal_event_log_path, "a", encoding="utf-8") as handle:
-            handle.write(json.dumps(_snapshot_to_document(event), separators=(",", ":"), sort_keys=True))
+            handle.write(payload)
             handle.write("\n")
+            if self._journal_fsync:
+                handle.flush()
+                os.fsync(handle.fileno())
+        if self._journal_fsync:
+            _fsync_parent_directory(self._journal_event_log_path)
         self._journal_log_entries_since_compaction += 1
+        self._journal_log_bytes_since_compaction += len(payload.encode("utf-8")) + 1
 
     def _compaction_threshold(self) -> int:
         if self._max_retained_events is None:
@@ -128,7 +173,11 @@ class ChangeStreamHub:
                 os.remove(self._journal_event_log_path)
             except FileNotFoundError:
                 pass
+            else:
+                if self._journal_fsync:
+                    _fsync_parent_directory(self._journal_event_log_path)
         self._journal_log_entries_since_compaction = 0
+        self._journal_log_bytes_since_compaction = 0
 
     def _load_journal(self) -> None:
         if self._journal_path is not None and os.path.exists(self._journal_path):
@@ -163,13 +212,15 @@ class ChangeStreamHub:
                 lines = handle.readlines()
         except Exception as exc:  # noqa: BLE001
             raise OperationFailure("change stream journal could not be loaded") from exc
-        for raw_line in lines:
+        for index, raw_line in enumerate(lines):
             line = raw_line.strip()
             if not line:
                 continue
             try:
-                event = _snapshot_from_document(json.loads(line))
+                event = _snapshot_from_log_entry(json.loads(line))
             except Exception as exc:  # noqa: BLE001
+                if index == len(lines) - 1 and not raw_line.endswith("\n"):
+                    break
                 raise OperationFailure("change stream journal could not be loaded") from exc
             if event.token < self._next_token:
                 continue
@@ -177,10 +228,19 @@ class ChangeStreamHub:
             self._next_token = event.token + 1
         self._prune_locked()
         self._journal_log_entries_since_compaction = sum(1 for raw_line in lines if raw_line.strip())
+        self._journal_log_bytes_since_compaction = os.path.getsize(self._journal_event_log_path)
 
     @property
     def journal_path(self) -> str | None:
         return self._journal_path
+
+    @property
+    def journal_fsync(self) -> bool:
+        return self._journal_fsync
+
+    @property
+    def journal_max_log_bytes(self) -> int | None:
+        return self._journal_max_log_bytes
 
     def compact_journal(self) -> None:
         with self._condition:
@@ -234,7 +294,14 @@ class ChangeStreamHub:
             self._next_token += 1
             pruned = self._prune_locked()
             self._append_journal_event_locked(event)
-            if pruned or self._journal_log_entries_since_compaction >= self._compaction_threshold():
+            if (
+                pruned
+                or self._journal_log_entries_since_compaction >= self._compaction_threshold()
+                or (
+                    self._journal_max_log_bytes is not None
+                    and self._journal_log_bytes_since_compaction >= self._journal_max_log_bytes
+                )
+            ):
                 self._compact_locked()
             self._condition.notify_all()
 
@@ -518,3 +585,31 @@ def _snapshot_from_document(document: object) -> ChangeEventSnapshot:
         full_document=full_document,
         update_description=update_description,
     )
+
+
+def _snapshot_from_log_entry(document: object) -> ChangeEventSnapshot:
+    if not isinstance(document, dict):
+        raise OperationFailure("change stream journal could not be loaded")
+    version = document.get("version")
+    event = document.get("event")
+    checksum = document.get("checksum")
+    if version != 1 or not isinstance(checksum, str):
+        raise OperationFailure("change stream journal could not be loaded")
+    payload = json.dumps(event, separators=(",", ":"), sort_keys=True)
+    if hashlib.sha256(payload.encode("utf-8")).hexdigest() != checksum:
+        raise OperationFailure("change stream journal could not be loaded")
+    return _snapshot_from_document(event)
+
+
+def _fsync_parent_directory(path: str) -> None:
+    directory = os.path.dirname(path) or "."
+    try:
+        descriptor = os.open(directory, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(descriptor)
+    except OSError:
+        return
+    finally:
+        os.close(descriptor)

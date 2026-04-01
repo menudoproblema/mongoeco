@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import tempfile
 import threading
@@ -258,8 +259,90 @@ class ChangeStreamHubTests(unittest.TestCase):
             self.assertTrue(os.path.exists(log_path))
             hub.compact_journal()
             self.assertFalse(os.path.exists(log_path))
+
+    def test_hub_ignores_truncated_tail_entry_in_incremental_log(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            log_path = f"{journal_path}.events"
+            hub = ChangeStreamHub(max_retained_events=8, journal_path=journal_path)
+            hub.publish(
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 1},
+            )
+
+            with open(log_path, "a", encoding="utf-8") as handle:
+                handle.write('{"version":1,"event":')
+
             reloaded = ChangeStreamHub(max_retained_events=8, journal_path=journal_path)
-            self.assertEqual(reloaded.current_offset(), 2)
+            self.assertEqual(reloaded.current_offset(), 1)
+            self.assertEqual(reloaded.offset_after_token(1), 1)
+
+    def test_hub_rejects_corrupted_incremental_log_checksum(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            log_path = f"{journal_path}.events"
+            hub = ChangeStreamHub(max_retained_events=8, journal_path=journal_path)
+            hub.publish(
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 1},
+            )
+
+            with open(log_path, "r+", encoding="utf-8") as handle:
+                line = handle.readline().strip()
+                entry = json.loads(line)
+                entry["checksum"] = "bad"
+                handle.seek(0)
+                handle.write(json.dumps(entry, separators=(",", ":"), sort_keys=True))
+                handle.write("\n")
+                handle.truncate()
+
+            with self.assertRaisesRegex(OperationFailure, "journal could not be loaded"):
+                ChangeStreamHub(max_retained_events=8, journal_path=journal_path)
+
+    def test_hub_compacts_journal_when_incremental_log_exceeds_byte_limit(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            log_path = f"{journal_path}.events"
+            hub = ChangeStreamHub(
+                max_retained_events=64,
+                journal_path=journal_path,
+                journal_max_log_bytes=1,
+            )
+            hub.publish(
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 1},
+            )
+
+            self.assertFalse(os.path.exists(log_path))
+            reloaded = ChangeStreamHub(max_retained_events=64, journal_path=journal_path)
+            self.assertEqual(reloaded.current_offset(), 1)
+
+    def test_hub_fsyncs_snapshot_and_incremental_log_when_enabled(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            with patch("mongoeco.change_streams.os.fsync") as fsync_mock:
+                hub = ChangeStreamHub(
+                    max_retained_events=8,
+                    journal_path=journal_path,
+                    journal_fsync=True,
+                )
+                hub.publish(
+                    operation_type="insert",
+                    db_name="alpha",
+                    coll_name="users",
+                    document_key={"_id": 1},
+                )
+                hub.compact_journal()
+
+            self.assertGreaterEqual(fsync_mock.call_count, 3)
+            reloaded = ChangeStreamHub(max_retained_events=8, journal_path=journal_path)
+            self.assertEqual(reloaded.current_offset(), 1)
 
 
 class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):

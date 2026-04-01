@@ -254,6 +254,7 @@ Hoy el contrato soportado y testeado es:
 
 Para collation Unicode:
 
+* `PyICU` se mantiene como dependencia opcional por contrato
 * `mongoeco` prefiere `PyICU` cuando está disponible
 * si `PyICU` no está instalado, usa `pyuca` como backend runtime de base
 * ambas rutas quedan cubiertas por tests, pero pueden existir diferencias
@@ -285,6 +286,12 @@ ventana retenida.
 
 La persistencia local usa además un journal incremental con compactación sobre
 snapshot retenido, para no reescribir el historial completo en cada evento.
+Cada entrada incremental incluye checksum de integridad, el reload tolera una
+cola truncada si la última escritura quedó a medias y el usuario puede endurecer
+la persistencia con:
+
+* `change_stream_journal_fsync=True`
+* `change_stream_journal_max_bytes=<limite>`
 
 La API runtime expone esta información en
 `mongoeco.core.collation.collation_backend_info()`, que devuelve:

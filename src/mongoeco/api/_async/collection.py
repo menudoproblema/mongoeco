@@ -173,6 +173,8 @@ class AsyncCollection:
         change_hub: ChangeStreamHub | None = None,
         change_stream_history_size: int | None = 10_000,
         change_stream_journal_path: str | None = None,
+        change_stream_journal_fsync: bool = False,
+        change_stream_journal_max_bytes: int | None = 1_048_576,
     ):
         self._engine = engine
         self._db_name = db_name
@@ -196,10 +198,14 @@ class AsyncCollection:
         self._planning_mode = planning_mode
         self._change_stream_history_size = change_stream_history_size
         self._change_stream_journal_path = change_stream_journal_path
+        self._change_stream_journal_fsync = change_stream_journal_fsync
+        self._change_stream_journal_max_bytes = change_stream_journal_max_bytes
         self._change_hub = (
             ChangeStreamHub(
                 max_retained_events=change_stream_history_size,
                 journal_path=change_stream_journal_path,
+                journal_fsync=change_stream_journal_fsync,
+                journal_max_log_bytes=change_stream_journal_max_bytes,
             )
             if change_hub is None
             else change_hub
@@ -230,6 +236,8 @@ class AsyncCollection:
             change_hub=self._change_hub,
             change_stream_history_size=self._change_stream_history_size,
             change_stream_journal_path=self._change_stream_journal_path,
+            change_stream_journal_fsync=self._change_stream_journal_fsync,
+            change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
         )
 
     def __getattr__(self, name: str) -> "AsyncCollection":
@@ -2952,6 +2960,14 @@ class AsyncCollection:
     @property
     def change_stream_journal_path(self) -> str | None:
         return self._change_stream_journal_path
+
+    @property
+    def change_stream_journal_fsync(self) -> bool:
+        return self._change_stream_journal_fsync
+
+    @property
+    def change_stream_journal_max_bytes(self) -> int | None:
+        return self._change_stream_journal_max_bytes
 
 
 def _resolve_distinct_candidates(

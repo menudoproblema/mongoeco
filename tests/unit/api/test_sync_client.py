@@ -204,6 +204,21 @@ class SyncClientUnitTests(unittest.TestCase):
         finally:
             client.close()
 
+    def test_client_preserves_journal_durability_settings(self):
+        client = MongoClient(
+            MemoryEngine(),
+            change_stream_journal_fsync=True,
+            change_stream_journal_max_bytes=8192,
+        )
+        try:
+            self.assertTrue(client.change_stream_journal_fsync)
+            self.assertEqual(client.change_stream_journal_max_bytes, 8192)
+            clone = client.with_options()
+            self.assertTrue(clone.change_stream_journal_fsync)
+            self.assertEqual(clone.change_stream_journal_max_bytes, 8192)
+        finally:
+            client.close()
+
     def test_client_drop_database_prefers_engine_fast_path(self):
         class EngineStub:
             def __init__(self):

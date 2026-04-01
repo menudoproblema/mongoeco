@@ -142,6 +142,10 @@ usa Semantic Versioning.
   ahora un log incremental y lo compacta periódicamente contra un
   snapshot retenido, evitando reescrituras completas del historial en
   cada evento publicado.
+- La persistencia local de change streams añade ahora checksum por
+  entrada incremental, ignora una cola truncada si el último append
+  quedó a medias y expone knobs públicos de durabilidad y rotación
+  (`change_stream_journal_fsync`, `change_stream_journal_max_bytes`).
 - `watch()` acepta ya `fullDocument` (`default`, `updateLookup`,
   `whenAvailable`, `required`), los resume tokens dejan de exponerse
   como enteros decimales simples y `drop_database()` insiste hasta
