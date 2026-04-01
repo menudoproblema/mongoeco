@@ -5,6 +5,10 @@ from copy import deepcopy
 import time
 
 from mongoeco.api._async._collection_bulk import execute_bulk_write
+from mongoeco.api._async._collection_bulk import (
+    BulkWritePreparationContext as _BulkWriteContext,
+    PreparedBulkWriteRequest as _PreparedBulkWriteRequest,
+)
 from mongoeco.api._async._collection_watch import (
     CollectionChangeStreamConfig,
     create_change_stream_hub,

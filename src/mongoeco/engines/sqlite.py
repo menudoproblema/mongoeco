@@ -67,6 +67,12 @@ from mongoeco.engines._shared_runtime import (
     merge_profile_database_names,
     profile_namespace_options,
 )
+from mongoeco.engines._sqlite_catalog import (
+    list_collection_names as _sqlite_list_collection_names,
+    list_database_names as _sqlite_list_database_names,
+    load_collection_options as _sqlite_load_collection_options,
+    load_search_index_rows as _sqlite_load_search_index_rows,
+)
 from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
@@ -2291,40 +2297,12 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         name: str | None = None,
     ) -> list[tuple[SearchIndexDefinition, str | None, float | None]]:
-        conn = self._require_connection()
-        sql = """
-            SELECT name, index_type, definition_json, physical_name, ready_at_epoch
-            FROM search_indexes
-            WHERE db_name = ? AND coll_name = ?
-        """
-        params: list[object] = [db_name, coll_name]
-        if name is not None:
-            sql += " AND name = ?"
-            params.append(name)
-        sql += " ORDER BY name"
-        cursor = conn.execute(sql, tuple(params))
-        if cursor is None:
-            return []
-        try:
-            rows = cursor.fetchall()
-            if not isinstance(rows, list):
-                return []
-            return [
-                (
-                    SearchIndexDefinition(
-                        json_loads(definition_json),
-                        name=row_name,
-                        index_type=index_type,
-                    ),
-                    physical_name,
-                    ready_at_epoch,
-                )
-                for row_name, index_type, definition_json, physical_name, ready_at_epoch in rows
-            ]
-        finally:
-            close = getattr(cursor, "close", None)
-            if callable(close):
-                close()
+        return _sqlite_load_search_index_rows(
+            self._require_connection(),
+            db_name,
+            coll_name,
+            name=name,
+        )
 
     def _load_search_indexes(self, db_name: str, coll_name: str) -> list[SearchIndexDefinition]:
         return [definition for definition, _physical_name, _ready_at_epoch in self._load_search_index_rows(db_name, coll_name)]
@@ -3106,16 +3084,9 @@ class SQLiteEngine(AsyncStorageEngine):
             return profile_options
         with self._lock:
             conn = self._require_connection(context)
-            row = conn.execute(
-                """
-                SELECT options_json
-                FROM collections
-                WHERE db_name = ? AND coll_name = ?
-                """,
-                (db_name, coll_name),
-            ).fetchone()
-            if row is not None:
-                return json_loads(row[0] or "{}")
+            options = _sqlite_load_collection_options(conn, db_name, coll_name)
+            if options is not None:
+                return options
             if self._collection_exists_sync(conn, db_name, coll_name):
                 return {}
             raise CollectionInvalid(f"collection '{coll_name}' does not exist")
@@ -3126,17 +3097,10 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
     ) -> dict[str, object]:
-        row = conn.execute(
-            """
-            SELECT options_json
-            FROM collections
-            WHERE db_name = ? AND coll_name = ?
-            """,
-            (db_name, coll_name),
-        ).fetchone()
-        if row is None:
+        options = _sqlite_load_collection_options(conn, db_name, coll_name)
+        if options is None:
             return {}
-        return json_loads(row[0] or "{}")
+        return options
 
     def _load_existing_document_for_storage_key(
         self,
@@ -4697,50 +4661,13 @@ class SQLiteEngine(AsyncStorageEngine):
     def _list_databases_sync(self, context: ClientSession | None = None) -> list[str]:
         with self._lock:
             conn = self._require_connection(context)
-            cursor = conn.execute(
-                """
-                SELECT db_name
-                FROM collections
-                UNION
-                SELECT db_name
-                FROM documents
-                UNION
-                SELECT db_name
-                FROM indexes
-                UNION
-                SELECT db_name
-                FROM search_indexes
-                ORDER BY db_name
-                """
-            )
-            names = [row[0] for row in cursor.fetchall()]
+            names = _sqlite_list_database_names(conn)
         return merge_profile_database_names(names, self._profiler)
 
     def _list_collections_sync(self, db_name: str, context: ClientSession | None = None) -> list[str]:
         with self._lock:
             conn = self._require_connection(context)
-            cursor = conn.execute(
-                """
-                SELECT coll_name
-                FROM collections
-                WHERE db_name = ?
-                UNION
-                SELECT coll_name
-                FROM documents
-                WHERE db_name = ?
-                UNION
-                SELECT coll_name
-                FROM indexes
-                WHERE db_name = ?
-                UNION
-                SELECT coll_name
-                FROM search_indexes
-                WHERE db_name = ?
-                ORDER BY coll_name
-                """,
-                (db_name, db_name, db_name, db_name),
-            )
-            names = [row[0] for row in cursor.fetchall()]
+            names = _sqlite_list_collection_names(conn, db_name)
         return merge_profile_collection_names(
             names,
             db_name=db_name,
