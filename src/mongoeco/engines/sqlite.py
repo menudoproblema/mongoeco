@@ -101,6 +101,23 @@ from mongoeco.engines._sqlite_modify_ops import (
     delete_matching_document as _sqlite_delete_matching_document,
     update_with_operation as _sqlite_update_with_operation,
 )
+from mongoeco.engines._sqlite_fast_paths import (
+    build_select_sql as _sqlite_build_select_sql,
+    build_scalar_sort_select_sql as _sqlite_build_scalar_sort_select_sql,
+    build_select_statement_with_custom_order as _sqlite_build_select_statement_with_custom_order,
+    comparison_fields as _sqlite_comparison_fields,
+    plan_fields as _sqlite_plan_fields,
+    select_first_document_for_plan as _sqlite_select_first_document_for_plan,
+    select_first_document_for_scalar_index as _sqlite_select_first_document_for_scalar_index,
+    select_first_document_for_scalar_range as _sqlite_select_first_document_for_scalar_range,
+)
+from mongoeco.engines._sqlite_plan_heuristics import (
+    plan_has_array_traversing_paths as _sqlite_plan_has_array_traversing_paths,
+    plan_requires_python_for_array_comparisons as _sqlite_plan_requires_python_for_array_comparisons,
+    plan_requires_python_for_dbref_paths as _sqlite_plan_requires_python_for_dbref_paths,
+    plan_requires_python_for_tagged_type as _sqlite_plan_requires_python_for_tagged_type,
+    sort_requires_python as _sqlite_sort_requires_python,
+)
 from mongoeco.engines._sqlite_write_ops import (
     delete_document as _sqlite_delete_document,
     put_document as _sqlite_put_document,
@@ -771,37 +788,27 @@ class SQLiteEngine(AsyncStorageEngine):
         hint: str | IndexKeySpec | None = None,
         dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> tuple[str, list[object]]:
-        scalar_sort_sql = self._build_scalar_sort_select_sql(
-            db_name,
-            coll_name,
-            plan,
+        return _sqlite_build_select_sql(
+            db_name=db_name,
+            coll_name=coll_name,
+            plan=plan,
             select_clause=select_clause,
             sort=sort,
             skip=skip,
             limit=limit,
             hint=hint,
+            build_scalar_sort_select_sql_fn=self._build_scalar_sort_select_sql,
+            resolve_hint_index=lambda current_db_name, current_coll_name, current_hint: self._resolve_hint_index(
+                current_db_name,
+                current_coll_name,
+                current_hint,
+                plan=plan,
+                dialect=dialect,
+            ),
+            translate_query_plan_with_multikey=self._translate_query_plan_with_multikey,
+            build_select_statement=self._sql_translator.build_select_statement,
+            quote_identifier=self._quote_identifier,
         )
-        if scalar_sort_sql is not None:
-            return scalar_sort_sql
-        hinted_index = self._resolve_hint_index(db_name, coll_name, hint, plan=plan, dialect=dialect)
-        where_fragment = self._translate_query_plan_with_multikey(db_name, coll_name, plan)
-        from_clause = "documents"
-        if hinted_index is not None and hinted_index.get("physical_name") is not None:
-            from_clause = (
-                "documents INDEXED BY "
-                f"{self._quote_identifier(str(hinted_index['physical_name']))}"
-            )
-        statement = self._sql_translator.build_select_statement(
-            select_clause=select_clause,
-            from_clause=from_clause,
-            namespace_sql="db_name = ? AND coll_name = ?",
-            namespace_params=(db_name, coll_name),
-            where_fragment=where_fragment,
-            sort=sort,
-            skip=skip,
-            limit=limit,
-        )
-        return statement.sql, list(statement.params)
 
     def _field_has_uniform_scalar_sort_type_in_collection(
         self,
@@ -912,56 +919,28 @@ class SQLiteEngine(AsyncStorageEngine):
         limit: int | None,
         hint: str | IndexKeySpec | None,
     ) -> tuple[str, list[object]] | None:
-        if hint is not None or not sort or len(sort) != 1:
-            return None
-
-        field, direction = sort[0]
-        if direction not in (1, -1):
-            return None
-        if self._field_traverses_array_in_collection(db_name, coll_name, field):
-            return None
-        if self._field_contains_tagged_bytes_in_collection(db_name, coll_name, field):
-            return None
-        if self._field_contains_tagged_undefined_in_collection(db_name, coll_name, field):
-            return None
-        if self._field_has_uniform_scalar_sort_type_in_collection(db_name, coll_name, field) is None:
-            return None
-
-        order = "ASC" if direction == 1 else "DESC"
-        where_fragment = self._translate_query_plan_with_multikey(db_name, coll_name, plan)
-
-        index = self._find_scalar_sort_index(db_name, coll_name, field)
-        if index is not None and index.get("scalar_physical_name"):
-            conn = self._require_connection()
-            collection_id = self._lookup_collection_id(conn, db_name, coll_name)
-            if collection_id is not None:
-                return self._build_select_statement_with_custom_order(
-                    select_clause=self._resolve_select_clause_for_scalar_sort(select_clause),
-                    from_clause=(
-                        f"scalar_index_entries INDEXED BY {self._quote_identifier(str(index['scalar_physical_name']))} "
-                        "JOIN documents ON documents.db_name = ? AND documents.coll_name = ? "
-                        "AND documents.storage_key = scalar_index_entries.storage_key"
-                    ),
-                    namespace_sql="scalar_index_entries.collection_id = ? AND scalar_index_entries.index_name = ?",
-                    namespace_params=(db_name, coll_name, collection_id, index["name"]),
-                    where_fragment=where_fragment,
-                    order_sql=(
-                        f" ORDER BY scalar_index_entries.element_key {order}, "
-                        "documents.storage_key ASC"
-                    ),
-                    skip=skip,
-                    limit=limit,
-                )
-
-        return self._build_select_statement_with_custom_order(
+        return _sqlite_build_scalar_sort_select_sql(
+            db_name=db_name,
+            coll_name=coll_name,
+            plan=plan,
             select_clause=select_clause,
-            from_clause="documents",
-            namespace_sql="db_name = ? AND coll_name = ?",
-            namespace_params=(db_name, coll_name),
-            where_fragment=where_fragment,
-            order_sql=f" ORDER BY {value_expression_sql(field)} {order}",
+            sort=sort,
             skip=skip,
             limit=limit,
+            hint=hint,
+            field_traverses_array_in_collection=self._field_traverses_array_in_collection,
+            field_contains_tagged_bytes_in_collection=self._field_contains_tagged_bytes_in_collection,
+            field_contains_tagged_undefined_in_collection=self._field_contains_tagged_undefined_in_collection,
+            field_has_uniform_scalar_sort_type_in_collection=self._field_has_uniform_scalar_sort_type_in_collection,
+            translate_query_plan_with_multikey=self._translate_query_plan_with_multikey,
+            find_scalar_sort_index=self._find_scalar_sort_index,
+            lookup_collection_id=lambda current_db_name, current_coll_name: self._lookup_collection_id(
+                self._require_connection(),
+                current_db_name,
+                current_coll_name,
+            ),
+            quote_identifier=self._quote_identifier,
+            value_expression_sql=value_expression_sql,
         )
 
     @staticmethod
@@ -1433,40 +1412,20 @@ class SQLiteEngine(AsyncStorageEngine):
         return translate_query_plan(plan)
 
     def _sort_requires_python(self, db_name: str, coll_name: str, plan: QueryNode, sort: SortSpec | None) -> bool:
-        if not sort:
-            return False
-
-        conn = self._require_connection()
-        if self._plan_has_array_traversing_paths(db_name, coll_name, plan):
-            return True
-        where_sql, params = translate_query_plan(plan)
-        for field, _direction in sort:
-            if self._field_traverses_array_in_collection(db_name, coll_name, field):
-                return True
-            if self._field_contains_tagged_bytes_in_collection(db_name, coll_name, field):
-                return True
-            if self._field_contains_tagged_undefined_in_collection(db_name, coll_name, field):
-                return True
-            path_literal = "'" + json_path_for_field(field).replace("'", "''") + "'"
-            row = conn.execute(
-                f"""
-                SELECT 1
-                FROM documents
-                WHERE db_name = ? AND coll_name = ? AND ({where_sql})
-                  AND (
-                    json_type(document, {path_literal}) = 'array'
-                    OR (
-                        json_type(document, {path_literal}) = 'object'
-                        AND {type_expression_sql(field)} = ''
-                    )
-                  )
-                LIMIT 1
-                """,
-                (db_name, coll_name, *params),
-            ).fetchone()
-            if row is not None:
-                return True
-        return False
+        return _sqlite_sort_requires_python(
+            db_name=db_name,
+            coll_name=coll_name,
+            plan=plan,
+            sort=sort,
+            plan_has_array_traversing_paths=self._plan_has_array_traversing_paths,
+            translate_query_plan=translate_query_plan,
+            field_traverses_array_in_collection=self._field_traverses_array_in_collection,
+            field_contains_tagged_bytes_in_collection=self._field_contains_tagged_bytes_in_collection,
+            field_contains_tagged_undefined_in_collection=self._field_contains_tagged_undefined_in_collection,
+            fetchone=lambda sql, params: self._require_connection().execute(sql, params).fetchone(),
+            type_expression_sql=type_expression_sql,
+            json_path_for_field=json_path_for_field,
+        )
 
     @staticmethod
     def _plan_fields(plan: QueryNode) -> set[str]:
@@ -1513,9 +1472,12 @@ class SQLiteEngine(AsyncStorageEngine):
         return result
 
     def _plan_has_array_traversing_paths(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
-        return any(
-            self._field_traverses_array_in_collection(db_name, coll_name, field)
-            for field in self._plan_fields(plan)
+        return _sqlite_plan_has_array_traversing_paths(
+            db_name=db_name,
+            coll_name=coll_name,
+            plan=plan,
+            plan_fields=self._plan_fields,
+            field_traverses_array_in_collection=self._field_traverses_array_in_collection,
         )
 
     def _field_traverses_dbref_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
@@ -1547,9 +1509,12 @@ class SQLiteEngine(AsyncStorageEngine):
         return result
 
     def _plan_requires_python_for_dbref_paths(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
-        return any(
-            self._field_traverses_dbref_in_collection(db_name, coll_name, field)
-            for field in self._plan_fields(plan)
+        return _sqlite_plan_requires_python_for_dbref_paths(
+            db_name=db_name,
+            coll_name=coll_name,
+            plan=plan,
+            plan_fields=self._plan_fields,
+            field_traverses_dbref_in_collection=self._field_traverses_dbref_in_collection,
         )
 
     @staticmethod
@@ -1598,15 +1563,21 @@ class SQLiteEngine(AsyncStorageEngine):
         return self._field_contains_tagged_value_type_in_collection(db_name, coll_name, field, 'undefined')
 
     def _plan_requires_python_for_bytes(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
-        return any(
-            self._field_contains_tagged_bytes_in_collection(db_name, coll_name, field)
-            for field in self._comparison_fields(plan)
+        return _sqlite_plan_requires_python_for_tagged_type(
+            db_name=db_name,
+            coll_name=coll_name,
+            plan=plan,
+            comparison_fields=self._comparison_fields,
+            field_contains_tagged_type_in_collection=self._field_contains_tagged_bytes_in_collection,
         )
 
     def _plan_requires_python_for_undefined(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
-        return any(
-            self._field_contains_tagged_undefined_in_collection(db_name, coll_name, field)
-            for field in self._comparison_fields(plan)
+        return _sqlite_plan_requires_python_for_tagged_type(
+            db_name=db_name,
+            coll_name=coll_name,
+            plan=plan,
+            comparison_fields=self._comparison_fields,
+            field_contains_tagged_type_in_collection=self._field_contains_tagged_undefined_in_collection,
         )
 
     def _field_is_top_level_array_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
@@ -1630,9 +1601,12 @@ class SQLiteEngine(AsyncStorageEngine):
         return result
 
     def _plan_requires_python_for_array_comparisons(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
-        return any(
-            self._field_is_top_level_array_in_collection(db_name, coll_name, field)
-            for field in self._comparison_fields(plan)
+        return _sqlite_plan_requires_python_for_array_comparisons(
+            db_name=db_name,
+            coll_name=coll_name,
+            plan=plan,
+            comparison_fields=self._comparison_fields,
+            field_is_top_level_array_in_collection=self._field_is_top_level_array_in_collection,
         )
 
     @staticmethod
@@ -1732,45 +1706,31 @@ class SQLiteEngine(AsyncStorageEngine):
         return self._typed_engine_key(values[0])
 
     def _select_first_document_for_plan(self, db_name: str, coll_name: str, plan: QueryNode, *, hint: str | IndexKeySpec | None = None) -> tuple[str, Document] | None:
-        if isinstance(plan, EqualsCondition) and "." not in plan.field:
-            if plan.field == "_id":
-                conn = self._require_connection()
-                storage_key = self._storage_key(plan.value)
-                row = conn.execute(
-                    "SELECT storage_key, document FROM documents "
-                    "WHERE db_name = ? AND coll_name = ? AND storage_key = ?",
-                    (db_name, coll_name, storage_key),
-                ).fetchone()
-                if row is None:
-                    return None
-                storage_key, document = row
-                return storage_key, self._deserialize_document(document)
-            selected = self._select_first_document_for_scalar_index(
-                db_name,
-                coll_name,
-                field=plan.field,
-                value=plan.value,
-                null_matches_undefined=plan.null_matches_undefined,
-            )
-            if selected is not None:
-                return selected
-        if isinstance(plan, (GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition)) and "." not in plan.field:
-            operator = (
-                ">" if isinstance(plan, GreaterThanCondition)
-                else ">=" if isinstance(plan, GreaterThanOrEqualCondition)
-                else "<" if isinstance(plan, LessThanCondition)
-                else "<="
-            )
-            selected = self._select_first_document_for_scalar_range(
-                db_name,
-                coll_name,
-                field=plan.field,
-                value=plan.value,
-                operator=operator,
-            )
-            if selected is not None:
-                return selected
         conn = self._require_connection()
+        selected = _sqlite_select_first_document_for_plan(
+            db_name=db_name,
+            coll_name=coll_name,
+            plan=plan,
+            storage_key_for_id=self._storage_key,
+            fetchone=lambda sql, params: conn.execute(sql, params).fetchone(),
+            deserialize_document=self._deserialize_document,
+            select_first_document_for_scalar_index_fn=lambda current_db_name, current_coll_name, field, value, null_matches_undefined: self._select_first_document_for_scalar_index(
+                current_db_name,
+                current_coll_name,
+                field=field,
+                value=value,
+                null_matches_undefined=null_matches_undefined,
+            ),
+            select_first_document_for_scalar_range_fn=lambda current_db_name, current_coll_name, field, value, operator: self._select_first_document_for_scalar_range(
+                current_db_name,
+                current_coll_name,
+                field=field,
+                value=value,
+                operator=operator,
+            ),
+        )
+        if selected is not None:
+            return selected
         execution_plan = self._compile_read_execution_plan(
             db_name,
             coll_name,
@@ -1794,39 +1754,29 @@ class SQLiteEngine(AsyncStorageEngine):
         value: Any,
         null_matches_undefined: bool = False,
     ) -> tuple[str, Document] | None:
-        if self._field_is_top_level_array_in_collection(db_name, coll_name, field):
-            return None
-        index = self._find_scalar_index(db_name, coll_name, field)
-        if index is None or not index.get("scalar_physical_name"):
-            return None
         conn = self._require_connection()
-        collection_id = self._lookup_collection_id(conn, db_name, coll_name)
-        if collection_id is None:
-            return None
-        try:
-            signatures = self._multikey_signatures_for_query_value(
-                value,
-                null_matches_undefined=null_matches_undefined,
-            )
-        except NotImplementedError:
-            return None
-        filters = " OR ".join("(scalar_index_entries.type_score = ? AND scalar_index_entries.element_key = ?)" for _ in signatures)
-        params: list[object] = [db_name, coll_name, collection_id, index["name"]]
-        for element_type, element_key in signatures:
-            params.extend([self._multikey_type_score(element_type), element_key])
-        row = conn.execute(
-            "SELECT documents.storage_key, documents.document "
-            f"FROM scalar_index_entries INDEXED BY {self._quote_identifier(str(index['scalar_physical_name']))} "
-            "JOIN documents ON documents.db_name = ? AND documents.coll_name = ? "
-            "AND documents.storage_key = scalar_index_entries.storage_key "
-            "WHERE scalar_index_entries.collection_id = ? AND scalar_index_entries.index_name = ? "
-            f"AND ({filters}) LIMIT 1",
-            tuple(params),
-        ).fetchone()
-        if row is None:
-            return None
-        storage_key, document = row
-        return storage_key, self._deserialize_document(document)
+        return _sqlite_select_first_document_for_scalar_index(
+            db_name=db_name,
+            coll_name=coll_name,
+            field=field,
+            value=value,
+            null_matches_undefined=null_matches_undefined,
+            field_is_top_level_array_in_collection=self._field_is_top_level_array_in_collection,
+            find_scalar_index=self._find_scalar_index,
+            lookup_collection_id=lambda current_db_name, current_coll_name: self._lookup_collection_id(
+                conn,
+                current_db_name,
+                current_coll_name,
+            ),
+            multikey_signatures_for_query_value=lambda current_value, current_null_matches_undefined: self._multikey_signatures_for_query_value(
+                current_value,
+                null_matches_undefined=current_null_matches_undefined,
+            ),
+            multikey_type_score=self._multikey_type_score,
+            quote_identifier=self._quote_identifier,
+            fetchone=lambda sql, params: conn.execute(sql, params).fetchone(),
+            deserialize_document=self._deserialize_document,
+        )
 
     def _build_scalar_indexed_top_level_range_sql(
         self,
@@ -1871,36 +1821,28 @@ class SQLiteEngine(AsyncStorageEngine):
         value: Any,
         operator: str,
     ) -> tuple[str, Document] | None:
-        scalar_path = self._can_use_scalar_range_fast_path(
-            db_name,
-            coll_name,
-            field,
-            value,
-        )
-        if scalar_path is None:
-            return None
-        index, type_score, element_key = scalar_path
-        if not index.get("scalar_physical_name"):
-            return None
         conn = self._require_connection()
-        collection_id = self._lookup_collection_id(conn, db_name, coll_name)
-        if collection_id is None:
-            return None
-        row = conn.execute(
-            "SELECT documents.storage_key, documents.document "
-            f"FROM scalar_index_entries INDEXED BY {self._quote_identifier(str(index['scalar_physical_name']))} "
-            "JOIN documents ON documents.db_name = ? AND documents.coll_name = ? "
-            "AND documents.storage_key = scalar_index_entries.storage_key "
-            "WHERE scalar_index_entries.collection_id = ? AND scalar_index_entries.index_name = ? "
-            "AND scalar_index_entries.type_score = ? "
-            f"AND scalar_index_entries.element_key {operator} ? "
-            "LIMIT 1",
-            (db_name, coll_name, collection_id, index["name"], type_score, element_key),
-        ).fetchone()
-        if row is None:
-            return None
-        storage_key, document = row
-        return storage_key, self._deserialize_document(document)
+        return _sqlite_select_first_document_for_scalar_range(
+            db_name=db_name,
+            coll_name=coll_name,
+            field=field,
+            value=value,
+            operator=operator,
+            can_use_scalar_range_fast_path=lambda current_db_name, current_coll_name, current_field, current_value: self._can_use_scalar_range_fast_path(
+                current_db_name,
+                current_coll_name,
+                current_field,
+                current_value,
+            ),
+            lookup_collection_id=lambda current_db_name, current_coll_name: self._lookup_collection_id(
+                conn,
+                current_db_name,
+                current_coll_name,
+            ),
+            quote_identifier=self._quote_identifier,
+            fetchone=lambda sql, params: conn.execute(sql, params).fetchone(),
+            deserialize_document=self._deserialize_document,
+        )
 
     def _compile_read_execution_plan(
         self,
