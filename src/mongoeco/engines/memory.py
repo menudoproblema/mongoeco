@@ -14,12 +14,20 @@ from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.engines.base import AsyncStorageEngine
-from mongoeco.engines._shared_runtime import (
-    build_search_index_documents,
+from mongoeco.engines._shared_namespace_admin import (
     merge_profile_collection_names,
     merge_profile_database_names,
-    profile_namespace_options,
+    namespace_collection_names,
+    namespace_collection_options,
+    namespace_database_names,
 )
+from mongoeco.engines._shared_search_admin import (
+    build_search_index_documents,
+    ensure_search_index_query_supported,
+    normalize_search_index_definition,
+    search_index_not_found,
+)
+from mongoeco.engines._shared_ttl import coerce_ttl_datetime, document_expired_by_ttl
 from mongoeco.engines.mvcc import MemoryMvccState
 from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.engines.semantic_core import (
@@ -160,13 +168,7 @@ class MemoryEngine(AsyncStorageEngine):
             return True
         return False
 
-    @staticmethod
-    def _coerce_ttl_datetime(value: object) -> datetime.datetime | None:
-        if not isinstance(value, datetime.datetime):
-            return None
-        if value.tzinfo is None:
-            return value.replace(tzinfo=datetime.timezone.utc)
-        return value.astimezone(datetime.timezone.utc)
+    _coerce_ttl_datetime = staticmethod(coerce_ttl_datetime)
 
     def _document_expired_by_ttl(
         self,
@@ -175,22 +177,12 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         now: datetime.datetime,
     ) -> bool:
-        if index.expire_after_seconds is None or len(index.fields) != 1:
-            return False
-        field = index.fields[0]
-        values = QueryEngine.extract_values(document, field)
-        ttl_candidates = [
-            candidate
-            for candidate in (
-                self._coerce_ttl_datetime(value)
-                for value in values
-            )
-            if candidate is not None
-        ]
-        if not ttl_candidates:
-            return False
-        expires_at = min(ttl_candidates) + datetime.timedelta(seconds=index.expire_after_seconds)
-        return expires_at <= now
+        return document_expired_by_ttl(
+            document,
+            index,
+            now=now,
+            extract_values=QueryEngine.extract_values,
+        )
 
     def _purge_expired_documents_locked(
         self,
@@ -1551,14 +1543,7 @@ class MemoryEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> str:
         deadline = operation_deadline(max_time_ms)
-        normalized_definition = SearchIndexDefinition(
-            validate_search_index_definition(
-                definition.definition,
-                index_type=definition.index_type,
-            ),
-            name=definition.name,
-            index_type=definition.index_type,
-        )
+        normalized_definition = normalize_search_index_definition(definition)
         async with self._get_lock(db_name, coll_name):
             search_indexes = self._search_indexes_view(context)
             collections = self._collections_view(context)
@@ -1681,13 +1666,12 @@ class MemoryEngine(AsyncStorageEngine):
             )
             definition = next((item for item in indexes if item.name == query.index_name), None)
             if definition is None:
-                raise OperationFailure(f"search index not found with name [{query.index_name}]")
-            if not self._search_index_is_ready(db_name, coll_name, query.index_name):
-                raise OperationFailure(f"search index [{query.index_name}] is not ready yet")
-            if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) and definition.index_type != "search":
-                raise OperationFailure(f"search index [{query.index_name}] does not support $search")
-            if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
-                raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
+                raise search_index_not_found(query.index_name)
+            ensure_search_index_query_supported(
+                definition,
+                query,
+                ready=self._search_index_is_ready(db_name, coll_name, query.index_name),
+            )
             documents = [
                 self._decode_storage_document(payload)
                 for payload in self._storage_view(context).get(db_name, {}).get(coll_name, {}).values()
@@ -1743,12 +1727,9 @@ class MemoryEngine(AsyncStorageEngine):
             )
         definition = next((item for item in indexes if item.name == query.index_name), None)
         if definition is None:
-            raise OperationFailure(f"search index not found with name [{query.index_name}]")
+            raise search_index_not_found(query.index_name)
         ready = self._search_index_is_ready(db_name, coll_name, query.index_name)
-        if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) and definition.index_type != "search":
-            raise OperationFailure(f"search index [{query.index_name}] does not support $search")
-        if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
-            raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
+        ensure_search_index_query_supported(definition, query, ready=ready, enforce_ready=False)
         return QueryPlanExplanation(
             engine="memory",
             strategy="search",
@@ -1905,12 +1886,12 @@ class MemoryEngine(AsyncStorageEngine):
         collections = self._collections_view(context)
         options = self._collection_options_view(context)
         with self._meta_lock:
-            names = sorted(
-                set(storage.keys())
-                | set(indexes.keys())
-                | set(search_indexes.keys())
-                | set(collections.keys())
-                | set(options.keys())
+            names = namespace_database_names(
+                storage=storage,
+                indexes=indexes,
+                search_indexes=search_indexes,
+                collections=collections,
+                options=options,
             )
         return merge_profile_database_names(names, self._profiler)
 
@@ -1921,11 +1902,12 @@ class MemoryEngine(AsyncStorageEngine):
         search_indexes = self._search_indexes_view(context)
         collections = self._collections_view(context)
         with self._meta_lock:
-            names = sorted(
-                set(storage.get(db_name, {}).keys())
-                | set(indexes.get(db_name, {}).keys())
-                | set(search_indexes.get(db_name, {}).keys())
-                | set(collections.get(db_name, set()))
+            names = namespace_collection_names(
+                db_name,
+                storage=storage,
+                indexes=indexes,
+                search_indexes=search_indexes,
+                collections=collections,
             )
         return merge_profile_collection_names(
             names,
@@ -1942,28 +1924,23 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> dict[str, object]:
-        profile_options = profile_namespace_options(
-            db_name=db_name,
-            coll_name=coll_name,
-            profiler=self._profiler,
-            profile_collection_name=self._PROFILE_COLLECTION_NAME,
-        )
-        if profile_options is not None:
-            return profile_options
         collections = self._collections_view(context)
         storage = self._storage_view(context)
         indexes = self._indexes_view(context)
         search_indexes = self._search_indexes_view(context)
         options = self._collection_options_view(context)
         with self._meta_lock:
-            if not (
-                coll_name in collections.get(db_name, set())
-                or coll_name in storage.get(db_name, {})
-                or coll_name in indexes.get(db_name, {})
-                or coll_name in search_indexes.get(db_name, {})
-            ):
-                raise CollectionInvalid(f"collection '{coll_name}' does not exist")
-            return deepcopy(options.get(db_name, {}).get(coll_name, {}))
+            return namespace_collection_options(
+                db_name,
+                coll_name,
+                storage=storage,
+                indexes=indexes,
+                search_indexes=search_indexes,
+                collections=collections,
+                options=options,
+                profiler=self._profiler,
+                profile_collection_name=self._PROFILE_COLLECTION_NAME,
+            )
 
     @override
     async def create_collection(

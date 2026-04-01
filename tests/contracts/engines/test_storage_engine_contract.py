@@ -196,6 +196,21 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                     self.assertIn("db", await engine.list_databases())
                     self.assertEqual(await engine.list_collections("db"), ["empty"])
 
+    async def test_collection_options_round_trip_and_profile_namespace_match_across_engines(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_engine(engine_name) as engine:
+                    await engine.create_collection("db", "archived", options={"capped": True, "size": 1024})
+
+                    self.assertEqual(
+                        await engine.collection_options("db", "archived"),
+                        {"capped": True, "size": 1024},
+                    )
+
+                    await engine.set_profiling_level("db", 1)
+                    self.assertIn("system.profile", await engine.list_collections("db"))
+                    self.assertEqual(await engine.collection_options("db", "system.profile"), {})
+
     async def test_embedded_document_comparison_does_not_crash(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
@@ -468,3 +483,37 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
 
                     await engine.drop_search_index("db", "docs", "default")
                     self.assertEqual(await engine.list_search_indexes("db", "docs"), [])
+
+    async def test_engine_search_index_errors_are_stable_across_engines(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_engine(engine_name) as engine:
+                    await engine.create_search_index(
+                        "db",
+                        "docs",
+                        SearchIndexDefinition(
+                            {
+                                "fields": [
+                                    {
+                                        "type": "vector",
+                                        "path": "embedding",
+                                        "numDimensions": 3,
+                                        "similarity": "cosine",
+                                    }
+                                ]
+                            },
+                            name="by_vector",
+                            index_type="vectorSearch",
+                        ),
+                    )
+
+                    with self.assertRaisesRegex(OperationFailure, "search index not found"):
+                        await engine.update_search_index("db", "docs", "missing", {"mappings": {"dynamic": True}})
+
+                    with self.assertRaisesRegex(OperationFailure, "does not support \\$search"):
+                        await engine.search_documents(
+                            "db",
+                            "docs",
+                            "$search",
+                            {"index": "by_vector", "text": {"query": "ada", "path": "title"}},
+                        )

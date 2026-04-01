@@ -4,12 +4,15 @@ import sqlite3
 from collections.abc import Callable
 
 from mongoeco.core.operation_limits import enforce_deadline
-from mongoeco.core.search import validate_search_index_definition
 from mongoeco.core.json_compat import json_dumps_compact, json_loads
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, SearchIndexDefinition, SearchIndexDocument
 
-from mongoeco.engines._shared_runtime import build_search_index_documents
+from mongoeco.engines._shared_search_admin import (
+    build_search_index_documents,
+    normalize_search_index_definition,
+)
+from mongoeco.core.search import validate_search_index_definition
 
 
 def list_search_index_documents(
@@ -43,14 +46,7 @@ def create_search_index(
     physical_search_index_name: Callable[[str, str, str], str],
     pending_ready_at: Callable[[], float | None],
 ) -> str:
-    normalized_definition = SearchIndexDefinition(
-        validate_search_index_definition(
-            definition.definition,
-            index_type=definition.index_type,
-        ),
-        name=definition.name,
-        index_type=definition.index_type,
-    )
+    normalized_definition = normalize_search_index_definition(definition)
     physical_name = (
         physical_search_index_name(db_name, coll_name, normalized_definition.name)
         if normalized_definition.index_type == "search"

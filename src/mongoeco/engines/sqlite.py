@@ -56,17 +56,11 @@ from mongoeco.core.search import (
     matches_search_text_query,
     score_vector_document,
     sqlite_fts5_query,
-    validate_search_index_definition,
     vector_field_paths,
 )
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.base import AsyncStorageEngine
-from mongoeco.engines._shared_runtime import (
-    build_search_index_documents,
-    merge_profile_collection_names,
-    merge_profile_database_names,
-    profile_namespace_options,
-)
+from mongoeco.engines._shared_ttl import coerce_ttl_datetime, document_expired_by_ttl
 from mongoeco.engines._sqlite_runtime import SQLiteCacheState, SQLiteRuntimeState
 from mongoeco.engines._sqlite_catalog import (
     list_collection_names as _sqlite_list_collection_names,
@@ -79,6 +73,15 @@ from mongoeco.engines._sqlite_search_admin import (
     drop_search_index as _sqlite_drop_search_index,
     list_search_index_documents as _sqlite_list_search_index_documents,
     update_search_index as _sqlite_update_search_index,
+)
+from mongoeco.engines._sqlite_namespace_admin import (
+    collection_options as _sqlite_collection_options,
+    create_collection as _sqlite_create_collection,
+    drop_collection as _sqlite_drop_collection,
+    drop_database as _sqlite_drop_database,
+    list_collections as _sqlite_list_collections,
+    list_databases as _sqlite_list_databases,
+    rename_collection as _sqlite_rename_collection,
 )
 from mongoeco.engines._sqlite_index_admin import (
     build_index_information as _sqlite_build_index_information,
@@ -622,13 +625,7 @@ class SQLiteEngine(AsyncStorageEngine):
     def _dialect_requires_python_fallback(self, dialect: MongoDialect) -> bool:
         return type(dialect) not in (MongoDialect70, MongoDialect80)
 
-    @staticmethod
-    def _coerce_ttl_datetime(value: object) -> datetime.datetime | None:
-        if not isinstance(value, datetime.datetime):
-            return None
-        if value.tzinfo is None:
-            return value.replace(tzinfo=datetime.timezone.utc)
-        return value.astimezone(datetime.timezone.utc)
+    _coerce_ttl_datetime = staticmethod(coerce_ttl_datetime)
 
     def _document_expired_by_ttl(
         self,
@@ -637,21 +634,12 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         now: datetime.datetime,
     ) -> bool:
-        if index.expire_after_seconds is None or len(index.fields) != 1:
-            return False
-        values = QueryEngine.extract_values(document, index.fields[0])
-        ttl_candidates = [
-            candidate
-            for candidate in (
-                self._coerce_ttl_datetime(value)
-                for value in values
-            )
-            if candidate is not None
-        ]
-        if not ttl_candidates:
-            return False
-        expires_at = min(ttl_candidates) + datetime.timedelta(seconds=index.expire_after_seconds)
-        return expires_at <= now
+        return document_expired_by_ttl(
+            document,
+            index,
+            now=now,
+            extract_values=QueryEngine.extract_values,
+        )
 
     def _purge_expired_documents_sync(
         self,
@@ -3068,22 +3056,17 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         context: ClientSession | None = None,
     ) -> dict[str, object]:
-        profile_options = profile_namespace_options(
-            db_name=db_name,
-            coll_name=coll_name,
-            profiler=self._profiler,
-            profile_collection_name=self._PROFILE_COLLECTION_NAME,
-        )
-        if profile_options is not None:
-            return profile_options
         with self._lock:
             conn = self._require_connection(context)
-            options = _sqlite_load_collection_options(conn, db_name, coll_name)
-            if options is not None:
-                return options
-            if self._collection_exists_sync(conn, db_name, coll_name):
-                return {}
-            raise CollectionInvalid(f"collection '{coll_name}' does not exist")
+            return _sqlite_collection_options(
+                db_name=db_name,
+                coll_name=coll_name,
+                profiler=self._profiler,
+                profile_collection_name=self._PROFILE_COLLECTION_NAME,
+                load_collection_options=_sqlite_load_collection_options,
+                collection_exists=self._collection_exists_sync,
+                conn=conn,
+            )
 
     def _collection_options_or_empty_sync(
         self,
@@ -3795,89 +3778,22 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                index_rows = conn.execute(
-                    """
-                    SELECT physical_name, multikey_physical_name, scalar_physical_name
-                    FROM indexes
-                    WHERE db_name = ?
-                    """,
-                    (db_name,),
-                ).fetchall()
-                search_rows = conn.execute(
-                    """
-                    SELECT physical_name
-                    FROM search_indexes
-                    WHERE db_name = ?
-                    """,
-                    (db_name,),
-                ).fetchall()
-                try:
-                    self._begin_write(conn, context)
-                    for physical_name, multikey_physical_name, scalar_physical_name in index_rows:
-                        if physical_name:
-                            conn.execute(
-                                f"DROP INDEX IF EXISTS {self._quote_identifier(str(physical_name))}"
-                            )
-                        if scalar_physical_name:
-                            conn.execute(
-                                f"DROP INDEX IF EXISTS {self._quote_identifier(str(scalar_physical_name))}"
-                            )
-                        if multikey_physical_name:
-                            conn.execute(
-                                f"DROP INDEX IF EXISTS {self._quote_identifier(str(multikey_physical_name))}"
-                            )
-                    for (physical_name,) in search_rows:
-                        self._drop_search_backend_sync(conn, physical_name)
-                    conn.execute(
-                        """
-                        DELETE FROM scalar_index_entries
-                        WHERE collection_id IN (
-                            SELECT collection_id FROM collections WHERE db_name = ?
-                        )
-                        """,
-                        (db_name,),
-                    )
-                    conn.execute(
-                        """
-                        DELETE FROM multikey_entries
-                        WHERE collection_id IN (
-                            SELECT collection_id FROM collections WHERE db_name = ?
-                        )
-                        """,
-                        (db_name,),
-                    )
-                    conn.execute(
-                        """
-                        DELETE FROM documents
-                        WHERE db_name = ?
-                        """,
-                        (db_name,),
-                    )
-                    conn.execute(
-                        """
-                        DELETE FROM indexes
-                        WHERE db_name = ?
-                        """,
-                        (db_name,),
-                    )
-                    conn.execute(
-                        """
-                        DELETE FROM search_indexes
-                        WHERE db_name = ?
-                        """,
-                        (db_name,),
-                    )
-                    conn.execute(
-                        """
-                        DELETE FROM collections
-                        WHERE db_name = ?
-                        """,
-                        (db_name,),
-                    )
-                    self._commit_write(conn, context)
-                except Exception:
-                    self._rollback_write(conn, context)
-                    raise
+                _sqlite_drop_database(
+                    conn=conn,
+                    db_name=db_name,
+                    begin_write=lambda current: self._begin_write(current, context),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                    quote_identifier=self._quote_identifier,
+                    drop_search_backend=self._drop_search_backend_sync,
+                    clear_index_metadata_versions=self._clear_index_metadata_versions_for_database,
+                    invalidate_index_cache=self._invalidate_index_cache,
+                    invalidate_collection_id_cache=self._invalidate_collection_id_cache,
+                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                    clear_profiler=self._profiler.clear,
+                )
+
+    def _clear_index_metadata_versions_for_database(self, db_name: str) -> None:
         stale_index_keys = [
             key
             for key in self._index_metadata_versions
@@ -3885,10 +3801,6 @@ class SQLiteEngine(AsyncStorageEngine):
         ]
         for key in stale_index_keys:
             self._index_metadata_versions.pop(key, None)
-        self._invalidate_index_cache()
-        self._invalidate_collection_id_cache()
-        self._invalidate_collection_features_cache()
-        self._profiler.clear(db_name)
 
     def _drop_indexes_sync(
         self,
@@ -4182,19 +4094,22 @@ class SQLiteEngine(AsyncStorageEngine):
     def _list_databases_sync(self, context: ClientSession | None = None) -> list[str]:
         with self._lock:
             conn = self._require_connection(context)
-            names = _sqlite_list_database_names(conn)
-        return merge_profile_database_names(names, self._profiler)
+            return _sqlite_list_databases(
+                conn=conn,
+                profiler=self._profiler,
+                list_database_names=_sqlite_list_database_names,
+            )
 
     def _list_collections_sync(self, db_name: str, context: ClientSession | None = None) -> list[str]:
         with self._lock:
             conn = self._require_connection(context)
-            names = _sqlite_list_collection_names(conn, db_name)
-        return merge_profile_collection_names(
-            names,
-            db_name=db_name,
-            profiler=self._profiler,
-            profile_collection_name=self._PROFILE_COLLECTION_NAME,
-        )
+            return _sqlite_list_collections(
+                conn=conn,
+                db_name=db_name,
+                profiler=self._profiler,
+                profile_collection_name=self._PROFILE_COLLECTION_NAME,
+                list_collection_names=_sqlite_list_collection_names,
+            )
 
     def _create_collection_sync(
         self,
@@ -4205,15 +4120,17 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> None:
         with self._lock:
             conn = self._require_connection(context)
-            try:
-                self._begin_write(conn, context)
-                if self._collection_exists_sync(conn, db_name, coll_name):
-                    raise CollectionInvalid(f"collection '{coll_name}' already exists")
-                self._ensure_collection_row(conn, db_name, coll_name, options=options)
-                self._commit_write(conn, context)
-            except Exception:
-                self._rollback_write(conn, context)
-                raise
+            _sqlite_create_collection(
+                conn=conn,
+                db_name=db_name,
+                coll_name=coll_name,
+                options=options,
+                begin_write=lambda current: self._begin_write(current, context),
+                commit_write=lambda current: self._commit_write(current, context),
+                rollback_write=lambda current: self._rollback_write(current, context),
+                collection_exists=self._collection_exists_sync,
+                ensure_collection_row=self._ensure_collection_row,
+            )
 
     def _rename_collection_sync(
         self,
@@ -4222,35 +4139,21 @@ class SQLiteEngine(AsyncStorageEngine):
         new_name: str,
         context: ClientSession | None = None,
     ) -> None:
-        if coll_name == new_name:
-            raise CollectionInvalid("collection names must differ")
         with self._lock:
             conn = self._require_connection(context)
-            try:
-                self._begin_write(conn, context)
-                if not self._collection_exists_sync(conn, db_name, coll_name):
-                    raise CollectionInvalid(f"collection '{coll_name}' does not exist")
-                if self._collection_exists_sync(conn, db_name, new_name):
-                    raise CollectionInvalid(f"collection '{new_name}' already exists")
-                for table_name in ("collections", "documents", "indexes", "search_indexes"):
-                    conn.execute(
-                        f"""
-                        UPDATE {table_name}
-                        SET coll_name = ?
-                        WHERE db_name = ? AND coll_name = ?
-                        """,
-                        (new_name, db_name, coll_name),
-                    )
-                self._commit_write(conn, context)
-                self._mark_index_metadata_changed(db_name, coll_name)
-                self._mark_index_metadata_changed(db_name, new_name)
-                self._invalidate_collection_id_cache(db_name, coll_name)
-                self._invalidate_collection_id_cache(db_name, new_name)
-                self._invalidate_collection_features_cache(db_name, coll_name)
-                self._invalidate_collection_features_cache(db_name, new_name)
-            except Exception:
-                self._rollback_write(conn, context)
-                raise
+            _sqlite_rename_collection(
+                conn=conn,
+                db_name=db_name,
+                coll_name=coll_name,
+                new_name=new_name,
+                begin_write=lambda current: self._begin_write(current, context),
+                commit_write=lambda current: self._commit_write(current, context),
+                rollback_write=lambda current: self._rollback_write(current, context),
+                collection_exists=self._collection_exists_sync,
+                mark_index_metadata_changed=self._mark_index_metadata_changed,
+                invalidate_collection_id_cache=self._invalidate_collection_id_cache,
+                invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+            )
 
     def _drop_collection_sync(self, db_name: str, coll_name: str, context: ClientSession | None = None) -> None:
         if self._is_profile_namespace(coll_name):
@@ -4259,73 +4162,22 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                indexes = self._load_indexes(db_name, coll_name)
-                search_indexes = self._load_search_index_rows(db_name, coll_name)
-                try:
-                    self._begin_write(conn, context)
-                    collection_id = self._lookup_collection_id(conn, db_name, coll_name)
-                    for index in indexes:
-                        conn.execute(f"DROP INDEX IF EXISTS {self._quote_identifier(index['physical_name'])}")
-                        if index.get("scalar_physical_name"):
-                            conn.execute(
-                                f"DROP INDEX IF EXISTS {self._quote_identifier(index['scalar_physical_name'])}"
-                            )
-                        if index.get("multikey"):
-                            conn.execute(
-                                f"DROP INDEX IF EXISTS {self._quote_identifier(index['multikey_physical_name'])}"
-                            )
-                    for _definition, physical_name, _ready_at_epoch in search_indexes:
-                        self._drop_search_backend_sync(conn, physical_name)
-                    conn.execute(
-                        """
-                        DELETE FROM documents
-                        WHERE db_name = ? AND coll_name = ?
-                        """,
-                        (db_name, coll_name),
-                    )
-                    if collection_id is not None:
-                        conn.execute(
-                            """
-                            DELETE FROM scalar_index_entries
-                            WHERE collection_id = ?
-                            """,
-                            (collection_id,),
-                        )
-                        conn.execute(
-                            """
-                            DELETE FROM multikey_entries
-                            WHERE collection_id = ?
-                            """,
-                            (collection_id,),
-                        )
-                    conn.execute(
-                        """
-                        DELETE FROM indexes
-                        WHERE db_name = ? AND coll_name = ?
-                        """,
-                        (db_name, coll_name),
-                    )
-                    conn.execute(
-                        """
-                        DELETE FROM search_indexes
-                        WHERE db_name = ? AND coll_name = ?
-                        """,
-                        (db_name, coll_name),
-                    )
-                    conn.execute(
-                        """
-                        DELETE FROM collections
-                        WHERE db_name = ? AND coll_name = ?
-                        """,
-                        (db_name, coll_name),
-                    )
-                    self._commit_write(conn, context)
-                    self._mark_index_metadata_changed(db_name, coll_name)
-                    self._invalidate_collection_id_cache(db_name, coll_name)
-                    self._invalidate_collection_features_cache(db_name, coll_name)
-                except Exception:
-                    self._rollback_write(conn, context)
-                    raise
+                _sqlite_drop_collection(
+                    conn=conn,
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    begin_write=lambda current: self._begin_write(current, context),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                    load_indexes=self._load_indexes,
+                    load_search_index_rows=self._load_search_index_rows,
+                    lookup_collection_id=self._lookup_collection_id,
+                    quote_identifier=self._quote_identifier,
+                    drop_search_backend=self._drop_search_backend_sync,
+                    mark_index_metadata_changed=self._mark_index_metadata_changed,
+                    invalidate_collection_id_cache=self._invalidate_collection_id_cache,
+                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                )
 
     @override
     async def connect(self) -> None:
