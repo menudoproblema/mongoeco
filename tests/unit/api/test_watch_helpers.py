@@ -218,6 +218,26 @@ class DirectWatchHubTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(client.selection_policy)
         self.assertIsNotNone(client.concern_policy)
         self.assertIsNotNone(client.auth_policy)
+
+    def test_async_database_and_collection_public_properties_do_not_fall_through_getattr(self):
+        client = AsyncMongoClient(
+            MemoryEngine(),
+            change_stream_history_size=9,
+            change_stream_journal_path="/tmp/mongoeco-async-surface.json",
+            change_stream_journal_fsync=True,
+            change_stream_journal_max_bytes=1234,
+        )
+        database = client.get_database("db")
+        collection = database.get_collection("coll")
+
+        self.assertEqual(database.change_stream_history_size, 9)
+        self.assertEqual(database.change_stream_journal_path, "/tmp/mongoeco-async-surface.json")
+        self.assertTrue(database.change_stream_journal_fsync)
+        self.assertEqual(database.change_stream_journal_max_bytes, 1234)
+        self.assertEqual(collection.change_stream_history_size, 9)
+        self.assertEqual(collection.change_stream_journal_path, "/tmp/mongoeco-async-surface.json")
+        self.assertTrue(collection.change_stream_journal_fsync)
+        self.assertEqual(collection.change_stream_journal_max_bytes, 1234)
         self.assertIsNotNone(client.tls_policy)
         self.assertIsNone(client.srv_resolution)
         self.assertIsNotNone(client.driver_runtime)

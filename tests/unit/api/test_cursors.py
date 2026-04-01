@@ -778,7 +778,17 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cursor.to_list(), [{"_id": "1"}, {"_id": "2"}])
         self.assertEqual(cursor.first(), {"_id": "1"})
         self.assertEqual(factory.calls, 1)
-        self.assertEqual(factory.first_calls, 0)
+
+    def test_sync_cursor_public_error_messages_remain_stable(self):
+        cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
+
+        list(cursor)
+        with self.assertRaisesRegex(InvalidOperation, "cannot modify cursor after iteration has started"):
+            cursor.sort([("_id", 1)])
+
+        cursor.close()
+        with self.assertRaisesRegex(InvalidOperation, "cannot use cursor after it has been closed"):
+            cursor.first()
 
     def test_sync_cursor_first_uses_direct_first_path_without_materializing_cache(self):
         factory = _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}])

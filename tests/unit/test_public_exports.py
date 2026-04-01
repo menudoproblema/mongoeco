@@ -66,3 +66,14 @@ class PublicExportsTests(unittest.TestCase):
                         f'stdout:\n{result.stdout}\n'
                         f'stderr:\n{result.stderr}'
                     )
+
+    def test_async_and_sync_api_packages_export_public_cursor_types(self):
+        from mongoeco.api import _async as async_api
+        from mongoeco.api import _sync as sync_api
+
+        self.assertEqual(async_api.AsyncListingCursor.__name__, "AsyncListingCursor")
+        self.assertEqual(async_api.AsyncSearchIndexCursor.__name__, "AsyncSearchIndexCursor")
+        self.assertEqual(async_api.AsyncRawBatchCursor.__name__, "AsyncRawBatchCursor")
+        self.assertEqual(sync_api.ListingCursor.__name__, "ListingCursor")
+        self.assertEqual(sync_api.SearchIndexCursor.__name__, "SearchIndexCursor")
+        self.assertEqual(sync_api.RawBatchCursor.__name__, "RawBatchCursor")

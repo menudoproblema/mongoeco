@@ -253,6 +253,28 @@ class SyncClientUnitTests(unittest.TestCase):
         finally:
             client.close()
 
+    def test_sync_database_and_collection_public_properties_do_not_fall_through_getattr(self):
+        client = MongoClient(
+            MemoryEngine(),
+            change_stream_history_size=321,
+            change_stream_journal_path="/tmp/mongoeco-sync-surface.json",
+            change_stream_journal_fsync=True,
+            change_stream_journal_max_bytes=8192,
+        )
+        try:
+            database = client.get_database("alpha")
+            collection = database.get_collection("events")
+            self.assertEqual(database.change_stream_history_size, 321)
+            self.assertEqual(database.change_stream_journal_path, "/tmp/mongoeco-sync-surface.json")
+            self.assertTrue(database.change_stream_journal_fsync)
+            self.assertEqual(database.change_stream_journal_max_bytes, 8192)
+            self.assertEqual(collection.change_stream_history_size, 321)
+            self.assertEqual(collection.change_stream_journal_path, "/tmp/mongoeco-sync-surface.json")
+            self.assertTrue(collection.change_stream_journal_fsync)
+            self.assertEqual(collection.change_stream_journal_max_bytes, 8192)
+        finally:
+            client.close()
+
     def test_client_exposes_change_stream_state(self):
         client = MongoClient(MemoryEngine(), change_stream_history_size=7)
         try:

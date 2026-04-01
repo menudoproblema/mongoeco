@@ -626,6 +626,15 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
 
 class SyncAggregationCursorTests(unittest.TestCase):
+    def test_closed_message_remains_stable(self):
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+
+        cursor.close()
+
+        with self.assertRaisesRegex(InvalidOperation, "cannot use aggregation cursor after it has been closed"):
+            cursor.to_list()
+
     def test_first_uses_direct_async_first_path_without_materializing_cache(self):
         async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)

@@ -18,6 +18,10 @@ usa Semantic Versioning.
   `client.sdam_capabilities()` para el subconjunto SDAM soportado; y
   `collation_capabilities_info()` para el alcance de collation soportado
   con `PyICU` opcional y `pyuca` como fallback.
+- Los subpaquetes `mongoeco.api._async` y `mongoeco.api._sync` exportan
+  ahora también los cursores públicos de listado, search indexes y raw
+  BSON batches, alineando sus `__all__` con la superficie real devuelta
+  por clientes y colecciones.
 
 ### Fixed
 
