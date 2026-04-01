@@ -1001,6 +1001,128 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(results["memory"], results["sqlite"])
 
+    async def test_session_transaction_visibility_and_commit_abort_match_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.alpha.get_collection("users")
+
+                abort_session = client.start_session()
+                abort_session.start_transaction()
+                await collection.insert_one({"_id": "abort", "name": "Abort"}, session=abort_session)
+                abort_visible_inside = await collection.find_one({"_id": "abort"}, session=abort_session)
+                abort_session.abort_transaction()
+                abort_after = await collection.find_one({"_id": "abort"})
+
+                commit_session = client.start_session()
+                commit_session.start_transaction()
+                await collection.insert_one({"_id": "commit", "name": "Commit"}, session=commit_session)
+                commit_visible_inside = await collection.find_one({"_id": "commit"}, session=commit_session)
+                commit_session.commit_transaction()
+                commit_after = await collection.find_one({"_id": "commit"})
+
+                results[engine_name] = {
+                    "abort_inside": abort_visible_inside,
+                    "abort_after": abort_after,
+                    "commit_inside": commit_visible_inside,
+                    "commit_after": commit_after,
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_session_bound_admin_visibility_matches_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                session = client.start_session()
+                session.start_transaction()
+                await client.alpha.create_collection("events", session=session)
+                inside_collections = await client.alpha.list_collection_names(session=session)
+                session.abort_transaction()
+                after_abort = await client.alpha.list_collection_names()
+
+                results[engine_name] = {
+                    "inside": inside_collections,
+                    "after_abort": after_abort,
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_database_command_surface_matches_in_memory_and_sqlite_for_admin_subsets(self):
+        results: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.alpha.get_collection("events")
+                await collection.insert_many(
+                    [
+                        {"_id": "1", "kind": "view"},
+                        {"_id": "2", "kind": "click"},
+                    ]
+                )
+                await collection.create_index([("kind", 1)], name="kind_idx")
+
+                coll_stats = await client.alpha.command({"collStats": "events"})
+                db_stats = await client.alpha.command("dbStats")
+                find_explain = await client.alpha.command(
+                    {
+                        "explain": {
+                            "find": "events",
+                            "filter": {"kind": "view"},
+                            "hint": "kind_idx",
+                            "comment": "find explain",
+                            "maxTimeMS": 50,
+                            "batchSize": 1,
+                        }
+                    }
+                )
+                aggregate_explain = await client.alpha.command(
+                    {
+                        "explain": {
+                            "aggregate": "events",
+                            "pipeline": [{"$match": {"kind": "view"}}],
+                            "cursor": {"batchSize": 1},
+                            "hint": "kind_idx",
+                            "comment": "agg explain",
+                            "maxTimeMS": 50,
+                            "allowDiskUse": True,
+                        }
+                    }
+                )
+
+                results[engine_name] = {
+                    "collStats": {
+                        "ns": coll_stats["ns"],
+                        "count": coll_stats["count"],
+                        "nindexes": coll_stats["nindexes"],
+                        "ok": coll_stats["ok"],
+                    },
+                    "dbStats": {
+                        "db": db_stats["db"],
+                        "collections": db_stats["collections"],
+                        "objects": db_stats["objects"],
+                        "indexes": db_stats["indexes"],
+                        "ok": db_stats["ok"],
+                    },
+                    "findExplain": {
+                        "hint": find_explain["hint"],
+                        "hinted_index": find_explain["hinted_index"],
+                        "comment": find_explain["comment"],
+                        "max_time_ms": find_explain["max_time_ms"],
+                        "batch_size": find_explain["batch_size"],
+                        "ok": find_explain["ok"],
+                    },
+                    "aggregateExplain": {
+                        "hint": aggregate_explain["hint"],
+                        "comment": aggregate_explain["comment"],
+                        "max_time_ms": aggregate_explain["max_time_ms"],
+                        "batch_size": aggregate_explain["batch_size"],
+                        "allow_disk_use": aggregate_explain["allow_disk_use"],
+                        "ok": aggregate_explain["ok"],
+                    },
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
     async def test_pop_update_matches_in_memory_and_sqlite(self):
         results: dict[str, dict] = {}
         for engine_name in ("memory", "sqlite"):
