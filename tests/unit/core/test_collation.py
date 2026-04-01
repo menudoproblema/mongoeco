@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -20,6 +21,10 @@ from mongoeco.core.collation import (
 
 
 class CollationTests(unittest.TestCase):
+    def tearDown(self):
+        collation_module._get_icu_collator.cache_clear()
+        collation_module._get_pyuca_collator.cache_clear()
+
     def test_normalize_collation_accepts_supported_document(self):
         spec = normalize_collation(
             {
@@ -293,3 +298,166 @@ class CollationTests(unittest.TestCase):
 
         self.assertEqual(collation_module._compare_with_icu("Álvaro", "alvaro", spec), 0)
         self.assertLess(collation_module._compare_with_icu("file2", "file10", spec), 0)
+
+    def test_collation_spec_to_document_includes_optional_fields(self):
+        spec = CollationSpec(
+            locale="en",
+            strength=2,
+            backwards=True,
+            alternate="shifted",
+            max_variable="space",
+            normalization=True,
+        )
+
+        self.assertEqual(
+            spec.to_document(),
+            {
+                "locale": "en",
+                "strength": 2,
+                "caseLevel": False,
+                "numericOrdering": False,
+                "backwards": True,
+                "alternate": "shifted",
+                "maxVariable": "space",
+                "normalization": True,
+            },
+        )
+
+    def test_internal_icu_helpers_cover_attributes_and_compare_paths(self):
+        class _FakeCollator:
+            PRIMARY = 1
+            SECONDARY = 2
+            TERTIARY = 3
+
+            def __init__(self):
+                self.strength = None
+                self.attributes: list[tuple[object, object]] = []
+
+            def setStrength(self, strength):
+                self.strength = strength
+
+            def setAttribute(self, attribute, value):
+                self.attributes.append((attribute, value))
+
+            def compare(self, left, right):
+                if left < right:
+                    return -2
+                if left > right:
+                    return 3
+                return 0
+
+        collator = _FakeCollator()
+        fake_icu = SimpleNamespace(
+            Collator=SimpleNamespace(
+                PRIMARY=1,
+                SECONDARY=2,
+                TERTIARY=3,
+                createInstance=lambda _locale: collator,
+            ),
+            Locale=lambda locale: locale,
+            UCollAttribute=SimpleNamespace(
+                NORMALIZATION_MODE="normalization",
+                CASE_LEVEL="case",
+                NUMERIC_COLLATION="numeric",
+                FRENCH_COLLATION="french",
+                ALTERNATE_HANDLING="alternate",
+                MAX_VARIABLE="max-variable",
+            ),
+            UCollAttributeValue=SimpleNamespace(
+                ON="on",
+                OFF="off",
+                SHIFTED="shifted",
+                NON_IGNORABLE="non-ignorable",
+                SPACE="space",
+                PUNCT="punct",
+            ),
+        )
+
+        with patch.object(collation_module, "_icu", fake_icu):
+            resolved = collation_module._get_icu_collator(
+                "en",
+                2,
+                True,
+                True,
+                True,
+                "shifted",
+                "space",
+                True,
+            )
+            spec = CollationSpec(
+                locale="en",
+                strength=2,
+                case_level=True,
+                numeric_ordering=True,
+                backwards=True,
+                alternate="shifted",
+                max_variable="space",
+                normalization=True,
+            )
+            self.assertEqual(collation_module._compare_with_icu("a", "b", spec), -1)
+            self.assertEqual(collation_module._compare_with_icu("b", "a", spec), 1)
+            self.assertEqual(collation_module._compare_with_icu("a", "a", spec), 0)
+
+        self.assertIs(resolved, collator)
+        self.assertEqual(collator.strength, 2)
+        self.assertIn(("normalization", "on"), collator.attributes)
+        self.assertIn(("case", "on"), collator.attributes)
+        self.assertIn(("numeric", "on"), collator.attributes)
+        self.assertIn(("french", "on"), collator.attributes)
+        self.assertIn(("alternate", "shifted"), collator.attributes)
+        self.assertIn(("max-variable", "space"), collator.attributes)
+
+    def test_pyuca_helpers_cover_runtime_guard_key_truncation_and_accent_stripping(self):
+        with patch.object(collation_module, "_pyuca", None):
+            with self.assertRaisesRegex(RuntimeError, "unavailable"):
+                collation_module._get_pyuca_collator()
+
+        class _FakePyucaCollator:
+            def sort_key(self, value):
+                if value == "Az":
+                    return (1, 2, 0, 3, 0, 4)
+                return tuple(ord(char) for char in value) + (0,)
+
+        fake_pyuca = SimpleNamespace(Collator=lambda: _FakePyucaCollator())
+        with patch.object(collation_module, "_pyuca", fake_pyuca):
+            spec = CollationSpec(locale="en", strength=3, case_level=True)
+            numeric_spec = CollationSpec(locale="en", strength=2, numeric_ordering=True)
+
+            self.assertEqual(
+                collation_module._truncate_uca_key((1, 2, 0, 3, 0, 4), spec),
+                ((1, 2), (3,), (4,)),
+            )
+            self.assertEqual(
+                collation_module._split_uca_levels((1, 2, 0, 3, 0, 4)),
+                ((1, 2), (3,), (4,)),
+            )
+            self.assertEqual(
+                collation_module._pyuca_collation_key("Az", spec),
+                ((1, 2), (3,), (4,)),
+            )
+            self.assertEqual(
+                collation_module._pyuca_collation_key("a10b", numeric_spec),
+                ((1, ((97,),)), (0, 10), (1, ((98,),))),
+            )
+
+        self.assertEqual(collation_module._strip_accents("Árbol"), "Arbol")
+
+    def test_fallback_primary_key_and_python_string_comparison_branches(self):
+        with (
+            patch("mongoeco.core.collation._can_use_icu_collation", return_value=False),
+            patch("mongoeco.core.collation._can_use_pyuca_collation", return_value=False),
+        ):
+            strength_one = CollationSpec(locale="en", strength=1)
+            strength_two_numeric = CollationSpec(locale="en", strength=2, numeric_ordering=True)
+            case_level = CollationSpec(locale="en", strength=2, case_level=True)
+
+            self.assertEqual(
+                collation_module._collation_primary_key("Álvaro", strength_one),
+                ("alvaro",),
+            )
+            self.assertEqual(
+                collation_module._collation_primary_key("A10b", strength_two_numeric),
+                ((1, "a"), (0, 10), (1, "b")),
+            )
+            self.assertLess(compare_with_collation("a", "b", collation=case_level), 0)
+            self.assertGreater(compare_with_collation("b", "a", collation=case_level), 0)

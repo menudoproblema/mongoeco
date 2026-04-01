@@ -16,8 +16,10 @@ from mongoeco.change_streams import (
     _resolve_change_stream_offset,
     compile_change_stream_pipeline,
 )
+from mongoeco._change_streams.pipeline import apply_full_document_mode, normalize_full_document_mode
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ChangeEventSnapshot, encode_change_stream_token
+from mongoeco._change_streams import journal as journal_module
 
 
 class ChangeStreamPipelineTests(unittest.TestCase):
@@ -74,8 +76,39 @@ class ChangeStreamPipelineTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             compile_change_stream_pipeline([{"$project": []}])
 
+    def test_change_stream_pipeline_helpers_cover_full_document_modes(self):
+        with self.assertRaises(TypeError):
+            normalize_full_document_mode(1)
+
+        self.assertEqual(normalize_full_document_mode("required"), "required")
+        with self.assertRaises(OperationFailure):
+            normalize_full_document_mode("later")
+
+        insert = {"operationType": "insert", "fullDocument": {"_id": 1}}
+        update = {"operationType": "update", "fullDocument": {"_id": 1}}
+        self.assertIs(apply_full_document_mode(insert, "default"), insert)
+        self.assertNotIn("fullDocument", apply_full_document_mode(update, "default"))
+        self.assertEqual(apply_full_document_mode(update, "whenAvailable"), update)
+        with self.assertRaisesRegex(OperationFailure, "required"):
+            apply_full_document_mode({"operationType": "update"}, "required")
+
 
 class ChangeStreamHubTests(unittest.TestCase):
+    def test_hub_constructor_and_properties_validate_inputs(self):
+        with self.assertRaises(TypeError):
+            ChangeStreamHub(max_retained_events=0)
+        with self.assertRaises(TypeError):
+            ChangeStreamHub(journal_path="")
+        with self.assertRaises(TypeError):
+            ChangeStreamHub(journal_fsync=1)
+        with self.assertRaises(TypeError):
+            ChangeStreamHub(journal_max_log_bytes=0)
+
+        hub = ChangeStreamHub(max_retained_events=None)
+        self.assertIsNone(hub.journal_path)
+        self.assertFalse(hub.journal_fsync)
+        self.assertEqual(hub.journal_max_log_bytes, 1_048_576)
+
     def test_hub_backend_info_reports_local_persistent_capabilities(self):
         hub = ChangeStreamHub(
             max_retained_events=12,
@@ -407,6 +440,115 @@ class ChangeStreamHubTests(unittest.TestCase):
         self.assertEqual(state_before["journalMaxLogBytes"], 4096)
         self.assertFalse(state_after["eventLogExists"])
         self.assertGreaterEqual(state_after["journalCompactionCount"], 1)
+
+    def test_hub_covers_none_retention_threshold_and_empty_compaction_paths(self):
+        hub = ChangeStreamHub(max_retained_events=None)
+        hub.publish(
+            operation_type="insert",
+            db_name="alpha",
+            coll_name="users",
+            document_key={"_id": 1},
+        )
+        self.assertEqual(hub.current_offset(), 1)
+        hub.compact_journal()
+        self.assertEqual(hub.current_offset(), 1)
+
+    def test_hub_wait_for_event_detects_history_expiring_while_waiting(self):
+        hub = ChangeStreamHub(max_retained_events=1)
+        first = ChangeEventSnapshot(
+            token=2,
+            operation_type="insert",
+            db_name="alpha",
+            coll_name="users",
+            document_key={"_id": 2},
+        )
+
+        def _expire_history(_timeout=None):
+            hub._events = [first]
+            hub._base_offset = 1
+            hub._next_token = 3
+
+        with patch.object(hub._condition, "wait", side_effect=_expire_history):
+            with self.assertRaisesRegex(OperationFailure, "history is no longer available"):
+                hub.wait_for_event(0, timeout_seconds=None)
+
+    def test_hub_load_journal_rejects_invalid_payloads_and_tolerates_blank_or_duplicate_log_entries(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            log_path = f"{journal_path}.events"
+            with open(journal_path, "w", encoding="utf-8") as handle:
+                json.dump({"version": 2, "base_offset": 0, "next_token": 1, "events": []}, handle)
+
+            with self.assertRaisesRegex(OperationFailure, "journal could not be loaded"):
+                ChangeStreamHub(journal_path=journal_path)
+
+            with open(journal_path, "w", encoding="utf-8") as handle:
+                json.dump({"version": 1, "base_offset": 0, "next_token": 2, "events": []}, handle)
+            event = ChangeEventSnapshot(
+                token=1,
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 1},
+            )
+            with open(log_path, "w", encoding="utf-8") as handle:
+                handle.write("\n")
+                handle.write(journal_module.journal_event_entry(event))
+                handle.write("\n")
+
+            hub = ChangeStreamHub(journal_path=journal_path)
+            self.assertEqual(hub.current_offset(), 0)
+
+    def test_hub_load_journal_handles_event_log_open_failures(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            log_path = f"{journal_path}.events"
+            with open(journal_path, "w", encoding="utf-8") as handle:
+                json.dump({"version": 1, "base_offset": 0, "next_token": 1, "events": []}, handle)
+            with open(log_path, "w", encoding="utf-8") as handle:
+                handle.write("")
+
+            with patch("mongoeco._change_streams.hub.open", side_effect=OSError("boom")):
+                with self.assertRaisesRegex(OperationFailure, "journal could not be loaded"):
+                    ChangeStreamHub(journal_path=journal_path)
+
+
+class ChangeStreamJournalTests(unittest.TestCase):
+    def test_journal_helpers_validate_shapes_and_fsync_errors(self):
+        event = ChangeEventSnapshot(
+            token=1,
+            operation_type="insert",
+            db_name="alpha",
+            coll_name="users",
+            document_key={"_id": 1},
+            full_document={"_id": 1},
+            update_description={"updatedFields": {"name": "Ada"}},
+        )
+
+        document = journal_module.snapshot_to_document(event)
+        self.assertEqual(journal_module.snapshot_from_document(document), event)
+        self.assertEqual(journal_module.snapshot_from_log_entry(json.loads(journal_module.journal_event_entry(event))), event)
+
+        with self.assertRaisesRegex(OperationFailure, "journal could not be loaded"):
+            journal_module.snapshot_from_document("bad")
+        with self.assertRaisesRegex(OperationFailure, "journal could not be loaded"):
+            journal_module.snapshot_from_document({"token": 0, "operation_type": "insert", "db_name": "a", "coll_name": "b", "document_key": {}})
+        with self.assertRaisesRegex(OperationFailure, "journal could not be loaded"):
+            journal_module.snapshot_from_document({"token": 1, "operation_type": "insert", "db_name": "a", "coll_name": "b", "document_key": {}, "full_document": []})
+        with self.assertRaisesRegex(OperationFailure, "journal could not be loaded"):
+            journal_module.snapshot_from_log_entry("bad")
+        with self.assertRaisesRegex(OperationFailure, "journal could not be loaded"):
+            journal_module.snapshot_from_log_entry({"version": 2, "event": {}, "checksum": "x"})
+
+        with patch("mongoeco._change_streams.journal.os.open", side_effect=OSError("no-open")):
+            journal_module.fsync_parent_directory("/tmp/example")
+        with (
+            patch("mongoeco._change_streams.journal.os.open", return_value=10),
+            patch("mongoeco._change_streams.journal.os.fsync", side_effect=OSError("no-fsync")),
+            patch("mongoeco._change_streams.journal.os.close") as close_mock,
+        ):
+            journal_module.fsync_parent_directory("/tmp/example")
+        close_mock.assert_called_once_with(10)
 
 
 class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
