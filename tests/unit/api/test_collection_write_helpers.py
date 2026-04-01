@@ -704,9 +704,40 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
             [1, 2],
         )
         self.assertEqual(
+            _resolve_distinct_candidates([[[]], []], exact_found=True, exact_value=[[]]),
+            [[]],
+        )
+        self.assertEqual(
+            _resolve_distinct_candidates(
+                [[[[1]], [[1]]], [[1]], [[1]]],
+                exact_found=True,
+                exact_value=[[[1]], [[1]]],
+            ),
+            [[[1]], [[1]]],
+        )
+        self.assertEqual(
             _resolve_distinct_candidates([1, 2], exact_found=False, exact_value=None),
             [1, 2],
         )
+
+    def test_distinct_supports_nested_empty_array_values(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                await collection.insert_many(
+                    [
+                        {"_id": "1", "matrix": [[]]},
+                        {"_id": "2", "matrix": [[1, 2], []]},
+                        {"_id": "3", "matrix": []},
+                    ]
+                )
+                return await collection.distinct("matrix")
+            finally:
+                await engine.disconnect()
+
+        self.assertEqual(asyncio.run(_exercise()), [[], [1, 2]])
 
     def test_bulk_write_records_upserted_ids_for_update_many_and_replace_one(self):
         async def _exercise():

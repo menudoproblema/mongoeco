@@ -2985,14 +2985,12 @@ def _resolve_distinct_candidates(
         if isinstance(exact_value, list):
             return []
         return [exact_value]
-    if exact_found and exact_value == [] and values == [[]]:
+    if not exact_found or not isinstance(exact_value, list):
+        return values
+    if exact_value == [] and values == [[]]:
         return []
-    if (
-        exact_found
-        and isinstance(exact_value, list)
-        and len(values) > 1
-        and values[0] == exact_value
-        and values[1:] == list(exact_value)
-    ):
-        return values[1:]
+    if values and values[0] == exact_value:
+        expanded_members = list(exact_value)
+        if values[1:] == expanded_members:
+            return expanded_members
     return values
