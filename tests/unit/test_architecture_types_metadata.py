@@ -1,6 +1,11 @@
+import base64
 import asyncio
+import builtins
 import decimal
+import importlib.util
 import inspect
+import json
+from pathlib import Path
 from typing import get_type_hints
 import unittest
 
@@ -75,11 +80,16 @@ from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.types import EngineIndexRecord, IndexDefinition, IndexInformation, IndexModel, default_id_index_definition
 from mongoeco.types import (
     AggregateExplanation,
+    ChangeEventSnapshot,
     BulkWriteErrorDetails,
     CodecOptions,
+    DBRef,
     ExecutionLineageStep,
+    ProfileEntrySnapshot,
     PhysicalPlanStep,
     PlanningIssue,
+    ProfilingCommandResult,
+    SON,
     SearchIndexDefinition,
     SearchIndexModel,
     PlanningMode,
@@ -110,6 +120,7 @@ from mongoeco.types import (
     UpsertedWriteEntry,
     WriteErrorEntry,
     WriteCommandResult,
+    UNDEFINED,
     default_id_index_document,
     default_id_index_information,
     is_ordered_index_spec,
@@ -127,6 +138,52 @@ from mongoeco.core.operators import UpdateEngine
 
 
 class ArchitectureTypeMetadataTests(unittest.TestCase):
+    def test_undefined_dbref_and_snapshot_metadata_serialize_cleanly(self):
+        profile_result = ProfilingCommandResult(previous_level=0, slow_ms=100)
+        profile_entry = ProfileEntrySnapshot(
+            profile_id=7,
+            op="query",
+            namespace="db.users",
+            command={"comment": "trace"},
+            millis=1.5,
+            micros=1500,
+            ts="2026-04-01T00:00:00+00:00",
+            engine="memory",
+            execution_lineage=(ExecutionLineageStep(runtime="python", phase="match", detail="scan"),),
+            fallback_reason="full-scan",
+            errmsg="boom",
+        )
+        change_event = ChangeEventSnapshot(
+            token=9,
+            operation_type="update",
+            db_name="db",
+            coll_name="users",
+            document_key={"_id": "1"},
+            full_document={"_id": "1", "name": "Ada"},
+            update_description={"updatedFields": {"name": "Ada"}},
+        )
+        dbref = DBRef("users", "1", database="db", extras={"tenant": "a"})
+
+        self.assertEqual(repr(UNDEFINED), "UNDEFINED")
+        self.assertEqual(UNDEFINED, type(UNDEFINED)())
+        self.assertEqual(hash(UNDEFINED), hash(type(UNDEFINED)))
+        self.assertEqual(
+            dbref.as_document(),
+            SON([("$ref", "users"), ("$id", "1"), ("$db", "db"), ("tenant", "a")]),
+        )
+        self.assertEqual(
+            profile_result.to_document(),
+            {"was": 0, "slowms": 100, "sampleRate": 1.0, "ok": 1.0},
+        )
+        self.assertEqual(profile_entry.to_document()["fallbackReason"], "full-scan")
+        self.assertEqual(profile_entry.to_document()["errmsg"], "boom")
+        self.assertEqual(profile_entry.to_document()["executionLineage"][0]["phase"], "match")
+        encoded_token = change_event.to_document()["_id"]["_data"]
+        payload = json.loads(base64.urlsafe_b64decode(encoded_token + "==").decode("utf-8"))
+        self.assertEqual(payload, {"v": 1, "t": 9})
+        self.assertEqual(change_event.to_document()["clusterTime"], 9)
+        self.assertEqual(change_event.to_document()["fullDocument"]["name"], "Ada")
+
     def test_public_bson_value_types_normalize_equality_and_ordering(self):
         from mongoeco.types import Binary, Decimal128, Regex, Timestamp
 
@@ -135,6 +192,55 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         self.assertEqual(Regex("^a", "mi").flags, "im")
         self.assertGreater(Timestamp(10, 0), Timestamp(2, 0))
         self.assertEqual(Decimal128(decimal.Decimal("NaN")), Decimal128(decimal.Decimal("NaN")))
+
+    def test_object_id_accepts_valid_inputs_and_rejects_invalid_shapes(self):
+        from mongoeco.types import ObjectId
+
+        generated = ObjectId()
+        copied = ObjectId(str(generated))
+
+        self.assertEqual(str(copied), str(generated))
+        self.assertTrue(ObjectId.is_valid(str(generated)))
+        self.assertTrue(ObjectId.is_valid(getattr(generated, "binary", bytes.fromhex(str(generated)))))
+        self.assertIsInstance(generated.generation_time, int)
+        with self.assertRaises(TypeError):
+            ObjectId(1)  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            ObjectId("abc")
+        with self.assertRaises(ValueError):
+            ObjectId(b"123")
+
+    def test_types_module_fallback_object_id_works_without_bson_dependency(self):
+        module_path = Path(__file__).resolve().parents[2] / "src" / "mongoeco" / "types.py"
+        spec = importlib.util.spec_from_file_location("mongoeco_types_no_bson_test", module_path)
+        assert spec is not None
+        assert spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        original_import = builtins.__import__
+
+        def _fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name.startswith("bson"):
+                raise ModuleNotFoundError(name)
+            return original_import(name, globals, locals, fromlist, level)
+
+        try:
+            builtins.__import__ = _fake_import
+            spec.loader.exec_module(module)
+        finally:
+            builtins.__import__ = original_import
+
+        generated = module.ObjectId()
+        cloned = module.ObjectId(str(generated))
+
+        self.assertEqual(str(cloned), str(generated))
+        self.assertTrue(module.ObjectId.is_valid(str(generated)))
+        self.assertTrue(module.ObjectId.is_valid(generated.binary))
+        self.assertFalse(module.ObjectId.is_valid("short"))
+        self.assertEqual(repr(generated), f"ObjectId('{generated}')")
+        with self.assertRaises(TypeError):
+            module.ObjectId(1)
+        with self.assertRaises(ValueError):
+            module.ObjectId(b"123")
 
     def test_operation_option_support_exposes_effective_and_noop_statuses(self):
         self.assertEqual(
