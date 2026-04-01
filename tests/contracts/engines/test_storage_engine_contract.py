@@ -5,6 +5,7 @@ from mongoeco.api.operations import compile_update_operation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.errors import DuplicateKeyError, OperationFailure
+from mongoeco.types import SearchIndexDefinition
 from tests.support import ENGINE_FACTORIES, open_engine
 
 
@@ -438,3 +439,32 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
 
                     self.assertEqual([doc["_id"] for doc in matched], ["1", "2"])
                     self.assertEqual(count, 2)
+
+    async def test_engine_search_index_lifecycle_round_trips_consistently(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_engine(engine_name) as engine:
+                    created = await engine.create_search_index(
+                        "db",
+                        "docs",
+                        SearchIndexDefinition(
+                            {"mappings": {"dynamic": False}},
+                            name="default",
+                        ),
+                    )
+                    self.assertEqual(created, "default")
+
+                    listed = await engine.list_search_indexes("db", "docs")
+                    self.assertEqual([index["name"] for index in listed], ["default"])
+
+                    await engine.update_search_index(
+                        "db",
+                        "docs",
+                        "default",
+                        {"mappings": {"dynamic": True}},
+                    )
+                    updated = await engine.list_search_indexes("db", "docs")
+                    self.assertEqual(updated[0]["latestDefinition"], {"mappings": {"dynamic": True}})
+
+                    await engine.drop_search_index("db", "docs", "default")
+                    self.assertEqual(await engine.list_search_indexes("db", "docs"), [])

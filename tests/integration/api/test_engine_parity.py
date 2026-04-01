@@ -12,7 +12,18 @@ from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import DuplicateKeyError
-from mongoeco.types import DBRef, ObjectId, ReturnDocument, UNDEFINED
+from mongoeco.types import (
+    DBRef,
+    DeleteOne,
+    InsertOne,
+    ObjectId,
+    ReplaceOne,
+    ReturnDocument,
+    SearchIndexModel,
+    UNDEFINED,
+    UpdateMany,
+    UpdateOne,
+)
 from tests.support import open_client
 
 
@@ -888,6 +899,105 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "deleted": deleted.deleted_count,
                     "remaining": remaining,
                 }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_bulk_write_results_and_final_state_match_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                bulk = await collection.bulk_write(
+                    [
+                        InsertOne({"_id": "1", "kind": "view", "count": 1}),
+                        InsertOne({"_id": "2", "kind": "view", "count": 2}),
+                        UpdateOne({"_id": "1"}, {"$set": {"tag": "updated"}}),
+                        UpdateMany({"kind": "view"}, {"$inc": {"count": 1}}),
+                        ReplaceOne({"_id": "2"}, {"_id": "2", "kind": "view", "count": 9, "tag": "replaced"}),
+                        DeleteOne({"_id": "1"}),
+                    ],
+                    ordered=True,
+                )
+                remaining = await collection.find({}, sort=[("_id", 1)]).to_list()
+
+                results[engine_name] = {
+                    "counts": {
+                        "inserted": bulk.inserted_count,
+                        "matched": bulk.matched_count,
+                        "modified": bulk.modified_count,
+                        "deleted": bulk.deleted_count,
+                        "upserted": bulk.upserted_count,
+                    },
+                    "remaining": remaining,
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_search_index_lifecycle_matches_in_memory_and_sqlite(self):
+        results: dict[str, list[dict[str, object]]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("docs")
+                await collection.create_search_index({"mappings": {"dynamic": False}})
+                await collection.create_search_indexes(
+                    [
+                        SearchIndexModel({"mappings": {"dynamic": True}}, name="by_text"),
+                        SearchIndexModel(
+                            {
+                                "fields": [
+                                    {
+                                        "type": "vector",
+                                        "path": "embedding",
+                                        "numDimensions": 3,
+                                        "similarity": "cosine",
+                                    }
+                                ]
+                            },
+                            name="by_vector",
+                            type="vectorSearch",
+                        ),
+                    ]
+                )
+                await collection.update_search_index("default", {"mappings": {"dynamic": True}})
+                await collection.drop_search_index("by_vector")
+                listed = await collection.list_search_indexes().to_list()
+                results[engine_name] = [
+                    {
+                        "name": item["name"],
+                        "latestDefinition": item["latestDefinition"],
+                        "queryMode": item["queryMode"],
+                        "capabilities": item["capabilities"],
+                        "status": item["status"],
+                    }
+                    for item in listed
+                ]
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_watch_event_shape_matches_in_memory_and_sqlite(self):
+        results: dict[str, list[dict[str, object]]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.observe.get_collection("items")
+                stream = collection.watch(max_await_time_ms=100, full_document="updateLookup")
+
+                await collection.insert_one({"_id": "1", "name": "Ada"})
+                await collection.update_one({"_id": "1"}, {"$set": {"name": "Ada Lovelace"}})
+                await collection.delete_one({"_id": "1"})
+                await collection.drop()
+
+                captured: list[dict[str, object]] = []
+                for _ in range(4):
+                    event = await stream.try_next()
+                    self.assertIsNotNone(event)
+                    payload = {
+                        "operationType": event["operationType"],
+                        "ns": event["ns"],
+                    }
+                    if "fullDocument" in event:
+                        payload["fullDocument"] = event["fullDocument"]
+                    captured.append(payload)
+                results[engine_name] = captured
 
         self.assertEqual(results["memory"], results["sqlite"])
 
