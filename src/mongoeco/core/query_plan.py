@@ -5,6 +5,7 @@ import uuid
 from typing import Any, TypeIs
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.bson_scalars import INT32_MAX, unwrap_bson_numeric
 from mongoeco.errors import OperationFailure
 from mongoeco.types import BsonBindings, BitwiseMaskOperand, BsonValue, Filter, PlanningIssue, PlanningMode, Regex
 
@@ -298,6 +299,7 @@ def _normalize_type_aliases(type_specs: tuple[BsonValue, ...]) -> frozenset[str]
 
 def _coerce_bitwise_mask(operand: Any) -> int:
     int64_max = (1 << 63) - 1
+    operand = unwrap_bson_numeric(operand)
     if isinstance(operand, bool):
         raise ValueError("bitwise query operators do not accept boolean masks")
     if isinstance(operand, int):
@@ -320,6 +322,15 @@ def _coerce_bitwise_mask(operand: Any) -> int:
     raise ValueError("bitwise query operators require a numeric mask, BinData, or list of bit positions")
 
 
+def _validate_filter_field_name(field: str) -> None:
+    if not field:
+        raise OperationFailure("filter field names must not be empty")
+    if "\x00" in field:
+        raise OperationFailure("filter field names must not contain null bytes")
+    if any(segment == "" for segment in field.split(".")):
+        raise OperationFailure("filter field names must not contain empty path segments")
+
+
 def _compile_field_condition(
     field: str,
     condition: Any,
@@ -327,6 +338,7 @@ def _compile_field_condition(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     depth: int = 0,
 ) -> QueryNode:
+    _validate_filter_field_name(field)
     if isinstance(condition, Regex):
         return RegexCondition(
             field,
@@ -403,7 +415,7 @@ def _compile_field_condition(
                 raise ValueError("$all necesita una lista")
             clauses.append(AllCondition(field, tuple(value)))
         elif operator == "$size":
-            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0 or value > INT32_MAX:
                 raise ValueError("$size necesita un entero no negativo")
             clauses.append(SizeCondition(field, value))
         elif operator == "$mod":
@@ -621,6 +633,7 @@ def _compile_filter_strict(
             continue
         if isinstance(key, str) and key.startswith("$"):
             raise OperationFailure(f"Unsupported top-level query operator: {key}")
+        _validate_filter_field_name(key)
         clauses.append(_compile_field_condition(key, value, dialect=dialect, depth=depth))
 
     if not clauses:

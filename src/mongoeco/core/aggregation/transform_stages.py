@@ -190,9 +190,12 @@ def _apply_replace_root(
 ) -> list[Document]:
     if not isinstance(spec, dict) or "newRoot" not in spec:
         raise OperationFailure("$replaceRoot requires a document with newRoot")
+    new_root_spec = spec["newRoot"]
+    if new_root_spec is None or isinstance(new_root_spec, (int, float, bool, list)):
+        raise OperationFailure("$replaceRoot newRoot must be a document-producing expression")
     result: list[Document] = []
     for document in documents:
-        new_root = evaluate_expression(document, spec["newRoot"], variables, dialect=dialect)
+        new_root = evaluate_expression(document, new_root_spec, variables, dialect=dialect)
         if not isinstance(new_root, dict):
             raise OperationFailure("$replaceRoot newRoot must evaluate to a document")
         result.append(deepcopy(new_root))

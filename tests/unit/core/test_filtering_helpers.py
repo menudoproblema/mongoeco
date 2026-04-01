@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import mongoeco.core.filtering as filtering_module
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
+from mongoeco.core.bson_scalars import BsonInt32, BsonInt64
 from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.errors import OperationFailure
@@ -336,6 +337,7 @@ class FilteringHelperTests(unittest.TestCase):
         uid = uuid.UUID("12345678-1234-5678-1234-567812345678")
 
         self.assertEqual(QueryEngine._coerce_bitwise_mask(bytes([0b00000101])), 5)
+        self.assertEqual(QueryEngine._coerce_bitwise_mask(BsonInt32(5)), 5)
         self.assertEqual(
             QueryEngine._coerce_bitwise_mask(uid),
             int.from_bytes(uid.bytes, byteorder="little", signed=False),
@@ -356,12 +358,17 @@ class FilteringHelperTests(unittest.TestCase):
         self.assertIsNone(QueryEngine._coerce_bitwise_candidate(1 << 80))
         self.assertIsNone(QueryEngine._coerce_bitwise_candidate(float(1 << 80)))
         self.assertEqual(QueryEngine._coerce_bitwise_candidate(10.0), 10)
+        self.assertEqual(QueryEngine._coerce_bitwise_candidate(BsonInt64(10)), 10)
         self.assertEqual(QueryEngine._coerce_bitwise_candidate(bytes([0b00000101])), 5)
         self.assertEqual(
             QueryEngine._coerce_bitwise_candidate(uid),
             int.from_bytes(uid.bytes, byteorder="little", signed=False),
         )
         self.assertFalse(QueryEngine._evaluate_bitwise({}, "flags", "$bitsAllSet", 1))
+        self.assertTrue(QueryEngine._evaluate_bitwise({"flags": BsonInt64(0b1010)}, "flags", "$bitsAllSet", BsonInt32(0b1000)))
+        self.assertFalse(QueryEngine._evaluate_bitwise({"flags": -1}, "flags", "$bitsAllSet", bytes([0] * 12 + [0b1])))
+        self.assertTrue(QueryEngine._mod_remainder_matches(0.09999999999999998, 0.1))
+        self.assertTrue(QueryEngine._evaluate_mod({"value": 0.9}, "value", 0.3, 0.0))
         with self.assertRaises(ValueError):
             QueryEngine._evaluate_bitwise({"flags": 3}, "flags", "$bitsNope", 1)
 

@@ -8,12 +8,11 @@ from mongoeco.types import DBRef
 
 
 class PathHelpersTests(unittest.TestCase):
-    def test_set_document_value_returns_false_for_non_numeric_list_leaf_segment(self):
+    def test_set_document_value_rejects_non_numeric_list_leaf_segment(self):
         document = []
 
-        changed = set_document_value(document, "name", "Ada")
-
-        self.assertFalse(changed)
+        with self.assertRaises(OperationFailure):
+            set_document_value(document, "name", "Ada")
         self.assertEqual(document, [])
 
     def test_set_document_value_extends_list_and_detects_noop_on_leaf_assignment(self):
@@ -88,12 +87,11 @@ class PathHelpersTests(unittest.TestCase):
         self.assertFalse(changed_scalar)
         self.assertFalse(changed_list)
 
-    def test_set_document_value_returns_false_for_non_numeric_nested_list_segment(self):
+    def test_set_document_value_rejects_non_numeric_nested_list_segment(self):
         document = []
 
-        changed = set_document_value(document, "name.value", "Ada")
-
-        self.assertFalse(changed)
+        with self.assertRaises(OperationFailure):
+            set_document_value(document, "name.value", "Ada")
         self.assertEqual(document, [])
 
     def test_set_document_value_extends_nested_list_and_creates_container(self):

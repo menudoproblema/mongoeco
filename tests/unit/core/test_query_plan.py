@@ -243,6 +243,8 @@ class QueryPlanTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compile_filter({"tags": {"$size": -1}})
         with self.assertRaises(ValueError):
+            compile_filter({"tags": {"$size": 1 << 40}})
+        with self.assertRaises(ValueError):
             compile_filter({"count": {"$mod": 3}})
         with self.assertRaises(ValueError):
             compile_filter({"count": {"$mod": [0, 1]}})
@@ -262,6 +264,18 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({"name": {"$not": {"$regex": "^ad", "x": 1}}})
         with self.assertRaises(ValueError):
             compile_filter({"items": {"$elemMatch": 1}})
+
+    def test_compile_filter_rejects_invalid_field_names(self):
+        for filter_spec in (
+            {"": 1},
+            {"a.": 1},
+            {".a": 1},
+            {"a..b": 1},
+            {"field\x00name": 1},
+        ):
+            with self.subTest(filter_spec=filter_spec):
+                with self.assertRaises(OperationFailure):
+                    compile_filter(filter_spec)
 
     def test_query_plan_private_helpers_cover_regex_type_and_bitwise_branches(self):
         compiled = re.compile("^ad", re.IGNORECASE | re.MULTILINE | re.DOTALL | re.VERBOSE)

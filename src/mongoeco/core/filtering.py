@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - optional dependency
     BsonMinKey = None
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.bson_scalars import bson_numeric_alias
+from mongoeco.core.bson_scalars import bson_numeric_alias, unwrap_bson_numeric
 from mongoeco.core.collation import CollationSpec, compare_with_collation, values_equal_with_collation
 from mongoeco.core.identity import canonical_document_id
 from mongoeco.errors import OperationFailure
@@ -1157,6 +1157,7 @@ class QueryEngine:
     def _coerce_bitwise_mask(operand: Any) -> int:
         int64_min = -(1 << 63)
         int64_max = (1 << 63) - 1
+        operand = unwrap_bson_numeric(operand)
         if isinstance(operand, bool):
             raise ValueError("bitwise query operators do not accept boolean masks")
         if isinstance(operand, int):
@@ -1182,6 +1183,7 @@ class QueryEngine:
     def _coerce_bitwise_candidate(candidate: Any) -> int | None:
         int64_min = -(1 << 63)
         int64_max = (1 << 63) - 1
+        candidate = unwrap_bson_numeric(candidate)
         if isinstance(candidate, bool):
             return None
         if isinstance(candidate, int):
@@ -1219,13 +1221,18 @@ class QueryEngine:
             candidate_value = QueryEngine._coerce_bitwise_candidate(candidate)
             if candidate_value is None:
                 continue
-            if operator == "$bitsAllSet" and (candidate_value & resolved_mask) == resolved_mask:
+            candidate_bits = (
+                candidate_value & ((1 << 64) - 1)
+                if isinstance(candidate_value, int) and candidate_value < 0
+                else candidate_value
+            )
+            if operator == "$bitsAllSet" and (candidate_bits & resolved_mask) == resolved_mask:
                 return True
-            if operator == "$bitsAnySet" and (candidate_value & resolved_mask) != 0:
+            if operator == "$bitsAnySet" and (candidate_bits & resolved_mask) != 0:
                 return True
-            if operator == "$bitsAllClear" and (candidate_value & resolved_mask) == 0:
+            if operator == "$bitsAllClear" and (candidate_bits & resolved_mask) == 0:
                 return True
-            if operator == "$bitsAnyClear" and (~candidate_value & resolved_mask) != 0:
+            if operator == "$bitsAnyClear" and (~candidate_bits & resolved_mask) != 0:
                 return True
         if operator in {"$bitsAllSet", "$bitsAnySet", "$bitsAllClear", "$bitsAnyClear"}:
             return False
@@ -1290,9 +1297,15 @@ class QueryEngine:
             and math.isfinite(value)
             and math.isfinite(divisor)
             and divisor != 0
-            and QueryEngine._mongo_remainder(value, divisor) == remainder
+            and QueryEngine._mod_remainder_matches(QueryEngine._mongo_remainder(value, divisor), remainder)
             for value in values
         )
+
+    @staticmethod
+    def _mod_remainder_matches(actual: int | float, expected: int | float) -> bool:
+        if isinstance(actual, float) or isinstance(expected, float):
+            return math.isclose(float(actual), float(expected), rel_tol=1e-12, abs_tol=1e-12)
+        return actual == expected
 
     @staticmethod
     def _mongo_remainder(value: int | float, divisor: int | float) -> int | float:

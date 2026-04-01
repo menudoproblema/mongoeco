@@ -1,4 +1,5 @@
 from copy import deepcopy
+import re
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -15,6 +16,9 @@ from mongoeco.core.aggregation.runtime import (
     _require_union_with_spec,
     evaluate_expression,
 )
+
+
+_LOOKUP_LET_VARIABLE_RE = re.compile(r"^(?:[a-z]|[^\x00-\x7f])(?:[A-Za-z0-9_]|[^\x00-\x7f])*$")
 
 
 def _apply_lookup(
@@ -50,6 +54,8 @@ def _apply_lookup(
         if "pipeline" in lookup:
             scoped = dict(variables or {})
             for name, expression in lookup["let"].items():
+                if not _LOOKUP_LET_VARIABLE_RE.match(name):
+                    raise OperationFailure("$lookup let variable names must begin with a lowercase letter or non-ascii character")
                 scoped[name] = evaluate_expression(document, expression, variables, dialect=dialect)
             from mongoeco.core.aggregation.stages import apply_pipeline
 
@@ -124,7 +130,7 @@ def _apply_facet(
         if not isinstance(field, str):
             raise OperationFailure("$facet field names must be strings")
         faceted[field] = apply_pipeline(
-            documents,
+            list(documents),
             _require_pipeline_spec("$facet", pipeline),
             collection_resolver=collection_resolver,
             variables=variables,

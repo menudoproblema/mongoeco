@@ -104,7 +104,7 @@ def set_document_value(doc: dict[str, Any] | list[Any], path: str, value: Any) -
         if "." not in path:
             index = _parse_index(path)
             if index is None:
-                return False
+                raise OperationFailure(f"Cannot create field '{path}' in array element")
             _ensure_array_index_within_limit(index)
             if index >= len(doc):
                 doc.extend([None] * (index - len(doc) + 1))
@@ -116,7 +116,7 @@ def set_document_value(doc: dict[str, Any] | list[Any], path: str, value: Any) -
         first, rest = path.split(".", 1)
         index = _parse_index(first)
         if index is None:
-            return False
+            raise OperationFailure(f"Cannot create field '{rest}' in array element")
         _ensure_array_index_within_limit(index)
         if index >= len(doc):
             doc.extend([None] * (index - len(doc) + 1))
