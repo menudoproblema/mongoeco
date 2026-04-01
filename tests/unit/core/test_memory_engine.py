@@ -11,7 +11,7 @@ from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, ExecutionTimeout, OperationFailure
 from mongoeco.session import ClientSession
-from mongoeco.types import UNDEFINED
+from mongoeco.types import EngineIndexRecord, UNDEFINED
 
 
 class _UnhashableValue:
@@ -766,6 +766,54 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertIsNone(found)
         self.assertEqual(remaining, [{"_id": "fresh", "expires_at": future, "name": "new"}])
+
+    def test_ttl_helpers_cover_invalid_values_naive_datetimes_and_empty_collections(self):
+        engine = MemoryEngine()
+        now = datetime.datetime(2026, 4, 1, tzinfo=datetime.timezone.utc)
+        ttl_index = EngineIndexRecord(
+            name="expires_at_1",
+            fields=["expires_at"],
+            key=[("expires_at", 1)],
+            unique=False,
+            expire_after_seconds=30,
+        )
+        invalid_index = EngineIndexRecord(
+            name="compound",
+            fields=["expires_at", "other"],
+            key=[("expires_at", 1), ("other", 1)],
+            unique=False,
+            expire_after_seconds=30,
+        )
+
+        self.assertIsNone(engine._coerce_ttl_datetime("2026-04-01"))
+        self.assertEqual(
+            engine._coerce_ttl_datetime(datetime.datetime(2026, 4, 1, 12, 0)),
+            datetime.datetime(2026, 4, 1, 12, 0, tzinfo=datetime.timezone.utc),
+        )
+        self.assertFalse(
+            engine._document_expired_by_ttl(
+                {"expires_at": "not-a-date"},
+                ttl_index,
+                now=now,
+            )
+        )
+        self.assertFalse(
+            engine._document_expired_by_ttl(
+                {"expires_at": now},
+                invalid_index,
+                now=now,
+            )
+        )
+        self.assertEqual(
+            engine._purge_expired_documents_locked(
+                "db",
+                "missing",
+                indexes_view={"db": {"missing": [ttl_index]}},
+                storage_view={"db": {"missing": {}}},
+                index_data_view={"db": {"missing": {}}},
+            ),
+            0,
+        )
 
     async def test_hint_rejects_partial_index_when_query_does_not_imply_filter(self):
         engine = MemoryEngine()

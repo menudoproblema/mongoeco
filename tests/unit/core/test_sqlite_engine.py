@@ -1767,6 +1767,96 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_hint_by_key_pattern_supports_id_index_and_rejects_unusable_partial_index(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com", "active": False})
+            await engine.create_index(
+                "db",
+                "coll",
+                ["email"],
+                partial_filter_expression={"active": True},
+                name="idx_email_active",
+            )
+
+            id_plan = await self._explain(
+                engine,
+                "db",
+                "coll",
+                {"_id": "1"},
+                hint=[("_id", 1)],
+            )
+            with self.assertRaises(OperationFailure):
+                await self._explain(
+                    engine,
+                    "db",
+                    "coll",
+                    {"email": "a@example.com"},
+                    hint=[("email", 1)],
+                )
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(id_plan.hinted_index, "_id_")
+
+    def test_serialize_value_for_sql_preserves_scalars_and_encodes_complex_values(self):
+        engine = SQLiteEngine()
+
+        self.assertIsNone(engine._serialize_value_for_sql(None))
+        self.assertEqual(engine._serialize_value_for_sql(3), 3)
+        self.assertEqual(engine._serialize_value_for_sql(3.5), 3.5)
+        self.assertEqual(engine._serialize_value_for_sql("Ada"), "Ada")
+        self.assertEqual(engine._serialize_value_for_sql(True), True)
+        encoded = engine._serialize_value_for_sql({"a": 1})
+
+        self.assertEqual(encoded, {"a": 1})
+
+    async def test_get_document_sync_uses_profiler_namespace_entries(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            engine._profiler.set_level("db", 2)
+            engine._profiler.record(
+                "db",
+                op="query",
+                namespace="db.system.profile",
+                command={"comment": "trace"},
+                duration_micros=1000,
+            )
+            document = engine._get_document_sync(
+                "db",
+                engine._PROFILE_COLLECTION_NAME,
+                1,
+                {"command.comment": 1},
+            )
+            missing = engine._get_document_sync(
+                "db",
+                engine._PROFILE_COLLECTION_NAME,
+                99,
+                None,
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(document, {"command": {"comment": "trace"}, "_id": 1})
+        self.assertIsNone(missing)
+
+    def test_purge_expired_documents_sync_returns_zero_when_index_loading_fails(self):
+        engine = SQLiteEngine()
+        connection = sqlite3.connect(":memory:")
+
+        with patch.object(engine, "_load_indexes", side_effect=RuntimeError("boom")):
+            purged = engine._purge_expired_documents_sync(
+                connection,
+                "db",
+                "coll",
+                context=None,
+            )
+
+        self.assertEqual(purged, 0)
+        connection.close()
+
     async def test_drop_index_and_drop_indexes_preserve_builtin_id_index(self):
         engine = SQLiteEngine()
         await engine.connect()

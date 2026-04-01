@@ -1,4 +1,5 @@
 from types import MappingProxyType
+import math
 import json
 from pathlib import Path
 import unittest
@@ -50,6 +51,8 @@ from mongoeco.compat import (
     export_operation_option_catalog,
     export_pymongo_profile_catalog,
 )
+from mongoeco.compat.base import _compare_values_default, build_mongo_behavior_policy
+from mongoeco.types import Binary, Timestamp
 
 
 class CompatResolutionTests(unittest.TestCase):
@@ -248,6 +251,125 @@ class CompatResolutionTests(unittest.TestCase):
     def test_resolve_pymongo_profile_rejects_unsupported_values(self):
         with self.assertRaises(ValueError):
             resolve_pymongo_profile('6.0')
+
+    def test_build_mongo_behavior_policy_rejects_unsupported_strategies(self):
+        with self.assertRaisesRegex(ValueError, "expression truthiness"):
+            build_mongo_behavior_policy(
+                MongoBehaviorPolicySpec(expression_truthiness="custom")
+            )
+        with self.assertRaisesRegex(ValueError, "projection flag"):
+            build_mongo_behavior_policy(
+                MongoBehaviorPolicySpec(projection_flag_mode="custom")
+            )
+        with self.assertRaisesRegex(ValueError, "update path sort"):
+            build_mongo_behavior_policy(
+                MongoBehaviorPolicySpec(update_path_sort_mode="custom")
+            )
+        with self.assertRaisesRegex(ValueError, "equality strategy"):
+            build_mongo_behavior_policy(
+                MongoBehaviorPolicySpec(equality_mode="custom")
+            )
+        with self.assertRaisesRegex(ValueError, "comparison strategy"):
+            build_mongo_behavior_policy(
+                MongoBehaviorPolicySpec(comparison_mode="custom")
+            )
+
+    def test_compare_values_default_covers_binary_timestamp_and_nan_paths(self):
+        bson_type_order = MappingProxyType({Binary: 5, Timestamp: 10, float: 2})
+
+        self.assertEqual(
+            _compare_values_default(
+                Binary(b"a", subtype=0),
+                Binary(b"a", subtype=0),
+                bson_type_order,
+            ),
+            0,
+        )
+        self.assertLess(
+            _compare_values_default(
+                Binary(b"a", subtype=0),
+                Binary(b"a", subtype=1),
+                bson_type_order,
+            ),
+            0,
+        )
+        self.assertLess(
+            _compare_values_default(
+                Binary(b"a", subtype=0),
+                Binary(b"b", subtype=0),
+                bson_type_order,
+            ),
+            0,
+        )
+        self.assertEqual(
+            _compare_values_default(
+                Timestamp(1, 2),
+                Timestamp(1, 2),
+                bson_type_order,
+            ),
+            0,
+        )
+        self.assertLess(
+            _compare_values_default(
+                Timestamp(1, 2),
+                Timestamp(2, 0),
+                bson_type_order,
+            ),
+            0,
+        )
+        self.assertEqual(
+            _compare_values_default(float("nan"), float("nan"), bson_type_order),
+            0,
+        )
+        self.assertLess(
+            _compare_values_default(float("nan"), 1.0, bson_type_order),
+            0,
+        )
+        self.assertGreater(
+            _compare_values_default(1.0, float("nan"), bson_type_order),
+            0,
+        )
+
+    def test_compare_values_and_values_equal_cover_structural_paths_and_fallbacks(self):
+        dialect = MongoDialect70()
+
+        self.assertFalse(dialect.values_equal({"a": 1}, {"a": 1, "b": 2}))
+        self.assertFalse(dialect.values_equal([1], [1, 2]))
+        self.assertLess(dialect.compare_values({"a": 1}, {"b": 1}), 0)
+        self.assertLess(dialect.compare_values({"a": 1}, {"a": 2}), 0)
+        self.assertEqual(dialect.compare_values({"a": 1}, {"a": 1}), 0)
+        self.assertLess(dialect.compare_values([1, 2], [1, 3]), 0)
+        self.assertEqual(dialect.compare_values([1, 2], [1, 2]), 0)
+        self.assertEqual(dialect.compare_values(float("nan"), float("nan")), 0)
+        self.assertEqual(
+            dialect.compare_values(complex(1, 2), complex(1, 2)),
+            0,
+        )
+
+    def test_dialect_and_profile_behavior_flags_return_defaults_for_unknown_names(self):
+        self.assertIsNone(MongoDialect70().behavior_flag("unknown"))
+        self.assertEqual(MongoDialect70().behavior_flag("unknown", default=True), True)
+        self.assertIsNone(PYMONGO_PROFILE_49.behavior_flag("unknown"))
+        self.assertEqual(PYMONGO_PROFILE_49.behavior_flag("unknown", default=False), False)
+
+    def test_dialect_respects_invalid_policy_modes_in_public_methods(self):
+        dialect = MongoDialect(
+            key="test",
+            server_version="test",
+            label="Test",
+            catalog_policy_spec=MongoBehaviorPolicySpec(equality_mode="custom"),
+        )
+        with self.assertRaisesRegex(ValueError, "equality strategy"):
+            dialect.values_equal(1, 1)
+
+        dialect = MongoDialect(
+            key="test",
+            server_version="test",
+            label="Test",
+            catalog_policy_spec=MongoBehaviorPolicySpec(comparison_mode="custom"),
+        )
+        with self.assertRaisesRegex(ValueError, "comparison strategy"):
+            dialect.compare_values(1, 1)
 
     @patch('mongoeco.compat.registry.importlib_metadata.version', return_value='4.10.2')
     def test_detect_installed_pymongo_profile_maps_unknown_minor_to_latest_compatible_profile(self, _version):
