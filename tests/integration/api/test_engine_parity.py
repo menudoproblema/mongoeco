@@ -1185,6 +1185,172 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(results["memory"], results["sqlite"])
 
+    async def test_search_and_vector_search_contracts_match_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.search_runtime.get_collection("docs")
+                await collection.insert_many(
+                    [
+                        {"_id": "1", "title": "Ada Lovelace", "body": "Analytical engine notes", "embedding": [1.0, 0.0, 0.0]},
+                        {"_id": "2", "title": "Grace Hopper", "body": "Compiler pioneer", "embedding": [0.0, 1.0, 0.0]},
+                        {"_id": "3", "title": "Notes", "body": "Ada wrote the first algorithm", "embedding": [0.9, 0.1, 0.0]},
+                    ]
+                )
+                await collection.create_search_indexes(
+                    [
+                        SearchIndexModel(
+                            {
+                                "mappings": {
+                                    "dynamic": False,
+                                    "fields": {
+                                        "title": {"type": "string"},
+                                        "body": {"type": "string"},
+                                    },
+                                }
+                            },
+                            name="by_text",
+                        ),
+                        SearchIndexModel(
+                            {
+                                "fields": [
+                                    {
+                                        "type": "vector",
+                                        "path": "embedding",
+                                        "numDimensions": 3,
+                                        "similarity": "cosine",
+                                    }
+                                ]
+                            },
+                            name="by_vector",
+                            type="vectorSearch",
+                        ),
+                    ]
+                )
+
+                search_hits = await collection.aggregate(
+                    [
+                        {"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}},
+                        {"$sort": {"_id": 1}},
+                    ]
+                ).to_list()
+                vector_hits = await collection.aggregate(
+                    [
+                        {
+                            "$vectorSearch": {
+                                "index": "by_vector",
+                                "path": "embedding",
+                                "queryVector": [1.0, 0.0, 0.0],
+                                "limit": 2,
+                                "numCandidates": 3,
+                            }
+                        },
+                        {"$project": {"_id": 1, "title": 1}},
+                    ]
+                ).to_list()
+
+                search_explain = await collection.aggregate(
+                    [{"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}}]
+                ).explain()
+                vector_explain = await collection.aggregate(
+                    [
+                        {
+                            "$vectorSearch": {
+                                "index": "by_vector",
+                                "path": "embedding",
+                                "queryVector": [1.0, 0.0, 0.0],
+                                "limit": 2,
+                                "numCandidates": 3,
+                            }
+                        }
+                    ]
+                ).explain()
+
+                results[engine_name] = {
+                    "search_hits": [document["_id"] for document in search_hits],
+                    "vector_hits": [document["_id"] for document in vector_hits],
+                    "search_explain": {
+                        "hint": search_explain["hint"],
+                        "batch_size": search_explain["batch_size"],
+                        "planning_mode": search_explain["planning_mode"],
+                        "remaining_pipeline": search_explain["remaining_pipeline"],
+                        "query_operator": search_explain["engine_plan"]["details"]["queryOperator"],
+                        "paths": search_explain["engine_plan"]["details"]["paths"],
+                    },
+                    "vector_explain": {
+                        "hint": vector_explain["hint"],
+                        "batch_size": vector_explain["batch_size"],
+                        "planning_mode": vector_explain["planning_mode"],
+                        "remaining_pipeline": vector_explain["remaining_pipeline"],
+                        "path": vector_explain["engine_plan"]["details"]["path"],
+                        "limit": vector_explain["engine_plan"]["details"]["limit"],
+                        "num_candidates": vector_explain["engine_plan"]["details"]["numCandidates"],
+                    },
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_search_runtime_error_contracts_match_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, tuple[str, object, str]]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.search_runtime.get_collection("docs")
+                await collection.insert_one({"_id": "1", "title": "Ada", "embedding": [1.0, 0.0, 0.0]})
+                await collection.create_search_indexes(
+                    [
+                        SearchIndexModel({"mappings": {"dynamic": True}}, name="by_text"),
+                        SearchIndexModel(
+                            {
+                                "fields": [
+                                    {
+                                        "type": "vector",
+                                        "path": "embedding",
+                                        "numDimensions": 3,
+                                        "similarity": "cosine",
+                                    }
+                                ]
+                            },
+                            name="by_vector",
+                            type="vectorSearch",
+                        ),
+                    ]
+                )
+
+                with self.assertRaises(OperationFailure) as wrong_cap_ctx:
+                    await collection.aggregate(
+                        [
+                            {
+                                "$vectorSearch": {
+                                    "index": "by_text",
+                                    "path": "embedding",
+                                    "queryVector": [1.0, 0.0, 0.0],
+                                    "numCandidates": 3,
+                                    "limit": 2,
+                                }
+                            }
+                        ]
+                    ).to_list()
+
+                with self.assertRaises(OperationFailure) as missing_idx_ctx:
+                    await collection.aggregate(
+                        [{"$search": {"index": "missing", "text": {"query": "ada", "path": "title"}}}]
+                    ).to_list()
+
+                results[engine_name] = {
+                    "wrong_capability": (
+                        type(wrong_cap_ctx.exception).__name__,
+                        wrong_cap_ctx.exception.code,
+                        str(wrong_cap_ctx.exception),
+                    ),
+                    "missing_index": (
+                        type(missing_idx_ctx.exception).__name__,
+                        missing_idx_ctx.exception.code,
+                        str(missing_idx_ctx.exception),
+                    ),
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
     async def test_watch_event_shape_matches_in_memory_and_sqlite(self):
         results: dict[str, list[dict[str, object]]] = {}
         for engine_name in ("memory", "sqlite"):
@@ -1209,6 +1375,45 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         payload["fullDocument"] = event["fullDocument"]
                     captured.append(payload)
                 results[engine_name] = captured
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_with_transaction_and_find_one_and_update_upsert_match_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+
+                session = client.start_session()
+                transaction_result = await session.with_transaction(
+                    lambda active_session: collection.insert_one(
+                        {"_id": "tx", "kind": "transactional"},
+                        session=active_session,
+                    )
+                )
+                committed = await collection.find_one({"_id": "tx"})
+
+                before = await collection.find_one_and_update(
+                    {"_id": "missing-before"},
+                    {"$set": {"kind": "new", "state": "upserted"}},
+                    upsert=True,
+                    return_document=ReturnDocument.BEFORE,
+                )
+                after = await collection.find_one_and_update(
+                    {"_id": "missing-after"},
+                    {"$set": {"kind": "new", "state": "upserted"}},
+                    upsert=True,
+                    return_document=ReturnDocument.AFTER,
+                )
+                after_state = await collection.find({}, sort=[("_id", 1)]).to_list()
+
+                results[engine_name] = {
+                    "transaction_result": transaction_result.inserted_id,
+                    "committed": committed,
+                    "before": before,
+                    "after": after,
+                    "after_state": after_state,
+                }
 
         self.assertEqual(results["memory"], results["sqlite"])
 
