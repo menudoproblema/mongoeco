@@ -1073,6 +1073,58 @@ class RequestExecutionPipelineTests(unittest.TestCase):
 
         self.assertEqual([server.address for server in plan.candidate_servers], ["db1:27017"])
 
+    def test_execute_request_reselects_candidates_from_current_topology(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017,db2:27018/?replicaSet=rs0&retryReads=true",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
+        )
+        plan = runtime.plan_command_request("observe", "find", {"find": "events"}, read_only=True)
+        runtime._topology = TopologyDescription(
+            topology_type=TopologyType.REPLICA_SET,
+            servers=(
+                ServerDescription(
+                    address="db2:27018",
+                    server_type=ServerType.RS_SECONDARY,
+                    state=ServerState.HEALTHY,
+                    set_name="rs0",
+                ),
+            ),
+            set_name="rs0",
+        )  # type: ignore[attr-defined]
+        seen: list[str] = []
+
+        class EchoTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                seen.append(execution.selected_server.address)
+                return {"ok": 1.0, "cursor": {"id": 0}}
+
+        result = asyncio.run(runtime.execute_request(plan, EchoTransport()))
+
+        self.assertTrue(result.outcome.ok)
+        self.assertEqual(seen, ["db2:27018"])
+
+    def test_execute_request_uses_current_topology_when_stale_plan_still_has_candidates(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/?directConnection=true",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        plan = runtime.plan_command_request("admin", "ping", {"ping": 1}, read_only=True)
+        runtime._topology = TopologyDescription(topology_type=TopologyType.UNKNOWN, servers=())  # type: ignore[attr-defined]
+
+        class NoopTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                del execution
+                return {"ok": 1.0}
+
+        result = asyncio.run(runtime.execute_request(plan, NoopTransport()))
+
+        self.assertFalse(result.outcome.ok)
+        self.assertIn("no eligible servers", result.outcome.error or "")
+
     def test_selection_policy_prefers_healthier_servers_when_ordering_nearest(self):
         policy = build_selection_policy(
             parse_mongo_uri("mongodb://db1:27017,db2:27018,db3:27019/"),

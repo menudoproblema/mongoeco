@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
 from mongoeco.driver.connections import ConnectionLease, ConnectionPoolSnapshot, ConnectionRegistry
@@ -113,10 +114,27 @@ class DriverRuntime:
             concern_policy=self._concern_policy,
             auth_policy=self._auth_policy,
             tls_policy=self._tls_policy,
+            dynamic_candidates=True,
             candidate_servers=self._selection_policy.select_servers(
                 self._topology,
                 for_writes=not read_only,
             ),
+        )
+
+    def _resolve_execution_plan(self, plan: RequestExecutionPlan) -> RequestExecutionPlan:
+        if not plan.dynamic_candidates:
+            return plan
+        topology = self._topology
+        candidate_servers = plan.selection_policy.select_servers(
+            topology,
+            for_writes=not plan.request.read_only,
+        )
+        if topology is plan.topology and candidate_servers == plan.candidate_servers:
+            return plan
+        return replace(
+            plan,
+            topology=topology,
+            candidate_servers=candidate_servers,
         )
 
     async def prepare_request_execution(self, plan: RequestExecutionPlan) -> PreparedRequestExecution:
@@ -128,6 +146,7 @@ class DriverRuntime:
         *,
         attempt_number: int,
     ) -> PreparedRequestExecution:
+        plan = self._resolve_execution_plan(plan)
         if not plan.candidate_servers:
             raise RuntimeError("no candidate servers available for request execution")
         selected_server = plan.candidate_servers[min(attempt_number - 1, len(plan.candidate_servers) - 1)]
@@ -180,6 +199,7 @@ class DriverRuntime:
         self._connections.clear()
 
     async def execute_request(self, plan: RequestExecutionPlan, transport) -> RequestExecutionResult:
+        plan = self._resolve_execution_plan(plan)
         if not plan.candidate_servers:
             error = ServerSelectionTimeoutError(
                 f"no eligible servers found within {plan.timeout_policy.server_selection_timeout_ms}ms"

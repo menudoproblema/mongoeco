@@ -67,6 +67,7 @@ from mongoeco.engines._shared_runtime import (
     merge_profile_database_names,
     profile_namespace_options,
 )
+from mongoeco.engines._sqlite_runtime import SQLiteCacheState, SQLiteRuntimeState
 from mongoeco.engines._sqlite_catalog import (
     list_collection_names as _sqlite_list_collection_names,
     list_database_names as _sqlite_list_database_names,
@@ -226,15 +227,9 @@ class SQLiteEngine(AsyncStorageEngine):
     ):
         self._path = path
         self._codec = codec
-        self._connection: sqlite3.Connection | None = None
-        self._connection_count = 0
-        self._transaction_owner_session_id: str | None = None
+        self._runtime_state = SQLiteRuntimeState()
+        self._cache_state = SQLiteCacheState()
         self._lock = threading.RLock()
-        self._scan_condition = threading.Condition()
-        self._active_scan_count = 0
-        self._thread_local = threading.local()
-        self._executor: ThreadPoolExecutor | None = None
-        self._owns_executor = False
         if executor_workers is not None and executor_workers < 1:
             raise ValueError("executor_workers must be positive")
         self._executor_workers = executor_workers or (
@@ -245,13 +240,6 @@ class SQLiteEngine(AsyncStorageEngine):
         self._use_shared_executor = executor_workers is None
         self._profiler = EngineProfiler("sqlite")
         self._mvcc_version = 0
-        self._index_cache: dict[tuple[str, str], tuple[int, list[EngineIndexRecord]]] = {}
-        self._index_metadata_versions: dict[tuple[str, str], int] = {}
-        self._collection_id_cache: dict[tuple[str, str], int] = {}
-        self._collection_features_cache: dict[tuple[str, str, str], bool] = {}
-        self._ensured_multikey_physical_indexes: set[str] = set()
-        self._fts5_available: bool | None = None
-        self._ensured_search_backends: set[str] = set()
         self.aggregation_cost_policy = (
             None
             if aggregation_materialization_limit is None
@@ -262,6 +250,94 @@ class SQLiteEngine(AsyncStorageEngine):
         )
         self._simulate_search_index_latency = max(0.0, float(simulate_search_index_latency))
         self._sql_translator = SQLiteQueryTranslator()
+
+    @property
+    def _connection(self) -> sqlite3.Connection | None:
+        return self._runtime_state.connection
+
+    @_connection.setter
+    def _connection(self, value: sqlite3.Connection | None) -> None:
+        self._runtime_state.connection = value
+
+    @property
+    def _connection_count(self) -> int:
+        return self._runtime_state.connection_count
+
+    @_connection_count.setter
+    def _connection_count(self, value: int) -> None:
+        self._runtime_state.connection_count = value
+
+    @property
+    def _transaction_owner_session_id(self) -> str | None:
+        return self._runtime_state.transaction_owner_session_id
+
+    @_transaction_owner_session_id.setter
+    def _transaction_owner_session_id(self, value: str | None) -> None:
+        self._runtime_state.transaction_owner_session_id = value
+
+    @property
+    def _scan_condition(self) -> threading.Condition:
+        return self._runtime_state.scan_condition
+
+    @property
+    def _active_scan_count(self) -> int:
+        return self._runtime_state.active_scan_count
+
+    @_active_scan_count.setter
+    def _active_scan_count(self, value: int) -> None:
+        self._runtime_state.active_scan_count = value
+
+    @property
+    def _thread_local(self) -> threading.local:
+        return self._runtime_state.thread_local
+
+    @property
+    def _executor(self) -> ThreadPoolExecutor | None:
+        return self._runtime_state.executor
+
+    @_executor.setter
+    def _executor(self, value: ThreadPoolExecutor | None) -> None:
+        self._runtime_state.executor = value
+
+    @property
+    def _owns_executor(self) -> bool:
+        return self._runtime_state.owns_executor
+
+    @_owns_executor.setter
+    def _owns_executor(self, value: bool) -> None:
+        self._runtime_state.owns_executor = value
+
+    @property
+    def _fts5_available(self) -> bool | None:
+        return self._runtime_state.fts5_available
+
+    @_fts5_available.setter
+    def _fts5_available(self, value: bool | None) -> None:
+        self._runtime_state.fts5_available = value
+
+    @property
+    def _index_cache(self) -> dict[tuple[str, str], tuple[int, list[EngineIndexRecord]]]:
+        return self._cache_state.index_cache
+
+    @property
+    def _index_metadata_versions(self) -> dict[tuple[str, str], int]:
+        return self._cache_state.index_metadata_versions
+
+    @property
+    def _collection_id_cache(self) -> dict[tuple[str, str], int]:
+        return self._cache_state.collection_id_cache
+
+    @property
+    def _collection_features_cache(self) -> dict[tuple[str, str, str], bool | str]:
+        return self._cache_state.collection_features_cache
+
+    @property
+    def _ensured_multikey_physical_indexes(self) -> set[str]:
+        return self._cache_state.ensured_multikey_physical_indexes
+
+    @property
+    def _ensured_search_backends(self) -> set[str]:
+        return self._cache_state.ensured_search_backends
 
     def _ensure_executor(self) -> ThreadPoolExecutor:
         executor = self._executor

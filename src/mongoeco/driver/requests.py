@@ -33,6 +33,7 @@ class RequestExecutionPlan:
     concern_policy: ConcernPolicy
     auth_policy: AuthPolicy
     tls_policy: TlsPolicy
+    dynamic_candidates: bool = False
     candidate_servers: tuple[ServerDescription, ...] = field(default_factory=tuple)
 
     @property

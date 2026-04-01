@@ -209,6 +209,10 @@ usa Semantic Versioning.
   también ante errores de `connect`/`read`/`write`; además, cada server
   mantiene estado de salud local (`healthy`, `recovering`, `degraded`,
   `unreachable`) y esa señal se usa para priorizar candidatos más sanos.
+- La ejecución de comandos del driver vuelve a resolver `candidate_servers`
+  contra la topología vigente en el momento de ejecutar, evitando que un
+  `RequestExecutionPlan` preparado con seeds o miembros ya desfasados siga
+  enviando tráfico a candidatos obsoletos tras un `refresh_topology()`.
 
 ## [2.2.0] - 2026-03-31
 
