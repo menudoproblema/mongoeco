@@ -1,6 +1,7 @@
 import base64
 import asyncio
 import builtins
+import datetime
 import decimal
 import importlib.util
 import inspect
@@ -188,10 +189,22 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         from mongoeco.types import Binary, Decimal128, Regex, Timestamp
 
         self.assertNotEqual(Binary(b"x", subtype=0), Binary(b"x", subtype=5))
+        self.assertEqual(hash(Binary(b"x", subtype=5)), hash(Binary(b"x", subtype=5)))
+        with self.assertRaises(ValueError):
+            Binary(b"x", subtype=999)
         self.assertEqual(Regex("^a", "mi"), Regex("^a", "im"))
         self.assertEqual(Regex("^a", "mi").flags, "im")
+        self.assertEqual(Regex("^a", "sx").compile().flags & 16, 16)
+        with self.assertRaises(ValueError):
+            Regex("^a", "q")
         self.assertGreater(Timestamp(10, 0), Timestamp(2, 0))
+        self.assertEqual(Timestamp(10, 0).as_datetime(), datetime.datetime.fromtimestamp(10, tz=datetime.UTC).replace(tzinfo=None))
+        with self.assertRaises(ValueError):
+            Timestamp(-1, 0)
         self.assertEqual(Decimal128(decimal.Decimal("NaN")), Decimal128(decimal.Decimal("NaN")))
+        self.assertEqual(hash(Decimal128(decimal.Decimal("NaN"))), hash(Decimal128(decimal.Decimal("NaN"))))
+        self.assertEqual(str(Decimal128("1.25")), "1.25")
+        self.assertIn("Decimal128", repr(Decimal128("1.25")))
 
     def test_object_id_accepts_valid_inputs_and_rejects_invalid_shapes(self):
         from mongoeco.types import ObjectId
@@ -209,6 +222,42 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             ObjectId("abc")
         with self.assertRaises(ValueError):
             ObjectId(b"123")
+
+    def test_codec_transaction_and_index_metadata_types_validate_edge_inputs(self):
+        with self.assertRaises(TypeError):
+            CodecOptions(document_class=1)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            CodecOptions(document_class=list)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            CodecOptions(tz_aware=1)  # type: ignore[arg-type]
+
+        with self.assertRaises(TypeError):
+            TransactionOptions(read_concern="bad")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            TransactionOptions(write_concern="bad")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            TransactionOptions(read_preference="bad")  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            TransactionOptions(max_commit_time_ms=0)
+
+        create_indexes = CreateIndexesCommandResult(1, 2, True, note="existing")
+        self.assertEqual(create_indexes.to_document()["note"], "existing")
+
+        with self.assertRaises(ValueError):
+            IndexDefinition([("name", 1)], name="")
+        index_definition = IndexDefinition(
+            [("name", 1)],
+            name="name_1",
+            sparse=True,
+            partial_filter_expression={"name": {"$exists": True}},
+            expire_after_seconds=10,
+        )
+        self.assertEqual(index_definition.fields, ["name"])
+        self.assertTrue(index_definition.to_information_entry()["sparse"])
+        self.assertEqual(index_definition.to_model_document()["expireAfterSeconds"], 10)
+
+        with self.assertRaises(ValueError):
+            IndexModel([("name", 1)], name="")
 
     def test_types_module_fallback_object_id_works_without_bson_dependency(self):
         module_path = Path(__file__).resolve().parents[2] / "src" / "mongoeco" / "types.py"

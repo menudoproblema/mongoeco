@@ -42,6 +42,7 @@ class _FakeCollection:
         filter_spec=None,
         projection=None,
         *,
+        collation=None,
         sort=None,
         skip=0,
         limit=None,
@@ -65,6 +66,8 @@ class _FakeCollection:
                 "session": session,
             }
         )
+        if collation is not None:
+            self.calls[-1]["collation"] = collation
         documents = list(self._documents)
         documents = sort_documents(documents, sort)
         if skip:
@@ -162,6 +165,21 @@ class _AsyncAggregationCursorStub:
 
 
 class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
+    async def test_search_helpers_cover_missing_invalid_and_engine_fallback_paths(self):
+        collection = _FakeCollection([])
+        cursor = AsyncAggregationCursor(collection, [])
+        self.assertIsNone(cursor._leading_search_stage())
+
+        cursor = AsyncAggregationCursor(collection, ["invalid"])  # type: ignore[list-item]
+        self.assertIsNone(cursor._leading_search_stage())
+
+        cursor = AsyncAggregationCursor(collection, [{"$search": {"text": {"query": "Ada", "path": "name"}}}])
+        with self.assertRaisesRegex(OperationFailure, "not supported by this engine"):
+            await cursor._search_documents()
+
+        with self.assertRaisesRegex(OperationFailure, "search stage was not present"):
+            await AsyncAggregationCursor(collection, [])._search_documents()
+
     async def test_allow_disk_use_false_disables_engine_spill_policy(self):
         collection = _FakeCollection([{"_id": "1", "rank": 2}, {"_id": "2", "rank": 1}])
         cursor = AsyncAggregationCursor(
@@ -240,6 +258,19 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             unregister_aggregation_stage("$future")
 
         self.assertEqual(stream_plan, ([{"$match": {"x": 1}}, {"$future": {}}], 0, 1))
+
+    async def test_split_streamable_pipeline_returns_none_after_trailing_window_and_accumulates_skip_limit(self):
+        self.assertIsNone(
+            AsyncAggregationCursor._split_streamable_pipeline(
+                [{"$skip": 1}, {"$match": {"x": 1}}],
+            )
+        )
+        self.assertEqual(
+            AsyncAggregationCursor._split_streamable_pipeline(
+                [{"$match": {"x": 1}}, {"$skip": 2}, {"$limit": 5}, {"$limit": 3}],
+            ),
+            ([{"$match": {"x": 1}}], 2, 3),
+        )
 
     async def test_materialize_pushes_safe_prefix_to_find(self):
         collection = _FakeCollection(
@@ -415,6 +446,22 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             ],
         )
 
+    async def test_streaming_batch_execution_skips_full_first_page_and_honors_zero_remaining_limit(self):
+        collection = _FakeCollection(
+            [
+                {"_id": "1", "kind": "view", "rank": 1},
+                {"_id": "2", "kind": "view", "rank": 2},
+                {"_id": "3", "kind": "view", "rank": 3},
+            ]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$match": {"kind": "view"}}, {"$skip": 2}, {"$limit": 1}],
+            batch_size=2,
+        )
+
+        self.assertEqual(await cursor.to_list(), [{"_id": "3", "kind": "view", "rank": 3}])
+
     async def test_streaming_batch_execution_falls_back_for_global_pipeline_stages(self):
         collection = _FakeCollection(
             [
@@ -463,6 +510,42 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explain_semantics.hint, "kind_1")
         self.assertEqual(explain_semantics.comment, "trace")
         self.assertEqual(explain_semantics.max_time_ms, 5)
+
+    async def test_async_aggregation_cursor_explain_covers_search_fallback_and_first_empty_profile(self):
+        collection = _FakeCollection([])
+        collection._engine.aggregation_spill_policy = lambda: AggregationSpillPolicy(threshold=2)
+        profiled = []
+
+        async def _search_documents(*args, **kwargs):
+            del args, kwargs
+            return []
+
+        collection._engine.search_documents = _search_documents
+
+        async def _profile_operation(**kwargs):
+            profiled.append(kwargs)
+
+        collection._profile_operation = _profile_operation  # type: ignore[attr-defined]
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$search": {"text": {"query": "Ada", "path": "name"}}}],
+            batch_size=1,
+        )
+
+        explanation = await cursor.explain()
+        self.assertEqual(explanation["engine_plan"]["plan"], "unsupported-search-engine")
+        self.assertEqual(cursor._spill_policy().threshold, 2)
+        self.assertIsNone(await cursor.first())
+        self.assertEqual(profiled[-1]["op"], "command")
+
+    async def test_build_pushdown_cursor_uses_collection_find_when_private_builder_is_missing(self):
+        collection = _FakeCollection([{"_id": "1"}])
+        collection._build_cursor = None  # type: ignore[assignment]
+        cursor = AsyncAggregationCursor(collection, [{"$match": {"_id": "1"}}])
+
+        await cursor._build_pushdown_cursor(cursor._pushdown_find_operation()).to_list()
+
+        self.assertEqual(collection.calls[0]["filter_spec"], {"_id": "1"})
 
     async def test_async_aggregation_cursor_explain_surfaces_deferred_reason_details(self):
         collection = _FakeCollection([{"_id": "1", "kind": "view"}])

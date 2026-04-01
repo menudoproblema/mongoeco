@@ -490,9 +490,11 @@ class AsyncAggregationCursor:
                 planning_issues=self._operation.planning_issues,
             ).to_document()
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
+        streamable_pipeline: list[object] = []
         if self._leading_search_stage() is not None:
             operator, spec = self._leading_search_stage()
             remaining_pipeline = self._effective_pipeline()
+            streamable_pipeline = remaining_pipeline
             explain_search_documents = getattr(
                 self._collection._engine,
                 "explain_search_documents",
@@ -527,6 +529,7 @@ class AsyncAggregationCursor:
                 dialect=dialect,
             )
             remaining_pipeline = pushdown.remaining_pipeline
+            streamable_pipeline = pushdown.remaining_pipeline
             operation = self._pushdown_find_operation()
             from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
 
@@ -548,7 +551,7 @@ class AsyncAggregationCursor:
             let=self._let,
             streaming_batch_execution=self._batch_size not in (None, 0)
             and self._split_streamable_pipeline(
-                pushdown.remaining_pipeline,
+                streamable_pipeline,
                 dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
             )
             is not None,
