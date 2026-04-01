@@ -138,6 +138,10 @@ usa Semantic Versioning.
   a un journal en fichero mediante `change_stream_journal_path`, lo que
   permite reanudar cursores con `resume_after` o `start_after` tras
   recrear clientes o colecciones dentro del mismo entorno local.
+- Cuando el journal de change streams está activado, `mongoeco` conserva
+  ahora un log incremental y lo compacta periódicamente contra un
+  snapshot retenido, evitando reescrituras completas del historial en
+  cada evento publicado.
 - `watch()` acepta ya `fullDocument` (`default`, `updateLookup`,
   `whenAvailable`, `required`), los resume tokens dejan de exponerse
   como enteros decimales simples y `drop_database()` insiste hasta
@@ -152,6 +156,11 @@ usa Semantic Versioning.
   provisional mientras no haya handshake y `refresh_topology()` descubre
   miembros adicionales de replica set desde `hello`, marcando además
   incompatibilidades por familias mezcladas o `setName` conflictivos.
+- El discovery del driver aprovecha además `primary`, `me`,
+  `arbiterOnly` y `topologyVersion`: los arbiters pasan a modelarse como
+  miembros explícitos del replica set, el monitor puede descubrir seeds
+  adicionales desde respuestas secundarias y deja de degradar el estado
+  local si recibe un `hello` con versión topológica más vieja.
 
 ## [2.2.0] - 2026-03-31
 

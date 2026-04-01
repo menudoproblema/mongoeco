@@ -69,6 +69,11 @@ class TopologyMonitorTests(unittest.IsolatedAsyncioTestCase):
             {"msg": "isdbgrid", "tags": [("x", "y")]},
             round_trip_time_ms=3.5,
         )
+        arbiter = _server_description_from_hello(
+            "db1:27017",
+            {"setName": "rs0", "arbiterOnly": True, "me": "db1:27017"},
+            round_trip_time_ms=0.8,
+        )
         unknown_rs_member = _server_description_from_hello(
             "db2:27017",
             {"setName": "rs0"},
@@ -81,6 +86,8 @@ class TopologyMonitorTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(mongos.server_type, ServerType.MONGOS)
+        self.assertEqual(arbiter.server_type, ServerType.RS_ARBITER)
+        self.assertEqual(arbiter.me, "db1:27017")
         self.assertEqual(mongos.tags, {})
         self.assertIsNone(mongos.wire_version_range)
         self.assertIsNone(mongos.logical_session_timeout_minutes)
@@ -195,3 +202,44 @@ class TopologyMonitorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertFalse(refreshed.compatible)
         self.assertIn("replica set name mismatch", refreshed.servers[0].error or "")
+
+    async def test_refresh_topology_keeps_newer_topology_version_when_probe_is_stale(self):
+        topology = TopologyDescription(
+            topology_type=TopologyType.REPLICA_SET,
+            servers=(
+                ServerDescription(
+                    address="db1:27017",
+                    server_type=ServerType.RS_PRIMARY,
+                    set_name="rs0",
+                    topology_version={"processId": "p1", "counter": 5},
+                    set_version=5,
+                ),
+            ),
+            set_name="rs0",
+        )
+
+        async def prepare_execution(plan, attempt_number):
+            del plan, attempt_number
+            return object()
+
+        async def complete_execution(_execution):
+            return None
+
+        class _StaleTransport:
+            async def send(self, _execution):
+                return {
+                    "setName": "rs0",
+                    "isWritablePrimary": True,
+                    "topologyVersion": {"processId": "p1", "counter": 3},
+                    "setVersion": 3,
+                }
+
+        refreshed = await refresh_topology(
+            current_topology=topology,
+            prepare_execution=prepare_execution,
+            complete_execution=complete_execution,
+            transport=_StaleTransport(),
+        )
+
+        self.assertEqual(refreshed.servers[0].topology_version, {"processId": "p1", "counter": 5})
+        self.assertEqual(refreshed.servers[0].set_version, 5)

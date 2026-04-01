@@ -89,6 +89,8 @@ Unicode collation backend:
 * local change streams can also persist that retained history to a journal file
   with `change_stream_journal_path`, allowing `resume_after` / `start_after`
   to survive client recreation inside the same local environment
+* when journaling is enabled, `mongoeco` keeps an incremental event log and
+  compacts it back into a retained snapshot as the local history rolls forward
 * the local driver now starts non-direct single-seed topologies as
   provisional `UNKNOWN` and relies on `hello` discovery to converge towards
   `standalone`, `replicaSet` or `sharded` topology shapes

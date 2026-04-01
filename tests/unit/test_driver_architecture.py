@@ -1208,3 +1208,59 @@ class RequestExecutionPipelineTests(unittest.TestCase):
         self.assertEqual(refreshed.topology_type, TopologyType.REPLICA_SET)
         self.assertEqual([server.address for server in refreshed.servers], ["db1:27017", "db2:27018"])
         self.assertEqual(refreshed.servers[1].server_type, ServerType.RS_SECONDARY)
+
+    def test_refresh_topology_discovers_primary_and_arbiter_addresses_from_secondary_hello(self):
+        topology = TopologyDescription(
+            topology_type=TopologyType.REPLICA_SET,
+            servers=(ServerDescription("db2:27018", set_name="rs0"),),
+            set_name="rs0",
+        )
+
+        async def prepare(plan, *, attempt_number):
+            del attempt_number
+            return PreparedRequestExecution(
+                plan=plan,
+                selected_server=plan.candidate_servers[0],
+                connection=type(
+                    "Lease",
+                    (),
+                    {
+                        "pool_key": None,
+                        "connection_id": plan.candidate_servers[0].address,
+                        "server": plan.candidate_servers[0],
+                    },
+                )(),
+            )
+
+        async def complete(execution):
+            del execution
+
+        class DiscoveryTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                if execution.selected_server.address == "db2:27018":
+                    return {
+                        "ok": 1.0,
+                        "setName": "rs0",
+                        "secondary": True,
+                        "primary": "db1:27017",
+                        "arbiters": ["db3:27019"],
+                        "me": "db2:27018",
+                    }
+                if execution.selected_server.address == "db1:27017":
+                    return {"ok": 1.0, "setName": "rs0", "isWritablePrimary": True}
+                return {"ok": 1.0, "setName": "rs0", "arbiterOnly": True}
+
+        refreshed = asyncio.run(
+            refresh_topology(
+                current_topology=topology,
+                prepare_execution=prepare,
+                complete_execution=complete,
+                transport=DiscoveryTransport(),
+            )
+        )
+
+        self.assertEqual(
+            [server.address for server in refreshed.servers],
+            ["db2:27018", "db1:27017", "db3:27019"],
+        )
+        self.assertEqual(refreshed.servers[2].server_type, ServerType.RS_ARBITER)

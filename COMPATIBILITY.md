@@ -283,6 +283,9 @@ pueden reanudar desde `resume_after` o `start_after` incluso tras recrear el
 cliente o la colección dentro del mismo entorno local, siempre dentro de la
 ventana retenida.
 
+La persistencia local usa además un journal incremental con compactación sobre
+snapshot retenido, para no reescribir el historial completo en cada evento.
+
 La API runtime expone esta información en
 `mongoeco.core.collation.collation_backend_info()`, que devuelve:
 
@@ -311,6 +314,9 @@ Contrato actual:
 * en `replicaSet`, `refresh_topology()` descubre ya miembros adicionales desde
   `hosts`, `passives` y `arbiters`, y marca la topología como incompatible si
   aparecen familias mezcladas o `setName` conflictivos
+* el monitor usa también `primary` y `me` para discovery adicional, clasifica
+  `arbiterOnly` como miembro explícito del replica set y evita degradar el
+  estado local cuando llega un `hello` con `topologyVersion` más viejo
 
 ## 11. Verificación contractual contra PyMongo real
 

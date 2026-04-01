@@ -54,6 +54,10 @@ class ChangeStreamHub:
         self._next_token = 1
         self._max_retained_events = max_retained_events
         self._journal_path = journal_path
+        self._journal_event_log_path = (
+            None if journal_path is None else f"{journal_path}.events"
+        )
+        self._journal_log_entries_since_compaction = 0
         self._load_journal()
 
     def _end_offset_locked(self) -> int:
@@ -64,14 +68,15 @@ class ChangeStreamHub:
             return None
         return self._events[0].token
 
-    def _prune_locked(self) -> None:
+    def _prune_locked(self) -> bool:
         if self._max_retained_events is None:
-            return
+            return False
         excess = len(self._events) - self._max_retained_events
         if excess <= 0:
-            return
+            return False
         del self._events[:excess]
         self._base_offset += excess
+        return True
 
     def _journal_document_locked(self) -> dict[str, object]:
         return {
@@ -98,38 +103,88 @@ class ChangeStreamHub:
             handle.write(payload)
         os.replace(temp_path, self._journal_path)
 
+    def _append_journal_event_locked(self, event: ChangeEventSnapshot) -> None:
+        if self._journal_event_log_path is None:
+            return
+        journal_dir = os.path.dirname(self._journal_event_log_path)
+        if journal_dir:
+            os.makedirs(journal_dir, exist_ok=True)
+        with open(self._journal_event_log_path, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps(_snapshot_to_document(event), separators=(",", ":"), sort_keys=True))
+            handle.write("\n")
+        self._journal_log_entries_since_compaction += 1
+
+    def _compaction_threshold(self) -> int:
+        if self._max_retained_events is None:
+            return 256
+        return max(32, self._max_retained_events)
+
+    def _compact_locked(self) -> None:
+        if self._journal_path is None:
+            return
+        self._persist_locked()
+        if self._journal_event_log_path is not None:
+            try:
+                os.remove(self._journal_event_log_path)
+            except FileNotFoundError:
+                pass
+        self._journal_log_entries_since_compaction = 0
+
     def _load_journal(self) -> None:
-        if self._journal_path is None or not os.path.exists(self._journal_path):
+        if self._journal_path is not None and os.path.exists(self._journal_path):
+            try:
+                with open(self._journal_path, "r", encoding="utf-8") as handle:
+                    payload = json.load(handle)
+            except Exception as exc:  # noqa: BLE001
+                raise OperationFailure("change stream journal could not be loaded") from exc
+            if not isinstance(payload, dict) or payload.get("version") != 1:
+                raise OperationFailure("change stream journal could not be loaded")
+            base_offset = payload.get("base_offset")
+            next_token = payload.get("next_token")
+            raw_events = payload.get("events")
+            if (
+                not isinstance(base_offset, int)
+                or isinstance(base_offset, bool)
+                or base_offset < 0
+                or not isinstance(next_token, int)
+                or isinstance(next_token, bool)
+                or next_token < 1
+                or not isinstance(raw_events, list)
+            ):
+                raise OperationFailure("change stream journal could not be loaded")
+            self._events = [_snapshot_from_document(item) for item in raw_events]
+            self._base_offset = base_offset
+            self._next_token = next_token
+            self._prune_locked()
+        if self._journal_event_log_path is None or not os.path.exists(self._journal_event_log_path):
             return
         try:
-            with open(self._journal_path, "r", encoding="utf-8") as handle:
-                payload = json.load(handle)
+            with open(self._journal_event_log_path, "r", encoding="utf-8") as handle:
+                lines = handle.readlines()
         except Exception as exc:  # noqa: BLE001
             raise OperationFailure("change stream journal could not be loaded") from exc
-        if not isinstance(payload, dict) or payload.get("version") != 1:
-            raise OperationFailure("change stream journal could not be loaded")
-        base_offset = payload.get("base_offset")
-        next_token = payload.get("next_token")
-        raw_events = payload.get("events")
-        if (
-            not isinstance(base_offset, int)
-            or isinstance(base_offset, bool)
-            or base_offset < 0
-            or not isinstance(next_token, int)
-            or isinstance(next_token, bool)
-            or next_token < 1
-            or not isinstance(raw_events, list)
-        ):
-            raise OperationFailure("change stream journal could not be loaded")
-        events = [_snapshot_from_document(item) for item in raw_events]
-        self._events = events
-        self._base_offset = base_offset
-        self._next_token = next_token
+        for raw_line in lines:
+            line = raw_line.strip()
+            if not line:
+                continue
+            try:
+                event = _snapshot_from_document(json.loads(line))
+            except Exception as exc:  # noqa: BLE001
+                raise OperationFailure("change stream journal could not be loaded") from exc
+            if event.token < self._next_token:
+                continue
+            self._events.append(event)
+            self._next_token = event.token + 1
         self._prune_locked()
+        self._journal_log_entries_since_compaction = sum(1 for raw_line in lines if raw_line.strip())
 
     @property
     def journal_path(self) -> str | None:
         return self._journal_path
+
+    def compact_journal(self) -> None:
+        with self._condition:
+            self._compact_locked()
 
     def current_offset(self) -> int:
         with self._condition:
@@ -166,20 +221,21 @@ class ChangeStreamHub:
         update_description: dict[str, object] | None = None,
     ) -> None:
         with self._condition:
-            self._events.append(
-                ChangeEventSnapshot(
-                    token=self._next_token,
-                    operation_type=operation_type,
-                    db_name=db_name,
-                    coll_name=coll_name,
-                    document_key=document_key,
-                    full_document=full_document,
-                    update_description=update_description,
-                )
+            event = ChangeEventSnapshot(
+                token=self._next_token,
+                operation_type=operation_type,
+                db_name=db_name,
+                coll_name=coll_name,
+                document_key=document_key,
+                full_document=full_document,
+                update_description=update_description,
             )
+            self._events.append(event)
             self._next_token += 1
-            self._prune_locked()
-            self._persist_locked()
+            pruned = self._prune_locked()
+            self._append_journal_event_locked(event)
+            if pruned or self._journal_log_entries_since_compaction >= self._compaction_threshold():
+                self._compact_locked()
             self._condition.notify_all()
 
     def wait_for_event(

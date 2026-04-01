@@ -12,6 +12,7 @@ class ServerType(Enum):
     MONGOS = "mongos"
     RS_PRIMARY = "rsPrimary"
     RS_SECONDARY = "rsSecondary"
+    RS_ARBITER = "rsArbiter"
     UNKNOWN = "unknown"
 
 

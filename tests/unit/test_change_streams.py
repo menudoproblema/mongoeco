@@ -184,6 +184,83 @@ class ChangeStreamHubTests(unittest.TestCase):
             with self.assertRaisesRegex(OperationFailure, "journal could not be loaded"):
                 ChangeStreamHub(journal_path=journal_path)
 
+    def test_hub_replays_incremental_event_log_without_rewriting_snapshot_each_time(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            log_path = f"{journal_path}.events"
+            hub = ChangeStreamHub(max_retained_events=8, journal_path=journal_path)
+
+            hub.publish(
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 1},
+            )
+            hub.publish(
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 2},
+            )
+
+            self.assertTrue(os.path.exists(log_path))
+            reloaded = ChangeStreamHub(max_retained_events=8, journal_path=journal_path)
+            self.assertEqual(reloaded.current_offset(), 2)
+            self.assertEqual(reloaded.offset_after_token(1), 1)
+
+    def test_hub_compacts_journal_after_pruning_or_explicit_request(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            log_path = f"{journal_path}.events"
+            hub = ChangeStreamHub(max_retained_events=2, journal_path=journal_path)
+            hub.publish(
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 1},
+            )
+            hub.publish(
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 2},
+            )
+            hub.publish(
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 3},
+            )
+
+            self.assertFalse(os.path.exists(log_path))
+            reloaded = ChangeStreamHub(max_retained_events=2, journal_path=journal_path)
+            self.assertEqual(reloaded.current_offset(), 3)
+            self.assertEqual(reloaded.offset_after_token(2), 2)
+
+    def test_hub_can_explicitly_compact_incremental_journal(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            log_path = f"{journal_path}.events"
+            hub = ChangeStreamHub(max_retained_events=8, journal_path=journal_path)
+            hub.publish(
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 1},
+            )
+            hub.publish(
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 2},
+            )
+
+            self.assertTrue(os.path.exists(log_path))
+            hub.compact_journal()
+            self.assertFalse(os.path.exists(log_path))
+            reloaded = ChangeStreamHub(max_retained_events=8, journal_path=journal_path)
+            self.assertEqual(reloaded.current_offset(), 2)
+
 
 class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
     async def test_cursor_filters_by_scope_pipeline_and_timeout(self):

@@ -74,6 +74,9 @@ async def refresh_topology(
                 response,
                 round_trip_time_ms=(time.perf_counter() - started_at) * 1000,
             )
+            existing = current_by_address.get(address)
+            if existing is not None and _is_stale_topology_update(existing, description):
+                description = existing
             if (
                 seed_set_name is not None
                 and description.set_name is not None
@@ -128,7 +131,9 @@ def _server_description_from_hello(
     if response.get("msg") == "isdbgrid":
         server_type = ServerType.MONGOS
     elif isinstance(response.get("setName"), str):
-        if bool(response.get("secondary")):
+        if bool(response.get("arbiterOnly")):
+            server_type = ServerType.RS_ARBITER
+        elif bool(response.get("secondary")):
             server_type = ServerType.RS_SECONDARY
         elif bool(response.get("isWritablePrimary")) or bool(response.get("ismaster")):
             server_type = ServerType.RS_PRIMARY
@@ -199,7 +204,7 @@ def _derive_topology_type(
 def _server_family(server_type: ServerType) -> TopologyType | None:
     if server_type is ServerType.MONGOS:
         return TopologyType.SHARDED
-    if server_type in {ServerType.RS_PRIMARY, ServerType.RS_SECONDARY}:
+    if server_type in {ServerType.RS_PRIMARY, ServerType.RS_SECONDARY, ServerType.RS_ARBITER}:
         return TopologyType.REPLICA_SET
     if server_type is ServerType.STANDALONE:
         return TopologyType.SINGLE
@@ -246,7 +251,47 @@ def _string_tuple(value: object) -> tuple[str, ...]:
 
 def _discovered_addresses(server: ServerDescription) -> tuple[str, ...]:
     addresses: list[str] = []
-    for candidate in (*server.hosts, *server.passives, *server.arbiters):
+    for candidate in (
+        *((server.primary,) if server.primary is not None else ()),
+        *server.hosts,
+        *server.passives,
+        *server.arbiters,
+        *((server.me,) if server.me is not None else ()),
+    ):
         if candidate not in addresses:
             addresses.append(candidate)
     return tuple(addresses)
+
+
+def _is_stale_topology_update(
+    existing: ServerDescription,
+    candidate: ServerDescription,
+) -> bool:
+    existing_version = _topology_version_signature(existing.topology_version)
+    candidate_version = _topology_version_signature(candidate.topology_version)
+    if existing_version is not None and candidate_version is not None:
+        existing_process_id, existing_counter = existing_version
+        candidate_process_id, candidate_counter = candidate_version
+        if existing_process_id == candidate_process_id and candidate_counter < existing_counter:
+            return True
+    if (
+        existing.server_type is ServerType.RS_PRIMARY
+        and candidate.server_type is ServerType.RS_PRIMARY
+        and existing.set_version is not None
+        and candidate.set_version is not None
+        and candidate.set_version < existing.set_version
+    ):
+        return True
+    return False
+
+
+def _topology_version_signature(value: dict[str, object] | None) -> tuple[str, int] | None:
+    if not isinstance(value, dict):
+        return None
+    process_id = value.get("processId")
+    counter = value.get("counter")
+    if not isinstance(process_id, str):
+        return None
+    if not isinstance(counter, int) or isinstance(counter, bool):
+        return None
+    return process_id, counter
