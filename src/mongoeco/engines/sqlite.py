@@ -79,6 +79,23 @@ from mongoeco.engines._sqlite_search_admin import (
     list_search_index_documents as _sqlite_list_search_index_documents,
     update_search_index as _sqlite_update_search_index,
 )
+from mongoeco.engines._sqlite_index_admin import (
+    build_index_information as _sqlite_build_index_information,
+    create_index as _sqlite_create_index,
+    drop_all_indexes as _sqlite_drop_all_indexes,
+    drop_index as _sqlite_drop_index,
+    list_index_documents as _sqlite_list_index_documents,
+)
+from mongoeco.engines._sqlite_read_ops import (
+    get_document as _sqlite_get_document,
+    require_sql_execution_plan as _sqlite_require_sql_execution_plan,
+    search_documents as _sqlite_search_documents,
+)
+from mongoeco.engines._sqlite_write_ops import (
+    delete_document as _sqlite_delete_document,
+    put_document as _sqlite_put_document,
+    put_documents_bulk as _sqlite_put_documents_bulk,
+)
 from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
@@ -3168,72 +3185,51 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                self._purge_expired_documents_sync(conn, db_name, coll_name, context=context)
-                self._begin_write(conn, context)
-                try:
-                    collection_options = self._collection_options_or_empty_sync(conn, db_name, coll_name)
-                    original_document = None
-                    if not bypass_document_validation or not overwrite:
-                        original_document = self._load_existing_document_for_storage_key(conn, db_name, coll_name, storage_key)
-
-                    if not overwrite and original_document is not None:
-                        self._rollback_write(conn, context)
-                        return False
-
-                    if not bypass_document_validation:
-                        enforce_collection_document_validation(
-                            document,
-                            options=collection_options,
-                            original_document=original_document,
-                            dialect=MONGODB_DIALECT_70,
-                        )
-
-                    self._ensure_collection_row(conn, db_name, coll_name, options=collection_options)
-                    self._validate_document_against_unique_indexes(
-                        db_name,
-                        coll_name,
-                        document,
-                        exclude_storage_key=storage_key if overwrite else None,
-                    )
-                    
-                    try:
-                        if overwrite:
-                            conn.execute(
-                                """
-                                INSERT INTO documents (db_name, coll_name, storage_key, document)
-                                VALUES (?, ?, ?, ?)
-                                ON CONFLICT(db_name, coll_name, storage_key)
-                                DO UPDATE SET document = excluded.document
-                                """,
-                                (db_name, coll_name, storage_key, serialized_document),
-                            )
-                        else:
-                            conn.execute(
-                                """
-                                INSERT INTO documents (db_name, coll_name, storage_key, document)
-                                VALUES (?, ?, ?, ?)
-                                """,
-                                (db_name, coll_name, storage_key, serialized_document),
-                            )
-                    except sqlite3.IntegrityError as exc:
-                        raise DuplicateKeyError(f"Duplicate key error: {exc}") from exc
-
-                    indexes = self._load_indexes(db_name, coll_name)
-                    if any(idx.get("multikey") for idx in indexes):
-                        self._rebuild_multikey_entries_for_document(conn, db_name, coll_name, storage_key, document, indexes)
-                    if any(self._supports_scalar_index(idx) for idx in indexes):
-                        self._rebuild_scalar_entries_for_document(conn, db_name, coll_name, storage_key, document, indexes)
-                    
-                    search_indexes = self._load_search_index_rows(db_name, coll_name)
-                    if search_indexes:
-                        self._replace_search_entries_for_document(conn, db_name, coll_name, storage_key, document, search_indexes=search_indexes)
-                    
-                    self._commit_write(conn, context)
-                    self._invalidate_collection_features_cache(db_name, coll_name)
-                    return True
-                except Exception:
-                    self._rollback_write(conn, context)
-                    raise
+                return _sqlite_put_document(
+                    conn,
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    document=document,
+                    overwrite=overwrite,
+                    bypass_document_validation=bypass_document_validation,
+                    storage_key=storage_key,
+                    serialized_document=serialized_document,
+                    purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
+                        current,
+                        current_db_name,
+                        current_coll_name,
+                        context=context,
+                    ),
+                    begin_write=lambda current: self._begin_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    collection_options_or_empty=self._collection_options_or_empty_sync,
+                    load_existing_document_for_storage_key=self._load_existing_document_for_storage_key,
+                    ensure_collection_row=self._ensure_collection_row,
+                    validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, current_document, exclude_storage_key: self._validate_document_against_unique_indexes(
+                        current_db_name,
+                        current_coll_name,
+                        current_document,
+                        exclude_storage_key=exclude_storage_key,
+                    ),
+                    load_indexes=self._load_indexes,
+                    rebuild_multikey_entries_for_document=self._rebuild_multikey_entries_for_document,
+                    supports_scalar_index=self._supports_scalar_index,
+                    rebuild_scalar_entries_for_document=self._rebuild_scalar_entries_for_document,
+                    load_search_index_rows=lambda current_db_name, current_coll_name: self._load_search_index_rows(
+                        current_db_name,
+                        current_coll_name,
+                    ),
+                    replace_search_entries_for_document=lambda current, current_db_name, current_coll_name, current_storage_key, current_document, search_indexes: self._replace_search_entries_for_document(
+                        current,
+                        current_db_name,
+                        current_coll_name,
+                        current_storage_key,
+                        current_document,
+                        search_indexes=search_indexes,
+                    ),
+                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                )
 
     def _snapshot_bulk_insert_validation_options_sync(
         self,
@@ -3261,116 +3257,59 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                self._purge_expired_documents_sync(conn, db_name, coll_name, context=context)
-                collection_options = self._collection_options_or_empty_sync(
+                return _sqlite_put_documents_bulk(
                     conn,
-                    db_name,
-                    coll_name,
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    documents=documents,
+                    prepared_documents=prepared_documents,
+                    snapshot_indexes=snapshot_indexes,
+                    bypass_document_validation=bypass_document_validation,
+                    snapshot_options=snapshot_options,
+                    purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
+                        current,
+                        current_db_name,
+                        current_coll_name,
+                        context=context,
+                    ),
+                    collection_options_or_empty=self._collection_options_or_empty_sync,
+                    load_indexes=self._load_indexes,
+                    load_search_index_rows=lambda current_db_name, current_coll_name: self._load_search_index_rows(
+                        current_db_name,
+                        current_coll_name,
+                    ),
+                    begin_write=lambda current: self._begin_write(current, context),
+                    ensure_collection_row=self._ensure_collection_row,
+                    lookup_collection_id=lambda current, current_db_name, current_coll_name, create: self._lookup_collection_id(
+                        current,
+                        current_db_name,
+                        current_coll_name,
+                        create=create,
+                    ),
+                    validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, current_document, exclude_storage_key: self._validate_document_against_unique_indexes(
+                        current_db_name,
+                        current_coll_name,
+                        current_document,
+                        exclude_storage_key=exclude_storage_key,
+                    ),
+                    delete_multikey_entries_for_storage_key=self._delete_multikey_entries_for_storage_key,
+                    delete_scalar_entries_for_storage_key=self._delete_scalar_entries_for_storage_key,
+                    build_multikey_rows_for_document=self._build_multikey_rows_for_document,
+                    ensure_multikey_physical_indexes=self._ensure_multikey_physical_indexes_sync,
+                    build_scalar_rows_for_document=self._build_scalar_rows_for_document,
+                    ensure_scalar_physical_indexes=self._ensure_scalar_physical_indexes_sync,
+                    replace_search_entries_for_document=lambda current, current_db_name, current_coll_name, current_storage_key, current_document, search_indexes: self._replace_search_entries_for_document(
+                        current,
+                        current_db_name,
+                        current_coll_name,
+                        current_storage_key,
+                        current_document,
+                        search_indexes=search_indexes,
+                    ),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
                 )
-                if (
-                    not bypass_document_validation
-                    and snapshot_options is not None
-                    and collection_options != snapshot_options
-                ):
-                    for document in documents:
-                        enforce_collection_document_validation(
-                            document,
-                            options=collection_options,
-                            original_document=None,
-                            dialect=MONGODB_DIALECT_70,
-                        )
-                indexes = self._load_indexes(db_name, coll_name)
-                search_indexes = self._load_search_index_rows(db_name, coll_name)
-                results: list[bool] = []
-                try:
-                    self._begin_write(conn, context)
-                    self._ensure_collection_row(conn, db_name, coll_name)
-                    collection_id = self._lookup_collection_id(conn, db_name, coll_name, create=True)
-                    for index, (document, (storage_key, serialized_document, prepared_multikey_rows)) in enumerate(
-                        zip(documents, prepared_documents, strict=False)
-                    ):
-                        try:
-                            self._validate_document_against_unique_indexes(
-                                db_name,
-                                coll_name,
-                                document,
-                                exclude_storage_key=None,
-                            )
-                            cursor = conn.execute(
-                                """
-                                INSERT INTO documents (db_name, coll_name, storage_key, document)
-                                VALUES (?, ?, ?, ?)
-                                ON CONFLICT(db_name, coll_name, storage_key) DO NOTHING
-                                """,
-                                (db_name, coll_name, storage_key, serialized_document),
-                            )
-                            if cursor.rowcount == 0:
-                                results.append(False)
-                                break
-                            self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                            self._delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                            effective_rows = prepared_multikey_rows
-                            if indexes != snapshot_indexes:
-                                effective_rows = self._build_multikey_rows_for_document(storage_key, document, indexes)
-                            if collection_id is not None and effective_rows:
-                                self._ensure_multikey_physical_indexes_sync(conn, indexes)
-                                conn.executemany(
-                                    """
-                                    INSERT OR IGNORE INTO multikey_entries (
-                                        collection_id, index_name, storage_key, element_type, type_score, element_key
-                                    ) VALUES (?, ?, ?, ?, ?, ?)
-                                    """,
-                                    [
-                                        (
-                                            collection_id,
-                                            index_name,
-                                            storage_key,
-                                            element_type,
-                                            type_score,
-                                            element_key,
-                                        )
-                                        for index_name, element_type, type_score, element_key in effective_rows
-                                    ],
-                                )
-                            scalar_rows = self._build_scalar_rows_for_document(storage_key, document, indexes)
-                            if collection_id is not None and scalar_rows:
-                                self._ensure_scalar_physical_indexes_sync(conn, indexes)
-                                conn.executemany(
-                                    """
-                                    INSERT OR IGNORE INTO scalar_index_entries (
-                                        collection_id, index_name, storage_key, element_type, type_score, element_key
-                                    ) VALUES (?, ?, ?, ?, ?, ?)
-                                    """,
-                                    [
-                                        (
-                                            collection_id,
-                                            index_name,
-                                            storage_key,
-                                            element_type,
-                                            type_score,
-                                            element_key,
-                                        )
-                                        for index_name, element_type, type_score, element_key in scalar_rows
-                                    ],
-                                )
-                            self._replace_search_entries_for_document(
-                                conn,
-                                db_name,
-                                coll_name,
-                                storage_key,
-                                document,
-                                search_indexes=search_indexes,
-                            )
-                            results.append(True)
-                        except (DuplicateKeyError, sqlite3.IntegrityError):
-                            results.append(False)
-                            break
-                    self._commit_write(conn, context)
-                    self._invalidate_collection_features_cache(db_name, coll_name)
-                    return results
-                except Exception:
-                    self._rollback_write(conn, context)
-                    raise
 
     def _prepare_bulk_document_sync(self, document: Document) -> tuple[str, str]:
         return self._storage_key(document.get("_id")), self._serialize_document(document)
@@ -3412,21 +3351,16 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 self._purge_expired_documents_sync(conn, db_name, coll_name, context=context)
-                row = conn.execute(
-                    """
-                    SELECT document
-                    FROM documents
-                    WHERE db_name = ? AND coll_name = ? AND storage_key = ?
-                    """,
-                    (db_name, coll_name, self._storage_key(doc_id)),
-                ).fetchone()
-        if row is None:
-            return None
-        return apply_projection(
-            DocumentCodec.to_public(self._deserialize_document(row[0])),
-            projection,
-            dialect=effective_dialect,
-        )
+                return _sqlite_get_document(
+                    conn,
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    doc_id=doc_id,
+                    projection=projection,
+                    dialect=effective_dialect,
+                    storage_key=self._storage_key(doc_id),
+                    deserialize_document=lambda payload: DocumentCodec.to_public(self._deserialize_document(payload)),
+                )
 
     def _delete_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, context: ClientSession | None) -> bool:
         if self._is_profile_namespace(coll_name):
@@ -3434,25 +3368,19 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                storage_key = self._storage_key(doc_id)
-                try:
-                    self._begin_write(conn, context)
-                    cursor = conn.execute(
-                        """
-                        DELETE FROM documents
-                        WHERE db_name = ? AND coll_name = ? AND storage_key = ?
-                        """,
-                        (db_name, coll_name, storage_key),
-                    )
-                    self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                    self._delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                    self._delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                    self._commit_write(conn, context)
-                    self._invalidate_collection_features_cache(db_name, coll_name)
-                    return cursor.rowcount > 0
-                except Exception:
-                    self._rollback_write(conn, context)
-                    raise
+                return _sqlite_delete_document(
+                    conn,
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    storage_key=self._storage_key(doc_id),
+                    begin_write=lambda current: self._begin_write(current, context),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                    delete_multikey_entries_for_storage_key=self._delete_multikey_entries_for_storage_key,
+                    delete_scalar_entries_for_storage_key=self._delete_scalar_entries_for_storage_key,
+                    delete_search_entries_for_storage_key=self._delete_search_entries_for_storage_key,
+                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                )
 
     def _iter_scan_documents_sync(
         self,
@@ -3584,7 +3512,7 @@ class SQLiteEngine(AsyncStorageEngine):
                                 semantics,
                                 hint=hint,
                             )
-                    sql, sql_params = execution_plan.require_sql()
+                    sql, sql_params = _sqlite_require_sql_execution_plan(execution_plan)
                     if active_connection is None:
                         with self._lock:
                             active_connection = self._require_connection(context)
@@ -3824,227 +3752,52 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None,
         context: ClientSession | None,
     ) -> str:
-        normalized_keys = normalize_index_keys(keys)
-        partial_filter_expression = normalize_partial_filter_expression(partial_filter_expression)
-        fields = index_fields(normalized_keys)
-        index_name = name or default_index_name(normalized_keys)
-        special_directions = special_index_directions(normalized_keys)
         deadline = operation_deadline(max_time_ms)
-        if expire_after_seconds is not None:
-            if (
-                not isinstance(expire_after_seconds, int)
-                or isinstance(expire_after_seconds, bool)
-                or expire_after_seconds < 0
-            ):
-                raise TypeError("expire_after_seconds must be a non-negative int or None")
-            if len(fields) != 1:
-                raise OperationFailure("TTL indexes require a single-field key pattern")
-            if fields[0] == "_id":
-                raise OperationFailure("TTL indexes cannot be created on _id")
-        if special_directions:
-            if len(normalized_keys) != 1:
-                raise OperationFailure("special index types currently require a single-field key pattern")
-            if unique:
-                raise OperationFailure(f"{special_directions[0]} indexes do not support unique")
-        if self._is_builtin_id_index(normalized_keys):
-            if (
-                name not in (None, "_id_")
-                or sparse
-                or partial_filter_expression is not None
-                or expire_after_seconds is not None
-                or not unique
-            ):
-                raise OperationFailure("Conflicting index definition for '_id_'")
-            return "_id_"
-        if index_name == "_id_":
-            raise OperationFailure("Conflicting index definition for '_id_'")
-        ordered_index = is_ordered_index_spec(normalized_keys)
-        physical_name = (
-            self._physical_index_name(db_name, coll_name, index_name)
-            if ordered_index
-            else None
-        )
-        multikey = ordered_index and self._supports_multikey_index(fields, unique)
-        multikey_physical_name = (
-            self._physical_multikey_index_name(db_name, coll_name, index_name)
-            if multikey
-            else None
-        )
-        scalar_physical_name = (
-            self._physical_scalar_index_name(db_name, coll_name, index_name)
-            if ordered_index and len(fields) == 1
-            else None
-        )
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                enforce_deadline(deadline)
-                indexes = self._load_indexes(db_name, coll_name)
-                for index in indexes:
-                    enforce_deadline(deadline)
-                    if index["name"] == index_name:
-                        if (
-                            index["key"] != normalized_keys
-                            or index["unique"] != unique
-                            or index.get("sparse") != sparse
-                            or index.get("partial_filter_expression") != partial_filter_expression
-                            or index.get("expire_after_seconds") != expire_after_seconds
-                        ):
-                            raise OperationFailure(f"Conflicting index definition for '{index_name}'")
-                        return index_name
-                    if index["key"] == normalized_keys:
-                        if (
-                            index["unique"] != unique
-                            or index.get("sparse") != sparse
-                            or index.get("partial_filter_expression") != partial_filter_expression
-                            or index.get("expire_after_seconds") != expire_after_seconds
-                        ):
-                            raise OperationFailure(
-                                f"Conflicting index definition for key pattern '{normalized_keys!r}'"
-                            )
-                        continue
-
-                if unique:
-                    for field in fields:
-                        if self._field_traverses_array_in_collection(db_name, coll_name, field):
-                            raise OperationFailure("SQLite unique indexes do not support paths that traverse arrays")
-        expressions = None
-        if ordered_index:
-            expressions = ", ".join(
-                [
-                    "db_name",
-                    "coll_name",
-                    *[
-                        f"{expression}{' DESC' if direction == -1 else ''}"
-                        for field, direction in normalized_keys
-                        for expression in index_expressions_sql(field)
-                    ],
-                ]
-            )
-        unique_sql = "UNIQUE " if unique and not (sparse or partial_filter_expression is not None) else ""
-        with self._lock:
-            conn = self._require_connection(context)
-            with self._bind_connection(conn):
-                enforce_deadline(deadline)
-                try:
-                    self._begin_write(conn, context)
-                    if physical_name is not None and expressions is not None:
-                        conn.execute(
-                            f"CREATE {unique_sql}INDEX {self._quote_identifier(physical_name)} "
-                            f"ON documents ({expressions})"
-                        )
-                    if multikey:
-                        enforce_deadline(deadline)
-                        conn.execute(
-                            f"CREATE INDEX {self._quote_identifier(multikey_physical_name)} "
-                            "ON multikey_entries (collection_id, index_name, type_score, element_key, storage_key)"
-                        )
-                    if scalar_physical_name is not None:
-                        enforce_deadline(deadline)
-                        conn.execute(
-                            f"CREATE INDEX {self._quote_identifier(scalar_physical_name)} "
-                            "ON scalar_index_entries (collection_id, index_name, type_score, element_key, storage_key)"
-                        )
-                    conn.execute(
-                        """
-                        INSERT INTO indexes (
-                            db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
-                        )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """,
-                        (
-                            db_name,
-                            coll_name,
-                            index_name,
-                            physical_name,
-                            json_dumps_compact(fields),
-                            json_dumps_compact(normalized_keys),
-                            1 if unique else 0,
-                            1 if sparse else 0,
-                            json_dumps_compact(partial_filter_expression) if partial_filter_expression is not None else None,
-                            expire_after_seconds,
-                            1 if multikey else 0,
-                            multikey_physical_name if multikey else None,
-                            scalar_physical_name,
-                        ),
-                    )
-                    if multikey:
-                        enforce_deadline(deadline)
-                        index_metadata = EngineIndexRecord(
-                            name=index_name,
-                            physical_name=physical_name,
-                            fields=fields,
-                            key=normalized_keys,
-                            unique=unique,
-                            sparse=sparse,
-                            partial_filter_expression=deepcopy(partial_filter_expression),
-                            expire_after_seconds=expire_after_seconds,
-                            multikey=True,
-                            multikey_physical_name=multikey_physical_name,
-                            scalar_physical_name=scalar_physical_name,
-                        )
-                        for storage_key, document in self._load_documents(db_name, coll_name):
-                            enforce_deadline(deadline)
-                            self._replace_multikey_entries_for_index_for_document(
-                                conn,
-                                db_name,
-                                coll_name,
-                                storage_key,
-                                document,
-                                index_metadata,
-                            )
-                    if scalar_physical_name is not None:
-                        enforce_deadline(deadline)
-                        index_metadata = EngineIndexRecord(
-                            name=index_name,
-                            physical_name=physical_name,
-                            fields=fields,
-                            key=normalized_keys,
-                            unique=unique,
-                            sparse=sparse,
-                            partial_filter_expression=deepcopy(partial_filter_expression),
-                            expire_after_seconds=expire_after_seconds,
-                            multikey=multikey,
-                            multikey_physical_name=multikey_physical_name,
-                            scalar_physical_name=scalar_physical_name,
-                        )
-                        for storage_key, document in self._load_documents(db_name, coll_name):
-                            enforce_deadline(deadline)
-                            self._replace_scalar_entries_for_index_for_document(
-                                conn,
-                                db_name,
-                                coll_name,
-                                storage_key,
-                                document,
-                                index_metadata,
-                            )
-                    enforce_deadline(deadline)
-                    self._commit_write(conn, context)
-                    self._purge_expired_documents_sync(
-                        conn,
-                        db_name,
-                        coll_name,
+                return _sqlite_create_index(
+                    conn,
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    keys=keys,
+                    unique=unique,
+                    name=name,
+                    sparse=sparse,
+                    partial_filter_expression=partial_filter_expression,
+                    expire_after_seconds=expire_after_seconds,
+                    deadline=deadline,
+                    enforce_deadline_fn=enforce_deadline,
+                    begin_write=lambda current: self._begin_write(current, context),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                    purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
+                        current,
+                        current_db_name,
+                        current_coll_name,
                         context=context,
-                    )
-                    self._mark_index_metadata_changed(db_name, coll_name)
-                    self._invalidate_collection_features_cache(db_name, coll_name)
-                    return index_name
-                except sqlite3.IntegrityError as exc:
-                    self._rollback_write(conn, context)
-                    self._mark_index_metadata_changed(db_name, coll_name)
-                    raise DuplicateKeyError(str(exc)) from exc
+                    ),
+                    mark_index_metadata_changed=self._mark_index_metadata_changed,
+                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                    load_indexes=self._load_indexes,
+                    field_traverses_array_in_collection=self._field_traverses_array_in_collection,
+                    supports_multikey_index=self._supports_multikey_index,
+                    physical_index_name=self._physical_index_name,
+                    physical_multikey_index_name=self._physical_multikey_index_name,
+                    physical_scalar_index_name=self._physical_scalar_index_name,
+                    is_builtin_id_index=self._is_builtin_id_index,
+                    replace_multikey_entries_for_document=self._replace_multikey_entries_for_index_for_document,
+                    replace_scalar_entries_for_document=self._replace_scalar_entries_for_index_for_document,
+                    load_documents=self._load_documents,
+                    quote_identifier=self._quote_identifier,
+                )
 
     def _list_indexes_sync(self, db_name: str, coll_name: str, context: ClientSession | None) -> list[IndexDocument]:
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 indexes = deepcopy(self._load_indexes(db_name, coll_name))
-        result = [default_id_index_definition().to_list_document()]
-        result.extend(
-            index.to_definition().to_list_document()
-            for index in indexes
-        )
-        return result
+        return _sqlite_list_index_documents(indexes)
 
     def _index_information_sync(
         self,
@@ -4056,13 +3809,7 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 indexes = deepcopy(self._load_indexes(db_name, coll_name))
-        return {
-            **default_id_index_information(),
-            **{
-                str(index["name"]): index.to_definition().to_information_entry()
-                for index in indexes
-            },
-        }
+        return _sqlite_build_index_information(indexes)
 
     def _drop_index_sync(
         self,
@@ -4071,79 +3818,28 @@ class SQLiteEngine(AsyncStorageEngine):
         index_or_name: str | IndexKeySpec,
         context: ClientSession | None,
     ) -> None:
-        normalized_keys: IndexKeySpec | None = None
-        target_name: str
-        if isinstance(index_or_name, str):
-            if index_or_name == "_id_":
-                raise OperationFailure("cannot drop _id index")
-            target_name = index_or_name
-        else:
-            normalized_keys = normalize_index_keys(index_or_name)
-            if self._is_builtin_id_index(normalized_keys):
-                raise OperationFailure("cannot drop _id index")
-            target_name = default_index_name(normalized_keys)
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                indexes = self._load_indexes(db_name, coll_name)
-                if normalized_keys is not None:
-                    matches = [index for index in indexes if index["key"] == normalized_keys]
-                    if not matches:
-                        raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
-                    if len(matches) > 1:
-                        raise OperationFailure(
-                            f"multiple indexes found with key pattern {normalized_keys!r}; drop by name instead"
-                        )
-                    target_name = str(matches[0]["name"])
-                target: EngineIndexRecord | None = None
-                for index in indexes:
-                    if index["name"] == target_name:
-                        target = index
-                        break
-                if target is None:
-                    if isinstance(index_or_name, str):
-                        raise OperationFailure(f"index not found with name [{index_or_name}]")
-                    raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
-                try:
-                    self._begin_write(conn, context)
-                    conn.execute(
-                        f"DROP INDEX IF EXISTS {self._quote_identifier(str(target['physical_name']))}"
-                    )
-                    if target.get("scalar_physical_name"):
-                        conn.execute(
-                            f"DROP INDEX IF EXISTS {self._quote_identifier(str(target['scalar_physical_name']))}"
-                        )
-                        conn.execute(
-                            """
-                            DELETE FROM scalar_index_entries
-                            WHERE collection_id = ? AND index_name = ?
-                            """,
-                            (self._lookup_collection_id(conn, db_name, coll_name), target["name"]),
-                        )
-                    if target.get("multikey"):
-                        conn.execute(
-                            f"DROP INDEX IF EXISTS {self._quote_identifier(str(target['multikey_physical_name']))}"
-                        )
-                        conn.execute(
-                            """
-                            DELETE FROM multikey_entries
-                            WHERE collection_id = ? AND index_name = ?
-                            """,
-                            (self._lookup_collection_id(conn, db_name, coll_name), target["name"]),
-                        )
-                    conn.execute(
-                        """
-                        DELETE FROM indexes
-                        WHERE db_name = ? AND coll_name = ? AND name = ?
-                        """,
-                        (db_name, coll_name, target["name"]),
-                    )
-                    self._commit_write(conn, context)
-                    self._mark_index_metadata_changed(db_name, coll_name)
-                    self._invalidate_collection_features_cache(db_name, coll_name)
-                except Exception:
-                    self._rollback_write(conn, context)
-                    raise
+                _sqlite_drop_index(
+                    conn,
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    index_or_name=index_or_name,
+                    begin_write=lambda current: self._begin_write(current, context),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                    load_indexes=self._load_indexes,
+                    lookup_collection_id=lambda current, current_db_name, current_coll_name: self._lookup_collection_id(
+                        current,
+                        current_db_name,
+                        current_coll_name,
+                    ),
+                    quote_identifier=self._quote_identifier,
+                    mark_index_metadata_changed=self._mark_index_metadata_changed,
+                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                    is_builtin_id_index=self._is_builtin_id_index,
+                )
 
     def _drop_database_sync(
         self,
@@ -4257,49 +3953,23 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                indexes = self._load_indexes(db_name, coll_name)
-                search_indexes = self._load_search_index_rows(db_name, coll_name)
-                try:
-                    self._begin_write(conn, context)
-                    for index in indexes:
-                        conn.execute(
-                            f"DROP INDEX IF EXISTS {self._quote_identifier(str(index['physical_name']))}"
-                        )
-                        if index.get("scalar_physical_name"):
-                            conn.execute(
-                                f"DROP INDEX IF EXISTS {self._quote_identifier(str(index['scalar_physical_name']))}"
-                            )
-                        if index.get("multikey"):
-                            conn.execute(
-                                f"DROP INDEX IF EXISTS {self._quote_identifier(str(index['multikey_physical_name']))}"
-                            )
-                    conn.execute(
-                        """
-                        DELETE FROM scalar_index_entries
-                        WHERE collection_id = ?
-                        """,
-                        (self._lookup_collection_id(conn, db_name, coll_name),),
-                    )
-                    conn.execute(
-                        """
-                        DELETE FROM multikey_entries
-                        WHERE collection_id = ?
-                        """,
-                        (self._lookup_collection_id(conn, db_name, coll_name),),
-                    )
-                    conn.execute(
-                        """
-                        DELETE FROM indexes
-                        WHERE db_name = ? AND coll_name = ?
-                        """,
-                        (db_name, coll_name),
-                    )
-                    self._commit_write(conn, context)
-                    self._mark_index_metadata_changed(db_name, coll_name)
-                    self._invalidate_collection_features_cache(db_name, coll_name)
-                except Exception:
-                    self._rollback_write(conn, context)
-                    raise
+                _sqlite_drop_all_indexes(
+                    conn,
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    begin_write=lambda current: self._begin_write(current, context),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                    load_indexes=self._load_indexes,
+                    lookup_collection_id=lambda current, current_db_name, current_coll_name: self._lookup_collection_id(
+                        current,
+                        current_db_name,
+                        current_coll_name,
+                    ),
+                    quote_identifier=self._quote_identifier,
+                    mark_index_metadata_changed=self._mark_index_metadata_changed,
+                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                )
 
     def _create_search_index_sync(
         self,
@@ -4395,6 +4065,68 @@ class SQLiteEngine(AsyncStorageEngine):
                 drop_search_backend=self._drop_search_backend_sync,
             )
 
+    def _execute_sqlite_search_query(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        definition: SearchIndexDefinition,
+        query: SearchTextQuery | SearchPhraseQuery,
+        physical_name: str | None,
+        deadline: float | None,
+    ) -> list[Document]:
+        resolved_physical_name = self._ensure_search_backend_sync(
+            conn,
+            db_name,
+            coll_name,
+            definition,
+            physical_name,
+        )
+        if resolved_physical_name and self._supports_fts5(conn) and self._sqlite_table_exists(
+            conn,
+            resolved_physical_name,
+        ):
+            sql = (
+                f"SELECT DISTINCT storage_key FROM {self._quote_identifier(resolved_physical_name)} "
+                "WHERE content MATCH ?"
+            )
+            params: list[object] = [sqlite_fts5_query(query)]
+            if query.paths is not None:
+                placeholders = ", ".join("?" for _ in query.paths)
+                sql += f" AND field_path IN ({placeholders})"
+                params.extend(query.paths)
+            storage_keys = [row[0] for row in conn.execute(sql, tuple(params)).fetchall()]
+            if not storage_keys:
+                return []
+            storage_key_set = set(storage_keys)
+            documents = {
+                storage_key: document
+                for storage_key, document in self._load_documents(db_name, coll_name)
+                if storage_key in storage_key_set
+            }
+            enforce_deadline(deadline)
+            return [documents[storage_key] for storage_key in storage_keys if storage_key in documents]
+
+        documents = [
+            document
+            for _, document in self._load_documents(db_name, coll_name)
+            if (
+                matches_search_text_query(
+                    document,
+                    definition=definition,
+                    query=query,
+                )
+                if isinstance(query, SearchTextQuery)
+                else matches_search_phrase_query(
+                    document,
+                    definition=definition,
+                    query=query,
+                )
+            )
+        ]
+        enforce_deadline(deadline)
+        return documents
+
     def _search_documents_sync(
         self,
         db_name: str,
@@ -4405,89 +4137,32 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
     ) -> list[Document]:
         deadline = operation_deadline(max_time_ms)
-        query = compile_search_stage(operator, spec)
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                rows = self._load_search_index_rows(db_name, coll_name, name=query.index_name)
-                if not rows:
-                    raise OperationFailure(f"search index not found with name [{query.index_name}]")
-                definition, physical_name, ready_at_epoch = rows[0]
-                if not self._search_index_is_ready_sync(ready_at_epoch):
-                    raise OperationFailure(f"search index [{query.index_name}] is not ready yet")
-                if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) and definition.index_type != "search":
-                    raise OperationFailure(f"search index [{query.index_name}] does not support $search")
-                if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
-                    raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
-                if isinstance(query, SearchVectorQuery):
-                    documents = [
-                        document
-                        for _, document in self._load_documents(db_name, coll_name)
-                    ]
-                    enforce_deadline(deadline)
-                    vector_hits: list[tuple[float, Document]] = []
-                    for document in documents:
-                        score = score_vector_document(
-                            document,
-                            definition=definition,
-                            query=query,
-                        )
-                        if score is None:
-                            continue
-                        vector_hits.append((score, document))
-                    vector_hits.sort(key=lambda item: item[0], reverse=True)
-                    return [document for _score, document in vector_hits[: query.limit]]
-                resolved_physical_name = self._ensure_search_backend_sync(
-                    conn,
-                    db_name,
-                    coll_name,
-                    definition,
-                    physical_name,
+                return _sqlite_search_documents(
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    operator=operator,
+                    spec=spec,
+                    deadline=deadline,
+                    load_search_index_rows=lambda current_db_name, current_coll_name, name: self._load_search_index_rows(
+                        current_db_name,
+                        current_coll_name,
+                        name=name,
+                    ),
+                    search_index_is_ready=self._search_index_is_ready_sync,
+                    load_documents=lambda current_db_name, current_coll_name: list(self._load_documents(current_db_name, current_coll_name)),
+                    search_sql=lambda current_db_name, current_coll_name, definition, query, physical_name: self._execute_sqlite_search_query(
+                        conn,
+                        current_db_name,
+                        current_coll_name,
+                        definition,
+                        query,
+                        physical_name,
+                        deadline,
+                    ),
                 )
-                if resolved_physical_name and self._supports_fts5(conn) and self._sqlite_table_exists(
-                    conn,
-                    resolved_physical_name,
-                ):
-                    sql = (
-                        f"SELECT DISTINCT storage_key FROM {self._quote_identifier(resolved_physical_name)} "
-                        "WHERE content MATCH ?"
-                    )
-                    params: list[object] = [sqlite_fts5_query(query)]
-                    if query.paths is not None:
-                        placeholders = ", ".join("?" for _ in query.paths)
-                        sql += f" AND field_path IN ({placeholders})"
-                        params.extend(query.paths)
-                    storage_keys = [row[0] for row in conn.execute(sql, tuple(params)).fetchall()]
-                    if not storage_keys:
-                        return []
-                    storage_key_set = set(storage_keys)
-                    documents = {
-                        storage_key: document
-                        for storage_key, document in self._load_documents(db_name, coll_name)
-                        if storage_key in storage_key_set
-                    }
-                    enforce_deadline(deadline)
-                    return [documents[storage_key] for storage_key in storage_keys if storage_key in documents]
-
-                documents = [
-                    document
-                    for _, document in self._load_documents(db_name, coll_name)
-                    if (
-                        matches_search_text_query(
-                            document,
-                            definition=definition,
-                            query=query,
-                        )
-                        if isinstance(query, SearchTextQuery)
-                        else matches_search_phrase_query(
-                        document,
-                        definition=definition,
-                        query=query,
-                        )
-                    )
-                ]
-                enforce_deadline(deadline)
-                return documents
 
     def _explain_search_documents_sync(
         self,
