@@ -12,7 +12,7 @@ from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import DuplicateKeyError
-from mongoeco.types import DBRef, ObjectId, UNDEFINED
+from mongoeco.types import DBRef, ObjectId, ReturnDocument, UNDEFINED
 from tests.support import open_client
 
 
@@ -797,6 +797,99 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(outcomes["memory"], "b@example.com")
         self.assertEqual(outcomes["sqlite"], "b@example.com")
+
+    async def test_find_one_and_modify_family_matches_in_memory_and_sqlite(self):
+        results: dict[str, tuple[object, object, object, list[dict]]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                await collection.insert_many(
+                    [
+                        {"_id": "1", "kind": "view", "rank": 2, "done": False},
+                        {"_id": "2", "kind": "view", "rank": 1, "done": False},
+                    ]
+                )
+
+                before = await collection.find_one_and_update(
+                    {"kind": "view"},
+                    {"$set": {"done": True}},
+                    sort=[("rank", 1)],
+                    return_document=ReturnDocument.BEFORE,
+                    projection={"rank": 1, "done": 1, "_id": 0},
+                )
+                after = await collection.find_one_and_replace(
+                    {"kind": "view"},
+                    {"kind": "view", "rank": 1, "done": False, "tag": "replaced"},
+                    sort=[("rank", 1)],
+                    return_document=ReturnDocument.AFTER,
+                    projection={"rank": 1, "done": 1, "tag": 1, "_id": 0},
+                )
+                deleted = await collection.find_one_and_delete(
+                    {"kind": "view"},
+                    sort=[("rank", -1)],
+                    projection={"rank": 1, "_id": 0},
+                )
+                remaining = await collection.find({}, sort=[("_id", 1)]).to_list()
+
+                results[engine_name] = (before, after, deleted, remaining)
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_distinct_matches_in_memory_and_sqlite_for_arrays_documents_and_filters(self):
+        results: dict[str, dict[str, list[object]]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                await collection.insert_many(
+                    [
+                        {"_id": "1", "kind": "view", "tags": ["python", "mongodb"], "profile": {"city": "Madrid"}, "items": [{"code": "a"}]},
+                        {"_id": "2", "kind": "view", "tags": ["python"], "profile": {"city": "Sevilla"}, "items": [{"code": "b"}]},
+                        {"_id": "3", "kind": "click", "tags": ["sqlite"], "profile": {"city": "Madrid"}, "items": [{"code": "a"}]},
+                    ]
+                )
+
+                results[engine_name] = {
+                    "tags": await collection.distinct("tags"),
+                    "cities": await collection.distinct("profile.city", {"kind": "view"}),
+                    "items": await collection.distinct("items"),
+                    "codes": await collection.distinct("items.code"),
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_collation_sensitive_operations_match_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, object]] = {}
+        collation = {"locale": "en", "strength": 2, "numericOrdering": True}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("users")
+                await collection.insert_many(
+                    [
+                        {"_id": "1", "name": "Alice", "rank": "10"},
+                        {"_id": "2", "name": "alice", "rank": "2"},
+                        {"_id": "3", "name": "Bob", "rank": "11"},
+                    ]
+                )
+
+                found = await collection.find({"name": "ALICE"}, sort=[("rank", 1)], collation=collation).to_list()
+                updated = await collection.update_one(
+                    {"name": "alice"},
+                    {"$set": {"matched": True}},
+                    collation=collation,
+                )
+                distinct = await collection.distinct("name", collation=collation)
+                deleted = await collection.delete_one({"name": "bob"}, collation=collation)
+                remaining = await collection.find({}, sort=[("_id", 1)]).to_list()
+
+                results[engine_name] = {
+                    "found": found,
+                    "updated": (updated.matched_count, updated.modified_count),
+                    "distinct": distinct,
+                    "deleted": deleted.deleted_count,
+                    "remaining": remaining,
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
 
     async def test_pop_update_matches_in_memory_and_sqlite(self):
         results: dict[str, dict] = {}

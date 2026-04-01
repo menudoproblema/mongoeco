@@ -4,7 +4,7 @@ import unittest
 from mongoeco.api.operations import compile_update_operation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.engines.semantic_core import compile_find_semantics
-from mongoeco.errors import OperationFailure
+from mongoeco.errors import DuplicateKeyError, OperationFailure
 from tests.support import ENGINE_FACTORIES, open_engine
 
 
@@ -385,3 +385,56 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                             "partialFilterExpression": {"active": True},
                         },
                     )
+
+    async def test_engine_enforces_sparse_and_partial_unique_indexes_consistently(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_engine(engine_name) as engine:
+                    await engine.create_index("db", "sparse_users", ["email"], unique=True, sparse=True)
+                    await engine.put_document("db", "sparse_users", {"_id": "1"})
+                    await engine.put_document("db", "sparse_users", {"_id": "2"})
+                    await engine.put_document("db", "sparse_users", {"_id": "3", "email": "ada@example.com"})
+                    with self.assertRaises(DuplicateKeyError):
+                        await engine.put_document("db", "sparse_users", {"_id": "4", "email": "ada@example.com"})
+
+                    await engine.create_index(
+                        "db",
+                        "partial_users",
+                        ["email"],
+                        unique=True,
+                        partial_filter_expression={"active": True},
+                    )
+                    await engine.put_document("db", "partial_users", {"_id": "1", "email": "a@example.com", "active": False})
+                    await engine.put_document("db", "partial_users", {"_id": "2", "email": "a@example.com", "active": False})
+                    await engine.put_document("db", "partial_users", {"_id": "3", "email": "a@example.com", "active": True})
+                    with self.assertRaises(DuplicateKeyError):
+                        await engine.put_document("db", "partial_users", {"_id": "4", "email": "a@example.com", "active": True})
+
+    async def test_engine_find_semantics_respects_collation_for_filter_sort_and_count(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_engine(engine_name) as engine:
+                    await engine.put_document("db", "users", {"_id": "1", "name": "Alice"})
+                    await engine.put_document("db", "users", {"_id": "2", "name": "alice"})
+                    await engine.put_document("db", "users", {"_id": "3", "name": "Bob"})
+
+                    semantics = compile_find_semantics(
+                        {"name": "ALICE"},
+                        collation={"locale": "en", "strength": 2},
+                        sort=[("name", 1), ("_id", 1)],
+                    )
+                    matched = [
+                        doc
+                        async for doc in engine.scan_find_semantics("db", "users", semantics)
+                    ]
+                    count = await engine.count_find_semantics(
+                        "db",
+                        "users",
+                        compile_find_semantics(
+                            {"name": "ALICE"},
+                            collation={"locale": "en", "strength": 2},
+                        ),
+                    )
+
+                    self.assertEqual([doc["_id"] for doc in matched], ["1", "2"])
+                    self.assertEqual(count, 2)
