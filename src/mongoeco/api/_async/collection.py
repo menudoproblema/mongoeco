@@ -9,6 +9,7 @@ from mongoeco.api._async._collection_bulk import (
     BulkWritePreparationContext as _BulkWriteContext,
     PreparedBulkWriteRequest as _PreparedBulkWriteRequest,
 )
+from mongoeco.api._async import _collection_indexing
 from mongoeco.api._async._collection_watch import (
     CollectionChangeStreamConfig,
     create_change_stream_hub,
@@ -50,7 +51,6 @@ from mongoeco.api.operations import (
     compile_update_operation,
 )
 from mongoeco.api._async.cursor import AsyncCursor, _operation_issue_message
-from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
 from mongoeco.compat import (
     MongoDialect,
@@ -2344,28 +2344,18 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> str:
-        normalized_keys = self._normalize_index_keys(keys)
-        expire_after_seconds = self._normalize_expire_after_seconds(expire_after_seconds)
-        max_time_ms = self._normalize_max_time_ms(max_time_ms)
-        created_name = await self._engine.create_index(
-            self._db_name,
-            self._collection_name,
-            normalized_keys,
+        return await _collection_indexing.create_index(
+            self,
+            keys,
             unique=unique,
             name=name,
             sparse=sparse,
             partial_filter_expression=partial_filter_expression,
             expire_after_seconds=expire_after_seconds,
-            max_time_ms=max_time_ms,
-            context=session,
-        )
-        self._record_operation_metadata(
-            operation="create_index",
             comment=comment,
             max_time_ms=max_time_ms,
             session=session,
         )
-        return created_name
 
     async def create_indexes(
         self,
@@ -2375,74 +2365,24 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> list[str]:
-        models = self._normalize_index_models(indexes)
-        max_time_ms = self._normalize_max_time_ms(max_time_ms)
-        deadline = operation_deadline(max_time_ms)
-        existing = await self._engine.index_information(
-            self._db_name,
-            self._collection_name,
-            context=session,
-        )
-        names: list[str] = []
-        created_names: list[str] = []
-        for index in models:
-            try:
-                enforce_deadline(deadline)
-                name = await self._engine.create_index(
-                    self._db_name,
-                    self._collection_name,
-                    index.keys,
-                    unique=index.unique,
-                    name=index.name,
-                    sparse=index.sparse,
-                    partial_filter_expression=index.partial_filter_expression,
-                    expire_after_seconds=index.expire_after_seconds,
-                    max_time_ms=None if deadline is None else max(
-                        1,
-                        int((deadline - time.monotonic()) * 1000),
-                    ),
-                    context=session,
-                )
-            except Exception:
-                for created_name in reversed(created_names):
-                    try:
-                        await self._engine.drop_index(
-                            self._db_name,
-                            self._collection_name,
-                            created_name,
-                            context=session,
-                        )
-                    except Exception:
-                        pass
-                raise
-            names.append(name)
-            if name not in existing and name not in created_names:
-                created_names.append(name)
-        self._record_operation_metadata(
-            operation="create_indexes",
+        return await _collection_indexing.create_indexes(
+            self,
+            indexes,
             comment=comment,
             max_time_ms=max_time_ms,
             session=session,
         )
-        return names
 
     def list_indexes(
         self,
         *,
         comment: object | None = None,
         session: ClientSession | None = None,
-    ) -> AsyncIndexCursor:
-        self._record_operation_metadata(
-            operation="list_indexes",
+    ):
+        return _collection_indexing.list_indexes(
+            self,
             comment=comment,
             session=session,
-        )
-        return AsyncIndexCursor(
-            lambda: self._engine.list_indexes(
-                self._db_name,
-                self._collection_name,
-                context=session,
-            )
         )
 
     async def index_information(
@@ -2451,12 +2391,11 @@ class AsyncCollection:
         comment: object | None = None,
         session: ClientSession | None = None,
     ) -> IndexInformation:
-        self._record_operation_metadata(
-            operation="index_information",
+        return await _collection_indexing.index_information(
+            self,
             comment=comment,
             session=session,
         )
-        return await self._engine.index_information(self._db_name, self._collection_name, context=session)
 
     async def drop_index(
         self,
@@ -2465,14 +2404,9 @@ class AsyncCollection:
         comment: object | None = None,
         session: ClientSession | None = None,
     ) -> None:
-        target: str | IndexKeySpec
-        if isinstance(index_or_name, str):
-            target = index_or_name
-        else:
-            target = self._normalize_index_keys(index_or_name)
-        await self._engine.drop_index(self._db_name, self._collection_name, target, context=session)
-        self._record_operation_metadata(
-            operation="drop_index",
+        await _collection_indexing.drop_index(
+            self,
+            index_or_name,
             comment=comment,
             session=session,
         )
@@ -2483,9 +2417,8 @@ class AsyncCollection:
         comment: object | None = None,
         session: ClientSession | None = None,
     ) -> None:
-        await self._engine.drop_indexes(self._db_name, self._collection_name, context=session)
-        self._record_operation_metadata(
-            operation="drop_indexes",
+        await _collection_indexing.drop_indexes(
+            self,
             comment=comment,
             session=session,
         )
@@ -2498,22 +2431,13 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> str:
-        normalized_model = self._normalize_search_index_model(model)
-        max_time_ms = self._normalize_max_time_ms(max_time_ms)
-        created_name = await self._engine.create_search_index(
-            self._db_name,
-            self._collection_name,
-            normalized_model.definition_snapshot,
-            max_time_ms=max_time_ms,
-            context=session,
-        )
-        self._record_operation_metadata(
-            operation="create_search_index",
+        return await _collection_indexing.create_search_index(
+            self,
+            model,
             comment=comment,
             max_time_ms=max_time_ms,
             session=session,
         )
-        return created_name
 
     async def create_search_indexes(
         self,
@@ -2523,28 +2447,13 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> list[str]:
-        models = self._normalize_search_index_models(indexes)
-        max_time_ms = self._normalize_max_time_ms(max_time_ms)
-        deadline = operation_deadline(max_time_ms)
-        names: list[str] = []
-        for model in models:
-            enforce_deadline(deadline)
-            remaining = None if deadline is None else max(1, int((deadline - time.monotonic()) * 1000))
-            name = await self._engine.create_search_index(
-                self._db_name,
-                self._collection_name,
-                model.definition_snapshot,
-                max_time_ms=remaining,
-                context=session,
-            )
-            names.append(name)
-        self._record_operation_metadata(
-            operation="create_search_indexes",
+        return await _collection_indexing.create_search_indexes(
+            self,
+            indexes,
             comment=comment,
             max_time_ms=max_time_ms,
             session=session,
         )
-        return names
 
     def list_search_indexes(
         self,
@@ -2553,20 +2462,11 @@ class AsyncCollection:
         comment: object | None = None,
         session: ClientSession | None = None,
     ) -> AsyncSearchIndexCursor:
-        if name is not None:
-            name = self._normalize_search_index_name(name)
-        self._record_operation_metadata(
-            operation="list_search_indexes",
+        return _collection_indexing.list_search_indexes(
+            self,
+            name=name,
             comment=comment,
             session=session,
-        )
-        return AsyncSearchIndexCursor(
-            lambda: self._engine.list_search_indexes(
-                self._db_name,
-                self._collection_name,
-                name=name,
-                context=session,
-            )
         )
 
     async def update_search_index(
@@ -2578,19 +2478,10 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> None:
-        name = self._normalize_search_index_name(name)
-        definition = self._require_document(definition)
-        max_time_ms = self._normalize_max_time_ms(max_time_ms)
-        await self._engine.update_search_index(
-            self._db_name,
-            self._collection_name,
+        await _collection_indexing.update_search_index(
+            self,
             name,
             definition,
-            max_time_ms=max_time_ms,
-            context=session,
-        )
-        self._record_operation_metadata(
-            operation="update_search_index",
             comment=comment,
             max_time_ms=max_time_ms,
             session=session,
@@ -2604,17 +2495,9 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> None:
-        name = self._normalize_search_index_name(name)
-        max_time_ms = self._normalize_max_time_ms(max_time_ms)
-        await self._engine.drop_search_index(
-            self._db_name,
-            self._collection_name,
+        await _collection_indexing.drop_search_index(
+            self,
             name,
-            max_time_ms=max_time_ms,
-            context=session,
-        )
-        self._record_operation_metadata(
-            operation="drop_search_index",
             comment=comment,
             max_time_ms=max_time_ms,
             session=session,
