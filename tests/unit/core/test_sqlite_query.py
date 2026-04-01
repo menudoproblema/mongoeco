@@ -32,6 +32,7 @@ from mongoeco.engines.sqlite_query import (
     _comparison_type_order,
     _normalize_comparable_value,
     _path_crosses_scalar_parent,
+    _translate_same_type_comparison,
     _translate_array_contains_scalar,
     _translate_comparison,
     _translate_equals,
@@ -246,6 +247,58 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             _translate_comparison(">", "payload", {"nested": True})
+
+    def test_sqlite_query_helper_branches_cover_same_type_comparison_type_codes_and_update_fallbacks(self):
+        self.assertEqual(_comparison_type_order("uuid"), 6)
+        self.assertEqual(_comparison_type_order("objectid"), 7)
+        self.assertEqual(_comparison_type_order("datetime"), 9)
+        self.assertEqual(_comparison_type_order("timestamp"), 10)
+        self.assertEqual(_comparison_type_order("regex"), 11)
+
+        sql, params = _translate_same_type_comparison(">", "name", "Ada")
+        self.assertIn("json_type(document, '$.name') = 'text'", sql)
+        self.assertEqual(params, ["Ada"])
+
+        sql, params = _translate_same_type_comparison("<", "flag", True)
+        self.assertIn("json_type(document, '$.flag') IN ('true', 'false')", sql)
+        self.assertEqual(params, [1])
+
+        sql, params = _translate_same_type_comparison(">=", "_id", ObjectId("0123456789abcdef01234567"))
+        self.assertIn("type'), '') = ?", sql)
+        self.assertEqual(params[0], "objectid")
+
+        sql, _ = translate_query_plan(TypeCondition("value", (2, 4, "double", "object", "array", "binData", "objectId", "bool", "date", "null", "long")))
+        self.assertIn("json_type(document, '$.value') = 'text'", sql)
+        self.assertIn("json_type(document, '$.value') = 'array'", sql)
+        self.assertIn("json_type(document, '$.value') = 'null'", sql)
+        self.assertIn("json_type(document, '$.value') = 'real'", sql)
+
+        with mock.patch.object(UpdateEngine, "compile_update_plan", return_value=object()):
+            with self.assertRaisesRegex(NotImplementedError, "Aggregation pipeline updates require Python update fallback"):
+                translate_update_spec({"$set": {"name": "Ada"}})
+
+        with self.assertRaisesRegex(NotImplementedError, "Unsupported update operator"):
+            translate_compiled_update_plan(
+                UpdateEngine.compile_update_plan({"$inc": {"rank": 1}})
+            )
+        with self.assertRaisesRegex(NotImplementedError, "Array index paths require Python update fallback"):
+            translate_compiled_update_plan(
+                UpdateEngine.compile_update_plan({"$set": {"items.0.name": "Ada"}})
+            )
+        with self.assertRaisesRegex(NotImplementedError, "Scalar parent requires Python update fallback"):
+            translate_compiled_update_plan(
+                UpdateEngine.compile_update_plan({"$set": {"profile.name": "Ada"}}),
+                current_document={"profile": 1},
+            )
+        with self.assertRaisesRegex(NotImplementedError, "Array index paths require Python update fallback"):
+            translate_compiled_update_plan(
+                UpdateEngine.compile_update_plan({"$unset": {"items.0.name": ""}})
+            )
+
+        with self.assertRaisesRegex(NotImplementedError, "DBRef special subfields require Python query fallback"):
+            translate_query_plan(EqualsCondition("ref.$id", "1"))
+        with self.assertRaisesRegex(TypeError, "Unsupported query plan node"):
+            translate_query_plan("bad")  # type: ignore[arg-type]
 
     def test_sort_type_expression_sql_keeps_bytes_out_of_uuid_bucket(self):
         expression = sort_type_expression_sql("payload")

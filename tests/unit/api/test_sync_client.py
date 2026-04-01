@@ -399,3 +399,55 @@ class SyncClientUnitTests(unittest.TestCase):
         client.close()
         self.assertEqual(collection.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
         self.assertEqual(collection.pymongo_profile_resolution.resolution_mode, 'explicit-alias')
+
+    def test_sync_client_runtime_properties_and_wrappers_delegate_to_async_client(self):
+        client = MongoClient(MemoryEngine(), uri="mongodb://localhost:27017/")
+        try:
+            self.assertIsNotNone(client.topology_description)
+            self.assertIsNotNone(client.effective_client_uri)
+            self.assertIsNotNone(client.timeout_policy)
+            self.assertIsNotNone(client.retry_policy)
+            self.assertIsNotNone(client.selection_policy)
+            self.assertIsNotNone(client.concern_policy)
+            self.assertIsNotNone(client.auth_policy)
+            self.assertIsNotNone(client.tls_policy)
+            self.assertIsNone(client.srv_resolution)
+            self.assertIsNotNone(client.driver_runtime)
+            self.assertIsNotNone(client.driver_monitor)
+            self.assertIsNotNone(client.network_transport)
+
+            async def _execute_driver_command(*args, **kwargs):
+                return {"kind": "driver", "args": args, "kwargs": kwargs}
+
+            async def _execute_network_command(*args, **kwargs):
+                return {"kind": "network", "args": args, "kwargs": kwargs}
+
+            async def _refresh_topology(*, transport=None):
+                return {"transport": transport}
+
+            async def _start_topology_monitoring(*, transport=None):
+                return ("start", transport)
+
+            async def _stop_topology_monitoring():
+                return "stop"
+
+            client._ensure_connected = lambda: None  # type: ignore[method-assign]
+            client._async_client.execute_driver_command = _execute_driver_command  # type: ignore[method-assign]
+            client._async_client.execute_network_command = _execute_network_command  # type: ignore[method-assign]
+            client._async_client.refresh_topology = _refresh_topology  # type: ignore[method-assign]
+            client._async_client.start_topology_monitoring = _start_topology_monitoring  # type: ignore[method-assign]
+            client._async_client.stop_topology_monitoring = _stop_topology_monitoring  # type: ignore[method-assign]
+
+            self.assertEqual(
+                client.execute_driver_command("db", "ping", {"ping": 1})["kind"],
+                "driver",
+            )
+            self.assertEqual(
+                client.execute_network_command("db", "ping", {"ping": 1})["kind"],
+                "network",
+            )
+            self.assertEqual(client.refresh_topology(), {"transport": None})
+            self.assertIsNone(client.start_topology_monitoring())
+            self.assertIsNone(client.stop_topology_monitoring())
+        finally:
+            client.close()

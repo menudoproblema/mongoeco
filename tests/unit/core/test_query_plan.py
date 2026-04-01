@@ -1,5 +1,6 @@
 import re
 import unittest
+import uuid
 
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80, MongoDialect
 from mongoeco.errors import OperationFailure
@@ -23,6 +24,9 @@ from mongoeco.core.query_plan import (
     RegexCondition,
     SizeCondition,
     TypeCondition,
+    _coerce_bitwise_mask,
+    _normalize_type_specifier,
+    _regex_options_from_pattern,
     compile_filter,
     ensure_query_plan,
 )
@@ -258,6 +262,40 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({"name": {"$not": {"$regex": "^ad", "x": 1}}})
         with self.assertRaises(ValueError):
             compile_filter({"items": {"$elemMatch": 1}})
+
+    def test_query_plan_private_helpers_cover_regex_type_and_bitwise_branches(self):
+        compiled = re.compile("^ad", re.IGNORECASE | re.MULTILINE | re.DOTALL | re.VERBOSE)
+        self.assertEqual(_regex_options_from_pattern(compiled), "imsx")
+
+        self.assertEqual(_normalize_type_specifier(127), ("maxKey",))
+        self.assertEqual(_normalize_type_specifier(" number "), ("double", "int", "long", "decimal"))
+        with self.assertRaises(ValueError):
+            _normalize_type_specifier(999)
+        with self.assertRaises(ValueError):
+            _normalize_type_specifier(object())
+        with self.assertRaises(ValueError):
+            _normalize_type_specifier("future")
+
+        self.assertEqual(_coerce_bitwise_mask(uuid.UUID("12345678-1234-5678-1234-567812345678")), int.from_bytes(uuid.UUID("12345678-1234-5678-1234-567812345678").bytes, byteorder="little", signed=False))
+        with self.assertRaises(ValueError):
+            _coerce_bitwise_mask(True)
+        with self.assertRaises(ValueError):
+            _coerce_bitwise_mask([64])
+
+    def test_compile_filter_private_branches_cover_regex_equals_and_elem_match_fallback(self):
+        self.assertEqual(
+            compile_filter({"name": {"$eq": Regex("^ad", "i")}}),
+            RegexCondition("name", "^ad", "i"),
+        )
+        self.assertEqual(
+            compile_filter({"name": {"$eq": re.compile("^ad", re.IGNORECASE | re.MULTILINE)}}),
+            RegexCondition("name", "^ad", "im"),
+        )
+
+        plan = compile_filter({"items": {"$elemMatch": {"$future": 1}}}, planning_mode=PlanningMode.STRICT)
+        self.assertIsInstance(plan, ElemMatchCondition)
+        self.assertIsNone(plan.compiled_plan)
+        self.assertFalse(plan.wrap_value)
 
     def test_compile_filter_rejects_options_without_regex(self):
         with self.assertRaises(Exception):

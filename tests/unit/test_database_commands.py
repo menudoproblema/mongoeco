@@ -2,7 +2,19 @@ import asyncio
 import unittest
 from types import SimpleNamespace
 
-from mongoeco.api._async.database_commands import AsyncDatabaseCommandService, BuildInfoResult
+from mongoeco.api._async.database_commands import (
+    AsyncDatabaseCommandService,
+    BuildInfoResult,
+    _storage_engine_name,
+    build_info_document,
+    cmd_line_opts_document,
+    connection_status_document,
+    hello_document,
+    host_info_document,
+    list_commands_document,
+    server_status_document,
+    whats_my_uri_document,
+)
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import OperationFailure
@@ -91,6 +103,29 @@ class _ProfilingEngine(MemoryEngine):
 
 
 class AsyncDatabaseCommandServiceTests(unittest.TestCase):
+    def test_helper_result_builders_cover_document_helpers_and_engine_name_detection(self):
+        short_dialect = SimpleNamespace(server_version="8")
+        self.assertEqual(build_info_document(short_dialect)["versionArray"], [8, 0, 0, 0])
+        self.assertIn("helloOk", hello_document(short_dialect))
+        self.assertEqual(connection_status_document(show_privileges=True)["authInfo"]["authenticatedUserPrivileges"], [])
+        self.assertEqual(whats_my_uri_document()["you"], "127.0.0.1:0")
+        self.assertEqual(cmd_line_opts_document()["parsed"]["net"]["port"], 0)
+        self.assertIn("commands", list_commands_document())
+        self.assertIn("system", host_info_document())
+        self.assertIn("storageEngine", server_status_document(MONGODB_DIALECT_70, engine=MemoryEngine()))
+
+        class SQLiteLikeEngine:
+            pass
+
+        class CustomEngine:
+            pass
+
+        SQLiteLikeEngine.__name__ = "SQLiteTestEngine"
+        CustomEngine.__name__ = "CustomEngine"
+        self.assertEqual(_storage_engine_name(MemoryEngine()), "memory")
+        self.assertEqual(_storage_engine_name(SQLiteLikeEngine()), "sqlite")
+        self.assertEqual(_storage_engine_name(CustomEngine()), "CustomEngine")
+
     def test_parse_raw_command_covers_static_typed_and_delegated_variants(self):
         admin = _FakeAdmin()
         service = AsyncDatabaseCommandService(admin)
@@ -117,8 +152,27 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
             service.parse_raw_command({"profile": "bad"})
         with self.assertRaisesRegex(TypeError, "slowms must be an integer"):
             service.parse_raw_command({"profile": 1, "slowms": "bad"})
+        with self.assertRaisesRegex(TypeError, "command name must be a string"):
+            service.parse_raw_command({1: "bad"})  # type: ignore[arg-type]
         with self.assertRaisesRegex(OperationFailure, "Unsupported command"):
             service.parse_raw_command({"unsupported": 1})
+
+    def test_internal_dispatch_guards_cover_unexpected_static_and_command_types(self):
+        admin = _FakeAdmin()
+        service = AsyncDatabaseCommandService(admin)
+
+        with self.assertRaisesRegex(AssertionError, "Unexpected static admin command"):
+            service._execute_static(
+                service.StaticAdminCommand(db_name="db", command_name="weird", spec={"weird": 1})
+            )
+
+        async def _run():
+            with self.assertRaisesRegex(AssertionError, "Unexpected admin command type"):
+                await service.execute(
+                    service.AdminCommand(db_name="db", command_name="weird", spec={"weird": 1})
+                )
+
+        asyncio.run(_run())
 
     def test_execute_and_execute_document_cover_dispatch_and_profiling(self):
         admin = _FakeAdmin()

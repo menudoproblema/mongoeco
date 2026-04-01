@@ -9,6 +9,8 @@ from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.aggregation import evaluate_expression
 from mongoeco.core.aggregation import accumulators as accumulators_module
 from mongoeco.core.aggregation import array_string_expressions as array_module
+from mongoeco.core.aggregation import compiled_aggregation as compiled_module
+from mongoeco.core.aggregation import control_object_expressions as control_module
 from mongoeco.core.aggregation import date_expressions as date_module
 from mongoeco.core.aggregation import numeric_expressions as numeric_module
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
@@ -231,6 +233,204 @@ class DateHelperBranchTests(unittest.TestCase):
                 missing_sentinel=missing,
             )
 
+    def test_date_expression_private_branches_cover_null_invalid_and_on_error_paths(self):
+        eval_expr = lambda _doc, expr, _vars=None: expr
+        eval_missing = lambda _doc, expr, _vars=None: expr
+        missing = object()
+        now = datetime.datetime(2026, 3, 25, 10, 0, 0)
+
+        self.assertIsNone(
+            date_module.evaluate_date_expression(
+                "$dateAdd",
+                {},
+                {"startDate": None, "unit": "day", "amount": 1},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        )
+        with self.assertRaisesRegex(OperationFailure, "requires a datetime startDate"):
+            date_module.evaluate_date_expression(
+                "$dateSubtract",
+                {},
+                {"startDate": "bad", "unit": "day", "amount": 1},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        self.assertIsNone(
+            date_module.evaluate_date_expression(
+                "$dateSubtract",
+                {},
+                {"startDate": now, "unit": "day", "amount": None},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        )
+
+        with self.assertRaisesRegex(OperationFailure, "requires date"):
+            date_module.evaluate_date_expression(
+                "$dateToString",
+                {},
+                {},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        self.assertEqual(
+            date_module.evaluate_date_expression(
+                "$dateToString",
+                {},
+                {"date": None, "onNull": "fallback"},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            ),
+            "fallback",
+        )
+        with self.assertRaisesRegex(OperationFailure, "format must evaluate to a string"):
+            date_module.evaluate_date_expression(
+                "$dateToString",
+                {},
+                {"date": now, "format": 1},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        with self.assertRaisesRegex(OperationFailure, "requires date"):
+            date_module.evaluate_date_expression(
+                "$dateToParts",
+                {},
+                {},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        self.assertIsNone(
+            date_module.evaluate_date_expression(
+                "$dateToParts",
+                {},
+                {"date": None},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        )
+        with self.assertRaisesRegex(OperationFailure, "requires a date input"):
+            date_module.evaluate_date_expression(
+                "$dateToParts",
+                {},
+                {"date": "bad"},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        with self.assertRaisesRegex(OperationFailure, "requires dateString"):
+            date_module.evaluate_date_expression(
+                "$dateFromString",
+                {},
+                {},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        with self.assertRaisesRegex(OperationFailure, "format must evaluate to a string"):
+            date_module.evaluate_date_expression(
+                "$dateFromString",
+                {},
+                {"dateString": "2026-03-25", "format": 1},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        self.assertEqual(
+            date_module.evaluate_date_expression(
+                "$dateFromString",
+                {},
+                {"dateString": "bad-date", "onError": "fallback"},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            ),
+            "fallback",
+        )
+        with self.assertRaisesRegex(OperationFailure, "requires a document specification"):
+            date_module.evaluate_date_expression(
+                "$dateFromParts",
+                {},
+                "bad",
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        self.assertIsNone(
+            date_module.evaluate_date_expression(
+                "$year",
+                {},
+                None,
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=lambda *_args, **_kwargs: missing,
+                missing_sentinel=missing,
+            )
+        )
+        with self.assertRaisesRegex(OperationFailure, "requires startDate, endDate and unit"):
+            date_module.evaluate_date_expression(
+                "$dateDiff",
+                {},
+                {},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        self.assertIsNone(
+            date_module.evaluate_date_expression(
+                "$dateDiff",
+                {},
+                {"startDate": None, "endDate": now, "unit": "day"},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        )
+        with self.assertRaisesRegex(OperationFailure, "could not parse dateString"):
+            date_module.evaluate_date_expression(
+                "$dateFromString",
+                {},
+                {"dateString": "bad-date"},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                missing_sentinel=missing,
+            )
+        self.assertIsNone(
+            date_module.evaluate_date_expression(
+                "$isoWeek",
+                {},
+                None,
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=lambda *_args, **_kwargs: missing,
+                missing_sentinel=missing,
+            )
+        )
+
 
 class NumericHelperBranchTests(unittest.TestCase):
     def test_numeric_helper_branches_cover_nan_percentiles_rounding_and_subtract(self):
@@ -438,3 +638,181 @@ class AccumulatorHelperBranchTests(unittest.TestCase):
         self.assertEqual(finalized["ordered_list"], ["x", "y"])
         self.assertEqual(finalized["percentile_scalar"], 1)
         self.assertIsNone(finalized["percentile_list"])
+
+
+class CompiledAggregationHelperBranchTests(unittest.TestCase):
+    def test_compiled_group_private_helpers_cover_cache_freezing_and_simple_arithmetic(self):
+        self.assertIsNone(compiled_module._compiled_multiply([None, 2]))
+        self.assertIsNone(compiled_module._compiled_subtract(None, 2))
+        with self.assertRaisesRegex(OperationFailure, "single date argument"):
+            compiled_module._compiled_add(
+                [
+                    datetime.datetime(2026, 1, 1, 0, 0, 0),
+                    datetime.datetime(2026, 1, 2, 0, 0, 0),
+                ]
+            )
+
+        self.assertFalse(compiled_module.CompiledGroup.supports({"total": {"$sum": "$value"}}))
+        self.assertEqual(
+            compiled_module.CompiledGroup._freeze_cache_value((1, 2)),
+            ("tuple", (1, 2)),
+        )
+        self.assertEqual(
+            compiled_module.CompiledGroup._freeze_cache_value({2, 1}),
+            ("set", (1, 2)),
+        )
+        frozen_regex = compiled_module.CompiledGroup._freeze_cache_value(re.compile("^ad", re.IGNORECASE))
+        self.assertEqual(frozen_regex[:2], ("regex", "^ad"))
+
+        class _Unhashable:
+            __hash__ = None
+
+            def __repr__(self) -> str:
+                return "<unhashable>"
+
+        self.assertEqual(
+            compiled_module.CompiledGroup._freeze_cache_value(_Unhashable()),
+            ("repr", "<unhashable>"),
+        )
+
+    def test_compiled_group_private_branches_cover_cache_eviction_and_expression_codegen(self):
+        original_maxsize = compiled_module.CompiledGroup._COMPILED_FUNCTION_CACHE_MAXSIZE
+        compiled_module.CompiledGroup._COMPILED_FUNCTION_CACHE.clear()
+        compiled_module.CompiledGroup._COMPILED_FUNCTION_CACHE_MAXSIZE = 1
+        try:
+            compiled_module.CompiledGroup({"_id": "$kind", "total": {"$sum": "$value"}})
+            compiled_module.CompiledGroup({"_id": "$other", "total": {"$sum": "$value"}})
+            self.assertEqual(len(compiled_module.CompiledGroup._COMPILED_FUNCTION_CACHE), 1)
+        finally:
+            compiled_module.CompiledGroup._COMPILED_FUNCTION_CACHE.clear()
+            compiled_module.CompiledGroup._COMPILED_FUNCTION_CACHE_MAXSIZE = original_maxsize
+
+        compiled = compiled_module.CompiledGroup({"_id": "$kind", "total": {"$sum": "$value"}})
+        self.assertEqual(compiled._compile_expression("plain", "x"), "'plain'")
+        self.assertEqual(compiled._compile_expression({"$literal": "value"}, "x"), "'value'")
+        self.assertEqual(compiled._compile_expression({"nested": True}, "x").startswith("_evaluate("), True)
+        self.assertIn("state[0] += 1", "\n".join(compiled_module.CompiledGroup({"_id": "$kind", "count": {"$count": {}}})._compile_logic_only()))
+
+
+class ControlObjectHelperBranchTests(unittest.TestCase):
+    def test_control_object_private_branches_cover_invalid_specs_and_fallbacks(self):
+        document = {"items": [1, 2], "obj": {"name": "Ada"}}
+        eval_expr = lambda _doc, expr, _vars=None: expr
+        eval_missing = lambda _doc, expr, _vars=None: expr
+        require_args = lambda _op, spec, _mn, _mx: list(spec)
+
+        self.assertIsNone(control_module._evaluate_field_bound_query_operator("$in", document, "bad"))
+        self.assertIsNone(control_module._evaluate_field_bound_query_operator("$in", document, ["name", []]))
+        with self.assertRaisesRegex(OperationFailure, "only supports the field-bound form"):
+            control_module.evaluate_control_object_expression(
+                "$nin",
+                document,
+                ["literal", [1]],
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                require_expression_args=require_args,
+                compare_values=lambda left, right, operator: left == right,
+                expression_truthy=bool,
+                require_array=lambda _op, value: value,
+                evaluate_pick_n_input=lambda *_args, **_kwargs: ([], 1),
+                missing_sentinel=object(),
+            )
+        for operator, spec, expected in (
+            ("$setField", {}, "field, input, and value"),
+            ("$unsetField", {}, "field and input"),
+            ("$switch", {}, "requires branches"),
+        ):
+            with self.subTest(operator=operator):
+                with self.assertRaisesRegex(OperationFailure, expected):
+                    control_module.evaluate_control_object_expression(
+                        operator,
+                        document,
+                        spec,
+                        None,
+                        evaluate_expression=eval_expr,
+                        evaluate_expression_with_missing=eval_missing,
+                        require_expression_args=require_args,
+                        compare_values=lambda left, right, operator: left == right,
+                        expression_truthy=bool,
+                        require_array=lambda _op, value: value,
+                        evaluate_pick_n_input=lambda *_args, **_kwargs: ([], 1),
+                        missing_sentinel=object(),
+                    )
+        with self.assertRaisesRegex(OperationFailure, "no default was specified"):
+            control_module.evaluate_control_object_expression(
+                "$switch",
+                document,
+                {"branches": [{"case": False, "then": 1}]},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                require_expression_args=require_args,
+                compare_values=lambda left, right, operator: left == right,
+                expression_truthy=bool,
+                require_array=lambda _op, value: value,
+                evaluate_pick_n_input=lambda *_args, **_kwargs: ([], 1),
+                missing_sentinel=object(),
+            )
+        with self.assertRaisesRegex(OperationFailure, "requires at least 1 arguments"):
+            control_module.evaluate_control_object_expression(
+                "$mergeObjects",
+                document,
+                [],
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                require_expression_args=require_args,
+                compare_values=lambda left, right, operator: left == right,
+                expression_truthy=bool,
+                require_array=lambda _op, value: value,
+                evaluate_pick_n_input=lambda *_args, **_kwargs: ([], 1),
+                missing_sentinel=object(),
+            )
+        self.assertIsNone(
+            control_module.evaluate_control_object_expression(
+                "$getField",
+                document,
+                {"field": None, "input": "$$CURRENT"},
+                None,
+                evaluate_expression=lambda _doc, expr, _vars=None: None if expr is None else document,
+                evaluate_expression_with_missing=lambda _doc, expr, _vars=None: document,
+                require_expression_args=require_args,
+                compare_values=lambda left, right, operator: left == right,
+                expression_truthy=bool,
+                require_array=lambda _op, value: value,
+                evaluate_pick_n_input=lambda *_args, **_kwargs: ([], 1),
+                missing_sentinel=object(),
+            )
+        )
+        self.assertIsNone(
+            control_module.evaluate_control_object_expression(
+                "$getField",
+                document,
+                {"field": "name", "input": "not-an-object"},
+                None,
+                evaluate_expression=lambda _doc, expr, _vars=None: expr,
+                evaluate_expression_with_missing=lambda _doc, expr, _vars=None: expr,
+                require_expression_args=require_args,
+                compare_values=lambda left, right, operator: left == right,
+                expression_truthy=bool,
+                require_array=lambda _op, value: value,
+                evaluate_pick_n_input=lambda *_args, **_kwargs: ([], 1),
+                missing_sentinel=object(),
+            )
+        )
+        with self.assertRaisesRegex(OperationFailure, "Unsupported control/object expression operator"):
+            control_module.evaluate_control_object_expression(
+                "$unknown",
+                document,
+                {},
+                None,
+                evaluate_expression=eval_expr,
+                evaluate_expression_with_missing=eval_missing,
+                require_expression_args=require_args,
+                compare_values=lambda left, right, operator: left == right,
+                expression_truthy=bool,
+                require_array=lambda _op, value: value,
+                evaluate_pick_n_input=lambda *_args, **_kwargs: ([], 1),
+                missing_sentinel=object(),
+            )

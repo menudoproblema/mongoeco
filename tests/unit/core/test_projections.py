@@ -1,7 +1,7 @@
 import unittest
 
 from mongoeco.compat import MongoDialect
-from mongoeco.core.projections import apply_projection
+from mongoeco.core.projections import apply_projection, validate_projection_spec
 from mongoeco.errors import OperationFailure
 
 
@@ -240,3 +240,40 @@ class ProjectionTests(unittest.TestCase):
             apply_projection(doc, {"items": {"$elemMatch": {"kind": "a"}}, "name": 0})  # type: ignore[dict-item]
         with self.assertRaises(OperationFailure):
             apply_projection(doc, {"profile": {"$slice": 1}, "profile.colors": 1})  # type: ignore[dict-item]
+
+    def test_projection_validation_private_branches_cover_operator_and_slice_edge_cases(self):
+        doc = {"_id": 1, "items": "value", "profile": {"colors": [1, 2, 3]}}
+
+        self.assertEqual(validate_projection_spec({"name": 1}), {"name": 1})
+        with self.assertRaises(OperationFailure):
+            validate_projection_spec({"_id": {"$slice": 1}})  # type: ignore[dict-item]
+        with self.assertRaises(OperationFailure):
+            validate_projection_spec({"items.$": 1, "other.$": 1})
+        with self.assertRaises(OperationFailure):
+            validate_projection_spec({"items.$": 1, "name": 0})
+        with self.assertRaises(OperationFailure):
+            validate_projection_spec({"field": {"$slice": 1, "$elemMatch": {"x": 1}}})  # type: ignore[dict-item]
+        with self.assertRaises(OperationFailure):
+            validate_projection_spec({"$": 1})
+
+        self.assertEqual(apply_projection(doc, {"missing": {"$slice": 1}}), {"_id": 1, "items": "value", "profile": {"colors": [1, 2, 3]}})
+        self.assertEqual(
+            apply_projection(doc, {"items": {"$slice": 1}, "_id": 0}),
+            {"items": "value", "profile": {"colors": [1, 2, 3]}},
+        )
+        self.assertEqual(
+            apply_projection({"_id": 1, "items": []}, {"items": {"$slice": [3, 2]}}),
+            {"_id": 1, "items": []},
+        )
+        self.assertEqual(
+            apply_projection({"_id": 1, "items": [1, 2, 3]}, {"items": {"$elemMatch": {"kind": "a"}}}),
+            {"_id": 1},
+        )
+        self.assertEqual(
+            apply_projection({"_id": 1, "items": {"kind": "a"}}, {"items": {"$elemMatch": {"kind": "a"}}}),
+            {"_id": 1},
+        )
+        self.assertEqual(
+            apply_projection({"_id": 1, "items": "not-list"}, {"items.$": 1}, selector_filter={"items": "x"}),
+            {"_id": 1},
+        )

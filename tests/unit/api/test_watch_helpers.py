@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from types import SimpleNamespace
 
 from mongoeco.api._async.client import AsyncDatabase, AsyncMongoClient
 from mongoeco.api._async.collection import AsyncCollection
@@ -166,3 +167,61 @@ class DirectWatchHubTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIsNotNone(event)
         self.assertEqual(event["documentKey"], {"_id": 2})
+
+    async def test_async_client_drop_database_falls_back_to_collection_iteration_without_fast_path(self):
+        class EngineStub:
+            def __init__(self):
+                self.list_calls = []
+                self.drop_calls = []
+
+            def create_session_state(self, session):
+                del session
+
+            async def connect(self):
+                return None
+
+            async def disconnect(self):
+                return None
+
+            async def list_databases(self, *, context=None):
+                del context
+                return []
+
+            async def list_collections(self, db_name, *, context=None):
+                self.list_calls.append((db_name, context))
+                return ["users"] if len(self.list_calls) == 1 else []
+
+            async def drop_collection(self, db_name, coll_name, *, context=None):
+                self.drop_calls.append((db_name, coll_name, context))
+
+        client = AsyncMongoClient(EngineStub())
+        await client.drop_database("alpha")
+
+        self.assertEqual(client._engine.list_calls, [("alpha", None), ("alpha", None)])
+        self.assertEqual(client._engine.drop_calls, [("alpha", "users", None)])
+
+    def test_async_client_and_database_watch_validate_timeouts_and_expose_runtime_properties(self):
+        client = AsyncMongoClient(MemoryEngine(), uri="mongodb://localhost:27017/")
+        database = client.get_database("db")
+
+        with self.assertRaisesRegex(TypeError, "max_await_time_ms must be a non-negative integer"):
+            client.watch(max_await_time_ms=-1)
+        with self.assertRaisesRegex(TypeError, "max_await_time_ms must be a non-negative integer"):
+            database.watch(max_await_time_ms="bad")  # type: ignore[arg-type]
+
+        self.assertIsNotNone(client.client_uri)
+        self.assertIsNotNone(client.topology_description)
+        self.assertEqual(client.sdam_capabilities()["fullSdam"], False)
+        self.assertIsNotNone(client.effective_client_uri)
+        self.assertIsNotNone(client.timeout_policy)
+        self.assertIsNotNone(client.retry_policy)
+        self.assertIsNotNone(client.selection_policy)
+        self.assertIsNotNone(client.concern_policy)
+        self.assertIsNotNone(client.auth_policy)
+        self.assertIsNotNone(client.tls_policy)
+        self.assertIsNone(client.srv_resolution)
+        self.assertIsNotNone(client.driver_runtime)
+        self.assertIsNotNone(client.driver_monitor)
+        self.assertIsNotNone(client.network_transport)
+        self.assertEqual(database.change_stream_state()["retainedEvents"], 0)
+        self.assertEqual(database.change_stream_backend_info()["implementation"], "local")

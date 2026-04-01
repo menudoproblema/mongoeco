@@ -1,9 +1,18 @@
 import unittest
 
 from mongoeco.api.admin_parsing import (
+    normalize_command_batch_size,
+    normalize_command_bool,
     normalize_command_document,
+    normalize_command_hint,
+    normalize_command_max_time_ms,
+    normalize_command_ordered,
+    normalize_command_projection,
+    normalize_command_scale,
+    normalize_command_sort_document,
     normalize_delete_specs,
     normalize_filter_document,
+    normalize_find_and_modify_options,
     normalize_index_models_from_command,
     normalize_insert_documents,
     normalize_list_databases_options,
@@ -120,6 +129,67 @@ class AdminParsingTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             normalize_filter_document(["bad"])
+
+    def test_command_helper_normalizers_cover_sort_hint_projection_batch_and_find_and_modify(self):
+        self.assertEqual(normalize_command_sort_document({"name": 1}), [("name", 1)])
+        self.assertEqual(normalize_command_hint({"name": 1}), [("name", 1)])
+        self.assertEqual(normalize_command_projection({"name": 1}), {"name": 1})
+        self.assertEqual(normalize_command_batch_size(5), 5)
+        self.assertTrue(normalize_command_ordered(None))
+        self.assertFalse(normalize_command_bool(None, "flag", default=False))
+        self.assertEqual(normalize_command_scale(None), 1)
+        self.assertEqual(normalize_command_max_time_ms(25), 25)
+
+        options = normalize_find_and_modify_options(
+            {
+                "findAndModify": "users",
+                "query": {"name": "Ada"},
+                "sort": {"name": 1},
+                "fields": {"name": 1},
+                "remove": False,
+                "new": True,
+                "upsert": True,
+                "bypassDocumentValidation": False,
+                "arrayFilters": [{"x": 1}],
+                "hint": {"name": 1},
+                "maxTimeMS": 50,
+                "let": {"tenant": "a"},
+                "comment": "trace",
+                "update": {"$set": {"rank": 1}},
+                "collation": {"locale": "en"},
+            }
+        )
+        self.assertEqual(options.collection_name, "users")
+        self.assertEqual(options.sort, [("name", 1)])
+        self.assertEqual(options.hint, [("name", 1)])
+        self.assertTrue(options.return_new)
+        self.assertTrue(options.upsert)
+
+        with self.assertRaises(TypeError):
+            normalize_command_sort_document([])
+        with self.assertRaises(TypeError):
+            normalize_command_hint(True)
+        with self.assertRaises(TypeError):
+            normalize_command_projection([])
+        self.assertEqual(normalize_command_batch_size(0), 0)
+        with self.assertRaises(TypeError):
+            normalize_command_ordered("yes")
+        with self.assertRaises(TypeError):
+            normalize_command_bool("yes", "flag")
+        with self.assertRaises(TypeError):
+            normalize_command_scale(0)
+        with self.assertRaises(TypeError):
+            normalize_command_max_time_ms("slow")
+        with self.assertRaises(TypeError):
+            normalize_find_and_modify_options({"findAndModify": "users", "arrayFilters": ["bad"]})
+        with self.assertRaises(TypeError):
+            normalize_find_and_modify_options({"findAndModify": "users", "let": []})
+        with self.assertRaises(TypeError):
+            normalize_find_and_modify_options({"findAndModify": "users", "collation": []})
+        with self.assertRaises(TypeError):
+            normalize_find_and_modify_options({"findAndModify": "users", "bypassDocumentValidation": 1})
+        with self.assertRaises(TypeError):
+            normalize_find_and_modify_options({"findAndModify": "users", "update": []})
 
 
 if __name__ == "__main__":

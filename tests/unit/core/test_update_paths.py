@@ -1,9 +1,12 @@
 import unittest
 
 from mongoeco.core.update_paths import (
+    CompiledUpdatePath,
+    UpdatePathSegment,
     compile_update_path,
     parse_update_path,
     ResolvedUpdatePath,
+    expand_positional_update_paths,
     resolve_positional_update_paths,
     update_path_has_numeric_segment,
     update_path_has_positional_segment,
@@ -70,6 +73,8 @@ class UpdatePathParsingTests(unittest.TestCase):
 
     def test_parse_update_path_rejects_empty_segments_and_invalid_identifiers(self):
         with self.assertRaises(OperationFailure):
+            parse_update_path(1)  # type: ignore[arg-type]
+        with self.assertRaises(OperationFailure):
             parse_update_path("")
         with self.assertRaises(OperationFailure):
             parse_update_path("items..name")
@@ -79,3 +84,43 @@ class UpdatePathParsingTests(unittest.TestCase):
             parse_update_path("items.$[_bad].name")
         with self.assertRaises(OperationFailure):
             parse_update_path("items.$[1bad].name")
+
+    def test_expand_positional_update_paths_private_branches_cover_legacy_and_invalid_segments(self):
+        with self.assertRaises(OperationFailure):
+            expand_positional_update_paths(
+                {"items": [1]},
+                "items.$.name",
+                filtered_matcher=lambda _identifier, _candidate: True,
+            )
+
+        self.assertEqual(
+            expand_positional_update_paths(
+                {"items": "not-a-list"},
+                "items.$[].name",
+                filtered_matcher=lambda _identifier, _candidate: True,
+            ),
+            [],
+        )
+        self.assertEqual(
+            expand_positional_update_paths(
+                {"items": "not-a-list"},
+                "items.$[entry].name",
+                filtered_matcher=lambda _identifier, _candidate: True,
+            ),
+            [],
+        )
+
+        bad_path = CompiledUpdatePath(
+            raw="items.bogus.$[]",
+            segments=(
+                UpdatePathSegment("field", "items"),
+                UpdatePathSegment("bogus", "bogus"),  # type: ignore[arg-type]
+                UpdatePathSegment("all_positional", "$[]"),
+            ),
+        )
+        with self.assertRaises(AssertionError):
+            expand_positional_update_paths(
+                {"items": [{"name": "Ada"}]},
+                bad_path,
+                filtered_matcher=lambda _identifier, _candidate: True,
+            )
