@@ -42,12 +42,14 @@ from mongoeco.driver.requests import CommandRequest, PreparedRequestExecution, R
 from mongoeco.driver.runtime import DriverRuntime
 from mongoeco.driver.security import AuthPolicy, TlsPolicy, build_auth_policy, build_tls_policy
 from mongoeco.driver.topology import (
+    SdamCapabilitiesInfo,
     ServerDescription,
     ServerState,
     ServerType,
     TopologyDescription,
     TopologyType,
     build_local_topology_description,
+    sdam_capabilities_info,
 )
 from mongoeco.driver.topology_monitor import refresh_topology
 from mongoeco.driver.uri import (
@@ -102,9 +104,11 @@ __all__ = [
     "ServerDescription",
     "ServerState",
     "ServerType",
+    "SdamCapabilitiesInfo",
     "TopologyDescription",
     "TopologyType",
     "build_local_topology_description",
+    "sdam_capabilities_info",
     "refresh_topology",
     "TimeoutPolicy",
     "RetryPolicy",

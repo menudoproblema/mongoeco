@@ -301,13 +301,31 @@ para inspeccionar en runtime:
 * bytes/entradas pendientes desde la última compactación
 * número de compactaciones realizadas
 
-La API runtime expone esta información en
-`mongoeco.core.collation.collation_backend_info()`, que devuelve:
+Cliente, base de datos y colección exponen además
+`change_stream_backend_info()`, que deja explícito si el backend actual es:
+
+* local o distribuido
+* persistente o solo en memoria
+* reanudable entre recreaciones de cliente/proceso
+* acotado por ventana de retención
+
+La API runtime expone también la política de collation en
+`mongoeco.collation_backend_info()`, que devuelve:
 
 * `selected_backend`
 * `available_backends`
 * `unicode_available`
 * `advanced_options_available`
+
+Y `mongoeco.collation_capabilities_info()`, que devuelve:
+
+* `supported_locales`
+* `supported_strengths`
+* `supports_case_level`
+* `supports_numeric_ordering`
+* `optional_icu_backend`
+* `fallback_backend`
+* `advanced_options_require_icu`
 
 ## 10. Topología local y discovery
 
@@ -338,6 +356,15 @@ Contrato actual:
 * los fallos reales de red en transporte wire (`connect`, `drain`, `read`) se
   normalizan a `ConnectionFailure`, de modo que los retryable reads/writes ya
   no dependen solo de labels devueltos por el servidor
+
+La API runtime expone este contrato en `mongoeco.sdam_capabilities_info()` y
+en `client.sdam_capabilities()`, para que el proceso pueda distinguir entre:
+
+* soporte de discovery por `hello`
+* awareness de `topologyVersion`
+* tracking de salud por server
+* awareness de metadatos de elección
+* ausencia deliberada de SDAM completo y `hello` long-polling
 
 ## 11. Verificación contractual contra PyMongo real
 

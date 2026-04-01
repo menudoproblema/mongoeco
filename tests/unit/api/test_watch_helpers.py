@@ -118,6 +118,23 @@ class DirectWatchHubTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(collection_state["retainedEvents"], 0)
         self.assertTrue("journalEnabled" in collection_state)
 
+    def test_change_stream_backend_info_is_exposed_on_client_and_direct_collection(self):
+        client = AsyncMongoClient(
+            MemoryEngine(),
+            change_stream_history_size=5,
+            change_stream_journal_path="/tmp/mongoeco-watch.json",
+        )
+        client_info = client.change_stream_backend_info()
+        self.assertEqual(client_info["implementation"], "local")
+        self.assertFalse(client_info["distributed"])
+        self.assertTrue(client_info["persistent"])
+
+        collection = AsyncCollection(MemoryEngine(), "db", "coll")
+        collection_info = collection.change_stream_backend_info()
+        self.assertEqual(collection_info["implementation"], "local")
+        self.assertFalse(collection_info["distributed"])
+        self.assertFalse(collection_info["persistent"])
+
     async def test_direct_collection_can_resume_from_persisted_change_stream_journal(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             journal_path = os.path.join(temp_dir, "changes.json")

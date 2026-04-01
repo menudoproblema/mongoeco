@@ -376,6 +376,9 @@ class Database:
     def change_stream_state(self) -> dict[str, object]:
         return self._async_database().change_stream_state()
 
+    def change_stream_backend_info(self) -> dict[str, object]:
+        return self._async_database().change_stream_backend_info()
+
     @property
     def mongodb_dialect(self) -> MongoDialect:
         return self._client.mongodb_dialect
@@ -629,6 +632,10 @@ class MongoClient:
         self._ensure_connected()
         return self._async_client.change_stream_state()
 
+    def change_stream_backend_info(self) -> dict[str, object]:
+        self._ensure_connected()
+        return self._async_client.change_stream_backend_info()
+
     @property
     def mongodb_dialect(self) -> MongoDialect:
         return self._async_client.mongodb_dialect
@@ -688,6 +695,9 @@ class MongoClient:
     @property
     def topology_description(self):
         return self._async_client.topology_description
+
+    def sdam_capabilities(self) -> dict[str, object]:
+        return self._async_client.sdam_capabilities()
 
     @property
     def effective_client_uri(self):

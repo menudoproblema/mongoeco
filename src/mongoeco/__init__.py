@@ -1,6 +1,12 @@
 from mongoeco.api import AsyncMongoClient, MongoClient
 from mongoeco._version import __version__
-from mongoeco.core.collation import CollationBackendInfo, collation_backend_info
+from mongoeco.change_streams import ChangeStreamBackendInfo
+from mongoeco.core.collation import (
+    CollationBackendInfo,
+    CollationCapabilitiesInfo,
+    collation_backend_info,
+    collation_capabilities_info,
+)
 from mongoeco.errors import CollectionInvalid
 from mongoeco.driver import (
     AsyncCommandTransport,
@@ -38,6 +44,7 @@ from mongoeco.driver import (
     ServerSelectedEvent,
     SrvResolution,
     SelectionPolicy,
+    SdamCapabilitiesInfo,
     ServerDescription,
     ServerState,
     ServerType,
@@ -54,6 +61,7 @@ from mongoeco.driver import (
     build_connection_pool_options,
     build_local_topology_description,
     refresh_topology,
+    sdam_capabilities_info,
     build_retry_policy,
     build_selection_policy,
     build_tls_policy,
@@ -212,9 +220,11 @@ __all__ = [
     "ServerDescription",
     "ServerState",
     "ServerType",
+    "SdamCapabilitiesInfo",
     "TopologyDescription",
     "TopologyType",
     "build_local_topology_description",
+    "sdam_capabilities_info",
     "refresh_topology",
     "TimeoutPolicy",
     "RetryPolicy",
@@ -239,6 +249,7 @@ __all__ = [
     "LocalCommandTransport",
     "WireProtocolCommandTransport",
     "CollectionInvalid",
+    "ChangeStreamBackendInfo",
     "InsertOne",
     "UpdateOne",
     "UpdateMany",
@@ -267,7 +278,9 @@ __all__ = [
     "UndefinedType",
     "UNDEFINED",
     "CollationBackendInfo",
+    "CollationCapabilitiesInfo",
     "collation_backend_info",
+    "collation_capabilities_info",
     "__version__",
 ]
 

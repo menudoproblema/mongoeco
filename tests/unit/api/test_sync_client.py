@@ -228,6 +228,22 @@ class SyncClientUnitTests(unittest.TestCase):
         finally:
             client.close()
 
+    def test_client_exposes_change_stream_backend_info_and_sdam_capabilities(self):
+        client = MongoClient(
+            MemoryEngine(),
+            change_stream_journal_path="/tmp/mongoeco-sync-changes.json",
+        )
+        try:
+            backend = client.change_stream_backend_info()
+            capabilities = client.sdam_capabilities()
+            self.assertEqual(backend["implementation"], "local")
+            self.assertTrue(backend["persistent"])
+            self.assertFalse(backend["distributed"])
+            self.assertFalse(capabilities["fullSdam"])
+            self.assertTrue(capabilities["helloMemberDiscovery"])
+        finally:
+            client.close()
+
     def test_client_drop_database_prefers_engine_fast_path(self):
         class EngineStub:
             def __init__(self):

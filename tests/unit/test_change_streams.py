@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from mongoeco.change_streams import (
     AsyncChangeStreamCursor,
+    ChangeStreamBackendInfo,
     ChangeStreamCursor,
     ChangeStreamHub,
     ChangeStreamScope,
@@ -75,6 +76,35 @@ class ChangeStreamPipelineTests(unittest.TestCase):
 
 
 class ChangeStreamHubTests(unittest.TestCase):
+    def test_hub_backend_info_reports_local_persistent_capabilities(self):
+        hub = ChangeStreamHub(
+            max_retained_events=12,
+            journal_path="/tmp/mongoeco-change-streams.json",
+            journal_fsync=True,
+            journal_max_log_bytes=4096,
+        )
+
+        info = hub.backend_info
+
+        self.assertIsInstance(info, ChangeStreamBackendInfo)
+        self.assertEqual(
+            info.to_document(),
+            {
+                "implementation": "local",
+                "distributed": False,
+                "persistent": True,
+                "resumable": True,
+                "resumableAcrossClientRestarts": True,
+                "resumableAcrossProcesses": True,
+                "resumableAcrossNodes": False,
+                "boundedHistory": True,
+                "maxRetainedEvents": 12,
+                "journalEnabled": True,
+                "journalFsync": True,
+                "journalMaxLogBytes": 4096,
+            },
+        )
+
     def test_scope_matches_requires_matching_collection_when_configured(self):
         event = ChangeEventSnapshot(
             token=1,

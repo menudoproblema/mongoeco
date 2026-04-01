@@ -62,6 +62,28 @@ class CollationBackendInfo:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class CollationCapabilitiesInfo:
+    supported_locales: tuple[str, ...]
+    supported_strengths: tuple[int, ...]
+    supports_case_level: bool
+    supports_numeric_ordering: bool
+    optional_icu_backend: bool
+    fallback_backend: str | None
+    advanced_options_require_icu: tuple[str, ...]
+
+    def to_document(self) -> dict[str, object]:
+        return {
+            "supportedLocales": list(self.supported_locales),
+            "supportedStrengths": list(self.supported_strengths),
+            "supportsCaseLevel": self.supports_case_level,
+            "supportsNumericOrdering": self.supports_numeric_ordering,
+            "optionalIcuBackend": self.optional_icu_backend,
+            "fallbackBackend": self.fallback_backend,
+            "advancedOptionsRequireIcu": list(self.advanced_options_require_icu),
+        }
+
+
 def normalize_collation(collation: object | None) -> CollationSpec | None:
     if collation is None:
         return None
@@ -189,6 +211,18 @@ def collation_backend_info() -> CollationBackendInfo:
         available_backends=tuple(available),
         unicode_available=bool(available),
         advanced_options_available=_icu is not None,
+    )
+
+
+def collation_capabilities_info() -> CollationCapabilitiesInfo:
+    return CollationCapabilitiesInfo(
+        supported_locales=("simple", "en"),
+        supported_strengths=(1, 2, 3),
+        supports_case_level=True,
+        supports_numeric_ordering=True,
+        optional_icu_backend=True,
+        fallback_backend="pyuca" if _pyuca is not None else None,
+        advanced_options_require_icu=("backwards", "alternate", "maxVariable", "normalization"),
     )
 
 

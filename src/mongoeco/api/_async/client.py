@@ -6,7 +6,11 @@ from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
 from mongoeco.api.public_api import ARG_UNSET
 from mongoeco.api._async.database_commands import build_info_document
-from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub, ChangeStreamScope
+from mongoeco.change_streams import (
+    AsyncChangeStreamCursor,
+    ChangeStreamHub,
+    ChangeStreamScope,
+)
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,
@@ -26,6 +30,7 @@ from mongoeco.driver import (
     RequestExecutionPlan,
     SelectionPolicy,
     SrvResolution,
+    sdam_capabilities_info,
     TlsPolicy,
     TimeoutPolicy,
     TopologyDescription,
@@ -283,6 +288,9 @@ class AsyncDatabase:
 
     def change_stream_state(self) -> dict[str, object]:
         return self._change_hub.state.to_document()
+
+    def change_stream_backend_info(self) -> dict[str, object]:
+        return self._change_hub.backend_info.to_document()
 
     @property
     def mongodb_dialect(self) -> MongoDialect:
@@ -655,6 +663,9 @@ class AsyncMongoClient:
     def change_stream_state(self) -> dict[str, object]:
         return self._change_hub.state.to_document()
 
+    def change_stream_backend_info(self) -> dict[str, object]:
+        return self._change_hub.backend_info.to_document()
+
     @property
     def mongodb_dialect(self) -> MongoDialect:
         return self._mongodb_dialect
@@ -714,6 +725,9 @@ class AsyncMongoClient:
     @property
     def topology_description(self) -> TopologyDescription:
         return self._driver_runtime.topology
+
+    def sdam_capabilities(self) -> dict[str, object]:
+        return sdam_capabilities_info().to_document()
 
     @property
     def effective_client_uri(self) -> MongoUri:

@@ -103,6 +103,40 @@ class TopologyDescription:
         return tuple(server for server in self.servers if server.is_writable)
 
 
+@dataclass(frozen=True, slots=True)
+class SdamCapabilitiesInfo:
+    full_sdam: bool
+    topology_version_aware: bool
+    hello_member_discovery: bool
+    server_health_tracking: bool
+    election_metadata_aware: bool
+    long_polling_hello: bool
+    distributed_monitoring: bool
+
+    def to_document(self) -> dict[str, object]:
+        return {
+            "fullSdam": self.full_sdam,
+            "topologyVersionAware": self.topology_version_aware,
+            "helloMemberDiscovery": self.hello_member_discovery,
+            "serverHealthTracking": self.server_health_tracking,
+            "electionMetadataAware": self.election_metadata_aware,
+            "longPollingHello": self.long_polling_hello,
+            "distributedMonitoring": self.distributed_monitoring,
+        }
+
+
+def sdam_capabilities_info() -> SdamCapabilitiesInfo:
+    return SdamCapabilitiesInfo(
+        full_sdam=False,
+        topology_version_aware=True,
+        hello_member_discovery=True,
+        server_health_tracking=True,
+        election_metadata_aware=True,
+        long_polling_hello=False,
+        distributed_monitoring=False,
+    )
+
+
 def build_local_topology_description(uri: MongoUri) -> TopologyDescription:
     if uri.options.load_balanced:
         topology_type = TopologyType.SHARDED

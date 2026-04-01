@@ -7,7 +7,9 @@ import mongoeco.core.collation as collation_module
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.collation import (
     collation_backend_info,
+    collation_capabilities_info,
     CollationBackendInfo,
+    CollationCapabilitiesInfo,
     CollationSpec,
     compare_with_collation,
     icu_collation_available,
@@ -252,6 +254,21 @@ class CollationTests(unittest.TestCase):
             self.assertEqual(info.available_backends, ())
             self.assertFalse(info.unicode_available)
             self.assertFalse(info.advanced_options_available)
+
+    def test_collation_capabilities_info_reports_supported_contract(self):
+        info = collation_capabilities_info()
+
+        self.assertIsInstance(info, CollationCapabilitiesInfo)
+        self.assertEqual(info.supported_locales, ("simple", "en"))
+        self.assertEqual(info.supported_strengths, (1, 2, 3))
+        self.assertTrue(info.supports_case_level)
+        self.assertTrue(info.supports_numeric_ordering)
+        self.assertTrue(info.optional_icu_backend)
+        self.assertEqual(
+            info.advanced_options_require_icu,
+            ("backwards", "alternate", "maxVariable", "normalization"),
+        )
+        self.assertIn("supportedLocales", info.to_document())
 
     def test_actual_unicode_backend_handles_accent_and_numeric_ordering(self):
         spec = normalize_collation({"locale": "en", "strength": 1, "numericOrdering": True})

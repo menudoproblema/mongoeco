@@ -1,11 +1,13 @@
 import unittest
 
 from mongoeco.driver.topology import (
+    SdamCapabilitiesInfo,
     ServerDescription,
     ServerState,
     ServerType,
     TopologyDescription,
     TopologyType,
+    sdam_capabilities_info,
 )
 from mongoeco.driver.topology_monitor import (
     _derive_topology_type,
@@ -17,6 +19,19 @@ from mongoeco.driver.topology_monitor import (
 
 
 class TopologyMonitorTests(unittest.IsolatedAsyncioTestCase):
+    def test_sdam_capabilities_info_reports_supported_driver_subset(self):
+        info = sdam_capabilities_info()
+
+        self.assertIsInstance(info, SdamCapabilitiesInfo)
+        self.assertFalse(info.full_sdam)
+        self.assertTrue(info.topology_version_aware)
+        self.assertTrue(info.hello_member_discovery)
+        self.assertTrue(info.server_health_tracking)
+        self.assertTrue(info.election_metadata_aware)
+        self.assertFalse(info.long_polling_hello)
+        self.assertFalse(info.distributed_monitoring)
+        self.assertIn("fullSdam", info.to_document())
+
     async def test_refresh_topology_marks_failed_probe_as_incompatible(self):
         case = self
         server = ServerDescription(address="db1:27017", server_type=ServerType.STANDALONE)

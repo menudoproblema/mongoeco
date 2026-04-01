@@ -106,6 +106,10 @@ Unicode collation backend:
 * clients, databases and direct collections expose `change_stream_state()` so
   local retained history, journal files and compaction progress can be
   inspected at runtime
+* clients, databases and direct collections also expose
+  `change_stream_backend_info()`, which makes the contract explicit:
+  change streams are local, optionally persistent via journal, resumable inside
+  that local environment, and not distributed across nodes
 * the local driver now starts non-direct single-seed topologies as
   provisional `UNKNOWN` and relies on `hello` discovery to converge towards
   `standalone`, `replicaSet` or `sharded` topology shapes
@@ -114,6 +118,11 @@ Unicode collation backend:
 * replica-set discovery also tracks per-server health states (`healthy`,
   `recovering`, `degraded`, `unreachable`) and uses them to prefer healthier
   candidates when ordering eligible servers
+* clients expose `sdam_capabilities()` so the supported SDAM subset is
+  inspectable at runtime instead of being implicit in the implementation
+* `mongoeco.collation_backend_info()` reports the active Unicode backend,
+  while `mongoeco.collation_capabilities_info()` reports the supported locale
+  surface and which advanced knobs require `PyICU`
 
 ## Quick Start
 

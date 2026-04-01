@@ -73,6 +73,38 @@ class ChangeStreamHubState:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class ChangeStreamBackendInfo:
+    implementation: str
+    distributed: bool
+    persistent: bool
+    resumable: bool
+    resumable_across_client_restarts: bool
+    resumable_across_processes: bool
+    resumable_across_nodes: bool
+    bounded_history: bool
+    max_retained_events: int | None
+    journal_enabled: bool
+    journal_fsync: bool
+    journal_max_log_bytes: int | None
+
+    def to_document(self) -> dict[str, object]:
+        return {
+            "implementation": self.implementation,
+            "distributed": self.distributed,
+            "persistent": self.persistent,
+            "resumable": self.resumable,
+            "resumableAcrossClientRestarts": self.resumable_across_client_restarts,
+            "resumableAcrossProcesses": self.resumable_across_processes,
+            "resumableAcrossNodes": self.resumable_across_nodes,
+            "boundedHistory": self.bounded_history,
+            "maxRetainedEvents": self.max_retained_events,
+            "journalEnabled": self.journal_enabled,
+            "journalFsync": self.journal_fsync,
+            "journalMaxLogBytes": self.journal_max_log_bytes,
+        }
+
+
 class ChangeStreamHub:
     def __init__(
         self,
@@ -120,6 +152,23 @@ class ChangeStreamHub:
         self._journal_compaction_count = 0
         self._last_compaction_time_monotonic: float | None = None
         self._load_journal()
+
+    @property
+    def backend_info(self) -> ChangeStreamBackendInfo:
+        return ChangeStreamBackendInfo(
+            implementation="local",
+            distributed=False,
+            persistent=self._journal_path is not None,
+            resumable=True,
+            resumable_across_client_restarts=self._journal_path is not None,
+            resumable_across_processes=self._journal_path is not None,
+            resumable_across_nodes=False,
+            bounded_history=self._max_retained_events is not None,
+            max_retained_events=self._max_retained_events,
+            journal_enabled=self._journal_path is not None,
+            journal_fsync=self._journal_fsync,
+            journal_max_log_bytes=self._journal_max_log_bytes,
+        )
 
     def _end_offset_locked(self) -> int:
         return self._base_offset + len(self._events)

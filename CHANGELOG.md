@@ -8,6 +8,15 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Se exponen ya capacidades explícitas para las tres superficies más
+  dependientes de contrato: `change_stream_backend_info()` en cliente,
+  base de datos y colección; `sdam_capabilities_info()` /
+  `client.sdam_capabilities()` para el subconjunto SDAM soportado; y
+  `collation_capabilities_info()` para el alcance de collation soportado
+  con `PyICU` opcional y `pyuca` como fallback.
+
 ### Fixed
 
 - Se endurece la aritmetica BSON y la validacion de `$mod`: `bson_divide`
