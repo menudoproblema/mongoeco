@@ -11,7 +11,7 @@ from mongoeco import AsyncMongoClient, MongoClient
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import DuplicateKeyError
+from mongoeco.errors import BulkWriteError, DuplicateKeyError, InvalidOperation, OperationFailure
 from mongoeco.types import (
     DBRef,
     DeleteOne,
@@ -902,6 +902,144 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(results["memory"], results["sqlite"])
 
+    async def test_public_error_contracts_match_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                await collection.create_index([("email", 1)], unique=True)
+                await collection.insert_one({"_id": "1", "email": "ada@example.com"})
+
+                with self.assertRaises(DuplicateKeyError) as duplicate_ctx:
+                    await collection.insert_one({"_id": "2", "email": "ada@example.com"})
+
+                with self.assertRaises(OperationFailure) as hint_ctx:
+                    await collection.find({"email": "ada@example.com"}, hint="missing_idx").to_list()
+
+                with self.assertRaises(OperationFailure) as command_ctx:
+                    await client.alpha.command({"unsupportedThing": 1})
+
+                results[engine_name] = {
+                    "duplicate": {
+                        "type": type(duplicate_ctx.exception).__name__,
+                        "code": duplicate_ctx.exception.code,
+                        "message": str(duplicate_ctx.exception),
+                    },
+                    "hint": {
+                        "type": type(hint_ctx.exception).__name__,
+                        "code": hint_ctx.exception.code,
+                        "message": str(hint_ctx.exception),
+                    },
+                    "unsupported": {
+                        "type": type(command_ctx.exception).__name__,
+                        "code": command_ctx.exception.code,
+                        "message": str(command_ctx.exception),
+                    },
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_bulk_write_error_contract_matches_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                await collection.create_index([("email", 1)], unique=True)
+                await collection.insert_one({"_id": "1", "email": "a@example.com"})
+
+                with self.assertRaises(BulkWriteError) as bulk_ctx:
+                    await collection.bulk_write(
+                        [
+                            InsertOne({"_id": "1", "email": "x@example.com"}),
+                            InsertOne({"_id": "2", "email": "a@example.com"}),
+                            InsertOne({"_id": "3", "email": "b@example.com"}),
+                        ],
+                        ordered=False,
+                    )
+
+                details = bulk_ctx.exception.details
+                remaining = await collection.find({}, sort=[("_id", 1)]).to_list()
+                results[engine_name] = {
+                    "type": type(bulk_ctx.exception).__name__,
+                    "code": bulk_ctx.exception.code,
+                    "details": {
+                        "writeErrors": [
+                            {
+                                "index": item["index"],
+                                "code": item["code"],
+                                "op": item["op"],
+                            }
+                            for item in details["writeErrors"]
+                        ],
+                        "nInserted": details["nInserted"],
+                        "nMatched": details["nMatched"],
+                        "nModified": details["nModified"],
+                        "nRemoved": details["nRemoved"],
+                        "nUpserted": details["nUpserted"],
+                        "upserted": details["upserted"],
+                    },
+                    "remaining": remaining,
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_session_misuse_error_contract_matches_in_memory_and_sqlite_for_common_cases(self):
+        results: dict[str, list[tuple[str, str, str]]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                session = client.start_session()
+                cases: list[tuple[str, str, str]] = []
+
+                with self.assertRaises(InvalidOperation) as commit_ctx:
+                    session.commit_transaction()
+                cases.append(("commit_without_tx", type(commit_ctx.exception).__name__, str(commit_ctx.exception)))
+
+                session.start_transaction()
+                with self.assertRaises(InvalidOperation) as start_ctx:
+                    session.start_transaction()
+                cases.append(("double_start", type(start_ctx.exception).__name__, str(start_ctx.exception)))
+
+                session.abort_transaction()
+                with self.assertRaises(InvalidOperation) as abort_ctx:
+                    session.abort_transaction()
+                cases.append(("double_abort", type(abort_ctx.exception).__name__, str(abort_ctx.exception)))
+
+                results[engine_name] = cases
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_index_admin_error_contract_matches_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                await collection.create_index([("alias", 1)], name="alias_one")
+                await collection.create_index([("alias", 1)], name="alias_two")
+
+                with self.assertRaises(OperationFailure) as missing_ctx:
+                    await collection.drop_index([("missing", 1)])
+
+                with self.assertRaises(OperationFailure) as ambiguous_ctx:
+                    await collection.drop_index([("alias", 1)])
+
+                await collection.drop_index("alias_one")
+                remaining = await collection.list_indexes().to_list()
+                results[engine_name] = {
+                    "missing": (
+                        type(missing_ctx.exception).__name__,
+                        missing_ctx.exception.code,
+                        str(missing_ctx.exception),
+                    ),
+                    "ambiguous": (
+                        type(ambiguous_ctx.exception).__name__,
+                        ambiguous_ctx.exception.code,
+                        str(ambiguous_ctx.exception),
+                    ),
+                    "remaining": remaining,
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
     async def test_bulk_write_results_and_final_state_match_in_memory_and_sqlite(self):
         results: dict[str, dict[str, object]] = {}
         for engine_name in ("memory", "sqlite"):
@@ -929,6 +1067,40 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         "upserted": bulk.upserted_count,
                     },
                     "remaining": remaining,
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_watch_resume_expiration_and_invalidate_contract_match_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name, change_stream_history_size=2) as client:
+                collection = client.observe.get_collection("items")
+                await collection.insert_one({"_id": "1", "name": "Ada"})
+                await collection.insert_one({"_id": "2", "name": "Grace"})
+                await collection.insert_one({"_id": "3", "name": "Linus"})
+
+                with self.assertRaises(OperationFailure) as expired_ctx:
+                    collection.watch(
+                        resume_after={"_data": "1"},
+                        max_await_time_ms=50,
+                    )
+
+                invalidate_stream = collection.watch(max_await_time_ms=50)
+                await collection.drop()
+                invalidate_event = await invalidate_stream.try_next()
+                self.assertIsNotNone(invalidate_event)
+                results[engine_name] = {
+                    "expired": (
+                        type(expired_ctx.exception).__name__,
+                        expired_ctx.exception.code,
+                        str(expired_ctx.exception),
+                    ),
+                    "invalidate": {
+                        "operationType": invalidate_event["operationType"],
+                        "ns": invalidate_event["ns"],
+                        "alive": invalidate_stream.alive,
+                    },
                 }
 
         self.assertEqual(results["memory"], results["sqlite"])
@@ -971,6 +1143,45 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     }
                     for item in listed
                 ]
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_database_command_list_and_explain_contracts_match_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.alpha.get_collection("events")
+
+                empty_collections = await client.alpha.command({"listCollections": 1})
+                empty_indexes = await client.alpha.command({"listIndexes": "events"})
+
+                await collection.insert_one({"_id": "1", "kind": "view"})
+                await collection.create_index([("kind", 1)], name="kind_idx")
+
+                filled_collections = await client.alpha.command({"listCollections": 1})
+                filled_indexes = await client.alpha.command({"listIndexes": "events"})
+                with self.assertRaises(OperationFailure) as explain_ctx:
+                    await client.alpha.command(
+                        {
+                            "explain": {
+                                "aggregate": "events",
+                                "pipeline": [{"$densify": {"field": "kind", "range": {"step": 1, "unit": "day", "bounds": "full"}}}],
+                                "cursor": {"batchSize": 1},
+                            }
+                        }
+                    )
+
+                results[engine_name] = {
+                    "emptyCollections": empty_collections,
+                    "emptyIndexes": empty_indexes,
+                    "filledCollections": filled_collections,
+                    "filledIndexes": filled_indexes,
+                    "aggregateExplainError": {
+                        "type": type(explain_ctx.exception).__name__,
+                        "code": explain_ctx.exception.code,
+                        "message": str(explain_ctx.exception),
+                    },
+                }
 
         self.assertEqual(results["memory"], results["sqlite"])
 
