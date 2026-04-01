@@ -11,7 +11,7 @@ from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, ExecutionTimeout, OperationFailure
 from mongoeco.session import ClientSession
-from mongoeco.types import EngineIndexRecord, UNDEFINED
+from mongoeco.types import EngineIndexRecord, SearchIndexDefinition, UNDEFINED
 
 
 class _UnhashableValue:
@@ -1290,6 +1290,18 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_profile_settings_make_system_profile_namespace_visible(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            engine._profiler.set_level("db", 1)
+
+            self.assertEqual(await engine.list_databases(), ["db"])
+            self.assertEqual(await engine.list_collections("db"), ["system.profile"])
+            self.assertEqual(await engine.collection_options("db", "system.profile"), {})
+        finally:
+            await engine.disconnect()
+
     async def test_delete_last_document_does_not_remove_collection_metadata(self):
         engine = MemoryEngine()
         await engine.connect()
@@ -1327,6 +1339,37 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(await engine.collection_options("db", "archived"), {"capped": True})
         finally:
             await engine.disconnect()
+
+    async def test_explain_search_documents_reports_pending_status(self):
+        engine = MemoryEngine(simulate_search_index_latency=60.0)
+        await engine.connect()
+        try:
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition(
+                    {
+                        "mappings": {
+                            "dynamic": False,
+                            "fields": {"title": {"type": "string"}},
+                        }
+                    },
+                    name="by_text",
+                ),
+            )
+
+            explanation = await engine.explain_search_documents(
+                "db",
+                "coll",
+                "$search",
+                {"index": "by_text", "text": {"query": "ada", "path": "title"}},
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(explanation.hinted_index, "by_text")
+        self.assertEqual(explanation.details["status"], "PENDING")
+        self.assertEqual(explanation.details["backend"], "python")
 
     async def test_scan_and_count_prefer_explicit_plan_over_conflicting_filter(self):
         engine = MemoryEngine()

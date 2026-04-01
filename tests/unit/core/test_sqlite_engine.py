@@ -19,7 +19,7 @@ from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, ExecutionTimeout, OperationFailure
 from mongoeco.session import ClientSession
-from mongoeco.types import Decimal128, ObjectId, UNDEFINED
+from mongoeco.types import Decimal128, ObjectId, SearchIndexDefinition, UNDEFINED
 
 
 class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
@@ -1950,6 +1950,18 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_profile_settings_make_system_profile_namespace_visible(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            engine._profiler.set_level("db", 1)
+
+            self.assertEqual(await engine.list_databases(), ["db"])
+            self.assertEqual(await engine.list_collections("db"), ["system.profile"])
+            self.assertEqual(await engine.collection_options("db", "system.profile"), {})
+        finally:
+            await engine.disconnect()
+
     async def test_delete_last_document_does_not_remove_collection_metadata(self):
         engine = SQLiteEngine()
         await engine.connect()
@@ -1976,6 +1988,37 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(await engine.collection_options("db", "archived"), {"capped": True})
         finally:
             await engine.disconnect()
+
+    async def test_explain_search_documents_reports_pending_status(self):
+        engine = SQLiteEngine(simulate_search_index_latency=60.0)
+        await engine.connect()
+        try:
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition(
+                    {
+                        "mappings": {
+                            "dynamic": False,
+                            "fields": {"title": {"type": "string"}},
+                        }
+                    },
+                    name="by_text",
+                ),
+            )
+
+            explanation = await engine.explain_search_documents(
+                "db",
+                "coll",
+                "$search",
+                {"index": "by_text", "text": {"query": "ada", "path": "title"}},
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(explanation.hinted_index, "by_text")
+        self.assertEqual(explanation.details["status"], "PENDING")
+        self.assertIn(explanation.details["backend"], {"python", "fts5"})
 
     def test_drop_collection_rolls_back_if_metadata_delete_fails(self):
         engine = SQLiteEngine()
