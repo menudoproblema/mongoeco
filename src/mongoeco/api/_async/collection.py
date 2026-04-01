@@ -11,6 +11,7 @@ from mongoeco.api._async._collection_bulk import (
 )
 from mongoeco.api._async import _collection_indexing
 from mongoeco.api._async import _collection_modify
+from mongoeco.api._async import _collection_reads
 from mongoeco.api._async._collection_watch import (
     CollectionChangeStreamConfig,
     create_change_stream_hub,
@@ -27,14 +28,11 @@ from mongoeco.api.argument_validation import (
 from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub
 from mongoeco.api.public_api import (
     ARG_UNSET,
-    COLLECTION_COUNT_DOCUMENTS_SPEC,
     COLLECTION_DELETE_MANY_SPEC,
     COLLECTION_DELETE_ONE_SPEC,
-    COLLECTION_DISTINCT_SPEC,
     COLLECTION_FIND_ONE_AND_DELETE_SPEC,
     COLLECTION_FIND_ONE_AND_REPLACE_SPEC,
     COLLECTION_FIND_ONE_AND_UPDATE_SPEC,
-    COLLECTION_FIND_ONE_SPEC,
     COLLECTION_FIND_RAW_BATCHES_SPEC,
     COLLECTION_FIND_SPEC,
     COLLECTION_REPLACE_ONE_SPEC,
@@ -82,6 +80,7 @@ from mongoeco.errors import DuplicateKeyError, OperationFailure
 
 _FILTER_UNSET = ARG_UNSET
 _UPDATE_UNSET = ARG_UNSET
+_resolve_distinct_candidates = _collection_reads.resolve_distinct_candidates
 
 class AsyncCollection:
     """Representa una colección de MongoDB."""
@@ -986,74 +985,15 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> Document | None:
-        options = normalize_public_operation_arguments(
-            COLLECTION_FIND_ONE_SPEC,
-            explicit={
-                "filter_spec": filter_spec,
-                "projection": projection,
-                "collation": collation,
-                "session": session,
-            },
-            extra_kwargs={"filter": filter, **kwargs},
-            profile=self._pymongo_profile,
+        return await _collection_reads.find_one(
+            self,
+            filter_spec,
+            projection,
+            filter=filter,
+            collation=collation,
+            session=session,
+            extra_kwargs=kwargs,
         )
-        operation = compile_find_operation(
-            options.get("filter_spec"),
-            projection=options.get("projection"),
-            collation=options.get("collation"),
-            sort=options.get("sort"),
-            skip=options.get("skip", 0),
-            limit=1,
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            max_time_ms=options.get("max_time_ms"),
-            dialect=self._mongodb_dialect,
-            planning_mode=self._planning_mode,
-        )
-        doc = None
-        started_at = time.perf_counter_ns()
-        try:
-            if (
-                operation.collation is None
-                and operation.sort is None
-                and operation.skip == 0
-                and operation.hint is None
-                and operation.comment is None
-                and operation.max_time_ms is None
-                and self._can_use_direct_id_lookup(operation.filter_spec)
-            ):
-                doc = await self._engine.get_document(
-                    self._db_name,
-                    self._collection_name,
-                    operation.filter_spec["_id"],
-                    projection=operation.projection,
-                    dialect=self._mongodb_dialect,
-                    context=options.get("session"),
-                )
-            else:
-                async for d in self._engine_scan_with_operation(
-                    operation,
-                    session=options.get("session"),
-                ):
-                    doc = d
-                    break
-        except Exception as exc:
-            await self._profile_operation(
-                op="query",
-                command={"find": self._collection_name, "filter": operation.filter_spec},
-                duration_ns=time.perf_counter_ns() - started_at,
-                operation=operation,
-                errmsg=str(exc),
-            )
-            raise
-        await self._profile_operation(
-            op="query",
-            command={"find": self._collection_name, "filter": operation.filter_spec},
-            duration_ns=time.perf_counter_ns() - started_at,
-            operation=operation,
-        )
-
-        return doc
 
     def find(
         self,
@@ -1541,42 +1481,19 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> int:
-        options = normalize_public_operation_arguments(
-            COLLECTION_COUNT_DOCUMENTS_SPEC,
-            explicit={
-                "filter_spec": filter_spec,
-                "collation": collation,
-                "hint": hint,
-                "comment": comment,
-                "max_time_ms": max_time_ms,
-                "skip": skip,
-                "limit": limit,
-                "session": session,
-            },
-            extra_kwargs={"filter": filter, **kwargs},
-            profile=self._pymongo_profile,
+        return await _collection_reads.count_documents(
+            self,
+            filter_spec,
+            filter=filter,
+            collation=collation,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            skip=skip,
+            limit=limit,
+            session=session,
+            extra_kwargs=kwargs,
         )
-        operation = compile_find_operation(
-            options["filter_spec"],
-            projection={"_id": 1},
-            collation=options.get("collation"),
-            skip=options.get("skip", 0),
-            limit=options.get("limit"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            max_time_ms=options.get("max_time_ms"),
-            dialect=self._mongodb_dialect,
-            planning_mode=self._planning_mode,
-        )
-        count = await self._engine_count_with_operation(operation, session=options.get("session"))
-        self._record_operation_metadata(
-            operation="count_documents",
-            comment=operation.comment,
-            hint=operation.hint,
-            max_time_ms=operation.max_time_ms,
-            session=options.get("session"),
-        )
-        return count
 
     async def estimated_document_count(
         self,
@@ -1585,23 +1502,12 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> int:
-        max_time_ms = self._normalize_max_time_ms(max_time_ms)
-        count = len(
-            await self.find(
-                {},
-                {"_id": 1},
-                comment=comment,
-                max_time_ms=max_time_ms,
-                session=session,
-            ).to_list()
-        )
-        self._record_operation_metadata(
-            operation="estimated_document_count",
+        return await _collection_reads.estimated_document_count(
+            self,
             comment=comment,
             max_time_ms=max_time_ms,
             session=session,
         )
-        return count
 
     async def distinct(
         self,
@@ -1616,59 +1522,18 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> list[object]:
-        options = normalize_public_operation_arguments(
-            COLLECTION_DISTINCT_SPEC,
-            explicit={
-                "key": key,
-                "filter_spec": filter_spec,
-                "collation": collation,
-                "hint": hint,
-                "comment": comment,
-                "max_time_ms": max_time_ms,
-                "session": session,
-            },
-            extra_kwargs={"filter": filter, **kwargs},
-            profile=self._pymongo_profile,
+        return await _collection_reads.distinct(
+            self,
+            key,
+            filter_spec,
+            filter=filter,
+            collation=collation,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            session=session,
+            extra_kwargs=kwargs,
         )
-        if not isinstance(options["key"], str):
-            raise TypeError("key must be a string")
-        key = options["key"]
-        normalized_collation = normalize_collation(options.get("collation"))
-        distinct_values: list[object] = []
-        async for document in self.find(
-            options.get("filter_spec"),
-            collation=options.get("collation"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            max_time_ms=options.get("max_time_ms"),
-            session=options.get("session"),
-        ):
-            values = QueryEngine.extract_values(document, key)
-            found, value = QueryEngine._get_field_value(document, key)
-            candidates = _resolve_distinct_candidates(
-                values,
-                exact_found=found,
-                exact_value=value,
-            )
-            for candidate in candidates:
-                if not any(
-                    QueryEngine._values_equal(
-                        existing,
-                        candidate,
-                        dialect=self._mongodb_dialect,
-                        collation=normalized_collation,
-                    )
-                    for existing in distinct_values
-                ):
-                    distinct_values.append(candidate)
-        self._record_operation_metadata(
-            operation="distinct",
-            comment=options.get("comment"),
-            hint=options.get("hint"),
-            max_time_ms=options.get("max_time_ms"),
-            session=options.get("session"),
-        )
-        return distinct_values
 
     async def create_index(
         self,
@@ -1983,26 +1848,3 @@ class AsyncCollection:
     @property
     def change_stream_journal_max_bytes(self) -> int | None:
         return self._change_stream_journal_max_bytes
-
-
-def _resolve_distinct_candidates(
-    values: list[object],
-    *,
-    exact_found: bool,
-    exact_value: object,
-) -> list[object]:
-    if not values:
-        if not exact_found:
-            return [None]
-        if isinstance(exact_value, list):
-            return []
-        return [exact_value]
-    if not exact_found or not isinstance(exact_value, list):
-        return values
-    if exact_value == [] and values == [[]]:
-        return []
-    if values and values[0] == exact_value:
-        expanded_members = list(exact_value)
-        if values[1:] == expanded_members:
-            return expanded_members
-    return values
