@@ -31,6 +31,48 @@ class ChangeStreamScope:
         return True
 
 
+@dataclass(frozen=True, slots=True)
+class ChangeStreamHubState:
+    retained_events: int
+    base_offset: int
+    current_offset: int
+    next_token: int
+    retained_start_token: int | None
+    retained_end_token: int | None
+    journal_enabled: bool
+    journal_path: str | None
+    journal_event_log_path: str | None
+    journal_fsync: bool
+    journal_max_log_bytes: int | None
+    journal_log_entries_since_compaction: int
+    journal_log_bytes_since_compaction: int
+    journal_compaction_count: int
+    last_compaction_time_monotonic: float | None
+    snapshot_exists: bool
+    event_log_exists: bool
+
+    def to_document(self) -> dict[str, object]:
+        return {
+            "retainedEvents": self.retained_events,
+            "baseOffset": self.base_offset,
+            "currentOffset": self.current_offset,
+            "nextToken": self.next_token,
+            "retainedStartToken": self.retained_start_token,
+            "retainedEndToken": self.retained_end_token,
+            "journalEnabled": self.journal_enabled,
+            "journalPath": self.journal_path,
+            "journalEventLogPath": self.journal_event_log_path,
+            "journalFsync": self.journal_fsync,
+            "journalMaxLogBytes": self.journal_max_log_bytes,
+            "journalLogEntriesSinceCompaction": self.journal_log_entries_since_compaction,
+            "journalLogBytesSinceCompaction": self.journal_log_bytes_since_compaction,
+            "journalCompactionCount": self.journal_compaction_count,
+            "lastCompactionTimeMonotonic": self.last_compaction_time_monotonic,
+            "snapshotExists": self.snapshot_exists,
+            "eventLogExists": self.event_log_exists,
+        }
+
+
 class ChangeStreamHub:
     def __init__(
         self,
@@ -75,6 +117,8 @@ class ChangeStreamHub:
         )
         self._journal_log_entries_since_compaction = 0
         self._journal_log_bytes_since_compaction = 0
+        self._journal_compaction_count = 0
+        self._last_compaction_time_monotonic: float | None = None
         self._load_journal()
 
     def _end_offset_locked(self) -> int:
@@ -178,6 +222,8 @@ class ChangeStreamHub:
                     _fsync_parent_directory(self._journal_event_log_path)
         self._journal_log_entries_since_compaction = 0
         self._journal_log_bytes_since_compaction = 0
+        self._journal_compaction_count += 1
+        self._last_compaction_time_monotonic = time.monotonic()
 
     def _load_journal(self) -> None:
         if self._journal_path is not None and os.path.exists(self._journal_path):
@@ -241,6 +287,36 @@ class ChangeStreamHub:
     @property
     def journal_max_log_bytes(self) -> int | None:
         return self._journal_max_log_bytes
+
+    @property
+    def state(self) -> ChangeStreamHubState:
+        with self._condition:
+            retained_start_token = self._retained_start_token_locked()
+            retained_end_token = None if not self._events else self._events[-1].token
+            return ChangeStreamHubState(
+                retained_events=len(self._events),
+                base_offset=self._base_offset,
+                current_offset=self._end_offset_locked(),
+                next_token=self._next_token,
+                retained_start_token=retained_start_token,
+                retained_end_token=retained_end_token,
+                journal_enabled=self._journal_path is not None,
+                journal_path=self._journal_path,
+                journal_event_log_path=self._journal_event_log_path,
+                journal_fsync=self._journal_fsync,
+                journal_max_log_bytes=self._journal_max_log_bytes,
+                journal_log_entries_since_compaction=self._journal_log_entries_since_compaction,
+                journal_log_bytes_since_compaction=self._journal_log_bytes_since_compaction,
+                journal_compaction_count=self._journal_compaction_count,
+                last_compaction_time_monotonic=self._last_compaction_time_monotonic,
+                snapshot_exists=(
+                    self._journal_path is not None and os.path.exists(self._journal_path)
+                ),
+                event_log_exists=(
+                    self._journal_event_log_path is not None
+                    and os.path.exists(self._journal_event_log_path)
+                ),
+            )
 
     def compact_journal(self) -> None:
         with self._condition:

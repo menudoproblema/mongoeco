@@ -1051,6 +1051,9 @@ class Collection:
             ),
         )
 
+    def change_stream_state(self) -> dict[str, object]:
+        return self._async_collection().change_stream_state()
+
     @property
     def name(self) -> str:
         return self._collection_name

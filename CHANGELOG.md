@@ -146,6 +146,9 @@ usa Semantic Versioning.
   entrada incremental, ignora una cola truncada si el último append
   quedó a medias y expone knobs públicos de durabilidad y rotación
   (`change_stream_journal_fsync`, `change_stream_journal_max_bytes`).
+- Los change streams locales exponen ahora `change_stream_state()` en
+  cliente, base de datos y colección para inspeccionar offsets
+  retenidos, estado del journal y progreso de compactación.
 - `watch()` acepta ya `fullDocument` (`default`, `updateLookup`,
   `whenAvailable`, `required`), los resume tokens dejan de exponerse
   como enteros decimales simples y `drop_database()` insiste hasta
@@ -165,6 +168,11 @@ usa Semantic Versioning.
   miembros explícitos del replica set, el monitor puede descubrir seeds
   adicionales desde respuestas secundarias y deja de degradar el estado
   local si recibe un `hello` con versión topológica más vieja.
+- El driver normaliza ya fallos reales de red wire a
+  `ConnectionFailure`, haciendo efectivos los retryable reads/writes
+  también ante errores de `connect`/`read`/`write`; además, cada server
+  mantiene estado de salud local (`healthy`, `recovering`, `degraded`,
+  `unreachable`) y esa señal se usa para priorizar candidatos más sanos.
 
 ## [2.2.0] - 2026-03-31
 

@@ -43,6 +43,7 @@ from mongoeco.driver.runtime import DriverRuntime
 from mongoeco.driver.security import AuthPolicy, TlsPolicy, build_auth_policy, build_tls_policy
 from mongoeco.driver.topology import (
     ServerDescription,
+    ServerState,
     ServerType,
     TopologyDescription,
     TopologyType,
@@ -99,6 +100,7 @@ __all__ = [
     "CommandSucceededEvent",
     "CommandFailedEvent",
     "ServerDescription",
+    "ServerState",
     "ServerType",
     "TopologyDescription",
     "TopologyType",

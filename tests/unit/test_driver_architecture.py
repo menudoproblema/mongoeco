@@ -28,6 +28,7 @@ from mongoeco.driver import (
     RequestExecutionTrace,
     ServerSelectedEvent,
     ServerDescription,
+    ServerState,
     ServerType,
     SrvResolution,
     TlsPolicy,
@@ -1071,6 +1072,39 @@ class RequestExecutionPipelineTests(unittest.TestCase):
         plan = runtime.plan_command_request("admin", "ping", {"ping": 1}, read_only=True)
 
         self.assertEqual([server.address for server in plan.candidate_servers], ["db1:27017"])
+
+    def test_selection_policy_prefers_healthier_servers_when_ordering_nearest(self):
+        policy = build_selection_policy(
+            parse_mongo_uri("mongodb://db1:27017,db2:27018,db3:27019/"),
+            read_preference=ReadPreference(ReadPreferenceMode.NEAREST),
+        )
+        topology = TopologyDescription(
+            topology_type=TopologyType.REPLICA_SET,
+            servers=(
+                ServerDescription(
+                    "db1:27017",
+                    server_type=ServerType.RS_SECONDARY,
+                    state=ServerState.DEGRADED,
+                    round_trip_time_ms=1.0,
+                ),
+                ServerDescription(
+                    "db2:27018",
+                    server_type=ServerType.RS_SECONDARY,
+                    state=ServerState.HEALTHY,
+                    round_trip_time_ms=2.0,
+                ),
+                ServerDescription(
+                    "db3:27019",
+                    server_type=ServerType.RS_SECONDARY,
+                    state=ServerState.RECOVERING,
+                    round_trip_time_ms=1.5,
+                ),
+            ),
+        )
+
+        selected = policy.select_servers(topology)
+
+        self.assertEqual([server.address for server in selected], ["db2:27018", "db3:27019", "db1:27017"])
 
     def test_execute_request_discards_broken_connection_on_failure(self):
         runtime = DriverRuntime(

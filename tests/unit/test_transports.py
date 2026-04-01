@@ -13,7 +13,7 @@ from mongoeco.driver.transports import (
     StreamConnectionResource,
     WireProtocolCommandTransport,
 )
-from mongoeco.errors import OperationFailure
+from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import Binary
 from mongoeco.wire.protocol import OP_REPLY
@@ -260,11 +260,42 @@ class CommandTransportTests(unittest.IsolatedAsyncioTestCase):
         )
 
         with patch("mongoeco.driver.transports.encode_op_msg_request", return_value=b"encoded"):
-            with self.assertRaises(EOFError):
+            with self.assertRaises(ConnectionFailure):
                 await transport._roundtrip(resource, {"ping": 1}, lease="lease-1")
 
         self.assertEqual(registry.discarded, ["lease-1"])
         self.assertEqual(resource.writer.written, [b"encoded"])
+
+    async def test_wire_transport_ensure_resource_wraps_connect_errors_as_connection_failure(self):
+        transport = WireProtocolCommandTransport(
+            _FakeRegistry(),
+            tls_policy=TlsPolicy(enabled=False, verify_certificates=True),
+            connect_timeout_ms=250,
+        )
+        connection = DriverConnection(
+            connection_id="conn-1",
+            server=ServerDescription("db1:27017"),
+            pool_key=PoolKey(address="db1:27017", tls=False),
+            created_at_monotonic=0.0,
+            last_used_at_monotonic=0.0,
+            resource=None,
+        )
+
+        async def fake_wait_for(coro, timeout):
+            del timeout
+            coro.close()
+            raise OSError("boom")
+
+        async def fake_open_connection(*args, **kwargs):
+            del args, kwargs
+            return asyncio.StreamReader(), _FakeWriter()
+
+        with patch("mongoeco.driver.transports.asyncio.open_connection", side_effect=fake_open_connection), patch(
+            "mongoeco.driver.transports.asyncio.wait_for",
+            side_effect=fake_wait_for,
+        ):
+            with self.assertRaises(ConnectionFailure):
+                await transport._ensure_resource(connection)
 
     async def test_wire_transport_roundtrip_handles_empty_op_reply(self):
         transport = WireProtocolCommandTransport(

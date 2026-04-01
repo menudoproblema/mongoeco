@@ -293,6 +293,14 @@ la persistencia con:
 * `change_stream_journal_fsync=True`
 * `change_stream_journal_max_bytes=<limite>`
 
+Además, cliente, base de datos y colección exponen `change_stream_state()`
+para inspeccionar en runtime:
+
+* offsets retenidos
+* estado del snapshot y del log incremental
+* bytes/entradas pendientes desde la última compactación
+* número de compactaciones realizadas
+
 La API runtime expone esta información en
 `mongoeco.core.collation.collation_backend_info()`, que devuelve:
 
@@ -324,6 +332,12 @@ Contrato actual:
 * el monitor usa también `primary` y `me` para discovery adicional, clasifica
   `arbiterOnly` como miembro explícito del replica set y evita degradar el
   estado local cuando llega un `hello` con `topologyVersion` más viejo
+* cada `ServerDescription` mantiene además un estado de salud local
+  (`unknown`, `healthy`, `recovering`, `degraded`, `unreachable`) y contadores
+  de fallos consecutivos para observabilidad y ordenación de candidatos
+* los fallos reales de red en transporte wire (`connect`, `drain`, `read`) se
+  normalizan a `ConnectionFailure`, de modo que los retryable reads/writes ya
+  no dependen solo de labels devueltos por el servidor
 
 ## 11. Verificación contractual contra PyMongo real
 

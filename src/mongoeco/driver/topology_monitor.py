@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import time
 
 from mongoeco.driver.requests import CommandRequest, RequestExecutionPlan
-from mongoeco.driver.topology import ServerDescription, ServerType, TopologyDescription, TopologyType
+from mongoeco.driver.topology import (
+    ServerDescription,
+    ServerState,
+    ServerType,
+    TopologyDescription,
+    TopologyType,
+)
 
 
 def build_probe_plan(server: ServerDescription) -> RequestExecutionPlan:
@@ -77,18 +84,19 @@ async def refresh_topology(
             existing = current_by_address.get(address)
             if existing is not None and _is_stale_topology_update(existing, description):
                 description = existing
+            else:
+                description = _merge_successful_server_state(existing, description)
             if (
                 seed_set_name is not None
                 and description.set_name is not None
                 and description.set_name != seed_set_name
             ):
-                description = ServerDescription(
+                description = _mark_server_failure(
                     address=address,
-                    server_type=ServerType.UNKNOWN,
-                    set_name=description.set_name,
-                    round_trip_time_ms=description.round_trip_time_ms,
-                    last_update_time_monotonic=description.last_update_time_monotonic,
+                    existing=existing,
                     error=f"replica set name mismatch: expected {seed_set_name}, got {description.set_name}",
+                    recovered=description,
+                    reachable=True,
                 )
             refreshed_by_address[address] = description
             for discovered_address in _discovered_addresses(description):
@@ -97,11 +105,11 @@ async def refresh_topology(
                     ordered_addresses.append(discovered_address)
                     pending_addresses.append(discovered_address)
         except Exception as exc:  # noqa: BLE001
-            refreshed_by_address[address] = ServerDescription(
+            refreshed_by_address[address] = _mark_server_failure(
                 address=address,
-                server_type=ServerType.UNKNOWN,
-                set_name=seed_set_name,
+                existing=current_by_address.get(address),
                 error=f"{type(exc).__name__}: {exc}",
+                seed_set_name=seed_set_name,
             )
         finally:
             await complete_execution(execution)
@@ -128,6 +136,7 @@ def _server_description_from_hello(
     *,
     round_trip_time_ms: float,
 ) -> ServerDescription:
+    observed_at = time.monotonic()
     if response.get("msg") == "isdbgrid":
         server_type = ServerType.MONGOS
     elif isinstance(response.get("setName"), str):
@@ -147,6 +156,7 @@ def _server_description_from_hello(
     return ServerDescription(
         address=address,
         server_type=server_type,
+        state=ServerState.HEALTHY,
         round_trip_time_ms=round_trip_time_ms,
         set_name=response.get("setName") if isinstance(response.get("setName"), str) else None,
         tags=dict(tags) if isinstance(tags, dict) else {},
@@ -168,7 +178,8 @@ def _server_description_from_hello(
         else None,
         set_version=int(response["setVersion"]) if isinstance(response.get("setVersion"), int) else None,
         election_id=response.get("electionId"),
-        last_update_time_monotonic=time.monotonic(),
+        last_update_time_monotonic=observed_at,
+        last_success_time_monotonic=observed_at,
         hosts=_string_tuple(response.get("hosts")),
         passives=_string_tuple(response.get("passives")),
         arbiters=_string_tuple(response.get("arbiters")),
@@ -261,6 +272,112 @@ def _discovered_addresses(server: ServerDescription) -> tuple[str, ...]:
         if candidate not in addresses:
             addresses.append(candidate)
     return tuple(addresses)
+
+
+def _merge_successful_server_state(
+    existing: ServerDescription | None,
+    candidate: ServerDescription,
+) -> ServerDescription:
+    state = ServerState.HEALTHY
+    if existing is not None and existing.consecutive_failures > 0:
+        state = ServerState.RECOVERING
+    return replace(
+        candidate,
+        state=state,
+        consecutive_failures=0,
+        last_success_time_monotonic=candidate.last_update_time_monotonic,
+        last_error_time_monotonic=None,
+        error=None,
+    )
+
+
+def _mark_server_failure(
+    *,
+    address: str,
+    existing: ServerDescription | None,
+    error: str,
+    reachable: bool = False,
+    recovered: ServerDescription | None = None,
+    seed_set_name: str | None = None,
+) -> ServerDescription:
+    now = time.monotonic()
+    failures = 1 if existing is None else existing.consecutive_failures + 1
+    if reachable:
+        state = ServerState.DEGRADED
+        server_type = recovered.server_type if recovered is not None else ServerType.UNKNOWN
+        set_name = recovered.set_name if recovered is not None else seed_set_name
+        round_trip_time_ms = recovered.round_trip_time_ms if recovered is not None else None
+        topology_version = recovered.topology_version if recovered is not None else None
+        set_version = recovered.set_version if recovered is not None else None
+        election_id = recovered.election_id if recovered is not None else None
+        hosts = recovered.hosts if recovered is not None else ()
+        passives = recovered.passives if recovered is not None else ()
+        arbiters = recovered.arbiters if recovered is not None else ()
+        primary = recovered.primary if recovered is not None else None
+        me = recovered.me if recovered is not None else None
+        tags = recovered.tags if recovered is not None else {}
+        wire_version_range = recovered.wire_version_range if recovered is not None else None
+        logical_session_timeout_minutes = (
+            recovered.logical_session_timeout_minutes if recovered is not None else None
+        )
+        hidden = recovered.hidden if recovered is not None else False
+        arbiter_only = recovered.arbiter_only if recovered is not None else False
+        staleness_seconds = recovered.staleness_seconds if recovered is not None else None
+    else:
+        state = (
+            ServerState.DEGRADED
+            if existing is not None and existing.last_success_time_monotonic is not None
+            else ServerState.UNREACHABLE
+        )
+        server_type = ServerType.UNKNOWN
+        set_name = existing.set_name if existing is not None else seed_set_name
+        round_trip_time_ms = existing.round_trip_time_ms if existing is not None else None
+        topology_version = existing.topology_version if existing is not None else None
+        set_version = existing.set_version if existing is not None else None
+        election_id = existing.election_id if existing is not None else None
+        hosts = existing.hosts if existing is not None else ()
+        passives = existing.passives if existing is not None else ()
+        arbiters = existing.arbiters if existing is not None else ()
+        primary = existing.primary if existing is not None else None
+        me = existing.me if existing is not None else None
+        tags = existing.tags if existing is not None else {}
+        wire_version_range = existing.wire_version_range if existing is not None else None
+        logical_session_timeout_minutes = (
+            existing.logical_session_timeout_minutes if existing is not None else None
+        )
+        hidden = existing.hidden if existing is not None else False
+        arbiter_only = existing.arbiter_only if existing is not None else False
+        staleness_seconds = existing.staleness_seconds if existing is not None else None
+    return ServerDescription(
+        address=address,
+        server_type=server_type,
+        state=state,
+        round_trip_time_ms=round_trip_time_ms,
+        staleness_seconds=staleness_seconds,
+        set_name=set_name,
+        tags=tags,
+        wire_version_range=wire_version_range,
+        logical_session_timeout_minutes=logical_session_timeout_minutes,
+        hidden=hidden,
+        arbiter_only=arbiter_only,
+        topology_version=topology_version,
+        set_version=set_version,
+        election_id=election_id,
+        last_update_time_monotonic=now,
+        last_success_time_monotonic=(
+            recovered.last_success_time_monotonic
+            if reachable and recovered is not None
+            else (existing.last_success_time_monotonic if existing is not None else None)
+        ),
+        last_error_time_monotonic=now,
+        consecutive_failures=failures,
+        error=error,
+        hosts=hosts,
+        passives=passives,
+        arbiters=arbiters,
+        primary=primary,
+        me=me,
+    )
 
 
 def _is_stale_topology_update(

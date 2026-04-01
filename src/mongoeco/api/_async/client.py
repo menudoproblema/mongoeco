@@ -281,6 +281,9 @@ class AsyncDatabase:
             full_document=full_document,
         )
 
+    def change_stream_state(self) -> dict[str, object]:
+        return self._change_hub.state.to_document()
+
     @property
     def mongodb_dialect(self) -> MongoDialect:
         return self._mongodb_dialect
@@ -648,6 +651,9 @@ class AsyncMongoClient:
             start_at_operation_time=start_at_operation_time,
             full_document=full_document,
         )
+
+    def change_stream_state(self) -> dict[str, object]:
+        return self._change_hub.state.to_document()
 
     @property
     def mongodb_dialect(self) -> MongoDialect:

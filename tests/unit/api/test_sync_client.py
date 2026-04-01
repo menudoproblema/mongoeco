@@ -219,6 +219,15 @@ class SyncClientUnitTests(unittest.TestCase):
         finally:
             client.close()
 
+    def test_client_exposes_change_stream_state(self):
+        client = MongoClient(MemoryEngine(), change_stream_history_size=7)
+        try:
+            state = client.change_stream_state()
+            self.assertEqual(state["retainedEvents"], 0)
+            self.assertEqual(state["currentOffset"], 0)
+        finally:
+            client.close()
+
     def test_client_drop_database_prefers_engine_fast_path(self):
         class EngineStub:
             def __init__(self):

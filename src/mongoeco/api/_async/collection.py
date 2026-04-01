@@ -2897,6 +2897,9 @@ class AsyncCollection:
             full_document=full_document,
         )
 
+    def change_stream_state(self) -> dict[str, object]:
+        return self._change_hub.state.to_document()
+
     @property
     def name(self) -> str:
         return self._collection_name

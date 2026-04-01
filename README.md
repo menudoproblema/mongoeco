@@ -103,9 +103,17 @@ Unicode collation backend:
   compacts it back into a retained snapshot as the local history rolls forward;
   each log entry carries an integrity checksum and truncated tail writes are
   ignored on reload
+* clients, databases and direct collections expose `change_stream_state()` so
+  local retained history, journal files and compaction progress can be
+  inspected at runtime
 * the local driver now starts non-direct single-seed topologies as
   provisional `UNKNOWN` and relies on `hello` discovery to converge towards
   `standalone`, `replicaSet` or `sharded` topology shapes
+* retryable reads and writes now apply to real wire connection failures too:
+  connect/read/write socket errors are normalized to `ConnectionFailure`
+* replica-set discovery also tracks per-server health states (`healthy`,
+  `recovering`, `degraded`, `unreachable`) and uses them to prefer healthier
+  candidates when ordering eligible servers
 
 ## Quick Start
 

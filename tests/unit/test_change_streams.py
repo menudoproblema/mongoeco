@@ -344,6 +344,40 @@ class ChangeStreamHubTests(unittest.TestCase):
             reloaded = ChangeStreamHub(max_retained_events=8, journal_path=journal_path)
             self.assertEqual(reloaded.current_offset(), 1)
 
+    def test_hub_state_reports_retention_journal_and_compaction_metadata(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            hub = ChangeStreamHub(
+                max_retained_events=2,
+                journal_path=journal_path,
+                journal_max_log_bytes=4096,
+            )
+            hub.publish(
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 1},
+            )
+            hub.publish(
+                operation_type="insert",
+                db_name="alpha",
+                coll_name="users",
+                document_key={"_id": 2},
+            )
+            state_before = hub.state.to_document()
+            hub.compact_journal()
+            state_after = hub.state.to_document()
+
+        self.assertEqual(state_before["retainedEvents"], 2)
+        self.assertEqual(state_before["currentOffset"], 2)
+        self.assertEqual(state_before["retainedStartToken"], 1)
+        self.assertEqual(state_before["retainedEndToken"], 2)
+        self.assertTrue(state_before["journalEnabled"])
+        self.assertTrue(state_before["eventLogExists"])
+        self.assertEqual(state_before["journalMaxLogBytes"], 4096)
+        self.assertFalse(state_after["eventLogExists"])
+        self.assertGreaterEqual(state_after["journalCompactionCount"], 1)
+
 
 class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
     async def test_cursor_filters_by_scope_pipeline_and_timeout(self):

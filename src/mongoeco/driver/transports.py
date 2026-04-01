@@ -14,7 +14,7 @@ except Exception:  # pragma: no cover - bson is optional
 from mongoeco.driver.connections import ConnectionRegistry, DriverConnection
 from mongoeco.driver.security import TlsPolicy
 from mongoeco.driver.requests import PreparedRequestExecution
-from mongoeco.errors import OperationFailure
+from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.types import Binary
 from mongoeco.wire.scram import (
     build_scram_client_final,
@@ -109,7 +109,13 @@ class WireProtocolCommandTransport:
             ssl=ssl_context,
         )
         timeout = self._connect_timeout_ms / 1000
-        reader, writer = await asyncio.wait_for(connect_coro, timeout=timeout)
+        try:
+            reader, writer = await asyncio.wait_for(connect_coro, timeout=timeout)
+        except Exception as exc:  # noqa: BLE001
+            raise _wrap_connection_failure(
+                exc,
+                f"failed to connect to {connection.server.address}",
+            ) from exc
         resource = StreamConnectionResource(reader=reader, writer=writer)
         connection.attach_resource(resource)
         return resource
@@ -236,15 +242,15 @@ class WireProtocolCommandTransport:
         lease,
     ) -> dict[str, Any]:
         request_id = next(resource.request_ids)
-        resource.writer.write(encode_op_msg_request(request_document, request_id=request_id))
-        await resource.writer.drain()
         try:
+            resource.writer.write(encode_op_msg_request(request_document, request_id=request_id))
+            await resource.writer.drain()
             raw_header = await resource.reader.readexactly(16)
             header = parse_message_header(raw_header)
             payload = await resource.reader.readexactly(header.message_length - 16)
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
             self._registry.discard(lease)
-            raise
+            raise _wrap_connection_failure(exc, "wire request failed") from exc
         if header.op_code == OP_MSG:
             return decode_op_msg(header, payload).body
         if header.op_code == OP_REPLY:
@@ -292,3 +298,11 @@ def _advance_session_from_response(session: Any, response: dict[str, Any]) -> No
 def _require_bson() -> None:
     if BsonBinary.__name__ == "_MissingBsonBinary":  # pragma: no cover - guarded by callers
         raise OperationFailure("wire transports require the optional 'pymongo'/'bson' dependency")
+
+
+def _wrap_connection_failure(exc: Exception, message: str) -> Exception:
+    if isinstance(exc, ConnectionFailure):
+        return exc
+    if isinstance(exc, (OSError, EOFError, asyncio.TimeoutError, ssl.SSLError)):
+        return ConnectionFailure(f"{message}: {exc}")
+    return exc

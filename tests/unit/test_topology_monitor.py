@@ -1,6 +1,12 @@
 import unittest
 
-from mongoeco.driver.topology import ServerDescription, ServerType, TopologyDescription, TopologyType
+from mongoeco.driver.topology import (
+    ServerDescription,
+    ServerState,
+    ServerType,
+    TopologyDescription,
+    TopologyType,
+)
 from mongoeco.driver.topology_monitor import (
     _derive_topology_type,
     _server_description_from_hello,
@@ -42,6 +48,8 @@ class TopologyMonitorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(refreshed.servers), 1)
         self.assertEqual(refreshed.servers[0].server_type, ServerType.UNKNOWN)
+        self.assertEqual(refreshed.servers[0].state, ServerState.UNREACHABLE)
+        self.assertEqual(refreshed.servers[0].consecutive_failures, 1)
         self.assertEqual(refreshed.servers[0].error, "RuntimeError: boom")
         self.assertFalse(refreshed.compatible)
         self.assertEqual(refreshed.topology_type, TopologyType.SINGLE)
@@ -86,6 +94,7 @@ class TopologyMonitorTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(mongos.server_type, ServerType.MONGOS)
+        self.assertEqual(mongos.state, ServerState.HEALTHY)
         self.assertEqual(arbiter.server_type, ServerType.RS_ARBITER)
         self.assertEqual(arbiter.me, "db1:27017")
         self.assertEqual(mongos.tags, {})
@@ -202,6 +211,7 @@ class TopologyMonitorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertFalse(refreshed.compatible)
         self.assertIn("replica set name mismatch", refreshed.servers[0].error or "")
+        self.assertEqual(refreshed.servers[0].state, ServerState.DEGRADED)
 
     async def test_refresh_topology_keeps_newer_topology_version_when_probe_is_stale(self):
         topology = TopologyDescription(
@@ -243,3 +253,42 @@ class TopologyMonitorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(refreshed.servers[0].topology_version, {"processId": "p1", "counter": 5})
         self.assertEqual(refreshed.servers[0].set_version, 5)
+
+    async def test_refresh_topology_marks_success_after_failures_as_recovering(self):
+        topology = TopologyDescription(
+            topology_type=TopologyType.REPLICA_SET,
+            servers=(
+                ServerDescription(
+                    address="db1:27017",
+                    server_type=ServerType.UNKNOWN,
+                    state=ServerState.DEGRADED,
+                    set_name="rs0",
+                    consecutive_failures=2,
+                    last_success_time_monotonic=10.0,
+                    error="RuntimeError: boom",
+                ),
+            ),
+            set_name="rs0",
+        )
+
+        async def prepare_execution(plan, attempt_number):
+            del plan, attempt_number
+            return object()
+
+        async def complete_execution(_execution):
+            return None
+
+        class _RecoveryTransport:
+            async def send(self, _execution):
+                return {"setName": "rs0", "isWritablePrimary": True}
+
+        refreshed = await refresh_topology(
+            current_topology=topology,
+            prepare_execution=prepare_execution,
+            complete_execution=complete_execution,
+            transport=_RecoveryTransport(),
+        )
+
+        self.assertEqual(refreshed.servers[0].server_type, ServerType.RS_PRIMARY)
+        self.assertEqual(refreshed.servers[0].state, ServerState.RECOVERING)
+        self.assertEqual(refreshed.servers[0].consecutive_failures, 0)

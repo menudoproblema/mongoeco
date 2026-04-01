@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from mongoeco.driver.topology import ServerDescription, TopologyDescription, TopologyType
+from mongoeco.driver.topology import ServerDescription, ServerState, TopologyDescription, TopologyType
 from mongoeco.driver.uri import MongoClientOptions, MongoUri
 from mongoeco.types import ReadConcern, ReadPreference, ReadPreferenceMode, WriteConcern
 
@@ -111,6 +111,7 @@ class SelectionPolicy:
             sorted(
                 servers,
                 key=lambda server: (
+                    _server_state_sort_weight(server.state),
                     float("inf") if server.round_trip_time_ms is None else server.round_trip_time_ms,
                     server.address,
                 ),
@@ -130,6 +131,18 @@ def _server_matches_tag_set(server: ServerDescription, tag_set: dict[str, str]) 
     if not tag_set:
         return True
     return all(server.tags.get(key) == value for key, value in tag_set.items())
+
+
+def _server_state_sort_weight(state: ServerState) -> int:
+    if state is ServerState.HEALTHY:
+        return 0
+    if state is ServerState.RECOVERING:
+        return 1
+    if state is ServerState.DEGRADED:
+        return 2
+    if state is ServerState.UNKNOWN:
+        return 3
+    return 4
 
 
 @dataclass(frozen=True, slots=True)

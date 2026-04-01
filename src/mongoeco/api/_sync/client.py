@@ -373,6 +373,9 @@ class Database:
             ),
         )
 
+    def change_stream_state(self) -> dict[str, object]:
+        return self._async_database().change_stream_state()
+
     @property
     def mongodb_dialect(self) -> MongoDialect:
         return self._client.mongodb_dialect
@@ -621,6 +624,10 @@ class MongoClient:
                 session=session,
             ),
         )
+
+    def change_stream_state(self) -> dict[str, object]:
+        self._ensure_connected()
+        return self._async_client.change_stream_state()
 
     @property
     def mongodb_dialect(self) -> MongoDialect:

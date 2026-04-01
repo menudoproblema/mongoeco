@@ -16,6 +16,14 @@ class ServerType(Enum):
     UNKNOWN = "unknown"
 
 
+class ServerState(Enum):
+    UNKNOWN = "unknown"
+    HEALTHY = "healthy"
+    RECOVERING = "recovering"
+    DEGRADED = "degraded"
+    UNREACHABLE = "unreachable"
+
+
 class TopologyType(Enum):
     SINGLE = "single"
     SHARDED = "sharded"
@@ -27,6 +35,7 @@ class TopologyType(Enum):
 class ServerDescription:
     address: str
     server_type: ServerType = ServerType.UNKNOWN
+    state: ServerState = ServerState.UNKNOWN
     round_trip_time_ms: float | None = None
     staleness_seconds: int | None = None
     set_name: str | None = None
@@ -39,6 +48,9 @@ class ServerDescription:
     set_version: int | None = None
     election_id: object | None = None
     last_update_time_monotonic: float | None = None
+    last_success_time_monotonic: float | None = None
+    last_error_time_monotonic: float | None = None
+    consecutive_failures: int = 0
     error: str | None = None
     hosts: tuple[str, ...] = ()
     passives: tuple[str, ...] = ()
@@ -115,12 +127,22 @@ def build_local_topology_description(uri: MongoUri) -> TopologyDescription:
             ServerDescription(
                 address=seed.address,
                 server_type=server_type,
+                state=(
+                    ServerState.HEALTHY
+                    if server_type in {ServerType.STANDALONE, ServerType.MONGOS}
+                    else ServerState.UNKNOWN
+                ),
                 round_trip_time_ms=1.0 + index,
                 staleness_seconds=None if server_type is ServerType.UNKNOWN else 0,
                 set_name=uri.options.replica_set,
                 logical_session_timeout_minutes=30,
                 wire_version_range=(0, 20),
                 last_update_time_monotonic=time.monotonic(),
+                last_success_time_monotonic=(
+                    time.monotonic()
+                    if server_type in {ServerType.STANDALONE, ServerType.MONGOS}
+                    else None
+                ),
             )
         )
     return TopologyDescription(
