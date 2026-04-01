@@ -375,6 +375,28 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(results["memory"], results["sqlite"])
 
+    async def test_scalar_range_filters_on_arrays_only_match_array_elements_in_memory_and_sqlite(self):
+        results: dict[str, list[int]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                await collection.insert_many(
+                    [
+                        {"_id": 1, "a": [1, 10]},
+                        {"_id": 2, "a": [2]},
+                        {"_id": 3, "a": 20},
+                    ]
+                )
+                await collection.create_index([("a", 1)])
+
+                results[engine_name] = [
+                    document["_id"]
+                    async for document in collection.find({"a": {"$gt": 5}}, sort=[("_id", 1)])
+                ]
+
+        self.assertEqual(results["memory"], [1, 3])
+        self.assertEqual(results["sqlite"], [1, 3])
+
     async def test_aggregate_field_path_array_traversal_matches_in_memory_and_sqlite(self):
         results: dict[str, list[dict]] = {}
         for engine_name in ("memory", "sqlite"):

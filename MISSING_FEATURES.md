@@ -2,7 +2,6 @@
 
 | Prioridad | Nombre                                                            | Impacto     | Esfuerzo    | Refs                                                              |
 | --------- | ----------------------------------------------------------------- | ----------- | ----------- | ----------------------------------------------------------------- |
-| 5         | TTL / `expireAfterSeconds`                                        | Alto        | Medio       | `admin_parsing.py:92`<br>`test_admin_parsing.py:79`               |
 | 6         | Query geoespacial e indexacion asociada                           | Alto        | Alto        | `test_query_plan.py:259`<br>`compat_catalog_snapshot.md:25`       |
 | 7         | Full-text clasico: `$text` y `$meta` / `textScore`                | Alto        | Alto        | `compat_catalog_snapshot.md:25`<br>`test_projections.py:139`      |
 | 8         | Updates por pipeline de agregacion                                | Alto        | Medio-Alto  | `operators.py:136`<br>`test_async_api.py:4336`                    |

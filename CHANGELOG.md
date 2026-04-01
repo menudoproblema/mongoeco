@@ -58,6 +58,11 @@ usa Semantic Versioning.
   `$replaceRoot` falla antes ante `newRoot` claramente invalido y los
   updates sobre arrays con segmentos no numericos dejan ya de fallar en
   silencio.
+- Las comparaciones de rango sobre campos array dejan ya de tratar el
+  array completo como un escalar BSON frente a objetivos escalares;
+  `find()` y los paths de filtrado comunes vuelven a decidir por los
+  elementos del array, evitando falsos positivos como `{"a": [2]}`
+  matcheando `{"a": {"$gt": 5}}`.
 - `$strcasecmp` trata ya operandos `null` o ausentes como cadenas
   vacias, alineando las comparaciones con el comportamiento observado en
   MongoDB real en lugar de devolver `null`.

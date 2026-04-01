@@ -640,6 +640,11 @@ class QueryEngine:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
+        # Arrays should only compare as whole BSON values against other arrays.
+        # For scalar range operators, MongoDB matches array fields by comparing
+        # individual elements, not by type-ordering the array value itself.
+        if isinstance(candidate, list) and not isinstance(target, list):
+            return False
         if collation is None and dialect is MONGODB_DIALECT_70:
             candidate_type = type(candidate)
             target_type = type(target)

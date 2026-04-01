@@ -274,6 +274,9 @@ class FilteringHelperTests(unittest.TestCase):
         self.assertTrue(QueryEngine._comparison_matches_candidate(2, 2.0, "lte"))
         self.assertTrue(QueryEngine._match_top_level_comparison({"score": 2.0}, "score", 2, "lte"))
         self.assertTrue(QueryEngine._match_top_level_comparison({"values": [1, 2]}, "values", 1, "gt"))
+        self.assertFalse(QueryEngine._comparison_matches_candidate([2], 5, "gt"))
+        self.assertFalse(QueryEngine._match_top_level_comparison({"values": [2]}, "values", 5, "gt"))
+        self.assertTrue(QueryEngine._match_top_level_comparison({"values": [1, 10]}, "values", 5, "gt"))
         self.assertTrue(QueryEngine._match_top_level_equals({"values": [1, 2]}, "values", [1, 2]))
         self.assertFalse(QueryEngine._evaluate_comparison({}, "items.score", 2, "gt"))
         self.assertTrue(
