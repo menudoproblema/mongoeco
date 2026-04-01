@@ -4,10 +4,11 @@ import os
 import sqlite3
 import threading
 import tempfile
+import time
 import unittest
 import uuid
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from mongoeco.api.operations import compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect70
@@ -3683,3 +3684,177 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(explanation.details["virtual"])
         self.assertIn("engine_details", explanation.details)
+
+    async def test_sqlite_session_commit_require_connection_and_bound_connection_paths(self):
+        engine = SQLiteEngine()
+        session = ClientSession()
+        other = ClientSession()
+        engine.create_session_state(session)
+        engine.create_session_state(other)
+
+        await engine.connect()
+        try:
+            engine._start_session_transaction(session)
+            with self.assertRaisesRegex(InvalidOperation, "active transaction bound to another session"):
+                engine._require_connection(other)
+
+            previous_version = engine._mvcc_version
+            engine._commit_session_transaction(session)
+            self.assertIsNone(engine._transaction_owner_session_id)
+            self.assertFalse(session.in_transaction)
+            self.assertEqual(engine._mvcc_version, previous_version + 1)
+
+            bound = object()
+            with engine._bind_connection(bound):
+                self.assertIs(engine._require_connection(), bound)
+        finally:
+            await engine.disconnect()
+
+        with self.assertRaisesRegex(InvalidOperation, "SQLiteEngine is not connected"):
+            engine._commit_session_transaction(session)
+
+    def test_sqlite_misc_helpers_cover_record_metadata_and_decode_variants(self):
+        class LegacyCodec:
+            @staticmethod
+            def decode(payload):
+                return {"decoded": payload}
+
+        engine = SQLiteEngine(codec=LegacyCodec)
+        session = ClientSession()
+        engine.create_session_state(session)
+
+        engine._record_operation_metadata(
+            None,
+            operation="find",
+            comment="trace",
+            max_time_ms=5,
+            hint="_id_",
+        )
+        engine._record_operation_metadata(
+            session,
+            operation="find",
+            comment="trace",
+            max_time_ms=5,
+            hint="_id_",
+        )
+
+        state = session.get_engine_state(engine._engine_key())
+        self.assertEqual(state["last_operation"]["operation"], "find")
+        self.assertEqual(engine._multikey_type_score("undefined"), 0)
+
+        with patch("mongoeco.engines.sqlite.inspect.signature", side_effect=ValueError("no-signature")):
+            self.assertEqual(
+                engine._decode_codec_payload({"_id": "1"}, preserve_bson_wrappers=False),
+                {"decoded": {"_id": "1"}},
+            )
+
+    async def test_sqlite_search_backend_helpers_cover_pending_drop_load_and_create_paths(self):
+        engine = SQLiteEngine(simulate_search_index_latency=0.01)
+        definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="text", index_type="search")
+        vector_definition = SearchIndexDefinition(
+            {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2, "similarity": "cosine"}]},
+            name="vec",
+            index_type="vectorSearch",
+        )
+
+        self.assertIsNotNone(engine._pending_search_index_ready_at())
+        self.assertFalse(engine._search_index_is_ready_sync(time.time() + 60))
+        self.assertTrue(engine._search_index_is_ready_sync(time.time() - 1))
+
+        await engine.connect()
+        try:
+            conn = engine._require_connection()
+            self.assertIsNone(engine._ensure_search_backend_sync(conn, "db", "coll", vector_definition, None))
+
+            with patch.object(engine, "_supports_fts5", return_value=False):
+                resolved = engine._ensure_search_backend_sync(conn, "db", "coll", definition, None)
+            self.assertEqual(resolved, engine._physical_search_index_name("db", "coll", "text"))
+
+            with patch.object(engine, "_load_search_index_rows", return_value=[(definition, resolved, None)]):
+                self.assertEqual(engine._load_search_indexes("db", "coll"), [definition])
+
+            engine._drop_search_backend_sync(conn, None)
+
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada Lovelace"})
+            physical_name = engine._physical_search_index_name("db", "coll", "text")
+            created = engine._ensure_search_backend_sync(conn, "db", "coll", definition, physical_name)
+            self.assertEqual(created, physical_name)
+            self.assertIn(physical_name, engine._ensured_search_backends)
+            self.assertFalse(conn.in_transaction)
+            self.assertGreater(
+                conn.execute(f"SELECT COUNT(*) FROM {engine._quote_identifier(physical_name)}").fetchone()[0],
+                0,
+            )
+
+            second = engine._ensure_search_backend_sync(conn, "db", "coll", definition, physical_name)
+            self.assertEqual(second, physical_name)
+
+            engine._drop_search_backend_sync(conn, physical_name)
+            self.assertNotIn(physical_name, engine._ensured_search_backends)
+            self.assertFalse(engine._sqlite_table_exists(conn, physical_name))
+        finally:
+            await engine.disconnect()
+
+    async def test_sqlite_explain_find_semantics_covers_hybrid_and_python_fallback_detail_shapes(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "profile": {"rank": 2}, "title": "Ada"})
+
+            hybrid = await self._explain(engine, "db", "coll", sort=[("profile", 1)])
+            self.assertEqual(hybrid.details["fallback_reason"], "Sort requires Python fallback")
+            self.assertIn("engine_details", hybrid.details)
+
+            with patch("mongoeco.engines.sqlite.describe_virtual_index_usage", return_value={"virtual": True}):
+                python_fallback = await self._explain(
+                    engine,
+                    "db",
+                    "coll",
+                    {"title": "Ada"},
+                    collation={"locale": "en", "strength": 2},
+                )
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(python_fallback.details["fallback_reason"], "Collation requires Python fallback")
+        self.assertTrue(python_fallback.details["virtual"])
+
+    async def test_sqlite_drop_database_clears_runtime_state_and_profiler(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("alpha", "users", {"_id": "1", "email": "a@example.com"})
+            await engine.create_index("alpha", "users", ["email"], name="idx_email")
+            await engine.create_search_index(
+                "alpha",
+                "users",
+                SearchIndexDefinition({"mappings": {"dynamic": True}}, name="text", index_type="search"),
+            )
+            engine._profiler.set_level("alpha", 2)
+            engine._record_profile_event(
+                "alpha",
+                op="query",
+                command={"find": "users"},
+                duration_micros=1000,
+            )
+            engine._lookup_collection_id(engine._require_connection(), "alpha", "users")
+            engine._field_traverses_array_in_collection("alpha", "users", "items.name")
+
+            with patch.object(engine, "_drop_search_backend_sync", wraps=engine._drop_search_backend_sync) as drop_search_backend:
+                await engine.drop_database("alpha")
+
+            self.assertEqual(engine._profiler.count_entries("alpha"), 0)
+            self.assertFalse(any(key[0] == "alpha" for key in engine._collection_id_cache))
+            self.assertFalse(any(key[0] == "alpha" for key in engine._index_metadata_versions))
+            self.assertFalse(any(key[0] == "alpha" for key in engine._index_cache))
+            self.assertFalse(any(key[0] == "alpha" for key in engine._collection_features_cache))
+            self.assertGreaterEqual(drop_search_backend.call_count, 1)
+            self.assertEqual(
+                engine._require_connection().execute(
+                    "SELECT COUNT(*) FROM collections WHERE db_name = ?",
+                    ("alpha",),
+                ).fetchone()[0],
+                0,
+            )
+        finally:
+            await engine.disconnect()
