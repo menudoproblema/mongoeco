@@ -73,6 +73,12 @@ from mongoeco.engines._sqlite_catalog import (
     load_collection_options as _sqlite_load_collection_options,
     load_search_index_rows as _sqlite_load_search_index_rows,
 )
+from mongoeco.engines._sqlite_search_admin import (
+    create_search_index as _sqlite_create_search_index,
+    drop_search_index as _sqlite_drop_search_index,
+    list_search_index_documents as _sqlite_list_search_index_documents,
+    update_search_index as _sqlite_update_search_index,
+)
 from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
@@ -4304,73 +4310,22 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
     ) -> str:
         deadline = operation_deadline(max_time_ms)
-        normalized_definition = SearchIndexDefinition(
-            validate_search_index_definition(
-                definition.definition,
-                index_type=definition.index_type,
-            ),
-            name=definition.name,
-            index_type=definition.index_type,
-        )
-        physical_name = (
-            self._physical_search_index_name(db_name, coll_name, normalized_definition.name)
-            if normalized_definition.index_type == "search"
-            else None
-        )
         with self._lock:
             conn = self._require_connection(context)
-            try:
-                self._begin_write(conn, context)
-                self._ensure_collection_row(conn, db_name, coll_name)
-                row = conn.execute(
-                    """
-                    SELECT index_type, definition_json
-                    FROM search_indexes
-                    WHERE db_name = ? AND coll_name = ? AND name = ?
-                    """,
-                    (db_name, coll_name, normalized_definition.name),
-                ).fetchone()
-                if row is not None:
-                    existing = SearchIndexDefinition(
-                        json_loads(row[1]),
-                        name=normalized_definition.name,
-                        index_type=row[0],
-                    )
-                    if existing != normalized_definition:
-                        raise OperationFailure(
-                            f"Conflicting search index definition for '{normalized_definition.name}'"
-                        )
-                    self._commit_write(conn, context)
-                    return normalized_definition.name
-                enforce_deadline(deadline)
-                conn.execute(
-                    """
-                    INSERT INTO search_indexes (
-                        db_name, coll_name, name, index_type, definition_json, physical_name, ready_at_epoch
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        db_name,
-                        coll_name,
-                        normalized_definition.name,
-                        normalized_definition.index_type,
-                        json_dumps_compact(normalized_definition.definition, sort_keys=True),
-                        physical_name,
-                        self._pending_search_index_ready_at(),
-                    ),
-                )
-                self._ensure_search_backend_sync(
-                    conn,
-                    db_name,
-                    coll_name,
-                    normalized_definition,
-                    physical_name,
-                )
-                self._commit_write(conn, context)
-                return normalized_definition.name
-            except Exception:
-                self._rollback_write(conn, context)
-                raise
+            return _sqlite_create_search_index(
+                conn,
+                db_name=db_name,
+                coll_name=coll_name,
+                definition=definition,
+                deadline=deadline,
+                begin_write=lambda current: self._begin_write(current, context),
+                ensure_collection_row=self._ensure_collection_row,
+                commit_write=lambda current: self._commit_write(current, context),
+                rollback_write=lambda current: self._rollback_write(current, context),
+                ensure_search_backend=self._ensure_search_backend_sync,
+                physical_search_index_name=self._physical_search_index_name,
+                pending_ready_at=self._pending_search_index_ready_at,
+            )
 
     def _list_search_indexes_sync(
         self,
@@ -4383,11 +4338,8 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 rows = self._load_search_index_rows(db_name, coll_name)
-        return build_search_index_documents(
+        return _sqlite_list_search_index_documents(
             rows,
-            get_name=lambda row: row[0].name,
-            get_definition=lambda row: row[0],
-            get_ready_at_epoch=lambda row: row[2],
             is_ready=self._search_index_is_ready_sync,
             name=name,
         )
@@ -4404,59 +4356,21 @@ class SQLiteEngine(AsyncStorageEngine):
         deadline = operation_deadline(max_time_ms)
         with self._lock:
             conn = self._require_connection(context)
-            try:
-                self._begin_write(conn, context)
-                row = conn.execute(
-                    """
-                    SELECT index_type, physical_name
-                    FROM search_indexes
-                    WHERE db_name = ? AND coll_name = ? AND name = ?
-                    """,
-                    (db_name, coll_name, name),
-                ).fetchone()
-                if row is None:
-                    raise OperationFailure(f"search index not found with name [{name}]")
-                normalized_definition = validate_search_index_definition(
-                    definition,
-                    index_type=row[0],
-                )
-                enforce_deadline(deadline)
-                self._drop_search_backend_sync(conn, row[1])
-                physical_name = (
-                    self._physical_search_index_name(db_name, coll_name, name)
-                    if row[0] == "search"
-                    else None
-                )
-                conn.execute(
-                    """
-                    UPDATE search_indexes
-                    SET definition_json = ?, physical_name = ?, ready_at_epoch = ?
-                    WHERE db_name = ? AND coll_name = ? AND name = ?
-                    """,
-                    (
-                        json_dumps_compact(normalized_definition, sort_keys=True),
-                        physical_name,
-                        self._pending_search_index_ready_at(),
-                        db_name,
-                        coll_name,
-                        name,
-                    ),
-                )
-                self._ensure_search_backend_sync(
-                    conn,
-                    db_name,
-                    coll_name,
-                    SearchIndexDefinition(
-                        normalized_definition,
-                        name=name,
-                        index_type=row[0],
-                    ),
-                    physical_name,
-                )
-                self._commit_write(conn, context)
-            except Exception:
-                self._rollback_write(conn, context)
-                raise
+            _sqlite_update_search_index(
+                conn,
+                db_name=db_name,
+                coll_name=coll_name,
+                name=name,
+                definition=definition,
+                deadline=deadline,
+                begin_write=lambda current: self._begin_write(current, context),
+                commit_write=lambda current: self._commit_write(current, context),
+                rollback_write=lambda current: self._rollback_write(current, context),
+                drop_search_backend=self._drop_search_backend_sync,
+                ensure_search_backend=self._ensure_search_backend_sync,
+                physical_search_index_name=self._physical_search_index_name,
+                pending_ready_at=self._pending_search_index_ready_at,
+            )
 
     def _drop_search_index_sync(
         self,
@@ -4469,31 +4383,17 @@ class SQLiteEngine(AsyncStorageEngine):
         deadline = operation_deadline(max_time_ms)
         with self._lock:
             conn = self._require_connection(context)
-            try:
-                self._begin_write(conn, context)
-                row = conn.execute(
-                    """
-                    SELECT physical_name
-                    FROM search_indexes
-                    WHERE db_name = ? AND coll_name = ? AND name = ?
-                    """,
-                    (db_name, coll_name, name),
-                ).fetchone()
-                if row is None:
-                    raise OperationFailure(f"search index not found with name [{name}]")
-                enforce_deadline(deadline)
-                cursor = conn.execute(
-                    """
-                    DELETE FROM search_indexes
-                    WHERE db_name = ? AND coll_name = ? AND name = ?
-                    """,
-                    (db_name, coll_name, name),
-                )
-                self._drop_search_backend_sync(conn, row[0])
-                self._commit_write(conn, context)
-            except Exception:
-                self._rollback_write(conn, context)
-                raise
+            _sqlite_drop_search_index(
+                conn,
+                db_name=db_name,
+                coll_name=coll_name,
+                name=name,
+                deadline=deadline,
+                begin_write=lambda current: self._begin_write(current, context),
+                commit_write=lambda current: self._commit_write(current, context),
+                rollback_write=lambda current: self._rollback_write(current, context),
+                drop_search_backend=self._drop_search_backend_sync,
+            )
 
     def _search_documents_sync(
         self,
