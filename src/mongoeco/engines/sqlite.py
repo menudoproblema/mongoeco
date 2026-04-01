@@ -2076,10 +2076,10 @@ class SQLiteEngine(AsyncStorageEngine):
                     unique_flag,
                     sparse_flag,
                     partial_filter_json,
+                    expire_after_seconds,
                     multikey_flag,
                     multikey_physical_name,
                 ) = row
-                expire_after_seconds = None
                 scalar_physical_name = None
             else:
                 (

@@ -3473,3 +3473,213 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.matched_count, 1)
         self.assertEqual(result.modified_count, 1)
         self.assertEqual(found, {"_id": "1", "kind": "match", "profile": {"name": "Ada"}})
+
+    def test_sqlite_helper_edges_cover_ttl_hint_and_scalar_fast_path_branches(self):
+        engine = SQLiteEngine()
+        aware = datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone(datetime.timedelta(hours=2)))
+        naive = datetime.datetime(2026, 1, 1)
+        ttl_index = EngineIndexRecord(name="expires_1", fields=["expires_at"], key=[("expires_at", 1)], unique=False, expire_after_seconds=30)
+
+        self.assertIsNone(engine._coerce_ttl_datetime("nope"))
+        self.assertEqual(
+            engine._coerce_ttl_datetime(naive),
+            naive.replace(tzinfo=datetime.timezone.utc),
+        )
+        self.assertEqual(
+            engine._coerce_ttl_datetime(aware),
+            aware.astimezone(datetime.timezone.utc),
+        )
+        self.assertFalse(engine._document_expired_by_ttl({"expires_at": "nope"}, ttl_index, now=datetime.datetime.now(datetime.timezone.utc)))
+        self.assertFalse(
+            engine._document_expired_by_ttl(
+                {"expires_at": datetime.datetime.now(datetime.timezone.utc)},
+                EngineIndexRecord(name="compound", fields=["a", "b"], key=[("a", 1), ("b", 1)], unique=False, expire_after_seconds=30),
+                now=datetime.datetime.now(datetime.timezone.utc),
+            )
+        )
+
+        self.assertEqual(engine._resolve_hint_index("db", "coll", "_id_")["name"], "_id_")
+        self.assertEqual(engine._resolve_hint_index("db", "coll", [("_id", 1)])["name"], "_id_")
+
+        with patch.object(engine, "_load_indexes", return_value=[
+            {"fields": ["kind"], "sparse": True, "partial_filter_expression": None, "scalar_physical_name": "a", "key": [("kind", 1)]},
+            {"fields": ["kind"], "sparse": False, "partial_filter_expression": {"x": 1}, "scalar_physical_name": "b", "key": [("kind", 1)]},
+            {"fields": ["kind"], "sparse": False, "partial_filter_expression": None, "scalar_physical_name": None, "key": [("kind", 1)]},
+        ]):
+            self.assertIsNone(engine._find_scalar_sort_index("db", "coll", "kind"))
+            self.assertIsNone(engine._find_scalar_fast_path_index("db", "coll", "kind"))
+        with patch.object(engine, "_load_indexes", return_value=[
+            {"fields": ["kind"], "sparse": False, "partial_filter_expression": None, "scalar_physical_name": "a", "key": [("kind", "text")]},
+        ]):
+            self.assertIsNone(engine._find_scalar_index("db", "coll", "kind"))
+
+        self.assertIsNone(engine._scalar_range_signature({"x": 1}))
+        self.assertIsNone(engine._scalar_range_signature(b"bytes"))
+
+    def test_sqlite_collection_feature_helpers_cover_empty_bool_and_mismatch_branches(self):
+        engine = SQLiteEngine()
+        conn = Mock()
+        conn.execute.return_value.fetchone.side_effect = [
+            None,
+            (0, 0, 0, 0),
+            (2, 0, 0, 2),
+            None,
+            object(),
+        ]
+        engine._connection = conn
+
+        self.assertIsNone(engine._field_has_uniform_scalar_sort_type_in_collection("db", "empty", "kind"))
+        self.assertIsNone(engine._field_has_uniform_scalar_sort_type_in_collection("db", "zero", "kind"))
+        self.assertEqual(engine._field_has_uniform_scalar_sort_type_in_collection("db", "bools", "kind"), "bool")
+        self.assertFalse(engine._field_has_comparison_type_mismatch_in_collection("db", "coll", "kind", "string"))
+        self.assertTrue(engine._field_has_comparison_type_mismatch_in_collection("db", "coll", "kind", "bool"))
+        self.assertTrue(engine._field_has_comparison_type_mismatch_in_collection("db", "coll", "kind", "uuid"))
+
+    async def test_sqlite_create_index_and_namespace_error_paths(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            with self.assertRaisesRegex(TypeError, "expire_after_seconds"):
+                await engine.create_index("db", "coll", ["expires_at"], expire_after_seconds=-1)
+            with self.assertRaisesRegex(OperationFailure, "TTL indexes require a single-field key pattern"):
+                await engine.create_index("db", "coll", [("a", 1), ("b", 1)], expire_after_seconds=10)
+            with self.assertRaisesRegex(OperationFailure, "TTL indexes cannot be created on _id"):
+                await engine.create_index("db", "coll", ["_id"], expire_after_seconds=10)
+            with self.assertRaisesRegex(OperationFailure, "special index types currently require a single-field key pattern"):
+                await engine.create_index("db", "coll", [("a", "text"), ("b", 1)])
+            with self.assertRaisesRegex(OperationFailure, "do not support unique"):
+                await engine.create_index("db", "coll", [("a", "text")], unique=True)
+            with self.assertRaisesRegex(OperationFailure, "Conflicting index definition for '_id_'"):
+                await engine.create_index("db", "coll", ["_id"], unique=False)
+            with self.assertRaisesRegex(OperationFailure, "Conflicting index definition for '_id_'"):
+                await engine.create_index("db", "coll", ["name"], name="_id_")
+
+            with self.assertRaisesRegex(CollectionInvalid, "does not exist"):
+                await engine.collection_options("db", "missing")
+            with self.assertRaisesRegex(CollectionInvalid, "must differ"):
+                await engine.rename_collection("db", "same", "same")
+
+            await engine.create_collection("db", "coll")
+            await engine.create_collection("db", "other")
+            with self.assertRaisesRegex(CollectionInvalid, "already exists"):
+                await engine.rename_collection("db", "coll", "other")
+        finally:
+            await engine.disconnect()
+
+    async def test_sqlite_search_admin_and_namespace_error_paths(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            with self.assertRaisesRegex(OperationFailure, "search index not found"):
+                await engine.drop_search_index("db", "coll", "missing")
+            with self.assertRaisesRegex(OperationFailure, "search index not found"):
+                await engine.update_search_index(
+                    "db",
+                    "coll",
+                    "missing",
+                    SearchIndexDefinition({"mappings": {"dynamic": True}}, name="missing"),
+                )
+
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition(
+                    {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2, "similarity": "cosine"}]},
+                    name="vec",
+                    index_type="vectorSearch",
+                ),
+            )
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition({"mappings": {"dynamic": True}}, name="text", index_type="search"),
+            )
+
+            with self.assertRaisesRegex(OperationFailure, "does not support \\$search"):
+                await engine.search_documents(
+                    "db",
+                    "coll",
+                    "$search",
+                    {"index": "vec", "text": {"query": "ada", "path": "title"}},
+                )
+            with self.assertRaisesRegex(OperationFailure, "does not support \\$vectorSearch"):
+                await engine.search_documents(
+                    "db",
+                    "coll",
+                    "$vectorSearch",
+                    {"index": "text", "path": "embedding", "queryVector": [0.1, 0.2], "numCandidates": 5, "limit": 5},
+                )
+        finally:
+            await engine.disconnect()
+
+    async def test_sqlite_load_indexes_covers_legacy_row_shapes_and_invalid_metadata_variants(self):
+        engine = SQLiteEngine()
+        cursor = Mock()
+        connection = Mock()
+        connection.execute.return_value = cursor
+        engine._connection = connection
+
+        cursor.fetchall.return_value = [
+            ("legacy10", "idx_legacy10", '["email"]', '[["email", 1]]', 0, 0, None, 0, None, None),
+        ]
+        indexes = engine._load_indexes("db", "coll")
+        self.assertTrue(any(index["name"] == "legacy10" for index in indexes))
+        self.assertEqual(indexes[0]["expire_after_seconds"], 0)
+
+        cursor.fetchall.return_value = [
+            ("bad_fields", "idx_bad_fields", '["email", 1]', '[["email", 1]]', 0, 0, None, None, 0, None, None),
+        ]
+        engine._mark_index_metadata_changed("db", "coll")
+        with self.assertRaises(OperationFailure):
+            engine._load_indexes("db", "coll")
+
+        cursor.fetchall.return_value = [
+            ("bad_keys", "idx_bad_keys", '["email"]', '[["email", 2]]', 0, 0, None, None, 0, None, None),
+        ]
+        engine._mark_index_metadata_changed("db", "coll")
+        with self.assertRaises(OperationFailure):
+            engine._load_indexes("db", "coll")
+
+    async def test_sqlite_search_sync_and_explain_details_cover_empty_and_fallback_shapes(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition({"mappings": {"dynamic": True}}, name="text", index_type="search"),
+            )
+            self.assertEqual(
+                engine._search_documents_sync(
+                    "db",
+                    "coll",
+                    "$search",
+                    {"index": "text", "text": {"query": "ada", "path": "title"}},
+                    None,
+                    None,
+                ),
+                [],
+            )
+
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada Lovelace"})
+            docs = engine._search_documents_sync(
+                "db",
+                "coll",
+                "$search",
+                {"index": "text", "phrase": {"query": "Ada Lovelace", "path": "title"}},
+                None,
+                None,
+            )
+            self.assertEqual([doc["_id"] for doc in docs], ["1"])
+
+            with patch("mongoeco.engines.sqlite.describe_virtual_index_usage", return_value={"virtual": True}):
+                explanation = await engine.explain_find_semantics(
+                    "db",
+                    "coll",
+                    compile_find_semantics({"title": "Ada"}),
+                )
+        finally:
+            await engine.disconnect()
+
+        self.assertTrue(explanation.details["virtual"])
+        self.assertIn("engine_details", explanation.details)
