@@ -97,6 +97,10 @@ from mongoeco.engines._sqlite_read_execution import (
     compile_read_execution_plan as _sqlite_compile_read_execution_plan,
     plan_find_semantics_sync as _sqlite_plan_find_semantics_sync,
 )
+from mongoeco.engines._sqlite_modify_ops import (
+    delete_matching_document as _sqlite_delete_matching_document,
+    update_with_operation as _sqlite_update_with_operation,
+)
 from mongoeco.engines._sqlite_write_ops import (
     delete_document as _sqlite_delete_document,
     put_document as _sqlite_put_document,
@@ -3571,70 +3575,45 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         collation: CollationDocument | None = None,
     ) -> DeleteResult:
-        effective_dialect = dialect or MONGODB_DIALECT_70
-        plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
-        semantics = compile_find_semantics(
-            filter_spec,
-            plan=plan,
-            collation=collation,
-            dialect=effective_dialect,
-        )
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                self._purge_expired_documents_sync(conn, db_name, coll_name, context=context)
-                try:
-                    if semantics.collation is not None:
-                        raise NotImplementedError("Collation requires Python delete fallback")
-                    selected = self._select_first_document_for_plan(
-                        db_name,
-                        coll_name,
-                        semantics.query_plan,
-                    )
-                    if selected is None:
-                        return DeleteResult(deleted_count=0)
-                    storage_key, _document = selected
-                    self._begin_write(conn, context)
-                    conn.execute(
-                        """
-                        DELETE FROM documents
-                        WHERE db_name = ? AND coll_name = ? AND storage_key = ?
-                        """,
-                        (db_name, coll_name, storage_key),
-                    )
-                    self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                    self._delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                    self._delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                    self._commit_write(conn, context)
-                    self._invalidate_collection_features_cache(db_name, coll_name)
-                    return DeleteResult(deleted_count=1)
-                except (NotImplementedError, TypeError):
-                    self._rollback_write(conn, context)
-                    pass
-
-                for storage_key, document in self._load_documents(db_name, coll_name):
-                    if not QueryEngine.match_plan(
+                return _sqlite_delete_matching_document(
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    filter_spec=filter_spec,
+                    plan=plan,
+                    dialect=dialect or MONGODB_DIALECT_70,
+                    collation=collation,
+                    compile_find_semantics=compile_find_semantics,
+                    ensure_query_plan=lambda current_filter, current_plan: ensure_query_plan(
+                        current_filter,
+                        current_plan,
+                        dialect=dialect or MONGODB_DIALECT_70,
+                    ),
+                    require_connection=lambda: conn,
+                    purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
+                        current,
+                        current_db_name,
+                        current_coll_name,
+                        context=context,
+                    ),
+                    select_first_document_for_plan=self._select_first_document_for_plan,
+                    begin_write=lambda current: self._begin_write(current, context),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                    delete_multikey_entries_for_storage_key=self._delete_multikey_entries_for_storage_key,
+                    delete_scalar_entries_for_storage_key=self._delete_scalar_entries_for_storage_key,
+                    delete_search_entries_for_storage_key=self._delete_search_entries_for_storage_key,
+                    load_documents=self._load_documents,
+                    match_plan=lambda document, query_plan, current_dialect, current_collation: QueryEngine.match_plan(
                         document,
-                        semantics.query_plan,
-                        dialect=effective_dialect,
-                        collation=semantics.collation,
-                    ):
-                        continue
-                    self._begin_write(conn, context)
-                    conn.execute(
-                        """
-                        DELETE FROM documents
-                        WHERE db_name = ? AND coll_name = ? AND storage_key = ?
-                        """,
-                        (db_name, coll_name, storage_key),
-                    )
-                    self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                    self._delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                    self._delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                    self._commit_write(conn, context)
-                    self._invalidate_collection_features_cache(db_name, coll_name)
-                    return DeleteResult(deleted_count=1)
-                return DeleteResult(deleted_count=0)
+                        query_plan,
+                        dialect=current_dialect,
+                        collation=current_collation,
+                    ),
+                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                )
 
     def _count_matching_documents_sync(
         self,
@@ -4558,223 +4537,70 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         bypass_document_validation: bool = False,
     ) -> UpdateResult[DocumentId]:
-        semantics = compile_update_semantics(
-            operation,
-            dialect=dialect,
-            selector_filter=selector_filter,
-        )
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                self._purge_expired_documents_sync(conn, db_name, coll_name, context=context)
-                selected: tuple[str, Document] | None = None
-                sql_selection_supported = False
-                collection_options = self._collection_options_or_empty_sync(
-                    conn,
-                    db_name,
-                    coll_name,
-                )
-                try:
-                    if self._dialect_requires_python_fallback(semantics.dialect):
-                        raise NotImplementedError("Custom dialect requires Python fallback")
-                    if semantics.collation is not None:
-                        raise NotImplementedError("Collation requires Python update fallback")
-                    selected = self._select_first_document_for_plan(db_name, coll_name, semantics.query_plan)
-                    sql_selection_supported = True
-                except (NotImplementedError, TypeError):
-                    pass
-
-                if selected is None and not sql_selection_supported:
-                    for storage_key, document in self._load_documents(db_name, coll_name):
-                        if not QueryEngine.match_plan(
-                            document,
-                            semantics.query_plan,
-                            dialect=semantics.dialect,
-                            collation=semantics.collation,
-                        ):
-                            continue
-                        selected = (storage_key, document)
-                        break
-
-                if selected is not None:
-                    storage_key, original_document = selected
-                    document = deepcopy(original_document)
-                    modified = semantics.compiled_update_plan.apply(document)
-                    if not modified:
-                        return UpdateResult(matched_count=1, modified_count=0)
-                    if not bypass_document_validation:
-                        enforce_collection_document_validation(
-                            document,
-                            options=collection_options,
-                            original_document=original_document,
-                            dialect=semantics.dialect,
-                        )
-                    self._validate_document_against_unique_indexes(
-                        db_name,
-                        coll_name,
+                return _sqlite_update_with_operation(
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    operation=operation,
+                    upsert=upsert,
+                    upsert_seed=upsert_seed,
+                    selector_filter=selector_filter,
+                    dialect=dialect,
+                    bypass_document_validation=bypass_document_validation,
+                    compile_update_semantics=compile_update_semantics,
+                    require_connection=lambda: conn,
+                    purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
+                        current,
+                        current_db_name,
+                        current_coll_name,
+                        context=context,
+                    ),
+                    collection_options_or_empty=self._collection_options_or_empty_sync,
+                    dialect_requires_python_fallback=self._dialect_requires_python_fallback,
+                    select_first_document_for_plan=self._select_first_document_for_plan,
+                    load_documents=self._load_documents,
+                    match_plan=lambda document, query_plan, current_dialect, current_collation: QueryEngine.match_plan(
                         document,
-                        exclude_storage_key=storage_key,
-                    )
-                    indexes = self._load_indexes(db_name, coll_name)
-                    search_indexes = self._load_search_index_rows(db_name, coll_name)
-
-                    try:
-                        if self._dialect_requires_python_fallback(semantics.dialect):
-                            raise NotImplementedError("Custom dialect requires Python fallback")
-                        if operation.array_filters is not None:
-                            raise NotImplementedError("array_filters require Python update fallback")
-                        if not isinstance(semantics.compiled_update_plan, CompiledUpdatePlan):
-                            raise NotImplementedError("Aggregation pipeline updates require Python update fallback")
-                        update_sql, update_params = translate_compiled_update_plan(
-                            semantics.compiled_update_plan,
-                            current_document=original_document,
-                        )
-                        self._begin_write(conn, context)
-                        conn.execute(
-                            f"""
-                            UPDATE documents
-                            SET document = {update_sql}
-                            WHERE db_name = ? AND coll_name = ? AND storage_key = ?
-                            """,
-                            (*update_params, db_name, coll_name, storage_key),
-                        )
-                        self._rebuild_multikey_entries_for_document(
-                            conn,
-                            db_name,
-                            coll_name,
-                            storage_key,
-                            document,
-                            indexes,
-                        )
-                        self._rebuild_scalar_entries_for_document(
-                            conn,
-                            db_name,
-                            coll_name,
-                            storage_key,
-                            document,
-                            indexes,
-                        )
-                        self._replace_search_entries_for_document(
-                            conn,
-                            db_name,
-                            coll_name,
-                            storage_key,
-                            document,
-                            search_indexes=search_indexes,
-                        )
-                        self._commit_write(conn, context)
-                        self._invalidate_collection_features_cache(db_name, coll_name)
-                        return UpdateResult(matched_count=1, modified_count=1)
-                    except (NotImplementedError, TypeError):
-                        self._rollback_write(conn, context)
-                    except sqlite3.IntegrityError as exc:
-                        self._rollback_write(conn, context)
-                        raise DuplicateKeyError(str(exc)) from exc
-
-                    try:
-                        self._begin_write(conn, context)
-                        conn.execute(
-                            """
-                            UPDATE documents
-                            SET document = ?
-                            WHERE db_name = ? AND coll_name = ? AND storage_key = ?
-                            """,
-                            (self._serialize_document(document), db_name, coll_name, storage_key),
-                        )
-                        self._rebuild_multikey_entries_for_document(
-                            conn,
-                            db_name,
-                            coll_name,
-                            storage_key,
-                            document,
-                            indexes,
-                        )
-                        self._rebuild_scalar_entries_for_document(
-                            conn,
-                            db_name,
-                            coll_name,
-                            storage_key,
-                            document,
-                            indexes,
-                        )
-                        self._replace_search_entries_for_document(
-                            conn,
-                            db_name,
-                            coll_name,
-                            storage_key,
-                            document,
-                            search_indexes=search_indexes,
-                        )
-                        self._commit_write(conn, context)
-                        self._invalidate_collection_features_cache(db_name, coll_name)
-                        return UpdateResult(matched_count=1, modified_count=1)
-                    except sqlite3.IntegrityError as exc:
-                        self._rollback_write(conn, context)
-                        raise DuplicateKeyError(str(exc)) from exc
-
-                if not upsert:
-                    return UpdateResult(matched_count=0, modified_count=0)
-
-                new_doc = deepcopy(upsert_seed or {})
-                semantics.compiled_upsert_plan.apply(new_doc)
-                if "_id" not in new_doc:
-                    new_doc["_id"] = ObjectId()
-                if not bypass_document_validation:
-                    enforce_collection_document_validation(
-                        new_doc,
-                        options=collection_options,
-                        original_document=None,
-                        is_upsert_insert=True,
-                        dialect=semantics.dialect,
-                    )
-                self._validate_document_against_unique_indexes(db_name, coll_name, new_doc)
-
-                storage_key = self._storage_key(new_doc["_id"])
-                indexes = self._load_indexes(db_name, coll_name)
-                search_indexes = self._load_search_index_rows(db_name, coll_name)
-                try:
-                    self._begin_write(conn, context)
-                    conn.execute(
-                        """
-                        INSERT INTO documents (db_name, coll_name, storage_key, document)
-                        VALUES (?, ?, ?, ?)
-                        """,
-                        (db_name, coll_name, storage_key, self._serialize_document(new_doc)),
-                    )
-                    self._rebuild_multikey_entries_for_document(
-                        conn,
-                        db_name,
-                        coll_name,
+                        query_plan,
+                        dialect=current_dialect,
+                        collation=current_collation,
+                    ),
+                    enforce_collection_document_validation=enforce_collection_document_validation,
+                    validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, document, exclude_storage_key: self._validate_document_against_unique_indexes(
+                        current_db_name,
+                        current_coll_name,
+                        document,
+                        exclude_storage_key=exclude_storage_key,
+                    ),
+                    load_indexes=self._load_indexes,
+                    load_search_index_rows=lambda current_db_name, current_coll_name: self._load_search_index_rows(
+                        current_db_name,
+                        current_coll_name,
+                    ),
+                    begin_write=lambda current: self._begin_write(current, context),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                    translate_compiled_update_plan=lambda compiled_update_plan, current_document: translate_compiled_update_plan(
+                        compiled_update_plan,
+                        current_document=current_document,
+                    ),
+                    compiled_update_plan_type=CompiledUpdatePlan,
+                    rebuild_multikey_entries_for_document=self._rebuild_multikey_entries_for_document,
+                    rebuild_scalar_entries_for_document=self._rebuild_scalar_entries_for_document,
+                    replace_search_entries_for_document=lambda current, current_db_name, current_coll_name, storage_key, document, search_indexes: self._replace_search_entries_for_document(
+                        current,
+                        current_db_name,
+                        current_coll_name,
                         storage_key,
-                        new_doc,
-                        indexes,
-                    )
-                    self._rebuild_scalar_entries_for_document(
-                        conn,
-                        db_name,
-                        coll_name,
-                        storage_key,
-                        new_doc,
-                        indexes,
-                    )
-                    self._replace_search_entries_for_document(
-                        conn,
-                        db_name,
-                        coll_name,
-                        storage_key,
-                        new_doc,
+                        document,
                         search_indexes=search_indexes,
-                    )
-                    self._commit_write(conn, context)
-                    self._invalidate_collection_features_cache(db_name, coll_name)
-                except sqlite3.IntegrityError as exc:
-                    self._rollback_write(conn, context)
-                    raise DuplicateKeyError(str(exc)) from exc
-
-                return UpdateResult(
-                    matched_count=0,
-                    modified_count=0,
-                    upserted_id=new_doc["_id"],
+                    ),
+                    serialize_document=self._serialize_document,
+                    storage_key_for_id=self._storage_key,
+                    new_object_id=ObjectId,
+                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
                 )
 
     @override
