@@ -8,6 +8,8 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-04-01
+
 ### Added
 
 - Se exponen ya capacidades explícitas para las tres superficies más
