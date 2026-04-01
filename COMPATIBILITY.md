@@ -240,6 +240,24 @@ planning.
   * es útil para explain, tooling y superficies que prefieren degradación
     explícita frente a error inmediato
 
+## 8.1 Regla de endurecimiento para nueva superficie pública
+
+Cuando se amplía compatibilidad o se añade una feature nueva, el criterio de
+aceptación no es solo que el caso feliz funcione en una ruta concreta.
+
+La regla operativa del proyecto pasa a ser:
+
+* si la feature existe en API async y sync, ambas rutas deben quedar cubiertas
+  por tests de parity o por regresiones equivalentes
+* si la semántica se promete igual para `MemoryEngine` y `SQLiteEngine`, debe
+  añadirse cobertura cruzada entre engines
+* si una feature depende de reconstruir fachadas (`with_options()`,
+  `database`, `get_collection()`, `rename()`), los tests deben fijar también
+  la preservación de opciones heredadas y metadata runtime
+* cuando la degradación sea parte del contrato (`planning_issues`, errores
+  públicos, gaps explícitos de implementación), el shape observable debe quedar
+  fijado en tests en lugar de dejarlo implícito
+
 ## 9. Alcance actual de collation
 
 La implementación actual no intenta exponer toda la superficie de collation de

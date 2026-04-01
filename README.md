@@ -187,6 +187,18 @@ python -m pip install -e .[dev,wire]
 python -m unittest discover -s tests -p 'test*.py'
 ```
 
+Contract-testing rule for new features:
+
+* every new public feature should land with async/sync parity coverage when
+  both surfaces expose it
+* engine-visible behavior should also add cross-engine parity coverage for
+  `MemoryEngine` and `SQLiteEngine` whenever the contract is meant to be shared
+* regressions caused by facade reconstruction (`with_options()`, `database`,
+  `get_collection()`, `rename()`) should be fixed with explicit tests for the
+  inherited runtime options involved, not only with the implementation change
+* feature work that changes public errors or degraded planning behavior should
+  pin the relevant user-facing message or error shape in tests
+
 ## Benchmarks
 
 There is a benchmark harness under
