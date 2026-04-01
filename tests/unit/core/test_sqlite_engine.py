@@ -17,9 +17,10 @@ from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import CollectionInvalid, DuplicateKeyError, ExecutionTimeout, OperationFailure
+from mongoeco.engines.sqlite import _SQLITE_SHARED_EXECUTORS, _shutdown_sqlite_shared_executors
+from mongoeco.errors import CollectionInvalid, DuplicateKeyError, ExecutionTimeout, InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
-from mongoeco.types import Decimal128, ObjectId, SearchIndexDefinition, UNDEFINED
+from mongoeco.types import Decimal128, EngineIndexRecord, ObjectId, SearchIndexDefinition, UNDEFINED
 
 
 class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
@@ -736,6 +737,97 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(executor._max_workers, 1)
         finally:
             engine._shutdown_executor()
+
+    def test_constructor_rejects_non_positive_executor_workers(self):
+        with self.assertRaisesRegex(ValueError, "executor_workers must be positive"):
+            SQLiteEngine(executor_workers=0)
+
+    def test_shutdown_sqlite_shared_executors_closes_registered_pools(self):
+        executor = Mock()
+        _SQLITE_SHARED_EXECUTORS[99] = executor
+        try:
+            _shutdown_sqlite_shared_executors()
+        finally:
+            _SQLITE_SHARED_EXECUTORS.clear()
+        executor.shutdown.assert_called_once_with(wait=True, cancel_futures=True)
+
+    async def test_session_transaction_helpers_validate_connection_and_owner(self):
+        engine = SQLiteEngine()
+        session = ClientSession()
+        other = ClientSession()
+        engine.create_session_state(session)
+        engine.create_session_state(other)
+
+        with self.assertRaisesRegex(InvalidOperation, "must be connected before starting a transaction"):
+            engine._start_session_transaction(session)
+
+        await engine.connect()
+        try:
+            engine._start_session_transaction(session)
+            with self.assertRaisesRegex(InvalidOperation, "active transaction bound to another session"):
+                engine._start_session_transaction(other)
+            with self.assertRaisesRegex(InvalidOperation, "does not own the active SQLite transaction"):
+                engine._commit_session_transaction(other)
+            engine._abort_session_transaction(other)
+            self.assertEqual(engine._transaction_owner_session_id, session.session_id)
+            engine._abort_session_transaction(session)
+            self.assertIsNone(engine._transaction_owner_session_id)
+        finally:
+            await engine.disconnect()
+
+        engine._abort_session_transaction(session)
+
+    def test_ensure_physical_indexes_commit_when_creating_outside_transaction(self):
+        conn = sqlite3.connect(":memory:")
+        conn.execute(
+            "CREATE TABLE multikey_entries (collection_id INTEGER, index_name TEXT, storage_key TEXT, element_type TEXT, type_score INTEGER, element_key TEXT)"
+        )
+        conn.execute(
+            "CREATE TABLE scalar_index_entries (collection_id INTEGER, index_name TEXT, storage_key TEXT, element_type TEXT, type_score INTEGER, element_key TEXT)"
+        )
+        engine = SQLiteEngine()
+        multikey = EngineIndexRecord(
+            name="tags_1",
+            physical_name="idx_tags",
+            fields=["tags"],
+            key=[("tags", 1)],
+            unique=False,
+            multikey=True,
+            multikey_physical_name="mkidx_tags",
+        )
+        scalar = EngineIndexRecord(
+            name="kind_1",
+            physical_name="idx_kind",
+            fields=["kind"],
+            key=[("kind", 1)],
+            unique=False,
+            scalar_physical_name="scidx_kind",
+        )
+
+        engine._ensure_multikey_physical_indexes_sync(conn, [multikey])
+        engine._ensure_scalar_physical_indexes_sync(conn, [scalar])
+
+        index_names = {
+            row[1]
+            for row in conn.execute("PRAGMA index_list(multikey_entries)").fetchall()
+        }
+        index_names.update(
+            row[1]
+            for row in conn.execute("PRAGMA index_list(scalar_index_entries)").fetchall()
+        )
+        self.assertIn("mkidx_tags", index_names)
+        self.assertIn("scidx_kind", index_names)
+        self.assertFalse(conn.in_transaction)
+        conn.close()
+
+    def test_supports_fts5_tolerates_database_errors(self):
+        class _BrokenConnection:
+            def execute(self, _sql):
+                raise sqlite3.DatabaseError("broken")
+
+        engine = SQLiteEngine()
+        self.assertFalse(engine._supports_fts5(_BrokenConnection()))
+        self.assertFalse(engine._fts5_available)
 
     async def test_put_document_invalidates_collection_feature_cache(self):
         engine = SQLiteEngine()

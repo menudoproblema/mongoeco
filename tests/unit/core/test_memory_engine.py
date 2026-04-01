@@ -1,4 +1,5 @@
 import datetime
+import time
 import unittest
 import uuid
 from unittest.mock import patch
@@ -19,6 +20,12 @@ class _UnhashableValue:
 
     def __repr__(self) -> str:
         return "unhashable-value"
+
+
+class _CodecWithoutSignature:
+    @staticmethod
+    def decode(payload):
+        return payload
 
 
 class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
@@ -1370,6 +1377,265 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explanation.hinted_index, "by_text")
         self.assertEqual(explanation.details["status"], "PENDING")
         self.assertEqual(explanation.details["backend"], "python")
+
+    async def test_search_index_readiness_and_drop_cleanup_remove_transient_state(self):
+        engine = MemoryEngine(simulate_search_index_latency=0.01)
+        await engine.connect()
+        try:
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text"),
+            )
+
+            self.assertFalse(engine._search_index_is_ready("db", "coll", "by_text"))
+            engine._search_index_ready_at[("db", "coll", "by_text")] = time.time() - 1
+            self.assertTrue(engine._search_index_is_ready("db", "coll", "by_text"))
+            self.assertNotIn(("db", "coll", "by_text"), engine._search_index_ready_at)
+
+            await engine.drop_search_index("db", "coll", "by_text")
+            self.assertNotIn("db", engine._search_indexes)
+        finally:
+            await engine.disconnect()
+
+    def test_decode_codec_payload_tolerates_signature_lookup_failures(self):
+        engine = MemoryEngine(codec=_CodecWithoutSignature)
+        with patch("mongoeco.engines.memory.inspect.signature", side_effect=ValueError("no signature")):
+            self.assertEqual(
+                engine._decode_codec_payload({"_id": "1"}, preserve_bson_wrappers=False),
+                {"_id": "1"},
+            )
+
+    def test_decode_storage_document_supports_public_decode_from_stored_payload(self):
+        engine = MemoryEngine()
+        payload = engine._encode_storage_document({"_id": "1", "kind": "view"})
+        self.assertEqual(
+            engine._decode_storage_document(payload, preserve_bson_wrappers=False),
+            {"_id": "1", "kind": "view"},
+        )
+
+    async def test_resolve_hint_index_supports_builtin_id_by_key_pattern(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            hinted = engine._resolve_hint_index("db", "coll", [("_id", 1)])
+        finally:
+            await engine.disconnect()
+        self.assertEqual(hinted["name"], "_id_")
+
+    async def test_search_documents_and_explain_reject_wrong_search_index_types(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition(
+                    {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2, "similarity": "cosine"}]},
+                    name="vec",
+                    index_type="vectorSearch",
+                ),
+            )
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition({"mappings": {"dynamic": True}}, name="text", index_type="search"),
+            )
+
+            with self.assertRaisesRegex(OperationFailure, "does not support \\$search"):
+                await engine.search_documents(
+                    "db",
+                    "coll",
+                    "$search",
+                    {"index": "vec", "text": {"query": "ada", "path": "title"}},
+                )
+            with self.assertRaisesRegex(OperationFailure, "search index not found"):
+                await engine.search_documents(
+                    "db",
+                    "coll",
+                    "$search",
+                    {"index": "missing", "text": {"query": "ada", "path": "title"}},
+                )
+            with self.assertRaisesRegex(OperationFailure, "does not support \\$vectorSearch"):
+                await engine.explain_search_documents(
+                    "db",
+                    "coll",
+                    "$vectorSearch",
+                    {
+                        "index": "text",
+                        "path": "embedding",
+                        "queryVector": [0.1, 0.2],
+                        "numCandidates": 10,
+                        "limit": 5,
+                    },
+                )
+        finally:
+            await engine.disconnect()
+
+    async def test_drop_collection_clears_profile_and_search_index_state(self):
+        engine = MemoryEngine(simulate_search_index_latency=60.0)
+        await engine.connect()
+        try:
+            await engine.set_profiling_level("db", 2)
+            engine._profiler.record(
+                "db",
+                op="query",
+                namespace="db.events",
+                command={"find": "events"},
+                duration_micros=10_000,
+            )
+            self.assertGreater(engine._profiler.count_entries("db"), 0)
+            await engine.create_collection("db", "coll")
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text"),
+            )
+            self.assertIn(("db", "coll", "by_text"), engine._search_index_ready_at)
+
+            await engine.drop_collection("db", "system.profile")
+            await engine.drop_collection("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(engine._profiler.count_entries("db"), 0)
+        self.assertNotIn("db", engine._search_indexes)
+        self.assertNotIn(("db", "coll", "by_text"), engine._search_index_ready_at)
+
+    def test_memory_session_mvcc_helpers_cover_commit_abort_and_views(self):
+        engine = MemoryEngine()
+        session = ClientSession()
+        other = ClientSession()
+        engine.create_session_state(session)
+
+        engine._sync_session_state(other, transaction_active=True, snapshot_version=7)
+        state = session.get_engine_context(f"memory:{id(engine)}")
+        self.assertIsNotNone(state)
+
+        session.start_transaction()
+        engine._start_session_transaction(session)
+        self.assertIsNotNone(engine._active_mvcc_state(session))
+        self.assertIsNone(engine._active_mvcc_state(other))
+
+        snapshot = engine._mvcc_states[session.session_id]
+        snapshot.storage.setdefault("db", {}).setdefault("coll", {})["1"] = {"_id": "1"}
+        engine._commit_session_transaction(session)
+        self.assertEqual(engine._storage["db"]["coll"]["1"], {"_id": "1"})
+        self.assertIsNone(engine._active_mvcc_state(session))
+
+        engine._start_session_transaction(session)
+        engine._abort_session_transaction(session)
+        self.assertIsNone(engine._active_mvcc_state(session))
+
+    def test_memory_index_helpers_cover_default_views_and_delete_cleanup(self):
+        engine = MemoryEngine()
+        index = EngineIndexRecord(name="kind_1", fields=["kind"], key=[("kind", 1)], unique=False)
+        engine._storage = {"db": {"coll": {"1": {"_id": "1", "kind": "view"}}}}
+        engine._indexes = {"db": {"coll": [index]}}
+
+        engine._rebuild_index_data_locked("db", "coll", index)
+        self.assertEqual(
+            engine._index_data["db"]["coll"]["kind_1"][(("str", "view"),)],
+            {"1"},
+        )
+
+        engine._update_indexes_locked("db", "coll", "1", {"_id": "1", "kind": "view"}, action="delete")
+        self.assertEqual(engine._index_data["db"]["coll"]["kind_1"], {})
+
+    async def test_memory_hint_resolution_by_key_pattern_rejects_unusable_index(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
+            await engine.create_index(
+                "db",
+                "coll",
+                ["kind"],
+                name="kind_partial",
+                partial_filter_expression={"kind": "click"},
+            )
+            with self.assertRaisesRegex(OperationFailure, "usable index"):
+                engine._resolve_hint_index(
+                    "db",
+                    "coll",
+                    [("kind", 1)],
+                    plan=compile_filter({"kind": "view"}),
+                )
+        finally:
+            await engine.disconnect()
+
+    async def test_memory_unique_index_fallback_scan_detects_unhashable_duplicate(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["value"], name="value_unique", unique=True)
+            document = {"_id": "1", "value": _UnhashableValue()}
+            await engine.put_document("db", "coll", document)
+            with self.assertRaises(DuplicateKeyError):
+                engine._ensure_unique_indexes(
+                    "db",
+                    "coll",
+                    {"_id": "2", "value": _UnhashableValue()},
+                )
+        finally:
+            await engine.disconnect()
+
+    async def test_memory_search_index_lifecycle_conflict_update_missing_and_phrase_vector_paths(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="search")
+            await engine.create_search_index("db", "coll", definition)
+            self.assertEqual(await engine.list_search_indexes("db", "coll"), [definition.to_document()])
+
+            with self.assertRaisesRegex(OperationFailure, "Conflicting search index definition"):
+                await engine.create_search_index(
+                    "db",
+                    "coll",
+                    SearchIndexDefinition({"mappings": {"dynamic": False}}, name="search"),
+                )
+
+            with self.assertRaisesRegex(OperationFailure, "search index not found"):
+                await engine.update_search_index(
+                    "db",
+                    "coll",
+                    "missing",
+                    SearchIndexDefinition({"mappings": {"dynamic": True}}, name="missing"),
+                )
+
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada Lovelace", "embedding": [0.0, 1.0]})
+            phrase_hits = await engine.search_documents(
+                "db",
+                "coll",
+                "$search",
+                {"index": "search", "phrase": {"query": "Ada Lovelace", "path": "title"}},
+            )
+            self.assertEqual([doc["_id"] for doc in phrase_hits], ["1"])
+
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition(
+                    {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2, "similarity": "cosine"}]},
+                    name="vec",
+                    index_type="vectorSearch",
+                ),
+            )
+            vector_hits = await engine.search_documents(
+                "db",
+                "coll",
+                "$vectorSearch",
+                {
+                    "index": "vec",
+                    "path": "embedding",
+                    "queryVector": [0.0, 1.0],
+                    "numCandidates": 5,
+                    "limit": 5,
+                },
+            )
+            self.assertEqual([doc["_id"] for doc in vector_hits], ["1"])
+        finally:
+            await engine.disconnect()
 
     async def test_scan_and_count_prefer_explicit_plan_over_conflicting_filter(self):
         engine = MemoryEngine()

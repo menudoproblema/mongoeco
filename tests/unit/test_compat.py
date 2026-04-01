@@ -52,7 +52,42 @@ from mongoeco.compat import (
     export_pymongo_profile_catalog,
 )
 from mongoeco.compat.base import _compare_values_default, build_mongo_behavior_policy
+from mongoeco.compat.base import _values_equal_default
 from mongoeco.types import Binary, Timestamp
+
+
+class _FlatComparable:
+    def __init__(self, label: str) -> None:
+        self.label = label
+
+    def __lt__(self, other: object) -> bool:
+        return False
+
+    def __gt__(self, other: object) -> bool:
+        return False
+
+    def __eq__(self, other: object) -> bool:
+        return False
+
+
+class _TypeErrorComparable:
+    def __init__(self, label: str) -> None:
+        self.label = label
+
+    def __lt__(self, other: object) -> bool:
+        raise TypeError("not ordered")
+
+    def __gt__(self, other: object) -> bool:
+        raise TypeError("not ordered")
+
+    def __str__(self) -> str:
+        return self.label
+
+
+class _CustomNaNDialect(MongoDialect):
+    @property
+    def bson_type_order(self) -> MappingProxyType:
+        return MappingProxyType({float: 2, str: 2, _FlatComparable: 99, _TypeErrorComparable: 99})
 
 
 class CompatResolutionTests(unittest.TestCase):
@@ -343,6 +378,45 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertEqual(dialect.compare_values(float("nan"), float("nan")), 0)
         self.assertEqual(
             dialect.compare_values(complex(1, 2), complex(1, 2)),
+            0,
+        )
+
+    def test_compare_values_and_values_equal_cover_remaining_length_nan_and_fallback_paths(self):
+        bson_type_order = MappingProxyType({_FlatComparable: 99, _TypeErrorComparable: 99, float: 2})
+        dialect = MongoDialect70()
+
+        self.assertFalse(_values_equal_default({"a": 1}, {}, bson_type_order))
+        self.assertEqual(_compare_values_default([1, 2], [1], bson_type_order), 1)
+        self.assertEqual(_compare_values_default(_FlatComparable("x"), _FlatComparable("y"), bson_type_order), 0)
+        self.assertEqual(
+            _compare_values_default(
+                _TypeErrorComparable("same"),
+                _TypeErrorComparable("same"),
+                bson_type_order,
+            ),
+            0,
+        )
+        nan_mixed_order = MappingProxyType({float: 2, str: 2})
+        self.assertEqual(_compare_values_default(float("nan"), "x", nan_mixed_order), -1)
+        self.assertEqual(_compare_values_default("x", float("nan"), nan_mixed_order), 1)
+
+        self.assertTrue(dialect.values_equal([1, 2], [1, 2]))
+        self.assertEqual(dialect.compare_values({"a": 1}, {"a": 1, "b": 2}), -1)
+        self.assertEqual(dialect.compare_values([1, 2], [1]), 1)
+        self.assertEqual(dialect.compare_values(1.0, float("nan")), 1)
+        self.assertEqual(
+            dialect.compare_values(
+                _TypeErrorComparable("same"),
+                _TypeErrorComparable("same"),
+            ),
+            0,
+        )
+
+        custom_dialect = _CustomNaNDialect(key="test", server_version="test", label="test")
+        self.assertEqual(custom_dialect.compare_values(float("nan"), "x"), -1)
+        self.assertEqual(custom_dialect.compare_values("x", float("nan")), 1)
+        self.assertEqual(
+            custom_dialect.compare_values(_FlatComparable("x"), _FlatComparable("y")),
             0,
         )
 
