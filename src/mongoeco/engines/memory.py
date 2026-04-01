@@ -14,6 +14,12 @@ from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines._shared_runtime import (
+    build_search_index_documents,
+    merge_profile_collection_names,
+    merge_profile_database_names,
+    profile_namespace_options,
+)
 from mongoeco.engines.mvcc import MemoryMvccState
 from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.engines.semantic_core import (
@@ -1591,17 +1597,14 @@ class MemoryEngine(AsyncStorageEngine):
             indexes = deepcopy(
                 self._search_indexes_view(context).get(db_name, {}).get(coll_name, [])
             )
-        documents = [
-            build_search_index_document(
-                index,
-                ready=self._search_index_is_ready(db_name, coll_name, index.name),
-                ready_at_epoch=self._search_index_ready_at.get((db_name, coll_name, index.name)),
-            )
-            for index in sorted(indexes, key=lambda item: item.name)
-        ]
-        if name is None:
-            return documents
-        return [document for document in documents if document["name"] == name]
+        return build_search_index_documents(
+            indexes,
+            get_name=lambda index: index.name,
+            get_definition=lambda index: index,
+            get_ready_at_epoch=lambda index: self._search_index_ready_at.get((db_name, coll_name, index.name)),
+            is_ready=lambda ready_at_epoch: ready_at_epoch is None or ready_at_epoch <= time.time(),
+            name=name,
+        )
 
     @override
     async def update_search_index(
@@ -1909,10 +1912,7 @@ class MemoryEngine(AsyncStorageEngine):
                 | set(collections.keys())
                 | set(options.keys())
             )
-        for db_name in list(self._profiler._settings.keys()):
-            if db_name not in names:
-                names.append(db_name)
-        return sorted(names)
+        return merge_profile_database_names(names, self._profiler)
 
     @override
     async def list_collections(self, db_name: str, *, context: ClientSession | None = None) -> list[str]:
@@ -1927,9 +1927,12 @@ class MemoryEngine(AsyncStorageEngine):
                 | set(search_indexes.get(db_name, {}).keys())
                 | set(collections.get(db_name, set()))
             )
-        if self._profiler.namespace_visible(db_name):
-            names = sorted(set(names) | {self._PROFILE_COLLECTION_NAME})
-        return names
+        return merge_profile_collection_names(
+            names,
+            db_name=db_name,
+            profiler=self._profiler,
+            profile_collection_name=self._PROFILE_COLLECTION_NAME,
+        )
 
     @override
     async def collection_options(
@@ -1939,8 +1942,14 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> dict[str, object]:
-        if self._is_profile_namespace(coll_name) and self._profiler.namespace_visible(db_name):
-            return {}
+        profile_options = profile_namespace_options(
+            db_name=db_name,
+            coll_name=coll_name,
+            profiler=self._profiler,
+            profile_collection_name=self._PROFILE_COLLECTION_NAME,
+        )
+        if profile_options is not None:
+            return profile_options
         collections = self._collections_view(context)
         storage = self._storage_view(context)
         indexes = self._indexes_view(context)

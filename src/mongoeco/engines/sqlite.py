@@ -61,6 +61,12 @@ from mongoeco.core.search import (
 )
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines._shared_runtime import (
+    build_search_index_documents,
+    merge_profile_collection_names,
+    merge_profile_database_names,
+    profile_namespace_options,
+)
 from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
@@ -3090,8 +3096,14 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         context: ClientSession | None = None,
     ) -> dict[str, object]:
-        if self._is_profile_namespace(coll_name) and self._profiler.namespace_visible(db_name):
-            return {}
+        profile_options = profile_namespace_options(
+            db_name=db_name,
+            coll_name=coll_name,
+            profiler=self._profiler,
+            profile_collection_name=self._PROFILE_COLLECTION_NAME,
+        )
+        if profile_options is not None:
+            return profile_options
         with self._lock:
             conn = self._require_connection(context)
             row = conn.execute(
@@ -4407,17 +4419,14 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 rows = self._load_search_index_rows(db_name, coll_name)
-        documents = [
-            build_search_index_document(
-                definition,
-                ready=self._search_index_is_ready_sync(ready_at_epoch),
-                ready_at_epoch=ready_at_epoch,
-            )
-            for definition, _physical_name, ready_at_epoch in rows
-        ]
-        if name is None:
-            return documents
-        return [document for document in documents if document["name"] == name]
+        return build_search_index_documents(
+            rows,
+            get_name=lambda row: row[0].name,
+            get_definition=lambda row: row[0],
+            get_ready_at_epoch=lambda row: row[2],
+            is_ready=self._search_index_is_ready_sync,
+            name=name,
+        )
 
     def _update_search_index_sync(
         self,
@@ -4705,10 +4714,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 """
             )
             names = [row[0] for row in cursor.fetchall()]
-        for db_name in list(self._profiler._settings.keys()):
-            if db_name not in names:
-                names.append(db_name)
-        return sorted(names)
+        return merge_profile_database_names(names, self._profiler)
 
     def _list_collections_sync(self, db_name: str, context: ClientSession | None = None) -> list[str]:
         with self._lock:
@@ -4735,9 +4741,12 @@ class SQLiteEngine(AsyncStorageEngine):
                 (db_name, db_name, db_name, db_name),
             )
             names = [row[0] for row in cursor.fetchall()]
-        if self._profiler.namespace_visible(db_name):
-            names = sorted(set(names) | {self._PROFILE_COLLECTION_NAME})
-        return names
+        return merge_profile_collection_names(
+            names,
+            db_name=db_name,
+            profiler=self._profiler,
+            profile_collection_name=self._PROFILE_COLLECTION_NAME,
+        )
 
     def _create_collection_sync(
         self,
