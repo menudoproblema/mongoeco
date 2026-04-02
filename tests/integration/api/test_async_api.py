@@ -4687,12 +4687,17 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         {"key": [("email", 1), ("created_at", -1)]},
                     )
 
-    async def test_collection_accepts_special_index_key_types_as_metadata_only(self):
+    async def test_collection_supports_text_and_geo_special_index_key_types(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     collection = client.analytics.events
-                    await collection.insert_one({"_id": "1", "content": "Ada", "location": [40.0, -3.0]})
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "content": "Ada Lovelace wrote the first algorithm", "location": [40.0, -3.0]},
+                            {"_id": "2", "content": "Grace Hopper built compilers", "location": [41.0, -3.5]},
+                        ]
+                    )
 
                     text_name = await collection.create_index({"content": "text"})
                     geo_name = await collection.create_index([("location", "2dsphere")])
@@ -4711,6 +4716,30 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     )
                     self.assertEqual(info["content_text"], {"key": [("content", "text")]})
                     self.assertEqual(info["location_2dsphere"], {"key": [("location", "2dsphere")]})
+                    self.assertEqual(
+                        await collection.find(
+                            {"$text": {"$search": "algorithm"}},
+                            {"_id": 1, "score": {"$meta": "textScore"}},
+                            sort={"score": {"$meta": "textScore"}},
+                        ).to_list(),
+                        [{"_id": "1", "score": 1.0}],
+                    )
+                    command_result = await client.analytics.command(
+                        {
+                            "find": "events",
+                            "filter": {"$text": {"$search": "algorithm"}},
+                            "projection": {"_id": 1, "score": {"$meta": "textScore"}},
+                            "sort": {"score": {"$meta": "textScore"}},
+                        }
+                    )
+                    self.assertEqual(
+                        command_result["cursor"]["firstBatch"],
+                        [{"_id": "1", "score": 1.0}],
+                    )
+                    explain = await collection.find(
+                        {"$text": {"$search": "algorithm"}},
+                    ).explain()
+                    self.assertIn("textQuery", explain["details"])
 
                     with self.assertRaises(OperationFailure):
                         await collection.find({"content": "Ada"}, hint="content_text").to_list()
@@ -4784,6 +4813,101 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             {"_id": "c", "dist": 1.4142135623730951},
                         ],
                     )
+
+    async def test_aggregate_supports_coll_stats_stage_via_collection_and_command(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_many([{"_id": "1", "kind": "view"}, {"_id": "2", "kind": "click"}])
+                    await collection.create_index([("kind", 1)], name="kind_idx")
+
+                    collstats = await collection.aggregate(
+                        [{"$collStats": {"count": {}, "storageStats": {"scale": 2}}}]
+                    ).to_list()
+                    command_result = await client.analytics.command(
+                        {
+                            "aggregate": "events",
+                            "pipeline": [{"$collStats": {"count": {}, "storageStats": {"scale": 2}}}],
+                            "cursor": {},
+                        }
+                    )
+
+                    expected = collstats[0]
+                    self.assertEqual(expected["ns"], "analytics.events")
+                    self.assertEqual(expected["count"], {"count": 2})
+                    self.assertEqual(expected["storageStats"]["ns"], "analytics.events")
+                    self.assertEqual(expected["storageStats"]["scaleFactor"], 2)
+                    self.assertEqual(command_result["cursor"]["firstBatch"], collstats)
+
+    async def test_database_command_find_supports_advanced_projection_operators(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.schools
+                    await collection.insert_many(
+                        [
+                            {
+                                "_id": "1",
+                                "students": [{"school": 101, "age": 10}, {"school": 102, "age": 11}],
+                                "tags": ["python", "mongo", "sqlite"],
+                                "grades": [{"subject": "math", "score": 10}, {"subject": "history", "score": 8}],
+                            }
+                        ]
+                    )
+
+                    positional = await client.analytics.command(
+                        {
+                            "find": "schools",
+                            "filter": {"students.school": 102},
+                            "projection": {"students.$": 1, "_id": 0},
+                        }
+                    )
+                    operators = await client.analytics.command(
+                        {
+                            "find": "schools",
+                            "filter": {"_id": "1"},
+                            "projection": {
+                                "_id": 0,
+                                "tags": {"$slice": 2},
+                                "grades": {"$elemMatch": {"subject": "history"}},
+                            },
+                        }
+                    )
+
+                    self.assertEqual(
+                        positional["cursor"]["firstBatch"],
+                        [{"students": [{"school": 102, "age": 11}]}],
+                    )
+                    self.assertEqual(
+                        operators["cursor"]["firstBatch"],
+                        [{"tags": ["python", "mongo"], "grades": [{"subject": "history", "score": 8}]}],
+                    )
+
+    async def test_create_indexes_support_hidden_indexes_and_hidden_hints_are_rejected(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+                    await collection.insert_many([{"_id": "1", "kind": "view"}, {"_id": "2", "kind": "click"}])
+
+                    created = await client.analytics.command(
+                        {
+                            "createIndexes": "events",
+                            "indexes": [{"key": {"kind": 1}, "name": "kind_hidden", "hidden": True}],
+                        }
+                    )
+                    indexes = await collection.list_indexes().to_list()
+                    info = await collection.index_information()
+
+                    self.assertEqual(created["ok"], 1.0)
+                    self.assertIn(
+                        {"name": "kind_hidden", "key": {"kind": 1}, "unique": False, "hidden": True},
+                        indexes,
+                    )
+                    self.assertTrue(info["kind_hidden"]["hidden"])
+                    with self.assertRaisesRegex(OperationFailure, "hint does not correspond to a usable index"):
+                        await collection.find({"kind": "view"}, hint="kind_hidden").to_list()
 
     async def test_create_index_supports_ttl_and_expires_documents(self):
         for engine_name in ENGINE_FACTORIES:

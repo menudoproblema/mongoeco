@@ -1,16 +1,29 @@
 from __future__ import annotations
 
+from collections import Counter
 from copy import deepcopy
 from dataclasses import dataclass
 import math
+import re
+import unicodedata
 
 from mongoeco.core.paths import get_document_value
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, SearchIndexDefinition, SearchIndexDocument
+from mongoeco.types import Document, EngineIndexRecord, SearchIndexDefinition, SearchIndexDocument
 
 
 SUPPORTED_SEARCH_INDEX_TYPES = {"search", "vectorSearch"}
 TEXTUAL_SEARCH_INDEX_TYPES = {"search"}
+TEXT_SCORE_FIELD = "__mongoeco_textScore__"
+_TEXT_TOKEN_RE = re.compile(r"\w+", re.UNICODE)
+
+
+@dataclass(frozen=True, slots=True)
+class ClassicTextQuery:
+    raw_query: str
+    terms: tuple[str, ...]
+    case_sensitive: bool = False
+    diacritic_sensitive: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +50,129 @@ class SearchVectorQuery:
     num_candidates: int
     filter_spec: Document | None = None
     similarity: str = "cosine"
+
+
+def compile_classic_text_query(spec: object) -> ClassicTextQuery:
+    if not isinstance(spec, dict):
+        raise OperationFailure("$text requires a document specification")
+    unsupported = sorted(set(spec) - {"$search", "$caseSensitive", "$diacriticSensitive"})
+    if unsupported:
+        raise OperationFailure(
+            "$text local runtime supports only $search, $caseSensitive and $diacriticSensitive; unsupported keys: "
+            + ", ".join(unsupported)
+        )
+    raw_query = spec.get("$search")
+    if not isinstance(raw_query, str) or not raw_query.strip():
+        raise OperationFailure("$text.$search must be a non-empty string")
+    case_sensitive = bool(spec.get("$caseSensitive", False))
+    diacritic_sensitive = bool(spec.get("$diacriticSensitive", False))
+    if case_sensitive:
+        raise OperationFailure("$text.$caseSensitive=true is not supported in the local runtime")
+    if diacritic_sensitive:
+        raise OperationFailure("$text.$diacriticSensitive=true is not supported in the local runtime")
+    terms = tuple(tokenize_classic_text(raw_query))
+    if not terms:
+        raise OperationFailure("$text.$search must contain at least one searchable token")
+    return ClassicTextQuery(
+        raw_query=raw_query,
+        terms=terms,
+        case_sensitive=False,
+        diacritic_sensitive=False,
+    )
+
+
+def split_classic_text_filter(filter_spec: Document) -> tuple[Document, ClassicTextQuery | None]:
+    if "$text" not in filter_spec:
+        return filter_spec, None
+    raw_text_spec = filter_spec.get("$text")
+    if raw_text_spec is None:
+        raise OperationFailure("$text requires a document specification")
+    remaining = {key: value for key, value in filter_spec.items() if key != "$text"}
+    return remaining, compile_classic_text_query(raw_text_spec)
+
+
+def tokenize_classic_text(
+    value: str,
+    *,
+    case_sensitive: bool = False,
+    diacritic_sensitive: bool = False,
+) -> tuple[str, ...]:
+    if not isinstance(value, str):
+        return ()
+    normalized = value
+    if not diacritic_sensitive:
+        normalized = "".join(
+            character
+            for character in unicodedata.normalize("NFKD", normalized)
+            if not unicodedata.combining(character)
+        )
+    if not case_sensitive:
+        normalized = normalized.lower()
+    return tuple(match.group(0) for match in _TEXT_TOKEN_RE.finditer(normalized))
+
+
+def resolve_classic_text_index(
+    indexes: list[EngineIndexRecord],
+    *,
+    hinted_name: str | None = None,
+) -> tuple[str, str]:
+    candidates = [
+        index
+        for index in indexes
+        if len(index.key) == 1 and index.key[0][1] == "text"
+    ]
+    if hinted_name is not None:
+        candidates = [index for index in candidates if index.name == hinted_name]
+    if not candidates:
+        raise OperationFailure("classic $text requires a single-field text index on the collection")
+    if len(candidates) > 1:
+        if hinted_name is not None:
+            raise OperationFailure(f"text index not found with name [{hinted_name}]")
+        raise OperationFailure(
+            "classic $text is ambiguous with multiple text indexes; use a single text index per collection"
+        )
+    index = candidates[0]
+    return index.name, index.key[0][0]
+
+
+def classic_text_score(
+    document: Document,
+    *,
+    field: str,
+    query: ClassicTextQuery,
+) -> float | None:
+    token_counter = Counter()
+    for value in iter_classic_text_values(document, field):
+        token_counter.update(
+            tokenize_classic_text(
+                value,
+                case_sensitive=query.case_sensitive,
+                diacritic_sensitive=query.diacritic_sensitive,
+            )
+        )
+    if not token_counter:
+        return None
+    score = sum(token_counter.get(term, 0) for term in query.terms)
+    if score <= 0:
+        return None
+    return float(score)
+
+
+def attach_text_score(document: Document, score: float) -> Document:
+    enriched = dict(document)
+    enriched[TEXT_SCORE_FIELD] = float(score)
+    return enriched
+
+
+def iter_classic_text_values(document: Document, field: str) -> tuple[str, ...]:
+    found, value = get_document_value(document, field)
+    if not found:
+        return ()
+    if isinstance(value, str):
+        return (value,)
+    if isinstance(value, list):
+        return tuple(item for item in value if isinstance(item, str))
+    return ()
 
 
 def validate_search_index_definition(

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from mongoeco.api.argument_validation import (
+    normalize_sort_spec as _normalize_sort_spec,
     validate_batch_size as _validate_batch_size,
     validate_hint_spec as _validate_hint_spec,
     validate_max_time_ms as _validate_max_time_ms,
@@ -96,6 +97,7 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
             "name",
             "unique",
             "sparse",
+            "hidden",
             "partialFilterExpression",
             "expireAfterSeconds",
         }
@@ -112,6 +114,8 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
             kwargs["unique"] = raw_index["unique"]
         if "sparse" in raw_index:
             kwargs["sparse"] = raw_index["sparse"]
+        if "hidden" in raw_index:
+            kwargs["hidden"] = raw_index["hidden"]
         if "partialFilterExpression" in raw_index:
             kwargs["partialFilterExpression"] = raw_index["partialFilterExpression"]
         if "expireAfterSeconds" in raw_index:
@@ -125,7 +129,9 @@ def normalize_command_sort_document(sort: object | None) -> list[tuple[str, int]
         return None
     if not isinstance(sort, dict):
         raise TypeError("sort must be a document")
-    normalized = list(sort.items())
+    normalized = _normalize_sort_spec(sort)
+    if normalized is None:
+        return None
     _validate_sort_spec(normalized)
     return normalized
 

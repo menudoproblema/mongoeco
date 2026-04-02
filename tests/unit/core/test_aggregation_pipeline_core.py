@@ -144,6 +144,61 @@ class AggregationPipelineCoreTests(unittest.TestCase):
             ],
         )
 
+    def test_pipeline_supports_coll_stats_stage_with_count_and_storage_stats(self):
+        result = apply_pipeline(
+            [],
+            [{"$collStats": {"count": {}, "storageStats": {"scale": 2}}}],
+            collection_stats_resolver=lambda scale: {
+                "ns": "db.events",
+                "count": 3,
+                "size": 10,
+                "storageSize": 10,
+                "scaleFactor": scale,
+                "ok": 1.0,
+            },
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {
+                    "ns": "db.events",
+                    "count": {"count": 3},
+                    "storageStats": {
+                        "ns": "db.events",
+                        "count": 3,
+                        "size": 10,
+                        "storageSize": 10,
+                        "scaleFactor": 2,
+                    },
+                }
+            ],
+        )
+
+    def test_coll_stats_stage_requires_first_position_and_supported_options(self):
+        resolver = lambda scale: {"ns": "db.events", "count": 1, "size": 1, "storageSize": 1, "scaleFactor": scale}
+
+        with self.assertRaisesRegex(OperationFailure, "\\$collStats is only valid as the first pipeline stage"):
+            apply_pipeline(
+                [{"_id": 1}],
+                [{"$match": {"_id": 1}}, {"$collStats": {"count": {}}}],
+                collection_stats_resolver=resolver,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "supports only count and storageStats"):
+            apply_pipeline(
+                [],
+                [{"$collStats": {"latencyStats": {}}}],
+                collection_stats_resolver=resolver,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "storageStats.scale must be a positive integer"):
+            apply_pipeline(
+                [],
+                [{"$collStats": {"storageStats": {"scale": 0}}}],
+                collection_stats_resolver=resolver,
+            )
+
     def test_pipeline_supports_geo_near_for_local_points(self):
         documents = [
             {"_id": "a", "name": "Ada", "location": {"type": "Point", "coordinates": [0, 0]}, "active": True},

@@ -293,6 +293,38 @@ class AsyncAggregationCursor:
             loaded[name] = await self._load_collection_documents(name)
         return loaded
 
+    def _collect_collstats_scales(self, pipeline: Pipeline) -> set[int]:
+        scales: set[int] = set()
+        for stage in pipeline:
+            if not isinstance(stage, dict) or len(stage) != 1 or "$collStats" not in stage:
+                continue
+            spec = stage["$collStats"]
+            if not isinstance(spec, dict):
+                continue
+            storage_spec = spec.get("storageStats")
+            if isinstance(storage_spec, dict):
+                scale = storage_spec.get("scale", 1)
+                if isinstance(scale, int) and not isinstance(scale, bool) and scale > 0:
+                    scales.add(scale)
+            else:
+                scales.add(1)
+        return scales
+
+    async def _load_collstats_snapshots(self, pipeline: Pipeline) -> dict[int, Document]:
+        snapshots: dict[int, Document] = {}
+        scales = self._collect_collstats_scales(pipeline)
+        if not scales:
+            return snapshots
+        database = self._collection.database
+        for scale in sorted(scales):
+            snapshot = await database._admin._collection_stats(
+                self._collection._collection_name,
+                scale=scale,
+                session=self._session,
+            )
+            snapshots[scale] = snapshot.to_document()
+        return snapshots
+
     def _scan_collection_with_operation(
         self,
         collection_name: str,
@@ -362,8 +394,6 @@ class AsyncAggregationCursor:
             max_time_ms=self._max_time_ms,
         ):
             enforce_deadline(deadline)
-            referenced_collections = await self._load_referenced_collections()
-            enforce_deadline(deadline)
             if self._leading_search_stage() is not None:
                 documents = await self._search_documents()
                 remaining_pipeline = pipeline
@@ -372,20 +402,33 @@ class AsyncAggregationCursor:
                     pipeline,
                     dialect=dialect,
                 )
-                documents = await self._build_pushdown_cursor(
-                    self._pushdown_find_operation()
-                ).to_list()
                 remaining_pipeline = pushdown.remaining_pipeline
+                if remaining_pipeline and isinstance(remaining_pipeline[0], dict) and "$collStats" in remaining_pipeline[0]:
+                    documents = []
+                else:
+                    documents = await self._build_pushdown_cursor(
+                        self._pushdown_find_operation()
+                    ).to_list()
+            referenced_collections = await self._load_referenced_collections()
+            collstats_snapshots = await self._load_collstats_snapshots(remaining_pipeline)
+            enforce_deadline(deadline)
             enforce_deadline(deadline)
             self._enforce_materialization_budget(
                 len(documents),
                 remaining_pipeline,
                 dialect=dialect,
             )
+            collection_stats_resolver = None
+            if collstats_snapshots:
+                default_collstats_snapshot = next(iter(collstats_snapshots.values()))
+                collection_stats_resolver = lambda scale: deepcopy(
+                    collstats_snapshots.get(scale, default_collstats_snapshot)
+                )
             result = apply_pipeline(
                 documents,
                 remaining_pipeline,
                 collection_resolver=referenced_collections.get,
+                collection_stats_resolver=collection_stats_resolver,
                 variables=self._let,
                 dialect=dialect,
                 collation=self._collation,

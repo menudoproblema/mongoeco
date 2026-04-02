@@ -136,7 +136,15 @@ class ProjectionTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             apply_projection(doc, {1: 1})  # type: ignore[dict-item]
         with self.assertRaises(OperationFailure):
-            apply_projection(doc, {"score": {"$meta": "textScore"}})  # type: ignore[dict-item]
+            apply_projection(doc, {"score": {"$meta": "other"}})  # type: ignore[dict-item]
+
+    def test_projection_supports_meta_text_score(self):
+        doc = {"_id": 1, "name": "Ada", "__mongoeco_textScore__": 3.0}
+
+        self.assertEqual(
+            apply_projection(doc, {"score": {"$meta": "textScore"}, "_id": 0}),  # type: ignore[dict-item]
+            {"score": 3.0},
+        )
 
     def test_projection_supports_slice_as_exclusion_style_projection(self):
         doc = {"_id": 1, "name": "Ada", "items": [1, 2, 3, 4], "role": "admin"}

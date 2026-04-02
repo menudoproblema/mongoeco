@@ -97,6 +97,7 @@ def _aggregation_key(value: Any) -> Any:
 class AggregationStageContext:
     stage_index: int
     collection_resolver: Callable[[str], list[Document]] | None = None
+    collection_stats_resolver: Callable[[int], Document] | None = None
     variables: dict[str, Any] | None = None
     dialect: MongoDialect = MONGODB_DIALECT_70
     collation: CollationSpec | None = None

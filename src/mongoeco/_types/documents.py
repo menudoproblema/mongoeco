@@ -256,6 +256,7 @@ class EngineIndexRecord:
     unique: bool
     physical_name: str | None = None
     sparse: bool = False
+    hidden: bool = False
     partial_filter_expression: Filter | None = None
     expire_after_seconds: int | None = None
     multikey: bool = False
@@ -276,6 +277,7 @@ class EngineIndexRecord:
             name=self.name,
             unique=self.unique,
             sparse=self.sparse,
+            hidden=self.hidden,
             partial_filter_expression=deepcopy(self.partial_filter_expression),
             expire_after_seconds=self.expire_after_seconds,
         )
@@ -1008,4 +1010,3 @@ class AggregatePushdownSummaryDocument(TypedDict, total=False):
     streamingEligible: bool
     streamableStageCount: int
     leadingSearchOperator: str
-

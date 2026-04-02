@@ -58,6 +58,9 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import QueryNode, ensure_query_plan
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.search import (
+    attach_text_score,
+    classic_text_score,
+    ClassicTextQuery,
     SearchPhraseQuery,
     SearchTextQuery,
     SearchVectorQuery,
@@ -65,6 +68,7 @@ from mongoeco.core.search import (
     compile_search_stage,
     matches_search_phrase_query,
     matches_search_text_query,
+    resolve_classic_text_index,
     score_vector_document,
     validate_search_index_definition,
     vector_field_paths,
@@ -632,11 +636,15 @@ class MemoryEngine(AsyncStorageEngine):
         for index in indexes:
             if isinstance(hint, str):
                 if index["name"] == hint:
+                    if index.get("hidden"):
+                        raise OperationFailure("hint does not correspond to a usable index for this query")
                     if plan is not None and not query_can_use_index(index, plan, dialect=dialect):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
             else:
                 if index["key"] == normalized_hint:
+                    if index.get("hidden"):
+                        raise OperationFailure("hint does not correspond to a usable index for this query")
                     if plan is not None and not query_can_use_index(index, plan, dialect=dialect):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
@@ -1014,7 +1022,12 @@ class MemoryEngine(AsyncStorageEngine):
             enforce_deadline(deadline)
 
             if self._is_profile_namespace(coll_name):
-                documents = filter_documents(self._profile_documents(db_name), semantics)
+                documents = self._iter_documents_for_classic_text_query(
+                    self._profile_documents(db_name),
+                    indexes=[],
+                    semantics=semantics,
+                )
+                documents = filter_documents(documents, semantics)
                 documents = finalize_documents(documents, semantics)
                 for document in documents:
                     enforce_deadline(deadline)
@@ -1098,6 +1111,11 @@ class MemoryEngine(AsyncStorageEngine):
                         )
 
                 # Pipeline de procesamiento perezoso (streaming)
+                document_source = self._iter_documents_for_classic_text_query(
+                    document_source,
+                    indexes=indexes,
+                    semantics=semantics,
+                )
                 filtered = iter_filtered_documents(document_source, semantics)
 
                 # Si no hay ordenación, podemos hacer streaming real y parar tras el limit.
@@ -1350,6 +1368,7 @@ class MemoryEngine(AsyncStorageEngine):
         unique: bool = False,
         name: str | None = None,
         sparse: bool = False,
+        hidden: bool = False,
         partial_filter_expression: Filter | None = None,
         expire_after_seconds: int | None = None,
         max_time_ms: int | None = None,
@@ -1372,6 +1391,8 @@ class MemoryEngine(AsyncStorageEngine):
                 raise OperationFailure("TTL indexes require a single-field key pattern")
             if fields[0] == "_id":
                 raise OperationFailure("TTL indexes cannot be created on _id")
+        if not isinstance(hidden, bool):
+            raise TypeError("hidden must be a bool")
         if special_directions:
             if len(normalized_keys) != 1:
                 raise OperationFailure("special index types currently require a single-field key pattern")
@@ -1381,6 +1402,7 @@ class MemoryEngine(AsyncStorageEngine):
             if (
                 name not in (None, "_id_")
                 or sparse
+                or hidden
                 or partial_filter_expression is not None
                 or expire_after_seconds is not None
                 or not unique
@@ -1413,6 +1435,7 @@ class MemoryEngine(AsyncStorageEngine):
                         index["key"] != normalized_keys
                         or index["unique"] != unique
                         or index.get("sparse") != sparse
+                        or index.get("hidden") != hidden
                         or index.get("partial_filter_expression") != partial_filter_expression
                         or index.get("expire_after_seconds") != expire_after_seconds
                     ):
@@ -1424,6 +1447,7 @@ class MemoryEngine(AsyncStorageEngine):
                     if (
                         index["unique"] != unique
                         or index.get("sparse") != sparse
+                        or index.get("hidden") != hidden
                         or index.get("partial_filter_expression") != partial_filter_expression
                         or index.get("expire_after_seconds") != expire_after_seconds
                     ):
@@ -1438,6 +1462,7 @@ class MemoryEngine(AsyncStorageEngine):
                 key=deepcopy(normalized_keys),
                 unique=unique,
                 sparse=sparse,
+                hidden=hidden,
                 partial_filter_expression=deepcopy(partial_filter_expression),
                 expire_after_seconds=expire_after_seconds,
             )
@@ -1857,6 +1882,27 @@ class MemoryEngine(AsyncStorageEngine):
             },
         )
 
+    def _iter_documents_for_classic_text_query(
+        self,
+        documents: Any,
+        *,
+        indexes: list[EngineIndexRecord],
+        semantics: EngineFindSemantics,
+    ):
+        text_query = semantics.text_query
+        if text_query is None:
+            return documents
+        _index_name, field = resolve_classic_text_index(indexes)
+
+        def _iter():
+            for document in documents:
+                score = classic_text_score(document, field=field, query=text_query)
+                if score is None:
+                    continue
+                yield attach_text_score(document, score)
+
+        return _iter()
+
     @override
     async def explain_find_semantics(
         self,
@@ -1898,6 +1944,21 @@ class MemoryEngine(AsyncStorageEngine):
             hinted_index_name=None if hinted_index is None else hinted_index["name"],
             dialect=semantics.dialect,
         )
+        if semantics.text_query is not None:
+            text_index_name, text_field = resolve_classic_text_index(indexes)
+            text_details = {
+                "textQuery": {
+                    "backend": "python",
+                    "index": text_index_name,
+                    "field": text_field,
+                    "rawQuery": semantics.text_query.raw_query,
+                    "terms": list(semantics.text_query.terms),
+                    "tokenizer": "lowercase+punctuation-split",
+                    "caseSensitive": False,
+                    "diacriticSensitive": False,
+                }
+            }
+            details = {**details, **text_details} if isinstance(details, dict) else text_details
         return build_query_plan_explanation(
             engine="memory",
             strategy=execution_plan.strategy,
@@ -1940,8 +2001,10 @@ class MemoryEngine(AsyncStorageEngine):
         del db_name, coll_name, context
         lineage = [
             ExecutionLineageStep(runtime="python", phase="scan", detail="engine scan"),
-            ExecutionLineageStep(runtime="python", phase="filter", detail="semantic core"),
         ]
+        if semantics.text_query is not None:
+            lineage.append(ExecutionLineageStep(runtime="python", phase="text", detail="classic text filter"))
+        lineage.append(ExecutionLineageStep(runtime="python", phase="filter", detail="semantic core"))
         if semantics.sort:
             lineage.append(ExecutionLineageStep(runtime="python", phase="sort", detail="semantic core"))
         if semantics.projection is not None:
@@ -1950,10 +2013,15 @@ class MemoryEngine(AsyncStorageEngine):
             lineage.append(ExecutionLineageStep(runtime="python", phase="slice", detail="semantic core"))
         return EngineReadExecutionPlan(
             semantics=semantics,
-            strategy="python",
+            strategy="python-text" if semantics.text_query is not None else "python",
             execution_lineage=tuple(lineage),
             physical_plan=(
                 PhysicalPlanStep(runtime="python", operation="scan"),
+                *(
+                    (PhysicalPlanStep(runtime="python", operation="text"),)
+                    if semantics.text_query is not None
+                    else ()
+                ),
                 PhysicalPlanStep(runtime="python", operation="filter"),
                 *(
                     (PhysicalPlanStep(runtime="python", operation="sort"),)

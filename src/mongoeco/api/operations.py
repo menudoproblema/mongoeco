@@ -12,7 +12,12 @@ from mongoeco.core.aggregation.extensions import get_registered_aggregation_stag
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.operators import CompiledExecutableUpdatePlan, UpdateEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
-from mongoeco.core.search import validate_search_stage_pipeline
+from mongoeco.core.search import (
+    TEXT_SCORE_FIELD,
+    ClassicTextQuery,
+    split_classic_text_filter,
+    validate_search_stage_pipeline,
+)
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ArrayFilters, CollationDocument, Filter, PlanningIssue, PlanningMode, Projection, SortSpec, Update
@@ -21,7 +26,9 @@ from mongoeco.types import ArrayFilters, CollationDocument, Filter, PlanningIssu
 @dataclass(frozen=True, slots=True)
 class FindOperation:
     filter_spec: Filter
+    selector_filter: Filter
     plan: QueryNode
+    text_query: ClassicTextQuery | None = None
     projection: Projection | None = None
     collation: CollationDocument | None = None
     sort: SortSpec | None = None
@@ -84,6 +91,7 @@ def compile_find_selection_from_update_operation(
 ) -> FindOperation:
     return FindOperation(
         filter_spec=operation.filter_spec,
+        selector_filter=operation.filter_spec,
         plan=operation.plan,
         projection=projection,
         collation=operation.collation,
@@ -115,6 +123,7 @@ def compile_find_operation(
     planning_mode: PlanningMode = PlanningMode.STRICT,
 ) -> FindOperation:
     normalized_filter = _normalize_filter(filter_spec)
+    selector_filter, text_query = split_classic_text_filter(normalized_filter)
     normalized_projection = _normalize_projection(projection)
     normalized_collation = _normalize_collation(collation)
     normalized_sort = _normalize_sort(sort)
@@ -123,11 +132,20 @@ def compile_find_operation(
     normalized_batch_size = _normalize_batch_size(batch_size)
     normalized_skip = _normalize_skip(skip)
     normalized_limit = _normalize_limit(limit)
+    if text_query is not None and normalized_hint is not None:
+        raise OperationFailure("classic $text local runtime does not support hint")
+    if text_query is None:
+        if _projection_requests_text_score(normalized_projection):
+            raise OperationFailure("$meta textScore projection requires a $text query")
+        if _sort_requests_text_score(normalized_sort):
+            raise OperationFailure("$meta textScore sort requires a $text query")
     return FindOperation(
         filter_spec=normalized_filter,
-        plan=compile_filter(normalized_filter, dialect=dialect, variables=variables, planning_mode=planning_mode)
+        selector_filter=selector_filter,
+        plan=compile_filter(selector_filter, dialect=dialect, variables=variables, planning_mode=planning_mode)
         if plan is None
         else plan,
+        text_query=text_query,
         projection=normalized_projection,
         collation=normalized_collation,
         sort=normalized_sort,
@@ -138,7 +156,7 @@ def compile_find_operation(
         max_time_ms=normalized_max_time_ms,
         batch_size=normalized_batch_size,
         planning_mode=planning_mode,
-        planning_issues=_collect_query_planning_issues(normalized_filter, dialect=dialect, variables=variables, planning_mode=planning_mode),
+        planning_issues=_collect_query_planning_issues(selector_filter, dialect=dialect, variables=variables, planning_mode=planning_mode),
     )
 
 
@@ -406,6 +424,21 @@ def _normalize_projection(projection: object | None) -> Projection | None:
 
 def _normalize_sort(sort: object | None) -> SortSpec | None:
     return _normalize_sort_spec(sort)
+
+
+def _projection_requests_text_score(projection: Projection | None) -> bool:
+    if projection is None:
+        return False
+    return any(
+        isinstance(value, dict) and value == {"$meta": "textScore"}
+        for value in projection.values()
+    )
+
+
+def _sort_requests_text_score(sort: SortSpec | None) -> bool:
+    if sort is None:
+        return False
+    return any(field == TEXT_SCORE_FIELD for field, _direction in sort)
 
 
 def _normalize_hint(hint: object | None) -> HintSpec | None:

@@ -162,6 +162,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                 "unique": True,
                 "name": "idx_email",
                 "sparse": False,
+                "hidden": False,
                 "partial_filter_expression": None,
                 "expire_after_seconds": None,
                 "max_time_ms": None,
@@ -256,6 +257,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                         "unique": True,
                         "name": "email_idx",
                         "sparse": False,
+                        "hidden": False,
                         "partial_filter_expression": {"active": True},
                         "expire_after_seconds": None,
                         "max_time_ms": None,
@@ -342,6 +344,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                         "unique": True,
                         "name": None,
                         "sparse": False,
+                        "hidden": False,
                         "partial_filter_expression": None,
                         "expire_after_seconds": None,
                         "max_time_ms": None,
@@ -354,6 +357,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                         "unique": False,
                         "name": "tenant_created",
                         "sparse": False,
+                        "hidden": False,
                         "partial_filter_expression": None,
                         "expire_after_seconds": None,
                         "max_time_ms": None,
@@ -386,6 +390,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                 "unique": False,
                 "name": None,
                 "sparse": True,
+                "hidden": False,
                 "partial_filter_expression": {"active": True},
                 "expire_after_seconds": None,
                 "max_time_ms": None,
@@ -415,12 +420,26 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                 "unique": False,
                 "name": None,
                 "sparse": False,
+                "hidden": False,
                 "partial_filter_expression": None,
                 "expire_after_seconds": 30,
                 "max_time_ms": None,
                 "context": None,
             },
         )
+
+    def test_create_index_forwards_hidden(self):
+        class EngineStub:
+            async def create_index(self, *args, **kwargs):
+                self.kwargs = kwargs
+                return "email_1"
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        asyncio.run(collection.create_index([("email", 1)], hidden=True))
+
+        self.assertTrue(engine.kwargs["hidden"])
 
     def test_create_index_rejects_invalid_expire_after_seconds_type(self):
         collection = AsyncCollection(MemoryEngine(), "db", "coll")

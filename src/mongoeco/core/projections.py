@@ -5,6 +5,7 @@ from typing import Any
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import get_document_value, set_document_value
+from mongoeco.core.search import TEXT_SCORE_FIELD
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, Filter, Projection
 
@@ -74,6 +75,8 @@ def apply_projection(
                     selector_filter=selector_filter,
                     dialect=dialect,
                 )
+            elif spec.operator == "$meta":
+                _apply_meta_projection(result, doc, path, spec.value)
         # MongoDB returns $elemMatch projected fields after the other inclusions.
         for path, spec in parsed.operator_fields.items():
             if spec.operator == "$elemMatch":
@@ -107,6 +110,7 @@ def _parse_projection_spec(
     has_regular_inclusion = False
     has_regular_exclusion = False
     has_elem_match = False
+    has_meta = False
     has_positional = False
     has_slice = False
     for key, value in projection.items():
@@ -132,6 +136,8 @@ def _parse_projection_spec(
                 has_elem_match = True
             if operator_spec.operator == "$slice":
                 has_slice = True
+            if operator_spec.operator == "$meta":
+                has_meta = True
             continue
         flag = _projection_flag(value, dialect=dialect)
         if flag is None:
@@ -147,6 +153,8 @@ def _parse_projection_spec(
         raise OperationFailure("cannot mix inclusion and exclusion in projection")
     if has_elem_match and has_regular_exclusion:
         raise OperationFailure("cannot mix exclusion with $elemMatch projection")
+    if has_meta and has_regular_exclusion:
+        raise OperationFailure("cannot mix exclusion with $meta projection")
     if has_positional and has_regular_exclusion:
         raise OperationFailure("cannot mix exclusion with positional projection")
     if has_positional and sum(
@@ -154,7 +162,7 @@ def _parse_projection_spec(
     ) > 1:
         raise OperationFailure("only one positional projection is supported")
     _validate_projection_operator_path_collisions({*regular_fields, *operator_fields})
-    is_inclusion = has_regular_inclusion or has_elem_match or has_positional
+    is_inclusion = has_regular_inclusion or has_elem_match or has_positional or has_meta
     if not is_inclusion and has_slice:
         is_inclusion = False
     return _ParsedProjection(
@@ -181,6 +189,10 @@ def _parse_projection_operator_value(
     if operator == "$elemMatch":
         if not isinstance(operand, dict):
             raise OperationFailure("$elemMatch projection requires a document specification")
+        return _ProjectionOperatorSpec(operator=operator, value=operand)
+    if operator == "$meta":
+        if operand != "textScore":
+            raise OperationFailure("$meta projection only supports 'textScore'")
         return _ProjectionOperatorSpec(operator=operator, value=operand)
     raise OperationFailure(f"Unsupported projection operator: {operator} for field {path}")
 
@@ -260,6 +272,18 @@ def _apply_elem_match_projection(
         if QueryEngine._match_elem_match_candidate(candidate, operand, dialect=dialect):
             set_document_value(target, path, [deepcopy(candidate)])
             return
+
+
+def _apply_meta_projection(
+    target: Document,
+    source: Document,
+    path: str,
+    operand: object,
+) -> None:
+    if operand != "textScore":
+        raise OperationFailure("$meta projection only supports 'textScore'")
+    found, value = get_document_value(source, TEXT_SCORE_FIELD)
+    set_document_value(target, path, deepcopy(value) if found else None)
 
 
 def _apply_positional_projection(

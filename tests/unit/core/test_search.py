@@ -2,10 +2,14 @@ import unittest
 
 import mongoeco.core.search as search_module
 from mongoeco.core.search import (
+    ClassicTextQuery,
     SearchPhraseQuery,
     SearchTextQuery,
     SearchVectorQuery,
+    attach_text_score,
     build_search_index_document,
+    classic_text_score,
+    compile_classic_text_query,
     is_queryable_search_definition,
     compile_search_text_like_query,
     compile_search_phrase_query,
@@ -15,17 +19,73 @@ from mongoeco.core.search import (
     iter_searchable_text_entries,
     matches_search_phrase_query,
     matches_search_text_query,
+    resolve_classic_text_index,
+    split_classic_text_filter,
     score_vector_document,
     sqlite_fts5_query,
+    tokenize_classic_text,
     validate_search_index_definition,
     validate_search_stage_pipeline,
     vector_field_paths,
 )
 from mongoeco.errors import OperationFailure
-from mongoeco.types import SearchIndexDefinition
+from mongoeco.types import EngineIndexRecord, SearchIndexDefinition
 
 
 class SearchCoreTests(unittest.TestCase):
+    def test_compile_classic_text_query_and_filter_split(self) -> None:
+        remaining, query = split_classic_text_filter(
+            {
+                "$text": {"$search": "Ada Lovelace", "$caseSensitive": False},
+                "kind": "person",
+            }
+        )
+
+        self.assertEqual(remaining, {"kind": "person"})
+        self.assertEqual(
+            query,
+            ClassicTextQuery(raw_query="Ada Lovelace", terms=("ada", "lovelace")),
+        )
+
+    def test_compile_classic_text_query_rejects_sensitive_flags(self) -> None:
+        with self.assertRaises(OperationFailure):
+            compile_classic_text_query({"$search": "Ada", "$caseSensitive": True})
+        with self.assertRaises(OperationFailure):
+            compile_classic_text_query({"$search": "Ada", "$diacriticSensitive": True})
+
+    def test_tokenize_and_score_classic_text_query(self) -> None:
+        query = compile_classic_text_query({"$search": "Ada algOrithm"})
+        self.assertEqual(tokenize_classic_text("Áda wrote algorithms"), ("ada", "wrote", "algorithms"))
+        self.assertEqual(
+            classic_text_score(
+                {"body": "Ada wrote the first algorithm. Ada again."},
+                field="body",
+                query=query,
+            ),
+            3.0,
+        )
+        self.assertIsNone(
+            classic_text_score(
+                {"body": "Grace Hopper"},
+                field="body",
+                query=query,
+            )
+        )
+        self.assertEqual(attach_text_score({"_id": 1}, 2.0)["__mongoeco_textScore__"], 2.0)
+
+    def test_resolve_classic_text_index_requires_single_unambiguous_text_index(self) -> None:
+        indexes = [
+            EngineIndexRecord(name="content_text", fields=["content"], key=[("content", "text")], unique=False),
+        ]
+        self.assertEqual(resolve_classic_text_index(indexes), ("content_text", "content"))
+        with self.assertRaises(OperationFailure):
+            resolve_classic_text_index(
+                indexes
+                + [
+                    EngineIndexRecord(name="title_text", fields=["title"], key=[("title", "text")], unique=False),
+                ]
+            )
+
     def test_validate_search_index_definition_rejects_unsupported_field_type(self) -> None:
         with self.assertRaises(OperationFailure):
             validate_search_index_definition(

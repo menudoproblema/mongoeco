@@ -110,6 +110,7 @@ class IndexDefinition:
     name: str
     unique: bool = False
     sparse: bool = False
+    hidden: bool = False
     partial_filter_expression: Filter | None = None
     expire_after_seconds: int | None = None
 
@@ -120,6 +121,7 @@ class IndexDefinition:
         name: str,
         unique: bool = False,
         sparse: bool = False,
+        hidden: bool = False,
         partial_filter_expression: Filter | None = None,
         expire_after_seconds: int | None = None,
     ):
@@ -130,6 +132,8 @@ class IndexDefinition:
             raise TypeError("unique must be a bool")
         if not isinstance(sparse, bool):
             raise TypeError("sparse must be a bool")
+        if not isinstance(hidden, bool):
+            raise TypeError("hidden must be a bool")
         if partial_filter_expression is not None and not isinstance(partial_filter_expression, dict):
             raise TypeError("partial_filter_expression must be a dict or None")
         if expire_after_seconds is not None and (
@@ -142,6 +146,7 @@ class IndexDefinition:
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "unique", unique)
         object.__setattr__(self, "sparse", sparse)
+        object.__setattr__(self, "hidden", hidden)
         object.__setattr__(self, "partial_filter_expression", deepcopy(partial_filter_expression))
         object.__setattr__(self, "expire_after_seconds", expire_after_seconds)
 
@@ -157,6 +162,8 @@ class IndexDefinition:
         }
         if self.sparse:
             document["sparse"] = True
+        if self.hidden:
+            document["hidden"] = True
         if self.partial_filter_expression is not None:
             document["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
         if self.expire_after_seconds is not None:
@@ -172,6 +179,8 @@ class IndexDefinition:
             document["unique"] = True
         if self.sparse:
             document["sparse"] = True
+        if self.hidden:
+            document["hidden"] = True
         if self.partial_filter_expression is not None:
             document["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
         if self.expire_after_seconds is not None:
@@ -184,6 +193,8 @@ class IndexDefinition:
             entry["unique"] = True
         if self.sparse:
             entry["sparse"] = True
+        if self.hidden:
+            entry["hidden"] = True
         if self.partial_filter_expression is not None:
             entry["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
         if self.expire_after_seconds is not None:
@@ -212,6 +223,7 @@ class IndexModel:
     name: str | None = None
     unique: bool = False
     sparse: bool = False
+    hidden: bool = False
     partial_filter_expression: Filter | None = None
     expire_after_seconds: int | None = None
 
@@ -220,6 +232,7 @@ class IndexModel:
         name = kwargs.pop("name", None)
         unique = kwargs.pop("unique", False)
         sparse = kwargs.pop("sparse", False)
+        hidden = kwargs.pop("hidden", False)
         partial_filter_expression = kwargs.pop("partialFilterExpression", None)
         if partial_filter_expression is None:
             partial_filter_expression = kwargs.pop("partial_filter_expression", None)
@@ -232,6 +245,8 @@ class IndexModel:
             raise TypeError("unique must be a bool")
         if not isinstance(sparse, bool):
             raise TypeError("sparse must be a bool")
+        if not isinstance(hidden, bool):
+            raise TypeError("hidden must be a bool")
         if partial_filter_expression is not None and not isinstance(partial_filter_expression, dict):
             raise TypeError("partial_filter_expression must be a dict or None")
         if expire_after_seconds is not None and (
@@ -247,6 +262,7 @@ class IndexModel:
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "unique", unique)
         object.__setattr__(self, "sparse", sparse)
+        object.__setattr__(self, "hidden", hidden)
         object.__setattr__(self, "partial_filter_expression", deepcopy(partial_filter_expression))
         object.__setattr__(self, "expire_after_seconds", expire_after_seconds)
 
@@ -261,6 +277,7 @@ class IndexModel:
             name=self.resolved_name,
             unique=self.unique,
             sparse=self.sparse,
+            hidden=self.hidden,
             partial_filter_expression=self.partial_filter_expression,
             expire_after_seconds=self.expire_after_seconds,
         )

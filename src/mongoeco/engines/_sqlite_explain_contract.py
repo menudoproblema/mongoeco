@@ -218,6 +218,12 @@ def sqlite_pushdown_followup_hints(
             }
         )
     reason_hints = {
+        "classic $text local runtime executes in Python fallback": {
+            "operator": "$text",
+            "priority": "high",
+            "currentSupport": "single-field text index with local tokenization, textScore projection and score sort in Python fallback",
+            "nextStep": "add SQL-side prefilters or dedicated local text indexing if classic text becomes a planner priority",
+        },
         "Sort requires Python fallback": {
             "operator": "sort",
             "priority": "high",

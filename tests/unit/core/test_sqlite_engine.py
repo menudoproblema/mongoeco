@@ -1415,6 +1415,27 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(any("idx_" in detail for detail in details))
 
+    async def test_list_indexes_and_index_information_include_hidden_metadata(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["email"], hidden=True, name="email_hidden")
+            indexes = await engine.list_indexes("db", "coll")
+            info = await engine.index_information("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(
+            indexes[1],
+            {
+                "name": "email_hidden",
+                "key": {"email": 1},
+                "unique": False,
+                "hidden": True,
+            },
+        )
+        self.assertTrue(info["email_hidden"]["hidden"])
+
     async def test_explain_query_plan_uses_created_physical_index_for_codec_aware_filter(self):
         engine = SQLiteEngine()
         session_id = uuid.UUID("12345678-1234-5678-1234-567812345678")

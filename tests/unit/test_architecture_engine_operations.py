@@ -185,6 +185,39 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         self.assertEqual(semantics.hint, [("name", 1)])
         self.assertEqual(semantics.comment, "read")
         self.assertEqual(semantics.max_time_ms, 25)
+        self.assertEqual(semantics.selector_filter, {"name": "Ada"})
+
+    def test_compile_find_operation_extracts_classic_text_query_and_text_score_contract(self):
+        operation = compile_find_operation(
+            {"$text": {"$search": "Ada Lovelace"}, "kind": "person"},
+            projection={"score": {"$meta": "textScore"}, "_id": 0},
+            sort={"score": {"$meta": "textScore"}},
+        )
+
+        self.assertEqual(operation.filter_spec, {"$text": {"$search": "Ada Lovelace"}, "kind": "person"})
+        self.assertEqual(operation.selector_filter, {"kind": "person"})
+        self.assertIsNotNone(operation.text_query)
+        self.assertEqual(operation.text_query.terms, ("ada", "lovelace"))
+        self.assertEqual(operation.sort, [("__mongoeco_textScore__", -1)])
+
+    def test_compile_find_operation_rejects_text_score_without_text_query(self):
+        with self.assertRaisesRegex(Exception, "\\$meta textScore projection requires a \\$text query"):
+            compile_find_operation(
+                {"kind": "person"},
+                projection={"score": {"$meta": "textScore"}},
+            )
+        with self.assertRaisesRegex(Exception, "\\$meta textScore sort requires a \\$text query"):
+            compile_find_operation(
+                {"kind": "person"},
+                sort={"score": {"$meta": "textScore"}},
+            )
+
+    def test_compile_find_operation_rejects_hint_with_classic_text_query(self):
+        with self.assertRaisesRegex(Exception, "classic \\$text local runtime does not support hint"):
+            compile_find_operation(
+                {"$text": {"$search": "Ada"}},
+                hint="content_text",
+            )
 
     def test_compile_update_semantics_returns_typed_write_semantics(self):
         operation = compile_update_operation(

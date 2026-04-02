@@ -11,6 +11,7 @@ from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll, QueryNode, ensure_query_plan
+from mongoeco.core.search import ClassicTextQuery, TEXT_SCORE_FIELD
 from mongoeco.core.schema_validation import (
     CompiledCollectionValidator,
     SchemaValidationResult,
@@ -34,7 +35,9 @@ from mongoeco.types import (
 @dataclass(frozen=True, slots=True)
 class EngineFindSemantics:
     filter_spec: Filter | None
+    selector_filter: Filter | None
     query_plan: QueryNode
+    text_query: ClassicTextQuery | None
     projection: Projection | None
     collation: CollationSpec | None
     sort: SortSpec | None
@@ -128,8 +131,10 @@ def enforce_collection_document_validation(
 
 def compile_find_semantics(
     filter_spec: Filter | None = None,
+    selector_filter: Filter | None = None,
     *,
     plan: QueryNode | None = None,
+    text_query: ClassicTextQuery | None = None,
     projection: Projection | None = None,
     collation: CollationDocument | None = None,
     sort: SortSpec | None = None,
@@ -147,11 +152,14 @@ def compile_find_semantics(
     if limit is not None and limit < 0:
         raise ValueError("limit must be >= 0")
     effective_collation = normalize_collation(collation)
-    query_plan = ensure_query_plan(filter_spec, plan, dialect=effective_dialect)
+    effective_selector_filter = filter_spec if selector_filter is None else selector_filter
+    query_plan = ensure_query_plan(effective_selector_filter, plan, dialect=effective_dialect)
 
     return EngineFindSemantics(
         filter_spec=filter_spec,
+        selector_filter=effective_selector_filter,
         query_plan=query_plan,
+        text_query=text_query,
         projection=projection,
         collation=effective_collation,
         sort=sort,
@@ -179,7 +187,9 @@ def compile_find_semantics_from_operation(
 ) -> EngineFindSemantics:
     return compile_find_semantics(
         operation.filter_spec,
+        selector_filter=operation.selector_filter,
         plan=operation.plan,
+        text_query=operation.text_query,
         projection=operation.projection,
         collation=operation.collation,
         sort=operation.sort,
@@ -343,11 +353,12 @@ def stream_finalize_documents(
                 else apply_projection(
                     document,
                     projection,
-                    selector_filter=semantics.filter_spec,
+                    selector_filter=semantics.selector_filter,
                     dialect=dialect,
                 )
             )
-            yield DocumentCodec.to_public(projected) if emit_public_documents else projected
+            cleaned = _strip_result_metadata(projected)
+            yield DocumentCodec.to_public(cleaned) if emit_public_documents else cleaned
             if remaining_limit is not None:
                 remaining_limit -= 1
                 if remaining_limit == 0:
@@ -365,11 +376,12 @@ def stream_finalize_documents(
             else apply_projection(
                 document,
                 projection,
-                selector_filter=semantics.filter_spec,
+                selector_filter=semantics.selector_filter,
                 dialect=dialect,
             )
         )
-        yield DocumentCodec.to_public(projected) if emit_public_documents else projected
+        cleaned = _strip_result_metadata(projected)
+        yield DocumentCodec.to_public(cleaned) if emit_public_documents else cleaned
         if remaining_limit is not None:
             remaining_limit -= 1
             if remaining_limit == 0:
@@ -407,3 +419,11 @@ def build_query_plan_explanation(
         fallback_reason=fallback_reason,
         planning_issues=planning_issues,
     )
+
+
+def _strip_result_metadata(document: Document) -> Document:
+    if TEXT_SCORE_FIELD not in document:
+        return document
+    cleaned = dict(document)
+    del cleaned[TEXT_SCORE_FIELD]
+    return cleaned

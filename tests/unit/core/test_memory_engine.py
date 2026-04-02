@@ -742,6 +742,27 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             },
         )
 
+    async def test_list_indexes_and_index_information_include_hidden_metadata(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["email"], hidden=True, name="email_hidden")
+            indexes = await engine.list_indexes("db", "coll")
+            info = await engine.index_information("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(
+            indexes[1],
+            {
+                "name": "email_hidden",
+                "key": {"email": 1},
+                "unique": False,
+                "hidden": True,
+            },
+        )
+        self.assertTrue(info["email_hidden"]["hidden"])
+
     async def test_ttl_index_metadata_and_opportunistic_expiration_round_trip(self):
         engine = MemoryEngine()
         past = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=120)

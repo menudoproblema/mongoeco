@@ -336,6 +336,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 unique=True,
                 name=None,
                 sparse=False,
+                hidden=False,
                 partial_filter_expression=None,
                 expire_after_seconds=None,
                 deadline=None,

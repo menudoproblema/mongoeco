@@ -66,6 +66,8 @@ def query_can_use_index(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> bool:
+    if _index_hidden(index):
+        return False
     keys = _index_key(index)
     if not isinstance(keys, list) or not is_ordered_index_spec(keys):
         return False
@@ -152,6 +154,12 @@ def _index_sparse(index: EngineIndexRecord | dict[str, object]) -> bool:
     if isinstance(index, EngineIndexRecord):
         return index.sparse
     return bool(index.get("sparse", False))
+
+
+def _index_hidden(index: EngineIndexRecord | dict[str, object]) -> bool:
+    if isinstance(index, EngineIndexRecord):
+        return index.hidden
+    return bool(index.get("hidden", False))
 
 
 def _index_partial_filter_expression(index: EngineIndexRecord | dict[str, object]) -> Filter | None:

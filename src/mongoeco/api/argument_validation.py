@@ -1,5 +1,6 @@
 from collections.abc import Mapping, Sequence
 
+from mongoeco.core.search import TEXT_SCORE_FIELD
 from mongoeco.types import SortSpec
 
 
@@ -10,7 +11,16 @@ def normalize_sort_spec(sort: object | None) -> SortSpec | None:
     if sort is None:
         return None
     if isinstance(sort, Mapping):
-        normalized = list(sort.items())
+        normalized = []
+        for field, direction in sort.items():
+            if (
+                isinstance(field, str)
+                and isinstance(direction, Mapping)
+                and dict(direction) == {"$meta": "textScore"}
+            ):
+                normalized.append((TEXT_SCORE_FIELD, -1))
+                continue
+            normalized.append((field, direction))
         validate_sort_spec(normalized)
         return normalized
     if (

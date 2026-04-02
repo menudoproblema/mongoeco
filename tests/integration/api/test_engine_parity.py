@@ -86,6 +86,27 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(memory_documents, sqlite_documents)
 
+    async def test_classic_text_query_and_text_score_match_in_memory_and_sqlite(self):
+        results: dict[str, list[dict[str, object]]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("articles")
+                await collection.insert_many(
+                    [
+                        {"_id": "1", "content": "Ada wrote the first algorithm"},
+                        {"_id": "2", "content": "Grace built the first compiler"},
+                        {"_id": "3", "content": "Algorithm notes by Ada"},
+                    ]
+                )
+                await collection.create_index({"content": "text"})
+                results[engine_name] = await collection.find(
+                    {"$text": {"$search": "algorithm ada"}},
+                    {"_id": 1, "score": {"$meta": "textScore"}},
+                    sort={"score": {"$meta": "textScore"}},
+                ).to_list()
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
     async def test_dbref_subfield_filter_and_lookup_match_in_memory_and_sqlite(self):
         results: dict[str, dict[str, list[object]]] = {}
         for engine_name in ("memory", "sqlite"):
@@ -1655,6 +1676,37 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         "allow_disk_use": aggregate_explain["allow_disk_use"],
                         "ok": aggregate_explain["ok"],
                     },
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_coll_stats_stage_and_hidden_indexes_match_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.alpha.get_collection("events")
+                await collection.insert_many([{"_id": "1", "kind": "view"}, {"_id": "2", "kind": "click"}])
+                await client.alpha.command(
+                    {
+                        "createIndexes": "events",
+                        "indexes": [{"key": {"kind": 1}, "name": "kind_hidden", "hidden": True}],
+                    }
+                )
+
+                collstats = await collection.aggregate(
+                    [{"$collStats": {"count": {}, "storageStats": {"scale": 2}}}]
+                ).to_list()
+                indexes = await collection.list_indexes().to_list()
+                hidden_hint_error = None
+                try:
+                    await collection.find({"kind": "view"}, hint="kind_hidden").to_list()
+                except Exception as exc:  # pragma: no branch
+                    hidden_hint_error = str(exc)
+
+                results[engine_name] = {
+                    "collStats": collstats,
+                    "indexes": indexes,
+                    "hiddenHintError": hidden_hint_error,
                 }
 
         self.assertEqual(results["memory"], results["sqlite"])

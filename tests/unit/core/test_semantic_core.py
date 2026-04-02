@@ -111,7 +111,9 @@ class SemanticCoreUnitTests(unittest.TestCase):
     def test_iter_filtered_documents_uses_query_engine_when_compiled_query_is_missing_and_deadline_present(self):
         semantics = EngineFindSemantics(
             filter_spec={"name": "Ada"},
+            selector_filter={"name": "Ada"},
             query_plan=compile_filter({"name": "Ada"}),
+            text_query=None,
             projection=None,
             collation=None,
             sort=None,
@@ -166,7 +168,9 @@ class SemanticCoreUnitTests(unittest.TestCase):
         compiled = type("Compiled", (), {"match": lambda self, document: document["_id"] == "2"})()
         compiled_semantics = EngineFindSemantics(
             filter_spec={"name": "Ada"},
+            selector_filter={"name": "Ada"},
             query_plan=compile_filter({"name": "Ada"}),
+            text_query=None,
             projection=None,
             collation=None,
             sort=None,

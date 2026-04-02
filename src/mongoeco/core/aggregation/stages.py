@@ -447,6 +447,59 @@ def _stage_geo_near(
     return [document for _distance, document in matches]
 
 
+def _stage_coll_stats(
+    _documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    if context.stage_index != 0:
+        raise OperationFailure("$collStats is only valid as the first pipeline stage")
+    if context.collection_stats_resolver is None:
+        raise OperationFailure("$collStats requires a collection stats resolver in the local runtime")
+    if not isinstance(spec, dict):
+        raise OperationFailure("$collStats requires a document specification")
+    unsupported = sorted(set(spec) - {"count", "storageStats"})
+    if unsupported:
+        raise OperationFailure(
+            "$collStats local runtime supports only count and storageStats; unsupported keys: "
+            + ", ".join(unsupported)
+        )
+    if not spec:
+        raise OperationFailure("$collStats requires at least one of count or storageStats")
+
+    include_count = False
+    scale = 1
+    if "count" in spec:
+        count_spec = spec.get("count")
+        if count_spec != {}:
+            raise OperationFailure("$collStats.count must be an empty document")
+        include_count = True
+    if "storageStats" in spec:
+        storage_spec = spec.get("storageStats")
+        if not isinstance(storage_spec, dict):
+            raise OperationFailure("$collStats.storageStats must be a document")
+        unsupported_storage = sorted(set(storage_spec) - {"scale"})
+        if unsupported_storage:
+            raise OperationFailure(
+                "$collStats.storageStats local runtime supports only scale; unsupported keys: "
+                + ", ".join(unsupported_storage)
+            )
+        scale_value = storage_spec.get("scale", 1)
+        if not isinstance(scale_value, int) or isinstance(scale_value, bool) or scale_value <= 0:
+            raise OperationFailure("$collStats.storageStats.scale must be a positive integer")
+        scale = scale_value
+
+    snapshot = context.collection_stats_resolver(scale)
+    result: Document = {"ns": snapshot.get("ns")}
+    if include_count:
+        result["count"] = {"count": snapshot.get("count", 0)}
+    if "storageStats" in spec:
+        storage_stats = deepcopy(snapshot)
+        storage_stats.pop("ok", None)
+        result["storageStats"] = storage_stats
+    return [result]
+
+
 def _partition_value(document: Document, path: str) -> object | None:
     found, value = get_document_value(document, path)
     return value if found else None
@@ -576,6 +629,7 @@ AGGREGATION_STAGE_SPECS: dict[str, AggregationStageSpec] = {
     "$densify": AggregationStageSpec(_stage_densify, "materializing"),
     "$fill": AggregationStageSpec(_stage_fill, "materializing"),
     "$geoNear": AggregationStageSpec(_stage_geo_near, "materializing"),
+    "$collStats": AggregationStageSpec(_stage_coll_stats, "materializing"),
 }
 
 AGGREGATION_STAGE_HANDLERS: dict[str, AggregationStageHandler] = {
@@ -626,6 +680,7 @@ def apply_pipeline(
     pipeline: Pipeline,
     *,
     collection_resolver=None,
+    collection_stats_resolver=None,
     variables: dict[str, Any] | None = None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
@@ -668,6 +723,7 @@ def apply_pipeline(
             AggregationStageContext(
                 stage_index=index,
                 collection_resolver=collection_resolver,
+                collection_stats_resolver=collection_stats_resolver,
                 variables=variables,
                 dialect=dialect,
                 collation=collation,

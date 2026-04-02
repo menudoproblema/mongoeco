@@ -58,9 +58,12 @@ from mongoeco.core.query_plan import (
     ensure_query_plan,
 )
 from mongoeco.core.search import (
+    attach_text_score,
+    classic_text_score,
     SearchPhraseQuery,
     SearchTextQuery,
     SearchVectorQuery,
+    resolve_classic_text_index,
     build_search_index_document,
     compile_search_stage,
     iter_searchable_text_entries,
@@ -203,6 +206,7 @@ from mongoeco.types import (
     IndexInformation,
     IndexKeySpec,
     ObjectId,
+    PhysicalPlanStep,
     ProfilingCommandResult,
     Projection,
     QueryPlanExplanation,
@@ -835,11 +839,15 @@ class SQLiteEngine(AsyncStorageEngine):
         for index in indexes:
             if isinstance(hint, str):
                 if index["name"] == hint:
+                    if index.get("hidden"):
+                        raise OperationFailure("hint does not correspond to a usable index for this query")
                     if plan is not None and not query_can_use_index(index, plan, dialect=dialect):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
             else:
                 if index["key"] == normalized_hint:
+                    if index.get("hidden"):
+                        raise OperationFailure("hint does not correspond to a usable index for this query")
                     if plan is not None and not query_can_use_index(index, plan, dialect=dialect):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
@@ -2134,6 +2142,23 @@ class SQLiteEngine(AsyncStorageEngine):
         select_clause: str = "document",
         hint: str | IndexKeySpec | None = None,
     ) -> SQLiteReadExecutionPlan:
+        if semantics.text_query is not None:
+            return SQLiteReadExecutionPlan(
+                semantics=semantics,
+                strategy="python-text",
+                execution_lineage=(
+                    ExecutionLineageStep(runtime="python", phase="scan", detail="sqlite collection scan"),
+                    ExecutionLineageStep(runtime="python", phase="text", detail="classic text filter"),
+                    ExecutionLineageStep(runtime="python", phase="filter", detail="semantic core"),
+                ),
+                physical_plan=(
+                    PhysicalPlanStep(runtime="python", operation="scan"),
+                    PhysicalPlanStep(runtime="python", operation="text"),
+                    PhysicalPlanStep(runtime="python", operation="filter"),
+                ),
+                use_sql=False,
+                fallback_reason="classic $text local runtime executes in Python fallback",
+            )
         return _sqlite_compile_read_execution_plan(
             db_name=db_name,
             coll_name=coll_name,
@@ -2173,6 +2198,44 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         semantics: EngineFindSemantics,
     ) -> EngineReadExecutionPlan:
+        if semantics.text_query is not None:
+            lineage = [
+                ExecutionLineageStep(runtime="python", phase="scan", detail="sqlite collection scan"),
+                ExecutionLineageStep(runtime="python", phase="text", detail="classic text filter"),
+                ExecutionLineageStep(runtime="python", phase="filter", detail="semantic core"),
+            ]
+            if semantics.sort:
+                lineage.append(ExecutionLineageStep(runtime="python", phase="sort", detail="semantic core"))
+            if semantics.projection is not None:
+                lineage.append(ExecutionLineageStep(runtime="python", phase="project", detail="semantic core"))
+            if semantics.skip or semantics.limit is not None:
+                lineage.append(ExecutionLineageStep(runtime="python", phase="slice", detail="semantic core"))
+            return EngineReadExecutionPlan(
+                semantics=semantics,
+                strategy="python-text",
+                execution_lineage=tuple(lineage),
+                physical_plan=(
+                    PhysicalPlanStep(runtime="python", operation="scan"),
+                    PhysicalPlanStep(runtime="python", operation="text"),
+                    PhysicalPlanStep(runtime="python", operation="filter"),
+                    *(
+                        (PhysicalPlanStep(runtime="python", operation="sort"),)
+                        if semantics.sort
+                        else ()
+                    ),
+                    *(
+                        (PhysicalPlanStep(runtime="python", operation="project"),)
+                        if semantics.projection is not None
+                        else ()
+                    ),
+                    *(
+                        (PhysicalPlanStep(runtime="python", operation="slice"),)
+                        if semantics.skip or semantics.limit is not None
+                        else ()
+                    ),
+                ),
+                fallback_reason="classic $text local runtime executes in Python fallback",
+            )
         return _sqlite_plan_find_semantics_sync(
             db_name=db_name,
             coll_name=coll_name,
@@ -2335,7 +2398,7 @@ class SQLiteEngine(AsyncStorageEngine):
         conn = self._require_connection()
         cursor = conn.execute(
             """
-            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
+            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
             FROM indexes
             WHERE db_name = ? AND coll_name = ?
             ORDER BY name
@@ -2356,6 +2419,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     multikey_flag,
                     multikey_physical_name,
                 ) = row
+                hidden_flag = 0
                 expire_after_seconds = None
                 scalar_physical_name = None
             elif len(row) == 10:
@@ -2371,6 +2435,22 @@ class SQLiteEngine(AsyncStorageEngine):
                     multikey_flag,
                     multikey_physical_name,
                 ) = row
+                hidden_flag = 0
+                scalar_physical_name = None
+            elif len(row) == 11:
+                (
+                    name,
+                    physical_name,
+                    fields,
+                    keys,
+                    unique_flag,
+                    sparse_flag,
+                    hidden_flag,
+                    partial_filter_json,
+                    expire_after_seconds,
+                    multikey_flag,
+                    multikey_physical_name,
+                ) = row
                 scalar_physical_name = None
             else:
                 (
@@ -2380,6 +2460,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     keys,
                     unique_flag,
                     sparse_flag,
+                    hidden_flag,
                     partial_filter_json,
                     expire_after_seconds,
                     multikey_flag,
@@ -2421,6 +2502,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     key=parsed_keys,
                     unique=bool(unique_flag),
                     sparse=bool(sparse_flag),
+                    hidden=bool(hidden_flag),
                     partial_filter_expression=partial_filter_expression,
                     expire_after_seconds=(
                         int(expire_after_seconds)
@@ -2832,7 +2914,7 @@ class SQLiteEngine(AsyncStorageEngine):
         indexes = conn.execute(
             """
             SELECT db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag,
-                   partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
+                   hidden_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
             FROM indexes
             ORDER BY db_name, coll_name, name
             """
@@ -2849,6 +2931,7 @@ class SQLiteEngine(AsyncStorageEngine):
             keys,
             unique_flag,
             sparse_flag,
+            hidden_flag,
             partial_filter_json,
             expire_after_seconds,
             multikey_flag,
@@ -2881,6 +2964,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     key=parsed_keys,
                     unique=bool(unique_flag),
                     sparse=bool(sparse_flag),
+                    hidden=bool(hidden_flag),
                     partial_filter_expression=partial_filter_expression,
                     expire_after_seconds=(
                         int(expire_after_seconds)
@@ -2961,6 +3045,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         keys TEXT,
                         unique_flag INTEGER NOT NULL,
                         sparse_flag INTEGER NOT NULL DEFAULT 0,
+                        hidden_flag INTEGER NOT NULL DEFAULT 0,
                         partial_filter_json TEXT,
                         expire_after_seconds INTEGER,
                         multikey_flag INTEGER NOT NULL DEFAULT 0,
@@ -3030,6 +3115,8 @@ class SQLiteEngine(AsyncStorageEngine):
                     connection.execute("ALTER TABLE indexes ADD COLUMN sparse_flag INTEGER NOT NULL DEFAULT 0")
                 if "partial_filter_json" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN partial_filter_json TEXT")
+                if "hidden_flag" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN hidden_flag INTEGER NOT NULL DEFAULT 0")
                 if "expire_after_seconds" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN expire_after_seconds INTEGER")
                 if "multikey_flag" not in columns:
@@ -3541,6 +3628,30 @@ class SQLiteEngine(AsyncStorageEngine):
                     invalidate_collection_features_cache=self._invalidate_collection_features_cache,
                 )
 
+    def _iter_documents_for_classic_text_query_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        documents: Any,
+        *,
+        semantics: EngineFindSemantics,
+        context: ClientSession | None = None,
+    ):
+        text_query = semantics.text_query
+        if text_query is None:
+            return documents
+        indexes = self._load_indexes(db_name, coll_name)
+        _index_name, field = resolve_classic_text_index(indexes)
+
+        def _iter():
+            for document in documents:
+                score = classic_text_score(document, field=field, query=text_query)
+                if score is None:
+                    continue
+                yield attach_text_score(document, score)
+
+        return _iter()
+
     def _iter_scan_documents_sync(
         self,
         db_name: str,
@@ -3576,7 +3687,13 @@ class SQLiteEngine(AsyncStorageEngine):
         python_semantics = replace(semantics, compiled_query=None)
         deadline = semantics.deadline
         if self._is_profile_namespace(coll_name):
-            documents_iter = iter(self._profile_documents(db_name))
+            documents_iter = self._iter_documents_for_classic_text_query_sync(
+                db_name,
+                coll_name,
+                iter(self._profile_documents(db_name)),
+                semantics=python_semantics,
+                context=context,
+            )
             if python_semantics.sort is None:
                 for document in stream_finalize_documents(
                     iter_filtered_documents(documents_iter, python_semantics),
@@ -3615,6 +3732,8 @@ class SQLiteEngine(AsyncStorageEngine):
                         context=context,
                     )
         if (
+            semantics.text_query is None
+            and
             semantics.sort is None
             and semantics.skip == 0
             and semantics.limit == 1
@@ -3706,7 +3825,13 @@ class SQLiteEngine(AsyncStorageEngine):
                             pass
                     return
                 except (NotImplementedError, TypeError):
-                    documents_iter = (document for _, document in self._load_documents(db_name, coll_name))
+                    documents_iter = self._iter_documents_for_classic_text_query_sync(
+                        db_name,
+                        coll_name,
+                        (document for _, document in self._load_documents(db_name, coll_name)),
+                        semantics=python_semantics,
+                        context=context,
+                    )
                     try:
                         if python_semantics.sort is None:
                             for document in stream_finalize_documents(
@@ -3881,6 +4006,7 @@ class SQLiteEngine(AsyncStorageEngine):
         unique: bool,
         name: str | None,
         sparse: bool,
+        hidden: bool,
         partial_filter_expression: Filter | None,
         expire_after_seconds: int | None,
         max_time_ms: int | None,
@@ -3898,6 +4024,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     unique=unique,
                     name=name,
                     sparse=sparse,
+                    hidden=hidden,
                     partial_filter_expression=partial_filter_expression,
                     expire_after_seconds=expire_after_seconds,
                     deadline=deadline,
@@ -4720,6 +4847,7 @@ class SQLiteEngine(AsyncStorageEngine):
         unique: bool = False,
         name: str | None = None,
         sparse: bool = False,
+        hidden: bool = False,
         partial_filter_expression: Filter | None = None,
         expire_after_seconds: int | None = None,
         max_time_ms: int | None = None,
@@ -4733,6 +4861,7 @@ class SQLiteEngine(AsyncStorageEngine):
             unique,
             name,
             sparse,
+            hidden,
             partial_filter_expression,
             expire_after_seconds,
             max_time_ms,
@@ -4944,6 +5073,26 @@ class SQLiteEngine(AsyncStorageEngine):
                 details = {**details, **virtual_details}
             else:
                 details = {"engine_details": details, **virtual_details}
+        if semantics.text_query is not None:
+            text_index_name, text_field = resolve_classic_text_index(
+                await self._run_blocking(self._load_indexes, db_name, coll_name),
+            )
+            text_details = {
+                "textQuery": {
+                    "backend": "python",
+                    "index": text_index_name,
+                    "field": text_field,
+                    "rawQuery": semantics.text_query.raw_query,
+                    "terms": list(semantics.text_query.terms),
+                    "tokenizer": "lowercase+punctuation-split",
+                    "caseSensitive": False,
+                    "diacriticSensitive": False,
+                }
+            }
+            if isinstance(details, dict):
+                details = {**details, **text_details}
+            else:
+                details = text_details
         planning_issues = sqlite_planning_issues(execution_plan.fallback_reason)
         pushdown_hints = sqlite_pushdown_followup_hints(
             semantics.query_plan,

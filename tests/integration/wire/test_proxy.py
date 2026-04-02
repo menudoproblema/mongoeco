@@ -245,6 +245,118 @@ class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(explained["comment"], "wire count explain")
             self.assertEqual(explained["ok"], 1.0)
 
+    async def test_proxy_supports_classic_text_query_and_text_score_through_pymongo(self):
+        async with AsyncMongoEcoProxyServer(engine=MemoryEngine(), mongodb_dialect="8.0") as proxy:
+            uri = proxy.address.uri
+
+            def _exercise() -> tuple[list[dict], dict]:
+                client = PyMongoClient(
+                    uri,
+                    serverSelectionTimeoutMS=3000,
+                    directConnection=True,
+                )
+                try:
+                    collection = client.alpha.articles
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "content": "Ada wrote the first algorithm"},
+                            {"_id": "2", "content": "Grace built the first compiler"},
+                        ]
+                    )
+                    collection.create_index([("content", "text")], name="content_text")
+                    found = list(
+                        collection.find(
+                            {"$text": {"$search": "algorithm"}},
+                            {"score": {"$meta": "textScore"}},
+                            sort={"score": {"$meta": "textScore"}},
+                        )
+                    )
+                    explained = client.alpha.command(
+                        {
+                            "explain": {
+                                "find": "articles",
+                                "filter": {"$text": {"$search": "algorithm"}},
+                            }
+                        }
+                    )
+                    return found, explained
+                finally:
+                    client.close()
+
+            found, explained = await asyncio.to_thread(_exercise)
+
+            self.assertEqual(found, [{"_id": "1", "score": 1.0}])
+            self.assertEqual(explained["engine"], "memory")
+            self.assertEqual(explained["strategy"], "python-text")
+            self.assertIn("textQuery", explained["details"])
+
+    async def test_proxy_supports_advanced_projection_and_hidden_indexes(self):
+        async with AsyncMongoEcoProxyServer(engine=MemoryEngine(), mongodb_dialect="8.0") as proxy:
+            uri = proxy.address.uri
+
+            def _exercise() -> tuple[dict, list[dict], dict[str, dict]]:
+                client = PyMongoClient(
+                    uri,
+                    serverSelectionTimeoutMS=3000,
+                    directConnection=True,
+                )
+                try:
+                    collection = client.alpha.schools
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "students": [{"school": 101, "age": 10}, {"school": 102, "age": 11}],
+                            "tags": ["python", "mongo", "sqlite"],
+                            "grades": [{"subject": "math", "score": 10}, {"subject": "history", "score": 8}],
+                        }
+                    )
+                    positional = collection.find_one(
+                        {"students.school": 102},
+                        {"students.$": 1, "_id": 0},
+                    )
+                    projected = list(
+                        collection.find(
+                            {"_id": "1"},
+                            {"tags": {"$slice": 2}, "grades": {"$elemMatch": {"subject": "history"}}, "_id": 0},
+                        )
+                    )
+                    hidden_result = client.alpha.command(
+                        {
+                            "createIndexes": "schools",
+                            "indexes": [{"key": {"tags": 1}, "name": "tags_hidden", "hidden": True}],
+                        }
+                    )
+                    try:
+                        list(collection.find({"_id": "1"}, hint="tags_hidden"))
+                    except Exception as exc:
+                        hidden_error = str(exc)
+                    else:  # pragma: no cover
+                        hidden_error = None
+                    return (
+                        {
+                            "positional": positional,
+                            "projected": projected,
+                            "hiddenResult": hidden_result,
+                            "hiddenError": hidden_error,
+                        },
+                        list(collection.list_indexes()),
+                        collection.index_information(),
+                    )
+                finally:
+                    client.close()
+
+            payload, indexes, info = await asyncio.to_thread(_exercise)
+
+            self.assertEqual(payload["positional"], {"students": [{"school": 102, "age": 11}]})
+            self.assertEqual(
+                payload["projected"],
+                [{"tags": ["python", "mongo"], "grades": [{"subject": "history", "score": 8}]}],
+            )
+            self.assertEqual(payload["hiddenResult"]["ok"], 1.0)
+            self.assertIn("hint does not correspond to a usable index", payload["hiddenError"])
+            self.assertIn("tags_hidden", {document["name"] for document in indexes})
+            self.assertTrue(info["tags_hidden"]["hidden"])
+
     async def test_proxy_supports_admin_introspection_and_profile_commands_through_pymongo(self):
         async with AsyncMongoEcoProxyServer(engine=MemoryEngine(), mongodb_dialect="8.0") as proxy:
             uri = proxy.address.uri
