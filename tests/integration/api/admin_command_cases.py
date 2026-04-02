@@ -60,6 +60,14 @@ async def assert_list_commands_and_connection_status_commands_return_local_admin
         case.assertIn("find", commands["commands"])
         case.assertIn("aggregate", commands["commands"])
         case.assertIn("explain", commands["commands"])
+        case.assertEqual(commands["commands"]["find"]["adminFamily"], "admin_read")
+        case.assertTrue(commands["commands"]["find"]["supportsWire"])
+        case.assertTrue(commands["commands"]["find"]["supportsExplain"])
+        case.assertTrue(commands["commands"]["find"]["supportsComment"])
+        case.assertIn("comment", commands["commands"]["find"]["supportedOptions"])
+        case.assertFalse(commands["commands"]["listCommands"]["supportsExplain"])
+        case.assertFalse(commands["commands"]["listCommands"]["supportsComment"])
+        case.assertIn("local support", commands["commands"]["find"]["help"])
         case.assertEqual(commands["ok"], 1.0)
         case.assertEqual(connection_status["authInfo"]["authenticatedUsers"], [])
         case.assertEqual(connection_status["authInfo"]["authenticatedUserRoles"], [])
@@ -67,18 +75,138 @@ async def assert_list_commands_and_connection_status_commands_return_local_admin
         case.assertEqual(connection_status["ok"], 1.0)
 
 
-async def assert_server_status_command_returns_local_runtime_metadata(case, open_client: OpenClient) -> None:
-    async with open_client("memory", mongodb_dialect="8.0") as client:
-        status = await _maybe_await(client.alpha.command("serverStatus"))
+async def assert_server_status_command_returns_local_runtime_metadata(case, engine_names, open_client: OpenClient) -> None:
+    for engine_name in engine_names:
+        with case.subTest(engine=engine_name):
+            async with open_client(engine_name, mongodb_dialect="8.0") as client:
+                status = await _maybe_await(client.alpha.command("serverStatus"))
 
-        case.assertEqual(status["process"], "mongod")
-        case.assertEqual(status["version"], "8.0.0")
-        case.assertIsInstance(status["pid"], int)
-        case.assertGreaterEqual(status["uptime"], 0)
-        case.assertGreaterEqual(status["uptimeMillis"], 0)
-        case.assertEqual(status["connections"]["current"], 1)
-        case.assertEqual(status["storageEngine"]["name"], "memory")
-        case.assertEqual(status["ok"], 1.0)
+                case.assertEqual(status["process"], "mongod")
+                case.assertEqual(status["version"], "8.0.0")
+                case.assertIsInstance(status["pid"], int)
+                case.assertGreaterEqual(status["uptime"], 0)
+                case.assertGreaterEqual(status["uptimeMillis"], 0)
+                case.assertEqual(status["connections"]["current"], 1)
+                case.assertEqual(status["storageEngine"]["name"], engine_name)
+                case.assertEqual(status["asserts"]["regular"], 0)
+                case.assertEqual(status["opcounters"]["command"], 0)
+                case.assertTrue(status["mongoeco"]["embedded"])
+                case.assertEqual(status["mongoeco"]["dialectVersion"], "8.0")
+                case.assertGreaterEqual(status["mongoeco"]["adminCommandSurfaceCount"], 1)
+                case.assertGreaterEqual(status["mongoeco"]["wireCommandSurfaceCount"], 1)
+                case.assertGreaterEqual(status["mongoeco"]["adminFamilies"]["admin_read"], 1)
+                case.assertGreaterEqual(status["mongoeco"]["explainableCommandCount"], 1)
+                case.assertIn("collation", status["mongoeco"])
+                case.assertIn("sdam", status["mongoeco"])
+                case.assertIn("changeStreams", status["mongoeco"])
+                case.assertIn("engineRuntime", status["mongoeco"])
+                case.assertIn("planner", status["mongoeco"]["engineRuntime"])
+                case.assertIn("search", status["mongoeco"]["engineRuntime"])
+                case.assertIn("caches", status["mongoeco"]["engineRuntime"])
+                case.assertIn("selectedBackend", status["mongoeco"]["collation"])
+                case.assertIn("fullSdam", status["mongoeco"]["sdam"])
+                case.assertEqual(status["mongoeco"]["changeStreams"]["implementation"], "local")
+                case.assertIn("jsonBackend", status["mongoeco"])
+                case.assertEqual(status["mongoeco"]["profile"]["trackedDatabases"], 0)
+                case.assertIn("hybridSortFallback", status["mongoeco"]["engineRuntime"]["planner"])
+                case.assertIn("simulatedIndexLatencySeconds", status["mongoeco"]["engineRuntime"]["search"])
+                case.assertIn("declaredIndexCount", status["mongoeco"]["engineRuntime"]["search"])
+                case.assertIn("pendingIndexCount", status["mongoeco"]["engineRuntime"]["search"])
+                case.assertEqual(status["ok"], 1.0)
+
+                if engine_name == "memory":
+                    case.assertEqual(status["mongoeco"]["engineRuntime"]["planner"]["engine"], "python")
+                    case.assertEqual(status["mongoeco"]["engineRuntime"]["search"]["backend"], "python")
+                    case.assertIn(
+                        "trackedCollections",
+                        status["mongoeco"]["engineRuntime"]["caches"],
+                    )
+                else:
+                    case.assertEqual(status["mongoeco"]["engineRuntime"]["planner"]["engine"], "sqlite")
+                    case.assertIn(
+                        "sql",
+                        status["mongoeco"]["engineRuntime"]["planner"]["pushdownModes"],
+                    )
+                    case.assertEqual(
+                        status["mongoeco"]["engineRuntime"]["search"]["backend"],
+                        "fts5-or-python-fallback",
+                    )
+                    case.assertIn(
+                        "fts5Available",
+                        status["mongoeco"]["engineRuntime"]["search"],
+                    )
+                    case.assertIn(
+                        "ensuredMultikeyPhysicalIndexCount",
+                        status["mongoeco"]["engineRuntime"]["caches"],
+                    )
+
+
+async def assert_server_status_opcounters_track_local_runtime_activity(case, engine_names, open_client: OpenClient) -> None:
+    for engine_name in engine_names:
+        with case.subTest(engine=engine_name):
+            async with open_client(engine_name, mongodb_dialect="8.0") as client:
+                database = await _maybe_await(client.get_database("alpha"))
+                collection = await _maybe_await(database.get_collection("events"))
+                await _maybe_await(
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "seq": 1, "kind": "view"},
+                            {"_id": "2", "seq": 2, "kind": "view"},
+                            {"_id": "3", "seq": 3, "kind": "view"},
+                        ]
+                    )
+                )
+                cursor = await _maybe_await(collection.find({}, sort=[("seq", 1)], batch_size=1))
+                await _maybe_await(cursor.to_list())
+                await _maybe_await(collection.find_one({"_id": "1"}))
+                await _maybe_await(collection.update_one({"_id": "1"}, {"$set": {"kind": "click"}}))
+                await _maybe_await(collection.delete_one({"_id": "3"}))
+                aggregation_cursor = await _maybe_await(collection.aggregate([{"$match": {"kind": "view"}}]))
+                await _maybe_await(aggregation_cursor.to_list())
+                await _maybe_await(database.command("ping"))
+
+                status = await _maybe_await(database.command("serverStatus"))
+
+                case.assertGreaterEqual(status["opcounters"]["insert"], 1)
+                case.assertGreaterEqual(status["opcounters"]["query"], 1)
+                case.assertGreaterEqual(status["opcounters"]["update"], 1)
+                case.assertGreaterEqual(status["opcounters"]["delete"], 1)
+                case.assertGreaterEqual(status["opcounters"]["getmore"], 1)
+                case.assertGreaterEqual(status["opcounters"]["command"], 2)
+
+
+async def assert_database_command_supports_db_hash_and_profile_status(case, engine_names, open_client: OpenClient) -> None:
+    for engine_name in engine_names:
+        with case.subTest(engine=engine_name):
+            async with open_client(engine_name) as client:
+                database = await _maybe_await(client.get_database("profiled"))
+                collection = await _maybe_await(database.get_collection("users"))
+
+                await _maybe_await(collection.insert_many([{"_id": "1", "name": "Ada"}, {"_id": "2", "name": "Bob"}]))
+                await _maybe_await(collection.create_index([("name", 1)], name="name_idx"))
+
+                full_hash = await _maybe_await(database.command({"dbHash": 1}))
+                filtered_hash = await _maybe_await(database.command({"dbHash": 1, "collections": ["users"]}))
+                profile_enabled = await _maybe_await(database.command({"profile": 2, "slowms": 0}))
+                await _maybe_await(collection.find_one({"_id": "1"}))
+                profile_status = await _maybe_await(database.command({"profile": -1}))
+
+                case.assertIn("users", full_hash["collections"])
+                case.assertEqual(filtered_hash["collections"], {"users": full_hash["collections"]["users"]})
+                case.assertEqual(len(full_hash["md5"]), 32)
+                case.assertEqual(len(filtered_hash["md5"]), 32)
+                case.assertGreaterEqual(full_hash["timeMillis"], 0)
+                case.assertEqual(profile_enabled["level"], 2)
+                case.assertEqual(profile_enabled["entryCount"], 0)
+                case.assertTrue(profile_enabled["namespaceVisible"])
+                case.assertGreaterEqual(profile_enabled["trackedDatabases"], 1)
+                case.assertGreaterEqual(profile_enabled["visibleNamespaces"], 1)
+                case.assertEqual(profile_status["was"], 2)
+                case.assertEqual(profile_status["level"], 2)
+                case.assertGreaterEqual(profile_status["entryCount"], 1)
+                case.assertTrue(profile_status["namespaceVisible"])
+                case.assertGreaterEqual(profile_status["trackedDatabases"], 1)
+                case.assertGreaterEqual(profile_status["visibleNamespaces"], 1)
 
 
 async def assert_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata(case, open_client: OpenClient) -> None:
@@ -226,8 +354,8 @@ async def assert_database_command_supports_collection_index_count_and_distinct_c
                             "id": 0,
                             "ns": "alpha.events",
                             "firstBatch": [
-                                {"name": "_id_", "key": {"_id": 1}, "unique": True},
-                                {"name": "kind_idx", "key": {"kind": 1}, "unique": False},
+                                {"name": "_id_", "key": {"_id": 1}, "unique": True, "ns": "alpha.events"},
+                                {"name": "kind_idx", "key": {"kind": 1}, "unique": False, "ns": "alpha.events"},
                             ],
                         },
                         "ok": 1.0,
@@ -343,7 +471,15 @@ async def assert_database_command_supports_rename_collection_within_current_data
         with case.subTest(engine=engine_name):
             async with open_client(engine_name) as client:
                 await _maybe_await(client.alpha.events.insert_one({"_id": "1", "kind": "view"}))
+                await _maybe_await(client.alpha.events.insert_one({"_id": "ttl-1", "expires_at": "soon"}))
                 await _maybe_await(client.alpha.events.create_index([("kind", 1)], name="kind_idx"))
+                await _maybe_await(
+                    client.alpha.events.create_index(
+                        [("expires_at", 1)],
+                        name="expires_at_ttl",
+                        expire_after_seconds=30,
+                    )
+                )
                 await _maybe_await(client.alpha.archived.insert_one({"_id": "existing"}))
 
                 renamed = await _maybe_await(
@@ -453,11 +589,19 @@ async def assert_database_command_supports_explain_for_find_and_aggregate(case, 
                 )
 
                 case.assertEqual(find_explain["verbosity"], "queryPlanner")
+                case.assertEqual(find_explain["command"], "find")
+                case.assertEqual(find_explain["explained_command"], "find")
+                case.assertEqual(find_explain["collection"], "events")
+                case.assertEqual(find_explain["namespace"], "alpha.events")
                 case.assertEqual(find_explain["hint"], "kind_idx")
                 case.assertEqual(find_explain["comment"], "find explain")
                 case.assertEqual(find_explain["max_time_ms"], 50)
                 case.assertEqual(find_explain["batch_size"], 1)
                 case.assertEqual(find_explain["ok"], 1.0)
+                case.assertEqual(aggregate_explain["command"], "aggregate")
+                case.assertEqual(aggregate_explain["explained_command"], "aggregate")
+                case.assertEqual(aggregate_explain["collection"], "events")
+                case.assertEqual(aggregate_explain["namespace"], "alpha.events")
                 case.assertEqual(aggregate_explain["hint"], "kind_idx")
                 case.assertEqual(aggregate_explain["comment"], "agg explain")
                 case.assertEqual(aggregate_explain["max_time_ms"], 50)
@@ -503,17 +647,110 @@ async def assert_database_command_supports_explain_for_update_and_delete(case, e
                 )
 
                 case.assertEqual(update_explain["command"], "update")
+                case.assertEqual(update_explain["explained_command"], "update")
+                case.assertEqual(update_explain["collection"], "events")
+                case.assertEqual(update_explain["namespace"], "alpha.events")
                 case.assertFalse(update_explain["multi"])
                 case.assertEqual(update_explain["hint"], "kind_idx")
                 case.assertEqual(update_explain["comment"], "update explain")
                 case.assertEqual(update_explain["max_time_ms"], 50)
                 case.assertEqual(update_explain["ok"], 1.0)
                 case.assertEqual(delete_explain["command"], "delete")
+                case.assertEqual(delete_explain["explained_command"], "delete")
+                case.assertEqual(delete_explain["collection"], "events")
+                case.assertEqual(delete_explain["namespace"], "alpha.events")
                 case.assertEqual(delete_explain["limit"], 1)
                 case.assertEqual(delete_explain["hint"], "kind_idx")
                 case.assertEqual(delete_explain["comment"], "delete explain")
                 case.assertEqual(delete_explain["max_time_ms"], 50)
                 case.assertEqual(delete_explain["ok"], 1.0)
+
+
+async def assert_database_command_supports_explain_for_count_distinct_and_find_and_modify(case, engine_names, open_client: OpenClient) -> None:
+    for engine_name in engine_names:
+        with case.subTest(engine=engine_name):
+            async with open_client(engine_name) as client:
+                await _maybe_await(
+                    client.alpha.events.insert_many(
+                        [{"_id": "1", "kind": "view", "tag": "python"}, {"_id": "2", "kind": "click", "tag": "mongo"}]
+                    )
+                )
+                await _maybe_await(client.alpha.events.create_index([("kind", 1)], name="kind_idx"))
+
+                count_explain = await _maybe_await(
+                    client.alpha.command(
+                        {
+                            "explain": {
+                                "count": "events",
+                                "query": {"kind": "view"},
+                                "hint": "kind_idx",
+                                "comment": "count explain",
+                                "maxTimeMS": 50,
+                            }
+                        }
+                    )
+                )
+                distinct_explain = await _maybe_await(
+                    client.alpha.command(
+                        {
+                            "explain": {
+                                "distinct": "events",
+                                "key": "tag",
+                                "query": {"kind": "view"},
+                                "hint": "kind_idx",
+                                "comment": "distinct explain",
+                                "maxTimeMS": 50,
+                            }
+                        }
+                    )
+                )
+                find_and_modify_explain = await _maybe_await(
+                    client.alpha.command(
+                        {
+                            "explain": {
+                                "findAndModify": "events",
+                                "query": {"kind": "view"},
+                                "update": {"$set": {"done": True}},
+                                "sort": {"kind": 1},
+                                "hint": "kind_idx",
+                                "comment": "fam explain",
+                                "maxTimeMS": 50,
+                                "new": True,
+                                "upsert": True,
+                                "fields": {"_id": 1},
+                            }
+                        }
+                    )
+                )
+
+                case.assertEqual(count_explain["command"], "count")
+                case.assertEqual(count_explain["explained_command"], "count")
+                case.assertEqual(count_explain["collection"], "events")
+                case.assertEqual(count_explain["namespace"], "alpha.events")
+                case.assertEqual(count_explain["hint"], "kind_idx")
+                case.assertEqual(count_explain["comment"], "count explain")
+                case.assertEqual(count_explain["max_time_ms"], 50)
+                case.assertEqual(count_explain["ok"], 1.0)
+                case.assertEqual(distinct_explain["command"], "distinct")
+                case.assertEqual(distinct_explain["explained_command"], "distinct")
+                case.assertEqual(distinct_explain["collection"], "events")
+                case.assertEqual(distinct_explain["namespace"], "alpha.events")
+                case.assertEqual(distinct_explain["key"], "tag")
+                case.assertEqual(distinct_explain["hint"], "kind_idx")
+                case.assertEqual(distinct_explain["comment"], "distinct explain")
+                case.assertEqual(distinct_explain["max_time_ms"], 50)
+                case.assertEqual(distinct_explain["ok"], 1.0)
+                case.assertEqual(find_and_modify_explain["command"], "findAndModify")
+                case.assertEqual(find_and_modify_explain["explained_command"], "findAndModify")
+                case.assertEqual(find_and_modify_explain["collection"], "events")
+                case.assertEqual(find_and_modify_explain["namespace"], "alpha.events")
+                case.assertEqual(find_and_modify_explain["hint"], "kind_idx")
+                case.assertEqual(find_and_modify_explain["comment"], "fam explain")
+                case.assertEqual(find_and_modify_explain["max_time_ms"], 50)
+                case.assertTrue(find_and_modify_explain["new"])
+                case.assertTrue(find_and_modify_explain["upsert"])
+                case.assertEqual(find_and_modify_explain["fields"], {"_id": 1})
+                case.assertEqual(find_and_modify_explain["ok"], 1.0)
 
 
 async def assert_database_command_supports_insert_update_and_delete(case, engine_names, open_client: OpenClient) -> None:
@@ -647,17 +884,25 @@ async def assert_database_command_supports_coll_stats_and_db_stats(case, engine_
                 case.assertEqual(coll_stats["nindexes"], 2)
                 case.assertGreater(coll_stats["size"], 0)
                 case.assertEqual(coll_stats["storageSize"], coll_stats["size"])
+                case.assertGreater(coll_stats["totalIndexSize"], 0)
+                case.assertEqual(coll_stats["scaleFactor"], 1)
                 case.assertEqual(coll_stats["ok"], 1.0)
                 case.assertEqual(db_stats["db"], "alpha")
                 case.assertEqual(db_stats["collections"], 1)
                 case.assertEqual(db_stats["objects"], 1)
                 case.assertEqual(db_stats["indexes"], 2)
                 case.assertEqual(db_stats["storageSize"], db_stats["dataSize"])
+                case.assertGreater(db_stats["indexSize"], 0)
+                case.assertEqual(db_stats["scaleFactor"], 1)
                 case.assertEqual(db_stats["ok"], 1.0)
                 case.assertLessEqual(scaled_coll_stats["size"], coll_stats["size"])
                 case.assertLessEqual(scaled_coll_stats["storageSize"], coll_stats["storageSize"])
+                case.assertLessEqual(scaled_coll_stats["totalIndexSize"], coll_stats["totalIndexSize"])
+                case.assertEqual(scaled_coll_stats["scaleFactor"], 2)
                 case.assertLessEqual(scaled_db_stats["dataSize"], db_stats["dataSize"])
                 case.assertLessEqual(scaled_db_stats["storageSize"], db_stats["storageSize"])
+                case.assertLessEqual(scaled_db_stats["indexSize"], db_stats["indexSize"])
+                case.assertEqual(scaled_db_stats["scaleFactor"], 2)
 
 
 async def assert_database_command_rejects_unsupported_commands(case, open_client: OpenClient) -> None:
@@ -699,15 +944,45 @@ async def assert_database_command_rejects_invalid_command_shapes(case, open_clie
         with case.assertRaises(TypeError):
             await _maybe_await(client.alpha.command({"aggregate": "events", "pipeline": [], "cursor": 1}))  # type: ignore[arg-type]
         with case.assertRaises(TypeError):
+            await _maybe_await(client.alpha.command({"aggregate": "events", "pipeline": [], "allowDiskUse": 1}))  # type: ignore[arg-type]
+        with case.assertRaises(TypeError):
+            await _maybe_await(client.alpha.command({"aggregate": "events", "pipeline": [], "let": 1}))  # type: ignore[arg-type]
+        with case.assertRaises(TypeError):
             await _maybe_await(client.alpha.command({"explain": 1}))  # type: ignore[arg-type]
+        with case.assertRaises(TypeError):
+            await _maybe_await(client.alpha.command({"explain": {"find": "events"}, "verbosity": 1}))  # type: ignore[arg-type]
         with case.assertRaises(TypeError):
             await _maybe_await(client.alpha.command({"connectionStatus": 1, "showPrivileges": 1}))  # type: ignore[arg-type]
         with case.assertRaises(TypeError):
+            await _maybe_await(client.alpha.command({"find": "events", "projection": 1}))  # type: ignore[arg-type]
+        with case.assertRaises(TypeError):
+            await _maybe_await(client.alpha.command({"find": "events", "sort": 1}))  # type: ignore[arg-type]
+        with case.assertRaises(TypeError):
+            await _maybe_await(client.alpha.command({"count": "events", "query": 1}))  # type: ignore[arg-type]
+        with case.assertRaises(TypeError):
             await _maybe_await(client.alpha.command({"renameCollection": "events", "to": "alpha.logs"}))  # type: ignore[arg-type]
+        with case.assertRaises(TypeError):
+            await _maybe_await(client.alpha.command({"distinct": "events", "key": ""}))
+        with case.assertRaises(TypeError):
+            await _maybe_await(client.alpha.command("listCollections", comment=1))  # type: ignore[arg-type]
+        with case.assertRaises(TypeError):
+            await _maybe_await(client.alpha.command({"listIndexes": "events", "comment": 1}))  # type: ignore[arg-type]
+        with case.assertRaises(TypeError):
+            await _maybe_await(client.alpha.command({"validate": "events", "comment": 1}))  # type: ignore[arg-type]
+        with case.assertRaises(TypeError):
+            await _maybe_await(client.alpha.command({"validate": "events", "background": "yes"}))  # type: ignore[arg-type]
+        with case.assertRaises(TypeError):
+            await _maybe_await(client.alpha.command({"count": "events", "limit": -1}))  # type: ignore[arg-type]
+        with case.assertRaises(TypeError):
+            await _maybe_await(
+                client.alpha.command(
+                    {"findAndModify": "events", "query": {}, "update": {"$set": {"done": True}}, "let": 1}
+                )  # type: ignore[arg-type]
+            )
         with case.assertRaises(OperationFailure):
             await _maybe_await(client.alpha.command({"findAndModify": "events"}))
-        with case.assertRaises(OperationFailure):
-            await _maybe_await(client.alpha.command({"explain": {"count": "events"}}))
+        with case.assertRaises(TypeError):
+            await _maybe_await(client.alpha.command({"explain": {"distinct": "events", "key": ""}}))
         with case.assertRaises(TypeError):
             await _maybe_await(client.alpha.command({"explain": {"update": "events", "updates": []}}))
         with case.assertRaises(OperationFailure):
@@ -719,17 +994,45 @@ async def assert_validate_collection_returns_metadata_and_rejects_missing_namesp
         with case.subTest(engine=engine_name):
             async with open_client(engine_name) as client:
                 await _maybe_await(client.alpha.events.insert_one({"_id": "1", "kind": "view"}))
+                await _maybe_await(client.alpha.events.insert_one({"_id": "ttl-1", "expires_at": "soon"}))
                 await _maybe_await(client.alpha.events.create_index([("kind", 1)], name="kind_idx"))
+                await _maybe_await(
+                    client.alpha.events.create_index(
+                        [("expires_at", 1)],
+                        name="expires_at_ttl",
+                        expire_after_seconds=30,
+                    )
+                )
 
                 validated = await _maybe_await(client.alpha.validate_collection("events"))
                 validated_from_command = await _maybe_await(client.alpha.command({"validate": "events"}))
+                validated_full = await _maybe_await(
+                    client.alpha.command(
+                        {"validate": "events", "scandata": True, "full": True, "background": False}
+                    )
+                )
 
                 case.assertEqual(validated["ns"], "alpha.events")
-                case.assertEqual(validated["nrecords"], 1)
-                case.assertEqual(validated["nIndexes"], 2)
-                case.assertEqual(validated["keysPerIndex"], {"_id_": 1, "kind_idx": 1})
+                case.assertEqual(validated["nrecords"], 2)
+                case.assertEqual(validated["nIndexes"], 3)
+                case.assertEqual(validated["keysPerIndex"], {"_id_": 1, "kind_idx": 1, "expires_at_ttl": 1})
                 case.assertTrue(validated["valid"])
+                case.assertEqual(
+                    validated["warnings"],
+                    [
+                        "TTL index 'expires_at_ttl' on 'events.expires_at' has 1 document(s) with no date values; those documents will not expire under local TTL semantics",
+                    ],
+                )
                 case.assertEqual(validated_from_command, validated)
+                case.assertEqual(
+                    validated_full["warnings"],
+                    [
+                        "validate scandata is accepted for compatibility but does not change local validation behavior",
+                        "validate full is accepted for compatibility but does not change local validation behavior",
+                        "validate background is accepted for compatibility but validation runs synchronously in mongoeco",
+                        "TTL index 'expires_at_ttl' on 'events.expires_at' has 1 document(s) with no date values; those documents will not expire under local TTL semantics",
+                    ],
+                )
 
     async with open_client("memory") as client:
         with case.assertRaises(CollectionInvalid):

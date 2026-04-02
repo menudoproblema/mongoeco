@@ -418,6 +418,66 @@ class FilteringHelperTests(unittest.TestCase):
         self.assertFalse(QueryEngine.match({"tenant": "b", "name": "Ada"}, filter_spec))
         self.assertFalse(QueryEngine.match({"tenant": "a"}, filter_spec))
 
+    def test_query_engine_supports_richer_top_level_json_schema_constraints(self):
+        filter_spec = {
+            "$jsonSchema": {
+                "required": ["tenant", "profile", "score"],
+                "additionalProperties": False,
+                "properties": {
+                    "_id": {"bsonType": "string"},
+                    "tenant": {"bsonType": "string", "minLength": 1, "maxLength": 4},
+                    "score": {"bsonType": "int", "minimum": 5, "maximum": 10},
+                    "profile": {
+                        "bsonType": "object",
+                        "required": ["name", "tags"],
+                        "additionalProperties": False,
+                        "properties": {
+                            "name": {"bsonType": "string", "minLength": 3, "maxLength": 5},
+                            "tags": {
+                                "bsonType": "array",
+                                "items": {"bsonType": "string", "minLength": 2},
+                            },
+                        },
+                    },
+                },
+            },
+            "tenant": "a",
+        }
+
+        self.assertTrue(
+            QueryEngine.match(
+                {
+                    "_id": "1",
+                    "tenant": "a",
+                    "score": 7,
+                    "profile": {"name": "Ada", "tags": ["ml", "db"]},
+                },
+                filter_spec,
+            )
+        )
+        self.assertFalse(
+            QueryEngine.match(
+                {
+                    "_id": "2",
+                    "tenant": "a",
+                    "score": 4,
+                    "profile": {"name": "Ada", "tags": ["ml", "db"]},
+                },
+                filter_spec,
+            )
+        )
+        self.assertFalse(
+            QueryEngine.match(
+                {
+                    "_id": "3",
+                    "tenant": "a",
+                    "score": 7,
+                    "profile": {"name": "Ada", "tags": ["x"], "extra": True},
+                },
+                filter_spec,
+            )
+        )
+
     def test_query_engine_matches_dbref_subfields_in_filters(self):
         document = {
             "author": DBRef(
@@ -472,5 +532,36 @@ class FilteringHelperTests(unittest.TestCase):
             QueryEngine.match(
                 {"tenant": "b", "age": 11},
                 {"$nor": [schema_clause]},
+            )
+        )
+
+    def test_query_engine_supports_local_geo_subset(self):
+        document = {
+            "home": {"type": "Point", "coordinates": [0, 0]},
+            "work": [5, 5],
+        }
+
+        self.assertTrue(
+            QueryEngine.match(
+                document,
+                {"home": {"$geoWithin": {"$geometry": {"type": "Polygon", "coordinates": [[[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]]]}}}},
+            )
+        )
+        self.assertTrue(
+            QueryEngine.match(
+                document,
+                {"work": {"$geoIntersects": {"$geometry": {"type": "Point", "coordinates": [5, 5]}}}},
+            )
+        )
+        self.assertTrue(
+            QueryEngine.match(
+                document,
+                {"home": {"$near": {"$geometry": {"type": "Point", "coordinates": [1, 1]}, "$maxDistance": 2}}},
+            )
+        )
+        self.assertFalse(
+            QueryEngine.match(
+                document,
+                {"home": {"$nearSphere": {"$geometry": {"type": "Point", "coordinates": [10, 10]}, "$maxDistance": 2}}},
             )
         )

@@ -1,5 +1,10 @@
 # Compatibility Guide
 
+Arquitectura relacionada:
+
+* [docs/architecture/index.md](docs/architecture/index.md)
+* [docs/architecture/testing-and-compatibility.md](docs/architecture/testing-and-compatibility.md)
+
 Esta guía resume cómo configurar `mongoeco` cuando quieres controlar:
 
 * la semántica objetivo de MongoDB (`mongodb_dialect`)
@@ -30,6 +35,21 @@ Consecuencias prácticas:
 * no se aceptan como objetivo de diseño semánticas específicas de MongoDB `6.x` o anteriores
 * no se aceptan como objetivo de diseño firmas o comportamientos específicos de PyMongo anteriores a `4.9`
 * cuando se amplía superficie pública o semántica, la referencia es siempre PyMongo `4.9+` sobre dialectos MongoDB `7.0+`
+
+## 1.2 Subset embebido honesto
+
+Dentro de esos ejes, `mongoeco` sigue modelando un runtime embebido/local, no
+un servidor MongoDB completo.
+
+Esto implica:
+
+* `currentOp` y `killOp` existen solo con semántica local y best-effort;
+* `vectorSearch` sigue siendo exact search local, sin ANN;
+* `$merge`, `$densify` y `$fill` existen como subset explícito;
+* los pipeline-style updates ya están soportados end-to-end para su subset;
+* geoespacial entra solo como subset local point-only;
+* `$text` clásico sigue siendo un área en expansión y no debe inferirse como
+  “MongoDB completo” por la mera presencia de tipos o metadata.
 
 ## 2. Configuración explícita recomendada
 
@@ -222,6 +242,55 @@ Para CI y suites de compatibilidad:
 
 * `mongodb_dialect` fijado explícitamente
 * `pymongo_profile` fijado explícitamente, o `strict-auto-installed`
+
+## 7.1 Surface administrativa local actual
+
+Para un runtime embebido/local, la surface administrativa ya cubre:
+
+* introspección y estado local: `buildInfo`, `hello`, `serverStatus`,
+  `connectionStatus`, `hostInfo`, `getCmdLineOpts`, `whatsmyuri`,
+  `listCommands`, `currentOp`, `killOp`, `profile`;
+* namespace e índices: `listCollections`, `listDatabases`, `create`, `drop`,
+  `renameCollection`, `dropDatabase`, `listIndexes`, `createIndexes`,
+  `dropIndexes`;
+* lectura/escritura administrativa: `find`, `aggregate`, `count`, `distinct`,
+  `insert`, `update`, `delete`, `findAndModify`;
+* validación y observabilidad: `collStats`, `dbStats`, `dbHash`, `validate`,
+  `explain`.
+
+Límites conscientes:
+
+* no hay administración distribuida de cluster, réplica o sharding;
+* no hay `usersInfo`/`createUser`/`dropUser` completos;
+* `killOp` solo cancela operaciones locales registradas como cancelables;
+* el wire passthrough replica esta misma surface local, no una surface de
+  servidor completa.
+
+## 7.2 Subset geoespacial local actual
+
+El runtime local soporta ya un subset geoespacial explícito y limitado:
+
+* datos geoespaciales:
+  * `Point` GeoJSON;
+  * pares legacy `[x, y]`;
+* queries:
+  * `$geoWithin` con `Polygon` GeoJSON y legacy `$box`;
+  * `$geoIntersects` cuando el documento almacenado es un punto y la
+    geometría consultada es `Point` o `Polygon`;
+  * `$near` y `$nearSphere` como proximidad local point-only;
+* agregación:
+  * `$geoNear` con `near`, `distanceField`, `key`, `query`, `minDistance`,
+    `maxDistance` e `includeLocs` dentro del subset local.
+
+Límites conscientes:
+
+* no hay `LineString`, `Multi*` ni `GeometryCollection`;
+* `SQLiteEngine` ejecuta este subset con fallback Python explícito, no con
+  pushdown SQL;
+* `$nearSphere` conserva semántica local de distancia plana, no geodesia
+  completa;
+* la presencia de índices `2d`/`2dsphere` no implica todavía un planner
+  geoespacial especializado.
 
 ## 8. Modo de planning
 
@@ -463,6 +532,158 @@ Casos relevantes hoy:
 * `bulk_write(comment=...)` -> `effective`
 * `bulk_write(let=...)` -> `effective` cuando las operaciones usan filtros con `$expr`
 
+## 12.1 Superficie de comandos de base de datos
+
+Ademas de la matriz de opciones de la API publica estilo coleccion,
+`mongoeco` declara ya una matriz separada para comandos crudos de
+`database.command(...)` y para la misma surface expuesta via proxy `wire`.
+
+La diferencia importante es esta:
+
+* `database_commands`
+  * declara el inventario de comandos soportados, su familia administrativa y
+    si forman parte tambien de la surface wire local, y si tienen
+    superficie `explain` declarada
+  * en `listCommands`, esa metadata se expone tambien en runtime como
+    `adminFamily`, `supportsWire`, `supportsExplain` y `note`
+* `operation_options`
+  * usa nombres de opciones de la API Python publica (`max_time_ms`,
+    `batch_size`, `allow_disk_use`, ...)
+* `database_command_options`
+  * usa nombres crudos del documento de comando (`maxTimeMS`, `batchSize`,
+    `allowDiskUse`, `authorizedCollections`, ...)
+
+Casos relevantes ya declarados:
+
+* `database_commands.find` -> familia `admin_read`, `supports_wire=True`
+* `database_commands.dbHash` -> familia `admin_introspection`, `supports_wire=True`
+* `database_commands.findAndModify` -> familia `admin_find_and_modify`, `supports_wire=True`
+* `database_commands.profile` -> familia `admin_control`, `supports_wire=True`
+* `listCommands` expone `adminFamily`, `supportsWire` y `supportsExplain` por comando
+* `find(maxTimeMS, batchSize, hint, comment, let)` -> `effective`
+* `find(filter, projection, sort, skip, limit)` -> `effective`
+* `aggregate(maxTimeMS, batchSize, hint, comment, allowDiskUse, let)` -> `effective`
+* `findAndModify(arrayFilters, hint, maxTimeMS, let, comment, sort, bypassDocumentValidation)` -> `effective`
+* `listCollections(filter, nameOnly, authorizedCollections)` -> `effective`
+* `listDatabases(filter, nameOnly)` -> `effective`
+* `count(query, skip, limit, hint, comment, maxTimeMS)` -> `effective`
+* `distinct(query, hint, comment, maxTimeMS)` -> `effective`
+* `connectionStatus(showPrivileges)` -> `effective`
+* `dbHash(collections, comment)` -> `effective`
+* `profile(slowms)` -> `effective`
+* `createIndexes(comment, maxTimeMS)` -> `effective`
+* `validate(scandata, full, background, comment)` -> `effective`
+* `explain(find, aggregate, update, delete, count, distinct, findAndModify)` -> `effective`
+
+Notas observables adicionales de runtime:
+
+* `serverStatus.mongoeco` expone tambien `collation` y `sdam`, para hacer
+  visible el backend de collation seleccionado y el subconjunto SDAM local
+  soportado.
+* `serverStatus.mongoeco.changeStreams` expone tambien el backend local y un
+  resumen de estado del hub (`persistent`, `boundedHistory`, `retainedEvents`,
+  `currentOffset`, `nextToken`), sin necesidad de consultar APIs auxiliares.
+* `serverStatus.mongoeco` expone ademas `adminFamilies` y
+  `explainableCommandCount`, para resumir la surface administrativa local desde
+  la misma fuente de verdad que usa `listCommands` y el catálogo de compat.
+* `serverStatus.mongoeco.engineRuntime` expone tambien diagnostico estructurado
+  del engine activo (`planner`, `search`, `caches`), incluyendo en SQLite el
+  resumen de modos de pushdown (`sql` / `hybrid` / `python`), disponibilidad
+  de FTS5, numero de search indexes declarados/pendientes y tamano de caches
+  de indices/colecciones.
+* `serverStatus.opcounters` refleja ya actividad local real del runtime
+  embebido (`insert`, `query`, `update`, `delete`, `getmore`, `command`) en
+  lugar de quedar fijado a ceros.
+* `validate` mantiene `warnings=[]` en el camino base, pero cuando se usan
+  flags aceptados solo por compatibilidad (`scandata`, `full`, `background`)
+  devuelve avisos explicitos en vez de silenciarlos.
+* `validate` anade tambien warnings reales de TTL cuando detecta indices con
+  `expireAfterSeconds` cuyos documentos actuales no contienen ningun valor
+  fecha usable; esos documentos no expiraran bajo la semantica TTL local.
+* `collStats.totalIndexSize` y `dbStats.indexSize` reflejan ya una medida local
+  real del peso de metadata de indices, en lugar de quedar fijados a `0`.
+* `listIndexes` expone ya `ns` por documento en la surface administrativa, y
+  `explain` devuelve `collection` y `namespace` de forma uniforme para todas
+  las rutas soportadas.
+* `explain` en SQLite materializa tambien un bloque `pushdown` para hacer
+  visible si la ruta ejecuta SQL puro, plan hibrido o fallback Python, junto
+  con `usesSqlRuntime`, `pythonSort` y `fallbackReason` cuando aplica.
+  Cuando existe fallback del engine, `planning_issues` incorpora ya tambien un
+  issue estructurado con `scope=\"engine\"`, para que tooling no dependa solo de
+  interpretar `fallback_reason` como texto libre.
+* `aggregate(...).explain()` expone ya tambien un bloque top-level `pushdown`
+  con `mode`, `totalStages`, `pushedDownStages`, `remainingStages` y
+  `streamingEligible`, para hacer visible cuanto de la pipeline se resolvio en
+  la ruta de pushdown y cuanto queda en core.
+* SQLite traduce ya tambien `$size` simple, `$mod` entero sobre campos
+  escalares y un subconjunto seguro de `$regex` literal
+  (`literal`, `^literal`, `literal$`, `^literal$`, `^literal.*`) a SQL en
+  explain/ejecucion cuando la ruta no requiere fallback estructural. Si el
+  campo contiene arrays o reales, o si el regex usa opciones/semantica mas
+  amplia, la ruta sigue degradando a Python para preservar semantica BSON en
+  vez de forzar un pushdown incorrecto.
+* SQLite traduce ya tambien `$all` sobre arrays escalares simples y
+  `$elemMatch` muy acotado sobre arrays escalares top-level cuando el predicado
+  interno puede compilarse a una condicion SQL segura.
+* Dentro de ese subconjunto, SQLite acepta tambien `$options: "i"` solo para
+  patrones literales ASCII y fields que no contienen texto no ASCII, evitando
+  prometer un `ignoreCase` Unicode que el backend SQL no pueda reproducir con
+  fidelidad.
+* Las comparaciones de rango (`$gt`, `$gte`, `$lt`, `$lte`) admiten ya tambien
+  pushdown SQL en paths top-level que mezclan escalares y arrays, siempre que
+  todos los escalares y elementos del array pertenezcan al mismo tipo
+  comparable (`number`, `string` o `bool`).
+* `find(...).explain()` en SQLite expone ya tambien `pushdown_hints` cuando una
+  query cae a fallback por limites del engine, para señalar de forma
+  estructurada que operador esta bloqueando el pushdown y cual seria la siguiente
+  extension natural de esa familia. Esos hints ya clasifican no solo familias de
+  operador como `$regex`, `$mod`, `$all` o `$elemMatch`, sino tambien bloqueos
+  estructurales como `sort`, `collation`, `array-comparison` o
+  `array-traversal`.
+* `profile` expone ya tambien `namespaceVisible`, `trackedDatabases` y
+  `visibleNamespaces`, ademas de `level` y `entryCount`.
+* `listCommands` expone ya tambien `supportsComment` y `supportedOptions`, para
+  que tooling local pueda descubrir desde runtime que opciones raw estan
+  declaradas como soportadas por cada comando.
+* Los explains de search exponen tambien detalles de lifecycle/backend
+  (`backendAvailable`, `backendMaterialized`, `physicalName`, `readyAtEpoch`,
+  `fts5Available`) para hacer visible el estado real del indice de busqueda en
+  tiempo de ejecucion.
+
+La surface wire local queda verificada tambien contra cliente PyMongo real para
+familias administrativas ya soportadas como:
+
+* `listCollections`
+* `listDatabases`
+* `collStats`
+* `dbStats`
+* `listIndexes`
+* `createIndexes`
+* `dropIndexes`
+* `findAndModify`
+* `count`
+* `distinct`
+* `dbHash`
+* `validate`
+* `explain`
+
+La exportacion publica queda disponible en:
+
+```python
+from mongoeco.compat import (
+    export_database_command_catalog,
+    export_database_command_option_catalog,
+)
+
+command_catalog = export_database_command_catalog()
+option_catalog = export_database_command_option_catalog()
+
+assert command_catalog["find"]["family"] == "admin_read"
+assert command_catalog["find"]["supports_comment"] is True
+assert "comment" in command_catalog["find"]["supported_options"]
+assert option_catalog["find"]["batchSize"]["status"] == "effective"
+```
+
 Regla de mantenimiento:
 
 * no se debe promocionar una opción a `effective` sin test observable
@@ -477,7 +698,40 @@ Regla de mantenimiento:
   * `max_time_ms` en `update_one`, `update_many`, `replace_one`,
     `delete_one` y `delete_many`
 
-## 9. Qué no hace `mongoeco`
+## 13. Surface wire declarada dentro de 8.0 / 4.x
+
+Dentro del alcance soportado de `MongoDB 8.0` y `PyMongo 4.x`, el proxy wire
+declara ya cobertura contractual para familias administrativas y de control
+que antes quedaban menos fijadas por tests reales:
+
+* introspeccion/control:
+  * `buildInfo`
+  * `listCommands`
+  * `connectionStatus`
+  * `serverStatus`
+  * `hostInfo`
+  * `getCmdLineOpts`
+  * `whatsmyuri`
+  * `profile`
+  * `dbHash`
+* admin read/stats:
+  * `count`
+  * `distinct`
+  * `collStats`
+  * `dbStats`
+  * `validate`
+  * `explain`
+
+Ademas, el proxy endurece la validacion temprana de payloads malformed para:
+
+* `auth`: `authenticate`, `saslContinue`
+* `sessions`: `endSessions`, `commitTransaction`, `abortTransaction`
+* `cursor`: `getMore`, `killCursors`
+
+El objetivo es que el wire falle antes y con mensajes publicos estables,
+evitando que errores de shape atraviesen varias capas antes de materializarse.
+
+## 14. Qué no hace `mongoeco`
 
 `mongoeco` no:
 

@@ -482,6 +482,9 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(collection.calls), 1)
         explanation = await cursor.explain()
         self.assertFalse(explanation["streaming_batch_execution"])
+        self.assertEqual(explanation["pushdown"]["mode"], "pipeline-prefix")
+        self.assertEqual(explanation["pushdown"]["pushedDownStages"], 0)
+        self.assertEqual(explanation["pushdown"]["remainingStages"], 1)
 
     async def test_async_aggregation_cursor_explain_includes_engine_plan_and_options(self):
         collection = _FakeCollection([{"_id": "1", "kind": "view"}])
@@ -499,6 +502,11 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         explanation = await cursor.explain()
 
         self.assertEqual(explanation["engine_plan"], {"engine": "fake", "details": ["IXSCAN"]})
+        self.assertEqual(explanation["pushdown"]["mode"], "pipeline-prefix")
+        self.assertEqual(explanation["pushdown"]["totalStages"], 1)
+        self.assertEqual(explanation["pushdown"]["pushedDownStages"], 1)
+        self.assertEqual(explanation["pushdown"]["remainingStages"], 0)
+        self.assertEqual(explanation["pushdown"]["streamableStageCount"], 0)
         self.assertEqual(explanation["hint"], "kind_1")
         self.assertEqual(explanation["comment"], "trace")
         self.assertEqual(explanation["max_time_ms"], 5)
@@ -534,6 +542,9 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         explanation = await cursor.explain()
         self.assertEqual(explanation["engine_plan"]["plan"], "unsupported-search-engine")
+        self.assertEqual(explanation["pushdown"]["mode"], "search")
+        self.assertEqual(explanation["pushdown"]["leadingSearchOperator"], "$search")
+        self.assertEqual(explanation["pushdown"]["pushedDownStages"], 1)
         self.assertEqual(cursor._spill_policy().threshold, 2)
         self.assertIsNone(await cursor.first())
         self.assertEqual(profiled[-1]["op"], "command")

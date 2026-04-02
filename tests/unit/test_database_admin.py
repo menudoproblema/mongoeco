@@ -1,4 +1,6 @@
 import asyncio
+import ast
+from pathlib import Path
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -22,6 +24,15 @@ class _AsyncCursor:
 
     async def to_list(self):
         return list(self._documents)
+
+    async def explain(self):
+        return {
+            "engine": "memory",
+            "strategy": "python",
+            "plan": "collection_scan",
+            "planning_issues": [],
+            "ok": 1.0,
+        }
 
 
 class _FakeCollection:
@@ -101,6 +112,26 @@ class _FakeCollection:
 
 
 class AsyncDatabaseAdminServiceTests(unittest.TestCase):
+    def test_database_admin_modules_keep_facade_and_routing_split(self):
+        admin_module_path = Path(__file__).resolve().parents[2] / "src" / "mongoeco" / "api" / "_async" / "database_admin.py"
+        commands_module_path = Path(__file__).resolve().parents[2] / "src" / "mongoeco" / "api" / "_async" / "database_commands.py"
+
+        admin_tree = ast.parse(admin_module_path.read_text(encoding="utf-8"))
+        imported_modules = {
+            node.module
+            for node in admin_tree.body
+            if isinstance(node, ast.ImportFrom) and node.module is not None
+        }
+
+        self.assertIn(
+            "mongoeco.api._async._database_admin_routing",
+            imported_modules,
+        )
+        commands_source = commands_module_path.read_text(encoding="utf-8")
+        self.assertIn("_database_command_contract", commands_source)
+        self.assertIn("self._routing", commands_source)
+        self.assertIn("self._compiler", commands_source)
+
     def test_create_collection_rejects_invalid_capped_options(self):
         database = AsyncDatabase(MemoryEngine(), "db")
         service = database._admin
@@ -181,6 +212,28 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
         self.assertEqual(result.to_document(), {"ok": 1.0})
         self.assertEqual(names, ["target"])
         self.assertEqual(documents, [{"_id": 1}])
+
+    def test_database_admin_command_service_uses_routing_service(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin
+
+        async def _run():
+            parsed = service._commands.parse_raw_command({"count": "events"})
+            with patch.object(service._routing, "execute_count_command", return_value={"n": 1}) as count_mock:
+                result = await service._commands.execute(parsed)
+                self.assertEqual(result, {"n": 1})
+                count_mock.assert_awaited_once()
+            parsed_drop = service._commands.parse_raw_command({"dropDatabase": 1})
+            with patch.object(
+                service._routing,
+                "command_drop_database",
+                return_value={"ok": 1.0},
+            ) as drop_mock:
+                result = await service._commands.execute(parsed_drop)
+                self.assertEqual(result, {"ok": 1.0})
+                drop_mock.assert_awaited_once_with(session=None)
+
+        asyncio.run(_run())
 
     def test_execute_distinct_command_handles_missing_values_list_fallback_and_deduplication(self):
         database = AsyncDatabase(MemoryEngine(), "db")
@@ -409,6 +462,38 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                     )
                 with self.assertRaisesRegex(OperationFailure, "Unsupported explain command"):
                     await service._command_explain({"explain": {"ping": 1}})
+                count_explain = await service._command_explain({"explain": {"count": "users", "query": {}}})
+                distinct_explain = await service._command_explain(
+                    {"explain": {"distinct": "users", "key": "kind", "query": {}}}
+                )
+                find_and_modify_explain = await service._command_explain(
+                    {
+                        "explain": {
+                            "findAndModify": "users",
+                            "query": {"kind": "view"},
+                            "update": {"$set": {"done": True}},
+                            "new": True,
+                            "upsert": True,
+                            "fields": {"_id": 1},
+                        }
+                    }
+                )
+                self.assertEqual(count_explain["command"], "count")
+                self.assertEqual(count_explain["explained_command"], "count")
+                self.assertEqual(count_explain["collection"], "users")
+                self.assertEqual(count_explain["namespace"], "db.users")
+                self.assertEqual(distinct_explain["command"], "distinct")
+                self.assertEqual(distinct_explain["explained_command"], "distinct")
+                self.assertEqual(distinct_explain["collection"], "users")
+                self.assertEqual(distinct_explain["namespace"], "db.users")
+                self.assertEqual(distinct_explain["key"], "kind")
+                self.assertEqual(find_and_modify_explain["command"], "findAndModify")
+                self.assertEqual(find_and_modify_explain["explained_command"], "findAndModify")
+                self.assertEqual(find_and_modify_explain["collection"], "users")
+                self.assertEqual(find_and_modify_explain["namespace"], "db.users")
+                self.assertTrue(find_and_modify_explain["new"])
+                self.assertTrue(find_and_modify_explain["upsert"])
+                self.assertEqual(find_and_modify_explain["fields"], {"_id": 1})
 
                 remove_result = await service._execute_find_and_modify_remove(
                     fake_collection,
@@ -460,9 +545,9 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                         ),
                     )
 
-                with patch.object(service, "_find_and_modify_before_full", return_value=None), patch.object(
-                    service,
-                    "_find_and_modify_fetch_upserted_value",
+                with patch.object(service._write_commands, "find_and_modify_before_full", return_value=None), patch.object(
+                    service._write_commands,
+                    "find_and_modify_fetch_upserted_value",
                     return_value={"_id": "upserted-1"},
                 ):
                     operator_result = await service._execute_find_and_modify_operator_update(
@@ -506,13 +591,88 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                 self.assertEqual(replacement_result.value, {"_id": "upserted-1"})
 
                 indexes_result = await service._execute_list_indexes_command("users", comment="trace")
-                self.assertEqual(indexes_result.first_batch, [{"name": "_id_", "key": {"_id": 1}}])
+                self.assertEqual(indexes_result.first_batch, [{"name": "_id_", "key": {"_id": 1}, "ns": "db.users"}])
                 self.assertEqual(fake_collection.list_indexes_calls[-1]["comment"], "trace")
 
                 drop_all = await service._command_drop_indexes({"dropIndexes": "users", "index": "*"})
                 self.assertIn("non-_id indexes", drop_all.message)
                 with self.assertRaisesRegex(TypeError, "index must be '\\*', a name, or a key specification"):
                     await service._command_drop_indexes({"dropIndexes": "users", "index": 1.5})
+
+        asyncio.run(_run())
+
+    def test_database_admin_db_hash_covers_local_hashing_and_missing_collection(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin
+
+        async def _run():
+            await database.get_collection("users").insert_one({"_id": "1", "name": "Ada"})
+            await database.get_collection("users").create_index([("name", 1)], name="name_idx")
+
+            full_hash = (await service._command_db_hash({"dbHash": 1})).to_document()
+            filtered_hash = (await service._command_db_hash({"dbHash": 1, "collections": ["users"]})).to_document()
+
+            self.assertEqual(list(filtered_hash["collections"]), ["users"])
+            self.assertEqual(filtered_hash["collections"]["users"], full_hash["collections"]["users"])
+            self.assertEqual(len(filtered_hash["md5"]), 32)
+
+            with self.assertRaisesRegex(OperationFailure, "dbHash unknown collections: missing"):
+                await service._command_db_hash({"dbHash": 1, "collections": ["missing"]})
+
+        asyncio.run(_run())
+
+    def test_validate_warnings_cover_emulated_runtime_flags(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin
+
+        async def _run():
+            await database.get_collection("users").insert_one({"_id": "1", "name": "Ada"})
+
+            validated = await service.validate_collection(
+                "users",
+                scandata=True,
+                full=True,
+                background=False,
+            )
+
+            self.assertEqual(
+                validated["warnings"],
+                [
+                    "validate scandata is accepted for compatibility but does not change local validation behavior",
+                    "validate full is accepted for compatibility but does not change local validation behavior",
+                    "validate background is accepted for compatibility but validation runs synchronously in mongoeco",
+                ],
+            )
+
+        asyncio.run(_run())
+
+    def test_validate_warns_when_ttl_index_targets_non_date_values(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin
+
+        async def _run():
+            collection = database.get_collection("users")
+            await collection.insert_many(
+                [
+                    {"_id": "1", "expires_at": "soon"},
+                    {"_id": "2", "expires_at": "later"},
+                    {"_id": "3", "expires_at": None},
+                ]
+            )
+            await collection.create_index(
+                [("expires_at", 1)],
+                name="expires_at_ttl",
+                expire_after_seconds=30,
+            )
+
+            validated = await service.validate_collection("users")
+
+            self.assertEqual(
+                validated["warnings"],
+                [
+                    "TTL index 'expires_at_ttl' on 'users.expires_at' has 3 document(s) with no date values; those documents will not expire under local TTL semantics",
+                ],
+            )
 
         asyncio.run(_run())
 

@@ -12,18 +12,15 @@ No sustituye a:
 
 ### Query top-level `$jsonSchema`
 
-Estado: implementado en `query_plan` y `QueryEngine`, con cobertura
-unitaria e integracion `async`/`sync`.
+Estado: cubierto en `query_plan`, `QueryEngine` e integracion
+`async`/`sync`, incluyendo mezcla con filtros de campo y schemas mas
+ricos (`additionalProperties`, `items`, `minLength` / `maxLength`,
+`minimum` / `maximum`).
 
-Pendientes recomendados:
+Pendiente razonable:
 
-- anadir pruebas de mezcla de `$jsonSchema` con filtros de campo
-  sobre documentos validos e invalidos en la misma consulta;
-- anadir algun caso de schema mas rico en filtro top-level:
-  - `additionalProperties`
-  - `items`
-  - `minLength` / `maxLength`
-  - `minimum` / `maximum`
+- si aparece otro bug real, anadir la regresion sobre el helper comun
+  de casos `async`/`sync`.
 
 ### Smoke del artefacto empaquetado
 
@@ -39,45 +36,45 @@ Estado actual:
     `MemoryEngine`
 - este smoke ya detecto una regresion real de imports ansiosos a
   `bson`, que quedo corregida antes de preparar `2.1.0`
-
-Pendientes recomendados:
-
-- si se usa CI en el futuro, ejecutar ese smoke sobre el artefacto
-  construido, no solo sobre `src/`.
+- el smoke del artefacto ya corre en CI sobre el `wheel` y el `sdist`
+  construidos, no solo sobre `src/`.
 
 ### Snapshots del catalogo de compatibilidad
 
 Motivacion: al tocar el catalogo de operadores soportados se rompen los
 snapshots y es facil olvidarlo.
 
-Pendientes recomendados:
+Estado actual:
 
-- dejar un script pequeño para regenerar:
-  - `tests/fixtures/compat_catalog_snapshot.json`
-  - `tests/fixtures/compat_catalog_snapshot.md`
-- documentar en el flujo de cambios del catalogo que los snapshots
-  deben actualizarse en el mismo commit.
+- ya existe el script:
+  - `scripts/update_compat_snapshots.py`
+- el flujo esperado queda asi:
+  1. tocar catalogo/export;
+  2. regenerar snapshots;
+  3. incluir snapshots en el mismo commit.
 
 ## 2. Cobertura con mejor retorno
 
 ### Alta prioridad
 
-- [search.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/core/search.py)
-  Motivo: sigue siendo una zona de producto visible y con retorno real
-  por test nuevo.
-- [api/_async/cursor.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/api/_async/cursor.py)
-  Motivo: sigue siendo una superficie publica grande con bastantes ramas
-  y retorno razonable por tanda de tests.
+- [engines/sqlite.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/engines/sqlite.py)
+  Motivo: modulo grande con retorno alto, aunque mas caro de atacar.
 
 ### Prioridad media
 
+- zonas internas extraidas de SQLite con menos cobertura que el resto
+  del hardening reciente, siempre que el test nuevo tenga frontera
+  clara y no se convierta en reproduccion del engine entero.
+
+### Ya bastante cubierto
+
+- [api/_async/cursor.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/api/_async/cursor.py)
 - [compat/base.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/compat/base.py)
-  Motivo: rutas de error y resolucion de estrategias.
+- [search.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/core/search.py)
 - [types.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/types.py)
-  Motivo: volumen grande y varias rutas publicas todavia poco
-  ejercitadas.
-- [engines/sqlite.py](/Users/uve/Proyectos/mongoeco2/src/mongoeco/engines/sqlite.py)
-  Motivo: modulo grande con retorno alto, aunque mas caro de atacar.
+
+Motivo: el retorno inmediato por mas tests ya no es especialmente alto
+frente a otras zonas.
 
 ### No perseguir por ahora
 
@@ -115,6 +112,8 @@ Pendiente:
 
 - seguir extrayendo utilidades comunes cuando un caso nuevo obligue a
   tocar ambos ficheros a la vez.
+- ya existe un primer helper comun para casos de integracion de
+  top-level `$jsonSchema`.
 
 No merece la pena una gran reescritura preventiva ahora.
 

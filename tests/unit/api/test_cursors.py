@@ -257,6 +257,14 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         )
         with self.assertRaisesRegex(OperationFailure, "blocked"):
             async_cursor_module._ensure_operation_executable(object(), operation)
+        checker_calls = []
+
+        class _CollectionWithChecker:
+            def _ensure_operation_executable(self, candidate):
+                checker_calls.append(candidate)
+
+        async_cursor_module._ensure_operation_executable(_CollectionWithChecker(), operation)
+        self.assertEqual(checker_calls, [operation])
         self.assertEqual(
             async_cursor_module._resolve_planning_mode(type("Collection", (), {"planning_mode": PlanningMode.RELAXED})()),
             PlanningMode.RELAXED,
@@ -655,6 +663,14 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         await iterator.close()
         self.assertEqual(await iterator.pull_chunk(1), [])
 
+    async def test_async_cursor_pull_chunk_closes_when_fetch_batch_returns_no_documents(self):
+        cursor = AsyncCursor(_AsyncCollectionStub([]), {}, MatchAll(), None, batch_size=2)
+        iterator = cursor._iter(enforce_ownership=False)
+
+        self.assertEqual(await iterator.pull_chunk(2), [])
+        self.assertTrue(iterator._closed)
+        self.assertTrue(cursor._exhausted)
+
     async def test_async_cursor_first_profiles_active_iterator_results_and_errors(self):
         collection = _ProfiledAsyncCollectionStub([{"_id": "1"}])
         cursor = AsyncCursor(collection, {}, MatchAll(), None)
@@ -683,6 +699,44 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         cursor._active_async_iterable = active
 
         self.assertIsNone(await cursor.first())
+
+    async def test_async_cursor_to_list_profiles_success_and_errors(self):
+        collection = _ProfiledAsyncCollectionStub([{"_id": "1"}, {"_id": "2"}])
+        cursor = AsyncCursor(collection, {}, MatchAll(), None)
+
+        self.assertEqual(await cursor.to_list(), [{"_id": "1"}, {"_id": "2"}])
+        self.assertEqual(collection.profile_calls[-1]["op"], "query")
+        self.assertNotIn("errmsg", collection.profile_calls[-1])
+
+        collection = _ProfiledAsyncCollectionStub([{"_id": "1"}])
+        cursor = AsyncCursor(collection, {}, MatchAll(), None)
+
+        class _BrokenIterator:
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                raise RuntimeError("boom")
+
+        cursor._active_async_iterable = _BrokenIterator()
+        with self.assertRaisesRegex(RuntimeError, "boom"):
+            await cursor.to_list()
+        self.assertEqual(collection.profile_calls[-1]["errmsg"], "boom")
+
+    async def test_async_cursor_first_profiles_success_and_empty_results_without_active_iterator(self):
+        collection = _ProfiledAsyncCollectionStub([{"_id": "1"}])
+        cursor = AsyncCursor(collection, {}, MatchAll(), None)
+
+        self.assertEqual(await cursor.first(), {"_id": "1"})
+        self.assertEqual(collection.profile_calls[-1]["op"], "query")
+        self.assertNotIn("errmsg", collection.profile_calls[-1])
+
+        collection = _ProfiledAsyncCollectionStub([])
+        cursor = AsyncCursor(collection, {}, MatchAll(), None)
+
+        self.assertIsNone(await cursor.first())
+        self.assertEqual(collection.profile_calls[-1]["op"], "query")
+        self.assertNotIn("errmsg", collection.profile_calls[-1])
 
     async def test_async_cursor_rewind_clears_active_iterator_and_explain_handles_planning_issues(self):
         collection = _AsyncCollectionStub([{"_id": "1"}])

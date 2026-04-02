@@ -7,6 +7,10 @@ Estado actual del repo:
 * runtime local de `search` cerrado en su perímetro actual;
 * backlog restante ya no es de cierre de fases, sino de evolución del producto.
 
+La deuda arquitectónica activa y las fronteras que se vigilan ya no se
+describen aquí. Su referencia canónica pasa a ser
+`docs/architecture/architecture-audit-2026-04.md`.
+
 ## 1. Search: siguiente nivel
 
 Objetivo: ampliar el runtime local de búsqueda más allá del perímetro actual sin degradar la honestidad del contrato.
@@ -22,7 +26,7 @@ Pendientes:
   * `string`
   * `token`
   * `autocomplete`
-* decidir si `vectorSearch` sigue siendo suficiente en modo experimental o si necesita backend dedicado;
+* decidir si `vectorSearch` exacto local sigue siendo suficiente o si necesita backend dedicado/ANN;
 * mejorar `explain()` de search si aparecen nuevos backends u operadores.
 
 ## 2. Rendimiento y planificación
@@ -68,6 +72,17 @@ Pendientes:
   * alcance soportado
   * diferencias deliberadas frente a MongoDB real
   * diferencias deliberadas frente a `mongomock`
+
+## Anotaciones de estado
+
+Ya no forman parte del backlog pendiente básico:
+
+* pipeline-style updates en su subset documentado;
+* `$merge` como stage terminal local de agregación;
+* `$densify` y `$fill` en su subset local documentado;
+* `currentOp` / `killOp` locales;
+* `vectorSearch` exacto local con `filter` y similitudes `cosine`,
+  `dotProduct` y `euclidean`.
 
 ## 5. Backends y extensibilidad
 

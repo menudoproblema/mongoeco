@@ -12,12 +12,15 @@ from mongoeco.core.query_plan import (
     ElemMatchCondition,
     EqualsCondition,
     ExistsCondition,
+    GeoIntersectsCondition,
+    GeoWithinCondition,
     GreaterThanOrEqualCondition,
     InCondition,
     JsonSchemaCondition,
     LessThanOrEqualCondition,
     MatchAll,
     ModCondition,
+    NearCondition,
     NotCondition,
     NotInCondition,
     OrCondition,
@@ -337,6 +340,39 @@ class QueryPlanTests(unittest.TestCase):
         self.assertEqual(compiled.schema, {"required": ["name"]})
         self.assertIsNotNone(compiled.compiled_schema)
 
+    def test_compile_filter_accepts_richer_top_level_json_schema(self):
+        compiled = compile_filter(
+            {
+                "$jsonSchema": {
+                    "required": ["profile", "score"],
+                    "additionalProperties": False,
+                    "properties": {
+                        "_id": {"bsonType": "string"},
+                        "score": {"bsonType": "int", "minimum": 5, "maximum": 10},
+                        "profile": {
+                            "bsonType": "object",
+                            "required": ["name", "tags"],
+                            "additionalProperties": False,
+                            "properties": {
+                                "name": {"bsonType": "string", "minLength": 3, "maxLength": 5},
+                                "tags": {
+                                    "bsonType": "array",
+                                    "items": {"bsonType": "string", "minLength": 2},
+                                },
+                            },
+                        },
+                    },
+                }
+            }
+        )
+
+        self.assertEqual(compiled.schema["properties"]["score"]["minimum"], 5)
+        self.assertEqual(
+            compiled.schema["properties"]["profile"]["properties"]["tags"]["items"]["minLength"],
+            2,
+        )
+        self.assertIsNotNone(compiled.compiled_schema)
+
     def test_compile_filter_rejects_invalid_json_schema_payloads(self):
         with self.assertRaises(OperationFailure):
             compile_filter({"$jsonSchema": 1})
@@ -347,34 +383,56 @@ class QueryPlanTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             compile_filter({"$where": "this.a > 1"})
 
-    def test_compile_filter_rejects_unsupported_field_level_query_operators_explicitly(self):
-        unsupported_filters = [
-            {"location": {"$geoIntersects": {"$geometry": {}}}},
-            {"location": {"$geoWithin": {"$geometry": {}}}},
-            {"location": {"$near": [0, 0]}},
-            {"location": {"$nearSphere": [0, 0]}},
-        ]
+    def test_compile_filter_supports_local_geo_subset(self):
+        self.assertEqual(
+            compile_filter(
+                {
+                    "location": {
+                        "$geoWithin": {
+                            "$box": [[-1, -1], [1, 1]],
+                        }
+                    }
+                }
+            ),
+            GeoWithinCondition("location", "box", ((-1.0, -1.0), (1.0, 1.0))),
+        )
+        self.assertEqual(
+            compile_filter(
+                {
+                    "location": {
+                        "$geoIntersects": {
+                            "$geometry": {"type": "Point", "coordinates": [1, 2]},
+                        }
+                    }
+                }
+            ),
+            GeoIntersectsCondition("location", "point", (1.0, 2.0)),
+        )
+        self.assertEqual(
+            compile_filter(
+                {
+                    "location": {
+                        "$near": {
+                            "$geometry": {"type": "Point", "coordinates": [0, 0]},
+                            "$maxDistance": 3,
+                        }
+                    }
+                }
+            ),
+            NearCondition("location", (0.0, 0.0), max_distance=3.0),
+        )
+        self.assertEqual(
+            compile_filter({"location": {"$nearSphere": [0, 0]}}),
+            NearCondition("location", (0.0, 0.0), spherical=True),
+        )
 
-        for filter_spec in unsupported_filters:
-            with self.subTest(filter_spec=filter_spec):
-                with self.assertRaises(OperationFailure):
-                    compile_filter(filter_spec)
-
-    def test_compile_filter_rejects_geo_within_with_dedicated_test(self):
+    def test_compile_filter_rejects_unsupported_geo_shapes(self):
         with self.assertRaises(OperationFailure):
-            compile_filter({"location": {"$geoWithin": {"$geometry": {}}}})
-
-    def test_compile_filter_rejects_geo_intersects_with_dedicated_test(self):
+            compile_filter({"location": {"$geoWithin": {"$geometry": {"type": "LineString", "coordinates": []}}}})
         with self.assertRaises(OperationFailure):
-            compile_filter({"location": {"$geoIntersects": {"$geometry": {}}}})
-
-    def test_compile_filter_rejects_near_with_dedicated_test(self):
+            compile_filter({"location": {"$geoIntersects": {"$geometry": {"type": "MultiPoint", "coordinates": []}}}})
         with self.assertRaises(OperationFailure):
-            compile_filter({"location": {"$near": [0, 0]}})
-
-    def test_compile_filter_rejects_near_sphere_with_dedicated_test(self):
-        with self.assertRaises(OperationFailure):
-            compile_filter({"location": {"$nearSphere": [0, 0]}})
+            compile_filter({"location": {"$near": {"$geometry": {"type": "Polygon", "coordinates": []}}}})
 
     def test_compile_filter_accepts_bits_all_set_with_dedicated_test(self):
         self.assertEqual(

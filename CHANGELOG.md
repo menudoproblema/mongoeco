@@ -8,6 +8,130 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- El catálogo de compatibilidad exporta ya una matriz separada de
+  `database_command_options`, para declarar la surface efectiva de
+  `database.command(...)` y del proxy wire dentro del alcance soportado
+  de `MongoDB 8.0` y `PyMongo 4.x`.
+- El catálogo de compatibilidad exporta ahora también `database_commands`,
+  un inventario declarativo de los comandos crudos soportados, su familia
+  administrativa y si forman parte de la surface wire local.
+- `listCommands` expone ahora también metadatos observables del producto por
+  comando (`adminFamily`, `supportsWire`, `supportsExplain`,
+  `supportsComment`, `supportedOptions`, `note`) para tooling e
+  introspección local.
+- La surface administrativa local añade ahora `dbHash` tanto en
+  `database.command(...)` como en el proxy wire, y `serverStatus`
+  incorpora contadores embebidos y resumen de profiling para observabilidad
+  local.
+- El runtime embebido añade ahora `currentOp` y `killOp` con semántica local
+  y best-effort, visibles tanto desde `database.command(...)` como desde la
+  surface wire administrativa.
+- La agregación local soporta ya `$densify`, `$fill` y `$merge` en su subset
+  documentado, y los pipeline-style updates quedan cerrados end-to-end también
+  en las rutas administrativas de `update` y `findAndModify`.
+- El runtime embebido soporta ya un subset geoespacial local y explícito:
+  `$geoWithin`, `$geoIntersects`, `$near`, `$nearSphere` y `$geoNear`
+  sobre datos `Point` GeoJSON o pares legacy `[x, y]`. En `SQLiteEngine`
+  esa semántica queda visible como fallback Python honesto, con
+  `pushdown_hints` específicos en `explain()`.
+
+### Fixed
+
+- El executor wire valida ya de forma temprana que el nombre del comando
+  sea un string no vacio, devolviendo un `OperationFailure` estable en
+  vez de dejar que requests malformed fallen mas tarde en routing o
+  ejecucion.
+- El executor wire valida tambien de forma temprana payloads malformed
+  de familias passthrough comunes, como nombres de coleccion vacios en
+  `find`/`listIndexes`, `explain` sin documento de comando o batches
+  vacios/invalidos en `insert`/`update`/`delete`/`createIndexes`,
+  evitando errores tardios y dejando mensajes publicos mas estables.
+- El runtime wire endurece tambien la validacion temprana de
+  `count`, `distinct`, `validate` y `explain(verbosity=...)`, y las
+  respuestas de `explain` dejan ya de filtrar objetos internos como
+  `EngineIndexRecord` que PyMongo no podia codificar al cruzar el proxy.
+- El proxy wire valida ahora tambien de forma temprana varios comandos
+  menos transitados de introspeccion y control (`connectionStatus`,
+  `collStats`, `dbStats`, `profile`, `listCollections`,
+  `listDatabases`) y endurece las familias `auth`/`session`/`cursor`
+  (`authenticate`, `saslContinue`, `endSessions`, `getMore`,
+  `killCursors`, `commitTransaction`, `abortTransaction`) para que los
+  payloads malformed fallen antes y con mensajes publicos mas estables.
+- La validacion temprana del proxy wire endurece ahora tambien varios
+  shapes de `wire/admin` que antes podian caer tarde dentro de
+  `database.command(...)`, incluyendo `find`, `count`, `distinct`,
+  `aggregate`, `createIndexes`, `dropIndexes`, `listIndexes`,
+  `findAndModify`, `listCollections` y `listDatabases`.
+- `explain` cubre ahora tambien `count`, `distinct` y `findAndModify`,
+  ademas de `find`, `aggregate`, `update` y `delete`, reutilizando el
+  mismo routing administrativo y devolviendo shapes serializables por
+  wire.
+- `collStats` y `dbStats` incluyen ya `scaleFactor` en las respuestas
+  administrativas locales para reflejar mejor la escala efectiva usada
+  al materializar los snapshots.
+- El comando `profile` devuelve ahora también el nivel actual y el número
+  de entradas registradas, y `explain` materializa `command` /
+  `explained_command` de forma más uniforme en la surface administrativa.
+- `serverStatus.mongoeco` expone ahora también bloques estructurados de
+  `collation` y `sdam`, y `validate` devuelve warnings explícitos cuando se
+  usan flags aceptados solo por compatibilidad (`scandata`, `full`,
+  `background`) que no cambian el comportamiento del runtime embebido.
+- `collStats.totalIndexSize` y `dbStats.indexSize` reflejan ya tamaños locales
+  reales de metadata de índices, `listIndexes` expone `ns` por documento, y
+  `explain` materializa también `collection` y `namespace` de forma uniforme
+  en todas las rutas administrativas soportadas.
+- `serverStatus.mongoeco` expone ahora tambien resumen local de
+  `changeStreams`, y `profile` devuelve ademas `namespaceVisible`,
+  `trackedDatabases` y `visibleNamespaces` para reforzar la observabilidad del
+  runtime embebido.
+- `serverStatus.mongoeco` resume ahora tambien la surface administrativa
+  declarada (`adminFamilies`, `explainableCommandCount`), y `validate`
+  anade warnings TTL cuando detecta indices `expireAfterSeconds` cuyos
+  documentos actuales no contienen ningun valor fecha usable.
+- `serverStatus.mongoeco` expone ahora tambien `engineRuntime` con diagnostico
+  estructurado de planner/search/caches por engine, los explains de search
+  materializan detalles de lifecycle/backend (`backendAvailable`,
+  `backendMaterialized`, `physicalName`, `readyAtEpoch`, `fts5Available`) y en
+  SQLite `explain` deja visible un bloque `pushdown` comun para distinguir SQL
+  puro, plan hibrido y fallback Python.
+- `aggregate(...).explain()` expone ahora tambien un bloque top-level
+  `pushdown` con recuento de stages empujados/restantes y elegibilidad de
+  streaming, y `serverStatus.mongoeco.engineRuntime` en SQLite resume ademas
+  search indexes declarados/pendientes y caches fisicas relevantes.
+- SQLite empuja ya tambien `$size` simple a SQL cuando la ruta es segura, y
+  `find(...).explain()` materializa `planning_issues` del engine para los
+  fallbacks hibridos o Python, en vez de dejar solo `fallback_reason`.
+- SQLite empuja ahora tambien `$mod` entero sobre campos escalares cuando el
+  path no mezcla arrays ni valores `real`, y `find(...).explain()` mantiene el
+  fallback a Python con `planning_issues` del engine cuando esa ruta segura no
+  aplica.
+- SQLite empuja ahora tambien un subconjunto seguro de `$regex` anclado por
+  patrones literales sobre campos string escalares (`literal`, `^literal`,
+  `literal$`, `^literal$`, `^literal.*`) y conserva fallback explicito a Python
+  cuando hay arrays u opciones regex que cambian la semantica.
+- Dentro de ese subconjunto, SQLite acepta ya tambien `$options: "i"` cuando
+  el patron y los valores del field son ASCII, manteniendo fallback explicito
+  en cuanto aparece texto no ASCII o una semantica regex mas amplia.
+- SQLite empuja ahora tambien `$all` sobre arrays escalares simples,
+  `$elemMatch` muy acotado sobre arrays escalares top-level y comparaciones de
+  rango sobre paths que mezclan escalares y arrays cuando el contenido sigue
+  siendo homogeneo en un mismo tipo comparable.
+- `find(...).explain()` en SQLite expone ya tambien `pushdown_hints` cuando una
+  query cae a fallback, para dejar visible que familia de operador esta
+  bloqueando el pushdown y cual seria la siguiente extension natural. Esa
+  clasificacion cubre ya tambien bloqueos estructurales como `sort`,
+  `collation`, `array-comparison` o `array-traversal`, no solo operadores
+  explicitos de la query.
+- `serverStatus.opcounters` refleja ya actividad local real del runtime
+  embebido (`insert`, `query`, `update`, `delete`, `getmore`, `command`) en
+  lugar de quedar fijado a ceros.
+- `vectorSearch` local acepta ya `filter` y similitudes `cosine`,
+  `dotProduct` y `euclidean`, manteniendo el contrato como exact search local
+  y reflejando esa surface ampliada en explain, compatibilidad declarada y
+  tests.
+
 ## [3.0.0] - 2026-04-01
 
 ### Added

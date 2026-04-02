@@ -1467,15 +1467,17 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-    async def test_explain_query_plan_rejects_top_level_array_comparisons(self):
+    async def test_explain_query_plan_supports_homogeneous_top_level_array_comparisons(self):
         engine = SQLiteEngine()
         await engine.connect()
         try:
             await engine.put_document("db", "coll", {"_id": "1", "v": [1]})
-            with self.assertRaises(NotImplementedError):
-                engine._explain_query_plan_sync("db", "coll", {"v": {"$gt": 0}})
+            details = engine._explain_query_plan_sync("db", "coll", {"v": {"$gt": 0}})
         finally:
             await engine.disconnect()
+
+        self.assertTrue(details)
+        self.assertTrue(any("SCAN" in step or "SEARCH" in step for step in details))
 
     async def test_select_first_document_for_plan_rejects_tagged_bytes_range_filters(self):
         engine = SQLiteEngine()
@@ -2112,6 +2114,12 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explanation.hinted_index, "by_text")
         self.assertEqual(explanation.details["status"], "PENDING")
         self.assertIn(explanation.details["backend"], {"python", "fts5"})
+        self.assertIn("backendAvailable", explanation.details)
+        self.assertIn("backendMaterialized", explanation.details)
+        self.assertIn("physicalName", explanation.details)
+        self.assertIn("readyAtEpoch", explanation.details)
+        self.assertIn("fts5Available", explanation.details)
+        self.assertIsNotNone(explanation.details["readyAtEpoch"])
 
     def test_drop_collection_rolls_back_if_metadata_delete_fails(self):
         engine = SQLiteEngine()
@@ -3363,6 +3371,369 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(documents, ["2", "1"])
 
+    async def test_scan_and_explain_size_filter_use_sql_pushdown(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "tags": ["python", "sqlite"]})
+            await engine.put_document("db", "coll", {"_id": "2", "tags": ["python"]})
+            await engine.put_document("db", "coll", {"_id": "3", "tags": "python"})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"tags": {"$size": 2}}, sort=[("_id", 1)])
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"tags": {"$size": 2}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1"])
+        self.assertEqual(explanation.strategy, "sql")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "sql")
+        self.assertTrue(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.planning_issues, ())
+
+    async def test_scan_and_explain_mod_filter_use_sql_pushdown_for_scalar_integers(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "value": 5})
+            await engine.put_document("db", "coll", {"_id": "2", "value": 4})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"value": {"$mod": [2, 1]}}, sort=[("_id", 1)])
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"value": {"$mod": [2, 1]}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1"])
+        self.assertEqual(explanation.strategy, "sql")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "sql")
+        self.assertTrue(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.planning_issues, ())
+
+    async def test_scan_and_explain_all_filter_use_sql_pushdown_for_simple_scalar_arrays(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "tags": ["python", "sqlite"]})
+            await engine.put_document("db", "coll", {"_id": "2", "tags": ["python"]})
+            await engine.put_document("db", "coll", {"_id": "3", "tags": "python"})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"tags": {"$all": ["python", "sqlite"]}}, sort=[("_id", 1)])
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"tags": {"$all": ["python", "sqlite"]}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1"])
+        self.assertEqual(explanation.strategy, "sql")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "sql")
+        self.assertTrue(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.planning_issues, ())
+
+    async def test_scan_and_explain_elem_match_filter_use_sql_pushdown_for_scalar_array_predicate(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "scores": [7, 2]})
+            await engine.put_document("db", "coll", {"_id": "2", "scores": [4]})
+            await engine.put_document("db", "coll", {"_id": "3", "scores": 7})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"scores": {"$elemMatch": {"$gt": 5}}}, sort=[("_id", 1)])
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"scores": {"$elemMatch": {"$gt": 5}}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1"])
+        self.assertEqual(explanation.strategy, "sql")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "sql")
+        self.assertTrue(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.planning_issues, ())
+
+    async def test_scan_and_explain_range_filter_use_sql_pushdown_for_mixed_scalar_and_array_numbers(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "value": 7})
+            await engine.put_document("db", "coll", {"_id": "2", "value": [8, 1]})
+            await engine.put_document("db", "coll", {"_id": "3", "value": [2]})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"value": {"$gt": 5}}, sort=[("_id", 1)])
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"value": {"$gt": 5}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1", "2"])
+        self.assertEqual(explanation.strategy, "sql")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "sql")
+        self.assertTrue(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.planning_issues, ())
+
+    async def test_explain_mod_filter_falls_back_when_collection_contains_arrays(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "value": 5})
+            await engine.put_document("db", "coll", {"_id": "2", "value": [5]})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"value": {"$mod": [2, 1]}}, sort=[("_id", 1)])
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"value": {"$mod": [2, 1]}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1", "2"])
+        self.assertEqual(explanation.strategy, "python")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "python")
+        self.assertFalse(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.details["fallback_reason"], "Query operator not yet translated to SQL")
+        self.assertEqual(explanation.planning_issues[0].scope, "engine")
+        self.assertEqual(explanation.planning_issues[0].message, "Query operator not yet translated to SQL")
+
+    async def test_explain_mod_filter_falls_back_when_collection_contains_real_values(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "value": 5})
+            await engine.put_document("db", "coll", {"_id": "2", "value": 4.5})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"value": {"$mod": [2, 1]}}, sort=[("_id", 1)])
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"value": {"$mod": [2, 1]}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1"])
+        self.assertEqual(explanation.strategy, "python")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "python")
+        self.assertFalse(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.details["fallback_reason"], "Query operator not yet translated to SQL")
+        self.assertEqual(explanation.details["pushdown_hints"][0]["operator"], "$mod")
+        self.assertEqual(explanation.details["pushdown_hints"][0]["priority"], "high")
+        self.assertEqual(explanation.planning_issues[0].scope, "engine")
+        self.assertEqual(explanation.planning_issues[0].message, "Query operator not yet translated to SQL")
+
+    async def test_explain_range_filter_falls_back_when_array_elements_have_incompatible_types(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "value": 7})
+            await engine.put_document("db", "coll", {"_id": "2", "value": ["x", 8]})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"value": {"$gt": 5}}, sort=[("_id", 1)])
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"value": {"$gt": 5}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1", "2"])
+        self.assertEqual(explanation.strategy, "python")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "python")
+        self.assertFalse(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.details["fallback_reason"], "Top-level array comparisons require Python fallback")
+        self.assertTrue(any(hint["operator"] == "range-comparison" for hint in explanation.details["pushdown_hints"]))
+        self.assertTrue(any(hint["operator"] == "array-comparison" for hint in explanation.details["pushdown_hints"]))
+
+    async def test_scan_and_explain_regex_prefix_filter_use_sql_pushdown_for_scalar_strings(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada Lovelace"})
+            await engine.put_document("db", "coll", {"_id": "2", "title": "Grace Hopper"})
+            await engine.put_document("db", "coll", {"_id": "3", "title": 123})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"title": {"$regex": "^Ada"}}, sort=[("_id", 1)])
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"title": {"$regex": "^Ada"}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1"])
+        self.assertEqual(explanation.strategy, "sql")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "sql")
+        self.assertTrue(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.planning_issues, ())
+
+    async def test_scan_and_explain_regex_exact_filter_use_sql_pushdown_for_scalar_strings(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada"})
+            await engine.put_document("db", "coll", {"_id": "2", "title": "Ada Lovelace"})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"title": {"$regex": "^Ada$"}}, sort=[("_id", 1)])
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"title": {"$regex": "^Ada$"}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1"])
+        self.assertEqual(explanation.strategy, "sql")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "sql")
+        self.assertTrue(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.planning_issues, ())
+
+    async def test_scan_and_explain_regex_contains_and_suffix_filters_use_sql_pushdown(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada Lovelace"})
+            await engine.put_document("db", "coll", {"_id": "2", "title": "Lovelace"})
+            await engine.put_document("db", "coll", {"_id": "3", "title": "Grace Hopper"})
+
+            contains_documents = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"title": {"$regex": "Love"}}, sort=[("_id", 1)])
+            ]
+            contains_explanation = await self._explain(engine, "db", "coll", {"title": {"$regex": "Love"}})
+
+            suffix_documents = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"title": {"$regex": "Lovelace$"}}, sort=[("_id", 1)])
+            ]
+            suffix_explanation = await self._explain(engine, "db", "coll", {"title": {"$regex": "Lovelace$"}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(contains_documents, ["1", "2"])
+        self.assertEqual(contains_explanation.strategy, "sql")
+        self.assertEqual(contains_explanation.details["pushdown"]["mode"], "sql")
+        self.assertEqual(contains_explanation.planning_issues, ())
+
+        self.assertEqual(suffix_documents, ["1", "2"])
+        self.assertEqual(suffix_explanation.strategy, "sql")
+        self.assertEqual(suffix_explanation.details["pushdown"]["mode"], "sql")
+        self.assertEqual(suffix_explanation.planning_issues, ())
+
+    async def test_explain_regex_filter_falls_back_when_collection_contains_arrays(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada Lovelace"})
+            await engine.put_document("db", "coll", {"_id": "2", "title": ["Ada Lovelace"]})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"title": {"$regex": "^Ada"}}, sort=[("_id", 1)])
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"title": {"$regex": "^Ada"}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1", "2"])
+        self.assertEqual(explanation.strategy, "python")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "python")
+        self.assertFalse(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.details["fallback_reason"], "Query operator not yet translated to SQL")
+        self.assertEqual(explanation.details["pushdown_hints"][0]["operator"], "$regex")
+        self.assertEqual(explanation.details["pushdown_hints"][0]["priority"], "high")
+        self.assertEqual(explanation.planning_issues[0].scope, "engine")
+        self.assertEqual(explanation.planning_issues[0].message, "Query operator not yet translated to SQL")
+
+    async def test_explain_regex_filter_with_ascii_i_options_use_sql_pushdown(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "title": "ada lovelace"})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(
+                    engine,
+                    "db",
+                    "coll",
+                    {"title": {"$regex": "^Ada", "$options": "i"}},
+                    sort=[("_id", 1)],
+                )
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"title": {"$regex": "^Ada", "$options": "i"}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1"])
+        self.assertEqual(explanation.strategy, "sql")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "sql")
+        self.assertTrue(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.planning_issues, ())
+
+    async def test_scan_and_explain_regex_ascii_ignore_case_use_sql_pushdown(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "title": "ada lovelace"})
+            await engine.put_document("db", "coll", {"_id": "2", "title": "grace hopper"})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(
+                    engine,
+                    "db",
+                    "coll",
+                    {"title": {"$regex": "^Ada", "$options": "i"}},
+                    sort=[("_id", 1)],
+                )
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"title": {"$regex": "^Ada", "$options": "i"}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1"])
+        self.assertEqual(explanation.strategy, "sql")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "sql")
+        self.assertTrue(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.planning_issues, ())
+
+    async def test_explain_regex_ignore_case_falls_back_with_non_ascii_text(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "title": "álvaro"})
+
+            documents = [
+                document["_id"]
+                async for document in self._scan(
+                    engine,
+                    "db",
+                    "coll",
+                    {"title": {"$regex": "^Ál", "$options": "i"}},
+                    sort=[("_id", 1)],
+                )
+            ]
+            explanation = await self._explain(engine, "db", "coll", {"title": {"$regex": "^Ál", "$options": "i"}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(documents, ["1"])
+        self.assertEqual(explanation.strategy, "python")
+        self.assertEqual(explanation.details["pushdown"]["mode"], "python")
+        self.assertFalse(explanation.details["pushdown"]["usesSqlRuntime"])
+        self.assertEqual(explanation.details["fallback_reason"], "Query operator not yet translated to SQL")
+        self.assertEqual(explanation.details["pushdown_hints"][0]["operator"], "$regex")
+        self.assertEqual(explanation.details["pushdown_hints"][0]["nextStep"], "broaden regex pushdown beyond literal-safe patterns or support non-ASCII ignore-case semantics")
+        self.assertEqual(explanation.planning_issues[0].scope, "engine")
+        self.assertEqual(explanation.planning_issues[0].message, "Query operator not yet translated to SQL")
+
     async def test_update_matching_document_uses_sql_selected_candidate_for_simple_updates(self):
         engine = SQLiteEngine()
         await engine.connect()
@@ -3800,10 +4171,25 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             await engine.put_document("db", "coll", {"_id": "1", "profile": {"rank": 2}, "title": "Ada"})
+            await engine.put_document("db", "coll", {"_id": "2", "profile": {"rank": 1}, "title": "Bob"})
+            await engine.create_index("db", "coll", [("title", 1)])
+
+            sql = await self._explain(engine, "db", "coll", {"title": "Ada"})
+            self.assertEqual(sql.details["pushdown"]["mode"], "sql")
+            self.assertTrue(sql.details["pushdown"]["usesSqlRuntime"])
+            self.assertFalse(sql.details["pushdown"]["pythonSort"])
+            self.assertIn("engine_details", sql.details)
+            self.assertEqual(sql.planning_issues, ())
 
             hybrid = await self._explain(engine, "db", "coll", sort=[("profile", 1)])
             self.assertEqual(hybrid.details["fallback_reason"], "Sort requires Python fallback")
+            self.assertEqual(hybrid.details["pushdown"]["mode"], "hybrid")
+            self.assertTrue(hybrid.details["pushdown"]["usesSqlRuntime"])
+            self.assertTrue(hybrid.details["pushdown"]["pythonSort"])
             self.assertIn("engine_details", hybrid.details)
+            self.assertTrue(any(hint["operator"] == "sort" for hint in hybrid.details["pushdown_hints"]))
+            self.assertEqual(hybrid.planning_issues[0].scope, "engine")
+            self.assertEqual(hybrid.planning_issues[0].message, "Sort requires Python fallback")
 
             with patch("mongoeco.engines.sqlite.describe_virtual_index_usage", return_value={"virtual": True}):
                 python_fallback = await self._explain(
@@ -3817,7 +4203,97 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertEqual(python_fallback.details["fallback_reason"], "Collation requires Python fallback")
+        self.assertEqual(python_fallback.details["pushdown"]["mode"], "python")
+        self.assertFalse(python_fallback.details["pushdown"]["usesSqlRuntime"])
+        self.assertTrue(any(hint["operator"] == "collation" for hint in python_fallback.details["pushdown_hints"]))
+        self.assertEqual(python_fallback.planning_issues[0].scope, "engine")
+        self.assertEqual(python_fallback.planning_issues[0].message, "Collation requires Python fallback")
         self.assertTrue(python_fallback.details["virtual"])
+
+    async def test_explain_elem_match_filter_reports_operator_pushdown_hint(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "items": [{"score": 7}]})
+            explanation = await self._explain(engine, "db", "coll", {"items": {"$elemMatch": {"score": {"$gt": 5}}}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(explanation.strategy, "python")
+        self.assertEqual(explanation.details["fallback_reason"], "Only scalar $elemMatch shapes are translated to SQL")
+        self.assertTrue(any(hint["operator"] == "$elemMatch" for hint in explanation.details["pushdown_hints"]))
+
+    async def test_explain_array_comparison_reports_range_and_array_pushdown_hints(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "value": ["x", 7]})
+            explanation = await self._explain(engine, "db", "coll", {"value": {"$gt": 5}})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(explanation.strategy, "python")
+        self.assertEqual(explanation.details["fallback_reason"], "Top-level array comparisons require Python fallback")
+        self.assertTrue(any(hint["operator"] == "range-comparison" for hint in explanation.details["pushdown_hints"]))
+        self.assertTrue(any(hint["operator"] == "array-comparison" for hint in explanation.details["pushdown_hints"]))
+
+    async def test_explain_geo_filter_reports_geo_pushdown_hints(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "1", "location": {"type": "Point", "coordinates": [0, 0]}},
+            )
+            explanation = await self._explain(
+                engine,
+                "db",
+                "coll",
+                {
+                    "location": {
+                        "$geoWithin": {
+                            "$geometry": {
+                                "type": "Polygon",
+                                "coordinates": [[[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]]],
+                            }
+                        }
+                    }
+                },
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(explanation.strategy, "python")
+        self.assertEqual(explanation.details["fallback_reason"], "Geospatial operators require Python query fallback")
+        self.assertTrue(any(hint["operator"] == "$geoWithin" for hint in explanation.details["pushdown_hints"]))
+        self.assertTrue(any(hint["operator"] == "geo-runtime" for hint in explanation.details["pushdown_hints"]))
+
+    async def test_sqlite_runtime_diagnostics_surface_planner_search_and_cache_state(self):
+        engine = SQLiteEngine(simulate_search_index_latency=60.0)
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada"})
+            await engine.create_index("db", "coll", [("title", 1)], name="title_idx")
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition({"mappings": {"dynamic": True}}, name="text", index_type="search"),
+            )
+            runtime = engine._runtime_diagnostics_info()
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(runtime["planner"]["engine"], "sqlite")
+        self.assertEqual(runtime["planner"]["pushdownModes"], ["sql", "hybrid", "python"])
+        self.assertTrue(runtime["planner"]["hybridSortFallback"])
+        self.assertEqual(runtime["search"]["backend"], "fts5-or-python-fallback")
+        self.assertEqual(runtime["search"]["declaredIndexCount"], 1)
+        self.assertEqual(runtime["search"]["pendingIndexCount"], 1)
+        self.assertGreaterEqual(runtime["search"]["ensuredBackendCount"], 0)
+        self.assertGreaterEqual(runtime["caches"]["indexMetadataVersionEntries"], 1)
+        self.assertGreaterEqual(runtime["caches"]["collectionFeatureCacheEntries"], 0)
+        self.assertGreaterEqual(runtime["caches"]["ensuredMultikeyPhysicalIndexCount"], 0)
 
     async def test_sqlite_drop_database_clears_runtime_state_and_profiler(self):
         engine = SQLiteEngine()

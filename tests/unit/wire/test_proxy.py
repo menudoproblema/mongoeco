@@ -2,6 +2,8 @@ import unittest
 from unittest.mock import patch
 import uuid
 import struct
+import ast
+from pathlib import Path
 
 from mongoeco.errors import ExecutionTimeout, MongoEcoError, OperationFailure, PyMongoError
 from mongoeco.wire.protocol import OP_MSG, OP_QUERY, parse_message_header
@@ -30,6 +32,27 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertEqual(resolve_wire_command_capability("saslStart").kind, "sasl_start")
         self.assertEqual(resolve_wire_command_capability("saslContinue").kind, "sasl_continue")
         self.assertEqual(resolve_wire_command_capability("find").kind, "passthrough")
+        self.assertEqual(resolve_wire_command_capability("find").family, "admin_read")
+        self.assertEqual(resolve_wire_command_capability("buildInfo").family, "admin_introspection")
+        self.assertEqual(resolve_wire_command_capability("dbHash").family, "admin_introspection")
+        self.assertEqual(resolve_wire_command_capability("serverStatus").family, "admin_status")
+        self.assertEqual(resolve_wire_command_capability("profile").family, "admin_control")
+        self.assertEqual(resolve_wire_command_capability("listCollections").family, "admin_namespace")
+        self.assertEqual(resolve_wire_command_capability("createIndexes").family, "admin_index")
+        self.assertEqual(resolve_wire_command_capability("findAndModify").family, "admin_find_and_modify")
+        self.assertEqual(resolve_wire_command_capability("connectionStatus").family, "admin_status")
+
+    def test_wire_executor_module_stays_thin_coordinator(self):
+        module_path = Path(__file__).resolve().parents[3] / "src" / "mongoeco" / "wire" / "executor.py"
+        tree = ast.parse(module_path.read_text(encoding="utf-8"))
+        imported_modules = {
+            node.module
+            for node in tree.body
+            if isinstance(node, ast.ImportFrom) and node.module is not None
+        }
+
+        self.assertIn("mongoeco.wire._executor_support", imported_modules)
+        self.assertIn("mongoeco.wire._executor_handlers", imported_modules)
 
     def test_error_document_includes_catalog_metadata_and_labels(self):
         exc = ExecutionTimeout("took too long")
@@ -537,6 +560,9 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(OperationFailure, "non-empty string"):
             await proxy._executor.execute_command({"ping": 1}, connection=connection)
 
+        with self.assertRaisesRegex(OperationFailure, "wire command name must be a non-empty string"):
+            await proxy._executor.execute_command({1: "ping", "$db": "admin"}, connection=connection)  # type: ignore[dict-item]
+
         with self.assertRaisesRegex(OperationFailure, "legacy OP_QUERY only supports command namespaces"):
             await proxy._executor.execute_legacy_query(
                 "alpha.events",
@@ -615,6 +641,190 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 connection=connection,
             )
 
+    async def test_executor_validates_passthrough_command_payload_shapes_early(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        with self.assertRaisesRegex(OperationFailure, "wire find requires a non-empty collection name"):
+            await proxy._executor.execute_command(
+                {"find": "", "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire listDatabases requires the command value 1"):
+            await proxy._executor.execute_command(
+                {"listDatabases": 0, "$db": "admin"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire explain requires a command document"):
+            await proxy._executor.execute_command(
+                {"explain": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire explain verbosity must be a string"):
+            await proxy._executor.execute_command(
+                {"explain": {"find": "events"}, "verbosity": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire aggregate requires a pipeline list"):
+            await proxy._executor.execute_command(
+                {"aggregate": "events", "pipeline": {}, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire aggregate cursor must be a document"):
+            await proxy._executor.execute_command(
+                {"aggregate": "events", "pipeline": [], "cursor": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire aggregate allowDiskUse must be a bool"):
+            await proxy._executor.execute_command(
+                {"aggregate": "events", "pipeline": [], "allowDiskUse": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire aggregate let must be a document"):
+            await proxy._executor.execute_command(
+                {"aggregate": "events", "pipeline": [], "let": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire insert requires a non-empty documents list"):
+            await proxy._executor.execute_command(
+                {"insert": "events", "documents": [], "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire update requires a non-empty updates list"):
+            await proxy._executor.execute_command(
+                {"update": "events", "updates": {}, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire delete requires a non-empty deletes list"):
+            await proxy._executor.execute_command(
+                {"delete": "events", "deletes": [], "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire count skip must be a non-negative integer"):
+            await proxy._executor.execute_command(
+                {"count": "events", "skip": -1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire count filter_spec must be a dict"):
+            await proxy._executor.execute_command(
+                {"count": "events", "query": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire distinct requires a non-empty key string"):
+            await proxy._executor.execute_command(
+                {"distinct": "events", "key": "", "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire find projection must be a dict"):
+            await proxy._executor.execute_command(
+                {"find": "events", "projection": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire find sort must be a document"):
+            await proxy._executor.execute_command(
+                {"find": "events", "sort": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire find batch_size must be >= 0"):
+            await proxy._executor.execute_command(
+                {"find": "events", "batchSize": -1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire validate comment must be a string"):
+            await proxy._executor.execute_command(
+                {"validate": "events", "comment": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire connectionStatus showPrivileges must be a bool"):
+            await proxy._executor.execute_command(
+                {"connectionStatus": 1, "showPrivileges": 1, "$db": "admin"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire dbStats scale must be a positive integer"):
+            await proxy._executor.execute_command(
+                {"dbStats": 1, "scale": 0, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire dbHash collections must be a list of non-empty strings"):
+            await proxy._executor.execute_command(
+                {"dbHash": 1, "collections": ["events", ""], "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire dbHash comment must be a string"):
+            await proxy._executor.execute_command(
+                {"dbHash": 1, "comment": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire collStats scale must be a positive integer"):
+            await proxy._executor.execute_command(
+                {"collStats": "events", "scale": 0, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire profile level must be an integer"):
+            await proxy._executor.execute_command(
+                {"profile": "bad", "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire profile slowms must be an integer"):
+            await proxy._executor.execute_command(
+                {"profile": 2, "slowms": "bad", "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire listCollections comment must be a string"):
+            await proxy._executor.execute_command(
+                {"listCollections": 1, "comment": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire listIndexes comment must be a string"):
+            await proxy._executor.execute_command(
+                {"listIndexes": "events", "comment": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire createIndexes each index specification must be a dict"):
+            await proxy._executor.execute_command(
+                {"createIndexes": "events", "indexes": [1], "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire dropIndexes index must be '\\*', a name, or a key specification"):
+            await proxy._executor.execute_command(
+                {"dropIndexes": "events", "index": 1.5, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire findAndModify let must be a dict"):
+            await proxy._executor.execute_command(
+                {"findAndModify": "events", "query": {}, "update": {"$set": {"a": 1}}, "let": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
     async def test_executor_passthrough_requires_document_response(self):
         proxy = AsyncMongoEcoProxyServer()
         connection = proxy._connections.create(("127.0.0.1", 27017))
@@ -629,6 +839,91 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                     {"ping": 1, "$db": "admin"},
                     connection=connection,
                 )
+
+    async def test_executor_passthrough_admin_commands_materialize_cursor_and_document_shapes(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        class _Database:
+            async def command(self, command_document, session=None):
+                command_name = next(iter(command_document))
+                if command_name == "listCollections":
+                    return {
+                        "cursor": {
+                            "id": 0,
+                            "ns": "alpha.$cmd.listCollections",
+                            "firstBatch": [{"name": "events", "type": "collection"}],
+                        },
+                        "ok": 1.0,
+                    }
+                if command_name == "listIndexes":
+                    return {
+                        "cursor": {
+                            "id": 0,
+                            "ns": "alpha.$cmd.listIndexes.events",
+                            "firstBatch": [{"name": "_id_", "key": {"_id": 1}}],
+                        },
+                        "ok": 1.0,
+                    }
+                if command_name == "dbStats":
+                    return {"db": "alpha", "collections": 1, "ok": 1.0}
+                if command_name == "findAndModify":
+                    return {"value": {"_id": 1, "kind": "view"}, "ok": 1.0}
+                raise AssertionError(command_name)
+
+        with patch.object(proxy._client, "get_database", return_value=_Database()):
+            collections = await proxy._executor.execute_command(
+                {"listCollections": 1, "$db": "alpha"},
+                connection=connection,
+            )
+            indexes = await proxy._executor.execute_command(
+                {"listIndexes": "events", "$db": "alpha"},
+                connection=connection,
+            )
+            db_stats = await proxy._executor.execute_command(
+                {"dbStats": 1, "$db": "alpha"},
+                connection=connection,
+            )
+            find_and_modify = await proxy._executor.execute_command(
+                {"findAndModify": "events", "query": {}, "remove": True, "$db": "alpha"},
+                connection=connection,
+            )
+
+        self.assertEqual(collections["cursor"]["firstBatch"], [{"name": "events", "type": "collection"}])
+        self.assertEqual(indexes["cursor"]["firstBatch"], [{"name": "_id_", "key": {"_id": 1}}])
+        self.assertEqual(db_stats, {"db": "alpha", "collections": 1, "ok": 1.0})
+        self.assertEqual(find_and_modify, {"value": {"_id": 1, "kind": "view"}, "ok": 1.0})
+
+    async def test_executor_passthrough_requires_auth_when_wire_auth_is_enabled(self):
+        proxy = AsyncMongoEcoProxyServer(
+            auth_users=(
+                WireAuthUser(
+                    username="ada",
+                    password="secret",
+                    source="admin",
+                    mechanisms=("SCRAM-SHA-256",),
+                ),
+            )
+        )
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        class _Database:
+            async def command(self, command_document, session=None):
+                return {"ok": 1.0}
+
+        with patch.object(proxy._client, "get_database", return_value=_Database()):
+            with self.assertRaisesRegex(OperationFailure, "Authentication required for listDatabases"):
+                await proxy._executor.execute_command(
+                    {"listDatabases": 1, "$db": "admin"},
+                    connection=connection,
+                )
+
+            result = await proxy._executor.execute_command(
+                {"connectionStatus": 1, "$db": "admin"},
+                connection=connection,
+            )
+
+        self.assertEqual(result["ok"], 1.0)
 
     async def test_executor_connection_status_rewrites_auth_info_from_connection(self):
         proxy = AsyncMongoEcoProxyServer()
@@ -726,6 +1021,85 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(logged_out, {"ok": 1.0})
         self.assertEqual(connection.authenticated_users, [])
+
+    async def test_executor_validates_auth_session_and_cursor_shapes_early(self):
+        proxy = AsyncMongoEcoProxyServer(
+            auth_users=(
+                WireAuthUser(
+                    username="ada",
+                    password="secret",
+                    source="admin",
+                    mechanisms=("SCRAM-SHA-256",),
+                ),
+            )
+        )
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        with self.assertRaisesRegex(OperationFailure, "wire authenticate requires the command value 1"):
+            await proxy._executor.execute_command(
+                {"authenticate": 0, "mechanism": "SCRAM-SHA-256", "user": "ada", "pwd": "secret", "$db": "admin"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "authenticate requires mechanism"):
+            await proxy._executor.execute_command(
+                {"authenticate": 1, "user": "ada", "pwd": "secret", "$db": "admin"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire saslContinue requires the command value 1"):
+            await proxy._executor.execute_command(
+                {"saslContinue": 0, "conversationId": 1, "payload": Binary(b"abc"), "$db": "admin"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "saslContinue requires conversationId"):
+            await proxy._executor.execute_command(
+                {"saslContinue": 1, "conversationId": "bad", "payload": Binary(b"abc"), "$db": "admin"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire endSessions requires a list"):
+            await proxy._executor.execute_command(
+                {"endSessions": "bad", "$db": "admin"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire getMore cursor id must be an integer"):
+            await proxy._executor.execute_command(
+                {"getMore": "bad", "collection": "events", "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire getMore requires a non-empty collection name"):
+            await proxy._executor.execute_command(
+                {"getMore": 1, "collection": "", "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire getMore batchSize must be a non-negative integer"):
+            await proxy._executor.execute_command(
+                {"getMore": 1, "collection": "events", "batchSize": -1, "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire killCursors requires a cursors list"):
+            await proxy._executor.execute_command(
+                {"killCursors": "events", "cursors": "bad", "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire killCursors cursor ids must be integers"):
+            await proxy._executor.execute_command(
+                {"killCursors": "events", "cursors": ["bad"], "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "wire transaction command requires lsid"):
+            await proxy._executor.execute_command(
+                {"commitTransaction": 1, "$db": "admin"},
+                connection=connection,
+            )
 
     async def test_proxy_start_returns_existing_address_when_already_running(self):
         async with AsyncMongoEcoProxyServer() as proxy:

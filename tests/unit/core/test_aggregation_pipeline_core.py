@@ -103,6 +103,91 @@ class AggregationPipelineCoreTests(unittest.TestCase):
 
         self.assertEqual(result, [{"payload": {"city": "Sevilla"}}])
 
+    def test_pipeline_supports_densify_for_numeric_values(self):
+        documents = [{"x": 1}, {"x": 3}]
+
+        result = apply_pipeline(
+            documents,
+            [{"$densify": {"field": "x", "range": {"step": 1, "bounds": "full"}}}],
+        )
+
+        self.assertEqual(result, [{"x": 1}, {"x": 2}, {"x": 3}])
+
+    def test_pipeline_supports_fill_locf_and_linear(self):
+        documents = [
+            {"order": 1, "temp": 10, "qty": 1},
+            {"order": 2, "temp": None, "qty": None},
+            {"order": 3, "temp": 16, "qty": None},
+        ]
+
+        result = apply_pipeline(
+            documents,
+            [
+                {
+                    "$fill": {
+                        "sortBy": {"order": 1},
+                        "output": {
+                            "temp": {"method": "linear"},
+                            "qty": {"method": "locf"},
+                        },
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {"order": 1, "temp": 10, "qty": 1},
+                {"order": 2, "temp": 13.0, "qty": 1},
+                {"order": 3, "temp": 16, "qty": 1},
+            ],
+        )
+
+    def test_pipeline_supports_geo_near_for_local_points(self):
+        documents = [
+            {"_id": "a", "name": "Ada", "location": {"type": "Point", "coordinates": [0, 0]}, "active": True},
+            {"_id": "b", "name": "Grace", "location": [2, 0], "active": False},
+            {"_id": "c", "name": "Linus", "location": {"type": "Point", "coordinates": [1, 0]}, "active": True},
+        ]
+
+        result = apply_pipeline(
+            documents,
+            [
+                {
+                    "$geoNear": {
+                        "near": {"type": "Point", "coordinates": [0, 0]},
+                        "key": "location",
+                        "distanceField": "dist",
+                        "includeLocs": "matched",
+                        "query": {"active": True},
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {
+                    "_id": "a",
+                    "name": "Ada",
+                    "location": {"type": "Point", "coordinates": [0, 0]},
+                    "active": True,
+                    "dist": 0.0,
+                    "matched": {"type": "Point", "coordinates": [0, 0]},
+                },
+                {
+                    "_id": "c",
+                    "name": "Linus",
+                    "location": {"type": "Point", "coordinates": [1, 0]},
+                    "active": True,
+                    "dist": 1.0,
+                    "matched": {"type": "Point", "coordinates": [1, 0]},
+                },
+            ],
+        )
+
     def test_pipeline_supports_unwind_string_path(self):
         documents = [
             {"_id": "1", "tags": ["python", "mongodb"]},

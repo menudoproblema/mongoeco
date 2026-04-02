@@ -188,8 +188,10 @@ class AdminParsingTests(unittest.TestCase):
             normalize_find_and_modify_options({"findAndModify": "users", "collation": []})
         with self.assertRaises(TypeError):
             normalize_find_and_modify_options({"findAndModify": "users", "bypassDocumentValidation": 1})
-        with self.assertRaises(TypeError):
-            normalize_find_and_modify_options({"findAndModify": "users", "update": []})
+        pipeline_options = normalize_find_and_modify_options(
+            {"findAndModify": "users", "update": [{"$set": {"rank": 1}}]}
+        )
+        self.assertEqual(pipeline_options.update_spec, [{"$set": {"rank": 1}}])
 
 
 if __name__ == "__main__":

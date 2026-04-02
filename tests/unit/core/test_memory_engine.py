@@ -1376,7 +1376,33 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(explanation.hinted_index, "by_text")
         self.assertEqual(explanation.details["status"], "PENDING")
-        self.assertEqual(explanation.details["backend"], "python")
+        self.assertTrue(explanation.details["backendAvailable"])
+        self.assertFalse(explanation.details["backendMaterialized"])
+        self.assertIsNone(explanation.details["physicalName"])
+        self.assertIsNone(explanation.details["fts5Available"])
+        self.assertIsNotNone(explanation.details["readyAtEpoch"])
+
+    async def test_memory_runtime_diagnostics_surface_planner_search_and_cache_state(self):
+        engine = MemoryEngine(simulate_search_index_latency=60.0)
+        await engine.connect()
+        try:
+            await engine.create_collection("db", "docs", options={"capped": True})
+            await engine.create_search_index(
+                "db",
+                "docs",
+                SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text"),
+            )
+            runtime = engine._runtime_diagnostics_info()
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(runtime["planner"]["engine"], "python")
+        self.assertEqual(runtime["planner"]["pushdownModes"], ["python"])
+        self.assertEqual(runtime["search"]["backend"], "python")
+        self.assertEqual(runtime["search"]["declaredIndexCount"], 1)
+        self.assertEqual(runtime["search"]["pendingIndexCount"], 1)
+        self.assertGreaterEqual(runtime["caches"]["trackedCollections"], 1)
+        self.assertEqual(runtime["search"]["fts5Available"], None)
 
     async def test_search_index_readiness_and_drop_cleanup_remove_transient_state(self):
         engine = MemoryEngine(simulate_search_index_latency=0.01)

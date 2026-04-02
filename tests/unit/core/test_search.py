@@ -709,7 +709,7 @@ class SearchCoreTests(unittest.TestCase):
             )
         with self.assertRaises(OperationFailure):
             validate_search_index_definition(
-                {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 3, "similarity": "dotProduct"}]},
+                {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 3, "similarity": "manhattan"}]},
                 index_type="vectorSearch",
             )
         with self.assertRaises(OperationFailure):
@@ -734,6 +734,24 @@ class SearchCoreTests(unittest.TestCase):
             )
         with self.assertRaises(OperationFailure):
             validate_search_index_definition({"fields": []}, index_type="vectorSearch")
+
+    def test_validate_vector_search_definition_accepts_additional_local_similarities(self) -> None:
+        for similarity in ("cosine", "dotProduct", "euclidean"):
+            with self.subTest(similarity=similarity):
+                normalized = validate_search_index_definition(
+                    {
+                        "fields": [
+                            {
+                                "type": "vector",
+                                "path": "embedding",
+                                "numDimensions": 3,
+                                "similarity": similarity,
+                            }
+                        ]
+                    },
+                    index_type="vectorSearch",
+                )
+                self.assertEqual(normalized["fields"][0]["similarity"], similarity)
 
     def test_search_private_helpers_cover_empty_and_invalid_vector_specs(self) -> None:
         self.assertEqual(

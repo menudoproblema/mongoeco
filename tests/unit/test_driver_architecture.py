@@ -1,4 +1,6 @@
 import asyncio
+import ast
+from pathlib import Path
 import unittest
 
 from mongoeco import (
@@ -49,6 +51,9 @@ from mongoeco.driver import (
     build_timeout_policy,
     refresh_topology,
 )
+from mongoeco.driver._runtime_attempts import RuntimeAttemptLifecycle
+from mongoeco.driver._runtime_plan_resolution import resolve_runtime_execution_plan
+from mongoeco.driver.topology_monitor import build_probe_plan
 from mongoeco.wire import AsyncMongoEcoProxyServer, WireAuthUser
 
 
@@ -226,6 +231,19 @@ class MongoUriTests(unittest.TestCase):
 
 
 class TopologyAndPolicyTests(unittest.TestCase):
+    def test_driver_runtime_module_stays_split_between_planning_resolution_and_attempts(self):
+        module_path = Path(__file__).resolve().parents[2] / "src" / "mongoeco" / "driver" / "runtime.py"
+        tree = ast.parse(module_path.read_text(encoding="utf-8"))
+        imported_modules = {
+            node.module
+            for node in tree.body
+            if isinstance(node, ast.ImportFrom) and node.module is not None
+        }
+
+        self.assertIn("mongoeco.driver._runtime_planning", imported_modules)
+        self.assertIn("mongoeco.driver._runtime_plan_resolution", imported_modules)
+        self.assertIn("mongoeco.driver._runtime_attempts", imported_modules)
+
     def test_build_local_topology_description_reflects_replica_set(self):
         uri = parse_mongo_uri("mongodb://db1:27017,db2:27018/?replicaSet=rs0")
         topology = build_local_topology_description(uri)
@@ -1124,6 +1142,133 @@ class RequestExecutionPipelineTests(unittest.TestCase):
 
         self.assertFalse(result.outcome.ok)
         self.assertIn("no eligible servers", result.outcome.error or "")
+
+    def test_runtime_plan_resolution_updates_dynamic_plans_against_current_topology(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017,db2:27018/?replicaSet=rs0",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
+        )
+        plan = runtime.plan_command_request("observe", "find", {"find": "events"}, read_only=True)
+        refreshed_topology = TopologyDescription(
+            topology_type=TopologyType.REPLICA_SET,
+            servers=(
+                ServerDescription(
+                    address="db2:27018",
+                    server_type=ServerType.RS_SECONDARY,
+                    state=ServerState.HEALTHY,
+                    set_name="rs0",
+                ),
+            ),
+            set_name="rs0",
+        )
+
+        resolved = resolve_runtime_execution_plan(
+            current_topology=refreshed_topology,
+            plan=plan,
+        )
+
+        self.assertIs(resolved.topology, refreshed_topology)
+        self.assertEqual([server.address for server in resolved.candidate_servers], ["db2:27018"])
+
+    def test_runtime_plan_resolution_keeps_probe_plans_stable(self):
+        server = ServerDescription(address="db1:27017")
+        probe_plan = build_probe_plan(server)
+        changed_topology = TopologyDescription(
+            topology_type=TopologyType.REPLICA_SET,
+            servers=(
+                ServerDescription(
+                    address="db2:27018",
+                    server_type=ServerType.RS_SECONDARY,
+                    state=ServerState.HEALTHY,
+                    set_name="rs0",
+                ),
+            ),
+            set_name="rs0",
+        )
+
+        resolved = resolve_runtime_execution_plan(
+            current_topology=changed_topology,
+            plan=probe_plan,
+        )
+
+        self.assertIs(resolved, probe_plan)
+        self.assertEqual([candidate.address for candidate in resolved.candidate_servers], ["db1:27017"])
+
+    def test_driver_runtime_delegates_attempt_lifecycle_to_helper(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/?retryReads=false",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        plan = runtime.plan_command_request("observe", "find", {"find": "events"}, read_only=True)
+
+        class FakeAttempts:
+            def __init__(self):
+                self.calls = []
+
+            async def prepare(self, current_plan, *, attempt_number):
+                self.calls.append(("prepare", current_plan, attempt_number))
+                return "prepared"
+
+            async def complete(self, execution):
+                self.calls.append(("complete", execution))
+
+            async def discard(self, execution):
+                self.calls.append(("discard", execution))
+
+            async def execute(self, current_plan, *, transport):
+                self.calls.append(("execute", current_plan, transport))
+                return "result"
+
+        fake = FakeAttempts()
+        runtime._attempts = fake
+
+        prepared = asyncio.run(runtime.prepare_request_execution_attempt(plan, attempt_number=2))
+        asyncio.run(runtime.complete_request_execution("prepared"))
+        asyncio.run(runtime.discard_request_execution("broken"))
+        result = asyncio.run(runtime.execute_request(plan, transport=object()))
+
+        self.assertEqual(prepared, "prepared")
+        self.assertEqual(result, "result")
+        self.assertEqual(fake.calls[0], ("prepare", plan, 2))
+        self.assertEqual(fake.calls[1], ("complete", "prepared"))
+        self.assertEqual(fake.calls[2], ("discard", "broken"))
+        self.assertEqual(fake.calls[3][0], "execute")
+        self.assertIs(fake.calls[3][1], plan)
+
+    def test_runtime_attempt_lifecycle_preserves_probe_plans_during_prepare(self):
+        class StubConnections:
+            async def checkout_async(self, server):
+                return type("Lease", (), {"connection_id": server.address, "server": server, "pool_key": None})()
+
+        class StubMonitor:
+            def __init__(self):
+                self.events = []
+
+            def emit(self, event):
+                self.events.append(type(event).__name__)
+
+        server = ServerDescription(address="db1:27017")
+        probe_plan = build_probe_plan(server)
+        lifecycle = RuntimeAttemptLifecycle(
+            connections=StubConnections(),
+            monitor=StubMonitor(),
+            resolve_plan=lambda plan: resolve_runtime_execution_plan(
+                current_topology=TopologyDescription(
+                    topology_type=TopologyType.REPLICA_SET,
+                    servers=(ServerDescription("db2:27018", server_type=ServerType.RS_SECONDARY),),
+                ),
+                plan=plan,
+            ),
+        )
+
+        prepared = asyncio.run(lifecycle.prepare(probe_plan, attempt_number=1))
+
+        self.assertIs(prepared.plan, probe_plan)
+        self.assertEqual(prepared.selected_server.address, "db1:27017")
 
     def test_selection_policy_prefers_healthier_servers_when_ordering_nearest(self):
         policy = build_selection_policy(

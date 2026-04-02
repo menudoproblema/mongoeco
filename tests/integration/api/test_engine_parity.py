@@ -764,6 +764,105 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(results["memory"], results["sqlite"])
 
+    async def test_regex_prefix_filter_matches_in_memory_and_sqlite(self):
+        results: dict[str, list[dict]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                await collection.insert_one({"_id": "1", "title": "Ada Lovelace"})
+                await collection.insert_one({"_id": "2", "title": "Grace Hopper"})
+                await collection.insert_one({"_id": "3", "title": 123})
+
+                results[engine_name] = [
+                    document
+                    async for document in collection.find(
+                        {"title": {"$regex": "^Ada"}},
+                        {"title": 1, "_id": 0},
+                        sort=[("title", 1)],
+                    )
+                ]
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_regex_ascii_ignore_case_filter_matches_in_memory_and_sqlite(self):
+        results: dict[str, list[dict]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                await collection.insert_one({"_id": "1", "title": "ada lovelace"})
+                await collection.insert_one({"_id": "2", "title": "grace hopper"})
+
+                results[engine_name] = [
+                    document
+                    async for document in collection.find(
+                        {"title": {"$regex": "^Ada", "$options": "i"}},
+                        {"title": 1, "_id": 0},
+                        sort=[("title", 1)],
+                    )
+                ]
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_all_filter_matches_in_memory_and_sqlite(self):
+        results: dict[str, list[dict]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                await collection.insert_one({"_id": "1", "tags": ["python", "sqlite"]})
+                await collection.insert_one({"_id": "2", "tags": ["python"]})
+                await collection.insert_one({"_id": "3", "tags": "python"})
+
+                results[engine_name] = [
+                    document
+                    async for document in collection.find(
+                        {"tags": {"$all": ["python", "sqlite"]}},
+                        {"_id": 1},
+                        sort=[("_id", 1)],
+                    )
+                ]
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_elem_match_scalar_array_filter_matches_in_memory_and_sqlite(self):
+        results: dict[str, list[dict]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                await collection.insert_one({"_id": "1", "scores": [7, 2]})
+                await collection.insert_one({"_id": "2", "scores": [4]})
+                await collection.insert_one({"_id": "3", "scores": 7})
+
+                results[engine_name] = [
+                    document
+                    async for document in collection.find(
+                        {"scores": {"$elemMatch": {"$gt": 5}}},
+                        {"_id": 1},
+                        sort=[("_id", 1)],
+                    )
+                ]
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
+    async def test_range_filter_with_mixed_scalars_and_arrays_matches_in_memory_and_sqlite(self):
+        results: dict[str, list[dict]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("events")
+                await collection.insert_one({"_id": "1", "value": 7})
+                await collection.insert_one({"_id": "2", "value": [8, 1]})
+                await collection.insert_one({"_id": "3", "value": [2]})
+
+                results[engine_name] = [
+                    document
+                    async for document in collection.find(
+                        {"value": {"$gt": 5}},
+                        {"_id": 1},
+                        sort=[("_id", 1)],
+                    )
+                ]
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
     async def test_not_and_elem_match_filters_match_in_memory_and_sqlite(self):
         results: dict[str, tuple[list[dict], list[dict]]] = {}
         for engine_name in ("memory", "sqlite"):
@@ -1182,26 +1281,25 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
 
                 filled_collections = await client.alpha.command({"listCollections": 1})
                 filled_indexes = await client.alpha.command({"listIndexes": "events"})
-                with self.assertRaises(OperationFailure) as explain_ctx:
-                    await client.alpha.command(
-                        {
-                            "explain": {
-                                "aggregate": "events",
-                                "pipeline": [{"$densify": {"field": "kind", "range": {"step": 1, "unit": "day", "bounds": "full"}}}],
-                                "cursor": {"batchSize": 1},
-                            }
+                aggregate_explain = await client.alpha.command(
+                    {
+                        "explain": {
+                            "aggregate": "events",
+                            "pipeline": [{"$densify": {"field": "kind", "range": {"step": 1, "bounds": "full"}}}],
+                            "cursor": {"batchSize": 1},
                         }
-                    )
+                    }
+                )
 
                 results[engine_name] = {
                     "emptyCollections": empty_collections,
                     "emptyIndexes": empty_indexes,
                     "filledCollections": filled_collections,
                     "filledIndexes": filled_indexes,
-                    "aggregateExplainError": {
-                        "type": type(explain_ctx.exception).__name__,
-                        "code": explain_ctx.exception.code,
-                        "message": str(explain_ctx.exception),
+                    "aggregateExplain": {
+                        "remainingPipeline": aggregate_explain["remaining_pipeline"],
+                        "pushdownMode": aggregate_explain["pushdown"]["mode"],
+                        "planningMode": aggregate_explain["planning_mode"],
                     },
                 }
 

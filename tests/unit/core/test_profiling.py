@@ -13,8 +13,18 @@ class EngineProfilerTests(unittest.TestCase):
 
         self.assertEqual(current.previous_level, 0)
         self.assertEqual(current.slow_ms, 100)
+        self.assertEqual(current.current_level, 0)
+        self.assertEqual(current.entry_count, 0)
+        self.assertFalse(current.namespace_visible)
+        self.assertEqual(current.tracked_databases, 0)
+        self.assertEqual(current.visible_namespaces, 0)
         self.assertEqual(enabled.previous_level, 0)
         self.assertEqual(enabled.slow_ms, 0)
+        self.assertEqual(enabled.current_level, 2)
+        self.assertEqual(enabled.entry_count, 0)
+        self.assertTrue(enabled.namespace_visible)
+        self.assertEqual(enabled.tracked_databases, 1)
+        self.assertEqual(enabled.visible_namespaces, 1)
 
         with self.assertRaises(ValueError):
             profiler.set_level("db", 3)
@@ -103,3 +113,24 @@ class EngineProfilerTests(unittest.TestCase):
         self.assertEqual(profiler.count_entries("db"), 0)
         self.assertEqual(profiler.get_settings("db").level, 2)
         self.assertTrue(profiler.namespace_visible("db"))
+
+    def test_status_snapshot_summarizes_tracked_databases_and_entries(self):
+        profiler = EngineProfiler("memory")
+        profiler.set_level("alpha", 2, slow_ms=0)
+        profiler.record(
+            "alpha",
+            op="query",
+            namespace="alpha.users",
+            command={"find": "users"},
+            duration_micros=100,
+        )
+        profiler.set_level("beta", 0, slow_ms=100)
+
+        self.assertEqual(
+            profiler.status_snapshot(),
+            {
+                "tracked_databases": 2,
+                "visible_namespaces": 1,
+                "entry_count": 1,
+            },
+        )

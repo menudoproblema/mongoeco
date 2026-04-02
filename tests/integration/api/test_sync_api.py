@@ -49,9 +49,11 @@ from tests.integration.api.admin_command_cases import (
     assert_database_command_index_commands_support_comment_and_max_time,
     assert_database_command_rejects_invalid_command_shapes,
     assert_database_command_rejects_unsupported_commands,
+    assert_database_command_supports_db_hash_and_profile_status,
     assert_database_command_supports_coll_stats_and_db_stats,
     assert_database_command_supports_collection_index_count_and_distinct_commands,
     assert_database_command_supports_explain_for_find_and_aggregate,
+    assert_database_command_supports_explain_for_count_distinct_and_find_and_modify,
     assert_database_command_supports_explain_for_update_and_delete,
     assert_database_command_supports_find_and_aggregate,
     assert_database_command_supports_find_and_modify,
@@ -63,8 +65,12 @@ from tests.integration.api.admin_command_cases import (
     assert_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata,
     assert_list_collections_command_supports_name_only,
     assert_list_commands_and_connection_status_commands_return_local_admin_metadata,
+    assert_server_status_opcounters_track_local_runtime_activity,
     assert_server_status_command_returns_local_runtime_metadata,
     assert_validate_collection_returns_metadata_and_rejects_missing_namespace,
+)
+from tests.integration.api.json_schema_cases import (
+    assert_sync_find_supports_richer_top_level_json_schema_filter,
 )
 from tests.support import ENGINE_FACTORIES as SYNC_ENGINE_FACTORIES, open_sync_client
 
@@ -193,9 +199,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}}]
                     ).explain()
                     self.assertEqual(explanation["engine_plan"]["strategy"], "search")
+                    self.assertEqual(explanation["pushdown"]["mode"], "search")
+                    self.assertEqual(explanation["pushdown"]["pushedDownStages"], 1)
+                    self.assertEqual(explanation["pushdown"]["totalStages"], 1)
+                    self.assertTrue(explanation["engine_plan"]["details"]["backendAvailable"])
+                    self.assertIn("readyAtEpoch", explanation["engine_plan"]["details"])
                     if engine_name == "sqlite":
                         self.assertEqual(explanation["engine_plan"]["details"]["backend"], "fts5")
                         self.assertEqual(explanation["engine_plan"]["details"]["fts5_match"], '"ada"')
+                        self.assertTrue(explanation["engine_plan"]["details"]["backendMaterialized"])
+                        self.assertIsNotNone(explanation["engine_plan"]["details"]["physicalName"])
+                        self.assertIsNotNone(explanation["engine_plan"]["details"]["fts5Available"])
+                    else:
+                        self.assertEqual(explanation["engine_plan"]["details"]["backend"], "python")
+                        self.assertFalse(explanation["engine_plan"]["details"]["backendMaterialized"])
+                        self.assertIsNone(explanation["engine_plan"]["details"]["physicalName"])
+                        self.assertIsNone(explanation["engine_plan"]["details"]["fts5Available"])
 
                     vector_hits = collection.aggregate(
                         [
@@ -252,6 +271,34 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         )
                     with self.assertRaises(OperationFailure):
                         collection.create_search_index({"mappings": {"fields": {"title": {"type": "number"}}}})
+
+    def test_aggregate_explain_reports_pipeline_pushdown_summary(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.analytics.get_collection("events")
+                    collection.insert_many(
+                        [
+                            {"_id": 1, "kind": "view", "rank": 3},
+                            {"_id": 2, "kind": "view", "rank": 1},
+                            {"_id": 3, "kind": "click", "rank": 2},
+                        ]
+                    )
+
+                    explanation = collection.aggregate(
+                        [
+                            {"$match": {"kind": "view"}},
+                            {"$sort": {"rank": 1}},
+                            {"$limit": 1},
+                            {"$project": {"_id": 0, "rank": 1}},
+                        ]
+                    ).explain()
+
+                    self.assertEqual(explanation["pushdown"]["mode"], "pipeline-prefix")
+                    self.assertEqual(explanation["pushdown"]["totalStages"], 4)
+                    self.assertEqual(explanation["pushdown"]["pushedDownStages"], 4)
+                    self.assertEqual(explanation["pushdown"]["remainingStages"], 0)
+                    self.assertEqual(explanation["remaining_pipeline"], [])
 
     def test_search_index_latency_can_surface_pending_state(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -458,6 +505,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"_id": "3", "tenant": "b", "age": 11},
                         ],
                     )
+
+    def test_find_supports_richer_top_level_json_schema_filter(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    assert_sync_find_supports_richer_top_level_json_schema_filter(client)
 
     def test_bypass_document_validation_allows_invalid_writes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -714,6 +767,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     database = client.get_database("profiled")
                     profile_enabled = database.command({"profile": 2, "slowms": 0})
                     self.assertEqual(profile_enabled["was"], 0)
+                    self.assertEqual(profile_enabled["level"], 2)
+                    self.assertEqual(profile_enabled["entryCount"], 0)
 
                     collection = database.get_collection("users")
                     collection.insert_one({"_id": "1", "name": "Ada"})
@@ -722,6 +777,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     profile_status = database.command({"profile": -1})
                     self.assertEqual(profile_status["was"], 2)
+                    self.assertEqual(profile_status["level"], 2)
+                    self.assertGreaterEqual(profile_status["entryCount"], 3)
                     profile_entries = database.get_collection("system.profile").find().to_list()
 
                     self.assertTrue(any(entry["op"] == "insert" for entry in profile_entries))
@@ -800,7 +857,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
         asyncio.run(assert_list_commands_and_connection_status_commands_return_local_admin_metadata(self, open_sync_client))
 
     def test_server_status_command_returns_local_runtime_metadata(self):
-        asyncio.run(assert_server_status_command_returns_local_runtime_metadata(self, open_sync_client))
+        asyncio.run(assert_server_status_command_returns_local_runtime_metadata(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+
+    def test_server_status_opcounters_track_local_runtime_activity(self):
+        asyncio.run(assert_server_status_opcounters_track_local_runtime_activity(self, SYNC_ENGINE_FACTORIES, open_sync_client))
 
     def test_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata(self):
         asyncio.run(assert_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata(self, open_sync_client))
@@ -978,6 +1038,24 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
     def test_database_command_supports_explain_for_update_and_delete(self):
         asyncio.run(assert_database_command_supports_explain_for_update_and_delete(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+
+    def test_database_command_supports_explain_for_count_distinct_and_find_and_modify(self):
+        asyncio.run(
+            assert_database_command_supports_explain_for_count_distinct_and_find_and_modify(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            )
+        )
+
+    def test_database_command_supports_db_hash_and_profile_status(self):
+        asyncio.run(
+            assert_database_command_supports_db_hash_and_profile_status(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            )
+        )
 
     def test_database_command_supports_insert_update_and_delete(self):
         asyncio.run(assert_database_command_supports_insert_update_and_delete(self, SYNC_ENGINE_FACTORIES, open_sync_client))
@@ -4116,6 +4194,49 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     with self.assertRaises(OperationFailure):
                         collection.aggregate([{"$densify": {}}]).to_list()
 
+    def test_aggregate_supports_densify_fill_and_merge(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    source = client.analytics.series
+                    sink = client.analytics.series_filled
+                    source.insert_many(
+                        [
+                            {"_id": "1", "bucket": "a", "x": 1, "qty": 10},
+                            {"_id": "2", "bucket": "a", "x": 3, "qty": None},
+                            {"_id": "3", "bucket": "a", "x": 4, "qty": 40},
+                        ]
+                    )
+
+                    densified = source.aggregate(
+                        [
+                            {"$project": {"_id": 0, "bucket": 1, "x": 1, "qty": 1}},
+                            {"$densify": {"field": "x", "partitionByFields": ["bucket"], "range": {"step": 1, "bounds": "full"}}},
+                            {"$fill": {"sortBy": {"x": 1}, "partitionByFields": ["bucket"], "output": {"qty": {"method": "linear"}}}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(
+                        densified,
+                        [
+                            {"bucket": "a", "x": 1, "qty": 10},
+                            {"bucket": "a", "x": 2, "qty": 20.0},
+                            {"bucket": "a", "x": 3, "qty": 30.0},
+                            {"bucket": "a", "x": 4, "qty": 40},
+                        ],
+                    )
+
+                    merged = source.aggregate(
+                        [
+                            {"$project": {"_id": 1, "bucket": 1}},
+                            {"$merge": {"into": "series_filled", "whenMatched": "merge", "whenNotMatched": "insert"}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual(merged, [])
+                    stored = sink.find({}, sort=[("_id", 1)]).to_list()
+                    self.assertEqual(stored, [{"_id": "1", "bucket": "a"}, {"_id": "2", "bucket": "a"}, {"_id": "3", "bucket": "a"}])
+
     def test_index_metadata_round_trip(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -4199,6 +4320,65 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         collection.create_index([("tenant", 1), ("content", "text")])
                     with self.assertRaises(OperationFailure):
                         collection.create_index([("content", "hashed")], unique=True)
+
+    def test_collection_supports_local_geo_queries_and_geo_near(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.places
+                    collection.insert_many(
+                        [
+                            {"_id": "a", "name": "Ada", "location": {"type": "Point", "coordinates": [0, 0]}, "kind": "home"},
+                            {"_id": "b", "name": "Grace", "location": [2, 0], "kind": "office"},
+                            {"_id": "c", "name": "Linus", "location": {"type": "Point", "coordinates": [1, 1]}, "kind": "home"},
+                        ]
+                    )
+
+                    within = collection.find(
+                        {
+                            "location": {
+                                "$geoWithin": {
+                                    "$geometry": {
+                                        "type": "Polygon",
+                                        "coordinates": [[[-1, -1], [1.5, -1], [1.5, 1.5], [-1, 1.5], [-1, -1]]],
+                                    }
+                                }
+                            }
+                        }
+                    ).to_list()
+                    near = collection.find(
+                        {
+                            "location": {
+                                "$near": {
+                                    "$geometry": {"type": "Point", "coordinates": [0, 0]},
+                                    "$maxDistance": 1.5,
+                                }
+                            }
+                        }
+                    ).to_list()
+                    aggregate = collection.aggregate(
+                        [
+                            {
+                                "$geoNear": {
+                                    "near": {"type": "Point", "coordinates": [0, 0]},
+                                    "key": "location",
+                                    "distanceField": "dist",
+                                    "query": {"kind": "home"},
+                                }
+                            },
+                            {"$project": {"_id": 1, "dist": 1}},
+                        ]
+                    ).to_list()
+
+                    self.assertEqual({document["_id"] for document in within}, {"a", "c"})
+                    self.assertEqual({document["_id"] for document in near}, {"a", "c"})
+                    self.assertEqual(
+                        aggregate,
+                        [
+                            {"_id": "a", "dist": 0.0},
+                            {"_id": "c", "dist": 1.4142135623730951},
+                        ],
+                    )
 
     def test_create_index_supports_ttl_and_expires_documents(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

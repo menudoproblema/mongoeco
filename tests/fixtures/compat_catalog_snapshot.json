@@ -1,4 +1,717 @@
 {
+  "database_command_options": {
+    "aggregate": {
+      "allowDiskUse": {
+        "note": "Applied to blocking aggregate stages through the same local spill policy as the public API.",
+        "status": "effective"
+      },
+      "batchSize": {
+        "note": "Materialized into the command cursor surface for streamable pipelines.",
+        "status": "effective"
+      },
+      "comment": {
+        "note": "Recorded in engine session metadata and surfaced through explain/materialization.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Propagated through command routing into aggregate pushdown/explain.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Propagated into aggregate expression evaluation and subpipelines.",
+        "status": "effective"
+      },
+      "maxTimeMS": {
+        "note": "Enforced against local aggregate execution and explain paths.",
+        "status": "effective"
+      }
+    },
+    "collStats": {
+      "scale": {
+        "note": "Applied to size-oriented metrics in the local collection stats snapshot.",
+        "status": "effective"
+      }
+    },
+    "connectionStatus": {
+      "showPrivileges": {
+        "note": "Controls whether the local auth status document includes the privileges array.",
+        "status": "effective"
+      }
+    },
+    "count": {
+      "comment": {
+        "note": "Recorded in engine session metadata for the command execution.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through the compiled selection path used by the count command.",
+        "status": "effective"
+      },
+      "limit": {
+        "note": "Applied before materializing the local count result.",
+        "status": "effective"
+      },
+      "maxTimeMS": {
+        "note": "Enforced through the compiled selection path used by the count command.",
+        "status": "effective"
+      },
+      "query": {
+        "note": "Compiled into the same local find-selection path used to execute the count command.",
+        "status": "effective"
+      },
+      "skip": {
+        "note": "Applied before materializing the local count result.",
+        "status": "effective"
+      }
+    },
+    "createIndexes": {
+      "comment": {
+        "note": "Recorded in engine session metadata for index administration.",
+        "status": "effective"
+      },
+      "maxTimeMS": {
+        "note": "Enforced as a local deadline across the command index batch.",
+        "status": "effective"
+      }
+    },
+    "currentOp": {
+      "comment": {
+        "note": "Accepted for command parity and recorded in local admin profiling metadata when supplied.",
+        "status": "effective"
+      }
+    },
+    "dbHash": {
+      "collections": {
+        "note": "Limits hashing to the selected local collections while preserving a stable collection-order contract.",
+        "status": "effective"
+      },
+      "comment": {
+        "note": "Accepted for command parity and recorded in command profiling metadata.",
+        "status": "effective"
+      }
+    },
+    "dbStats": {
+      "scale": {
+        "note": "Applied to size-oriented metrics in the local database stats snapshot.",
+        "status": "effective"
+      }
+    },
+    "delete": {
+      "comment": {
+        "note": "Recorded in engine session metadata for the write command.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Propagated into per-delete filters through $expr when supplied on individual specs.",
+        "status": "effective"
+      },
+      "ordered": {
+        "note": "Controls short-circuiting when one delete specification fails.",
+        "status": "effective"
+      }
+    },
+    "distinct": {
+      "comment": {
+        "note": "Recorded in engine session metadata for the command execution.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through the underlying read selection path used by the command.",
+        "status": "effective"
+      },
+      "maxTimeMS": {
+        "note": "Enforced through the underlying distinct selection path.",
+        "status": "effective"
+      },
+      "query": {
+        "note": "Compiled into the same local selection path used to enumerate distinct values.",
+        "status": "effective"
+      }
+    },
+    "dropIndexes": {
+      "comment": {
+        "note": "Recorded in engine session metadata for index administration.",
+        "status": "effective"
+      }
+    },
+    "explain": {
+      "comment": {
+        "note": "Propagated into the explained command where that command supports comment.",
+        "status": "effective"
+      },
+      "maxTimeMS": {
+        "note": "Propagated into the explained command where that command supports maxTimeMS.",
+        "status": "effective"
+      },
+      "verbosity": {
+        "note": "Accepted and surfaced in explain responses for supported routed commands, including find/aggregate/update/delete/count/distinct/findAndModify.",
+        "status": "effective"
+      }
+    },
+    "find": {
+      "batchSize": {
+        "note": "Materialized into the command cursor surface.",
+        "status": "effective"
+      },
+      "comment": {
+        "note": "Recorded in engine session metadata for the command execution.",
+        "status": "effective"
+      },
+      "filter": {
+        "note": "Compiled into the same local find operation shape as the collection API.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied to command read planning and surfaced in explain.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Propagated into command-level $expr evaluation.",
+        "status": "effective"
+      },
+      "limit": {
+        "note": "Applied before command cursor materialization.",
+        "status": "effective"
+      },
+      "maxTimeMS": {
+        "note": "Enforced during command read execution and explain.",
+        "status": "effective"
+      },
+      "projection": {
+        "note": "Applied to command cursor materialization using the same projection semantics as the collection API.",
+        "status": "effective"
+      },
+      "skip": {
+        "note": "Applied before command cursor materialization.",
+        "status": "effective"
+      },
+      "sort": {
+        "note": "Applied to command read planning and result materialization.",
+        "status": "effective"
+      }
+    },
+    "findAndModify": {
+      "arrayFilters": {
+        "note": "Applied through the underlying write path for supported filtered positional updates.",
+        "status": "effective"
+      },
+      "bypassDocumentValidation": {
+        "note": "Validated and propagated through replacement/update command routing.",
+        "status": "effective"
+      },
+      "comment": {
+        "note": "Recorded in engine session metadata for the command execution.",
+        "status": "effective"
+      },
+      "hint": {
+        "note": "Applied through hinted selection and post-write fetch.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Propagated into command-level $expr evaluation for the write filter.",
+        "status": "effective"
+      },
+      "maxTimeMS": {
+        "note": "Propagated through the underlying selection path and enforced there.",
+        "status": "effective"
+      },
+      "sort": {
+        "note": "Applied through the underlying find-and-modify selection path.",
+        "status": "effective"
+      }
+    },
+    "insert": {
+      "bypassDocumentValidation": {
+        "note": "Validated and propagated through command routing.",
+        "status": "effective"
+      },
+      "comment": {
+        "note": "Recorded in engine session metadata for the write command.",
+        "status": "effective"
+      },
+      "ordered": {
+        "note": "Controls short-circuiting when one insert document fails.",
+        "status": "effective"
+      }
+    },
+    "killOp": {
+      "comment": {
+        "note": "Accepted for command parity and recorded in local admin profiling metadata when supplied.",
+        "status": "effective"
+      },
+      "op": {
+        "note": "Identifies the locally registered operation to cancel on a best-effort basis.",
+        "status": "effective"
+      }
+    },
+    "listCollections": {
+      "authorizedCollections": {
+        "note": "Accepted for wire/API parity and preserved in the normalized command options.",
+        "status": "effective"
+      },
+      "comment": {
+        "note": "Recorded in engine session metadata for the admin read command.",
+        "status": "effective"
+      },
+      "filter": {
+        "note": "Applied to the local namespace snapshot before cursor materialization.",
+        "status": "effective"
+      },
+      "nameOnly": {
+        "note": "Controls the fields exposed by the listCollections cursor.",
+        "status": "effective"
+      }
+    },
+    "listDatabases": {
+      "comment": {
+        "note": "Recorded in engine session metadata for the admin read command.",
+        "status": "effective"
+      },
+      "filter": {
+        "note": "Applied to the local database snapshot before materialization.",
+        "status": "effective"
+      },
+      "nameOnly": {
+        "note": "Controls the fields exposed by the listDatabases response.",
+        "status": "effective"
+      }
+    },
+    "listIndexes": {
+      "comment": {
+        "note": "Recorded in engine session metadata for index administration.",
+        "status": "effective"
+      }
+    },
+    "profile": {
+      "slowms": {
+        "note": "Propagated through the local profiling control path when a profiling level update is requested; status queries also surface current level and entry counts.",
+        "status": "effective"
+      }
+    },
+    "update": {
+      "arrayFilters": {
+        "note": "Applied through per-update write execution for supported filtered positional paths.",
+        "status": "effective"
+      },
+      "bypassDocumentValidation": {
+        "note": "Validated and propagated through replacement/update command routing.",
+        "status": "effective"
+      },
+      "comment": {
+        "note": "Recorded in engine session metadata for the write command.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Propagated into per-update filters through $expr when supplied on individual specs.",
+        "status": "effective"
+      },
+      "ordered": {
+        "note": "Controls short-circuiting when one update specification fails.",
+        "status": "effective"
+      }
+    },
+    "validate": {
+      "background": {
+        "note": "Validated and surfaced in the validation snapshot contract.",
+        "status": "effective"
+      },
+      "comment": {
+        "note": "Recorded in engine session metadata for the validation command.",
+        "status": "effective"
+      },
+      "full": {
+        "note": "Controls whether the validation snapshot requests the expanded pass.",
+        "status": "effective"
+      },
+      "scandata": {
+        "note": "Controls whether storage-engine level scan metadata is requested in the validation snapshot.",
+        "status": "effective"
+      }
+    }
+  },
+  "database_commands": {
+    "aggregate": {
+      "family": "admin_read",
+      "note": "Compiled through database admin routing and exposed by both database.command(...) and the local wire passthrough.",
+      "supported_options": [
+        "allowDiskUse",
+        "batchSize",
+        "comment",
+        "hint",
+        "let",
+        "maxTimeMS"
+      ],
+      "supports_comment": true,
+      "supports_explain": true,
+      "supports_wire": true
+    },
+    "buildInfo": {
+      "family": "admin_introspection",
+      "note": "Static local metadata sourced from the dialect/runtime descriptor.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "collStats": {
+      "family": "admin_stats",
+      "note": "Served from local collection stats snapshots.",
+      "supported_options": [
+        "scale"
+      ],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "connectionStatus": {
+      "family": "admin_status",
+      "note": "Static local auth/runtime shape, with wire auth info patched from the active connection.",
+      "supported_options": [
+        "showPrivileges"
+      ],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "count": {
+      "family": "admin_read",
+      "note": "Compiled through the same find-selection path used by direct count command routing.",
+      "supported_options": [
+        "comment",
+        "hint",
+        "limit",
+        "maxTimeMS",
+        "query",
+        "skip"
+      ],
+      "supports_comment": true,
+      "supports_explain": true,
+      "supports_wire": true
+    },
+    "create": {
+      "family": "admin_namespace",
+      "note": "Namespace administration routed through database admin services.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "createIndexes": {
+      "family": "admin_index",
+      "note": "Index administration routed through local collection/index services.",
+      "supported_options": [
+        "comment",
+        "maxTimeMS"
+      ],
+      "supports_comment": true,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "currentOp": {
+      "family": "admin_control",
+      "note": "Exposes the local active-operation registry for embedded-runtime API and wire parity; no distributed semantics are attempted.",
+      "supported_options": [
+        "comment"
+      ],
+      "supports_comment": true,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "dbHash": {
+      "family": "admin_introspection",
+      "note": "Computes stable local collection hashes for embedded-runtime verification across documents, indexes and collection options.",
+      "supported_options": [
+        "collections",
+        "comment"
+      ],
+      "supports_comment": true,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "dbStats": {
+      "family": "admin_stats",
+      "note": "Served from local database stats snapshots.",
+      "supported_options": [
+        "scale"
+      ],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "delete": {
+      "family": "admin_write",
+      "note": "Write command orchestration routes each delete spec through the same write semantics as the public API.",
+      "supported_options": [
+        "comment",
+        "let",
+        "ordered"
+      ],
+      "supports_comment": true,
+      "supports_explain": true,
+      "supports_wire": true
+    },
+    "distinct": {
+      "family": "admin_read",
+      "note": "Compiled through the same read-selection path used by direct distinct execution.",
+      "supported_options": [
+        "comment",
+        "hint",
+        "maxTimeMS",
+        "query"
+      ],
+      "supports_comment": true,
+      "supports_explain": true,
+      "supports_wire": true
+    },
+    "drop": {
+      "family": "admin_namespace",
+      "note": "Namespace administration routed through database admin services.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "dropDatabase": {
+      "family": "admin_namespace",
+      "note": "Implemented as local namespace lifecycle cleanup plus runtime invalidation.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "dropIndexes": {
+      "family": "admin_index",
+      "note": "Index administration routed through local collection/index services.",
+      "supported_options": [
+        "comment"
+      ],
+      "supports_comment": true,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "explain": {
+      "family": "admin_explain",
+      "note": "Delegates to routed find/aggregate/update/delete/count/distinct/findAndModify explain builders and preserves the explained command shape.",
+      "supported_options": [
+        "comment",
+        "maxTimeMS",
+        "verbosity"
+      ],
+      "supports_comment": true,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "find": {
+      "family": "admin_read",
+      "note": "Compiled through the same find operation path as the public collection surface.",
+      "supported_options": [
+        "batchSize",
+        "comment",
+        "filter",
+        "hint",
+        "let",
+        "limit",
+        "maxTimeMS",
+        "projection",
+        "skip",
+        "sort"
+      ],
+      "supports_comment": true,
+      "supports_explain": true,
+      "supports_wire": true
+    },
+    "findAndModify": {
+      "family": "admin_find_and_modify",
+      "note": "Routes through explicit find-and-modify orchestration shared by database.command(...) and wire passthrough.",
+      "supported_options": [
+        "arrayFilters",
+        "bypassDocumentValidation",
+        "comment",
+        "hint",
+        "let",
+        "maxTimeMS",
+        "sort"
+      ],
+      "supports_comment": true,
+      "supports_explain": true,
+      "supports_wire": true
+    },
+    "getCmdLineOpts": {
+      "family": "admin_introspection",
+      "note": "Static local process metadata.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "hello": {
+      "family": "admin_status",
+      "note": "Static local handshake metadata.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "hostInfo": {
+      "family": "admin_introspection",
+      "note": "Static local host/process metadata.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "insert": {
+      "family": "admin_write",
+      "note": "Write command orchestration routes each insert batch through the same collection semantics as the public API.",
+      "supported_options": [
+        "bypassDocumentValidation",
+        "comment",
+        "ordered"
+      ],
+      "supports_comment": true,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "isMaster": {
+      "family": "admin_status",
+      "note": "Legacy handshake alias sharing the local hello metadata source of truth.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "ismaster": {
+      "family": "admin_status",
+      "note": "Legacy handshake alias sharing the local hello metadata source of truth.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "killOp": {
+      "family": "admin_control",
+      "note": "Best-effort local cancellation over operations registered as killable in the embedded runtime; no remote or cluster cancellation exists.",
+      "supported_options": [
+        "comment",
+        "op"
+      ],
+      "supports_comment": true,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "listCollections": {
+      "family": "admin_namespace",
+      "note": "Namespace listing routed through local snapshots with filter/nameOnly support.",
+      "supported_options": [
+        "authorizedCollections",
+        "comment",
+        "filter",
+        "nameOnly"
+      ],
+      "supports_comment": true,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "listCommands": {
+      "family": "admin_introspection",
+      "note": "Static inventory of the supported raw command surface, including admin family, wire availability and explain availability metadata.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "listDatabases": {
+      "family": "admin_namespace",
+      "note": "Database listing routed through local snapshots with filter/nameOnly support.",
+      "supported_options": [
+        "comment",
+        "filter",
+        "nameOnly"
+      ],
+      "supports_comment": true,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "listIndexes": {
+      "family": "admin_index",
+      "note": "Index metadata surfaced through local collection/index services.",
+      "supported_options": [
+        "comment"
+      ],
+      "supports_comment": true,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "ping": {
+      "family": "admin_status",
+      "note": "Static local health/availability response.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "profile": {
+      "family": "admin_control",
+      "note": "Local profiling control and introspection routed through engine profiling support, including current level and recorded entry counts.",
+      "supported_options": [
+        "slowms"
+      ],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "renameCollection": {
+      "family": "admin_namespace",
+      "note": "Namespace administration routed through database admin services.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "serverStatus": {
+      "family": "admin_status",
+      "note": "Static local runtime metadata enriched with engine information, embedded-runtime counters and profiling summary.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "update": {
+      "family": "admin_write",
+      "note": "Write command orchestration routes each update spec through the same write semantics as the public API.",
+      "supported_options": [
+        "arrayFilters",
+        "bypassDocumentValidation",
+        "comment",
+        "let",
+        "ordered"
+      ],
+      "supports_comment": true,
+      "supports_explain": true,
+      "supports_wire": true
+    },
+    "validate": {
+      "family": "admin_validate",
+      "note": "Validation snapshots routed through local collection validation support.",
+      "supported_options": [
+        "background",
+        "comment",
+        "full",
+        "scandata"
+      ],
+      "supports_comment": true,
+      "supports_explain": false,
+      "supports_wire": true
+    },
+    "whatsmyuri": {
+      "family": "admin_introspection",
+      "note": "Static local connection metadata.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    }
+  },
   "defaults": {
     "mongodb_dialect": "7.0",
     "pymongo_auto_profile": "auto-installed",
@@ -152,12 +865,16 @@
         "$bucket",
         "$bucketAuto",
         "$count",
+        "$densify",
         "$documents",
         "$facet",
+        "$fill",
+        "$geoNear",
         "$group",
         "$limit",
         "$lookup",
         "$match",
+        "$merge",
         "$project",
         "$replaceRoot",
         "$replaceWith",
@@ -224,6 +941,8 @@
         "$elemMatch",
         "$eq",
         "$exists",
+        "$geoIntersects",
+        "$geoWithin",
         "$gt",
         "$gte",
         "$in",
@@ -231,6 +950,8 @@
         "$lte",
         "$mod",
         "$ne",
+        "$near",
+        "$nearSphere",
         "$nin",
         "$not",
         "$options",
@@ -244,7 +965,8 @@
         "$expr",
         "$jsonSchema",
         "$nor",
-        "$or"
+        "$or",
+        "$text"
       ],
       "server_version": "7.0",
       "update_operators": [
@@ -429,12 +1151,16 @@
         "$bucket",
         "$bucketAuto",
         "$count",
+        "$densify",
         "$documents",
         "$facet",
+        "$fill",
+        "$geoNear",
         "$group",
         "$limit",
         "$lookup",
         "$match",
+        "$merge",
         "$project",
         "$replaceRoot",
         "$replaceWith",
@@ -499,6 +1225,8 @@
         "$elemMatch",
         "$eq",
         "$exists",
+        "$geoIntersects",
+        "$geoWithin",
         "$gt",
         "$gte",
         "$in",
@@ -506,6 +1234,8 @@
         "$lte",
         "$mod",
         "$ne",
+        "$near",
+        "$nearSphere",
         "$nin",
         "$not",
         "$options",
@@ -519,7 +1249,8 @@
         "$expr",
         "$jsonSchema",
         "$nor",
-        "$or"
+        "$or",
+        "$text"
       ],
       "server_version": "8.0",
       "update_operators": [

@@ -1,3 +1,4 @@
+import ast
 import base64
 import asyncio
 import builtins
@@ -7,6 +8,7 @@ import importlib.util
 import inspect
 import json
 from pathlib import Path
+import sys
 from typing import get_type_hints
 import unittest
 
@@ -38,6 +40,8 @@ from mongoeco.api._sync._materialized_cursor import MaterializedCursor
 from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.compat import (
+    DATABASE_COMMAND_SUPPORT_CATALOG,
+    DATABASE_COMMAND_OPTION_SUPPORT_CATALOG,
     OPERATION_OPTION_SUPPORT,
     OptionSupportStatus,
     export_full_compat_catalog,
@@ -140,7 +144,15 @@ from mongoeco.core.operators import UpdateEngine
 
 class ArchitectureTypeMetadataTests(unittest.TestCase):
     def test_undefined_dbref_and_snapshot_metadata_serialize_cleanly(self):
-        profile_result = ProfilingCommandResult(previous_level=0, slow_ms=100)
+        profile_result = ProfilingCommandResult(
+            previous_level=0,
+            slow_ms=100,
+            current_level=2,
+            entry_count=3,
+            namespace_visible=True,
+            tracked_databases=2,
+            visible_namespaces=1,
+        )
         profile_entry = ProfileEntrySnapshot(
             profile_id=7,
             op="query",
@@ -174,7 +186,17 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         )
         self.assertEqual(
             profile_result.to_document(),
-            {"was": 0, "slowms": 100, "sampleRate": 1.0, "ok": 1.0},
+            {
+                "was": 0,
+                "slowms": 100,
+                "sampleRate": 1.0,
+                "level": 2,
+                "entryCount": 3,
+                "namespaceVisible": True,
+                "trackedDatabases": 2,
+                "visibleNamespaces": 1,
+                "ok": 1.0,
+            },
         )
         self.assertEqual(profile_entry.to_document()["fallbackReason"], "full-scan")
         self.assertEqual(profile_entry.to_document()["errmsg"], "boom")
@@ -274,9 +296,11 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
 
         try:
             builtins.__import__ = _fake_import
+            sys.modules[spec.name] = module
             spec.loader.exec_module(module)
         finally:
             builtins.__import__ = original_import
+            sys.modules.pop(spec.name, None)
 
         generated = module.ObjectId()
         cloned = module.ObjectId(str(generated))
@@ -290,6 +314,66 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             module.ObjectId(1)
         with self.assertRaises(ValueError):
             module.ObjectId(b"123")
+
+    def test_types_module_is_import_only_public_aggregator(self):
+        module_path = Path(__file__).resolve().parents[2] / "src" / "mongoeco" / "types.py"
+        tree = ast.parse(module_path.read_text(encoding="utf-8"))
+
+        forbidden = (
+            ast.FunctionDef,
+            ast.AsyncFunctionDef,
+            ast.ClassDef,
+            ast.Assign,
+            ast.AnnAssign,
+        )
+        non_import_nodes = [
+            node
+            for node in tree.body
+            if not isinstance(node, (ast.ImportFrom, ast.Import))
+        ]
+
+        self.assertEqual(non_import_nodes, [])
+        self.assertFalse(any(isinstance(node, forbidden) for node in tree.body))
+
+    def test_bson_module_native_fallback_covers_object_id_helpers_without_pymongo(self):
+        module_path = Path(__file__).resolve().parents[2] / "src" / "mongoeco" / "_types" / "bson.py"
+        spec = importlib.util.spec_from_file_location("mongoeco_bson_no_bson_test", module_path)
+        assert spec is not None
+        assert spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        original_import = builtins.__import__
+
+        def _fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name.startswith("bson"):
+                raise ModuleNotFoundError(name)
+            return original_import(name, globals, locals, fromlist, level)
+
+        try:
+            builtins.__import__ = _fake_import
+            sys.modules[spec.name] = module
+            spec.loader.exec_module(module)
+        finally:
+            builtins.__import__ = original_import
+            sys.modules.pop(spec.name, None)
+
+        generated = module.ObjectId()
+        cloned = module.ObjectId(str(generated))
+
+        self.assertEqual(str(cloned), str(generated))
+        self.assertTrue(module.ObjectId.is_valid(str(generated)))
+        self.assertTrue(module.ObjectId.is_valid(generated.binary))
+        self.assertEqual(module.normalize_object_id(cloned), cloned)
+        self.assertEqual(module.normalize_object_id(str(generated)), str(generated))
+        self.assertTrue(module.is_object_id_like(generated))
+        self.assertLess(module.ObjectId("000000000000000000000001"), module.ObjectId("ffffffffffffffffffffffff"))
+        self.assertEqual(
+            module.DBRef("users", "ada", database="db", extras={"tenant": "t1"}).as_document(),
+            module.SON([("$ref", "users"), ("$id", "ada"), ("$db", "db"), ("tenant", "t1")]),
+        )
+        with self.assertRaises(ValueError):
+            module.ObjectId("abc")
+        with self.assertRaises(TypeError):
+            module.ObjectId(1)
 
     def test_operation_option_support_exposes_effective_and_noop_statuses(self):
         self.assertEqual(
@@ -347,6 +431,14 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         self.assertEqual(
             set(exported["operation_options"]),
             set(OPERATION_OPTION_SUPPORT),
+        )
+        self.assertEqual(
+            set(exported["database_command_options"]),
+            set(DATABASE_COMMAND_OPTION_SUPPORT_CATALOG),
+        )
+        self.assertEqual(
+            set(exported["database_commands"]),
+            set(DATABASE_COMMAND_SUPPORT_CATALOG),
         )
 
     def test_index_model_reuses_index_definition_contract(self):
@@ -577,6 +669,7 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             count=4,
             data_size=200,
             index_count=2,
+            total_index_size=40,
             scale=10,
         )
         database_snapshot = DatabaseStatsSnapshot(
@@ -585,13 +678,16 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             object_count=4,
             data_size=200,
             index_count=5,
+            index_size=60,
             scale=10,
         )
 
         self.assertEqual(listing_snapshot.to_document()["info"]["readOnly"], False)
         self.assertEqual(database_listing_snapshot.to_document()["sizeOnDisk"], 128)
         self.assertEqual(collection_snapshot.to_document()["size"], 20)
+        self.assertEqual(collection_snapshot.to_document()["totalIndexSize"], 4)
         self.assertEqual(database_snapshot.to_document()["dataSize"], 20)
+        self.assertEqual(database_snapshot.to_document()["indexSize"], 6)
 
     def test_explanation_types_serialize_optional_metadata(self):
         explanation = QueryPlanExplanation(
@@ -616,6 +712,14 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         aggregate = AggregateExplanation(
             engine_plan=explanation,
             remaining_pipeline=[{"$project": {"_id": 0}}],
+            pushdown={
+                "mode": "pipeline-prefix",
+                "totalStages": 2,
+                "pushedDownStages": 1,
+                "remainingStages": 1,
+                "streamingEligible": True,
+                "streamableStageCount": 1,
+            },
             hint="score_-1",
             comment="trace",
             max_time_ms=10,
@@ -633,6 +737,7 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         self.assertEqual(explanation.to_document()["physical_plan"][0]["operation"], "scan")
         self.assertEqual(explanation.to_document()["fallback_reason"], "unsupported filter")
         self.assertEqual(aggregate.to_document()["engine_plan"]["engine"], "memory")
+        self.assertEqual(aggregate.to_document()["pushdown"]["pushedDownStages"], 1)
         self.assertEqual(aggregate.to_document()["planning_issues"][0]["scope"], "aggregate")
 
     def test_stats_snapshots_reject_invalid_values(self):

@@ -177,6 +177,7 @@ See:
 
 * [COMPATIBILITY.md](COMPATIBILITY.md)
 * [DIALECTS.md](DIALECTS.md)
+* [docs/architecture/index.md](docs/architecture/index.md)
 
 ## Testing
 
@@ -198,6 +199,10 @@ Contract-testing rule for new features:
   inherited runtime options involved, not only with the implementation change
 * feature work that changes public errors or degraded planning behavior should
   pin the relevant user-facing message or error shape in tests
+
+Architecture reference:
+
+* [docs/architecture/index.md](docs/architecture/index.md)
 
 ## Benchmarks
 

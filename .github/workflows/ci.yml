@@ -60,6 +60,12 @@ jobs:
       - name: Build distributions
         run: python -m build --sdist --wheel
 
+      - name: Regenerate compat snapshots
+        run: python scripts/update_compat_snapshots.py
+
+      - name: Verify compat snapshots are committed
+        run: git diff --exit-code -- tests/fixtures/compat_catalog_snapshot.json tests/fixtures/compat_catalog_snapshot.md
+
       - name: Smoke installed wheel
         if: matrix.python-version == '3.14'
         run: python scripts/smoke_installed_wheel.py
