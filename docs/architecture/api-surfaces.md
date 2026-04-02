@@ -144,6 +144,13 @@ verdad compartida para:
 - los wrappers historicos del admin se mantienen como capa de compatibilidad,
   pero ya no son la unica frontera real del subsistema.
 
+La debilidad arquitectonica que sigue viva aqui es explicita: `database_admin.py`
+sigue siendo una fachada relativamente gruesa porque conserva wrappers
+historicos, helpers de compatibilidad y muchos puntos de entrada publicos. La
+regla vigente no es seguir troceandola por inercia, sino impedir que vuelva a
+reabsorber routing, validacion o shape publica que ya viven en servicios
+internos.
+
 ## Reconstruccion de objetos y opciones heredadas
 
 Una decision importante del proyecto es que la reconstruccion de fachadas no

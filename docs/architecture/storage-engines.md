@@ -110,6 +110,12 @@ concentra:
 Eso reduce el acoplamiento entre planner, runtime y contrato publico y deja a
 `sqlite.py` en un rol mas claro de coordinador.
 
+El hotspot estructural que sigue pendiente en SQLite no es ya explain, sino la
+cadena completa `semantic_core -> sqlite_planner -> sqlite_query -> sqlite
+runtime`. La politica de pushdown real sigue repartida entre esas capas y la
+proxima inversion aqui deberia hacerse solo cuando una familia concreta de
+operador, explain o fallback justifique una frontera nueva y estable.
+
 ## MVCC y sesiones
 
 La semantica de sesiones y transacciones locales se apoya en:

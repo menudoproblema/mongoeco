@@ -106,6 +106,15 @@ Parte de ese catalogo se proyecta tambien en runtime a traves de
 `supportsExplain`, `supportsComment`, `supportedOptions` y `note`
 por comando para tooling e introspeccion local.
 
+La regla operativa resultante es que un comando admin nuevo no se considera
+cerrado solo porque funcione en runtime. Debe entrar por el contrato
+declarativo y quedar alineado en las tres vistas que hoy forman el contrato
+real del subsistema:
+
+- `compat`;
+- runtime observable (`listCommands`, `serverStatus`, explain);
+- tests y snapshots.
+
 Por eso esta capa debe leerse junto con los tests y no solo junto con las docs.
 
 ## Tests estructurales de mantenimiento
@@ -132,6 +141,9 @@ separacion:
 - `sqlite.py` no debe volver a concentrar la traduccion de fallback a
   `planning_issues` y `pushdown_hints`; esa frontera vive ya en
   `_sqlite_explain_contract.py`.
+- un subset local complejo (`geo`, `vectorSearch`, `$merge`, ops locales) no
+  debe darse por soportado si no coincide el mismo significado entre runtime,
+  compat, docs y tests.
 
 Estos tests no sustituyen a los funcionales, pero ayudan a detectar deriva de
 responsabilidad antes de que vuelva a traducirse en regresiones.
