@@ -6,6 +6,8 @@ Estado actual del repo:
 * capítulo `mongomock` cerrado y sin backlog operativo abierto;
 * runtime local de `search` cerrado en su perímetro actual;
 * backlog restante ya no es de cierre de fases, sino de evolución del producto.
+* ya no se mantiene un `FOLLOWUPS.md` separado: los huecos de producto viven en
+  `MISSING_FEATURES.md` y el backlog amplio/roadmap vive aquí.
 
 La deuda arquitectónica activa y las fronteras que se vigilan ya no se
 describen aquí. Su referencia canónica vive ya repartida en
