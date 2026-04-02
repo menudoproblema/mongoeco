@@ -92,6 +92,17 @@ Algo parecido ocurre con `mongoeco.types`: la superficie publica sigue siendo
 para que nuevos tipos o resultados no obliguen a seguir creciendo en un
 monolito unico.
 
+La misma regla se aplica ya al subset local de `search`:
+
+- `core/_search_contract.py` fija el inventario declarativo de operadores
+  textuales soportados;
+- `core/search.py` materializa compilacion, matching y shape de explain sobre
+  ese contrato;
+- `SearchIndexDefinition.to_document()` reutiliza ese mismo inventario al
+  exponer capacidades;
+- los tests estructurales congelan esa alineacion para que runtime, docs y
+  snapshots no diverjan cuando entre un operador nuevo.
+
 La capa `compat` fija ahora dos matrices separadas:
 
 - `database_commands`, para declarar el inventario de comandos soportados, su
@@ -130,6 +141,8 @@ separacion:
 - `WireCommandExecutor` debe seguir coordinando sobre helpers de parseo,
   validacion temprana, handlers especiales, passthrough y errores, no volver a
   mezclar toda la surface wire en un unico archivo;
+- `_executor_support.py` no debe volver a concentrar la validacion por comando
+  de `wire/admin`; esa frontera vive ya en `_executor_validation.py`;
 - `database_admin.py` debe seguir siendo una fachada y punto de compatibilidad,
   no volver a concentrar el routing y la ejecucion por familias que ya viven en
   `_database_admin_routing.py` y servicios auxiliares;
@@ -141,6 +154,9 @@ separacion:
 - `sqlite.py` no debe volver a concentrar la traduccion de fallback a
   `planning_issues` y `pushdown_hints`; esa frontera vive ya en
   `_sqlite_explain_contract.py`.
+- `sqlite.py` tampoco debe volver a decidir en paralelo la capacidad real del
+  backend local de `$search`; esa frontera vive ya en
+  `_sqlite_search_backend.py`.
 - un subset local complejo (`geo`, `vectorSearch`, `$merge`, ops locales) no
   debe darse por soportado si no coincide el mismo significado entre runtime,
   compat, docs y tests.
@@ -167,6 +183,8 @@ En la fase actual, eso incluye ya explicitamente:
   (`$geoWithin`, `$geoIntersects`, `$near`, `$nearSphere` y `$geoNear`);
 - parity async/sync, cross-engine y surface wire para el subset local de
   `$text` clasico con `textScore`;
+- parity async/sync, cross-engine y `explain()` coherente para el subset local
+  de `$search` (`text`, `phrase`, `autocomplete`, `wildcard`, `compound`);
 - parity async/sync y cross-engine para projection avanzada de `find`
   (`$slice`, `$elemMatch` y proyeccion posicional);
 - parity async/sync y cross-engine para `$collStats` como stage inicial de

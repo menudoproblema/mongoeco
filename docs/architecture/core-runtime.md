@@ -84,6 +84,30 @@ Tambien entra ya un subset local de `$text` clasico:
 - `MemoryEngine` como baseline semantico y `SQLiteEngine` como fallback Python
   observable en `explain()`.
 
+Y el runtime local de `search` queda ya ampliado a un subset explicito de
+`$search`:
+
+- `text`;
+- `phrase`;
+- `autocomplete`;
+- `wildcard`.
+- `compound`.
+
+La regla arquitectonica es la misma:
+
+- `core/_search_contract.py` fija el inventario declarativo de operadores
+  textuales soportados y evita que runtime, tipos y snapshots mantengan listas
+  distintas;
+- `core/search.py` define el contrato semantico y el matching baseline;
+- `core/search.py` usa ya un registro explicito de operadores para separar
+  compilacion de clause, matching baseline y shape de explain, en vez de seguir
+  creciendo por cadenas de `if/elif`;
+- `MemoryEngine` actua como baseline observable;
+- `SQLiteEngine` usa FTS5 cuando la traduccion sigue siendo defendible
+  (`text`, `phrase`, `autocomplete`) y cae a Python cuando no (`wildcard`).
+  `compound` se apoya hoy en ese baseline Python local y no intenta fingir un
+  planner FTS compuesto mas ambicioso de lo que existe realmente.
+
 ## Sorting, projection y updates
 
 El runtime comparte reglas para:

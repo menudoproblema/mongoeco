@@ -60,17 +60,16 @@ from mongoeco.core.query_plan import (
 from mongoeco.core.search import (
     attach_text_score,
     classic_text_score,
-    SearchPhraseQuery,
-    SearchTextQuery,
-    SearchVectorQuery,
     resolve_classic_text_index,
     build_search_index_document,
     compile_search_stage,
     iter_searchable_text_entries,
-    matches_search_phrase_query,
-    matches_search_text_query,
+    is_text_search_query,
+    matches_search_query,
     score_vector_document,
-    sqlite_fts5_query,
+    search_query_explain_details,
+    SearchQuery,
+    SearchVectorQuery,
     vector_field_paths,
 )
 from mongoeco.core.sorting import sort_documents
@@ -84,6 +83,7 @@ from mongoeco.engines._sqlite_explain_contract import (
     sqlite_pushdown_details,
     sqlite_pushdown_followup_hints,
 )
+from mongoeco.engines._sqlite_search_backend import decide_sqlite_search_backend
 from mongoeco.engines._sqlite_runtime import SQLiteCacheState, SQLiteRuntimeState
 from mongoeco.engines._sqlite_session_runtime import SQLiteSessionRuntime
 from mongoeco.engines._sqlite_catalog import (
@@ -4242,7 +4242,7 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
         definition: SearchIndexDefinition,
-        query: SearchTextQuery | SearchPhraseQuery,
+        query: SearchQuery,
         physical_name: str | None,
         deadline: float | None,
     ) -> list[Document]:
@@ -4253,16 +4253,22 @@ class SQLiteEngine(AsyncStorageEngine):
             definition,
             physical_name,
         )
-        if resolved_physical_name and self._supports_fts5(conn) and self._sqlite_table_exists(
-            conn,
-            resolved_physical_name,
-        ):
+        decision = decide_sqlite_search_backend(
+            query,
+            physical_name=resolved_physical_name,
+            fts5_available=self._supports_fts5(conn),
+            backend_materialized=bool(
+                resolved_physical_name
+                and self._sqlite_table_exists(conn, resolved_physical_name)
+            ),
+        )
+        if decision.backend == "fts5":
             sql = (
-                f"SELECT DISTINCT storage_key FROM {self._quote_identifier(resolved_physical_name)} "
+                f"SELECT DISTINCT storage_key FROM {self._quote_identifier(decision.physical_name)} "
                 "WHERE content MATCH ?"
             )
-            params: list[object] = [sqlite_fts5_query(query)]
-            if query.paths is not None:
+            params: list[object] = [decision.fts5_match]
+            if is_text_search_query(query) and query.paths is not None:
                 placeholders = ", ".join("?" for _ in query.paths)
                 sql += f" AND field_path IN ({placeholders})"
                 params.extend(query.paths)
@@ -4281,17 +4287,11 @@ class SQLiteEngine(AsyncStorageEngine):
         documents = [
             document
             for _, document in self._load_documents(db_name, coll_name)
-            if (
-                matches_search_text_query(
-                    document,
-                    definition=definition,
-                    query=query,
-                )
-                if isinstance(query, SearchTextQuery)
-                else matches_search_phrase_query(
-                    document,
-                    definition=definition,
-                    query=query,
+                if (
+                    matches_search_query(
+                        document,
+                        definition=definition,
+                        query=query,
                 )
             )
         ]
@@ -4358,9 +4358,13 @@ class SQLiteEngine(AsyncStorageEngine):
                     raise OperationFailure(f"search index not found with name [{query.index_name}]")
                 definition, physical_name, ready_at_epoch = rows[0]
                 ready = self._search_index_is_ready_sync(ready_at_epoch)
-                backend = "python"
-                fts5_match: str | None = None
-                if isinstance(query, (SearchTextQuery, SearchPhraseQuery)):
+                decision = decide_sqlite_search_backend(
+                    query,
+                    physical_name=physical_name,
+                    fts5_available=None,
+                    backend_materialized=False,
+                )
+                if is_text_search_query(query):
                     resolved_physical_name = self._ensure_search_backend_sync(
                         conn,
                         db_name,
@@ -4373,20 +4377,23 @@ class SQLiteEngine(AsyncStorageEngine):
                         resolved_physical_name
                         and self._sqlite_table_exists(conn, resolved_physical_name)
                     )
-                    if (
-                        resolved_physical_name
-                        and fts5_available
-                        and backend_materialized
-                    ):
-                        backend = "fts5"
-                        fts5_match = sqlite_fts5_query(query)
+                    decision = decide_sqlite_search_backend(
+                        query,
+                        physical_name=resolved_physical_name or physical_name,
+                        fts5_available=fts5_available,
+                        backend_materialized=backend_materialized,
+                    )
                 elif isinstance(query, SearchVectorQuery):
-                    backend = "python"
-                    resolved_physical_name = None
+                    decision = decide_sqlite_search_backend(
+                        query,
+                        physical_name=None,
+                        fts5_available=fts5_available,
+                        backend_materialized=False,
+                    )
         return QueryPlanExplanation(
             engine="sqlite",
             strategy="search",
-            plan="python-vector-search" if isinstance(query, SearchVectorQuery) else f"{backend}-search",
+            plan="python-vector-search" if isinstance(query, SearchVectorQuery) else f"{decision.backend}-search",
             sort=None,
             skip=0,
             limit=None,
@@ -4397,28 +4404,20 @@ class SQLiteEngine(AsyncStorageEngine):
             details={
                 "operator": operator,
                 "index": query.index_name,
-                "backend": backend,
+                "backend": decision.backend,
                 "status": "READY" if ready else "PENDING",
-                "backendAvailable": backend == "python" or bool(fts5_available),
-                "backendMaterialized": backend_materialized,
-                "physicalName": resolved_physical_name or physical_name,
+                "backendAvailable": decision.backend_available,
+                "backendMaterialized": decision.backend_materialized,
+                "physicalName": decision.physical_name,
                 "readyAtEpoch": ready_at_epoch,
-                "fts5Available": fts5_available,
+                "fts5Available": decision.fts5_available,
                 "definition": build_search_index_document(
                     definition,
                     ready=ready,
                     ready_at_epoch=ready_at_epoch,
                 ),
-                "queryOperator": "phrase" if isinstance(query, SearchPhraseQuery) else "text" if isinstance(query, SearchTextQuery) else None,
-                "query": query.raw_query if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) else None,
-                "paths": list(query.paths) if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) and query.paths is not None else None,
-                "fts5_match": fts5_match,
-                "path": query.path if isinstance(query, SearchVectorQuery) else None,
-                "queryVector": list(query.query_vector) if isinstance(query, SearchVectorQuery) else None,
-                "limit": query.limit if isinstance(query, SearchVectorQuery) else None,
-                "numCandidates": query.num_candidates if isinstance(query, SearchVectorQuery) else None,
-                "filter": deepcopy(query.filter_spec) if isinstance(query, SearchVectorQuery) and query.filter_spec is not None else None,
-                "similarity": query.similarity if isinstance(query, SearchVectorQuery) else None,
+                **search_query_explain_details(query),
+                "fts5_match": decision.fts5_match,
                 "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
             },
         )

@@ -8,11 +8,12 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.search import (
-    SearchPhraseQuery,
-    SearchTextQuery,
-    SearchVectorQuery,
     compile_search_stage,
+    is_text_search_query,
     score_vector_document,
+    SearchQuery,
+    SearchVectorQuery,
+    search_query_explain_details,
     vector_field_paths,
 )
 from mongoeco.core.operation_limits import enforce_deadline
@@ -69,7 +70,7 @@ def search_documents(
     definition, physical_name, ready_at_epoch = rows[0]
     if not search_index_is_ready(ready_at_epoch):
         raise OperationFailure(f"search index [{query.index_name}] is not ready yet")
-    if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) and definition.index_type != "search":
+    if is_text_search_query(query) and definition.index_type != "search":
         raise OperationFailure(f"search index [{query.index_name}] does not support $search")
     if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
         raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
@@ -103,19 +104,14 @@ def build_search_explain(
     physical_name: str | None,
     fts5_match: str | None,
 ) -> dict[str, object]:
-    query = compile_search_stage(operator, spec)
+    query: SearchQuery = compile_search_stage(operator, spec)
     return {
         "operator": operator,
         "index": query.index_name,
         "indexType": definition.index_type,
         "physicalName": physical_name,
         "fts5_match": fts5_match,
-        "path": query.path if isinstance(query, SearchVectorQuery) else None,
-        "queryVector": list(query.query_vector) if isinstance(query, SearchVectorQuery) else None,
-        "limit": query.limit if isinstance(query, SearchVectorQuery) else None,
-        "numCandidates": query.num_candidates if isinstance(query, SearchVectorQuery) else None,
-        "filter": deepcopy(query.filter_spec) if isinstance(query, SearchVectorQuery) and query.filter_spec is not None else None,
-        "similarity": query.similarity if isinstance(query, SearchVectorQuery) else None,
+        **search_query_explain_details(query),
         "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
     }
 

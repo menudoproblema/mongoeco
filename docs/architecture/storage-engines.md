@@ -110,6 +110,17 @@ concentra:
 Eso reduce el acoplamiento entre planner, runtime y contrato publico y deja a
 `sqlite.py` en un rol mas claro de coordinador.
 
+En search existe ya otra frontera explicita: `_sqlite_search_backend.py`
+concentra la politica de capacidad real del backend local para `$search`:
+
+- que operadores pueden ir por FTS5;
+- cuales degradan siempre a Python;
+- que shape de explain corresponde a cada backend (`backend`,
+  `backendAvailable`, `backendMaterialized`, `fts5_match`).
+
+Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
+ruta de ejecucion y en la de `explain()`.
+
 El hotspot estructural que sigue pendiente en SQLite no es ya explain, sino la
 cadena completa `semantic_core -> sqlite_planner -> sqlite_query -> sqlite
 runtime`. La politica de pushdown real sigue repartida entre esas capas y la

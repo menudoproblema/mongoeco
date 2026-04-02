@@ -121,8 +121,10 @@ La capa `wire` adapta comandos estilo MongoDB a la superficie del cliente local:
 La implementacion ya no concentra esas responsabilidades en un unico modulo:
 
 - `_executor_support.py` contiene parseo de contexto, normalizacion de
-  `OP_QUERY` legacy, validacion temprana de payloads wire y materializacion de
-  errores wire;
+  `OP_QUERY` legacy y materializacion de errores wire;
+- `_executor_validation.py` concentra la validacion temprana declarativa por
+  comando/familia, para que el crecimiento de `wire/admin` no vuelva a
+  depender de una sola cadena larga de ramas;
 - `_executor_handlers.py` concentra los handlers especiales y el mapa de
   dispatch estable por familia (`auth`, `handshake`, `cursor`, `sessions`,
   passthrough);

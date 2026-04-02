@@ -61,15 +61,14 @@ from mongoeco.core.search import (
     attach_text_score,
     classic_text_score,
     ClassicTextQuery,
-    SearchPhraseQuery,
-    SearchTextQuery,
     SearchVectorQuery,
     build_search_index_document,
     compile_search_stage,
-    matches_search_phrase_query,
-    matches_search_text_query,
+    is_text_search_query,
+    matches_search_query,
     resolve_classic_text_index,
     score_vector_document,
+    search_query_explain_details,
     validate_search_index_definition,
     vector_field_paths,
 )
@@ -1784,21 +1783,11 @@ class MemoryEngine(AsyncStorageEngine):
                 for payload in self._storage_view(context).get(db_name, {}).get(coll_name, {}).values()
             ]
         enforce_deadline(deadline)
-        if isinstance(query, SearchTextQuery):
+        if is_text_search_query(query):
             return [
                 document
                 for document in documents
-                if matches_search_text_query(
-                    document,
-                    definition=definition,
-                    query=query,
-                )
-            ]
-        if isinstance(query, SearchPhraseQuery):
-            return [
-                document
-                for document in documents
-                if matches_search_phrase_query(
+                if matches_search_query(
                     document,
                     definition=definition,
                     query=query,
@@ -1869,15 +1858,7 @@ class MemoryEngine(AsyncStorageEngine):
                     ready=ready,
                     ready_at_epoch=self._search_index_ready_at.get((db_name, coll_name, query.index_name)),
                 ),
-                "queryOperator": "phrase" if isinstance(query, SearchPhraseQuery) else "text" if isinstance(query, SearchTextQuery) else None,
-                "query": query.raw_query if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) else None,
-                "paths": list(query.paths) if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) and query.paths is not None else None,
-                "path": query.path if isinstance(query, SearchVectorQuery) else None,
-                "queryVector": list(query.query_vector) if isinstance(query, SearchVectorQuery) else None,
-                "limit": query.limit if isinstance(query, SearchVectorQuery) else None,
-                "numCandidates": query.num_candidates if isinstance(query, SearchVectorQuery) else None,
-                "filter": deepcopy(query.filter_spec) if isinstance(query, SearchVectorQuery) and query.filter_spec is not None else None,
-                "similarity": query.similarity if isinstance(query, SearchVectorQuery) else None,
+                **search_query_explain_details(query),
                 "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
             },
         )

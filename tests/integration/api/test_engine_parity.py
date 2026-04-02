@@ -1375,6 +1375,32 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         {"$sort": {"_id": 1}},
                     ]
                 ).to_list()
+                autocomplete_hits = await collection.aggregate(
+                    [
+                        {"$search": {"index": "by_text", "autocomplete": {"query": "ada", "path": ["title", "body"]}}},
+                        {"$sort": {"_id": 1}},
+                    ]
+                ).to_list()
+                wildcard_hits = await collection.aggregate(
+                    [
+                        {"$search": {"index": "by_text", "wildcard": {"query": "*algorithm*", "path": "body"}}},
+                        {"$sort": {"_id": 1}},
+                    ]
+                ).to_list()
+                compound_hits = await collection.aggregate(
+                    [
+                        {
+                            "$search": {
+                                "index": "by_text",
+                                "compound": {
+                                    "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                    "filter": [{"wildcard": {"query": "*algorithm*", "path": "body"}}],
+                                },
+                            }
+                        },
+                        {"$sort": {"_id": 1}},
+                    ]
+                ).to_list()
                 vector_hits = await collection.aggregate(
                     [
                         {
@@ -1393,6 +1419,25 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                 search_explain = await collection.aggregate(
                     [{"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}}]
                 ).explain()
+                autocomplete_explain = await collection.aggregate(
+                    [{"$search": {"index": "by_text", "autocomplete": {"query": "ada", "path": ["title", "body"]}}}]
+                ).explain()
+                wildcard_explain = await collection.aggregate(
+                    [{"$search": {"index": "by_text", "wildcard": {"query": "*algorithm*", "path": "body"}}}]
+                ).explain()
+                compound_explain = await collection.aggregate(
+                    [
+                        {
+                            "$search": {
+                                "index": "by_text",
+                                "compound": {
+                                    "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                    "filter": [{"wildcard": {"query": "*algorithm*", "path": "body"}}],
+                                },
+                            }
+                        }
+                    ]
+                ).explain()
                 vector_explain = await collection.aggregate(
                     [
                         {
@@ -1409,6 +1454,9 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
 
                 results[engine_name] = {
                     "search_hits": [document["_id"] for document in search_hits],
+                    "autocomplete_hits": [document["_id"] for document in autocomplete_hits],
+                    "wildcard_hits": [document["_id"] for document in wildcard_hits],
+                    "compound_hits": [document["_id"] for document in compound_hits],
                     "vector_hits": [document["_id"] for document in vector_hits],
                     "search_explain": {
                         "hint": search_explain["hint"],
@@ -1417,6 +1465,18 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         "remaining_pipeline": search_explain["remaining_pipeline"],
                         "query_operator": search_explain["engine_plan"]["details"]["queryOperator"],
                         "paths": search_explain["engine_plan"]["details"]["paths"],
+                    },
+                    "autocomplete_explain": {
+                        "query_operator": autocomplete_explain["engine_plan"]["details"]["queryOperator"],
+                        "paths": autocomplete_explain["engine_plan"]["details"]["paths"],
+                    },
+                    "wildcard_explain": {
+                        "query_operator": wildcard_explain["engine_plan"]["details"]["queryOperator"],
+                        "paths": wildcard_explain["engine_plan"]["details"]["paths"],
+                    },
+                    "compound_explain": {
+                        "query_operator": compound_explain["engine_plan"]["details"]["queryOperator"],
+                        "compound": compound_explain["engine_plan"]["details"]["compound"],
                     },
                     "vector_explain": {
                         "hint": vector_explain["hint"],

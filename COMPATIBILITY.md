@@ -50,6 +50,10 @@ Esto implica:
 * geoespacial entra solo como subset local point-only;
 * `$text` clásico existe ya como subset local explícito, con `textScore`
   observable pero sin pretender semántica full-text de servidor MongoDB.
+* `$search` local soporta ya `text`, `phrase`, `autocomplete`, `wildcard`
+  y `compound`
+  como subset explícito y documentado, sin pretender semántica Atlas Search
+  completa.
 * la proyeccion avanzada de `find` cubre ya el subconjunto diario mas util
   (`$slice`, `$elemMatch`, proyeccion posicional y `$meta: "textScore"`);
 * `$collStats` existe tanto como comando administrativo como stage de
@@ -338,6 +342,34 @@ Límites conscientes:
 Límites conscientes:
 
 * no hay ANN, HNSW ni backends Atlas-like;
+
+## 7.5 Subset local actual de `$search`
+
+El runtime local soporta ya un subset explícito de `$search`:
+
+* operadores:
+  * `text`
+  * `phrase`
+  * `autocomplete`
+  * `wildcard`
+  * `compound`
+* surface observable:
+  * `explain()` con `queryOperator`, paths y backend real;
+  * `SearchIndexDocument.capabilities` alineado con el runtime real;
+  * `SQLiteEngine` usando FTS5 cuando la traducción es defendible y fallback
+    Python cuando no lo es.
+
+Límites conscientes:
+
+* no hay `near`, `compound`, `facet`, `range`, `exists` ni scoring Atlas-like;
+* `wildcard` sigue siendo matching local simple, no sintaxis Atlas Search;
+* `autocomplete` es local y basado en prefijos de tokens, no en analyzer
+  avanzado;
+* `compound` se limita a combinar el subset local soportado
+  (`text`/`phrase`/`autocomplete`/`wildcard`) con `must`, `should`, `filter`,
+  `mustNot` y `minimumShouldMatch`;
+* `SQLiteEngine` solo empuja a FTS5 `text`, `phrase` y `autocomplete`; el
+  `wildcard` local y `compound` siguen siendo fallback Python explícito.
 * `$vectorSearch` debe seguir siendo el primer stage;
 * la semantica sigue siendo local y exacta, no de cluster o servicio remoto.
 

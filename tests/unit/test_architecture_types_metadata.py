@@ -24,6 +24,7 @@ from mongoeco.api.admin_parsing import (
     normalize_list_collections_options,
     normalize_validate_command_options,
 )
+from mongoeco.core._search_contract import TEXT_SEARCH_INDEX_CAPABILITIES
 from mongoeco.api.operations import (
     AggregateOperation,
     FindOperation,
@@ -923,7 +924,10 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         )
 
         self.assertEqual(search_definition.to_document()["status"], "READY")
-        self.assertEqual(search_definition.to_document()["capabilities"], ["text", "phrase"])
+        self.assertEqual(
+            search_definition.to_document()["capabilities"],
+            list(TEXT_SEARCH_INDEX_CAPABILITIES),
+        )
         self.assertTrue(vector_definition.to_document()["queryable"])
         self.assertEqual(vector_definition.to_document()["queryMode"], "vector")
         self.assertEqual(vector_definition.to_document()["capabilities"], ["vectorSearch"])

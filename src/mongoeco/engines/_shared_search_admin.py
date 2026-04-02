@@ -4,9 +4,9 @@ from collections.abc import Callable, Sequence
 from typing import TypeVar
 
 from mongoeco.core.search import (
-    SearchPhraseQuery,
-    SearchTextQuery,
+    is_text_search_query,
     SearchVectorQuery,
+    SearchQuery,
     validate_search_index_definition,
 )
 from mongoeco.errors import OperationFailure
@@ -56,14 +56,14 @@ def search_index_not_found(name: str) -> OperationFailure:
 
 def ensure_search_index_query_supported(
     definition: SearchIndexDefinition,
-    query: SearchTextQuery | SearchPhraseQuery | SearchVectorQuery,
+    query: SearchQuery,
     *,
     ready: bool,
     enforce_ready: bool = True,
 ) -> None:
     if enforce_ready and not ready:
         raise OperationFailure(f"search index [{query.index_name}] is not ready yet")
-    if isinstance(query, (SearchTextQuery, SearchPhraseQuery)) and definition.index_type != "search":
+    if is_text_search_query(query) and definition.index_type != "search":
         raise OperationFailure(f"search index [{query.index_name}] does not support $search")
     if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
         raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")

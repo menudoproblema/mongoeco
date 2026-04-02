@@ -1,27 +1,40 @@
 import unittest
 
 import mongoeco.core.search as search_module
+from mongoeco.core._search_contract import TEXT_SEARCH_INDEX_CAPABILITIES, TEXT_SEARCH_OPERATOR_NAMES
 from mongoeco.core.search import (
     ClassicTextQuery,
+    SearchAutocompleteQuery,
+    SearchCompoundQuery,
     SearchPhraseQuery,
     SearchTextQuery,
     SearchVectorQuery,
+    SearchWildcardQuery,
     attach_text_score,
     build_search_index_document,
     classic_text_score,
+    compile_search_autocomplete_query,
     compile_classic_text_query,
+    compile_search_compound_query,
     is_queryable_search_definition,
     compile_search_text_like_query,
     compile_search_phrase_query,
     compile_search_stage,
     compile_search_text_query,
     compile_vector_search_query,
+    compile_search_wildcard_query,
     iter_searchable_text_entries,
+    matches_search_autocomplete_query,
+    matches_search_compound_query,
+    matches_search_query,
     matches_search_phrase_query,
     matches_search_text_query,
+    matches_search_wildcard_query,
     resolve_classic_text_index,
     split_classic_text_filter,
     score_vector_document,
+    search_query_explain_details,
+    search_query_operator_name,
     sqlite_fts5_query,
     tokenize_classic_text,
     validate_search_index_definition,
@@ -170,6 +183,14 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(document["queryMode"], "text")
         self.assertFalse(document["experimental"])
         self.assertEqual(document["readyAtEpoch"], 12.5)
+        self.assertEqual(document["capabilities"], list(TEXT_SEARCH_INDEX_CAPABILITIES))
+
+    def test_search_capabilities_and_operator_registry_share_the_same_contract(self) -> None:
+        self.assertEqual(TEXT_SEARCH_INDEX_CAPABILITIES, TEXT_SEARCH_OPERATOR_NAMES)
+        self.assertEqual(
+            SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text").to_document()["capabilities"],
+            list(TEXT_SEARCH_INDEX_CAPABILITIES),
+        )
 
     def test_compile_search_text_query_supports_paths(self) -> None:
         query = compile_search_text_query(
@@ -315,12 +336,96 @@ class SearchCoreTests(unittest.TestCase):
             ),
         )
 
-    def test_compile_search_stage_rejects_unsupported_search_operator_keys(self) -> None:
-        with self.assertRaises(OperationFailure):
+    def test_compile_search_stage_supports_autocomplete_and_wildcard_operators(self) -> None:
+        self.assertEqual(
             compile_search_stage(
                 "$search",
-                {"index": "by_text", "wildcard": {"query": "ada", "path": "title"}},
-            )
+                {"index": "by_text", "autocomplete": {"query": "Ada Lov", "path": "title"}},
+            ),
+            SearchAutocompleteQuery(
+                index_name="by_text",
+                raw_query="Ada Lov",
+                terms=("ada", "lov"),
+                paths=("title",),
+            ),
+        )
+
+    def test_compile_search_stage_supports_compound_operator(self) -> None:
+        self.assertEqual(
+            compile_search_stage(
+                "$search",
+                {
+                    "index": "by_text",
+                    "compound": {
+                        "must": [{"text": {"query": "ada", "path": "title"}}],
+                        "should": [{"wildcard": {"query": "*engine*", "path": "body"}}],
+                    },
+                },
+            ),
+            SearchCompoundQuery(
+                index_name="by_text",
+                must=(
+                    SearchTextQuery(
+                        index_name="by_text",
+                        raw_query="ada",
+                        terms=("ada",),
+                        paths=("title",),
+                    ),
+                ),
+                should=(
+                    SearchWildcardQuery(
+                        index_name="by_text",
+                        raw_query="*engine*",
+                        normalized_pattern="*engine*",
+                        paths=("body",),
+                    ),
+                ),
+                minimum_should_match=0,
+            ),
+        )
+
+    def test_search_query_explain_details_reuse_operator_contract(self) -> None:
+        wildcard = compile_search_wildcard_query(
+            {
+                "index": "by_text",
+                "wildcard": {"query": "Ada*", "path": "title"},
+            }
+        )
+        compound = compile_search_compound_query(
+            {
+                "index": "by_text",
+                "compound": {
+                    "must": [{"text": {"query": "Ada", "path": "title"}}],
+                },
+            }
+        )
+        vector = compile_vector_search_query(
+            {
+                "index": "vec",
+                "path": "embedding",
+                "queryVector": [1, 2, 3],
+                "limit": 2,
+            }
+        )
+
+        self.assertEqual(search_query_operator_name(wildcard), "wildcard")
+        self.assertEqual(search_query_explain_details(wildcard)["paths"], ["title"])
+        self.assertEqual(search_query_operator_name(compound), "compound")
+        self.assertEqual(search_query_explain_details(compound)["compound"]["must"], 1)
+        self.assertIsNone(search_query_operator_name(vector))
+        self.assertEqual(search_query_explain_details(vector)["path"], "embedding")
+        self.assertEqual(
+            compile_search_stage(
+                "$search",
+                {"index": "by_text", "wildcard": {"query": "Ada*", "path": "title"}},
+            ),
+            SearchWildcardQuery(
+                index_name="by_text",
+                raw_query="Ada*",
+                normalized_pattern="ada*",
+                paths=("title",),
+            ),
+        )
 
     def test_compile_search_stage_rejects_missing_or_conflicting_text_clause(self) -> None:
         with self.assertRaises(OperationFailure):
@@ -332,6 +437,15 @@ class SearchCoreTests(unittest.TestCase):
                     "index": "by_text",
                     "text": {"query": "ada"},
                     "phrase": {"query": "ada"},
+                },
+            )
+        with self.assertRaises(OperationFailure):
+            compile_search_stage(
+                "$search",
+                {
+                    "index": "by_text",
+                    "text": {"query": "ada"},
+                    "wildcard": {"query": "ad*"},
                 },
             )
 
@@ -354,6 +468,39 @@ class SearchCoreTests(unittest.TestCase):
             compile_search_text_query({"phrase": {"query": "ada"}})
         with self.assertRaises(OperationFailure):
             compile_search_phrase_query({"text": {"query": "ada"}})
+        with self.assertRaises(OperationFailure):
+            compile_search_autocomplete_query({"text": {"query": "ada"}})
+        with self.assertRaises(OperationFailure):
+            compile_search_wildcard_query({"text": {"query": "ada"}})
+        with self.assertRaises(OperationFailure):
+            compile_search_text_like_query({"wildcard": {"query": 1}})
+        with self.assertRaises(OperationFailure):
+            compile_search_compound_query({"text": {"query": "ada"}})
+        with self.assertRaises(OperationFailure):
+            compile_search_text_like_query({"compound": []})
+
+    def test_compile_search_compound_query_validates_clause_structure(self) -> None:
+        with self.assertRaises(OperationFailure):
+            compile_search_compound_query({"compound": {}})
+        with self.assertRaises(OperationFailure):
+            compile_search_compound_query({"compound": {"must": {}}})
+        with self.assertRaises(OperationFailure):
+            compile_search_compound_query(
+                {"compound": {"must": [{"text": {"query": "ada"}}, {"phrase": {"query": "ada"}}], "minimumShouldMatch": 1}}
+            )
+        with self.assertRaises(OperationFailure):
+            compile_search_compound_query({"compound": {"minimumShouldMatch": 1, "must": [{"text": {"query": "ada"}}]}})
+        query = compile_search_compound_query(
+            {
+                "index": "by_text",
+                "compound": {
+                    "must": [{"text": {"query": "ada"}}],
+                    "should": [{"phrase": {"query": "analytical engine"}}],
+                    "minimumShouldMatch": 1,
+                },
+            }
+        )
+        self.assertEqual(query.minimum_should_match, 1)
 
     def test_compile_search_phrase_query_rejects_unsupported_options(self) -> None:
         with self.assertRaises(OperationFailure):
@@ -363,6 +510,39 @@ class SearchCoreTests(unittest.TestCase):
                     "phrase": {"query": "ada", "path": "title", "slop": 2},
                 }
             )
+
+    def test_compile_search_autocomplete_and_wildcard_queries_support_paths(self) -> None:
+        autocomplete = compile_search_autocomplete_query(
+            {
+                "index": "by_text",
+                "autocomplete": {"query": "Ada Lov", "path": ["title", "body"]},
+            }
+        )
+        wildcard = compile_search_wildcard_query(
+            {
+                "index": "by_text",
+                "wildcard": {"query": "*algorithm*", "path": ["title", "body"]},
+            }
+        )
+        self.assertEqual(
+            autocomplete,
+            SearchAutocompleteQuery(
+                index_name="by_text",
+                raw_query="Ada Lov",
+                terms=("ada", "lov"),
+                paths=("title", "body"),
+            ),
+        )
+        self.assertEqual(sqlite_fts5_query(autocomplete), '"ada"* AND "lov"*')
+        self.assertEqual(
+            wildcard,
+            SearchWildcardQuery(
+                index_name="by_text",
+                raw_query="*algorithm*",
+                normalized_pattern="*algorithm*",
+                paths=("title", "body"),
+            ),
+        )
 
     def test_compile_search_text_query_supports_wildcard_path(self) -> None:
         query = compile_search_text_query(
@@ -591,6 +771,162 @@ class SearchCoreTests(unittest.TestCase):
                 query=SearchPhraseQuery(
                     index_name="by_text",
                     raw_query="Ada",
+                    paths=("title",),
+                ),
+            )
+        )
+
+    def test_matches_search_autocomplete_and_wildcard_queries_against_mapping(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "autocomplete"},
+                        "body": {"type": "string"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+
+    def test_matches_search_compound_queries_against_mapping(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "autocomplete"},
+                        "body": {"type": "string"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+        document = {
+            "title": "Ada Lovelace",
+            "body": "Analytical engine pioneer",
+        }
+        self.assertTrue(
+            matches_search_compound_query(
+                document,
+                definition=definition,
+                query=SearchCompoundQuery(
+                    index_name="by_text",
+                    must=(
+                        SearchAutocompleteQuery(
+                            index_name="by_text",
+                            raw_query="ada",
+                            terms=("ada",),
+                            paths=("title",),
+                        ),
+                    ),
+                    filter=(
+                        SearchWildcardQuery(
+                            index_name="by_text",
+                            raw_query="*engine*",
+                            normalized_pattern="*engine*",
+                            paths=("body",),
+                        ),
+                    ),
+                ),
+            )
+        )
+        self.assertFalse(
+            matches_search_query(
+                document,
+                definition=definition,
+                query=SearchCompoundQuery(
+                    index_name="by_text",
+                    must=(
+                        SearchTextQuery(
+                            index_name="by_text",
+                            raw_query="ada",
+                            terms=("ada",),
+                            paths=("title",),
+                        ),
+                    ),
+                    must_not=(
+                        SearchPhraseQuery(
+                            index_name="by_text",
+                            raw_query="Analytical engine",
+                            paths=("body",),
+                        ),
+                    ),
+                ),
+            )
+        )
+        self.assertTrue(
+            matches_search_query(
+                document,
+                definition=definition,
+                query=SearchCompoundQuery(
+                    index_name="by_text",
+                    should=(
+                        SearchPhraseQuery(
+                            index_name="by_text",
+                            raw_query="Ada Lovelace",
+                            paths=("title",),
+                        ),
+                        SearchWildcardQuery(
+                            index_name="by_text",
+                            raw_query="*compiler*",
+                            normalized_pattern="*compiler*",
+                            paths=("body",),
+                        ),
+                    ),
+                    minimum_should_match=1,
+                ),
+            )
+        )
+        document = {
+            "title": "Ada Lovelace",
+            "body": "Analytical engine pioneer",
+        }
+        self.assertTrue(
+            matches_search_autocomplete_query(
+                document,
+                definition=definition,
+                query=SearchAutocompleteQuery(
+                    index_name="by_text",
+                    raw_query="ada lov",
+                    terms=("ada", "lov"),
+                    paths=("title",),
+                ),
+            )
+        )
+        self.assertFalse(
+            matches_search_autocomplete_query(
+                document,
+                definition=definition,
+                query=SearchAutocompleteQuery(
+                    index_name="by_text",
+                    raw_query="grace",
+                    terms=("grace",),
+                    paths=("title",),
+                ),
+            )
+        )
+        self.assertTrue(
+            matches_search_wildcard_query(
+                document,
+                definition=definition,
+                query=SearchWildcardQuery(
+                    index_name="by_text",
+                    raw_query="*engine*",
+                    normalized_pattern="*engine*",
+                    paths=("body",),
+                ),
+            )
+        )
+        self.assertFalse(
+            matches_search_wildcard_query(
+                document,
+                definition=definition,
+                query=SearchWildcardQuery(
+                    index_name="by_text",
+                    raw_query="grace*",
+                    normalized_pattern="grace*",
                     paths=("title",),
                 ),
             )

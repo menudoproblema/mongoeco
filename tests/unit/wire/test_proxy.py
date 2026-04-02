@@ -10,6 +10,7 @@ from mongoeco.wire.protocol import OP_MSG, OP_QUERY, parse_message_header
 from mongoeco.types import Binary, ObjectId
 from mongoeco.wire.auth import WireAuthenticationService, WireAuthUser
 from mongoeco.wire.connections import WireConnectionContext, WireConnectionRegistry
+from mongoeco.wire._executor_support import patch_connection_status_auth_info
 from mongoeco.wire.capabilities import resolve_wire_command_capability
 from mongoeco.wire.handshake import WireHandshakeService
 from mongoeco.wire.executor import WireCommandExecutor
@@ -53,6 +54,17 @@ class WireProxyUnitTests(unittest.TestCase):
 
         self.assertIn("mongoeco.wire._executor_support", imported_modules)
         self.assertIn("mongoeco.wire._executor_handlers", imported_modules)
+
+    def test_wire_executor_support_delegates_command_validation_to_registry_module(self):
+        module_path = Path(__file__).resolve().parents[3] / "src" / "mongoeco" / "wire" / "_executor_support.py"
+        tree = ast.parse(module_path.read_text(encoding="utf-8"))
+        imported_modules = {
+            node.module
+            for node in tree.body
+            if isinstance(node, ast.ImportFrom) and node.module is not None
+        }
+
+        self.assertIn("mongoeco.wire._executor_validation", imported_modules)
 
     def test_error_document_includes_catalog_metadata_and_labels(self):
         exc = ExecutionTimeout("took too long")
@@ -188,6 +200,37 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertEqual(document["code"], 999)
         self.assertEqual(document["codeName"], "BadThing")
         self.assertEqual(document["errorLabels"], ["RetryableWriteError"])
+
+    def test_error_document_merges_details_and_preserves_existing_error_labels(self):
+        error = PyMongoError("bad")
+        error.details = {"code": 17, "errorLabels": ["FromDetails"], "extra": True}
+        error.error_labels = ("RetryableWriteError",)
+
+        document = WireCommandExecutor.error_document(error)
+
+        self.assertEqual(document["code"], 17)
+        self.assertEqual(document["errorLabels"], ["FromDetails"])
+        self.assertTrue(document["extra"])
+
+    def test_patch_connection_status_auth_info_updates_auth_lists(self):
+        connection = WireConnectionContext(connection_id=1, peer_host="127.0.0.1", peer_port=27017)
+        connection.authenticated_users[:] = [{"user": "ada", "db": "admin"}]
+        connection.authenticated_roles[:] = [{"role": "readWrite", "db": "admin"}]
+
+        result = patch_connection_status_auth_info(
+            {
+                "authInfo": {
+                    "authenticatedUsers": [],
+                    "authenticatedUserRoles": [],
+                    "authenticatedUserPrivileges": ["stale"],
+                }
+            },
+            connection=connection,
+        )
+
+        self.assertEqual(result["authInfo"]["authenticatedUsers"], connection.authenticated_users)
+        self.assertEqual(result["authInfo"]["authenticatedUserRoles"], connection.authenticated_roles)
+        self.assertEqual(result["authInfo"]["authenticatedUserPrivileges"], [])
 
     def test_session_store_returns_none_when_capability_does_not_bind_or_lsid_missing(self):
         proxy = AsyncMongoEcoProxyServer()
@@ -1143,6 +1186,52 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             number_to_return=5,
         )
         self.assertEqual(normalized["cursor"], {"batchSize": 5})
+
+    async def test_build_request_context_rejects_invalid_db_and_unsupported_command(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        with self.assertRaisesRegex(OperationFailure, r"\$db must be a non-empty string"):
+            proxy._executor._build_request_context({}, connection=connection)
+
+        with self.assertRaisesRegex(OperationFailure, "unsupported wire command: madeUp"):
+            proxy._executor._build_request_context(
+                {"madeUp": 1, "$db": "alpha"},
+                connection=connection,
+            )
+
+    async def test_executor_rejects_additional_auth_and_admin_shape_errors(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        cases = [
+            ({"authenticate": 0, "mechanism": "SCRAM-SHA-256", "user": "ada", "db": "admin", "$db": "admin"}, "wire authenticate requires the command value 1"),
+            ({"authenticate": 1, "mechanism": "SCRAM-SHA-256", "$db": "admin"}, "authenticate requires user"),
+            ({"saslStart": 1, "$db": "admin"}, "saslStart requires mechanism"),
+            ({"saslContinue": 1, "conversationId": "1", "$db": "admin"}, "saslContinue requires conversationId"),
+            ({"logout": 0, "$db": "admin"}, "wire logout requires the command value 1"),
+            ({"currentOp": 0, "$db": "admin"}, "wire currentOp requires the command value 1"),
+            ({"collStats": "events", "scale": 0, "$db": "alpha"}, "wire collStats scale must be a positive integer"),
+            ({"dbHash": 1, "collections": [""], "$db": "alpha"}, "wire dbHash collections must be a list of non-empty strings"),
+            ({"dbHash": 1, "comment": 1, "$db": "alpha"}, "wire dbHash comment must be a string"),
+            ({"listCollections": 1, "nameOnly": "yes", "$db": "alpha"}, "wire listCollections nameOnly must be a bool"),
+            ({"listDatabases": 1, "filter": [], "$db": "admin"}, "wire listDatabases filter must be a document"),
+            ({"profile": 1, "slowms": "10", "$db": "alpha"}, "wire profile slowms must be an integer"),
+            ({"aggregate": "events", "pipeline": [], "allowDiskUse": "yes", "$db": "alpha"}, "wire aggregate allowDiskUse must be a bool"),
+            ({"aggregate": "events", "pipeline": [], "let": [], "$db": "alpha"}, "wire aggregate let must be a document"),
+            ({"aggregate": "events", "pipeline": [], "cursor": {"batchSize": -1}, "$db": "alpha"}, r"wire aggregate batch_size must be >= 0"),
+            ({"validate": "events", "scandata": "yes", "$db": "alpha"}, "wire validate scandata must be a bool"),
+            ({"validate": "events", "background": "yes", "$db": "alpha"}, "wire validate background must be a bool or null"),
+            ({"listIndexes": "events", "comment": 1, "$db": "alpha"}, "wire listIndexes comment must be a string"),
+            ({"createIndexes": "events", "indexes": [{"key": {"title": 1}, "name": "x"}], "maxTimeMS": -1, "$db": "alpha"}, r"wire createIndexes max_time_ms must be >= 0"),
+            ({"dropIndexes": "events", "index": "x", "comment": 1, "$db": "alpha"}, "wire dropIndexes comment must be a string"),
+            ({"findAndModify": "events", "query": {}, "let": [], "$db": "alpha"}, "wire findAndModify let must be a dict"),
+        ]
+
+        for body, message in cases:
+            with self.subTest(body=body):
+                with self.assertRaisesRegex(OperationFailure, message):
+                    await proxy._executor.execute_command(body, connection=connection)
 
     async def test_proxy_handle_connection_closes_writer_on_incomplete_read(self):
         proxy = AsyncMongoEcoProxyServer()

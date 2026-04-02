@@ -124,7 +124,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(len(only_default), 1)
                     self.assertEqual(only_default[0]["name"], "default")
                     self.assertEqual(only_default[0]["queryMode"], "text")
-                    self.assertEqual(only_default[0]["capabilities"], ["text", "phrase"])
+                    self.assertEqual(only_default[0]["capabilities"], ["text", "phrase", "autocomplete", "wildcard", "compound"])
 
                     collection.update_search_index("default", {"mappings": {"dynamic": True}})
                     updated = collection.list_search_indexes("default").first()
@@ -215,6 +215,74 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         self.assertFalse(explanation["engine_plan"]["details"]["backendMaterialized"])
                         self.assertIsNone(explanation["engine_plan"]["details"]["physicalName"])
                         self.assertIsNone(explanation["engine_plan"]["details"]["fts5Available"])
+
+                    autocomplete_hits = collection.aggregate(
+                        [
+                            {"$search": {"index": "by_text", "autocomplete": {"query": "ada", "path": ["title", "body"]}}},
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in autocomplete_hits], [2, 3])
+                    autocomplete_explanation = collection.aggregate(
+                        [{"$search": {"index": "by_text", "autocomplete": {"query": "ada", "path": ["title", "body"]}}}]
+                    ).explain()
+                    self.assertEqual(autocomplete_explanation["engine_plan"]["details"]["queryOperator"], "autocomplete")
+                    if engine_name == "sqlite":
+                        self.assertEqual(autocomplete_explanation["engine_plan"]["details"]["backend"], "fts5")
+                        self.assertEqual(autocomplete_explanation["engine_plan"]["details"]["fts5_match"], '"ada"*')
+                    else:
+                        self.assertEqual(autocomplete_explanation["engine_plan"]["details"]["backend"], "python")
+
+                    wildcard_hits = collection.aggregate(
+                        [{"$search": {"index": "by_text", "wildcard": {"query": "*algorithm*", "path": "body"}}}]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in wildcard_hits], [3])
+                    wildcard_explanation = collection.aggregate(
+                        [{"$search": {"index": "by_text", "wildcard": {"query": "*algorithm*", "path": "body"}}}]
+                    ).explain()
+                    self.assertEqual(wildcard_explanation["engine_plan"]["details"]["queryOperator"], "wildcard")
+                    self.assertEqual(wildcard_explanation["engine_plan"]["details"]["backend"], "python")
+                    self.assertIsNone(wildcard_explanation["engine_plan"]["details"].get("fts5_match"))
+
+                    compound_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "filter": [{"wildcard": {"query": "*algorithm*", "path": "body"}}],
+                                    },
+                                }
+                            }
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in compound_hits], [3])
+                    compound_explanation = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "filter": [{"wildcard": {"query": "*algorithm*", "path": "body"}}],
+                                    },
+                                }
+                            }
+                        ]
+                    ).explain()
+                    self.assertEqual(compound_explanation["engine_plan"]["details"]["queryOperator"], "compound")
+                    self.assertEqual(compound_explanation["engine_plan"]["details"]["backend"], "python")
+                    self.assertEqual(
+                        compound_explanation["engine_plan"]["details"]["compound"],
+                        {
+                            "must": 1,
+                            "should": 0,
+                            "filter": 1,
+                            "mustNot": 0,
+                            "minimumShouldMatch": 0,
+                        },
+                    )
 
                     vector_hits = collection.aggregate(
                         [

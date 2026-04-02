@@ -18,10 +18,13 @@ Objetivo: ampliar el runtime local de búsqueda más allá del perímetro actual
 
 Pendientes:
 
-* ampliar el subset de `$search` más allá de `text` y `phrase`;
-* decidir si merece la pena soportar operadores adicionales como:
+* decidir si merece la pena ampliar `$search` más allá del subset actual:
+  * `text`
+  * `phrase`
   * `autocomplete`
   * `wildcard`
+  * `compound`
+* evaluar operadores adicionales como:
   * `near`
 * ampliar mappings locales más allá de:
   * `string`

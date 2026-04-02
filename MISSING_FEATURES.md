@@ -9,7 +9,7 @@ arquitectonica y las decisiones de endurecimiento del diseno viven ya en
 | 6         | Ampliar geoespacial mas alla del subset point-only actual         | Alto        | Alto        | `geo.py:1`<br>`core-runtime.md:46`                                |
 | 7         | Ampliar `$text` clasico mas alla del subset local actual          | Alto        | Alto        | `search.py:252`<br>`core-runtime.md:82`                           |
 | 10        | Opciones avanzadas de indice adicionales a `hidden`              | Medio-Alto  | Medio       | `admin_parsing.py:92`<br>`types.py:1492`                          |
-| 11        | Ampliar `$search` mas alla de `text` y `phrase`                   | Medio-Alto  | Medio       | `search.py:126`<br>`TODO.md:10`                                   |
+| 11        | Ampliar `$search` mas alla de `text`/`phrase`/`autocomplete`/`wildcard`/`compound` | Medio-Alto  | Medio       | `search.py:126`<br>`TODO.md:10`                                   |
 | 12        | Updates con posicional legado `$`                                 | Medio-Alto  | Medio       | `update_paths.py:135`<br>`compat_catalog_snapshot.md:27`          |
 | 14        | Hacer `vectorSearch` algo mas que un runtime experimental         | Medio-Alto  | Alto        | `README.md:20`<br>`search.py:187`<br>`TODO.md:25`                 |
 | 18        | `codec options` avanzadas                                         | Medio       | Medio       | `types.py:1244`                                                   |

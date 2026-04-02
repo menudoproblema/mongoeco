@@ -39,6 +39,10 @@ usa Semantic Versioning.
 - El runtime embebido soporta ya un subset local explícito de `$text`
   clásico con `textScore`, proyección `$meta`, ordenación por score y
   `explain()` consistente entre API directa, engines y proxy wire.
+- El runtime local de `$search` amplía ya su subset documentado con
+  `autocomplete`, `wildcard` y `compound`, manteniendo `autocomplete`
+  empujable a FTS5 en `SQLiteEngine` y dejando `wildcard` y `compound` como
+  fallback Python explícito cuando no hay una traducción honesta a backend.
 - La surface básica de `find` queda cerrada también para proyección avanzada
   en su subconjunto local útil (`$slice`, `$elemMatch` y proyección
   posicional), incluyendo `database.command(...)`.

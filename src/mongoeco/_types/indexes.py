@@ -5,6 +5,8 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from mongoeco.core._search_contract import TEXT_SEARCH_INDEX_CAPABILITIES
+
 type Filter = dict[str, Any]
 type Document = dict[str, Any]
 type SortDirection = Literal[1, -1]
@@ -314,7 +316,7 @@ class SearchIndexDefinition:
         queryable = self.index_type == "search"
         query_mode = "text"
         experimental = False
-        capabilities: list[str] = ["text", "phrase"]
+        capabilities: list[str] = list(TEXT_SEARCH_INDEX_CAPABILITIES)
         if self.index_type == "vectorSearch":
             fields = self.definition.get("fields")
             queryable = isinstance(fields, list) and any(

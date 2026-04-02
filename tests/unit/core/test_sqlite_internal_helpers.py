@@ -29,6 +29,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
 
         self.assertIn("mongoeco.engines._sqlite_admin_runtime", imported_modules)
         self.assertIn("mongoeco.engines._sqlite_explain_contract", imported_modules)
+        self.assertIn("mongoeco.engines._sqlite_search_backend", imported_modules)
         self.assertIn("mongoeco.engines._sqlite_session_runtime", imported_modules)
 
     def test_sqlite_profile_namespace_paths_delegate_to_admin_runtime(self):
