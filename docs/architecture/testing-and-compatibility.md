@@ -165,6 +165,14 @@ En la fase actual, eso incluye ya explicitamente:
 - parity async/sync y cross-engine para `$densify`, `$fill` y `$merge`;
 - parity async/sync y cobertura cruzada para el subset geoespacial local
   (`$geoWithin`, `$geoIntersects`, `$near`, `$nearSphere` y `$geoNear`);
+- parity async/sync, cross-engine y surface wire para el subset local de
+  `$text` clasico con `textScore`;
+- parity async/sync y cross-engine para projection avanzada de `find`
+  (`$slice`, `$elemMatch` y proyeccion posicional);
+- parity async/sync y cross-engine para `$collStats` como stage inicial de
+  agregacion local;
+- coverage observable para indices `hidden` como metadata administrativa local,
+  incluyendo rechazo estable de `hint` contra indices ocultos;
 - tests de surface administrativa local para `currentOp` y `killOp`;
 - regresiones sobre `vectorSearch` local con similitudes adicionales y `filter`;
 - snapshots de compatibilidad regenerados automaticamente cuando cambia el

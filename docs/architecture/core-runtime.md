@@ -76,6 +76,14 @@ propios y el engine decide si puede empujarlo o si debe degradar a Python. En
 SQLite, hoy queda documentado como fallback explícito y observable vía
 `fallback_reason`, `planning_issues` y `pushdown_hints`.
 
+Tambien entra ya un subset local de `$text` clasico:
+
+- filtro top-level `$text`;
+- tokenizacion local explicita;
+- `textScore` materializado para proyeccion y ordenacion;
+- `MemoryEngine` como baseline semantico y `SQLiteEngine` como fallback Python
+  observable en `explain()`.
+
 ## Sorting, projection y updates
 
 El runtime comparte reglas para:
@@ -88,6 +96,12 @@ El runtime comparte reglas para:
 
 Esto reduce deriva entre engines y evita que cada backend implemente su propia
 semantica ad hoc.
+
+Dentro del objetivo embebido/local, esta capa ya considera baseline:
+
+- projection posicional en `find`;
+- operadores de proyeccion como `$slice` y `$elemMatch`;
+- `$meta: "textScore"` cuando existe un filtro `$text`.
 
 ## Aggregation
 
@@ -118,6 +132,12 @@ ultimo caso la decision de arquitectura es explicita: el runtime mantiene
 `apply_pipeline()` como transformacion pura y deja la escritura final de
 `$merge` en la capa de cursor/ejecucion, para no mezclar stages puros con
 efectos persistentes.
+
+Tambien soporta ya `$collStats` como stage inicial de introspeccion local. La
+frontera importante es que el stage no reconstruye snapshots administrativos
+por su cuenta: consume un `collection_stats_resolver` inyectado desde la capa
+de cursor, para mantener separadas la semantica del stage y la obtencion de
+stats de coleccion.
 
 Ese mismo subsistema soporta ya tambien `$geoNear` como stage materializante
 local point-only. La restriccion es consciente: requiere `key` explicito y no

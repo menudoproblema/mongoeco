@@ -35,7 +35,7 @@ DATABASE_COMMAND_SUPPORT_CATALOG = MappingProxyType(
         ),
         "createIndexes": DatabaseCommandSupport(
             family="admin_index",
-            note="Index administration routed through local collection/index services.",
+            note="Index administration routed through local collection/index services, including local-only per-index metadata such as hidden indexes.",
         ),
         "currentOp": DatabaseCommandSupport(
             family="admin_control",

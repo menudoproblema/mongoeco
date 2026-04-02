@@ -36,6 +36,14 @@ usa Semantic Versioning.
   sobre datos `Point` GeoJSON o pares legacy `[x, y]`. En `SQLiteEngine`
   esa semántica queda visible como fallback Python honesto, con
   `pushdown_hints` específicos en `explain()`.
+- El runtime embebido soporta ya un subset local explícito de `$text`
+  clásico con `textScore`, proyección `$meta`, ordenación por score y
+  `explain()` consistente entre API directa, engines y proxy wire.
+- La surface básica de `find` queda cerrada también para proyección avanzada
+  en su subconjunto local útil (`$slice`, `$elemMatch` y proyección
+  posicional), incluyendo `database.command(...)`.
+- La agregación local soporta ya también `$collStats` como stage inicial de
+  introspección.
 
 ### Fixed
 
@@ -131,6 +139,13 @@ usa Semantic Versioning.
   `dotProduct` y `euclidean`, manteniendo el contrato como exact search local
   y reflejando esa surface ampliada en explain, compatibilidad declarada y
   tests.
+- Los índices `hidden` quedan ya soportados como metadata administrativa local
+  real: se preservan en `create_index`, `createIndexes`, `listIndexes` e
+  `index_information()`, y el planner rechaza de forma estable los `hint`
+  contra índices ocultos.
+- La precarga de snapshots para `$collStats` deja ya de activarse fuera de las
+  pipelines que realmente usan ese stage, evitando regresiones colaterales en
+  agregaciones con valores BSON no serializables por el helper de stats.
 
 ## [3.0.0] - 2026-04-01
 

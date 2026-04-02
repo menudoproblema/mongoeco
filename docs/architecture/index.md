@@ -39,8 +39,7 @@ completa de verdad de la estructura interna.
 5. [driver-and-wire.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/driver-and-wire.md)
 6. [change-streams-and-collation.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/change-streams-and-collation.md)
 7. [testing-and-compatibility.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/testing-and-compatibility.md)
-8. [architecture-audit-2026-04.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/architecture-audit-2026-04.md)
-9. [decisions/index.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/decisions/index.md)
+8. [decisions/index.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/decisions/index.md)
 
 ## Patrones principales
 

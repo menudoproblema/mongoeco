@@ -8,8 +8,9 @@ Estado actual del repo:
 * backlog restante ya no es de cierre de fases, sino de evolución del producto.
 
 La deuda arquitectónica activa y las fronteras que se vigilan ya no se
-describen aquí. Su referencia canónica pasa a ser
-`docs/architecture/architecture-audit-2026-04.md`.
+describen aquí. Su referencia canónica vive ya repartida en
+`docs/architecture/`, especialmente en `api-surfaces.md`,
+`storage-engines.md` y `testing-and-compatibility.md`.
 
 ## 1. Search: siguiente nivel
 
@@ -83,6 +84,10 @@ Ya no forman parte del backlog pendiente básico:
 * `currentOp` / `killOp` locales;
 * `vectorSearch` exacto local con `filter` y similitudes `cosine`,
   `dotProduct` y `euclidean`.
+* projection avanzada de `find` en el subconjunto diario (`$slice`,
+  `$elemMatch`, proyección posicional, `$meta: "textScore"`);
+* `$collStats` como stage inicial de agregación local;
+* índices `hidden` como metadata administrativa local.
 
 ## 5. Backends y extensibilidad
 

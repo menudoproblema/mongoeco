@@ -48,8 +48,15 @@ Esto implica:
 * `$merge`, `$densify` y `$fill` existen como subset explícito;
 * los pipeline-style updates ya están soportados end-to-end para su subset;
 * geoespacial entra solo como subset local point-only;
-* `$text` clásico sigue siendo un área en expansión y no debe inferirse como
-  “MongoDB completo” por la mera presencia de tipos o metadata.
+* `$text` clásico existe ya como subset local explícito, con `textScore`
+  observable pero sin pretender semántica full-text de servidor MongoDB.
+* la proyeccion avanzada de `find` cubre ya el subconjunto diario mas util
+  (`$slice`, `$elemMatch`, proyeccion posicional y `$meta: "textScore"`);
+* `$collStats` existe tanto como comando administrativo como stage de
+  agregacion local de introspeccion;
+* los indices `hidden` existen como opcion local honesta: se listan y se
+  preservan en metadata, pero el planner no los usa ni acepta `hint` contra
+  ellos.
 
 ## 2. Configuración explícita recomendada
 
@@ -291,6 +298,48 @@ Límites conscientes:
   completa;
 * la presencia de índices `2d`/`2dsphere` no implica todavía un planner
   geoespacial especializado.
+
+## 7.3 Subset local actual de `$text` clasico
+
+El runtime local soporta ya un subset explícito y limitado de `$text`:
+
+* queries:
+  * filtro top-level `{ "$text": { "$search": "..." } }`;
+  * tokenizacion local por minusculas, separacion por espacios o puntuacion y
+    plegado diacritico basico;
+* indices:
+  * un unico indice `text` de un solo campo por coleccion para el camino
+    clasico local;
+* score:
+  * materializacion local de `textScore`;
+  * proyeccion `{campo: {"$meta": "textScore"}}`;
+  * ordenacion por `textScore`.
+
+Límites conscientes:
+
+* `caseSensitive=true` y `diacriticSensitive=true` quedan fuera del subset
+  soportado;
+* no hay stemming, idioma, weights ni planner full-text especializado;
+* `SQLiteEngine` ejecuta el subset clasico como fallback Python explicito y lo
+  deja visible en `explain()`.
+
+## 7.4 Subset local actual de `vectorSearch`
+
+`vectorSearch` forma ya parte del runtime embebido como exact search local:
+
+* similitudes:
+  * `cosine`
+  * `dotProduct`
+  * `euclidean`
+* surface:
+  * `filter` opcional reutilizando `QueryEngine`;
+  * `explain` con backend, similitud, escaneo y candidatos evaluados.
+
+Límites conscientes:
+
+* no hay ANN, HNSW ni backends Atlas-like;
+* `$vectorSearch` debe seguir siendo el primer stage;
+* la semantica sigue siendo local y exacta, no de cluster o servicio remoto.
 
 ## 8. Modo de planning
 
@@ -605,6 +654,9 @@ Notas observables adicionales de runtime:
 * `listIndexes` expone ya `ns` por documento en la surface administrativa, y
   `explain` devuelve `collection` y `namespace` de forma uniforme para todas
   las rutas soportadas.
+* `createIndexes` y `create_index()` aceptan ya `hidden` como metadata local
+  explicita del indice, y los `hint` contra indices ocultos fallan de forma
+  estable en lugar de ignorarse silenciosamente.
 * `explain` en SQLite materializa tambien un bloque `pushdown` para hacer
   visible si la ruta ejecuta SQL puro, plan hibrido o fallback Python, junto
   con `usesSqlRuntime`, `pythonSort` y `fallbackReason` cuando aplica.
@@ -715,12 +767,18 @@ que antes quedaban menos fijadas por tests reales:
   * `profile`
   * `dbHash`
 * admin read/stats:
+* `count`
+* `distinct`
+* `collStats`
+* `dbStats`
+* `validate`
+* `explain`
+
+En agregacion local se considera ya tambien parte del subset estable:
+
+* `$collStats` como stage inicial de introspeccion local
   * `count`
-  * `distinct`
-  * `collStats`
-  * `dbStats`
-  * `validate`
-  * `explain`
+  * `storageStats`
 
 Ademas, el proxy endurece la validacion temprana de payloads malformed para:
 
