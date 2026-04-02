@@ -23,6 +23,7 @@ from mongoeco.types import (
     ExecutionLineageStep,
     PhysicalPlanStep,
     Filter,
+    PlanningIssue,
     Projection,
     QueryPlanExplanation,
     SortSpec,
@@ -386,6 +387,7 @@ def build_query_plan_explanation(
     execution_lineage: tuple[ExecutionLineageStep, ...] = (),
     physical_plan: tuple[PhysicalPlanStep, ...] = (),
     fallback_reason: str | None = None,
+    planning_issues: tuple[PlanningIssue, ...] = (),
 ) -> QueryPlanExplanation:
     return QueryPlanExplanation(
         engine=engine,
@@ -403,4 +405,5 @@ def build_query_plan_explanation(
         execution_lineage=execution_lineage,
         physical_plan=physical_plan,
         fallback_reason=fallback_reason,
+        planning_issues=planning_issues,
     )

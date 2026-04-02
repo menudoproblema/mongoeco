@@ -3,29 +3,19 @@ from __future__ import annotations
 from typing import Any
 
 from mongoeco.api import AsyncMongoClient
-from mongoeco.errors import MongoEcoError, OperationFailure, PyMongoError
+from mongoeco.errors import OperationFailure
+from mongoeco.wire._executor_handlers import WireSpecialCommandHandlers
+from mongoeco.wire._executor_support import (
+    build_error_document,
+    build_request_context,
+    normalize_legacy_query_body,
+)
 from mongoeco.wire.auth import WireAuthenticationService
-from mongoeco.wire.capabilities import resolve_wire_command_capability
 from mongoeco.wire.connections import WireConnectionContext
 from mongoeco.wire.cursors import WireCursorStore
-from mongoeco.wire.handshake import WireHandshakeService
 from mongoeco.wire.requests import WireRequestContext
 from mongoeco.wire.surface import WireSurface
 from mongoeco.wire.sessions import WireSessionStore
-
-
-_WIRE_INTERNAL_KEYS = frozenset(
-    {
-        "$db",
-        "$readPreference",
-        "$clusterTime",
-        "lsid",
-        "txnNumber",
-        "autocommit",
-        "startTransaction",
-        "$audit",
-    }
-)
 
 
 class WireCommandExecutor:
@@ -42,20 +32,13 @@ class WireCommandExecutor:
         self._session_store = session_store
         self._surface = surface or WireSurface()
         self._auth = auth or WireAuthenticationService()
-        self._handshake = WireHandshakeService(client.mongodb_dialect, surface=self._surface)
-        self._special_handlers = {
-            "authenticate": self._handle_authenticate,
-            "sasl_start": self._handle_sasl_start,
-            "sasl_continue": self._handle_sasl_continue,
-            "handshake": self._handle_handshake,
-            "end_sessions": self._handle_end_sessions,
-            "get_more": self._handle_get_more,
-            "kill_cursors": self._handle_kill_cursors,
-            "logout": self._handle_logout,
-            "commit_transaction": self._handle_commit_transaction,
-            "abort_transaction": self._handle_abort_transaction,
-            "passthrough": self._handle_passthrough,
-        }
+        self._handlers = WireSpecialCommandHandlers(
+            client=client,
+            cursor_store=cursor_store,
+            session_store=session_store,
+            surface=self._surface,
+            auth=self._auth,
+        )
 
     async def execute_command(
         self,
@@ -65,8 +48,7 @@ class WireCommandExecutor:
         db_name: str | None = None,
     ) -> dict[str, Any]:
         context = self._build_request_context(body, connection=connection, db_name=db_name)
-        handler = self._special_handlers[context.capability.kind]
-        return await handler(context)
+        return await self._handlers.dispatch(context)
 
     async def execute_legacy_query(
         self,
@@ -92,92 +74,14 @@ class WireCommandExecutor:
         connection: WireConnectionContext,
         db_name: str | None = None,
     ) -> WireRequestContext:
-        if db_name is None:
-            db_name = body.get("$db")
-        if not isinstance(db_name, str) or not db_name:
-            raise OperationFailure("$db must be a non-empty string")
-        command_document = {
-            key: value
-            for key, value in body.items()
-            if key not in _WIRE_INTERNAL_KEYS
-        }
-        if not command_document:
-            raise OperationFailure("wire command document must contain an executable command")
-        command_name = next(iter(command_document))
-        if not self._surface.supports_command(command_name):
-            raise OperationFailure(f"unsupported wire command: {command_name}")
-        capability = resolve_wire_command_capability(command_name)
-        session = self._session_store.resolve_for_command(
-            self._client,
+        return build_request_context(
             body,
-            capability=capability,
-        )
-        return WireRequestContext(
-            db_name=db_name,
-            command_name=command_name,
-            command_document=command_document,
-            raw_body=body,
-            capability=capability,
             connection=connection,
-            session=session,
+            db_name=db_name,
+            client=self._client,
+            surface=self._surface,
+            session_store=self._session_store,
         )
-
-    async def _handle_handshake(self, context: WireRequestContext) -> dict[str, Any]:
-        context.connection.register_hello(context.command_name, context.raw_body)
-        return self._handshake.build_hello_response(
-            command_name=context.command_name,
-            body=context.raw_body,
-            connection=context.connection,
-        )
-
-    async def _handle_end_sessions(self, context: WireRequestContext) -> dict[str, Any]:
-        return self._session_store.end_sessions(context.command_document.get("endSessions"))
-
-    async def _handle_get_more(self, context: WireRequestContext) -> dict[str, Any]:
-        self._auth.require_authenticated(context.connection, context.command_name)
-        return self._cursor_store.get_more(context.command_document, db_name=context.db_name)
-
-    async def _handle_kill_cursors(self, context: WireRequestContext) -> dict[str, Any]:
-        self._auth.require_authenticated(context.connection, context.command_name)
-        return self._cursor_store.kill_cursors(context.command_document)
-
-    async def _handle_authenticate(self, context: WireRequestContext) -> dict[str, Any]:
-        return self._auth.authenticate(context.command_document, connection=context.connection)
-
-    async def _handle_sasl_start(self, context: WireRequestContext) -> dict[str, Any]:
-        return self._auth.sasl_start(context.command_document, connection=context.connection)
-
-    async def _handle_sasl_continue(self, context: WireRequestContext) -> dict[str, Any]:
-        return self._auth.sasl_continue(context.command_document, connection=context.connection)
-
-    async def _handle_logout(self, context: WireRequestContext) -> dict[str, Any]:
-        return self._auth.logout(context.connection)
-
-    async def _handle_commit_transaction(self, context: WireRequestContext) -> dict[str, Any]:
-        return self._session_store.commit_transaction(context.raw_body)
-
-    async def _handle_abort_transaction(self, context: WireRequestContext) -> dict[str, Any]:
-        return self._session_store.abort_transaction(context.raw_body)
-
-    async def _handle_passthrough(self, context: WireRequestContext) -> dict[str, Any]:
-        if context.command_name == "connectionStatus":
-            result = await self._client.get_database(context.db_name).command(
-                context.command_document,
-                session=context.session,
-            )
-            auth_info = result.get("authInfo")
-            if isinstance(auth_info, dict):
-                auth_info["authenticatedUsers"] = list(context.connection.authenticated_users)
-                auth_info["authenticatedUserRoles"] = list(context.connection.authenticated_roles)
-                if "authenticatedUserPrivileges" in auth_info:
-                    auth_info["authenticatedUserPrivileges"] = []
-            return result
-        self._auth.require_authenticated(context.connection, context.command_name)
-        database = self._client.get_database(context.db_name)
-        result = await database.command(context.command_document, session=context.session)
-        if not isinstance(result, dict):
-            raise OperationFailure("wire command must resolve to a document response")
-        return self._cursor_store.materialize_command_result(context.command_document, result)
 
     @staticmethod
     def _normalize_legacy_query_body(
@@ -185,58 +89,11 @@ class WireCommandExecutor:
         *,
         number_to_return: int | None,
     ) -> dict[str, Any]:
-        if not isinstance(query, dict):
-            raise OperationFailure("legacy OP_QUERY command must be a document")
-        if "$query" in query:
-            wrapped_query = query.get("$query")
-            if not isinstance(wrapped_query, dict):
-                raise OperationFailure("legacy OP_QUERY $query wrapper must contain a document")
-            body = dict(wrapped_query)
-            for key, value in query.items():
-                if key == "$query":
-                    continue
-                if key == "$orderby" and "sort" not in body and "find" in body:
-                    body["sort"] = value
-                    continue
-                body[key] = value
-        else:
-            body = dict(query)
-
-        if not body:
-            raise OperationFailure("legacy OP_QUERY command must contain a document")
-
-        command_name = next(iter(body))
-        if number_to_return is not None and number_to_return > 0:
-            if command_name == "find":
-                body.setdefault("batchSize", number_to_return)
-            elif command_name in {"aggregate", "listCollections", "listIndexes"}:
-                cursor_spec = body.get("cursor")
-                if cursor_spec is None:
-                    body["cursor"] = {"batchSize": number_to_return}
-                elif isinstance(cursor_spec, dict):
-                    cursor_spec.setdefault("batchSize", number_to_return)
-        return body
+        return normalize_legacy_query_body(
+            query,
+            number_to_return=number_to_return,
+        )
 
     @staticmethod
     def error_document(exc: Exception) -> dict[str, Any]:
-        if isinstance(exc, PyMongoError):
-            document: dict[str, Any] = {
-                "ok": 0.0,
-                "errmsg": str(exc),
-            }
-            code = getattr(exc, "code", None)
-            if code is not None:
-                document["code"] = code
-            code_name = getattr(exc, "code_name", None)
-            if code_name is not None:
-                document["codeName"] = code_name
-            details = getattr(exc, "details", None)
-            if isinstance(details, dict):
-                document.update(details)
-            error_labels = getattr(exc, "error_labels", ())
-            if error_labels and "errorLabels" not in document:
-                document["errorLabels"] = list(error_labels)
-            return document
-        if isinstance(exc, MongoEcoError):
-            return {"ok": 0.0, "errmsg": str(exc)}
-        return {"ok": 0.0, "errmsg": str(exc)}
+        return build_error_document(exc)

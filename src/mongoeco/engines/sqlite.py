@@ -32,17 +32,29 @@ from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import (
+    AllCondition,
     AndCondition,
+    BitwiseCondition,
+    ElemMatchCondition,
     EqualsCondition,
+    ExprCondition,
+    GeoIntersectsCondition,
+    GeoWithinCondition,
     GreaterThanCondition,
     GreaterThanOrEqualCondition,
     InCondition,
+    JsonSchemaCondition,
     LessThanCondition,
     LessThanOrEqualCondition,
     MatchAll,
+    ModCondition,
+    NearCondition,
     NotCondition,
     OrCondition,
     QueryNode,
+    RegexCondition,
+    SizeCondition,
+    TypeCondition,
     ensure_query_plan,
 )
 from mongoeco.core.search import (
@@ -60,8 +72,17 @@ from mongoeco.core.search import (
 )
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines._active_operations import LocalActiveOperationRegistry
+from mongoeco.engines._runtime_metrics import LocalRuntimeMetrics
 from mongoeco.engines._shared_ttl import coerce_ttl_datetime, document_expired_by_ttl
+from mongoeco.engines._sqlite_admin_runtime import SQLiteAdminRuntime
+from mongoeco.engines._sqlite_explain_contract import (
+    sqlite_planning_issues,
+    sqlite_pushdown_details,
+    sqlite_pushdown_followup_hints,
+)
 from mongoeco.engines._sqlite_runtime import SQLiteCacheState, SQLiteRuntimeState
+from mongoeco.engines._sqlite_session_runtime import SQLiteSessionRuntime
 from mongoeco.engines._sqlite_catalog import (
     list_collection_names as _sqlite_list_collection_names,
     list_database_names as _sqlite_list_database_names,
@@ -117,7 +138,6 @@ from mongoeco.engines._sqlite_fast_paths import (
 )
 from mongoeco.engines._sqlite_plan_heuristics import (
     plan_has_array_traversing_paths as _sqlite_plan_has_array_traversing_paths,
-    plan_requires_python_for_array_comparisons as _sqlite_plan_requires_python_for_array_comparisons,
     plan_requires_python_for_dbref_paths as _sqlite_plan_requires_python_for_dbref_paths,
     plan_requires_python_for_tagged_type as _sqlite_plan_requires_python_for_tagged_type,
     sort_requires_python as _sqlite_sort_requires_python,
@@ -153,7 +173,10 @@ from mongoeco.engines.virtual_indexes import (
 )
 from mongoeco.engines.sqlite_query import (
     _normalize_comparable_value,
+    _translate_all_condition,
+    _translate_elem_match_condition,
     _translate_equals_scalar_only,
+    _translate_scalar_or_array_same_type_comparison,
     _translate_same_type_comparison,
     _translate_scalar_equals,
     index_expressions_sql,
@@ -167,7 +190,6 @@ from mongoeco.engines.sqlite_query import (
 )
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
-from mongoeco.session import EngineTransactionContext
 from mongoeco.types import (
     ArrayFilters,
     CollationDocument,
@@ -242,6 +264,10 @@ class SQLiteEngine(AsyncStorageEngine):
         )
         self._use_shared_executor = executor_workers is None
         self._profiler = EngineProfiler("sqlite")
+        self._runtime_metrics = LocalRuntimeMetrics()
+        self._active_operations = LocalActiveOperationRegistry()
+        self._admin_runtime = SQLiteAdminRuntime(self)
+        self._session_runtime = SQLiteSessionRuntime(self)
         self._mvcc_version = 0
         self.aggregation_cost_policy = (
             None
@@ -341,6 +367,59 @@ class SQLiteEngine(AsyncStorageEngine):
     @property
     def _ensured_search_backends(self) -> set[str]:
         return self._cache_state.ensured_search_backends
+
+    def _runtime_diagnostics_info(self) -> dict[str, object]:
+        declared_search_index_count = 0
+        pending_search_index_count = 0
+        connection = self._connection
+        if connection is not None:
+            try:
+                row = connection.execute(
+                    """
+                    SELECT
+                        COUNT(*) AS declared_count,
+                        COALESCE(
+                            SUM(
+                                CASE
+                                    WHEN ready_at_epoch IS NOT NULL AND ready_at_epoch > ?
+                                    THEN 1
+                                    ELSE 0
+                                END
+                            ),
+                            0
+                        ) AS pending_count
+                    FROM search_indexes
+                    """
+                    ,
+                    (time.time(),),
+                ).fetchone()
+            except sqlite3.OperationalError:
+                row = None
+            if row is not None:
+                declared_search_index_count = int(row[0] or 0)
+                pending_search_index_count = int(row[1] or 0)
+        return {
+            "planner": {
+                "engine": "sqlite",
+                "pushdownModes": ["sql", "hybrid", "python"],
+                "hybridSortFallback": True,
+            },
+            "search": {
+                "backend": "fts5-or-python-fallback",
+                "fts5Available": self._fts5_available,
+                "declaredIndexCount": declared_search_index_count,
+                "pendingIndexCount": pending_search_index_count,
+                "ensuredBackendCount": len(self._ensured_search_backends),
+                "simulatedIndexLatencySeconds": self._simulate_search_index_latency,
+            },
+            "caches": {
+                "indexCacheEntries": len(self._index_cache),
+                "collectionIdCacheEntries": len(self._collection_id_cache),
+                "collectionFeatureCacheEntries": len(self._collection_features_cache),
+                "indexMetadataVersionEntries": len(self._index_metadata_versions),
+                "ensuredMultikeyPhysicalIndexCount": len(self._ensured_multikey_physical_indexes),
+            },
+        }
 
     def _ensure_executor(self) -> ThreadPoolExecutor:
         executor = self._executor
@@ -499,10 +578,10 @@ class SQLiteEngine(AsyncStorageEngine):
         ok: float = 1.0,
         errmsg: str | None = None,
     ) -> None:
-        self._profiler.record(
+        self._runtime_metrics.record(op)
+        self._admin_runtime.record_profile_event(
             db_name,
             op=op,
-            namespace=f"{db_name}.{self._PROFILE_COLLECTION_NAME}",
             command=command,
             duration_micros=duration_micros,
             execution_lineage=execution_lineage,
@@ -511,27 +590,54 @@ class SQLiteEngine(AsyncStorageEngine):
             errmsg=errmsg,
         )
 
+    def _record_runtime_opcounter(self, op: str, *, amount: int = 1) -> None:
+        self._runtime_metrics.record(op, amount=amount)
+
+    def _runtime_opcounters_snapshot(self) -> dict[str, int]:
+        return self._runtime_metrics.snapshot()
+
+    def _begin_active_operation(
+        self,
+        *,
+        command_name: str,
+        operation_type: str,
+        namespace: str | None,
+        session_id: str | None = None,
+        cursor_id: int | None = None,
+        connection_id: int | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        killable: bool = True,
+        metadata: dict[str, object] | None = None,
+    ):
+        return self._active_operations.begin(
+            command_name=command_name,
+            operation_type=operation_type,
+            namespace=namespace,
+            session_id=session_id,
+            cursor_id=cursor_id,
+            connection_id=connection_id,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            killable=killable,
+            metadata=metadata,
+        )
+
+    def _complete_active_operation(self, opid: str) -> None:
+        self._active_operations.complete(opid)
+
+    def _snapshot_active_operations(self) -> list[dict[str, object]]:
+        return self._active_operations.snapshot()
+
+    def _cancel_active_operation(self, opid: str) -> bool:
+        return self._active_operations.cancel(opid)
+
     def _is_profile_namespace(self, coll_name: str) -> bool:
-        return coll_name == self._PROFILE_COLLECTION_NAME
+        return self._admin_runtime.is_profile_namespace(coll_name)
 
     @override
     def create_session_state(self, session: ClientSession) -> None:
-        engine_key = self._engine_key()
-        session.bind_engine_context(
-            EngineTransactionContext(
-                engine_key=engine_key,
-                connected=self._connection is not None,
-                supports_transactions=True,
-                transaction_active=False,
-                metadata={"path": self._path, "snapshot_version": self._mvcc_version},
-            )
-        )
-        session.register_transaction_hooks(
-            engine_key,
-            start=self._start_session_transaction,
-            commit=self._commit_session_transaction,
-            abort=self._abort_session_transaction,
-        )
+        self._session_runtime.create_session_state(session)
 
     def _sync_session_state(
         self,
@@ -539,88 +645,39 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         transaction_active: bool | None = None,
     ) -> None:
-        state = session.get_engine_context(self._engine_key())
-        if state is None:
-            return
-        state.connected = self._connection is not None
-        if transaction_active is not None:
-            state.transaction_active = transaction_active
-        state.metadata["snapshot_version"] = self._mvcc_version
+        self._session_runtime.sync_session_state(
+            session,
+            transaction_active=transaction_active,
+        )
 
     def _start_session_transaction(self, session: ClientSession) -> None:
-        with self._lock:
-            if self._connection is None:
-                raise InvalidOperation("SQLiteEngine must be connected before starting a transaction")
-            if self._transaction_owner_session_id is not None:
-                raise InvalidOperation("SQLiteEngine already has an active transaction bound to another session")
-            conn = self._connection
-            conn.execute("BEGIN")
-            self._transaction_owner_session_id = session.session_id
-            self._mvcc_version += 1
-            self._sync_session_state(session, transaction_active=True)
+        self._session_runtime.start_session_transaction(session)
 
     def _commit_session_transaction(self, session: ClientSession) -> None:
-        with self._lock:
-            if self._connection is None:
-                raise InvalidOperation("SQLiteEngine is not connected")
-            if self._transaction_owner_session_id != session.session_id:
-                raise InvalidOperation("This session does not own the active SQLite transaction")
-            try:
-                self._connection.commit()
-            finally:
-                self._transaction_owner_session_id = None
-                self._mvcc_version += 1
-                self._sync_session_state(session, transaction_active=False)
+        self._session_runtime.commit_session_transaction(session)
 
     def _abort_session_transaction(self, session: ClientSession) -> None:
-        with self._lock:
-            if self._connection is None:
-                return
-            if self._transaction_owner_session_id != session.session_id:
-                return
-            try:
-                self._connection.rollback()
-            finally:
-                self._transaction_owner_session_id = None
-                self._sync_session_state(session, transaction_active=False)
+        self._session_runtime.abort_session_transaction(session)
 
     @contextmanager
     def _bind_connection(self, conn: sqlite3.Connection):
-        previous = getattr(self._thread_local, "connection", None)
-        self._thread_local.connection = conn
-        try:
+        with self._session_runtime.bind_connection(conn):
             yield
-        finally:
-            self._thread_local.connection = previous
 
     def _session_owns_transaction(self, context: ClientSession | None) -> bool:
-        return (
-            context is not None
-            and context.in_transaction
-            and self._transaction_owner_session_id == context.session_id
-        )
+        return self._session_runtime.session_owns_transaction(context)
 
     def _require_connection(self, context: ClientSession | None = None) -> sqlite3.Connection:
-        thread_bound = getattr(self._thread_local, "connection", None)
-        if thread_bound is not None:
-            return thread_bound
-        if self._connection is None:
-            raise RuntimeError("SQLiteEngine is not connected")
-        if self._transaction_owner_session_id is not None and not self._session_owns_transaction(context):
-            raise InvalidOperation("SQLiteEngine has an active transaction bound to another session")
-        return self._connection
+        return self._session_runtime.require_connection(context)
 
     def _begin_write(self, conn: sqlite3.Connection, context: ClientSession | None) -> None:
-        if not self._session_owns_transaction(context):
-            conn.execute("BEGIN")
+        self._session_runtime.begin_write(conn, context)
 
     def _commit_write(self, conn: sqlite3.Connection, context: ClientSession | None) -> None:
-        if not self._session_owns_transaction(context):
-            conn.commit()
+        self._session_runtime.commit_write(conn, context)
 
     def _rollback_write(self, conn: sqlite3.Connection, context: ClientSession | None) -> None:
-        if not self._session_owns_transaction(context):
-            conn.rollback()
+        self._session_runtime.rollback_write(conn, context)
 
     def _dialect_requires_python_fallback(self, dialect: MongoDialect) -> bool:
         return type(dialect) not in (MongoDialect70, MongoDialect80)
@@ -1311,6 +1368,53 @@ class SQLiteEngine(AsyncStorageEngine):
         self._collection_features_cache[feature_key] = result
         return result
 
+    def _field_has_scalar_or_array_element_type_mismatch_in_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+        expected_type: str,
+    ) -> bool:
+        feature_key = (db_name, coll_name, f"scalar_or_array_comparison_mismatch:{field}:{expected_type}")
+        if feature_key in self._collection_features_cache:
+            return self._collection_features_cache[feature_key]
+        if expected_type == "number":
+            scalar_allowed = "'integer', 'real', 'array'"
+            element_predicate = "json_each.type NOT IN ('integer', 'real')"
+        elif expected_type == "string":
+            scalar_allowed = "'text', 'array'"
+            element_predicate = "json_each.type != 'text'"
+        elif expected_type == "bool":
+            scalar_allowed = "'true', 'false', 'array'"
+            element_predicate = "json_each.type NOT IN ('true', 'false')"
+        else:
+            self._collection_features_cache[feature_key] = True
+            return True
+        conn = self._require_connection()
+        path_literal = "'" + json_path_for_field(field).replace("'", "''") + "'"
+        row = conn.execute(
+            f"""
+            SELECT 1
+            FROM documents
+            WHERE db_name = ? AND coll_name = ?
+              AND (
+                    (json_type(document, {path_literal}) IS NOT NULL
+                     AND json_type(document, {path_literal}) NOT IN ({scalar_allowed}))
+                 OR (json_type(document, {path_literal}) = 'array'
+                     AND EXISTS (
+                         SELECT 1
+                         FROM json_each(document, {path_literal})
+                         WHERE {element_predicate}
+                     ))
+              )
+            LIMIT 1
+            """,
+            (db_name, coll_name),
+        ).fetchone()
+        result = row is not None
+        self._collection_features_cache[feature_key] = result
+        return result
+
     def _translate_in_with_multikey(
         self,
         collection_id: int,
@@ -1350,7 +1454,7 @@ class SQLiteEngine(AsyncStorageEngine):
         signature = self._multikey_value_signature(plan.value)
         if signature is None or signature[0] != "number":
             return translate_query_plan(plan)
-        scalar_sql, scalar_params = translate_query_plan(plan)
+        scalar_sql, scalar_params = _translate_same_type_comparison(operator, plan.field, plan.value)
         array_sql, array_params = self._translate_multikey_ordered_exists_clause(
             collection_id,
             db_name,
@@ -1392,10 +1496,35 @@ class SQLiteEngine(AsyncStorageEngine):
             if collection_id is None:
                 return translate_query_plan(plan)
             return self._translate_in_with_multikey(collection_id, db_name, coll_name, plan, index)
+        if isinstance(plan, AllCondition):
+            try:
+                return _translate_all_condition(plan.field, plan.values)
+            except NotImplementedError:
+                return translate_query_plan(plan)
+        if isinstance(plan, ElemMatchCondition):
+            try:
+                return _translate_elem_match_condition(
+                    plan.field,
+                    plan.compiled_plan,
+                    wrap_value=plan.wrap_value,
+                )
+            except NotImplementedError:
+                return translate_query_plan(plan)
         if isinstance(plan, GreaterThanCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 expected_type, _ = _normalize_comparable_value(plan.value)
+                if (
+                    "." not in plan.field
+                    and self._field_is_top_level_array_in_collection(db_name, coll_name, plan.field)
+                    and not self._field_has_scalar_or_array_element_type_mismatch_in_collection(
+                        db_name,
+                        coll_name,
+                        plan.field,
+                        expected_type,
+                    )
+                ):
+                    return _translate_scalar_or_array_same_type_comparison(">", plan.field, plan.value)
                 if not self._field_has_comparison_type_mismatch_in_collection(
                     db_name,
                     coll_name,
@@ -1412,6 +1541,17 @@ class SQLiteEngine(AsyncStorageEngine):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 expected_type, _ = _normalize_comparable_value(plan.value)
+                if (
+                    "." not in plan.field
+                    and self._field_is_top_level_array_in_collection(db_name, coll_name, plan.field)
+                    and not self._field_has_scalar_or_array_element_type_mismatch_in_collection(
+                        db_name,
+                        coll_name,
+                        plan.field,
+                        expected_type,
+                    )
+                ):
+                    return _translate_scalar_or_array_same_type_comparison(">=", plan.field, plan.value)
                 if not self._field_has_comparison_type_mismatch_in_collection(
                     db_name,
                     coll_name,
@@ -1428,6 +1568,17 @@ class SQLiteEngine(AsyncStorageEngine):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 expected_type, _ = _normalize_comparable_value(plan.value)
+                if (
+                    "." not in plan.field
+                    and self._field_is_top_level_array_in_collection(db_name, coll_name, plan.field)
+                    and not self._field_has_scalar_or_array_element_type_mismatch_in_collection(
+                        db_name,
+                        coll_name,
+                        plan.field,
+                        expected_type,
+                    )
+                ):
+                    return _translate_scalar_or_array_same_type_comparison("<", plan.field, plan.value)
                 if not self._field_has_comparison_type_mismatch_in_collection(
                     db_name,
                     coll_name,
@@ -1444,6 +1595,17 @@ class SQLiteEngine(AsyncStorageEngine):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 expected_type, _ = _normalize_comparable_value(plan.value)
+                if (
+                    "." not in plan.field
+                    and self._field_is_top_level_array_in_collection(db_name, coll_name, plan.field)
+                    and not self._field_has_scalar_or_array_element_type_mismatch_in_collection(
+                        db_name,
+                        coll_name,
+                        plan.field,
+                        expected_type,
+                    )
+                ):
+                    return _translate_scalar_or_array_same_type_comparison("<=", plan.field, plan.value)
                 if not self._field_has_comparison_type_mismatch_in_collection(
                     db_name,
                     coll_name,
@@ -1664,14 +1826,69 @@ class SQLiteEngine(AsyncStorageEngine):
         self._collection_features_cache[feature_key] = result
         return result
 
+    def _field_contains_real_numeric_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
+        feature_key = (db_name, coll_name, f"contains_real_numeric:{field}")
+        if feature_key in self._collection_features_cache:
+            return self._collection_features_cache[feature_key]
+        conn = self._require_connection()
+        path_literal = "'" + json_path_for_field(field).replace("'", "''") + "'"
+        row = conn.execute(
+            f"""
+            SELECT 1
+            FROM documents
+            WHERE db_name = ? AND coll_name = ?
+              AND json_type(document, {path_literal}) = 'real'
+            LIMIT 1
+            """,
+            (db_name, coll_name),
+        ).fetchone()
+        result = row is not None
+        self._collection_features_cache[feature_key] = result
+        return result
+
+    def _field_contains_non_ascii_text_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
+        feature_key = (db_name, coll_name, f"contains_non_ascii_text:{field}")
+        if feature_key in self._collection_features_cache:
+            return self._collection_features_cache[feature_key]
+        conn = self._require_connection()
+        path_literal = "'" + json_path_for_field(field).replace("'", "''") + "'"
+        rows = conn.execute(
+            f"""
+            SELECT json_extract(document, {path_literal})
+            FROM documents
+            WHERE db_name = ? AND coll_name = ?
+              AND json_type(document, {path_literal}) = 'text'
+            """,
+            (db_name, coll_name),
+        ).fetchall()
+        result = any(isinstance(row[0], str) and not row[0].isascii() for row in rows)
+        self._collection_features_cache[feature_key] = result
+        return result
+
     def _plan_requires_python_for_array_comparisons(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
-        return _sqlite_plan_requires_python_for_array_comparisons(
-            db_name=db_name,
-            coll_name=coll_name,
-            plan=plan,
-            comparison_fields=self._comparison_fields,
-            field_is_top_level_array_in_collection=self._field_is_top_level_array_in_collection,
-        )
+        def requires_python(node: QueryNode) -> bool:
+            if isinstance(node, (GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition)):
+                if not self._field_is_top_level_array_in_collection(db_name, coll_name, node.field):
+                    return False
+                if "." in node.field:
+                    return True
+                try:
+                    expected_type, _ = _normalize_comparable_value(node.value)
+                except NotImplementedError:
+                    return True
+                return self._field_has_scalar_or_array_element_type_mismatch_in_collection(
+                    db_name,
+                    coll_name,
+                    node.field,
+                    expected_type,
+                )
+            if isinstance(node, NotCondition):
+                return requires_python(node.clause)
+            if isinstance(node, (AndCondition, OrCondition)):
+                return any(requires_python(clause) for clause in node.clauses)
+            return False
+
+        return requires_python(plan)
 
     @staticmethod
     def _document_traverses_array_on_field(document: Document, field: str) -> bool:
@@ -1967,6 +2184,16 @@ class SQLiteEngine(AsyncStorageEngine):
                 field,
             ),
             field_is_top_level_array_in_collection=lambda current_db_name, current_coll_name, field: self._field_is_top_level_array_in_collection(
+                current_db_name,
+                current_coll_name,
+                field,
+            ),
+            field_contains_real_numeric_in_collection=lambda current_db_name, current_coll_name, field: self._field_contains_real_numeric_in_collection(
+                current_db_name,
+                current_coll_name,
+                field,
+            ),
+            field_contains_non_ascii_text_in_collection=lambda current_db_name, current_coll_name, field: self._field_contains_non_ascii_text_in_collection(
                 current_db_name,
                 current_coll_name,
                 field,
@@ -3027,28 +3254,7 @@ class SQLiteEngine(AsyncStorageEngine):
         self._lookup_collection_id(conn, db_name, coll_name, create=True)
 
     def _collection_exists_sync(self, conn: sqlite3.Connection, db_name: str, coll_name: str) -> bool:
-        row = conn.execute(
-            """
-            SELECT 1
-            FROM collections
-            WHERE db_name = ? AND coll_name = ?
-            UNION
-            SELECT 1
-            FROM documents
-            WHERE db_name = ? AND coll_name = ?
-            UNION
-            SELECT 1
-            FROM indexes
-            WHERE db_name = ? AND coll_name = ?
-            UNION
-            SELECT 1
-            FROM search_indexes
-            WHERE db_name = ? AND coll_name = ?
-            LIMIT 1
-            """,
-            (db_name, coll_name, db_name, coll_name, db_name, coll_name, db_name, coll_name),
-        ).fetchone()
-        return row is not None
+        return self._admin_runtime.collection_exists(conn, db_name, coll_name)
 
     def _collection_options_sync(
         self,
@@ -3057,16 +3263,7 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> dict[str, object]:
         with self._lock:
-            conn = self._require_connection(context)
-            return _sqlite_collection_options(
-                db_name=db_name,
-                coll_name=coll_name,
-                profiler=self._profiler,
-                profile_collection_name=self._PROFILE_COLLECTION_NAME,
-                load_collection_options=_sqlite_load_collection_options,
-                collection_exists=self._collection_exists_sync,
-                conn=conn,
-            )
+            return self._admin_runtime.collection_options(db_name, coll_name, context=context)
 
     def _collection_options_or_empty_sync(
         self,
@@ -3074,10 +3271,7 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
     ) -> dict[str, object]:
-        options = _sqlite_load_collection_options(conn, db_name, coll_name)
-        if options is None:
-            return {}
-        return options
+        return self._admin_runtime.collection_options_or_empty(conn, db_name, coll_name)
 
     def _load_existing_document_for_storage_key(
         self,
@@ -3121,7 +3315,10 @@ class SQLiteEngine(AsyncStorageEngine):
             connection.close()
 
     def _profile_documents(self, db_name: str) -> list[Document]:
-        return self._profiler.list_entries(db_name)
+        profile_documents = getattr(self._admin_runtime, "profile_namespace_documents", None)
+        if callable(profile_documents):
+            return profile_documents(db_name)
+        return self._admin_runtime.profile_documents(db_name)
 
     def _put_document_sync(
         self,
@@ -3297,7 +3494,15 @@ class SQLiteEngine(AsyncStorageEngine):
     def _get_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, projection: Projection | None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
         effective_dialect = dialect or MONGODB_DIALECT_70
         if self._is_profile_namespace(coll_name):
-            document = self._profiler.get_entry(db_name, doc_id)
+            profile_document = getattr(self._admin_runtime, "profile_namespace_document", None)
+            if callable(profile_document):
+                return profile_document(
+                    db_name,
+                    doc_id,
+                    projection=projection,
+                    dialect=effective_dialect,
+                )
+            document = self._admin_runtime.profile_document(db_name, doc_id)
             if document is None:
                 return None
             return apply_projection(document, projection, dialect=effective_dialect)
@@ -3778,29 +3983,10 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                _sqlite_drop_database(
-                    conn=conn,
-                    db_name=db_name,
-                    begin_write=lambda current: self._begin_write(current, context),
-                    commit_write=lambda current: self._commit_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
-                    quote_identifier=self._quote_identifier,
-                    drop_search_backend=self._drop_search_backend_sync,
-                    clear_index_metadata_versions=self._clear_index_metadata_versions_for_database,
-                    invalidate_index_cache=self._invalidate_index_cache,
-                    invalidate_collection_id_cache=self._invalidate_collection_id_cache,
-                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
-                    clear_profiler=self._profiler.clear,
-                )
+                self._admin_runtime.drop_database(db_name, context=context)
 
     def _clear_index_metadata_versions_for_database(self, db_name: str) -> None:
-        stale_index_keys = [
-            key
-            for key in self._index_metadata_versions
-            if key[0] == db_name
-        ]
-        for key in stale_index_keys:
-            self._index_metadata_versions.pop(key, None)
+        self._admin_runtime.clear_index_metadata_versions_for_database(db_name)
 
     def _drop_indexes_sync(
         self,
@@ -4032,6 +4218,11 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
     ) -> QueryPlanExplanation:
         query = compile_search_stage(operator, spec)
+        ready_at_epoch: float | None = None
+        ready = True
+        fts5_available: bool | None = None
+        backend_materialized = False
+        resolved_physical_name: str | None = None
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -4039,6 +4230,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 if not rows:
                     raise OperationFailure(f"search index not found with name [{query.index_name}]")
                 definition, physical_name, ready_at_epoch = rows[0]
+                ready = self._search_index_is_ready_sync(ready_at_epoch)
                 backend = "python"
                 fts5_match: str | None = None
                 if isinstance(query, (SearchTextQuery, SearchPhraseQuery)):
@@ -4049,15 +4241,21 @@ class SQLiteEngine(AsyncStorageEngine):
                         definition,
                         physical_name,
                     )
+                    fts5_available = self._supports_fts5(conn)
+                    backend_materialized = bool(
+                        resolved_physical_name
+                        and self._sqlite_table_exists(conn, resolved_physical_name)
+                    )
                     if (
                         resolved_physical_name
-                        and self._supports_fts5(conn)
-                        and self._sqlite_table_exists(conn, resolved_physical_name)
+                        and fts5_available
+                        and backend_materialized
                     ):
                         backend = "fts5"
                         fts5_match = sqlite_fts5_query(query)
                 elif isinstance(query, SearchVectorQuery):
                     backend = "python"
+                    resolved_physical_name = None
         return QueryPlanExplanation(
             engine="sqlite",
             strategy="search",
@@ -4073,10 +4271,15 @@ class SQLiteEngine(AsyncStorageEngine):
                 "operator": operator,
                 "index": query.index_name,
                 "backend": backend,
-                "status": "READY" if self._search_index_is_ready_sync(ready_at_epoch) else "PENDING",
+                "status": "READY" if ready else "PENDING",
+                "backendAvailable": backend == "python" or bool(fts5_available),
+                "backendMaterialized": backend_materialized,
+                "physicalName": resolved_physical_name or physical_name,
+                "readyAtEpoch": ready_at_epoch,
+                "fts5Available": fts5_available,
                 "definition": build_search_index_document(
                     definition,
-                    ready=self._search_index_is_ready_sync(ready_at_epoch),
+                    ready=ready,
                     ready_at_epoch=ready_at_epoch,
                 ),
                 "queryOperator": "phrase" if isinstance(query, SearchPhraseQuery) else "text" if isinstance(query, SearchTextQuery) else None,
@@ -4087,29 +4290,19 @@ class SQLiteEngine(AsyncStorageEngine):
                 "queryVector": list(query.query_vector) if isinstance(query, SearchVectorQuery) else None,
                 "limit": query.limit if isinstance(query, SearchVectorQuery) else None,
                 "numCandidates": query.num_candidates if isinstance(query, SearchVectorQuery) else None,
+                "filter": deepcopy(query.filter_spec) if isinstance(query, SearchVectorQuery) and query.filter_spec is not None else None,
+                "similarity": query.similarity if isinstance(query, SearchVectorQuery) else None,
                 "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
             },
         )
 
     def _list_databases_sync(self, context: ClientSession | None = None) -> list[str]:
         with self._lock:
-            conn = self._require_connection(context)
-            return _sqlite_list_databases(
-                conn=conn,
-                profiler=self._profiler,
-                list_database_names=_sqlite_list_database_names,
-            )
+            return self._admin_runtime.list_databases(context=context)
 
     def _list_collections_sync(self, db_name: str, context: ClientSession | None = None) -> list[str]:
         with self._lock:
-            conn = self._require_connection(context)
-            return _sqlite_list_collections(
-                conn=conn,
-                db_name=db_name,
-                profiler=self._profiler,
-                profile_collection_name=self._PROFILE_COLLECTION_NAME,
-                list_collection_names=_sqlite_list_collection_names,
-            )
+            return self._admin_runtime.list_collections(db_name, context=context)
 
     def _create_collection_sync(
         self,
@@ -4157,7 +4350,7 @@ class SQLiteEngine(AsyncStorageEngine):
 
     def _drop_collection_sync(self, db_name: str, coll_name: str, context: ClientSession | None = None) -> None:
         if self._is_profile_namespace(coll_name):
-            self._profiler.clear(db_name)
+            self._admin_runtime.clear_profile_namespace(db_name)
             return
         with self._lock:
             conn = self._require_connection(context)
@@ -4199,7 +4392,11 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> ProfilingCommandResult:
         del context
-        return self._profiler.set_level(db_name, level, slow_ms=slow_ms)
+        return self._admin_runtime.set_profiling_level(
+            db_name,
+            level,
+            slow_ms=slow_ms,
+        )
 
     @override
     async def put_document(
@@ -4715,6 +4912,7 @@ class SQLiteEngine(AsyncStorageEngine):
             semantics,
             context=context,
         )
+        pushdown_details = sqlite_pushdown_details(execution_plan)
         details: object
         if isinstance(execution_plan, SQLiteReadExecutionPlan) and execution_plan.use_sql:
             sql_details = await self._run_blocking(
@@ -4724,15 +4922,17 @@ class SQLiteEngine(AsyncStorageEngine):
                 semantics,
                 hint=semantics.hint,
             )
-            if execution_plan.fallback_reason is None:
-                details = sql_details
-            else:
-                details = {
-                    "engine_details": sql_details,
-                    "fallback_reason": execution_plan.fallback_reason,
-                }
+            details = {
+                "engine_details": sql_details,
+                "pushdown": pushdown_details,
+            }
+            if execution_plan.fallback_reason is not None:
+                details["fallback_reason"] = execution_plan.fallback_reason
         else:
-            details = {"fallback_reason": execution_plan.fallback_reason}
+            details = {
+                "pushdown": pushdown_details,
+                "fallback_reason": execution_plan.fallback_reason,
+            }
         virtual_details = describe_virtual_index_usage(
             await self._run_blocking(self._list_indexes_sync, db_name, coll_name, context),
             semantics.query_plan,
@@ -4744,6 +4944,13 @@ class SQLiteEngine(AsyncStorageEngine):
                 details = {**details, **virtual_details}
             else:
                 details = {"engine_details": details, **virtual_details}
+        planning_issues = sqlite_planning_issues(execution_plan.fallback_reason)
+        pushdown_hints = sqlite_pushdown_followup_hints(
+            semantics.query_plan,
+            execution_plan.fallback_reason,
+        )
+        if pushdown_hints and isinstance(details, dict):
+            details = {**details, "pushdown_hints": pushdown_hints}
         return build_query_plan_explanation(
             engine="sqlite",
             strategy=execution_plan.strategy,
@@ -4753,6 +4960,7 @@ class SQLiteEngine(AsyncStorageEngine):
             execution_lineage=execution_plan.execution_lineage,
             physical_plan=execution_plan.physical_plan,
             fallback_reason=execution_plan.fallback_reason,
+            planning_issues=planning_issues,
         )
 
     @override

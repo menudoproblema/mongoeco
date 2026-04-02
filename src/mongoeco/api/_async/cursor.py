@@ -235,6 +235,9 @@ class AsyncCursor:
     def _scan(self, *, limit: int | None = None):
         self._started = True
         engine = self._collection._engine
+        record_runtime_opcounter = getattr(engine, "_record_runtime_opcounter", None)
+        if callable(record_runtime_opcounter):
+            record_runtime_opcounter("query")
         operation = self._operation_with_overrides(limit=self._limit if limit is None else limit)
         _ensure_operation_executable(self._collection, operation)
         semantics = self._semantics_with_overrides(limit=operation.limit)
@@ -256,6 +259,9 @@ class AsyncCursor:
         operation = self._operation_with_overrides(skip=effective_skip, limit=effective_limit)
         _ensure_operation_executable(self._collection, operation)
         engine = self._collection._engine
+        record_runtime_opcounter = getattr(engine, "_record_runtime_opcounter", None)
+        if callable(record_runtime_opcounter):
+            record_runtime_opcounter("query" if offset == 0 else "getmore")
         semantics = self._semantics_with_overrides(skip=effective_skip, limit=effective_limit)
         iterable = engine.scan_find_semantics(
             self._collection._db_name,

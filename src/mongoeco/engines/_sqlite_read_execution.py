@@ -10,9 +10,12 @@ from mongoeco.core.query_plan import (
     GreaterThanOrEqualCondition,
     LessThanCondition,
     LessThanOrEqualCondition,
+    ModCondition,
+    RegexCondition,
 )
 from mongoeco.engines.semantic_core import EngineFindSemantics
 from mongoeco.engines.sqlite_planner import SQLiteReadExecutionPlan, compile_sqlite_read_execution_plan
+from mongoeco.engines.sqlite_query import json_path_for_field, parse_safe_literal_regex
 from mongoeco.types import IndexKeySpec
 
 
@@ -135,6 +138,8 @@ def plan_find_semantics_sync(
     storage_key_for_id: Callable[[object], str],
     find_scalar_fast_path_index: Callable[[str, str], object | None],
     field_is_top_level_array_in_collection: Callable[[str, str], bool],
+    field_contains_real_numeric_in_collection: Callable[[str, str], bool],
+    field_contains_non_ascii_text_in_collection: Callable[[str, str], bool],
     build_equals_sql: Callable[[str, str, object, str, str, int | None, bool], tuple[str, tuple[object, ...]] | None],
     build_range_sql: Callable[[str, str, object, str, str, str, int | None], tuple[str, tuple[object, ...]] | None],
     compile_read_plan: Callable[[EngineFindSemantics, str | IndexKeySpec | None], SQLiteReadExecutionPlan],
@@ -188,6 +193,104 @@ def plan_find_semantics_sync(
                         sql=sql,
                         params=params,
                     )
+
+        if (
+            isinstance(query_plan, ModCondition)
+            and "." not in query_plan.field
+            and isinstance(query_plan.divisor, int)
+            and not isinstance(query_plan.divisor, bool)
+            and isinstance(query_plan.remainder, int)
+            and not isinstance(query_plan.remainder, bool)
+            and query_plan.divisor != 0
+            and not field_is_top_level_array_in_collection(db_name, coll_name, query_plan.field)
+            and not field_contains_real_numeric_in_collection(db_name, coll_name, query_plan.field)
+        ):
+            path = json_path_for_field(query_plan.field)
+            sql = (
+                "SELECT document FROM documents "
+                "WHERE db_name = ? AND coll_name = ? "
+                "AND json_type(document, ?) = 'integer' "
+                "AND (CAST(json_extract(document, ?) AS INTEGER) % ?) = ?"
+            )
+            params: tuple[object, ...] = (
+                db_name,
+                coll_name,
+                path,
+                path,
+                query_plan.divisor,
+                query_plan.remainder,
+            )
+            if semantics.limit is not None:
+                sql += f" LIMIT {int(semantics.limit)}"
+            return SQLiteReadExecutionPlan(
+                semantics=semantics,
+                strategy="sql",
+                execution_lineage=(),
+                physical_plan=(),
+                use_sql=True,
+                sql=sql,
+                params=params,
+            )
+
+        if (
+            isinstance(query_plan, RegexCondition)
+            and "." not in query_plan.field
+            and not field_is_top_level_array_in_collection(db_name, coll_name, query_plan.field)
+        ):
+            safe_regex = parse_safe_literal_regex(query_plan.pattern, query_plan.options)
+            if safe_regex is not None:
+                mode, literal, ignore_case = safe_regex
+                if ignore_case and (
+                    not literal.isascii()
+                    or field_contains_non_ascii_text_in_collection(db_name, coll_name, query_plan.field)
+                ):
+                    return compile_read_plan(semantics, semantics.hint)
+                path = json_path_for_field(query_plan.field)
+                value_expr = f"lower(json_extract(document, ?))" if ignore_case else "json_extract(document, ?)"
+                literal_param = literal.lower() if ignore_case else literal
+                if mode == "exact":
+                    sql = (
+                        "SELECT document FROM documents "
+                        "WHERE db_name = ? AND coll_name = ? "
+                        "AND json_type(document, ?) = 'text' "
+                        f"AND {value_expr} = ?"
+                    )
+                    params = (db_name, coll_name, path, path, literal_param)
+                elif mode == "suffix":
+                    sql = (
+                        "SELECT document FROM documents "
+                        "WHERE db_name = ? AND coll_name = ? "
+                        "AND json_type(document, ?) = 'text' "
+                        f"AND substr({value_expr}, -length(?)) = ?"
+                    )
+                    params = (db_name, coll_name, path, path, literal_param, literal_param)
+                elif mode == "contains":
+                    sql = (
+                        "SELECT document FROM documents "
+                        "WHERE db_name = ? AND coll_name = ? "
+                        "AND json_type(document, ?) = 'text' "
+                        f"AND instr({value_expr}, ?) > 0"
+                    )
+                    params = (db_name, coll_name, path, path, literal_param)
+                else:
+                    sql = (
+                        "SELECT document FROM documents "
+                        "WHERE db_name = ? AND coll_name = ? "
+                        "AND json_type(document, ?) = 'text' "
+                        f"AND substr({value_expr}, 1, length(?)) = ?"
+                    )
+                    params = (db_name, coll_name, path, path, literal_param, literal_param)
+                if semantics.limit is not None:
+                    sql += f" LIMIT {int(semantics.limit)}"
+                return SQLiteReadExecutionPlan(
+                    semantics=semantics,
+                    strategy="sql",
+                    execution_lineage=(),
+                    physical_plan=(),
+                    use_sql=True,
+                    sql=sql,
+                    params=params,
+                )
 
         if isinstance(query_plan, (GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition)):
             operator = (

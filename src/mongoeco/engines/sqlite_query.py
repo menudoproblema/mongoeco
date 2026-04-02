@@ -13,6 +13,8 @@ from mongoeco.core.query_plan import (
     ElemMatchCondition,
     EqualsCondition,
     ExistsCondition,
+    GeoIntersectsCondition,
+    GeoWithinCondition,
     JsonSchemaCondition,
     GreaterThanCondition,
     GreaterThanOrEqualCondition,
@@ -21,6 +23,7 @@ from mongoeco.core.query_plan import (
     LessThanOrEqualCondition,
     MatchAll,
     ModCondition,
+    NearCondition,
     NotEqualsCondition,
     NotCondition,
     NotInCondition,
@@ -58,6 +61,9 @@ HANDLED_SQL_QUERY_NODE_TYPES: tuple[type[QueryNode], ...] = (
     SizeCondition,
     ModCondition,
     RegexCondition,
+    GeoWithinCondition,
+    GeoIntersectsCondition,
+    NearCondition,
     ElemMatchCondition,
     BitwiseCondition,
     ExprCondition,
@@ -92,6 +98,51 @@ def json_path_for_field(field: str) -> str:
 
 def _path_literal(field: str) -> str:
     return _quote_sql_string(json_path_for_field(field))
+
+
+def parse_safe_literal_regex(pattern: str, options: str) -> tuple[str, str, bool] | None:
+    ignore_case = False
+    if options:
+        if options != "i":
+            return None
+        ignore_case = True
+    anchored_start = pattern.startswith("^")
+    body = pattern[1:] if anchored_start else pattern
+    anchored_end = body.endswith("$")
+    if anchored_end:
+        body = body[:-1]
+    if anchored_start and body.endswith(".*"):
+        body = body[:-2]
+        anchored_end = False
+    if not body:
+        return None
+
+    literal_chars: list[str] = []
+    index = 0
+    metacharacters = set(".^$*+?{}[]()|")
+    while index < len(body):
+        char = body[index]
+        if char == "\\":
+            index += 1
+            if index >= len(body):
+                return None
+            literal_chars.append(body[index])
+        elif char in metacharacters:
+            return None
+        else:
+            literal_chars.append(char)
+        index += 1
+
+    if not literal_chars:
+        return None
+    literal = "".join(literal_chars)
+    if anchored_start and anchored_end:
+        return ("exact", literal, ignore_case)
+    if anchored_start:
+        return ("prefix", literal, ignore_case)
+    if anchored_end:
+        return ("suffix", literal, ignore_case)
+    return ("contains", literal, ignore_case)
 
 
 def _path_has_numeric_segment(path: str) -> bool:
@@ -287,6 +338,54 @@ def _translate_array_contains_scalar(
     )
 
 
+def _translate_json_each_scalar_match(path: str, value: object) -> SqlFragment | None:
+    path_literal = _quote_sql_string(path)
+    if value is None:
+        return (
+            f"EXISTS (SELECT 1 FROM json_each(document, {path_literal}) WHERE json_each.type = 'null')",
+            [],
+        )
+    if isinstance(value, bool):
+        return (
+            f"EXISTS (SELECT 1 FROM json_each(document, {path_literal}) "
+            f"WHERE json_each.type IN ('true', 'false') AND json_each.value = ?)",
+            [int(value)],
+        )
+    if isinstance(value, str):
+        return (
+            f"EXISTS (SELECT 1 FROM json_each(document, {path_literal}) "
+            f"WHERE json_each.type = 'text' AND json_each.value = ?)",
+            [value],
+        )
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return (
+            f"EXISTS (SELECT 1 FROM json_each(document, {path_literal}) "
+            f"WHERE json_each.type IN ('integer', 'real') AND json_each.value = ?)",
+            [value],
+        )
+    return None
+
+
+def _translate_json_each_scalar_comparison(operator: str, value: object) -> SqlFragment | None:
+    expected_type, comparable = _normalize_comparable_value(value)
+    if expected_type == "number":
+        return (
+            f"json_each.type IN ('integer', 'real') AND json_each.value {operator} ?",
+            [comparable],
+        )
+    if expected_type == "string":
+        return (
+            f"json_each.type = 'text' AND json_each.value {operator} ?",
+            [comparable],
+        )
+    if expected_type == "bool":
+        return (
+            f"json_each.type IN ('true', 'false') AND json_each.value {operator} ?",
+            [comparable],
+        )
+    return None
+
+
 def _translate_array_contains_codec_aware(field: str, value: object) -> SqlFragment:
     path = _path_literal(field)
     each_type_path, each_value_path = _json_each_tagged_paths()
@@ -355,6 +454,97 @@ def _translate_equals(
     return f"({scalar_sql} OR {array_sql})", [*scalar_params, *array_params]
 
 
+def _translate_all_condition(field: str, values: tuple[object, ...]) -> SqlFragment:
+    if "." in field:
+        raise NotImplementedError("Only top-level $all paths are translated to SQL")
+    if not values:
+        raise NotImplementedError("Empty $all values are not translated to SQL")
+    path = json_path_for_field(field)
+    path_literal = _quote_sql_string(path)
+    clauses: list[str] = []
+    params: list[object] = []
+    for value in values:
+        if isinstance(value, dict):
+            raise NotImplementedError("$all with operator values is not translated to SQL")
+        fragment = _translate_json_each_scalar_match(path, value)
+        if fragment is None:
+            raise NotImplementedError("$all only supports simple scalar values for SQL translation")
+        sql, sql_params = fragment
+        clauses.append(sql)
+        params.extend(sql_params)
+    array_clause = f"(json_type(document, {path_literal}) = 'array' AND " + " AND ".join(
+        f"({clause})" for clause in clauses
+    ) + ")"
+    if len(values) == 1:
+        scalar_sql, scalar_params = _translate_scalar_equals(field, values[0], null_matches_undefined=False)
+        return f"({array_clause} OR ({scalar_sql}))", [*params, *scalar_params]
+    return array_clause, params
+
+
+def _translate_json_each_value_plan(plan: QueryNode) -> SqlFragment | None:
+    match plan:
+        case EqualsCondition(field="value", value=value):
+            fragment = _translate_json_each_scalar_match("$", value)
+            if fragment is None:
+                return None
+            sql, params = fragment
+            prefix = "EXISTS (SELECT 1 FROM json_each(document, '$') WHERE "
+            suffix = ")"
+            if sql.startswith(prefix) and sql.endswith(suffix):
+                return sql[len(prefix):-len(suffix)], params
+            return None
+        case GreaterThanCondition(field="value", value=value):
+            return _translate_json_each_scalar_comparison(">", value)
+        case GreaterThanOrEqualCondition(field="value", value=value):
+            return _translate_json_each_scalar_comparison(">=", value)
+        case LessThanCondition(field="value", value=value):
+            return _translate_json_each_scalar_comparison("<", value)
+        case LessThanOrEqualCondition(field="value", value=value):
+            return _translate_json_each_scalar_comparison("<=", value)
+        case RegexCondition(field="value", pattern=pattern, options=options):
+            safe_regex = parse_safe_literal_regex(pattern, options)
+            if safe_regex is None:
+                return None
+            mode, literal, ignore_case = safe_regex
+            if ignore_case and not literal.isascii():
+                return None
+            value_expr = "lower(json_each.value)" if ignore_case else "json_each.value"
+            literal_param = literal.lower() if ignore_case else literal
+            if mode == "exact":
+                return (f"json_each.type = 'text' AND {value_expr} = ?", [literal_param])
+            if mode == "prefix":
+                return (f"json_each.type = 'text' AND substr({value_expr}, 1, length(?)) = ?", [literal_param, literal_param])
+            if mode == "suffix":
+                return (f"json_each.type = 'text' AND substr({value_expr}, -length(?)) = ?", [literal_param, literal_param])
+            if mode == "contains":
+                return (f"json_each.type = 'text' AND instr({value_expr}, ?) > 0", [literal_param])
+            return None
+        case _:
+            return None
+
+
+def _translate_elem_match_condition(
+    field: str,
+    compiled_plan: QueryNode | None,
+    *,
+    wrap_value: bool,
+) -> SqlFragment:
+    if "." in field:
+        raise NotImplementedError("Only top-level $elemMatch paths are translated to SQL")
+    if compiled_plan is None or not wrap_value:
+        raise NotImplementedError("Only scalar $elemMatch shapes are translated to SQL")
+    path = _quote_sql_string(json_path_for_field(field))
+    predicate = _translate_json_each_value_plan(compiled_plan)
+    if predicate is None:
+        raise NotImplementedError("Unsupported $elemMatch scalar predicate for SQL translation")
+    predicate_sql, predicate_params = predicate
+    return (
+        f"(json_type(document, {path}) = 'array' "
+        f"AND EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE {predicate_sql}))",
+        predicate_params,
+    )
+
+
 def _translate_equals_scalar_only(
     field: str,
     value: object,
@@ -393,6 +583,14 @@ def _translate_not_equals(field: str, value: object) -> SqlFragment:
         f"OR json_type(document, {path}) = 'null' "
         f"OR NOT ({scalar_sql} OR {array_sql}))",
         [*scalar_params, *array_params],
+    )
+
+
+def _translate_size_condition(field: str, value: int) -> SqlFragment:
+    path = _path_literal(field)
+    return (
+        f"(json_type(document, {path}) = 'array' AND json_array_length(document, {path}) = ?)",
+        [value],
     )
 
 
@@ -446,6 +644,20 @@ def _translate_same_type_comparison(operator: str, field: str, value: object) ->
         f"({type_expression_sql(field)} = ? AND {value_expression_sql(field)} {sql_operator} ?)",
         [value_type, comparable],
     )
+
+
+def _translate_scalar_or_array_same_type_comparison(operator: str, field: str, value: object) -> SqlFragment:
+    scalar_sql, scalar_params = _translate_same_type_comparison(operator, field, value)
+    array_predicate = _translate_json_each_scalar_comparison(operator, value)
+    if array_predicate is None:
+        raise NotImplementedError("Unsupported array-aware comparison value for SQL translation")
+    array_predicate_sql, array_predicate_params = array_predicate
+    path = _path_literal(field)
+    array_sql = (
+        f"(json_type(document, {path}) = 'array' "
+        f"AND EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE {array_predicate_sql}))"
+    )
+    return f"({scalar_sql} OR {array_sql})", [*scalar_params, *array_predicate_params]
 
 
 def _translate_comparison(operator: str, field: str, value: object) -> SqlFragment:
@@ -812,8 +1024,16 @@ def translate_query_plan(plan: QueryNode) -> SqlFragment:
         case NotCondition(clause=clause):
             clause_sql, clause_params = translate_query_plan(clause)
             return f"NOT COALESCE(({clause_sql}), 0)", clause_params
-        case AllCondition() | SizeCondition() | ModCondition() | RegexCondition() | ElemMatchCondition():
+        case SizeCondition(field=field, value=value):
+            return _translate_size_condition(field, value)
+        case AllCondition(field=field, values=values):
+            return _translate_all_condition(field, values)
+        case ElemMatchCondition(field=field, compiled_plan=compiled_plan, wrap_value=wrap_value):
+            return _translate_elem_match_condition(field, compiled_plan, wrap_value=wrap_value)
+        case ModCondition() | RegexCondition():
             raise NotImplementedError("Query operator not yet translated to SQL")
+        case GeoWithinCondition() | GeoIntersectsCondition() | NearCondition():
+            raise NotImplementedError("Geospatial operators require Python query fallback")
         case BitwiseCondition() | ExprCondition() | JsonSchemaCondition():
             raise NotImplementedError("Query operator not yet translated to SQL")
         case AndCondition(clauses=clauses):

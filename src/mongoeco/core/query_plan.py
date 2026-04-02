@@ -6,6 +6,7 @@ from typing import Any, TypeIs
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_scalars import INT32_MAX, unwrap_bson_numeric
+from mongoeco.core.geo import parse_geo_box, parse_geo_point, parse_geo_polygon
 from mongoeco.errors import OperationFailure
 from mongoeco.types import BsonBindings, BitwiseMaskOperand, BsonValue, Filter, PlanningIssue, PlanningMode, Regex
 
@@ -102,6 +103,29 @@ class RegexCondition(QueryNode):
 
 
 @dataclass(frozen=True)
+class GeoWithinCondition(QueryNode):
+    field: str
+    geometry_kind: str
+    geometry: object
+
+
+@dataclass(frozen=True)
+class GeoIntersectsCondition(QueryNode):
+    field: str
+    geometry_kind: str
+    geometry: object
+
+
+@dataclass(frozen=True)
+class NearCondition(QueryNode):
+    field: str
+    point: tuple[float, float]
+    min_distance: float | None = None
+    max_distance: float | None = None
+    spherical: bool = False
+
+
+@dataclass(frozen=True)
 class NotCondition(QueryNode):
     clause: QueryNode
 
@@ -173,6 +197,9 @@ type ConcreteQueryNode = (
     | SizeCondition
     | ModCondition
     | RegexCondition
+    | GeoWithinCondition
+    | GeoIntersectsCondition
+    | NearCondition
     | NotCondition
     | ElemMatchCondition
     | ExistsCondition
@@ -203,6 +230,9 @@ def is_concrete_query_node(node: QueryNode) -> TypeIs[ConcreteQueryNode]:
             SizeCondition,
             ModCondition,
             RegexCondition,
+            GeoWithinCondition,
+            GeoIntersectsCondition,
+            NearCondition,
             NotCondition,
             ElemMatchCondition,
             ExistsCondition,
@@ -447,6 +477,69 @@ def _compile_field_condition(
             if not isinstance(value, str):
                 raise ValueError("$options necesita un string")
             regex_options += value
+        elif operator == "$geoWithin":
+            if not isinstance(value, dict):
+                raise ValueError("$geoWithin requires a document specification")
+            if "$geometry" in value:
+                clauses.append(
+                    GeoWithinCondition(
+                        field,
+                        "polygon",
+                        parse_geo_polygon(value["$geometry"], label="$geoWithin.$geometry"),
+                    )
+                )
+            elif "$box" in value:
+                clauses.append(
+                    GeoWithinCondition(
+                        field,
+                        "box",
+                        parse_geo_box(value["$box"], label="$geoWithin.$box"),
+                    )
+                )
+            else:
+                raise OperationFailure("$geoWithin supports only $geometry Polygon or legacy $box in the local runtime")
+        elif operator == "$geoIntersects":
+            if not isinstance(value, dict) or "$geometry" not in value:
+                raise ValueError("$geoIntersects requires a $geometry document")
+            geometry_value = value["$geometry"]
+            if isinstance(geometry_value, dict) and geometry_value.get("type") == "Point":
+                clauses.append(
+                    GeoIntersectsCondition(
+                        field,
+                        "point",
+                        parse_geo_point(geometry_value, label="$geoIntersects.$geometry"),
+                    )
+                )
+            else:
+                clauses.append(
+                    GeoIntersectsCondition(
+                        field,
+                        "polygon",
+                        parse_geo_polygon(geometry_value, label="$geoIntersects.$geometry"),
+                    )
+                )
+        elif operator in {"$near", "$nearSphere"}:
+            min_distance: float | None = None
+            max_distance: float | None = None
+            if isinstance(value, dict):
+                if "$geometry" not in value:
+                    raise ValueError(f"{operator} requires a $geometry point in the local runtime")
+                point = parse_geo_point(value["$geometry"], label=f"{operator}.$geometry")
+                if "$minDistance" in value:
+                    min_distance = _coerce_geo_distance(value["$minDistance"], label=f"{operator}.$minDistance")
+                if "$maxDistance" in value:
+                    max_distance = _coerce_geo_distance(value["$maxDistance"], label=f"{operator}.$maxDistance")
+            else:
+                point = parse_geo_point(value, label=operator)
+            clauses.append(
+                NearCondition(
+                    field,
+                    point,
+                    min_distance=min_distance,
+                    max_distance=max_distance,
+                    spherical=operator == "$nearSphere",
+                )
+            )
         elif operator == "$not":
             if not isinstance(value, dict) or not value or not all(isinstance(key, str) and key.startswith("$") for key in value):
                 raise ValueError("$not necesita una expresion de operador")
@@ -656,3 +749,9 @@ def ensure_query_plan(
     if filter_spec is None:
         return MatchAll()
     return compile_filter(filter_spec, dialect=dialect, variables=variables, planning_mode=planning_mode)
+
+
+def _coerce_geo_distance(value: Any, *, label: str) -> float:
+    if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value) or value < 0:
+        raise OperationFailure(f"{label} must be a non-negative finite number")
+    return float(value)

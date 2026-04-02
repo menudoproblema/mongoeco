@@ -1,10 +1,13 @@
 from collections.abc import Callable, Iterable
 from copy import deepcopy
 from dataclasses import dataclass
+import datetime
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec
+from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.geo import parse_geo_point, planar_distance
 from mongoeco.core.sorting import sort_documents, sort_documents_window
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
@@ -39,6 +42,7 @@ from mongoeco.core.aggregation.runtime import (
     AggregationStageContext,
     _apply_unwind,
 )
+from mongoeco.core.paths import get_document_value, set_document_value
 from mongoeco.core.aggregation.transform_stages import (
     _apply_add_fields,
     _apply_match,
@@ -277,6 +281,275 @@ def _stage_set_window_fields(
     )
 
 
+def _stage_densify(
+    documents: list[Document],
+    spec: object,
+    _context: AggregationStageContext,
+) -> list[Document]:
+    if not isinstance(spec, dict):
+        raise OperationFailure("$densify requires a document specification")
+    field = spec.get("field")
+    if not isinstance(field, str) or not field:
+        raise OperationFailure("$densify field must be a non-empty string")
+    partition_by_fields = spec.get("partitionByFields", [])
+    if partition_by_fields is None:
+        partition_by_fields = []
+    if not isinstance(partition_by_fields, list) or not all(isinstance(item, str) and item for item in partition_by_fields):
+        raise OperationFailure("$densify partitionByFields must be a list of non-empty strings")
+    range_spec = spec.get("range")
+    if not isinstance(range_spec, dict):
+        raise OperationFailure("$densify range must be a document")
+    step = range_spec.get("step")
+    if not isinstance(step, (int, float)) or isinstance(step, bool) or step <= 0:
+        raise OperationFailure("$densify range.step must be a positive number")
+    bounds = range_spec.get("bounds")
+    unit = range_spec.get("unit")
+    if unit is not None and not isinstance(unit, str):
+        raise OperationFailure("$densify range.unit must be a string")
+
+    grouped: dict[tuple[object, ...], list[Document]] = {}
+    for document in documents:
+        key = tuple(_partition_value(document, path) for path in partition_by_fields)
+        grouped.setdefault(key, []).append(document)
+
+    result: list[Document] = []
+    for partition_key, partition_documents in grouped.items():
+        ordered = sorted(
+            partition_documents,
+            key=lambda document: _require_densify_value(document, field),
+        )
+        present_values = {
+            _require_densify_value(document, field): document
+            for document in ordered
+        }
+        ordered_values = list(present_values)
+        if not ordered_values:
+            result.extend(ordered)
+            continue
+        lower, upper = _resolve_densify_bounds(bounds, ordered_values)
+        current = lower
+        while _densify_value_leq(current, upper):
+            existing = present_values.get(current)
+            if existing is not None:
+                result.append(existing)
+            else:
+                synthetic: Document = {}
+                for path, value in zip(partition_by_fields, partition_key, strict=False):
+                    if value is not None:
+                        set_document_value(synthetic, path, deepcopy(value))
+                set_document_value(synthetic, field, current)
+                result.append(synthetic)
+            current = _advance_densify_value(current, step, unit)
+    return result
+
+
+def _stage_fill(
+    documents: list[Document],
+    spec: object,
+    _context: AggregationStageContext,
+) -> list[Document]:
+    if not isinstance(spec, dict):
+        raise OperationFailure("$fill requires a document specification")
+    sort_by = spec.get("sortBy")
+    if not isinstance(sort_by, dict) or len(sort_by) != 1:
+        raise OperationFailure("$fill sortBy must be a single-field document")
+    sort_field, sort_direction = next(iter(sort_by.items()))
+    if sort_direction not in (1, -1) or isinstance(sort_direction, bool):
+        raise OperationFailure("$fill sortBy directions must be 1 or -1")
+    partition_by_fields = spec.get("partitionByFields", [])
+    if partition_by_fields is None:
+        partition_by_fields = []
+    if not isinstance(partition_by_fields, list) or not all(isinstance(item, str) and item for item in partition_by_fields):
+        raise OperationFailure("$fill partitionByFields must be a list of non-empty strings")
+    output = spec.get("output")
+    if not isinstance(output, dict) or not output:
+        raise OperationFailure("$fill output must be a non-empty document")
+
+    grouped: dict[tuple[object, ...], list[Document]] = {}
+    for document in documents:
+        key = tuple(_partition_value(document, path) for path in partition_by_fields)
+        grouped.setdefault(key, []).append(deepcopy(document))
+
+    result: list[Document] = []
+    for partition_documents in grouped.values():
+        ordered = sorted(
+            partition_documents,
+            key=lambda document: _partition_value(document, sort_field),
+            reverse=sort_direction == -1,
+        )
+        for field, field_spec in output.items():
+            _apply_fill_output(ordered, field, field_spec)
+        result.extend(ordered)
+    return result
+
+
+def _stage_geo_near(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    if not isinstance(spec, dict):
+        raise OperationFailure("$geoNear requires a document specification")
+    near = spec.get("near")
+    if near is None:
+        raise OperationFailure("$geoNear requires near")
+    near_point = parse_geo_point(near, label="$geoNear.near")
+    distance_field = spec.get("distanceField")
+    if not isinstance(distance_field, str) or not distance_field:
+        raise OperationFailure("$geoNear distanceField must be a non-empty string")
+    key = spec.get("key")
+    if not isinstance(key, str) or not key:
+        raise OperationFailure("$geoNear key must be a non-empty string in the local runtime")
+    query_spec = spec.get("query", {})
+    if not isinstance(query_spec, dict):
+        raise OperationFailure("$geoNear query must be a document")
+    include_locs = spec.get("includeLocs")
+    if include_locs is not None and (not isinstance(include_locs, str) or not include_locs):
+        raise OperationFailure("$geoNear includeLocs must be a non-empty string")
+    min_distance = spec.get("minDistance")
+    if min_distance is not None and (
+        not isinstance(min_distance, (int, float)) or isinstance(min_distance, bool) or min_distance < 0
+    ):
+        raise OperationFailure("$geoNear minDistance must be a non-negative number")
+    max_distance = spec.get("maxDistance")
+    if max_distance is not None and (
+        not isinstance(max_distance, (int, float)) or isinstance(max_distance, bool) or max_distance < 0
+    ):
+        raise OperationFailure("$geoNear maxDistance must be a non-negative number")
+
+    matches: list[tuple[float, Document]] = []
+    for document in documents:
+        if query_spec and not QueryEngine.match(
+            document,
+            query_spec,
+            dialect=context.dialect,
+            collation=context.collation,
+        ):
+            continue
+        found, location = get_document_value(document, key)
+        if not found:
+            continue
+        try:
+            point = parse_geo_point(location, label=f"$geoNear key {key}")
+        except OperationFailure:
+            continue
+        distance = planar_distance(point, near_point)
+        if min_distance is not None and distance < float(min_distance):
+            continue
+        if max_distance is not None and distance > float(max_distance):
+            continue
+        enriched = deepcopy(document)
+        set_document_value(enriched, distance_field, distance)
+        if include_locs is not None:
+            set_document_value(enriched, include_locs, deepcopy(location))
+        matches.append((distance, enriched))
+    matches.sort(key=lambda item: (item[0], item[1].get("_id")))
+    return [document for _distance, document in matches]
+
+
+def _partition_value(document: Document, path: str) -> object | None:
+    found, value = get_document_value(document, path)
+    return value if found else None
+
+
+def _require_densify_value(document: Document, field: str) -> object:
+    found, value = get_document_value(document, field)
+    if not found:
+        raise OperationFailure("$densify requires the densified field to exist in all input documents")
+    if not isinstance(value, (int, float, datetime.datetime)) or isinstance(value, bool):
+        raise OperationFailure("$densify currently supports numeric or date values only")
+    return value
+
+
+def _resolve_densify_bounds(bounds: object, values: list[object]) -> tuple[object, object]:
+    if bounds == "full":
+        return values[0], values[-1]
+    if isinstance(bounds, list) and len(bounds) == 2:
+        return bounds[0], bounds[1]
+    raise OperationFailure("$densify range.bounds must be 'full' or a [lower, upper] pair")
+
+
+def _advance_densify_value(value: object, step: int | float, unit: str | None) -> object:
+    if isinstance(value, datetime.datetime):
+        delta = _densify_datetime_delta(step, unit)
+        return value + delta
+    return value + step
+
+
+def _densify_datetime_delta(step: int | float, unit: str | None) -> datetime.timedelta:
+    if unit is None:
+        raise OperationFailure("$densify date ranges require a unit")
+    if unit == "millisecond":
+        return datetime.timedelta(milliseconds=step)
+    if unit == "second":
+        return datetime.timedelta(seconds=step)
+    if unit == "minute":
+        return datetime.timedelta(minutes=step)
+    if unit == "hour":
+        return datetime.timedelta(hours=step)
+    if unit == "day":
+        return datetime.timedelta(days=step)
+    raise OperationFailure("$densify currently supports millisecond/second/minute/hour/day units")
+
+
+def _densify_value_leq(left: object, right: object) -> bool:
+    return bool(left <= right)
+
+
+def _apply_fill_output(documents: list[Document], field: str, field_spec: object) -> None:
+    if not isinstance(field_spec, dict):
+        raise OperationFailure("$fill output fields must be documents")
+    if "value" in field_spec:
+        replacement = field_spec["value"]
+        for document in documents:
+            found, current = get_document_value(document, field)
+            if not found or current is None:
+                set_document_value(document, field, deepcopy(replacement))
+        return
+    method = field_spec.get("method")
+    if method == "locf":
+        previous: object | None = None
+        for document in documents:
+            found, current = get_document_value(document, field)
+            if found and current is not None:
+                previous = current
+                continue
+            if previous is not None:
+                set_document_value(document, field, deepcopy(previous))
+        return
+    if method == "linear":
+        _apply_linear_fill(documents, field)
+        return
+    raise OperationFailure("$fill output supports only value, locf or linear")
+
+
+def _apply_linear_fill(documents: list[Document], field: str) -> None:
+    known_points: list[tuple[int, object]] = []
+    for index, document in enumerate(documents):
+        found, current = get_document_value(document, field)
+        if found and current is not None:
+            known_points.append((index, current))
+    for point_index, (left_index, left_value) in enumerate(known_points[:-1]):
+        right_index, right_value = known_points[point_index + 1]
+        gap = right_index - left_index
+        if gap <= 1:
+            continue
+        if isinstance(left_value, datetime.datetime) and isinstance(right_value, datetime.datetime):
+            total = (right_value - left_value).total_seconds()
+            for offset in range(1, gap):
+                set_document_value(
+                    documents[left_index + offset],
+                    field,
+                    left_value + datetime.timedelta(seconds=(total * offset) / gap),
+                )
+            continue
+        if not isinstance(left_value, (int, float)) or not isinstance(right_value, (int, float)):
+            raise OperationFailure("$fill linear currently supports only numeric or date values")
+        step = (right_value - left_value) / gap
+        for offset in range(1, gap):
+            set_document_value(documents[left_index + offset], field, left_value + (step * offset))
+
+
 AGGREGATION_STAGE_SPECS: dict[str, AggregationStageSpec] = {
     "$documents": AggregationStageSpec(_stage_documents, "materializing"),
     "$match": AggregationStageSpec(_stage_match, "streamable"),
@@ -300,6 +573,9 @@ AGGREGATION_STAGE_SPECS: dict[str, AggregationStageSpec] = {
     "$count": AggregationStageSpec(_stage_count, "materializing"),
     "$sortByCount": AggregationStageSpec(_stage_sort_by_count, "materializing"),
     "$setWindowFields": AggregationStageSpec(_stage_set_window_fields, "materializing"),
+    "$densify": AggregationStageSpec(_stage_densify, "materializing"),
+    "$fill": AggregationStageSpec(_stage_fill, "materializing"),
+    "$geoNear": AggregationStageSpec(_stage_geo_near, "materializing"),
 }
 
 AGGREGATION_STAGE_HANDLERS: dict[str, AggregationStageHandler] = {

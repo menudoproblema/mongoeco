@@ -35,6 +35,7 @@ class SearchVectorQuery:
     query_vector: tuple[float, ...]
     limit: int
     num_candidates: int
+    filter_spec: Document | None = None
     similarity: str = "cosine"
 
 
@@ -181,10 +182,10 @@ def compile_search_phrase_query(spec: object) -> SearchPhraseQuery:
 def compile_vector_search_query(spec: object) -> SearchVectorQuery:
     if not isinstance(spec, dict):
         raise OperationFailure("$vectorSearch requires a document specification")
-    unsupported = sorted(set(spec) - {"index", "path", "queryVector", "limit", "numCandidates"})
+    unsupported = sorted(set(spec) - {"index", "path", "queryVector", "limit", "numCandidates", "filter"})
     if unsupported:
         raise OperationFailure(
-            "$vectorSearch local runtime supports only index, path, queryVector, limit and numCandidates; "
+            "$vectorSearch local runtime supports only index, path, queryVector, limit, numCandidates and filter; "
             "unsupported keys: " + ", ".join(unsupported)
         )
     index_name = spec.get("index", "default")
@@ -204,12 +205,16 @@ def compile_vector_search_query(spec: object) -> SearchVectorQuery:
     num_candidates = spec.get("numCandidates", limit)
     if not isinstance(num_candidates, int) or isinstance(num_candidates, bool) or num_candidates < limit:
         raise OperationFailure("$vectorSearch.numCandidates must be an integer >= limit")
+    filter_spec = spec.get("filter")
+    if filter_spec is not None and not isinstance(filter_spec, dict):
+        raise OperationFailure("$vectorSearch.filter must be a document")
     return SearchVectorQuery(
         index_name=index_name,
         path=path,
         query_vector=tuple(float(value) for value in raw_query_vector),
         limit=limit,
         num_candidates=num_candidates,
+        filter_spec=deepcopy(filter_spec),
     )
 
 
@@ -265,6 +270,11 @@ def score_vector_document(
     candidate = tuple(float(item) for item in value)
     if len(candidate) != field_spec["numDimensions"] or len(candidate) != len(query.query_vector):
         return None
+    similarity = str(field_spec.get("similarity", query.similarity))
+    if similarity == "dotProduct":
+        return _dot_product(query.query_vector, candidate)
+    if similarity == "euclidean":
+        return _negative_euclidean_distance(query.query_vector, candidate)
     return _cosine_similarity(query.query_vector, candidate)
 
 
@@ -345,8 +355,8 @@ def _validate_vector_search_definition(definition: Document) -> None:
         if not isinstance(num_dimensions, int) or isinstance(num_dimensions, bool) or num_dimensions <= 0:
             raise OperationFailure("local vectorSearch numDimensions must be a positive integer")
         similarity = field.get("similarity", "cosine")
-        if similarity != "cosine":
-            raise OperationFailure("local vectorSearch currently supports only cosine similarity")
+        if similarity not in {"cosine", "dotProduct", "euclidean"}:
+            raise OperationFailure("local vectorSearch currently supports cosine, dotProduct and euclidean similarity")
 
 
 def _validate_mappings_document(mappings: Document) -> None:
@@ -469,3 +479,11 @@ def _cosine_similarity(left: tuple[float, ...], right: tuple[float, ...]) -> flo
     if left_norm == 0 or right_norm == 0:
         return None
     return dot / (left_norm * right_norm)
+
+
+def _dot_product(left: tuple[float, ...], right: tuple[float, ...]) -> float:
+    return sum(a * b for a, b in zip(left, right, strict=True))
+
+
+def _negative_euclidean_distance(left: tuple[float, ...], right: tuple[float, ...]) -> float:
+    return -math.sqrt(sum((a - b) ** 2 for a, b in zip(left, right, strict=True)))

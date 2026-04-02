@@ -27,6 +27,8 @@ from mongoeco.engines._shared_search_admin import (
     normalize_search_index_definition,
     search_index_not_found,
 )
+from mongoeco.engines._active_operations import LocalActiveOperationRegistry
+from mongoeco.engines._runtime_metrics import LocalRuntimeMetrics
 from mongoeco.engines._shared_ttl import coerce_ttl_datetime, document_expired_by_ttl
 from mongoeco.engines.mvcc import MemoryMvccState
 from mongoeco.engines.profiling import EngineProfiler
@@ -131,6 +133,8 @@ class MemoryEngine(AsyncStorageEngine):
         self._connection_count = 0
         self._codec = codec
         self._profiler = EngineProfiler("memory")
+        self._runtime_metrics = LocalRuntimeMetrics()
+        self._active_operations = LocalActiveOperationRegistry()
         self._mvcc_version = 0
         self._mvcc_states: dict[str, MemoryMvccState] = {}
         self.aggregation_spill_policy = (
@@ -167,6 +171,41 @@ class MemoryEngine(AsyncStorageEngine):
             self._search_index_ready_at.pop((db_name, coll_name, index_name), None)
             return True
         return False
+
+    def _runtime_diagnostics_info(self) -> dict[str, object]:
+        declared_search_index_count = sum(
+            len(indexes)
+            for collections in self._search_indexes.values()
+            for indexes in collections.values()
+        )
+        tracked_collection_count = sum(len(collections) for collections in self._collections.values())
+        collection_option_namespace_count = sum(
+            len(collections)
+            for collections in self._collection_options.values()
+        )
+        index_data_collection_count = sum(
+            len(collections)
+            for collections in self._index_data.values()
+        )
+        return {
+            "planner": {
+                "engine": "python",
+                "pushdownModes": ["python"],
+                "hybridSortFallback": False,
+            },
+            "search": {
+                "backend": "python",
+                "declaredIndexCount": declared_search_index_count,
+                "pendingIndexCount": len(self._search_index_ready_at),
+                "simulatedIndexLatencySeconds": self._simulate_search_index_latency,
+                "fts5Available": None,
+            },
+            "caches": {
+                "trackedCollections": tracked_collection_count,
+                "collectionOptionNamespaces": collection_option_namespace_count,
+                "indexDataCollections": index_data_collection_count,
+            },
+        }
 
     _coerce_ttl_datetime = staticmethod(coerce_ttl_datetime)
 
@@ -493,6 +532,7 @@ class MemoryEngine(AsyncStorageEngine):
         ok: float = 1.0,
         errmsg: str | None = None,
     ) -> None:
+        self._runtime_metrics.record(op)
         self._profiler.record(
             db_name,
             op=op,
@@ -504,6 +544,48 @@ class MemoryEngine(AsyncStorageEngine):
             ok=ok,
             errmsg=errmsg,
         )
+
+    def _record_runtime_opcounter(self, op: str, *, amount: int = 1) -> None:
+        self._runtime_metrics.record(op, amount=amount)
+
+    def _runtime_opcounters_snapshot(self) -> dict[str, int]:
+        return self._runtime_metrics.snapshot()
+
+    def _begin_active_operation(
+        self,
+        *,
+        command_name: str,
+        operation_type: str,
+        namespace: str | None,
+        session_id: str | None = None,
+        cursor_id: int | None = None,
+        connection_id: int | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        killable: bool = True,
+        metadata: dict[str, object] | None = None,
+    ):
+        return self._active_operations.begin(
+            command_name=command_name,
+            operation_type=operation_type,
+            namespace=namespace,
+            session_id=session_id,
+            cursor_id=cursor_id,
+            connection_id=connection_id,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            killable=killable,
+            metadata=metadata,
+        )
+
+    def _complete_active_operation(self, opid: str) -> None:
+        self._active_operations.complete(opid)
+
+    def _snapshot_active_operations(self) -> list[dict[str, object]]:
+        return self._active_operations.snapshot()
+
+    def _cancel_active_operation(self, opid: str) -> bool:
+        return self._active_operations.cancel(opid)
 
     def _is_profile_namespace(self, coll_name: str) -> bool:
         return coll_name == self._PROFILE_COLLECTION_NAME
@@ -1699,6 +1781,12 @@ class MemoryEngine(AsyncStorageEngine):
             ]
         vector_hits: list[tuple[float, Document]] = []
         for document in documents:
+            if query.filter_spec is not None and not QueryEngine.match(
+                document,
+                query.filter_spec,
+                dialect=MONGODB_DIALECT_70,
+            ):
+                continue
             score = score_vector_document(
                 document,
                 definition=definition,
@@ -1746,6 +1834,11 @@ class MemoryEngine(AsyncStorageEngine):
                 "index": query.index_name,
                 "backend": "python",
                 "status": "READY" if ready else "PENDING",
+                "backendAvailable": True,
+                "backendMaterialized": False,
+                "physicalName": None,
+                "readyAtEpoch": self._search_index_ready_at.get((db_name, coll_name, query.index_name)),
+                "fts5Available": None,
                 "definition": build_search_index_document(
                     definition,
                     ready=ready,
@@ -1758,6 +1851,8 @@ class MemoryEngine(AsyncStorageEngine):
                 "queryVector": list(query.query_vector) if isinstance(query, SearchVectorQuery) else None,
                 "limit": query.limit if isinstance(query, SearchVectorQuery) else None,
                 "numCandidates": query.num_candidates if isinstance(query, SearchVectorQuery) else None,
+                "filter": deepcopy(query.filter_spec) if isinstance(query, SearchVectorQuery) and query.filter_spec is not None else None,
+                "similarity": query.similarity if isinstance(query, SearchVectorQuery) else None,
                 "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
             },
         )

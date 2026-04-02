@@ -12,6 +12,8 @@ from mongoeco.api._async._collection_bulk import (
 from mongoeco.api._async import _collection_indexing
 from mongoeco.api._async import _collection_modify
 from mongoeco.api._async import _collection_reads
+from mongoeco.api._async._collection_runtime import CollectionRuntimeCoordinator
+from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api._async._collection_watch import (
     CollectionChangeStreamConfig,
     create_change_stream_hub,
@@ -40,14 +42,8 @@ from mongoeco.api.public_api import (
     COLLECTION_UPDATE_ONE_SPEC,
     normalize_public_operation_arguments,
 )
-from mongoeco.api.operations import (
-    AggregateOperation,
-    FindOperation,
-    UpdateOperation,
-    compile_aggregate_operation,
-    compile_find_operation,
-)
-from mongoeco.api._async.cursor import AsyncCursor, _operation_issue_message
+from mongoeco.api.operations import AggregateOperation, FindOperation, UpdateOperation, compile_aggregate_operation, compile_find_operation
+from mongoeco.api._async.cursor import AsyncCursor
 from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
 from mongoeco.compat import (
     MongoDialect,
@@ -64,7 +60,6 @@ from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import QueryNode
 from mongoeco.engines.base import AsyncStorageEngine
-from mongoeco.core.upserts import seed_upsert_document
 from mongoeco.core.validation import is_document, is_filter, is_projection, is_update
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -139,6 +134,7 @@ class AsyncCollection:
                 journal_max_bytes=change_stream_journal_max_bytes,
             ),
         )
+        self._runtime = CollectionRuntimeCoordinator(self)
 
     def with_options(
         self,
@@ -424,20 +420,13 @@ class AsyncCollection:
         hint: HintSpec | None = None,
         session: ClientSession | None = None,
     ) -> None:
-        if session is None:
-            return
-        recorder = getattr(self._engine, "_record_operation_metadata", None)
-        if callable(recorder):
-            recorder(
-                session,
-                operation=operation,
-                comment=comment,
-                max_time_ms=max_time_ms,
-                hint=hint,
-            )
-        observe_operation = getattr(session, "observe_operation", None)
-        if callable(observe_operation):
-            observe_operation()
+        self._runtime.record_operation_metadata(
+            operation=operation,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            hint=hint,
+            session=session,
+        )
 
     async def _profile_operation(
         self,
@@ -448,37 +437,11 @@ class AsyncCollection:
         operation: FindOperation | None = None,
         errmsg: str | None = None,
     ) -> None:
-        if self._collection_name == "system.profile":
-            return
-        recorder = getattr(self._engine, "_record_profile_event", None)
-        if not callable(recorder):
-            return
-        execution_lineage: tuple[object, ...] = ()
-        fallback_reason: str | None = None
-        if operation is not None:
-            planner = getattr(self._engine, "plan_find_execution", None)
-            if callable(planner):
-                try:
-                    execution_plan = await planner(
-                        self._db_name,
-                        self._collection_name,
-                        operation,
-                        dialect=self._mongodb_dialect,
-                        context=None,
-                    )
-                    execution_lineage = execution_plan.execution_lineage
-                    fallback_reason = execution_plan.fallback_reason
-                except Exception:
-                    execution_lineage = ()
-                    fallback_reason = None
-        recorder(
-            self._db_name,
+        await self._runtime.profile_operation(
             op=op,
             command=command,
-            duration_micros=max(1, duration_ns // 1000),
-            execution_lineage=tuple(execution_lineage),
-            fallback_reason=fallback_reason,
-            ok=0.0 if errmsg is not None else 1.0,
+            duration_ns=duration_ns,
+            operation=operation,
             errmsg=errmsg,
         )
 
@@ -488,12 +451,9 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
     ) -> Document | None:
-        return await self._engine.get_document(
-            self._db_name,
-            self._collection_name,
+        return await self._runtime.document_by_id(
             document_id,
-            dialect=self._mongodb_dialect,
-            context=session,
+            session=session,
         )
 
     def _publish_change_event(
@@ -504,12 +464,8 @@ class AsyncCollection:
         full_document: Document | None = None,
         update_description: dict[str, object] | None = None,
     ) -> None:
-        if self._change_hub is None:
-            return
-        self._change_hub.publish(
+        self._runtime.publish_change_event(
             operation_type=operation_type,
-            db_name=self._db_name,
-            coll_name=self._collection_name,
             document_key=document_key,
             full_document=full_document,
             update_description=update_description,
@@ -525,49 +481,14 @@ class AsyncCollection:
         session: ClientSession | None = None,
         bypass_document_validation: bool = False,
     ) -> UpdateResult[DocumentId]:
-        self._ensure_operation_executable(operation)
-        started_at = time.perf_counter_ns()
-        method = getattr(self._engine, "update_with_operation", None)
-        try:
-            if not callable(method):
-                raise TypeError("engine must implement update_with_operation")
-            result = await method(
-                self._db_name,
-                self._collection_name,
-                operation,
-                upsert=upsert,
-                upsert_seed=upsert_seed,
-                selector_filter=selector_filter,
-                dialect=self._mongodb_dialect,
-                context=session,
-                bypass_document_validation=bypass_document_validation,
-            )
-        except Exception as exc:
-            await self._profile_operation(
-                op="update",
-                command={
-                    "update": self._collection_name,
-                    "q": operation.filter_spec,
-                    "u": deepcopy(operation.update_spec or {}),
-                    "upsert": upsert,
-                    "bypassDocumentValidation": bypass_document_validation,
-                },
-                duration_ns=time.perf_counter_ns() - started_at,
-                errmsg=str(exc),
-            )
-            raise
-        await self._profile_operation(
-            op="update",
-            command={
-                "update": self._collection_name,
-                "q": operation.filter_spec,
-                "u": deepcopy(operation.update_spec or {}),
-                "upsert": upsert,
-                "bypassDocumentValidation": bypass_document_validation,
-            },
-            duration_ns=time.perf_counter_ns() - started_at,
+        return await self._runtime.engine_update_with_operation(
+            operation,
+            upsert=upsert,
+            upsert_seed=upsert_seed,
+            selector_filter=selector_filter,
+            session=session,
+            bypass_document_validation=bypass_document_validation,
         )
-        return result
 
     def _engine_scan_with_operation(
         self,
@@ -575,18 +496,9 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
     ) -> AsyncIterable[Document]:
-        self._ensure_operation_executable(operation)
-        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
-
-        semantics = compile_find_semantics_from_operation(
+        return self._runtime.engine_scan_with_operation(
             operation,
-            dialect=self._mongodb_dialect,
-        )
-        return self._engine.scan_find_semantics(
-            self._db_name,
-            self._collection_name,
-            semantics,
-            context=session,
+            session=session,
         )
 
     async def _engine_delete_with_operation(
@@ -595,30 +507,10 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
     ) -> DeleteResult:
-        self._ensure_operation_executable(operation)
-        started_at = time.perf_counter_ns()
-        try:
-            result = await self._engine.delete_with_operation(
-                self._db_name,
-                self._collection_name,
-                operation,
-                dialect=self._mongodb_dialect,
-                context=session,
-            )
-        except Exception as exc:
-            await self._profile_operation(
-                op="remove",
-                command={"delete": self._collection_name, "q": operation.filter_spec},
-                duration_ns=time.perf_counter_ns() - started_at,
-                errmsg=str(exc),
-            )
-            raise
-        await self._profile_operation(
-            op="remove",
-            command={"delete": self._collection_name, "q": operation.filter_spec},
-            duration_ns=time.perf_counter_ns() - started_at,
+        return await self._runtime.engine_delete_with_operation(
+            operation,
+            session=session,
         )
-        return result
 
     async def _engine_count_with_operation(
         self,
@@ -626,27 +518,10 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
     ) -> int:
-        self._ensure_operation_executable(operation)
-        started_at = time.perf_counter_ns()
-        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
-
-        semantics = compile_find_semantics_from_operation(
+        return await self._runtime.engine_count_with_operation(
             operation,
-            dialect=self._mongodb_dialect,
+            session=session,
         )
-        count = await self._engine.count_find_semantics(
-            self._db_name,
-            self._collection_name,
-            semantics,
-            context=session,
-        )
-        await self._profile_operation(
-            op="command",
-            command={"count": self._collection_name, "query": operation.filter_spec},
-            duration_ns=time.perf_counter_ns() - started_at,
-            operation=operation,
-        )
-        return count
 
     @staticmethod
     def _can_use_direct_id_lookup(filter_spec: Filter) -> bool:
@@ -671,23 +546,19 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> Document | None:
-        operation = compile_find_operation(
+        return await self._runtime.select_first_document(
             filter_spec,
+            plan=plan,
             collation=collation,
             sort=sort,
-            limit=1,
             hint=hint,
             comment=comment,
             max_time_ms=max_time_ms,
-            dialect=self._mongodb_dialect,
-            plan=plan,
-            planning_mode=self._planning_mode,
+            session=session,
         )
-        return await self._build_cursor(operation, session=session).first()
 
     def _ensure_operation_executable(self, operation: FindOperation | UpdateOperation | AggregateOperation) -> None:
-        if operation.planning_issues:
-            raise OperationFailure(_operation_issue_message(operation))
+        self._runtime.ensure_operation_executable(operation)
 
     def _build_cursor(
         self,
@@ -695,19 +566,8 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
     ) -> AsyncCursor:
-        return AsyncCursor(
-            self,
-            operation.filter_spec,
-            operation.plan,
-            operation.projection,
-            collation=operation.collation,
-            sort=operation.sort,
-            skip=operation.skip,
-            limit=operation.limit,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            batch_size=operation.batch_size,
+        return self._runtime.build_cursor(
+            operation,
             session=session,
         )
 
@@ -719,54 +579,29 @@ class AsyncCollection:
         session: ClientSession | None = None,
         bypass_document_validation: bool = False,
     ) -> None:
-        success = await self._engine.put_document(
-            self._db_name,
-            self._collection_name,
+        await self._runtime.put_replacement_document(
             document,
             overwrite=overwrite,
-            context=session,
+            session=session,
             bypass_document_validation=bypass_document_validation,
         )
-        if not success:
-            raise DuplicateKeyError(f"Duplicate key: _id={document['_id']}")
 
     def _build_upsert_replacement_document(
         self,
         filter_spec: Filter,
         replacement: Document,
     ) -> Document:
-        seeded: Document = {}
-        seed_upsert_document(seeded, filter_spec)
-        if "_id" in seeded and "_id" in replacement:
-            if not self._mongodb_dialect.values_equal(seeded["_id"], replacement["_id"]):
-                raise OperationFailure("The _id field cannot conflict with the replacement filter during upsert")
-        document = deepcopy(seeded)
-        document.update(deepcopy(replacement))
-        if "_id" not in document:
-            document["_id"] = ObjectId()
-        return document
+        return self._runtime.build_upsert_replacement_document(
+            filter_spec,
+            replacement,
+        )
 
     @staticmethod
     def _materialize_replacement_document(selected: Document, replacement: Document) -> Document:
-        if "_id" in replacement:
-            return deepcopy(replacement)
-
-        replacement_items = [(key, deepcopy(value)) for key, value in replacement.items()]
-        replacement_document: Document = {}
-        inserted_id = False
-        id_position = list(selected).index("_id") if "_id" in selected else 0
-
-        for index in range(len(replacement_items) + 1):
-            if index == id_position and not inserted_id:
-                replacement_document["_id"] = deepcopy(selected["_id"])
-                inserted_id = True
-            if index < len(replacement_items):
-                key, value = replacement_items[index]
-                replacement_document[key] = value
-
-        if not inserted_id:
-            replacement_document["_id"] = deepcopy(selected["_id"])
-        return replacement_document
+        return CollectionRuntimeCoordinator.materialize_replacement_document(
+            selected,
+            replacement,
+        )
 
     def _validate_bulk_write_request_against_profile(self, request: WriteModel) -> None:
         if (
@@ -793,14 +628,23 @@ class AsyncCollection:
 
         started_at = time.perf_counter_ns()
         try:
-            success = await self._engine.put_document(
-                self._db_name,
-                self._collection_name,
-                doc,
-                overwrite=False,
-                context=session,
-                bypass_document_validation=bypass_document_validation,
-            )
+            with track_active_operation(
+                self._engine,
+                command_name="insert",
+                operation_type="write",
+                namespace=f"{self._db_name}.{self._collection_name}",
+                session=session,
+                metadata={"kind": "insert_one"},
+                killable=False,
+            ):
+                success = await self._engine.put_document(
+                    self._db_name,
+                    self._collection_name,
+                    doc,
+                    overwrite=False,
+                    context=session,
+                    bypass_document_validation=bypass_document_validation,
+                )
         except Exception as exc:
             await self._profile_operation(
                 op="insert",
@@ -854,13 +698,22 @@ class AsyncCollection:
         bulk_put = getattr(self._engine, "put_documents_bulk", None)
         if callable(bulk_put):
             try:
-                results = list(await bulk_put(
-                    self._db_name,
-                    self._collection_name,
-                    normalized_documents,
-                    context=session,
-                    bypass_document_validation=bypass_document_validation,
-                ))
+                with track_active_operation(
+                    self._engine,
+                    command_name="insert",
+                    operation_type="write",
+                    namespace=f"{self._db_name}.{self._collection_name}",
+                    session=session,
+                    metadata={"kind": "insert_many", "documents": len(normalized_documents)},
+                    killable=False,
+                ):
+                    results = list(await bulk_put(
+                        self._db_name,
+                        self._collection_name,
+                        normalized_documents,
+                        context=session,
+                        bypass_document_validation=bypass_document_validation,
+                    ))
             except Exception as exc:
                 await self._profile_operation(
                     op="insert",
@@ -902,14 +755,23 @@ class AsyncCollection:
 
         for doc in normalized_documents:
             try:
-                success = await self._engine.put_document(
-                    self._db_name,
-                    self._collection_name,
-                    doc,
-                    overwrite=False,
-                    context=session,
-                    bypass_document_validation=bypass_document_validation,
-                )
+                with track_active_operation(
+                    self._engine,
+                    command_name="insert",
+                    operation_type="write",
+                    namespace=f"{self._db_name}.{self._collection_name}",
+                    session=session,
+                    metadata={"kind": "insert_many", "documents": len(normalized_documents)},
+                    killable=False,
+                ):
+                    success = await self._engine.put_document(
+                        self._db_name,
+                        self._collection_name,
+                        doc,
+                        overwrite=False,
+                        context=session,
+                        bypass_document_validation=bypass_document_validation,
+                    )
             except Exception as exc:
                 await self._profile_operation(
                     op="insert",

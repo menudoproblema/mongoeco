@@ -32,10 +32,17 @@ class EngineProfiler:
         if level not in {-1, 0, 1, 2}:
             raise ValueError("profile level must be -1, 0, 1 or 2")
         current = self.get_settings(db_name)
+        snapshot = self.status_snapshot()
+        namespace_visible = self.namespace_visible(db_name)
         if level == -1:
             return ProfilingCommandResult(
                 previous_level=current.level,
                 slow_ms=current.slow_ms,
+                current_level=current.level,
+                entry_count=self.count_entries(db_name),
+                namespace_visible=namespace_visible,
+                tracked_databases=snapshot["tracked_databases"],
+                visible_namespaces=snapshot["visible_namespaces"],
             )
         resolved_slow_ms = current.slow_ms if slow_ms is None else slow_ms
         if resolved_slow_ms < 0:
@@ -44,9 +51,15 @@ class EngineProfiler:
             level=level,
             slow_ms=resolved_slow_ms,
         )
+        updated_snapshot = self.status_snapshot()
         return ProfilingCommandResult(
             previous_level=current.level,
             slow_ms=resolved_slow_ms,
+            current_level=level,
+            entry_count=self.count_entries(db_name),
+            namespace_visible=self.namespace_visible(db_name),
+            tracked_databases=updated_snapshot["tracked_databases"],
+            visible_namespaces=updated_snapshot["visible_namespaces"],
         )
 
     def record(
@@ -95,6 +108,14 @@ class EngineProfiler:
 
     def count_entries(self, db_name: str) -> int:
         return len(self._entries.get(db_name, []))
+
+    def status_snapshot(self) -> dict[str, int]:
+        tracked_names = set(self._settings) | set(self._entries)
+        return {
+            "tracked_databases": len(tracked_names),
+            "visible_namespaces": sum(1 for db_name in tracked_names if self.namespace_visible(db_name)),
+            "entry_count": sum(len(entries) for entries in self._entries.values()),
+        }
 
     def clear(self, db_name: str) -> None:
         self._entries.pop(db_name, None)

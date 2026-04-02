@@ -9,6 +9,7 @@ from mongoeco.api.public_api import (
     COLLECTION_FIND_ONE_SPEC,
     normalize_public_operation_arguments,
 )
+from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api.operations import compile_find_operation
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
@@ -63,31 +64,44 @@ async def find_one(
     )
     document = None
     started_at = time.perf_counter_ns()
+    record_runtime_opcounter = getattr(collection._engine, "_record_runtime_opcounter", None)
+    if callable(record_runtime_opcounter):
+        record_runtime_opcounter("query")
     try:
-        if (
-            operation.collation is None
-            and operation.sort is None
-            and operation.skip == 0
-            and operation.hint is None
-            and operation.comment is None
-            and operation.max_time_ms is None
-            and collection._can_use_direct_id_lookup(operation.filter_spec)
+        with track_active_operation(
+            collection._engine,
+            command_name="find",
+            operation_type="read",
+            namespace=f"{collection._db_name}.{collection._collection_name}",
+            session=options.get("session"),
+            comment=operation.comment,
+            max_time_ms=operation.max_time_ms,
+            metadata={"kind": "find_one"},
         ):
-            document = await collection._engine.get_document(
-                collection._db_name,
-                collection._collection_name,
-                operation.filter_spec["_id"],
-                projection=operation.projection,
-                dialect=collection._mongodb_dialect,
-                context=options.get("session"),
-            )
-        else:
-            async for candidate in collection._engine_scan_with_operation(
-                operation,
-                session=options.get("session"),
+            if (
+                operation.collation is None
+                and operation.sort is None
+                and operation.skip == 0
+                and operation.hint is None
+                and operation.comment is None
+                and operation.max_time_ms is None
+                and collection._can_use_direct_id_lookup(operation.filter_spec)
             ):
-                document = candidate
-                break
+                document = await collection._engine.get_document(
+                    collection._db_name,
+                    collection._collection_name,
+                    operation.filter_spec["_id"],
+                    projection=operation.projection,
+                    dialect=collection._mongodb_dialect,
+                    context=options.get("session"),
+                )
+            else:
+                async for candidate in collection._engine_scan_with_operation(
+                    operation,
+                    session=options.get("session"),
+                ):
+                    document = candidate
+                    break
     except Exception as exc:
         await collection._profile_operation(
             op="query",
@@ -147,7 +161,16 @@ async def count_documents(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
-    count = await collection._engine_count_with_operation(operation, session=options.get("session"))
+    with track_active_operation(
+        collection._engine,
+        command_name="count",
+        operation_type="read",
+        namespace=f"{collection._db_name}.{collection._collection_name}",
+        session=options.get("session"),
+        comment=operation.comment,
+        max_time_ms=operation.max_time_ms,
+    ):
+        count = await collection._engine_count_with_operation(operation, session=options.get("session"))
     collection._record_operation_metadata(
         operation="count_documents",
         comment=operation.comment,
@@ -215,32 +238,41 @@ async def distinct(
         raise TypeError("key must be a string")
     normalized_collation = normalize_collation(options.get("collation"))
     distinct_values: list[object] = []
-    async for document in collection.find(
-        options.get("filter_spec"),
-        collation=options.get("collation"),
-        hint=options.get("hint"),
+    with track_active_operation(
+        collection._engine,
+        command_name="distinct",
+        operation_type="read",
+        namespace=f"{collection._db_name}.{collection._collection_name}",
+        session=options.get("session"),
         comment=options.get("comment"),
         max_time_ms=options.get("max_time_ms"),
-        session=options.get("session"),
     ):
-        values = QueryEngine.extract_values(document, options["key"])
-        found, value = QueryEngine._get_field_value(document, options["key"])
-        candidates = resolve_distinct_candidates(
-            values,
-            exact_found=found,
-            exact_value=value,
-        )
-        for candidate in candidates:
-            if not any(
-                QueryEngine._values_equal(
-                    existing,
-                    candidate,
-                    dialect=collection._mongodb_dialect,
-                    collation=normalized_collation,
-                )
-                for existing in distinct_values
-            ):
-                distinct_values.append(candidate)
+        async for document in collection.find(
+            options.get("filter_spec"),
+            collation=options.get("collation"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            max_time_ms=options.get("max_time_ms"),
+            session=options.get("session"),
+        ):
+            values = QueryEngine.extract_values(document, options["key"])
+            found, value = QueryEngine._get_field_value(document, options["key"])
+            candidates = resolve_distinct_candidates(
+                values,
+                exact_found=found,
+                exact_value=value,
+            )
+            for candidate in candidates:
+                if not any(
+                    QueryEngine._values_equal(
+                        existing,
+                        candidate,
+                        dialect=collection._mongodb_dialect,
+                        collation=normalized_collation,
+                    )
+                    for existing in distinct_values
+                ):
+                    distinct_values.append(candidate)
     collection._record_operation_metadata(
         operation="distinct",
         comment=options.get("comment"),

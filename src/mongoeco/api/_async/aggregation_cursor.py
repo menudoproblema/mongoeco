@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from copy import deepcopy
 import time
 
 from mongoeco.api._async.cursor import (
@@ -7,6 +8,7 @@ from mongoeco.api._async.cursor import (
     _operation_issue_message,
     _resolve_planning_mode,
 )
+from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api.operations import (
     AggregateOperation,
     FindOperation,
@@ -90,6 +92,95 @@ class AsyncAggregationCursor:
         if leading_search is None:
             return self._pipeline
         return self._pipeline[1:]
+
+    @staticmethod
+    def _split_terminal_writeback_stage(pipeline: Pipeline) -> tuple[Pipeline, tuple[str, object] | None]:
+        if not pipeline:
+            return pipeline, None
+        terminal = pipeline[-1]
+        if not isinstance(terminal, dict) or len(terminal) != 1:
+            return pipeline, None
+        operator, spec = next(iter(terminal.items()))
+        if operator != "$merge":
+            return pipeline, None
+        for stage in pipeline[:-1]:
+            if isinstance(stage, dict) and "$merge" in stage:
+                raise OperationFailure("$merge is only supported as the final aggregation stage")
+        return pipeline[:-1], (operator, spec)
+
+    def _target_database(self, db_name: str):
+        database = self._collection.database
+        if db_name == database.name:
+            return database
+        return type(database)(
+            self._collection._engine,
+            db_name,
+            mongodb_dialect=self._collection._mongodb_dialect,
+            mongodb_dialect_resolution=self._collection._mongodb_dialect_resolution,
+            pymongo_profile=self._collection._pymongo_profile,
+            pymongo_profile_resolution=self._collection._pymongo_profile_resolution,
+            write_concern=self._collection._write_concern,
+            read_concern=self._collection._read_concern,
+            read_preference=self._collection._read_preference,
+            codec_options=self._collection._codec_options,
+            change_hub=self._collection._change_hub,
+            change_stream_history_size=self._collection._change_stream_history_size,
+            change_stream_journal_path=self._collection._change_stream_journal_path,
+            change_stream_journal_fsync=self._collection._change_stream_journal_fsync,
+            change_stream_journal_max_bytes=self._collection._change_stream_journal_max_bytes,
+        )
+
+    async def _apply_merge_stage(self, documents: list[Document], spec: object) -> None:
+        if not isinstance(spec, dict):
+            raise OperationFailure("$merge requires a document specification")
+        into = spec.get("into")
+        if isinstance(into, str):
+            target_db_name = self._collection._db_name
+            target_coll_name = into
+        elif isinstance(into, dict):
+            target_db_name = spec_db = into.get("db", self._collection._db_name)
+            target_coll_name = into.get("coll")
+            if not isinstance(spec_db, str) or not spec_db:
+                raise OperationFailure("$merge.into.db must be a non-empty string")
+        else:
+            raise OperationFailure("$merge.into must be a collection name or {db, coll}")
+        if not isinstance(target_coll_name, str) or not target_coll_name:
+            raise OperationFailure("$merge.into.coll must be a non-empty string")
+        on = spec.get("on", "_id")
+        if on not in (None, "_id"):
+            raise OperationFailure("$merge currently supports only omitted on or on: '_id'")
+        when_matched = spec.get("whenMatched", "merge")
+        if when_matched not in {"replace", "merge", "keepExisting", "fail"}:
+            raise OperationFailure("$merge whenMatched currently supports replace, merge, keepExisting or fail")
+        when_not_matched = spec.get("whenNotMatched", "insert")
+        if when_not_matched not in {"insert", "discard", "fail"}:
+            raise OperationFailure("$merge whenNotMatched currently supports insert, discard or fail")
+        if isinstance(when_matched, list):
+            raise OperationFailure("$merge whenMatched pipelines are not supported in the local runtime")
+
+        target_collection = self._target_database(target_db_name).get_collection(target_coll_name)
+        for source_document in documents:
+            candidate = deepcopy(source_document)
+            if "_id" not in candidate:
+                raise OperationFailure("$merge currently requires documents with _id")
+            existing = await target_collection.find_one({"_id": candidate["_id"]}, session=self._session)
+            if existing is None:
+                if when_not_matched == "insert":
+                    await target_collection.insert_one(candidate, session=self._session)
+                    continue
+                if when_not_matched == "discard":
+                    continue
+                raise OperationFailure(f"$merge whenNotMatched=fail found no target document for _id={candidate['_id']!r}")
+            if when_matched == "keepExisting":
+                continue
+            if when_matched == "fail":
+                raise OperationFailure(f"$merge whenMatched=fail found an existing target document for _id={candidate['_id']!r}")
+            if when_matched == "replace":
+                await target_collection.replace_one({"_id": candidate["_id"]}, candidate, session=self._session)
+                continue
+            merged = deepcopy(existing)
+            merged.update(candidate)
+            await target_collection.replace_one({"_id": candidate["_id"]}, merged, session=self._session)
 
     async def _search_documents(self) -> list[Document]:
         leading_search = self._leading_search_stage()
@@ -260,38 +351,52 @@ class AsyncAggregationCursor:
         deadline = operation_deadline(self._max_time_ms)
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
         pipeline = self._effective_pipeline()
-        enforce_deadline(deadline)
-        referenced_collections = await self._load_referenced_collections()
-        enforce_deadline(deadline)
-        if self._leading_search_stage() is not None:
-            documents = await self._search_documents()
-            remaining_pipeline = pipeline
-        else:
-            pushdown = split_pushdown_pipeline(
-                pipeline,
+        pipeline, writeback_stage = self._split_terminal_writeback_stage(pipeline)
+        with track_active_operation(
+            self._collection._engine,
+            command_name="aggregate",
+            operation_type="aggregate",
+            namespace=f"{self._collection._db_name}.{self._collection._collection_name}",
+            session=self._session,
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
+        ):
+            enforce_deadline(deadline)
+            referenced_collections = await self._load_referenced_collections()
+            enforce_deadline(deadline)
+            if self._leading_search_stage() is not None:
+                documents = await self._search_documents()
+                remaining_pipeline = pipeline
+            else:
+                pushdown = split_pushdown_pipeline(
+                    pipeline,
+                    dialect=dialect,
+                )
+                documents = await self._build_pushdown_cursor(
+                    self._pushdown_find_operation()
+                ).to_list()
+                remaining_pipeline = pushdown.remaining_pipeline
+            enforce_deadline(deadline)
+            self._enforce_materialization_budget(
+                len(documents),
+                remaining_pipeline,
                 dialect=dialect,
             )
-            documents = await self._build_pushdown_cursor(
-                self._pushdown_find_operation()
-            ).to_list()
-            remaining_pipeline = pushdown.remaining_pipeline
-        enforce_deadline(deadline)
-        self._enforce_materialization_budget(
-            len(documents),
-            remaining_pipeline,
-            dialect=dialect,
-        )
-        result = apply_pipeline(
-            documents,
-            remaining_pipeline,
-            collection_resolver=referenced_collections.get,
-            variables=self._let,
-            dialect=dialect,
-            collation=self._collation,
-            spill_policy=self._spill_policy(),
-        )
-        enforce_deadline(deadline)
-        return [DocumentCodec.to_public(document) for document in result]
+            result = apply_pipeline(
+                documents,
+                remaining_pipeline,
+                collection_resolver=referenced_collections.get,
+                variables=self._let,
+                dialect=dialect,
+                collation=self._collation,
+                spill_policy=self._spill_policy(),
+            )
+            enforce_deadline(deadline)
+            if writeback_stage is not None:
+                _operator, spec = writeback_stage
+                await self._apply_merge_stage(result, spec)
+                return []
+            return [DocumentCodec.to_public(document) for document in result]
 
     def _cost_policy(self) -> AggregationCostPolicy | None:
         policy = getattr(self._collection._engine, "aggregation_cost_policy", None)
@@ -344,6 +449,11 @@ class AsyncAggregationCursor:
             for document in await self._materialize():
                 yield document
             return
+        effective_pipeline, writeback_stage = self._split_terminal_writeback_stage(self._effective_pipeline())
+        if writeback_stage is not None:
+            for document in await self._materialize():
+                yield document
+            return
         if self._batch_size in (None, 0):
             for document in await self._materialize():
                 yield document
@@ -352,7 +462,7 @@ class AsyncAggregationCursor:
         deadline = operation_deadline(self._max_time_ms)
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
         pushdown = split_pushdown_pipeline(
-            self._effective_pipeline(),
+            effective_pipeline,
             dialect=dialect,
         )
         stream_plan = self._split_streamable_pipeline(
@@ -479,6 +589,14 @@ class AsyncAggregationCursor:
                     planning_issues=self._operation.planning_issues,
                 ),
                 remaining_pipeline=list(self._pipeline),
+                pushdown={
+                    "mode": "deferred",
+                    "totalStages": len(self._pipeline),
+                    "pushedDownStages": 0,
+                    "remainingStages": len(self._pipeline),
+                    "streamingEligible": False,
+                    "streamableStageCount": 0,
+                },
                 hint=self._hint,
                 comment=self._comment,
                 max_time_ms=self._max_time_ms,
@@ -491,10 +609,18 @@ class AsyncAggregationCursor:
             ).to_document()
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
         streamable_pipeline: list[object] = []
+        pushdown_summary: dict[str, object]
         if self._leading_search_stage() is not None:
             operator, spec = self._leading_search_stage()
             remaining_pipeline = self._effective_pipeline()
             streamable_pipeline = remaining_pipeline
+            pushdown_summary = {
+                "mode": "search",
+                "totalStages": len(self._pipeline),
+                "pushedDownStages": 1,
+                "remainingStages": len(remaining_pipeline),
+                "leadingSearchOperator": operator,
+            }
             explain_search_documents = getattr(
                 self._collection._engine,
                 "explain_search_documents",
@@ -530,6 +656,12 @@ class AsyncAggregationCursor:
             )
             remaining_pipeline = pushdown.remaining_pipeline
             streamable_pipeline = pushdown.remaining_pipeline
+            pushdown_summary = {
+                "mode": "pipeline-prefix",
+                "totalStages": len(self._pipeline),
+                "pushedDownStages": len(self._effective_pipeline()) - len(remaining_pipeline),
+                "remainingStages": len(remaining_pipeline),
+            }
             operation = self._pushdown_find_operation()
             from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
 
@@ -540,21 +672,27 @@ class AsyncAggregationCursor:
                 semantics,
                 context=self._session,
             )
+        streaming_split = self._split_streamable_pipeline(
+            streamable_pipeline,
+            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+        )
+        pushdown_summary["streamingEligible"] = (
+            self._batch_size not in (None, 0) and streaming_split is not None
+        )
+        pushdown_summary["streamableStageCount"] = (
+            len(streaming_split[0]) if streaming_split is not None else 0
+        )
         return AggregateExplanation(
             engine_plan=engine_plan,
             remaining_pipeline=remaining_pipeline,
+            pushdown=pushdown_summary,
             hint=self._hint,
             comment=self._comment,
             max_time_ms=self._max_time_ms,
             batch_size=self._batch_size,
             allow_disk_use=self._allow_disk_use,
             let=self._let,
-            streaming_batch_execution=self._batch_size not in (None, 0)
-            and self._split_streamable_pipeline(
-                streamable_pipeline,
-                dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-            )
-            is not None,
+            streaming_batch_execution=bool(pushdown_summary["streamingEligible"]),
         ).to_document()
 
     def __aiter__(self) -> AsyncIterator[Document]:

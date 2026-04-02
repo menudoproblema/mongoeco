@@ -16,12 +16,14 @@ class ListCollectionsCommandOptions:
     name_only: bool
     authorized_collections: bool
     filter_spec: Filter
+    comment: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class ListDatabasesCommandOptions:
     name_only: bool
     filter_spec: Filter
+    comment: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -186,6 +188,9 @@ def normalize_command_scale(scale: object | None) -> int:
 def normalize_list_collections_options(
     spec: dict[str, object],
 ) -> ListCollectionsCommandOptions:
+    comment = spec.get("comment")
+    if comment is not None and not isinstance(comment, str):
+        raise TypeError("comment must be a string")
     return ListCollectionsCommandOptions(
         name_only=normalize_command_bool(spec.get("nameOnly"), "nameOnly"),
         authorized_collections=normalize_command_bool(
@@ -193,15 +198,20 @@ def normalize_list_collections_options(
             "authorizedCollections",
         ),
         filter_spec=normalize_filter_document(spec.get("filter")),
+        comment=comment,
     )
 
 
 def normalize_list_databases_options(
     spec: dict[str, object],
 ) -> ListDatabasesCommandOptions:
+    comment = spec.get("comment")
+    if comment is not None and not isinstance(comment, str):
+        raise TypeError("comment must be a string")
     return ListDatabasesCommandOptions(
         name_only=normalize_command_bool(spec.get("nameOnly"), "nameOnly"),
         filter_spec=normalize_filter_document(spec.get("filter")),
+        comment=comment,
     )
 
 
@@ -244,8 +254,8 @@ def normalize_find_and_modify_options(
     if not isinstance(bypass_document_validation, bool):
         raise TypeError("bypassDocumentValidation must be a bool")
     update_spec = spec.get("update")
-    if update_spec is not None and not isinstance(update_spec, dict):
-        raise TypeError("update must be a document")
+    if update_spec is not None and not isinstance(update_spec, (dict, list)):
+        raise TypeError("update must be a document or pipeline")
     return FindAndModifyCommandOptions(
         collection_name=require_collection_name(spec.get("findAndModify"), "findAndModify"),
         query=normalize_filter_document(spec.get("query")),

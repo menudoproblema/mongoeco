@@ -1,22 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
 from mongoeco.driver.connections import ConnectionLease, ConnectionPoolSnapshot, ConnectionRegistry
 from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_dns, resolve_srv_seeds
 from mongoeco.driver.execution import (
     RequestExecutionResult,
-    RequestExecutionTrace,
-    classify_request_exception,
-    execute_request_pipeline,
 )
 from mongoeco.driver.monitoring import (
-    ConnectionCheckedInEvent,
-    ConnectionCheckedOutEvent,
     DriverMonitor,
-    ServerSelectedEvent,
 )
 from mongoeco.driver.policies import (
     ConcernPolicy,
@@ -28,7 +21,10 @@ from mongoeco.driver.policies import (
     build_selection_policy,
     build_timeout_policy,
 )
-from mongoeco.driver.requests import CommandRequest, PreparedRequestExecution, RequestExecutionPlan
+from mongoeco.driver._runtime_attempts import RuntimeAttemptLifecycle
+from mongoeco.driver._runtime_planning import build_runtime_command_plan
+from mongoeco.driver._runtime_plan_resolution import resolve_runtime_execution_plan
+from mongoeco.driver.requests import PreparedRequestExecution, RequestExecutionPlan
 from mongoeco.driver.security import AuthPolicy, TlsPolicy, build_auth_policy, build_tls_policy
 from mongoeco.driver.topology_monitor import refresh_topology
 from mongoeco.driver.topology import ServerDescription, TopologyDescription, build_local_topology_description
@@ -42,7 +38,6 @@ from mongoeco.driver.uri import (
 )
 from mongoeco.session import ClientSession
 from mongoeco.types import ReadConcern, ReadPreference, WriteConcern
-from mongoeco.errors import ServerSelectionTimeoutError
 
 if TYPE_CHECKING:
     from mongoeco.driver.transports import WireProtocolCommandTransport
@@ -88,6 +83,11 @@ class DriverRuntime:
         )
         self._connections = ConnectionRegistry(self._effective_uri)
         self._monitor = DriverMonitor()
+        self._attempts = RuntimeAttemptLifecycle(
+            connections=self._connections,
+            monitor=self._monitor,
+            resolve_plan=self._resolve_execution_plan,
+        )
         self._topology_monitor_task: asyncio.Task[None] | None = None
 
     def plan_command_request(
@@ -99,14 +99,12 @@ class DriverRuntime:
         session: ClientSession | None = None,
         read_only: bool = False,
     ) -> RequestExecutionPlan:
-        return RequestExecutionPlan(
-            request=CommandRequest(
-                database=database,
-                command_name=command_name,
-                payload=payload,
-                session=session,
-                read_only=read_only,
-            ),
+        return build_runtime_command_plan(
+            database=database,
+            command_name=command_name,
+            payload=payload,
+            session=session,
+            read_only=read_only,
             topology=self._topology,
             timeout_policy=self._timeout_policy,
             retry_policy=self._retry_policy,
@@ -114,27 +112,12 @@ class DriverRuntime:
             concern_policy=self._concern_policy,
             auth_policy=self._auth_policy,
             tls_policy=self._tls_policy,
-            dynamic_candidates=True,
-            candidate_servers=self._selection_policy.select_servers(
-                self._topology,
-                for_writes=not read_only,
-            ),
         )
 
     def _resolve_execution_plan(self, plan: RequestExecutionPlan) -> RequestExecutionPlan:
-        if not plan.dynamic_candidates:
-            return plan
-        topology = self._topology
-        candidate_servers = plan.selection_policy.select_servers(
-            topology,
-            for_writes=not plan.request.read_only,
-        )
-        if topology is plan.topology and candidate_servers == plan.candidate_servers:
-            return plan
-        return replace(
-            plan,
-            topology=topology,
-            candidate_servers=candidate_servers,
+        return resolve_runtime_execution_plan(
+            current_topology=self._topology,
+            plan=plan,
         )
 
     async def prepare_request_execution(self, plan: RequestExecutionPlan) -> PreparedRequestExecution:
@@ -146,76 +129,19 @@ class DriverRuntime:
         *,
         attempt_number: int,
     ) -> PreparedRequestExecution:
-        plan = self._resolve_execution_plan(plan)
-        if not plan.candidate_servers:
-            raise RuntimeError("no candidate servers available for request execution")
-        selected_server = plan.candidate_servers[min(attempt_number - 1, len(plan.candidate_servers) - 1)]
-        lease = await self._connections.checkout_async(selected_server)
-        execution = PreparedRequestExecution(
-            plan=plan,
-            selected_server=selected_server,
-            connection=lease,
-            attempt_number=attempt_number,
-        )
-        self._monitor.emit(
-            ServerSelectedEvent(
-                database=plan.request.database,
-                command_name=plan.request.command_name,
-                server_address=selected_server.address,
-                attempt_number=attempt_number,
-                read_only=plan.request.read_only,
-                session_id=plan.request.session_id,
-            )
-        )
-        self._monitor.emit(
-            ConnectionCheckedOutEvent(
-                database=plan.request.database,
-                command_name=plan.request.command_name,
-                server_address=selected_server.address,
-                connection_id=lease.connection_id,
-                attempt_number=attempt_number,
-                session_id=plan.request.session_id,
-            )
-        )
-        return execution
+        return await self._attempts.prepare(plan, attempt_number=attempt_number)
 
     async def complete_request_execution(self, execution: PreparedRequestExecution) -> None:
-        await self._connections.checkin_async(execution.connection)
-        self._monitor.emit(
-            ConnectionCheckedInEvent(
-                database=execution.plan.request.database,
-                command_name=execution.plan.request.command_name,
-                server_address=execution.selected_server.address,
-                connection_id=execution.connection.connection_id,
-                attempt_number=execution.attempt_number,
-                session_id=execution.plan.request.session_id,
-            )
-        )
+        await self._attempts.complete(execution)
 
     async def discard_request_execution(self, execution: PreparedRequestExecution) -> None:
-        await self._connections.discard_async(execution.connection)
+        await self._attempts.discard(execution)
 
     def clear_connections(self) -> None:
         self._connections.clear()
 
     async def execute_request(self, plan: RequestExecutionPlan, transport) -> RequestExecutionResult:
-        plan = self._resolve_execution_plan(plan)
-        if not plan.candidate_servers:
-            error = ServerSelectionTimeoutError(
-                f"no eligible servers found within {plan.timeout_policy.server_selection_timeout_ms}ms"
-            )
-            return RequestExecutionResult(
-                outcome=classify_request_exception(error, plan=plan),
-                trace=RequestExecutionTrace(),
-            )
-        return await execute_request_pipeline(
-            plan=plan,
-            prepare_execution=self.prepare_request_execution_attempt,
-            complete_execution=self.complete_request_execution,
-            discard_execution=self.discard_request_execution,
-            transport=transport,
-            monitor=self._monitor,
-        )
+        return await self._attempts.execute(plan, transport=transport)
 
     def create_network_transport(self) -> WireProtocolCommandTransport:
         from mongoeco.driver.transports import WireProtocolCommandTransport

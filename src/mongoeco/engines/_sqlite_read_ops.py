@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from copy import deepcopy
 import sqlite3
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.search import (
     SearchPhraseQuery,
@@ -76,6 +78,8 @@ def search_documents(
         enforce_deadline(deadline)
         vector_hits: list[tuple[float, Document]] = []
         for document in documents:
+            if query.filter_spec is not None and not QueryEngine.match(document, query.filter_spec):
+                continue
             score = score_vector_document(
                 document,
                 definition=definition,
@@ -110,6 +114,8 @@ def build_search_explain(
         "queryVector": list(query.query_vector) if isinstance(query, SearchVectorQuery) else None,
         "limit": query.limit if isinstance(query, SearchVectorQuery) else None,
         "numCandidates": query.num_candidates if isinstance(query, SearchVectorQuery) else None,
+        "filter": deepcopy(query.filter_spec) if isinstance(query, SearchVectorQuery) and query.filter_spec is not None else None,
+        "similarity": query.similarity if isinstance(query, SearchVectorQuery) else None,
         "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
     }
 
