@@ -19,7 +19,7 @@ from copy import deepcopy
 from decimal import Decimal
 from typing import Any, AsyncIterable, override
 
-from mongoeco.api.operations import FindOperation, UpdateOperation, compile_update_operation
+from mongoeco.api.operations import UpdateOperation, compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect, MongoDialect70, MongoDialect80
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS, bson_engine_key, bson_numeric_index_key
 from mongoeco.core.codec import DocumentCodec
@@ -61,16 +61,7 @@ from mongoeco.core.search import (
     attach_text_score,
     classic_text_score,
     resolve_classic_text_index,
-    build_search_index_document,
-    compile_search_stage,
-    iter_searchable_text_entries,
-    is_text_search_query,
-    matches_search_query,
-    score_vector_document,
-    search_query_explain_details,
-    SearchQuery,
     SearchVectorQuery,
-    vector_field_paths,
 )
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.base import AsyncStorageEngine
@@ -83,26 +74,35 @@ from mongoeco.engines._sqlite_explain_contract import (
     sqlite_pushdown_details,
     sqlite_pushdown_followup_hints,
 )
-from mongoeco.engines._sqlite_search_backend import decide_sqlite_search_backend
 from mongoeco.engines._sqlite_runtime import SQLiteCacheState, SQLiteRuntimeState
 from mongoeco.engines._sqlite_session_runtime import SQLiteSessionRuntime
 from mongoeco.engines._sqlite_vector_backend import (
     SQLiteVectorBackendState,
-    build_sqlite_vector_backend,
-    search_sqlite_vector_backend,
     vector_backend_stats_document,
+)
+from mongoeco.engines._sqlite_search_runtime import (
+    create_search_index_sync as _sqlite_create_search_index_sync,
+    delete_search_entries_for_storage_key as _sqlite_delete_search_entries_for_storage_key,
+    drop_search_backend_sync as _sqlite_drop_search_backend_sync,
+    drop_search_index_sync as _sqlite_drop_search_index_sync,
+    ensure_search_backend_sync as _sqlite_ensure_search_backend_sync,
+    ensure_vector_search_backend_sync as _sqlite_ensure_vector_search_backend_sync,
+    exact_vector_hits_sync as _sqlite_exact_vector_hits_sync,
+    execute_sqlite_search_query as _sqlite_execute_search_query,
+    explain_search_documents_sync as _sqlite_explain_search_documents_sync,
+    list_search_indexes_sync as _sqlite_list_search_indexes_sync,
+    load_search_index_rows as _sqlite_runtime_load_search_index_rows,
+    load_search_indexes as _sqlite_runtime_load_search_indexes,
+    pending_search_index_ready_at as _sqlite_pending_search_index_ready_at,
+    replace_search_entries_for_document as _sqlite_replace_search_entries_for_document,
+    search_documents_sync as _sqlite_search_documents_sync,
+    search_index_is_ready_sync as _sqlite_search_index_is_ready_sync,
+    update_search_index_sync as _sqlite_update_search_index_sync,
 )
 from mongoeco.engines._sqlite_catalog import (
     list_collection_names as _sqlite_list_collection_names,
     list_database_names as _sqlite_list_database_names,
     load_collection_options as _sqlite_load_collection_options,
-    load_search_index_rows as _sqlite_load_search_index_rows,
-)
-from mongoeco.engines._sqlite_search_admin import (
-    create_search_index as _sqlite_create_search_index,
-    drop_search_index as _sqlite_drop_search_index,
-    list_search_index_documents as _sqlite_list_search_index_documents,
-    update_search_index as _sqlite_update_search_index,
 )
 from mongoeco.engines._sqlite_namespace_admin import (
     collection_options as _sqlite_collection_options,
@@ -2665,36 +2665,24 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         name: str | None = None,
     ) -> list[tuple[SearchIndexDefinition, str | None, float | None]]:
-        return _sqlite_load_search_index_rows(
-            self._require_connection(),
+        return _sqlite_runtime_load_search_index_rows(
+            self,
             db_name,
             coll_name,
             name=name,
         )
 
     def _load_search_indexes(self, db_name: str, coll_name: str) -> list[SearchIndexDefinition]:
-        return [definition for definition, _physical_name, _ready_at_epoch in self._load_search_index_rows(db_name, coll_name)]
+        return _sqlite_runtime_load_search_indexes(self, db_name, coll_name)
 
     def _pending_search_index_ready_at(self) -> float | None:
-        if self._simulate_search_index_latency <= 0:
-            return None
-        return time.time() + self._simulate_search_index_latency
+        return _sqlite_pending_search_index_ready_at(self)
 
     def _search_index_is_ready_sync(self, ready_at_epoch: float | None) -> bool:
-        return ready_at_epoch is None or time.time() >= ready_at_epoch
+        return _sqlite_search_index_is_ready_sync(ready_at_epoch)
 
     def _drop_search_backend_sync(self, conn: sqlite3.Connection, physical_name: str | None) -> None:
-        if not physical_name:
-            return
-        conn.execute(f"DROP TABLE IF EXISTS {self._quote_identifier(physical_name)}")
-        self._ensured_search_backends.discard(physical_name)
-        stale_keys = [
-            key
-            for key, state in self._vector_search_backends.items()
-            if state.physical_name == physical_name
-        ]
-        for key in stale_keys:
-            self._vector_search_backends.pop(key, None)
+        _sqlite_drop_search_backend_sync(self, conn, physical_name)
 
     def _ensure_search_backend_sync(
         self,
@@ -2704,49 +2692,14 @@ class SQLiteEngine(AsyncStorageEngine):
         definition: SearchIndexDefinition,
         physical_name: str | None,
     ) -> str | None:
-        resolved_physical_name = physical_name or self._physical_search_index_name(
+        return _sqlite_ensure_search_backend_sync(
+            self,
+            conn,
             db_name,
             coll_name,
-            definition.name,
+            definition,
+            physical_name,
         )
-        if definition.index_type == "vectorSearch":
-            return resolved_physical_name
-        if definition.index_type != "search":
-            return None
-        if not self._supports_fts5(conn):
-            return resolved_physical_name
-        if resolved_physical_name in self._ensured_search_backends and self._sqlite_table_exists(
-            conn,
-            resolved_physical_name,
-        ):
-            return resolved_physical_name
-        had_transaction = conn.in_transaction
-        conn.execute(
-            f"""
-            CREATE VIRTUAL TABLE IF NOT EXISTS {self._quote_identifier(resolved_physical_name)}
-            USING fts5(storage_key UNINDEXED, field_path UNINDEXED, content, tokenize='unicode61')
-            """
-        )
-        conn.execute(f"DELETE FROM {self._quote_identifier(resolved_physical_name)}")
-        rows: list[tuple[str, str, str]] = []
-        for storage_key, document in self._load_documents(db_name, coll_name):
-            rows.extend(
-                (storage_key, field_path, content)
-                for field_path, content in iter_searchable_text_entries(document, definition)
-            )
-        if rows:
-            conn.executemany(
-                f"""
-                INSERT INTO {self._quote_identifier(resolved_physical_name)} (
-                    storage_key, field_path, content
-                ) VALUES (?, ?, ?)
-                """,
-                rows,
-            )
-        self._ensured_search_backends.add(resolved_physical_name)
-        if not had_transaction and conn.in_transaction:
-            conn.commit()
-        return resolved_physical_name
 
     def _ensure_vector_search_backend_sync(
         self,
@@ -2757,25 +2710,15 @@ class SQLiteEngine(AsyncStorageEngine):
         physical_name: str,
         path: str,
     ) -> SQLiteVectorBackendState:
-        cache_key = (physical_name, path)
-        collection_version = self._search_backend_version(db_name, coll_name)
-        cached = self._vector_search_backends.get(cache_key)
-        if (
-            cached is not None
-            and cached.collection_version == collection_version
-        ):
-            return cached
-        state = build_sqlite_vector_backend(
-            db_name=db_name,
-            coll_name=coll_name,
-            definition=definition,
-            physical_name=physical_name,
-            path=path,
-            collection_version=collection_version,
-            documents=list(self._load_documents(db_name, coll_name)),
+        return _sqlite_ensure_vector_search_backend_sync(
+            self,
+            conn,
+            db_name,
+            coll_name,
+            definition,
+            physical_name,
+            path,
         )
-        self._vector_search_backends[cache_key] = state
-        return state
 
     def _delete_search_entries_for_storage_key(
         self,
@@ -2785,17 +2728,14 @@ class SQLiteEngine(AsyncStorageEngine):
         storage_key: str,
         search_indexes: list[tuple[SearchIndexDefinition, str | None, float | None]] | None = None,
     ) -> None:
-        rows = search_indexes if search_indexes is not None else self._load_search_index_rows(db_name, coll_name)
-        for definition, physical_name, _ready_at_epoch in rows:
-            if definition.index_type != "search" or not physical_name:
-                continue
-            if not self._sqlite_table_exists(conn, physical_name):
-                continue
-            conn.execute(
-                f"DELETE FROM {self._quote_identifier(physical_name)} WHERE storage_key = ?",
-                (storage_key,),
-            )
-        self._mark_search_backend_changed(db_name, coll_name)
+        _sqlite_delete_search_entries_for_storage_key(
+            self,
+            conn,
+            db_name,
+            coll_name,
+            storage_key,
+            search_indexes=search_indexes,
+        )
 
     def _replace_search_entries_for_document(
         self,
@@ -2806,39 +2746,15 @@ class SQLiteEngine(AsyncStorageEngine):
         document: Document,
         search_indexes: list[tuple[SearchIndexDefinition, str | None, float | None]] | None = None,
     ) -> None:
-        rows = search_indexes if search_indexes is not None else self._load_search_index_rows(db_name, coll_name)
-        self._delete_search_entries_for_storage_key(
+        _sqlite_replace_search_entries_for_document(
+            self,
             conn,
             db_name,
             coll_name,
             storage_key,
-            search_indexes=rows,
+            document,
+            search_indexes=search_indexes,
         )
-        for definition, physical_name, _ready_at_epoch in rows:
-            if definition.index_type != "search":
-                continue
-            resolved_physical_name = physical_name
-            if resolved_physical_name is not None and not self._sqlite_table_exists(conn, resolved_physical_name):
-                resolved_physical_name = self._ensure_search_backend_sync(
-                    conn,
-                    db_name,
-                    coll_name,
-                    definition,
-                    resolved_physical_name,
-                )
-            if not resolved_physical_name or not self._sqlite_table_exists(conn, resolved_physical_name):
-                continue
-            entries = iter_searchable_text_entries(document, definition)
-            if not entries:
-                continue
-            conn.executemany(
-                f"""
-                INSERT INTO {self._quote_identifier(resolved_physical_name)} (
-                    storage_key, field_path, content
-                ) VALUES (?, ?, ?)
-                """,
-                [(storage_key, field_path, content) for field_path, content in entries],
-            )
 
     def _delete_multikey_entries_for_storage_key(
         self,
@@ -4271,25 +4187,15 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None,
         context: ClientSession | None,
     ) -> str:
-        deadline = operation_deadline(max_time_ms)
         with self._lock:
-            conn = self._require_connection(context)
-            result = _sqlite_create_search_index(
-                conn,
-                db_name=db_name,
-                coll_name=coll_name,
-                definition=definition,
-                deadline=deadline,
-                begin_write=lambda current: self._begin_write(current, context),
-                ensure_collection_row=self._ensure_collection_row,
-                commit_write=lambda current: self._commit_write(current, context),
-                rollback_write=lambda current: self._rollback_write(current, context),
-                ensure_search_backend=self._ensure_search_backend_sync,
-                physical_search_index_name=self._physical_search_index_name,
-                pending_ready_at=self._pending_search_index_ready_at,
+            return _sqlite_create_search_index_sync(
+                self,
+                db_name,
+                coll_name,
+                definition,
+                max_time_ms,
+                context,
             )
-            self._mark_search_backend_changed(db_name, coll_name)
-            return result
 
     def _list_search_indexes_sync(
         self,
@@ -4299,14 +4205,13 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
     ) -> list[SearchIndexDocument]:
         with self._lock:
-            conn = self._require_connection(context)
-            with self._bind_connection(conn):
-                rows = self._load_search_index_rows(db_name, coll_name)
-        return _sqlite_list_search_index_documents(
-            rows,
-            is_ready=self._search_index_is_ready_sync,
-            name=name,
-        )
+            return _sqlite_list_search_indexes_sync(
+                self,
+                db_name,
+                coll_name,
+                name,
+                context,
+            )
 
     def _update_search_index_sync(
         self,
@@ -4317,25 +4222,16 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None,
         context: ClientSession | None,
     ) -> None:
-        deadline = operation_deadline(max_time_ms)
         with self._lock:
-            conn = self._require_connection(context)
-            _sqlite_update_search_index(
-                conn,
-                db_name=db_name,
-                coll_name=coll_name,
-                name=name,
-                definition=definition,
-                deadline=deadline,
-                begin_write=lambda current: self._begin_write(current, context),
-                commit_write=lambda current: self._commit_write(current, context),
-                rollback_write=lambda current: self._rollback_write(current, context),
-                drop_search_backend=self._drop_search_backend_sync,
-                ensure_search_backend=self._ensure_search_backend_sync,
-                physical_search_index_name=self._physical_search_index_name,
-                pending_ready_at=self._pending_search_index_ready_at,
+            _sqlite_update_search_index_sync(
+                self,
+                db_name,
+                coll_name,
+                name,
+                definition,
+                max_time_ms,
+                context,
             )
-        self._mark_search_backend_changed(db_name, coll_name)
 
     def _drop_search_index_sync(
         self,
@@ -4345,21 +4241,15 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None,
         context: ClientSession | None,
     ) -> None:
-        deadline = operation_deadline(max_time_ms)
         with self._lock:
-            conn = self._require_connection(context)
-            _sqlite_drop_search_index(
-                conn,
-                db_name=db_name,
-                coll_name=coll_name,
-                name=name,
-                deadline=deadline,
-                begin_write=lambda current: self._begin_write(current, context),
-                commit_write=lambda current: self._commit_write(current, context),
-                rollback_write=lambda current: self._rollback_write(current, context),
-                drop_search_backend=self._drop_search_backend_sync,
+            _sqlite_drop_search_index_sync(
+                self,
+                db_name,
+                coll_name,
+                name,
+                max_time_ms,
+                context,
             )
-        self._mark_search_backend_changed(db_name, coll_name)
 
     def _exact_vector_hits_sync(
         self,
@@ -4368,24 +4258,13 @@ class SQLiteEngine(AsyncStorageEngine):
         definition: SearchIndexDefinition,
         query: SearchVectorQuery,
     ) -> list[tuple[float, Document]]:
-        vector_hits: list[tuple[float, Document]] = []
-        for _, document in self._load_documents(db_name, coll_name):
-            if query.filter_spec is not None and not QueryEngine.match(
-                document,
-                query.filter_spec,
-                dialect=MONGODB_DIALECT_70,
-            ):
-                continue
-            score = score_vector_document(
-                document,
-                definition=definition,
-                query=query,
-            )
-            if score is None:
-                continue
-            vector_hits.append((score, document))
-        vector_hits.sort(key=lambda item: item[0], reverse=True)
-        return vector_hits
+        return _sqlite_exact_vector_hits_sync(
+            self,
+            db_name,
+            coll_name,
+            definition,
+            query,
+        )
 
     def _execute_sqlite_search_query(
         self,
@@ -4397,103 +4276,16 @@ class SQLiteEngine(AsyncStorageEngine):
         physical_name: str | None,
         deadline: float | None,
     ) -> list[Document]:
-        resolved_physical_name = self._ensure_search_backend_sync(
+        return _sqlite_execute_search_query(
+            self,
             conn,
             db_name,
             coll_name,
             definition,
-            physical_name,
-        )
-        if isinstance(query, SearchVectorQuery):
-            decision = decide_sqlite_search_backend(
-                query,
-                physical_name=resolved_physical_name,
-                fts5_available=self._supports_fts5(conn),
-                backend_materialized=resolved_physical_name is not None,
-                ann_available=True,
-            )
-            if decision.backend == "usearch" and resolved_physical_name is not None:
-                backend_state = self._ensure_vector_search_backend_sync(
-                    conn,
-                    db_name,
-                    coll_name,
-                    definition,
-                    resolved_physical_name,
-                    query.path,
-                )
-                documents_by_storage_key = {
-                    storage_key: document
-                    for storage_key, document in self._load_documents(db_name, coll_name)
-                }
-                ann_hits = search_sqlite_vector_backend(
-                    backend_state,
-                    query_vector=query.query_vector,
-                    count=query.num_candidates,
-                )
-                filtered_documents: list[Document] = []
-                for storage_key, _distance in ann_hits:
-                    document = documents_by_storage_key.get(storage_key)
-                    if document is None:
-                        continue
-                    if query.filter_spec is not None and not QueryEngine.match(
-                        document,
-                        query.filter_spec,
-                        dialect=MONGODB_DIALECT_70,
-                    ):
-                        continue
-                    filtered_documents.append(document)
-                    if len(filtered_documents) >= query.limit:
-                        break
-                if query.filter_spec is None or len(filtered_documents) >= query.limit:
-                    enforce_deadline(deadline)
-                    return filtered_documents[: query.limit]
-            exact_hits = self._exact_vector_hits_sync(db_name, coll_name, definition, query)
-            enforce_deadline(deadline)
-            return [document for _score, document in exact_hits[: query.limit]]
-        decision = decide_sqlite_search_backend(
             query,
-            physical_name=resolved_physical_name,
-            fts5_available=self._supports_fts5(conn),
-            backend_materialized=bool(
-                resolved_physical_name
-                and self._sqlite_table_exists(conn, resolved_physical_name)
-            ),
+            physical_name,
+            deadline,
         )
-        if decision.backend == "fts5":
-            sql = (
-                f"SELECT DISTINCT storage_key FROM {self._quote_identifier(decision.physical_name)} "
-                "WHERE content MATCH ?"
-            )
-            params: list[object] = [decision.fts5_match]
-            if is_text_search_query(query) and query.paths is not None:
-                placeholders = ", ".join("?" for _ in query.paths)
-                sql += f" AND field_path IN ({placeholders})"
-                params.extend(query.paths)
-            storage_keys = [row[0] for row in conn.execute(sql, tuple(params)).fetchall()]
-            if not storage_keys:
-                return []
-            storage_key_set = set(storage_keys)
-            documents = {
-                storage_key: document
-                for storage_key, document in self._load_documents(db_name, coll_name)
-                if storage_key in storage_key_set
-            }
-            enforce_deadline(deadline)
-            return [documents[storage_key] for storage_key in storage_keys if storage_key in documents]
-
-        documents = [
-            document
-            for _, document in self._load_documents(db_name, coll_name)
-                if (
-                    matches_search_query(
-                        document,
-                        definition=definition,
-                        query=query,
-                )
-            )
-        ]
-        enforce_deadline(deadline)
-        return documents
 
     def _search_documents_sync(
         self,
@@ -4504,33 +4296,16 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None,
         context: ClientSession | None,
     ) -> list[Document]:
-        deadline = operation_deadline(max_time_ms)
         with self._lock:
-            conn = self._require_connection(context)
-            with self._bind_connection(conn):
-                return _sqlite_search_documents(
-                    db_name=db_name,
-                    coll_name=coll_name,
-                    operator=operator,
-                    spec=spec,
-                    deadline=deadline,
-                    load_search_index_rows=lambda current_db_name, current_coll_name, name: self._load_search_index_rows(
-                        current_db_name,
-                        current_coll_name,
-                        name=name,
-                    ),
-                    search_index_is_ready=self._search_index_is_ready_sync,
-                    load_documents=lambda current_db_name, current_coll_name: list(self._load_documents(current_db_name, current_coll_name)),
-                    search_sql=lambda current_db_name, current_coll_name, definition, query, physical_name: self._execute_sqlite_search_query(
-                        conn,
-                        current_db_name,
-                        current_coll_name,
-                        definition,
-                        query,
-                        physical_name,
-                        deadline,
-                    ),
-                )
+            return _sqlite_search_documents_sync(
+                self,
+                db_name,
+                coll_name,
+                operator,
+                spec,
+                max_time_ms,
+                context,
+            )
 
     def _explain_search_documents_sync(
         self,
@@ -4541,173 +4316,16 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None,
         context: ClientSession | None,
     ) -> QueryPlanExplanation:
-        query = compile_search_stage(operator, spec)
-        ready_at_epoch: float | None = None
-        ready = True
-        fts5_available: bool | None = None
-        backend_materialized = False
-        resolved_physical_name: str | None = None
-        vector_state: SQLiteVectorBackendState | None = None
-        exact_fallback_reason: str | None = None
-        documents_filtered = 0
         with self._lock:
-            conn = self._require_connection(context)
-            with self._bind_connection(conn):
-                rows = self._load_search_index_rows(db_name, coll_name, name=query.index_name)
-                if not rows:
-                    raise OperationFailure(f"search index not found with name [{query.index_name}]")
-                definition, physical_name, ready_at_epoch = rows[0]
-                ready = self._search_index_is_ready_sync(ready_at_epoch)
-                decision = decide_sqlite_search_backend(
-                    query,
-                    physical_name=physical_name,
-                    fts5_available=None,
-                    backend_materialized=False,
-                )
-                if is_text_search_query(query):
-                    resolved_physical_name = self._ensure_search_backend_sync(
-                        conn,
-                        db_name,
-                        coll_name,
-                        definition,
-                        physical_name,
-                    )
-                    fts5_available = self._supports_fts5(conn)
-                    backend_materialized = bool(
-                        resolved_physical_name
-                        and self._sqlite_table_exists(conn, resolved_physical_name)
-                    )
-                    decision = decide_sqlite_search_backend(
-                        query,
-                        physical_name=resolved_physical_name or physical_name,
-                        fts5_available=fts5_available,
-                        backend_materialized=backend_materialized,
-                    )
-                elif isinstance(query, SearchVectorQuery):
-                    resolved_physical_name = self._ensure_search_backend_sync(
-                        conn,
-                        db_name,
-                        coll_name,
-                        definition,
-                        physical_name,
-                    )
-                    vector_state = None
-                    if resolved_physical_name is not None:
-                        vector_state = self._ensure_vector_search_backend_sync(
-                            conn,
-                            db_name,
-                            coll_name,
-                            definition,
-                            resolved_physical_name,
-                            query.path,
-                        )
-                    decision = decide_sqlite_search_backend(
-                        query,
-                        physical_name=resolved_physical_name,
-                        fts5_available=fts5_available,
-                        backend_materialized=vector_state is not None,
-                        ann_available=True,
-                    )
-                if isinstance(query, SearchVectorQuery) and vector_state is not None and query.filter_spec is not None:
-                    documents_by_storage_key = {
-                        storage_key: document
-                        for storage_key, document in self._load_documents(db_name, coll_name)
-                    }
-                    ann_hits = search_sqlite_vector_backend(
-                        vector_state,
-                        query_vector=query.query_vector,
-                        count=query.num_candidates,
-                    )
-                    matched = 0
-                    for storage_key, _distance in ann_hits:
-                        document = documents_by_storage_key.get(storage_key)
-                        if document is None:
-                            continue
-                        if QueryEngine.match(document, query.filter_spec, dialect=MONGODB_DIALECT_70):
-                            matched += 1
-                        else:
-                            documents_filtered += 1
-                        if matched >= query.limit:
-                            break
-                    if matched < query.limit:
-                        exact_fallback_reason = "post-filter-underflow"
-        return QueryPlanExplanation(
-            engine="sqlite",
-            strategy="search",
-            plan=(
-                "usearch-vector-search"
-                if isinstance(query, SearchVectorQuery) and decision.backend == "usearch"
-                else "python-vector-search"
-                if isinstance(query, SearchVectorQuery)
-                else f"{decision.backend}-search"
-            ),
-            sort=None,
-            skip=0,
-            limit=None,
-            hint=None,
-            hinted_index=query.index_name,
-            comment=None,
-            max_time_ms=max_time_ms,
-            details={
-                "operator": operator,
-                "index": query.index_name,
-                "backend": decision.backend,
-                "status": "READY" if ready else "PENDING",
-                "backendAvailable": decision.backend_available,
-                "backendMaterialized": decision.backend_materialized,
-                "physicalName": decision.physical_name,
-                "readyAtEpoch": ready_at_epoch,
-                "fts5Available": decision.fts5_available,
-                "annAvailable": decision.ann_available,
-                "definition": build_search_index_document(
-                    definition,
-                    ready=ready,
-                    ready_at_epoch=ready_at_epoch,
-                ),
-                **search_query_explain_details(query),
-                "fts5_match": decision.fts5_match,
-                "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
-                "mode": (
-                    "ann"
-                    if isinstance(query, SearchVectorQuery) and decision.backend == "usearch"
-                    else "exact"
-                    if isinstance(query, SearchVectorQuery)
-                    else None
-                ),
-                "filterMode": "post-candidate" if isinstance(query, SearchVectorQuery) and query.filter_spec is not None else None,
-                "exactFallbackReason": exact_fallback_reason,
-                "candidatesEvaluated": (
-                    min(query.num_candidates, vector_state.valid_vectors)
-                    if isinstance(query, SearchVectorQuery) and vector_state is not None
-                    else None
-                ),
-                "documentsFiltered": (
-                    documents_filtered
-                    if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
-                    else None
-                ),
-                "documentsScanned": (
-                    vector_state.documents_scanned
-                    if isinstance(query, SearchVectorQuery) and vector_state is not None
-                    else None
-                ),
-                "validVectors": (
-                    vector_state.valid_vectors
-                    if isinstance(query, SearchVectorQuery) and vector_state is not None
-                    else None
-                ),
-                "invalidVectors": (
-                    vector_state.invalid_vectors
-                    if isinstance(query, SearchVectorQuery) and vector_state is not None
-                    else None
-                ),
-                "vectorBackend": (
-                    vector_backend_stats_document(vector_state)
-                    if isinstance(query, SearchVectorQuery) and vector_state is not None
-                    else None
-                ),
-            },
-        )
+            return _sqlite_explain_search_documents_sync(
+                self,
+                db_name,
+                coll_name,
+                operator,
+                spec,
+                max_time_ms,
+                context,
+            )
 
     def _list_databases_sync(self, context: ClientSession | None = None) -> list[str]:
         with self._lock:

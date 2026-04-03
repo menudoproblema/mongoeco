@@ -62,7 +62,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
 
         self.assertIn("mongoeco.engines._sqlite_admin_runtime", imported_modules)
         self.assertIn("mongoeco.engines._sqlite_explain_contract", imported_modules)
-        self.assertIn("mongoeco.engines._sqlite_search_backend", imported_modules)
+        self.assertIn("mongoeco.engines._sqlite_search_runtime", imported_modules)
         self.assertIn("mongoeco.engines._sqlite_session_runtime", imported_modules)
 
     def test_sqlite_runtime_diagnostics_handles_missing_search_index_table(self):
@@ -1051,7 +1051,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 "_load_documents",
                 return_value=[("1", {"name": "Ada"}), ("2", {"name": "Grace"})],
             ), patch(
-                "mongoeco.engines.sqlite.matches_search_query",
+                "mongoeco.engines._sqlite_search_runtime.matches_search_query",
                 side_effect=lambda document, **_: document["name"] == "Ada",
             ):
                 matched = engine._execute_sqlite_search_query(

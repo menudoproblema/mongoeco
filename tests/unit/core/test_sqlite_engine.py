@@ -4661,7 +4661,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual([document["_id"] for _score, document in exact_hits], ["1"])
 
             with patch(
-                "mongoeco.engines.sqlite.search_sqlite_vector_backend",
+                "mongoeco.engines._sqlite_search_runtime.search_sqlite_vector_backend",
                 return_value=[(engine._storage_key("missing"), 0.1), (engine._storage_key("2"), 0.2)],
             ):
                 fallback_docs = await engine.search_documents(
@@ -4680,7 +4680,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual([document["_id"] for document in fallback_docs], ["1"])
 
             with patch(
-                "mongoeco.engines.sqlite.search_sqlite_vector_backend",
+                "mongoeco.engines._sqlite_search_runtime.search_sqlite_vector_backend",
                 return_value=[(engine._storage_key("2"), 0.2)],
             ):
                 explanation = await engine.explain_search_documents(
