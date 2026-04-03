@@ -154,9 +154,14 @@ separacion:
 - `sqlite.py` no debe volver a concentrar la coordinacion de
   `compile/plan/explain` de lecturas; esa frontera vive ya en
   `_sqlite_read_runtime.py`.
+- `sqlite.py` no debe volver a concentrar la seleccion temprana ni los
+  fast paths de lectura; esa frontera vive ya en
+  `_sqlite_read_fast_path_runtime.py`.
 - `sqlite.py` no debe volver a concentrar el lifecycle de search/vector
   (materializacion, rebuild, ejecucion y explain); esa frontera vive ya en
   `_sqlite_search_runtime.py`.
+- `sqlite.py` no debe volver a concentrar el mantenimiento fisico de indices
+  y backfills; esa frontera vive ya en `_sqlite_index_runtime.py`.
 - `sqlite.py` no debe volver a concentrar la traduccion de fallback a
   `planning_issues` y `pushdown_hints`; esa frontera vive ya en
   `_sqlite_explain_contract.py`.

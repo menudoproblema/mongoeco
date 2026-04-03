@@ -62,6 +62,8 @@ class SQLiteInternalHelperTests(unittest.TestCase):
 
         self.assertIn("mongoeco.engines._sqlite_admin_runtime", imported_modules)
         self.assertIn("mongoeco.engines._sqlite_explain_contract", imported_modules)
+        self.assertIn("mongoeco.engines._sqlite_index_runtime", imported_modules)
+        self.assertIn("mongoeco.engines._sqlite_read_fast_path_runtime", imported_modules)
         self.assertIn("mongoeco.engines._sqlite_read_runtime", imported_modules)
         self.assertIn("mongoeco.engines._sqlite_search_runtime", imported_modules)
         self.assertIn("mongoeco.engines._sqlite_session_runtime", imported_modules)

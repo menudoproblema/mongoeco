@@ -114,6 +114,8 @@ En lectura ocurre ya otra separacion util:
 
 - `_sqlite_read_execution.py` concentra helpers de planning y fast paths
   defendibles por familia;
+- `_sqlite_read_fast_path_runtime.py` concentra la coordinacion de seleccion
+  temprana y fast paths de lectura;
 - `_sqlite_read_runtime.py` concentra la coordinacion de `compile/plan/explain`
   para lecturas SQLite, incluido el caso especial de `$text` clasico.
 
@@ -123,6 +125,18 @@ Con eso, `sqlite.py` deja de mezclar en el mismo bloque:
 - wiring del planner;
 - shape de `EXPLAIN QUERY PLAN`;
 - wrappers async/sync.
+
+Tambien en el mantenimiento fisico de indices existe ya una frontera propia:
+
+- `_sqlite_index_runtime.py` concentra asegurado de indices fisicos, rebuild de
+  filas derivadas y backfills de `scalar_index_entries` / `multikey_entries`.
+
+Con eso, `sqlite.py` conserva el lifecycle general y el wiring de operaciones,
+pero deja de ser el contenedor principal de:
+
+- mantenimiento fisico de tablas derivadas de indices;
+- reposicion de filas auxiliares por documento;
+- backfills de metadata fisica al conectar.
 
 En search existe ya otra frontera explicita por capas:
 

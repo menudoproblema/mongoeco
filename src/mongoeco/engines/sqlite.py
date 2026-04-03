@@ -130,9 +130,23 @@ from mongoeco.engines._sqlite_read_runtime import (
     explain_query_plan_sync as _sqlite_runtime_explain_query_plan_sync,
     plan_find_semantics_sync as _sqlite_runtime_plan_find_semantics_sync,
 )
-from mongoeco.engines._sqlite_read_execution import (
-    build_scalar_indexed_top_level_equals_sql as _sqlite_build_scalar_indexed_top_level_equals_sql,
-    build_scalar_indexed_top_level_range_sql as _sqlite_build_scalar_indexed_top_level_range_sql,
+from mongoeco.engines._sqlite_read_fast_path_runtime import (
+    build_scalar_indexed_top_level_equals_sql as _sqlite_runtime_build_scalar_indexed_top_level_equals_sql,
+    build_scalar_indexed_top_level_range_sql as _sqlite_runtime_build_scalar_indexed_top_level_range_sql,
+    can_use_scalar_range_fast_path as _sqlite_runtime_can_use_scalar_range_fast_path,
+    find_scalar_fast_path_index as _sqlite_runtime_find_scalar_fast_path_index,
+    select_first_document_for_plan as _sqlite_runtime_select_first_document_for_plan,
+    select_first_document_for_scalar_index as _sqlite_runtime_select_first_document_for_scalar_index,
+    select_first_document_for_scalar_range as _sqlite_runtime_select_first_document_for_scalar_range,
+)
+from mongoeco.engines._sqlite_index_runtime import (
+    backfill_scalar_indexes_sync as _sqlite_runtime_backfill_scalar_indexes_sync,
+    ensure_multikey_physical_indexes_sync as _sqlite_runtime_ensure_multikey_physical_indexes_sync,
+    ensure_scalar_physical_indexes_sync as _sqlite_runtime_ensure_scalar_physical_indexes_sync,
+    rebuild_multikey_entries_for_document as _sqlite_runtime_rebuild_multikey_entries_for_document,
+    rebuild_scalar_entries_for_document as _sqlite_runtime_rebuild_scalar_entries_for_document,
+    replace_multikey_entries_for_index_for_document as _sqlite_runtime_replace_multikey_entries_for_index_for_document,
+    replace_scalar_entries_for_index_for_document as _sqlite_runtime_replace_scalar_entries_for_index_for_document,
 )
 from mongoeco.engines._sqlite_modify_ops import (
     delete_matching_document as _sqlite_delete_matching_document,
@@ -144,9 +158,6 @@ from mongoeco.engines._sqlite_fast_paths import (
     build_select_statement_with_custom_order as _sqlite_build_select_statement_with_custom_order,
     comparison_fields as _sqlite_comparison_fields,
     plan_fields as _sqlite_plan_fields,
-    select_first_document_for_plan as _sqlite_select_first_document_for_plan,
-    select_first_document_for_scalar_index as _sqlite_select_first_document_for_scalar_index,
-    select_first_document_for_scalar_range as _sqlite_select_first_document_for_scalar_range,
 )
 from mongoeco.engines._sqlite_plan_heuristics import (
     plan_has_array_traversing_paths as _sqlite_plan_has_array_traversing_paths,
@@ -558,43 +569,14 @@ class SQLiteEngine(AsyncStorageEngine):
         conn: sqlite3.Connection,
         indexes: list[EngineIndexRecord],
     ) -> None:
-        had_transaction = conn.in_transaction
-        created_any = False
-        for index in indexes:
-            if not index.get("multikey"):
-                continue
-            physical_name = str(index["multikey_physical_name"])
-            if physical_name in self._ensured_multikey_physical_indexes:
-                continue
-            conn.execute(
-                f"CREATE INDEX IF NOT EXISTS {self._quote_identifier(physical_name)} "
-                "ON multikey_entries (collection_id, index_name, type_score, element_key, storage_key)"
-            )
-            self._ensured_multikey_physical_indexes.add(physical_name)
-            created_any = True
-        if created_any and not had_transaction and conn.in_transaction:
-            conn.commit()
+        _sqlite_runtime_ensure_multikey_physical_indexes_sync(self, conn, indexes)
 
     def _ensure_scalar_physical_indexes_sync(
         self,
         conn: sqlite3.Connection,
         indexes: list[EngineIndexRecord],
     ) -> None:
-        had_transaction = conn.in_transaction
-        created_any = False
-        for index in indexes:
-            if not self._supports_scalar_index(index):
-                continue
-            physical_name = index.get("scalar_physical_name")
-            if not physical_name:
-                continue
-            conn.execute(
-                f"CREATE INDEX IF NOT EXISTS {self._quote_identifier(str(physical_name))} "
-                "ON scalar_index_entries (collection_id, index_name, type_score, element_key, storage_key)"
-            )
-            created_any = True
-        if created_any and not had_transaction and conn.in_transaction:
-            conn.commit()
+        _sqlite_runtime_ensure_scalar_physical_indexes_sync(self, conn, indexes)
 
     @staticmethod
     def _multikey_type_score(element_type: str) -> int:
@@ -1249,15 +1231,7 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         field: str,
     ) -> EngineIndexRecord | None:
-        for index in self._load_indexes(db_name, coll_name):
-            if index["key"] != [(field, 1)]:
-                continue
-            if index.get("sparse") or index.get("partial_filter_expression"):
-                continue
-            if not index.get("scalar_physical_name"):
-                continue
-            return index
-        return None
+        return _sqlite_runtime_find_scalar_fast_path_index(self, db_name, coll_name, field)
 
     def _can_use_scalar_range_fast_path(
         self,
@@ -1266,25 +1240,13 @@ class SQLiteEngine(AsyncStorageEngine):
         field: str,
         value: object,
     ) -> tuple[EngineIndexRecord, int, str] | None:
-        if "." in field:
-            return None
-        if self._field_is_top_level_array_in_collection(db_name, coll_name, field):
-            return None
-        signature = self._scalar_range_signature(value)
-        if signature is None:
-            return None
-        element_type, type_score, element_key = signature
-        if self._field_has_comparison_type_mismatch_in_collection(
+        return _sqlite_runtime_can_use_scalar_range_fast_path(
+            self,
             db_name,
             coll_name,
             field,
-            element_type,
-        ):
-            return None
-        index = self._find_scalar_fast_path_index(db_name, coll_name, field)
-        if index is None:
-            return None
-        return index, type_score, element_key
+            value,
+        )
 
     def _lookup_collection_id(
         self,
@@ -2075,44 +2037,13 @@ class SQLiteEngine(AsyncStorageEngine):
         return self._typed_engine_key(values[0])
 
     def _select_first_document_for_plan(self, db_name: str, coll_name: str, plan: QueryNode, *, hint: str | IndexKeySpec | None = None) -> tuple[str, Document] | None:
-        conn = self._require_connection()
-        selected = _sqlite_select_first_document_for_plan(
-            db_name=db_name,
-            coll_name=coll_name,
-            plan=plan,
-            storage_key_for_id=self._storage_key,
-            fetchone=lambda sql, params: conn.execute(sql, params).fetchone(),
-            deserialize_document=self._deserialize_document,
-            select_first_document_for_scalar_index_fn=lambda current_db_name, current_coll_name, field, value, null_matches_undefined: self._select_first_document_for_scalar_index(
-                current_db_name,
-                current_coll_name,
-                field=field,
-                value=value,
-                null_matches_undefined=null_matches_undefined,
-            ),
-            select_first_document_for_scalar_range_fn=lambda current_db_name, current_coll_name, field, value, operator: self._select_first_document_for_scalar_range(
-                current_db_name,
-                current_coll_name,
-                field=field,
-                value=value,
-                operator=operator,
-            ),
-        )
-        if selected is not None:
-            return selected
-        execution_plan = self._compile_read_execution_plan(
+        return _sqlite_runtime_select_first_document_for_plan(
+            self,
             db_name,
             coll_name,
-            compile_find_semantics({}, plan=plan, limit=1),
-            select_clause="storage_key, document",
+            plan,
             hint=hint,
         )
-        sql, params = execution_plan.require_sql()
-        row = conn.execute(sql, tuple(params)).fetchone()
-        if row is None:
-            return None
-        storage_key, document = row
-        return storage_key, self._deserialize_document(document)
 
     def _select_first_document_for_scalar_index(
         self,
@@ -2123,28 +2054,13 @@ class SQLiteEngine(AsyncStorageEngine):
         value: Any,
         null_matches_undefined: bool = False,
     ) -> tuple[str, Document] | None:
-        conn = self._require_connection()
-        return _sqlite_select_first_document_for_scalar_index(
-            db_name=db_name,
-            coll_name=coll_name,
+        return _sqlite_runtime_select_first_document_for_scalar_index(
+            self,
+            db_name,
+            coll_name,
             field=field,
             value=value,
             null_matches_undefined=null_matches_undefined,
-            field_is_top_level_array_in_collection=self._field_is_top_level_array_in_collection,
-            find_scalar_index=self._find_scalar_index,
-            lookup_collection_id=lambda current_db_name, current_coll_name: self._lookup_collection_id(
-                conn,
-                current_db_name,
-                current_coll_name,
-            ),
-            multikey_signatures_for_query_value=lambda current_value, current_null_matches_undefined: self._multikey_signatures_for_query_value(
-                current_value,
-                null_matches_undefined=current_null_matches_undefined,
-            ),
-            multikey_type_score=self._multikey_type_score,
-            quote_identifier=self._quote_identifier,
-            fetchone=lambda sql, params: conn.execute(sql, params).fetchone(),
-            deserialize_document=self._deserialize_document,
         )
 
     def _build_scalar_indexed_top_level_range_sql(
@@ -2159,26 +2075,16 @@ class SQLiteEngine(AsyncStorageEngine):
         physical_name: str,
         limit: int | None = None,
     ) -> tuple[str, tuple[object, ...]] | None:
-        return _sqlite_build_scalar_indexed_top_level_range_sql(
-            db_name=db_name,
-            coll_name=coll_name,
+        return _sqlite_runtime_build_scalar_indexed_top_level_range_sql(
+            self,
+            db_name,
+            coll_name,
+            field=field,
             value=value,
             operator=operator,
             index_name=index_name,
             physical_name=physical_name,
             limit=limit,
-            can_use_scalar_range_fast_path=lambda current_db_name, current_coll_name, current_value: self._can_use_scalar_range_fast_path(
-                current_db_name,
-                current_coll_name,
-                field,
-                current_value,
-            ),
-            lookup_collection_id=lambda current_db_name, current_coll_name: self._lookup_collection_id(
-                self._require_connection(),
-                current_db_name,
-                current_coll_name,
-            ),
-            quote_identifier=self._quote_identifier,
         )
 
     def _select_first_document_for_scalar_range(
@@ -2190,27 +2096,13 @@ class SQLiteEngine(AsyncStorageEngine):
         value: Any,
         operator: str,
     ) -> tuple[str, Document] | None:
-        conn = self._require_connection()
-        return _sqlite_select_first_document_for_scalar_range(
-            db_name=db_name,
-            coll_name=coll_name,
+        return _sqlite_runtime_select_first_document_for_scalar_range(
+            self,
+            db_name,
+            coll_name,
             field=field,
             value=value,
             operator=operator,
-            can_use_scalar_range_fast_path=lambda current_db_name, current_coll_name, current_field, current_value: self._can_use_scalar_range_fast_path(
-                current_db_name,
-                current_coll_name,
-                current_field,
-                current_value,
-            ),
-            lookup_collection_id=lambda current_db_name, current_coll_name: self._lookup_collection_id(
-                conn,
-                current_db_name,
-                current_coll_name,
-            ),
-            quote_identifier=self._quote_identifier,
-            fetchone=lambda sql, params: conn.execute(sql, params).fetchone(),
-            deserialize_document=self._deserialize_document,
         )
 
     def _compile_read_execution_plan(
@@ -2297,26 +2189,16 @@ class SQLiteEngine(AsyncStorageEngine):
         limit: int | None = None,
         null_matches_undefined: bool = False,
     ) -> tuple[str, tuple[object, ...]] | None:
-        return _sqlite_build_scalar_indexed_top_level_equals_sql(
-            db_name=db_name,
-            coll_name=coll_name,
+        return _sqlite_runtime_build_scalar_indexed_top_level_equals_sql(
+            self,
+            db_name,
+            coll_name,
             field=field,
             value=value,
             index_name=index_name,
             physical_name=physical_name,
             limit=limit,
             null_matches_undefined=null_matches_undefined,
-            lookup_collection_id=lambda current_db_name, current_coll_name: self._lookup_collection_id(
-                self._require_connection(),
-                current_db_name,
-                current_coll_name,
-            ),
-            multikey_signatures_for_query_value=lambda current_value, current_null_matches_undefined: self._multikey_signatures_for_query_value(
-                current_value,
-                null_matches_undefined=current_null_matches_undefined,
-            ),
-            multikey_type_score=self._multikey_type_score,
-            quote_identifier=self._quote_identifier,
         )
 
     def _explain_query_plan_sync(
@@ -2683,29 +2565,15 @@ class SQLiteEngine(AsyncStorageEngine):
         document: Document,
         indexes: list[EngineIndexRecord],
     ) -> None:
-        self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-        collection_id = self._lookup_collection_id(conn, db_name, coll_name, create=True)
-        if collection_id is None:
-            return
-        rows = [
-            (collection_id, index_name, storage_key, element_type, type_score, element_key)
-            for index_name, element_type, type_score, element_key in self._build_multikey_rows_for_document(
-                storage_key,
-                document,
-                indexes,
-            )
-        ]
-        if rows:
-            self._ensure_multikey_physical_indexes_sync(conn, indexes)
-        if rows:
-            conn.executemany(
-                """
-                INSERT OR IGNORE INTO multikey_entries (
-                    collection_id, index_name, storage_key, element_type, type_score, element_key
-                ) VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                rows,
-            )
+        _sqlite_runtime_rebuild_multikey_entries_for_document(
+            self,
+            conn,
+            db_name,
+            coll_name,
+            storage_key,
+            document,
+            indexes,
+        )
 
     def _rebuild_scalar_entries_for_document(
         self,
@@ -2716,28 +2584,15 @@ class SQLiteEngine(AsyncStorageEngine):
         document: Document,
         indexes: list[EngineIndexRecord],
     ) -> None:
-        self._delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-        collection_id = self._lookup_collection_id(conn, db_name, coll_name, create=True)
-        if collection_id is None:
-            return
-        rows = [
-            (collection_id, index_name, storage_key, element_type, type_score, element_key)
-            for index_name, element_type, type_score, element_key in self._build_scalar_rows_for_document(
-                storage_key,
-                document,
-                indexes,
-            )
-        ]
-        if rows:
-            self._ensure_scalar_physical_indexes_sync(conn, indexes)
-            conn.executemany(
-                """
-                INSERT OR IGNORE INTO scalar_index_entries (
-                    collection_id, index_name, storage_key, element_type, type_score, element_key
-                ) VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                rows,
-            )
+        _sqlite_runtime_rebuild_scalar_entries_for_document(
+            self,
+            conn,
+            db_name,
+            coll_name,
+            storage_key,
+            document,
+            indexes,
+        )
 
     def _replace_multikey_entries_for_index_for_document(
         self,
@@ -2748,38 +2603,15 @@ class SQLiteEngine(AsyncStorageEngine):
         document: Document,
         index: EngineIndexRecord,
     ) -> None:
-        collection_id = self._lookup_collection_id(conn, db_name, coll_name, create=True)
-        if collection_id is None:
-            return
-        conn.execute(
-            """
-            DELETE FROM multikey_entries
-            WHERE collection_id = ? AND storage_key = ? AND index_name = ?
-            """,
-            (collection_id, storage_key, index["name"]),
+        _sqlite_runtime_replace_multikey_entries_for_index_for_document(
+            self,
+            conn,
+            db_name,
+            coll_name,
+            storage_key,
+            document,
+            index,
         )
-        if not document_in_virtual_index(document, index):
-            return
-        if not index.get("multikey"):
-            return
-        rows = [
-            (collection_id, index_name, storage_key, element_type, type_score, element_key)
-            for index_name, element_type, type_score, element_key in self._build_multikey_rows_for_document(
-                storage_key,
-                document,
-                [index],
-            )
-        ]
-        if rows:
-            self._ensure_multikey_physical_indexes_sync(conn, [index])
-            conn.executemany(
-                """
-                INSERT OR IGNORE INTO multikey_entries (
-                    collection_id, index_name, storage_key, element_type, type_score, element_key
-                ) VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                rows,
-            )
 
     def _replace_scalar_entries_for_index_for_document(
         self,
@@ -2790,138 +2622,19 @@ class SQLiteEngine(AsyncStorageEngine):
         document: Document,
         index: EngineIndexRecord,
     ) -> None:
-        collection_id = self._lookup_collection_id(conn, db_name, coll_name, create=True)
-        if collection_id is None:
-            return
-        conn.execute(
-            """
-            DELETE FROM scalar_index_entries
-            WHERE collection_id = ? AND storage_key = ? AND index_name = ?
-            """,
-            (collection_id, storage_key, index["name"]),
+        _sqlite_runtime_replace_scalar_entries_for_index_for_document(
+            self,
+            conn,
+            db_name,
+            coll_name,
+            storage_key,
+            document,
+            index,
         )
-        if not self._supports_scalar_index(index):
-            return
-        if not document_in_virtual_index(document, index):
-            return
-        signature = self._scalar_value_signature_for_document(document, index["fields"][0])
-        if signature is None:
-            return
-        self._ensure_scalar_physical_indexes_sync(conn, [index])
-        conn.execute(
-            """
-            INSERT OR IGNORE INTO scalar_index_entries (
-                collection_id, index_name, storage_key, element_type, type_score, element_key
-            ) VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            (
-                collection_id,
-                index["name"],
-                storage_key,
-                signature[0],
-                self._multikey_type_score(signature[0]),
-                signature[1],
-                ),
-            )
         self._mark_search_backend_changed(db_name, coll_name)
 
     def _backfill_scalar_indexes_sync(self, conn: sqlite3.Connection) -> None:
-        indexes = conn.execute(
-            """
-            SELECT db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag,
-                   hidden_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
-            FROM indexes
-            ORDER BY db_name, coll_name, name
-            """
-        ).fetchall()
-        if not indexes:
-            return
-        grouped: dict[tuple[str, str], list[EngineIndexRecord]] = {}
-        for (
-            db_name,
-            coll_name,
-            name,
-            physical_name,
-            fields,
-            keys,
-            unique_flag,
-            sparse_flag,
-            hidden_flag,
-            partial_filter_json,
-            expire_after_seconds,
-            multikey_flag,
-            multikey_physical_name,
-            scalar_physical_name,
-        ) in indexes:
-            parsed_fields = json_loads(fields)
-            parsed_keys = normalize_index_keys(json_loads(keys)) if keys is not None else [(field, 1) for field in parsed_fields]
-            partial_filter_expression = (
-                normalize_partial_filter_expression(json_loads(partial_filter_json))
-                if partial_filter_json is not None
-                else None
-            )
-            resolved_scalar_name = scalar_physical_name
-            if len(parsed_fields) == 1 and not resolved_scalar_name:
-                resolved_scalar_name = self._physical_scalar_index_name(db_name, coll_name, name)
-                conn.execute(
-                    """
-                    UPDATE indexes
-                    SET scalar_physical_name = ?
-                    WHERE db_name = ? AND coll_name = ? AND name = ?
-                    """,
-                    (resolved_scalar_name, db_name, coll_name, name),
-                )
-            grouped.setdefault((db_name, coll_name), []).append(
-                EngineIndexRecord(
-                    name=name,
-                    physical_name=physical_name or self._physical_index_name(db_name, coll_name, name),
-                    fields=parsed_fields,
-                    key=parsed_keys,
-                    unique=bool(unique_flag),
-                    sparse=bool(sparse_flag),
-                    hidden=bool(hidden_flag),
-                    partial_filter_expression=partial_filter_expression,
-                    expire_after_seconds=(
-                        int(expire_after_seconds)
-                        if expire_after_seconds is not None
-                        else None
-                    ),
-                    multikey=bool(multikey_flag),
-                    multikey_physical_name=multikey_physical_name or self._physical_multikey_index_name(db_name, coll_name, name),
-                    scalar_physical_name=resolved_scalar_name,
-                )
-            )
-        for collection_indexes in grouped.values():
-            self._ensure_scalar_physical_indexes_sync(conn, collection_indexes)
-        for (db_name, coll_name), collection_indexes in grouped.items():
-            collection_id = self._lookup_collection_id(conn, db_name, coll_name)
-            if collection_id is None:
-                continue
-            conn.execute(
-                """
-                DELETE FROM scalar_index_entries
-                WHERE collection_id = ?
-                """,
-                (collection_id,),
-            )
-            for storage_key, document in self._load_documents(db_name, coll_name):
-                rows = [
-                    (collection_id, index_name, storage_key, element_type, type_score, element_key)
-                    for index_name, element_type, type_score, element_key in self._build_scalar_rows_for_document(
-                        storage_key,
-                        document,
-                        collection_indexes,
-                    )
-                ]
-                if rows:
-                    conn.executemany(
-                        """
-                        INSERT OR IGNORE INTO scalar_index_entries (
-                            collection_id, index_name, storage_key, element_type, type_score, element_key
-                        ) VALUES (?, ?, ?, ?, ?, ?)
-                        """,
-                        rows,
-                    )
+        _sqlite_runtime_backfill_scalar_indexes_sync(self, conn)
 
     def _connect_sync(self) -> None:
         with self._lock:
