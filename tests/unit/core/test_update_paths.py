@@ -124,3 +124,48 @@ class UpdatePathParsingTests(unittest.TestCase):
                 bad_path,
                 filtered_matcher=lambda _identifier, _candidate: True,
             )
+
+    def test_expand_positional_update_paths_covers_numeric_index_segments(self):
+        self.assertEqual(
+            expand_positional_update_paths(
+                {"items": [{"tags": ["a"]}, {"tags": ["b", "c"]}]},
+                "items.1.tags.0",
+                filtered_matcher=lambda _identifier, _candidate: True,
+            ),
+            ["items.1.tags.0"],
+        )
+        self.assertEqual(
+            expand_positional_update_paths(
+                {"items": [{"tags": ["a"]}]},
+                "items.3.tags.0",
+                filtered_matcher=lambda _identifier, _candidate: True,
+            ),
+            ["items.3.tags.0"],
+        )
+        compiled = CompiledUpdatePath(
+            raw="items.2.tags.0",
+            segments=(
+                UpdatePathSegment("field", "items"),
+                UpdatePathSegment("index", "2", index=2),
+                UpdatePathSegment("field", "tags"),
+                UpdatePathSegment("index", "0", index=0),
+            ),
+        )
+        self.assertEqual(
+            expand_positional_update_paths(
+                {"items": [{"tags": ["a"]}]},
+                compiled,
+                filtered_matcher=lambda _identifier, _candidate: True,
+            ),
+            ["items.2.tags.0"],
+        )
+
+    def test_expand_positional_update_paths_walks_index_segments_after_positional_expansion(self):
+        self.assertEqual(
+            expand_positional_update_paths(
+                {"items": [{"tags": ["a", "b"]}, {"tags": ["c"]}]},
+                "items.$[].tags.1",
+                filtered_matcher=lambda _identifier, _candidate: True,
+            ),
+            ["items.0.tags.1", "items.1.tags.1"],
+        )

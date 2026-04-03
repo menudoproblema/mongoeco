@@ -122,6 +122,16 @@ class UpdateEngineTests(unittest.TestCase):
 
         self.assertEqual([target.concrete_path for target in targets], ["items.0.qty", "items.1.qty"])
 
+    def test_update_engine_deduplicates_repeated_resolved_targets(self):
+        targets = UpdateEngine._resolve_update_targets(
+            {"items": [[{"qty": 1}]]},
+            "items.$[].$[].qty",
+            array_filters={},
+            allow_positional=True,
+        )
+
+        self.assertEqual([target.concrete_path for target in targets], ["items.0.0.qty"])
+
     def test_update_engine_compiles_resolved_instruction_applications(self):
         context = UpdateEngine.build_execution_context(
             selector_filter={"items.qty": {"$gt": 0}},
@@ -192,6 +202,31 @@ class UpdateEngineTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             UpdateEngine.compile_update_plan({})
 
+    def test_compile_update_pipeline_plan_rejects_array_filters_for_pipeline_updates(self):
+        context = UpdateEngine.build_execution_context(array_filters=[{"item.qty": {"$gt": 1}}])
+
+        with self.assertRaisesRegex(OperationFailure, "arrayFilters may not be specified"):
+            UpdateEngine.compile_update_pipeline_plan(
+                [{"$set": {"done": True}}],
+                context=context,
+            )
+
+    def test_validate_update_pipeline_rejects_invalid_stage_shapes(self):
+        with self.assertRaisesRegex(OperationFailure, "single-key document"):
+            UpdateEngine.validate_update_pipeline([{"$set": {"a": 1}, "$unset": {"b": ""}}])
+        with self.assertRaisesRegex(OperationFailure, "operator must start with '\\$'"):
+            UpdateEngine.validate_update_pipeline([{"set": {"a": 1}}])
+
+        class _NoProjectDialect(MongoDialect):
+            def supports_aggregation_stage(self, name: str) -> bool:
+                return False if name == "$project" else super().supports_aggregation_stage(name)
+
+        with self.assertRaisesRegex(OperationFailure, "Unsupported update pipeline stage: \\$project"):
+            UpdateEngine.validate_update_pipeline(
+                [{"$project": {"a": 1}}],
+                dialect=_NoProjectDialect(key="test", server_version="test", label="No Project"),
+            )
+
     def test_set_same_value_is_noop(self):
         document = {"field": 1}
 
@@ -221,6 +256,7 @@ class UpdateEngineTests(unittest.TestCase):
 
     def test_compile_array_filters_rejects_invalid_shapes(self):
         invalid_specs = [
+            ([{}], "non-empty documents"),
             ([{1: {"$gt": 0}}], "field names must be strings"),
             ([{"$and": [{"i.qty": {"$gt": 0}}]}], "Top-level operators"),
             ([{"9.qty": {"$gt": 0}}], "identifiers must begin with a lowercase letter"),
@@ -616,6 +652,21 @@ class UpdateEngineTests(unittest.TestCase):
                 {"scores": [1, 2, 3]},
                 {"$set": {"scores.$": 9}},
                 selector_filter={"scores": {"$ne": 4}},
+            )
+
+    def test_resolve_legacy_positional_path_rejects_multiple_segments_and_missing_arrays(self):
+        with self.assertRaisesRegex(OperationFailure, "exactly one positional segment"):
+            UpdateEngine._resolve_legacy_positional_path(
+                {"items": [[{"qty": 1}]]},
+                "items.$.$.qty",
+                {"items.qty": {"$gte": 1}},
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "did not find the match needed"):
+            UpdateEngine._resolve_legacy_positional_path(
+                {"items": {"qty": 1}},
+                "items.$.qty",
+                {"items.qty": {"$gte": 1}},
             )
 
     def test_bit_supports_and_or_xor_and_positional_targets(self):

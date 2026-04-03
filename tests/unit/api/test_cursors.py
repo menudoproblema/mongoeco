@@ -825,6 +825,30 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             cursor.hint("")
 
+    def test_sync_cursor_comment_batch_size_and_max_time_ms_mutators_invalidate_caches(self):
+        cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
+        cursor._cache = [{"_id": "cached"}]
+        cursor._exhausted = True
+
+        self.assertIs(cursor.comment("trace"), cursor)
+        self.assertEqual(cursor._comment, "trace")
+        self.assertIsNone(cursor._cache)
+        self.assertFalse(cursor._exhausted)
+
+        cursor._cache = [{"_id": "cached"}]
+        cursor._exhausted = True
+        self.assertIs(cursor.max_time_ms(5), cursor)
+        self.assertEqual(cursor._max_time_ms, 5)
+        self.assertIsNone(cursor._cache)
+        self.assertFalse(cursor._exhausted)
+
+        cursor._cache = [{"_id": "cached"}]
+        cursor._exhausted = True
+        self.assertIs(cursor.batch_size(2), cursor)
+        self.assertEqual(cursor._batch_size, 2)
+        self.assertIsNone(cursor._cache)
+        self.assertFalse(cursor._exhausted)
+
     def test_sync_cursor_first_uses_cache_when_already_loaded(self):
         factory = _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}])
         cursor = Cursor(_SyncClientStub(), factory, {}, None)
@@ -955,6 +979,17 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         cursor.close()
 
         self.assertEqual(collection.last_cursor.close_calls, 1)
+
+    def test_sync_cursor_rewind_closes_active_async_iterator(self):
+        collection = _StreamingAsyncCollectionStub([{"_id": "1"}, {"_id": "2"}])
+        cursor = Cursor(_SyncClientStub(), collection, {}, None)
+        iterator = iter(cursor)
+
+        self.assertEqual(next(iterator), {"_id": "1"})
+        cursor.rewind()
+
+        self.assertEqual(collection.last_cursor.close_calls, 1)
+        self.assertEqual(list(cursor), [{"_id": "1"}, {"_id": "2"}])
 
     def test_sync_cursor_reiteration_continues_from_current_position(self):
         collection = _StreamingAsyncCollectionStub([{"_id": "1"}, {"_id": "2"}])

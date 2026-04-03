@@ -121,6 +121,12 @@ class CollationTests(unittest.TestCase):
             normalize_collation({"locale": "simple", "numericOrdering": True})
         with self.assertRaisesRegex(ValueError, "simple collation does not support normalization"):
             normalize_collation({"locale": "simple", "normalization": True})
+        with self.assertRaisesRegex(ValueError, "simple collation does not support backwards"):
+            normalize_collation({"locale": "simple", "backwards": True})
+        with self.assertRaisesRegex(ValueError, "simple collation does not support alternate"):
+            normalize_collation({"locale": "simple", "alternate": "shifted"})
+        with self.assertRaisesRegex(ValueError, "simple collation does not support maxVariable"):
+            normalize_collation({"locale": "simple", "maxVariable": "space"})
 
     def test_compare_with_collation_honours_strength_and_case_level(self):
         strength_one = normalize_collation({"locale": "en", "strength": 1})
@@ -213,6 +219,9 @@ class CollationTests(unittest.TestCase):
                 values_equal_with_collation(left, right, collation=spec),
                 MONGODB_DIALECT_70.policy.values_equal(left, right),
             )
+        self.assertEqual(compare_with_collation("a", "a", collation=spec), 0)
+        self.assertEqual(compare_with_collation("a", "b", collation=spec), -1)
+        self.assertEqual(compare_with_collation("b", "a", collation=spec), 1)
 
     def test_icu_collation_available_exposes_backend_presence(self):
         self.assertIsInstance(icu_collation_available(), bool)

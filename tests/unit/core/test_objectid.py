@@ -1,5 +1,10 @@
 import unittest
 import time
+import builtins
+import importlib.util
+import sys
+from pathlib import Path
+from unittest.mock import patch
 
 from mongoeco.types import DeleteResult, InsertManyResult, InsertOneResult, ObjectId, UNDEFINED, UndefinedType, UpdateResult
 try:
@@ -97,3 +102,60 @@ class TestObjectId(unittest.TestCase):
         self.assertEqual(repr(UNDEFINED), "UNDEFINED")
         self.assertEqual(hash(UNDEFINED), hash(UndefinedType))
         self.assertEqual(UNDEFINED, UndefinedType())
+
+    def test_fallback_objectid_implementation_behaves_without_bson_dependency(self):
+        module_path = Path(__file__).resolve().parents[3] / "src" / "mongoeco" / "_types" / "_bson_objectid.py"
+        module_name = "mongoeco._types._bson_objectid_fallback_test"
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        self.assertIsNotNone(spec)
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+
+        original_import = builtins.__import__
+
+        def _import_without_bson(name, globals=None, locals=None, fromlist=(), level=0):
+            if name.startswith("bson"):
+                raise ImportError("blocked for fallback test")
+            return original_import(name, globals, locals, fromlist, level)
+
+        with patch("builtins.__import__", side_effect=_import_without_bson):
+            sys.modules.pop(module_name, None)
+            spec.loader.exec_module(module)
+
+        FallbackObjectId = module.ObjectId
+        generated = FallbackObjectId()
+        copied = FallbackObjectId(generated)
+        from_text = FallbackObjectId(str(generated))
+        from_bytes = FallbackObjectId(generated.binary)
+
+        self.assertEqual(copied, generated)
+        self.assertEqual(from_text, generated)
+        self.assertEqual(from_bytes, generated)
+        self.assertEqual(from_bytes.binary, generated.binary)
+        self.assertEqual(repr(generated), f"ObjectId('{generated}')")
+        self.assertTrue(FallbackObjectId.is_valid(generated))
+        self.assertTrue(FallbackObjectId.is_valid(generated.binary))
+        self.assertTrue(FallbackObjectId.is_valid(str(generated)))
+        self.assertFalse(FallbackObjectId.is_valid("short"))
+        self.assertFalse(FallbackObjectId.is_valid(123))
+        self.assertFalse(FallbackObjectId("0" * 24) == "other")
+        self.assertIs(FallbackObjectId("0" * 24).__lt__("other"), NotImplemented)
+        self.assertEqual(FallbackObjectId("0" * 24).generation_time, 0)
+        self.assertEqual(hash(FallbackObjectId("0" * 24)), hash(FallbackObjectId("0" * 24)))
+        self.assertTrue(FallbackObjectId("0" * 24) < FallbackObjectId("1" * 24))
+
+        normalized_same = module.normalize_object_id(generated)
+        normalized_other = module.normalize_object_id(str(generated))
+        self.assertIs(normalized_same, generated)
+        self.assertEqual(normalized_other, str(generated))
+        self.assertEqual(module.normalize_object_id("plain"), "plain")
+        self.assertTrue(module.is_object_id_like(generated))
+
+        with self.assertRaises(ValueError):
+            FallbackObjectId(b"short")
+        with self.assertRaises(ValueError):
+            FallbackObjectId("short")
+        with self.assertRaises(ValueError):
+            FallbackObjectId("z" * 24)
+        with self.assertRaises(TypeError):
+            FallbackObjectId(123)

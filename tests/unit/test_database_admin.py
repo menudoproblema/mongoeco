@@ -6,6 +6,7 @@ import unittest
 from unittest.mock import patch
 
 from mongoeco.api._async.client import AsyncDatabase
+from mongoeco.api._async._database_admin_command_compiler import DatabaseAdminCommandCompiler
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
@@ -148,6 +149,77 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
 
         asyncio.run(_run())
 
+    def test_database_admin_normalizer_facade_helpers_delegate_and_validate(self):
+        service = AsyncDatabase(MemoryEngine(), "db")._admin
+
+        with self.assertRaisesRegex(TypeError, "capped must be a bool"):
+            service._validate_create_collection_options({"capped": "yes"})
+
+        self.assertEqual(service._normalize_command({"ping": 1}, {}), {"ping": 1})
+        self.assertEqual(service._require_collection_name("users", "find"), "users")
+        self.assertEqual(service._resolve_collection_reference("db.users", "to"), "db.users")
+        self.assertEqual(service._normalize_index_models_from_command([{"key": {"name": 1}, "name": "name_1"}])[0].document["name"], "name_1")
+        self.assertEqual(service._normalize_sort_document({"name": 1}), [("name", 1)])
+        self.assertEqual(service._normalize_projection_from_command({"name": 1}), {"name": 1})
+        self.assertEqual(service._normalize_batch_size_from_command(5), 5)
+        self.assertEqual(service._normalize_scale_from_command(2), 2)
+        self.assertEqual(service._normalize_namespace("db.users", "renameCollection"), ("db", "users"))
+        self.assertEqual(service._normalize_insert_documents([{"_id": 1}]), [{"_id": 1}])
+        self.assertEqual(service._normalize_update_specs([{"q": {}, "u": {"$set": {"x": 1}}}])[0]["q"], {})
+        self.assertEqual(service._normalize_delete_specs([{"q": {}, "limit": 1}])[0]["limit"], 1)
+        self.assertTrue(service._is_operator_update({"$set": {"x": 1}}))
+        self.assertFalse(service._is_operator_update({"x": 1}))
+
+    def test_database_admin_command_compiler_facade_normalizers_delegate(self):
+        compiler = DatabaseAdminCommandCompiler(AsyncDatabase(MemoryEngine(), "db")._admin)
+
+        self.assertEqual(compiler.normalize_command({"ping": 1}, {}), {"ping": 1})
+        self.assertEqual(compiler.require_collection_name("users", "find"), "users")
+        self.assertEqual(compiler.resolve_collection_reference("db.users", "to"), "db.users")
+        self.assertEqual(compiler.normalize_index_models([{"key": {"name": 1}, "name": "name_1"}])[0].document["name"], "name_1")
+        self.assertEqual(compiler.normalize_sort_document({"name": 1}), [("name", 1)])
+        self.assertEqual(compiler.normalize_projection({"name": 1}), {"name": 1})
+        self.assertEqual(compiler.normalize_namespace("db.users", "renameCollection"), ("db", "users"))
+        self.assertEqual(compiler.normalize_insert_documents([{"_id": 1}]), [{"_id": 1}])
+        self.assertEqual(compiler.normalize_update_specs([{"q": {}, "u": {"$set": {"x": 1}}}])[0]["q"], {})
+        self.assertEqual(compiler.normalize_delete_specs([{"q": {}, "limit": 1}])[0]["limit"], 1)
+
+    def test_database_admin_compiler_wrapper_helpers_delegate_to_command_compiler(self):
+        service = AsyncDatabase(MemoryEngine(), "db")._admin
+        compiler = service._command_compiler
+
+        with patch.object(compiler, "compile_update_selection_operation", return_value=SimpleNamespace(kind="update")) as update_mock:
+            result = service._compile_command_update_selection_operation(
+                {"q": {}, "u": {"$set": {"x": 1}}},
+                comment="trace",
+                max_time_ms=5,
+                limit=1,
+            )
+        self.assertEqual(result.kind, "update")
+        update_mock.assert_called_once()
+
+        with patch.object(compiler, "compile_delete_selection_operation", return_value=SimpleNamespace(kind="delete")) as delete_mock:
+            result = service._compile_command_delete_selection_operation(
+                {"q": {}, "limit": 1},
+                comment="trace",
+                max_time_ms=5,
+                limit=1,
+            )
+        self.assertEqual(result.kind, "delete")
+        delete_mock.assert_called_once()
+
+        with patch.object(compiler, "compile_find_and_modify_selection_operation", return_value=SimpleNamespace(kind="fam")) as fam_mock:
+            result = service._compile_find_and_modify_selection_operation(
+                SimpleNamespace(query={}, collation=None, sort=None, hint=None, comment=None, max_time_ms=None, let=None),
+            )
+        self.assertEqual(result.kind, "fam")
+        fam_mock.assert_called_once()
+
+        with patch.object(compiler, "compile_id_lookup_operation", return_value=SimpleNamespace(kind="id")) as id_mock:
+            result = service._compile_id_lookup_operation("doc-1", projection={"name": 1})
+        self.assertEqual(result.kind, "id")
+        id_mock.assert_called_once_with("doc-1", projection={"name": 1})
+
     def test_compile_command_helpers_validate_find_and_aggregate_shapes(self):
         service = AsyncDatabase(MemoryEngine(), "db")._admin
 
@@ -232,6 +304,167 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                 result = await service._commands.execute(parsed_drop)
                 self.assertEqual(result, {"ok": 1.0})
                 drop_mock.assert_awaited_once_with(session=None)
+
+        asyncio.run(_run())
+
+    def test_command_update_and_find_and_modify_cover_remaining_write_paths(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin
+        collection = _FakeCollection()
+
+        async def _run():
+            with patch.object(database, "get_collection", return_value=collection):
+                with self.assertRaises(BulkWriteError) as type_error:
+                    await service._command_update({"update": "events", "updates": [{"q": {}, "u": 1}]})
+                self.assertIn("u must be a document or pipeline", str(type_error.exception.details))
+
+                with self.assertRaises(BulkWriteError) as upsert_error:
+                    await service._command_update(
+                        {"update": "events", "updates": [{"q": {}, "u": {"$set": {"x": 1}}, "upsert": "yes"}]}
+                    )
+                self.assertIn("upsert must be a bool", str(upsert_error.exception.details))
+
+                with self.assertRaises(BulkWriteError) as let_error:
+                    await service._command_update(
+                        {"update": "events", "updates": [{"q": {}, "u": {"$set": {"x": 1}}, "let": 1}]}
+                    )
+                self.assertIn("let must be a dict", str(let_error.exception.details))
+
+                with self.assertRaises(BulkWriteError) as multi_error:
+                    await service._command_update(
+                        {"update": "events", "updates": [{"q": {}, "u": {"x": 1}, "multi": True}]}
+                    )
+                self.assertIn("replacement updates cannot be multi", str(multi_error.exception.details))
+
+                options = SimpleNamespace(
+                    collection_name="events",
+                    query={"_id": 1},
+                    update_spec={"name": "Ada"},
+                    fields={"name": 1},
+                    collation=None,
+                    sort=[("_id", 1)],
+                    upsert=False,
+                    return_new=False,
+                    array_filters=None,
+                    hint=None,
+                    comment="trace",
+                    max_time_ms=50,
+                    let=None,
+                    bypass_document_validation=False,
+                )
+                with patch.object(service._write_commands, "find_and_modify_before_full", return_value={"_id": 1}):
+                    result = await service._execute_find_and_modify_replacement(collection, options)
+                self.assertEqual(result.value, {"_id": 1, "replaced": True})
+
+        asyncio.run(_run())
+
+    def test_is_operator_update_treats_pipeline_as_operator_style(self):
+        service = AsyncDatabase(MemoryEngine(), "db")._admin
+
+        self.assertTrue(service._is_operator_update([{"$set": {"x": 1}}]))
+
+    def test_database_admin_routing_service_delegates_all_command_families(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin
+        routing = service._routing
+
+        async def _run():
+            with (
+                patch.object(service._read_commands, "command_count", return_value={"ok": 1.0}) as count_mock,
+                patch.object(service._read_commands, "command_distinct", return_value={"ok": 1.0}) as distinct_mock,
+                patch.object(service._read_commands, "command_db_hash", return_value={"ok": 1.0}) as db_hash_mock,
+                patch.object(service._read_commands, "command_find", return_value={"ok": 1.0}) as find_mock,
+                patch.object(service._read_commands, "command_aggregate", return_value={"ok": 1.0}) as aggregate_mock,
+                patch.object(service._write_commands, "command_insert", return_value={"ok": 1.0}) as insert_mock,
+                patch.object(service._write_commands, "command_update", return_value={"ok": 1.0}) as update_mock,
+                patch.object(service._write_commands, "command_delete", return_value={"ok": 1.0}) as delete_mock,
+                patch.object(service._commands, "command", return_value={"ok": 1.0}) as command_mock,
+            ):
+                await routing.command_count({"count": "events"})
+                await routing.command_distinct({"distinct": "events", "key": "kind"})
+                await routing.command_db_hash({"dbHash": 1})
+                await routing.command_find({"find": "events"})
+                await routing.command_aggregate({"aggregate": "events", "pipeline": []})
+                await routing.command_insert({"insert": "events", "documents": [{"_id": 1}]})
+                await routing.command_update({"update": "events", "updates": [{"q": {}, "u": {"$set": {"x": 1}}}]})
+                await routing.command_delete({"delete": "events", "deletes": [{"q": {}, "limit": 1}]})
+                await routing.command_current_op({"currentOp": 1})
+                await routing.command_kill_op({"killOp": 1, "op": "op-1"})
+                await routing._command_count({"count": "events"})
+                await routing._command_db_hash({"dbHash": 1})
+                await routing._command_distinct({"distinct": "events", "key": "kind"})
+                await routing._command_find({"find": "events"})
+                await routing._command_aggregate({"aggregate": "events", "pipeline": []})
+                await routing._command_current_op({"currentOp": 1})
+                await routing._command_kill_op({"killOp": 1, "op": "op-1"})
+
+            self.assertGreaterEqual(count_mock.call_count, 2)
+            self.assertGreaterEqual(distinct_mock.call_count, 2)
+            self.assertGreaterEqual(db_hash_mock.call_count, 2)
+            self.assertGreaterEqual(find_mock.call_count, 2)
+            self.assertGreaterEqual(aggregate_mock.call_count, 2)
+            insert_mock.assert_called_once()
+            update_mock.assert_called_once()
+            delete_mock.assert_called_once()
+            self.assertEqual(command_mock.call_count, 4)
+
+        asyncio.run(_run())
+
+    def test_database_admin_facade_wrappers_delegate_to_compiler_and_services(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin
+
+        async def _run():
+            with (
+                patch.object(service._command_compiler, "compile_count_operation", return_value=("events", "count-op")) as count_compile,
+                patch.object(service._command_compiler, "compile_distinct_operation", return_value=("events", "kind", "distinct-op")) as distinct_compile,
+                patch.object(service._command_compiler, "compile_find_operation", return_value=("events", "find-op")) as find_compile,
+                patch.object(service._command_compiler, "compile_aggregate_operation", return_value=("events", "agg-op")) as aggregate_compile,
+                patch.object(service._read_commands, "execute_count_command", return_value={"ok": 1.0}) as count_exec,
+                patch.object(service._read_commands, "execute_distinct_command", return_value={"ok": 1.0}) as distinct_exec,
+                patch.object(service._read_commands, "execute_find_command", return_value={"ok": 1.0}) as find_exec,
+                patch.object(service._read_commands, "execute_aggregate_command", return_value={"ok": 1.0}) as aggregate_exec,
+                patch.object(service._write_commands, "execute_find_and_modify", return_value={"ok": 1.0}) as fam_exec,
+                patch.object(service._write_commands, "find_and_modify_before_full", return_value={"_id": 1}) as before_full,
+                patch.object(service._write_commands, "find_and_modify_fetch_upserted_value", return_value={"_id": 2}) as upserted,
+                patch.object(service._write_commands, "execute_find_and_modify_operator_update", return_value={"ok": 1.0}) as operator_update,
+                patch.object(service._write_commands, "execute_find_and_modify_replacement", return_value={"ok": 1.0}) as replacement,
+                patch.object(service._write_commands, "command_create_indexes", return_value={"ok": 1.0}) as create_indexes,
+                patch.object(service._write_commands, "command_drop_indexes", return_value={"ok": 1.0}) as drop_indexes,
+                patch.object(service._write_commands, "command_drop_database", return_value={"ok": 1.0}) as drop_database,
+                patch.object(service._read_commands, "command_list_indexes", return_value={"ok": 1.0}) as list_indexes,
+            ):
+                self.assertEqual(await service._command_count({"count": "events"}), {"ok": 1.0})
+                self.assertEqual(await service._command_distinct({"distinct": "events", "key": "kind"}), {"ok": 1.0})
+                self.assertEqual(await service._command_find({"find": "events"}), {"ok": 1.0})
+                self.assertEqual(await service._command_aggregate({"aggregate": "events", "pipeline": []}), {"ok": 1.0})
+                self.assertEqual(await service._execute_find_and_modify("opts"), {"ok": 1.0})
+                self.assertEqual(await service._find_and_modify_before_full("opts"), {"_id": 1})
+                self.assertEqual(await service._find_and_modify_fetch_upserted_value("events", "upserted", None), {"_id": 2})
+                self.assertEqual(await service._execute_find_and_modify_operator_update("collection", "opts"), {"ok": 1.0})
+                self.assertEqual(await service._execute_find_and_modify_replacement("collection", "opts"), {"ok": 1.0})
+                self.assertEqual(await service._command_create_indexes({"createIndexes": "events", "indexes": []}), {"ok": 1.0})
+                self.assertEqual(await service._command_drop_indexes({"dropIndexes": "events", "index": "*"}), {"ok": 1.0})
+                self.assertEqual(await service._command_drop_database(), {"ok": 1.0})
+                self.assertEqual(await service._command_list_indexes({"listIndexes": "events"}), {"ok": 1.0})
+
+            count_compile.assert_called_once()
+            distinct_compile.assert_called_once()
+            find_compile.assert_called_once()
+            aggregate_compile.assert_called_once()
+            count_exec.assert_called_once_with("events", "count-op", session=None)
+            distinct_exec.assert_called_once_with("events", "kind", "distinct-op", session=None)
+            find_exec.assert_called_once_with("events", "find-op", session=None)
+            aggregate_exec.assert_called_once_with("events", "agg-op", session=None)
+            fam_exec.assert_called_once_with("opts", session=None)
+            before_full.assert_called_once_with("opts", session=None)
+            upserted.assert_called_once_with("events", "upserted", None, session=None)
+            operator_update.assert_called_once_with("collection", "opts", session=None)
+            replacement.assert_called_once_with("collection", "opts", session=None)
+            create_indexes.assert_called_once()
+            drop_indexes.assert_called_once()
+            drop_database.assert_called_once_with(session=None)
+            list_indexes.assert_called_once()
 
         asyncio.run(_run())
 
@@ -379,6 +612,82 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
             ) as execute_aggregate:
                 self.assertEqual(await service._command_aggregate({"aggregate": "events", "pipeline": []}), {"cursor": {}})
                 execute_aggregate.assert_awaited_once()
+
+        asyncio.run(_run())
+
+    def test_database_admin_additional_wrapper_paths_cover_read_write_and_cursor_fallbacks(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin
+
+        class _CursorWithoutFirst:
+            async def to_list(self):
+                return [{"_id": 1}]
+
+        async def _run():
+            fake_collection = SimpleNamespace(_build_cursor=lambda _operation, session=None: _CursorWithoutFirst())
+            with patch.object(service._database, "get_collection", return_value=fake_collection):
+                document = await service._first_with_operation("events", object())
+                self.assertEqual(document, {"_id": 1})
+
+            with (
+                patch.object(service._read_commands, "command_list_collections", return_value={"cursor": {}}) as list_collections,
+                patch.object(service._read_commands, "command_list_databases", return_value={"databases": []}) as list_databases,
+                patch.object(service._write_commands, "command_create", return_value={"ok": 1.0}) as create_mock,
+                patch.object(service._write_commands, "command_drop", return_value={"ok": 1.0}) as drop_mock,
+                patch.object(service._write_commands, "command_rename_collection", return_value={"ok": 1.0}) as rename_mock,
+                patch.object(service._read_commands, "execute_db_hash_command", return_value={"md5": "x"}) as db_hash_exec,
+            ):
+                self.assertEqual(await service._command_list_collections({"listCollections": 1}), {"cursor": {}})
+                self.assertEqual(await service._command_list_databases({"listDatabases": 1}), {"databases": []})
+                self.assertEqual(await service._command_create({"create": "events"}), {"ok": 1.0})
+                self.assertEqual(await service._command_drop({"drop": "events"}), {"ok": 1.0})
+                self.assertEqual(await service._command_rename_collection({"renameCollection": "db.a", "to": "db.b"}), {"ok": 1.0})
+                self.assertEqual(await service._execute_db_hash_command(("events",), comment="trace"), {"md5": "x"})
+
+            list_collections.assert_awaited_once_with({"listCollections": 1}, session=None)
+            list_databases.assert_awaited_once_with({"listDatabases": 1}, session=None)
+            create_mock.assert_awaited_once_with({"create": "events"}, session=None)
+            drop_mock.assert_awaited_once_with({"drop": "events"}, session=None)
+            rename_mock.assert_awaited_once_with({"renameCollection": "db.a", "to": "db.b"}, session=None)
+            db_hash_exec.assert_awaited_once_with(("events",), comment="trace", session=None)
+
+        asyncio.run(_run())
+
+    def test_database_admin_read_command_service_and_compiler_cover_direct_paths(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin
+
+        async def _run():
+            with (
+                patch.object(service._command_compiler, "compile_count_operation", return_value=("events", "count-op")) as count_compile,
+                patch.object(service._read_commands, "execute_count_command", return_value={"n": 1}) as count_exec,
+                patch.object(service._command_compiler, "compile_distinct_operation", return_value=("events", "kind", "distinct-op")) as distinct_compile,
+                patch.object(service._read_commands, "execute_distinct_command", return_value={"values": []}) as distinct_exec,
+                patch.object(service._command_compiler, "compile_find_operation", return_value=("events", "find-op")) as find_compile,
+                patch.object(service._read_commands, "execute_find_command", return_value={"cursor": {}}) as find_exec,
+                patch.object(service._command_compiler, "compile_aggregate_operation", return_value=("events", "agg-op")) as aggregate_compile,
+                patch.object(service._read_commands, "execute_aggregate_command", return_value={"cursor": {}}) as aggregate_exec,
+            ):
+                self.assertEqual(await service._read_commands.command_count({"count": "events"}), {"n": 1})
+                self.assertEqual(await service._read_commands.command_distinct({"distinct": "events", "key": "kind"}), {"values": []})
+                self.assertEqual(await service._read_commands.command_find({"find": "events"}), {"cursor": {}})
+                self.assertEqual(await service._read_commands.command_aggregate({"aggregate": "events", "pipeline": []}), {"cursor": {}})
+
+            count_compile.assert_called_once_with({"count": "events"})
+            count_exec.assert_awaited_once_with("events", "count-op", session=None)
+            distinct_compile.assert_called_once_with({"distinct": "events", "key": "kind"})
+            distinct_exec.assert_awaited_once_with("events", "kind", "distinct-op", session=None)
+            find_compile.assert_called_once_with({"find": "events"}, collection_field="find")
+            find_exec.assert_awaited_once_with("events", "find-op", session=None)
+            aggregate_compile.assert_called_once_with({"aggregate": "events", "pipeline": []})
+            aggregate_exec.assert_awaited_once_with("events", "agg-op", session=None)
+
+            with self.assertRaisesRegex(TypeError, "collections must be a list of non-empty strings"):
+                await service._read_commands.command_db_hash({"dbHash": 1, "collections": ["", "users"]})
+            with self.assertRaisesRegex(TypeError, "comment must be a string"):
+                await service._read_commands.command_db_hash({"dbHash": 1, "comment": 1})
+            with self.assertRaisesRegex(TypeError, "comment must be a string"):
+                await service._read_commands.command_list_indexes({"listIndexes": "events", "comment": 1})
 
         asyncio.run(_run())
 

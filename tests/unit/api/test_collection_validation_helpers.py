@@ -115,6 +115,7 @@ class AsyncCollectionValidationTests(AsyncCollectionHelperBase):
         self.assertEqual(AsyncCollection._normalize_filter(None), {})
         self.assertIsNone(AsyncCollection._normalize_projection(None))
         self.assertIsNone(AsyncCollection._normalize_batch_size(None))
+        self.assertEqual(AsyncCollection._normalize_batch_size(0), 0)
         normalized_collation = AsyncCollection._normalize_collation({"locale": "en", "strength": 1})
         self.assertEqual(normalized_collation["locale"], "en")
         self.assertEqual(normalized_collation["strength"], 1)
@@ -154,6 +155,18 @@ class AsyncCollectionValidationTests(AsyncCollectionHelperBase):
             AsyncCollection._normalize_search_index_name("")  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
             AsyncCollection._normalize_expire_after_seconds(True)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            AsyncCollection._normalize_index_model(type("Model", (), {"document": "bad"})())
+        with self.assertRaises(TypeError):
+            AsyncCollection._normalize_index_model(type("Model", (), {"document": {"name": "idx"}})())
+        with self.assertRaisesRegex(TypeError, "unsupported IndexModel options"):
+            AsyncCollection._normalize_index_model(
+                type(
+                    "Model",
+                    (),
+                    {"document": {"key": {"email": 1}, "name": "idx", "hidden": True}},
+                )()
+            )
 
     def test_collection_require_helpers_reject_invalid_inputs(self):
         self.assertEqual(AsyncCollection._require_documents(({"_id": "1"},)), [{"_id": "1"}])

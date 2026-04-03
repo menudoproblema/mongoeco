@@ -352,3 +352,24 @@ class SchemaValidationTests(unittest.TestCase):
                 is_upsert_insert=False,
             )
         )
+
+    def test_json_schema_issue_and_decimal_helper_branches(self):
+        schema = CompiledJsonSchema(
+            {
+                "properties": {
+                    "tags": {"minItems": 2},
+                    "name": {"maxLength": 3},
+                },
+                "anyOf": [
+                    {"properties": {"kind": {"enum": ["user"]}}},
+                    {"properties": {"kind": {"enum": ["admin"]}}},
+                ],
+            }
+        )
+
+        result = schema.validate({"tags": ["only"], "name": "Grace", "kind": "guest"})
+        rendered = [issue.render() for issue in result.issues]
+        self.assertTrue(any("fewer than 2 items" in message for message in rendered))
+        self.assertTrue(any("longer than 3" in message for message in rendered))
+        self.assertTrue(any("does not satisfy anyOf" in message for message in rendered))
+        self.assertIsNone(schema._as_decimal(object()))

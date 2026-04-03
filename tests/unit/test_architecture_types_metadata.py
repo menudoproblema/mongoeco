@@ -441,6 +441,8 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             set(exported["database_commands"]),
             set(DATABASE_COMMAND_SUPPORT_CATALOG),
         )
+        self.assertIn("vectorSearch", exported["local_runtime_subsets"])
+        self.assertIn("geospatial", exported["local_runtime_subsets"])
 
     def test_index_model_reuses_index_definition_contract(self):
         from mongoeco.types import IndexModel

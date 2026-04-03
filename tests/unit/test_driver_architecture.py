@@ -6,8 +6,10 @@ import unittest
 from mongoeco import (
     AsyncMongoClient,
     MongoClient,
+    ReadConcern,
     ReadPreference,
     ReadPreferenceMode,
+    WriteConcern,
     parse_mongo_uri,
 )
 from mongoeco.engines.memory import MemoryEngine
@@ -40,7 +42,9 @@ from mongoeco.driver import (
     build_auth_policy,
     build_read_concern_from_uri,
     build_read_preference_from_uri,
+    build_retry_policy,
     build_tls_policy,
+    build_concern_policy,
     build_write_concern_from_uri,
     classify_request_exception,
     build_local_topology_description,
@@ -51,6 +55,8 @@ from mongoeco.driver import (
     build_timeout_policy,
     refresh_topology,
 )
+from mongoeco.driver.connections import ConnectionPool, build_connection_pool_options
+from mongoeco.driver.execution import _is_retryable_exception
 from mongoeco.driver._runtime_attempts import RuntimeAttemptLifecycle
 from mongoeco.driver._runtime_plan_resolution import resolve_runtime_execution_plan
 from mongoeco.driver.topology_monitor import build_probe_plan
@@ -443,8 +449,133 @@ class TopologyAndPolicyTests(unittest.TestCase):
         self.assertEqual(policy.socket_timeout_ms, 5000)
         self.assertEqual(policy.wait_queue_timeout_ms, 900)
 
+    def test_policy_and_discovery_helpers_cover_small_remaining_branches(self):
+        import mongoeco.driver.discovery as discovery_module
+        import mongoeco.driver.monitoring as monitoring_module
+        import mongoeco.driver.policies as policies_module
+
+        non_srv_uri = parse_mongo_uri("mongodb://localhost/")
+        self.assertIsNone(resolve_srv_seeds(non_srv_uri))
+        self.assertIsNone(resolve_srv_dns(non_srv_uri, resolver=lambda *_args: ()))
+        with self.assertRaisesRegex(ValueError, "at least one seed"):
+            resolve_srv_seeds(parse_mongo_uri("mongodb+srv://cluster.example.net/"), srv_records=())
+
+        resolution = resolve_srv_seeds(
+            parse_mongo_uri("mongodb+srv://cluster.example.net/?srvMaxHosts=1"),
+            srv_records=(discovery_module.MongoUriSeed("db1.example.net", None),),
+        )
+        self.assertEqual(resolution.resolved_seeds[0].address, "db1.example.net:27017")
+        self.assertIs(materialize_srv_uri(non_srv_uri, resolution=None), non_srv_uri)
+
+        policy = policies_module.SelectionPolicy(mode=ReadPreferenceMode.NEAREST)
+        self.assertTrue(policies_module._server_matches_tag_set(ServerDescription("db1:27017"), {}))
+        self.assertEqual(policies_module._server_state_sort_weight(ServerState.UNKNOWN), 3)
+        self.assertEqual(policies_module._server_state_sort_weight(ServerState.UNREACHABLE), 4)
+        servers = (
+            ServerDescription("db2:27018", state=ServerState.DEGRADED, round_trip_time_ms=None),
+            ServerDescription("db1:27017", state=ServerState.HEALTHY, round_trip_time_ms=5.0),
+        )
+        self.assertEqual([server.address for server in policy._order_nearest(servers)], ["db1:27017", "db2:27018"])
+
+        monitor = monitoring_module.DriverMonitor()
+        seen = []
+        listener = seen.append
+        event = ServerSelectedEvent(
+            database="db",
+            command_name="find",
+            server_address="db1:27017",
+            attempt_number=1,
+            read_only=True,
+        )
+        monitor.add_listener(listener)
+        monitor.emit(event)
+        monitor.remove_listener(lambda _event: None)
+        monitor.clear_listeners()
+        self.assertEqual(monitor.history, (event,))
+        self.assertEqual(seen, [event])
+        monitor.clear_history()
+        self.assertEqual(monitor.history, ())
+
+    def test_driver_helper_builders_cover_small_constructor_paths(self):
+        uri = parse_mongo_uri("mongodb://localhost/?retryReads=false&retryWrites=false")
+        retry = build_retry_policy(uri)
+        concern = build_concern_policy(
+            write_concern=WriteConcern(1),
+            read_concern=ReadConcern("local"),
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        self.assertFalse(retry.retry_reads)
+        self.assertFalse(retry.retry_writes)
+        self.assertEqual(concern.write_concern, WriteConcern(1))
+
+    def test_selection_policy_covers_unknown_and_non_replica_set_edge_paths(self):
+        policy = build_selection_policy(
+            parse_mongo_uri("mongodb://db1:27017,db2:27018/?readPreference=primaryPreferred"),
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY_PREFERRED),
+        )
+        unknown_topology = TopologyDescription(
+            topology_type=TopologyType.UNKNOWN,
+            servers=(ServerDescription("db2:27018"), ServerDescription("db1:27017")),
+        )
+        self.assertEqual(
+            [server.address for server in policy.select_servers(unknown_topology)],
+            ["db1:27017", "db2:27018"],
+        )
+
+        non_repl_policy = build_selection_policy(
+            parse_mongo_uri("mongodb://db1:27017/?readPreference=nearest"),
+            read_preference=ReadPreference(ReadPreferenceMode.NEAREST),
+        )
+        sharded = TopologyDescription(
+            topology_type=TopologyType.SHARDED,
+            servers=(
+                ServerDescription("db2:27018", server_type=ServerType.MONGOS, round_trip_time_ms=12),
+                ServerDescription("db1:27017", server_type=ServerType.MONGOS, round_trip_time_ms=5),
+            ),
+        )
+        self.assertEqual(
+            [server.address for server in non_repl_policy.select_servers(sharded)],
+            ["db1:27017", "db2:27018"],
+        )
+
+        secondary_preferred = build_selection_policy(
+            parse_mongo_uri("mongodb://db1:27017,db2:27018/?replicaSet=rs0&readPreference=secondaryPreferred"),
+            read_preference=ReadPreference(ReadPreferenceMode.SECONDARY_PREFERRED),
+        )
+        replica_set = TopologyDescription(
+            topology_type=TopologyType.REPLICA_SET,
+            servers=(ServerDescription("db1:27017", server_type=ServerType.RS_PRIMARY),),
+            set_name="rs0",
+        )
+        self.assertEqual(
+            [server.address for server in secondary_preferred.select_servers(replica_set)],
+            ["db1:27017"],
+        )
+
 
 class ConnectionArchitectureTests(unittest.TestCase):
+    def test_connection_pool_helpers_cover_exhaustion_options_and_missing_pool_paths(self):
+        uri = parse_mongo_uri("mongodb://db1:27017/?maxPoolSize=1")
+        topology = build_local_topology_description(uri)
+        pool = ConnectionPool(
+            ConnectionRegistry(uri).pool_key_for_server(topology.servers[0]),
+            build_connection_pool_options(uri),
+        )
+
+        self.assertEqual(pool.options.max_pool_size, 1)
+
+        first = pool.checkout(topology.servers[0])
+        with self.assertRaisesRegex(RuntimeError, "connection pool exhausted"):
+            pool.checkout(topology.servers[0])
+
+        pool.checkin("missing")
+        first.mark_closed()
+        pool.checkin(first.connection_id)
+        pool.discard("missing")
+
+        registry = ConnectionRegistry(uri)
+        self.assertIsNone(registry.get_connection(first))
+
     def test_connection_registry_creates_and_reuses_server_pool(self):
         uri = parse_mongo_uri("mongodb://db1:27017/?maxPoolSize=3&authSource=admin")
         topology = build_local_topology_description(uri)
@@ -565,6 +696,28 @@ class ConnectionArchitectureTests(unittest.TestCase):
         order = asyncio.run(_run())
 
         self.assertEqual(order, ["a", "b"])
+
+    def test_connection_registry_async_checkout_without_timeout_waits_for_checkin(self):
+        uri = parse_mongo_uri("mongodb://db1:27017/?maxPoolSize=1")
+        topology = build_local_topology_description(uri)
+        registry = ConnectionRegistry(uri)
+
+        async def _run() -> tuple[str, str]:
+            first = await registry.checkout_async(topology.servers[0])
+
+            async def _release() -> None:
+                await asyncio.sleep(0.01)
+                await registry.checkin_async(first)
+
+            release_task = asyncio.create_task(_release())
+            try:
+                second = await registry.checkout_async(topology.servers[0])
+            finally:
+                await release_task
+            return first.connection_id, second.connection_id
+
+        first_id, second_id = asyncio.run(_run())
+        self.assertEqual(first_id, second_id)
 
 
 class ClientDriverArchitectureTests(unittest.TestCase):
@@ -868,6 +1021,26 @@ class ClientDriverArchitectureTests(unittest.TestCase):
 
 
 class RequestExecutionPipelineTests(unittest.TestCase):
+    def test_request_execution_trace_and_exception_classification_cover_generic_paths(self):
+        self.assertIsNone(RequestExecutionTrace().final_outcome)
+
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/?retryWrites=true",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        plan = runtime.plan_command_request("admin", "insert", {"insert": "events"}, read_only=False)
+
+        generic = classify_request_exception(RuntimeError("boom"), plan=plan)
+        self.assertEqual(generic.error, "RuntimeError: boom")
+        self.assertFalse(
+            _is_retryable_exception(
+                OperationFailure("write failed", error_labels=()),
+                plan=plan,
+            )
+        )
+
     def test_execute_request_retries_retryable_read_errors(self):
         runtime = DriverRuntime(
             uri="mongodb://db1:27017,db2:27018,db3:27019/?replicaSet=rs0&retryReads=true",

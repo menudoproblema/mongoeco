@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import mongoeco.core.search as search_module
 from mongoeco.core._search_contract import TEXT_SEARCH_INDEX_CAPABILITIES, TEXT_SEARCH_OPERATOR_NAMES
@@ -66,6 +67,33 @@ class SearchCoreTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             compile_classic_text_query({"$search": "Ada", "$diacriticSensitive": True})
 
+    def test_classic_text_helpers_cover_invalid_shapes_and_ambiguous_hints(self) -> None:
+        with self.assertRaises(OperationFailure):
+            compile_classic_text_query([])
+        with self.assertRaises(OperationFailure):
+            compile_classic_text_query({"$search": ""})
+        with self.assertRaises(OperationFailure):
+            compile_classic_text_query({"$search": "Ada", "$language": "en"})
+        with self.assertRaises(OperationFailure):
+            split_classic_text_filter({"$text": None})
+        self.assertEqual(tokenize_classic_text(1), ())
+        self.assertEqual(search_module.iter_classic_text_values({"tags": [1, "Ada"]}, "tags"), ("Ada",))
+        self.assertEqual(search_module.iter_classic_text_values({}, "tags"), ())
+
+        indexes = [
+            EngineIndexRecord(name="body_text", fields=["body"], key=[("body", "text")], unique=False),
+            EngineIndexRecord(name="title_text", fields=["title"], key=[("title", "text")], unique=False),
+        ]
+        with self.assertRaisesRegex(OperationFailure, "single-field text index"):
+            resolve_classic_text_index(indexes, hinted_name="missing")
+
+        duplicate_named_indexes = [
+            EngineIndexRecord(name="dup", fields=["body"], key=[("body", "text")], unique=False),
+            EngineIndexRecord(name="dup", fields=["title"], key=[("title", "text")], unique=False),
+        ]
+        with self.assertRaisesRegex(OperationFailure, "text index not found with name \\[dup\\]"):
+            resolve_classic_text_index(duplicate_named_indexes, hinted_name="dup")
+
     def test_tokenize_and_score_classic_text_query(self) -> None:
         query = compile_classic_text_query({"$search": "Ada algOrithm"})
         self.assertEqual(tokenize_classic_text("Áda wrote algorithms"), ("ada", "wrote", "algorithms"))
@@ -85,6 +113,13 @@ class SearchCoreTests(unittest.TestCase):
             )
         )
         self.assertEqual(attach_text_score({"_id": 1}, 2.0)["__mongoeco_textScore__"], 2.0)
+        self.assertIsNone(
+            classic_text_score(
+                {"body": [1, 2, 3]},
+                field="body",
+                query=query,
+            )
+        )
 
     def test_resolve_classic_text_index_requires_single_unambiguous_text_index(self) -> None:
         indexes = [
@@ -233,6 +268,93 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(sqlite_fts5_query(query), '"ada lovelace"')
 
+    def test_search_compilers_cover_unsupported_keys_and_registry_gaps(self) -> None:
+        with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
+            compile_search_text_like_query(
+                {
+                    "index": "by_text",
+                    "text": {"query": "ada", "path": "title"},
+                    "unsupported": True,
+                }
+            )
+        with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
+            compile_search_text_query(
+                {
+                    "index": "by_text",
+                    "text": {"query": "ada", "path": "title", "score": {"boost": 2}},
+                }
+            )
+        with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
+            compile_search_autocomplete_query(
+                {
+                    "index": "by_text",
+                    "autocomplete": {"query": "ada", "path": "title", "tokenOrder": "any"},
+                }
+            )
+        with self.assertRaisesRegex(OperationFailure, "at least one searchable token"):
+            compile_search_autocomplete_query(
+                {
+                    "index": "by_text",
+                    "autocomplete": {"query": "!!!", "path": "title"},
+                }
+            )
+        with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
+            compile_search_wildcard_query(
+                {
+                    "index": "by_text",
+                    "wildcard": {"query": "ada*", "path": "title", "allowAnalyzedField": True},
+                }
+            )
+        with patch.dict(search_module._SEARCH_CLAUSE_COMPILERS, {"text": None}, clear=False):
+            with self.assertRaisesRegex(OperationFailure, "unsupported local \\$search operator: text"):
+                compile_search_text_like_query(
+                    {
+                        "index": "by_text",
+                        "text": {"query": "ada", "path": "title"},
+                    }
+                )
+            with self.assertRaisesRegex(OperationFailure, "unsupported local \\$search operator: text"):
+                search_module._compile_search_clause(
+                    index_name="by_text",
+                    clause_name="text",
+                    clause_spec={"query": "ada", "path": "title"},
+                )
+        with patch.dict(search_module._SEARCH_CLAUSE_COMPILERS, {"text": None}, clear=False):
+            with self.assertRaisesRegex(OperationFailure, "uses unsupported operator text"):
+                compile_search_compound_query(
+                    {
+                        "index": "by_text",
+                        "compound": {"must": [{"text": {"query": "ada", "path": "title"}}]},
+                    }
+                )
+        self.assertIsInstance(
+            search_module._compile_search_clause(
+                index_name="by_text",
+                clause_name="text",
+                clause_spec={"query": "ada", "path": "title"},
+            ),
+            SearchTextQuery,
+        )
+        with self.assertRaisesRegex(OperationFailure, "must be a non-empty string"):
+            compile_search_autocomplete_query(
+                {
+                    "index": "by_text",
+                    "autocomplete": {"query": "   ", "path": "title"},
+                }
+            )
+
+    def test_matches_search_autocomplete_query_skips_empty_token_candidates(self) -> None:
+        definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text")
+        query = SearchAutocompleteQuery(index_name="by_text", raw_query="ada", terms=("ada",), paths=("title",))
+
+        self.assertFalse(
+            matches_search_autocomplete_query(
+                {"title": "!!!"},
+                definition=definition,
+                query=query,
+            )
+        )
+
     def test_iter_searchable_text_entries_respects_mapping(self) -> None:
         definition = SearchIndexDefinition(
             {
@@ -310,6 +432,24 @@ class SearchCoreTests(unittest.TestCase):
             ]
         )
 
+    def test_search_compilers_cover_more_invalid_shapes(self) -> None:
+        with self.assertRaises(OperationFailure):
+            compile_search_text_like_query({"index": "by_text"})
+        with self.assertRaises(OperationFailure):
+            compile_search_text_like_query({"index": "by_text", "text": {"query": "ada"}, "wildcard": {"query": "*a*"}})
+        with self.assertRaises(OperationFailure):
+            compile_search_text_query({"index": "by_text", "text": []})
+        with self.assertRaises(OperationFailure):
+            compile_search_phrase_query({"index": "by_text", "phrase": {"query": ""}})
+        with self.assertRaises(OperationFailure):
+            compile_search_autocomplete_query({"index": "by_text", "autocomplete": {"query": "!!!"}})
+        with self.assertRaises(OperationFailure):
+            compile_search_wildcard_query({"index": "by_text", "wildcard": {"query": ""}})
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query({"index": "vec", "path": "", "queryVector": [1], "limit": 1})
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query({"index": "vec", "path": "embedding", "queryVector": [1], "limit": 1, "filter": []})
+
     def test_compile_search_stage_supports_phrase_operator(self) -> None:
         self.assertEqual(
             compile_search_stage(
@@ -349,6 +489,27 @@ class SearchCoreTests(unittest.TestCase):
                 paths=("title",),
             ),
         )
+
+    def test_compound_and_clause_compilers_cover_more_error_paths(self) -> None:
+        with self.assertRaises(OperationFailure):
+            search_module._compile_search_clause(index_name="by_text", clause_name="exists", clause_spec={})
+        with self.assertRaises(OperationFailure):
+            compile_search_compound_query({"index": "by_text", "compound": []})
+        with self.assertRaises(OperationFailure):
+            compile_search_compound_query({"index": "by_text", "compound": {}})
+        with self.assertRaises(OperationFailure):
+            compile_search_compound_query({"index": "by_text", "compound": {"unsupported": []}})
+        with self.assertRaises(OperationFailure):
+            compile_search_compound_query({"index": "by_text", "compound": {"must": [1]}})
+        with self.assertRaises(OperationFailure):
+            compile_search_compound_query(
+                {
+                    "index": "by_text",
+                    "compound": {
+                        "must": [{"text": {"query": "ada"}, "phrase": {"query": "ada"}}],
+                    },
+                }
+            )
 
     def test_compile_search_stage_supports_compound_operator(self) -> None:
         self.assertEqual(
@@ -425,6 +586,33 @@ class SearchCoreTests(unittest.TestCase):
                 normalized_pattern="ada*",
                 paths=("title",),
             ),
+        )
+
+    def test_search_matchers_cover_empty_entries_and_non_matching_paths(self) -> None:
+        definition = SearchIndexDefinition(
+            {"mappings": {"dynamic": False, "fields": {"title": {"type": "string"}}}},
+            name="by_text",
+        )
+        self.assertFalse(
+            matches_search_autocomplete_query(
+                {"title": ""},
+                definition=definition,
+                query=SearchAutocompleteQuery(index_name="by_text", raw_query="Ada", terms=("ada",), paths=("title",)),
+            )
+        )
+        self.assertFalse(
+            matches_search_wildcard_query(
+                {"title": ""},
+                definition=definition,
+                query=SearchWildcardQuery(index_name="by_text", raw_query="*ada*", normalized_pattern="*ada*", paths=("title",)),
+            )
+        )
+        self.assertFalse(
+            matches_search_query(
+                {"title": "Ada"},
+                definition=definition,
+                query=SearchTextQuery(index_name="by_text", raw_query="Ada", terms=("ada",), paths=("body",)),
+            )
         )
 
     def test_compile_search_stage_rejects_missing_or_conflicting_text_clause(self) -> None:
@@ -1149,6 +1337,46 @@ class SearchCoreTests(unittest.TestCase):
                 )
                 self.assertEqual(normalized["fields"][0]["similarity"], similarity)
 
+    def test_validate_vector_search_definition_accepts_local_ann_settings(self) -> None:
+        normalized = validate_search_index_definition(
+            {
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": 3,
+                        "similarity": "cosine",
+                        "connectivity": 16,
+                        "expansionAdd": 32,
+                        "expansionSearch": 64,
+                    }
+                ]
+            },
+            index_type="vectorSearch",
+        )
+        self.assertEqual(normalized["fields"][0]["connectivity"], 16)
+        self.assertEqual(normalized["fields"][0]["expansionAdd"], 32)
+        self.assertEqual(normalized["fields"][0]["expansionSearch"], 64)
+
+    def test_validate_vector_search_definition_rejects_invalid_local_ann_settings(self) -> None:
+        for option_name in ("connectivity", "expansionAdd", "expansionSearch"):
+            with self.subTest(option=option_name):
+                with self.assertRaises(OperationFailure):
+                    validate_search_index_definition(
+                        {
+                            "fields": [
+                                {
+                                    "type": "vector",
+                                    "path": "embedding",
+                                    "numDimensions": 3,
+                                    "similarity": "cosine",
+                                    option_name: 0,
+                                }
+                            ]
+                        },
+                        index_type="vectorSearch",
+                    )
+
     def test_search_private_helpers_cover_empty_and_invalid_vector_specs(self) -> None:
         self.assertEqual(
             search_module._vector_field_specs(SearchIndexDefinition({}, name="by_text")),
@@ -1172,6 +1400,108 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertIsNone(search_module._cosine_similarity((0.0,), (1.0,)))
         self.assertAlmostEqual(search_module._cosine_similarity((1.0, 0.0), (1.0, 0.0)) or 0.0, 1.0)
+
+    def test_search_contract_helpers_cover_additional_error_paths(self) -> None:
+        with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
+            compile_classic_text_query({"$search": "Ada", "$language": "en"})
+        with self.assertRaisesRegex(OperationFailure, "searchable token"):
+            compile_classic_text_query({"$search": "!!!"})
+        with self.assertRaisesRegex(OperationFailure, "single-field text index"):
+            resolve_classic_text_index(
+                [EngineIndexRecord(name="content_text", fields=["content"], key=[("content", "text")], unique=False)],
+                hinted_name="missing",
+            )
+        with self.assertRaisesRegex(OperationFailure, "must be the first stage"):
+            validate_search_stage_pipeline(
+                [{"$match": {"x": 1}}, {"$vectorSearch": {"index": "vec", "path": "embedding", "queryVector": [1], "limit": 1}}]
+            )
+        with self.assertRaisesRegex(OperationFailure, "unsupported local \\$search operator"):
+            search_module._compile_search_clause(index_name="by_text", clause_name="near", clause_spec={})
+
+        self.assertEqual(search_module.iter_classic_text_values({"tags": ["Ada", 1, "Grace"]}, "tags"), ("Ada", "Grace"))
+        self.assertEqual(search_module.iter_classic_text_values({"tags": 1}, "tags"), ())
+
+    def test_search_clause_compilers_cover_invalid_shapes_and_matching_fallbacks(self) -> None:
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            compile_search_text_query({"text": "bad"})
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            compile_search_phrase_query({"phrase": "bad"})
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            compile_search_autocomplete_query({"autocomplete": "bad"})
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            compile_search_wildcard_query({"wildcard": "bad"})
+        with self.assertRaisesRegex(OperationFailure, "entries must be documents"):
+            compile_search_compound_query({"compound": {"must": ["bad"]}})
+        with self.assertRaisesRegex(OperationFailure, "require exactly one operator"):
+            compile_search_compound_query(
+                {"compound": {"must": [{"text": {"query": "ada"}, "phrase": {"query": "ada"}}]}}
+            )
+        with self.assertRaisesRegex(OperationFailure, "minimumShouldMatch must be a non-negative integer"):
+            compile_search_compound_query(
+                {"compound": {"should": [{"text": {"query": "ada"}}], "minimumShouldMatch": -1}}
+            )
+
+        definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="default")
+        self.assertFalse(
+            matches_search_autocomplete_query(
+                {"name": None},
+                definition=definition,
+                query=SearchAutocompleteQuery(index_name="default", raw_query="Ada", terms=("ada",), paths=("name",)),
+            )
+        )
+        self.assertFalse(
+            matches_search_wildcard_query(
+                {"name": None},
+                definition=definition,
+                query=SearchWildcardQuery(index_name="default", raw_query="Ada*", normalized_pattern="ada*", paths=("name",)),
+            )
+        )
+        with self.assertRaisesRegex(OperationFailure, "unsupported local search query type"):
+            matches_search_query(
+                {"name": "Ada"},
+                definition=definition,
+                query=SearchVectorQuery(index_name="vec", path="embedding", query_vector=(1.0,), limit=1, num_candidates=1),
+            )
+
+    def test_vector_scoring_and_explain_helpers_cover_non_cosine_variants(self) -> None:
+        dot_definition = SearchIndexDefinition(
+            {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2, "similarity": "dotProduct"}]},
+            name="vec",
+            index_type="vectorSearch",
+        )
+        self.assertEqual(
+            score_vector_document(
+                {"embedding": [1.0, 2.0]},
+                definition=dot_definition,
+                query=SearchVectorQuery(index_name="vec", path="embedding", query_vector=(2.0, 3.0), limit=1, num_candidates=1),
+            ),
+            8.0,
+        )
+
+        euclidean_definition = SearchIndexDefinition(
+            {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2, "similarity": "euclidean"}]},
+            name="vec",
+            index_type="vectorSearch",
+        )
+        self.assertEqual(
+            score_vector_document(
+                {"embedding": [2.0, 2.0]},
+                definition=euclidean_definition,
+                query=SearchVectorQuery(index_name="vec", path="embedding", query_vector=(1.0, 2.0), limit=1, num_candidates=1),
+            ),
+            -1.0,
+        )
+        compound = SearchCompoundQuery(
+            index_name="by_text",
+            must=(SearchTextQuery(index_name="by_text", raw_query="Ada", terms=("Ada",), paths=("title",)),),
+            should=(),
+            filter=(),
+            must_not=(),
+            minimum_should_match=0,
+        )
+        details = search_query_explain_details(compound)
+        self.assertEqual(details["queryOperator"], "compound")
+        self.assertEqual(details["compound"]["must"], 1)
 
 
 if __name__ == "__main__":

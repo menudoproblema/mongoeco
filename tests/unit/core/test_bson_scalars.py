@@ -1,6 +1,7 @@
 import decimal
 import math
 import unittest
+from unittest.mock import patch
 
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Decimal128
@@ -52,6 +53,8 @@ class BsonScalarTests(unittest.TestCase):
             BsonInt64(1 << 80)
         with self.assertRaises(TypeError):
             BsonInt32(True)
+        with self.assertRaises(TypeError):
+            BsonInt64("bad")  # type: ignore[arg-type]
 
     def test_bson_numeric_alias_and_unwrap_support_wrappers(self):
         wrapped = BsonInt64(1 << 40)
@@ -144,12 +147,14 @@ class BsonScalarTests(unittest.TestCase):
         wrapped_decimal128 = wrap_bson_numeric(Decimal128("10.25"))
         self.assertEqual(wrapped_decimal128, BsonDecimal128(decimal.Decimal("10.25")))
         self.assertEqual(_numeric_to_decimal(Decimal128("3.5")), decimal.Decimal("3.5"))
+        self.assertEqual(compare_bson_numeric(1.5, 1.5), 0)
         self.assertEqual(compare_bson_numeric(1.5, 2.5), -1)
         self.assertEqual(compare_bson_numeric(2.5, 1.5), 1)
         self.assertEqual(compare_bson_numeric(Decimal128("2.50"), decimal.Decimal("2.5")), 0)
         self.assertEqual(compare_bson_numeric(float("inf"), float("inf")), 0)
         self.assertEqual(compare_bson_numeric(1.0, float("inf")), -1)
         self.assertEqual(compare_bson_numeric(1.0, float("-inf")), 1)
+        self.assertEqual(compare_bson_numeric(decimal.Decimal("2.5"), decimal.Decimal("2.5")), 0)
 
     def test_bson_arithmetic_overflow_divide_and_mod_edge_cases(self):
         with self.assertRaises(BsonScalarOverflowError):
@@ -208,6 +213,7 @@ class BsonScalarTests(unittest.TestCase):
         self.assertEqual(_numeric_template_metadata(1.5), ("double", False))
         self.assertEqual(_numeric_template_metadata(1), ("int", False))
         self.assertEqual(_numeric_template_metadata(1 << 40), ("long", False))
+        self.assertEqual(_numeric_template_metadata(True), (None, False))
         with self.assertRaises(BsonScalarOverflowError):
             _numeric_template_metadata(1 << 80)
 
@@ -231,3 +237,10 @@ class BsonScalarTests(unittest.TestCase):
         self.assertEqual(bson_rewrap_numeric(5, BsonInt64(1 << 40)), BsonInt64(5))
         with self.assertRaises(BsonScalarOverflowError):
             _wrap_from_templates(1 << 80, BsonInt64(1 << 40))
+        with self.assertRaises(TypeError):
+            with patch("mongoeco.core.bson_scalars.wrap_bson_numeric", return_value=BsonDouble(1.5)):
+                bson_bitwise("and", BsonInt32(3), 1)
+
+    def test_bson_multiply_decimal_path_uses_wrapped_result(self):
+        result = bson_multiply(BsonInt32(2), Decimal128("1.5"))
+        self.assertEqual(result, BsonDecimal128(decimal.Decimal("3.0")))

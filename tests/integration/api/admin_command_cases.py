@@ -129,11 +129,15 @@ async def assert_server_status_command_returns_local_runtime_metadata(case, engi
                     )
                     case.assertEqual(
                         status["mongoeco"]["engineRuntime"]["search"]["backend"],
-                        "fts5-or-python-fallback",
+                        "fts5-or-usearch-or-python-fallback",
                     )
                     case.assertIn(
                         "fts5Available",
                         status["mongoeco"]["engineRuntime"]["search"],
+                    )
+                    case.assertEqual(
+                        status["mongoeco"]["engineRuntime"]["search"]["vectorBackend"],
+                        "usearch",
                     )
                     case.assertIn(
                         "ensuredMultikeyPhysicalIndexCount",

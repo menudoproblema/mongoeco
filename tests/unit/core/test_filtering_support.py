@@ -72,3 +72,12 @@ class FilteringSupportTests(unittest.TestCase):
         self.assertEqual(extract_all_candidates(document, "authors.tenant"), ["t2", "t2"])
         self.assertEqual(extract_all_candidates(document, "items.tags"), ["a", "b", "c", "a", "b", "c"])
         self.assertEqual(extract_all_candidates(document, ""), [])
+
+    def test_filtering_support_helpers_cover_mapping_redirect_and_array_candidate_paths(self):
+        ref = DBRef("users", "ada", extras={"tags": ["eu", "admin"]})
+        self.assertEqual(extract_values(ref, "tags"), [["eu", "admin"], "eu", "admin"])
+        self.assertEqual(get_field_value(ref, "$id"), (True, "ada"))
+
+        document = {"items": [[{"name": "Ada"}], []], "tags": [["a", "b"]]}
+        self.assertEqual(extract_all_candidates(document, "items.0.name"), ["Ada", "Ada", "Ada"])
+        self.assertEqual(extract_all_candidates(document, "tags.0"), ["a", "b", "a"])

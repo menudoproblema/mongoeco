@@ -15,6 +15,10 @@ async def _noop() -> None:
 
 
 class SyncClientUnitTests(unittest.TestCase):
+    def test_sync_runner_helper_rethrows_helper_errors(self):
+        with self.assertRaisesRegex(RuntimeError, "boom"):
+            _SyncRunner._rethrow_helper_error({"error": RuntimeError("boom")})
+
     def test_sync_runner_cleans_up_pending_tasks_on_close(self):
         runner = _SyncRunner()
 
@@ -83,6 +87,27 @@ class SyncClientUnitTests(unittest.TestCase):
         runner._runner = ClosedLoopRunner()
         runner._cleanup_pending_tasks()
 
+    def test_sync_runner_cleanup_tolerates_timeout_while_draining_pending_tasks(self):
+        runner = _SyncRunner()
+
+        async def _spawn_background():
+            async def _background():
+                await asyncio.sleep(3600)
+
+            asyncio.create_task(_background())
+            await asyncio.sleep(0)
+
+        try:
+            runner.run(_spawn_background())
+
+            async def _timeout(*_args, **_kwargs):
+                raise TimeoutError
+
+            with patch("mongoeco.api._sync.client.asyncio.wait_for", side_effect=_timeout):
+                runner._cleanup_pending_tasks()
+        finally:
+            runner.close()
+
     def test_sync_runner_close_tolerates_get_loop_failure_inside_running_loop(self):
         runner = _SyncRunner()
 
@@ -128,8 +153,18 @@ class SyncClientUnitTests(unittest.TestCase):
             worker.join()
         finally:
             runner.close()
-
         self.assertEqual(captured, [None])
+
+    def test_sync_database_change_stream_properties_delegate_to_async_database(self):
+        client = MongoClient()
+        try:
+            database = client.get_database("db")
+            state = database.change_stream_state()
+            backend = database.change_stream_backend_info()
+            self.assertIn("retainedEvents", state)
+            self.assertIn("persistent", backend)
+        finally:
+            client.close()
 
     def test_sync_runner_close_supports_active_event_loop(self):
         runner = _SyncRunner()

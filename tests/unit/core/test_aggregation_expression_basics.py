@@ -55,6 +55,20 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             AggregationSpillPolicy(threshold=0)
 
+    def test_aggregation_spill_policy_covers_inline_sort_and_missing_file_cleanup(self):
+        policy = AggregationSpillPolicy(threshold=2)
+        documents = [{"_id": "2"}, {"_id": "1"}]
+        self.assertEqual(
+            [doc["_id"] for doc in policy.sort_with_spill(documents, [("_id", 1)])],
+            ["1", "2"],
+        )
+
+        with patch("mongoeco.core.aggregation.spill.os.unlink", side_effect=FileNotFoundError):
+            self.assertEqual(
+                [doc["_id"] for doc in policy.maybe_spill("$sort", [{"_id": "2"}, {"_id": "1"}, {"_id": "3"}])],
+                ["2", "1", "3"],
+            )
+
     def test_evaluate_expression_rejects_currently_unsupported_operators_explicitly(self):
         document = {"value": "10", "tags": ["a", "b"]}
 

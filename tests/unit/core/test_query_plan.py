@@ -2,6 +2,8 @@ import re
 import unittest
 import uuid
 
+from shapely.geometry import MultiPoint, Point, box as shapely_box
+
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80, MongoDialect
 from mongoeco.errors import OperationFailure
 from mongoeco.core.query_plan import (
@@ -86,6 +88,35 @@ class QueryPlanTests(unittest.TestCase):
 
         self.assertIsInstance(plan, DeferredQueryNode)
         self.assertEqual(plan.issue.scope, "query")
+
+    def test_geo_query_plan_rejects_invalid_local_runtime_shapes(self):
+        with self.assertRaisesRegex(ValueError, "\\$geoWithin requires a document specification"):
+            compile_filter({"location": {"$geoWithin": "bad"}})
+        with self.assertRaisesRegex(OperationFailure, "only supports Polygon or MultiPolygon"):
+            compile_filter(
+                {
+                    "location": {
+                        "$geoWithin": {
+                            "$geometry": {"type": "Point", "coordinates": [0, 0]},
+                        }
+                    }
+                }
+            )
+        with self.assertRaisesRegex(ValueError, "\\$geoIntersects requires a \\$geometry document"):
+            compile_filter({"location": {"$geoIntersects": {}}})
+        with self.assertRaisesRegex(ValueError, "\\$near requires a \\$geometry point"):
+            compile_filter({"location": {"$near": {}}})
+        with self.assertRaisesRegex(OperationFailure, "\\$nearSphere.\\$minDistance must be a non-negative finite number"):
+            compile_filter(
+                {
+                    "location": {
+                        "$nearSphere": {
+                            "$geometry": {"type": "Point", "coordinates": [0, 0]},
+                            "$minDistance": -1,
+                        }
+                    }
+                }
+            )
 
     def test_compile_filter_produces_typed_field_conditions(self):
         plan = compile_filter({"name": "Ada", "age": {"$gte": 18}})
@@ -384,30 +415,31 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({"$where": "this.a > 1"})
 
     def test_compile_filter_supports_local_geo_subset(self):
-        self.assertEqual(
-            compile_filter(
-                {
-                    "location": {
-                        "$geoWithin": {
-                            "$box": [[-1, -1], [1, 1]],
-                        }
+        box_plan = compile_filter(
+            {
+                "location": {
+                    "$geoWithin": {
+                        "$box": [[-1, -1], [1, 1]],
                     }
                 }
-            ),
-            GeoWithinCondition("location", "box", ((-1.0, -1.0), (1.0, 1.0))),
+            }
         )
-        self.assertEqual(
-            compile_filter(
-                {
-                    "location": {
-                        "$geoIntersects": {
-                            "$geometry": {"type": "Point", "coordinates": [1, 2]},
-                        }
+        self.assertEqual(box_plan.field, "location")
+        self.assertEqual(box_plan.geometry_kind, "box")
+        self.assertTrue(box_plan.geometry.equals(shapely_box(-1.0, -1.0, 1.0, 1.0)))
+
+        intersects_plan = compile_filter(
+            {
+                "location": {
+                    "$geoIntersects": {
+                        "$geometry": {"type": "Point", "coordinates": [1, 2]},
                     }
                 }
-            ),
-            GeoIntersectsCondition("location", "point", (1.0, 2.0)),
+            }
         )
+        self.assertEqual(intersects_plan.field, "location")
+        self.assertEqual(intersects_plan.geometry_kind, "point")
+        self.assertTrue(intersects_plan.geometry.equals(Point(1.0, 2.0)))
         self.assertEqual(
             compile_filter(
                 {
@@ -428,11 +460,44 @@ class QueryPlanTests(unittest.TestCase):
 
     def test_compile_filter_rejects_unsupported_geo_shapes(self):
         with self.assertRaises(OperationFailure):
-            compile_filter({"location": {"$geoWithin": {"$geometry": {"type": "LineString", "coordinates": []}}}})
+            compile_filter({"location": {"$geoWithin": {"$geometry": {"type": "LineString", "coordinates": [[0, 0], [1, 1]]}}}})
         with self.assertRaises(OperationFailure):
-            compile_filter({"location": {"$geoIntersects": {"$geometry": {"type": "MultiPoint", "coordinates": []}}}})
+            compile_filter({"location": {"$geoIntersects": {"$geometry": {"type": "Circle", "coordinates": [0, 0]}}}})
         with self.assertRaises(OperationFailure):
             compile_filter({"location": {"$near": {"$geometry": {"type": "Polygon", "coordinates": []}}}})
+
+    def test_compile_filter_supports_broader_local_geo_shapes(self):
+        within_plan = compile_filter(
+            {
+                "location": {
+                    "$geoWithin": {
+                        "$geometry": {
+                            "type": "MultiPolygon",
+                            "coordinates": [
+                                [[[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]]],
+                                [[[9, 9], [11, 9], [11, 11], [9, 11], [9, 9]]],
+                            ],
+                        }
+                    }
+                }
+            }
+        )
+        self.assertEqual(within_plan.geometry_kind, "multipolygon")
+
+        intersects_plan = compile_filter(
+            {
+                "location": {
+                    "$geoIntersects": {
+                        "$geometry": {
+                            "type": "MultiPoint",
+                            "coordinates": [[1, 2], [3, 4]],
+                        }
+                    }
+                }
+            }
+        )
+        self.assertEqual(intersects_plan.geometry_kind, "multipoint")
+        self.assertTrue(intersects_plan.geometry.equals(MultiPoint([(1, 2), (3, 4)])))
 
     def test_compile_filter_accepts_bits_all_set_with_dedicated_test(self):
         self.assertEqual(

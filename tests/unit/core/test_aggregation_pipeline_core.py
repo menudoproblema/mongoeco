@@ -7,14 +7,20 @@ import uuid
 from copy import deepcopy
 from unittest.mock import ANY, patch
 
-from mongoeco.compat import MongoDialect
+from mongoeco.compat import MongoDialect, MONGODB_DIALECT_70
 import mongoeco.core.aggregation.accumulators as accumulators_module
 import mongoeco.core.aggregation.grouping_stages as grouping_stages
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.aggregation.accumulators import _AccumulatorBucket, _OrderedAccumulator
-from mongoeco.core.aggregation.stages import _sort_window_for_following_slices
+from mongoeco.core.aggregation.stages import (
+    _apply_fill_output,
+    _densify_datetime_delta,
+    _require_densify_value,
+    _resolve_densify_bounds,
+    _sort_window_for_following_slices,
+)
 from mongoeco.core.aggregation import (
     _ACCUMULATOR_FLAGS_KEY,
     _MISSING,
@@ -144,6 +150,87 @@ class AggregationPipelineCoreTests(unittest.TestCase):
             ],
         )
 
+    def test_densify_and_fill_cover_validation_and_helper_paths(self):
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            apply_pipeline([{"x": 1}], [{"$densify": []}])
+        with self.assertRaisesRegex(OperationFailure, "field must be a non-empty string"):
+            apply_pipeline([{"x": 1}], [{"$densify": {"field": "", "range": {"step": 1, "bounds": "full"}}}])
+        with self.assertRaisesRegex(OperationFailure, "partitionByFields must be a list"):
+            apply_pipeline([{"x": 1}], [{"$densify": {"field": "x", "partitionByFields": [""], "range": {"step": 1, "bounds": "full"}}}])
+        with self.assertRaisesRegex(OperationFailure, "range must be a document"):
+            apply_pipeline([{"x": 1}], [{"$densify": {"field": "x", "range": []}}])
+        with self.assertRaisesRegex(OperationFailure, "positive number"):
+            apply_pipeline([{"x": 1}], [{"$densify": {"field": "x", "range": {"step": 0, "bounds": "full"}}}])
+        with self.assertRaisesRegex(OperationFailure, "range.unit must be a string"):
+            apply_pipeline([{"x": datetime.datetime.now(datetime.UTC)}], [{"$densify": {"field": "x", "range": {"step": 1, "bounds": "full", "unit": 1}}}])
+
+        with self.assertRaisesRegex(OperationFailure, "sortBy must be a single-field document"):
+            apply_pipeline([{"order": 1}], [{"$fill": {"sortBy": {}, "output": {"x": {"value": 1}}}}])
+        with self.assertRaisesRegex(OperationFailure, "sortBy directions must be 1 or -1"):
+            apply_pipeline([{"order": 1}], [{"$fill": {"sortBy": {"order": 0}, "output": {"x": {"value": 1}}}}])
+        with self.assertRaisesRegex(OperationFailure, "partitionByFields must be a list"):
+            apply_pipeline([{"order": 1}], [{"$fill": {"sortBy": {"order": 1}, "partitionByFields": [""], "output": {"x": {"value": 1}}}}])
+        with self.assertRaisesRegex(OperationFailure, "output must be a non-empty document"):
+            apply_pipeline([{"order": 1}], [{"$fill": {"sortBy": {"order": 1}, "output": {}}}])
+
+        with self.assertRaisesRegex(OperationFailure, "densified field to exist"):
+            _require_densify_value({}, "x")
+        with self.assertRaisesRegex(OperationFailure, "numeric or date values only"):
+            _require_densify_value({"x": "bad"}, "x")
+        self.assertEqual(_resolve_densify_bounds("full", [1, 3]), (1, 3))
+        self.assertEqual(_resolve_densify_bounds([1, 5], [2, 4]), (1, 5))
+        self.assertEqual(_densify_datetime_delta(2, "hour"), datetime.timedelta(hours=2))
+        with self.assertRaisesRegex(OperationFailure, "require a unit"):
+            _densify_datetime_delta(1, None)
+        with self.assertRaisesRegex(OperationFailure, "millisecond/second/minute/hour/day units"):
+            _densify_datetime_delta(1, "month")
+
+        linear_docs = [
+            {"order": 1, "value": datetime.datetime(2024, 1, 1, 0, 0, 0)},
+            {"order": 2, "value": None},
+            {"order": 3, "value": datetime.datetime(2024, 1, 1, 0, 0, 10)},
+        ]
+        _apply_fill_output(linear_docs, "value", {"method": "linear"})
+        self.assertEqual(linear_docs[1]["value"], datetime.datetime(2024, 1, 1, 0, 0, 5))
+        with self.assertRaisesRegex(OperationFailure, "supports only value, locf or linear"):
+            _apply_fill_output([{"x": None}], "x", {"method": "future"})
+        with self.assertRaisesRegex(OperationFailure, "output fields must be documents"):
+            _apply_fill_output([{"x": None}], "x", 1)
+        with self.assertRaisesRegex(OperationFailure, "supports only numeric or date values"):
+            _apply_fill_output([{"x": "a"}, {"x": None}, {"x": "b"}], "x", {"method": "linear"})
+
+    def test_densify_and_fill_cover_none_partition_fields_and_gap_skips(self):
+        result = apply_pipeline(
+            [{"x": 1}, {"x": 2}],
+            [{"$densify": {"field": "x", "partitionByFields": None, "range": {"step": 1, "bounds": "full"}}}],
+        )
+        self.assertEqual(result, [{"x": 1}, {"x": 2}])
+
+        filled = apply_pipeline(
+            [{"order": 1, "value": 1}, {"order": 2, "value": None}],
+            [{"$fill": {"sortBy": {"order": 1}, "partitionByFields": None, "output": {"value": {"method": "locf"}}}}],
+        )
+        self.assertEqual(filled[1]["value"], 1)
+
+    def test_fill_and_densify_helpers_cover_remaining_scalar_paths(self):
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            apply_pipeline([{"order": 1}], [{"$fill": []}])
+
+        with self.assertRaisesRegex(OperationFailure, "full' or a \\[lower, upper\\] pair"):
+            _resolve_densify_bounds("range", [1, 2])
+
+        self.assertEqual(_densify_datetime_delta(1, "second"), datetime.timedelta(seconds=1))
+        self.assertEqual(_densify_datetime_delta(2, "minute"), datetime.timedelta(minutes=2))
+        self.assertEqual(_densify_datetime_delta(3, "day"), datetime.timedelta(days=3))
+
+        docs = [{"value": None}, {"value": 2}, {}]
+        _apply_fill_output(docs, "value", {"value": 7})
+        self.assertEqual(docs, [{"value": 7}, {"value": 2}, {"value": 7}])
+
+        adjacent = [{"value": 1}, {"value": 2}]
+        _apply_fill_output(adjacent, "value", {"method": "linear"})
+        self.assertEqual(adjacent, [{"value": 1}, {"value": 2}])
+
     def test_pipeline_supports_coll_stats_stage_with_count_and_storage_stats(self):
         result = apply_pipeline(
             [],
@@ -198,6 +285,18 @@ class AggregationPipelineCoreTests(unittest.TestCase):
                 [{"$collStats": {"storageStats": {"scale": 0}}}],
                 collection_stats_resolver=resolver,
             )
+        with self.assertRaisesRegex(OperationFailure, "requires a collection stats resolver"):
+            apply_pipeline([], [{"$collStats": {"count": {}}}])
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            apply_pipeline([], [{"$collStats": []}], collection_stats_resolver=resolver)
+        with self.assertRaisesRegex(OperationFailure, "requires at least one of count or storageStats"):
+            apply_pipeline([], [{"$collStats": {}}], collection_stats_resolver=resolver)
+        with self.assertRaisesRegex(OperationFailure, "count must be an empty document"):
+            apply_pipeline([], [{"$collStats": {"count": 1}}], collection_stats_resolver=resolver)
+        with self.assertRaisesRegex(OperationFailure, "storageStats must be a document"):
+            apply_pipeline([], [{"$collStats": {"storageStats": 1}}], collection_stats_resolver=resolver)
+        with self.assertRaisesRegex(OperationFailure, "supports only scale"):
+            apply_pipeline([], [{"$collStats": {"storageStats": {"future": True}}}], collection_stats_resolver=resolver)
 
     def test_pipeline_supports_geo_near_for_local_points(self):
         documents = [
@@ -242,6 +341,86 @@ class AggregationPipelineCoreTests(unittest.TestCase):
                 },
             ],
         )
+
+    def test_geo_near_stage_covers_validation_and_skip_paths(self):
+        documents = [{"_id": "a", "location": {"type": "LineString", "coordinates": [[0, 0], [1, 1]]}}]
+
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            apply_pipeline(documents, [{"$geoNear": []}])
+        with self.assertRaisesRegex(OperationFailure, "requires near"):
+            apply_pipeline(documents, [{"$geoNear": {"key": "location", "distanceField": "dist"}}])
+        with self.assertRaisesRegex(OperationFailure, "distanceField must be a non-empty string"):
+            apply_pipeline(documents, [{"$geoNear": {"near": [0, 0], "key": "location", "distanceField": ""}}])
+        with self.assertRaisesRegex(OperationFailure, "key must be a non-empty string"):
+            apply_pipeline(documents, [{"$geoNear": {"near": [0, 0], "key": "", "distanceField": "dist"}}])
+        with self.assertRaisesRegex(OperationFailure, "query must be a document"):
+            apply_pipeline(documents, [{"$geoNear": {"near": [0, 0], "key": "location", "distanceField": "dist", "query": []}}])
+        with self.assertRaisesRegex(OperationFailure, "includeLocs must be a non-empty string"):
+            apply_pipeline(documents, [{"$geoNear": {"near": [0, 0], "key": "location", "distanceField": "dist", "includeLocs": ""}}])
+        with self.assertRaisesRegex(OperationFailure, "minDistance must be a non-negative number"):
+            apply_pipeline(documents, [{"$geoNear": {"near": [0, 0], "key": "location", "distanceField": "dist", "minDistance": -1}}])
+        with self.assertRaisesRegex(OperationFailure, "maxDistance must be a non-negative number"):
+            apply_pipeline(documents, [{"$geoNear": {"near": [0, 0], "key": "location", "distanceField": "dist", "maxDistance": -1}}])
+
+        result = apply_pipeline(
+            [{"_id": "a"}, {"_id": "b", "location": "bad"}],
+            [{"$geoNear": {"near": [0, 0], "key": "location", "distanceField": "dist"}}],
+        )
+        self.assertEqual(result, [])
+
+        distance_filtered = apply_pipeline(
+            [
+                {"_id": "a", "location": {"type": "Point", "coordinates": [0, 0]}},
+                {"_id": "b", "location": {"type": "Point", "coordinates": [10, 0]}},
+            ],
+            [
+                {
+                    "$geoNear": {
+                        "near": {"type": "Point", "coordinates": [0, 0]},
+                        "key": "location",
+                        "distanceField": "dist",
+                        "minDistance": 1,
+                        "maxDistance": 9,
+                    }
+                }
+            ],
+        )
+        self.assertEqual(distance_filtered, [])
+
+    def test_pipeline_supports_geo_near_for_non_point_planar_geometries(self):
+        documents = [
+            {
+                "_id": "a",
+                "location": {"type": "LineString", "coordinates": [[0, 0], [3, 0]]},
+                "active": True,
+            },
+            {
+                "_id": "b",
+                "location": {
+                    "type": "Polygon",
+                    "coordinates": [[[4, -1], [6, -1], [6, 1], [4, 1], [4, -1]]],
+                },
+                "active": True,
+            },
+        ]
+
+        result = apply_pipeline(
+            documents,
+            [
+                {
+                    "$geoNear": {
+                        "near": {"type": "Point", "coordinates": [1, 1]},
+                        "key": "location",
+                        "distanceField": "dist",
+                        "query": {"active": True},
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual([document["_id"] for document in result], ["a", "b"])
+        self.assertAlmostEqual(result[0]["dist"], 1.0)
+        self.assertGreater(result[1]["dist"], result[0]["dist"])
 
     def test_pipeline_supports_unwind_string_path(self):
         documents = [
@@ -1344,6 +1523,39 @@ class AggregationPipelineCoreTests(unittest.TestCase):
         self.assertIsNone(
             _sort_window_for_following_slices(
                 [{"$sort": {"score": 1}}],
+                0,
+            )
+        )
+
+    def test_compiled_pipeline_helpers_cover_registered_stage_and_guard_paths(self):
+        def _registered_stage(documents, spec, context):
+            del spec, context
+            return list(documents)
+
+        register_aggregation_stage("$testRegistered", _registered_stage)
+        try:
+            self.assertIsNone(compile_pipeline([{"$testRegistered": {}}]))
+        finally:
+            unregister_aggregation_stage("$testRegistered")
+
+        with patch("mongoeco.core.aggregation.compiled_pipeline.compile_pipeline", side_effect=RuntimeError("boom")):
+            self.assertFalse(CompiledPipelinePlan.supports([{"$match": {"x": 1}}]))
+
+        with self.assertRaisesRegex(AssertionError, "unsupported compiled document step"):
+            from mongoeco.core.aggregation.compiled_pipeline import _compile_document_step
+
+            _compile_document_step("$skip", 1, dialect=MONGODB_DIALECT_70)
+
+        with self.assertRaisesRegex(OperationFailure, "\\$match requires a document specification"):
+            compile_pipeline([{"$match": []}])
+
+        self.assertIsNone(
+            _sort_window_for_following_slices(
+                [
+                    {"$sort": {"score": 1}},
+                    {"$limit": 2},
+                    {"$skip": 1},
+                ],
                 0,
             )
         )

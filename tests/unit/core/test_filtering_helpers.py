@@ -7,15 +7,91 @@ import uuid
 from unittest.mock import patch
 
 import mongoeco.core.filtering as filtering_module
+from mongoeco.core._filtering_matching import FilteringMatchingMixin
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.bson_scalars import BsonInt32, BsonInt64
 from mongoeco.core.filtering import BSONComparator, QueryEngine
+from mongoeco.core.geo import (
+    geometry_intersects_geometry,
+    geometry_within_geometry,
+    parse_geo_box,
+    parse_geo_geometry,
+    parse_geo_point,
+    parse_geo_polygon,
+    planar_distance,
+    planar_distance_to_geometry,
+    point_in_box,
+    point_in_polygon,
+    point_matches_geometry,
+    _iter_geometry_coordinates,
+)
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, Timestamp, UNDEFINED, PlanningMode
 
 
 class FilteringHelperTests(unittest.TestCase):
+    def test_geo_helpers_cover_planar_geometries_and_validation_errors(self):
+        kind, point = parse_geo_geometry({"type": "Point", "coordinates": [1, 2]})
+        self.assertEqual(kind, "point")
+        self.assertEqual(parse_geo_point([1, 2]), (1.0, 2.0))
+        polygon = parse_geo_polygon(
+            {
+                "type": "Polygon",
+                "coordinates": [[[0, 0], [2, 0], [2, 2], [0, 0]]],
+            }
+        )
+        area_box = parse_geo_box([[0, 0], [2, 2]])
+
+        self.assertTrue(point_in_box((1, 2), area_box))
+        self.assertTrue(point_in_polygon((1, 1), polygon))
+        self.assertEqual(planar_distance((0, 0), (3, 4)), 5.0)
+        self.assertEqual(planar_distance_to_geometry((1, 2), point), 0.0)
+        self.assertTrue(point_matches_geometry((1, 2), "point", point))
+        self.assertTrue(geometry_within_geometry(point, area_box))
+        self.assertTrue(geometry_intersects_geometry(point, area_box))
+        polygon_with_hole = parse_geo_polygon(
+            {
+                "type": "Polygon",
+                "coordinates": [
+                    [[0, 0], [4, 0], [4, 4], [0, 4], [0, 0]],
+                    [[1, 1], [1, 2], [2, 2], [2, 1], [1, 1]],
+                ],
+            }
+        )
+        self.assertTrue(point_matches_geometry((0.5, 0.5), "polygon", polygon_with_hole))
+
+        collection_kind, collection = parse_geo_geometry(
+            {
+                "type": "GeometryCollection",
+                "geometries": [
+                    {"type": "Point", "coordinates": [0, 0]},
+                    {"type": "LineString", "coordinates": [[0, 0], [1, 1]]},
+                ],
+            }
+        )
+        self.assertEqual(collection_kind, "geometrycollection")
+        self.assertGreaterEqual(len(list(_iter_geometry_coordinates(collection))), 3)
+
+        with self.assertRaisesRegex(OperationFailure, "finite numeric coordinates"):
+            parse_geo_point([1, float("inf")])
+        with self.assertRaisesRegex(OperationFailure, "Point coordinates must be a \\[x, y\\] pair"):
+            parse_geo_point({"type": "Point", "coordinates": [1]})
+        with self.assertRaisesRegex(OperationFailure, "must be a GeoJSON Point or a legacy \\[x, y\\] pair"):
+            parse_geo_point("bad")
+        with self.assertRaisesRegex(OperationFailure, "only supports GeoJSON Point values"):
+            parse_geo_point({"type": "LineString", "coordinates": [[0, 0], [1, 1]]})
+        with self.assertRaisesRegex(OperationFailure, "GeoJSON Polygon values"):
+            parse_geo_polygon({"type": "Point", "coordinates": [0, 0]})
+        with self.assertRaisesRegex(OperationFailure, "must be a \\[\\[x1, y1\\], \\[x2, y2\\]\\] pair"):
+            parse_geo_box([1, 2, 3])
+        with self.assertRaisesRegex(OperationFailure, "must be a supported GeoJSON geometry document"):
+            parse_geo_geometry("bad")
+        with self.assertRaisesRegex(OperationFailure, "must not be empty"):
+            parse_geo_geometry({"type": "GeometryCollection", "geometries": []})
+        with self.assertRaisesRegex(OperationFailure, "unsupported planar geometry type"):
+            list(_iter_geometry_coordinates(object()))
+
     def test_query_engine_handles_nan_comparison_without_crashing(self):
         self.assertTrue(QueryEngine.match({"value": math.nan}, {"value": math.nan}))
 
@@ -33,6 +109,36 @@ class FilteringHelperTests(unittest.TestCase):
         self.assertFalse(QueryEngine.match({"value": smaller}, {"value": "000000000000000000000001"}))
         self.assertTrue(QueryEngine.match({"value": smaller}, {"value": smaller}))
         self.assertTrue(QueryEngine.match({"value": larger}, {"value": {"$gt": smaller}}))
+
+    def test_query_engine_fast_comparison_paths_cover_scalar_and_array_branches(self):
+        self.assertTrue(QueryEngine._comparison_matches_candidate(3, 2, ">"))
+        self.assertTrue(QueryEngine._comparison_matches_candidate(3, 3, ">="))
+        self.assertTrue(QueryEngine._comparison_matches_candidate(2, 3, "<"))
+        self.assertTrue(QueryEngine._comparison_matches_candidate(2, 2, "<="))
+        self.assertTrue(FilteringMatchingMixin._query_equality_matches("Ada", "Ada", null_matches_undefined=False))
+        self.assertTrue(QueryEngine._query_equality_matches("Ada", "Ada", null_matches_undefined=False))
+        self.assertTrue(QueryEngine._query_equality_matches(3, 3, null_matches_undefined=False))
+        self.assertTrue(QueryEngine.match({"value": 3}, {"value": 3}))
+        self.assertTrue(FilteringMatchingMixin._match_top_level_comparison({"value": "d"}, "value", "c", ">"))
+        self.assertTrue(FilteringMatchingMixin._match_top_level_comparison({"value": "d"}, "value", "d", ">="))
+        self.assertTrue(FilteringMatchingMixin._match_top_level_comparison({"value": "b"}, "value", "c", "<"))
+        self.assertTrue(QueryEngine._match_top_level_comparison({"value": "d"}, "value", "c", ">"))
+        self.assertTrue(QueryEngine._match_top_level_comparison({"value": "d"}, "value", "d", ">="))
+        self.assertTrue(QueryEngine._match_top_level_comparison({"value": "b"}, "value", "c", "<"))
+        self.assertTrue(QueryEngine._match_top_level_comparison({"value": [1, 4]}, "value", 3, ">"))
+        self.assertTrue(FilteringMatchingMixin._match_top_level_comparison({"value": ["d", "a"]}, "value", "c", ">"))
+        self.assertTrue(QueryEngine._match_top_level_comparison({"value": ["d", "a"]}, "value", "c", ">"))
+        self.assertTrue(QueryEngine._match_top_level_comparison({"value": 4}, "value", 3, ">"))
+        self.assertTrue(QueryEngine._match_top_level_comparison({"value": 4}, "value", 4, ">="))
+        self.assertTrue(QueryEngine._match_top_level_comparison({"value": 2}, "value", 3, "<"))
+        self.assertTrue(QueryEngine._match_top_level_comparison({"value": [4]}, "value", 3, ">"))
+        self.assertFalse(QueryEngine._comparison_matches_candidate([1, 2], 1, ">"))
+        with self.assertRaisesRegex(ValueError, "Unsupported comparison operator kind"):
+            QueryEngine._comparison_matches_candidate(1, 1, "bad")
+        with self.assertRaisesRegex(ValueError, "Unsupported comparison operator kind"):
+            QueryEngine._match_top_level_comparison({"value": 1}, "value", 1, "bad")
+        with self.assertRaisesRegex(ValueError, "Unsupported comparison operator kind"):
+            QueryEngine._evaluate_comparison({"value": {"nested": ["d", "a"]}}, "value.nested", "c", "bad")
 
     def test_bson_comparator_respects_document_and_array_structure(self):
         self.assertNotEqual(
@@ -124,6 +230,42 @@ class FilteringHelperTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             QueryEngine.match_plan({"a": 1}, UnknownPlan())
+
+    def test_query_engine_helpers_cover_path_mapping_geo_candidates_and_assert_never(self):
+        self.assertEqual(QueryEngine._path_mapping({"a": {"b": 1}}), {"a": {"b": 1}})
+
+        candidates = QueryEngine._geo_candidates(
+            {
+                "shape": {"type": "Point", "coordinates": [0, 0]},
+                "nested": [{"shape": {"type": "Point", "coordinates": [0, 0]}}],
+                "bad": {"type": "Point", "coordinates": [0, "x"]},
+            },
+            "shape",
+        )
+        self.assertEqual(len(candidates), 1)
+
+        self.assertTrue(
+            QueryEngine._evaluate_near(
+                {
+                    "shape": [
+                        {"type": "Point", "coordinates": [0, 0]},
+                        {"type": "Point", "coordinates": [5, 0]},
+                    ]
+                },
+                "shape",
+                (0.0, 0.0),
+                min_distance=1.0,
+                max_distance=10.0,
+                spherical=False,
+            )
+        )
+
+        class UnknownConcretePlan(QueryNode):
+            pass
+
+        with patch.object(filtering_module, "is_concrete_query_node", return_value=True):
+            with self.assertRaises(AssertionError):
+                QueryEngine.match_plan({"a": 1}, UnknownConcretePlan())
 
     def test_query_engine_extract_values_handles_indexed_scalar_nested_array(self):
         document = {"items": [[1, 2], [3, 4]]}
@@ -563,5 +705,61 @@ class FilteringHelperTests(unittest.TestCase):
             QueryEngine.match(
                 document,
                 {"home": {"$nearSphere": {"$geometry": {"type": "Point", "coordinates": [10, 10]}, "$maxDistance": 2}}},
+            )
+        )
+
+    def test_query_engine_supports_broader_planar_geo_shapes(self):
+        document = {
+            "route": {"type": "LineString", "coordinates": [[0, 0], [4, 0]]},
+            "zone": {
+                "type": "MultiPolygon",
+                "coordinates": [
+                    [[[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]]],
+                    [[[9, 9], [11, 9], [11, 11], [9, 11], [9, 9]]],
+                ],
+            },
+            "mixed": {
+                "type": "GeometryCollection",
+                "geometries": [
+                    {"type": "Point", "coordinates": [10, 10]},
+                    {"type": "LineString", "coordinates": [[2, 2], [4, 4]]},
+                ],
+            },
+        }
+
+        self.assertTrue(
+            QueryEngine.match(
+                document,
+                {
+                    "route": {
+                        "$geoIntersects": {
+                            "$geometry": {"type": "Point", "coordinates": [2, 0]},
+                        }
+                    }
+                },
+            )
+        )
+        self.assertTrue(
+            QueryEngine.match(
+                document,
+                {
+                    "zone": {
+                        "$geoWithin": {
+                            "$geometry": {
+                                "type": "MultiPolygon",
+                                "coordinates": [
+                                    [[[-2, -2], [2, -2], [2, 2], [-2, 2], [-2, -2]]],
+                                    [[[8, 8], [12, 8], [12, 12], [8, 12], [8, 8]]],
+                                ],
+                            }
+                        }
+                    }
+                },
+            )
+        )
+        self.assertTrue(
+            QueryEngine.match(
+                document,
+                {"mixed": {"$near": {"$geometry": {"type": "Point", "coordinates": [3, 3]}, "$maxDistance": 2}}},
             )
         )

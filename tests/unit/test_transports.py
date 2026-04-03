@@ -4,10 +4,13 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import AsyncMock, patch
 
+import mongoeco.driver.transports as transport_module
 from mongoeco.driver.connections import DriverConnection, PoolKey
 from mongoeco.driver.security import TlsPolicy
 from mongoeco.driver.topology import ServerDescription
 from mongoeco.driver.transports import (
+    _advance_session_from_response,
+    _wrap_connection_failure,
     CallbackCommandTransport,
     LocalCommandTransport,
     StreamConnectionResource,
@@ -247,6 +250,168 @@ class CommandTransportTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(continue_command["saslContinue"], 1)
         self.assertEqual(continue_command["conversationId"], 1)
 
+    async def test_wire_transport_send_authenticates_enabled_resources_before_roundtrip(self):
+        connection = DriverConnection(
+            connection_id="conn-1",
+            server=ServerDescription("db1:27017"),
+            pool_key=PoolKey(address="db1:27017", tls=False),
+            created_at_monotonic=0.0,
+            last_used_at_monotonic=0.0,
+            resource=None,
+        )
+        registry = _FakeRegistry(connection)
+        transport = WireProtocolCommandTransport(
+            registry,
+            tls_policy=TlsPolicy(enabled=False, verify_certificates=True),
+            connect_timeout_ms=250,
+        )
+        resource = StreamConnectionResource(reader=asyncio.StreamReader(), writer=_FakeWriter())
+        execution = SimpleNamespace(
+            connection="lease-1",
+            plan=SimpleNamespace(
+                auth_policy=SimpleNamespace(enabled=True),
+                request=SimpleNamespace(payload={"ping": 1}, database="admin", session=None),
+            ),
+        )
+
+        with patch.object(transport, "_ensure_resource", new=AsyncMock(return_value=resource)), patch.object(
+            transport,
+            "_authenticate_resource",
+            new=AsyncMock(),
+        ) as auth_mock, patch.object(
+            transport,
+            "_roundtrip",
+            new=AsyncMock(return_value={"ok": 1.0}),
+        ) as roundtrip_mock:
+            response = await transport.send(execution)
+
+        self.assertEqual(response, {"ok": 1.0})
+        auth_mock.assert_awaited_once_with(resource, execution)
+        roundtrip_mock.assert_awaited_once()
+
+    async def test_wire_transport_authenticate_uses_plain_authenticate_for_non_scram_mechanisms(self):
+        transport = WireProtocolCommandTransport(
+            _FakeRegistry(),
+            tls_policy=TlsPolicy(enabled=False, verify_certificates=True),
+            connect_timeout_ms=250,
+        )
+        resource = StreamConnectionResource(
+            reader=asyncio.StreamReader(),
+            writer=_FakeWriter(),
+        )
+        execution = SimpleNamespace(
+            connection="lease-1",
+            plan=SimpleNamespace(
+                auth_policy=SimpleNamespace(
+                    mechanism="MONGODB-X509",
+                    username="CN=ada",
+                    password=None,
+                    source="$external",
+                ),
+                request=SimpleNamespace(database="admin"),
+            ),
+        )
+
+        with patch.object(
+            transport,
+            "_roundtrip",
+            new=AsyncMock(return_value={"ok": 1.0}),
+        ) as roundtrip_mock:
+            await transport._authenticate_resource(resource, execution)
+
+        self.assertTrue(resource.authenticated)
+        payload = roundtrip_mock.await_args.args[1]
+        self.assertEqual(
+            payload,
+            {
+                "authenticate": 1,
+                "mechanism": "MONGODB-X509",
+                "user": "CN=ada",
+                "pwd": None,
+                "db": "$external",
+                "$db": "$external",
+            },
+        )
+
+    async def test_wire_transport_authenticate_requires_password_for_non_x509_mechanisms(self):
+        transport = WireProtocolCommandTransport(
+            _FakeRegistry(),
+            tls_policy=TlsPolicy(enabled=False, verify_certificates=True),
+            connect_timeout_ms=250,
+        )
+        resource = StreamConnectionResource(
+            reader=asyncio.StreamReader(),
+            writer=_FakeWriter(),
+        )
+        execution = SimpleNamespace(
+            connection="lease-2",
+            plan=SimpleNamespace(
+                auth_policy=SimpleNamespace(
+                    mechanism="PLAIN",
+                    username="ada",
+                    password=None,
+                    source="admin",
+                ),
+                request=SimpleNamespace(database="admin"),
+            ),
+        )
+
+        with self.assertRaisesRegex(OperationFailure, "requires a password"):
+            await transport._authenticate_resource(resource, execution)
+
+    async def test_wire_transport_scram_requires_integer_conversation_id(self):
+        registry = _FakeRegistry()
+        transport = WireProtocolCommandTransport(
+            registry,
+            tls_policy=TlsPolicy(enabled=False, verify_certificates=True),
+            connect_timeout_ms=250,
+        )
+        resource = StreamConnectionResource(
+            reader=asyncio.StreamReader(),
+            writer=_FakeWriter(),
+        )
+        execution = SimpleNamespace(
+            connection="lease-9",
+            plan=SimpleNamespace(
+                auth_policy=SimpleNamespace(
+                    mechanism="SCRAM-SHA-256",
+                    username="ada",
+                    password="secret",
+                    source="admin",
+                ),
+                request=SimpleNamespace(database="admin"),
+            ),
+        )
+
+        with patch.object(
+            transport,
+            "_roundtrip",
+            new=AsyncMock(
+                return_value={
+                    "ok": 1.0,
+                    "conversationId": "1",
+                    "payload": Binary(b"r=client-server,s=YQ==,i=15000"),
+                }
+            ),
+        ), patch(
+            "mongoeco.driver.transports.build_scram_client_start",
+            return_value=SimpleNamespace(
+                nonce="client",
+                first_bare="n=ada,r=client",
+                payload=b"n,,n=ada,r=client",
+            ),
+        ), patch(
+            "mongoeco.driver.transports.build_scram_client_final",
+            return_value=SimpleNamespace(
+                payload=b"c=biws,r=client-server,p=proof",
+                expected_server_signature="sig",
+            ),
+        ):
+            with self.assertRaisesRegex(OperationFailure, "integer conversationId"):
+                await transport._authenticate_resource(resource, execution)
+
+        self.assertEqual(registry.discarded, ["lease-9"])
+
     async def test_wire_transport_roundtrip_discards_broken_leases(self):
         registry = _FakeRegistry()
         transport = WireProtocolCommandTransport(
@@ -336,6 +501,28 @@ class CommandTransportTests(unittest.IsolatedAsyncioTestCase):
         ):
             with self.assertRaises(OperationFailure):
                 await transport._roundtrip(resource, {"ping": 1}, lease="lease-1")
+
+    async def test_wire_transport_roundtrip_decodes_op_msg_bodies(self):
+        transport = WireProtocolCommandTransport(
+            _FakeRegistry(),
+            tls_policy=TlsPolicy(enabled=False, verify_certificates=True),
+            connect_timeout_ms=250,
+        )
+        resource = StreamConnectionResource(
+            reader=_FakeReader([b"h" * 16, b"body"]),
+            writer=_FakeWriter(),
+        )
+
+        with patch("mongoeco.driver.transports.encode_op_msg_request", return_value=b"encoded"), patch(
+            "mongoeco.driver.transports.parse_message_header",
+            return_value=SimpleNamespace(message_length=20, op_code=transport_module.OP_MSG),
+        ), patch(
+            "mongoeco.driver.transports.decode_op_msg",
+            return_value=SimpleNamespace(body={"ok": 1.0, "pong": 1}),
+        ):
+            response = await transport._roundtrip(resource, {"ping": 1}, lease="lease-1")
+
+        self.assertEqual(response, {"ok": 1.0, "pong": 1})
 
     async def test_wire_transport_ensure_resource_reuses_existing_streams_and_can_open_tls_connections(self):
         transport = WireProtocolCommandTransport(
@@ -442,6 +629,39 @@ class CommandTransportTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response["ok"], 1.0)
         self.assertEqual(session.operation_time, 15)
         self.assertEqual(session.cluster_time, 18)
+
+    def test_wire_transport_payload_and_error_helpers_cover_remaining_branches(self):
+        class _PatchedBsonBinary:
+            def __init__(self, data: bytes):
+                self._data = data
+
+            def __bytes__(self):
+                return self._data
+
+        with patch.object(transport_module, "BsonBinary", _PatchedBsonBinary):
+            self.assertEqual(
+                WireProtocolCommandTransport._binary_payload_bytes(_PatchedBsonBinary(b"abc"), "cmd"),
+                b"abc",
+            )
+        self.assertEqual(WireProtocolCommandTransport._binary_payload_bytes(b"raw", "cmd"), b"raw")
+        with self.assertRaisesRegex(OperationFailure, "binary payload"):
+            WireProtocolCommandTransport._binary_payload_bytes("bad", "cmd")
+        with self.assertRaisesRegex(OperationFailure, "requires nonce"):
+            WireProtocolCommandTransport._extract_scram_nonce("s=value,i=15000")
+
+    def test_session_advance_and_connection_failure_helpers_cover_guard_branches(self):
+        class _SessionWithoutHooks:
+            advance_cluster_time = None
+            advance_operation_time = None
+
+        _advance_session_from_response(None, {"ok": 1.0})
+        _advance_session_from_response(_SessionWithoutHooks(), {"ok": 1.0})
+
+        wrapped = ConnectionFailure("already wrapped")
+        self.assertIs(_wrap_connection_failure(wrapped, "ignored"), wrapped)
+
+        value_error = ValueError("boom")
+        self.assertIs(_wrap_connection_failure(value_error, "ignored"), value_error)
 
 
 if __name__ == "__main__":

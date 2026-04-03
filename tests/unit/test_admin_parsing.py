@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from mongoeco.api.admin_parsing import (
     normalize_command_batch_size,
@@ -124,11 +125,14 @@ class AdminParsingTests(unittest.TestCase):
 
         self.assertTrue(options.name_only)
         self.assertEqual(options.filter_spec, {"name": "analytics"})
+        self.assertIsNone(normalize_command_sort_document(None))
         self.assertEqual(normalize_filter_document(None), {})
         self.assertEqual(normalize_filter_document({"active": True}), {"active": True})
 
         with self.assertRaises(TypeError):
             normalize_filter_document(["bad"])
+        with self.assertRaises(TypeError):
+            normalize_list_databases_options({"comment": 1})
 
     def test_command_helper_normalizers_cover_sort_hint_projection_batch_and_find_and_modify(self):
         self.assertEqual(normalize_command_sort_document({"name": 1}), [("name", 1)])
@@ -187,11 +191,19 @@ class AdminParsingTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             normalize_find_and_modify_options({"findAndModify": "users", "collation": []})
         with self.assertRaises(TypeError):
+            normalize_find_and_modify_options({"findAndModify": "users", "update": 1})
+        with self.assertRaises(TypeError):
             normalize_find_and_modify_options({"findAndModify": "users", "bypassDocumentValidation": 1})
         pipeline_options = normalize_find_and_modify_options(
             {"findAndModify": "users", "update": [{"$set": {"rank": 1}}]}
         )
         self.assertEqual(pipeline_options.update_spec, [{"$set": {"rank": 1}}])
+        with patch("mongoeco.api.admin_parsing._normalize_sort_spec", return_value=None):
+            self.assertIsNone(normalize_command_sort_document({"name": 1}))
+
+    def test_insert_document_normalizer_rejects_non_document_items(self):
+        with self.assertRaises(TypeError):
+            normalize_insert_documents([{"_id": "1"}, 2])  # type: ignore[list-item]
 
 
 if __name__ == "__main__":

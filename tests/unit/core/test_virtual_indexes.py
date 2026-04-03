@@ -17,6 +17,7 @@ from mongoeco.core.query_plan import (
 from mongoeco.engines.virtual_indexes import (
     _compare_bounds,
     _compile_regex_condition,
+    _index_key,
     _implies_same_field_condition,
     _plan_implies,
     _plan_implies_exists_true,
@@ -220,6 +221,27 @@ class VirtualIndexTests(unittest.TestCase):
             },
         )
 
+    def test_virtual_index_helpers_cover_hidden_invalid_and_empty_usage_paths(self):
+        hidden_index = EngineIndexRecord(
+            name="hidden_email",
+            fields=["email"],
+            key=[("email", 1)],
+            unique=False,
+            hidden=True,
+            sparse=True,
+        )
+
+        self.assertFalse(query_can_use_index(hidden_index, compile_filter({"email": "a@example.com"})))
+        self.assertFalse(
+            query_can_use_index(
+                {"name": "bad_key", "fields": ["email"], "key": [("email", "hashed")]},
+                compile_filter({"email": "a@example.com"}),
+            )
+        )
+        self.assertIsNone(describe_virtual_index_usage([], MatchAll()))
+        self.assertEqual(_index_key({"fields": ["email"]}), [("email", 1)])
+        self.assertIsNone(_index_key({}))
+
     def test_partial_index_implication_handles_or_and_exists_requirements(self):
         partial_index = EngineIndexRecord(
             name="active_or_premium",
@@ -342,6 +364,7 @@ class VirtualIndexTests(unittest.TestCase):
         self.assertTrue(_same_field_regex_implies(RegexCondition("name", "^ad", "i"), regex))
         self.assertFalse(_same_field_regex_implies(EqualsCondition("name", 3), regex))
         self.assertFalse(_same_field_regex_implies(InCondition("name", (1,)), regex))
+        self.assertFalse(_same_field_regex_implies(InCondition("name", ()), regex))
         self.assertFalse(_same_field_regex_implies(MatchAll(), regex))
         self.assertIsNotNone(_compile_regex_condition(RegexCondition("body", "^ada$", "imsx")).search("Ada\n"))
 
@@ -412,6 +435,30 @@ class VirtualIndexTests(unittest.TestCase):
             _implies_same_field_condition(
                 InCondition("score", (5,)),
                 EqualsCondition("score", 5),
+            )
+        )
+        self.assertFalse(
+            _implies_same_field_condition(
+                MatchAll(),
+                EqualsCondition("score", 5),
+            )
+        )
+        self.assertFalse(
+            _implies_same_field_condition(
+                InCondition("other", (5,)),
+                InCondition("score", (5, 6)),
+            )
+        )
+        self.assertTrue(
+            _implies_same_field_condition(
+                EqualsCondition("score", 7),
+                GreaterThanCondition("score", 5),
+            )
+        )
+        self.assertFalse(
+            _implies_same_field_condition(
+                MatchAll(),
+                MatchAll(),
             )
         )
         self.assertTrue(

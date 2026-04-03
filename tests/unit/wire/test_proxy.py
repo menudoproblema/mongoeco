@@ -4,6 +4,7 @@ import uuid
 import struct
 import ast
 from pathlib import Path
+from types import SimpleNamespace
 
 from mongoeco.errors import ExecutionTimeout, MongoEcoError, OperationFailure, PyMongoError
 from mongoeco.wire.protocol import OP_MSG, OP_QUERY, parse_message_header
@@ -18,6 +19,7 @@ from mongoeco.wire.proxy import AsyncMongoEcoProxyServer
 from mongoeco.wire.scram import build_scram_client_final
 from mongoeco.wire.surface import WireSurface
 from mongoeco.wire.sessions import WireSessionStore
+from mongoeco.wire._executor_validation import validate_wire_command_document
 
 
 class WireProxyUnitTests(unittest.TestCase):
@@ -65,6 +67,112 @@ class WireProxyUnitTests(unittest.TestCase):
         }
 
         self.assertIn("mongoeco.wire._executor_validation", imported_modules)
+
+    def test_wire_command_validation_covers_more_shape_errors(self):
+        def _validate(name: str, body: dict, command_document: dict):
+            return validate_wire_command_document(body, command_document, capability=SimpleNamespace(name=name))
+
+        with self.assertRaisesRegex(OperationFailure, "wire profile level must be an integer"):
+            _validate("profile", {}, {"profile": True})
+        with self.assertRaisesRegex(OperationFailure, "wire profile slowms must be an integer"):
+            _validate("profile", {}, {"profile": 1, "slowms": "10"})
+        with self.assertRaisesRegex(OperationFailure, "wire aggregate allowDiskUse must be a bool"):
+            _validate("aggregate", {}, {"aggregate": "events", "pipeline": [], "allowDiskUse": "yes"})
+        with self.assertRaisesRegex(OperationFailure, "wire aggregate let must be a document"):
+            _validate("aggregate", {}, {"aggregate": "events", "pipeline": [], "let": []})
+        with self.assertRaisesRegex(OperationFailure, "wire aggregate cursor must be a document"):
+            _validate("aggregate", {}, {"aggregate": "events", "pipeline": [], "cursor": []})
+        with self.assertRaisesRegex(OperationFailure, "wire distinct requires a non-empty key string"):
+            _validate("distinct", {}, {"distinct": "events", "key": ""})
+        with self.assertRaisesRegex(OperationFailure, "wire validate scandata must be a bool"):
+            _validate("validate", {}, {"validate": "events", "scandata": 1})
+        with self.assertRaisesRegex(OperationFailure, "wire validate background must be a bool or null"):
+            _validate("validate", {}, {"validate": "events", "background": "yes"})
+        with self.assertRaisesRegex(OperationFailure, "wire listIndexes comment must be a string"):
+            _validate("listIndexes", {}, {"listIndexes": "events", "comment": 1})
+        with self.assertRaisesRegex(OperationFailure, "wire createIndexes"):
+            _validate("createIndexes", {}, {"createIndexes": "events", "indexes": "bad"})
+        with self.assertRaisesRegex(OperationFailure, "wire dropIndexes comment must be a string"):
+            _validate("dropIndexes", {}, {"dropIndexes": "events", "index": "*", "comment": 1})
+        with self.assertRaisesRegex(OperationFailure, "wire findAndModify let must be a dict"):
+            _validate("findAndModify", {}, {"findAndModify": "events", "query": {}, "let": []})
+        with self.assertRaisesRegex(OperationFailure, "wire listCollections comment must be a string"):
+            _validate("listCollections", {}, {"listCollections": 1, "comment": 1})
+        with self.assertRaisesRegex(OperationFailure, "wire listDatabases filter must be a document"):
+            _validate("listDatabases", {}, {"listDatabases": 1, "filter": []})
+        with self.assertRaisesRegex(OperationFailure, "wire endSessions requires a list"):
+            _validate("endSessions", {}, {"endSessions": "bad"})
+
+    def test_wire_command_validation_covers_more_find_auth_and_payload_paths(self):
+        def _validate(name: str, body: dict, command_document: dict):
+            return validate_wire_command_document(body, command_document, capability=SimpleNamespace(name=name))
+
+        with self.assertRaisesRegex(OperationFailure, "requires db"):
+            _validate("authenticate", {"db": ""}, {"authenticate": 1, "mechanism": "SCRAM-SHA-256", "user": "ada"})
+        with self.assertRaisesRegex(OperationFailure, "wire find requires a non-empty collection name"):
+            _validate("find", {}, {"find": "", "filter": {}})
+        with self.assertRaisesRegex(OperationFailure, "sort must be a list"):
+            _validate("find", {}, {"find": "events", "hint": 1.5})
+        with self.assertRaisesRegex(OperationFailure, "max_time_ms must be >= 0"):
+            _validate("find", {}, {"find": "events", "maxTimeMS": -1})
+        with self.assertRaisesRegex(OperationFailure, "authorizedCollections must be a bool"):
+            _validate("listCollections", {}, {"listCollections": 1, "authorizedCollections": "yes"})
+        with self.assertRaisesRegex(OperationFailure, "comment must be a string"):
+            _validate("listDatabases", {}, {"listDatabases": 1, "comment": 1})
+        with self.assertRaisesRegex(OperationFailure, "aggregate cursor must be a document"):
+            _validate("aggregate", {}, {"aggregate": "events", "pipeline": [], "cursor": []})
+        with self.assertRaisesRegex(OperationFailure, "sort must be a list"):
+            _validate("aggregate", {}, {"aggregate": "events", "pipeline": [], "hint": 1.5})
+        with self.assertRaisesRegex(OperationFailure, "findAndModify",):
+            _validate("findAndModify", {}, {"findAndModify": "events", "query": [], "update": {"$set": {"x": 1}}})
+        with self.assertRaisesRegex(OperationFailure, "findAndModify",):
+            _validate("findAndModify", {}, {"findAndModify": "events", "query": {}, "sort": [], "update": {"$set": {"x": 1}}})
+        with self.assertRaisesRegex(OperationFailure, "findAndModify",):
+            _validate("findAndModify", {}, {"findAndModify": "events", "query": {}, "fields": [], "update": {"$set": {"x": 1}}})
+        with self.assertRaisesRegex(OperationFailure, "wire insert requires a non-empty documents list"):
+            _validate("insert", {}, {"insert": "events", "documents": []})
+        with self.assertRaisesRegex(OperationFailure, "wire killOp requires a non-empty string op"):
+            _validate("killOp", {}, {"killOp": 1, "op": ""})
+        with self.assertRaisesRegex(OperationFailure, "wire dbStats scale must be a positive integer"):
+            _validate("dbStats", {}, {"dbStats": 1, "scale": 0})
+        with self.assertRaisesRegex(OperationFailure, "wire listCollections filter must be a document"):
+            _validate("listCollections", {}, {"listCollections": 1, "filter": []})
+        with self.assertRaisesRegex(OperationFailure, "wire listDatabases nameOnly must be a bool"):
+            _validate("listDatabases", {}, {"listDatabases": 1, "nameOnly": "yes"})
+        with self.assertRaisesRegex(OperationFailure, "wire listIndexes requires a non-empty collection name"):
+            _validate("listIndexes", {}, {"listIndexes": ""})
+        with self.assertRaisesRegex(OperationFailure, "wire aggregate max_time_ms must be >= 0"):
+            _validate("aggregate", {}, {"aggregate": "events", "pipeline": [], "maxTimeMS": -1})
+        with self.assertRaisesRegex(OperationFailure, "sort must be a list"):
+            _validate(
+                "findAndModify",
+                {},
+                {"findAndModify": "events", "query": {}, "hint": 1.5},
+            )
+        with self.assertRaisesRegex(OperationFailure, "max_time_ms must be >= 0"):
+            _validate(
+                "findAndModify",
+                {},
+                {"findAndModify": "events", "query": {}, "maxTimeMS": -1},
+            )
+
+    def test_wire_command_validation_allows_simple_flag_and_collection_commands(self):
+        def _validate(name: str, body: dict, command_document: dict):
+            return validate_wire_command_document(body, command_document, capability=SimpleNamespace(name=name))
+
+        _validate("currentOp", {}, {"currentOp": 1})
+        _validate("listCollections", {}, {"listCollections": 1, "nameOnly": True, "filter": {"name": "events"}})
+        _validate("listDatabases", {}, {"listDatabases": 1, "nameOnly": False, "filter": {"name": "alpha"}})
+        _validate(
+            "aggregate",
+            {},
+            {"aggregate": "events", "pipeline": [], "cursor": {"batchSize": 2}},
+        )
+        _validate(
+            "findAndModify",
+            {},
+            {"findAndModify": "events", "query": {}, "hint": {"_id": 1}, "maxTimeMS": 5},
+        )
 
     def test_error_document_includes_catalog_metadata_and_labels(self):
         exc = ExecutionTimeout("took too long")

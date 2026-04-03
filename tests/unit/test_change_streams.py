@@ -211,6 +211,46 @@ class ChangeStreamHubTests(unittest.TestCase):
         with self.assertRaisesRegex(OperationFailure, "start_at_operation_time is no longer available"):
             hub.offset_at_or_after_cluster_time(1)
 
+    def test_hub_journal_helpers_cover_empty_wait_and_error_paths(self):
+        hub = ChangeStreamHub()
+        hub._events = []  # noqa: SLF001
+        self.assertEqual(hub.wait_for_event(0, timeout_seconds=0), (0, None))
+        hub._journal_path = None  # noqa: SLF001
+        hub._persist_locked()  # noqa: SLF001
+        with patch.object(hub, "_end_offset_locked", side_effect=[1, 0]):
+            self.assertEqual(hub.wait_for_event(0, timeout_seconds=0), (0, None))
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            log_path = f"{journal_path}.events"
+            hub = ChangeStreamHub(journal_path=journal_path)
+            hub._journal_event_log_path = log_path  # noqa: SLF001
+            hub._compact_locked()  # noqa: SLF001
+            hub._compact_locked()  # noqa: SLF001
+
+            with open(journal_path, "w", encoding="utf-8") as handle:
+                json.dump({"version": 0}, handle)
+            with self.assertRaisesRegex(OperationFailure, "could not be loaded"):
+                ChangeStreamHub(journal_path=journal_path)
+
+            os.remove(journal_path)
+            with open(journal_path, "w", encoding="utf-8") as handle:
+                json.dump({"version": 1, "base_offset": "bad", "next_token": 1, "events": []}, handle)
+            with self.assertRaisesRegex(OperationFailure, "could not be loaded"):
+                ChangeStreamHub(journal_path=journal_path)
+
+            os.remove(journal_path)
+            with open(log_path, "w", encoding="utf-8") as handle:
+                handle.write("{not-json}\n")
+            with self.assertRaisesRegex(OperationFailure, "could not be loaded"):
+                ChangeStreamHub(journal_path=journal_path)
+            os.remove(log_path)
+            with open(log_path, "w", encoding="utf-8") as handle:
+                handle.write("{}\n")
+            with patch("mongoeco._change_streams.hub.open", side_effect=OSError("boom")):
+                with self.assertRaisesRegex(OperationFailure, "could not be loaded"):
+                    ChangeStreamHub(journal_path=journal_path)
+
     def test_hub_persists_history_to_journal_and_rehydrates_resume_state(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             journal_path = os.path.join(temp_dir, "changes.json")

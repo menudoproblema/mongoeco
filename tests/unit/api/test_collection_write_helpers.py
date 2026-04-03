@@ -1,4 +1,5 @@
 from tests.unit.api._collection_test_support import *  # noqa: F403
+from mongoeco.session import ClientSession
 
 class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
     def test_insert_many_requires_non_empty_document_list(self):
@@ -116,6 +117,106 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
 
         with self.assertRaisesRegex(RuntimeError, "result count different"):
             asyncio.run(_exercise())
+
+    def test_insert_many_bulk_path_rejects_false_success_marker(self):
+        class EngineStub:
+            async def put_documents_bulk(self, *args, **kwargs):
+                return [True, False]
+
+        async def _exercise():
+            collection = AsyncCollection(EngineStub(), "db", "coll")
+            await collection.insert_many([{"_id": "1"}, {"_id": "2"}])
+
+        with self.assertRaisesRegex(DuplicateKeyError, "Duplicate key"):
+            asyncio.run(_exercise())
+
+    def test_insert_many_non_bulk_path_profiles_errors_and_observes_session(self):
+        class EngineStub:
+            async def put_document(self, *args, **kwargs):
+                raise RuntimeError("single boom")
+
+        async def _exercise_failure():
+            collection = AsyncCollection(EngineStub(), "db", "coll")
+            profiled = []
+
+            async def _profile_operation(**payload):
+                profiled.append(payload)
+
+            collection._profile_operation = _profile_operation  # type: ignore[method-assign]
+            with self.assertRaisesRegex(RuntimeError, "single boom"):
+                await collection.insert_many([{"_id": "1"}])
+            return profiled
+
+        async def _exercise_success():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                session = ClientSession()
+                published = []
+                collection._publish_change_event = lambda **payload: published.append(payload)  # type: ignore[method-assign]
+                result = await collection.insert_many([{"_id": "1"}, {"_id": "2"}], session=session)
+                return result.inserted_ids, session.operation_time, session.cluster_time, published
+            finally:
+                await engine.disconnect()
+
+        profiled = asyncio.run(_exercise_failure())
+        self.assertEqual(profiled[-1]["errmsg"], "single boom")
+
+        inserted_ids, operation_time, cluster_time, published = asyncio.run(_exercise_success())
+        self.assertEqual(inserted_ids, ["1", "2"])
+        self.assertIsNotNone(operation_time)
+        self.assertIsNotNone(cluster_time)
+        self.assertEqual([event["document_key"]["_id"] for event in published], ["1", "2"])
+
+    def test_insert_many_non_bulk_success_profiles_session_and_change_events(self):
+        class EngineStub:
+            async def put_document(self, *args, **kwargs):
+                return True
+
+        async def _exercise():
+            collection = AsyncCollection(EngineStub(), "db", "coll")
+            profiled = []
+            published = []
+            session = ClientSession()
+
+            async def _profile_operation(**payload):
+                profiled.append(payload)
+
+            collection._profile_operation = _profile_operation  # type: ignore[method-assign]
+            collection._publish_change_event = lambda **payload: published.append(payload)  # type: ignore[method-assign]
+            result = await collection.insert_many([{"_id": "1"}, {"_id": "2"}], session=session)
+            return result, profiled, published, session
+
+        result, profiled, published, session = asyncio.run(_exercise())
+        self.assertEqual(result.inserted_ids, ["1", "2"])
+        self.assertEqual(profiled[-1]["op"], "insert")
+        self.assertEqual([event["document_key"]["_id"] for event in published], ["1", "2"])
+        self.assertIsNotNone(session.operation_time)
+
+    def test_perform_upsert_update_delegates_to_collection_modify_module(self):
+        async def _exercise():
+            collection = AsyncCollection(MemoryEngine(), "db", "coll")
+            expected = UpdateResult(matched_count=0, modified_count=0, upserted_id="1")
+            with patch(
+                "mongoeco.api._async.collection._collection_modify.perform_upsert_update",
+                return_value=expected,
+            ) as modify:
+                result = await collection._perform_upsert_update(
+                    {"_id": "1"},
+                    {"$set": {"done": True}},
+                    session="session",  # type: ignore[arg-type]
+                    array_filters=[{"item.qty": {"$gt": 1}}],
+                    let={"tenant": "eu"},
+                    bypass_document_validation=True,
+                )
+            return result, modify.call_args
+
+        result, call_args = asyncio.run(_exercise())
+        self.assertEqual(result.upserted_id, "1")
+        self.assertEqual(call_args.args[1:], ({"_id": "1"}, {"$set": {"done": True}}))
+        self.assertEqual(call_args.kwargs["let"], {"tenant": "eu"})
+        self.assertTrue(call_args.kwargs["bypass_document_validation"])
 
     def test_find_one_profiles_direct_id_lookup_errors(self):
         class EngineStub:

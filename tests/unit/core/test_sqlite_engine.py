@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import mongoeco.core.search as search_module
 import os
 import sqlite3
 import threading
@@ -15,6 +16,7 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect70
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import MatchAll, compile_filter
+from mongoeco.core.search import compile_classic_text_query
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.sqlite import SQLiteEngine
@@ -492,6 +494,40 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(ValueError):
                 async for _ in self._scan(engine, "db", "coll", limit=-1):
                     pass
+        finally:
+            await engine.disconnect()
+
+    async def test_scan_collection_async_producer_flushes_batch_before_reraising_errors(self):
+        fd, path = tempfile.mkstemp(suffix=".sqlite")
+        os.close(fd)
+        engine = SQLiteEngine(path)
+        await engine.connect()
+        yielded = []
+
+        def broken_iter(*args, **kwargs):
+            del args, kwargs
+            yield {"_id": "1", "kind": "view"}
+            raise RuntimeError("boom")
+
+        try:
+            with patch.object(engine, "_iter_scan_documents_sync", side_effect=broken_iter):
+                with self.assertRaisesRegex(RuntimeError, "boom"):
+                    async for document in self._scan(engine, "db", "coll"):
+                        yielded.append(document)
+        finally:
+            await engine.disconnect()
+            if os.path.exists(path):
+                os.remove(path)
+
+        self.assertEqual(yielded, [{"_id": "1", "kind": "view"}])
+
+    async def test_sqlite_snapshot_options_and_profile_namespace_none_paths(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            self.assertEqual(engine._snapshot_bulk_insert_validation_options_sync("db", "missing", None), {})
+            self.assertIsNone(engine._get_document_sync("db", "system.profile", "missing", None))
+            self.assertFalse(engine._delete_document_sync("db", "system.profile", "missing", None))
         finally:
             await engine.disconnect()
 
@@ -1699,6 +1735,171 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn("physical_name", columns)
         self.assertIn("keys", columns)
+
+    async def test_connect_migrates_legacy_search_and_scalar_storage_shapes(self):
+        fd, path = tempfile.mkstemp(suffix=".sqlite")
+        os.close(fd)
+        legacy = sqlite3.connect(path, check_same_thread=False)
+        try:
+            legacy.execute(
+                """
+                CREATE TABLE collections (
+                    db_name TEXT NOT NULL,
+                    coll_name TEXT NOT NULL,
+                    PRIMARY KEY (db_name, coll_name)
+                )
+                """
+            )
+            legacy.execute(
+                """
+                CREATE TABLE documents (
+                    db_name TEXT NOT NULL,
+                    coll_name TEXT NOT NULL,
+                    storage_key TEXT NOT NULL,
+                    document TEXT NOT NULL,
+                    PRIMARY KEY (db_name, coll_name, storage_key)
+                )
+                """
+            )
+            legacy.execute(
+                """
+                CREATE TABLE indexes (
+                    db_name TEXT NOT NULL,
+                    coll_name TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    physical_name TEXT,
+                    fields TEXT NOT NULL,
+                    keys TEXT,
+                    unique_flag INTEGER NOT NULL,
+                    sparse_flag INTEGER NOT NULL DEFAULT 0,
+                    hidden_flag INTEGER NOT NULL DEFAULT 0,
+                    partial_filter_json TEXT,
+                    expire_after_seconds INTEGER,
+                    multikey_flag INTEGER NOT NULL DEFAULT 0,
+                    multikey_physical_name TEXT,
+                    PRIMARY KEY (db_name, coll_name, name)
+                )
+                """
+            )
+            legacy.execute(
+                """
+                CREATE TABLE search_indexes (
+                    db_name TEXT NOT NULL,
+                    coll_name TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    index_type TEXT NOT NULL,
+                    definition_json TEXT NOT NULL,
+                    PRIMARY KEY (db_name, coll_name, name)
+                )
+                """
+            )
+            legacy.execute(
+                """
+                CREATE TABLE multikey_entries (
+                    db_name TEXT NOT NULL,
+                    coll_name TEXT NOT NULL,
+                    index_name TEXT NOT NULL,
+                    storage_key TEXT NOT NULL,
+                    element_type TEXT NOT NULL,
+                    element_key TEXT NOT NULL
+                )
+                """
+            )
+            legacy.execute(
+                """
+                CREATE TABLE scalar_index_entries (
+                    db_name TEXT NOT NULL,
+                    coll_name TEXT NOT NULL,
+                    index_name TEXT NOT NULL,
+                    storage_key TEXT NOT NULL,
+                    element_type TEXT NOT NULL,
+                    element_key TEXT NOT NULL
+                )
+                """
+            )
+            payload = SQLiteEngine(path)._serialize_document({"_id": "1", "email": "ada@example.com", "tags": ["python"]})
+            legacy.execute("INSERT INTO collections (db_name, coll_name) VALUES (?, ?)", ("db", "coll"))
+            legacy.execute(
+                "INSERT INTO documents (db_name, coll_name, storage_key, document) VALUES (?, ?, ?, ?)",
+                ("db", "coll", repr("1"), payload),
+            )
+            legacy.execute(
+                """
+                INSERT INTO indexes (
+                    db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag,
+                    hidden_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "db",
+                    "coll",
+                    "email_1",
+                    "idx_email",
+                    '["email"]',
+                    '[["email", 1]]',
+                    0,
+                    0,
+                    0,
+                    None,
+                    None,
+                    1,
+                    "mkidx_email",
+                ),
+            )
+            legacy.execute(
+                """
+                INSERT INTO search_indexes (db_name, coll_name, name, index_type, definition_json)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    "db",
+                    "coll",
+                    "text",
+                    "search",
+                    '{"mappings": {"dynamic": true}}',
+                ),
+            )
+            legacy.commit()
+            legacy.close()
+
+            engine = SQLiteEngine(path)
+            await engine.connect()
+            try:
+                conn = engine._require_connection()
+                collection_columns = {row[1] for row in conn.execute("PRAGMA table_info(collections)").fetchall()}
+                index_columns = {row[1] for row in conn.execute("PRAGMA table_info(indexes)").fetchall()}
+                search_columns = {row[1] for row in conn.execute("PRAGMA table_info(search_indexes)").fetchall()}
+                multikey_columns = {row[1] for row in conn.execute("PRAGMA table_info(multikey_entries)").fetchall()}
+                scalar_columns = {row[1] for row in conn.execute("PRAGMA table_info(scalar_index_entries)").fetchall()}
+
+                self.assertIn("options_json", collection_columns)
+                self.assertIn("collection_id", collection_columns)
+                self.assertIn("scalar_physical_name", index_columns)
+                self.assertIn("physical_name", search_columns)
+                self.assertIn("ready_at_epoch", search_columns)
+                self.assertIn("collection_id", multikey_columns)
+                self.assertNotIn("db_name", multikey_columns)
+                self.assertIn("type_score", scalar_columns)
+                self.assertNotIn("db_name", scalar_columns)
+
+                scalar_name = conn.execute(
+                    "SELECT scalar_physical_name FROM indexes WHERE db_name = ? AND coll_name = ? AND name = ?",
+                    ("db", "coll", "email_1"),
+                ).fetchone()[0]
+                physical_name = conn.execute(
+                    "SELECT physical_name FROM search_indexes WHERE db_name = ? AND coll_name = ? AND name = ?",
+                    ("db", "coll", "text"),
+                ).fetchone()[0]
+                scalar_rows = conn.execute("SELECT COUNT(*) FROM scalar_index_entries").fetchone()[0]
+
+                self.assertTrue(scalar_name)
+                self.assertTrue(physical_name)
+                self.assertGreater(scalar_rows, 0)
+            finally:
+                await engine.disconnect()
+        finally:
+            if os.path.exists(path):
+                os.remove(path)
 
     async def test_list_indexes_includes_builtin_id_and_index_information_round_trips_key_spec(self):
         engine = SQLiteEngine()
@@ -4156,7 +4357,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             conn = engine._require_connection()
-            self.assertIsNone(engine._ensure_search_backend_sync(conn, "db", "coll", vector_definition, None))
+            self.assertEqual(
+                engine._ensure_search_backend_sync(conn, "db", "coll", vector_definition, None),
+                engine._physical_search_index_name("db", "coll", "vec"),
+            )
 
             with patch.object(engine, "_supports_fts5", return_value=False):
                 resolved = engine._ensure_search_backend_sync(conn, "db", "coll", definition, None)
@@ -4230,6 +4434,32 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(python_fallback.planning_issues[0].scope, "engine")
         self.assertEqual(python_fallback.planning_issues[0].message, "Collation requires Python fallback")
         self.assertTrue(python_fallback.details["virtual"])
+
+    async def test_sqlite_explain_find_semantics_covers_non_dict_detail_merges(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada"})
+            await engine.create_index("db", "coll", [("title", "text")], name="title_text")
+            semantics = compile_find_semantics({"title": "Ada"})
+            with patch("mongoeco.engines.sqlite.sqlite_pushdown_details", return_value="legacy"), patch(
+                "mongoeco.engines.sqlite.describe_virtual_index_usage",
+                return_value={"virtual": True},
+            ):
+                explanation = await engine.explain_find_semantics("db", "coll", semantics)
+            with patch("mongoeco.engines.sqlite.sqlite_pushdown_details", return_value="legacy"):
+                text_explanation = await engine.explain_find_semantics(
+                    "db",
+                    "coll",
+                    compile_find_semantics(text_query=compile_classic_text_query({"$search": "Ada"})),
+                )
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(explanation.details["pushdown"], "legacy")
+        self.assertIsInstance(explanation.details["engine_details"], list)
+        self.assertTrue(explanation.details["virtual"])
+        self.assertIn("textQuery", text_explanation.details)
 
     async def test_explain_elem_match_filter_reports_operator_pushdown_hint(self):
         engine = SQLiteEngine()
@@ -4308,13 +4538,182 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(runtime["planner"]["engine"], "sqlite")
         self.assertEqual(runtime["planner"]["pushdownModes"], ["sql", "hybrid", "python"])
         self.assertTrue(runtime["planner"]["hybridSortFallback"])
-        self.assertEqual(runtime["search"]["backend"], "fts5-or-python-fallback")
+        self.assertEqual(runtime["search"]["backend"], "fts5-or-usearch-or-python-fallback")
         self.assertEqual(runtime["search"]["declaredIndexCount"], 1)
         self.assertEqual(runtime["search"]["pendingIndexCount"], 1)
         self.assertGreaterEqual(runtime["search"]["ensuredBackendCount"], 0)
+        self.assertEqual(runtime["search"]["vectorBackend"], "usearch")
+        self.assertEqual(runtime["search"]["declaredVectorIndexCount"], 0)
+        self.assertEqual(runtime["search"]["pendingVectorIndexCount"], 0)
+        self.assertEqual(runtime["search"]["materializedVectorBackendCount"], 0)
         self.assertGreaterEqual(runtime["caches"]["indexMetadataVersionEntries"], 1)
         self.assertGreaterEqual(runtime["caches"]["collectionFeatureCacheEntries"], 0)
         self.assertGreaterEqual(runtime["caches"]["ensuredMultikeyPhysicalIndexCount"], 0)
+        self.assertGreaterEqual(runtime["caches"]["vectorSearchBackendCount"], 0)
+
+    async def test_sqlite_vector_search_uses_usearch_backend_and_reports_runtime_diagnostics(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "embedding": [1.0, 0.0, 0.0], "kind": "keep"})
+            await engine.put_document("db", "coll", {"_id": "2", "embedding": [0.9, 0.1, 0.0], "kind": "drop"})
+            await engine.put_document("db", "coll", {"_id": "3", "embedding": [0.0, 1.0, 0.0]})
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition(
+                    {
+                        "fields": [
+                            {
+                                "type": "vector",
+                                "path": "embedding",
+                                "numDimensions": 3,
+                                "similarity": "cosine",
+                                "connectivity": 8,
+                                "expansionAdd": 16,
+                                "expansionSearch": 24,
+                            }
+                        ]
+                    },
+                    name="vec",
+                    index_type="vectorSearch",
+                ),
+            )
+
+            results = await engine.search_documents(
+                "db",
+                "coll",
+                "$vectorSearch",
+                {
+                    "index": "vec",
+                    "path": "embedding",
+                    "queryVector": [1.0, 0.0, 0.0],
+                    "limit": 1,
+                    "numCandidates": 2,
+                    "filter": {"kind": "keep"},
+                },
+            )
+            explanation = await engine.explain_search_documents(
+                "db",
+                "coll",
+                "$vectorSearch",
+                {
+                    "index": "vec",
+                    "path": "embedding",
+                    "queryVector": [1.0, 0.0, 0.0],
+                    "limit": 1,
+                    "numCandidates": 2,
+                    "filter": {"kind": "keep"},
+                },
+            )
+            runtime = engine._runtime_diagnostics_info()
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual([document["_id"] for document in results], ["1"])
+        self.assertEqual(explanation.details["backend"], "usearch")
+        self.assertEqual(explanation.details["mode"], "ann")
+        self.assertTrue(explanation.details["backendMaterialized"])
+        self.assertEqual(explanation.details["filterMode"], "post-candidate")
+        self.assertEqual(explanation.details["exactFallbackReason"], None)
+        self.assertEqual(explanation.details["vectorBackend"]["backend"], "usearch")
+        self.assertEqual(explanation.details["vectorBackend"]["connectivity"], 8)
+        self.assertEqual(explanation.details["vectorBackend"]["expansionAdd"], 16)
+        self.assertEqual(explanation.details["vectorBackend"]["expansionSearch"], 24)
+        self.assertEqual(runtime["search"]["declaredVectorIndexCount"], 1)
+        self.assertEqual(runtime["search"]["materializedVectorBackendCount"], 1)
+        self.assertEqual(runtime["caches"]["vectorSearchBackendCount"], 1)
+
+    async def test_sqlite_vector_search_exact_fallback_and_explain_edge_paths(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "embedding": [1.0, 0.0], "kind": "keep"})
+            await engine.put_document("db", "coll", {"_id": "2", "embedding": [0.9, 0.1], "kind": "drop"})
+            await engine.put_document("db", "coll", {"_id": "3", "embedding": ["bad", 1.0], "kind": "keep"})
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition(
+                    {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2, "similarity": "cosine"}]},
+                    name="vec",
+                    index_type="vectorSearch",
+                ),
+            )
+
+            rows = engine._load_search_index_rows("db", "coll", name="vec")
+            definition, _physical_name, _ready_at_epoch = rows[0]
+            exact_hits = engine._exact_vector_hits_sync(
+                "db",
+                "coll",
+                definition,
+                search_module.compile_vector_search_query(  # type: ignore[name-defined]
+                    {
+                        "index": "vec",
+                        "path": "embedding",
+                        "queryVector": [1.0, 0.0],
+                        "limit": 2,
+                        "numCandidates": 2,
+                        "filter": {"kind": "keep"},
+                    }
+                ),
+            )
+            self.assertEqual([document["_id"] for _score, document in exact_hits], ["1"])
+
+            with patch(
+                "mongoeco.engines.sqlite.search_sqlite_vector_backend",
+                return_value=[(engine._storage_key("missing"), 0.1), (engine._storage_key("2"), 0.2)],
+            ):
+                fallback_docs = await engine.search_documents(
+                    "db",
+                    "coll",
+                    "$vectorSearch",
+                    {
+                        "index": "vec",
+                        "path": "embedding",
+                        "queryVector": [1.0, 0.0],
+                        "limit": 1,
+                        "numCandidates": 2,
+                        "filter": {"kind": "keep"},
+                    },
+                )
+            self.assertEqual([document["_id"] for document in fallback_docs], ["1"])
+
+            with patch(
+                "mongoeco.engines.sqlite.search_sqlite_vector_backend",
+                return_value=[(engine._storage_key("2"), 0.2)],
+            ):
+                explanation = await engine.explain_search_documents(
+                    "db",
+                    "coll",
+                    "$vectorSearch",
+                    {
+                        "index": "vec",
+                        "path": "embedding",
+                        "queryVector": [1.0, 0.0],
+                        "limit": 1,
+                        "numCandidates": 1,
+                        "filter": {"kind": "keep"},
+                    },
+                )
+            self.assertEqual(explanation.details["exactFallbackReason"], "post-filter-underflow")
+            self.assertEqual(explanation.details["documentsFiltered"], 1)
+
+            with self.assertRaisesRegex(OperationFailure, "search index not found"):
+                await engine.explain_search_documents(
+                    "db",
+                    "coll",
+                    "$vectorSearch",
+                    {
+                        "index": "missing",
+                        "path": "embedding",
+                        "queryVector": [1.0, 0.0],
+                        "limit": 1,
+                        "numCandidates": 1,
+                    },
+                )
+        finally:
+            await engine.disconnect()
 
     async def test_sqlite_drop_database_clears_runtime_state_and_profiler(self):
         engine = SQLiteEngine()
@@ -4355,3 +4754,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             )
         finally:
             await engine.disconnect()
+
+    async def test_update_with_operation_requires_compiled_update_plan(self):
+        engine = SQLiteEngine()
+
+        with self.assertRaisesRegex(OperationFailure, "compiled update plan"):
+            await engine.update_with_operation(
+                "db",
+                "coll",
+                Mock(compiled_update_plan=None, compiled_upsert_plan=None),
+            )

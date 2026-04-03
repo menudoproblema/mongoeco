@@ -100,3 +100,20 @@ class WireBsonBridgeTests(unittest.TestCase):
         with patch.object(Binary, "as_uuid", side_effect=RuntimeError("boom")):
             with self.assertRaisesRegex(RuntimeError, "boom"):
                 decode_wire_value(payload)
+
+    def test_bson_bridge_covers_plain_code_decimal_and_flag_helpers(self):
+        decoded = decode_wire_value(BsonCode("function() { return 1; }"))
+        self.assertEqual(decoded, BsonCode("function() { return 1; }"))
+
+        encoded = encode_wire_value(
+            {
+                "raw_decimal": decimal.Decimal("3.25"),
+                "code": BsonCode("function() { return 1; }"),
+            }
+        )
+        self.assertEqual(encoded["raw_decimal"], Decimal128("3.25"))
+        self.assertEqual(encoded["code"], BsonCode("function() { return 1; }"))
+        self.assertEqual(
+            decode_wire_value(Regex("^ab", 0)),
+            MongoecoRegex("^ab", ""),
+        )

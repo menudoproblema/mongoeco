@@ -313,7 +313,14 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             }
                         ]
                     ).explain()
-                    self.assertEqual(vector_explanation["engine_plan"]["details"]["backend"], "python")
+                    if engine_name == "sqlite":
+                        self.assertEqual(vector_explanation["engine_plan"]["details"]["backend"], "usearch")
+                        self.assertEqual(vector_explanation["engine_plan"]["details"]["mode"], "ann")
+                        self.assertTrue(vector_explanation["engine_plan"]["details"]["backendMaterialized"])
+                        self.assertTrue(vector_explanation["engine_plan"]["details"]["annAvailable"])
+                        self.assertIsNotNone(vector_explanation["engine_plan"]["details"]["vectorBackend"])
+                    else:
+                        self.assertEqual(vector_explanation["engine_plan"]["details"]["backend"], "python")
                     self.assertEqual(vector_explanation["engine_plan"]["details"]["path"], "embedding")
 
                     with self.assertRaises(OperationFailure):
@@ -4833,6 +4840,16 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             {"_id": "a", "name": "Ada", "location": {"type": "Point", "coordinates": [0, 0]}, "kind": "home"},
                             {"_id": "b", "name": "Grace", "location": [2, 0], "kind": "office"},
                             {"_id": "c", "name": "Linus", "location": {"type": "Point", "coordinates": [1, 1]}, "kind": "home"},
+                            {"_id": "d", "name": "Route", "location": {"type": "LineString", "coordinates": [[0, 0], [3, 0]]}, "kind": "route"},
+                            {
+                                "_id": "e",
+                                "name": "Campus",
+                                "location": {
+                                    "type": "Polygon",
+                                    "coordinates": [[[4, -1], [6, -1], [6, 1], [4, 1], [4, -1]]],
+                                },
+                                "kind": "area",
+                            },
                         ]
                     )
 
@@ -4858,6 +4875,15 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             }
                         }
                     ).to_list()
+                    intersects = await collection.find(
+                        {
+                            "location": {
+                                "$geoIntersects": {
+                                    "$geometry": {"type": "Point", "coordinates": [2, 0]},
+                                }
+                            }
+                        }
+                    ).to_list()
                     aggregate = await collection.aggregate(
                         [
                             {
@@ -4873,7 +4899,8 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     ).to_list()
 
                     self.assertEqual({document["_id"] for document in within}, {"a", "c"})
-                    self.assertEqual({document["_id"] for document in near}, {"a", "c"})
+                    self.assertEqual({document["_id"] for document in near}, {"a", "c", "d"})
+                    self.assertEqual({document["_id"] for document in intersects}, {"b", "d"})
                     self.assertEqual(
                         aggregate,
                         [

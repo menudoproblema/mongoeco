@@ -225,6 +225,44 @@ class ClientSessionTests(unittest.TestCase):
         self.assertEqual(session.cluster_time, 11)
         self.assertEqual(session.operation_time, 11)
 
+    def test_session_causal_time_helpers_reject_invalid_values_and_retry_labels(self):
+        session = ClientSession()
+
+        session.advance_cluster_time(None)
+        session.advance_operation_time(None)
+
+        with self.assertRaisesRegex(TypeError, "cluster_time"):
+            session.advance_cluster_time(-1)
+        with self.assertRaisesRegex(TypeError, "operation_time"):
+            session.advance_operation_time("bad")  # type: ignore[arg-type]
+
+        self.assertEqual(
+            session._error_labels(type("E", (), {"error_labels": ("TransientTransactionError",)})()),
+            ("TransientTransactionError",),
+        )
+        self.assertEqual(
+            session._error_labels(type("E", (), {"error_labels": ["TransientTransactionError", 1]})()),
+            ("TransientTransactionError",),
+        )
+        self.assertTrue(
+            session._should_retry_transaction_phase(
+                "commit",
+                type("E", (), {"error_labels": ["UnknownTransactionCommitResult"]})(),
+            )
+        )
+        self.assertTrue(
+            session._should_retry_transaction_phase(
+                "abort",
+                type("E", (), {"error_labels": ["TransientTransactionError"]})(),
+            )
+        )
+        self.assertFalse(
+            session._should_retry_transaction_phase(
+                "prepare",
+                type("E", (), {"error_labels": ["TransientTransactionError"]})(),
+            )
+        )
+
     def test_client_can_start_non_causal_session(self):
         session = AsyncMongoClient(MemoryEngine()).start_session(causal_consistency=False)
 

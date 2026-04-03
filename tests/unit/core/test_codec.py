@@ -2,6 +2,7 @@ import datetime
 import decimal
 import unittest
 import uuid
+from unittest.mock import patch
 
 try:
     from bson.code import Code as BsonCode
@@ -269,3 +270,20 @@ class DocumentCodecTests(unittest.TestCase):
         self.assertEqual(decoded["code"].scope, original["code"].scope)
         self.assertEqual(decoded["min"], original["min"])
         self.assertEqual(decoded["max"], original["max"])
+
+    def test_document_codec_decode_reports_missing_optional_bson_support(self):
+        with patch("mongoeco.core.codec.BsonMinKey", None):
+            with self.assertRaisesRegex(ValueError, "MinKey requires bson support"):
+                DocumentCodec.decode({"$mongoeco": {"type": "minkey", "value": None}})
+        with patch("mongoeco.core.codec.BsonMaxKey", None):
+            with self.assertRaisesRegex(ValueError, "MaxKey requires bson support"):
+                DocumentCodec.decode({"$mongoeco": {"type": "maxkey", "value": None}})
+        with patch("mongoeco.core.codec.BsonCode", None):
+            with self.assertRaisesRegex(ValueError, "Code requires bson support"):
+                DocumentCodec.decode({"$mongoeco": {"type": "code", "value": {"code": "return 1", "scope": None}}})
+
+    def test_document_codec_to_public_copy_on_write_covers_flat_list_changes(self):
+        payload = {"items": [BsonInt32(1), 2], "meta": "x"}
+        public = DocumentCodec.to_public(payload)
+        self.assertEqual(public, {"items": [1, 2], "meta": "x"})
+        self.assertIsNot(public, payload)

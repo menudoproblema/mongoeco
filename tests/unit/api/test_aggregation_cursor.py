@@ -1,6 +1,8 @@
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
+from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api.operations import compile_aggregate_operation
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
@@ -15,6 +17,7 @@ from mongoeco.core.aggregation import _CURRENT_COLLECTION_RESOLVER_KEY
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll
 from mongoeco.core.sorting import sort_documents
+from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import ExecutionTimeout, InvalidOperation, OperationFailure
 from mongoeco.types import PlanningIssue, PlanningMode
 
@@ -634,6 +637,144 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(await cursor.to_list(), [{"_id": "a", "count": 2}])
+
+    async def test_aggregation_cursor_merge_helpers_cover_validation_and_target_paths(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        source = database.get_collection("source")
+        cursor = AsyncAggregationCursor(source, [])
+
+        self.assertEqual(cursor._target_database("db").name, "db")
+        self.assertEqual(cursor._target_database("analytics").name, "analytics")
+        self.assertEqual(cursor._split_terminal_writeback_stage([]), ([], None))
+        self.assertEqual(cursor._split_terminal_writeback_stage([{"$match": {"x": 1}}]), ([{"$match": {"x": 1}}], None))
+        with self.assertRaisesRegex(OperationFailure, "only supported as the final aggregation stage"):
+            cursor._split_terminal_writeback_stage(
+                [{"$merge": {"into": "archive"}}, {"$merge": {"into": "archive"}}]
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            await cursor._apply_merge_stage([], [])
+        with self.assertRaisesRegex(OperationFailure, "collection name or \\{db, coll\\}"):
+            await cursor._apply_merge_stage([], {"into": 1})
+        with self.assertRaisesRegex(OperationFailure, "non-empty string"):
+            await cursor._apply_merge_stage([], {"into": {"db": "", "coll": "archive"}})
+        with self.assertRaisesRegex(OperationFailure, "omitted on or on: '_id'"):
+            await cursor._apply_merge_stage([], {"into": "archive", "on": "slug"})
+        with self.assertRaisesRegex(OperationFailure, "whenMatched currently supports"):
+            await cursor._apply_merge_stage([], {"into": "archive", "whenMatched": "pipeline"})
+        with self.assertRaisesRegex(OperationFailure, "whenNotMatched currently supports"):
+            await cursor._apply_merge_stage([], {"into": "archive", "whenNotMatched": "upsert"})
+        with self.assertRaisesRegex(OperationFailure, "pipelines are not supported"):
+            await cursor._apply_merge_stage([], {"into": "archive", "whenMatched": []})
+        with self.assertRaisesRegex(OperationFailure, "requires documents with _id"):
+            await cursor._apply_merge_stage([{"value": 1}], {"into": "archive"})
+
+        await cursor._apply_merge_stage([{"_id": "1", "value": 1}], {"into": "archive", "whenNotMatched": "discard"})
+        self.assertIsNone(await database.get_collection("archive").find_one({"_id": "1"}))
+        with self.assertRaisesRegex(OperationFailure, "whenNotMatched=fail"):
+            await cursor._apply_merge_stage([{"_id": "1", "value": 1}], {"into": "archive", "whenNotMatched": "fail"})
+
+        await database.get_collection("archive").insert_one({"_id": "2", "value": 10, "extra": True})
+        await cursor._apply_merge_stage([{"_id": "2", "value": 20}], {"into": "archive", "whenMatched": "keepExisting"})
+        self.assertEqual((await database.get_collection("archive").find_one({"_id": "2"}))["value"], 10)
+        with self.assertRaisesRegex(OperationFailure, "whenMatched=fail"):
+            await cursor._apply_merge_stage([{"_id": "2", "value": 20}], {"into": "archive", "whenMatched": "fail"})
+        await cursor._apply_merge_stage([{"_id": "2", "value": 30}], {"into": "archive", "whenMatched": "replace"})
+        self.assertEqual((await database.get_collection("archive").find_one({"_id": "2"}))["value"], 30)
+        await cursor._apply_merge_stage([{"_id": "2", "value": 40, "merged": True}], {"into": "archive", "whenMatched": "merge"})
+        merged = await database.get_collection("archive").find_one({"_id": "2"})
+        self.assertEqual(merged["value"], 40)
+        self.assertTrue(merged["merged"])
+
+    async def test_aggregation_cursor_collstats_and_stream_batches_cover_fallback_branches(self):
+        collection = _FakeCollection([{"_id": "1"}, {"_id": "2"}])
+        cursor = AsyncAggregationCursor(collection, [{"$project": {"_id": 1}}], batch_size=2)
+
+        self.assertEqual(cursor._collect_collstats_scales([{"$collStats": {"storageStats": {"scale": 4}}}]), {4})
+        self.assertEqual(cursor._collect_collstats_scales([{"$collStats": {"count": {}}}, {"$collStats": []}]), {1})
+
+        search_cursor = AsyncAggregationCursor(collection, [{"$search": {"text": {"query": "Ada", "path": "name"}}}], batch_size=2)
+        with patch.object(search_cursor, "_materialize", return_value=[{"_id": "a"}]) as materialize:
+            self.assertEqual([document async for document in search_cursor._stream_batches()], [{"_id": "a"}])
+            materialize.assert_awaited_once()
+
+        merge_cursor = AsyncAggregationCursor(collection, [{"$match": {"x": 1}}, {"$merge": {"into": "archive"}}], batch_size=2)
+        with patch.object(merge_cursor, "_materialize", return_value=[{"_id": "m"}]) as materialize:
+            self.assertEqual([document async for document in merge_cursor._stream_batches()], [{"_id": "m"}])
+            materialize.assert_awaited_once()
+
+        unbatched_cursor = AsyncAggregationCursor(collection, [{"$project": {"_id": 1}}], batch_size=None)
+        with patch.object(unbatched_cursor, "_materialize", return_value=[{"_id": "u"}]) as materialize:
+            self.assertEqual([document async for document in unbatched_cursor._stream_batches()], [{"_id": "u"}])
+            materialize.assert_awaited_once()
+
+        with patch.object(cursor, "_split_streamable_pipeline", return_value=None), patch.object(cursor, "_materialize", return_value=[{"_id": "p"}]) as materialize:
+            self.assertEqual([document async for document in cursor._stream_batches()], [{"_id": "p"}])
+            materialize.assert_awaited_once()
+
+        stream_cursor = AsyncAggregationCursor(collection, [{"$project": {"_id": 1}}, {"$skip": 1}, {"$limit": 1}], batch_size=2)
+        with (
+            patch(
+                "mongoeco.api._async.aggregation_cursor.split_pushdown_pipeline",
+                return_value=SimpleNamespace(
+                    filter_spec={},
+                    projection=None,
+                    sort=None,
+                    remaining_pipeline=[{"$project": {"_id": 1}}, {"$skip": 1}, {"$limit": 1}],
+                    skip=0,
+                    limit=3,
+                ),
+            ),
+            patch.object(stream_cursor, "_split_streamable_pipeline", return_value=([{"$project": {"_id": 1}}], 1, 1)),
+            patch.object(stream_cursor, "_load_referenced_collections", return_value={}),
+            patch.object(stream_cursor, "_spill_policy", return_value=None),
+        ):
+            batches = [
+                [{"_id": "1"}, {"_id": "2"}],
+                [{"_id": "3"}],
+                [],
+            ]
+
+            class _BatchCursor:
+                def __init__(self, docs):
+                    self._docs = docs
+
+                async def to_list(self):
+                    return self._docs
+
+            stream_cursor._build_pushdown_cursor = lambda _operation: _BatchCursor(batches.pop(0))  # type: ignore[method-assign]
+            self.assertEqual([document async for document in stream_cursor._stream_batches()], [{"_id": "2"}])
+
+    async def test_aggregation_cursor_additional_stream_and_merge_branches(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        source = database.get_collection("source")
+        await source.insert_many([{"_id": "1"}, {"_id": "2"}])
+        cursor = AsyncAggregationCursor(source, [], batch_size=2)
+
+        self.assertEqual(cursor._split_terminal_writeback_stage(["bad-stage"]), (["bad-stage"], None))  # type: ignore[list-item]
+        with self.assertRaisesRegex(OperationFailure, "final aggregation stage"):
+            cursor._split_terminal_writeback_stage(
+                [
+                    {"$merge": {"into": "archive"}},
+                    {"$project": {"_id": 1}},
+                    {"$merge": {"into": "archive"}},
+                ]
+            )
+        with self.assertRaisesRegex(OperationFailure, "non-empty string"):
+            await cursor._apply_merge_stage([{"_id": "1"}], {"into": {"db": "analytics"}})
+
+        merge_cursor = AsyncAggregationCursor(source, [{"$merge": {"into": "archive"}}], batch_size=2)
+        with patch.object(merge_cursor, "_materialize", return_value=[{"_id": "m"}]) as materialize:
+            self.assertEqual([document async for document in merge_cursor._stream_batches()], [{"_id": "m"}])
+            materialize.assert_awaited_once()
+
+        with (
+            patch.object(cursor, "_leading_search_stage", return_value=None),
+            patch.object(cursor, "_effective_pipeline", return_value=[{"$project": {"_id": 1}}]),
+            patch("mongoeco.api._async.aggregation_cursor.split_pushdown_pipeline", return_value=SimpleNamespace(remaining_pipeline=[], skip=0, limit=None)),
+            patch.object(cursor, "_split_streamable_pipeline", return_value=([], 0, 0)),
+        ):
+            self.assertEqual([document async for document in cursor._stream_batches()], [])
 
 
 class SyncAggregationCursorTests(unittest.TestCase):

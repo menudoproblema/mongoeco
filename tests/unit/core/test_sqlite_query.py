@@ -3,6 +3,7 @@ import datetime
 import uuid
 import json
 from unittest import mock
+from unittest.mock import patch
 
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.operators import UpdateEngine
@@ -32,12 +33,19 @@ from mongoeco.engines.sqlite_query import (
     _comparison_type_order,
     _normalize_comparable_value,
     _path_crosses_scalar_parent,
+    _translate_all_condition,
+    _translate_elem_match_condition,
+    _translate_json_each_scalar_comparison,
+    _translate_json_each_scalar_match,
+    _translate_json_each_value_plan,
+    _translate_scalar_or_array_same_type_comparison,
     _translate_same_type_comparison,
     _translate_array_contains_scalar,
     _translate_comparison,
     _translate_equals,
     _translate_not_equals,
     _translate_scalar_equals,
+    parse_safe_literal_regex,
     index_expressions_sql,
     json_path_for_field,
     path_array_prefixes,
@@ -53,6 +61,144 @@ from mongoeco.types import ObjectId, UNDEFINED
 
 
 class SQLiteQueryTranslationTests(unittest.TestCase):
+    def test_regex_and_json_each_helpers_cover_safe_and_rejected_shapes(self):
+        self.assertEqual(parse_safe_literal_regex("^Ada.*", ""), ("prefix", "Ada", False))
+        self.assertEqual(parse_safe_literal_regex("Ada$", "i"), ("suffix", "Ada", True))
+        self.assertEqual(parse_safe_literal_regex("Ada", ""), ("contains", "Ada", False))
+        self.assertEqual(parse_safe_literal_regex("^Ada$", ""), ("exact", "Ada", False))
+        self.assertEqual(parse_safe_literal_regex("Ada\\.", ""), ("contains", "Ada.", False))
+        self.assertIsNone(parse_safe_literal_regex("^", ""))
+        self.assertIsNone(parse_safe_literal_regex("Ada", "m"))
+        self.assertIsNone(parse_safe_literal_regex("Ada\\", ""))
+        self.assertIsNone(parse_safe_literal_regex("A.*da", ""))
+        self.assertIsNone(parse_safe_literal_regex("^", "i"))
+
+        self.assertEqual(
+            _translate_json_each_scalar_match("$.items", None),
+            ("EXISTS (SELECT 1 FROM json_each(document, '$.items') WHERE json_each.type = 'null')", []),
+        )
+        self.assertEqual(
+            _translate_json_each_scalar_match("$.items", True),
+            (
+                "EXISTS (SELECT 1 FROM json_each(document, '$.items') WHERE json_each.type IN ('true', 'false') AND json_each.value = ?)",
+                [1],
+            ),
+        )
+        self.assertEqual(
+            _translate_json_each_scalar_match("$.items", "Ada"),
+            (
+                "EXISTS (SELECT 1 FROM json_each(document, '$.items') WHERE json_each.type = 'text' AND json_each.value = ?)",
+                ["Ada"],
+            ),
+        )
+        self.assertEqual(
+            _translate_json_each_scalar_match("$.items", 3.5),
+            (
+                "EXISTS (SELECT 1 FROM json_each(document, '$.items') WHERE json_each.type IN ('integer', 'real') AND json_each.value = ?)",
+                [3.5],
+            ),
+        )
+        self.assertIsNone(_translate_json_each_scalar_match("$.items", object()))
+        with self.assertRaisesRegex(NotImplementedError, "Unsupported comparison value for SQL translation"):
+            _translate_json_each_scalar_comparison(">", object())
+        with self.assertRaisesRegex(NotImplementedError, "Unsupported comparison value for SQL translation"):
+            _translate_json_each_scalar_comparison(">", {"bad": 1})
+        with self.assertRaisesRegex(NotImplementedError, "Unsupported comparison value for SQL translation"):
+            _translate_json_each_scalar_comparison(">", None)
+
+    def test_all_elem_match_and_type_translation_cover_error_branches(self):
+        with self.assertRaisesRegex(NotImplementedError, "Only top-level \\$all paths"):
+            _translate_all_condition("items.name", ("Ada",))
+        with self.assertRaisesRegex(NotImplementedError, "Empty \\$all values"):
+            _translate_all_condition("items", ())
+        with self.assertRaisesRegex(NotImplementedError, "operator values"):
+            _translate_all_condition("items", ({"$gt": 1},))
+        with self.assertRaisesRegex(NotImplementedError, "simple scalar values"):
+            _translate_all_condition("items", (ObjectId("0123456789abcdef01234567"),))
+
+        self.assertIn("json_extract(document, '$.items')", _translate_all_condition("items", ("Ada",))[0])
+        with self.assertRaisesRegex(NotImplementedError, "Only top-level \\$elemMatch paths"):
+            _translate_elem_match_condition("items.value", EqualsCondition("value", 1), wrap_value=True)
+        with self.assertRaisesRegex(NotImplementedError, "Only scalar \\$elemMatch shapes"):
+            _translate_elem_match_condition("items", None, wrap_value=True)
+        with self.assertRaisesRegex(NotImplementedError, "Only scalar \\$elemMatch shapes"):
+            _translate_elem_match_condition("items", EqualsCondition("value", 1), wrap_value=False)
+        with self.assertRaisesRegex(NotImplementedError, "Unsupported \\$elemMatch scalar predicate"):
+            _translate_elem_match_condition("items", MatchAll(), wrap_value=True)
+
+        with self.assertRaises(NotImplementedError):
+            translate_query_plan(TypeCondition("value", (19,)))
+        with self.assertRaises(NotImplementedError):
+            translate_query_plan(TypeCondition("value", ([],)))  # type: ignore[list-item]
+
+    def test_json_each_value_plan_and_array_aware_comparison_cover_additional_paths(self):
+        self.assertIsNone(_translate_json_each_value_plan(EqualsCondition("other", 1)))
+        self.assertIsNone(_translate_json_each_value_plan(EqualsCondition("value", ObjectId("0123456789abcdef01234567"))))
+        self.assertEqual(
+            _translate_json_each_value_plan(EqualsCondition("value", None)),
+            ("json_each.type = 'null'", []),
+        )
+        self.assertEqual(
+            _translate_json_each_value_plan(RegexCondition("value", "^Ada$", "")),
+            ("json_each.type = 'text' AND json_each.value = ?", ["Ada"]),
+        )
+        self.assertIsNone(_translate_json_each_value_plan(RegexCondition("value", "^Áda$", "i")))
+        self.assertIsNone(_translate_json_each_value_plan(RegexCondition("value", "A.*", "")))
+        self.assertEqual(
+            _translate_json_each_value_plan(GreaterThanCondition("value", "Ada")),
+            ("json_each.type = 'text' AND json_each.value > ?", ["Ada"]),
+        )
+        self.assertEqual(
+            _translate_json_each_value_plan(LessThanOrEqualCondition("value", False)),
+            ("json_each.type IN ('true', 'false') AND json_each.value <= ?", [0]),
+        )
+        self.assertEqual(
+            _translate_json_each_value_plan(GreaterThanOrEqualCondition("value", 4)),
+            ("json_each.type IN ('integer', 'real') AND json_each.value >= ?", [4]),
+        )
+        self.assertEqual(
+            _translate_json_each_value_plan(LessThanCondition("value", 4)),
+            ("json_each.type IN ('integer', 'real') AND json_each.value < ?", [4]),
+        )
+        self.assertEqual(
+            _translate_json_each_value_plan(RegexCondition("value", "^Ada", "")),
+            ("json_each.type = 'text' AND substr(json_each.value, 1, length(?)) = ?", ["Ada", "Ada"]),
+        )
+        self.assertEqual(
+            _translate_json_each_value_plan(RegexCondition("value", "Ada$", "")),
+            ("json_each.type = 'text' AND substr(json_each.value, -length(?)) = ?", ["Ada", "Ada"]),
+        )
+        self.assertEqual(
+            _translate_json_each_value_plan(RegexCondition("value", "Ada", "")),
+            ("json_each.type = 'text' AND instr(json_each.value, ?) > 0", ["Ada"]),
+        )
+        with self.assertRaisesRegex(NotImplementedError, "Unsupported comparison value for SQL translation"):
+            _translate_scalar_or_array_same_type_comparison(">", "value", None)
+        with self.assertRaisesRegex(NotImplementedError, "Unsupported comparison value for SQL translation"):
+            _translate_scalar_or_array_same_type_comparison(">", "value", {"bad": 1})
+
+    def test_sqlite_query_private_translation_helpers_cover_none_fallbacks_and_assert_never(self):
+        sql, params = _translate_array_contains_scalar("items", ObjectId("0123456789abcdef01234567"))
+        self.assertIn("json_each.value = ?", sql)
+        self.assertEqual(params, [ObjectId("0123456789abcdef01234567")])
+        self.assertIsNone(_translate_json_each_scalar_comparison(">", ObjectId("0123456789abcdef01234567")))
+        self.assertIsNone(_translate_json_each_value_plan(NotCondition(EqualsCondition("value", 1))))
+        self.assertIsNone(_translate_json_each_value_plan(RegexCondition("value", "^Ada$", "m")))
+
+        class UnknownPlan(QueryNode):
+            pass
+
+        with self.assertRaises(TypeError):
+            translate_query_plan(UnknownPlan())
+
+    def test_sqlite_query_private_translation_helpers_cover_remaining_none_and_error_branches(self):
+        self.assertIsNone(parse_safe_literal_regex("^$", ""))
+        with patch("mongoeco.engines.sqlite_query._translate_json_each_scalar_match", return_value=("bad", [])):
+            self.assertIsNone(_translate_json_each_value_plan(EqualsCondition("value", 1)))
+        with patch("mongoeco.engines.sqlite_query.parse_safe_literal_regex", return_value=("mystery", "Ada", False)):
+            self.assertIsNone(_translate_json_each_value_plan(RegexCondition("value", "Ada", "")))
+        with self.assertRaisesRegex(NotImplementedError, "Unsupported array-aware comparison value"):
+            _translate_scalar_or_array_same_type_comparison(">", "items", ObjectId("0123456789abcdef01234567"))
     def test_path_array_prefixes_keep_non_numeric_prefixes_before_index_segments(self):
         self.assertEqual(path_array_prefixes("a.0.b.c"), ("a", "a.0.b"))
         self.assertEqual(path_array_prefixes("items.0"), ("items",))
@@ -73,6 +219,15 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
 
     def test_translate_match_all(self):
         self.assertEqual(translate_query_plan(MatchAll()), ("1 = 1", []))
+
+    def test_translate_query_plan_covers_type_alias_and_or_paths(self):
+        sql, params = translate_query_plan(TypeCondition("value", ("int",)))
+        self.assertIn("BETWEEN -2147483648 AND 2147483647", sql)
+        self.assertEqual(params, [])
+
+        sql, params = translate_query_plan(OrCondition((EqualsCondition("a", 1), EqualsCondition("b", 2))))
+        self.assertIn(" OR ", sql)
+        self.assertEqual(params, [1, 1, 2, 2])
 
     def test_translate_json_schema_condition_is_explicitly_deferred_to_python(self):
         with self.assertRaisesRegex(NotImplementedError, "not yet translated to SQL"):

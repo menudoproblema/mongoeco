@@ -1714,3 +1714,127 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertEqual(documents, [{"_id": "1", "kind": "view"}])
+
+    async def test_memory_engine_helper_paths_cover_profile_hint_and_search_edges(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            self.assertEqual(engine._lock_key("db", "coll"), "db.coll")
+            self.assertFalse(engine._namespace_exists_locked("db", "missing"))
+
+            await engine.put_document("db", "users", {"_id": "1", "kind": "view", "embedding": [1.0, 0.0]})
+            await engine.create_index("db", "users", ["kind"], name="kind_hidden", hidden=True)
+            with self.assertRaisesRegex(OperationFailure, "usable index"):
+                engine._resolve_hint_index("db", "users", [("kind", 1)])
+
+            self.assertIsNone(await engine.get_document("db", "system.profile", "missing"))
+            self.assertFalse(await engine.delete_document("db", "system.profile", "missing"))
+
+            with self.assertRaisesRegex(TypeError, "hidden must be a bool"):
+                await engine.create_index("db", "users", ["kind"], hidden="yes")  # type: ignore[arg-type]
+            with self.assertRaisesRegex(TypeError, "expire_after_seconds must be a non-negative int"):
+                await engine.create_index("db", "users", ["expires_at"], expire_after_seconds=-1)
+            with self.assertRaisesRegex(OperationFailure, "Conflicting index definition for '_id_'"):
+                await engine.create_index("db", "users", ["_id"], name="_id_")
+
+            definition = SearchIndexDefinition(
+                {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2, "similarity": "cosine"}]},
+                name="vec",
+                index_type="vectorSearch",
+            )
+            await engine.create_search_index("db", "users", definition)
+            with self.assertRaisesRegex(OperationFailure, "search index not found"):
+                await engine.drop_search_index("db", "users", "missing")
+            with self.assertRaisesRegex(OperationFailure, "search index not found"):
+                await engine.explain_search_documents(
+                    "db",
+                    "users",
+                    "$vectorSearch",
+                    {"index": "missing", "path": "embedding", "queryVector": [1.0, 0.0], "limit": 1},
+                )
+            self.assertEqual(
+                await engine.search_documents(
+                    "db",
+                    "users",
+                    "$vectorSearch",
+                    {
+                        "index": "vec",
+                        "path": "embedding",
+                        "queryVector": [1.0, 0.0],
+                        "numCandidates": 5,
+                        "limit": 5,
+                        "filter": {"kind": "missing"},
+                    },
+                ),
+                [],
+            )
+            with self.assertRaises(CollectionInvalid):
+                await engine.rename_collection("db", "missing", "renamed")
+        finally:
+            await engine.disconnect()
+
+    async def test_memory_engine_covers_remaining_hint_unique_search_and_rename_branches(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "users", {"_id": "1", "kind": "view", "email": "ada@example.com", "embedding": ["bad", 1.0]})
+            await engine.put_document("db", "users", {"_id": "2", "kind": "view", "email": "grace@example.com"})
+            await engine.create_index("db", "users", ["email"], name="email_idx", unique=True)
+            hinted = engine._resolve_hint_index("db", "users", [("email", 1)])
+            self.assertEqual(hinted["name"], "email_idx")
+
+            engine._index_data.clear()
+            with self.assertRaises(DuplicateKeyError):
+                engine._ensure_unique_indexes("db", "users", {"_id": "3", "email": "ada@example.com"})
+
+            engine._profiler.set_level("db", 1)
+            engine._profiler.record("db", op="query", namespace="db.users", command={"find": "users"}, duration_micros=200_000)
+            profile_entry_id = engine._profiler.list_entries("db")[0]["_id"]
+            profile_doc = await engine.get_document("db", "system.profile", profile_entry_id, projection={"op": 1, "_id": 0})
+            self.assertEqual(profile_doc, {"op": "query"})
+
+            await engine.create_index("db", "users", ["kind"], name="kind_idx")
+            count = await self._count(engine, "db", "users", {"$and": [{"missing": "x"}, {"kind": "view"}]})
+            self.assertEqual(count, 0)
+
+            with self.assertRaisesRegex(OperationFailure, "Conflicting index definition for '_id_'"):
+                await engine.create_index("db", "users", ["name"], name="_id_")
+            await engine.create_index(
+                "db",
+                "users",
+                ["inactive"],
+                name="inactive_unique",
+                unique=True,
+                partial_filter_expression={"inactive": True},
+            )
+            with self.assertRaisesRegex(OperationFailure, "index not found with name \\[missing\\]"):
+                await engine.drop_index("db", "users", "missing")
+            with self.assertRaisesRegex(OperationFailure, "index not found with key pattern"):
+                await engine.drop_index("db", "users", [("missing", 1)])
+
+            definition = SearchIndexDefinition(
+                {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2, "similarity": "cosine"}]},
+                name="vec",
+                index_type="vectorSearch",
+            )
+            self.assertEqual(await engine.create_search_index("db", "users", definition), "vec")
+            self.assertEqual(await engine.create_search_index("db", "users", definition), "vec")
+            self.assertEqual(
+                await engine.search_documents(
+                    "db",
+                    "users",
+                    "$vectorSearch",
+                    {"index": "vec", "path": "embedding", "queryVector": [1.0, 0.0], "numCandidates": 2, "limit": 2},
+                ),
+                [],
+            )
+
+            engine._search_index_ready_at[("db", "users", "vec")] = 123.0
+            await engine.rename_collection("db", "users", "archived")
+            self.assertIn("archived", engine._search_indexes["db"])
+            self.assertIn(("db", "archived", "vec"), engine._search_index_ready_at)
+
+            await engine.drop_database("db")
+            self.assertFalse(any(key[0] == "db" for key in engine._search_index_ready_at))
+        finally:
+            await engine.disconnect()

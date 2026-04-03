@@ -2,6 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 import unittest
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from mongoeco.api._async import _database_command_contract as command_contract
 from mongoeco.api._async.database_commands import (
@@ -173,6 +174,27 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
             mongoeco["explainableCommandCount"],
             command_contract.explainable_command_count(),
         )
+        self.assertEqual(
+            command_contract.command_help_document("unknownCommand"),
+            {
+                "help": "mongoeco local support for the unknownCommand command",
+                "supportsExplain": False,
+                "supportsComment": False,
+            },
+        )
+        with patch.object(
+            command_contract,
+            "command_supported_options",
+            return_value=("comment", "maxTimeMS"),
+        ), patch.object(
+            command_contract,
+            "command_supports_comment",
+            return_value=True,
+        ):
+            self.assertEqual(
+                command_contract.command_help_document("unknownCommand")["supportedOptions"],
+                ["comment", "maxTimeMS"],
+            )
 
     def test_helper_result_builders_cover_document_helpers_and_engine_name_detection(self):
         short_dialect = SimpleNamespace(server_version="8")
