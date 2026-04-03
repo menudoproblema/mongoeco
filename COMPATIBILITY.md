@@ -51,8 +51,8 @@ Esto implica:
 * geoespacial entra ya como subset local amplio y planar;
 * `$text` clásico existe ya como subset local explícito, con `textScore`
   observable pero sin pretender semántica full-text de servidor MongoDB.
-* `$search` local soporta ya `text`, `phrase`, `autocomplete`, `wildcard`
-  y `compound`
+* `$search` local soporta ya `text`, `phrase`, `autocomplete`, `wildcard`,
+  `exists` y `compound`
   como subset explícito y documentado, sin pretender semántica Atlas Search
   completa.
 * la proyeccion avanzada de `find` cubre ya el subconjunto diario mas util
@@ -350,7 +350,8 @@ Límites conscientes:
 
 * no hay servicio remoto Atlas-like, ANN distribuido ni embeddings
   automáticos;
-* `filter` sigue siendo post-candidate;
+* `filter` sigue siendo post-candidate, con ampliación adaptativa de
+  candidatos antes de degradar a exacto;
 * si el filtro degrada demasiado el resultado, `explain()` deja visible la
   degradación a exacto.
 
@@ -363,6 +364,7 @@ El runtime local soporta ya un subset explícito de `$search`:
   * `phrase`
   * `autocomplete`
   * `wildcard`
+  * `exists`
   * `compound`
 * surface observable:
   * `explain()` con `queryOperator`, paths y backend real;
@@ -372,15 +374,15 @@ El runtime local soporta ya un subset explícito de `$search`:
 
 Límites conscientes:
 
-* no hay `near`, `facet`, `range`, `exists` ni scoring Atlas-like;
+* no hay `near`, `facet`, `range` ni scoring Atlas-like;
 * `wildcard` sigue siendo matching local simple, no sintaxis Atlas Search;
 * `autocomplete` es local y basado en prefijos de tokens, no en analyzer
   avanzado;
 * `compound` se limita a combinar el subset local soportado
-  (`text`/`phrase`/`autocomplete`/`wildcard`) con `must`, `should`, `filter`,
-  `mustNot` y `minimumShouldMatch`;
+  (`text`/`phrase`/`autocomplete`/`wildcard`/`exists`) con `must`, `should`,
+  `filter`, `mustNot` y `minimumShouldMatch`;
 * `SQLiteEngine` solo empuja a FTS5 `text`, `phrase` y `autocomplete`; el
-  `wildcard` local y `compound` siguen siendo fallback Python explícito.
+  `wildcard`, `exists` y `compound` siguen siendo fallback Python explícito.
 * `$vectorSearch` debe seguir siendo el primer stage;
 * la semantica sigue siendo local, no de cluster o servicio remoto.
 

@@ -6,8 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "mongoeco"
 dynamic = ["version"]
 description = "Async-first MongoDB-like persistence library with pluggable storage engines."
-readme = "README.md"
+readme = {file = "README.md", content-type = "text/markdown"}
 license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [{name = "Vicente Ruiz"}]
 requires-python = ">=3.13"
 dependencies = [
@@ -29,6 +30,7 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Database",
     "Topic :: Software Development :: Testing",
 ]

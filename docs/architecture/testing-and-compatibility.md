@@ -195,7 +195,8 @@ En la fase actual, eso incluye ya explicitamente:
 - parity async/sync, cross-engine y surface wire para el subset local de
   `$text` clasico con `textScore`;
 - parity async/sync, cross-engine y `explain()` coherente para el subset local
-  de `$search` (`text`, `phrase`, `autocomplete`, `wildcard`, `compound`);
+  de `$search` (`text`, `phrase`, `autocomplete`, `wildcard`, `exists`,
+  `compound`);
 - parity async/sync y cross-engine para projection avanzada de `find`
   (`$slice`, `$elemMatch` y proyeccion posicional);
 - parity async/sync y cross-engine para `$collStats` como stage inicial de
@@ -204,6 +205,7 @@ En la fase actual, eso incluye ya explicitamente:
   incluyendo rechazo estable de `hint` contra indices ocultos;
 - tests de surface administrativa local para `currentOp` y `killOp`;
 - regresiones sobre `vectorSearch` local con similitudes adicionales, `filter`,
-  backend ANN `usearch` y `explain()` con degradacion observable;
+  backend ANN `usearch`, ampliacion adaptativa de candidatos y `explain()`
+  con degradacion observable;
 - snapshots de compatibilidad regenerados automaticamente cuando cambia el
   catalogo declarado.

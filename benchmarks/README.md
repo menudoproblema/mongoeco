@@ -26,6 +26,8 @@ The suite currently covers these workload groups:
 - `filter_selectivity`
 - `predicate_diagnostics`
 - `sort_shape_diagnostics`
+- `search_diagnostics`
+- `vector_search_diagnostics`
 
 Each group is designed to answer a specific question:
 
@@ -36,6 +38,10 @@ Each group is designed to answer a specific question:
 - sort diagnostics separate `limit` top-k behavior from full sort behavior
 - aggregation workloads distinguish mostly-streamable pipelines from clearly
   materializing pipelines
+- search diagnostics isolate local `$search` operators and surface the real
+  backend (`fts5` vs Python fallback)
+- vector diagnostics isolate local ANN-backed `$vectorSearch` and the extra
+  cost of post-candidate filtering
 
 The harness measures end-to-end API calls, not internal operators in isolation.
 That is deliberate: it lets us catch planner, materialization, codec, cursor
@@ -90,6 +96,26 @@ Smoke check:
 
 ```bash
 python -m benchmarks.run --engine all --size 1000 --warmup 0 --repetitions 1
+```
+
+Targeted local search/vector smoke:
+
+```bash
+python -m benchmarks.run \
+  --engine memory-sync \
+  --size 1000 \
+  --warmup 0 \
+  --repetitions 1 \
+  --workload search_diagnostics \
+  --workload vector_search_diagnostics
+
+python -m benchmarks.run \
+  --engine sqlite-sync \
+  --size 1000 \
+  --warmup 0 \
+  --repetitions 1 \
+  --workload search_diagnostics \
+  --workload vector_search_diagnostics
 ```
 
 Recommended community matrix:
@@ -160,6 +186,32 @@ python -m benchmarks.report \
   --output-json benchmarks/reports/diagnostics.json \
   --output-markdown benchmarks/reports/diagnostics.md
 ```
+
+Targeted search/vector diagnostic run:
+
+```bash
+python -m benchmarks.run \
+  --engine memory-sync \
+  --size 1000 \
+  --warmup 0 \
+  --repetitions 3 \
+  --workload search_diagnostics \
+  --workload vector_search_diagnostics \
+  --format table
+
+python -m benchmarks.run \
+  --engine sqlite-sync \
+  --size 1000 \
+  --warmup 0 \
+  --repetitions 3 \
+  --workload search_diagnostics \
+  --workload vector_search_diagnostics \
+  --format table
+```
+
+These workload groups are not part of the default community matrix yet,
+because `mongomock` does not provide a comparable local `$search` /
+`$vectorSearch` baseline.
 
 SQLite JSON backend A/B:
 

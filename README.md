@@ -13,16 +13,17 @@ What is already in place:
 
 * async and sync client APIs
 * memory and SQLite engines
-* transactional local sessions
+* transactional local sessions and local admin/runtime introspection
 * aggregation runtime with pushdown and spill guardrails
 * compatibility modeling across MongoDB dialects and PyMongo profiles
 * local wire/driver runtime
-* search index lifecycle plus local `$search` / experimental `$vectorSearch`
+* local geospatial, classic `$text`, `$search` and ANN-backed `$vectorSearch`
 
 What this is not:
 
 * a drop-in replacement for a production MongoDB cluster
 * a full Atlas Search implementation
+* a geodesic geospatial engine
 * a full-text/vector engine with server-grade scaling guarantees
 
 ## Installation
@@ -220,182 +221,33 @@ python -m benchmarks.run \
   --repetitions 1
 ```
 
-Latest local smoke snapshot from March 30, 2026:
+The harness currently covers:
 
-- command:
+* reads and point lookups;
+* sort/limit and cursor materialization;
+* mostly-streamable vs materializing aggregation;
+* targeted local `search` and `vectorSearch` diagnostics.
 
-```bash
-python -m benchmarks.run \
-  --engine all \
-  --size 1000 \
-  --warmup 0 \
-  --repetitions 1 \
-  --format table
-```
+Current rule of thumb from local diagnostics:
 
-- high-level reading:
-  - `memory` is currently strongest on point lookups and most filter-heavy workloads
-  - `sqlite` is currently strongest on full-sort workloads and remains competitive on filter-heavy workloads
-  - `mongomock` is still a useful baseline, but `mongoeco` now beats it in many lookup, filter and sort cases on this harness
-- notable smoke numbers:
-  - `secondary_lookup_indexed_1k`
-    - `memory-sync 0.1647s`
-    - `sqlite-sync 0.3760s`
-    - `memory-async 0.1542s`
-    - `sqlite-async 0.3089s`
-    - `mongomock 0.6840s`
-  - `filter_selectivity_high_100`
-    - `memory-sync 0.3720s`
-    - `sqlite-sync 0.4404s`
-    - `memory-async 0.3201s`
-    - `sqlite-async 0.3534s`
-    - `mongomock 0.2676s`
-  - `sort_limit_indexed_200`
-    - `memory-sync 0.1971s`
-    - `sqlite-sync 0.3427s`
-    - `memory-async 0.1783s`
-    - `sqlite-async 0.4458s`
-    - `mongomock 1.4541s`
-  - `sort_shape_top_level_full_50`
-    - `memory-sync 0.6109s`
-    - `sqlite-sync 0.3267s`
-    - `memory-async 0.5790s`
-    - `sqlite-async 0.3182s`
-    - `mongomock 0.4602s`
+* `MemoryEngine` remains strongest on many Python-baseline filter paths;
+* `SQLiteEngine` is strongest when it can push work to SQL, FTS5 or `usearch`;
+* `wildcard` search is still an explicit Python fallback in SQLite;
+* `vectorSearch` on SQLite is already materially faster than the exact
+  baseline when the ANN backend is materialized.
 
-Treat this as a smoke snapshot, not a publication-quality claim. For anything
-you plan to cite publicly, use the reproducible report commands below with
-warmup and repeated runs.
-
-Recommended community matrix:
-
-- `size=100`
-  - small-dataset overhead and API-path visibility
-- `size=1000`
-  - primary reference point for balanced comparisons
-- `size=5000`
-  - larger-scale behavior without turning the default community workflow into a
-    multi-hour run
-
-The `size=50` case is mainly useful for local smoke checks, and `size=500`
-rarely changes the story enough to justify making it part of the default
-published matrix.
-
-Reproducible local report:
-
-```bash
-python -m benchmarks.report \
-  --engine all \
-  --size 10000 \
-  --warmup 1 \
-  --repetitions 5 \
-  --output-json benchmarks/reports/latest.json \
-  --output-markdown benchmarks/reports/latest.md
-```
-
-Suggested community runs:
-
-```bash
-python -m benchmarks.report \
-  --engine all \
-  --size 100 \
-  --warmup 1 \
-  --repetitions 5 \
-  --output-json benchmarks/reports/matrix-100.json \
-  --output-markdown benchmarks/reports/matrix-100.md
-
-python -m benchmarks.report \
-  --engine all \
-  --size 1000 \
-  --warmup 1 \
-  --repetitions 5 \
-  --output-json benchmarks/reports/matrix-1000.json \
-  --output-markdown benchmarks/reports/matrix-1000.md
-
-python -m benchmarks.report \
-  --engine all \
-  --size 5000 \
-  --warmup 1 \
-  --repetitions 5 \
-  --output-json benchmarks/reports/matrix-5000.json \
-  --output-markdown benchmarks/reports/matrix-5000.md
-```
-
-Latest serious reference snapshot used for local analysis:
-
-- date: March 30, 2026
-- command:
-
-```bash
-python -m benchmarks.report \
-  --engine all \
-  --size 1000 \
-  --warmup 1 \
-  --repetitions 5 \
-  --output-json benchmarks/reports/latest-1000-serious.json \
-  --output-markdown benchmarks/reports/latest-1000-serious.md
-```
-
-- environment:
-  - Python `3.14.0`
-  - macOS `15.6`
-  - `arm64`
-  - JSON backend `stdlib`
-  - git revision `7277a30904192aa8c6cbb7547ec3035840781bb4`
-  - worktree was dirty, so treat the numbers as a strong local reference, not a
-    final published baseline
-- representative means:
-  - `secondary_lookup_indexed_1k`
-    - `memory-sync 0.1430s`
-    - `sqlite-sync 0.3142s`
-    - `memory-async 0.1414s`
-    - `sqlite-async 0.3048s`
-    - `mongomock 0.6643s`
-  - `filter_selectivity_high_100`
-    - `memory-sync 0.3275s`
-    - `sqlite-sync 0.3898s`
-    - `memory-async 0.3069s`
-    - `sqlite-async 0.3556s`
-    - `mongomock 0.2529s`
-  - `sort_limit_indexed_200`
-    - `memory-sync 0.1769s`
-    - `sqlite-sync 0.2927s`
-    - `memory-async 0.1705s`
-    - `sqlite-async 0.4060s`
-    - `mongomock 1.3748s`
-  - `sort_shape_top_level_full_50`
-    - `memory-sync 0.5765s`
-    - `sqlite-sync 0.2887s`
-    - `memory-async 0.5709s`
-    - `sqlite-async 0.2946s`
-    - `mongomock 0.4256s`
-
-Current high-level reading from that snapshot:
-
-- `memory` is strongest on point lookups and most filter-heavy workloads
-- `sqlite` is strongest on full-sort workloads and remains competitive on many
-  filter-heavy workloads
-- `mongomock` remains a useful baseline, but it is no longer the fastest option
-  in many lookup, filter and sort scenarios covered by this harness
-
-`orjson` note:
-
-- `mongoeco` defaults to `stdlib` JSON for reproducibility
-- SQLite-specific A/B runs show that `orjson` can help materially on
-  JSON-heavy filter and materialization workloads at `size=1000` and above
-- the same A/B runs do not show a universal improvement for lookup-heavy
-  workloads
-- because of that, benchmark discussions should always state the JSON backend
-  explicitly when SQLite is involved
-
-Benchmark outputs are treated as local artifacts and should stay out of git.
-The harness itself is versioned so anyone can reproduce the same workload mix,
-dataset seeds and report structure from a given revision.
+For anything you plan to cite publicly, use the reproducible commands in
+[benchmarks/README.md](benchmarks/README.md) instead of copying ad hoc local
+numbers into docs.
 
 ## Project Status
 
 The repository is in active development and the public package surface is still
 best treated as pre-release.
+
+Release-readiness checklist:
+
+* [docs/release-checklist.md](docs/release-checklist.md)
 
 ## License
 

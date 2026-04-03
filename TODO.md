@@ -25,6 +25,7 @@ Pendientes:
   * `phrase`
   * `autocomplete`
   * `wildcard`
+  * `exists`
   * `compound`
 * evaluar operadores adicionales como:
   * `near`
@@ -32,8 +33,9 @@ Pendientes:
   * `string`
   * `token`
   * `autocomplete`
-* decidir si el backend ANN local actual de `vectorSearch` es suficiente o si
-  necesita una siguiente fase mas ambiciosa;
+* decidir si el backend ANN local actual de `vectorSearch`, ya con
+  ampliacion adaptativa de candidatos antes del fallback exacto, es suficiente
+  o si necesita una siguiente fase mas ambiciosa;
 * mejorar `explain()` de search si aparecen nuevos backends u operadores.
 
 ## 2. Rendimiento y planificación
@@ -46,7 +48,7 @@ Pendientes:
 * revisar si compensa otra vuelta sobre fallback/materialización en agregación;
 * estudiar mejoras adicionales de concurrencia/throughput en SQLite si el objetivo pasa de paridad funcional a ambición más cercana a producción;
 * optimizar `vectorSearch` si deja de ser suficiente el backend ANN local
-  actual;
+  actual o si los filtros post-candidato pasan a exigir una politica mas rica;
 * seguir endureciendo el planner físico si aparecen consultas mixtas donde el pushdown parcial actual no baste.
 
 ## 3. Consolidación selectiva

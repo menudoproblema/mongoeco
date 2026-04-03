@@ -763,6 +763,7 @@
         "phrase",
         "autocomplete",
         "wildcard",
+        "exists",
         "compound"
       ],
       "sqliteBackends": [
@@ -773,7 +774,7 @@
     "vectorSearch": {
       "backend": "usearch",
       "fallback": "exact",
-      "filterMode": "post-candidate",
+      "filterMode": "post-candidate-with-adaptive-candidate-expansion",
       "mode": "local-ann-with-exact-baseline",
       "note": "SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.",
       "similarities": [

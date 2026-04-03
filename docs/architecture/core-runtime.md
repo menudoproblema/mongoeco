@@ -93,6 +93,7 @@ Y el runtime local de `search` queda ya ampliado a un subset explicito de
 - `phrase`;
 - `autocomplete`;
 - `wildcard`.
+- `exists`;
 - `compound`.
 
 La regla arquitectonica es la misma:
@@ -107,8 +108,8 @@ La regla arquitectonica es la misma:
 - `MemoryEngine` actua como baseline observable;
 - `SQLiteEngine` usa FTS5 cuando la traduccion sigue siendo defendible
   (`text`, `phrase`, `autocomplete`) y cae a Python cuando no (`wildcard`).
-  `compound` se apoya hoy en ese baseline Python local y no intenta fingir un
-  planner FTS compuesto mas ambicioso de lo que existe realmente.
+  `exists` y `compound` se apoyan hoy en ese baseline Python local y no
+  intentan fingir un planner FTS mas ambicioso de lo que existe realmente.
 
 ## Sorting, projection y updates
 
@@ -262,7 +263,8 @@ El runtime local de search distingue ya dos familias:
 En esta fase, `vectorSearch` soporta:
 
 - similitud `cosine`, `dotProduct` y `euclidean`;
-- `filter` opcional reutilizando `QueryEngine`;
+- `filter` opcional reutilizando `QueryEngine`, con ampliacion adaptativa de
+  candidatos antes de degradar a exacto;
 - backend `usearch` en `SQLiteEngine` con baseline exacta en `MemoryEngine`;
 - explain con backend real, modo ANN/exacto, paths vectoriales, similitud,
   shape del filtro y metadata de materializacion.

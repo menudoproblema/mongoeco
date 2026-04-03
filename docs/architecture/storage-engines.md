@@ -150,6 +150,9 @@ En search existe ya otra frontera explicita por capas:
 - cuales degradan siempre a Python;
 - que shape de explain corresponde a cada backend (`backend`,
   `backendAvailable`, `backendMaterialized`, `fts5_match`).
+- el runtime evita ya volver a cargar la coleccion completa cuando FTS5 o
+  `usearch` devuelven `storage_key` candidatos; en esas rutas recupera solo
+  los documentos necesarios para materializar resultados o aplicar filtros.
 
 Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
 ruta de ejecucion, en la de `explain()` y en el lifecycle documental de los
