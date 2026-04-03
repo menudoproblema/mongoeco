@@ -27,12 +27,14 @@ from benchmarks.runners.workloads import (
     filter_selectivity,
     materializing_aggregation,
     predicate_diagnostics,
+    search_diagnostics,
     secondary_lookup_diagnostics,
     secondary_lookup_indexed,
     secondary_lookup_unindexed,
     simple_aggregation,
     sort_shape_diagnostics,
     sort_limit,
+    vector_search_diagnostics,
 )
 from benchmarks.runners.metrics import summarize
 
@@ -68,9 +70,22 @@ WORKLOADS = {
     "filter_selectivity": filter_selectivity,
     "predicate_diagnostics": predicate_diagnostics,
     "sort_shape_diagnostics": sort_shape_diagnostics,
+    "search_diagnostics": search_diagnostics,
+    "vector_search_diagnostics": vector_search_diagnostics,
 }
 
-WORKLOAD_ORDER = tuple(WORKLOADS.keys())
+WORKLOAD_ORDER = (
+    "secondary_lookup_indexed",
+    "secondary_lookup_unindexed",
+    "secondary_lookup_diagnostics",
+    "simple_aggregation",
+    "materializing_aggregation",
+    "sort_limit",
+    "cursor_consumption",
+    "filter_selectivity",
+    "predicate_diagnostics",
+    "sort_shape_diagnostics",
+)
 
 
 def resolve_workload_names(selected: list[str] | None) -> tuple[str, ...]:

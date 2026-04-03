@@ -4,7 +4,7 @@ import tempfile
 from typing import Any
 
 from benchmarks.engines.base import BenchmarkEngine
-from mongoeco import AsyncMongoClient
+from mongoeco import AsyncMongoClient, SearchIndexModel
 
 
 class _MongoecoAsyncEngine(BenchmarkEngine):
@@ -60,6 +60,26 @@ class _MongoecoAsyncEngine(BenchmarkEngine):
     ) -> None:
         assert self._runner is not None
         self._runner.run(self.client[db_name][coll_name].create_index(keys))
+
+    def create_search_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        definition: dict[str, Any],
+        *,
+        name: str = "default",
+        index_type: str = "search",
+    ) -> str:
+        assert self._runner is not None
+        return self._runner.run(
+            self.client[db_name][coll_name].create_search_index(
+                SearchIndexModel(
+                    definition,
+                    name=name,
+                    type=index_type,
+                )
+            )
+        )
 
     def find(
         self,

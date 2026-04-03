@@ -34,6 +34,19 @@ class BenchmarkEngine(ABC):
         pass
 
     @abstractmethod
+    def create_search_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        definition: dict[str, Any],
+        *,
+        name: str = "default",
+        index_type: str = "search",
+    ) -> str:
+        """Crea un search index o vectorSearch index para el workload."""
+        pass
+
+    @abstractmethod
     def find(self, db_name: str, coll_name: str, filter_spec: dict[str, Any], sort: list[tuple[str, int]] | None = None, limit: int = 0) -> list[dict[str, Any]]:
         """Busca documentos y devuelve la lista materializada."""
         pass

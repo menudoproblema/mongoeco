@@ -125,7 +125,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(len(only_default), 1)
                     self.assertEqual(only_default[0]["name"], "default")
                     self.assertEqual(only_default[0]["queryMode"], "text")
-                    self.assertEqual(only_default[0]["capabilities"], ["text", "phrase", "autocomplete", "wildcard", "compound"])
+                    self.assertEqual(
+                        only_default[0]["capabilities"],
+                        ["text", "phrase", "autocomplete", "wildcard", "exists", "compound"],
+                    )
 
                     await collection.update_search_index("default", {"mappings": {"dynamic": True}})
                     updated = await collection.list_search_indexes("default").first()
@@ -245,6 +248,16 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(wildcard_explanation["engine_plan"]["details"]["backend"], "python")
                     self.assertIsNone(wildcard_explanation["engine_plan"]["details"].get("fts5_match"))
 
+                    exists_hits = await collection.aggregate(
+                        [{"$search": {"index": "by_text", "exists": {"path": "title"}}}]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in exists_hits], [2, 3])
+                    exists_explanation = await collection.aggregate(
+                        [{"$search": {"index": "by_text", "exists": {"path": "title"}}}]
+                    ).explain()
+                    self.assertEqual(exists_explanation["engine_plan"]["details"]["queryOperator"], "exists")
+                    self.assertEqual(exists_explanation["engine_plan"]["details"]["backend"], "python")
+
                     compound_hits = await collection.aggregate(
                         [
                             {
@@ -319,6 +332,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         self.assertTrue(vector_explanation["engine_plan"]["details"]["backendMaterialized"])
                         self.assertTrue(vector_explanation["engine_plan"]["details"]["annAvailable"])
                         self.assertIsNotNone(vector_explanation["engine_plan"]["details"]["vectorBackend"])
+                        self.assertGreaterEqual(
+                            vector_explanation["engine_plan"]["details"]["candidatesRequested"],
+                            vector_explanation["engine_plan"]["details"]["candidatesEvaluated"],
+                        )
                     else:
                         self.assertEqual(vector_explanation["engine_plan"]["details"]["backend"], "python")
                     self.assertEqual(vector_explanation["engine_plan"]["details"]["path"], "embedding")

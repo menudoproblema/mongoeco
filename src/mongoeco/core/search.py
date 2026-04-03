@@ -65,12 +65,18 @@ class SearchWildcardQuery:
 
 
 @dataclass(frozen=True, slots=True)
+class SearchExistsQuery:
+    index_name: str
+    paths: tuple[str, ...] | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class SearchCompoundQuery:
     index_name: str
-    must: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | "SearchCompoundQuery", ...] = ()
-    should: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | "SearchCompoundQuery", ...] = ()
-    filter: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | "SearchCompoundQuery", ...] = ()
-    must_not: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | "SearchCompoundQuery", ...] = ()
+    must: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | "SearchCompoundQuery", ...] = ()
+    should: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | "SearchCompoundQuery", ...] = ()
+    filter: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | "SearchCompoundQuery", ...] = ()
+    must_not: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | "SearchCompoundQuery", ...] = ()
     minimum_should_match: int = 0
 
 
@@ -90,6 +96,7 @@ type SearchTextLikeQuery = (
     | SearchPhraseQuery
     | SearchAutocompleteQuery
     | SearchWildcardQuery
+    | SearchExistsQuery
     | SearchCompoundQuery
 )
 type SearchQuery = SearchTextLikeQuery | SearchVectorQuery
@@ -358,6 +365,13 @@ def compile_search_wildcard_query(spec: object) -> SearchWildcardQuery:
     return query
 
 
+def compile_search_exists_query(spec: object) -> SearchExistsQuery:
+    query = compile_search_text_like_query(spec)
+    if not isinstance(query, SearchExistsQuery):
+        raise OperationFailure("$search.exists specification is required")
+    return query
+
+
 def compile_search_compound_query(spec: object) -> SearchCompoundQuery:
     query = compile_search_text_like_query(spec)
     if not isinstance(query, SearchCompoundQuery):
@@ -475,6 +489,21 @@ def matches_search_wildcard_query(
         return False
     pattern = query.normalized_pattern
     return any(fnmatch.fnmatchcase(value.lower(), pattern) for _, value in entries if value)
+
+
+def matches_search_exists_query(
+    document: Document,
+    *,
+    definition: SearchIndexDefinition,
+    query: SearchExistsQuery,
+) -> bool:
+    entries = iter_searchable_text_entries(document, definition)
+    if not entries:
+        return False
+    if query.paths is None:
+        return True
+    allowed = set(query.paths)
+    return any(path in allowed for path, _value in entries)
 
 
 def matches_search_compound_query(
@@ -696,6 +725,21 @@ def _compile_search_wildcard_clause(index_name: str, clause_spec: object) -> Sea
     )
 
 
+def _compile_search_exists_clause(index_name: str, clause_spec: object) -> SearchExistsQuery:
+    if not isinstance(clause_spec, dict):
+        raise OperationFailure("$search.exists requires a document specification")
+    unsupported_options = sorted(set(clause_spec) - {"path"})
+    if unsupported_options:
+        raise OperationFailure(
+            "$search.exists only supports path; unsupported keys: "
+            + ", ".join(unsupported_options)
+        )
+    return SearchExistsQuery(
+        index_name=index_name,
+        paths=_normalize_search_paths(clause_spec.get("path")),
+    )
+
+
 def _compile_search_compound_clause(
     index_name: str,
     clause_spec: object,
@@ -855,6 +899,20 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
     }
 
 
+def _explain_exists_query(query: SearchExistsQuery) -> dict[str, object | None]:
+    return {
+        "query": None,
+        "paths": list(query.paths) if query.paths is not None else None,
+        "compound": None,
+        "path": None,
+        "queryVector": None,
+        "limit": None,
+        "numCandidates": None,
+        "filter": None,
+        "similarity": None,
+    }
+
+
 def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | None]:
     return {
         "query": None,
@@ -899,6 +957,7 @@ _SEARCH_CLAUSE_COMPILERS: dict[str, _SearchClauseCompiler] = {
     "phrase": _compile_search_phrase_clause,
     "autocomplete": _compile_search_autocomplete_clause,
     "wildcard": _compile_search_wildcard_clause,
+    "exists": _compile_search_exists_clause,
     "compound": _compile_search_compound_clause,
 }
 
@@ -907,6 +966,7 @@ _SEARCH_QUERY_OPERATOR_NAMES: dict[type[Any], str] = {
     SearchPhraseQuery: "phrase",
     SearchAutocompleteQuery: "autocomplete",
     SearchWildcardQuery: "wildcard",
+    SearchExistsQuery: "exists",
     SearchCompoundQuery: "compound",
 }
 
@@ -915,6 +975,7 @@ _SEARCH_QUERY_MATCHERS: dict[type[Any], _SearchMatcher] = {
     SearchPhraseQuery: lambda document, definition, query: matches_search_phrase_query(document, definition=definition, query=query),  # type: ignore[arg-type]
     SearchAutocompleteQuery: lambda document, definition, query: matches_search_autocomplete_query(document, definition=definition, query=query),  # type: ignore[arg-type]
     SearchWildcardQuery: lambda document, definition, query: matches_search_wildcard_query(document, definition=definition, query=query),  # type: ignore[arg-type]
+    SearchExistsQuery: lambda document, definition, query: matches_search_exists_query(document, definition=definition, query=query),  # type: ignore[arg-type]
     SearchCompoundQuery: lambda document, definition, query: matches_search_compound_query(document, definition=definition, query=query),  # type: ignore[arg-type]
 }
 
@@ -923,6 +984,7 @@ _SEARCH_QUERY_EXPLAINERS: dict[type[Any], _SearchExplainBuilder] = {
     SearchPhraseQuery: lambda query: _explain_text_like_query(query),  # type: ignore[arg-type]
     SearchAutocompleteQuery: lambda query: _explain_text_like_query(query),  # type: ignore[arg-type]
     SearchWildcardQuery: lambda query: _explain_text_like_query(query),  # type: ignore[arg-type]
+    SearchExistsQuery: lambda query: _explain_exists_query(query),  # type: ignore[arg-type]
     SearchCompoundQuery: lambda query: _explain_compound_query(query),  # type: ignore[arg-type]
     SearchVectorQuery: lambda query: _explain_vector_query(query),  # type: ignore[arg-type]
 }

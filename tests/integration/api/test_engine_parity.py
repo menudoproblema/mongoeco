@@ -1387,6 +1387,12 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         {"$sort": {"_id": 1}},
                     ]
                 ).to_list()
+                exists_hits = await collection.aggregate(
+                    [
+                        {"$search": {"index": "by_text", "exists": {"path": "title"}}},
+                        {"$sort": {"_id": 1}},
+                    ]
+                ).to_list()
                 compound_hits = await collection.aggregate(
                     [
                         {
@@ -1425,6 +1431,9 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                 wildcard_explain = await collection.aggregate(
                     [{"$search": {"index": "by_text", "wildcard": {"query": "*algorithm*", "path": "body"}}}]
                 ).explain()
+                exists_explain = await collection.aggregate(
+                    [{"$search": {"index": "by_text", "exists": {"path": "title"}}}]
+                ).explain()
                 compound_explain = await collection.aggregate(
                     [
                         {
@@ -1456,6 +1465,7 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "search_hits": [document["_id"] for document in search_hits],
                     "autocomplete_hits": [document["_id"] for document in autocomplete_hits],
                     "wildcard_hits": [document["_id"] for document in wildcard_hits],
+                    "exists_hits": [document["_id"] for document in exists_hits],
                     "compound_hits": [document["_id"] for document in compound_hits],
                     "vector_hits": [document["_id"] for document in vector_hits],
                     "search_explain": {
@@ -1473,6 +1483,10 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "wildcard_explain": {
                         "query_operator": wildcard_explain["engine_plan"]["details"]["queryOperator"],
                         "paths": wildcard_explain["engine_plan"]["details"]["paths"],
+                    },
+                    "exists_explain": {
+                        "query_operator": exists_explain["engine_plan"]["details"]["queryOperator"],
+                        "paths": exists_explain["engine_plan"]["details"]["paths"],
                     },
                     "compound_explain": {
                         "query_operator": compound_explain["engine_plan"]["details"]["queryOperator"],

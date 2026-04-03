@@ -7,6 +7,7 @@ from mongoeco.core.search import (
     ClassicTextQuery,
     SearchAutocompleteQuery,
     SearchCompoundQuery,
+    SearchExistsQuery,
     SearchPhraseQuery,
     SearchTextQuery,
     SearchVectorQuery,
@@ -17,6 +18,7 @@ from mongoeco.core.search import (
     compile_search_autocomplete_query,
     compile_classic_text_query,
     compile_search_compound_query,
+    compile_search_exists_query,
     is_queryable_search_definition,
     compile_search_text_like_query,
     compile_search_phrase_query,
@@ -27,6 +29,7 @@ from mongoeco.core.search import (
     iter_searchable_text_entries,
     matches_search_autocomplete_query,
     matches_search_compound_query,
+    matches_search_exists_query,
     matches_search_query,
     matches_search_phrase_query,
     matches_search_text_query,
@@ -489,10 +492,26 @@ class SearchCoreTests(unittest.TestCase):
                 paths=("title",),
             ),
         )
+        self.assertEqual(
+            compile_search_stage(
+                "$search",
+                {"index": "by_text", "exists": {"path": "title"}},
+            ),
+            SearchExistsQuery(
+                index_name="by_text",
+                paths=("title",),
+            ),
+        )
 
     def test_compound_and_clause_compilers_cover_more_error_paths(self) -> None:
-        with self.assertRaises(OperationFailure):
-            search_module._compile_search_clause(index_name="by_text", clause_name="exists", clause_spec={})
+        self.assertEqual(
+            search_module._compile_search_clause(
+                index_name="by_text",
+                clause_name="exists",
+                clause_spec={"path": "title"},
+            ),
+            SearchExistsQuery(index_name="by_text", paths=("title",)),
+        )
         with self.assertRaises(OperationFailure):
             compile_search_compound_query({"index": "by_text", "compound": []})
         with self.assertRaises(OperationFailure):
@@ -1430,6 +1449,8 @@ class SearchCoreTests(unittest.TestCase):
             compile_search_autocomplete_query({"autocomplete": "bad"})
         with self.assertRaisesRegex(OperationFailure, "document specification"):
             compile_search_wildcard_query({"wildcard": "bad"})
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            compile_search_exists_query({"exists": "bad"})
         with self.assertRaisesRegex(OperationFailure, "entries must be documents"):
             compile_search_compound_query({"compound": {"must": ["bad"]}})
         with self.assertRaisesRegex(OperationFailure, "require exactly one operator"):
@@ -1454,6 +1475,20 @@ class SearchCoreTests(unittest.TestCase):
                 {"name": None},
                 definition=definition,
                 query=SearchWildcardQuery(index_name="default", raw_query="Ada*", normalized_pattern="ada*", paths=("name",)),
+            )
+        )
+        self.assertTrue(
+            matches_search_exists_query(
+                {"name": "Ada"},
+                definition=definition,
+                query=SearchExistsQuery(index_name="default", paths=("name",)),
+            )
+        )
+        self.assertFalse(
+            matches_search_exists_query(
+                {"other": "Ada"},
+                definition=definition,
+                query=SearchExistsQuery(index_name="default", paths=("name",)),
             )
         )
         with self.assertRaisesRegex(OperationFailure, "unsupported local search query type"):
@@ -1502,6 +1537,11 @@ class SearchCoreTests(unittest.TestCase):
         details = search_query_explain_details(compound)
         self.assertEqual(details["queryOperator"], "compound")
         self.assertEqual(details["compound"]["must"], 1)
+        exists_details = search_query_explain_details(
+            SearchExistsQuery(index_name="by_text", paths=("title",))
+        )
+        self.assertEqual(exists_details["queryOperator"], "exists")
+        self.assertEqual(exists_details["paths"], ["title"])
 
 
 if __name__ == "__main__":

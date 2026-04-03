@@ -3,7 +3,7 @@ LOCAL_RUNTIME_SUBSET_CATALOG: dict[str, dict[str, object]] = {
         "backend": "usearch",
         "mode": "local-ann-with-exact-baseline",
         "similarities": ["cosine", "dotProduct", "euclidean"],
-        "filterMode": "post-candidate",
+        "filterMode": "post-candidate-with-adaptive-candidate-expansion",
         "fallback": "exact",
         "note": (
             "SQLiteEngine uses a local usearch ANN backend when the vector index is "
@@ -30,7 +30,7 @@ LOCAL_RUNTIME_SUBSET_CATALOG: dict[str, dict[str, object]] = {
         ),
     },
     "search": {
-        "operators": ["text", "phrase", "autocomplete", "wildcard", "compound"],
+        "operators": ["text", "phrase", "autocomplete", "wildcard", "exists", "compound"],
         "sqliteBackends": ["fts5", "python"],
         "note": "The local $search surface remains an explicit Atlas-like subset.",
     },

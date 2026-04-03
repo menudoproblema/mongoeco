@@ -5,6 +5,7 @@ TEXT_SEARCH_OPERATOR_NAMES: tuple[str, ...] = (
     "phrase",
     "autocomplete",
     "wildcard",
+    "exists",
     "compound",
 )
 

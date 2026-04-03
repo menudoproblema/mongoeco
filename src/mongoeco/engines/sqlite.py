@@ -966,6 +966,32 @@ class SQLiteEngine(AsyncStorageEngine):
                 # finalized after engine shutdown.
                 pass
 
+    def _load_documents_by_storage_keys(
+        self,
+        db_name: str,
+        coll_name: str,
+        storage_keys: list[str],
+    ) -> dict[str, Document]:
+        if not storage_keys:
+            return {}
+        placeholders = ", ".join("?" for _ in storage_keys)
+        conn = self._require_connection()
+        cursor = conn.execute(
+            f"""
+            SELECT storage_key, document
+            FROM documents
+            WHERE db_name = ? AND coll_name = ? AND storage_key IN ({placeholders})
+            """,
+            (db_name, coll_name, *storage_keys),
+        )
+        try:
+            return {
+                storage_key: self._deserialize_document(document)
+                for storage_key, document in cursor
+            }
+        finally:
+            cursor.close()
+
     def _build_select_sql(
         self,
         db_name: str,

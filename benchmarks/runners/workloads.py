@@ -70,6 +70,23 @@ def _summarize_aggregate_explain(explain: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _summarize_search_explain(explain: dict[str, Any]) -> dict[str, Any]:
+    summary = _summarize_aggregate_explain(explain)
+    engine_plan = explain.get("engine_plan")
+    details = engine_plan.get("details") if isinstance(engine_plan, dict) else None
+    if not isinstance(details, dict):
+        return summary
+    summary["query_operator"] = details.get("queryOperator")
+    summary["backend"] = details.get("backend")
+    summary["mode"] = details.get("mode")
+    summary["filter_mode"] = details.get("filterMode")
+    summary["exact_fallback_reason"] = details.get("exactFallbackReason")
+    summary["candidates_evaluated"] = details.get("candidatesEvaluated")
+    summary["candidates_requested"] = details.get("candidatesRequested")
+    summary["documents_filtered"] = details.get("documentsFiltered")
+    return summary
+
+
 def _metrics_with_metadata(
     metrics: Metrics,
     *,
@@ -90,6 +107,36 @@ def _measure_single_task(
     with measure(metric_store):
         callback()
     return _metrics_with_metadata(metric_store[0], metadata=metadata)
+
+
+def _augment_search_documents(docs: list[dict[str, Any]]) -> None:
+    people = ("Ada", "Grace", "Barbara", "Donald")
+    topics = ("algorithms", "compilers", "indexes", "vectors")
+    summaries = (
+        "analytical engine design notes",
+        "compiler construction handbook",
+        "sqlite indexing patterns",
+        "vector retrieval and ranking",
+    )
+    embeddings = (
+        (1.0, 0.0, 0.0),
+        (0.0, 1.0, 0.0),
+        (0.0, 0.0, 1.0),
+        (0.8, 0.2, 0.0),
+    )
+    for index, document in enumerate(docs):
+        person = people[index % len(people)]
+        topic = topics[index % len(topics)]
+        summary = summaries[index % len(summaries)]
+        cluster = embeddings[index % len(embeddings)]
+        document["title"] = f"{person} {topic}"
+        document["body"] = (
+            f"{person} wrote about {topic}. "
+            f"{summary}. "
+            f"{document['city']} field report {index % 7}."
+        )
+        document["kind"] = "reference" if index % 3 == 0 else "note"
+        document["embedding"] = [float(value) for value in cluster]
 
 
 def secondary_lookup_indexed(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
@@ -592,6 +639,175 @@ def sort_shape_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any
                     for _ in range(50)
                 ],
                 metadata=nested_full_metadata,
+            ),
+        }
+    finally:
+        engine.teardown()
+
+
+def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+    """Mide operadores de $search sobre el subset local actual."""
+    text_metrics: list[Metrics] = []
+    autocomplete_metrics: list[Metrics] = []
+    wildcard_metrics: list[Metrics] = []
+
+    db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_augment_search_documents)
+    try:
+        engine.create_search_index(
+            db_name,
+            coll_name,
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "string"},
+                        "body": {"type": "string"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+
+        text_pipeline = [
+            {"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}},
+            {"$limit": 10},
+        ]
+        autocomplete_pipeline = [
+            {
+                "$search": {
+                    "index": "by_text",
+                    "autocomplete": {"query": "alg", "path": ["title", "body"]},
+                }
+            },
+            {"$limit": 10},
+        ]
+        wildcard_pipeline = [
+            {"$search": {"index": "by_text", "wildcard": {"query": "*vector*", "path": "body"}}},
+            {"$limit": 10},
+        ]
+
+        return {
+            "search_text_topk_100": _measure_single_task(
+                text_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, text_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, text_pipeline)
+                    ),
+                    "query_shape": "$search.text title/body ada",
+                },
+            ),
+            "search_autocomplete_topk_100": _measure_single_task(
+                autocomplete_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, autocomplete_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, autocomplete_pipeline)
+                    ),
+                    "query_shape": "$search.autocomplete title/body alg",
+                },
+            ),
+            "search_wildcard_topk_100": _measure_single_task(
+                wildcard_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, wildcard_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, wildcard_pipeline)
+                    ),
+                    "query_shape": "$search.wildcard body *vector*",
+                },
+            ),
+        }
+    finally:
+        engine.teardown()
+
+
+def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+    """Mide ANN local y el coste adicional del filtro post-candidato."""
+    ann_metrics: list[Metrics] = []
+    filtered_metrics: list[Metrics] = []
+
+    db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_augment_search_documents)
+    try:
+        engine.create_search_index(
+            db_name,
+            coll_name,
+            {
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": 3,
+                        "similarity": "cosine",
+                        "connectivity": 8,
+                        "expansionAdd": 16,
+                        "expansionSearch": 24,
+                    }
+                ]
+            },
+            name="by_vector",
+            index_type="vectorSearch",
+        )
+
+        ann_pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": "by_vector",
+                    "path": "embedding",
+                    "queryVector": [1.0, 0.0, 0.0],
+                    "numCandidates": 24,
+                    "limit": 10,
+                }
+            }
+        ]
+        filtered_pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": "by_vector",
+                    "path": "embedding",
+                    "queryVector": [1.0, 0.0, 0.0],
+                    "numCandidates": 24,
+                    "limit": 10,
+                    "filter": {"kind": "reference"},
+                }
+            }
+        ]
+
+        return {
+            "vector_search_ann_topk_100": _measure_single_task(
+                ann_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, ann_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, ann_pipeline)
+                    ),
+                    "query_shape": "$vectorSearch cosine topk",
+                },
+            ),
+            "vector_search_filtered_topk_100": _measure_single_task(
+                filtered_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, filtered_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, filtered_pipeline)
+                    ),
+                    "query_shape": "$vectorSearch cosine topk + post-filter",
+                },
             ),
         }
     finally:

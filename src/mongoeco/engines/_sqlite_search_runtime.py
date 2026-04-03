@@ -55,6 +55,12 @@ class _SQLiteSearchRuntimeEngine(Protocol):
     def _require_connection(self, context: ClientSession | None = None) -> sqlite3.Connection: ...
     def _quote_identifier(self, identifier: str) -> str: ...
     def _load_documents(self, db_name: str, coll_name: str) -> list[tuple[str, Document]]: ...
+    def _load_documents_by_storage_keys(
+        self,
+        db_name: str,
+        coll_name: str,
+        storage_keys: list[str],
+    ) -> dict[str, Document]: ...
     def _sqlite_table_exists(self, conn: sqlite3.Connection, table_name: str) -> bool: ...
     def _supports_fts5(self, conn: sqlite3.Connection) -> bool: ...
     def _physical_search_index_name(self, db_name: str, coll_name: str, index_name: str) -> str: ...
@@ -175,6 +181,22 @@ def ensure_search_backend_sync(
     if not had_transaction and conn.in_transaction:
         conn.commit()
     return resolved_physical_name
+
+
+def _load_candidate_documents(
+    engine: _SQLiteSearchRuntimeEngine,
+    db_name: str,
+    coll_name: str,
+    storage_keys: list[str],
+) -> list[tuple[str, Document]]:
+    if not storage_keys:
+        return []
+    documents = engine._load_documents_by_storage_keys(db_name, coll_name, storage_keys)
+    return [
+        (storage_key, documents[storage_key])
+        for storage_key in storage_keys
+        if storage_key in documents
+    ]
 
 
 def ensure_vector_search_backend_sync(
@@ -416,6 +438,77 @@ def exact_vector_hits_sync(
     return vector_hits
 
 
+def _sqlite_vector_candidate_documents(
+    engine: _SQLiteSearchRuntimeEngine,
+    db_name: str,
+    coll_name: str,
+    query: SearchVectorQuery,
+    backend_state: SQLiteVectorBackendState,
+) -> tuple[list[Document], int, int, int, str | None]:
+    requested = max(query.limit, query.num_candidates)
+    max_requested = min(
+        backend_state.valid_vectors,
+        max(requested, query.limit * 4),
+    )
+    matched_documents: list[Document] = []
+    documents_filtered = 0
+    candidates_evaluated = 0
+    exact_fallback_reason: str | None = None
+    seen_storage_keys: set[str] = set()
+    current_request = requested
+
+    while current_request > 0:
+        ann_hits = search_sqlite_vector_backend(
+            backend_state,
+            query_vector=query.query_vector,
+            count=current_request,
+        )
+        new_storage_keys = [
+            storage_key
+            for storage_key, _distance in ann_hits
+            if storage_key not in seen_storage_keys
+        ]
+        if not new_storage_keys:
+            break
+        seen_storage_keys.update(new_storage_keys)
+        for storage_key, document in _load_candidate_documents(
+            engine,
+            db_name,
+            coll_name,
+            new_storage_keys,
+        ):
+            candidates_evaluated += 1
+            if query.filter_spec is not None and not QueryEngine.match(
+                document,
+                query.filter_spec,
+                dialect=MONGODB_DIALECT_70,
+            ):
+                documents_filtered += 1
+                continue
+            matched_documents.append(document)
+            if len(matched_documents) >= query.limit:
+                return (
+                    matched_documents[: query.limit],
+                    current_request,
+                    candidates_evaluated,
+                    documents_filtered,
+                    None,
+                )
+        if query.filter_spec is None or current_request >= max_requested:
+            break
+        current_request = min(max_requested, current_request * 2)
+
+    if query.filter_spec is not None and len(matched_documents) < query.limit:
+        exact_fallback_reason = "post-filter-underflow"
+    return (
+        matched_documents[: query.limit],
+        current_request,
+        candidates_evaluated,
+        documents_filtered,
+        exact_fallback_reason,
+    )
+
+
 def execute_sqlite_search_query(
     engine: _SQLiteSearchRuntimeEngine,
     conn: sqlite3.Connection,
@@ -452,30 +545,20 @@ def execute_sqlite_search_query(
                 resolved_physical_name,
                 query.path,
             )
-            documents_by_storage_key = {
-                storage_key: document
-                for storage_key, document in engine._load_documents(db_name, coll_name)
-            }
-            ann_hits = search_sqlite_vector_backend(
+            (
+                filtered_documents,
+                _requested_candidates,
+                _candidates_evaluated,
+                _documents_filtered,
+                exact_fallback_reason,
+            ) = _sqlite_vector_candidate_documents(
+                engine,
+                db_name,
+                coll_name,
+                query,
                 backend_state,
-                query_vector=query.query_vector,
-                count=query.num_candidates,
             )
-            filtered_documents: list[Document] = []
-            for storage_key, _distance in ann_hits:
-                document = documents_by_storage_key.get(storage_key)
-                if document is None:
-                    continue
-                if query.filter_spec is not None and not QueryEngine.match(
-                    document,
-                    query.filter_spec,
-                    dialect=MONGODB_DIALECT_70,
-                ):
-                    continue
-                filtered_documents.append(document)
-                if len(filtered_documents) >= query.limit:
-                    break
-            if query.filter_spec is None or len(filtered_documents) >= query.limit:
+            if exact_fallback_reason is None:
                 enforce_deadline(deadline)
                 return filtered_documents[: query.limit]
         exact_hits = exact_vector_hits_sync(engine, db_name, coll_name, definition, query)
@@ -504,12 +587,7 @@ def execute_sqlite_search_query(
         storage_keys = [row[0] for row in conn.execute(sql, tuple(params)).fetchall()]
         if not storage_keys:
             return []
-        storage_key_set = set(storage_keys)
-        documents = {
-            storage_key: document
-            for storage_key, document in engine._load_documents(db_name, coll_name)
-            if storage_key in storage_key_set
-        }
+        documents = engine._load_documents_by_storage_keys(db_name, coll_name, storage_keys)
         enforce_deadline(deadline)
         return [documents[storage_key] for storage_key in storage_keys if storage_key in documents]
 
@@ -584,6 +662,8 @@ def explain_search_documents_sync(
     vector_state: SQLiteVectorBackendState | None = None
     exact_fallback_reason: str | None = None
     documents_filtered = 0
+    candidates_evaluated: int | None = None
+    candidates_requested: int | None = None
     conn = engine._require_connection(context)
     with engine._bind_connection(conn):
         rows = engine._load_search_index_rows(db_name, coll_name, name=query.index_name)
@@ -643,29 +723,21 @@ def explain_search_documents_sync(
                 backend_materialized=vector_state is not None,
                 ann_available=True,
             )
-        if isinstance(query, SearchVectorQuery) and vector_state is not None and query.filter_spec is not None:
-            documents_by_storage_key = {
-                storage_key: document
-                for storage_key, document in engine._load_documents(db_name, coll_name)
-            }
-            ann_hits = search_sqlite_vector_backend(
+        if isinstance(query, SearchVectorQuery) and vector_state is not None:
+            (
+                _matched_documents,
+                candidates_requested,
+                evaluated_count,
+                documents_filtered,
+                exact_fallback_reason,
+            ) = _sqlite_vector_candidate_documents(
+                engine,
+                db_name,
+                coll_name,
+                query,
                 vector_state,
-                query_vector=query.query_vector,
-                count=query.num_candidates,
             )
-            matched = 0
-            for storage_key, _distance in ann_hits:
-                document = documents_by_storage_key.get(storage_key)
-                if document is None:
-                    continue
-                if QueryEngine.match(document, query.filter_spec, dialect=MONGODB_DIALECT_70):
-                    matched += 1
-                else:
-                    documents_filtered += 1
-                if matched >= query.limit:
-                    break
-            if matched < query.limit:
-                exact_fallback_reason = "post-filter-underflow"
+            candidates_evaluated = evaluated_count
 
     return QueryPlanExplanation(
         engine="sqlite",
@@ -713,7 +785,12 @@ def explain_search_documents_sync(
             "filterMode": "post-candidate" if isinstance(query, SearchVectorQuery) and query.filter_spec is not None else None,
             "exactFallbackReason": exact_fallback_reason,
             "candidatesEvaluated": (
-                min(query.num_candidates, vector_state.valid_vectors)
+                candidates_evaluated
+                if isinstance(query, SearchVectorQuery) and vector_state is not None
+                else None
+            ),
+            "candidatesRequested": (
+                candidates_requested
                 if isinstance(query, SearchVectorQuery) and vector_state is not None
                 else None
             ),

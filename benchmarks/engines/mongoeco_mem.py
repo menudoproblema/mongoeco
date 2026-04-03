@@ -1,7 +1,7 @@
 from typing import Any
 
 from benchmarks.engines.base import BenchmarkEngine
-from mongoeco import MongoClient
+from mongoeco import MongoClient, SearchIndexModel
 
 
 class MongoecoMemoryEngine(BenchmarkEngine):
@@ -34,6 +34,22 @@ class MongoecoMemoryEngine(BenchmarkEngine):
         keys: list[tuple[str, int]],
     ) -> None:
         self.client[db_name][coll_name].create_index(keys)
+
+    def create_search_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        definition: dict[str, Any],
+        *,
+        name: str = "default",
+        index_type: str = "search",
+    ) -> str:
+        model = SearchIndexModel(
+            definition,
+            name=name,
+            type=index_type,
+        )
+        return self.client[db_name][coll_name].create_search_index(model)
 
     def find(self, db_name: str, coll_name: str, filter_spec: dict[str, Any], sort: list[tuple[str, int]] | None = None, limit: int = 0) -> list[dict[str, Any]]:
         cursor = self.client[db_name][coll_name].find(filter_spec)
