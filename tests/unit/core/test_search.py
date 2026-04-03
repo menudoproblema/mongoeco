@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch
+import datetime
 
 import mongoeco.core.search as search_module
 from mongoeco.core._search_contract import TEXT_SEARCH_INDEX_CAPABILITIES, TEXT_SEARCH_OPERATOR_NAMES
@@ -8,6 +9,7 @@ from mongoeco.core.search import (
     SearchAutocompleteQuery,
     SearchCompoundQuery,
     SearchExistsQuery,
+    SearchNearQuery,
     SearchPhraseQuery,
     SearchTextQuery,
     SearchVectorQuery,
@@ -19,6 +21,7 @@ from mongoeco.core.search import (
     compile_classic_text_query,
     compile_search_compound_query,
     compile_search_exists_query,
+    compile_search_near_query,
     is_queryable_search_definition,
     compile_search_text_like_query,
     compile_search_phrase_query,
@@ -30,6 +33,7 @@ from mongoeco.core.search import (
     matches_search_autocomplete_query,
     matches_search_compound_query,
     matches_search_exists_query,
+    matches_search_near_query,
     matches_search_query,
     matches_search_phrase_query,
     matches_search_text_query,
@@ -37,6 +41,7 @@ from mongoeco.core.search import (
     resolve_classic_text_index,
     split_classic_text_filter,
     score_vector_document,
+    search_near_distance,
     search_query_explain_details,
     search_query_operator_name,
     sqlite_fts5_query,
@@ -143,7 +148,7 @@ class SearchCoreTests(unittest.TestCase):
                 {
                     "mappings": {
                         "fields": {
-                            "title": {"type": "number"},
+                            "title": {"type": "boolean"},
                         }
                     }
                 },
@@ -502,6 +507,19 @@ class SearchCoreTests(unittest.TestCase):
                 paths=("title",),
             ),
         )
+        self.assertEqual(
+            compile_search_stage(
+                "$search",
+                {"index": "by_text", "near": {"path": "score", "origin": 10, "pivot": 2}},
+            ),
+            SearchNearQuery(
+                index_name="by_text",
+                path="score",
+                origin=10,
+                pivot=2.0,
+                origin_kind="number",
+            ),
+        )
 
     def test_compound_and_clause_compilers_cover_more_error_paths(self) -> None:
         self.assertEqual(
@@ -587,9 +605,21 @@ class SearchCoreTests(unittest.TestCase):
                 "limit": 2,
             }
         )
+        near = compile_search_near_query(
+            {
+                "index": "by_text",
+                "near": {
+                    "path": "score",
+                    "origin": datetime.datetime(2024, 1, 1, 12, 0, 0),
+                    "pivot": 60.0,
+                },
+            }
+        )
 
         self.assertEqual(search_query_operator_name(wildcard), "wildcard")
         self.assertEqual(search_query_explain_details(wildcard)["paths"], ["title"])
+        self.assertEqual(search_query_operator_name(near), "near")
+        self.assertEqual(search_query_explain_details(near)["originKind"], "date")
         self.assertEqual(search_query_operator_name(compound), "compound")
         self.assertEqual(search_query_explain_details(compound)["compound"]["must"], 1)
         self.assertIsNone(search_query_operator_name(vector))
@@ -1434,7 +1464,7 @@ class SearchCoreTests(unittest.TestCase):
             validate_search_stage_pipeline(
                 [{"$match": {"x": 1}}, {"$vectorSearch": {"index": "vec", "path": "embedding", "queryVector": [1], "limit": 1}}]
             )
-        with self.assertRaisesRegex(OperationFailure, "unsupported local \\$search operator"):
+        with self.assertRaisesRegex(OperationFailure, "\\$search.near.path must be a non-empty string"):
             search_module._compile_search_clause(index_name="by_text", clause_name="near", clause_spec={})
 
         self.assertEqual(search_module.iter_classic_text_values({"tags": ["Ada", 1, "Grace"]}, "tags"), ("Ada", "Grace"))
@@ -1451,6 +1481,10 @@ class SearchCoreTests(unittest.TestCase):
             compile_search_wildcard_query({"wildcard": "bad"})
         with self.assertRaisesRegex(OperationFailure, "document specification"):
             compile_search_exists_query({"exists": "bad"})
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            compile_search_near_query({"near": "bad"})
+        with self.assertRaisesRegex(OperationFailure, "positive finite number"):
+            compile_search_near_query({"near": {"path": "score", "origin": 1, "pivot": 0}})
         with self.assertRaisesRegex(OperationFailure, "entries must be documents"):
             compile_search_compound_query({"compound": {"must": ["bad"]}})
         with self.assertRaisesRegex(OperationFailure, "require exactly one operator"):
@@ -1490,6 +1524,40 @@ class SearchCoreTests(unittest.TestCase):
                 definition=definition,
                 query=SearchExistsQuery(index_name="default", paths=("name",)),
             )
+        )
+        near_query = SearchNearQuery(
+            index_name="default",
+            path="score",
+            origin=10,
+            pivot=2.0,
+            origin_kind="number",
+        )
+        self.assertTrue(
+            matches_search_near_query(
+                {"score": 11},
+                definition=definition,
+                query=near_query,
+            )
+        )
+        self.assertFalse(
+            matches_search_near_query(
+                {"score": 14},
+                definition=definition,
+                query=near_query,
+            )
+        )
+        self.assertEqual(
+            search_near_distance(
+                {"history": [15, 8, 3]},
+                query=SearchNearQuery(
+                    index_name="default",
+                    path="history",
+                    origin=10,
+                    pivot=3.0,
+                    origin_kind="number",
+                ),
+            ),
+            2.0,
         )
         with self.assertRaisesRegex(OperationFailure, "unsupported local search query type"):
             matches_search_query(
@@ -1542,6 +1610,17 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(exists_details["queryOperator"], "exists")
         self.assertEqual(exists_details["paths"], ["title"])
+        near_details = search_query_explain_details(
+            SearchNearQuery(
+                index_name="by_text",
+                path="score",
+                origin=10,
+                pivot=5.0,
+                origin_kind="number",
+            )
+        )
+        self.assertEqual(near_details["queryOperator"], "near")
+        self.assertEqual(near_details["pivot"], 5.0)
 
 
 if __name__ == "__main__":

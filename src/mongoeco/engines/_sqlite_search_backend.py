@@ -6,6 +6,7 @@ from mongoeco.core.search import (
     SearchAutocompleteQuery,
     SearchCompoundQuery,
     SearchExistsQuery,
+    SearchNearQuery,
     SearchPhraseQuery,
     SearchQuery,
     SearchTextQuery,
@@ -65,7 +66,7 @@ def decide_sqlite_search_backend(
         )
     return SQLiteSearchBackendDecision(
         backend="python",
-        backend_available=isinstance(query, (SearchWildcardQuery, SearchExistsQuery, SearchCompoundQuery)) or bool(fts5_available),
+        backend_available=isinstance(query, (SearchWildcardQuery, SearchExistsQuery, SearchNearQuery, SearchCompoundQuery)) or bool(fts5_available),
         backend_materialized=backend_materialized,
         fts5_available=fts5_available,
         ann_available=ann_available,

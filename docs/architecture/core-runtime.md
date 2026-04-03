@@ -92,8 +92,9 @@ Y el runtime local de `search` queda ya ampliado a un subset explicito de
 - `text`;
 - `phrase`;
 - `autocomplete`;
-- `wildcard`.
+- `wildcard`;
 - `exists`;
+- `near`;
 - `compound`.
 
 La regla arquitectonica es la misma:
@@ -107,9 +108,12 @@ La regla arquitectonica es la misma:
   creciendo por cadenas de `if/elif`;
 - `MemoryEngine` actua como baseline observable;
 - `SQLiteEngine` usa FTS5 cuando la traduccion sigue siendo defendible
-  (`text`, `phrase`, `autocomplete`) y cae a Python cuando no (`wildcard`).
-  `exists` y `compound` se apoyan hoy en ese baseline Python local y no
-  intentan fingir un planner FTS mas ambicioso de lo que existe realmente.
+  (`text`, `phrase`, `autocomplete`) y, en `wildcard`, `exists` y parte de
+  `compound`, usa la tabla materializada como prefilter de candidatos antes
+  del matching Python exacto;
+- `near` entra como operador local para numericos y fecha/datetime con
+  `path`, `origin` y `pivot`, y mantiene explain/backends explicitos en vez de
+  fingir scoring Atlas Search completo.
 
 ## Sorting, projection y updates
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from copy import deepcopy
 from dataclasses import dataclass
+import datetime
 import fnmatch
 import math
 import re
@@ -71,12 +72,21 @@ class SearchExistsQuery:
 
 
 @dataclass(frozen=True, slots=True)
+class SearchNearQuery:
+    index_name: str
+    path: str
+    origin: float | datetime.date | datetime.datetime
+    pivot: float
+    origin_kind: str
+
+
+@dataclass(frozen=True, slots=True)
 class SearchCompoundQuery:
     index_name: str
-    must: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | "SearchCompoundQuery", ...] = ()
-    should: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | "SearchCompoundQuery", ...] = ()
-    filter: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | "SearchCompoundQuery", ...] = ()
-    must_not: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | "SearchCompoundQuery", ...] = ()
+    must: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
+    should: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
+    filter: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
+    must_not: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
     minimum_should_match: int = 0
 
 
@@ -97,6 +107,7 @@ type SearchTextLikeQuery = (
     | SearchAutocompleteQuery
     | SearchWildcardQuery
     | SearchExistsQuery
+    | SearchNearQuery
     | SearchCompoundQuery
 )
 type SearchQuery = SearchTextLikeQuery | SearchVectorQuery
@@ -372,6 +383,13 @@ def compile_search_exists_query(spec: object) -> SearchExistsQuery:
     return query
 
 
+def compile_search_near_query(spec: object) -> SearchNearQuery:
+    query = compile_search_text_like_query(spec)
+    if not isinstance(query, SearchNearQuery):
+        raise OperationFailure("$search.near specification is required")
+    return query
+
+
 def compile_search_compound_query(spec: object) -> SearchCompoundQuery:
     query = compile_search_text_like_query(spec)
     if not isinstance(query, SearchCompoundQuery):
@@ -430,8 +448,12 @@ def matches_search_text_query(
         entries = [entry for entry in entries if entry[0] in allowed]
     if not entries:
         return False
-    lowered_entries = [value.lower() for _, value in entries if value]
-    return all(any(term.lower() in value for value in lowered_entries) for term in query.terms)
+    tokens: set[str] = set()
+    for _path, value in entries:
+        if not value:
+            continue
+        tokens.update(tokenize_classic_text(value))
+    return all(term.lower() in tokens for term in query.terms)
 
 
 def matches_search_phrase_query(
@@ -504,6 +526,16 @@ def matches_search_exists_query(
         return True
     allowed = set(query.paths)
     return any(path in allowed for path, _value in entries)
+
+
+def matches_search_near_query(
+    document: Document,
+    *,
+    definition: SearchIndexDefinition,
+    query: SearchNearQuery,
+) -> bool:
+    del definition
+    return search_near_distance(document, query=query) is not None
 
 
 def matches_search_compound_query(
@@ -654,11 +686,14 @@ def _compile_search_text_clause(index_name: str, clause_spec: object) -> SearchT
     raw_query = clause_spec.get("query")
     if not isinstance(raw_query, str) or not raw_query.strip():
         raise OperationFailure("$search.text.query must be a non-empty string")
+    terms = tokenize_classic_text(raw_query)
+    if not terms:
+        raise OperationFailure("$search.text.query must contain at least one searchable token")
     paths = _normalize_search_paths(clause_spec.get("path"))
     return SearchTextQuery(
         index_name=index_name,
         raw_query=raw_query,
-        terms=tuple(term for term in raw_query.strip().split() if term),
+        terms=terms,
         paths=paths,
     )
 
@@ -737,6 +772,38 @@ def _compile_search_exists_clause(index_name: str, clause_spec: object) -> Searc
     return SearchExistsQuery(
         index_name=index_name,
         paths=_normalize_search_paths(clause_spec.get("path")),
+    )
+
+
+def _compile_search_near_clause(index_name: str, clause_spec: object) -> SearchNearQuery:
+    if not isinstance(clause_spec, dict):
+        raise OperationFailure("$search.near requires a document specification")
+    unsupported_options = sorted(set(clause_spec) - {"path", "origin", "pivot"})
+    if unsupported_options:
+        raise OperationFailure(
+            "$search.near only supports path, origin and pivot; unsupported keys: "
+            + ", ".join(unsupported_options)
+        )
+    path = clause_spec.get("path")
+    if not isinstance(path, str) or not path:
+        raise OperationFailure("$search.near.path must be a non-empty string")
+    if "." in path:
+        # Nested paths are allowed semantically, but keeping this stage explicit
+        # avoids silently broadening runtime support without tests/explain work.
+        pass
+    origin = clause_spec.get("origin")
+    origin_kind = _search_near_origin_kind(origin)
+    if origin_kind is None:
+        raise OperationFailure("$search.near.origin must be a finite number or a date/datetime value")
+    pivot = clause_spec.get("pivot")
+    if not isinstance(pivot, (int, float)) or isinstance(pivot, bool) or not math.isfinite(float(pivot)) or float(pivot) <= 0:
+        raise OperationFailure("$search.near.pivot must be a positive finite number")
+    return SearchNearQuery(
+        index_name=index_name,
+        path=path,
+        origin=origin,
+        pivot=float(pivot),
+        origin_kind=origin_kind,
     )
 
 
@@ -876,7 +943,7 @@ def _validate_field_mapping(field_spec: Document) -> None:
     if mapping_type == "document":
         _validate_mappings_document(field_spec)
         return
-    if mapping_type not in {"string", "autocomplete", "token"}:
+    if mapping_type not in {"string", "autocomplete", "token", "number", "date"}:
         raise OperationFailure(f"unsupported local search field mapping type: {mapping_type}")
     unsupported = set(field_spec) - {"type", "analyzer", "searchAnalyzer"}
     if unsupported:
@@ -890,6 +957,9 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
         "query": query.raw_query,
         "paths": list(query.paths) if query.paths is not None else None,
         "compound": None,
+        "origin": None,
+        "originKind": None,
+        "pivot": None,
         "path": None,
         "queryVector": None,
         "limit": None,
@@ -904,7 +974,27 @@ def _explain_exists_query(query: SearchExistsQuery) -> dict[str, object | None]:
         "query": None,
         "paths": list(query.paths) if query.paths is not None else None,
         "compound": None,
+        "origin": None,
+        "originKind": None,
+        "pivot": None,
         "path": None,
+        "queryVector": None,
+        "limit": None,
+        "numCandidates": None,
+        "filter": None,
+        "similarity": None,
+    }
+
+
+def _explain_near_query(query: SearchNearQuery) -> dict[str, object | None]:
+    return {
+        "query": None,
+        "paths": None,
+        "compound": None,
+        "origin": query.origin,
+        "originKind": query.origin_kind,
+        "pivot": query.pivot,
+        "path": query.path,
         "queryVector": None,
         "limit": None,
         "numCandidates": None,
@@ -924,6 +1014,9 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
             "mustNot": len(query.must_not),
             "minimumShouldMatch": query.minimum_should_match,
         },
+        "origin": None,
+        "originKind": None,
+        "pivot": None,
         "path": None,
         "queryVector": None,
         "limit": None,
@@ -938,6 +1031,9 @@ def _explain_vector_query(query: SearchVectorQuery) -> dict[str, object | None]:
         "query": None,
         "paths": None,
         "compound": None,
+        "origin": None,
+        "originKind": None,
+        "pivot": None,
         "path": query.path,
         "queryVector": list(query.query_vector),
         "limit": query.limit,
@@ -958,6 +1054,7 @@ _SEARCH_CLAUSE_COMPILERS: dict[str, _SearchClauseCompiler] = {
     "autocomplete": _compile_search_autocomplete_clause,
     "wildcard": _compile_search_wildcard_clause,
     "exists": _compile_search_exists_clause,
+    "near": _compile_search_near_clause,
     "compound": _compile_search_compound_clause,
 }
 
@@ -967,6 +1064,7 @@ _SEARCH_QUERY_OPERATOR_NAMES: dict[type[Any], str] = {
     SearchAutocompleteQuery: "autocomplete",
     SearchWildcardQuery: "wildcard",
     SearchExistsQuery: "exists",
+    SearchNearQuery: "near",
     SearchCompoundQuery: "compound",
 }
 
@@ -976,6 +1074,7 @@ _SEARCH_QUERY_MATCHERS: dict[type[Any], _SearchMatcher] = {
     SearchAutocompleteQuery: lambda document, definition, query: matches_search_autocomplete_query(document, definition=definition, query=query),  # type: ignore[arg-type]
     SearchWildcardQuery: lambda document, definition, query: matches_search_wildcard_query(document, definition=definition, query=query),  # type: ignore[arg-type]
     SearchExistsQuery: lambda document, definition, query: matches_search_exists_query(document, definition=definition, query=query),  # type: ignore[arg-type]
+    SearchNearQuery: lambda document, definition, query: matches_search_near_query(document, definition=definition, query=query),  # type: ignore[arg-type]
     SearchCompoundQuery: lambda document, definition, query: matches_search_compound_query(document, definition=definition, query=query),  # type: ignore[arg-type]
 }
 
@@ -985,6 +1084,7 @@ _SEARCH_QUERY_EXPLAINERS: dict[type[Any], _SearchExplainBuilder] = {
     SearchAutocompleteQuery: lambda query: _explain_text_like_query(query),  # type: ignore[arg-type]
     SearchWildcardQuery: lambda query: _explain_text_like_query(query),  # type: ignore[arg-type]
     SearchExistsQuery: lambda query: _explain_exists_query(query),  # type: ignore[arg-type]
+    SearchNearQuery: lambda query: _explain_near_query(query),  # type: ignore[arg-type]
     SearchCompoundQuery: lambda query: _explain_compound_query(query),  # type: ignore[arg-type]
     SearchVectorQuery: lambda query: _explain_vector_query(query),  # type: ignore[arg-type]
 }
@@ -1039,6 +1139,77 @@ def _collect_text_leaf_entries(value: object, path: str) -> list[tuple[str, str]
                 entries.append((path, item))
         return entries
     return []
+
+
+def _search_near_origin_kind(value: object) -> str | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return "number" if math.isfinite(float(value)) else None
+    if isinstance(value, datetime.datetime):
+        return "date"
+    if isinstance(value, datetime.date):
+        return "date"
+    return None
+
+
+def _datetime_to_sortable_number(value: datetime.date | datetime.datetime) -> float:
+    if isinstance(value, datetime.datetime):
+        return (
+            value.toordinal() * 86400.0
+            + value.hour * 3600.0
+            + value.minute * 60.0
+            + value.second
+            + value.microsecond / 1_000_000.0
+        )
+    return float(value.toordinal() * 86400)
+
+
+def _search_near_scalar_distance(
+    candidate: object,
+    *,
+    origin: float | datetime.date | datetime.datetime,
+    origin_kind: str,
+) -> float | None:
+    if origin_kind == "number":
+        if not isinstance(candidate, (int, float)) or isinstance(candidate, bool):
+            return None
+        if not math.isfinite(float(candidate)):
+            return None
+        return abs(float(candidate) - float(origin))
+    if origin_kind == "date":
+        if not isinstance(candidate, (datetime.date, datetime.datetime)):
+            return None
+        return abs(_datetime_to_sortable_number(candidate) - _datetime_to_sortable_number(origin))
+    return None
+
+
+def search_near_distance(
+    document: Document,
+    *,
+    query: SearchNearQuery,
+) -> float | None:
+    found, value = get_document_value(document, query.path)
+    if not found:
+        return None
+    if isinstance(value, list):
+        distances = [
+            distance
+            for item in value
+            if (distance := _search_near_scalar_distance(item, origin=query.origin, origin_kind=query.origin_kind)) is not None
+        ]
+        if not distances:
+            return None
+        best = min(distances)
+        return best if best <= query.pivot else None
+    distance = _search_near_scalar_distance(
+        value,
+        origin=query.origin,
+        origin_kind=query.origin_kind,
+    )
+    if distance is None or distance > query.pivot:
+        return None
+    return distance
 
 
 def _vector_field_specs(definition: SearchIndexDefinition) -> dict[str, dict[str, object]]:

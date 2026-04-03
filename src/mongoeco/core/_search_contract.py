@@ -6,6 +6,7 @@ TEXT_SEARCH_OPERATOR_NAMES: tuple[str, ...] = (
     "autocomplete",
     "wildcard",
     "exists",
+    "near",
     "compound",
 )
 

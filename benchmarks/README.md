@@ -39,7 +39,7 @@ Each group is designed to answer a specific question:
 - aggregation workloads distinguish mostly-streamable pipelines from clearly
   materializing pipelines
 - search diagnostics isolate local `$search` operators and surface the real
-  backend (`fts5` vs Python fallback)
+  backend (`fts5`, materialized prefilter paths or Python fallback)
 - vector diagnostics isolate local ANN-backed `$vectorSearch` and the extra
   cost of post-candidate filtering
 

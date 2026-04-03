@@ -84,6 +84,7 @@ def _summarize_search_explain(explain: dict[str, Any]) -> dict[str, Any]:
     summary["candidates_evaluated"] = details.get("candidatesEvaluated")
     summary["candidates_requested"] = details.get("candidatesRequested")
     summary["documents_filtered"] = details.get("documentsFiltered")
+    summary["candidate_count"] = details.get("candidateCount")
     return summary
 
 
@@ -650,6 +651,7 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
     text_metrics: list[Metrics] = []
     autocomplete_metrics: list[Metrics] = []
     wildcard_metrics: list[Metrics] = []
+    compound_metrics: list[Metrics] = []
 
     db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_augment_search_documents)
     try:
@@ -662,6 +664,7 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                     "fields": {
                         "title": {"type": "string"},
                         "body": {"type": "string"},
+                        "kind": {"type": "token"},
                     },
                 }
             },
@@ -683,6 +686,21 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
         ]
         wildcard_pipeline = [
             {"$search": {"index": "by_text", "wildcard": {"query": "*vector*", "path": "body"}}},
+            {"$limit": 10},
+        ]
+        compound_pipeline = [
+            {
+                "$search": {
+                    "index": "by_text",
+                    "compound": {
+                        "must": [{"text": {"query": "report 0", "path": ["title", "body"]}}],
+                        "filter": [
+                            {"exists": {"path": "title"}},
+                            {"wildcard": {"query": "*vector*", "path": "body"}},
+                        ],
+                    },
+                }
+            },
             {"$limit": 10},
         ]
 
@@ -724,6 +742,19 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                         engine.explain_aggregate(db_name, coll_name, wildcard_pipeline)
                     ),
                     "query_shape": "$search.wildcard body *vector*",
+                },
+            ),
+            "search_compound_hybrid_topk_100": _measure_single_task(
+                compound_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, compound_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, compound_pipeline)
+                    ),
+                    "query_shape": "$search.compound must(text=report 0)+filter(exists,wildcard)",
                 },
             ),
         }

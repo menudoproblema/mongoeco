@@ -52,7 +52,7 @@ Esto implica:
 * `$text` clásico existe ya como subset local explícito, con `textScore`
   observable pero sin pretender semántica full-text de servidor MongoDB.
 * `$search` local soporta ya `text`, `phrase`, `autocomplete`, `wildcard`,
-  `exists` y `compound`
+  `exists`, `near` y `compound`
   como subset explícito y documentado, sin pretender semántica Atlas Search
   completa.
 * la proyeccion avanzada de `find` cubre ya el subconjunto diario mas util
@@ -365,6 +365,7 @@ El runtime local soporta ya un subset explícito de `$search`:
   * `autocomplete`
   * `wildcard`
   * `exists`
+  * `near`
   * `compound`
 * surface observable:
   * `explain()` con `queryOperator`, paths y backend real;
@@ -374,15 +375,19 @@ El runtime local soporta ya un subset explícito de `$search`:
 
 Límites conscientes:
 
-* no hay `near`, `facet`, `range` ni scoring Atlas-like;
+* no hay `facet`, `range` ni scoring Atlas-like;
 * `wildcard` sigue siendo matching local simple, no sintaxis Atlas Search;
 * `autocomplete` es local y basado en prefijos de tokens, no en analyzer
   avanzado;
+* `near` entra como subset local para valores numericos y fecha/datetime,
+  con `path`, `origin` y `pivot`, y ordena por cercania local sin pretender
+  scoring Atlas Search completo;
 * `compound` se limita a combinar el subset local soportado
-  (`text`/`phrase`/`autocomplete`/`wildcard`/`exists`) con `must`, `should`,
-  `filter`, `mustNot` y `minimumShouldMatch`;
-* `SQLiteEngine` solo empuja a FTS5 `text`, `phrase` y `autocomplete`; el
-  `wildcard`, `exists` y `compound` siguen siendo fallback Python explícito.
+  (`text`/`phrase`/`autocomplete`/`wildcard`/`exists`/`near`) con `must`,
+  `should`, `filter`, `mustNot` y `minimumShouldMatch`;
+* `SQLiteEngine` usa FTS5 directo para `text`, `phrase` y `autocomplete`, y
+  usa el backend materializado como prefilter de candidatos para `wildcard`,
+  `exists` y parte de `compound` antes del matching Python exacto;
 * `$vectorSearch` debe seguir siendo el primer stage;
 * la semantica sigue siendo local, no de cluster o servicio remoto.
 

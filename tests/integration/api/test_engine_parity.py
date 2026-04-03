@@ -1333,9 +1333,9 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                 collection = client.search_runtime.get_collection("docs")
                 await collection.insert_many(
                     [
-                        {"_id": "1", "title": "Ada Lovelace", "body": "Analytical engine notes", "embedding": [1.0, 0.0, 0.0]},
-                        {"_id": "2", "title": "Grace Hopper", "body": "Compiler pioneer", "embedding": [0.0, 1.0, 0.0]},
-                        {"_id": "3", "title": "Notes", "body": "Ada wrote the first algorithm", "embedding": [0.9, 0.1, 0.0]},
+                        {"_id": "1", "title": "Ada Lovelace", "body": "Analytical engine notes", "score": 9, "embedding": [1.0, 0.0, 0.0]},
+                        {"_id": "2", "title": "Grace Hopper", "body": "Compiler pioneer", "score": 15, "embedding": [0.0, 1.0, 0.0]},
+                        {"_id": "3", "title": "Notes", "body": "Ada wrote the first algorithm", "score": 11, "embedding": [0.9, 0.1, 0.0]},
                     ]
                 )
                 await collection.create_search_indexes(
@@ -1347,6 +1347,7 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                                     "fields": {
                                         "title": {"type": "string"},
                                         "body": {"type": "string"},
+                                        "score": {"type": "number"},
                                     },
                                 }
                             },
@@ -1393,6 +1394,12 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         {"$sort": {"_id": 1}},
                     ]
                 ).to_list()
+                near_hits = await collection.aggregate(
+                    [
+                        {"$search": {"index": "by_text", "near": {"path": "score", "origin": 10, "pivot": 2}}},
+                        {"$project": {"_id": 1}},
+                    ]
+                ).to_list()
                 compound_hits = await collection.aggregate(
                     [
                         {
@@ -1434,6 +1441,9 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                 exists_explain = await collection.aggregate(
                     [{"$search": {"index": "by_text", "exists": {"path": "title"}}}]
                 ).explain()
+                near_explain = await collection.aggregate(
+                    [{"$search": {"index": "by_text", "near": {"path": "score", "origin": 10, "pivot": 2}}}]
+                ).explain()
                 compound_explain = await collection.aggregate(
                     [
                         {
@@ -1466,6 +1476,7 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "autocomplete_hits": [document["_id"] for document in autocomplete_hits],
                     "wildcard_hits": [document["_id"] for document in wildcard_hits],
                     "exists_hits": [document["_id"] for document in exists_hits],
+                    "near_hits": [document["_id"] for document in near_hits],
                     "compound_hits": [document["_id"] for document in compound_hits],
                     "vector_hits": [document["_id"] for document in vector_hits],
                     "search_explain": {
@@ -1487,6 +1498,11 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "exists_explain": {
                         "query_operator": exists_explain["engine_plan"]["details"]["queryOperator"],
                         "paths": exists_explain["engine_plan"]["details"]["paths"],
+                    },
+                    "near_explain": {
+                        "query_operator": near_explain["engine_plan"]["details"]["queryOperator"],
+                        "path": near_explain["engine_plan"]["details"]["path"],
+                        "pivot": near_explain["engine_plan"]["details"]["pivot"],
                     },
                     "compound_explain": {
                         "query_operator": compound_explain["engine_plan"]["details"]["queryOperator"],

@@ -14,10 +14,19 @@ from mongoeco.core.search import (
     is_text_search_query,
     iter_searchable_text_entries,
     matches_search_query,
+    search_near_distance,
     score_vector_document,
     search_query_explain_details,
+    sqlite_fts5_query,
+    SearchAutocompleteQuery,
+    SearchCompoundQuery,
+    SearchExistsQuery,
+    SearchNearQuery,
+    SearchPhraseQuery,
     SearchQuery,
+    SearchTextQuery,
     SearchVectorQuery,
+    SearchWildcardQuery,
     vector_field_paths,
 )
 from mongoeco.engines._sqlite_catalog import load_search_index_rows as _sqlite_load_search_index_rows
@@ -197,6 +206,168 @@ def _load_candidate_documents(
         for storage_key in storage_keys
         if storage_key in documents
     ]
+
+
+def _intersect_storage_key_lists(lists: list[list[str]]) -> list[str]:
+    if not lists:
+        return []
+    allowed = set(lists[0])
+    for values in lists[1:]:
+        allowed &= set(values)
+    return [storage_key for storage_key in lists[0] if storage_key in allowed]
+
+
+def _union_storage_key_lists(lists: list[list[str]]) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for values in lists:
+        for storage_key in values:
+            if storage_key in seen:
+                continue
+            seen.add(storage_key)
+            ordered.append(storage_key)
+    return ordered
+
+
+def _sqlite_leaf_candidate_storage_keys(
+    engine: _SQLiteSearchRuntimeEngine,
+    conn: sqlite3.Connection,
+    *,
+    physical_name: str,
+    query: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery,
+) -> tuple[list[str], str, bool]:
+    sql: str
+    params: list[object]
+    if isinstance(query, (SearchTextQuery, SearchPhraseQuery, SearchAutocompleteQuery)):
+        sql = (
+            f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
+            "WHERE content MATCH ?"
+        )
+        params = [sqlite_fts5_query(query)]
+        backend = "fts5"
+        exact = not isinstance(query, SearchPhraseQuery)
+    elif isinstance(query, SearchWildcardQuery):
+        sql = (
+            f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
+            "WHERE lower(content) GLOB ?"
+        )
+        params = [query.normalized_pattern]
+        backend = "fts5-glob"
+        exact = True
+    else:
+        sql = f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)}"
+        params = []
+        backend = "fts5-path"
+        exact = True
+    if query.paths is not None:
+        placeholders = ", ".join("?" for _ in query.paths)
+        clause = f"field_path IN ({placeholders})"
+        sql = f"{sql} WHERE {clause}" if " WHERE " not in sql else f"{sql} AND {clause}"
+        params.extend(query.paths)
+    return [row[0] for row in conn.execute(sql, tuple(params)).fetchall()], backend, exact
+
+
+def _sqlite_candidate_storage_keys_for_query(
+    engine: _SQLiteSearchRuntimeEngine,
+    conn: sqlite3.Connection,
+    *,
+    physical_name: str | None,
+    query: SearchQuery,
+) -> tuple[list[str] | None, str | None, bool]:
+    if physical_name is None or not engine._sqlite_table_exists(conn, physical_name):
+        return None, None, False
+    if isinstance(query, (SearchTextQuery, SearchPhraseQuery, SearchAutocompleteQuery, SearchWildcardQuery, SearchExistsQuery)):
+        return _sqlite_leaf_candidate_storage_keys(
+            engine,
+            conn,
+            physical_name=physical_name,
+            query=query,
+        )
+    if isinstance(query, SearchCompoundQuery):
+        candidate_intersections: list[list[str]] = []
+        should_candidates: list[list[str]] = []
+        saw_non_candidateable_should = False
+        exact = True
+
+        for clause in (*query.must, *query.filter):
+            storage_keys, _backend, clause_exact = _sqlite_candidate_storage_keys_for_query(
+                engine,
+                conn,
+                physical_name=physical_name,
+                query=clause,
+            )
+            if storage_keys is not None:
+                candidate_intersections.append(storage_keys)
+                exact = exact and clause_exact
+            else:
+                exact = False
+
+        for clause in query.should:
+            storage_keys, _backend, clause_exact = _sqlite_candidate_storage_keys_for_query(
+                engine,
+                conn,
+                physical_name=physical_name,
+                query=clause,
+            )
+            if storage_keys is None:
+                saw_non_candidateable_should = True
+                exact = False
+                continue
+            should_candidates.append(storage_keys)
+            exact = exact and clause_exact
+
+        candidates = _intersect_storage_key_lists(candidate_intersections) if candidate_intersections else None
+
+        if should_candidates and not saw_non_candidateable_should:
+            merged_should = _union_storage_key_lists(should_candidates)
+            if candidates is None and query.minimum_should_match > 0:
+                candidates = merged_should
+            elif query.minimum_should_match > 0:
+                candidates = [storage_key for storage_key in candidates if storage_key in set(merged_should)]
+        elif candidates is None:
+            return None, None, False
+
+        if candidates is None:
+            return None, None, False
+        if query.must_not:
+            excluded: set[str] = set()
+            for clause in query.must_not:
+                storage_keys, _backend, clause_exact = _sqlite_candidate_storage_keys_for_query(
+                    engine,
+                    conn,
+                    physical_name=physical_name,
+                    query=clause,
+                )
+                if storage_keys is None:
+                    exact = False
+                    continue
+                if clause_exact:
+                    excluded.update(storage_keys)
+                else:
+                    exact = False
+            if excluded:
+                candidates = [storage_key for storage_key in candidates if storage_key not in excluded]
+        return candidates, "fts5-prefilter", exact
+    if isinstance(query, SearchNearQuery):
+        return None, None, False
+    return None, None, False
+
+
+def _sort_search_documents_for_query(
+    documents: list[Document],
+    *,
+    query: SearchQuery,
+) -> list[Document]:
+    if isinstance(query, SearchNearQuery):
+        return sorted(
+            documents,
+            key=lambda document: (
+                search_near_distance(document, query=query)
+                if search_near_distance(document, query=query) is not None
+                else float("inf")
+            ),
+        )
+    return documents
 
 
 def ensure_vector_search_backend_sync(
@@ -574,22 +745,35 @@ def execute_sqlite_search_query(
             and engine._sqlite_table_exists(conn, resolved_physical_name)
         ),
     )
-    if decision.backend == "fts5":
-        sql = (
-            f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(decision.physical_name)} "
-            "WHERE content MATCH ?"
-        )
-        params: list[object] = [decision.fts5_match]
-        if is_text_search_query(query) and query.paths is not None:
-            placeholders = ", ".join("?" for _ in query.paths)
-            sql += f" AND field_path IN ({placeholders})"
-            params.extend(query.paths)
-        storage_keys = [row[0] for row in conn.execute(sql, tuple(params)).fetchall()]
-        if not storage_keys:
+    candidate_storage_keys, _candidate_backend, candidate_exact = _sqlite_candidate_storage_keys_for_query(
+        engine,
+        conn,
+        physical_name=resolved_physical_name,
+        query=query,
+    )
+    if candidate_storage_keys is not None:
+        if not candidate_storage_keys:
             return []
-        documents = engine._load_documents_by_storage_keys(db_name, coll_name, storage_keys)
+        candidate_documents = _load_candidate_documents(
+            engine,
+            db_name,
+            coll_name,
+            candidate_storage_keys,
+        )
+        if candidate_exact:
+            enforce_deadline(deadline)
+            return [document for _storage_key, document in candidate_documents]
+        filtered_documents = [
+            document
+            for _storage_key, document in candidate_documents
+            if matches_search_query(
+                document,
+                definition=definition,
+                query=query,
+            )
+        ]
         enforce_deadline(deadline)
-        return [documents[storage_key] for storage_key in storage_keys if storage_key in documents]
+        return _sort_search_documents_for_query(filtered_documents, query=query)
 
     documents = [
         document
@@ -601,7 +785,7 @@ def execute_sqlite_search_query(
         )
     ]
     enforce_deadline(deadline)
-    return documents
+    return _sort_search_documents_for_query(documents, query=query)
 
 
 def search_documents_sync(
@@ -664,6 +848,8 @@ def explain_search_documents_sync(
     documents_filtered = 0
     candidates_evaluated: int | None = None
     candidates_requested: int | None = None
+    candidate_storage_keys: list[str] | None = None
+    candidate_exact: bool | None = None
     conn = engine._require_connection(context)
     with engine._bind_connection(conn):
         rows = engine._load_search_index_rows(db_name, coll_name, name=query.index_name)
@@ -697,6 +883,22 @@ def explain_search_documents_sync(
                 fts5_available=fts5_available,
                 backend_materialized=backend_materialized,
             )
+            candidate_storage_keys, candidate_backend, candidate_exact = _sqlite_candidate_storage_keys_for_query(
+                engine,
+                conn,
+                physical_name=resolved_physical_name,
+                query=query,
+            )
+            if candidate_backend is not None:
+                decision = type(decision)(
+                    backend=candidate_backend,
+                    backend_available=True,
+                    backend_materialized=backend_materialized,
+                    fts5_available=fts5_available,
+                    ann_available=decision.ann_available,
+                    fts5_match=decision.fts5_match,
+                    physical_name=decision.physical_name,
+                )
         elif isinstance(query, SearchVectorQuery):
             resolved_physical_name = ensure_search_backend_sync(
                 engine,
@@ -783,6 +985,8 @@ def explain_search_documents_sync(
                 else None
             ),
             "filterMode": "post-candidate" if isinstance(query, SearchVectorQuery) and query.filter_spec is not None else None,
+            "candidateCount": len(candidate_storage_keys) if candidate_storage_keys is not None else None,
+            "candidatePrefilterExact": candidate_exact,
             "exactFallbackReason": exact_fallback_reason,
             "candidatesEvaluated": (
                 candidates_evaluated

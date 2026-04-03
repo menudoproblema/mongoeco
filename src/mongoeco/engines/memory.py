@@ -61,6 +61,7 @@ from mongoeco.core.search import (
     attach_text_score,
     classic_text_score,
     ClassicTextQuery,
+    SearchNearQuery,
     SearchVectorQuery,
     build_search_index_document,
     compile_search_stage,
@@ -68,6 +69,7 @@ from mongoeco.core.search import (
     matches_search_query,
     resolve_classic_text_index,
     score_vector_document,
+    search_near_distance,
     search_query_explain_details,
     validate_search_index_definition,
     vector_field_paths,
@@ -1784,7 +1786,7 @@ class MemoryEngine(AsyncStorageEngine):
             ]
         enforce_deadline(deadline)
         if is_text_search_query(query):
-            return [
+            documents = [
                 document
                 for document in documents
                 if matches_search_query(
@@ -1793,6 +1795,15 @@ class MemoryEngine(AsyncStorageEngine):
                     query=query,
                 )
             ]
+            if isinstance(query, SearchNearQuery):
+                documents.sort(
+                    key=lambda document: (
+                        search_near_distance(document, query=query)
+                        if search_near_distance(document, query=query) is not None
+                        else float("inf")
+                    )
+                )
+            return documents
         vector_hits: list[tuple[float, Document]] = []
         for document in documents:
             if query.filter_spec is not None and not QueryEngine.match(

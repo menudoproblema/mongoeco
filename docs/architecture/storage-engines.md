@@ -147,7 +147,8 @@ En search existe ya otra frontera explicita por capas:
   backend local para `$search`:
 
 - que operadores pueden ir por FTS5;
-- cuales degradan siempre a Python;
+- cuales usan el backend materializado solo como prefilter de candidatos;
+- cuales degradan por completo a Python;
 - que shape de explain corresponde a cada backend (`backend`,
   `backendAvailable`, `backendMaterialized`, `fts5_match`).
 - el runtime evita ya volver a cargar la coleccion completa cuando FTS5 o

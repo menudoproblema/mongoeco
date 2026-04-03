@@ -764,10 +764,14 @@
         "autocomplete",
         "wildcard",
         "exists",
+        "near",
         "compound"
       ],
       "sqliteBackends": [
         "fts5",
+        "fts5-glob",
+        "fts5-path",
+        "fts5-prefilter",
         "python"
       ]
     },

@@ -126,7 +126,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(only_default[0]["queryMode"], "text")
                     self.assertEqual(
                         only_default[0]["capabilities"],
-                        ["text", "phrase", "autocomplete", "wildcard", "exists", "compound"],
+                        ["text", "phrase", "autocomplete", "wildcard", "exists", "near", "compound"],
                     )
 
                     collection.update_search_index("default", {"mappings": {"dynamic": True}})
@@ -144,9 +144,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.search_runtime.get_collection("docs")
                     collection.insert_many(
                         [
-                            {"_id": 1, "title": "Ada", "body": "Analytical engine notes", "embedding": [1.0, 0.0, 0.0]},
-                            {"_id": 2, "title": "Grace", "body": "Compiler pioneer", "embedding": [0.1, 0.9, 0.0]},
-                            {"_id": 3, "title": "Notes", "body": "Ada wrote the first algorithm", "embedding": [0.9, 0.1, 0.0]},
+                            {"_id": 1, "title": "Ada", "body": "Analytical engine notes", "score": 9, "publishedAt": datetime.datetime(2024, 1, 1, 12, 0, 0), "embedding": [1.0, 0.0, 0.0]},
+                            {"_id": 2, "title": "Grace", "body": "Compiler pioneer", "score": 15, "publishedAt": datetime.datetime(2024, 1, 1, 12, 5, 0), "embedding": [0.1, 0.9, 0.0]},
+                            {"_id": 3, "title": "Notes", "body": "Ada wrote the first algorithm", "score": 11, "publishedAt": datetime.datetime(2024, 1, 1, 12, 1, 0), "embedding": [0.9, 0.1, 0.0]},
                         ]
                     )
                     collection.create_search_indexes(
@@ -158,6 +158,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "fields": {
                                             "title": {"type": "string"},
                                             "body": {"type": "string"},
+                                            "score": {"type": "number"},
+                                            "publishedAt": {"type": "date"},
                                         },
                                     }
                                 },
@@ -244,18 +246,28 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"$search": {"index": "by_text", "wildcard": {"query": "*algorithm*", "path": "body"}}}]
                     ).explain()
                     self.assertEqual(wildcard_explanation["engine_plan"]["details"]["queryOperator"], "wildcard")
-                    self.assertEqual(wildcard_explanation["engine_plan"]["details"]["backend"], "python")
-                    self.assertIsNone(wildcard_explanation["engine_plan"]["details"].get("fts5_match"))
+                    if engine_name == "sqlite":
+                        self.assertEqual(wildcard_explanation["engine_plan"]["details"]["backend"], "fts5-glob")
+                        self.assertEqual(wildcard_explanation["engine_plan"]["details"]["candidateCount"], 1)
+                    else:
+                        self.assertEqual(wildcard_explanation["engine_plan"]["details"]["backend"], "python")
 
                     exists_hits = collection.aggregate(
-                        [{"$search": {"index": "by_text", "exists": {"path": "title"}}}]
+                        [
+                            {"$search": {"index": "by_text", "exists": {"path": "title"}}},
+                            {"$sort": {"_id": 1}},
+                        ]
                     ).to_list()
                     self.assertEqual([document["_id"] for document in exists_hits], [2, 3])
                     exists_explanation = collection.aggregate(
                         [{"$search": {"index": "by_text", "exists": {"path": "title"}}}]
                     ).explain()
                     self.assertEqual(exists_explanation["engine_plan"]["details"]["queryOperator"], "exists")
-                    self.assertEqual(exists_explanation["engine_plan"]["details"]["backend"], "python")
+                    if engine_name == "sqlite":
+                        self.assertEqual(exists_explanation["engine_plan"]["details"]["backend"], "fts5-path")
+                        self.assertEqual(exists_explanation["engine_plan"]["details"]["candidateCount"], 2)
+                    else:
+                        self.assertEqual(exists_explanation["engine_plan"]["details"]["backend"], "python")
 
                     compound_hits = collection.aggregate(
                         [
@@ -285,7 +297,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ]
                     ).explain()
                     self.assertEqual(compound_explanation["engine_plan"]["details"]["queryOperator"], "compound")
-                    self.assertEqual(compound_explanation["engine_plan"]["details"]["backend"], "python")
+                    if engine_name == "sqlite":
+                        self.assertEqual(compound_explanation["engine_plan"]["details"]["backend"], "fts5-prefilter")
+                        self.assertEqual(compound_explanation["engine_plan"]["details"]["candidateCount"], 1)
+                    else:
+                        self.assertEqual(compound_explanation["engine_plan"]["details"]["backend"], "python")
                     self.assertEqual(
                         compound_explanation["engine_plan"]["details"]["compound"],
                         {
@@ -296,6 +312,21 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "minimumShouldMatch": 0,
                         },
                     )
+
+                    near_hits = collection.aggregate(
+                        [
+                            {"$search": {"index": "by_text", "near": {"path": "score", "origin": 10, "pivot": 2}}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in near_hits], [3])
+                    near_explanation = collection.aggregate(
+                        [{"$search": {"index": "by_text", "near": {"path": "score", "origin": 10, "pivot": 2}}}]
+                    ).explain()
+                    self.assertEqual(near_explanation["engine_plan"]["details"]["queryOperator"], "near")
+                    self.assertEqual(near_explanation["engine_plan"]["details"]["path"], "score")
+                    self.assertEqual(near_explanation["engine_plan"]["details"]["pivot"], 2.0)
+                    self.assertEqual(near_explanation["engine_plan"]["details"]["backend"], "python")
 
                     vector_hits = collection.aggregate(
                         [
@@ -362,7 +393,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             '"Ada wrote the first algorithm"',
                         )
                     with self.assertRaises(OperationFailure):
-                        collection.create_search_index({"mappings": {"fields": {"title": {"type": "number"}}}})
+                        collection.create_search_index({"mappings": {"fields": {"title": {"type": "boolean"}}}})
 
     def test_aggregate_explain_reports_pipeline_pushdown_summary(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

@@ -232,7 +232,9 @@ Current rule of thumb from local diagnostics:
 
 * `MemoryEngine` remains strongest on many Python-baseline filter paths;
 * `SQLiteEngine` is strongest when it can push work to SQL, FTS5 or `usearch`;
-* `wildcard` search is still an explicit Python fallback in SQLite;
+* `wildcard`, `exists` and some `compound` search shapes in SQLite now use the
+  materialized search backend as a candidate prefilter before exact Python
+  matching;
 * `vectorSearch` on SQLite is already materially faster than the exact
   baseline when the ANN backend is materialized.
 

@@ -26,13 +26,14 @@ Pendientes:
   * `autocomplete`
   * `wildcard`
   * `exists`
-  * `compound`
-* evaluar operadores adicionales como:
   * `near`
+  * `compound`
 * ampliar mappings locales más allá de:
   * `string`
   * `token`
   * `autocomplete`
+  * `number`
+  * `date`
 * decidir si el backend ANN local actual de `vectorSearch`, ya con
   ampliacion adaptativa de candidatos antes del fallback exacto, es suficiente
   o si necesita una siguiente fase mas ambiciosa;
