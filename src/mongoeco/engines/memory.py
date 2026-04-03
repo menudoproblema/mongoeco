@@ -63,6 +63,8 @@ from mongoeco.core.search import (
     ClassicTextQuery,
     MaterializedSearchDocument,
     materialize_search_document,
+    SearchCompoundQuery,
+    search_compound_ranking,
     SearchNearQuery,
     SearchVectorQuery,
     build_search_index_document,
@@ -1891,6 +1893,34 @@ class MemoryEngine(AsyncStorageEngine):
                     distance_hits.append((distance, document))
                 distance_hits.sort(key=lambda item: item[0])
                 return [document for _distance, document in distance_hits]
+            if isinstance(query, SearchCompoundQuery) and query.should:
+                ranked_documents: list[tuple[tuple[float, float, float], Document]] = []
+                for document, materialized in materialized_documents:
+                    if not matches_search_query(
+                        document,
+                        definition=definition,
+                        query=query,
+                        materialized=materialized,
+                    ):
+                        continue
+                    matched_should, should_score, best_near_distance = search_compound_ranking(
+                        document,
+                        definition=definition,
+                        query=query,
+                        materialized=materialized,
+                    )
+                    ranked_documents.append(
+                        (
+                            (
+                                -float(matched_should),
+                                -should_score,
+                                best_near_distance,
+                            ),
+                            document,
+                        )
+                    )
+                ranked_documents.sort(key=lambda item: item[0])
+                return [document for _score, document in ranked_documents]
             return [
                 document
                 for document, materialized in materialized_documents

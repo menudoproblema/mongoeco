@@ -156,6 +156,9 @@ En search existe ya otra frontera explicita por capas:
 - el runtime evita ya volver a cargar la coleccion completa cuando FTS5 o
   `usearch` devuelven `storage_key` candidatos; en esas rutas recupera solo
   los documentos necesarios para materializar resultados o aplicar filtros.
+- en `compound`, esos candidatos se usan tambien para ordenar mejor las
+  clausulas `should`, y `near` participa ya en el ranking local cuando aparece
+  dentro de esa familia.
 
 Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
 ruta de ejecucion, en la de `explain()` y en el lifecycle documental de los

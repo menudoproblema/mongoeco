@@ -16,6 +16,7 @@ from mongoeco.core.search import (
     iter_searchable_text_entries,
     materialize_search_document,
     matches_search_query,
+    search_compound_ranking,
     search_near_distance,
     score_vector_document,
     search_query_explain_details,
@@ -435,18 +436,39 @@ def _describe_compound_prefilter_sync(
 
 
 def _sort_search_documents_for_query(
-    documents: list[Document],
+    documents: list[tuple[Document, SearchIndexDefinition, object | None]],
     *,
     query: SearchQuery,
 ) -> list[Document]:
     if isinstance(query, SearchNearQuery):
         ranked: list[tuple[float, Document]] = []
-        for document in documents:
+        for document, _definition, _materialized in documents:
             distance = search_near_distance(document, query=query)
             ranked.append((distance if distance is not None else float("inf"), document))
         ranked.sort(key=lambda item: item[0])
         return [document for _distance, document in ranked]
-    return documents
+    if isinstance(query, SearchCompoundQuery) and query.should:
+        ranked_compound: list[tuple[tuple[float, float, float], Document]] = []
+        for document, definition, materialized in documents:
+            matched_should, should_score, best_near_distance = search_compound_ranking(
+                document,
+                definition=definition,
+                query=query,
+                materialized=materialized,
+            )
+            ranked_compound.append(
+                (
+                    (
+                        -float(matched_should),
+                        -should_score,
+                        best_near_distance,
+                    ),
+                    document,
+                )
+            )
+        ranked_compound.sort(key=lambda item: item[0])
+        return [document for _score, document in ranked_compound]
+    return [document for document, _definition, _materialized in documents]
 
 
 def ensure_vector_search_backend_sync(
@@ -841,28 +863,44 @@ def execute_sqlite_search_query(
         )
         if candidate_exact:
             enforce_deadline(deadline)
+            if isinstance(query, SearchCompoundQuery) and query.should:
+                exact_documents = [
+                    (
+                        document,
+                        definition,
+                        materialize_search_document(document, definition),
+                    )
+                    for _storage_key, document in candidate_documents
+                ]
+                return _sort_search_documents_for_query(exact_documents, query=query)
             return [document for _storage_key, document in candidate_documents]
         filtered_documents = [
-            document
+            (document, definition, materialized_search_document)
             for _storage_key, document in candidate_documents
-            if matches_search_query(
+            if (
+                materialized_search_document := materialize_search_document(document, definition)
+            ) is not None
+            and matches_search_query(
                 document,
                 definition=definition,
                 query=query,
-                materialized=materialize_search_document(document, definition),
+                materialized=materialized_search_document,
             )
         ]
         enforce_deadline(deadline)
         return _sort_search_documents_for_query(filtered_documents, query=query)
 
     documents = [
-        document
+        (document, definition, materialized_search_document)
         for _, document in engine._load_documents(db_name, coll_name)
-        if matches_search_query(
+        if (
+            materialized_search_document := materialize_search_document(document, definition)
+        ) is not None
+        and matches_search_query(
             document,
             definition=definition,
             query=query,
-            materialized=materialize_search_document(document, definition),
+            materialized=materialized_search_document,
         )
     ]
     enforce_deadline(deadline)

@@ -1414,6 +1414,24 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         {"$sort": {"_id": 1}},
                     ]
                 ).to_list()
+                compound_should_near_hits = await collection.aggregate(
+                    [
+                        {
+                            "$search": {
+                                "index": "by_text",
+                                "compound": {
+                                    "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                    "should": [
+                                        {"exists": {"path": "title"}},
+                                        {"near": {"path": "score", "origin": 10, "pivot": 2}},
+                                    ],
+                                    "minimumShouldMatch": 0,
+                                },
+                            }
+                        },
+                        {"$project": {"_id": 1}},
+                    ]
+                ).to_list()
                 vector_hits = await collection.aggregate(
                     [
                         {
@@ -1478,6 +1496,7 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "exists_hits": [document["_id"] for document in exists_hits],
                     "near_hits": [document["_id"] for document in near_hits],
                     "compound_hits": [document["_id"] for document in compound_hits],
+                    "compound_should_near_hits": [document["_id"] for document in compound_should_near_hits],
                     "vector_hits": [document["_id"] for document in vector_hits],
                     "search_explain": {
                         "hint": search_explain["hint"],
@@ -1507,6 +1526,7 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "compound_explain": {
                         "query_operator": compound_explain["engine_plan"]["details"]["queryOperator"],
                         "compound": compound_explain["engine_plan"]["details"]["compound"],
+                        "ranking": compound_explain["engine_plan"]["details"]["ranking"],
                     },
                     "vector_explain": {
                         "hint": vector_explain["hint"],

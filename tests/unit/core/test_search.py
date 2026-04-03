@@ -31,6 +31,7 @@ from mongoeco.core.search import (
     compile_search_wildcard_query,
     iter_searchable_text_entries,
     materialize_search_document,
+    search_compound_ranking,
     matches_search_autocomplete_query,
     matches_search_compound_query,
     matches_search_exists_query,
@@ -1608,6 +1609,7 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(details["compound"]["must"], 1)
         self.assertEqual(details["compound"]["mustOperators"], ["text"])
         self.assertEqual(details["compound"]["shouldOperators"], [])
+        self.assertEqual(details["ranking"], {"usesShouldRanking": False, "nearAware": False})
         exists_details = search_query_explain_details(
             SearchExistsQuery(index_name="by_text", paths=("title",))
         )
@@ -1656,6 +1658,40 @@ class SearchCoreTests(unittest.TestCase):
                 materialized=prepared,
             )
         )
+
+    def test_search_compound_ranking_prefers_more_should_hits_and_near_closeness(self) -> None:
+        definition = SearchIndexDefinition(
+            {"mappings": {"dynamic": False, "fields": {"title": {"type": "string"}, "body": {"type": "string"}, "score": {"type": "number"}}}},
+            name="by_text",
+        )
+        query = SearchCompoundQuery(
+            index_name="by_text",
+            must=(SearchTextQuery(index_name="by_text", raw_query="ada", terms=("ada",), paths=("body",)),),
+            should=(
+                SearchExistsQuery(index_name="by_text", paths=("title",)),
+                SearchNearQuery(index_name="by_text", path="score", origin=10, pivot=2, origin_kind="number"),
+            ),
+            filter=(),
+            must_not=(),
+            minimum_should_match=0,
+        )
+        better = {"title": "Ada", "body": "ada algorithm", "score": 9}
+        worse = {"title": "Ada", "body": "ada algorithm", "score": 12}
+        better_rank = search_compound_ranking(
+            better,
+            definition=definition,
+            query=query,
+            materialized=materialize_search_document(better, definition),
+        )
+        worse_rank = search_compound_ranking(
+            worse,
+            definition=definition,
+            query=query,
+            materialized=materialize_search_document(worse, definition),
+        )
+        self.assertEqual(better_rank[0], 2)
+        self.assertEqual(worse_rank[0], 2)
+        self.assertGreater(better_rank[1], worse_rank[1])
 
 
 if __name__ == "__main__":

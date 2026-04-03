@@ -586,6 +586,71 @@ def search_query_explain_details(query: SearchQuery) -> dict[str, object | None]
     return details
 
 
+def search_clause_ranking(
+    document: Document,
+    *,
+    definition: SearchIndexDefinition,
+    query: SearchTextLikeQuery,
+    materialized: MaterializedSearchDocument | None = None,
+) -> tuple[bool, float, float | None]:
+    prepared = materialized or materialize_search_document(document, definition)
+    if isinstance(query, SearchNearQuery):
+        distance = search_near_distance(document, query=query)
+        if distance is None:
+            return False, 0.0, None
+        return True, 1.0 + (1.0 / (1.0 + (distance / query.pivot))), distance
+    if isinstance(query, SearchCompoundQuery):
+        if not matches_search_compound_query(
+            document,
+            definition=definition,
+            query=query,
+            materialized=prepared,
+        ):
+            return False, 0.0, None
+        matched_should, should_score, best_near_distance = search_compound_ranking(
+            document,
+            definition=definition,
+            query=query,
+            materialized=prepared,
+        )
+        return True, 1.0 + should_score + float(matched_should), best_near_distance
+    if matches_search_query(
+        document,
+        definition=definition,
+        query=query,
+        materialized=prepared,
+    ):
+        return True, 1.0, None
+    return False, 0.0, None
+
+
+def search_compound_ranking(
+    document: Document,
+    *,
+    definition: SearchIndexDefinition,
+    query: SearchCompoundQuery,
+    materialized: MaterializedSearchDocument | None = None,
+) -> tuple[int, float, float]:
+    prepared = materialized or materialize_search_document(document, definition)
+    matched_should = 0
+    total_score = 0.0
+    best_near_distance = float("inf")
+    for clause in query.should:
+        matched, clause_score, clause_near_distance = search_clause_ranking(
+            document,
+            definition=definition,
+            query=clause,
+            materialized=prepared,
+        )
+        if not matched:
+            continue
+        matched_should += 1
+        total_score += clause_score
+        if clause_near_distance is not None:
+            best_near_distance = min(best_near_distance, clause_near_distance)
+    return matched_should, total_score, best_near_distance
+
+
 def score_vector_document(
     document: Document,
     *,
@@ -1093,6 +1158,10 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
             "shouldOperators": _clause_operator_names(query.should),
             "filterOperators": _clause_operator_names(query.filter),
             "mustNotOperators": _clause_operator_names(query.must_not),
+        },
+        "ranking": {
+            "usesShouldRanking": bool(query.should),
+            "nearAware": any(isinstance(clause, SearchNearQuery) for clause in query.should),
         },
         "origin": None,
         "originKind": None,

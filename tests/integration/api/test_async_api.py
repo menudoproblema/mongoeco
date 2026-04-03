@@ -345,6 +345,30 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             compound_should_near_explanation["engine_plan"]["details"]["compoundPrefilter"]["requiredCandidateableShould"],
                             1,
                         )
+                    self.assertEqual(
+                        compound_should_near_explanation["engine_plan"]["details"]["ranking"],
+                        {"usesShouldRanking": True, "nearAware": True},
+                    )
+
+                    compound_should_near_hits = await collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "should": [
+                                            {"exists": {"path": "title"}},
+                                            {"near": {"path": "score", "origin": 10, "pivot": 2}},
+                                        ],
+                                        "minimumShouldMatch": 0,
+                                    },
+                                }
+                            },
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in compound_should_near_hits], [3, 2])
 
                     near_hits = await collection.aggregate(
                         [
