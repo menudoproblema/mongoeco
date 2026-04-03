@@ -1,3 +1,4 @@
+import datetime
 import random
 from collections.abc import Callable
 from typing import Any
@@ -138,6 +139,8 @@ def _augment_search_documents(docs: list[dict[str, Any]]) -> None:
         )
         document["kind"] = "reference" if index % 3 == 0 else "note"
         document["embedding"] = [float(value) for value in cluster]
+        document["score"] = float((index % 11) + 1)
+        document["publishedAt"] = datetime.datetime(2024, 1, 1) + datetime.timedelta(days=index % 30)
 
 
 def secondary_lookup_indexed(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
@@ -652,6 +655,7 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
     autocomplete_metrics: list[Metrics] = []
     wildcard_metrics: list[Metrics] = []
     compound_metrics: list[Metrics] = []
+    compound_near_metrics: list[Metrics] = []
 
     db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_augment_search_documents)
     try:
@@ -665,6 +669,8 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                         "title": {"type": "string"},
                         "body": {"type": "string"},
                         "kind": {"type": "token"},
+                        "score": {"type": "number"},
+                        "publishedAt": {"type": "date"},
                     },
                 }
             },
@@ -698,6 +704,23 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                             {"exists": {"path": "title"}},
                             {"wildcard": {"query": "*vector*", "path": "body"}},
                         ],
+                    },
+                }
+            },
+            {"$limit": 10},
+        ]
+        compound_near_pipeline = [
+            {
+                "$search": {
+                    "index": "by_text",
+                    "compound": {
+                        "must": [{"text": {"query": "report 0", "path": ["title", "body"]}}],
+                        "filter": [{"wildcard": {"query": "*vector*", "path": "body"}}],
+                        "should": [
+                            {"exists": {"path": "title"}},
+                            {"near": {"path": "score", "origin": 7, "pivot": 2}},
+                        ],
+                        "minimumShouldMatch": 2,
                     },
                 }
             },
@@ -755,6 +778,19 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                         engine.explain_aggregate(db_name, coll_name, compound_pipeline)
                     ),
                     "query_shape": "$search.compound must(text=report 0)+filter(exists,wildcard)",
+                },
+            ),
+            "search_compound_should_near_topk_100": _measure_single_task(
+                compound_near_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, compound_near_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, compound_near_pipeline)
+                    ),
+                    "query_shape": "$search.compound must(text=report 0)+filter(wildcard)+should(exists,near)",
                 },
             ),
         }

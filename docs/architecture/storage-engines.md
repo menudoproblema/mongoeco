@@ -28,6 +28,8 @@ Su valor arquitectonico no es solo la sencillez:
 - mantiene MVCC local con snapshots;
 - implementa metadata, profiling, indices y search indexes sin depender de un
   backend externo.
+- En `$search` textual reutiliza una materializacion ligera por indice para no
+  reconstruir entradas y tokens en cada consulta repetida.
 
 Se usa como baseline semantico, no como "mock" desechable.
 

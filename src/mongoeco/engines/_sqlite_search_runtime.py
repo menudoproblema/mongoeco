@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 import sqlite3
 import time
 from typing import Any, Protocol
@@ -13,10 +14,12 @@ from mongoeco.core.search import (
     compile_search_stage,
     is_text_search_query,
     iter_searchable_text_entries,
+    materialize_search_document,
     matches_search_query,
     search_near_distance,
     score_vector_document,
     search_query_explain_details,
+    search_query_operator_name,
     sqlite_fts5_query,
     SearchAutocompleteQuery,
     SearchCompoundQuery,
@@ -229,6 +232,25 @@ def _union_storage_key_lists(lists: list[list[str]]) -> list[str]:
     return ordered
 
 
+def _storage_keys_with_minimum_frequency(
+    lists: list[list[str]],
+    minimum: int,
+) -> list[str]:
+    if minimum <= 1:
+        return _union_storage_key_lists(lists)
+    counts: Counter[str] = Counter()
+    order: dict[str, int] = {}
+    for values in lists:
+        for storage_key in values:
+            counts[storage_key] += 1
+            order.setdefault(storage_key, len(order))
+    return [
+        storage_key
+        for storage_key, count in sorted(counts.items(), key=lambda item: order[item[0]])
+        if count >= minimum
+    ]
+
+
 def _sqlite_leaf_candidate_storage_keys(
     engine: _SQLiteSearchRuntimeEngine,
     conn: sqlite3.Connection,
@@ -287,6 +309,7 @@ def _sqlite_candidate_storage_keys_for_query(
         candidate_intersections: list[list[str]] = []
         should_candidates: list[list[str]] = []
         saw_non_candidateable_should = False
+        non_candidateable_should = 0
         exact = True
 
         for clause in (*query.must, *query.filter):
@@ -311,6 +334,7 @@ def _sqlite_candidate_storage_keys_for_query(
             )
             if storage_keys is None:
                 saw_non_candidateable_should = True
+                non_candidateable_should += 1
                 exact = False
                 continue
             should_candidates.append(storage_keys)
@@ -318,12 +342,25 @@ def _sqlite_candidate_storage_keys_for_query(
 
         candidates = _intersect_storage_key_lists(candidate_intersections) if candidate_intersections else None
 
-        if should_candidates and not saw_non_candidateable_should:
-            merged_should = _union_storage_key_lists(should_candidates)
-            if candidates is None and query.minimum_should_match > 0:
-                candidates = merged_should
-            elif query.minimum_should_match > 0:
-                candidates = [storage_key for storage_key in candidates if storage_key in set(merged_should)]
+        if should_candidates:
+            required_candidateable_should = max(
+                0,
+                query.minimum_should_match - non_candidateable_should,
+            )
+            if required_candidateable_should > 0:
+                merged_should = _storage_keys_with_minimum_frequency(
+                    should_candidates,
+                    required_candidateable_should,
+                )
+                if candidates is None:
+                    candidates = merged_should
+                else:
+                    merged_should_set = set(merged_should)
+                    candidates = [
+                        storage_key
+                        for storage_key in candidates
+                        if storage_key in merged_should_set
+                    ]
         elif candidates is None:
             return None, None, False
 
@@ -353,20 +390,62 @@ def _sqlite_candidate_storage_keys_for_query(
     return None, None, False
 
 
+def _describe_compound_prefilter_sync(
+    engine: _SQLiteSearchRuntimeEngine,
+    conn: sqlite3.Connection,
+    *,
+    physical_name: str | None,
+    query: SearchCompoundQuery,
+) -> dict[str, object]:
+    def _describe_clause(clause: SearchQuery) -> dict[str, object]:
+        storage_keys, backend, exact = _sqlite_candidate_storage_keys_for_query(
+            engine,
+            conn,
+            physical_name=physical_name,
+            query=clause,
+        )
+        return {
+            "operator": search_query_operator_name(clause),
+            "candidateable": storage_keys is not None,
+            "exact": exact if storage_keys is not None else False,
+            "backend": backend,
+        }
+
+    non_candidateable_should = sum(
+        1
+        for clause in query.should
+        if _sqlite_candidate_storage_keys_for_query(
+            engine,
+            conn,
+            physical_name=physical_name,
+            query=clause,
+        )[0]
+        is None
+    )
+    return {
+        "must": [_describe_clause(clause) for clause in query.must],
+        "filter": [_describe_clause(clause) for clause in query.filter],
+        "should": [_describe_clause(clause) for clause in query.should],
+        "mustNot": [_describe_clause(clause) for clause in query.must_not],
+        "requiredCandidateableShould": max(
+            0,
+            query.minimum_should_match - non_candidateable_should,
+        ),
+    }
+
+
 def _sort_search_documents_for_query(
     documents: list[Document],
     *,
     query: SearchQuery,
 ) -> list[Document]:
     if isinstance(query, SearchNearQuery):
-        return sorted(
-            documents,
-            key=lambda document: (
-                search_near_distance(document, query=query)
-                if search_near_distance(document, query=query) is not None
-                else float("inf")
-            ),
-        )
+        ranked: list[tuple[float, Document]] = []
+        for document in documents:
+            distance = search_near_distance(document, query=query)
+            ranked.append((distance if distance is not None else float("inf"), document))
+        ranked.sort(key=lambda item: item[0])
+        return [document for _distance, document in ranked]
     return documents
 
 
@@ -770,6 +849,7 @@ def execute_sqlite_search_query(
                 document,
                 definition=definition,
                 query=query,
+                materialized=materialize_search_document(document, definition),
             )
         ]
         enforce_deadline(deadline)
@@ -782,6 +862,7 @@ def execute_sqlite_search_query(
             document,
             definition=definition,
             query=query,
+            materialized=materialize_search_document(document, definition),
         )
     ]
     enforce_deadline(deadline)
@@ -850,6 +931,7 @@ def explain_search_documents_sync(
     candidates_requested: int | None = None
     candidate_storage_keys: list[str] | None = None
     candidate_exact: bool | None = None
+    compound_prefilter: dict[str, object] | None = None
     conn = engine._require_connection(context)
     with engine._bind_connection(conn):
         rows = engine._load_search_index_rows(db_name, coll_name, name=query.index_name)
@@ -889,6 +971,13 @@ def explain_search_documents_sync(
                 physical_name=resolved_physical_name,
                 query=query,
             )
+            if isinstance(query, SearchCompoundQuery):
+                compound_prefilter = _describe_compound_prefilter_sync(
+                    engine,
+                    conn,
+                    physical_name=resolved_physical_name,
+                    query=query,
+                )
             if candidate_backend is not None:
                 decision = type(decision)(
                     backend=candidate_backend,
@@ -987,6 +1076,7 @@ def explain_search_documents_sync(
             "filterMode": "post-candidate" if isinstance(query, SearchVectorQuery) and query.filter_spec is not None else None,
             "candidateCount": len(candidate_storage_keys) if candidate_storage_keys is not None else None,
             "candidatePrefilterExact": candidate_exact,
+            "compoundPrefilter": compound_prefilter,
             "exactFallbackReason": exact_fallback_reason,
             "candidatesEvaluated": (
                 candidates_evaluated

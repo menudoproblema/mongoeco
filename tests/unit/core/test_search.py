@@ -30,6 +30,7 @@ from mongoeco.core.search import (
     compile_vector_search_query,
     compile_search_wildcard_query,
     iter_searchable_text_entries,
+    materialize_search_document,
     matches_search_autocomplete_query,
     matches_search_compound_query,
     matches_search_exists_query,
@@ -1605,6 +1606,8 @@ class SearchCoreTests(unittest.TestCase):
         details = search_query_explain_details(compound)
         self.assertEqual(details["queryOperator"], "compound")
         self.assertEqual(details["compound"]["must"], 1)
+        self.assertEqual(details["compound"]["mustOperators"], ["text"])
+        self.assertEqual(details["compound"]["shouldOperators"], [])
         exists_details = search_query_explain_details(
             SearchExistsQuery(index_name="by_text", paths=("title",))
         )
@@ -1621,6 +1624,38 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(near_details["queryOperator"], "near")
         self.assertEqual(near_details["pivot"], 5.0)
+
+    def test_materialized_search_document_reuses_entries_for_multiple_matchers(self) -> None:
+        definition = SearchIndexDefinition(
+            {"mappings": {"dynamic": False, "fields": {"title": {"type": "string"}, "body": {"type": "string"}}}},
+            name="by_text",
+        )
+        document = {"title": "Ada Algorithms", "body": "Ada wrote vector algorithm notes"}
+        prepared = materialize_search_document(document, definition)
+        self.assertTrue(
+            matches_search_text_query(
+                document,
+                definition=definition,
+                query=SearchTextQuery(index_name="by_text", raw_query="Ada", terms=("ada",), paths=("title", "body")),
+                materialized=prepared,
+            )
+        )
+        self.assertTrue(
+            matches_search_wildcard_query(
+                document,
+                definition=definition,
+                query=SearchWildcardQuery(index_name="by_text", raw_query="*vector*", normalized_pattern="*vector*", paths=("body",)),
+                materialized=prepared,
+            )
+        )
+        self.assertTrue(
+            matches_search_exists_query(
+                document,
+                definition=definition,
+                query=SearchExistsQuery(index_name="by_text", paths=("title",)),
+                materialized=prepared,
+            )
+        )
 
 
 if __name__ == "__main__":

@@ -1684,6 +1684,38 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_memory_search_runtime_cache_is_invalidated_after_document_write(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            definition = SearchIndexDefinition(
+                {"mappings": {"dynamic": False, "fields": {"title": {"type": "string"}}}},
+                name="search",
+            )
+            await engine.create_search_index("db", "coll", definition)
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada"})
+
+            first_hits = await engine.search_documents(
+                "db",
+                "coll",
+                "$search",
+                {"index": "search", "text": {"query": "ada", "path": "title"}},
+            )
+            self.assertEqual([doc["_id"] for doc in first_hits], ["1"])
+            self.assertIn(("db", "coll", "search"), engine._search_document_cache)
+
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Grace"})
+
+            second_hits = await engine.search_documents(
+                "db",
+                "coll",
+                "$search",
+                {"index": "search", "text": {"query": "ada", "path": "title"}},
+            )
+            self.assertEqual(second_hits, [])
+        finally:
+            await engine.disconnect()
+
     async def test_scan_and_count_prefer_explicit_plan_over_conflicting_filter(self):
         engine = MemoryEngine()
         await engine.connect()

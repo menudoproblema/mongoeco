@@ -101,6 +101,16 @@ class SearchVectorQuery:
     similarity: str = "cosine"
 
 
+@dataclass(frozen=True, slots=True)
+class MaterializedSearchDocument:
+    entries: tuple[tuple[str, str], ...]
+    searchable_paths: frozenset[str]
+    lowered_values: tuple[str, ...]
+    lowered_values_by_path: dict[str, tuple[str, ...]]
+    token_sets_by_path: dict[str, frozenset[str]]
+    token_set: frozenset[str]
+
+
 type SearchTextLikeQuery = (
     SearchTextQuery
     | SearchPhraseQuery
@@ -112,7 +122,10 @@ type SearchTextLikeQuery = (
 )
 type SearchQuery = SearchTextLikeQuery | SearchVectorQuery
 type _SearchClauseCompiler = Callable[[str, object], SearchTextLikeQuery]
-type _SearchMatcher = Callable[[Document, SearchIndexDefinition, SearchTextLikeQuery], bool]
+type _SearchMatcher = Callable[
+    [Document, SearchIndexDefinition, SearchTextLikeQuery, MaterializedSearchDocument | None],
+    bool,
+]
 type _SearchExplainBuilder = Callable[[SearchQuery], dict[str, object | None]]
 
 
@@ -441,19 +454,10 @@ def matches_search_text_query(
     *,
     definition: SearchIndexDefinition,
     query: SearchTextQuery,
+    materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
-    entries = iter_searchable_text_entries(document, definition)
-    if query.paths is not None:
-        allowed = set(query.paths)
-        entries = [entry for entry in entries if entry[0] in allowed]
-    if not entries:
-        return False
-    tokens: set[str] = set()
-    for _path, value in entries:
-        if not value:
-            continue
-        tokens.update(tokenize_classic_text(value))
-    return all(term.lower() in tokens for term in query.terms)
+    prepared = materialized or materialize_search_document(document, definition)
+    return all(term.lower() in _materialized_token_set(prepared, query.paths) for term in query.terms)
 
 
 def matches_search_phrase_query(
@@ -461,15 +465,11 @@ def matches_search_phrase_query(
     *,
     definition: SearchIndexDefinition,
     query: SearchPhraseQuery,
+    materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
-    entries = iter_searchable_text_entries(document, definition)
-    if query.paths is not None:
-        allowed = set(query.paths)
-        entries = [entry for entry in entries if entry[0] in allowed]
-    if not entries:
-        return False
     phrase = query.raw_query.strip().lower()
-    return any(phrase in value.lower() for _, value in entries if value)
+    prepared = materialized or materialize_search_document(document, definition)
+    return any(phrase in value for value in _materialized_lowered_values(prepared, query.paths))
 
 
 def matches_search_autocomplete_query(
@@ -477,22 +477,15 @@ def matches_search_autocomplete_query(
     *,
     definition: SearchIndexDefinition,
     query: SearchAutocompleteQuery,
+    materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
-    entries = iter_searchable_text_entries(document, definition)
-    if query.paths is not None:
-        allowed = set(query.paths)
-        entries = [entry for entry in entries if entry[0] in allowed]
-    if not entries:
-        return False
+    prepared = materialized or materialize_search_document(document, definition)
     query_terms = tuple(term.lower() for term in query.terms)
-    for _, value in entries:
-        if not value:
-            continue
-        candidate_tokens = tokenize_classic_text(value)
-        if not candidate_tokens:
-            continue
-        lowered_tokens = tuple(token.lower() for token in candidate_tokens)
-        if all(any(token.startswith(term) for token in lowered_tokens) for term in query_terms):
+    token_sets = _materialized_token_sets(prepared, query.paths)
+    if not token_sets:
+        return False
+    for token_set in token_sets:
+        if all(any(token.startswith(term) for token in token_set) for term in query_terms):
             return True
     return False
 
@@ -502,15 +495,11 @@ def matches_search_wildcard_query(
     *,
     definition: SearchIndexDefinition,
     query: SearchWildcardQuery,
+    materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
-    entries = iter_searchable_text_entries(document, definition)
-    if query.paths is not None:
-        allowed = set(query.paths)
-        entries = [entry for entry in entries if entry[0] in allowed]
-    if not entries:
-        return False
     pattern = query.normalized_pattern
-    return any(fnmatch.fnmatchcase(value.lower(), pattern) for _, value in entries if value)
+    prepared = materialized or materialize_search_document(document, definition)
+    return any(fnmatch.fnmatchcase(value, pattern) for value in _materialized_lowered_values(prepared, query.paths))
 
 
 def matches_search_exists_query(
@@ -518,14 +507,15 @@ def matches_search_exists_query(
     *,
     definition: SearchIndexDefinition,
     query: SearchExistsQuery,
+    materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
-    entries = iter_searchable_text_entries(document, definition)
-    if not entries:
+    prepared = materialized or materialize_search_document(document, definition)
+    if not prepared.entries:
         return False
     if query.paths is None:
         return True
     allowed = set(query.paths)
-    return any(path in allowed for path, _value in entries)
+    return any(path in allowed for path in prepared.searchable_paths)
 
 
 def matches_search_near_query(
@@ -533,8 +523,10 @@ def matches_search_near_query(
     *,
     definition: SearchIndexDefinition,
     query: SearchNearQuery,
+    materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
     del definition
+    del materialized
     return search_near_distance(document, query=query) is not None
 
 
@@ -543,22 +535,24 @@ def matches_search_compound_query(
     *,
     definition: SearchIndexDefinition,
     query: SearchCompoundQuery,
+    materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
+    prepared = materialized or materialize_search_document(document, definition)
     for clause in query.must:
-        if not matches_search_query(document, definition=definition, query=clause):
+        if not matches_search_query(document, definition=definition, query=clause, materialized=prepared):
             return False
     for clause in query.filter:
-        if not matches_search_query(document, definition=definition, query=clause):
+        if not matches_search_query(document, definition=definition, query=clause, materialized=prepared):
             return False
     for clause in query.must_not:
-        if matches_search_query(document, definition=definition, query=clause):
+        if matches_search_query(document, definition=definition, query=clause, materialized=prepared):
             return False
     if not query.should:
         return True
     matched_should = sum(
         1
         for clause in query.should
-        if matches_search_query(document, definition=definition, query=clause)
+        if matches_search_query(document, definition=definition, query=clause, materialized=prepared)
     )
     return matched_should >= query.minimum_should_match
 
@@ -568,11 +562,12 @@ def matches_search_query(
     *,
     definition: SearchIndexDefinition,
     query: SearchTextLikeQuery,
+    materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
     matcher = _SEARCH_QUERY_MATCHERS.get(type(query))
     if matcher is None:
         raise OperationFailure(f"unsupported local search query type: {type(query).__name__}")
-    return matcher(document, definition, query)
+    return matcher(document, definition, query, materialized)
 
 
 def is_text_search_query(query: SearchQuery) -> bool:
@@ -617,6 +612,79 @@ def score_vector_document(
     if similarity == "euclidean":
         return _negative_euclidean_distance(query.query_vector, candidate)
     return _cosine_similarity(query.query_vector, candidate)
+
+
+def materialize_search_document(
+    document: Document,
+    definition: SearchIndexDefinition,
+) -> MaterializedSearchDocument:
+    entries = tuple(iter_searchable_text_entries(document, definition))
+    searchable_paths: set[str] = set()
+    lowered_values: list[str] = []
+    lowered_values_by_path: dict[str, list[str]] = {}
+    token_sets_by_path: dict[str, set[str]] = {}
+    token_set: set[str] = set()
+
+    for field_path, value in entries:
+        searchable_paths.add(field_path)
+        lowered = value.lower()
+        lowered_values.append(lowered)
+        lowered_values_by_path.setdefault(field_path, []).append(lowered)
+        tokens = set(tokenize_classic_text(value))
+        token_set.update(tokens)
+        token_sets_by_path.setdefault(field_path, set()).update(tokens)
+
+    return MaterializedSearchDocument(
+        entries=entries,
+        searchable_paths=frozenset(searchable_paths),
+        lowered_values=tuple(lowered_values),
+        lowered_values_by_path={
+            field_path: tuple(values)
+            for field_path, values in lowered_values_by_path.items()
+        },
+        token_sets_by_path={
+            field_path: frozenset(values)
+            for field_path, values in token_sets_by_path.items()
+        },
+        token_set=frozenset(token_set),
+    )
+
+
+def _materialized_lowered_values(
+    prepared: MaterializedSearchDocument,
+    paths: tuple[str, ...] | None,
+) -> tuple[str, ...]:
+    if paths is None:
+        return prepared.lowered_values
+    values: list[str] = []
+    for path in paths:
+        values.extend(prepared.lowered_values_by_path.get(path, ()))
+    return tuple(values)
+
+
+def _materialized_token_sets(
+    prepared: MaterializedSearchDocument,
+    paths: tuple[str, ...] | None,
+) -> tuple[frozenset[str], ...]:
+    if paths is None:
+        return tuple(prepared.token_sets_by_path.values())
+    return tuple(
+        prepared.token_sets_by_path[path]
+        for path in paths
+        if path in prepared.token_sets_by_path
+    )
+
+
+def _materialized_token_set(
+    prepared: MaterializedSearchDocument,
+    paths: tuple[str, ...] | None,
+) -> frozenset[str]:
+    if paths is None:
+        return prepared.token_set
+    tokens: set[str] = set()
+    for path in paths:
+        tokens.update(prepared.token_sets_by_path.get(path, ()))
+    return frozenset(tokens)
 
 
 def vector_field_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:
@@ -1004,6 +1072,14 @@ def _explain_near_query(query: SearchNearQuery) -> dict[str, object | None]:
 
 
 def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | None]:
+    def _clause_operator_names(
+        clauses: tuple[SearchTextLikeQuery, ...],
+    ) -> list[str]:
+        return [
+            _SEARCH_QUERY_OPERATOR_NAMES.get(type(clause), type(clause).__name__)
+            for clause in clauses
+        ]
+
     return {
         "query": None,
         "paths": None,
@@ -1013,6 +1089,10 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
             "filter": len(query.filter),
             "mustNot": len(query.must_not),
             "minimumShouldMatch": query.minimum_should_match,
+            "mustOperators": _clause_operator_names(query.must),
+            "shouldOperators": _clause_operator_names(query.should),
+            "filterOperators": _clause_operator_names(query.filter),
+            "mustNotOperators": _clause_operator_names(query.must_not),
         },
         "origin": None,
         "originKind": None,
@@ -1069,13 +1149,13 @@ _SEARCH_QUERY_OPERATOR_NAMES: dict[type[Any], str] = {
 }
 
 _SEARCH_QUERY_MATCHERS: dict[type[Any], _SearchMatcher] = {
-    SearchTextQuery: lambda document, definition, query: matches_search_text_query(document, definition=definition, query=query),  # type: ignore[arg-type]
-    SearchPhraseQuery: lambda document, definition, query: matches_search_phrase_query(document, definition=definition, query=query),  # type: ignore[arg-type]
-    SearchAutocompleteQuery: lambda document, definition, query: matches_search_autocomplete_query(document, definition=definition, query=query),  # type: ignore[arg-type]
-    SearchWildcardQuery: lambda document, definition, query: matches_search_wildcard_query(document, definition=definition, query=query),  # type: ignore[arg-type]
-    SearchExistsQuery: lambda document, definition, query: matches_search_exists_query(document, definition=definition, query=query),  # type: ignore[arg-type]
-    SearchNearQuery: lambda document, definition, query: matches_search_near_query(document, definition=definition, query=query),  # type: ignore[arg-type]
-    SearchCompoundQuery: lambda document, definition, query: matches_search_compound_query(document, definition=definition, query=query),  # type: ignore[arg-type]
+    SearchTextQuery: lambda document, definition, query, materialized=None: matches_search_text_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
+    SearchPhraseQuery: lambda document, definition, query, materialized=None: matches_search_phrase_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
+    SearchAutocompleteQuery: lambda document, definition, query, materialized=None: matches_search_autocomplete_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
+    SearchWildcardQuery: lambda document, definition, query, materialized=None: matches_search_wildcard_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
+    SearchExistsQuery: lambda document, definition, query, materialized=None: matches_search_exists_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
+    SearchNearQuery: lambda document, definition, query, materialized=None: matches_search_near_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
+    SearchCompoundQuery: lambda document, definition, query, materialized=None: matches_search_compound_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
 }
 
 _SEARCH_QUERY_EXPLAINERS: dict[type[Any], _SearchExplainBuilder] = {

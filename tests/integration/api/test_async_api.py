@@ -311,8 +311,40 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             "filter": 1,
                             "mustNot": 0,
                             "minimumShouldMatch": 0,
+                            "mustOperators": ["text"],
+                            "shouldOperators": [],
+                            "filterOperators": ["wildcard"],
+                            "mustNotOperators": [],
                         },
                     )
+
+                    compound_should_near_explanation = await collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "filter": [{"wildcard": {"query": "*algorithm*", "path": "body"}}],
+                                        "should": [
+                                            {"exists": {"path": "title"}},
+                                            {"near": {"path": "score", "origin": 10, "pivot": 2}},
+                                        ],
+                                        "minimumShouldMatch": 2,
+                                    },
+                                }
+                            }
+                        ]
+                    ).explain()
+                    self.assertEqual(
+                        compound_should_near_explanation["engine_plan"]["details"]["compound"]["shouldOperators"],
+                        ["exists", "near"],
+                    )
+                    if engine_name == "sqlite":
+                        self.assertEqual(
+                            compound_should_near_explanation["engine_plan"]["details"]["compoundPrefilter"]["requiredCandidateableShould"],
+                            1,
+                        )
 
                     near_hits = await collection.aggregate(
                         [

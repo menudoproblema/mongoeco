@@ -106,11 +106,14 @@ La regla arquitectonica es la misma:
 - `core/search.py` usa ya un registro explicito de operadores para separar
   compilacion de clause, matching baseline y shape de explain, en vez de seguir
   creciendo por cadenas de `if/elif`;
-- `MemoryEngine` actua como baseline observable;
+- `MemoryEngine` actua como baseline observable y reutiliza una materializacion
+  textual por indice para no repetir tokenizacion por documento en cada search;
 - `SQLiteEngine` usa FTS5 cuando la traduccion sigue siendo defendible
   (`text`, `phrase`, `autocomplete`) y, en `wildcard`, `exists` y parte de
   `compound`, usa la tabla materializada como prefilter de candidatos antes
   del matching Python exacto;
+- `compound` deja visible en `explain()` tanto el inventario de operadores por
+  clausula como el `compoundPrefilter` que esta reduciendo candidatos en SQLite;
 - `near` entra como operador local para numericos y fecha/datetime con
   `path`, `origin` y `pivot`, y mantiene explain/backends explicitos en vez de
   fingir scoring Atlas Search completo.

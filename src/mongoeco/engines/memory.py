@@ -61,6 +61,8 @@ from mongoeco.core.search import (
     attach_text_score,
     classic_text_score,
     ClassicTextQuery,
+    MaterializedSearchDocument,
+    materialize_search_document,
     SearchNearQuery,
     SearchVectorQuery,
     build_search_index_document,
@@ -132,6 +134,10 @@ class MemoryEngine(AsyncStorageEngine):
         self._index_data: dict[str, dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]]] = {}
         self._search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]] = {}
         self._search_index_ready_at: dict[tuple[str, str, str], float] = {}
+        self._search_document_cache: dict[
+            tuple[str, str, str],
+            tuple[SearchIndexDefinition, list[tuple[Document, MaterializedSearchDocument]]],
+        ] = {}
         self._collections: dict[str, set[str]] = {}
         self._collection_options: dict[str, dict[str, Document]] = {}
         self._meta_lock = threading.Lock()
@@ -176,6 +182,57 @@ class MemoryEngine(AsyncStorageEngine):
             self._search_index_ready_at.pop((db_name, coll_name, index_name), None)
             return True
         return False
+
+    def _clear_search_runtime_cache(self) -> None:
+        self._search_document_cache.clear()
+
+    def _invalidate_search_runtime_cache(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        index_name: str | None = None,
+    ) -> None:
+        if index_name is not None:
+            self._search_document_cache.pop((db_name, coll_name, index_name), None)
+            return
+        stale_keys = [
+            key
+            for key in self._search_document_cache
+            if key[0] == db_name and key[1] == coll_name
+        ]
+        for key in stale_keys:
+            self._search_document_cache.pop(key, None)
+
+    def _materialized_search_documents(
+        self,
+        db_name: str,
+        coll_name: str,
+        definition: SearchIndexDefinition,
+        *,
+        context: ClientSession | None,
+    ) -> list[tuple[Document, MaterializedSearchDocument]]:
+        if context is not None:
+            return [
+                (document, materialize_search_document(document, definition))
+                for document in [
+                    self._decode_storage_document(payload)
+                    for payload in self._storage_view(context).get(db_name, {}).get(coll_name, {}).values()
+                ]
+            ]
+        cache_key = (db_name, coll_name, definition.name)
+        cached = self._search_document_cache.get(cache_key)
+        if cached is not None and cached[0] == definition:
+            return cached[1]
+        materialized = [
+            (document, materialize_search_document(document, definition))
+            for document in [
+                self._decode_storage_document(payload)
+                for payload in self._storage_view(None).get(db_name, {}).get(coll_name, {}).values()
+            ]
+        ]
+        self._search_document_cache[cache_key] = (definition, materialized)
+        return materialized
 
     def _runtime_diagnostics_info(self) -> dict[str, object]:
         declared_search_index_count = sum(
@@ -406,6 +463,7 @@ class MemoryEngine(AsyncStorageEngine):
                 self._collections = snapshot.collections
                 self._collection_options = snapshot.collection_options
                 self._mvcc_version += 1
+                self._clear_search_runtime_cache()
         self._sync_session_state(
             session,
             transaction_active=False,
@@ -819,6 +877,7 @@ class MemoryEngine(AsyncStorageEngine):
             self._index_data.clear()
             self._search_indexes.clear()
             self._search_index_ready_at.clear()
+            self._clear_search_runtime_cache()
             self._collections.clear()
             self._collection_options.clear()
             self._locks.clear()
@@ -898,6 +957,7 @@ class MemoryEngine(AsyncStorageEngine):
                 )
 
             results: list[bool] = []
+            modified_any = False
             for document in documents:
                 doc_id = document.get("_id")
                 storage_key = self._storage_key(doc_id)
@@ -948,6 +1008,9 @@ class MemoryEngine(AsyncStorageEngine):
                     indexes_view=indexes_view,
                 )
                 results.append(True)
+                modified_any = True
+            if modified_any:
+                self._invalidate_search_runtime_cache(db_name, coll_name)
             return results
 
     @override
@@ -999,6 +1062,7 @@ class MemoryEngine(AsyncStorageEngine):
                     indexes_view=indexes_view,
                 )
                 del coll[storage_key]
+                self._invalidate_search_runtime_cache(db_name, coll_name)
                 return True
             return False
 
@@ -1234,6 +1298,7 @@ class MemoryEngine(AsyncStorageEngine):
                     index_data_view=index_data_view,
                     indexes_view=indexes_view,
                 )
+                self._invalidate_search_runtime_cache(db_name, coll_name)
                 return UpdateResult(
                     matched_count=1,
                     modified_count=1 if modified else 0,
@@ -1287,6 +1352,7 @@ class MemoryEngine(AsyncStorageEngine):
                 index_data_view=index_data_view,
                 indexes_view=indexes_view,
             )
+            self._invalidate_search_runtime_cache(db_name, coll_name)
             return UpdateResult(
                 matched_count=0,
                 modified_count=0,
@@ -1337,6 +1403,7 @@ class MemoryEngine(AsyncStorageEngine):
                     indexes_view=indexes_view,
                 )
                 del coll[storage_key]
+                self._invalidate_search_runtime_cache(db_name, coll_name)
                 return DeleteResult(deleted_count=1)
             return DeleteResult(deleted_count=0)
 
@@ -1617,6 +1684,11 @@ class MemoryEngine(AsyncStorageEngine):
                 ready_keys = [key for key in self._search_index_ready_at if key[0] == db_name]
                 for key in ready_keys:
                     del self._search_index_ready_at[key]
+                stale_cache_keys = [
+                    key for key in self._search_document_cache if key[0] == db_name
+                ]
+                for key in stale_cache_keys:
+                    del self._search_document_cache[key]
         self._profiler.clear(db_name)
 
     @override
@@ -1675,7 +1747,12 @@ class MemoryEngine(AsyncStorageEngine):
                         return normalized_definition.name
                 coll_search_indexes.append(normalized_definition)
                 self._mark_search_index_pending(db_name, coll_name, normalized_definition.name)
-        return normalized_definition.name
+                self._invalidate_search_runtime_cache(
+                    db_name,
+                    coll_name,
+                    index_name=normalized_definition.name,
+                )
+                return normalized_definition.name
 
     @override
     async def list_search_indexes(
@@ -1727,6 +1804,11 @@ class MemoryEngine(AsyncStorageEngine):
                         index_type=existing.index_type,
                     )
                     self._mark_search_index_pending(db_name, coll_name, name)
+                    self._invalidate_search_runtime_cache(
+                        db_name,
+                        coll_name,
+                        index_name=name,
+                    )
                     return
         raise OperationFailure(f"search index not found with name [{name}]")
 
@@ -1749,6 +1831,11 @@ class MemoryEngine(AsyncStorageEngine):
                 if existing.name == name:
                     del coll_search_indexes[idx]
                     self._search_index_ready_at.pop((db_name, coll_name, name), None)
+                    self._invalidate_search_runtime_cache(
+                        db_name,
+                        coll_name,
+                        index_name=name,
+                    )
                     if not coll_search_indexes:
                         del search_indexes[db_name][coll_name]
                     if not search_indexes[db_name]:
@@ -1780,30 +1867,41 @@ class MemoryEngine(AsyncStorageEngine):
                 query,
                 ready=self._search_index_is_ready(db_name, coll_name, query.index_name),
             )
-            documents = [
-                self._decode_storage_document(payload)
-                for payload in self._storage_view(context).get(db_name, {}).get(coll_name, {}).values()
-            ]
+            materialized_documents = self._materialized_search_documents(
+                db_name,
+                coll_name,
+                definition,
+                context=context,
+            )
         enforce_deadline(deadline)
         if is_text_search_query(query):
-            documents = [
+            if isinstance(query, SearchNearQuery):
+                distance_hits: list[tuple[float, Document]] = []
+                for document, materialized in materialized_documents:
+                    if not matches_search_query(
+                        document,
+                        definition=definition,
+                        query=query,
+                        materialized=materialized,
+                    ):
+                        continue
+                    distance = search_near_distance(document, query=query)
+                    if distance is None:
+                        continue
+                    distance_hits.append((distance, document))
+                distance_hits.sort(key=lambda item: item[0])
+                return [document for _distance, document in distance_hits]
+            return [
                 document
-                for document in documents
+                for document, materialized in materialized_documents
                 if matches_search_query(
                     document,
                     definition=definition,
                     query=query,
+                    materialized=materialized,
                 )
             ]
-            if isinstance(query, SearchNearQuery):
-                documents.sort(
-                    key=lambda document: (
-                        search_near_distance(document, query=query)
-                        if search_near_distance(document, query=query) is not None
-                        else float("inf")
-                    )
-                )
-            return documents
+        documents = [document for document, _materialized in materialized_documents]
         vector_hits: list[tuple[float, Document]] = []
         for document in documents:
             if query.filter_spec is not None and not QueryEngine.match(
@@ -2183,6 +2281,13 @@ class MemoryEngine(AsyncStorageEngine):
                 ready_at = self._search_index_ready_at
                 for key in [key for key in ready_at if key[0] == db_name and key[1] == coll_name]:
                     ready_at[(db_name, new_name, key[2])] = ready_at.pop(key)
+                stale_cache_keys = [
+                    key
+                    for key in self._search_document_cache
+                    if key[0] == db_name and key[1] == coll_name
+                ]
+                for key in stale_cache_keys:
+                    self._search_document_cache[(db_name, new_name, key[2])] = self._search_document_cache.pop(key)
 
                 db_options = option_store.get(db_name)
                 if db_options is not None and coll_name in db_options:
@@ -2249,3 +2354,4 @@ class MemoryEngine(AsyncStorageEngine):
                 ready_at = self._search_index_ready_at
                 for key in [key for key in ready_at if key[0] == db_name and key[1] == coll_name]:
                     del ready_at[key]
+                self._invalidate_search_runtime_cache(db_name, coll_name)
