@@ -125,11 +125,14 @@ from mongoeco.engines._sqlite_read_ops import (
     require_sql_execution_plan as _sqlite_require_sql_execution_plan,
     search_documents as _sqlite_search_documents,
 )
+from mongoeco.engines._sqlite_read_runtime import (
+    compile_read_execution_plan as _sqlite_runtime_compile_read_execution_plan,
+    explain_query_plan_sync as _sqlite_runtime_explain_query_plan_sync,
+    plan_find_semantics_sync as _sqlite_runtime_plan_find_semantics_sync,
+)
 from mongoeco.engines._sqlite_read_execution import (
     build_scalar_indexed_top_level_equals_sql as _sqlite_build_scalar_indexed_top_level_equals_sql,
     build_scalar_indexed_top_level_range_sql as _sqlite_build_scalar_indexed_top_level_range_sql,
-    compile_read_execution_plan as _sqlite_compile_read_execution_plan,
-    plan_find_semantics_sync as _sqlite_plan_find_semantics_sync,
 )
 from mongoeco.engines._sqlite_modify_ops import (
     delete_matching_document as _sqlite_delete_matching_document,
@@ -2219,37 +2222,13 @@ class SQLiteEngine(AsyncStorageEngine):
         select_clause: str = "document",
         hint: str | IndexKeySpec | None = None,
     ) -> SQLiteReadExecutionPlan:
-        if semantics.text_query is not None:
-            return SQLiteReadExecutionPlan(
-                semantics=semantics,
-                strategy="python-text",
-                execution_lineage=(
-                    ExecutionLineageStep(runtime="python", phase="scan", detail="sqlite collection scan"),
-                    ExecutionLineageStep(runtime="python", phase="text", detail="classic text filter"),
-                    ExecutionLineageStep(runtime="python", phase="filter", detail="semantic core"),
-                ),
-                physical_plan=(
-                    PhysicalPlanStep(runtime="python", operation="scan"),
-                    PhysicalPlanStep(runtime="python", operation="text"),
-                    PhysicalPlanStep(runtime="python", operation="filter"),
-                ),
-                use_sql=False,
-                fallback_reason="classic $text local runtime executes in Python fallback",
-            )
-        return _sqlite_compile_read_execution_plan(
-            db_name=db_name,
-            coll_name=coll_name,
-            semantics=semantics,
+        return _sqlite_runtime_compile_read_execution_plan(
+            self,
+            db_name,
+            coll_name,
+            semantics,
             select_clause=select_clause,
             hint=hint,
-            dialect_requires_python_fallback=self._dialect_requires_python_fallback,
-            plan_has_array_traversing_paths=self._plan_has_array_traversing_paths,
-            plan_requires_python_for_dbref_paths=self._plan_requires_python_for_dbref_paths,
-            plan_requires_python_for_array_comparisons=self._plan_requires_python_for_array_comparisons,
-            plan_requires_python_for_undefined=self._plan_requires_python_for_undefined,
-            plan_requires_python_for_bytes=self._plan_requires_python_for_bytes,
-            sort_requires_python=self._sort_requires_python,
-            build_select_sql=self._build_select_sql,
         )
 
     async def plan_find_execution(
@@ -2275,95 +2254,11 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         semantics: EngineFindSemantics,
     ) -> EngineReadExecutionPlan:
-        if semantics.text_query is not None:
-            lineage = [
-                ExecutionLineageStep(runtime="python", phase="scan", detail="sqlite collection scan"),
-                ExecutionLineageStep(runtime="python", phase="text", detail="classic text filter"),
-                ExecutionLineageStep(runtime="python", phase="filter", detail="semantic core"),
-            ]
-            if semantics.sort:
-                lineage.append(ExecutionLineageStep(runtime="python", phase="sort", detail="semantic core"))
-            if semantics.projection is not None:
-                lineage.append(ExecutionLineageStep(runtime="python", phase="project", detail="semantic core"))
-            if semantics.skip or semantics.limit is not None:
-                lineage.append(ExecutionLineageStep(runtime="python", phase="slice", detail="semantic core"))
-            return EngineReadExecutionPlan(
-                semantics=semantics,
-                strategy="python-text",
-                execution_lineage=tuple(lineage),
-                physical_plan=(
-                    PhysicalPlanStep(runtime="python", operation="scan"),
-                    PhysicalPlanStep(runtime="python", operation="text"),
-                    PhysicalPlanStep(runtime="python", operation="filter"),
-                    *(
-                        (PhysicalPlanStep(runtime="python", operation="sort"),)
-                        if semantics.sort
-                        else ()
-                    ),
-                    *(
-                        (PhysicalPlanStep(runtime="python", operation="project"),)
-                        if semantics.projection is not None
-                        else ()
-                    ),
-                    *(
-                        (PhysicalPlanStep(runtime="python", operation="slice"),)
-                        if semantics.skip or semantics.limit is not None
-                        else ()
-                    ),
-                ),
-                fallback_reason="classic $text local runtime executes in Python fallback",
-            )
-        return _sqlite_plan_find_semantics_sync(
-            db_name=db_name,
-            coll_name=coll_name,
-            semantics=semantics,
-            storage_key_for_id=self._storage_key,
-            find_scalar_fast_path_index=lambda current_db_name, current_coll_name, field: self._find_scalar_fast_path_index(
-                current_db_name,
-                current_coll_name,
-                field,
-            ),
-            field_is_top_level_array_in_collection=lambda current_db_name, current_coll_name, field: self._field_is_top_level_array_in_collection(
-                current_db_name,
-                current_coll_name,
-                field,
-            ),
-            field_contains_real_numeric_in_collection=lambda current_db_name, current_coll_name, field: self._field_contains_real_numeric_in_collection(
-                current_db_name,
-                current_coll_name,
-                field,
-            ),
-            field_contains_non_ascii_text_in_collection=lambda current_db_name, current_coll_name, field: self._field_contains_non_ascii_text_in_collection(
-                current_db_name,
-                current_coll_name,
-                field,
-            ),
-            build_equals_sql=lambda current_db_name, current_coll_name, value, index_name, physical_name, limit, null_matches_undefined: self._build_scalar_indexed_top_level_equals_sql(
-                current_db_name,
-                current_coll_name,
-                field=semantics.query_plan.field,
-                value=value,
-                index_name=index_name,
-                physical_name=physical_name,
-                limit=limit,
-                null_matches_undefined=null_matches_undefined,
-            ),
-            build_range_sql=lambda current_db_name, current_coll_name, value, operator, index_name, physical_name, limit: self._build_scalar_indexed_top_level_range_sql(
-                current_db_name,
-                current_coll_name,
-                field=semantics.query_plan.field,
-                value=value,
-                operator=operator,
-                index_name=index_name,
-                physical_name=physical_name,
-                limit=limit,
-            ),
-            compile_read_plan=lambda current_semantics, hint: self._compile_read_execution_plan(
-                db_name,
-                coll_name,
-                current_semantics,
-                hint=hint,
-            ),
+        return _sqlite_runtime_plan_find_semantics_sync(
+            self,
+            db_name,
+            coll_name,
+            semantics,
         )
 
     async def plan_find_semantics(
@@ -2438,10 +2333,11 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None = None,
         dialect: MongoDialect | None = None,
     ) -> list[str]:
-        semantics = (
-            semantics_or_filter_spec
-            if isinstance(semantics_or_filter_spec, EngineFindSemantics)
-            else compile_find_semantics(
+        with self._lock:
+            return _sqlite_runtime_explain_query_plan_sync(
+                self,
+                db_name,
+                coll_name,
                 semantics_or_filter_spec,
                 plan=plan,
                 sort=sort,
@@ -2451,20 +2347,6 @@ class SQLiteEngine(AsyncStorageEngine):
                 max_time_ms=max_time_ms,
                 dialect=dialect,
             )
-        )
-        deadline = semantics.deadline
-        with self._lock:
-            conn = self._require_connection()
-            enforce_deadline(deadline)
-            execution_plan = self._plan_find_semantics_sync(
-                db_name,
-                coll_name,
-                semantics,
-            )
-            sql, params = execution_plan.require_sql()
-            rows = conn.execute(f"EXPLAIN QUERY PLAN {sql}", tuple(params)).fetchall()
-        enforce_deadline(deadline)
-        return [str(row[3]) for row in rows]
 
     def _load_indexes(self, db_name: str, coll_name: str) -> list[EngineIndexRecord]:
         cache_key = (db_name, coll_name)

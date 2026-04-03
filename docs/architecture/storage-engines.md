@@ -110,6 +110,20 @@ concentra:
 Eso reduce el acoplamiento entre planner, runtime y contrato publico y deja a
 `sqlite.py` en un rol mas claro de coordinador.
 
+En lectura ocurre ya otra separacion util:
+
+- `_sqlite_read_execution.py` concentra helpers de planning y fast paths
+  defendibles por familia;
+- `_sqlite_read_runtime.py` concentra la coordinacion de `compile/plan/explain`
+  para lecturas SQLite, incluido el caso especial de `$text` clasico.
+
+Con eso, `sqlite.py` deja de mezclar en el mismo bloque:
+
+- semantica especial de planning;
+- wiring del planner;
+- shape de `EXPLAIN QUERY PLAN`;
+- wrappers async/sync.
+
 En search existe ya otra frontera explicita por capas:
 
 - `_sqlite_search_runtime.py` concentra el lifecycle local de search y

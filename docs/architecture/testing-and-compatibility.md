@@ -151,6 +151,9 @@ separacion:
   `_database_command_contract.py`;
 - `SQLiteEngine` no debe volver a concentrar el runtime de sesion o la capa
   administrativa ya extraida.
+- `sqlite.py` no debe volver a concentrar la coordinacion de
+  `compile/plan/explain` de lecturas; esa frontera vive ya en
+  `_sqlite_read_runtime.py`.
 - `sqlite.py` no debe volver a concentrar el lifecycle de search/vector
   (materializacion, rebuild, ejecucion y explain); esa frontera vive ya en
   `_sqlite_search_runtime.py`.
