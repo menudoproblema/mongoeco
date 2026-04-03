@@ -726,6 +726,63 @@
       "supports_update_one_sort"
     ]
   },
+  "local_runtime_subsets": {
+    "classicText": {
+      "note": "The classic $text subset remains local, token-based and intentionally lighter than MongoDB server full-text behavior.",
+      "supportsMetaProjection": true,
+      "supportsSortByTextScore": true,
+      "supportsTextScore": true
+    },
+    "geospatial": {
+      "aggregationStages": [
+        "$geoNear"
+      ],
+      "note": "The embedded runtime uses planar local geometry operations. $nearSphere and 2dsphere remain Mongo-like names over local planar distance.",
+      "queryOperators": [
+        "$geoWithin",
+        "$geoIntersects",
+        "$near",
+        "$nearSphere"
+      ],
+      "semantics": "planar-local",
+      "storedGeometries": [
+        "Point",
+        "LineString",
+        "Polygon",
+        "MultiPoint",
+        "MultiLineString",
+        "MultiPolygon",
+        "GeometryCollection",
+        "legacy [x, y]"
+      ]
+    },
+    "search": {
+      "note": "The local $search surface remains an explicit Atlas-like subset.",
+      "operators": [
+        "text",
+        "phrase",
+        "autocomplete",
+        "wildcard",
+        "compound"
+      ],
+      "sqliteBackends": [
+        "fts5",
+        "python"
+      ]
+    },
+    "vectorSearch": {
+      "backend": "usearch",
+      "fallback": "exact",
+      "filterMode": "post-candidate",
+      "mode": "local-ann-with-exact-baseline",
+      "note": "SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.",
+      "similarities": [
+        "cosine",
+        "dotProduct",
+        "euclidean"
+      ]
+    }
+  },
   "mongodb_dialects": {
     "7.0": {
       "aggregation_expression_operators": [

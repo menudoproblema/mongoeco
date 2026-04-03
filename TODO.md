@@ -32,7 +32,8 @@ Pendientes:
   * `string`
   * `token`
   * `autocomplete`
-* decidir si `vectorSearch` exacto local sigue siendo suficiente o si necesita backend dedicado/ANN;
+* decidir si el backend ANN local actual de `vectorSearch` es suficiente o si
+  necesita una siguiente fase mas ambiciosa;
 * mejorar `explain()` de search si aparecen nuevos backends u operadores.
 
 ## 2. Rendimiento y planificación
@@ -44,7 +45,8 @@ Pendientes:
 * seguir mejorando pushdown/planning en SQLite;
 * revisar si compensa otra vuelta sobre fallback/materialización en agregación;
 * estudiar mejoras adicionales de concurrencia/throughput en SQLite si el objetivo pasa de paridad funcional a ambición más cercana a producción;
-* optimizar `vectorSearch` si deja de ser suficiente la fuerza bruta local;
+* optimizar `vectorSearch` si deja de ser suficiente el backend ANN local
+  actual;
 * seguir endureciendo el planner físico si aparecen consultas mixtas donde el pushdown parcial actual no baste.
 
 ## 3. Consolidación selectiva
@@ -87,8 +89,8 @@ Ya no forman parte del backlog pendiente básico:
 * `$merge` como stage terminal local de agregación;
 * `$densify` y `$fill` en su subset local documentado;
 * `currentOp` / `killOp` locales;
-* `vectorSearch` exacto local con `filter` y similitudes `cosine`,
-  `dotProduct` y `euclidean`.
+* `vectorSearch` local con backend ANN `usearch`, fallback exacto, `filter` y
+  similitudes `cosine`, `dotProduct` y `euclidean`.
 * projection avanzada de `find` en el subconjunto diario (`$slice`,
   `$elemMatch`, proyección posicional, `$meta: "textScore"`);
 * `$collStats` como stage inicial de agregación local;

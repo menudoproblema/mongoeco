@@ -86,7 +86,10 @@ implementacion completa de un cluster MongoDB de produccion. En particular:
 - el SDAM soportado es parcial y explicitamente acotado;
 - la collation avanzada depende de `PyICU`;
 - `$search` y `$vectorSearch` tienen un perimetro local y no pretenden igualar
-  Atlas Search;
+  Atlas Search, aunque `SQLiteEngine` ya use FTS5 y `usearch` como backends
+  locales reales;
+- el geoespacial soportado es amplio pero estrictamente planar/local, no
+  geodesico;
 - `currentOp` y `killOp` existen solo como introspeccion/cancelacion local,
   best-effort y sin semantica distribuida;
 - `$merge`, `$densify` y `$fill` forman parte del runtime de agregacion, pero

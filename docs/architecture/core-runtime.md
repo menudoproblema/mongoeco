@@ -66,10 +66,12 @@ La idea no es solo acelerar consultas. Tambien:
 
 En esta misma capa entra ya un subset geoespacial local y explícito:
 
-- `Point` GeoJSON y pares `[x, y]` como datos punto;
-- `$geoWithin` con `Polygon` y legacy `$box`;
-- `$geoIntersects` point-only;
-- `$near` y `$nearSphere` con distancia local.
+- `Point`, `LineString`, `Polygon`, `MultiPoint`, `MultiLineString`,
+  `MultiPolygon` y `GeometryCollection`, ademas de pares `[x, y]` para puntos;
+- `$geoWithin` con `Polygon`, `MultiPolygon` y legacy `$box`;
+- `$geoIntersects` sobre cualquier geometria soportada del subset;
+- `$near` y `$nearSphere` con distancia minima planar desde el punto consultado
+  hasta la geometria almacenada.
 
 La arquitectura vuelve a ser la misma: el planner compila ese subset a nodos
 propios y el engine decide si puede empujarlo o si debe degradar a Python. En
@@ -164,9 +166,10 @@ de cursor, para mantener separadas la semantica del stage y la obtencion de
 stats de coleccion.
 
 Ese mismo subsistema soporta ya tambien `$geoNear` como stage materializante
-local point-only. La restriccion es consciente: requiere `key` explicito y no
-pretende simular una surface geoespacial de servidor mas amplia que la que el
-runtime puede defender honestamente.
+local con semantica planar explicita. La restriccion consciente ya no esta en
+las geometrías soportadas, sino en el modelo espacial: requiere `key`
+explicito y no pretende simular geodesia real ni indices espaciales de
+servidor.
 
 En el caso de SQLite, `find(...).explain()` deja ya tambien issues
 estructurados del engine cuando la ruta cae a hibrido o Python (`scope="engine"`),
@@ -254,14 +257,16 @@ sin no-ops silenciosos.
 El runtime local de search distingue ya dos familias:
 
 - `$search`, con subset local de operadores textuales;
-- `$vectorSearch`, como exact search local.
+- `$vectorSearch`, con baseline exacta y backend ANN local.
 
 En esta fase, `vectorSearch` soporta:
 
 - similitud `cosine`, `dotProduct` y `euclidean`;
 - `filter` opcional reutilizando `QueryEngine`;
-- explain con backend real, paths vectoriales, similitud y shape del filtro.
+- backend `usearch` en `SQLiteEngine` con baseline exacta en `MemoryEngine`;
+- explain con backend real, modo ANN/exacto, paths vectoriales, similitud,
+  shape del filtro y metadata de materializacion.
 
-La decision sigue siendo consciente: no hay ANN, HNSW ni embeddings
-automaticos. La compatibilidad se modela como subset local defendible, no como
-equivalencia con Atlas Search.
+La decision sigue siendo consciente: no hay Atlas Search remoto, ANN
+distribuido ni embeddings automaticos. La compatibilidad se modela como subset
+local defendible, no como equivalencia con Atlas Search.

@@ -140,9 +140,12 @@ usa Semantic Versioning.
   embebido (`insert`, `query`, `update`, `delete`, `getmore`, `command`) en
   lugar de quedar fijado a ceros.
 - `vectorSearch` local acepta ya `filter` y similitudes `cosine`,
-  `dotProduct` y `euclidean`, manteniendo el contrato como exact search local
-  y reflejando esa surface ampliada en explain, compatibilidad declarada y
-  tests.
+  `dotProduct` y `euclidean`, y `SQLiteEngine` materializa indices ANN locales
+  con `usearch` manteniendo `MemoryEngine` como baseline exacta. Esa surface
+  queda reflejada ya en explain, compatibilidad declarada y tests.
+- El subset geoespacial local deja ya de ser `point-only`: soporta geometrías
+  GeoJSON amplias con semántica planar honesta en queries y `$geoNear`, sin
+  prometer geodesia real.
 - Los índices `hidden` quedan ya soportados como metadata administrativa local
   real: se preservan en `create_index`, `createIndexes`, `listIndexes` e
   `index_information()`, y el planner rechaza de forma estable los `hint`

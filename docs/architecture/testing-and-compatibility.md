@@ -192,6 +192,7 @@ En la fase actual, eso incluye ya explicitamente:
 - coverage observable para indices `hidden` como metadata administrativa local,
   incluyendo rechazo estable de `hint` contra indices ocultos;
 - tests de surface administrativa local para `currentOp` y `killOp`;
-- regresiones sobre `vectorSearch` local con similitudes adicionales y `filter`;
+- regresiones sobre `vectorSearch` local con similitudes adicionales, `filter`,
+  backend ANN `usearch` y `explain()` con degradacion observable;
 - snapshots de compatibilidad regenerados automaticamente cuando cambia el
   catalogo declarado.

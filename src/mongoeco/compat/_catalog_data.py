@@ -23,3 +23,4 @@ from mongoeco.compat._catalog_profiles import (
     PYMONGO_PROFILE_CATALOG,
     SUPPORTED_PYMONGO_MAJORS,
 )
+from mongoeco.compat._catalog_runtime_subsets import LOCAL_RUNTIME_SUBSET_CATALOG

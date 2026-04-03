@@ -44,10 +44,11 @@ un servidor MongoDB completo.
 Esto implica:
 
 * `currentOp` y `killOp` existen solo con semántica local y best-effort;
-* `vectorSearch` sigue siendo exact search local, sin ANN;
+* `vectorSearch` usa ya ANN local con `usearch` en `SQLiteEngine` y baseline
+  exacta en `MemoryEngine`;
 * `$merge`, `$densify` y `$fill` existen como subset explícito;
 * los pipeline-style updates ya están soportados end-to-end para su subset;
-* geoespacial entra solo como subset local point-only;
+* geoespacial entra ya como subset local amplio y planar;
 * `$text` clásico existe ya como subset local explícito, con `textScore`
   observable pero sin pretender semántica full-text de servidor MongoDB.
 * `$search` local soporta ya `text`, `phrase`, `autocomplete`, `wildcard`
@@ -282,20 +283,20 @@ Límites conscientes:
 El runtime local soporta ya un subset geoespacial explícito y limitado:
 
 * datos geoespaciales:
-  * `Point` GeoJSON;
-  * pares legacy `[x, y]`;
+  * `Point`, `LineString`, `Polygon`, `MultiPoint`, `MultiLineString`,
+    `MultiPolygon` y `GeometryCollection`;
+  * pares legacy `[x, y]` para puntos;
 * queries:
-  * `$geoWithin` con `Polygon` GeoJSON y legacy `$box`;
-  * `$geoIntersects` cuando el documento almacenado es un punto y la
-    geometría consultada es `Point` o `Polygon`;
-  * `$near` y `$nearSphere` como proximidad local point-only;
+  * `$geoWithin` con `Polygon`, `MultiPolygon` y legacy `$box`;
+  * `$geoIntersects` entre cualquier geometría soportada del subset local;
+  * `$near` y `$nearSphere` con query point-only y distancia mínima planar
+    contra la geometría almacenada;
 * agregación:
   * `$geoNear` con `near`, `distanceField`, `key`, `query`, `minDistance`,
     `maxDistance` e `includeLocs` dentro del subset local.
 
 Límites conscientes:
 
-* no hay `LineString`, `Multi*` ni `GeometryCollection`;
 * `SQLiteEngine` ejecuta este subset con fallback Python explícito, no con
   pushdown SQL;
 * `$nearSphere` conserva semántica local de distancia plana, no geodesia
@@ -329,7 +330,8 @@ Límites conscientes:
 
 ## 7.4 Subset local actual de `vectorSearch`
 
-`vectorSearch` forma ya parte del runtime embebido como exact search local:
+`vectorSearch` forma ya parte del runtime embebido como búsqueda vectorial local
+con baseline exacta y backend ANN:
 
 * similitudes:
   * `cosine`
@@ -337,11 +339,20 @@ Límites conscientes:
   * `euclidean`
 * surface:
   * `filter` opcional reutilizando `QueryEngine`;
-  * `explain` con backend, similitud, escaneo y candidatos evaluados.
+  * `explain` con backend, modo, similitud, escaneo, candidatos evaluados,
+    vectores válidos/inválidos y razones de degradación.
+* backend:
+  * `MemoryEngine` mantiene baseline exacta para semántica y contraste;
+  * `SQLiteEngine` usa `usearch` como backend ANN local cuando el índice
+    vectorial está materializado.
 
 Límites conscientes:
 
-* no hay ANN, HNSW ni backends Atlas-like;
+* no hay servicio remoto Atlas-like, ANN distribuido ni embeddings
+  automáticos;
+* `filter` sigue siendo post-candidate;
+* si el filtro degrada demasiado el resultado, `explain()` deja visible la
+  degradación a exacto.
 
 ## 7.5 Subset local actual de `$search`
 
@@ -361,7 +372,7 @@ El runtime local soporta ya un subset explícito de `$search`:
 
 Límites conscientes:
 
-* no hay `near`, `compound`, `facet`, `range`, `exists` ni scoring Atlas-like;
+* no hay `near`, `facet`, `range`, `exists` ni scoring Atlas-like;
 * `wildcard` sigue siendo matching local simple, no sintaxis Atlas Search;
 * `autocomplete` es local y basado en prefijos de tokens, no en analyzer
   avanzado;
@@ -371,7 +382,7 @@ Límites conscientes:
 * `SQLiteEngine` solo empuja a FTS5 `text`, `phrase` y `autocomplete`; el
   `wildcard` local y `compound` siguen siendo fallback Python explícito.
 * `$vectorSearch` debe seguir siendo el primer stage;
-* la semantica sigue siendo local y exacta, no de cluster o servicio remoto.
+* la semantica sigue siendo local, no de cluster o servicio remoto.
 
 ## 8. Modo de planning
 

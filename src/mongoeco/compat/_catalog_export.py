@@ -13,6 +13,7 @@ from mongoeco.compat._catalog_constants import (
 from mongoeco.compat._catalog_data import (
     DATABASE_COMMAND_SUPPORT_CATALOG,
     DATABASE_COMMAND_OPTION_SUPPORT_CATALOG,
+    LOCAL_RUNTIME_SUBSET_CATALOG,
     MONGODB_DIALECT_CATALOG,
     OPERATION_OPTION_SUPPORT_CATALOG,
     PYMONGO_PROFILE_CATALOG,
@@ -113,6 +114,13 @@ def export_database_command_catalog() -> dict[str, dict[str, object]]:
     }
 
 
+def export_local_runtime_subset_catalog() -> dict[str, dict[str, object]]:
+    return {
+        name: dict(entry)
+        for name, entry in LOCAL_RUNTIME_SUBSET_CATALOG.items()
+    }
+
+
 def export_full_compat_catalog() -> dict[str, object]:
     return {
         "defaults": {
@@ -134,6 +142,7 @@ def export_full_compat_catalog() -> dict[str, object]:
         "database_commands": export_database_command_catalog(),
         "operation_options": export_operation_option_catalog(),
         "database_command_options": export_database_command_option_catalog(),
+        "local_runtime_subsets": export_local_runtime_subset_catalog(),
     }
 
 
@@ -218,5 +227,9 @@ def export_full_compat_catalog_markdown() -> str:
             )
             lines.append(f"- `{option}`: {rendered}")
         lines.append("")
+
+    runtime_subsets = catalog["local_runtime_subsets"]
+    assert isinstance(runtime_subsets, dict)
+    _render_section("Local Runtime Subsets", runtime_subsets)
 
     return "\n".join(lines).rstrip() + "\n"

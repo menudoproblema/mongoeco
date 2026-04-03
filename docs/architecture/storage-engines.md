@@ -174,7 +174,9 @@ La administracion de search indexes comparte:
 - errores publicos estables para indice inexistente o tipo incorrecto.
 
 Lo que no se comparte a la fuerza es la ejecucion fisica de `$search` o
-`$vectorSearch`, porque ahi el backend importa de verdad.
+`$vectorSearch`, porque ahi el backend importa de verdad: SQLite usa FTS5 para
+parte de `$search` y `usearch` para `vectorSearch`, mientras `MemoryEngine`
+mantiene el baseline semantico Python/exacto.
 
 ## Tradeoff principal de la capa de engines
 
