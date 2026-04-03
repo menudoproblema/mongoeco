@@ -150,13 +150,13 @@ class AsyncAggregationCursor:
         if on not in (None, "_id"):
             raise OperationFailure("$merge currently supports only omitted on or on: '_id'")
         when_matched = spec.get("whenMatched", "merge")
+        if isinstance(when_matched, list):
+            raise OperationFailure("$merge whenMatched pipelines are not supported in the local runtime")
         if when_matched not in {"replace", "merge", "keepExisting", "fail"}:
             raise OperationFailure("$merge whenMatched currently supports replace, merge, keepExisting or fail")
         when_not_matched = spec.get("whenNotMatched", "insert")
         if when_not_matched not in {"insert", "discard", "fail"}:
             raise OperationFailure("$merge whenNotMatched currently supports insert, discard or fail")
-        if isinstance(when_matched, list):
-            raise OperationFailure("$merge whenMatched pipelines are not supported in the local runtime")
 
         target_collection = self._target_database(target_db_name).get_collection(target_coll_name)
         for source_document in documents:

@@ -7,7 +7,7 @@ from typing import Any
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.geo import parse_geo_point, planar_distance
+from mongoeco.core.geo import parse_geo_geometry, parse_geo_point, planar_distance_to_geometry
 from mongoeco.core.sorting import sort_documents, sort_documents_window
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
@@ -430,10 +430,10 @@ def _stage_geo_near(
         if not found:
             continue
         try:
-            point = parse_geo_point(location, label=f"$geoNear key {key}")
+            _geometry_kind, geometry = parse_geo_geometry(location, label=f"$geoNear key {key}")
         except OperationFailure:
             continue
-        distance = planar_distance(point, near_point)
+        distance = planar_distance_to_geometry(near_point, geometry)
         if min_distance is not None and distance < float(min_distance):
             continue
         if max_distance is not None and distance > float(max_distance):

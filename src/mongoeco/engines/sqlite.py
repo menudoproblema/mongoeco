@@ -86,6 +86,12 @@ from mongoeco.engines._sqlite_explain_contract import (
 from mongoeco.engines._sqlite_search_backend import decide_sqlite_search_backend
 from mongoeco.engines._sqlite_runtime import SQLiteCacheState, SQLiteRuntimeState
 from mongoeco.engines._sqlite_session_runtime import SQLiteSessionRuntime
+from mongoeco.engines._sqlite_vector_backend import (
+    SQLiteVectorBackendState,
+    build_sqlite_vector_backend,
+    search_sqlite_vector_backend,
+    vector_backend_stats_document,
+)
 from mongoeco.engines._sqlite_catalog import (
     list_collection_names as _sqlite_list_collection_names,
     list_database_names as _sqlite_list_database_names,
@@ -372,9 +378,19 @@ class SQLiteEngine(AsyncStorageEngine):
     def _ensured_search_backends(self) -> set[str]:
         return self._cache_state.ensured_search_backends
 
+    @property
+    def _vector_search_backends(self) -> dict[tuple[str, str], SQLiteVectorBackendState]:
+        return self._cache_state.vector_search_backends
+
+    @property
+    def _search_backend_versions(self) -> dict[tuple[str, str], int]:
+        return self._cache_state.search_backend_versions
+
     def _runtime_diagnostics_info(self) -> dict[str, object]:
         declared_search_index_count = 0
         pending_search_index_count = 0
+        declared_vector_index_count = 0
+        pending_vector_index_count = 0
         connection = self._connection
         if connection is not None:
             try:
@@ -402,6 +418,35 @@ class SQLiteEngine(AsyncStorageEngine):
             if row is not None:
                 declared_search_index_count = int(row[0] or 0)
                 pending_search_index_count = int(row[1] or 0)
+            try:
+                vector_row = connection.execute(
+                    """
+                    SELECT
+                        COUNT(*) AS declared_count,
+                        COALESCE(
+                            SUM(
+                                CASE
+                                    WHEN ready_at_epoch IS NOT NULL AND ready_at_epoch > ?
+                                    THEN 1
+                                    ELSE 0
+                                END
+                            ),
+                            0
+                        ) AS pending_count
+                    FROM search_indexes
+                    WHERE index_type = 'vectorSearch'
+                    """,
+                    (time.time(),),
+                ).fetchone()
+            except sqlite3.OperationalError:
+                vector_row = None
+            if vector_row is not None:
+                declared_vector_index_count = int(vector_row[0] or 0)
+                pending_vector_index_count = int(vector_row[1] or 0)
+        materialized_vector_backends = tuple(
+            vector_backend_stats_document(state)
+            for state in self._vector_search_backends.values()
+        )
         return {
             "planner": {
                 "engine": "sqlite",
@@ -409,10 +454,15 @@ class SQLiteEngine(AsyncStorageEngine):
                 "hybridSortFallback": True,
             },
             "search": {
-                "backend": "fts5-or-python-fallback",
+                "backend": "fts5-or-usearch-or-python-fallback",
                 "fts5Available": self._fts5_available,
                 "declaredIndexCount": declared_search_index_count,
                 "pendingIndexCount": pending_search_index_count,
+                "vectorBackend": "usearch",
+                "declaredVectorIndexCount": declared_vector_index_count,
+                "pendingVectorIndexCount": pending_vector_index_count,
+                "materializedVectorBackendCount": len(materialized_vector_backends),
+                "materializedVectorBackends": list(materialized_vector_backends),
                 "ensuredBackendCount": len(self._ensured_search_backends),
                 "simulatedIndexLatencySeconds": self._simulate_search_index_latency,
             },
@@ -422,6 +472,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 "collectionFeatureCacheEntries": len(self._collection_features_cache),
                 "indexMetadataVersionEntries": len(self._index_metadata_versions),
                 "ensuredMultikeyPhysicalIndexCount": len(self._ensured_multikey_physical_indexes),
+                "vectorSearchBackendCount": len(self._vector_search_backends),
             },
         }
 
@@ -772,6 +823,32 @@ class SQLiteEngine(AsyncStorageEngine):
     def _physical_search_index_name(self, db_name: str, coll_name: str, index_name: str) -> str:
         digest = hashlib.sha1(f"{db_name}:{coll_name}:{index_name}:search".encode("utf-8")).hexdigest()[:16]
         return f"fts_{digest}"
+
+    def _mark_search_backend_changed(self, db_name: str, coll_name: str) -> None:
+        cache_key = (db_name, coll_name)
+        self._search_backend_versions[cache_key] = self._search_backend_versions.get(cache_key, 0) + 1
+        stale_keys = [
+            key
+            for key, state in self._vector_search_backends.items()
+            if state.db_name == db_name and state.coll_name == coll_name
+        ]
+        for key in stale_keys:
+            self._vector_search_backends.pop(key, None)
+
+    def _search_backend_version(self, db_name: str, coll_name: str) -> int:
+        return self._search_backend_versions.get((db_name, coll_name), 0)
+
+    def _clear_search_backend_state_for_database(self, db_name: str) -> None:
+        stale_version_keys = [key for key in self._search_backend_versions if key[0] == db_name]
+        for key in stale_version_keys:
+            self._search_backend_versions.pop(key, None)
+        stale_backend_keys = [
+            key
+            for key, state in self._vector_search_backends.items()
+            if state.db_name == db_name
+        ]
+        for key in stale_backend_keys:
+            self._vector_search_backends.pop(key, None)
 
     def _sqlite_table_exists(self, conn: sqlite3.Connection, table_name: str) -> bool:
         row = conn.execute(
@@ -2611,6 +2688,13 @@ class SQLiteEngine(AsyncStorageEngine):
             return
         conn.execute(f"DROP TABLE IF EXISTS {self._quote_identifier(physical_name)}")
         self._ensured_search_backends.discard(physical_name)
+        stale_keys = [
+            key
+            for key, state in self._vector_search_backends.items()
+            if state.physical_name == physical_name
+        ]
+        for key in stale_keys:
+            self._vector_search_backends.pop(key, None)
 
     def _ensure_search_backend_sync(
         self,
@@ -2620,13 +2704,15 @@ class SQLiteEngine(AsyncStorageEngine):
         definition: SearchIndexDefinition,
         physical_name: str | None,
     ) -> str | None:
-        if definition.index_type != "search":
-            return None
         resolved_physical_name = physical_name or self._physical_search_index_name(
             db_name,
             coll_name,
             definition.name,
         )
+        if definition.index_type == "vectorSearch":
+            return resolved_physical_name
+        if definition.index_type != "search":
+            return None
         if not self._supports_fts5(conn):
             return resolved_physical_name
         if resolved_physical_name in self._ensured_search_backends and self._sqlite_table_exists(
@@ -2662,6 +2748,35 @@ class SQLiteEngine(AsyncStorageEngine):
             conn.commit()
         return resolved_physical_name
 
+    def _ensure_vector_search_backend_sync(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        definition: SearchIndexDefinition,
+        physical_name: str,
+        path: str,
+    ) -> SQLiteVectorBackendState:
+        cache_key = (physical_name, path)
+        collection_version = self._search_backend_version(db_name, coll_name)
+        cached = self._vector_search_backends.get(cache_key)
+        if (
+            cached is not None
+            and cached.collection_version == collection_version
+        ):
+            return cached
+        state = build_sqlite_vector_backend(
+            db_name=db_name,
+            coll_name=coll_name,
+            definition=definition,
+            physical_name=physical_name,
+            path=path,
+            collection_version=collection_version,
+            documents=list(self._load_documents(db_name, coll_name)),
+        )
+        self._vector_search_backends[cache_key] = state
+        return state
+
     def _delete_search_entries_for_storage_key(
         self,
         conn: sqlite3.Connection,
@@ -2680,6 +2795,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 f"DELETE FROM {self._quote_identifier(physical_name)} WHERE storage_key = ?",
                 (storage_key,),
             )
+        self._mark_search_backend_changed(db_name, coll_name)
 
     def _replace_search_entries_for_document(
         self,
@@ -2907,8 +3023,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 signature[0],
                 self._multikey_type_score(signature[0]),
                 signature[1],
-            ),
-        )
+                ),
+            )
+        self._mark_search_backend_changed(db_name, coll_name)
 
     def _backfill_scalar_indexes_sync(self, conn: sqlite3.Connection) -> None:
         indexes = conn.execute(
@@ -3283,8 +3400,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     """
                     SELECT db_name, coll_name, name
                     FROM search_indexes
-                    WHERE index_type = 'search'
-                      AND (physical_name IS NULL OR physical_name = '')
+                    WHERE physical_name IS NULL OR physical_name = ''
                     """
                 ).fetchall()
                 for db_name, coll_name, name in search_index_rows:
@@ -3307,6 +3423,8 @@ class SQLiteEngine(AsyncStorageEngine):
                 connection.commit()
                 self._ensured_multikey_physical_indexes.clear()
                 self._ensured_search_backends.clear()
+                self._vector_search_backends.clear()
+                self._search_backend_versions.clear()
                 self._fts5_available = None
                 self._invalidate_index_cache()
                 self._invalidate_collection_id_cache()
@@ -3397,6 +3515,8 @@ class SQLiteEngine(AsyncStorageEngine):
             self._invalidate_collection_id_cache()
             self._invalidate_collection_features_cache()
             self._ensured_search_backends.clear()
+            self._vector_search_backends.clear()
+            self._search_backend_versions.clear()
             self._fts5_available = None
         if connection is not None:
             connection.close()
@@ -4111,6 +4231,7 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 self._admin_runtime.drop_database(db_name, context=context)
+            self._clear_search_backend_state_for_database(db_name)
 
     def _clear_index_metadata_versions_for_database(self, db_name: str) -> None:
         self._admin_runtime.clear_index_metadata_versions_for_database(db_name)
@@ -4153,7 +4274,7 @@ class SQLiteEngine(AsyncStorageEngine):
         deadline = operation_deadline(max_time_ms)
         with self._lock:
             conn = self._require_connection(context)
-            return _sqlite_create_search_index(
+            result = _sqlite_create_search_index(
                 conn,
                 db_name=db_name,
                 coll_name=coll_name,
@@ -4167,6 +4288,8 @@ class SQLiteEngine(AsyncStorageEngine):
                 physical_search_index_name=self._physical_search_index_name,
                 pending_ready_at=self._pending_search_index_ready_at,
             )
+            self._mark_search_backend_changed(db_name, coll_name)
+            return result
 
     def _list_search_indexes_sync(
         self,
@@ -4212,6 +4335,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 physical_search_index_name=self._physical_search_index_name,
                 pending_ready_at=self._pending_search_index_ready_at,
             )
+        self._mark_search_backend_changed(db_name, coll_name)
 
     def _drop_search_index_sync(
         self,
@@ -4235,6 +4359,33 @@ class SQLiteEngine(AsyncStorageEngine):
                 rollback_write=lambda current: self._rollback_write(current, context),
                 drop_search_backend=self._drop_search_backend_sync,
             )
+        self._mark_search_backend_changed(db_name, coll_name)
+
+    def _exact_vector_hits_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        definition: SearchIndexDefinition,
+        query: SearchVectorQuery,
+    ) -> list[tuple[float, Document]]:
+        vector_hits: list[tuple[float, Document]] = []
+        for _, document in self._load_documents(db_name, coll_name):
+            if query.filter_spec is not None and not QueryEngine.match(
+                document,
+                query.filter_spec,
+                dialect=MONGODB_DIALECT_70,
+            ):
+                continue
+            score = score_vector_document(
+                document,
+                definition=definition,
+                query=query,
+            )
+            if score is None:
+                continue
+            vector_hits.append((score, document))
+        vector_hits.sort(key=lambda item: item[0], reverse=True)
+        return vector_hits
 
     def _execute_sqlite_search_query(
         self,
@@ -4253,6 +4404,52 @@ class SQLiteEngine(AsyncStorageEngine):
             definition,
             physical_name,
         )
+        if isinstance(query, SearchVectorQuery):
+            decision = decide_sqlite_search_backend(
+                query,
+                physical_name=resolved_physical_name,
+                fts5_available=self._supports_fts5(conn),
+                backend_materialized=resolved_physical_name is not None,
+                ann_available=True,
+            )
+            if decision.backend == "usearch" and resolved_physical_name is not None:
+                backend_state = self._ensure_vector_search_backend_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                    definition,
+                    resolved_physical_name,
+                    query.path,
+                )
+                documents_by_storage_key = {
+                    storage_key: document
+                    for storage_key, document in self._load_documents(db_name, coll_name)
+                }
+                ann_hits = search_sqlite_vector_backend(
+                    backend_state,
+                    query_vector=query.query_vector,
+                    count=query.num_candidates,
+                )
+                filtered_documents: list[Document] = []
+                for storage_key, _distance in ann_hits:
+                    document = documents_by_storage_key.get(storage_key)
+                    if document is None:
+                        continue
+                    if query.filter_spec is not None and not QueryEngine.match(
+                        document,
+                        query.filter_spec,
+                        dialect=MONGODB_DIALECT_70,
+                    ):
+                        continue
+                    filtered_documents.append(document)
+                    if len(filtered_documents) >= query.limit:
+                        break
+                if query.filter_spec is None or len(filtered_documents) >= query.limit:
+                    enforce_deadline(deadline)
+                    return filtered_documents[: query.limit]
+            exact_hits = self._exact_vector_hits_sync(db_name, coll_name, definition, query)
+            enforce_deadline(deadline)
+            return [document for _score, document in exact_hits[: query.limit]]
         decision = decide_sqlite_search_backend(
             query,
             physical_name=resolved_physical_name,
@@ -4350,6 +4547,9 @@ class SQLiteEngine(AsyncStorageEngine):
         fts5_available: bool | None = None
         backend_materialized = False
         resolved_physical_name: str | None = None
+        vector_state: SQLiteVectorBackendState | None = None
+        exact_fallback_reason: str | None = None
+        documents_filtered = 0
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -4384,16 +4584,63 @@ class SQLiteEngine(AsyncStorageEngine):
                         backend_materialized=backend_materialized,
                     )
                 elif isinstance(query, SearchVectorQuery):
+                    resolved_physical_name = self._ensure_search_backend_sync(
+                        conn,
+                        db_name,
+                        coll_name,
+                        definition,
+                        physical_name,
+                    )
+                    vector_state = None
+                    if resolved_physical_name is not None:
+                        vector_state = self._ensure_vector_search_backend_sync(
+                            conn,
+                            db_name,
+                            coll_name,
+                            definition,
+                            resolved_physical_name,
+                            query.path,
+                        )
                     decision = decide_sqlite_search_backend(
                         query,
-                        physical_name=None,
+                        physical_name=resolved_physical_name,
                         fts5_available=fts5_available,
-                        backend_materialized=False,
+                        backend_materialized=vector_state is not None,
+                        ann_available=True,
                     )
+                if isinstance(query, SearchVectorQuery) and vector_state is not None and query.filter_spec is not None:
+                    documents_by_storage_key = {
+                        storage_key: document
+                        for storage_key, document in self._load_documents(db_name, coll_name)
+                    }
+                    ann_hits = search_sqlite_vector_backend(
+                        vector_state,
+                        query_vector=query.query_vector,
+                        count=query.num_candidates,
+                    )
+                    matched = 0
+                    for storage_key, _distance in ann_hits:
+                        document = documents_by_storage_key.get(storage_key)
+                        if document is None:
+                            continue
+                        if QueryEngine.match(document, query.filter_spec, dialect=MONGODB_DIALECT_70):
+                            matched += 1
+                        else:
+                            documents_filtered += 1
+                        if matched >= query.limit:
+                            break
+                    if matched < query.limit:
+                        exact_fallback_reason = "post-filter-underflow"
         return QueryPlanExplanation(
             engine="sqlite",
             strategy="search",
-            plan="python-vector-search" if isinstance(query, SearchVectorQuery) else f"{decision.backend}-search",
+            plan=(
+                "usearch-vector-search"
+                if isinstance(query, SearchVectorQuery) and decision.backend == "usearch"
+                else "python-vector-search"
+                if isinstance(query, SearchVectorQuery)
+                else f"{decision.backend}-search"
+            ),
             sort=None,
             skip=0,
             limit=None,
@@ -4411,6 +4658,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 "physicalName": decision.physical_name,
                 "readyAtEpoch": ready_at_epoch,
                 "fts5Available": decision.fts5_available,
+                "annAvailable": decision.ann_available,
                 "definition": build_search_index_document(
                     definition,
                     ready=ready,
@@ -4419,6 +4667,45 @@ class SQLiteEngine(AsyncStorageEngine):
                 **search_query_explain_details(query),
                 "fts5_match": decision.fts5_match,
                 "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
+                "mode": (
+                    "ann"
+                    if isinstance(query, SearchVectorQuery) and decision.backend == "usearch"
+                    else "exact"
+                    if isinstance(query, SearchVectorQuery)
+                    else None
+                ),
+                "filterMode": "post-candidate" if isinstance(query, SearchVectorQuery) and query.filter_spec is not None else None,
+                "exactFallbackReason": exact_fallback_reason,
+                "candidatesEvaluated": (
+                    min(query.num_candidates, vector_state.valid_vectors)
+                    if isinstance(query, SearchVectorQuery) and vector_state is not None
+                    else None
+                ),
+                "documentsFiltered": (
+                    documents_filtered
+                    if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
+                    else None
+                ),
+                "documentsScanned": (
+                    vector_state.documents_scanned
+                    if isinstance(query, SearchVectorQuery) and vector_state is not None
+                    else None
+                ),
+                "validVectors": (
+                    vector_state.valid_vectors
+                    if isinstance(query, SearchVectorQuery) and vector_state is not None
+                    else None
+                ),
+                "invalidVectors": (
+                    vector_state.invalid_vectors
+                    if isinstance(query, SearchVectorQuery) and vector_state is not None
+                    else None
+                ),
+                "vectorBackend": (
+                    vector_backend_stats_document(vector_state)
+                    if isinstance(query, SearchVectorQuery) and vector_state is not None
+                    else None
+                ),
             },
         )
 

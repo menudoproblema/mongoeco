@@ -12,7 +12,12 @@ from mongoeco.core._filtering_support import (
     path_mapping as _path_mapping,
 )
 from mongoeco.core.collation import CollationSpec, values_equal_with_collation
-from mongoeco.core.geo import parse_geo_point, planar_distance, point_matches_geometry
+from mongoeco.core.geo import (
+    geometry_intersects_geometry,
+    geometry_within_geometry,
+    parse_geo_geometry,
+    planar_distance_to_geometry,
+)
 from mongoeco.errors import OperationFailure
 from mongoeco.core.query_plan import (
     AllCondition,
@@ -326,21 +331,27 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
         )
 
     @staticmethod
-    def _geo_candidates(doc: dict[str, Any], field: str) -> list[tuple[float, float]]:
-        candidates: list[tuple[float, float]] = []
+    def _geo_candidates(doc: dict[str, Any], field: str) -> list[object]:
+        candidates: list[object] = []
+        seen_wkb: set[bytes] = set()
         found, direct_value = QueryEngine._get_field_value(doc, field)
         if found:
             try:
-                candidates.append(parse_geo_point(direct_value, label=field))
+                _geometry_kind, geometry = parse_geo_geometry(direct_value, label=field)
             except OperationFailure:
                 pass
+            else:
+                if geometry.wkb not in seen_wkb:
+                    seen_wkb.add(geometry.wkb)
+                    candidates.append(geometry)
         for value in QueryEngine._extract_values(doc, field):
             try:
-                point = parse_geo_point(value, label=field)
+                _geometry_kind, geometry = parse_geo_geometry(value, label=field)
             except OperationFailure:
                 continue
-            if point not in candidates:
-                candidates.append(point)
+            if geometry.wkb not in seen_wkb:
+                seen_wkb.add(geometry.wkb)
+                candidates.append(geometry)
         return candidates
 
     @staticmethod
@@ -351,7 +362,7 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
         geometry: object,
     ) -> bool:
         return any(
-            point_matches_geometry(candidate, geometry_kind, geometry)
+            geometry_within_geometry(candidate, geometry)
             for candidate in QueryEngine._geo_candidates(doc, field)
         )
 
@@ -363,7 +374,7 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
         geometry: object,
     ) -> bool:
         return any(
-            point_matches_geometry(candidate, geometry_kind, geometry)
+            geometry_intersects_geometry(candidate, geometry)
             for candidate in QueryEngine._geo_candidates(doc, field)
         )
 
@@ -379,7 +390,7 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
     ) -> bool:
         del spherical
         for candidate in QueryEngine._geo_candidates(doc, field):
-            distance = planar_distance(candidate, point)
+            distance = planar_distance_to_geometry(point, candidate)
             if min_distance is not None and distance < min_distance:
                 continue
             if max_distance is not None and distance > max_distance:

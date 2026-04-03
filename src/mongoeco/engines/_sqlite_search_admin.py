@@ -47,11 +47,7 @@ def create_search_index(
     pending_ready_at: Callable[[], float | None],
 ) -> str:
     normalized_definition = normalize_search_index_definition(definition)
-    physical_name = (
-        physical_search_index_name(db_name, coll_name, normalized_definition.name)
-        if normalized_definition.index_type == "search"
-        else None
-    )
+    physical_name = physical_search_index_name(db_name, coll_name, normalized_definition.name)
     try:
         begin_write(conn)
         ensure_collection_row(conn, db_name, coll_name)
@@ -140,11 +136,7 @@ def update_search_index(
         )
         enforce_deadline(deadline)
         drop_search_backend(conn, row[1])
-        physical_name = (
-            physical_search_index_name(db_name, coll_name, name)
-            if row[0] == "search"
-            else None
-        )
+        physical_name = physical_search_index_name(db_name, coll_name, name)
         conn.execute(
             """
             UPDATE search_indexes

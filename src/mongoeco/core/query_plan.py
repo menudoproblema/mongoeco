@@ -6,7 +6,7 @@ from typing import Any, TypeIs
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_scalars import INT32_MAX, unwrap_bson_numeric
-from mongoeco.core.geo import parse_geo_box, parse_geo_point, parse_geo_polygon
+from mongoeco.core.geo import parse_geo_box, parse_geo_geometry, parse_geo_point
 from mongoeco.errors import OperationFailure
 from mongoeco.types import BsonBindings, BitwiseMaskOperand, BsonValue, Filter, PlanningIssue, PlanningMode, Regex
 
@@ -481,11 +481,20 @@ def _compile_field_condition(
             if not isinstance(value, dict):
                 raise ValueError("$geoWithin requires a document specification")
             if "$geometry" in value:
+                geometry_kind, geometry = parse_geo_geometry(
+                    value["$geometry"],
+                    label="$geoWithin.$geometry",
+                    allow_legacy_point=False,
+                )
+                if geometry_kind not in {"polygon", "multipolygon"}:
+                    raise OperationFailure(
+                        "$geoWithin.$geometry only supports Polygon or MultiPolygon in the local runtime"
+                    )
                 clauses.append(
                     GeoWithinCondition(
                         field,
-                        "polygon",
-                        parse_geo_polygon(value["$geometry"], label="$geoWithin.$geometry"),
+                        geometry_kind,
+                        geometry,
                     )
                 )
             elif "$box" in value:
@@ -501,23 +510,18 @@ def _compile_field_condition(
         elif operator == "$geoIntersects":
             if not isinstance(value, dict) or "$geometry" not in value:
                 raise ValueError("$geoIntersects requires a $geometry document")
-            geometry_value = value["$geometry"]
-            if isinstance(geometry_value, dict) and geometry_value.get("type") == "Point":
-                clauses.append(
-                    GeoIntersectsCondition(
-                        field,
-                        "point",
-                        parse_geo_point(geometry_value, label="$geoIntersects.$geometry"),
-                    )
+            geometry_kind, geometry = parse_geo_geometry(
+                value["$geometry"],
+                label="$geoIntersects.$geometry",
+                allow_legacy_point=False,
+            )
+            clauses.append(
+                GeoIntersectsCondition(
+                    field,
+                    geometry_kind,
+                    geometry,
                 )
-            else:
-                clauses.append(
-                    GeoIntersectsCondition(
-                        field,
-                        "polygon",
-                        parse_geo_polygon(geometry_value, label="$geoIntersects.$geometry"),
-                    )
-                )
+            )
         elif operator in {"$near", "$nearSphere"}:
             min_distance: float | None = None
             max_distance: float | None = None

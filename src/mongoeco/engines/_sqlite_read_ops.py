@@ -5,12 +5,10 @@ from copy import deepcopy
 import sqlite3
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.search import (
     compile_search_stage,
     is_text_search_query,
-    score_vector_document,
     SearchQuery,
     SearchVectorQuery,
     search_query_explain_details,
@@ -74,25 +72,6 @@ def search_documents(
         raise OperationFailure(f"search index [{query.index_name}] does not support $search")
     if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
         raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
-    if isinstance(query, SearchVectorQuery):
-        documents = [document for _, document in load_documents(db_name, coll_name)]
-        enforce_deadline(deadline)
-        vector_hits: list[tuple[float, Document]] = []
-        for document in documents:
-            if query.filter_spec is not None and not QueryEngine.match(document, query.filter_spec):
-                continue
-            score = score_vector_document(
-                document,
-                definition=definition,
-                query=query,
-            )
-            if score is None:
-                continue
-            vector_hits.append((score, document))
-        vector_hits.sort(key=lambda item: item[0], reverse=True)
-        if query.num_candidates is not None:
-            vector_hits = vector_hits[:query.num_candidates]
-        return [document for _score, document in vector_hits[: query.limit]]
     return search_sql(db_name, coll_name, definition, query, physical_name)
 
 

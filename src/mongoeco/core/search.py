@@ -782,7 +782,7 @@ def _validate_vector_search_definition(definition: Document) -> None:
     for field in fields:
         if not isinstance(field, dict):
             raise OperationFailure("vectorSearch field definitions must be documents")
-        unsupported = set(field) - {"type", "path", "numDimensions", "similarity"}
+        unsupported = set(field) - {"type", "path", "numDimensions", "similarity", "connectivity", "expansionAdd", "expansionSearch"}
         if unsupported:
             raise OperationFailure(
                 "unsupported local vectorSearch field options: " + ", ".join(sorted(unsupported))
@@ -798,6 +798,12 @@ def _validate_vector_search_definition(definition: Document) -> None:
         similarity = field.get("similarity", "cosine")
         if similarity not in {"cosine", "dotProduct", "euclidean"}:
             raise OperationFailure("local vectorSearch currently supports cosine, dotProduct and euclidean similarity")
+        for option_name in ("connectivity", "expansionAdd", "expansionSearch"):
+            option_value = field.get(option_name)
+            if option_value is None:
+                continue
+            if not isinstance(option_value, int) or isinstance(option_value, bool) or option_value <= 0:
+                raise OperationFailure(f"local vectorSearch {option_name} must be a positive integer")
 
 
 def _validate_mappings_document(mappings: Document) -> None:

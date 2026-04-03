@@ -122,8 +122,8 @@ def sqlite_pushdown_followup_hints(
                     "operator": geo_operator,
                     "priority": "high",
                     "occurrences": operator_counts[geo_operator],
-                    "currentSupport": "evaluated in Python on point-only local geo semantics",
-                    "nextStep": "add SQL-side prefilters or broader point/subdocument geo pushdown where semantics stay honest",
+                    "currentSupport": "evaluated in Python on broad planar local geo semantics",
+                    "nextStep": "add SQL-side prefilters for safe planar local geo subsets without faking geodesic behaviour",
                 }
             )
     if "$mod" in operator_counts:
@@ -269,8 +269,8 @@ def sqlite_pushdown_followup_hints(
         "Geospatial operators require Python query fallback": {
             "operator": "geo-runtime",
             "priority": "high",
-            "currentSupport": "point-only local geo evaluation runs in Python/runtime",
-            "nextStep": "add SQL prefilters for safe point-only geospatial subsets",
+            "currentSupport": "broad planar local geo evaluation runs in Python/runtime",
+            "nextStep": "add SQL prefilters for safe planar local geospatial subsets",
         },
     }
     if fallback_reason in reason_hints:

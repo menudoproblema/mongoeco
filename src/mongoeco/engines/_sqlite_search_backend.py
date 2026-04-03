@@ -20,6 +20,7 @@ class SQLiteSearchBackendDecision:
     backend_available: bool
     backend_materialized: bool
     fts5_available: bool | None
+    ann_available: bool
     fts5_match: str | None
     physical_name: str | None
 
@@ -34,13 +35,15 @@ def decide_sqlite_search_backend(
     physical_name: str | None,
     fts5_available: bool | None,
     backend_materialized: bool,
+    ann_available: bool = True,
 ) -> SQLiteSearchBackendDecision:
     if isinstance(query, SearchVectorQuery):
         return SQLiteSearchBackendDecision(
-            backend="python",
-            backend_available=True,
-            backend_materialized=False,
+            backend="usearch" if ann_available else "python",
+            backend_available=ann_available,
+            backend_materialized=backend_materialized if ann_available else False,
             fts5_available=fts5_available,
+            ann_available=ann_available,
             fts5_match=None,
             physical_name=physical_name,
         )
@@ -55,6 +58,7 @@ def decide_sqlite_search_backend(
             backend_available=True,
             backend_materialized=True,
             fts5_available=fts5_available,
+            ann_available=ann_available,
             fts5_match=sqlite_fts5_query(query),
             physical_name=physical_name,
         )
@@ -63,6 +67,7 @@ def decide_sqlite_search_backend(
         backend_available=isinstance(query, (SearchWildcardQuery, SearchCompoundQuery)) or bool(fts5_available),
         backend_materialized=backend_materialized,
         fts5_available=fts5_available,
+        ann_available=ann_available,
         fts5_match=None,
         physical_name=physical_name,
     )

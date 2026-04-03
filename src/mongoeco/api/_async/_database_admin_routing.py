@@ -241,7 +241,7 @@ class DatabaseAdminRoutingService:
         *,
         session: "ClientSession | None" = None,
     ) -> object:
-        return await self._admin._command_service.execute_document(spec, session=session)
+        return await self._admin._commands.command(spec, session=session)
 
     async def command_kill_op(
         self,
@@ -249,7 +249,7 @@ class DatabaseAdminRoutingService:
         *,
         session: "ClientSession | None" = None,
     ) -> object:
-        return await self._admin._command_service.execute_document(spec, session=session)
+        return await self._admin._commands.command(spec, session=session)
 
     async def _command_list_collections(self, spec: dict[str, object], *, session: "ClientSession | None" = None) -> object:
         return await self.command_list_collections(spec, session=session)
