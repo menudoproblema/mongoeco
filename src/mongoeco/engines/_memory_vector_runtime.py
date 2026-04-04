@@ -42,6 +42,11 @@ class MaterializedVectorIndex:
     vector_row_scalar_filter_index: dict[str, dict[str, dict[_FilterValueKey, frozenset[int]]]]
     vector_row_scalar_values_by_path: dict[str, dict[str, tuple[tuple[int, _FilterValueKey], ...]]]
     vector_row_filter_cache: dict[tuple[str, str], tuple[tuple[int, ...] | None, dict[str, object] | None]]
+    vector_score_cache: dict[tuple[str, tuple[float, ...], str], tuple[tuple[float, int], ...]]
+    vector_ranked_row_cache: dict[
+        tuple[str, tuple[float, ...], str, tuple[int, ...], int | None],
+        tuple[tuple[float, int], ...],
+    ]
 
 
 def build_materialized_vector_index(
@@ -159,6 +164,8 @@ def build_materialized_vector_index(
         vector_row_scalar_filter_index=vector_row_scalar_filter_index,
         vector_row_scalar_values_by_path=vector_row_scalar_values_by_path,
         vector_row_filter_cache={},
+        vector_score_cache={},
+        vector_ranked_row_cache={},
     )
 
 
@@ -322,30 +329,61 @@ def vector_scores_for_rows(
     matrix = vector_index.vector_matrices.get(query.path)
     if matrix is None or matrix.size == 0 or not candidate_rows:
         return []
-    if len(candidate_rows) == matrix.shape[0] and candidate_rows == list(range(matrix.shape[0])):
-        candidate_matrix = matrix
-        selected_rows = candidate_rows
-    else:
-        selected_rows = list(candidate_rows)
-        candidate_matrix = matrix[np.asarray(selected_rows, dtype=np.int32)]
-    query_vector = np.asarray(query.query_vector, dtype=np.float32)
     similarity = str(vector_index.vector_specs.get(query.path, {}).get("similarity", query.similarity))
-    if similarity == "dotProduct":
-        scores = candidate_matrix @ query_vector
-    elif similarity == "euclidean":
-        scores = -np.linalg.norm(candidate_matrix - query_vector, axis=1)
-    else:
-        candidate_norms = np.linalg.norm(candidate_matrix, axis=1)
-        query_norm = float(np.linalg.norm(query_vector))
-        denominator = candidate_norms * query_norm
-        raw_scores = candidate_matrix @ query_vector
-        scores = np.divide(raw_scores, denominator, out=np.zeros_like(raw_scores, dtype=np.float32), where=denominator > 0)
-    if limit is not None and limit > 0 and len(scores) > limit:
-        top_indexes = np.argpartition(scores, -limit)[-limit:]
-        ordered_indexes = top_indexes[np.argsort(scores[top_indexes])[::-1]]
-        return [(float(scores[int(index)]), selected_rows[int(index)]) for index in ordered_indexes]
-    ordered_indexes = np.argsort(scores)[::-1]
-    return [(float(scores[int(index)]), selected_rows[int(index)]) for index in ordered_indexes]
+    query_vector_key = tuple(float(item) for item in query.query_vector)
+    cache_key = (query.path, query_vector_key, similarity)
+    cached_scores = vector_index.vector_score_cache.get(cache_key)
+    if cached_scores is None:
+        query_vector = np.asarray(query.query_vector, dtype=np.float32)
+        if similarity == "dotProduct":
+            scores = matrix @ query_vector
+        elif similarity == "euclidean":
+            scores = -np.linalg.norm(matrix - query_vector, axis=1)
+        else:
+            candidate_norms = np.linalg.norm(matrix, axis=1)
+            query_norm = float(np.linalg.norm(query_vector))
+            denominator = candidate_norms * query_norm
+            raw_scores = matrix @ query_vector
+            scores = np.divide(raw_scores, denominator, out=np.zeros_like(raw_scores, dtype=np.float32), where=denominator > 0)
+        ordered_indexes = np.argsort(scores)[::-1]
+        cached_scores = tuple(
+            (float(scores[int(index)]), int(index))
+            for index in ordered_indexes
+        )
+        vector_index.vector_score_cache[cache_key] = cached_scores
+    candidate_row_key = tuple(candidate_rows)
+    all_row_key = tuple(range(len(cached_scores)))
+    if candidate_row_key == all_row_key:
+        ordered_scores = list(cached_scores[:limit] if limit is not None and limit > 0 else cached_scores)
+        return ordered_scores
+    ranked_cache_key = (query.path, query_vector_key, similarity, candidate_row_key, limit)
+    cached_ranked_rows = vector_index.vector_ranked_row_cache.get(ranked_cache_key)
+    if cached_ranked_rows is not None:
+        return list(cached_ranked_rows)
+    allowed_rows = set(candidate_rows)
+    ranked_subset: list[tuple[float, int]] = []
+    for score, row_index in cached_scores:
+        if row_index not in allowed_rows:
+            continue
+        ranked_subset.append((score, row_index))
+        if limit is not None and limit > 0 and len(ranked_subset) >= limit:
+            break
+    _store_ranked_row_cache(
+        vector_index,
+        ranked_cache_key,
+        tuple(ranked_subset),
+    )
+    return ranked_subset
+
+
+def _store_ranked_row_cache(
+    vector_index: MaterializedVectorIndex,
+    key: tuple[str, tuple[float, ...], str, tuple[int, ...], int | None],
+    value: tuple[tuple[float, int], ...],
+) -> None:
+    if len(vector_index.vector_ranked_row_cache) >= 128:
+        vector_index.vector_ranked_row_cache.clear()
+    vector_index.vector_ranked_row_cache[key] = value
 
 
 def _candidate_positions_for_vector_filter_clause(

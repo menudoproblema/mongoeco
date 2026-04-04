@@ -2125,6 +2125,35 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             ),
             [],
         )
+        scored_rows = memory_module._vector_scores_for_rows(
+            vector_index,
+            query=SearchVectorQuery(
+                index_name="vec",
+                path="embedding",
+                query_vector=(1.0, 0.0),
+                limit=2,
+                num_candidates=4,
+                similarity="cosine",
+            ),
+            candidate_rows=[0],
+            limit=1,
+        )
+        self.assertEqual(scored_rows, [(1.0, 0)])
+        cached_subset_scores = memory_module._vector_scores_for_rows(
+            vector_index,
+            query=SearchVectorQuery(
+                index_name="vec",
+                path="embedding",
+                query_vector=(1.0, 0.0),
+                limit=2,
+                num_candidates=4,
+                similarity="cosine",
+            ),
+            candidate_rows=[0],
+            limit=1,
+        )
+        self.assertEqual(cached_subset_scores, [(1.0, 0)])
+        self.assertEqual(len(vector_index.vector_ranked_row_cache), 1)
 
     async def test_memory_search_and_vector_runtime_cover_candidate_prefilter_paths(self):
         engine = MemoryEngine()

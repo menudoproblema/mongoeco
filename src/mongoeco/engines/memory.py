@@ -40,6 +40,7 @@ from mongoeco.engines._memory_vector_runtime import (
     MaterializedVectorIndex as _RuntimeMaterializedVectorIndex,
     build_materialized_vector_index as _build_memory_vector_index,
     candidate_positions_for_vector_filter as _memory_candidate_positions_for_vector_filter,
+    vector_scores_for_rows as _memory_vector_scores_for_rows,
     vector_scores_for_positions as _memory_vector_scores_for_positions,
 )
 from mongoeco.engines._runtime_metrics import LocalRuntimeMetrics
@@ -214,6 +215,21 @@ def _vector_scores_for_positions(
         vector_index,
         query=query,
         candidate_positions=candidate_positions,
+        limit=limit,
+    )
+
+
+def _vector_scores_for_rows(
+    vector_index: _MaterializedVectorIndex,
+    *,
+    query: SearchVectorQuery,
+    candidate_rows: list[int],
+    limit: int | None,
+) -> list[tuple[float, int]]:
+    return _memory_vector_scores_for_rows(
+        vector_index,
+        query=query,
+        candidate_rows=candidate_rows,
         limit=limit,
     )
 
