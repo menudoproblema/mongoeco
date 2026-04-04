@@ -8,6 +8,8 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-04-04
+
 ### Added
 
 - El catálogo de compatibilidad exporta ya una matriz separada de
