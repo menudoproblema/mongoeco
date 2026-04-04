@@ -126,6 +126,9 @@ La regla arquitectonica es la misma:
   pero ya incluye filtros por documento como `$match`, el cursor usa expansion
   iterativa sobre prefijos ordenados y `explain()` distingue esa ruta con
   `searchTopKStrategy="prefix-iterative"`.
+- esa expansion ya no crece doblando a ciegas: usa `adaptive-retention`,
+  estimando el siguiente prefijo a partir de la tasa real de descarte observada
+  en iteraciones previas.
 - `near` entra como operador local para numericos y fecha/datetime con
   `path`, `origin` y `pivot`, y mantiene explain/backends explicitos en vez de
   fingir scoring Atlas Search completo.

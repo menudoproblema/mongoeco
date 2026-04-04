@@ -1643,6 +1643,7 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         "topk_limit_hint": compound_candidateable_should_matched_limited_explain["engine_plan"]["details"]["topKLimitHint"],
                         "search_result_limit_hint": compound_candidateable_should_matched_limited_explain["pushdown"]["searchResultLimitHint"],
                         "topk_strategy": compound_candidateable_should_matched_limited_explain["pushdown"]["searchTopKStrategy"],
+                        "growth_strategy": compound_candidateable_should_matched_limited_explain["pushdown"]["searchTopKGrowthStrategy"],
                     },
                     "vector_explain": {
                         "hint": vector_explain["hint"],

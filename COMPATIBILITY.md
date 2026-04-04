@@ -62,6 +62,8 @@ Esto implica:
   por documento y una ventana finita, el runtime puede expandir `top-k` de
   forma iterativa sin perder exactitud; `explain()` lo expone mediante
   `searchTopKStrategy`.
+* esa expansion iterativa usa crecimiento adaptativo por tasa de retencion
+  observada (`searchTopKGrowthStrategy`), no una heuristica fija opaca.
 * la proyeccion avanzada de `find` cubre ya el subconjunto diario mas util
   (`$slice`, `$elemMatch`, proyeccion posicional y `$meta: "textScore"`);
 * `$collStats` existe tanto como comando administrativo como stage de

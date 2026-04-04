@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from copy import deepcopy
+import math
 import time
 
 from mongoeco.api._async.cursor import (
@@ -156,6 +157,19 @@ class AsyncAggregationCursor:
         if not seen_limit:
             return None
         return output_cap
+
+    @staticmethod
+    def _next_search_prefix_fetch_limit(
+        current_fetch_limit: int,
+        fetched_count: int,
+        transformed_count: int,
+        output_limit: int,
+    ) -> int:
+        if transformed_count <= 0:
+            return max(current_fetch_limit + 1, current_fetch_limit * 4)
+        estimated = math.ceil((fetched_count * output_limit) / transformed_count)
+        safety_margin = max(1, output_limit - transformed_count)
+        return max(current_fetch_limit + 1, estimated + safety_margin)
 
     @staticmethod
     def _split_terminal_writeback_stage(pipeline: Pipeline) -> tuple[Pipeline, tuple[str, object] | None]:
@@ -316,7 +330,12 @@ class AsyncAggregationCursor:
             if len(documents) == previous_count or len(documents) < fetch_limit:
                 return transformed, []
             previous_count = len(documents)
-            fetch_limit = max(fetch_limit * 2, fetch_limit + 1)
+            fetch_limit = self._next_search_prefix_fetch_limit(
+                fetch_limit,
+                len(documents),
+                len(transformed),
+                output_limit,
+            )
 
     @staticmethod
     def _split_streamable_pipeline(
@@ -794,6 +813,9 @@ class AsyncAggregationCursor:
                     else "prefix-iterative"
                     if prefix_output_limit is not None
                     else None
+                ),
+                "searchTopKGrowthStrategy": (
+                    "adaptive-retention" if result_limit_hint is None and prefix_output_limit is not None else None
                 ),
             }
             explain_search_documents = getattr(

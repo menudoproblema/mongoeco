@@ -515,6 +515,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         "prefix-iterative",
                     )
                     self.assertEqual(
+                        compound_candidateable_should_matched_limited_explanation["pushdown"]["searchTopKGrowthStrategy"],
+                        "adaptive-retention",
+                    )
+                    self.assertEqual(
                         compound_candidateable_should_matched_limited_explanation["engine_plan"]["details"]["topKLimitHint"],
                         1,
                     )

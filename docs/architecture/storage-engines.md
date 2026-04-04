@@ -169,6 +169,8 @@ En search existe ya otra frontera explicita por capas:
   (`$match`) pero la pipeline sigue siendo `prefix-monotonic`, SQLite participa
   en la expansion incremental por prefijos y evita igualmente materializar el
   conjunto completo si la ventana posterior ya esta satisfecha.
+- esa expansion usa ya crecimiento adaptativo guiado por la tasa de retencion
+  observada, en vez de un doblado fijo por iteracion.
 
 Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
 ruta de ejecucion, en la de `explain()` y en el lifecycle documental de los

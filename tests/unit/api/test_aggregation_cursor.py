@@ -197,6 +197,24 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                 [{"$sort": {"rank": 1}}, {"$limit": 3}]
             )
         )
+        self.assertEqual(
+            AsyncAggregationCursor._next_search_prefix_fetch_limit(
+                10,
+                10,
+                4,
+                10,
+            ),
+            31,
+        )
+        self.assertEqual(
+            AsyncAggregationCursor._next_search_prefix_fetch_limit(
+                5,
+                5,
+                0,
+                2,
+            ),
+            20,
+        )
 
     async def test_search_helpers_cover_missing_invalid_and_engine_fallback_paths(self):
         collection = _FakeCollection([])
@@ -241,7 +259,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(await cursor.to_list(), [{"_id": "3", "kind": "keep"}])
-        self.assertEqual(calls, [1, 2, 4])
+        self.assertEqual(calls, [1, 4])
 
     async def test_allow_disk_use_false_disables_engine_spill_policy(self):
         collection = _FakeCollection([{"_id": "1", "rank": 2}, {"_id": "2", "rank": 1}])

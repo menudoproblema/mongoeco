@@ -92,6 +92,7 @@ def _summarize_search_explain(explain: dict[str, Any]) -> dict[str, Any]:
     summary["topk_prefilter"] = details.get("topKPrefilter")
     if isinstance(pushdown, dict):
         summary["search_topk_strategy"] = pushdown.get("searchTopKStrategy")
+        summary["search_topk_growth_strategy"] = pushdown.get("searchTopKGrowthStrategy")
     return summary
 
 
