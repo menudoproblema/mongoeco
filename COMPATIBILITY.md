@@ -78,6 +78,11 @@ Esto implica:
   calcular score exacto desde FTS, SQLite puede podar por tiers exactos de
   `matchedShould` + `shouldScore` antes de cargar documentos completos; esa
   poda aparece en `topKPrefilter.strategy`.
+* tanto `compoundPrefilter.downstreamFilter` como `vectorFilterPrefilter`
+  admiten ya booleanos locales conservadores:
+  - `$and` puede aprovechar la parte soportada aunque siga quedando resto no
+    candidateable;
+  - `$or` solo se vuelve candidateable si todas sus ramas lo son.
 * en `vectorSearch` con `filter`, SQLite declara ya
   `candidateExpansionStrategy="adaptive-retention"` en `explain()` para dejar
   visible que la expansion ANN posterior al filtro ya no usa una heuristica

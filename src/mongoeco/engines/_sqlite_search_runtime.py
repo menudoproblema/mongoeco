@@ -308,6 +308,7 @@ def _sqlite_candidate_storage_keys_for_query(
     *,
     physical_name: str | None,
     query: SearchQuery,
+    definition: SearchIndexDefinition | None = None,
 ) -> tuple[list[str] | None, str | None, bool]:
     if physical_name is None or not engine._sqlite_table_exists(conn, physical_name):
         return None, None, False
@@ -319,6 +320,8 @@ def _sqlite_candidate_storage_keys_for_query(
             query=query,
         )
     if isinstance(query, SearchCompoundQuery):
+        if definition is None:
+            return None, None, False
         candidates, backend, exact, _should_candidates, _non_candidateable = _sqlite_compound_candidate_state(
             engine,
             conn,
@@ -425,6 +428,7 @@ def _sqlite_compound_candidate_state(
                 conn,
                 physical_name=physical_name,
                 query=clause,
+                definition=definition,
             )
             if storage_keys is None:
                 exact = False
@@ -464,23 +468,17 @@ def _textual_search_field_types(definition: SearchIndexDefinition) -> dict[str, 
 
 
 def _flatten_downstream_filter_clauses(filter_spec: dict[str, object]) -> list[tuple[str, object]] | None:
-    clauses: list[tuple[str, object]] = []
-    for key, value in filter_spec.items():
-        if key == "$and":
-            if not isinstance(value, list):
-                return None
-            for item in value:
-                if not isinstance(item, dict):
-                    return None
-                nested = _flatten_downstream_filter_clauses(item)
-                if nested is None:
-                    return None
-                clauses.extend(nested)
-            continue
-        if key.startswith("$"):
-            return None
-        clauses.append((key, value))
-    return clauses
+    candidate_state = _candidate_storage_keys_for_downstream_filter_node(
+        None,
+        None,
+        None,
+        filter_spec=filter_spec,
+        field_types={},
+        return_clauses_only=True,
+    )
+    if candidate_state is None:
+        return None
+    return candidate_state["clauses"]
 
 
 def _document_for_search_path(path: str, value: object) -> Document:
@@ -601,8 +599,15 @@ def _sqlite_candidate_storage_keys_for_downstream_filter(
 ) -> tuple[list[str] | None, dict[str, object] | None]:
     if physical_name is None or filter_spec is None or not engine._sqlite_table_exists(conn, physical_name):
         return None, None
-    clauses = _flatten_downstream_filter_clauses(filter_spec)
-    if clauses is None:
+    field_types = _textual_search_field_types(definition)
+    candidate_state = _candidate_storage_keys_for_downstream_filter_node(
+        engine,
+        conn,
+        physical_name,
+        filter_spec=filter_spec,
+        field_types=field_types,
+    )
+    if candidate_state is None:
         return None, {
             "spec": deepcopy(filter_spec),
             "candidateable": False,
@@ -611,68 +616,204 @@ def _sqlite_candidate_storage_keys_for_downstream_filter(
             "supportedPaths": [],
             "supportedClauseCount": 0,
             "unsupportedClauseCount": 1,
+            "supportedOperators": [],
+            "booleanShape": None,
         }
-    field_types = _textual_search_field_types(definition)
-    supported_paths: list[str] = []
-    storage_key_lists: list[list[str]] = []
-    unsupported_clause_count = 0
-
-    for path, clause in clauses:
-        mapping_type = field_types.get(path)
-        if mapping_type not in {"string", "autocomplete", "token"}:
-            unsupported_clause_count += 1
-            continue
-        sql: str
-        params: list[object]
-        if isinstance(clause, str):
-            sql = (
-                f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
-                "WHERE field_path = ? AND lower(content) = ?"
-            )
-            params = [path, clause.lower()]
-        elif isinstance(clause, dict) and set(clause) == {"$in"} and isinstance(clause["$in"], list):
-            values = [item.lower() for item in clause["$in"] if isinstance(item, str)]
-            if not values or len(values) != len(clause["$in"]):
-                unsupported_clause_count += 1
-                continue
-            placeholders = ", ".join("?" for _ in values)
-            sql = (
-                f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
-                f"WHERE field_path = ? AND lower(content) IN ({placeholders})"
-            )
-            params = [path, *values]
-        elif isinstance(clause, dict) and clause == {"$exists": True}:
-            sql = (
-                f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
-                "WHERE field_path = ?"
-            )
-            params = [path]
-        else:
-            unsupported_clause_count += 1
-            continue
-        supported_paths.append(path)
-        storage_key_lists.append([row[0] for row in conn.execute(sql, tuple(params)).fetchall()])
-
-    if not storage_key_lists:
+    if candidate_state["keys"] is None:
         return None, {
             "spec": deepcopy(filter_spec),
             "candidateable": False,
             "exact": False,
             "backend": None,
-            "supportedPaths": [],
-            "supportedClauseCount": 0,
-            "unsupportedClauseCount": unsupported_clause_count,
+            "supportedPaths": candidate_state["supported_paths"],
+            "supportedClauseCount": candidate_state["supported_clause_count"],
+            "unsupportedClauseCount": candidate_state["unsupported_clause_count"],
+            "supportedOperators": candidate_state["supported_operators"],
+            "booleanShape": candidate_state["shape"],
         }
 
-    return _intersect_storage_key_lists(storage_key_lists), {
+    return candidate_state["keys"], {
         "spec": deepcopy(filter_spec),
         "candidateable": True,
-        "exact": unsupported_clause_count == 0,
+        "exact": candidate_state["exact"],
         "backend": "fts5-downstream-filter",
-        "supportedPaths": supported_paths,
-        "supportedClauseCount": len(storage_key_lists),
-        "unsupportedClauseCount": unsupported_clause_count,
+        "supportedPaths": candidate_state["supported_paths"],
+        "supportedClauseCount": candidate_state["supported_clause_count"],
+        "unsupportedClauseCount": candidate_state["unsupported_clause_count"],
+        "supportedOperators": candidate_state["supported_operators"],
+        "booleanShape": candidate_state["shape"],
     }
+
+
+def _candidate_storage_keys_for_downstream_filter_node(
+    engine: _SQLiteSearchRuntimeEngine | None,
+    conn: sqlite3.Connection | None,
+    physical_name: str | None,
+    *,
+    filter_spec: dict[str, object],
+    field_types: dict[str, str],
+    return_clauses_only: bool = False,
+) -> dict[str, object] | None:
+    clauses: list[tuple[str, object]] = []
+    supported_paths: list[str] = []
+    supported_operators: list[str] = []
+    supported_clause_count = 0
+    unsupported_clause_count = 0
+    exact = True
+    keys: list[str] | None = None
+    shapes: list[str] = []
+
+    for key, value in filter_spec.items():
+        if key == "$and":
+            if not isinstance(value, list):
+                return None
+            shapes.append("$and")
+            local_supported = False
+            local_keys: list[str] | None = None
+            for item in value:
+                if not isinstance(item, dict):
+                    return None
+                nested = _candidate_storage_keys_for_downstream_filter_node(
+                    engine,
+                    conn,
+                    physical_name,
+                    filter_spec=item,
+                    field_types=field_types,
+                    return_clauses_only=return_clauses_only,
+                )
+                if nested is None:
+                    return None
+                clauses.extend(nested["clauses"])
+                supported_paths.extend(nested["supported_paths"])
+                supported_operators.extend(nested["supported_operators"])
+                supported_clause_count += nested["supported_clause_count"]
+                unsupported_clause_count += nested["unsupported_clause_count"]
+                exact = exact and nested["exact"]
+                if not return_clauses_only and nested["keys"] is not None:
+                    local_supported = True
+                    local_keys = nested["keys"] if local_keys is None else _intersect_storage_key_lists([local_keys, nested["keys"]])
+            if not return_clauses_only and local_supported:
+                keys = local_keys if keys is None else _intersect_storage_key_lists([keys, local_keys])
+            continue
+        if key == "$or":
+            if not isinstance(value, list) or not value:
+                return None
+            shapes.append("$or")
+            branch_lists: list[list[str]] = []
+            for item in value:
+                if not isinstance(item, dict):
+                    return None
+                nested = _candidate_storage_keys_for_downstream_filter_node(
+                    engine,
+                    conn,
+                    physical_name,
+                    filter_spec=item,
+                    field_types=field_types,
+                    return_clauses_only=return_clauses_only,
+                )
+                if nested is None:
+                    return None
+                clauses.extend(nested["clauses"])
+                supported_paths.extend(nested["supported_paths"])
+                supported_operators.extend(nested["supported_operators"])
+                supported_clause_count += nested["supported_clause_count"]
+                unsupported_clause_count += nested["unsupported_clause_count"]
+                exact = exact and nested["exact"]
+                if not return_clauses_only:
+                    if nested["keys"] is None:
+                        return {
+                            "clauses": clauses,
+                            "keys": None,
+                            "supported_paths": supported_paths,
+                            "supported_operators": supported_operators,
+                            "supported_clause_count": supported_clause_count,
+                            "unsupported_clause_count": unsupported_clause_count + 1,
+                            "exact": False,
+                            "shape": "+".join(shapes) if shapes else "flat",
+                        }
+                    branch_lists.append(nested["keys"])
+            if not return_clauses_only:
+                union = _union_storage_key_lists(branch_lists)
+                keys = union if keys is None else _intersect_storage_key_lists([keys, union])
+            continue
+        if key.startswith("$"):
+            return None
+        clauses.append((key, value))
+        if return_clauses_only:
+            continue
+        storage_keys, operator_name = _candidate_storage_keys_for_downstream_clause(
+            engine,
+            conn,
+            physical_name,
+            path=key,
+            clause=value,
+            field_types=field_types,
+        )
+        if storage_keys is None:
+            unsupported_clause_count += 1
+            exact = False
+            continue
+        supported_paths.append(key)
+        supported_operators.append(operator_name)
+        supported_clause_count += 1
+        keys = storage_keys if keys is None else _intersect_storage_key_lists([keys, storage_keys])
+
+    return {
+        "clauses": clauses,
+        "keys": keys,
+        "supported_paths": supported_paths,
+        "supported_operators": supported_operators,
+        "supported_clause_count": supported_clause_count,
+        "unsupported_clause_count": unsupported_clause_count,
+        "exact": exact and unsupported_clause_count == 0,
+        "shape": "+".join(shapes) if shapes else "flat",
+    }
+
+
+def _candidate_storage_keys_for_downstream_clause(
+    engine: _SQLiteSearchRuntimeEngine | None,
+    conn: sqlite3.Connection | None,
+    physical_name: str | None,
+    *,
+    path: str,
+    clause: object,
+    field_types: dict[str, str],
+) -> tuple[list[str] | None, str]:
+    mapping_type = field_types.get(path)
+    if mapping_type not in {"string", "autocomplete", "token"}:
+        return None, "eq"
+    if engine is None or conn is None or physical_name is None:
+        return None, "eq"
+    sql: str
+    params: list[object]
+    if isinstance(clause, str):
+        sql = (
+            f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
+            "WHERE field_path = ? AND lower(content) = ?"
+        )
+        params = [path, clause.lower()]
+        operator_name = "eq"
+    elif isinstance(clause, dict) and set(clause) == {"$in"} and isinstance(clause["$in"], list):
+        values = [item.lower() for item in clause["$in"] if isinstance(item, str)]
+        if not values or len(values) != len(clause["$in"]):
+            return None, "$in"
+        placeholders = ", ".join("?" for _ in values)
+        sql = (
+            f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
+            f"WHERE field_path = ? AND lower(content) IN ({placeholders})"
+        )
+        params = [path, *values]
+        operator_name = "$in"
+    elif isinstance(clause, dict) and clause == {"$exists": True}:
+        sql = (
+            f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
+            "WHERE field_path = ?"
+        )
+        params = [path]
+        operator_name = "$exists"
+    else:
+        return None, "eq"
+    return [row[0] for row in conn.execute(sql, tuple(params)).fetchall()], operator_name
 
 
 def _describe_compound_prefilter_sync(
@@ -1468,6 +1609,7 @@ def execute_sqlite_search_query(
             conn,
             physical_name=resolved_physical_name,
             query=query,
+            definition=definition,
         )
         if downstream_filter_storage_keys is not None:
             if candidate_storage_keys is None:
@@ -1699,6 +1841,7 @@ def explain_search_documents_sync(
                     conn,
                     physical_name=resolved_physical_name,
                     query=query,
+                    definition=definition,
                 )
                 if downstream_filter_storage_keys is not None:
                     if candidate_storage_keys is None:

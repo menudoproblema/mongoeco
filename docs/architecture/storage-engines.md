@@ -186,6 +186,11 @@ En search existe ya otra frontera explicita por capas:
   puede reconstruir exactamente desde las filas FTS, SQLite puede hacer poda
   top-k por tiers exactos de `matchedShould` + `shouldScore` antes del ranking
   documental final.
+- los prefiltros candidateables de search/vector aceptan ya una booleana local
+  conservadora:
+  - `$and` puede intersectar la parte soportada aunque queden ramas no
+    candidateables;
+  - `$or` solo se usa como prefilter cuando todas sus ramas son soportadas.
 - en `vectorSearch`, cuando el `post-filter` documental descarta demasiados
   candidatos ANN, SQLite ya no expande `numCandidates` doblando a ciegas: usa
   `candidateExpansionStrategy="adaptive-retention"` para estimar la siguiente

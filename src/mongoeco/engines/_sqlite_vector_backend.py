@@ -174,78 +174,34 @@ def vector_filter_candidate_storage_keys(
 ) -> tuple[list[str] | None, dict[str, object] | None]:
     if filter_spec is None:
         return None, None
-    clauses = _flatten_simple_filter_clauses(filter_spec)
-    if clauses is None:
+    candidate_state = _candidate_storage_keys_for_filter_node(
+        state,
+        filter_spec,
+        all_storage_keys=set(state.storage_keys_by_slot),
+    )
+    if candidate_state is None or candidate_state["keys"] is None:
         return None, {
             "spec": filter_spec,
             "candidateable": False,
             "exact": False,
             "backend": None,
-            "supportedPaths": [],
-            "supportedClauseCount": 0,
-            "unsupportedClauseCount": 1,
-            "supportedOperators": [],
+            "supportedPaths": [] if candidate_state is None else candidate_state["supported_paths"],
+            "supportedClauseCount": 0 if candidate_state is None else candidate_state["supported_clause_count"],
+            "unsupportedClauseCount": 1 if candidate_state is None else candidate_state["unsupported_clause_count"],
+            "supportedOperators": [] if candidate_state is None else candidate_state["supported_operators"],
+            "booleanShape": None if candidate_state is None else candidate_state["shape"],
         }
-
-    all_storage_keys = set(state.storage_keys_by_slot)
-    supported_paths: list[str] = []
-    supported_operators: list[str] = []
-    storage_key_sets: list[set[str]] = []
-    unsupported_clause_count = 0
-
-    for path, clause in clauses:
-        matched_keys: set[str] | None = None
-        operator_name = "eq"
-        if isinstance(clause, dict) and set(clause) == {"$exists"} and isinstance(clause["$exists"], bool):
-            operator_name = "$exists"
-            existing = set(state.exists_filter_index.get(path, ()))
-            matched_keys = existing if clause["$exists"] else all_storage_keys - existing
-        elif isinstance(clause, dict) and set(clause) == {"$in"} and isinstance(clause["$in"], list):
-            operator_name = "$in"
-            matched_keys = set()
-            for item in clause["$in"]:
-                value_key = _filter_value_key(item)
-                if value_key is None:
-                    matched_keys = None
-                    break
-                matched_keys.update(state.scalar_filter_index.get(path, {}).get(value_key, ()))
-        else:
-            value_key = _filter_value_key(clause)
-            if value_key is not None:
-                matched_keys = set(state.scalar_filter_index.get(path, {}).get(value_key, ()))
-            else:
-                matched_keys = None
-
-        if matched_keys is None:
-            unsupported_clause_count += 1
-            continue
-        supported_paths.append(path)
-        supported_operators.append(operator_name)
-        storage_key_sets.append(matched_keys)
-
-    if not storage_key_sets:
-        return None, {
-            "spec": filter_spec,
-            "candidateable": False,
-            "exact": False,
-            "backend": None,
-            "supportedPaths": [],
-            "supportedClauseCount": 0,
-            "unsupportedClauseCount": unsupported_clause_count,
-            "supportedOperators": [],
-        }
-
-    matched = set.intersection(*storage_key_sets)
-    ordered = [storage_key for storage_key in state.storage_keys_by_slot if storage_key in matched]
+    ordered = [storage_key for storage_key in state.storage_keys_by_slot if storage_key in candidate_state["keys"]]
     return ordered, {
         "spec": filter_spec,
         "candidateable": True,
-        "exact": unsupported_clause_count == 0,
+        "exact": candidate_state["exact"],
         "backend": "vector-filter-index",
-        "supportedPaths": supported_paths,
-        "supportedClauseCount": len(storage_key_sets),
-        "unsupportedClauseCount": unsupported_clause_count,
-        "supportedOperators": supported_operators,
+        "supportedPaths": candidate_state["supported_paths"],
+        "supportedClauseCount": candidate_state["supported_clause_count"],
+        "unsupportedClauseCount": candidate_state["unsupported_clause_count"],
+        "supportedOperators": candidate_state["supported_operators"],
+        "booleanShape": candidate_state["shape"],
     }
 
 
@@ -328,24 +284,134 @@ def _filter_value_key(value: object) -> _FilterValueKey | None:
     return None
 
 
-def _flatten_simple_filter_clauses(filter_spec: dict[str, object]) -> list[tuple[str, object]] | None:
-    clauses: list[tuple[str, object]] = []
+def _candidate_storage_keys_for_filter_node(
+    state: SQLiteVectorBackendState,
+    filter_spec: dict[str, object],
+    *,
+    all_storage_keys: set[str],
+) -> dict[str, object] | None:
+    keys: set[str] | None = None
+    supported_paths: list[str] = []
+    supported_operators: list[str] = []
+    supported_clause_count = 0
+    unsupported_clause_count = 0
+    exact = True
+    shapes: list[str] = []
+
     for key, value in filter_spec.items():
         if key == "$and":
             if not isinstance(value, list):
                 return None
+            shapes.append("$and")
+            local_keys: set[str] | None = None
+            local_supported = False
             for item in value:
                 if not isinstance(item, dict):
                     return None
-                nested = _flatten_simple_filter_clauses(item)
+                nested = _candidate_storage_keys_for_filter_node(
+                    state,
+                    item,
+                    all_storage_keys=all_storage_keys,
+                )
                 if nested is None:
                     return None
-                clauses.extend(nested)
+                supported_paths.extend(nested["supported_paths"])
+                supported_operators.extend(nested["supported_operators"])
+                supported_clause_count += nested["supported_clause_count"]
+                unsupported_clause_count += nested["unsupported_clause_count"]
+                exact = exact and nested["exact"]
+                if nested["keys"] is not None:
+                    local_supported = True
+                    local_keys = set(nested["keys"]) if local_keys is None else local_keys & set(nested["keys"])
+            if local_supported:
+                keys = set(local_keys) if keys is None else keys & set(local_keys)
+            continue
+        if key == "$or":
+            if not isinstance(value, list) or not value:
+                return None
+            shapes.append("$or")
+            branch_sets: list[set[str]] = []
+            branch_exact = True
+            for item in value:
+                if not isinstance(item, dict):
+                    return None
+                nested = _candidate_storage_keys_for_filter_node(
+                    state,
+                    item,
+                    all_storage_keys=all_storage_keys,
+                )
+                if nested is None:
+                    return None
+                supported_paths.extend(nested["supported_paths"])
+                supported_operators.extend(nested["supported_operators"])
+                supported_clause_count += nested["supported_clause_count"]
+                unsupported_clause_count += nested["unsupported_clause_count"]
+                branch_exact = branch_exact and nested["exact"]
+                if nested["keys"] is None:
+                    return {
+                        "keys": None,
+                        "supported_paths": supported_paths,
+                        "supported_operators": supported_operators,
+                        "supported_clause_count": supported_clause_count,
+                        "unsupported_clause_count": unsupported_clause_count + 1,
+                        "exact": False,
+                        "shape": "+".join(shapes) if shapes else "flat",
+                    }
+                branch_sets.append(set(nested["keys"]))
+            union = set().union(*branch_sets)
+            keys = union if keys is None else keys & union
+            exact = exact and branch_exact
             continue
         if key.startswith("$"):
             return None
-        clauses.append((key, value))
-    return clauses
+        matched_keys, operator_name = _candidate_storage_keys_for_filter_clause(
+            state,
+            path=key,
+            clause=value,
+            all_storage_keys=all_storage_keys,
+        )
+        if matched_keys is None:
+            unsupported_clause_count += 1
+            exact = False
+            continue
+        supported_paths.append(key)
+        supported_operators.append(operator_name)
+        supported_clause_count += 1
+        keys = set(matched_keys) if keys is None else keys & set(matched_keys)
+
+    return {
+        "keys": keys,
+        "supported_paths": supported_paths,
+        "supported_operators": supported_operators,
+        "supported_clause_count": supported_clause_count,
+        "unsupported_clause_count": unsupported_clause_count,
+        "exact": exact and unsupported_clause_count == 0,
+        "shape": "+".join(shapes) if shapes else "flat",
+    }
+
+
+def _candidate_storage_keys_for_filter_clause(
+    state: SQLiteVectorBackendState,
+    *,
+    path: str,
+    clause: object,
+    all_storage_keys: set[str],
+) -> tuple[set[str] | None, str]:
+    if isinstance(clause, dict) and set(clause) == {"$exists"} and isinstance(clause["$exists"], bool):
+        existing = set(state.exists_filter_index.get(path, ()))
+        return (existing if clause["$exists"] else all_storage_keys - existing), "$exists"
+    if isinstance(clause, dict) and set(clause) == {"$in"} and isinstance(clause["$in"], list):
+        matched_keys: set[str] = set()
+        for item in clause["$in"]:
+            value_key = _filter_value_key(item)
+            if value_key is None:
+                return None, "$in"
+            matched_keys.update(state.scalar_filter_index.get(path, {}).get(value_key, ()))
+        return matched_keys, "$in"
+    value_key = _filter_value_key(clause)
+    if value_key is None:
+        return None, "eq"
+    return set(state.scalar_filter_index.get(path, {}).get(value_key, ())), "eq"
 
 
 def _metric_kind(similarity: str) -> MetricKind:

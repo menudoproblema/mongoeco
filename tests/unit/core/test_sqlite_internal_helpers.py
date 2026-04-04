@@ -32,7 +32,7 @@ from mongoeco.core.query_plan import (
     compile_filter,
 )
 from mongoeco.engines.semantic_core import compile_find_semantics
-from mongoeco.core.search import SearchWildcardQuery
+from mongoeco.core.search import SearchWildcardQuery, compile_search_stage
 from mongoeco.engines import _sqlite_admin_runtime as admin_runtime_module
 from mongoeco.engines import _sqlite_explain_contract as explain_contract
 from mongoeco.engines import _sqlite_index_admin as index_admin
@@ -287,6 +287,30 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         self.assertFalse(unsupported_description["candidateable"])
         self.assertEqual(unsupported_description["unsupportedClauseCount"], 1)
 
+        or_keys, or_description = vector_backend.vector_filter_candidate_storage_keys(
+            state,
+            filter_spec={"$or": [{"kind": "drop"}, {"meta.rank": {"$exists": True}}]},
+        )
+        self.assertEqual(or_keys, ["1", "2"])
+        self.assertEqual(or_description["booleanShape"], "$or")
+        self.assertTrue(or_description["exact"])
+
+        partial_and_keys, partial_and_description = vector_backend.vector_filter_candidate_storage_keys(
+            state,
+            filter_spec={"$and": [{"kind": "keep"}, {"kind": {"$gt": "drop"}}]},
+        )
+        self.assertEqual(partial_and_keys, ["1", "3"])
+        self.assertEqual(partial_and_description["booleanShape"], "$and")
+        self.assertFalse(partial_and_description["exact"])
+
+        unsupported_or_keys, unsupported_or_description = vector_backend.vector_filter_candidate_storage_keys(
+            state,
+            filter_spec={"$or": [{"kind": "keep"}, {"kind": {"$gt": "drop"}}]},
+        )
+        self.assertIsNone(unsupported_or_keys)
+        self.assertFalse(unsupported_or_description["candidateable"])
+        self.assertEqual(unsupported_or_description["booleanShape"], "$or")
+
     def test_sqlite_search_runtime_exact_should_score_prefilter_and_vector_prefilter_helpers(self):
         async def _run() -> None:
             engine = SQLiteEngine()
@@ -446,6 +470,297 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     self.assertEqual(empty_documents, [])
                     self.assertEqual((empty_requested, empty_evaluated, empty_filtered), (0, 0, 0))
                     self.assertIsNone(empty_reason)
+
+                    downstream_or_keys, downstream_or_description = search_runtime_module._sqlite_candidate_storage_keys_for_downstream_filter(
+                        engine,
+                        conn,
+                        physical_name=resolved_physical_name,
+                        definition=text_definition,
+                        filter_spec={"$or": [{"title": "Ada algorithms"}, {"body": {"$exists": True}}]},
+                    )
+                    self.assertEqual(downstream_or_description["booleanShape"], "$or")
+                    self.assertTrue(downstream_or_description["candidateable"])
+                    self.assertTrue(downstream_or_description["exact"])
+                    self.assertEqual(downstream_or_description["supportedClauseCount"], 2)
+                    self.assertEqual(downstream_or_description["supportedOperators"], ["eq", "$exists"])
+                    self.assertEqual(
+                        downstream_or_keys,
+                        [engine._storage_key(1), engine._storage_key(2), engine._storage_key(3)],
+                    )
+
+                    downstream_partial_and_keys, downstream_partial_and_description = search_runtime_module._sqlite_candidate_storage_keys_for_downstream_filter(
+                        engine,
+                        conn,
+                        physical_name=resolved_physical_name,
+                        definition=text_definition,
+                        filter_spec={"$and": [{"title": "Ada algorithms"}, {"score": {"$gt": 5}}]},
+                    )
+                    self.assertEqual(downstream_partial_and_description["booleanShape"], "$and")
+                    self.assertTrue(downstream_partial_and_description["candidateable"])
+                    self.assertFalse(downstream_partial_and_description["exact"])
+                    self.assertEqual(downstream_partial_and_keys, [engine._storage_key(1)])
+
+                    downstream_unsupported_or_keys, downstream_unsupported_or_description = search_runtime_module._sqlite_candidate_storage_keys_for_downstream_filter(
+                        engine,
+                        conn,
+                        physical_name=resolved_physical_name,
+                        definition=text_definition,
+                        filter_spec={"$or": [{"title": "Ada algorithms"}, {"score": {"$gt": 5}}]},
+                    )
+                    self.assertIsNone(downstream_unsupported_or_keys)
+                    self.assertFalse(downstream_unsupported_or_description["candidateable"])
+                    self.assertEqual(downstream_unsupported_or_description["booleanShape"], "$or")
+            finally:
+                await engine.disconnect()
+
+        asyncio.run(_run())
+
+    def test_sqlite_search_runtime_helper_branches_and_sync_wrappers(self):
+        async def _run() -> None:
+            engine = SQLiteEngine()
+            await engine.connect()
+            try:
+                await engine.put_document("db", "coll", {"_id": 1, "title": "Ada algorithms", "body": "vector algorithm", "score": 7, "kind": "note", "embedding": [1.0, 0.0]})
+                await engine.put_document("db", "coll", {"_id": 2, "title": "Grace notes", "body": "compiler vector", "score": 9, "kind": "reference", "embedding": [0.5, 0.5]})
+                text_definition = SearchIndexDefinition(
+                    {
+                        "mappings": {
+                            "dynamic": False,
+                            "fields": {
+                                "title": {"type": "string"},
+                                "body": {"type": "autocomplete"},
+                                "kind": {"type": "token"},
+                            },
+                        }
+                    },
+                    name="by_text",
+                    index_type="search",
+                )
+                vector_definition = SearchIndexDefinition(
+                    {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2}]},
+                    name="by_vector",
+                    index_type="vectorSearch",
+                )
+                search_runtime_module.create_search_index_sync(engine, "db", "coll", text_definition, None, None)
+                search_runtime_module.create_search_index_sync(engine, "db", "coll", vector_definition, None, None)
+
+                conn = engine._require_connection()
+                with engine._bind_connection(conn):
+                    text_rows = search_runtime_module.load_search_index_rows(engine, "db", "coll", name="by_text")
+                    self.assertEqual(len(search_runtime_module.load_search_indexes(engine, "db", "coll")), 2)
+                    self.assertIsNone(search_runtime_module.pending_search_index_ready_at(engine))
+                    self.assertTrue(search_runtime_module.search_index_is_ready_sync(None))
+                    text_definition_loaded, physical_name, _ = text_rows[0]
+                    resolved_physical = search_runtime_module.ensure_search_backend_sync(
+                        engine,
+                        conn,
+                        "db",
+                        "coll",
+                        text_definition_loaded,
+                        physical_name,
+                    )
+                    self.assertEqual(search_runtime_module._load_candidate_documents(engine, "db", "coll", []), [])
+                    self.assertEqual(search_runtime_module._intersect_storage_key_lists([]), [])
+                    self.assertEqual(search_runtime_module._union_storage_key_lists([["a", "b"], ["b", "c"]]), ["a", "b", "c"])
+                    self.assertEqual(
+                        search_runtime_module._storage_keys_with_minimum_frequency([["a", "b"], ["b", "c"], ["b"]], 2),
+                        ["b"],
+                    )
+
+                    text_query = compile_search_stage("$search", {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}})
+                    phrase_query = compile_search_stage("$search", {"index": "by_text", "phrase": {"query": "Ada algorithms", "path": "title"}})
+                    autocomplete_query = compile_search_stage("$search", {"index": "by_text", "autocomplete": {"query": "alg", "path": ["title", "body"]}})
+                    wildcard_query = compile_search_stage("$search", {"index": "by_text", "wildcard": {"query": "*vector*", "path": "body"}})
+                    exists_query = compile_search_stage("$search", {"index": "by_text", "exists": {"path": "title"}})
+                    near_query = compile_search_stage("$search", {"index": "by_text", "near": {"path": "score", "origin": 8, "pivot": 2}})
+                    compound_query = compile_search_stage(
+                        "$search",
+                        {
+                            "index": "by_text",
+                            "compound": {
+                                "must": [{"text": {"query": "vector", "path": ["title", "body"]}}],
+                                "should": [{"exists": {"path": "title"}}],
+                                "minimumShouldMatch": 0,
+                            },
+                        },
+                    )
+
+                    text_keys, text_backend, text_exact = search_runtime_module._sqlite_leaf_candidate_storage_keys(
+                        engine, conn, physical_name=resolved_physical, query=text_query
+                    )
+                    self.assertEqual(text_backend, "fts5")
+                    self.assertTrue(text_exact)
+                    self.assertIn(engine._storage_key(1), text_keys)
+
+                    phrase_keys, phrase_backend, phrase_exact = search_runtime_module._sqlite_leaf_candidate_storage_keys(
+                        engine, conn, physical_name=resolved_physical, query=phrase_query
+                    )
+                    self.assertEqual(phrase_backend, "fts5")
+                    self.assertFalse(phrase_exact)
+                    self.assertEqual(phrase_keys, [engine._storage_key(1)])
+
+                    autocomplete_keys, _, _ = search_runtime_module._sqlite_leaf_candidate_storage_keys(
+                        engine, conn, physical_name=resolved_physical, query=autocomplete_query
+                    )
+                    wildcard_keys, wildcard_backend, wildcard_exact = search_runtime_module._sqlite_leaf_candidate_storage_keys(
+                        engine, conn, physical_name=resolved_physical, query=wildcard_query
+                    )
+                    exists_keys, exists_backend, exists_exact = search_runtime_module._sqlite_leaf_candidate_storage_keys(
+                        engine, conn, physical_name=resolved_physical, query=exists_query
+                    )
+                    self.assertTrue(autocomplete_keys)
+                    self.assertEqual(wildcard_backend, "fts5-glob")
+                    self.assertTrue(wildcard_exact)
+                    self.assertEqual(exists_backend, "fts5-path")
+                    self.assertTrue(exists_exact)
+                    self.assertEqual(
+                        search_runtime_module._sqlite_candidate_storage_keys_for_query(
+                            engine, conn, physical_name=None, query=text_query, definition=text_definition_loaded
+                        ),
+                        (None, None, False),
+                    )
+                    self.assertEqual(
+                        search_runtime_module._sqlite_candidate_storage_keys_for_query(
+                            engine, conn, physical_name=resolved_physical, query=near_query, definition=text_definition_loaded
+                        ),
+                        (None, None, False),
+                    )
+                    self.assertEqual(
+                        search_runtime_module._sqlite_candidate_storage_keys_for_query(
+                            engine, conn, physical_name=resolved_physical, query=compound_query
+                        ),
+                        (None, None, False),
+                    )
+                    compound_keys, compound_backend, _ = search_runtime_module._sqlite_candidate_storage_keys_for_query(
+                        engine, conn, physical_name=resolved_physical, query=compound_query, definition=text_definition_loaded
+                    )
+                    self.assertEqual(compound_backend, "fts5-prefilter")
+                    self.assertTrue(compound_keys)
+
+                    self.assertEqual(search_runtime_module._textual_search_field_types(SearchIndexDefinition({"mappings": "bad"}, name="x", index_type="search")), {})
+                    self.assertIsNone(search_runtime_module._flatten_downstream_filter_clauses({"$or": "bad"}))
+                    self.assertEqual(search_runtime_module._document_for_search_path("a.b", 1), {"a": {"b": 1}})
+                    self.assertEqual(search_runtime_module._clause_search_paths(near_query), None)
+                    self.assertEqual(
+                        search_runtime_module._downstream_filter_implies_clause(
+                            exists_query,
+                            definition=text_definition_loaded,
+                            filter_spec={"title": {"$exists": True}},
+                        )[0],
+                        "title",
+                    )
+                    self.assertEqual(
+                        search_runtime_module._downstream_filter_implies_clause(
+                            wildcard_query,
+                            definition=text_definition_loaded,
+                            filter_spec={"title": {"$in": [1]}},
+                        ),
+                        (None, None),
+                    )
+                    self.assertEqual(
+                        search_runtime_module._candidate_storage_keys_for_downstream_clause(
+                            engine, conn, resolved_physical, path="score", clause=7, field_types={"score": "number"}
+                        ),
+                        (None, "eq"),
+                    )
+                    self.assertEqual(
+                        search_runtime_module._candidate_storage_keys_for_downstream_clause(
+                            None, None, None, path="title", clause="Ada algorithms", field_types={"title": "string"}
+                        ),
+                        (None, "eq"),
+                    )
+
+                    direct_docs = search_runtime_module.execute_sqlite_search_query(
+                        engine,
+                        conn,
+                        "db",
+                        "coll",
+                        text_definition_loaded,
+                        text_query,
+                        resolved_physical,
+                        None,
+                        1,
+                        {"kind": "note"},
+                    )
+                    self.assertEqual([document["_id"] for document in direct_docs], [1])
+
+                    explained = search_runtime_module.explain_search_documents_sync(
+                        engine,
+                        "db",
+                        "coll",
+                        "$search",
+                        {
+                            "index": "by_text",
+                            "compound": {
+                                "must": [{"text": {"query": "vector", "path": ["title", "body"]}}],
+                                "should": [{"exists": {"path": "title"}}],
+                                "minimumShouldMatch": 0,
+                            },
+                        },
+                        None,
+                        None,
+                        1,
+                        {"kind": "note"},
+                    )
+                    self.assertEqual(explained.details["backend"], "fts5-prefilter")
+
+                    search_runtime_module.replace_search_entries_for_document(
+                        engine,
+                        conn,
+                        "db",
+                        "coll",
+                        engine._storage_key(1),
+                        {"_id": 1, "title": "Ada refreshed", "body": "vector refreshed"},
+                    )
+                    search_runtime_module.delete_search_entries_for_storage_key(
+                        engine,
+                        conn,
+                        "db",
+                        "coll",
+                        engine._storage_key(2),
+                    )
+
+                    vector_rows = search_runtime_module.load_search_index_rows(engine, "db", "coll", name="by_vector")
+                    vector_definition_loaded, vector_physical_name, _ = vector_rows[0]
+                    vector_state = search_runtime_module.ensure_vector_search_backend_sync(
+                        engine,
+                        conn,
+                        "db",
+                        "coll",
+                        vector_definition_loaded,
+                        vector_physical_name,
+                        "embedding",
+                    )
+                    cached_vector_state = search_runtime_module.ensure_vector_search_backend_sync(
+                        engine,
+                        conn,
+                        "db",
+                        "coll",
+                        vector_definition_loaded,
+                        vector_physical_name,
+                        "embedding",
+                    )
+                    self.assertIs(vector_state, cached_vector_state)
+                    if conn.in_transaction:
+                        conn.commit()
+
+                search_runtime_module.update_search_index_sync(
+                    engine,
+                    "db",
+                    "coll",
+                    "by_text",
+                    {"mappings": {"dynamic": True}},
+                    None,
+                    None,
+                )
+                listed = search_runtime_module.list_search_indexes_sync(engine, "db", "coll", None, None)
+                self.assertEqual(len(listed), 2)
+                search_runtime_module.drop_search_index_sync(engine, "db", "coll", "by_vector", None, None)
+                listed_after_drop = search_runtime_module.list_search_indexes_sync(engine, "db", "coll", None, None)
+                self.assertEqual(len(listed_after_drop), 1)
+
+                rows_after_drop = engine._load_search_index_rows("db", "coll", name="by_vector")
+                self.assertEqual(rows_after_drop, [])
             finally:
                 await engine.disconnect()
 
