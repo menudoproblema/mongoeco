@@ -219,6 +219,8 @@ What to look at in the vector metadata:
   really did for the chosen `numCandidates`
 - `exact_fallback_reason`: whether filtered ANN had to degrade to exact
   ranking, for example under candidate underflow
+- `min_score` / `documents_filtered_by_min_score`: whether the query used an
+  explicit score floor and how many candidates it discarded
 - `vector_filter_prefilter` / `vector_filter_residual`: which part of a filter
   became candidateable and which part still needed documentary validation
 

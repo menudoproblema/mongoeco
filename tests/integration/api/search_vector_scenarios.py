@@ -189,6 +189,21 @@ def assert_vector_similarity_explanation(
         case.assertGreaterEqual(candidates_requested, candidates_evaluated)
 
 
+def assert_vector_min_score_explanation(
+    case: unittest.TestCase,
+    explanation: dict[str, object],
+    *,
+    expected_min_score: float,
+    engine_name: str,
+) -> None:
+    details = explanation["engine_plan"]["details"]
+    case.assertEqual(details["minScore"], expected_min_score)
+    if engine_name == "sqlite":
+        case.assertEqual(details["documentsFilteredByMinScore"], 1)
+    else:
+        case.assertIsNone(details["documentsFilteredByMinScore"])
+
+
 def assert_ranged_vector_explanation(
     case: unittest.TestCase,
     explanation: dict[str, object],

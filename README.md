@@ -204,8 +204,8 @@ Examples worth showing first:
 * [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
   demonstrates a local `compound` query with `phrase` + `in` + `range` + `regex`.
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
-  demonstrates how to read `similarity`, `numCandidates`, residual filtering
-  and exact fallback in local `$vectorSearch`.
+  demonstrates how to read `similarity`, `numCandidates`, `minScore`,
+  residual filtering and exact fallback in local `$vectorSearch`.
 
 ## Compatibility
 

@@ -2125,6 +2125,21 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             ),
             [],
         )
+        min_score_position_scores = memory_module._vector_scores_for_positions(
+            vector_index,
+            query=SearchVectorQuery(
+                index_name="vec",
+                path="embedding",
+                query_vector=(1.0, 0.0),
+                limit=2,
+                num_candidates=4,
+                similarity="cosine",
+                min_score=0.9,
+            ),
+            candidate_positions=[0, 1, 2],
+            limit=None,
+        )
+        self.assertEqual(min_score_position_scores, [(1.0, 0)])
         scored_rows = memory_module._vector_scores_for_rows(
             vector_index,
             query=SearchVectorQuery(
@@ -2154,6 +2169,21 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(cached_subset_scores, [(1.0, 0)])
         self.assertEqual(len(vector_index.vector_ranked_row_cache), 1)
+        min_score_row_scores = memory_module._vector_scores_for_rows(
+            vector_index,
+            query=SearchVectorQuery(
+                index_name="vec",
+                path="embedding",
+                query_vector=(1.0, 0.0),
+                limit=2,
+                num_candidates=4,
+                similarity="cosine",
+                min_score=0.9,
+            ),
+            candidate_rows=[0, 1, 2],
+            limit=2,
+        )
+        self.assertEqual(min_score_row_scores, [(1.0, 0)])
 
     async def test_memory_search_and_vector_runtime_cover_candidate_prefilter_paths(self):
         engine = MemoryEngine()

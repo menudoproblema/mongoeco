@@ -53,6 +53,7 @@ from tests.integration.api.search_vector_scenarios import (
     assert_phrase_in_range_compound_explanation,
     assert_regex_explanation,
     assert_ranged_vector_explanation,
+    assert_vector_min_score_explanation,
     assert_vector_similarity_explanation,
 )
 from tests.integration.api.admin_command_cases import (
@@ -879,6 +880,43 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     assert_boolean_vector_residual_explanation(
                         self,
                         boolean_vector_explanation,
+                        engine_name=engine_name,
+                    )
+                    min_score_vector_hits = collection.aggregate(
+                        [
+                            {
+                                "$vectorSearch": {
+                                    "index": "by_vector",
+                                    "path": "embedding",
+                                    "queryVector": [1.0, 0.0, 0.0],
+                                    "limit": 2,
+                                    "numCandidates": 3,
+                                    "filter": {"kind": "note"},
+                                    "minScore": 0.95,
+                                }
+                            }
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in min_score_vector_hits], [3])
+                    min_score_vector_explanation = collection.aggregate(
+                        [
+                            {
+                                "$vectorSearch": {
+                                    "index": "by_vector",
+                                    "path": "embedding",
+                                    "queryVector": [1.0, 0.0, 0.0],
+                                    "limit": 2,
+                                    "numCandidates": 3,
+                                    "filter": {"kind": "note"},
+                                    "minScore": 0.95,
+                                }
+                            }
+                        ]
+                    ).explain()
+                    assert_vector_min_score_explanation(
+                        self,
+                        min_score_vector_explanation,
+                        expected_min_score=0.95,
                         engine_name=engine_name,
                     )
 

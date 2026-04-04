@@ -887,12 +887,21 @@ class SearchCoreTests(unittest.TestCase):
         self.assertIsNone(search_near_distance({}, query=SearchNearQuery(index_name="by_text", path="score", origin=10, pivot=1.0, origin_kind="number")))
 
     def test_search_explain_and_operator_helpers_cover_remaining_shapes(self) -> None:
-        vector_query = SearchVectorQuery(index_name="vec", path="embedding", query_vector=(1.0, 0.0), limit=2, num_candidates=3, filter_spec={"kind": "keep"})
+        vector_query = SearchVectorQuery(
+            index_name="vec",
+            path="embedding",
+            query_vector=(1.0, 0.0),
+            limit=2,
+            num_candidates=3,
+            filter_spec={"kind": "keep"},
+            min_score=0.75,
+        )
         self.assertIsNone(search_query_operator_name(vector_query))
         details = search_query_explain_details(vector_query)
         self.assertEqual(details["path"], "embedding")
         self.assertEqual(details["filter"], {"kind": "keep"})
         self.assertEqual(details["numCandidates"], 3)
+        self.assertEqual(details["minScore"], 0.75)
         self.assertEqual(
             compile_search_stage(
                 "$vectorSearch",
@@ -1305,6 +1314,7 @@ class SearchCoreTests(unittest.TestCase):
                 "queryVector": [1, 0, 0],
                 "limit": 2,
                 "numCandidates": 4,
+                "minScore": 0.75,
             }
         )
         self.assertEqual(
@@ -1315,6 +1325,7 @@ class SearchCoreTests(unittest.TestCase):
                 query_vector=(1.0, 0.0, 0.0),
                 limit=2,
                 num_candidates=4,
+                min_score=0.75,
             ),
         )
 
@@ -1357,6 +1368,14 @@ class SearchCoreTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             compile_vector_search_query(
                 {"path": "embedding", "queryVector": [1], "limit": 1, "numCandidates": True}  # type: ignore[arg-type]
+            )
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query(
+                {"path": "embedding", "queryVector": [1], "limit": 1, "minScore": "bad"}  # type: ignore[arg-type]
+            )
+        with self.assertRaises(OperationFailure):
+            compile_vector_search_query(
+                {"path": "embedding", "queryVector": [1], "limit": 1, "minScore": float("inf")}
             )
         with self.assertRaises(OperationFailure):
             compile_vector_search_query(

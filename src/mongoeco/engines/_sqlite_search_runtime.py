@@ -1120,6 +1120,8 @@ def exact_vector_hits_sync(
         )
         if score is None:
             continue
+        if query.min_score is not None and score < query.min_score:
+            continue
         vector_hits.append((score, document))
     vector_hits.sort(key=lambda item: item[0], reverse=True)
     return vector_hits
@@ -1134,9 +1136,9 @@ def _sqlite_vector_candidate_documents(
     backend_state: SQLiteVectorBackendState,
     prefilter_storage_keys: list[str] | None,
     prefilter_exact: bool,
-) -> tuple[list[Document], int, int, int, str | None]:
+) -> tuple[list[Document], int, int, int, int, str | None]:
     if prefilter_storage_keys is not None and prefilter_exact and not prefilter_storage_keys:
-        return [], 0, 0, 0, None
+        return [], 0, 0, 0, 0, None
     requested = max(query.limit, query.num_candidates)
     max_requested = min(
         backend_state.valid_vectors,
@@ -1144,6 +1146,7 @@ def _sqlite_vector_candidate_documents(
     )
     matched_documents: list[Document] = []
     documents_filtered = 0
+    documents_filtered_by_min_score = 0
     candidates_evaluated = 0
     exact_fallback_reason: str | None = None
     seen_storage_keys: set[str] = set()
@@ -1179,6 +1182,16 @@ def _sqlite_vector_candidate_documents(
             ):
                 documents_filtered += 1
                 continue
+            score = score_vector_document(
+                document,
+                definition=definition,
+                query=query,
+            )
+            if score is None:
+                continue
+            if query.min_score is not None and score < query.min_score:
+                documents_filtered_by_min_score += 1
+                continue
             matched_documents.append(document)
             if len(matched_documents) >= query.limit:
                 return (
@@ -1186,6 +1199,7 @@ def _sqlite_vector_candidate_documents(
                     current_request,
                     candidates_evaluated,
                     documents_filtered,
+                    documents_filtered_by_min_score,
                     None,
                 )
         if query.filter_spec is None or current_request >= max_requested:
@@ -1204,6 +1218,7 @@ def _sqlite_vector_candidate_documents(
         current_request,
         candidates_evaluated,
         documents_filtered,
+        documents_filtered_by_min_score,
         exact_fallback_reason,
     )
 
@@ -1255,6 +1270,7 @@ def execute_sqlite_search_query(
                 _requested_candidates,
                 _candidates_evaluated,
                 _documents_filtered,
+                _documents_filtered_by_min_score,
                 exact_fallback_reason,
             ) = _sqlite_vector_candidate_documents(
                 engine,
@@ -1547,6 +1563,7 @@ def explain_search_documents_sync(
     vector_filter_description: dict[str, object] | None = None
     exact_fallback_reason: str | None = None
     documents_filtered = 0
+    documents_filtered_by_min_score: int | None = None
     candidates_evaluated: int | None = None
     candidates_requested: int | None = None
     candidate_storage_keys: list[str] | None = None
@@ -1703,6 +1720,7 @@ def explain_search_documents_sync(
                 candidates_requested,
                 evaluated_count,
                 documents_filtered,
+                documents_filtered_by_min_score,
                 exact_fallback_reason,
             ) = _sqlite_vector_candidate_documents(
                 engine,
@@ -1822,6 +1840,11 @@ def explain_search_documents_sync(
             "documentsFiltered": (
                 documents_filtered
                 if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
+                else None
+            ),
+            "documentsFilteredByMinScore": (
+                documents_filtered_by_min_score
+                if isinstance(query, SearchVectorQuery) and query.min_score is not None
                 else None
             ),
             "documentsScanned": (

@@ -26,9 +26,11 @@ def print_vector_case(collection, label: str, stage: dict[str, object]) -> None:
     print("similarity:", details["similarity"])
     print("mode:", details["mode"])
     print("numCandidates requested/evaluated:", details["candidatesRequested"], details["candidatesEvaluated"])
+    print("minScore:", details["minScore"])
     print("fallback:", details["exactFallbackReason"])
     print("prefilter:", details["vectorFilterPrefilter"])
     print("residual:", details["vectorFilterResidual"])
+    print("filteredByMinScore:", details["documentsFilteredByMinScore"])
 
 
 def main() -> None:
@@ -177,6 +179,19 @@ def main() -> None:
                         {"score": {"$gte": 10}},
                     ]
                 },
+            },
+        )
+        print_vector_case(
+            collection,
+            "cosine / note filter + minScore",
+            {
+                "index": "embedding_cosine",
+                "path": "embedding",
+                "queryVector": [1.0, 0.0, 0.0],
+                "numCandidates": 12,
+                "limit": 2,
+                "filter": {"kind": "note"},
+                "minScore": 0.999,
             },
         )
 

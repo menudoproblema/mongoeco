@@ -82,11 +82,13 @@ def _summarize_search_explain(explain: dict[str, Any]) -> dict[str, Any]:
     summary["backend"] = details.get("backend")
     summary["mode"] = details.get("mode")
     summary["similarity"] = details.get("similarity")
+    summary["min_score"] = details.get("minScore")
     summary["filter_mode"] = details.get("filterMode")
     summary["exact_fallback_reason"] = details.get("exactFallbackReason")
     summary["candidates_evaluated"] = details.get("candidatesEvaluated")
     summary["candidates_requested"] = details.get("candidatesRequested")
     summary["documents_filtered"] = details.get("documentsFiltered")
+    summary["documents_filtered_by_min_score"] = details.get("documentsFilteredByMinScore")
     summary["candidate_count"] = details.get("candidateCount")
     summary["candidate_count_before_topk"] = details.get("candidateCountBeforeTopK")
     summary["topk_limit_hint"] = details.get("topKLimitHint")
@@ -1019,6 +1021,7 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
     filtered_metrics: list[Metrics] = []
     filtered_boolean_metrics: list[Metrics] = []
     filtered_underflow_metrics: list[Metrics] = []
+    filtered_min_score_metrics: list[Metrics] = []
 
     db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_augment_search_documents)
     try:
@@ -1181,6 +1184,19 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                 }
             }
         ]
+        filtered_min_score_pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": "by_vector_cosine",
+                    "path": "embedding",
+                    "queryVector": [1.0, 0.0, 0.0],
+                    "numCandidates": 24,
+                    "limit": 10,
+                    "filter": {"kind": "note"},
+                    "minScore": 0.999,
+                }
+            }
+        ]
 
         return {
             "vector_search_ann_topk_100": _measure_single_task(
@@ -1285,6 +1301,19 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                         engine.explain_aggregate(db_name, coll_name, filtered_underflow_pipeline)
                     ),
                     "query_shape": "$vectorSearch cosine topk + rare boolean candidate filter",
+                },
+            ),
+            "vector_search_filtered_min_score_topk_100": _measure_single_task(
+                filtered_min_score_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, filtered_min_score_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, filtered_min_score_pipeline)
+                    ),
+                    "query_shape": "$vectorSearch cosine topk + filter(kind=note) + minScore(0.999)",
                 },
             ),
         }

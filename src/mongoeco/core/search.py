@@ -133,6 +133,7 @@ class SearchVectorQuery:
     num_candidates: int
     filter_spec: Document | None = None
     similarity: str = "cosine"
+    min_score: float | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -481,10 +482,10 @@ def compile_search_compound_query(spec: object) -> SearchCompoundQuery:
 def compile_vector_search_query(spec: object) -> SearchVectorQuery:
     if not isinstance(spec, dict):
         raise OperationFailure("$vectorSearch requires a document specification")
-    unsupported = sorted(set(spec) - {"index", "path", "queryVector", "limit", "numCandidates", "filter"})
+    unsupported = sorted(set(spec) - {"index", "path", "queryVector", "limit", "numCandidates", "filter", "minScore"})
     if unsupported:
         raise OperationFailure(
-            "$vectorSearch local runtime supports only index, path, queryVector, limit, numCandidates and filter; "
+            "$vectorSearch local runtime supports only index, path, queryVector, limit, numCandidates, filter and minScore; "
             "unsupported keys: " + ", ".join(unsupported)
         )
     index_name = spec.get("index", "default")
@@ -507,6 +508,11 @@ def compile_vector_search_query(spec: object) -> SearchVectorQuery:
     filter_spec = spec.get("filter")
     if filter_spec is not None and not isinstance(filter_spec, dict):
         raise OperationFailure("$vectorSearch.filter must be a document")
+    min_score = spec.get("minScore")
+    if min_score is not None:
+        if not isinstance(min_score, (int, float)) or isinstance(min_score, bool) or not math.isfinite(float(min_score)):
+            raise OperationFailure("$vectorSearch.minScore must be a finite numeric value")
+        min_score = float(min_score)
     return SearchVectorQuery(
         index_name=index_name,
         path=path,
@@ -514,6 +520,7 @@ def compile_vector_search_query(spec: object) -> SearchVectorQuery:
         limit=limit,
         num_candidates=num_candidates,
         filter_spec=deepcopy(filter_spec),
+        min_score=min_score,
     )
 
 
@@ -1654,6 +1661,7 @@ def _explain_vector_query(query: SearchVectorQuery) -> dict[str, object | None]:
         "numCandidates": query.num_candidates,
         "filter": deepcopy(query.filter_spec) if query.filter_spec is not None else None,
         "similarity": query.similarity,
+        "minScore": query.min_score,
     }
 
 

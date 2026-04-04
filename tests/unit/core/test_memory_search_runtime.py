@@ -120,6 +120,7 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                         "queryVector": [1.0, 0.0],
                         "limit": 2,
                         "filter": {"kind": "note"},
+                        "minScore": 0.95,
                     },
                     result_limit_hint=1,
                     downstream_filter_spec={"kind": {"$regex": "^n"}},
@@ -127,6 +128,8 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                 self.assertEqual(vector_explain.details["filterMode"], "candidate-prefilter")
                 self.assertEqual(vector_explain.details["topKLimitHint"], 1)
                 self.assertEqual(vector_explain.details["documentsScannedAfterPrefilter"], 1)
+                self.assertEqual(vector_explain.details["minScore"], 0.95)
+                self.assertIsNone(vector_explain.details["documentsFilteredByMinScore"])
             finally:
                 await engine.disconnect()
 

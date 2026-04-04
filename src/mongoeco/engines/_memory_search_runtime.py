@@ -323,6 +323,11 @@ async def explain_search_documents(
                 if isinstance(query, SearchVectorQuery)
                 else None
             ),
+            "documentsFilteredByMinScore": (
+                None
+                if not isinstance(query, SearchVectorQuery) or query.min_score is None
+                else None
+            ),
             "documentsScanned": (
                 vector_index.valid_vector_counts.get(query.path, 0)
                 if isinstance(query, SearchVectorQuery) and vector_index is not None

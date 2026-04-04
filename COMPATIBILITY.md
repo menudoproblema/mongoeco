@@ -396,8 +396,9 @@ con baseline exacta y backend ANN:
   * `euclidean`
 * surface:
   * `filter` opcional reutilizando `QueryEngine`;
+  * `minScore` opcional como corte local explícito por score;
   * `explain` con backend, modo, similitud, escaneo, candidatos evaluados,
-    vectores válidos/inválidos y razones de degradación.
+    corte `minScore`, vectores válidos/inválidos y razones de degradación.
 * backend:
   * `MemoryEngine` mantiene baseline exacta para semántica y contraste;
   * `SQLiteEngine` usa `usearch` como backend ANN local cuando el índice

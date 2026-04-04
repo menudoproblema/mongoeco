@@ -20,7 +20,7 @@ Available examples:
   explain output.
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
   Public-facing `vectorSearch` diagnostics: compare `similarity`,
-  `numCandidates`, residual filters and exact fallback.
+  `numCandidates`, `minScore`, residual filters and exact fallback.
 
 Run them from the repository root after installing the package:
 

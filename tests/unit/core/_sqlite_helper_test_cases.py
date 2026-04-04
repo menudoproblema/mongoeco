@@ -495,7 +495,14 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                             "filter": {"kind": "keep"},
                         },
                     )
-                    documents, requested, evaluated, filtered, fallback_reason = search_runtime_module._sqlite_vector_candidate_documents(
+                    (
+                        documents,
+                        requested,
+                        evaluated,
+                        filtered,
+                        filtered_by_min_score,
+                        fallback_reason,
+                    ) = search_runtime_module._sqlite_vector_candidate_documents(
                         engine,
                         "db",
                         "coll",
@@ -508,10 +515,50 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     self.assertEqual([document["_id"] for document in documents], [1])
                     self.assertEqual(requested, 1)
                     self.assertEqual(filtered, 0)
+                    self.assertEqual(filtered_by_min_score, 0)
                     self.assertEqual(fallback_reason, None)
                     self.assertGreaterEqual(evaluated, 1)
+                    min_score_vector_query = search_runtime_module.compile_search_stage(
+                        "$vectorSearch",
+                        {
+                            "index": "by_vector",
+                            "path": "embedding",
+                            "queryVector": [1.0, 0.0],
+                            "limit": 2,
+                            "numCandidates": 2,
+                            "filter": {"kind": "keep"},
+                            "minScore": 0.95,
+                        },
+                    )
+                    (
+                        min_score_documents,
+                        _min_score_requested,
+                        _min_score_evaluated,
+                        _min_score_filtered,
+                        min_score_filtered_by_min_score,
+                        min_score_fallback_reason,
+                    ) = search_runtime_module._sqlite_vector_candidate_documents(
+                        engine,
+                        "db",
+                        "coll",
+                        vector_definition,
+                        min_score_vector_query,
+                        vector_backend_state,
+                        prefilter_storage_keys=filter_keys,
+                        prefilter_exact=True,
+                    )
+                    self.assertEqual([document["_id"] for document in min_score_documents], [1])
+                    self.assertEqual(min_score_filtered_by_min_score, 1)
+                    self.assertEqual(min_score_fallback_reason, "candidate-prefilter-underflow")
 
-                    empty_documents, empty_requested, empty_evaluated, empty_filtered, empty_reason = search_runtime_module._sqlite_vector_candidate_documents(
+                    (
+                        empty_documents,
+                        empty_requested,
+                        empty_evaluated,
+                        empty_filtered,
+                        empty_filtered_by_min_score,
+                        empty_reason,
+                    ) = search_runtime_module._sqlite_vector_candidate_documents(
                         engine,
                         "db",
                         "coll",
@@ -523,6 +570,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     )
                     self.assertEqual(empty_documents, [])
                     self.assertEqual((empty_requested, empty_evaluated, empty_filtered), (0, 0, 0))
+                    self.assertEqual(empty_filtered_by_min_score, 0)
                     self.assertIsNone(empty_reason)
 
                     downstream_or_keys, downstream_or_description = search_runtime_module._sqlite_candidate_storage_keys_for_downstream_filter(

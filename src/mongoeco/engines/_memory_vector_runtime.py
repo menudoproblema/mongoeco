@@ -311,6 +311,12 @@ def vector_scores_for_positions(
         denominator = candidate_norms * query_norm
         raw_scores = candidate_matrix @ query_vector
         scores = np.divide(raw_scores, denominator, out=np.zeros_like(raw_scores, dtype=np.float32), where=denominator > 0)
+    if query.min_score is not None:
+        matched_indexes = np.flatnonzero(scores >= query.min_score)
+        if matched_indexes.size == 0:
+            return []
+        scores = scores[matched_indexes]
+        selected_positions = [selected_positions[int(index)] for index in matched_indexes]
     if limit is not None and limit > 0 and len(scores) > limit:
         top_indexes = np.argpartition(scores, -limit)[-limit:]
         ordered_indexes = top_indexes[np.argsort(scores[top_indexes])[::-1]]
@@ -354,15 +360,22 @@ def vector_scores_for_rows(
     candidate_row_key = tuple(candidate_rows)
     all_row_key = tuple(range(len(cached_scores)))
     if candidate_row_key == all_row_key:
-        ordered_scores = list(cached_scores[:limit] if limit is not None and limit > 0 else cached_scores)
+        filtered_scores = (
+            tuple((score, row_index) for score, row_index in cached_scores if score >= query.min_score)
+            if query.min_score is not None
+            else cached_scores
+        )
+        ordered_scores = list(filtered_scores[:limit] if limit is not None and limit > 0 else filtered_scores)
         return ordered_scores
-    ranked_cache_key = (query.path, query_vector_key, similarity, candidate_row_key, limit)
+    ranked_cache_key = (query.path, query_vector_key, similarity, candidate_row_key, limit, query.min_score)
     cached_ranked_rows = vector_index.vector_ranked_row_cache.get(ranked_cache_key)
     if cached_ranked_rows is not None:
         return list(cached_ranked_rows)
     allowed_rows = set(candidate_rows)
     ranked_subset: list[tuple[float, int]] = []
     for score, row_index in cached_scores:
+        if query.min_score is not None and score < query.min_score:
+            break
         if row_index not in allowed_rows:
             continue
         ranked_subset.append((score, row_index))
@@ -378,7 +391,7 @@ def vector_scores_for_rows(
 
 def _store_ranked_row_cache(
     vector_index: MaterializedVectorIndex,
-    key: tuple[str, tuple[float, ...], str, tuple[int, ...], int | None],
+    key: tuple[str, tuple[float, ...], str, tuple[int, ...], int | None, float | None],
     value: tuple[tuple[float, int], ...],
 ) -> None:
     if len(vector_index.vector_ranked_row_cache) >= 128:
