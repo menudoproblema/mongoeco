@@ -126,7 +126,7 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                 )
                 self.assertEqual(vector_explain.details["filterMode"], "candidate-prefilter")
                 self.assertEqual(vector_explain.details["topKLimitHint"], 1)
-                self.assertEqual(vector_explain.details["documentsScannedAfterPrefilter"], 2)
+                self.assertEqual(vector_explain.details["documentsScannedAfterPrefilter"], 1)
             finally:
                 await engine.disconnect()
 

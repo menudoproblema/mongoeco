@@ -117,10 +117,12 @@ def candidate_positions_for_vector_filter(
     vector_index: MaterializedVectorIndex,
     *,
     filter_spec: dict[str, object] | None,
+    candidate_positions: tuple[int, ...] | list[int] | None = None,
 ) -> tuple[list[int] | None, dict[str, object] | None]:
     if filter_spec is None:
         return None, None
-    ordered_positions = tuple(range(len(vector_index.documents)))
+    ordered_positions = tuple(candidate_positions) if candidate_positions is not None else tuple(range(len(vector_index.documents)))
+    all_positions = set(ordered_positions)
     result = evaluate_candidate_filter(
         filter_spec,
         all_candidates=ordered_positions,
@@ -129,7 +131,7 @@ def candidate_positions_for_vector_filter(
             vector_index,
             path=path,
             clause=clause,
-            all_positions=set(ordered_positions),
+            all_positions=all_positions,
         ),
     )
     if result is None or result.matches is None:

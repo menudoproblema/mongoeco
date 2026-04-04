@@ -150,17 +150,23 @@ async def execute_search_documents(
     effective_vector_limit = min(query.limit, effective_limit) if effective_limit is not None else query.limit
     if vector_index is None:
         return []
-    query_filter_positions, _query_filter_description = candidate_positions_for_vector_filter(vector_index, filter_spec=query.filter_spec)
-    downstream_filter_positions, _downstream_filter_description = candidate_positions_for_vector_filter(vector_index, filter_spec=downstream_filter_spec)
-    candidate_positions = list(vector_index.vector_row_positions.get(query.path, ()))
-    if query_filter_positions is not None:
-        allowed = set(query_filter_positions)
-        candidate_positions = [position for position in candidate_positions if position in allowed]
+    if query.path not in vector_index.vector_specs:
+        return []
+    path_positions = vector_index.vector_row_positions.get(query.path, ())
+    query_filter_positions, _query_filter_description = candidate_positions_for_vector_filter(
+        vector_index,
+        filter_spec=query.filter_spec,
+        candidate_positions=path_positions,
+    )
+    downstream_filter_positions, _downstream_filter_description = candidate_positions_for_vector_filter(
+        vector_index,
+        filter_spec=downstream_filter_spec,
+        candidate_positions=path_positions,
+    )
+    candidate_positions = list(query_filter_positions if query_filter_positions is not None else path_positions)
     if downstream_filter_positions is not None:
         allowed = set(downstream_filter_positions)
         candidate_positions = [position for position in candidate_positions if position in allowed]
-    if query.path not in vector_index.vector_specs:
-        return []
     scored_positions = vector_scores_for_positions(
         vector_index,
         query=query,
@@ -221,7 +227,11 @@ async def explain_search_documents(
     ready = engine._search_index_is_ready(db_name, coll_name, query.index_name)
     ensure_search_index_query_supported(definition, query, ready=ready, enforce_ready=False)
     vector_filter_positions, vector_filter_description = (
-        candidate_positions_for_vector_filter(vector_index, filter_spec=query.filter_spec)
+        candidate_positions_for_vector_filter(
+            vector_index,
+            filter_spec=query.filter_spec,
+            candidate_positions=vector_index.vector_row_positions.get(query.path, ()),
+        )
         if isinstance(query, SearchVectorQuery) and vector_index is not None
         else (None, None)
     )

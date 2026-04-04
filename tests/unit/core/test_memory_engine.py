@@ -2029,6 +2029,14 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(unsupported_description["candidateable"])
         self.assertEqual(unsupported_description["booleanShape"], "$or")
 
+        scoped_positions, scoped_description = memory_module._candidate_positions_for_vector_filter(
+            vector_index,
+            filter_spec={"kind": "keep"},
+            candidate_positions=(0, 1),
+        )
+        self.assertEqual(scoped_positions, [0])
+        self.assertTrue(scoped_description["exact"])
+
         self.assertTrue(memory_module._matches_candidateable_filter(documents[0], {"kind": "keep"}))
         self.assertFalse(memory_module._matches_candidateable_filter(documents[0], {"kind": "drop"}))
         self.assertTrue(

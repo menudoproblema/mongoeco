@@ -190,8 +190,13 @@ def _candidate_positions_for_vector_filter(
     vector_index: _MaterializedVectorIndex,
     *,
     filter_spec: dict[str, object] | None,
+    candidate_positions: tuple[int, ...] | list[int] | None = None,
 ) -> tuple[list[int] | None, dict[str, object] | None]:
-    return _memory_candidate_positions_for_vector_filter(vector_index, filter_spec=filter_spec)
+    return _memory_candidate_positions_for_vector_filter(
+        vector_index,
+        filter_spec=filter_spec,
+        candidate_positions=candidate_positions,
+    )
 
 
 def _matches_candidateable_filter(document: Document, filter_spec: dict[str, object]) -> bool | None:
