@@ -149,6 +149,31 @@ def assert_in_equals_and_range_explanations(
         case.assertFalse(bool(range_details.get("fts5_match")))
 
 
+def assert_phrase_in_range_compound_explanation(
+    case: unittest.TestCase,
+    explanation: dict[str, object],
+) -> None:
+    details = explanation["engine_plan"]["details"]
+    case.assertEqual(details["queryOperator"], "compound")
+    case.assertEqual(details["compound"]["mustOperators"], ["phrase"])
+    case.assertEqual(details["compound"]["filterOperators"], ["in", "range"])
+    case.assertEqual(details["compound"]["shouldOperators"], ["exists"])
+
+
+def assert_vector_similarity_explanation(
+    case: unittest.TestCase,
+    explanation: dict[str, object],
+    *,
+    expected_similarity: str,
+) -> None:
+    details = explanation["engine_plan"]["details"]
+    case.assertEqual(details["similarity"], expected_similarity)
+    candidates_requested = details.get("candidatesRequested")
+    candidates_evaluated = details.get("candidatesEvaluated")
+    if candidates_requested is not None and candidates_evaluated is not None:
+        case.assertGreaterEqual(candidates_requested, candidates_evaluated)
+
+
 def assert_ranged_vector_explanation(
     case: unittest.TestCase,
     explanation: dict[str, object],

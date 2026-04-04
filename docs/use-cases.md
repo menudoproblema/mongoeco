@@ -57,6 +57,7 @@ Current local `$search` subset includes:
 * `autocomplete`
 * `wildcard`
 * `exists`
+* `in`
 * `equals`
 * `range`
 * `near`
@@ -65,6 +66,7 @@ Current local `$search` subset includes:
 Reference:
 
 * [examples/search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
+* [examples/vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
 
 ## When `mongoeco` is not the right tool
 

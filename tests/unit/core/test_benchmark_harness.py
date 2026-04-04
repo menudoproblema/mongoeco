@@ -17,6 +17,12 @@ class BenchmarkHarnessTests(unittest.TestCase):
             ("sort_shape_diagnostics", "predicate_diagnostics"),
         )
 
+    def test_resolve_workload_names_supports_search_and_vector_diagnostics(self):
+        self.assertEqual(
+            resolve_workload_names(["search_diagnostics", "vector_search_diagnostics"]),
+            ("search_diagnostics", "vector_search_diagnostics"),
+        )
+
     def test_render_markdown_report_can_limit_output_to_selected_workloads(self):
         results = {
             "memory-sync": {
@@ -62,3 +68,41 @@ class BenchmarkHarnessTests(unittest.TestCase):
 
         self.assertIn("- Workloads: predicate_diagnostics", markdown)
         self.assertIn("- JSON backend: stdlib", markdown)
+
+    def test_render_markdown_report_includes_vector_metadata_notes(self):
+        results = {
+            "sqlite-sync": {
+                "vector_search_diagnostics": {
+                    "vector_search_ann_topk_100": {
+                        "repetitions": 1,
+                        "wall_time_mean_sec": 0.1,
+                        "wall_time_median_sec": 0.1,
+                        "wall_time_min_sec": 0.1,
+                        "wall_time_max_sec": 0.1,
+                        "cpu_user_mean_sec": 0.05,
+                        "cpu_sys_mean_sec": 0.0,
+                        "rss_delta_mean_mb": 0.0,
+                        "rss_peak_max_mb": 1.0,
+                        "metadata": {
+                            "summary": "sqlite/search opaque",
+                            "query_shape": "$vectorSearch cosine topk",
+                            "similarity": "cosine",
+                            "candidates_requested": 24,
+                            "candidates_evaluated": 10,
+                            "exact_fallback_reason": None,
+                        },
+                    }
+                }
+            }
+        }
+
+        markdown = render_markdown_report(
+            results=results,
+            size=1000,
+            warmup=0,
+            repetitions=1,
+            workload_names=("vector_search_diagnostics",),
+        )
+
+        self.assertIn("- `sqlite-sync` `similarity`: `cosine`", markdown)
+        self.assertIn("- `sqlite-sync` `candidates_requested`: `24`", markdown)

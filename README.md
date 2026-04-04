@@ -183,6 +183,7 @@ Executable examples live under [examples/README.md](/Users/uve/Proyectos/mongoec
 * [memory_quickstart.py](/Users/uve/Proyectos/mongoeco2/examples/memory_quickstart.py)
 * [sqlite_embedded_app.py](/Users/uve/Proyectos/mongoeco2/examples/sqlite_embedded_app.py)
 * [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
+* [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
 
 The local `$search` subset now includes:
 
@@ -196,6 +197,14 @@ The local `$search` subset now includes:
 * `range`
 * `near`
 * `compound`
+
+Examples worth showing first:
+
+* [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
+  demonstrates a local `compound` query with `phrase` + `in` + `range`.
+* [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
+  demonstrates how to read `similarity`, `numCandidates`, residual filtering
+  and exact fallback in local `$vectorSearch`.
 
 ## Compatibility
 
@@ -275,6 +284,10 @@ Current rule of thumb from local diagnostics:
   matching, depending on the operator/backend path;
 * `vectorSearch` on SQLite is already materially faster than the exact
   baseline when the ANN backend is materialized.
+* the public vector diagnostics also expose `similarity`, effective
+  `numCandidates`, candidate evaluation counts and exact fallback reasons in
+  benchmark metadata, so benchmark discussions can stay concrete instead of
+  anecdotal.
 
 For anything you plan to cite publicly, use the reproducible commands in
 [benchmarks/README.md](benchmarks/README.md) instead of copying ad hoc local

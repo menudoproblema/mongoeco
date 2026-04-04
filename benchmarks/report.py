@@ -11,7 +11,7 @@ from typing import Any
 
 from mongoeco.core.json_compat import get_json_backend_name
 
-from benchmarks.run import WORKLOAD_ORDER, run_benchmarks, resolve_workload_names
+from benchmarks.run import WORKLOAD_ORDER, WORKLOADS, run_benchmarks, resolve_workload_names
 
 
 def _git_revision(project_root: Path) -> str | None:
@@ -171,8 +171,23 @@ def render_markdown_report(
                         f"{metrics['rss_peak_max_mb']:.2f} |"
                     )
                     if isinstance(metadata, dict):
-                        for key in ("query_shape", "pipeline_shape", "consumption_mode", "selectivity", "streaming_batch_execution", "remaining_stage_count", "planning_mode"):
-                            if key in metadata:
+                        for key in (
+                            "query_shape",
+                            "pipeline_shape",
+                            "consumption_mode",
+                            "selectivity",
+                            "streaming_batch_execution",
+                            "remaining_stage_count",
+                            "planning_mode",
+                            "query_operator",
+                            "similarity",
+                            "mode",
+                            "filter_mode",
+                            "exact_fallback_reason",
+                            "candidates_requested",
+                            "candidates_evaluated",
+                        ):
+                            if key in metadata and metadata[key] is not None:
                                 metadata_notes.append(f"- `{engine_name}` `{key}`: `{metadata[key]}`")
                     continue
                 baseline_metrics = _baseline_lookup(
@@ -197,8 +212,23 @@ def render_markdown_report(
                     f"{metrics['rss_peak_max_mb']:.2f} |"
                 )
                 if isinstance(metadata, dict):
-                    for key in ("query_shape", "pipeline_shape", "consumption_mode", "selectivity", "streaming_batch_execution", "remaining_stage_count", "planning_mode"):
-                        if key in metadata:
+                    for key in (
+                        "query_shape",
+                        "pipeline_shape",
+                        "consumption_mode",
+                        "selectivity",
+                        "streaming_batch_execution",
+                        "remaining_stage_count",
+                        "planning_mode",
+                        "query_operator",
+                        "similarity",
+                        "mode",
+                        "filter_mode",
+                        "exact_fallback_reason",
+                        "candidates_requested",
+                        "candidates_evaluated",
+                    ):
+                        if key in metadata and metadata[key] is not None:
                             metadata_notes.append(f"- `{engine_name}` `{key}`: `{metadata[key]}`")
             if metadata_notes:
                 lines.append("")
@@ -238,7 +268,7 @@ def main() -> int:
     parser.add_argument(
         "--workload",
         action="append",
-        choices=list(WORKLOAD_ORDER),
+        choices=sorted(WORKLOADS.keys()),
         help="Run only the selected workload(s). Can be passed multiple times.",
     )
     args = parser.parse_args()

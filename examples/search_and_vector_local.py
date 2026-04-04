@@ -94,18 +94,51 @@ def main() -> None:
                     "$search": {
                         "index": "content_search",
                         "compound": {
-                            "must": [{"text": {"query": "ada", "path": "title"}}],
+                            "must": [
+                                {
+                                    "phrase": {
+                                        "query": "Ada algorithms",
+                                        "path": "title",
+                                    }
+                                }
+                            ],
                             "filter": [
-                                {"exists": {"path": "summary"}},
                                 {"in": {"path": "kind", "value": ["note", "reference"]}},
                                 {"range": {"path": "score", "gte": 9}},
                             ],
+                            "should": [{"exists": {"path": "summary"}}],
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "score": 1, "summary": 1}},
+            ]
+        ).to_list()
+        print("$search compound phrase+in+range results:", search_results)
+        search_explain = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "compound": {
+                            "must": [
+                                {
+                                    "phrase": {
+                                        "query": "Ada algorithms",
+                                        "path": "title",
+                                    }
+                                }
+                            ],
+                            "filter": [
+                                {"in": {"path": "kind", "value": ["note", "reference"]}},
+                                {"range": {"path": "score", "gte": 9}},
+                            ],
+                            "should": [{"exists": {"path": "summary"}}],
                         },
                     }
                 }
             ]
-        ).to_list()
-        print("$search results:", search_results)
+        ).explain()
+        print("$search compound explain operator:", search_explain["engine_plan"]["details"]["queryOperator"])
 
         vector_results = collection.aggregate(
             [
@@ -149,6 +182,10 @@ def main() -> None:
             ]
         ).explain()
         details = vector_explain["engine_plan"]["details"]
+        print("$vectorSearch similarity:", details["similarity"])
+        print("$vectorSearch mode:", details["mode"])
+        print("$vectorSearch numCandidates requested/evaluated:", details["candidatesRequested"], details["candidatesEvaluated"])
+        print("$vectorSearch fallback:", details["exactFallbackReason"])
         print("$vectorSearch prefilter:", details["vectorFilterPrefilter"])
         print("$vectorSearch residual:", details["vectorFilterResidual"])
 

@@ -1750,6 +1750,13 @@ def explain_search_documents_sync(
                 ready_at_epoch=ready_at_epoch,
             ),
             **search_query_explain_details(query),
+            "similarity": (
+                vector_state.similarity
+                if isinstance(query, SearchVectorQuery) and vector_state is not None
+                else query.similarity
+                if isinstance(query, SearchVectorQuery)
+                else None
+            ),
             "fts5_match": decision.fts5_match,
             "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
             "mode": (

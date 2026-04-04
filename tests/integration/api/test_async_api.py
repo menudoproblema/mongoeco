@@ -51,7 +51,9 @@ from tests.integration.api.search_vector_scenarios import (
     assert_boolean_vector_residual_explanation,
     assert_in_equals_and_range_explanations,
     assert_filtered_vector_explanation,
+    assert_phrase_in_range_compound_explanation,
     assert_ranged_vector_explanation,
+    assert_vector_similarity_explanation,
 )
 from tests.integration.api.admin_command_cases import (
     assert_build_info_command_shares_source_of_truth_with_server_info,
@@ -190,6 +192,34 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                     ]
                                 },
                                 name="by_vector",
+                                type="vectorSearch",
+                            ),
+                            SearchIndexModel(
+                                {
+                                    "fields": [
+                                        {
+                                            "type": "vector",
+                                            "path": "embedding",
+                                            "numDimensions": 3,
+                                            "similarity": "dotProduct",
+                                        }
+                                    ]
+                                },
+                                name="by_vector_dot",
+                                type="vectorSearch",
+                            ),
+                            SearchIndexModel(
+                                {
+                                    "fields": [
+                                        {
+                                            "type": "vector",
+                                            "path": "embedding",
+                                            "numDimensions": 3,
+                                            "similarity": "euclidean",
+                                        }
+                                    ]
+                                },
+                                name="by_vector_euclidean",
                                 type="vectorSearch",
                             ),
                         ]
@@ -387,6 +417,58 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             ).explain()
                         )["engine_plan"]["details"]["compound"]["filterOperators"],
                         ["exists", "in", "range"],
+                    )
+                    phrase_compound_hits = await collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [
+                                            {
+                                                "phrase": {
+                                                    "query": "Ada wrote the first algorithm",
+                                                    "path": "body",
+                                                }
+                                            }
+                                        ],
+                                        "filter": [
+                                            {"in": {"path": "kind", "value": ["note", "reference"]}},
+                                            {"range": {"path": "score", "gte": 9}},
+                                        ],
+                                        "should": [{"exists": {"path": "summary"}}],
+                                    },
+                                }
+                            }
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in phrase_compound_hits], [3])
+                    assert_phrase_in_range_compound_explanation(
+                        self,
+                        await collection.aggregate(
+                            [
+                                {
+                                    "$search": {
+                                        "index": "by_text",
+                                        "compound": {
+                                            "must": [
+                                                {
+                                                    "phrase": {
+                                                        "query": "Ada wrote the first algorithm",
+                                                        "path": "body",
+                                                    }
+                                                }
+                                            ],
+                                            "filter": [
+                                                {"in": {"path": "kind", "value": ["note", "reference"]}},
+                                                {"range": {"path": "score", "gte": 9}},
+                                            ],
+                                            "should": [{"exists": {"path": "summary"}}],
+                                        },
+                                    }
+                                }
+                            ]
+                        ).explain(),
                     )
                     if engine_name == "sqlite":
                         self.assertEqual(compound_explanation["engine_plan"]["details"]["backend"], "fts5-prefilter")
@@ -677,6 +759,45 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     else:
                         self.assertEqual(vector_explanation["engine_plan"]["details"]["backend"], "python")
                     self.assertEqual(vector_explanation["engine_plan"]["details"]["path"], "embedding")
+                    assert_vector_similarity_explanation(
+                        self,
+                        vector_explanation,
+                        expected_similarity="cosine",
+                    )
+                    assert_vector_similarity_explanation(
+                        self,
+                        await collection.aggregate(
+                            [
+                                {
+                                    "$vectorSearch": {
+                                        "index": "by_vector_dot",
+                                        "path": "embedding",
+                                        "queryVector": [1.0, 0.0, 0.0],
+                                        "limit": 2,
+                                        "numCandidates": 3,
+                                    }
+                                }
+                            ]
+                        ).explain(),
+                        expected_similarity="dotProduct",
+                    )
+                    assert_vector_similarity_explanation(
+                        self,
+                        await collection.aggregate(
+                            [
+                                {
+                                    "$vectorSearch": {
+                                        "index": "by_vector_euclidean",
+                                        "path": "embedding",
+                                        "queryVector": [1.0, 0.0, 0.0],
+                                        "limit": 2,
+                                        "numCandidates": 3,
+                                    }
+                                }
+                            ]
+                        ).explain(),
+                        expected_similarity="euclidean",
+                    )
 
                     filtered_vector_explanation = await collection.aggregate(
                         [

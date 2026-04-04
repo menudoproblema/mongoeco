@@ -98,6 +98,10 @@ Esto implica:
   `candidateExpansionStrategy="adaptive-retention"` en `explain()` para dejar
   visible que la expansion ANN posterior al filtro ya no usa una heuristica
   fija.
+* `vectorSearch` deja visible en `explain()` la `similarity` efectiva del
+  indice, los candidatos realmente pedidos/evaluados (`candidatesRequested` /
+  `candidatesEvaluated`) y `exactFallbackReason` cuando la ruta ANN degradada
+  tiene que caer al baseline exacto.
 * para filtros simples (`eq`, `$in`, `$exists`, `range`) sobre paths escalares
   ya vistos por el backend vectorial materializado, `vectorSearch` puede
   aplicar tambien `vectorFilterPrefilter` antes del ranking ANN/documental; si

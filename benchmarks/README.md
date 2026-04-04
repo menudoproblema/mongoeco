@@ -42,7 +42,8 @@ Each group is designed to answer a specific question:
   backend (`fts5`, materialized prefilter paths or Python fallback), including
   hybrid `compound` and `compound+near` shapes
 - vector diagnostics isolate local ANN-backed `$vectorSearch` and the extra
-  cost of post-candidate filtering
+  cost of post-candidate filtering, while surfacing `similarity`,
+  `numCandidates`, candidate counts and exact fallback metadata
 
 The harness measures end-to-end API calls, not internal operators in isolation.
 That is deliberate: it lets us catch planner, materialization, codec, cursor
@@ -208,6 +209,31 @@ python -m benchmarks.run \
   --workload search_diagnostics \
   --workload vector_search_diagnostics \
   --format table
+```
+
+What to look at in the vector metadata:
+
+- `similarity`: metric configured by the vector index (`cosine`,
+  `dotProduct`, `euclidean`)
+- `candidates_requested` / `candidates_evaluated`: how much work the engine
+  really did for the chosen `numCandidates`
+- `exact_fallback_reason`: whether filtered ANN had to degrade to exact
+  ranking, for example under candidate underflow
+- `vector_filter_prefilter` / `vector_filter_residual`: which part of a filter
+  became candidateable and which part still needed documentary validation
+
+Public-facing search/vector snapshot:
+
+```bash
+python -m benchmarks.report \
+  --engine all \
+  --size 1000 \
+  --warmup 0 \
+  --repetitions 3 \
+  --workload search_diagnostics \
+  --workload vector_search_diagnostics \
+  --output-json benchmarks/reports/search-vector-product-1000.json \
+  --output-markdown benchmarks/reports/search-vector-product-1000.md
 ```
 
 These workload groups are not part of the default community matrix yet,

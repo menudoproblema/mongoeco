@@ -296,6 +296,13 @@ async def explain_search_documents(
                 ready_at_epoch=engine._search_index_ready_at.get((db_name, coll_name, query.index_name)),
             ),
             **search_query_explain_details(query),
+            "similarity": (
+                str(vector_index.vector_specs.get(query.path, {}).get("similarity", query.similarity))
+                if isinstance(query, SearchVectorQuery) and vector_index is not None
+                else query.similarity
+                if isinstance(query, SearchVectorQuery)
+                else None
+            ),
             "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
             "filterMode": (
                 "candidate-prefilter"

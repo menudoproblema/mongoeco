@@ -81,6 +81,7 @@ def _summarize_search_explain(explain: dict[str, Any]) -> dict[str, Any]:
     summary["query_operator"] = details.get("queryOperator")
     summary["backend"] = details.get("backend")
     summary["mode"] = details.get("mode")
+    summary["similarity"] = details.get("similarity")
     summary["filter_mode"] = details.get("filterMode")
     summary["exact_fallback_reason"] = details.get("exactFallbackReason")
     summary["candidates_evaluated"] = details.get("candidatesEvaluated")
@@ -94,6 +95,7 @@ def _summarize_search_explain(explain: dict[str, Any]) -> dict[str, Any]:
     summary["compound_prefilter"] = details.get("compoundPrefilter")
     summary["downstream_filter_prefilter"] = details.get("downstreamFilterPrefilter")
     summary["vector_filter_prefilter"] = details.get("vectorFilterPrefilter")
+    summary["vector_filter_residual"] = details.get("vectorFilterResidual")
     summary["candidate_expansion_strategy"] = details.get("candidateExpansionStrategy")
     summary["documents_scanned"] = details.get("documentsScanned")
     summary["documents_scanned_after_prefilter"] = details.get("documentsScannedAfterPrefilter")
@@ -992,6 +994,10 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
 def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
     """Mide ANN local y el coste adicional del filtro post-candidato."""
     ann_metrics: list[Metrics] = []
+    ann_low_candidates_metrics: list[Metrics] = []
+    ann_high_candidates_metrics: list[Metrics] = []
+    dot_metrics: list[Metrics] = []
+    euclidean_metrics: list[Metrics] = []
     filtered_metrics: list[Metrics] = []
     filtered_boolean_metrics: list[Metrics] = []
     filtered_underflow_metrics: list[Metrics] = []
@@ -1014,14 +1020,96 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                     }
                 ]
             },
-            name="by_vector",
+            name="by_vector_cosine",
+            index_type="vectorSearch",
+        )
+        engine.create_search_index(
+            db_name,
+            coll_name,
+            {
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": 3,
+                        "similarity": "dotProduct",
+                        "connectivity": 8,
+                        "expansionAdd": 16,
+                        "expansionSearch": 24,
+                    }
+                ]
+            },
+            name="by_vector_dot",
+            index_type="vectorSearch",
+        )
+        engine.create_search_index(
+            db_name,
+            coll_name,
+            {
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": 3,
+                        "similarity": "euclidean",
+                        "connectivity": 8,
+                        "expansionAdd": 16,
+                        "expansionSearch": 24,
+                    }
+                ]
+            },
+            name="by_vector_euclidean",
             index_type="vectorSearch",
         )
 
         ann_pipeline = [
             {
                 "$vectorSearch": {
-                    "index": "by_vector",
+                    "index": "by_vector_cosine",
+                    "path": "embedding",
+                    "queryVector": [1.0, 0.0, 0.0],
+                    "numCandidates": 24,
+                    "limit": 10,
+                }
+            }
+        ]
+        ann_low_candidates_pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": "by_vector_cosine",
+                    "path": "embedding",
+                    "queryVector": [1.0, 0.0, 0.0],
+                    "numCandidates": 10,
+                    "limit": 10,
+                }
+            }
+        ]
+        ann_high_candidates_pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": "by_vector_cosine",
+                    "path": "embedding",
+                    "queryVector": [1.0, 0.0, 0.0],
+                    "numCandidates": 48,
+                    "limit": 10,
+                }
+            }
+        ]
+        dot_pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": "by_vector_dot",
+                    "path": "embedding",
+                    "queryVector": [1.0, 0.0, 0.0],
+                    "numCandidates": 24,
+                    "limit": 10,
+                }
+            }
+        ]
+        euclidean_pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": "by_vector_euclidean",
                     "path": "embedding",
                     "queryVector": [1.0, 0.0, 0.0],
                     "numCandidates": 24,
@@ -1032,7 +1120,7 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
         filtered_pipeline = [
             {
                 "$vectorSearch": {
-                    "index": "by_vector",
+                    "index": "by_vector_cosine",
                     "path": "embedding",
                     "queryVector": [1.0, 0.0, 0.0],
                     "numCandidates": 24,
@@ -1044,7 +1132,7 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
         filtered_boolean_pipeline = [
             {
                 "$vectorSearch": {
-                    "index": "by_vector",
+                    "index": "by_vector_cosine",
                     "path": "embedding",
                     "queryVector": [1.0, 0.0, 0.0],
                     "numCandidates": 24,
@@ -1061,7 +1149,7 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
         filtered_underflow_pipeline = [
             {
                 "$vectorSearch": {
-                    "index": "by_vector",
+                    "index": "by_vector_cosine",
                     "path": "embedding",
                     "queryVector": [1.0, 0.0, 0.0],
                     "numCandidates": 10,
@@ -1088,6 +1176,58 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                         engine.explain_aggregate(db_name, coll_name, ann_pipeline)
                     ),
                     "query_shape": "$vectorSearch cosine topk",
+                },
+            ),
+            "vector_search_cosine_low_candidates_topk_100": _measure_single_task(
+                ann_low_candidates_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, ann_low_candidates_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, ann_low_candidates_pipeline)
+                    ),
+                    "query_shape": "$vectorSearch cosine topk + numCandidates(10)",
+                },
+            ),
+            "vector_search_cosine_high_candidates_topk_100": _measure_single_task(
+                ann_high_candidates_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, ann_high_candidates_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, ann_high_candidates_pipeline)
+                    ),
+                    "query_shape": "$vectorSearch cosine topk + numCandidates(48)",
+                },
+            ),
+            "vector_search_dot_product_topk_100": _measure_single_task(
+                dot_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, dot_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, dot_pipeline)
+                    ),
+                    "query_shape": "$vectorSearch dotProduct topk",
+                },
+            ),
+            "vector_search_euclidean_topk_100": _measure_single_task(
+                euclidean_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, euclidean_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, euclidean_pipeline)
+                    ),
+                    "query_shape": "$vectorSearch euclidean topk",
                 },
             ),
             "vector_search_filtered_topk_100": _measure_single_task(
