@@ -1644,6 +1644,7 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         "search_result_limit_hint": compound_candidateable_should_matched_limited_explain["pushdown"]["searchResultLimitHint"],
                         "topk_strategy": compound_candidateable_should_matched_limited_explain["pushdown"]["searchTopKStrategy"],
                         "growth_strategy": compound_candidateable_should_matched_limited_explain["pushdown"]["searchTopKGrowthStrategy"],
+                        "downstream_filter_prefilter": compound_candidateable_should_matched_limited_explain["engine_plan"]["details"]["downstreamFilterPrefilter"],
                     },
                     "vector_explain": {
                         "hint": vector_explain["hint"],

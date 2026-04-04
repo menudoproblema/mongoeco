@@ -159,6 +159,24 @@ class AsyncAggregationCursor:
         return output_cap
 
     @staticmethod
+    def _leading_search_downstream_filter_spec(pipeline: Pipeline) -> dict[str, object] | None:
+        clauses: list[dict[str, object]] = []
+        for stage in pipeline:
+            if not isinstance(stage, dict) or len(stage) != 1:
+                break
+            operator, spec = next(iter(stage.items()))
+            if operator != "$match":
+                break
+            if not isinstance(spec, dict):
+                return None
+            clauses.append(deepcopy(spec))
+        if not clauses:
+            return None
+        if len(clauses) == 1:
+            return clauses[0]
+        return {"$and": clauses}
+
+    @staticmethod
     def _next_search_prefix_fetch_limit(
         current_fetch_limit: int,
         fetched_count: int,
@@ -267,6 +285,7 @@ class AsyncAggregationCursor:
         operator, spec = leading_search
         effective_pipeline, writeback_stage = self._split_terminal_writeback_stage(self._effective_pipeline())
         result_limit_hint = None if writeback_stage is not None else self._search_result_limit_hint(effective_pipeline)
+        downstream_filter_spec = self._leading_search_downstream_filter_spec(effective_pipeline)
         search_documents = getattr(self._collection._engine, "search_documents", None)
         if not callable(search_documents):
             raise OperationFailure(f"{operator} is not supported by this engine")
@@ -278,6 +297,7 @@ class AsyncAggregationCursor:
             max_time_ms=self._max_time_ms,
             context=self._session,
             result_limit_hint=result_limit_hint,
+            downstream_filter_spec=downstream_filter_spec,
         )
 
     async def _materialize_leading_search_pipeline(
@@ -293,6 +313,7 @@ class AsyncAggregationCursor:
         output_limit = self._search_prefix_output_limit(pipeline)
         if output_limit is None:
             return await self._search_documents(), pipeline
+        downstream_filter_spec = self._leading_search_downstream_filter_spec(pipeline)
 
         leading_search = self._leading_search_stage()
         if leading_search is None:
@@ -316,6 +337,7 @@ class AsyncAggregationCursor:
                 max_time_ms=self._max_time_ms,
                 context=self._session,
                 result_limit_hint=fetch_limit,
+                downstream_filter_spec=downstream_filter_spec,
             )
             transformed = apply_pipeline(
                 documents,
@@ -817,6 +839,7 @@ class AsyncAggregationCursor:
                 "searchTopKGrowthStrategy": (
                     "adaptive-retention" if result_limit_hint is None and prefix_output_limit is not None else None
                 ),
+                "searchDownstreamFilterPrefilter": self._leading_search_downstream_filter_spec(remaining_pipeline) is not None,
             }
             explain_search_documents = getattr(
                 self._collection._engine,
@@ -832,6 +855,7 @@ class AsyncAggregationCursor:
                     max_time_ms=self._max_time_ms,
                     context=self._session,
                     result_limit_hint=effective_limit_hint,
+                    downstream_filter_spec=self._leading_search_downstream_filter_spec(remaining_pipeline),
                 )
             else:
                 engine_plan = QueryPlanExplanation(

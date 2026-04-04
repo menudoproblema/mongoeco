@@ -3897,6 +3897,7 @@ class SQLiteEngine(AsyncStorageEngine):
         physical_name: str | None,
         deadline: float | None,
         result_limit_hint: int | None = None,
+        downstream_filter_spec: dict[str, object] | None = None,
     ) -> list[Document]:
         return _sqlite_execute_search_query(
             self,
@@ -3908,6 +3909,7 @@ class SQLiteEngine(AsyncStorageEngine):
             physical_name,
             deadline,
             result_limit_hint,
+            downstream_filter_spec,
         )
 
     def _search_documents_sync(
@@ -3919,6 +3921,7 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None,
         context: ClientSession | None,
         result_limit_hint: int | None = None,
+        downstream_filter_spec: dict[str, object] | None = None,
     ) -> list[Document]:
         with self._lock:
             return _sqlite_search_documents_sync(
@@ -3930,6 +3933,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 max_time_ms,
                 context,
                 result_limit_hint,
+                downstream_filter_spec,
             )
 
     def _explain_search_documents_sync(
@@ -3941,6 +3945,7 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None,
         context: ClientSession | None,
         result_limit_hint: int | None = None,
+        downstream_filter_spec: dict[str, object] | None = None,
     ) -> QueryPlanExplanation:
         with self._lock:
             return _sqlite_explain_search_documents_sync(
@@ -3952,6 +3957,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 max_time_ms,
                 context,
                 result_limit_hint,
+                downstream_filter_spec,
             )
 
     def _list_databases_sync(self, context: ClientSession | None = None) -> list[str]:
@@ -4514,6 +4520,7 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
         result_limit_hint: int | None = None,
+        downstream_filter_spec: dict[str, object] | None = None,
     ) -> list[Document]:
         return await self._run_blocking(
             self._search_documents_sync,
@@ -4524,6 +4531,7 @@ class SQLiteEngine(AsyncStorageEngine):
             max_time_ms,
             context,
             result_limit_hint,
+            downstream_filter_spec,
         )
 
     async def explain_search_documents(
@@ -4536,6 +4544,7 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
         result_limit_hint: int | None = None,
+        downstream_filter_spec: dict[str, object] | None = None,
     ) -> QueryPlanExplanation:
         return await self._run_blocking(
             self._explain_search_documents_sync,
@@ -4546,6 +4555,7 @@ class SQLiteEngine(AsyncStorageEngine):
             max_time_ms,
             context,
             result_limit_hint,
+            downstream_filter_spec,
         )
 
     @override

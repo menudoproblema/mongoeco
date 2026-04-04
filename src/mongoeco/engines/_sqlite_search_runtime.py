@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from copy import deepcopy
 import sqlite3
 import time
 from typing import Any, Protocol
@@ -902,6 +903,7 @@ def execute_sqlite_search_query(
     physical_name: str | None,
     deadline: float | None,
     result_limit_hint: int | None,
+    downstream_filter_spec: dict[str, object] | None,
 ) -> list[Document]:
     resolved_physical_name = ensure_search_backend_sync(
         engine,
@@ -944,6 +946,12 @@ def execute_sqlite_search_query(
             )
             if exact_fallback_reason is None:
                 enforce_deadline(deadline)
+                if downstream_filter_spec is not None:
+                    filtered_documents = [
+                        document
+                        for document in filtered_documents
+                        if QueryEngine.match(document, downstream_filter_spec, dialect=MONGODB_DIALECT_70)
+                    ]
                 effective_limit = min(query.limit, result_limit_hint) if result_limit_hint is not None else query.limit
                 return filtered_documents[:effective_limit]
         exact_hits = exact_vector_hits_sync(engine, db_name, coll_name, definition, query)
@@ -1010,14 +1018,23 @@ def execute_sqlite_search_query(
                         materialize_search_document(document, definition),
                     )
                     for _storage_key, document in candidate_documents
+                    if downstream_filter_spec is None
+                    or QueryEngine.match(document, downstream_filter_spec, dialect=MONGODB_DIALECT_70)
                 ]
                 sorted_documents = _sort_search_documents_for_query(exact_documents, query=query)
                 return sorted_documents[:result_limit_hint] if result_limit_hint is not None else sorted_documents
-            documents = [document for _storage_key, document in candidate_documents]
+            documents = [
+                document
+                for _storage_key, document in candidate_documents
+                if downstream_filter_spec is None
+                or QueryEngine.match(document, downstream_filter_spec, dialect=MONGODB_DIALECT_70)
+            ]
             return documents[:result_limit_hint] if result_limit_hint is not None else documents
         filtered_documents = [
             (document, definition, materialized_search_document)
             for _storage_key, document in candidate_documents
+            if downstream_filter_spec is None
+            or QueryEngine.match(document, downstream_filter_spec, dialect=MONGODB_DIALECT_70)
             if (
                 materialized_search_document := materialize_search_document(document, definition)
             ) is not None
@@ -1035,6 +1052,8 @@ def execute_sqlite_search_query(
     documents = [
         (document, definition, materialized_search_document)
         for _, document in engine._load_documents(db_name, coll_name)
+        if downstream_filter_spec is None
+        or QueryEngine.match(document, downstream_filter_spec, dialect=MONGODB_DIALECT_70)
         if (
             materialized_search_document := materialize_search_document(document, definition)
         ) is not None
@@ -1059,6 +1078,7 @@ def search_documents_sync(
     max_time_ms: int | None,
     context: ClientSession | None,
     result_limit_hint: int | None,
+    downstream_filter_spec: dict[str, object] | None,
 ) -> list[Document]:
     deadline = operation_deadline(max_time_ms)
     conn = engine._require_connection(context)
@@ -1088,6 +1108,7 @@ def search_documents_sync(
                 physical_name,
                 deadline,
                 current_limit_hint,
+                downstream_filter_spec,
             ),
             result_limit_hint=result_limit_hint,
         )
@@ -1102,6 +1123,7 @@ def explain_search_documents_sync(
     max_time_ms: int | None,
     context: ClientSession | None,
     result_limit_hint: int | None,
+    downstream_filter_spec: dict[str, object] | None,
 ) -> QueryPlanExplanation:
     query = compile_search_stage(operator, spec)
     ready_at_epoch: float | None = None
@@ -1295,6 +1317,7 @@ def explain_search_documents_sync(
             "compoundPrefilter": compound_prefilter,
             "topKLimitHint": result_limit_hint,
             "topKPrefilter": topk_prefilter,
+            "downstreamFilterPrefilter": deepcopy(downstream_filter_spec) if downstream_filter_spec is not None else None,
             "exactFallbackReason": exact_fallback_reason,
             "candidatesEvaluated": (
                 candidates_evaluated

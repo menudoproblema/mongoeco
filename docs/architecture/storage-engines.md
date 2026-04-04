@@ -171,6 +171,10 @@ En search existe ya otra frontera explicita por capas:
   conjunto completo si la ventana posterior ya esta satisfecha.
 - esa expansion usa ya crecimiento adaptativo guiado por la tasa de retencion
   observada, en vez de un doblado fijo por iteracion.
+- SQLite puede ademas aplicar un `downstreamFilterPrefilter` exacto cuando la
+  pipeline posterior a `$search` empieza por `$match`; con eso reduce el coste
+  del ranking final sin alterar el orden observable de los documentos que
+  sobreviven a ese filtro.
 
 Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
 ruta de ejecucion, en la de `explain()` y en el lifecycle documental de los

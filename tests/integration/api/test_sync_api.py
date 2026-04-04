@@ -500,7 +500,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     },
                                 }
                             },
-                            {"$match": {"_id": 2}},
+                            {"$match": {"_id": 3}},
                             {"$project": {"_id": 1}},
                             {"$limit": 1},
                         ]
@@ -518,8 +518,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         "adaptive-retention",
                     )
                     self.assertEqual(
+                        compound_candidateable_should_matched_limited_explanation["pushdown"]["searchDownstreamFilterPrefilter"],
+                        True,
+                    )
+                    self.assertEqual(
                         compound_candidateable_should_matched_limited_explanation["engine_plan"]["details"]["topKLimitHint"],
                         1,
+                    )
+                    self.assertEqual(
+                        compound_candidateable_should_matched_limited_explanation["engine_plan"]["details"]["downstreamFilterPrefilter"],
+                        {"_id": 3},
                     )
 
                     compound_candidateable_should_matched_limited_hits = collection.aggregate(
@@ -538,12 +546,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     },
                                 }
                             },
-                            {"$match": {"_id": 2}},
+                            {"$match": {"_id": 3}},
                             {"$project": {"_id": 1}},
                             {"$limit": 1},
                         ]
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in compound_candidateable_should_matched_limited_hits], [2])
+                    self.assertEqual([document["_id"] for document in compound_candidateable_should_matched_limited_hits], [3])
 
                     near_hits = collection.aggregate(
                         [

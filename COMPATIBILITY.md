@@ -64,6 +64,10 @@ Esto implica:
   `searchTopKStrategy`.
 * esa expansion iterativa usa crecimiento adaptativo por tasa de retencion
   observada (`searchTopKGrowthStrategy`), no una heuristica fija opaca.
+* cuando el tramo posterior a `$search` empieza por `$match`, el runtime puede
+  usar ese filtro como `downstreamFilterPrefilter` exacto antes del ranking
+  final; no se promete lo mismo para filtros colocados despues de stages que
+  transformen documentos.
 * la proyeccion avanzada de `find` cubre ya el subconjunto diario mas util
   (`$slice`, `$elemMatch`, proyeccion posicional y `$meta: "textScore"`);
 * `$collStats` existe tanto como comando administrativo como stage de

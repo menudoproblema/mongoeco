@@ -129,6 +129,10 @@ La regla arquitectonica es la misma:
 - esa expansion ya no crece doblando a ciegas: usa `adaptive-retention`,
   estimando el siguiente prefijo a partir de la tasa real de descarte observada
   en iteraciones previas.
+- cuando esa pipeline `prefix-monotonic` empieza con uno o varios `$match`,
+  el runtime puede pasarlos al engine como `downstreamFilterPrefilter` exacto
+  para reducir candidatos antes del ranking final. Ese prefilter no se intenta
+  si el `match` aparece despues de stages transformadores.
 - `near` entra como operador local para numericos y fecha/datetime con
   `path`, `origin` y `pivot`, y mantiene explain/backends explicitos en vez de
   fingir scoring Atlas Search completo.

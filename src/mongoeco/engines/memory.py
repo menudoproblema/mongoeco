@@ -1856,6 +1856,7 @@ class MemoryEngine(AsyncStorageEngine):
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
         result_limit_hint: int | None = None,
+        downstream_filter_spec: dict[str, object] | None = None,
     ) -> list[Document]:
         deadline = operation_deadline(max_time_ms)
         query = compile_search_stage(operator, spec)
@@ -1887,6 +1888,12 @@ class MemoryEngine(AsyncStorageEngine):
             if isinstance(query, SearchNearQuery):
                 distance_hits: list[tuple[float, Document]] = []
                 for document, materialized in materialized_documents:
+                    if downstream_filter_spec is not None and not QueryEngine.match(
+                        document,
+                        downstream_filter_spec,
+                        dialect=MONGODB_DIALECT_70,
+                    ):
+                        continue
                     if not matches_search_query(
                         document,
                         definition=definition,
@@ -1910,6 +1917,12 @@ class MemoryEngine(AsyncStorageEngine):
             if isinstance(query, SearchCompoundQuery) and query.should:
                 ranked_documents: list[tuple[tuple[float, float, float], Document]] = []
                 for document, materialized in materialized_documents:
+                    if downstream_filter_spec is not None and not QueryEngine.match(
+                        document,
+                        downstream_filter_spec,
+                        dialect=MONGODB_DIALECT_70,
+                    ):
+                        continue
                     if not matches_search_query(
                         document,
                         definition=definition,
@@ -1944,6 +1957,12 @@ class MemoryEngine(AsyncStorageEngine):
                 return [document for _score, document in ranked_documents]
             matches: list[Document] = []
             for document, materialized in materialized_documents:
+                if downstream_filter_spec is not None and not QueryEngine.match(
+                    document,
+                    downstream_filter_spec,
+                    dialect=MONGODB_DIALECT_70,
+                ):
+                    continue
                 if not matches_search_query(
                     document,
                     definition=definition,
@@ -1958,6 +1977,12 @@ class MemoryEngine(AsyncStorageEngine):
         documents = [document for document, _materialized in materialized_documents]
         vector_hits: list[tuple[float, Document]] = []
         for document in documents:
+            if downstream_filter_spec is not None and not QueryEngine.match(
+                document,
+                downstream_filter_spec,
+                dialect=MONGODB_DIALECT_70,
+            ):
+                continue
             if query.filter_spec is not None and not QueryEngine.match(
                 document,
                 query.filter_spec,
@@ -1985,6 +2010,7 @@ class MemoryEngine(AsyncStorageEngine):
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
         result_limit_hint: int | None = None,
+        downstream_filter_spec: dict[str, object] | None = None,
     ) -> QueryPlanExplanation:
         query = compile_search_stage(operator, spec)
         async with self._get_lock(db_name, coll_name):
@@ -2025,6 +2051,7 @@ class MemoryEngine(AsyncStorageEngine):
                 **search_query_explain_details(query),
                 "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
                 "topKLimitHint": result_limit_hint,
+                "downstreamFilterPrefilter": deepcopy(downstream_filter_spec) if downstream_filter_spec is not None else None,
             },
         )
 
