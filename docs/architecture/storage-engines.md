@@ -186,6 +186,9 @@ En search existe ya otra frontera explicita por capas:
   puede reconstruir exactamente desde las filas FTS, SQLite puede hacer poda
   top-k por tiers exactos de `matchedShould` + `shouldScore` antes del ranking
   documental final.
+- antes de calcular ese `shouldScore` exacto, SQLite puede recortar primero por
+  tiers de `matchedShould`; como ese campo ya es la primera clave del ranking,
+  esa poda reduce empates y materializacion sin cambiar el orden observable.
 - `compoundPrefilter` deja ya visible la clase de cada clausula
   (`candidateable-exact`, `candidateable-ranking`, `post-match-only`) para que
   esa poda no quede implicita.
@@ -196,6 +199,10 @@ En search existe ya otra frontera explicita por capas:
 - cuando esa poda aplica una ventana finita, `topKPrefilter.cutoffTier`
   identifica el tier exacto o aproximado que ha servido de corte antes de la
   materializacion documental final.
+- cuando entra tambien la poda previa por `matchedShould`, `topKPrefilter`
+  expone `candidateCountBeforePartialRanking`,
+  `candidateCountAfterPartialRanking` y `partialRanking.strategy` para dejar
+  claro cuanto trabajo se evitó antes del score exacto.
 - los prefiltros candidateables de search/vector aceptan ya una booleana local
   conservadora:
   - `$and` puede intersectar la parte soportada aunque queden ramas no

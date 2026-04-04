@@ -78,6 +78,10 @@ Esto implica:
   calcular score exacto desde FTS, SQLite puede podar por tiers exactos de
   `matchedShould` + `shouldScore` antes de cargar documentos completos; esa
   poda aparece en `topKPrefilter.strategy`.
+* antes de ese score exacto, SQLite puede recortar primero por tiers de
+  `matchedShould`; `topKPrefilter` deja visible ese paso con
+  `candidateCountBeforePartialRanking`, `candidateCountAfterPartialRanking` y
+  `partialRanking.strategy`.
 * `compoundPrefilter` deja visible la clase de cada clausula
   (`candidateable-exact`, `candidateable-ranking`, `post-match-only`) y
   `topKPrefilter.cutoffTier` expone el tier usado para el corte.

@@ -950,6 +950,12 @@ def _prune_candidate_storage_keys_for_topk(
                 return candidate_storage_keys, None
             resolved_should_candidates.append(storage_keys)
 
+    coarse_prefiltered_keys, matched_should_cutoff = _prefilter_candidate_storage_keys_by_matched_should(
+        candidate_storage_keys,
+        resolved_should_candidates,
+        result_limit_hint=result_limit_hint,
+    )
+    exact_score_input_keys = coarse_prefiltered_keys or candidate_storage_keys
     exact_should_scores = _exact_candidateable_should_scores(
         engine,
         conn,
@@ -957,7 +963,7 @@ def _prune_candidate_storage_keys_for_topk(
         coll_name=coll_name,
         physical_name=physical_name,
         query=query,
-        candidate_storage_keys=candidate_storage_keys,
+        candidate_storage_keys=exact_score_input_keys,
     )
     if exact_should_scores is not None:
         selected: set[str] = set()
@@ -976,7 +982,7 @@ def _prune_candidate_storage_keys_for_topk(
         for tier_key in exact_tiers:
             tier = [
                 storage_key
-                for storage_key in candidate_storage_keys
+                for storage_key in exact_score_input_keys
                 if (
                     exact_should_scores[storage_key]["matchedShould"],
                     round(float(exact_should_scores[storage_key]["shouldScore"]), 12),
@@ -991,7 +997,7 @@ def _prune_candidate_storage_keys_for_topk(
                 break
         pruned = [
             storage_key
-            for storage_key in candidate_storage_keys
+            for storage_key in exact_score_input_keys
             if storage_key in selected
         ]
         if len(pruned) < before_count:
@@ -1007,6 +1013,12 @@ def _prune_candidate_storage_keys_for_topk(
                     "cutoffTier": {
                         "matchedShould": cutoff[0] if cutoff is not None else None,
                         "shouldScore": cutoff[1] if cutoff is not None else None,
+                    },
+                    "candidateCountBeforePartialRanking": before_count,
+                    "candidateCountAfterPartialRanking": len(exact_score_input_keys),
+                    "partialRanking": {
+                        "strategy": "matched-should-prefilter+exact-should-score-tier",
+                        "matchedShouldCutoff": matched_should_cutoff,
                     },
                 },
             )
@@ -1142,6 +1154,54 @@ def _prune_candidate_storage_keys_with_candidateable_ranking(
         if storage_key in selected
     ]
     return pruned, cutoff_matched_should
+
+
+def _prefilter_candidate_storage_keys_by_matched_should(
+    candidate_storage_keys: list[str],
+    should_candidates: list[list[str]],
+    *,
+    result_limit_hint: int,
+) -> tuple[list[str] | None, int | None]:
+    if not should_candidates or result_limit_hint <= 0:
+        return None, None
+    candidate_set = set(candidate_storage_keys)
+    match_counts: Counter[str] = Counter()
+    for candidate_list in should_candidates:
+        seen_in_clause: set[str] = set()
+        for storage_key in candidate_list:
+            if storage_key not in candidate_set or storage_key in seen_in_clause:
+                continue
+            seen_in_clause.add(storage_key)
+            match_counts[storage_key] += 1
+    if not match_counts:
+        return None, None
+    selected: set[str] = set()
+    selected_count = 0
+    cutoff_matched_should: int | None = None
+    for matched_should in sorted(
+        {match_counts.get(storage_key, 0) for storage_key in candidate_storage_keys},
+        reverse=True,
+    ):
+        tier = [
+            storage_key
+            for storage_key in candidate_storage_keys
+            if match_counts.get(storage_key, 0) == matched_should
+        ]
+        if not tier:
+            continue
+        selected.update(tier)
+        selected_count += len(tier)
+        cutoff_matched_should = matched_should
+        if selected_count >= result_limit_hint:
+            break
+    prefitered = [
+        storage_key
+        for storage_key in candidate_storage_keys
+        if storage_key in selected
+    ]
+    if len(prefitered) >= len(candidate_storage_keys):
+        return None, cutoff_matched_should
+    return prefitered, cutoff_matched_should
 
 
 def _exact_candidateable_should_scores(

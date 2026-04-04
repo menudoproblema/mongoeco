@@ -15,9 +15,9 @@ The "before" values below are the last stable measurements taken before the broa
 
 | Engine | Workload | Before (s) | After (s) | Notes |
 | --- | --- | ---: | ---: | --- |
-| sqlite-sync | `search_compound_candidateable_should_topk_100` | ~0.86 | 0.4053 | Strong improvement from partial ranking and cached materialized search entries. |
-| sqlite-sync | `search_compound_candidateable_should_matched_topk_100` | ~0.81 | 0.4865 | Downstream `$match` candidateability and clause refinement cut ranking work materially. |
-| sqlite-sync | `search_compound_candidateable_should_title_topk_100` | ~0.65 | 0.4434 | Title/path-specific downstream refinement now prunes earlier. |
+| sqlite-sync | `search_compound_candidateable_should_topk_100` | ~0.86 | 0.3801 | Strong improvement from partial ranking, cached materialized search entries and pre-cut by `matchedShould` tiers. |
+| sqlite-sync | `search_compound_candidateable_should_matched_topk_100` | ~0.81 | 0.4470 | Downstream `$match` candidateability, clause refinement and pre-cut by `matchedShould` reduce ranking work materially. |
+| sqlite-sync | `search_compound_candidateable_should_title_topk_100` | ~0.65 | 0.4073 | Title/path-specific downstream refinement now prunes earlier, with less exact-score work at the cutoff tier. |
 | sqlite-sync | `search_compound_candidateable_should_msm2_topk_100` | n/a | 0.3987 | New diagnostic workload for a harder `minimumShouldMatch` case. |
 | memory-sync | `search_compound_candidateable_should_matched_topk_100` | ~0.41 | 0.3080 | Candidateable downstream filters and stronger pruning improved the baseline engine. |
 | memory-sync | `search_compound_candidateable_should_title_topk_100` | ~0.19 | 0.1980 | Roughly stable; no meaningful regression. |
@@ -31,6 +31,7 @@ The "before" values below are the last stable measurements taken before the broa
 ## Reading
 
 - The biggest win in this round is `SQLite compound` with broad `should` clauses.
+- The latest sub-round specifically improved the broad-`should` path by discarding lower `matchedShould` tiers before computing exact `shouldScore`.
 - `MemoryEngine` improved meaningfully on `compound + downstream match`.
 - `Memory vectorSearch` improved on filtered runs, but pure ANN top-k remains comparatively expensive.
 - `SQLite vectorSearch` remains fast on normal filtered cases, but still shows a visible long-tail outlier when candidate prefiltering underflows and exact fallback is forced.

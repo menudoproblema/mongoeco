@@ -473,6 +473,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["cutoffTier"]["matchedShould"],
                             2,
                         )
+                        self.assertEqual(
+                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["partialRanking"]["strategy"],
+                            "matched-should-prefilter+exact-should-score-tier",
+                        )
+                        self.assertGreaterEqual(
+                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["candidateCountBeforePartialRanking"],
+                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["candidateCountAfterPartialRanking"],
+                        )
                         self.assertLess(
                             compound_candidateable_should_limited_explanation["engine_plan"]["details"]["candidateCount"],
                             compound_candidateable_should_limited_explanation["engine_plan"]["details"]["candidateCountBeforeTopK"],

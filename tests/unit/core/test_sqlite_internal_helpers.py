@@ -1185,6 +1185,30 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         ),
                         ([engine._storage_key(1)], 1),
                     )
+                    self.assertEqual(
+                        search_runtime_module._prefilter_candidate_storage_keys_by_matched_should(
+                            [
+                                engine._storage_key(1),
+                                engine._storage_key(2),
+                                engine._storage_key(3),
+                            ],
+                            [
+                                [engine._storage_key(1), engine._storage_key(2)],
+                                [engine._storage_key(1)],
+                                [engine._storage_key(2), engine._storage_key(3)],
+                            ],
+                            result_limit_hint=1,
+                        ),
+                        ([engine._storage_key(1), engine._storage_key(2)], 2),
+                    )
+                    self.assertEqual(
+                        search_runtime_module._prefilter_candidate_storage_keys_by_matched_should(
+                            [engine._storage_key(1)],
+                            [],
+                            result_limit_hint=1,
+                        ),
+                        (None, None),
+                    )
 
                     self.assertIsNone(
                         search_runtime_module._exact_candidateable_should_scores(
