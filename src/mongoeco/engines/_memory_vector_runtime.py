@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 import numpy as np
 
@@ -40,6 +41,7 @@ class MaterializedVectorIndex:
     vector_row_exists_filter_index: dict[str, dict[str, frozenset[int]]]
     vector_row_scalar_filter_index: dict[str, dict[str, dict[_FilterValueKey, frozenset[int]]]]
     vector_row_scalar_values_by_path: dict[str, dict[str, tuple[tuple[int, _FilterValueKey], ...]]]
+    vector_row_filter_cache: dict[tuple[str, str], tuple[tuple[int, ...] | None, dict[str, object] | None]]
 
 
 def build_materialized_vector_index(
@@ -156,6 +158,7 @@ def build_materialized_vector_index(
         vector_row_exists_filter_index=vector_row_exists_filter_index,
         vector_row_scalar_filter_index=vector_row_scalar_filter_index,
         vector_row_scalar_values_by_path=vector_row_scalar_values_by_path,
+        vector_row_filter_cache={},
     )
 
 
@@ -203,9 +206,17 @@ def candidate_rows_for_vector_filter(
 ) -> tuple[list[int] | None, dict[str, object] | None]:
     if filter_spec is None:
         return None, None
+    cache_key = (query_path, repr(filter_spec))
+    cached = vector_index.vector_row_filter_cache.get(cache_key)
+    if cached is not None:
+        cached_rows, cached_metadata = cached
+        return (
+            list(cached_rows) if cached_rows is not None else None,
+            deepcopy(cached_metadata) if cached_metadata is not None else None,
+        )
     row_positions = tuple(range(len(vector_index.vector_row_positions.get(query_path, ()))))
     if not row_positions:
-        return [], {
+        metadata = {
             "spec": filter_spec,
             "candidateable": True,
             "exact": True,
@@ -216,6 +227,8 @@ def candidate_rows_for_vector_filter(
             "supportedOperators": [],
             "booleanShape": None,
         }
+        vector_index.vector_row_filter_cache[cache_key] = ((), deepcopy(metadata))
+        return [], metadata
     all_rows = set(row_positions)
     result = evaluate_candidate_filter(
         filter_spec,
@@ -230,7 +243,7 @@ def candidate_rows_for_vector_filter(
         ),
     )
     if result is None or result.matches is None:
-        return None, {
+        metadata = {
             "spec": filter_spec,
             "candidateable": False,
             "exact": False,
@@ -241,7 +254,12 @@ def candidate_rows_for_vector_filter(
             "supportedOperators": [] if result is None else list(result.plan.supported_operators),
             "booleanShape": None if result is None else result.plan.shape,
         }
-    return list(result.matches), result.to_metadata(backend="memory-vector-filter-index")
+        vector_index.vector_row_filter_cache[cache_key] = (None, deepcopy(metadata))
+        return None, metadata
+    metadata = result.to_metadata(backend="memory-vector-filter-index")
+    rows = tuple(result.matches)
+    vector_index.vector_row_filter_cache[cache_key] = (rows, deepcopy(metadata))
+    return list(rows), metadata
 
 
 def vector_scores_for_positions(
