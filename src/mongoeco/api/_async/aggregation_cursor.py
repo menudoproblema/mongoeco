@@ -47,6 +47,14 @@ class AsyncAggregationCursor:
             "$replaceWith",
         }
     )
+    _SEARCH_PREFIX_MONOTONIC_STAGE_OPERATORS = frozenset(
+        _SEARCH_TOPK_SAFE_STAGE_OPERATORS
+        | {
+            "$match",
+            "$skip",
+            "$limit",
+        }
+    )
 
     def __init__(
         self,
@@ -127,6 +135,27 @@ class AsyncAggregationCursor:
         if trailing_limit is None:
             return None
         return trailing_skip + trailing_limit
+
+    @classmethod
+    def _search_prefix_output_limit(cls, pipeline: Pipeline) -> int | None:
+        output_cap: int | None = None
+        seen_limit = False
+        for stage in pipeline:
+            if not isinstance(stage, dict) or len(stage) != 1:
+                return None
+            operator, spec = next(iter(stage.items()))
+            if operator not in cls._SEARCH_PREFIX_MONOTONIC_STAGE_OPERATORS:
+                return None
+            if operator == "$limit":
+                seen_limit = True
+                value = int(spec)
+                output_cap = value if output_cap is None else min(output_cap, value)
+                continue
+            if operator == "$skip" and output_cap is not None:
+                output_cap = max(output_cap - int(spec), 0)
+        if not seen_limit:
+            return None
+        return output_cap
 
     @staticmethod
     def _split_terminal_writeback_stage(pipeline: Pipeline) -> tuple[Pipeline, tuple[str, object] | None]:
@@ -236,6 +265,58 @@ class AsyncAggregationCursor:
             context=self._session,
             result_limit_hint=result_limit_hint,
         )
+
+    async def _materialize_leading_search_pipeline(
+        self,
+        pipeline: Pipeline,
+        *,
+        dialect,
+    ) -> tuple[list[Document], Pipeline]:
+        result_limit_hint = self._search_result_limit_hint(pipeline)
+        if result_limit_hint is not None:
+            return await self._search_documents(), pipeline
+
+        output_limit = self._search_prefix_output_limit(pipeline)
+        if output_limit is None:
+            return await self._search_documents(), pipeline
+
+        leading_search = self._leading_search_stage()
+        if leading_search is None:
+            raise OperationFailure("search stage was not present")
+        operator, spec = leading_search
+        search_documents = getattr(self._collection._engine, "search_documents", None)
+        if not callable(search_documents):
+            raise OperationFailure(f"{operator} is not supported by this engine")
+
+        if output_limit == 0:
+            return [], []
+
+        fetch_limit = max(output_limit, 1)
+        previous_count = -1
+        while True:
+            documents = await search_documents(
+                self._collection._db_name,
+                self._collection._collection_name,
+                operator,
+                spec,
+                max_time_ms=self._max_time_ms,
+                context=self._session,
+                result_limit_hint=fetch_limit,
+            )
+            transformed = apply_pipeline(
+                documents,
+                pipeline,
+                variables=self._let,
+                dialect=dialect,
+                collation=self._collation,
+                spill_policy=self._spill_policy(),
+            )
+            if len(transformed) >= output_limit:
+                return transformed, []
+            if len(documents) == previous_count or len(documents) < fetch_limit:
+                return transformed, []
+            previous_count = len(documents)
+            fetch_limit = max(fetch_limit * 2, fetch_limit + 1)
 
     @staticmethod
     def _split_streamable_pipeline(
@@ -433,8 +514,10 @@ class AsyncAggregationCursor:
         ):
             enforce_deadline(deadline)
             if self._leading_search_stage() is not None:
-                documents = await self._search_documents()
-                remaining_pipeline = pipeline
+                documents, remaining_pipeline = await self._materialize_leading_search_pipeline(
+                    pipeline,
+                    dialect=dialect,
+                )
             else:
                 pushdown = split_pushdown_pipeline(
                     pipeline,
@@ -695,6 +778,8 @@ class AsyncAggregationCursor:
             operator, spec = self._leading_search_stage()
             remaining_pipeline = self._effective_pipeline()
             result_limit_hint = self._search_result_limit_hint(remaining_pipeline)
+            prefix_output_limit = self._search_prefix_output_limit(remaining_pipeline)
+            effective_limit_hint = result_limit_hint if result_limit_hint is not None else prefix_output_limit
             streamable_pipeline = remaining_pipeline
             pushdown_summary = {
                 "mode": "search",
@@ -702,7 +787,14 @@ class AsyncAggregationCursor:
                 "pushedDownStages": 1,
                 "remainingStages": len(remaining_pipeline),
                 "leadingSearchOperator": operator,
-                "searchResultLimitHint": result_limit_hint,
+                "searchResultLimitHint": effective_limit_hint,
+                "searchTopKStrategy": (
+                    "direct-window"
+                    if result_limit_hint is not None
+                    else "prefix-iterative"
+                    if prefix_output_limit is not None
+                    else None
+                ),
             }
             explain_search_documents = getattr(
                 self._collection._engine,
@@ -717,7 +809,7 @@ class AsyncAggregationCursor:
                     spec,
                     max_time_ms=self._max_time_ms,
                     context=self._session,
-                    result_limit_hint=result_limit_hint,
+                    result_limit_hint=effective_limit_hint,
                 )
             else:
                 engine_plan = QueryPlanExplanation(

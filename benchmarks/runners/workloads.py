@@ -75,6 +75,7 @@ def _summarize_search_explain(explain: dict[str, Any]) -> dict[str, Any]:
     summary = _summarize_aggregate_explain(explain)
     engine_plan = explain.get("engine_plan")
     details = engine_plan.get("details") if isinstance(engine_plan, dict) else None
+    pushdown = explain.get("pushdown")
     if not isinstance(details, dict):
         return summary
     summary["query_operator"] = details.get("queryOperator")
@@ -89,6 +90,8 @@ def _summarize_search_explain(explain: dict[str, Any]) -> dict[str, Any]:
     summary["candidate_count_before_topk"] = details.get("candidateCountBeforeTopK")
     summary["topk_limit_hint"] = details.get("topKLimitHint")
     summary["topk_prefilter"] = details.get("topKPrefilter")
+    if isinstance(pushdown, dict):
+        summary["search_topk_strategy"] = pushdown.get("searchTopKStrategy")
     return summary
 
 
@@ -660,6 +663,7 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
     compound_metrics: list[Metrics] = []
     compound_near_metrics: list[Metrics] = []
     compound_candidateable_should_metrics: list[Metrics] = []
+    compound_candidateable_should_matched_metrics: list[Metrics] = []
 
     db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_augment_search_documents)
     try:
@@ -747,6 +751,24 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
             },
             {"$limit": 10},
         ]
+        compound_candidateable_should_matched_pipeline = [
+            {
+                "$search": {
+                    "index": "by_text",
+                    "compound": {
+                        "must": [{"text": {"query": "report 0", "path": ["title", "body"]}}],
+                        "should": [
+                            {"exists": {"path": "title"}},
+                            {"wildcard": {"query": "*vector*", "path": "body"}},
+                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                        ],
+                        "minimumShouldMatch": 1,
+                    },
+                }
+            },
+            {"$match": {"kind": "note"}},
+            {"$limit": 10},
+        ]
 
         return {
             "search_text_topk_100": _measure_single_task(
@@ -829,6 +851,23 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                         )
                     ),
                     "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)",
+                },
+            ),
+            "search_compound_candidateable_should_matched_topk_100": _measure_single_task(
+                compound_candidateable_should_matched_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, compound_candidateable_should_matched_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            compound_candidateable_should_matched_pipeline,
+                        )
+                    ),
+                    "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+match(kind=note)",
                 },
             ),
         }

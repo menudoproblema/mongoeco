@@ -180,6 +180,23 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                 [{"$match": {"kind": "view"}}, {"$limit": 3}]
             )
         )
+        self.assertEqual(
+            AsyncAggregationCursor._search_prefix_output_limit(
+                [{"$match": {"kind": "view"}}, {"$limit": 3}]
+            ),
+            3,
+        )
+        self.assertEqual(
+            AsyncAggregationCursor._search_prefix_output_limit(
+                [{"$limit": 5}, {"$skip": 2}, {"$project": {"_id": 1}}]
+            ),
+            3,
+        )
+        self.assertIsNone(
+            AsyncAggregationCursor._search_prefix_output_limit(
+                [{"$sort": {"rank": 1}}, {"$limit": 3}]
+            )
+        )
 
     async def test_search_helpers_cover_missing_invalid_and_engine_fallback_paths(self):
         collection = _FakeCollection([])
@@ -195,6 +212,36 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaisesRegex(OperationFailure, "search stage was not present"):
             await AsyncAggregationCursor(collection, [])._search_documents()
+
+    async def test_search_materialization_expands_prefix_for_match_then_limit(self):
+        collection = _FakeCollection([])
+        calls: list[int | None] = []
+        search_documents = [
+            {"_id": "1", "kind": "drop"},
+            {"_id": "2", "kind": "drop"},
+            {"_id": "3", "kind": "keep"},
+        ]
+
+        async def _search_documents(*args, **kwargs):
+            del args
+            calls.append(kwargs.get("result_limit_hint"))
+            limit_hint = kwargs.get("result_limit_hint")
+            if isinstance(limit_hint, int) and limit_hint > 0:
+                return search_documents[:limit_hint]
+            return list(search_documents)
+
+        collection._engine.search_documents = _search_documents
+        cursor = AsyncAggregationCursor(
+            collection,
+            [
+                {"$search": {"text": {"query": "keep", "path": "kind"}}},
+                {"$match": {"kind": "keep"}},
+                {"$limit": 1},
+            ],
+        )
+
+        self.assertEqual(await cursor.to_list(), [{"_id": "3", "kind": "keep"}])
+        self.assertEqual(calls, [1, 2, 4])
 
     async def test_allow_disk_use_false_disables_engine_spill_policy(self):
         collection = _FakeCollection([{"_id": "1", "rank": 2}, {"_id": "2", "rank": 1}])

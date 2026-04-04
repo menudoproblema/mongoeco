@@ -58,6 +58,10 @@ Esto implica:
 * cuando una pipeline deja un `skip/limit` seguro tras `$search`, el runtime
   local puede usar ese `top-k` para limitar candidatos y materialización sin
   cambiar el contrato observable.
+* cuando despues de `$search` hay una pipeline `prefix-monotonic` con filtros
+  por documento y una ventana finita, el runtime puede expandir `top-k` de
+  forma iterativa sin perder exactitud; `explain()` lo expone mediante
+  `searchTopKStrategy`.
 * la proyeccion avanzada de `find` cubre ya el subconjunto diario mas util
   (`$slice`, `$elemMatch`, proyeccion posicional y `$meta: "textScore"`);
 * `$collStats` existe tanto como comando administrativo como stage de

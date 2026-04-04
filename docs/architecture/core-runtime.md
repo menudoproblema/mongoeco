@@ -122,6 +122,10 @@ La regla arquitectonica es la misma:
   y una ventana final `skip/limit`, el runtime propaga ese `top-k` seguro al
   engine; en SQLite eso permite recortar candidatos antes de materializar todo
   el conjunto para ranking final.
+- cuando la pipeline posterior a `$search` sigue siendo `prefix-monotonic`
+  pero ya incluye filtros por documento como `$match`, el cursor usa expansion
+  iterativa sobre prefijos ordenados y `explain()` distingue esa ruta con
+  `searchTopKStrategy="prefix-iterative"`.
 - `near` entra como operador local para numericos y fecha/datetime con
   `path`, `origin` y `pivot`, y mantiene explain/backends explicitos en vez de
   fingir scoring Atlas Search completo.

@@ -165,6 +165,10 @@ En search existe ya otra frontera explicita por capas:
 - cuando `aggregate()` deja un `top-k` seguro tras `$search`, SQLite lo usa ya
   como `limit hint` interno para recortar candidatos exactos antes de cargar
   todos los documentos necesarios para el ranking final.
+- cuando ese `top-k` solo puede derivarse despues de filtros por documento
+  (`$match`) pero la pipeline sigue siendo `prefix-monotonic`, SQLite participa
+  en la expansion incremental por prefijos y evita igualmente materializar el
+  conjunto completo si la ventana posterior ya esta satisfecha.
 
 Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
 ruta de ejecucion, en la de `explain()` y en el lifecycle documental de los

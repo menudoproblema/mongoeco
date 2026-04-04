@@ -447,6 +447,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         1,
                     )
                     self.assertEqual(
+                        compound_candidateable_should_limited_explanation["pushdown"]["searchTopKStrategy"],
+                        "direct-window",
+                    )
+                    self.assertEqual(
                         compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKLimitHint"],
                         1,
                     )
@@ -480,6 +484,63 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ]
                     ).to_list()
                     self.assertEqual([document["_id"] for document in compound_candidateable_should_limited_hits], [3])
+
+                    compound_candidateable_should_matched_limited_explanation = await collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "should": [
+                                            {"exists": {"path": "title"}},
+                                            {"wildcard": {"query": "*algorithm*", "path": "body"}},
+                                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                                        ],
+                                        "minimumShouldMatch": 1,
+                                    },
+                                }
+                            },
+                            {"$match": {"_id": 2}},
+                            {"$project": {"_id": 1}},
+                            {"$limit": 1},
+                        ]
+                    ).explain()
+                    self.assertEqual(
+                        compound_candidateable_should_matched_limited_explanation["pushdown"]["searchResultLimitHint"],
+                        1,
+                    )
+                    self.assertEqual(
+                        compound_candidateable_should_matched_limited_explanation["pushdown"]["searchTopKStrategy"],
+                        "prefix-iterative",
+                    )
+                    self.assertEqual(
+                        compound_candidateable_should_matched_limited_explanation["engine_plan"]["details"]["topKLimitHint"],
+                        1,
+                    )
+
+                    compound_candidateable_should_matched_limited_hits = await collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "should": [
+                                            {"exists": {"path": "title"}},
+                                            {"wildcard": {"query": "*algorithm*", "path": "body"}},
+                                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                                        ],
+                                        "minimumShouldMatch": 1,
+                                    },
+                                }
+                            },
+                            {"$match": {"_id": 2}},
+                            {"$project": {"_id": 1}},
+                            {"$limit": 1},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in compound_candidateable_should_matched_limited_hits], [2])
 
                     near_hits = await collection.aggregate(
                         [

@@ -1471,6 +1471,27 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         {"$limit": 1},
                     ]
                 ).to_list()
+                compound_candidateable_should_matched_limited_hits = await collection.aggregate(
+                    [
+                        {
+                            "$search": {
+                                "index": "by_text",
+                                "compound": {
+                                    "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                    "should": [
+                                        {"exists": {"path": "title"}},
+                                        {"wildcard": {"query": "*algorithm*", "path": "body"}},
+                                        {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                                    ],
+                                    "minimumShouldMatch": 1,
+                                },
+                            }
+                        },
+                        {"$match": {"_id": 2}},
+                        {"$project": {"_id": 1}},
+                        {"$limit": 1},
+                    ]
+                ).to_list()
                 vector_hits = await collection.aggregate(
                     [
                         {
@@ -1534,6 +1555,27 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         {"$limit": 1},
                     ]
                 ).explain()
+                compound_candidateable_should_matched_limited_explain = await collection.aggregate(
+                    [
+                        {
+                            "$search": {
+                                "index": "by_text",
+                                "compound": {
+                                    "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                    "should": [
+                                        {"exists": {"path": "title"}},
+                                        {"wildcard": {"query": "*algorithm*", "path": "body"}},
+                                        {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                                    ],
+                                    "minimumShouldMatch": 1,
+                                },
+                            }
+                        },
+                        {"$match": {"_id": 2}},
+                        {"$project": {"_id": 1}},
+                        {"$limit": 1},
+                    ]
+                ).explain()
                 vector_explain = await collection.aggregate(
                     [
                         {
@@ -1558,6 +1600,9 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "compound_should_near_hits": [document["_id"] for document in compound_should_near_hits],
                     "compound_candidateable_should_hits": [document["_id"] for document in compound_candidateable_should_hits],
                     "compound_candidateable_should_limited_hits": [document["_id"] for document in compound_candidateable_should_limited_hits],
+                    "compound_candidateable_should_matched_limited_hits": [
+                        document["_id"] for document in compound_candidateable_should_matched_limited_hits
+                    ],
                     "vector_hits": [document["_id"] for document in vector_hits],
                     "search_explain": {
                         "hint": search_explain["hint"],
@@ -1592,6 +1637,12 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "compound_candidateable_should_limited_explain": {
                         "topk_limit_hint": compound_candidateable_should_limited_explain["engine_plan"]["details"]["topKLimitHint"],
                         "search_result_limit_hint": compound_candidateable_should_limited_explain["pushdown"]["searchResultLimitHint"],
+                        "topk_strategy": compound_candidateable_should_limited_explain["pushdown"]["searchTopKStrategy"],
+                    },
+                    "compound_candidateable_should_matched_limited_explain": {
+                        "topk_limit_hint": compound_candidateable_should_matched_limited_explain["engine_plan"]["details"]["topKLimitHint"],
+                        "search_result_limit_hint": compound_candidateable_should_matched_limited_explain["pushdown"]["searchResultLimitHint"],
+                        "topk_strategy": compound_candidateable_should_matched_limited_explain["pushdown"]["searchTopKStrategy"],
                     },
                     "vector_explain": {
                         "hint": vector_explain["hint"],
