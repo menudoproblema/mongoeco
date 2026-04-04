@@ -656,6 +656,7 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
     wildcard_metrics: list[Metrics] = []
     compound_metrics: list[Metrics] = []
     compound_near_metrics: list[Metrics] = []
+    compound_candidateable_should_metrics: list[Metrics] = []
 
     db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_augment_search_documents)
     try:
@@ -726,6 +727,23 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
             },
             {"$limit": 10},
         ]
+        compound_candidateable_should_pipeline = [
+            {
+                "$search": {
+                    "index": "by_text",
+                    "compound": {
+                        "must": [{"text": {"query": "report 0", "path": ["title", "body"]}}],
+                        "should": [
+                            {"exists": {"path": "title"}},
+                            {"wildcard": {"query": "*vector*", "path": "body"}},
+                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                        ],
+                        "minimumShouldMatch": 1,
+                    },
+                }
+            },
+            {"$limit": 10},
+        ]
 
         return {
             "search_text_topk_100": _measure_single_task(
@@ -791,6 +809,23 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                         engine.explain_aggregate(db_name, coll_name, compound_near_pipeline)
                     ),
                     "query_shape": "$search.compound must(text=report 0)+filter(wildcard)+should(exists,near)",
+                },
+            ),
+            "search_compound_candidateable_should_topk_100": _measure_single_task(
+                compound_candidateable_should_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, compound_candidateable_should_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            compound_candidateable_should_pipeline,
+                        )
+                    ),
+                    "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)",
                 },
             ),
         }

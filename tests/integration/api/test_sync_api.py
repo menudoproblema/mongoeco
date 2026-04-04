@@ -344,6 +344,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             compound_should_near_explanation["engine_plan"]["details"]["compoundPrefilter"]["requiredCandidateableShould"],
                             1,
                         )
+                        self.assertEqual(
+                            compound_should_near_explanation["engine_plan"]["details"]["compoundPrefilter"]["candidateableShouldOperators"],
+                            ["exists"],
+                        )
                     self.assertEqual(
                         compound_should_near_explanation["engine_plan"]["details"]["ranking"],
                         {"usesShouldRanking": True, "nearAware": True},
@@ -368,6 +372,54 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ]
                     ).to_list()
                     self.assertEqual([document["_id"] for document in compound_should_near_hits], [3, 2])
+
+                    compound_candidateable_should_explanation = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "should": [
+                                            {"exists": {"path": "title"}},
+                                            {"wildcard": {"query": "*algorithm*", "path": "body"}},
+                                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                                        ],
+                                        "minimumShouldMatch": 1,
+                                    },
+                                }
+                            }
+                        ]
+                    ).explain()
+                    if engine_name == "sqlite":
+                        self.assertEqual(
+                            compound_candidateable_should_explanation["engine_plan"]["details"]["compoundPrefilter"]["candidateableShouldCount"],
+                            3,
+                        )
+                        self.assertEqual(
+                            compound_candidateable_should_explanation["engine_plan"]["details"]["compoundPrefilter"]["candidateableShouldOperators"],
+                            ["exists", "wildcard", "autocomplete"],
+                        )
+                    compound_candidateable_should_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "should": [
+                                            {"exists": {"path": "title"}},
+                                            {"wildcard": {"query": "*algorithm*", "path": "body"}},
+                                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                                        ],
+                                        "minimumShouldMatch": 1,
+                                    },
+                                }
+                            },
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in compound_candidateable_should_hits], [3, 2])
 
                     near_hits = collection.aggregate(
                         [

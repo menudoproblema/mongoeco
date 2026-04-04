@@ -107,6 +107,8 @@ class MaterializedSearchDocument:
     searchable_paths: frozenset[str]
     lowered_values: tuple[str, ...]
     lowered_values_by_path: dict[str, tuple[str, ...]]
+    token_counter_by_path: dict[str, Counter[str]]
+    token_counter: Counter[str]
     token_sets_by_path: dict[str, frozenset[str]]
     token_set: frozenset[str]
 
@@ -599,6 +601,41 @@ def search_clause_ranking(
         if distance is None:
             return False, 0.0, None
         return True, 1.0 + (1.0 / (1.0 + (distance / query.pivot))), distance
+    if isinstance(query, SearchTextQuery):
+        token_counter = _materialized_token_counter(prepared, query.paths)
+        score = float(sum(token_counter.get(term.lower(), 0) for term in query.terms))
+        return score > 0.0, score, None
+    if isinstance(query, SearchPhraseQuery):
+        phrase = query.raw_query.strip().lower()
+        score = float(sum(value.count(phrase) for value in _materialized_lowered_values(prepared, query.paths)))
+        return score > 0.0, score, None
+    if isinstance(query, SearchAutocompleteQuery):
+        score = 0.0
+        for token_counter in _materialized_token_counters(prepared, query.paths):
+            local = 0.0
+            for term in query.terms:
+                matches = [token for token in token_counter if token.startswith(term.lower())]
+                if not matches:
+                    local = 0.0
+                    break
+                local += float(sum(token_counter[token] for token in matches))
+            score = max(score, local)
+        return score > 0.0, score, None
+    if isinstance(query, SearchWildcardQuery):
+        score = float(
+            sum(
+                1
+                for value in _materialized_lowered_values(prepared, query.paths)
+                if fnmatch.fnmatchcase(value, query.normalized_pattern)
+            )
+        )
+        return score > 0.0, score, None
+    if isinstance(query, SearchExistsQuery):
+        if query.paths is None:
+            score = float(len(prepared.searchable_paths))
+        else:
+            score = float(sum(1 for path in query.paths if path in prepared.searchable_paths))
+        return score > 0.0, score, None
     if isinstance(query, SearchCompoundQuery):
         if not matches_search_compound_query(
             document,
@@ -687,6 +724,8 @@ def materialize_search_document(
     searchable_paths: set[str] = set()
     lowered_values: list[str] = []
     lowered_values_by_path: dict[str, list[str]] = {}
+    token_counter_by_path: dict[str, Counter[str]] = {}
+    token_counter: Counter[str] = Counter()
     token_sets_by_path: dict[str, set[str]] = {}
     token_set: set[str] = set()
 
@@ -695,7 +734,10 @@ def materialize_search_document(
         lowered = value.lower()
         lowered_values.append(lowered)
         lowered_values_by_path.setdefault(field_path, []).append(lowered)
-        tokens = set(tokenize_classic_text(value))
+        tokens_counter = Counter(tokenize_classic_text(value))
+        tokens = set(tokens_counter)
+        token_counter.update(tokens_counter)
+        token_counter_by_path.setdefault(field_path, Counter()).update(tokens_counter)
         token_set.update(tokens)
         token_sets_by_path.setdefault(field_path, set()).update(tokens)
 
@@ -707,6 +749,8 @@ def materialize_search_document(
             field_path: tuple(values)
             for field_path, values in lowered_values_by_path.items()
         },
+        token_counter_by_path=token_counter_by_path,
+        token_counter=token_counter,
         token_sets_by_path={
             field_path: frozenset(values)
             for field_path, values in token_sets_by_path.items()
@@ -750,6 +794,31 @@ def _materialized_token_set(
     for path in paths:
         tokens.update(prepared.token_sets_by_path.get(path, ()))
     return frozenset(tokens)
+
+
+def _materialized_token_counter(
+    prepared: MaterializedSearchDocument,
+    paths: tuple[str, ...] | None,
+) -> Counter[str]:
+    if paths is None:
+        return prepared.token_counter
+    tokens: Counter[str] = Counter()
+    for path in paths:
+        tokens.update(prepared.token_counter_by_path.get(path, Counter()))
+    return tokens
+
+
+def _materialized_token_counters(
+    prepared: MaterializedSearchDocument,
+    paths: tuple[str, ...] | None,
+) -> tuple[Counter[str], ...]:
+    if paths is None:
+        return tuple(prepared.token_counter_by_path.values())
+    return tuple(
+        prepared.token_counter_by_path[path]
+        for path in paths
+        if path in prepared.token_counter_by_path
+    )
 
 
 def vector_field_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:

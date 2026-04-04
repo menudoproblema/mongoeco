@@ -412,26 +412,31 @@ def _describe_compound_prefilter_sync(
             "backend": backend,
         }
 
+    should_descriptions = [_describe_clause(clause) for clause in query.should]
     non_candidateable_should = sum(
         1
-        for clause in query.should
-        if _sqlite_candidate_storage_keys_for_query(
-            engine,
-            conn,
-            physical_name=physical_name,
-            query=clause,
-        )[0]
-        is None
+        for clause in should_descriptions
+        if not bool(clause["candidateable"])
     )
     return {
         "must": [_describe_clause(clause) for clause in query.must],
         "filter": [_describe_clause(clause) for clause in query.filter],
-        "should": [_describe_clause(clause) for clause in query.should],
+        "should": should_descriptions,
         "mustNot": [_describe_clause(clause) for clause in query.must_not],
         "requiredCandidateableShould": max(
             0,
             query.minimum_should_match - non_candidateable_should,
         ),
+        "candidateableShouldCount": sum(
+            1
+            for clause in should_descriptions
+            if bool(clause["candidateable"])
+        ),
+        "candidateableShouldOperators": [
+            str(clause["operator"])
+            for clause in should_descriptions
+            if bool(clause["candidateable"])
+        ],
     }
 
 

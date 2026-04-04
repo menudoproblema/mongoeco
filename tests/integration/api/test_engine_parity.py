@@ -1432,6 +1432,25 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         {"$project": {"_id": 1}},
                     ]
                 ).to_list()
+                compound_candidateable_should_hits = await collection.aggregate(
+                    [
+                        {
+                            "$search": {
+                                "index": "by_text",
+                                "compound": {
+                                    "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                    "should": [
+                                        {"exists": {"path": "title"}},
+                                        {"wildcard": {"query": "*algorithm*", "path": "body"}},
+                                        {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                                    ],
+                                    "minimumShouldMatch": 1,
+                                },
+                            }
+                        },
+                        {"$project": {"_id": 1}},
+                    ]
+                ).to_list()
                 vector_hits = await collection.aggregate(
                     [
                         {
@@ -1497,6 +1516,7 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "near_hits": [document["_id"] for document in near_hits],
                     "compound_hits": [document["_id"] for document in compound_hits],
                     "compound_should_near_hits": [document["_id"] for document in compound_should_near_hits],
+                    "compound_candidateable_should_hits": [document["_id"] for document in compound_candidateable_should_hits],
                     "vector_hits": [document["_id"] for document in vector_hits],
                     "search_explain": {
                         "hint": search_explain["hint"],

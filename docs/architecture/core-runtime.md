@@ -115,6 +115,9 @@ La regla arquitectonica es la misma:
 - `compound` deja visible en `explain()` tanto el inventario de operadores por
   clausula como el `compoundPrefilter` que esta reduciendo candidatos en SQLite,
   y usa ya ranking local por `should` con sensibilidad a `near`;
+- cuando los `should` candidateables son amplios, `compoundPrefilter` deja
+  visible tambien cuantas clausulas `should` son realmente candidateables para
+  distinguir ranking util de falso pruning.
 - `near` entra como operador local para numericos y fecha/datetime con
   `path`, `origin` y `pivot`, y mantiene explain/backends explicitos en vez de
   fingir scoring Atlas Search completo.

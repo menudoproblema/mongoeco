@@ -159,6 +159,9 @@ En search existe ya otra frontera explicita por capas:
 - en `compound`, esos candidatos se usan tambien para ordenar mejor las
   clausulas `should`, y `near` participa ya en el ranking local cuando aparece
   dentro de esa familia.
+- ese mismo contrato deja visible cuando un `should` candidateable sigue siendo
+  demasiado amplio y solo aporta ranking, no una reduccion material de
+  candidatos.
 
 Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
 ruta de ejecucion, en la de `explain()` y en el lifecycle documental de los
