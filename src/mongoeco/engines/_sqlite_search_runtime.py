@@ -1055,9 +1055,22 @@ def exact_vector_hits_sync(
     coll_name: str,
     definition: SearchIndexDefinition,
     query: SearchVectorQuery,
+    *,
+    candidate_storage_keys: list[str] | None = None,
 ) -> list[tuple[float, Document]]:
     vector_hits: list[tuple[float, Document]] = []
-    for _, document in engine._load_documents(db_name, coll_name):
+    if candidate_storage_keys is not None:
+        documents = [
+            (storage_key, document)
+            for storage_key, document in engine._load_documents_by_storage_keys(
+                db_name,
+                coll_name,
+                candidate_storage_keys,
+            ).items()
+        ]
+    else:
+        documents = engine._load_documents(db_name, coll_name)
+    for _, document in documents:
         if query.filter_spec is not None and not QueryEngine.match(
             document,
             query.filter_spec,
@@ -1225,7 +1238,20 @@ def execute_sqlite_search_query(
                     ]
                 effective_limit = min(query.limit, result_limit_hint) if result_limit_hint is not None else query.limit
                 return filtered_documents[:effective_limit]
-        exact_hits = exact_vector_hits_sync(engine, db_name, coll_name, definition, query)
+        exact_hits = exact_vector_hits_sync(
+            engine,
+            db_name,
+            coll_name,
+            definition,
+            query,
+            candidate_storage_keys=(
+                vector_filter_storage_keys
+                if vector_filter_storage_keys is not None
+                and vector_filter_description is not None
+                and bool(vector_filter_description.get("exact"))
+                else None
+            ),
+        )
         enforce_deadline(deadline)
         effective_limit = min(query.limit, result_limit_hint) if result_limit_hint is not None else query.limit
         return [document for _score, document in exact_hits[:effective_limit]]

@@ -4662,6 +4662,23 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 ),
             )
             self.assertEqual([document["_id"] for _score, document in exact_hits], ["1"])
+            exact_subset_hits = engine._exact_vector_hits_sync(
+                "db",
+                "coll",
+                definition,
+                search_module.compile_vector_search_query(  # type: ignore[name-defined]
+                    {
+                        "index": "vec",
+                        "path": "embedding",
+                        "queryVector": [1.0, 0.0],
+                        "limit": 2,
+                        "numCandidates": 2,
+                        "filter": {"kind": "keep"},
+                    }
+                ),
+                candidate_storage_keys=[engine._storage_key("1")],
+            )
+            self.assertEqual([document["_id"] for _score, document in exact_subset_hits], ["1"])
 
             with patch(
                 "mongoeco.engines._sqlite_search_runtime.search_sqlite_vector_backend",

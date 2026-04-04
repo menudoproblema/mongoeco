@@ -3899,6 +3899,8 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         definition: SearchIndexDefinition,
         query: SearchVectorQuery,
+        *,
+        candidate_storage_keys: list[str] | None = None,
     ) -> list[tuple[float, Document]]:
         return _sqlite_exact_vector_hits_sync(
             self,
@@ -3906,6 +3908,7 @@ class SQLiteEngine(AsyncStorageEngine):
             coll_name,
             definition,
             query,
+            candidate_storage_keys=candidate_storage_keys,
         )
 
     def _execute_sqlite_search_query(
