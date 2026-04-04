@@ -32,6 +32,14 @@ from mongoeco.engines._shared_search_admin import (
     search_index_not_found,
 )
 from mongoeco.engines._active_operations import LocalActiveOperationRegistry
+from mongoeco.engines._memory_search_runtime import (
+    execute_search_documents as _execute_memory_search_documents,
+    explain_search_documents as _explain_memory_search_documents,
+)
+from mongoeco.engines._memory_vector_runtime import (
+    MaterializedVectorIndex as _RuntimeMaterializedVectorIndex,
+    build_materialized_vector_index as _build_memory_vector_index,
+)
 from mongoeco.engines._runtime_metrics import LocalRuntimeMetrics
 from mongoeco.engines._shared_ttl import coerce_ttl_datetime, document_expired_by_ttl
 from mongoeco.engines.mvcc import MemoryMvccState
@@ -747,18 +755,18 @@ class MemoryEngine(AsyncStorageEngine):
         definition: SearchIndexDefinition,
         *,
         context: ClientSession | None,
-    ) -> _MaterializedVectorIndex:
+    ) -> _RuntimeMaterializedVectorIndex:
         documents = [
             self._decode_storage_document(payload)
             for payload in self._storage_view(context).get(db_name, {}).get(coll_name, {}).values()
         ]
         if context is not None:
-            return _build_materialized_vector_index(documents, definition)
+            return _build_memory_vector_index(documents, definition)
         cache_key = (db_name, coll_name, definition.name)
         cached = self._vector_document_cache.get(cache_key)
         if cached is not None and cached[0] == definition:
             return cached[1]
-        materialized = _build_materialized_vector_index(documents, definition)
+        materialized = _build_memory_vector_index(documents, definition)
         self._vector_document_cache[cache_key] = (definition, materialized)
         return materialized
 
@@ -2389,189 +2397,18 @@ class MemoryEngine(AsyncStorageEngine):
         downstream_filter_spec: dict[str, object] | None = None,
     ) -> list[Document]:
         deadline = operation_deadline(max_time_ms)
-        query = compile_search_stage(operator, spec)
-        effective_limit = (
-            result_limit_hint
-            if isinstance(result_limit_hint, int) and result_limit_hint > 0
-            else None
+        result = await _execute_memory_search_documents(
+            self,
+            db_name,
+            coll_name,
+            operator,
+            spec,
+            context=context,
+            result_limit_hint=result_limit_hint,
+            downstream_filter_spec=downstream_filter_spec,
         )
-        async with self._get_lock(db_name, coll_name):
-            indexes = deepcopy(
-                self._search_indexes_view(context).get(db_name, {}).get(coll_name, [])
-            )
-            definition = next((item for item in indexes if item.name == query.index_name), None)
-            if definition is None:
-                raise search_index_not_found(query.index_name)
-            ensure_search_index_query_supported(
-                definition,
-                query,
-                ready=self._search_index_is_ready(db_name, coll_name, query.index_name),
-            )
-            materialized_documents = self._materialized_search_documents(
-                db_name,
-                coll_name,
-                definition,
-                context=context,
-            )
-            vector_index = (
-                self._materialized_vector_index(
-                    db_name,
-                    coll_name,
-                    definition,
-                    context=context,
-                )
-                if isinstance(query, SearchVectorQuery)
-                else None
-            )
         enforce_deadline(deadline)
-        if is_text_search_query(query):
-            if isinstance(query, SearchNearQuery):
-                distance_hits: list[tuple[float, Document]] = []
-                for document, materialized in materialized_documents:
-                    if downstream_filter_spec is not None and not QueryEngine.match(
-                        document,
-                        downstream_filter_spec,
-                        dialect=MONGODB_DIALECT_70,
-                    ):
-                        continue
-                    if not matches_search_query(
-                        document,
-                        definition=definition,
-                        query=query,
-                        materialized=materialized,
-                    ):
-                        continue
-                    distance = search_near_distance(document, query=query)
-                    if distance is None:
-                        continue
-                    distance_hits.append((distance, document))
-                if effective_limit is not None:
-                    distance_hits = heapq.nsmallest(
-                        effective_limit,
-                        distance_hits,
-                        key=lambda item: item[0],
-                    )
-                else:
-                    distance_hits.sort(key=lambda item: item[0])
-                return [document for _distance, document in distance_hits]
-            if isinstance(query, SearchCompoundQuery) and query.should:
-                ranked_documents: list[tuple[tuple[int, float, float], int, Document]] = []
-                for order, (document, materialized) in enumerate(materialized_documents):
-                    if downstream_filter_spec is not None:
-                        candidateable_match = _matches_candidateable_filter(document, downstream_filter_spec)
-                        if candidateable_match is False:
-                            continue
-                        if candidateable_match is None and not QueryEngine.match(
-                            document,
-                            downstream_filter_spec,
-                            dialect=MONGODB_DIALECT_70,
-                        ):
-                            continue
-                    if not matches_search_query(
-                        document,
-                        definition=definition,
-                        query=query,
-                        materialized=materialized,
-                    ):
-                        continue
-                    matched_should, should_score, best_near_distance = search_compound_ranking(
-                        document,
-                        definition=definition,
-                        query=query,
-                        materialized=materialized,
-                    )
-                    rank = (
-                        matched_should,
-                        should_score,
-                        -best_near_distance if math.isfinite(best_near_distance) else float("-inf"),
-                    )
-                    if effective_limit is not None:
-                        if len(ranked_documents) < effective_limit:
-                            heapq.heappush(ranked_documents, (rank, -order, document))
-                        elif (rank, -order) > ranked_documents[0][:2]:
-                            heapq.heapreplace(ranked_documents, (rank, -order, document))
-                    else:
-                        ranked_documents.append((rank, -order, document))
-                if effective_limit is not None:
-                    ranked_documents.sort(key=lambda item: item[:2], reverse=True)
-                else:
-                    ranked_documents.sort(key=lambda item: item[:2], reverse=True)
-                return [document for _score, _order, document in ranked_documents]
-            matches: list[Document] = []
-            for document, materialized in materialized_documents:
-                if downstream_filter_spec is not None:
-                    candidateable_match = _matches_candidateable_filter(document, downstream_filter_spec)
-                    if candidateable_match is False:
-                        continue
-                    if candidateable_match is None and not QueryEngine.match(
-                        document,
-                        downstream_filter_spec,
-                        dialect=MONGODB_DIALECT_70,
-                    ):
-                        continue
-                if not matches_search_query(
-                    document,
-                    definition=definition,
-                    query=query,
-                    materialized=materialized,
-                ):
-                    continue
-                matches.append(document)
-                if effective_limit is not None and len(matches) >= effective_limit:
-                    break
-            return matches
-        effective_vector_limit = min(query.limit, effective_limit) if effective_limit is not None else query.limit
-        vector_hits: list[tuple[float, int, Document]] = []
-        if vector_index is None:
-            return []
-        query_filter_positions, _query_filter_description = _candidate_positions_for_vector_filter(
-            vector_index,
-            filter_spec=query.filter_spec,
-        )
-        downstream_filter_positions, _downstream_filter_description = _candidate_positions_for_vector_filter(
-            vector_index,
-            filter_spec=downstream_filter_spec,
-        )
-        candidate_positions = list(range(len(vector_index.documents)))
-        if query_filter_positions is not None:
-            allowed = set(query_filter_positions)
-            candidate_positions = [position for position in candidate_positions if position in allowed]
-        if downstream_filter_positions is not None:
-            allowed = set(downstream_filter_positions)
-            candidate_positions = [position for position in candidate_positions if position in allowed]
-        if query.path not in vector_index.vector_specs:
-            return []
-        scored_positions = _vector_scores_for_positions(
-            vector_index,
-            query=query,
-            candidate_positions=candidate_positions,
-            limit=effective_vector_limit,
-        )
-        for order, (score, position) in enumerate(scored_positions):
-            prepared = vector_index.documents[position]
-            if downstream_filter_spec is not None and downstream_filter_positions is None:
-                candidateable_match = _matches_candidateable_filter(prepared.document, downstream_filter_spec)
-                if candidateable_match is False:
-                    continue
-                if candidateable_match is None and not QueryEngine.match(
-                    prepared.document,
-                    downstream_filter_spec,
-                    dialect=MONGODB_DIALECT_70,
-                ):
-                    continue
-            if query.filter_spec is not None and query_filter_positions is None:
-                candidateable_match = _matches_candidateable_filter(prepared.document, query.filter_spec)
-                if candidateable_match is False:
-                    continue
-                if candidateable_match is None and not QueryEngine.match(
-                    prepared.document,
-                    query.filter_spec,
-                    dialect=MONGODB_DIALECT_70,
-                ):
-                    continue
-            vector_hits.append((score, -order, prepared.document))
-        vector_hits.sort(key=lambda item: item[:2], reverse=True)
-        return [document for _score, _order, document in vector_hits[:effective_vector_limit]]
+        return result
 
     async def explain_search_documents(
         self,
@@ -2585,89 +2422,16 @@ class MemoryEngine(AsyncStorageEngine):
         result_limit_hint: int | None = None,
         downstream_filter_spec: dict[str, object] | None = None,
     ) -> QueryPlanExplanation:
-        query = compile_search_stage(operator, spec)
-        async with self._get_lock(db_name, coll_name):
-            indexes = deepcopy(
-                self._search_indexes_view(context).get(db_name, {}).get(coll_name, [])
-            )
-            definition = next((item for item in indexes if item.name == query.index_name), None)
-            vector_index = (
-                self._materialized_vector_index(
-                    db_name,
-                    coll_name,
-                    definition,
-                    context=context,
-                )
-                if definition is not None and isinstance(query, SearchVectorQuery)
-                else None
-            )
-        definition = next((item for item in indexes if item.name == query.index_name), None)
-        if definition is None:
-            raise search_index_not_found(query.index_name)
-        ready = self._search_index_is_ready(db_name, coll_name, query.index_name)
-        ensure_search_index_query_supported(definition, query, ready=ready, enforce_ready=False)
-        vector_filter_positions, vector_filter_description = (
-            _candidate_positions_for_vector_filter(vector_index, filter_spec=query.filter_spec)
-            if isinstance(query, SearchVectorQuery) and vector_index is not None
-            else (None, None)
-        )
-        return QueryPlanExplanation(
-            engine="memory",
-            strategy="search",
-            plan="python-vector-search" if isinstance(query, SearchVectorQuery) else "python-search-scan",
-            sort=None,
-            skip=0,
-            limit=None,
-            hint=None,
-            hinted_index=query.index_name,
-            comment=None,
+        return await _explain_memory_search_documents(
+            self,
+            db_name,
+            coll_name,
+            operator,
+            spec,
             max_time_ms=max_time_ms,
-            details={
-                "operator": operator,
-                "index": query.index_name,
-                "backend": "python",
-                "status": "READY" if ready else "PENDING",
-                "backendAvailable": True,
-                "backendMaterialized": False,
-                "physicalName": None,
-                "readyAtEpoch": self._search_index_ready_at.get((db_name, coll_name, query.index_name)),
-                "fts5Available": None,
-                "definition": build_search_index_document(
-                    definition,
-                    ready=ready,
-                    ready_at_epoch=self._search_index_ready_at.get((db_name, coll_name, query.index_name)),
-                ),
-                **search_query_explain_details(query),
-                "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
-                "filterMode": (
-                    "candidate-prefilter"
-                    if isinstance(query, SearchVectorQuery)
-                    and query.filter_spec is not None
-                    and bool(vector_filter_description and vector_filter_description.get("exact"))
-                    else "candidate-prefilter+post-candidate"
-                    if isinstance(query, SearchVectorQuery)
-                    and query.filter_spec is not None
-                    and vector_filter_description is not None
-                    else "post-candidate"
-                    if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
-                    else None
-                ),
-                "vectorFilterPrefilter": vector_filter_description if isinstance(query, SearchVectorQuery) else None,
-                "documentsScanned": (
-                    vector_index.valid_vector_counts.get(query.path, 0)
-                    if isinstance(query, SearchVectorQuery) and vector_index is not None
-                    else None
-                ),
-                "documentsScannedAfterPrefilter": (
-                    len(vector_filter_positions)
-                    if isinstance(query, SearchVectorQuery) and vector_filter_positions is not None
-                    else vector_index.valid_vector_counts.get(query.path, 0)
-                    if isinstance(query, SearchVectorQuery) and vector_index is not None
-                    else None
-                ),
-                "topKLimitHint": result_limit_hint,
-                "downstreamFilterPrefilter": deepcopy(downstream_filter_spec) if downstream_filter_spec is not None else None,
-            },
+            context=context,
+            result_limit_hint=result_limit_hint,
+            downstream_filter_spec=downstream_filter_spec,
         )
 
     def _iter_documents_for_classic_text_query(
