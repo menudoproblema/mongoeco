@@ -552,6 +552,31 @@ def rank_compound_candidate_storage_keys_from_entries(
         return []
     if not compound_entry_ranking_supported(query, physical_name=physical_name):
         return None
+    exact_should_scores = exact_candidateable_should_scores(
+        engine,
+        conn,
+        db_name=db_name,
+        coll_name=coll_name,
+        physical_name=physical_name,
+        query=query,
+        candidate_storage_keys=candidate_storage_keys,
+    )
+    if exact_should_scores is not None:
+        ranked = [
+            (
+                (
+                    -float(exact_should_scores[storage_key]["matchedShould"]),
+                    -float(exact_should_scores[storage_key]["shouldScore"]),
+                ),
+                order,
+                storage_key,
+            )
+            for order, storage_key in enumerate(candidate_storage_keys)
+        ]
+        if result_limit_hint is not None and result_limit_hint > 0 and len(ranked) > result_limit_hint:
+            ranked = heapq.nsmallest(result_limit_hint, ranked, key=lambda item: item[:2])
+        ranked.sort(key=lambda item: item[:2])
+        return [storage_key for _rank, _order, storage_key in ranked]
     prepared_by_storage_key = load_materialized_search_documents_by_storage_key(
         engine,
         conn,

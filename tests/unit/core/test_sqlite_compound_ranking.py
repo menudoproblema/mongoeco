@@ -261,6 +261,18 @@ class SQLiteCompoundRankingTests(unittest.TestCase):
             result_limit_hint=2,
         )
         self.assertEqual(ranked_keys[:1], ["a"])
+        self.conn.execute(f'DELETE FROM "{self.physical_name}"')
+        cached_ranked_keys = rank_compound_candidate_storage_keys_from_entries(
+            self.engine,
+            self.conn,
+            db_name="db",
+            coll_name="coll",
+            physical_name=self.physical_name,
+            query=broad_compound,
+            candidate_storage_keys=["a", "b", "c"],
+            result_limit_hint=2,
+        )
+        self.assertEqual(cached_ranked_keys[:1], ["a"])
         self.assertEqual(
             rank_compound_candidate_storage_keys_from_entries(
                 self.engine,
