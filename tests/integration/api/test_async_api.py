@@ -398,6 +398,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             3,
                         )
                         self.assertEqual(
+                            compound_candidateable_should_explanation["engine_plan"]["details"]["compoundPrefilter"]["clauseClasses"]["should"],
+                            ["candidateable-exact", "candidateable-exact", "candidateable-exact"],
+                        )
+                        self.assertEqual(
                             compound_candidateable_should_explanation["engine_plan"]["details"]["compoundPrefilter"]["candidateableShouldOperators"],
                             ["exists", "wildcard", "autocomplete"],
                         )
@@ -465,6 +469,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(
                             compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["strategy"],
                             "exact-should-score-tier",
+                        )
+                        self.assertGreaterEqual(
+                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["cutoffTier"]["matchedShould"],
+                            2,
                         )
                         self.assertLess(
                             compound_candidateable_should_limited_explanation["engine_plan"]["details"]["candidateCount"],
@@ -696,6 +704,19 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(
                             filtered_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["supportedPaths"],
                             ["kind"],
+                        )
+                    else:
+                        self.assertEqual(
+                            filtered_vector_explanation["engine_plan"]["details"]["filterMode"],
+                            "candidate-prefilter",
+                        )
+                        self.assertEqual(
+                            filtered_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["backend"],
+                            "memory-vector-filter-index",
+                        )
+                        self.assertLess(
+                            filtered_vector_explanation["engine_plan"]["details"]["documentsScannedAfterPrefilter"],
+                            filtered_vector_explanation["engine_plan"]["details"]["documentsScanned"],
                         )
 
                     ranged_vector_explanation = await collection.aggregate(

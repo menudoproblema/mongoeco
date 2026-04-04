@@ -7,7 +7,9 @@ from unittest.mock import patch
 from mongoeco.api.operations import compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.search import SearchVectorQuery, compile_search_stage
 from mongoeco.core.query_plan import MatchAll, compile_filter
+from mongoeco.engines import memory as memory_module
 from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, ExecutionTimeout, OperationFailure
@@ -1868,5 +1870,420 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
             await engine.drop_database("db")
             self.assertFalse(any(key[0] == "db" for key in engine._search_index_ready_at))
+        finally:
+            await engine.disconnect()
+
+    def test_memory_search_vector_helper_functions_cover_candidateable_paths(self):
+        vector_definition = SearchIndexDefinition(
+            {
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": 2,
+                        "similarity": "dotProduct",
+                    }
+                ]
+            },
+            name="vec",
+            index_type="vectorSearch",
+        )
+        documents = [
+            {
+                "_id": "1",
+                "embedding": [1.0, 0.0],
+                "kind": "keep",
+                "score": 10,
+                "meta": {"rank": 1, "published": datetime.date(2024, 1, 2)},
+                "tags": ["a", "b"],
+            },
+            {
+                "_id": "2",
+                "embedding": [0.0, 1.0],
+                "kind": "drop",
+                "score": 5,
+                "meta": {"rank": 2},
+                "tags": ["b"],
+            },
+            {
+                "_id": "3",
+                "embedding": [1.0],
+                "kind": "keep",
+                "score": float("inf"),
+            },
+        ]
+        vector_index = memory_module._build_materialized_vector_index(documents, vector_definition)
+
+        self.assertEqual(memory_module._filter_value_key(None), ("null", None))
+        self.assertEqual(memory_module._filter_value_key(True), ("bool", True))
+        self.assertEqual(memory_module._filter_value_key(1), ("number", 1.0))
+        self.assertEqual(
+            memory_module._filter_value_key(datetime.datetime(2024, 1, 1, 12, 0, 0)),
+            ("datetime", datetime.datetime(2024, 1, 1, 12, 0, 0)),
+        )
+        self.assertEqual(
+            memory_module._filter_value_key(datetime.date(2024, 1, 1)),
+            ("date", datetime.date(2024, 1, 1)),
+        )
+        self.assertIsNone(memory_module._filter_value_key(float("inf")))
+        self.assertIsNone(memory_module._filter_value_key(object()))
+
+        collected = memory_module._collect_filterable_values(
+            {"": 1, "meta": {"rank": 2}, "tags": ["a", object(), 3]},
+        )
+        self.assertEqual(
+            {path: values for path, values in collected},
+            {
+                "meta.rank": {("number", 2.0)},
+                "tags": {("string", "a"), ("number", 3.0)},
+            },
+        )
+        self.assertEqual(memory_module._collect_filterable_values("root"), [])
+        self.assertEqual(
+            memory_module._collect_filterable_values([], prefix="items"),
+            [("items", set())],
+        )
+
+        self.assertFalse(
+            memory_module._value_key_matches_range(("string", "x"), {"$gt": 1})
+        )
+        self.assertFalse(
+            memory_module._value_key_matches_range(("number", 1.0), {"$regex": "x"})
+        )
+        self.assertFalse(
+            memory_module._value_key_matches_range(("number", 1.0), {"$gt": "x"})
+        )
+        self.assertTrue(
+            memory_module._value_key_matches_range(
+                ("number", 2.0),
+                {"$gte": 2, "$lte": 2},
+            )
+        )
+        self.assertFalse(
+            memory_module._value_key_matches_range(
+                ("date", datetime.date(2024, 1, 1)),
+                {"$lt": datetime.datetime(2024, 1, 1, 0, 0, 0)},
+            )
+        )
+
+        self.assertEqual(vector_index.valid_vector_counts["embedding"], 2)
+        self.assertEqual(vector_index.vector_paths, ("embedding",))
+        self.assertIn("meta.rank", vector_index.exists_filter_index)
+        self.assertIn("kind", vector_index.scalar_filter_index)
+
+        self.assertEqual(
+            memory_module._candidate_positions_for_vector_filter(vector_index, filter_spec=None),
+            (None, None),
+        )
+        eq_positions, eq_description = memory_module._candidate_positions_for_vector_filter(
+            vector_index,
+            filter_spec={"kind": "keep"},
+        )
+        self.assertEqual(eq_positions, [0, 2])
+        self.assertTrue(eq_description["candidateable"])
+        self.assertTrue(eq_description["exact"])
+        self.assertEqual(eq_description["supportedOperators"], ["eq"])
+
+        in_positions, in_description = memory_module._candidate_positions_for_vector_filter(
+            vector_index,
+            filter_spec={"tags": {"$in": ["b"]}},
+        )
+        self.assertEqual(in_positions, [0, 1])
+        self.assertEqual(in_description["supportedOperators"], ["$in"])
+
+        range_positions, range_description = memory_module._candidate_positions_for_vector_filter(
+            vector_index,
+            filter_spec={"meta.rank": {"$gte": 1, "$lt": 2}},
+        )
+        self.assertEqual(range_positions, [0])
+        self.assertEqual(range_description["supportedOperators"], ["range"])
+
+        exists_positions, exists_description = memory_module._candidate_positions_for_vector_filter(
+            vector_index,
+            filter_spec={"meta.published": {"$exists": False}},
+        )
+        self.assertEqual(exists_positions, [1, 2])
+        self.assertTrue(exists_description["exact"])
+
+        or_positions, or_description = memory_module._candidate_positions_for_vector_filter(
+            vector_index,
+            filter_spec={"$or": [{"kind": "drop"}, {"meta.rank": {"$exists": True}}]},
+        )
+        self.assertEqual(or_positions, [0, 1])
+        self.assertEqual(or_description["booleanShape"], "$or")
+        self.assertTrue(or_description["exact"])
+
+        partial_positions, partial_description = memory_module._candidate_positions_for_vector_filter(
+            vector_index,
+            filter_spec={"$and": [{"kind": "keep"}, {"kind": {"$regex": "k"}}]},
+        )
+        self.assertEqual(partial_positions, [0, 2])
+        self.assertTrue(partial_description["candidateable"])
+        self.assertFalse(partial_description["exact"])
+
+        unsupported_positions, unsupported_description = memory_module._candidate_positions_for_vector_filter(
+            vector_index,
+            filter_spec={"$or": [{"kind": "keep"}, {"kind": {"$regex": "k"}}]},
+        )
+        self.assertIsNone(unsupported_positions)
+        self.assertFalse(unsupported_description["candidateable"])
+        self.assertEqual(unsupported_description["booleanShape"], "$or")
+
+        self.assertTrue(memory_module._matches_candidateable_filter(documents[0], {"kind": "keep"}))
+        self.assertFalse(memory_module._matches_candidateable_filter(documents[0], {"kind": "drop"}))
+        self.assertTrue(
+            memory_module._matches_candidateable_filter(
+                documents[0],
+                {"meta.rank": {"$gte": 1, "$lte": 1}},
+            )
+        )
+        self.assertFalse(
+            memory_module._matches_candidateable_filter(
+                documents[1],
+                {"meta.rank": {"$gt": 2}},
+            )
+        )
+        self.assertFalse(
+            memory_module._matches_candidateable_filter(
+                documents[1],
+                {"meta.published": {"$exists": True}},
+            )
+        )
+        self.assertIsNone(
+            memory_module._matches_candidateable_filter(
+                documents[0],
+                {"kind": {"$regex": "keep"}},
+            )
+        )
+        self.assertIsNone(
+            memory_module._matches_candidateable_filter(
+                documents[0],
+                {"$or": "bad"},  # type: ignore[arg-type]
+            )
+        )
+
+        dot_query = SearchVectorQuery(
+            index_name="vec",
+            path="embedding",
+            query_vector=(1.0, 0.0),
+            limit=2,
+            num_candidates=4,
+            similarity="dotProduct",
+        )
+        dot_scores = memory_module._vector_scores_for_positions(
+            vector_index,
+            query=dot_query,
+            candidate_positions=[0, 1, 2],
+            limit=1,
+        )
+        self.assertEqual(len(dot_scores), 1)
+        self.assertEqual(dot_scores[0][1], 0)
+
+        euclidean_definition = SearchIndexDefinition(
+            {
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": 2,
+                        "similarity": "euclidean",
+                    }
+                ]
+            },
+            name="vec_euclidean",
+            index_type="vectorSearch",
+        )
+        euclidean_index = memory_module._build_materialized_vector_index(documents[:2], euclidean_definition)
+        euclidean_scores = memory_module._vector_scores_for_positions(
+            euclidean_index,
+            query=SearchVectorQuery(
+                index_name="vec_euclidean",
+                path="embedding",
+                query_vector=(1.0, 0.0),
+                limit=2,
+                num_candidates=4,
+                similarity="cosine",
+            ),
+            candidate_positions=[0, 1],
+            limit=None,
+        )
+        self.assertEqual([position for _score, position in euclidean_scores], [0, 1])
+        self.assertEqual(
+            memory_module._vector_scores_for_positions(
+                vector_index,
+                query=dot_query,
+                candidate_positions=[99],
+                limit=None,
+            ),
+            [],
+        )
+
+    async def test_memory_search_and_vector_runtime_cover_candidate_prefilter_paths(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document(
+                "db",
+                "coll",
+                {
+                    "_id": "1",
+                    "title": "Ada algorithms",
+                    "body": "vector ranking",
+                    "kind": "note",
+                    "score": 10,
+                    "embedding": [1.0, 0.0],
+                },
+            )
+            await engine.put_document(
+                "db",
+                "coll",
+                {
+                    "_id": "2",
+                    "title": "Grace notes",
+                    "body": "compiler vector",
+                    "kind": "reference",
+                    "score": 4,
+                    "embedding": [0.0, 1.0],
+                },
+            )
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition(
+                    {
+                        "mappings": {
+                            "dynamic": False,
+                            "fields": {
+                                "title": {"type": "string"},
+                                "body": {"type": "autocomplete"},
+                                "kind": {"type": "token"},
+                            },
+                        }
+                    },
+                    name="by_text",
+                ),
+            )
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition(
+                    {
+                        "fields": [
+                            {
+                                "type": "vector",
+                                "path": "embedding",
+                                "numDimensions": 2,
+                                "similarity": "cosine",
+                            }
+                        ]
+                    },
+                    name="by_vector",
+                    index_type="vectorSearch",
+                ),
+            )
+
+            session = ClientSession()
+            materialized_with_context = engine._materialized_search_documents(
+                "db",
+                "coll",
+                SearchIndexDefinition(
+                    {
+                        "mappings": {
+                            "dynamic": False,
+                            "fields": {"title": {"type": "string"}},
+                        }
+                    },
+                    name="by_text",
+                ),
+                context=session,
+            )
+            self.assertEqual(len(materialized_with_context), 2)
+            vector_index_with_context = engine._materialized_vector_index(
+                "db",
+                "coll",
+                SearchIndexDefinition(
+                    {
+                        "fields": [
+                            {
+                                "type": "vector",
+                                "path": "embedding",
+                                "numDimensions": 2,
+                                "similarity": "cosine",
+                            }
+                        ]
+                    },
+                    name="by_vector",
+                    index_type="vectorSearch",
+                ),
+                context=session,
+            )
+            self.assertEqual(vector_index_with_context.valid_vector_counts["embedding"], 2)
+
+            compound_hits = await engine.search_documents(
+                "db",
+                "coll",
+                "$search",
+                {
+                    "index": "by_text",
+                    "compound": {
+                        "must": [{"text": {"query": "vector", "path": ["title", "body"]}}],
+                        "should": [{"exists": {"path": "title"}}],
+                        "minimumShouldMatch": 0,
+                    },
+                },
+                result_limit_hint=1,
+                downstream_filter_spec={"$and": [{"kind": "note"}, {"score": {"$gte": 5}}]},
+            )
+            self.assertEqual([document["_id"] for document in compound_hits], ["1"])
+
+            text_hits = await engine.search_documents(
+                "db",
+                "coll",
+                "$search",
+                {"index": "by_text", "autocomplete": {"query": "vec", "path": ["title", "body"]}},
+                result_limit_hint=1,
+                downstream_filter_spec={"kind": {"$regex": "note"}},
+            )
+            self.assertEqual([document["_id"] for document in text_hits], ["1"])
+
+            vector_hits = await engine.search_documents(
+                "db",
+                "coll",
+                "$vectorSearch",
+                {
+                    "index": "by_vector",
+                    "path": "embedding",
+                    "queryVector": [1.0, 0.0],
+                    "numCandidates": 5,
+                    "limit": 5,
+                    "filter": {"$or": [{"kind": "note"}, {"score": {"$gte": 10}}]},
+                },
+                downstream_filter_spec={"kind": {"$regex": "note"}},
+            )
+            self.assertEqual([document["_id"] for document in vector_hits], ["1"])
+
+            vector_explanation = await engine.explain_search_documents(
+                "db",
+                "coll",
+                "$vectorSearch",
+                {
+                    "index": "by_vector",
+                    "path": "embedding",
+                    "queryVector": [1.0, 0.0],
+                    "numCandidates": 5,
+                    "limit": 5,
+                    "filter": {"$and": [{"kind": "note"}, {"kind": {"$regex": "n"}}]},
+                },
+            )
+            self.assertEqual(
+                vector_explanation.details["filterMode"],
+                "candidate-prefilter+post-candidate",
+            )
+            self.assertTrue(vector_explanation.details["vectorFilterPrefilter"]["candidateable"])
+            self.assertFalse(vector_explanation.details["vectorFilterPrefilter"]["exact"])
+            self.assertGreaterEqual(
+                vector_explanation.details["documentsScanned"],
+                vector_explanation.details["documentsScannedAfterPrefilter"],
+            )
         finally:
             await engine.disconnect()

@@ -90,9 +90,13 @@ def _summarize_search_explain(explain: dict[str, Any]) -> dict[str, Any]:
     summary["candidate_count_before_topk"] = details.get("candidateCountBeforeTopK")
     summary["topk_limit_hint"] = details.get("topKLimitHint")
     summary["topk_prefilter"] = details.get("topKPrefilter")
+    summary["ranking_source"] = details.get("rankingSource")
+    summary["compound_prefilter"] = details.get("compoundPrefilter")
     summary["downstream_filter_prefilter"] = details.get("downstreamFilterPrefilter")
     summary["vector_filter_prefilter"] = details.get("vectorFilterPrefilter")
     summary["candidate_expansion_strategy"] = details.get("candidateExpansionStrategy")
+    summary["documents_scanned"] = details.get("documentsScanned")
+    summary["documents_scanned_after_prefilter"] = details.get("documentsScannedAfterPrefilter")
     if isinstance(pushdown, dict):
         summary["search_topk_strategy"] = pushdown.get("searchTopKStrategy")
         summary["search_topk_growth_strategy"] = pushdown.get("searchTopKGrowthStrategy")
@@ -669,6 +673,7 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
     compound_candidateable_should_metrics: list[Metrics] = []
     compound_candidateable_should_matched_metrics: list[Metrics] = []
     compound_candidateable_should_title_metrics: list[Metrics] = []
+    compound_candidateable_should_msm2_metrics: list[Metrics] = []
 
     db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_augment_search_documents)
     try:
@@ -792,6 +797,23 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
             {"$match": {"title": "Ada algorithms"}},
             {"$limit": 10},
         ]
+        compound_candidateable_should_msm2_pipeline = [
+            {
+                "$search": {
+                    "index": "by_text",
+                    "compound": {
+                        "must": [{"text": {"query": "report 0", "path": ["title", "body"]}}],
+                        "should": [
+                            {"exists": {"path": "title"}},
+                            {"wildcard": {"query": "*vector*", "path": "body"}},
+                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                        ],
+                        "minimumShouldMatch": 2,
+                    },
+                }
+            },
+            {"$limit": 10},
+        ]
 
         return {
             "search_text_topk_100": _measure_single_task(
@@ -910,6 +932,23 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                     "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+match(title=Ada algorithms)",
                 },
             ),
+            "search_compound_candidateable_should_msm2_topk_100": _measure_single_task(
+                compound_candidateable_should_msm2_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, compound_candidateable_should_msm2_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            compound_candidateable_should_msm2_pipeline,
+                        )
+                    ),
+                    "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+minimumShouldMatch(2)",
+                },
+            ),
         }
     finally:
         engine.teardown()
@@ -919,6 +958,7 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
     """Mide ANN local y el coste adicional del filtro post-candidato."""
     ann_metrics: list[Metrics] = []
     filtered_metrics: list[Metrics] = []
+    filtered_boolean_metrics: list[Metrics] = []
 
     db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_augment_search_documents)
     try:
@@ -965,6 +1005,23 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                 }
             }
         ]
+        filtered_boolean_pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": "by_vector",
+                    "path": "embedding",
+                    "queryVector": [1.0, 0.0, 0.0],
+                    "numCandidates": 24,
+                    "limit": 10,
+                    "filter": {
+                        "$or": [
+                            {"kind": "reference"},
+                            {"score": {"$gte": 10}},
+                        ]
+                    },
+                }
+            }
+        ]
 
         return {
             "vector_search_ann_topk_100": _measure_single_task(
@@ -991,6 +1048,19 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                         engine.explain_aggregate(db_name, coll_name, filtered_pipeline)
                     ),
                     "query_shape": "$vectorSearch cosine topk + post-filter",
+                },
+            ),
+            "vector_search_filtered_boolean_topk_100": _measure_single_task(
+                filtered_boolean_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, filtered_boolean_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, filtered_boolean_pipeline)
+                    ),
+                    "query_shape": "$vectorSearch cosine topk + boolean candidate filter",
                 },
             ),
         }

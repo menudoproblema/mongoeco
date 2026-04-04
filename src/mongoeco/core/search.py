@@ -709,11 +709,11 @@ def score_vector_document(
     if len(candidate) != field_spec["numDimensions"] or len(candidate) != len(query.query_vector):
         return None
     similarity = str(field_spec.get("similarity", query.similarity))
-    if similarity == "dotProduct":
-        return _dot_product(query.query_vector, candidate)
-    if similarity == "euclidean":
-        return _negative_euclidean_distance(query.query_vector, candidate)
-    return _cosine_similarity(query.query_vector, candidate)
+    return score_vector_values(
+        query.query_vector,
+        candidate,
+        similarity=similarity,
+    )
 
 
 def materialize_search_document(
@@ -823,6 +823,23 @@ def _materialized_token_counters(
 
 def vector_field_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:
     return tuple(_vector_field_specs(definition))
+
+
+def vector_field_specs(definition: SearchIndexDefinition) -> dict[str, dict[str, object]]:
+    return deepcopy(_vector_field_specs(definition))
+
+
+def score_vector_values(
+    query_vector: tuple[float, ...],
+    candidate_vector: tuple[float, ...],
+    *,
+    similarity: str,
+) -> float:
+    if similarity == "dotProduct":
+        return _dot_product(query_vector, candidate_vector)
+    if similarity == "euclidean":
+        return _negative_euclidean_distance(query_vector, candidate_vector)
+    return _cosine_similarity(query_vector, candidate_vector)
 
 
 def iter_searchable_text_entries(

@@ -70,6 +70,10 @@ class _SQLiteSearchRuntimeEngine(Protocol):
     _simulate_search_index_latency: float
     _ensured_search_backends: set[str]
     _vector_search_backends: dict[tuple[str, str], SQLiteVectorBackendState]
+    _materialized_search_entry_cache: dict[
+        tuple[str, str, str, int],
+        dict[str, tuple[tuple[tuple[str, str], ...], MaterializedSearchDocument]],
+    ]
 
     def _load_search_index_rows(
         self,
@@ -859,6 +863,12 @@ def _describe_compound_prefilter_sync(
         "filter": [_describe_clause(clause) for clause in query.filter],
         "should": should_descriptions,
         "mustNot": [_describe_clause(clause) for clause in query.must_not],
+        "clauseClasses": {
+            "must": [_compound_clause_class(_describe_clause(clause)) for clause in query.must],
+            "filter": [_compound_clause_class(_describe_clause(clause)) for clause in query.filter],
+            "should": [_compound_clause_class(clause) for clause in should_descriptions],
+            "mustNot": [_compound_clause_class(_describe_clause(clause)) for clause in query.must_not],
+        },
         "downstreamFilter": deepcopy(downstream_filter) if downstream_filter is not None else None,
         "requiredCandidateableShould": max(
             0,
@@ -874,13 +884,29 @@ def _describe_compound_prefilter_sync(
             for clause in should_descriptions
             if bool(clause["candidateable"])
         ],
+        "partialRanking": {
+            "supported": _compound_entry_ranking_supported(query, physical_name=physical_name),
+            "strategy": "fts-materialized-entries"
+            if _compound_entry_ranking_supported(query, physical_name=physical_name)
+            else None,
+        },
     }
+
+
+def _compound_clause_class(description: dict[str, object]) -> str:
+    if not bool(description.get("candidateable")):
+        return "post-match-only"
+    if bool(description.get("exact")):
+        return "candidateable-exact"
+    return "candidateable-ranking"
 
 
 def _prune_candidate_storage_keys_for_topk(
     engine: _SQLiteSearchRuntimeEngine,
     conn: sqlite3.Connection,
     *,
+    db_name: str,
+    coll_name: str,
     physical_name: str | None,
     query: SearchQuery,
     candidate_storage_keys: list[str] | None,
@@ -927,6 +953,8 @@ def _prune_candidate_storage_keys_for_topk(
     exact_should_scores = _exact_candidateable_should_scores(
         engine,
         conn,
+        db_name=db_name,
+        coll_name=coll_name,
         physical_name=physical_name,
         query=query,
         candidate_storage_keys=candidate_storage_keys,
@@ -976,6 +1004,10 @@ def _prune_candidate_storage_keys_for_topk(
                     "strategy": "exact-should-score-tier",
                     "cutoffMatchedShould": cutoff[0] if cutoff is not None else None,
                     "cutoffShouldScore": cutoff[1] if cutoff is not None else None,
+                    "cutoffTier": {
+                        "matchedShould": cutoff[0] if cutoff is not None else None,
+                        "shouldScore": cutoff[1] if cutoff is not None else None,
+                    },
                 },
             )
 
@@ -996,6 +1028,9 @@ def _prune_candidate_storage_keys_for_topk(
                         "afterCount": len(pruned),
                         "strategy": "candidateable-should-ranking-tier",
                         "cutoffMatchedShould": matched_cutoff,
+                        "cutoffTier": {
+                            "matchedShould": matched_cutoff,
+                        },
                     },
                 )
 
@@ -1040,6 +1075,9 @@ def _prune_candidate_storage_keys_for_topk(
             "afterCount": len(pruned),
             "strategy": "matched-should-tier",
             "cutoffMatchedShould": cutoff_matched_should,
+            "cutoffTier": {
+                "matchedShould": cutoff_matched_should,
+            },
         },
     )
 
@@ -1110,6 +1148,8 @@ def _exact_candidateable_should_scores(
     engine: _SQLiteSearchRuntimeEngine,
     conn: sqlite3.Connection,
     *,
+    db_name: str,
+    coll_name: str,
     physical_name: str | None,
     query: SearchCompoundQuery,
     candidate_storage_keys: list[str],
@@ -1121,17 +1161,19 @@ def _exact_candidateable_should_scores(
         return None
     if not engine._sqlite_table_exists(conn, physical_name):
         return None
-    entries_by_storage_key = _load_search_entries_by_storage_key(
+    prepared_by_storage_key = _load_materialized_search_documents_by_storage_key(
         engine,
         conn,
+        db_name=db_name,
+        coll_name=coll_name,
         physical_name=physical_name,
         storage_keys=candidate_storage_keys,
     )
-    if not entries_by_storage_key:
+    if not prepared_by_storage_key:
         return None
     scores: dict[str, dict[str, float]] = {}
     for storage_key in candidate_storage_keys:
-        prepared = _materialized_search_document_from_entries(entries_by_storage_key.get(storage_key, ()))
+        prepared = prepared_by_storage_key.get(storage_key, _materialized_search_document_from_entries(()))
         matched_should = 0
         should_score = 0.0
         for clause in query.should:
@@ -1156,18 +1198,86 @@ def _load_search_entries_by_storage_key(
     engine: _SQLiteSearchRuntimeEngine,
     conn: sqlite3.Connection,
     *,
+    db_name: str,
+    coll_name: str,
     physical_name: str,
     storage_keys: list[str],
-) -> dict[str, list[tuple[str, str]]]:
-    entries: dict[str, list[tuple[str, str]]] = {storage_key: [] for storage_key in storage_keys}
-    placeholders = ", ".join("?" for _ in storage_keys)
-    sql = (
-        f"SELECT storage_key, field_path, content FROM {engine._quote_identifier(physical_name)} "
-        f"WHERE storage_key IN ({placeholders})"
+) -> dict[str, tuple[tuple[str, str], ...]]:
+    if not storage_keys:
+        return {}
+    cache_bucket = _materialized_search_entry_cache_bucket(
+        engine,
+        db_name=db_name,
+        coll_name=coll_name,
+        physical_name=physical_name,
     )
-    for storage_key, field_path, content in conn.execute(sql, tuple(storage_keys)).fetchall():
-        entries.setdefault(str(storage_key), []).append((str(field_path), str(content)))
-    return entries
+    missing_storage_keys = [storage_key for storage_key in storage_keys if storage_key not in cache_bucket]
+    if missing_storage_keys:
+        grouped_entries: dict[str, list[tuple[str, str]]] = {
+            storage_key: []
+            for storage_key in missing_storage_keys
+        }
+        placeholders = ", ".join("?" for _ in missing_storage_keys)
+        sql = (
+            f"SELECT storage_key, field_path, content FROM {engine._quote_identifier(physical_name)} "
+            f"WHERE storage_key IN ({placeholders})"
+        )
+        for storage_key, field_path, content in conn.execute(sql, tuple(missing_storage_keys)).fetchall():
+            grouped_entries.setdefault(str(storage_key), []).append((str(field_path), str(content)))
+        for storage_key in missing_storage_keys:
+            entries = tuple(grouped_entries.get(storage_key, ()))
+            cache_bucket[storage_key] = (entries, _materialized_search_document_from_entries(entries))
+    return {
+        storage_key: cache_bucket[storage_key][0]
+        for storage_key in storage_keys
+        if storage_key in cache_bucket
+    }
+
+
+def _load_materialized_search_documents_by_storage_key(
+    engine: _SQLiteSearchRuntimeEngine,
+    conn: sqlite3.Connection,
+    *,
+    db_name: str,
+    coll_name: str,
+    physical_name: str,
+    storage_keys: list[str],
+) -> dict[str, MaterializedSearchDocument]:
+    _load_search_entries_by_storage_key(
+        engine,
+        conn,
+        db_name=db_name,
+        coll_name=coll_name,
+        physical_name=physical_name,
+        storage_keys=storage_keys,
+    )
+    cache_bucket = _materialized_search_entry_cache_bucket(
+        engine,
+        db_name=db_name,
+        coll_name=coll_name,
+        physical_name=physical_name,
+    )
+    return {
+        storage_key: cache_bucket[storage_key][1]
+        for storage_key in storage_keys
+        if storage_key in cache_bucket
+    }
+
+
+def _materialized_search_entry_cache_bucket(
+    engine: _SQLiteSearchRuntimeEngine,
+    *,
+    db_name: str,
+    coll_name: str,
+    physical_name: str,
+) -> dict[str, tuple[tuple[tuple[str, str], ...], MaterializedSearchDocument]]:
+    cache_key = (
+        db_name,
+        coll_name,
+        physical_name,
+        engine._search_backend_version(db_name, coll_name),
+    )
+    return engine._materialized_search_entry_cache.setdefault(cache_key, {})
 
 
 def _materialized_search_document_from_entries(
@@ -1261,6 +1371,8 @@ def _rank_compound_candidate_storage_keys_from_entries(
     engine: _SQLiteSearchRuntimeEngine,
     conn: sqlite3.Connection,
     *,
+    db_name: str,
+    coll_name: str,
     physical_name: str,
     query: SearchCompoundQuery,
     candidate_storage_keys: list[str],
@@ -1270,15 +1382,17 @@ def _rank_compound_candidate_storage_keys_from_entries(
         return []
     if not _compound_entry_ranking_supported(query, physical_name=physical_name):
         return None
-    entries_by_storage_key = _load_search_entries_by_storage_key(
+    prepared_by_storage_key = _load_materialized_search_documents_by_storage_key(
         engine,
         conn,
+        db_name=db_name,
+        coll_name=coll_name,
         physical_name=physical_name,
         storage_keys=candidate_storage_keys,
     )
     ranked: list[tuple[tuple[float, float], int, str]] = []
     for order, storage_key in enumerate(candidate_storage_keys):
-        prepared = _materialized_search_document_from_entries(entries_by_storage_key.get(storage_key, ()))
+        prepared = prepared_by_storage_key.get(storage_key, _materialized_search_document_from_entries(()))
         matched_should = 0
         should_score = 0.0
         for clause in query.should:
@@ -1760,12 +1874,14 @@ def execute_sqlite_search_query(
                 candidate_exact = candidate_exact and bool(
                     downstream_filter_description and downstream_filter_description.get("exact")
                 )
-    candidate_storage_keys, _topk_prefilter = _prune_candidate_storage_keys_for_topk(
-        engine,
-        conn,
-        physical_name=resolved_physical_name,
-        query=query,
-        candidate_storage_keys=candidate_storage_keys,
+            candidate_storage_keys, _topk_prefilter = _prune_candidate_storage_keys_for_topk(
+                engine,
+                conn,
+                db_name=db_name,
+                coll_name=coll_name,
+                physical_name=resolved_physical_name,
+                query=query,
+                candidate_storage_keys=candidate_storage_keys,
         candidate_exact=candidate_exact,
         result_limit_hint=result_limit_hint,
         should_candidates=compound_should_candidates,
@@ -1783,6 +1899,8 @@ def execute_sqlite_search_query(
                     ranked_storage_keys = _rank_compound_candidate_storage_keys_from_entries(
                         engine,
                         conn,
+                        db_name=db_name,
+                        coll_name=coll_name,
                         physical_name=resolved_physical_name,
                         query=query,
                         candidate_storage_keys=candidate_storage_keys,
@@ -2041,6 +2159,8 @@ def explain_search_documents_sync(
             candidate_storage_keys, topk_prefilter = _prune_candidate_storage_keys_for_topk(
                 engine,
                 conn,
+                db_name=db_name,
+                coll_name=coll_name,
                 physical_name=resolved_physical_name,
                 query=query,
                 candidate_storage_keys=candidate_storage_keys,

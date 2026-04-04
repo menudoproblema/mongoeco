@@ -186,10 +186,16 @@ En search existe ya otra frontera explicita por capas:
   puede reconstruir exactamente desde las filas FTS, SQLite puede hacer poda
   top-k por tiers exactos de `matchedShould` + `shouldScore` antes del ranking
   documental final.
+- `compoundPrefilter` deja ya visible la clase de cada clausula
+  (`candidateable-exact`, `candidateable-ranking`, `post-match-only`) para que
+  esa poda no quede implicita.
 - cuando la ordenacion final de un `compound` puede reconstruirse solo desde
   las entradas materializadas de FTS, SQLite expone
   `rankingSource="fts-materialized-entries"` y evita cargar todos los
   documentos candidatos antes de aplicar la ventana final.
+- cuando esa poda aplica una ventana finita, `topKPrefilter.cutoffTier`
+  identifica el tier exacto o aproximado que ha servido de corte antes de la
+  materializacion documental final.
 - los prefiltros candidateables de search/vector aceptan ya una booleana local
   conservadora:
   - `$and` puede intersectar la parte soportada aunque queden ramas no
@@ -206,6 +212,17 @@ En search existe ya otra frontera explicita por capas:
   prefilter o si aun necesita validacion documental posterior. Ese prefilter ya
   cubre igualdad, `$in`, `$exists`, rangos simples y booleanos conservadores
   (`$and` parcial y `$or` totalmente soportado).
+
+`MemoryEngine` mantiene el contrato semantico local pero ya no trata
+`vectorSearch` ni `$search.compound` como puro full-scan documental:
+
+- materializa por indice los vectores, paths escalares filtrables y presencia
+  de campos para no reextraerlos en cada consulta;
+- `vectorSearch` deja visible en `explain()` cuanta lectura documental se evita
+  con `vectorFilterPrefilter`, `filterMode`, `documentsScanned` y
+  `documentsScannedAfterPrefilter`;
+- `$search.compound` reutiliza ese mismo enfoque para aplicar antes filtros
+  simples aguas abajo cuando son candidateables localmente.
 
 Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
 ruta de ejecucion, en la de `explain()` y en el lifecycle documental de los

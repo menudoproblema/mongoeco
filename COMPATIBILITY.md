@@ -78,6 +78,9 @@ Esto implica:
   calcular score exacto desde FTS, SQLite puede podar por tiers exactos de
   `matchedShould` + `shouldScore` antes de cargar documentos completos; esa
   poda aparece en `topKPrefilter.strategy`.
+* `compoundPrefilter` deja visible la clase de cada clausula
+  (`candidateable-exact`, `candidateable-ranking`, `post-match-only`) y
+  `topKPrefilter.cutoffTier` expone el tier usado para el corte.
 * cuando el ranking final de un `compound` puede reconstruirse exactamente
   desde las entradas materializadas de FTS, SQLite lo deja visible como
   `rankingSource="fts-materialized-entries"` y evita cargar todos los
@@ -95,6 +98,9 @@ Esto implica:
   ya vistos por el backend vectorial materializado, `vectorSearch` puede
   aplicar tambien `vectorFilterPrefilter` antes del ranking ANN/documental; si
   el subconjunto es exacto, `filterMode` pasa a `candidate-prefilter`.
+* `MemoryEngine` tambien materializa ya un subset local para `vectorSearch` y
+  deja visible en `explain()` tanto `vectorFilterPrefilter` como
+  `documentsScannedAfterPrefilter`, sin cambiar la shape publica del stage.
 * la proyeccion avanzada de `find` cubre ya el subconjunto diario mas util
   (`$slice`, `$elemMatch`, proyeccion posicional y `$meta: "textScore"`);
 * `$collStats` existe tanto como comando administrativo como stage de

@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 import sqlite3
 import threading
 
+from mongoeco.core.search import MaterializedSearchDocument
 from mongoeco.engines._sqlite_vector_backend import SQLiteVectorBackendState
 from mongoeco.types import EngineIndexRecord
 
@@ -32,3 +33,7 @@ class SQLiteCacheState:
     ensured_search_backends: set[str] = field(default_factory=set)
     vector_search_backends: dict[tuple[str, str], SQLiteVectorBackendState] = field(default_factory=dict)
     search_backend_versions: dict[tuple[str, str], int] = field(default_factory=dict)
+    materialized_search_entry_cache: dict[
+        tuple[str, str, str, int],
+        dict[str, tuple[tuple[tuple[str, str], ...], MaterializedSearchDocument]],
+    ] = field(default_factory=dict)

@@ -1,9 +1,11 @@
 import asyncio
 from contextlib import AsyncExitStack
 import datetime
+from dataclasses import dataclass
 import heapq
 import inspect
 import math
+import numpy as np
 import threading
 import time
 import uuid
@@ -55,6 +57,7 @@ from mongoeco.engines.virtual_indexes import (
 )
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operators import UpdateEngine
+from mongoeco.core.paths import get_document_value
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import QueryNode, ensure_query_plan
@@ -74,10 +77,10 @@ from mongoeco.core.search import (
     is_text_search_query,
     matches_search_query,
     resolve_classic_text_index,
-    score_vector_document,
     search_near_distance,
     search_query_explain_details,
     validate_search_index_definition,
+    vector_field_specs,
     vector_field_paths,
 )
 from mongoeco.core.aggregation import AggregationSpillPolicy
@@ -119,6 +122,492 @@ class _StoredDocument:
         self.decoded_public: Document | None = None
 
 
+type _FilterValueKey = tuple[str, object]
+
+
+@dataclass(frozen=True, slots=True)
+class _MaterializedVectorDocument:
+    document: Document
+    vectors_by_path: dict[str, tuple[float, ...]]
+    exists_paths: frozenset[str]
+    scalar_values: dict[str, tuple[_FilterValueKey, ...]]
+
+
+@dataclass(frozen=True, slots=True)
+class _MaterializedVectorIndex:
+    documents: tuple[_MaterializedVectorDocument, ...]
+    vector_paths: tuple[str, ...]
+    vector_specs: dict[str, dict[str, object]]
+    valid_vector_counts: dict[str, int]
+    vector_matrices: dict[str, np.ndarray]
+    vector_row_positions: dict[str, tuple[int, ...]]
+    vector_row_index_by_position: dict[str, dict[int, int]]
+    exists_filter_index: dict[str, frozenset[int]]
+    scalar_filter_index: dict[str, dict[_FilterValueKey, frozenset[int]]]
+    scalar_values_by_path: dict[str, tuple[tuple[int, _FilterValueKey], ...]]
+
+
+def _filter_value_key(value: object) -> _FilterValueKey | None:
+    if value is None:
+        return ("null", None)
+    if isinstance(value, bool):
+        return ("bool", value)
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        number = float(value)
+        if not math.isfinite(number):
+            return None
+        return ("number", number)
+    if isinstance(value, str):
+        return ("string", value)
+    if isinstance(value, datetime.datetime):
+        return ("datetime", value)
+    if isinstance(value, datetime.date):
+        return ("date", value)
+    return None
+
+
+def _collect_filterable_values(
+    value: object,
+    *,
+    prefix: str = "",
+) -> list[tuple[str, set[_FilterValueKey]]]:
+    entries: list[tuple[str, set[_FilterValueKey]]] = []
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if not isinstance(key, str) or not key:
+                continue
+            path = f"{prefix}.{key}" if prefix else key
+            entries.extend(_collect_filterable_values(item, prefix=path))
+        return entries
+    if not prefix:
+        return entries
+    if isinstance(value, list):
+        scalar_values = {
+            normalized
+            for item in value
+            if (normalized := _filter_value_key(item)) is not None
+        }
+        entries.append((prefix, scalar_values))
+        return entries
+    normalized = _filter_value_key(value)
+    entries.append((prefix, {normalized} if normalized is not None else set()))
+    return entries
+
+
+def _build_materialized_vector_index(
+    documents: list[Document],
+    definition: SearchIndexDefinition,
+) -> _MaterializedVectorIndex:
+    specs = vector_field_specs(definition)
+    exists_index: dict[str, set[int]] = {}
+    scalar_index: dict[str, dict[_FilterValueKey, set[int]]] = {}
+    scalar_values_by_path: dict[str, list[tuple[int, _FilterValueKey]]] = {}
+    valid_vector_counts = {path: 0 for path in specs}
+    vector_rows: dict[str, list[tuple[float, ...]]] = {path: [] for path in specs}
+    vector_row_positions: dict[str, list[int]] = {path: [] for path in specs}
+    materialized_documents: list[_MaterializedVectorDocument] = []
+    for position, document in enumerate(documents):
+        vectors_by_path: dict[str, tuple[float, ...]] = {}
+        for path, field_spec in specs.items():
+            found, value = get_document_value(document, path)
+            if not found or not isinstance(value, list):
+                continue
+            candidate = tuple(
+                float(item)
+                for item in value
+                if isinstance(item, (int, float)) and not isinstance(item, bool)
+            )
+            if len(candidate) != len(value):
+                continue
+            if len(candidate) != int(field_spec["numDimensions"]):
+                continue
+            vectors_by_path[path] = candidate
+            valid_vector_counts[path] += 1
+            vector_rows[path].append(candidate)
+            vector_row_positions[path].append(position)
+        exists_paths: set[str] = set()
+        scalar_values: dict[str, tuple[_FilterValueKey, ...]] = {}
+        for path, values in _collect_filterable_values(document):
+            exists_paths.add(path)
+            exists_index.setdefault(path, set()).add(position)
+            normalized_values = tuple(sorted(values))
+            scalar_values[path] = normalized_values
+            if not normalized_values:
+                continue
+            path_index = scalar_index.setdefault(path, {})
+            values_by_path = scalar_values_by_path.setdefault(path, [])
+            for normalized in normalized_values:
+                path_index.setdefault(normalized, set()).add(position)
+                values_by_path.append((position, normalized))
+        materialized_documents.append(
+            _MaterializedVectorDocument(
+                document=document,
+                vectors_by_path=vectors_by_path,
+                exists_paths=frozenset(exists_paths),
+                scalar_values=scalar_values,
+            )
+        )
+    return _MaterializedVectorIndex(
+        documents=tuple(materialized_documents),
+        vector_paths=tuple(specs),
+        vector_specs=specs,
+        valid_vector_counts=valid_vector_counts,
+        vector_matrices={
+            path: np.asarray(values, dtype=np.float32)
+            for path, values in vector_rows.items()
+            if values
+        },
+        vector_row_positions={
+            path: tuple(values)
+            for path, values in vector_row_positions.items()
+            if values
+        },
+        vector_row_index_by_position={
+            path: {position: row_index for row_index, position in enumerate(values)}
+            for path, values in vector_row_positions.items()
+            if values
+        },
+        exists_filter_index={
+            path: frozenset(values)
+            for path, values in exists_index.items()
+        },
+        scalar_filter_index={
+            path: {
+                value_key: frozenset(values)
+                for value_key, values in path_values.items()
+            }
+            for path, path_values in scalar_index.items()
+        },
+        scalar_values_by_path={
+            path: tuple(values)
+            for path, values in scalar_values_by_path.items()
+        },
+    )
+
+
+def _value_key_matches_range(value_key: _FilterValueKey, clause: dict[str, object]) -> bool:
+    kind, value = value_key
+    if kind not in {"number", "date", "datetime"}:
+        return False
+    for operator, bound in clause.items():
+        if operator not in {"$gt", "$gte", "$lt", "$lte"}:
+            return False
+        bound_key = _filter_value_key(bound)
+        if bound_key is None or bound_key[0] != kind:
+            return False
+        bound_value = bound_key[1]
+        if operator == "$gt" and not (value > bound_value):
+            return False
+        if operator == "$gte" and not (value >= bound_value):
+            return False
+        if operator == "$lt" and not (value < bound_value):
+            return False
+        if operator == "$lte" and not (value <= bound_value):
+            return False
+    return True
+
+
+def _candidate_positions_for_vector_filter(
+    vector_index: _MaterializedVectorIndex,
+    *,
+    filter_spec: dict[str, object] | None,
+) -> tuple[list[int] | None, dict[str, object] | None]:
+    if filter_spec is None:
+        return None, None
+    all_positions = set(range(len(vector_index.documents)))
+    candidate_state = _candidate_positions_for_vector_filter_node(
+        vector_index,
+        filter_spec,
+        all_positions=all_positions,
+    )
+    if candidate_state is None or candidate_state["positions"] is None:
+        return None, {
+            "spec": deepcopy(filter_spec),
+            "candidateable": False,
+            "exact": False,
+            "backend": None,
+            "supportedPaths": [] if candidate_state is None else candidate_state["supported_paths"],
+            "supportedClauseCount": 0 if candidate_state is None else candidate_state["supported_clause_count"],
+            "unsupportedClauseCount": 1 if candidate_state is None else candidate_state["unsupported_clause_count"],
+            "supportedOperators": [] if candidate_state is None else candidate_state["supported_operators"],
+            "booleanShape": None if candidate_state is None else candidate_state["shape"],
+        }
+    ordered_positions = [position for position in range(len(vector_index.documents)) if position in candidate_state["positions"]]
+    return ordered_positions, {
+        "spec": deepcopy(filter_spec),
+        "candidateable": True,
+        "exact": candidate_state["exact"],
+        "backend": "memory-vector-filter-index",
+        "supportedPaths": candidate_state["supported_paths"],
+        "supportedClauseCount": candidate_state["supported_clause_count"],
+        "unsupportedClauseCount": candidate_state["unsupported_clause_count"],
+        "supportedOperators": candidate_state["supported_operators"],
+        "booleanShape": candidate_state["shape"],
+    }
+
+
+def _candidate_positions_for_vector_filter_node(
+    vector_index: _MaterializedVectorIndex,
+    filter_spec: dict[str, object],
+    *,
+    all_positions: set[int],
+) -> dict[str, object] | None:
+    positions: set[int] | None = None
+    supported_paths: list[str] = []
+    supported_operators: list[str] = []
+    supported_clause_count = 0
+    unsupported_clause_count = 0
+    exact = True
+    shapes: list[str] = []
+    for key, value in filter_spec.items():
+        if key == "$and":
+            if not isinstance(value, list):
+                return None
+            shapes.append("$and")
+            local_positions: set[int] | None = None
+            local_supported = False
+            for item in value:
+                if not isinstance(item, dict):
+                    return None
+                nested = _candidate_positions_for_vector_filter_node(
+                    vector_index,
+                    item,
+                    all_positions=all_positions,
+                )
+                if nested is None:
+                    return None
+                supported_paths.extend(nested["supported_paths"])
+                supported_operators.extend(nested["supported_operators"])
+                supported_clause_count += nested["supported_clause_count"]
+                unsupported_clause_count += nested["unsupported_clause_count"]
+                exact = exact and nested["exact"]
+                if nested["positions"] is not None:
+                    local_supported = True
+                    local_positions = set(nested["positions"]) if local_positions is None else local_positions & set(nested["positions"])
+            if local_supported:
+                positions = set(local_positions) if positions is None else positions & set(local_positions)
+            continue
+        if key == "$or":
+            if not isinstance(value, list) or not value:
+                return None
+            shapes.append("$or")
+            branch_sets: list[set[int]] = []
+            branch_exact = True
+            for item in value:
+                if not isinstance(item, dict):
+                    return None
+                nested = _candidate_positions_for_vector_filter_node(
+                    vector_index,
+                    item,
+                    all_positions=all_positions,
+                )
+                if nested is None:
+                    return None
+                supported_paths.extend(nested["supported_paths"])
+                supported_operators.extend(nested["supported_operators"])
+                supported_clause_count += nested["supported_clause_count"]
+                unsupported_clause_count += nested["unsupported_clause_count"]
+                branch_exact = branch_exact and nested["exact"]
+                if nested["positions"] is None:
+                    return {
+                        "positions": None,
+                        "supported_paths": supported_paths,
+                        "supported_operators": supported_operators,
+                        "supported_clause_count": supported_clause_count,
+                        "unsupported_clause_count": unsupported_clause_count + 1,
+                        "exact": False,
+                        "shape": "+".join(shapes) if shapes else "flat",
+                    }
+                branch_sets.append(set(nested["positions"]))
+            union = set().union(*branch_sets)
+            positions = union if positions is None else positions & union
+            exact = exact and branch_exact
+            continue
+        if key.startswith("$"):
+            return None
+        matched_positions, operator_name = _candidate_positions_for_vector_filter_clause(
+            vector_index,
+            path=key,
+            clause=value,
+            all_positions=all_positions,
+        )
+        if matched_positions is None:
+            unsupported_clause_count += 1
+            exact = False
+            continue
+        supported_paths.append(key)
+        supported_operators.append(operator_name)
+        supported_clause_count += 1
+        positions = set(matched_positions) if positions is None else positions & set(matched_positions)
+    return {
+        "positions": positions,
+        "supported_paths": supported_paths,
+        "supported_operators": supported_operators,
+        "supported_clause_count": supported_clause_count,
+        "unsupported_clause_count": unsupported_clause_count,
+        "exact": exact and unsupported_clause_count == 0,
+        "shape": "+".join(shapes) if shapes else "flat",
+    }
+
+
+def _candidate_positions_for_vector_filter_clause(
+    vector_index: _MaterializedVectorIndex,
+    *,
+    path: str,
+    clause: object,
+    all_positions: set[int],
+) -> tuple[set[int] | None, str]:
+    if isinstance(clause, dict) and set(clause) == {"$exists"} and isinstance(clause["$exists"], bool):
+        existing = set(vector_index.exists_filter_index.get(path, ()))
+        return (existing if clause["$exists"] else all_positions - existing), "$exists"
+    if isinstance(clause, dict) and set(clause) == {"$in"} and isinstance(clause["$in"], list):
+        matched_positions: set[int] = set()
+        for item in clause["$in"]:
+            value_key = _filter_value_key(item)
+            if value_key is None:
+                return None, "$in"
+            matched_positions.update(vector_index.scalar_filter_index.get(path, {}).get(value_key, ()))
+        return matched_positions, "$in"
+    if isinstance(clause, dict) and clause and set(clause).issubset({"$gt", "$gte", "$lt", "$lte"}):
+        matched_positions = {
+            position
+            for position, value_key in vector_index.scalar_values_by_path.get(path, ())
+            if _value_key_matches_range(value_key, clause)
+        }
+        return matched_positions, "range"
+    value_key = _filter_value_key(clause)
+    if value_key is None:
+        return None, "eq"
+    return set(vector_index.scalar_filter_index.get(path, {}).get(value_key, ())), "eq"
+
+
+def _matches_candidateable_filter(document: Document, filter_spec: dict[str, object]) -> bool | None:
+    for key, value in filter_spec.items():
+        if key == "$and":
+            if not isinstance(value, list):
+                return None
+            for item in value:
+                if not isinstance(item, dict):
+                    return None
+                matched = _matches_candidateable_filter(document, item)
+                if matched is None:
+                    return None
+                if not matched:
+                    return False
+            continue
+        if key == "$or":
+            if not isinstance(value, list) or not value:
+                return None
+            branch_supported = False
+            for item in value:
+                if not isinstance(item, dict):
+                    return None
+                matched = _matches_candidateable_filter(document, item)
+                if matched is None:
+                    return None
+                branch_supported = True
+                if matched:
+                    return True
+            return False if branch_supported else None
+        if key.startswith("$"):
+            return None
+        found, raw_value = get_document_value(document, key)
+        candidate_values = raw_value if isinstance(raw_value, list) else [raw_value]
+        if isinstance(value, dict) and set(value) == {"$exists"} and isinstance(value["$exists"], bool):
+            if found != value["$exists"]:
+                return False
+            continue
+        if not found:
+            return False
+        if isinstance(value, dict) and set(value) == {"$in"} and isinstance(value["$in"], list):
+            normalized_candidates = {
+                normalized
+                for item in candidate_values
+                if (normalized := _filter_value_key(item)) is not None
+            }
+            normalized_filter_values = {
+                normalized
+                for item in value["$in"]
+                if (normalized := _filter_value_key(item)) is not None
+            }
+            if not normalized_filter_values or normalized_candidates.isdisjoint(normalized_filter_values):
+                return False
+            continue
+        if isinstance(value, dict) and value and set(value).issubset({"$gt", "$gte", "$lt", "$lte"}):
+            normalized_candidates = [
+                normalized
+                for item in candidate_values
+                if (normalized := _filter_value_key(item)) is not None
+            ]
+            if not normalized_candidates or not any(_value_key_matches_range(item, value) for item in normalized_candidates):
+                return False
+            continue
+        normalized_clause = _filter_value_key(value)
+        if normalized_clause is None:
+            return None
+        normalized_candidates = {
+            normalized
+            for item in candidate_values
+            if (normalized := _filter_value_key(item)) is not None
+        }
+        if normalized_clause not in normalized_candidates:
+            return False
+    return True
+
+
+def _vector_scores_for_positions(
+    vector_index: _MaterializedVectorIndex,
+    *,
+    query: SearchVectorQuery,
+    candidate_positions: list[int],
+    limit: int | None,
+) -> list[tuple[float, int]]:
+    matrix = vector_index.vector_matrices.get(query.path)
+    if matrix is None or matrix.size == 0:
+        return []
+    row_index_by_position = vector_index.vector_row_index_by_position.get(query.path, {})
+    selected_rows: list[int] = []
+    selected_positions: list[int] = []
+    for position in candidate_positions:
+        row_index = row_index_by_position.get(position)
+        if row_index is None:
+            continue
+        selected_rows.append(row_index)
+        selected_positions.append(position)
+    if not selected_rows:
+        return []
+    candidate_matrix = matrix[np.asarray(selected_rows, dtype=np.int32)]
+    query_vector = np.asarray(query.query_vector, dtype=np.float32)
+    similarity = str(vector_index.vector_specs.get(query.path, {}).get("similarity", query.similarity))
+    if similarity == "dotProduct":
+        scores = candidate_matrix @ query_vector
+    elif similarity == "euclidean":
+        scores = -np.linalg.norm(candidate_matrix - query_vector, axis=1)
+    else:
+        candidate_norms = np.linalg.norm(candidate_matrix, axis=1)
+        query_norm = float(np.linalg.norm(query_vector))
+        denominator = candidate_norms * query_norm
+        raw_scores = candidate_matrix @ query_vector
+        scores = np.divide(
+            raw_scores,
+            denominator,
+            out=np.zeros_like(raw_scores, dtype=np.float32),
+            where=denominator > 0,
+        )
+    if limit is not None and limit > 0 and len(scores) > limit:
+        top_indexes = np.argpartition(scores, -limit)[-limit:]
+        ordered_indexes = top_indexes[np.argsort(scores[top_indexes])[::-1]]
+        return [
+            (float(scores[int(index)]), selected_positions[int(index)])
+            for index in ordered_indexes
+        ]
+    ordered_indexes = np.argsort(scores)[::-1]
+    return [
+        (float(scores[int(index)]), selected_positions[int(index)])
+        for index in ordered_indexes
+    ]
+
+
 class MemoryEngine(AsyncStorageEngine):
     """Motor de almacenamiento en memoria ultra-rápido."""
 
@@ -141,6 +630,10 @@ class MemoryEngine(AsyncStorageEngine):
         self._search_document_cache: dict[
             tuple[str, str, str],
             tuple[SearchIndexDefinition, list[tuple[Document, MaterializedSearchDocument]]],
+        ] = {}
+        self._vector_document_cache: dict[
+            tuple[str, str, str],
+            tuple[SearchIndexDefinition, _MaterializedVectorIndex],
         ] = {}
         self._collections: dict[str, set[str]] = {}
         self._collection_options: dict[str, dict[str, Document]] = {}
@@ -189,6 +682,7 @@ class MemoryEngine(AsyncStorageEngine):
 
     def _clear_search_runtime_cache(self) -> None:
         self._search_document_cache.clear()
+        self._vector_document_cache.clear()
 
     def _invalidate_search_runtime_cache(
         self,
@@ -199,6 +693,7 @@ class MemoryEngine(AsyncStorageEngine):
     ) -> None:
         if index_name is not None:
             self._search_document_cache.pop((db_name, coll_name, index_name), None)
+            self._vector_document_cache.pop((db_name, coll_name, index_name), None)
             return
         stale_keys = [
             key
@@ -207,6 +702,13 @@ class MemoryEngine(AsyncStorageEngine):
         ]
         for key in stale_keys:
             self._search_document_cache.pop(key, None)
+        stale_vector_keys = [
+            key
+            for key in self._vector_document_cache
+            if key[0] == db_name and key[1] == coll_name
+        ]
+        for key in stale_vector_keys:
+            self._vector_document_cache.pop(key, None)
 
     def _materialized_search_documents(
         self,
@@ -236,6 +738,28 @@ class MemoryEngine(AsyncStorageEngine):
             ]
         ]
         self._search_document_cache[cache_key] = (definition, materialized)
+        return materialized
+
+    def _materialized_vector_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        definition: SearchIndexDefinition,
+        *,
+        context: ClientSession | None,
+    ) -> _MaterializedVectorIndex:
+        documents = [
+            self._decode_storage_document(payload)
+            for payload in self._storage_view(context).get(db_name, {}).get(coll_name, {}).values()
+        ]
+        if context is not None:
+            return _build_materialized_vector_index(documents, definition)
+        cache_key = (db_name, coll_name, definition.name)
+        cached = self._vector_document_cache.get(cache_key)
+        if cached is not None and cached[0] == definition:
+            return cached[1]
+        materialized = _build_materialized_vector_index(documents, definition)
+        self._vector_document_cache[cache_key] = (definition, materialized)
         return materialized
 
     def _runtime_diagnostics_info(self) -> dict[str, object]:
@@ -1693,6 +2217,11 @@ class MemoryEngine(AsyncStorageEngine):
                 ]
                 for key in stale_cache_keys:
                     del self._search_document_cache[key]
+                stale_vector_cache_keys = [
+                    key for key in self._vector_document_cache if key[0] == db_name
+                ]
+                for key in stale_vector_cache_keys:
+                    del self._vector_document_cache[key]
         self._profiler.clear(db_name)
 
     @override
@@ -1884,6 +2413,16 @@ class MemoryEngine(AsyncStorageEngine):
                 definition,
                 context=context,
             )
+            vector_index = (
+                self._materialized_vector_index(
+                    db_name,
+                    coll_name,
+                    definition,
+                    context=context,
+                )
+                if isinstance(query, SearchVectorQuery)
+                else None
+            )
         enforce_deadline(deadline)
         if is_text_search_query(query):
             if isinstance(query, SearchNearQuery):
@@ -1918,12 +2457,16 @@ class MemoryEngine(AsyncStorageEngine):
             if isinstance(query, SearchCompoundQuery) and query.should:
                 ranked_documents: list[tuple[tuple[int, float, float], int, Document]] = []
                 for order, (document, materialized) in enumerate(materialized_documents):
-                    if downstream_filter_spec is not None and not QueryEngine.match(
-                        document,
-                        downstream_filter_spec,
-                        dialect=MONGODB_DIALECT_70,
-                    ):
-                        continue
+                    if downstream_filter_spec is not None:
+                        candidateable_match = _matches_candidateable_filter(document, downstream_filter_spec)
+                        if candidateable_match is False:
+                            continue
+                        if candidateable_match is None and not QueryEngine.match(
+                            document,
+                            downstream_filter_spec,
+                            dialect=MONGODB_DIALECT_70,
+                        ):
+                            continue
                     if not matches_search_query(
                         document,
                         definition=definition,
@@ -1956,12 +2499,16 @@ class MemoryEngine(AsyncStorageEngine):
                 return [document for _score, _order, document in ranked_documents]
             matches: list[Document] = []
             for document, materialized in materialized_documents:
-                if downstream_filter_spec is not None and not QueryEngine.match(
-                    document,
-                    downstream_filter_spec,
-                    dialect=MONGODB_DIALECT_70,
-                ):
-                    continue
+                if downstream_filter_spec is not None:
+                    candidateable_match = _matches_candidateable_filter(document, downstream_filter_spec)
+                    if candidateable_match is False:
+                        continue
+                    if candidateable_match is None and not QueryEngine.match(
+                        document,
+                        downstream_filter_spec,
+                        dialect=MONGODB_DIALECT_70,
+                    ):
+                        continue
                 if not matches_search_query(
                     document,
                     definition=definition,
@@ -1973,36 +2520,56 @@ class MemoryEngine(AsyncStorageEngine):
                 if effective_limit is not None and len(matches) >= effective_limit:
                     break
             return matches
-        documents = [document for document, _materialized in materialized_documents]
         effective_vector_limit = min(query.limit, effective_limit) if effective_limit is not None else query.limit
         vector_hits: list[tuple[float, int, Document]] = []
-        for order, document in enumerate(documents):
-            if downstream_filter_spec is not None and not QueryEngine.match(
-                document,
-                downstream_filter_spec,
-                dialect=MONGODB_DIALECT_70,
-            ):
-                continue
-            if query.filter_spec is not None and not QueryEngine.match(
-                document,
-                query.filter_spec,
-                dialect=MONGODB_DIALECT_70,
-            ):
-                continue
-            score = score_vector_document(
-                document,
-                definition=definition,
-                query=query,
-            )
-            if score is None:
-                continue
-            if effective_vector_limit is not None:
-                if len(vector_hits) < effective_vector_limit:
-                    heapq.heappush(vector_hits, (score, -order, document))
-                elif (score, -order) > vector_hits[0][:2]:
-                    heapq.heapreplace(vector_hits, (score, -order, document))
-            else:
-                vector_hits.append((score, -order, document))
+        if vector_index is None:
+            return []
+        query_filter_positions, _query_filter_description = _candidate_positions_for_vector_filter(
+            vector_index,
+            filter_spec=query.filter_spec,
+        )
+        downstream_filter_positions, _downstream_filter_description = _candidate_positions_for_vector_filter(
+            vector_index,
+            filter_spec=downstream_filter_spec,
+        )
+        candidate_positions = list(range(len(vector_index.documents)))
+        if query_filter_positions is not None:
+            allowed = set(query_filter_positions)
+            candidate_positions = [position for position in candidate_positions if position in allowed]
+        if downstream_filter_positions is not None:
+            allowed = set(downstream_filter_positions)
+            candidate_positions = [position for position in candidate_positions if position in allowed]
+        if query.path not in vector_index.vector_specs:
+            return []
+        scored_positions = _vector_scores_for_positions(
+            vector_index,
+            query=query,
+            candidate_positions=candidate_positions,
+            limit=effective_vector_limit,
+        )
+        for order, (score, position) in enumerate(scored_positions):
+            prepared = vector_index.documents[position]
+            if downstream_filter_spec is not None and downstream_filter_positions is None:
+                candidateable_match = _matches_candidateable_filter(prepared.document, downstream_filter_spec)
+                if candidateable_match is False:
+                    continue
+                if candidateable_match is None and not QueryEngine.match(
+                    prepared.document,
+                    downstream_filter_spec,
+                    dialect=MONGODB_DIALECT_70,
+                ):
+                    continue
+            if query.filter_spec is not None and query_filter_positions is None:
+                candidateable_match = _matches_candidateable_filter(prepared.document, query.filter_spec)
+                if candidateable_match is False:
+                    continue
+                if candidateable_match is None and not QueryEngine.match(
+                    prepared.document,
+                    query.filter_spec,
+                    dialect=MONGODB_DIALECT_70,
+                ):
+                    continue
+            vector_hits.append((score, -order, prepared.document))
         vector_hits.sort(key=lambda item: item[:2], reverse=True)
         return [document for _score, _order, document in vector_hits[:effective_vector_limit]]
 
@@ -2023,11 +2590,27 @@ class MemoryEngine(AsyncStorageEngine):
             indexes = deepcopy(
                 self._search_indexes_view(context).get(db_name, {}).get(coll_name, [])
             )
+            definition = next((item for item in indexes if item.name == query.index_name), None)
+            vector_index = (
+                self._materialized_vector_index(
+                    db_name,
+                    coll_name,
+                    definition,
+                    context=context,
+                )
+                if definition is not None and isinstance(query, SearchVectorQuery)
+                else None
+            )
         definition = next((item for item in indexes if item.name == query.index_name), None)
         if definition is None:
             raise search_index_not_found(query.index_name)
         ready = self._search_index_is_ready(db_name, coll_name, query.index_name)
         ensure_search_index_query_supported(definition, query, ready=ready, enforce_ready=False)
+        vector_filter_positions, vector_filter_description = (
+            _candidate_positions_for_vector_filter(vector_index, filter_spec=query.filter_spec)
+            if isinstance(query, SearchVectorQuery) and vector_index is not None
+            else (None, None)
+        )
         return QueryPlanExplanation(
             engine="memory",
             strategy="search",
@@ -2056,6 +2639,32 @@ class MemoryEngine(AsyncStorageEngine):
                 ),
                 **search_query_explain_details(query),
                 "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
+                "filterMode": (
+                    "candidate-prefilter"
+                    if isinstance(query, SearchVectorQuery)
+                    and query.filter_spec is not None
+                    and bool(vector_filter_description and vector_filter_description.get("exact"))
+                    else "candidate-prefilter+post-candidate"
+                    if isinstance(query, SearchVectorQuery)
+                    and query.filter_spec is not None
+                    and vector_filter_description is not None
+                    else "post-candidate"
+                    if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
+                    else None
+                ),
+                "vectorFilterPrefilter": vector_filter_description if isinstance(query, SearchVectorQuery) else None,
+                "documentsScanned": (
+                    vector_index.valid_vector_counts.get(query.path, 0)
+                    if isinstance(query, SearchVectorQuery) and vector_index is not None
+                    else None
+                ),
+                "documentsScannedAfterPrefilter": (
+                    len(vector_filter_positions)
+                    if isinstance(query, SearchVectorQuery) and vector_filter_positions is not None
+                    else vector_index.valid_vector_counts.get(query.path, 0)
+                    if isinstance(query, SearchVectorQuery) and vector_index is not None
+                    else None
+                ),
                 "topKLimitHint": result_limit_hint,
                 "downstreamFilterPrefilter": deepcopy(downstream_filter_spec) if downstream_filter_spec is not None else None,
             },
@@ -2377,6 +2986,13 @@ class MemoryEngine(AsyncStorageEngine):
                 ]
                 for key in stale_cache_keys:
                     self._search_document_cache[(db_name, new_name, key[2])] = self._search_document_cache.pop(key)
+                stale_vector_cache_keys = [
+                    key
+                    for key in self._vector_document_cache
+                    if key[0] == db_name and key[1] == coll_name
+                ]
+                for key in stale_vector_cache_keys:
+                    self._vector_document_cache[(db_name, new_name, key[2])] = self._vector_document_cache.pop(key)
 
                 db_options = option_store.get(db_name)
                 if db_options is not None and coll_name in db_options:

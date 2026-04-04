@@ -400,6 +400,15 @@ class SQLiteEngine(AsyncStorageEngine):
     def _search_backend_versions(self) -> dict[tuple[str, str], int]:
         return self._cache_state.search_backend_versions
 
+    @property
+    def _materialized_search_entry_cache(
+        self,
+    ) -> dict[
+        tuple[str, str, str, int],
+        dict[str, tuple[tuple[tuple[str, str], ...], object]],
+    ]:
+        return self._cache_state.materialized_search_entry_cache
+
     def _runtime_diagnostics_info(self) -> dict[str, object]:
         declared_search_index_count = 0
         pending_search_index_count = 0
@@ -819,6 +828,13 @@ class SQLiteEngine(AsyncStorageEngine):
         ]
         for key in stale_keys:
             self._vector_search_backends.pop(key, None)
+        stale_entry_keys = [
+            key
+            for key in self._materialized_search_entry_cache
+            if key[0] == db_name and key[1] == coll_name
+        ]
+        for key in stale_entry_keys:
+            self._materialized_search_entry_cache.pop(key, None)
 
     def _search_backend_version(self, db_name: str, coll_name: str) -> int:
         return self._search_backend_versions.get((db_name, coll_name), 0)
@@ -834,6 +850,9 @@ class SQLiteEngine(AsyncStorageEngine):
         ]
         for key in stale_backend_keys:
             self._vector_search_backends.pop(key, None)
+        stale_entry_keys = [key for key in self._materialized_search_entry_cache if key[0] == db_name]
+        for key in stale_entry_keys:
+            self._materialized_search_entry_cache.pop(key, None)
 
     def _sqlite_table_exists(self, conn: sqlite3.Connection, table_name: str) -> bool:
         row = conn.execute(
@@ -2962,6 +2981,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._ensured_search_backends.clear()
                 self._vector_search_backends.clear()
                 self._search_backend_versions.clear()
+                self._materialized_search_entry_cache.clear()
                 self._fts5_available = None
                 self._invalidate_index_cache()
                 self._invalidate_collection_id_cache()
@@ -3054,6 +3074,7 @@ class SQLiteEngine(AsyncStorageEngine):
             self._ensured_search_backends.clear()
             self._vector_search_backends.clear()
             self._search_backend_versions.clear()
+            self._materialized_search_entry_cache.clear()
             self._fts5_available = None
         if connection is not None:
             connection.close()
