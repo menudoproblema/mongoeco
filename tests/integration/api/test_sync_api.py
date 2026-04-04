@@ -457,6 +457,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         self.assertTrue(
                             compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["applied"]
                         )
+                        self.assertEqual(
+                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["strategy"],
+                            "exact-should-score-tier",
+                        )
                         self.assertLess(
                             compound_candidateable_should_limited_explanation["engine_plan"]["details"]["candidateCount"],
                             compound_candidateable_should_limited_explanation["engine_plan"]["details"]["candidateCountBeforeTopK"],
@@ -669,7 +673,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         )
                         self.assertEqual(
                             filtered_vector_explanation["engine_plan"]["details"]["filterMode"],
-                            "post-candidate",
+                            "candidate-prefilter",
+                        )
+                        self.assertEqual(
+                            filtered_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["backend"],
+                            "vector-filter-index",
+                        )
+                        self.assertEqual(
+                            filtered_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["supportedPaths"],
+                            ["kind"],
                         )
 
                     with self.assertRaises(OperationFailure):

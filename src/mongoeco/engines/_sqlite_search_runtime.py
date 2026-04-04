@@ -12,6 +12,7 @@ from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.search import (
+    MaterializedSearchDocument,
     build_search_index_document,
     compile_search_stage,
     is_text_search_query,
@@ -19,11 +20,13 @@ from mongoeco.core.search import (
     materialize_search_document,
     matches_search_query,
     search_compound_ranking,
+    search_clause_ranking,
     search_near_distance,
     score_vector_document,
     search_query_explain_details,
     search_query_operator_name,
     sqlite_fts5_query,
+    tokenize_classic_text,
     SearchAutocompleteQuery,
     SearchCompoundQuery,
     SearchExistsQuery,
@@ -48,11 +51,18 @@ from mongoeco.engines._sqlite_vector_backend import (
     build_sqlite_vector_backend,
     search_sqlite_vector_backend,
     vector_backend_stats_document,
+    vector_filter_candidate_storage_keys,
 )
 from mongoeco.engines._sqlite_read_ops import search_documents as _sqlite_search_documents
 from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import Document, QueryPlanExplanation, SearchIndexDefinition, SearchIndexDocument
+
+_SEARCH_RUNTIME_DUMMY_DEFINITION = SearchIndexDefinition(
+    {"mappings": {"dynamic": True}},
+    name="local",
+    index_type="search",
+)
 
 
 class _SQLiteSearchRuntimeEngine(Protocol):
@@ -772,6 +782,61 @@ def _prune_candidate_storage_keys_for_topk(
                 return candidate_storage_keys, None
             resolved_should_candidates.append(storage_keys)
 
+    exact_should_scores = _exact_candidateable_should_scores(
+        engine,
+        conn,
+        physical_name=physical_name,
+        query=query,
+        candidate_storage_keys=candidate_storage_keys,
+    )
+    if exact_should_scores is not None:
+        selected: set[str] = set()
+        selected_count = 0
+        cutoff: tuple[int, float] | None = None
+        exact_tiers = sorted(
+            {
+                (
+                    score["matchedShould"],
+                    round(float(score["shouldScore"]), 12),
+                )
+                for score in exact_should_scores.values()
+            },
+            reverse=True,
+        )
+        for tier_key in exact_tiers:
+            tier = [
+                storage_key
+                for storage_key in candidate_storage_keys
+                if (
+                    exact_should_scores[storage_key]["matchedShould"],
+                    round(float(exact_should_scores[storage_key]["shouldScore"]), 12),
+                ) == tier_key
+            ]
+            if not tier:
+                continue
+            selected.update(tier)
+            selected_count += len(tier)
+            cutoff = tier_key
+            if selected_count >= result_limit_hint:
+                break
+        pruned = [
+            storage_key
+            for storage_key in candidate_storage_keys
+            if storage_key in selected
+        ]
+        if len(pruned) < before_count:
+            return (
+                pruned,
+                {
+                    "applied": True,
+                    "beforeCount": before_count,
+                    "afterCount": len(pruned),
+                    "strategy": "exact-should-score-tier",
+                    "cutoffMatchedShould": cutoff[0] if cutoff is not None else None,
+                    "cutoffShouldScore": cutoff[1] if cutoff is not None else None,
+                },
+            )
+
     match_counts: Counter[str] = Counter()
     for values in resolved_should_candidates:
         for storage_key in values:
@@ -814,6 +879,109 @@ def _prune_candidate_storage_keys_for_topk(
             "strategy": "matched-should-tier",
             "cutoffMatchedShould": cutoff_matched_should,
         },
+    )
+
+
+def _exact_candidateable_should_scores(
+    engine: _SQLiteSearchRuntimeEngine,
+    conn: sqlite3.Connection,
+    *,
+    physical_name: str | None,
+    query: SearchCompoundQuery,
+    candidate_storage_keys: list[str],
+) -> dict[str, dict[str, float]] | None:
+    if physical_name is None or not candidate_storage_keys or any(
+        isinstance(clause, (SearchNearQuery, SearchCompoundQuery))
+        for clause in query.should
+    ):
+        return None
+    if not engine._sqlite_table_exists(conn, physical_name):
+        return None
+    entries_by_storage_key = _load_search_entries_by_storage_key(
+        engine,
+        conn,
+        physical_name=physical_name,
+        storage_keys=candidate_storage_keys,
+    )
+    if not entries_by_storage_key:
+        return None
+    scores: dict[str, dict[str, float]] = {}
+    for storage_key in candidate_storage_keys:
+        prepared = _materialized_search_document_from_entries(entries_by_storage_key.get(storage_key, ()))
+        matched_should = 0
+        should_score = 0.0
+        for clause in query.should:
+            matched, clause_score, _near_distance = search_clause_ranking(
+                {},
+                definition=_SEARCH_RUNTIME_DUMMY_DEFINITION,
+                query=clause,
+                materialized=prepared,
+            )
+            if not matched:
+                continue
+            matched_should += 1
+            should_score += clause_score
+        scores[storage_key] = {
+            "matchedShould": float(matched_should),
+            "shouldScore": should_score,
+        }
+    return scores
+
+
+def _load_search_entries_by_storage_key(
+    engine: _SQLiteSearchRuntimeEngine,
+    conn: sqlite3.Connection,
+    *,
+    physical_name: str,
+    storage_keys: list[str],
+) -> dict[str, list[tuple[str, str]]]:
+    entries: dict[str, list[tuple[str, str]]] = {storage_key: [] for storage_key in storage_keys}
+    placeholders = ", ".join("?" for _ in storage_keys)
+    sql = (
+        f"SELECT storage_key, field_path, content FROM {engine._quote_identifier(physical_name)} "
+        f"WHERE storage_key IN ({placeholders})"
+    )
+    for storage_key, field_path, content in conn.execute(sql, tuple(storage_keys)).fetchall():
+        entries.setdefault(str(storage_key), []).append((str(field_path), str(content)))
+    return entries
+
+
+def _materialized_search_document_from_entries(
+    entries: list[tuple[str, str]] | tuple[tuple[str, str], ...],
+) -> MaterializedSearchDocument:
+    searchable_paths: set[str] = set()
+    lowered_values: list[str] = []
+    lowered_values_by_path: dict[str, list[str]] = {}
+    token_counter_by_path: dict[str, Counter[str]] = {}
+    token_counter: Counter[str] = Counter()
+    token_sets_by_path: dict[str, set[str]] = {}
+    token_set: set[str] = set()
+    for field_path, value in entries:
+        searchable_paths.add(field_path)
+        lowered = value.lower()
+        lowered_values.append(lowered)
+        lowered_values_by_path.setdefault(field_path, []).append(lowered)
+        tokens_counter = Counter(tokenize_classic_text(value))
+        tokens = set(tokens_counter)
+        token_counter.update(tokens_counter)
+        token_counter_by_path.setdefault(field_path, Counter()).update(tokens_counter)
+        token_set.update(tokens)
+        token_sets_by_path.setdefault(field_path, set()).update(tokens)
+    return MaterializedSearchDocument(
+        entries=tuple(entries),
+        searchable_paths=frozenset(searchable_paths),
+        lowered_values=tuple(lowered_values),
+        lowered_values_by_path={
+            field_path: tuple(values)
+            for field_path, values in lowered_values_by_path.items()
+        },
+        token_counter_by_path=token_counter_by_path,
+        token_counter=token_counter,
+        token_sets_by_path={
+            field_path: frozenset(values)
+            for field_path, values in token_sets_by_path.items()
+        },
+        token_set=frozenset(token_set),
     )
 
 
@@ -1112,7 +1280,11 @@ def _sqlite_vector_candidate_documents(
     coll_name: str,
     query: SearchVectorQuery,
     backend_state: SQLiteVectorBackendState,
+    prefilter_storage_keys: list[str] | None,
+    prefilter_exact: bool,
 ) -> tuple[list[Document], int, int, int, str | None]:
+    if prefilter_storage_keys is not None and prefilter_exact and not prefilter_storage_keys:
+        return [], 0, 0, 0, None
     requested = max(query.limit, query.num_candidates)
     max_requested = min(
         backend_state.valid_vectors,
@@ -1123,6 +1295,7 @@ def _sqlite_vector_candidate_documents(
     candidates_evaluated = 0
     exact_fallback_reason: str | None = None
     seen_storage_keys: set[str] = set()
+    allowed_storage_keys = set(prefilter_storage_keys) if prefilter_storage_keys is not None else None
     current_request = requested
 
     while current_request > 0:
@@ -1135,6 +1308,7 @@ def _sqlite_vector_candidate_documents(
             storage_key
             for storage_key, _distance in ann_hits
             if storage_key not in seen_storage_keys
+            and (allowed_storage_keys is None or storage_key in allowed_storage_keys)
         ]
         if not new_storage_keys:
             break
@@ -1146,7 +1320,7 @@ def _sqlite_vector_candidate_documents(
             new_storage_keys,
         ):
             candidates_evaluated += 1
-            if query.filter_spec is not None and not QueryEngine.match(
+            if query.filter_spec is not None and not prefilter_exact and not QueryEngine.match(
                 document,
                 query.filter_spec,
                 dialect=MONGODB_DIALECT_70,
@@ -1172,7 +1346,7 @@ def _sqlite_vector_candidate_documents(
         )
 
     if query.filter_spec is not None and len(matched_documents) < query.limit:
-        exact_fallback_reason = "post-filter-underflow"
+        exact_fallback_reason = "candidate-prefilter-underflow" if prefilter_exact else "post-filter-underflow"
     return (
         matched_documents[: query.limit],
         current_request,
@@ -1220,6 +1394,10 @@ def execute_sqlite_search_query(
                 resolved_physical_name,
                 query.path,
             )
+            vector_filter_storage_keys, vector_filter_description = vector_filter_candidate_storage_keys(
+                backend_state,
+                filter_spec=query.filter_spec,
+            )
             (
                 filtered_documents,
                 _requested_candidates,
@@ -1232,6 +1410,8 @@ def execute_sqlite_search_query(
                 coll_name,
                 query,
                 backend_state,
+                prefilter_storage_keys=vector_filter_storage_keys,
+                prefilter_exact=bool(vector_filter_description and vector_filter_description.get("exact")),
             )
             if exact_fallback_reason is None:
                 enforce_deadline(deadline)
@@ -1444,6 +1624,8 @@ def explain_search_documents_sync(
     backend_materialized = False
     resolved_physical_name: str | None = None
     vector_state: SQLiteVectorBackendState | None = None
+    vector_filter_storage_keys: list[str] | None = None
+    vector_filter_description: dict[str, object] | None = None
     exact_fallback_reason: str | None = None
     documents_filtered = 0
     candidates_evaluated: int | None = None
@@ -1582,6 +1764,10 @@ def explain_search_documents_sync(
                     resolved_physical_name,
                     query.path,
                 )
+                vector_filter_storage_keys, vector_filter_description = vector_filter_candidate_storage_keys(
+                    vector_state,
+                    filter_spec=query.filter_spec,
+                )
             decision = decide_sqlite_search_backend(
                 query,
                 physical_name=resolved_physical_name,
@@ -1602,6 +1788,8 @@ def explain_search_documents_sync(
                 coll_name,
                 query,
                 vector_state,
+                prefilter_storage_keys=vector_filter_storage_keys if vector_state is not None else None,
+                prefilter_exact=bool(vector_filter_description and vector_filter_description.get("exact")),
             )
             candidates_evaluated = evaluated_count
 
@@ -1648,10 +1836,27 @@ def explain_search_documents_sync(
                 if isinstance(query, SearchVectorQuery)
                 else None
             ),
-            "filterMode": "post-candidate" if isinstance(query, SearchVectorQuery) and query.filter_spec is not None else None,
+            "filterMode": (
+                "candidate-prefilter"
+                if isinstance(query, SearchVectorQuery)
+                and query.filter_spec is not None
+                and bool(vector_filter_description and vector_filter_description.get("exact"))
+                else "candidate-prefilter+post-candidate"
+                if isinstance(query, SearchVectorQuery)
+                and query.filter_spec is not None
+                and vector_filter_description is not None
+                else "post-candidate"
+                if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
+                else None
+            ),
             "candidateExpansionStrategy": (
                 "adaptive-retention"
                 if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
+                else None
+            ),
+            "vectorFilterPrefilter": (
+                vector_filter_description
+                if isinstance(query, SearchVectorQuery)
                 else None
             ),
             "candidateCount": len(candidate_storage_keys) if candidate_storage_keys is not None else None,

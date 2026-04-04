@@ -182,10 +182,19 @@ En search existe ya otra frontera explicita por capas:
   `compound.must`, `compound.filter` o `compound.should`, SQLite marca esa
   clausula como refinada por `downstreamFilter` dentro de `compoundPrefilter`
   y estrecha su conjunto de candidatos antes del ranking final.
+- si todas las clausulas `should` relevantes son candidateables y su score se
+  puede reconstruir exactamente desde las filas FTS, SQLite puede hacer poda
+  top-k por tiers exactos de `matchedShould` + `shouldScore` antes del ranking
+  documental final.
 - en `vectorSearch`, cuando el `post-filter` documental descarta demasiados
   candidatos ANN, SQLite ya no expande `numCandidates` doblando a ciegas: usa
   `candidateExpansionStrategy="adaptive-retention"` para estimar la siguiente
   expansion segun la retencion observada.
+- ademas, para filtros simples sobre paths escalares ya observados al
+  materializar el backend ANN, `vectorSearch` puede generar un
+  `vectorFilterPrefilter` exacto o parcial antes de cargar documentos; el
+  `filterMode` de `explain()` distingue si ese filtro se resuelve solo como
+  prefilter o si aun necesita validacion documental posterior.
 
 Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
 ruta de ejecucion, en la de `explain()` y en el lifecycle documental de los

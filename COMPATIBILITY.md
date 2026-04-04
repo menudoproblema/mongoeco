@@ -74,10 +74,18 @@ Esto implica:
 * si ese `$match` simple implica exactamente una clausula textual del
   `compound`, `explain()` lo deja visible como `downstreamRefinement` sobre esa
   clausula y el runtime usa ese refinamiento para estrechar candidatos.
+* cuando todas las clausulas `should` candidateables de un `compound` permiten
+  calcular score exacto desde FTS, SQLite puede podar por tiers exactos de
+  `matchedShould` + `shouldScore` antes de cargar documentos completos; esa
+  poda aparece en `topKPrefilter.strategy`.
 * en `vectorSearch` con `filter`, SQLite declara ya
   `candidateExpansionStrategy="adaptive-retention"` en `explain()` para dejar
   visible que la expansion ANN posterior al filtro ya no usa una heuristica
   fija.
+* para filtros simples (`eq`, `$in`, `$exists`) sobre paths escalares ya vistos
+  por el backend vectorial materializado, `vectorSearch` puede aplicar tambien
+  `vectorFilterPrefilter` antes del ranking ANN/documental; si el subconjunto es
+  exacto, `filterMode` pasa a `candidate-prefilter`.
 * la proyeccion avanzada de `find` cubre ya el subconjunto diario mas util
   (`$slice`, `$elemMatch`, proyeccion posicional y `$meta: "textScore"`);
 * `$collStats` existe tanto como comando administrativo como stage de

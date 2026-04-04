@@ -91,6 +91,7 @@ def _summarize_search_explain(explain: dict[str, Any]) -> dict[str, Any]:
     summary["topk_limit_hint"] = details.get("topKLimitHint")
     summary["topk_prefilter"] = details.get("topKPrefilter")
     summary["downstream_filter_prefilter"] = details.get("downstreamFilterPrefilter")
+    summary["vector_filter_prefilter"] = details.get("vectorFilterPrefilter")
     summary["candidate_expansion_strategy"] = details.get("candidateExpansionStrategy")
     if isinstance(pushdown, dict):
         summary["search_topk_strategy"] = pushdown.get("searchTopKStrategy")

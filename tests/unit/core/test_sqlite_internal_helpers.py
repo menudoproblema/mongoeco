@@ -40,6 +40,7 @@ from mongoeco.engines import _sqlite_modify_ops as modify_ops
 from mongoeco.engines import _sqlite_namespace_admin as namespace_admin
 from mongoeco.engines import _sqlite_read_execution as read_execution_module
 from mongoeco.engines import _sqlite_search_admin as search_admin
+from mongoeco.engines import _sqlite_search_runtime as search_runtime_module
 from mongoeco.engines import _sqlite_vector_backend as vector_backend
 from mongoeco.engines import _sqlite_write_ops as write_ops
 from mongoeco.engines.sqlite_planner import SQLiteReadExecutionPlan
@@ -191,8 +192,8 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             path="embedding",
             collection_version=3,
             documents=[
-                ("1", {"embedding": [1.0, 0.0]}),
-                ("2", {"embedding": [0.0, 1.0]}),
+                ("1", {"embedding": [1.0, 0.0], "kind": "keep"}),
+                ("2", {"embedding": [0.0, 1.0], "kind": "drop"}),
                 ("3", {"embedding": [1.0]}),
                 ("4", {"embedding": ["bad", 1.0]}),
             ],
@@ -217,6 +218,238 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             vector_backend.search_sqlite_vector_backend(state, query_vector=(1.0,), count=1)
         self.assertIsNone(vector_backend._extract_vector({"embedding": [1.0]}, path="embedding", num_dimensions=2))
         self.assertIsNone(vector_backend._extract_vector({"embedding": [True, 1.0]}, path="embedding", num_dimensions=2))
+
+        filter_keys, filter_description = vector_backend.vector_filter_candidate_storage_keys(
+            state,
+            filter_spec={"kind": "keep"},
+        )
+        self.assertEqual(filter_keys, ["1"])
+        self.assertEqual(filter_description["backend"], "vector-filter-index")
+        self.assertEqual(filter_description["supportedPaths"], ["kind"])
+        self.assertTrue(filter_description["exact"])
+
+    def test_sqlite_vector_backend_filter_prefilter_supports_in_exists_and_reports_unsupported(self):
+        definition = SearchIndexDefinition(
+            {
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": 2,
+                    }
+                ]
+            },
+            name="vec",
+            index_type="vectorSearch",
+        )
+        state = vector_backend.build_sqlite_vector_backend(
+            db_name="db",
+            coll_name="coll",
+            definition=definition,
+            physical_name="search_idx_vec",
+            path="embedding",
+            collection_version=1,
+            documents=[
+                ("1", {"embedding": [1.0, 0.0], "kind": "keep", "tags": ["a", "b"], "meta": {"rank": 1}}),
+                ("2", {"embedding": [0.0, 1.0], "kind": "drop", "tags": ["b"]}),
+                ("3", {"embedding": [0.5, 0.5], "kind": "keep"}),
+                ("4", {"embedding": ["bad", 1.0], "kind": "keep"}),
+            ],
+        )
+
+        in_keys, in_description = vector_backend.vector_filter_candidate_storage_keys(
+            state,
+            filter_spec={"kind": {"$in": ["keep"]}, "tags": "b"},
+        )
+        self.assertEqual(in_keys, ["1"])
+        self.assertEqual(in_description["supportedOperators"], ["$in", "eq"])
+        self.assertEqual(in_description["supportedClauseCount"], 2)
+
+        exists_keys, exists_description = vector_backend.vector_filter_candidate_storage_keys(
+            state,
+            filter_spec={"meta.rank": {"$exists": True}},
+        )
+        self.assertEqual(exists_keys, ["1"])
+        self.assertTrue(exists_description["exact"])
+
+        missing_keys, missing_description = vector_backend.vector_filter_candidate_storage_keys(
+            state,
+            filter_spec={"meta.rank": {"$exists": False}},
+        )
+        self.assertEqual(missing_keys, ["2", "3"])
+        self.assertTrue(missing_description["exact"])
+
+        unsupported_keys, unsupported_description = vector_backend.vector_filter_candidate_storage_keys(
+            state,
+            filter_spec={"kind": {"$gt": "keep"}},
+        )
+        self.assertIsNone(unsupported_keys)
+        self.assertFalse(unsupported_description["candidateable"])
+        self.assertEqual(unsupported_description["unsupportedClauseCount"], 1)
+
+    def test_sqlite_search_runtime_exact_should_score_prefilter_and_vector_prefilter_helpers(self):
+        async def _run() -> None:
+            engine = SQLiteEngine()
+            await engine.connect()
+            try:
+                await engine.put_document("db", "coll", {"_id": 1, "title": "Ada algorithms", "body": "vector algorithm", "embedding": [1.0, 0.0], "kind": "keep"})
+                await engine.put_document("db", "coll", {"_id": 2, "title": "Ada", "body": "vector vector", "embedding": [0.9, 0.1], "kind": "drop"})
+                await engine.put_document("db", "coll", {"_id": 3, "title": "Grace", "body": "algorithm", "embedding": [0.0, 1.0], "kind": "keep"})
+                await engine.create_search_index(
+                    "db",
+                    "coll",
+                    SearchIndexDefinition(
+                        {
+                            "mappings": {
+                                "dynamic": False,
+                                "fields": {
+                                    "title": {"type": "string"},
+                                    "body": {"type": "string"},
+                                },
+                            }
+                        },
+                        name="by_text",
+                        index_type="search",
+                    ),
+                )
+                await engine.create_search_index(
+                    "db",
+                    "coll",
+                    SearchIndexDefinition(
+                        {
+                            "fields": [
+                                {
+                                    "type": "vector",
+                                    "path": "embedding",
+                                    "numDimensions": 2,
+                                }
+                            ]
+                        },
+                        name="by_vector",
+                        index_type="vectorSearch",
+                    ),
+                )
+
+                text_rows = engine._load_search_index_rows("db", "coll", name="by_text")
+                text_definition, physical_name, _ready_at = text_rows[0]
+                conn = engine._require_connection()
+                with engine._bind_connection(conn):
+                    resolved_physical_name = search_runtime_module.ensure_search_backend_sync(
+                        engine,
+                        conn,
+                        "db",
+                        "coll",
+                        text_definition,
+                        physical_name,
+                    )
+                    query = search_runtime_module.compile_search_stage(
+                        "$search",
+                        {
+                            "index": "by_text",
+                            "compound": {
+                                "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                "should": [
+                                    {"exists": {"path": "title"}},
+                                    {"wildcard": {"query": "*algorithm*", "path": "body"}},
+                                    {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                                ],
+                                "minimumShouldMatch": 1,
+                            },
+                        },
+                    )
+                    candidate_keys, _backend, candidate_exact, should_candidates, _non_candidateable = search_runtime_module._sqlite_compound_candidate_state(
+                        engine,
+                        conn,
+                        physical_name=resolved_physical_name,
+                        definition=text_definition,
+                        query=query,
+                    )
+                    pruned_keys, topk_prefilter = search_runtime_module._prune_candidate_storage_keys_for_topk(
+                        engine,
+                        conn,
+                        physical_name=resolved_physical_name,
+                        query=query,
+                        candidate_storage_keys=candidate_keys,
+                        candidate_exact=candidate_exact,
+                        result_limit_hint=1,
+                        should_candidates=should_candidates,
+                    )
+                    self.assertEqual(pruned_keys, [engine._storage_key(1)])
+                    self.assertEqual(topk_prefilter["strategy"], "exact-should-score-tier")
+
+                    entries_by_key = search_runtime_module._load_search_entries_by_storage_key(
+                        engine,
+                        conn,
+                        physical_name=resolved_physical_name,
+                        storage_keys=[engine._storage_key(1), engine._storage_key(2)],
+                    )
+                    self.assertIn(engine._storage_key(1), entries_by_key)
+                    prepared = search_runtime_module._materialized_search_document_from_entries(
+                        entries_by_key[engine._storage_key(1)]
+                    )
+                    self.assertIn("title", prepared.searchable_paths)
+                    self.assertIn("body", prepared.searchable_paths)
+
+                vector_rows = engine._load_search_index_rows("db", "coll", name="by_vector")
+                vector_definition, vector_physical_name, _ready = vector_rows[0]
+                with engine._bind_connection(conn):
+                    vector_backend_state = search_runtime_module.ensure_vector_search_backend_sync(
+                        engine,
+                        conn,
+                        "db",
+                        "coll",
+                        vector_definition,
+                        vector_physical_name,
+                        "embedding",
+                    )
+                    filter_keys, filter_description = vector_backend.vector_filter_candidate_storage_keys(
+                        vector_backend_state,
+                        filter_spec={"kind": "keep"},
+                    )
+                    self.assertEqual(filter_keys, [engine._storage_key(1), engine._storage_key(3)])
+                    self.assertTrue(filter_description["exact"])
+                    vector_query = search_runtime_module.compile_search_stage(
+                        "$vectorSearch",
+                        {
+                            "index": "by_vector",
+                            "path": "embedding",
+                            "queryVector": [1.0, 0.0],
+                            "limit": 1,
+                            "numCandidates": 1,
+                            "filter": {"kind": "keep"},
+                        },
+                    )
+                    documents, requested, evaluated, filtered, fallback_reason = search_runtime_module._sqlite_vector_candidate_documents(
+                        engine,
+                        "db",
+                        "coll",
+                        vector_query,
+                        vector_backend_state,
+                        prefilter_storage_keys=filter_keys,
+                        prefilter_exact=True,
+                    )
+                    self.assertEqual([document["_id"] for document in documents], [1])
+                    self.assertEqual(requested, 1)
+                    self.assertEqual(filtered, 0)
+                    self.assertEqual(fallback_reason, None)
+                    self.assertGreaterEqual(evaluated, 1)
+
+                    empty_documents, empty_requested, empty_evaluated, empty_filtered, empty_reason = search_runtime_module._sqlite_vector_candidate_documents(
+                        engine,
+                        "db",
+                        "coll",
+                        vector_query,
+                        vector_backend_state,
+                        prefilter_storage_keys=[],
+                        prefilter_exact=True,
+                    )
+                    self.assertEqual(empty_documents, [])
+                    self.assertEqual((empty_requested, empty_evaluated, empty_filtered), (0, 0, 0))
+                    self.assertIsNone(empty_reason)
+            finally:
+                await engine.disconnect()
+
+        asyncio.run(_run())
 
     def test_sqlite_profile_namespace_paths_delegate_to_admin_runtime(self):
         engine = SQLiteEngine()
