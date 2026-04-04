@@ -273,6 +273,10 @@ class SQLiteCompoundRankingTests(unittest.TestCase):
             result_limit_hint=2,
         )
         self.assertEqual(cached_ranked_keys[:1], ["a"])
+        self.assertIn(
+            (("a", "b", "c"), 2),
+            getattr(self.engine, "_compound_rank_cache")[("db", "coll", self.physical_name, 1, repr(broad_compound))],
+        )
         self.assertEqual(
             rank_compound_candidate_storage_keys_from_entries(
                 self.engine,

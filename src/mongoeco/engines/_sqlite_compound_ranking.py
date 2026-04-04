@@ -59,6 +59,28 @@ def _compound_should_score_cache_bucket(
     return cache.setdefault(cache_key, {})
 
 
+def _compound_rank_cache_bucket(
+    engine: _SQLiteCompoundRankingEngine,
+    *,
+    db_name: str,
+    coll_name: str,
+    physical_name: str,
+    query: SearchCompoundQuery,
+) -> dict[tuple[tuple[str, ...], int | None], tuple[str, ...]]:
+    cache = getattr(engine, "_compound_rank_cache", None)
+    if cache is None:
+        cache = {}
+        setattr(engine, "_compound_rank_cache", cache)
+    cache_key = (
+        db_name,
+        coll_name,
+        physical_name,
+        engine._search_backend_version(db_name, coll_name),
+        repr(query),
+    )
+    return cache.setdefault(cache_key, {})
+
+
 @dataclass(frozen=True, slots=True)
 class CompoundTopKPrefilter:
     applied: bool
@@ -552,6 +574,16 @@ def rank_compound_candidate_storage_keys_from_entries(
         return []
     if not compound_entry_ranking_supported(query, physical_name=physical_name):
         return None
+    rank_cache = _compound_rank_cache_bucket(
+        engine,
+        db_name=db_name,
+        coll_name=coll_name,
+        physical_name=physical_name,
+        query=query,
+    )
+    cached_ranked = rank_cache.get((tuple(candidate_storage_keys), result_limit_hint))
+    if cached_ranked is not None:
+        return list(cached_ranked)
     exact_should_scores = exact_candidateable_should_scores(
         engine,
         conn,
@@ -576,7 +608,9 @@ def rank_compound_candidate_storage_keys_from_entries(
         if result_limit_hint is not None and result_limit_hint > 0 and len(ranked) > result_limit_hint:
             ranked = heapq.nsmallest(result_limit_hint, ranked, key=lambda item: item[:2])
         ranked.sort(key=lambda item: item[:2])
-        return [storage_key for _rank, _order, storage_key in ranked]
+        ranked_keys = tuple(storage_key for _rank, _order, storage_key in ranked)
+        rank_cache[(tuple(candidate_storage_keys), result_limit_hint)] = ranked_keys
+        return list(ranked_keys)
     prepared_by_storage_key = load_materialized_search_documents_by_storage_key(
         engine,
         conn,
@@ -605,4 +639,6 @@ def rank_compound_candidate_storage_keys_from_entries(
     if result_limit_hint is not None and result_limit_hint > 0 and len(ranked) > result_limit_hint:
         ranked = heapq.nsmallest(result_limit_hint, ranked, key=lambda item: item[:2])
     ranked.sort(key=lambda item: item[:2])
-    return [storage_key for _rank, _order, storage_key in ranked]
+    ranked_keys = tuple(storage_key for _rank, _order, storage_key in ranked)
+    rank_cache[(tuple(candidate_storage_keys), result_limit_hint)] = ranked_keys
+    return list(ranked_keys)
