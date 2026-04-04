@@ -3,6 +3,7 @@ import json
 import os
 import tempfile
 import threading
+import time
 import unittest
 from unittest.mock import patch
 
@@ -17,6 +18,8 @@ from mongoeco.change_streams import (
     compile_change_stream_pipeline,
 )
 from mongoeco._change_streams.pipeline import apply_full_document_mode, normalize_full_document_mode
+from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.errors import ExecutionTimeout
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ChangeEventSnapshot, encode_change_stream_token
 from mongoeco._change_streams import journal as journal_module
@@ -66,6 +69,14 @@ class ChangeStreamPipelineTests(unittest.TestCase):
             ],
         )
 
+    def test_compile_change_stream_pipeline_accepts_replace_with_stage(self):
+        pipeline = compile_change_stream_pipeline(
+            [
+                {"$replaceWith": {"operationType": "$operationType"}},
+            ]
+        )
+        self.assertEqual(pipeline, [{"$replaceWith": {"operationType": "$operationType"}}])
+
     def test_compile_change_stream_pipeline_rejects_invalid_stage_shape(self):
         with self.assertRaises(TypeError):
             compile_change_stream_pipeline([{"$match": {}, "$project": {}}])
@@ -88,9 +99,22 @@ class ChangeStreamPipelineTests(unittest.TestCase):
         update = {"operationType": "update", "fullDocument": {"_id": 1}}
         self.assertIs(apply_full_document_mode(insert, "default"), insert)
         self.assertNotIn("fullDocument", apply_full_document_mode(update, "default"))
+        self.assertEqual(apply_full_document_mode(update, "updateLookup"), update)
         self.assertEqual(apply_full_document_mode(update, "whenAvailable"), update)
+        self.assertEqual(apply_full_document_mode(update, "required"), update)
         with self.assertRaisesRegex(OperationFailure, "required"):
             apply_full_document_mode({"operationType": "update"}, "required")
+
+    def test_operation_deadline_helpers_cover_timeout_and_disabled_paths(self):
+        self.assertIsNone(operation_deadline(None))
+        self.assertIsNone(operation_deadline(0))
+        deadline = operation_deadline(50)
+        self.assertIsInstance(deadline, float)
+        self.assertGreater(deadline, time.monotonic())
+        enforce_deadline(None)
+        with patch("mongoeco.core.operation_limits.time.monotonic", return_value=10.0):
+            with self.assertRaises(ExecutionTimeout):
+                enforce_deadline(5.0)
 
 
 class ChangeStreamHubTests(unittest.TestCase):
@@ -774,6 +798,22 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(OperationFailure):
             await cursor.try_next()
 
+    async def test_cursor_next_closes_after_invalidate_event(self):
+        hub = ChangeStreamHub()
+        cursor = AsyncChangeStreamCursor(hub, scope=ChangeStreamScope())
+
+        hub.publish(
+            operation_type="invalidate",
+            db_name="alpha",
+            coll_name="users",
+            document_key={"_id": "users"},
+        )
+
+        event = await cursor.next()
+
+        self.assertEqual(event["operationType"], "invalidate")
+        self.assertFalse(cursor.alive)
+
     async def test_cursor_hides_update_full_document_by_default_and_can_require_it(self):
         hub = ChangeStreamHub()
         default_cursor = AsyncChangeStreamCursor(hub, scope=ChangeStreamScope(), max_await_time_ms=10)
@@ -883,3 +923,9 @@ class ChangeStreamOffsetHelpersTests(unittest.TestCase):
 
         with self.assertRaises(OperationFailure):
             _parse_resume_token({"_data": "abc"})
+
+    def test_parse_resume_token_rejects_non_string_and_invalid_payload_shape(self):
+        with self.assertRaises(OperationFailure):
+            _parse_resume_token({"_data": 1})
+        with self.assertRaises(OperationFailure):
+            _parse_resume_token({"_data": encode_change_stream_token(True)})

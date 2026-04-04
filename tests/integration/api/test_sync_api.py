@@ -47,6 +47,7 @@ from tests.integration.api.search_vector_scenarios import (
     assert_compound_candidateable_should_matched_limited_explanation,
     assert_compound_candidateable_should_title_prefilter_explanation,
     assert_compound_should_near_explanation,
+    assert_equals_and_range_explanations,
     assert_filtered_vector_explanation,
     assert_ranged_vector_explanation,
 )
@@ -135,7 +136,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(only_default[0]["queryMode"], "text")
                     self.assertEqual(
                         only_default[0]["capabilities"],
-                        ["text", "phrase", "autocomplete", "wildcard", "exists", "near", "compound"],
+                        ["text", "phrase", "autocomplete", "wildcard", "exists", "equals", "range", "near", "compound"],
                     )
 
                     collection.update_search_index("default", {"mappings": {"dynamic": True}})
@@ -153,9 +154,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.search_runtime.get_collection("docs")
                     collection.insert_many(
                         [
-                            {"_id": 1, "title": "Ada", "body": "Analytical engine notes", "score": 9, "publishedAt": datetime.datetime(2024, 1, 1, 12, 0, 0), "embedding": [1.0, 0.0, 0.0]},
-                            {"_id": 2, "title": "Grace", "body": "Compiler pioneer", "score": 15, "publishedAt": datetime.datetime(2024, 1, 1, 12, 5, 0), "embedding": [0.1, 0.9, 0.0]},
-                            {"_id": 3, "title": "Notes", "body": "Ada wrote the first algorithm", "score": 11, "publishedAt": datetime.datetime(2024, 1, 1, 12, 1, 0), "embedding": [0.9, 0.1, 0.0]},
+                            {"_id": 1, "title": "Ada", "body": "Analytical engine notes", "kind": "reference", "score": 9, "publishedAt": datetime.datetime(2024, 1, 1, 12, 0, 0), "embedding": [1.0, 0.0, 0.0]},
+                            {"_id": 2, "title": "Grace", "body": "Compiler pioneer", "kind": "note", "score": 15, "publishedAt": datetime.datetime(2024, 1, 1, 12, 5, 0), "embedding": [0.1, 0.9, 0.0]},
+                            {"_id": 3, "title": "Notes", "body": "Ada wrote the first algorithm", "kind": "note", "score": 11, "publishedAt": datetime.datetime(2024, 1, 1, 12, 1, 0), "embedding": [0.9, 0.1, 0.0]},
                         ]
                     )
                     collection.create_search_indexes(
@@ -277,6 +278,33 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         self.assertEqual(exists_explanation["engine_plan"]["details"]["candidateCount"], 2)
                     else:
                         self.assertEqual(exists_explanation["engine_plan"]["details"]["backend"], "python")
+
+                    equals_hits = collection.aggregate(
+                        [
+                            {"$search": {"index": "by_text", "equals": {"path": "kind", "value": "note"}}},
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in equals_hits], [2, 3])
+                    range_hits = collection.aggregate(
+                        [
+                            {"$search": {"index": "by_text", "range": {"path": "score", "gte": 9, "lte": 11}}},
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in range_hits], [3])
+                    equals_explanation = collection.aggregate(
+                        [{"$search": {"index": "by_text", "equals": {"path": "kind", "value": "note"}}}]
+                    ).explain()
+                    range_explanation = collection.aggregate(
+                        [{"$search": {"index": "by_text", "range": {"path": "score", "gte": 9, "lte": 11}}}]
+                    ).explain()
+                    assert_equals_and_range_explanations(
+                        self,
+                        equals_explanation,
+                        range_explanation,
+                        engine_name=engine_name,
+                    )
 
                     compound_hits = collection.aggregate(
                         [

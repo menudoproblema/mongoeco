@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
 import datetime
+from dataclasses import dataclass
 
 import mongoeco.core.search as search_module
 from mongoeco.core._search_contract import TEXT_SEARCH_INDEX_CAPABILITIES, TEXT_SEARCH_OPERATOR_NAMES
@@ -8,9 +9,11 @@ from mongoeco.core.search import (
     ClassicTextQuery,
     SearchAutocompleteQuery,
     SearchCompoundQuery,
+    SearchEqualsQuery,
     SearchExistsQuery,
     SearchNearQuery,
     SearchPhraseQuery,
+    SearchRangeQuery,
     SearchTextQuery,
     SearchVectorQuery,
     SearchWildcardQuery,
@@ -20,9 +23,11 @@ from mongoeco.core.search import (
     compile_search_autocomplete_query,
     compile_classic_text_query,
     compile_search_compound_query,
+    compile_search_equals_query,
     compile_search_exists_query,
     compile_search_near_query,
     is_queryable_search_definition,
+    compile_search_range_query,
     compile_search_text_like_query,
     compile_search_phrase_query,
     compile_search_stage,
@@ -34,10 +39,12 @@ from mongoeco.core.search import (
     search_compound_ranking,
     matches_search_autocomplete_query,
     matches_search_compound_query,
+    matches_search_equals_query,
     matches_search_exists_query,
     matches_search_near_query,
     matches_search_query,
     matches_search_phrase_query,
+    matches_search_range_query,
     matches_search_text_query,
     matches_search_wildcard_query,
     resolve_classic_text_index,
@@ -545,10 +552,12 @@ class SearchCoreTests(unittest.TestCase):
         autocomplete_query = SearchAutocompleteQuery(index_name="by_text", raw_query="alg", terms=("alg",), paths=("title", "body"))
         wildcard_query = SearchWildcardQuery(index_name="by_text", raw_query="*algorithm*", normalized_pattern="*algorithm*", paths=("body",))
         near_query = SearchNearQuery(index_name="by_text", path="count", origin=10, pivot=4.0, origin_kind="number")
+        equals_query = SearchEqualsQuery(index_name="by_text", path="count", value=7.0, value_kind="number")
+        range_query = SearchRangeQuery(index_name="by_text", path="count", gte=6.0, lt=8.0, bound_kind="number")
         compound_query = SearchCompoundQuery(
             index_name="by_text",
             must=(text_query,),
-            should=(autocomplete_query, near_query),
+            should=(autocomplete_query, near_query, equals_query, range_query),
             filter=(),
             must_not=(),
             minimum_should_match=0,
@@ -559,6 +568,8 @@ class SearchCoreTests(unittest.TestCase):
         self.assertTrue(matches_search_autocomplete_query(document, definition=definition, query=autocomplete_query, materialized=prepared))
         self.assertTrue(matches_search_wildcard_query(document, definition=definition, query=wildcard_query, materialized=prepared))
         self.assertTrue(matches_search_near_query(document, definition=definition, query=near_query, materialized=prepared))
+        self.assertTrue(matches_search_equals_query(document, definition=definition, query=equals_query, materialized=prepared))
+        self.assertTrue(matches_search_range_query(document, definition=definition, query=range_query, materialized=prepared))
         self.assertTrue(matches_search_compound_query(document, definition=definition, query=compound_query, materialized=prepared))
         self.assertEqual(search_module.search_clause_ranking(document, definition=definition, query=text_query, materialized=prepared), (True, 2.0, None))
         self.assertEqual(search_module.search_clause_ranking(document, definition=definition, query=phrase_query, materialized=prepared), (True, 1.0, None))
@@ -571,6 +582,24 @@ class SearchCoreTests(unittest.TestCase):
                 materialized=prepared,
             ),
             (True, float(len(prepared.searchable_paths)), None),
+        )
+        self.assertEqual(
+            search_module.search_clause_ranking(
+                document,
+                definition=definition,
+                query=equals_query,
+                materialized=prepared,
+            ),
+            (True, 1.0, None),
+        )
+        self.assertEqual(
+            search_module.search_clause_ranking(
+                document,
+                definition=definition,
+                query=range_query,
+                materialized=prepared,
+            ),
+            (True, 1.0, None),
         )
         compound_rank = search_module.search_clause_ranking(
             document,
@@ -586,7 +615,7 @@ class SearchCoreTests(unittest.TestCase):
             query=compound_query,
             materialized=prepared,
         )
-        self.assertEqual(matched_should, 2)
+        self.assertEqual(matched_should, 4)
         self.assertGreater(should_score, 0.0)
         self.assertLess(best_near_distance, float("inf"))
 
@@ -619,6 +648,13 @@ class SearchCoreTests(unittest.TestCase):
 
         self.assertIsNone(search_module._search_near_origin_kind(True))
         self.assertEqual(search_module._search_near_origin_kind(datetime.date(2024, 1, 1)), "date")
+        self.assertEqual(search_module._normalize_search_scalar_value(7), ("number", 7.0))
+        self.assertEqual(search_module._normalize_search_scalar_value(None), ("null", None))
+        self.assertIsNone(search_module._normalize_search_scalar_value(object()))
+        self.assertEqual(
+            search_module._search_path_scalar_values({"count": [7, "x", True]}, "count"),
+            (("number", 7.0), ("string", "x"), ("bool", True)),
+        )
         self.assertIsNone(search_module._search_near_scalar_distance(True, origin=1.0, origin_kind="number"))
         self.assertIsNone(search_module._search_near_scalar_distance(float("inf"), origin=1.0, origin_kind="number"))
         self.assertIsNone(search_module._search_near_scalar_distance("x", origin=datetime.date(2024, 1, 1), origin_kind="date"))
@@ -653,11 +689,161 @@ class SearchCoreTests(unittest.TestCase):
         with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
             search_module._compile_search_exists_clause("by_text", {"path": "title", "extra": 1})
         with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
+            search_module._compile_search_equals_clause("by_text", {"path": "title", "value": "Ada", "extra": 1})
+        with self.assertRaisesRegex(OperationFailure, "same value family"):
+            search_module._compile_search_range_clause("by_text", {"path": "score", "gte": 1, "lt": datetime.date(2024, 1, 1)})
+        with self.assertRaisesRegex(OperationFailure, "requires at least one"):
+            search_module._compile_search_range_clause("by_text", {"path": "score"})
+        with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
             search_module._compile_search_near_clause("by_text", {"path": "score", "origin": 1, "pivot": 1, "extra": 1})
         with self.assertRaisesRegex(OperationFailure, "origin must be"):
             search_module._compile_search_near_clause("by_text", {"path": "score", "origin": object(), "pivot": 1})
         with self.assertRaisesRegex(OperationFailure, "pivot must be"):
             search_module._compile_search_near_clause("by_text", {"path": "score", "origin": 1, "pivot": 0})
+
+    def test_search_equals_range_and_near_helpers_cover_remaining_scalar_branches(self) -> None:
+        definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text")
+
+        self.assertEqual(split_classic_text_filter({"kind": "note"}), ({"kind": "note"}, None))
+        self.assertTrue(search_module.is_text_search_query(SearchTextQuery(index_name="by_text", raw_query="ada", terms=("ada",))))
+        self.assertFalse(
+            search_module.is_text_search_query(
+                SearchVectorQuery(index_name="vec", path="embedding", query_vector=(1.0,), limit=1, num_candidates=1)
+            )
+        )
+
+        with self.assertRaisesRegex(OperationFailure, "equals specification is required"):
+            compile_search_equals_query({"index": "by_text", "text": {"query": "ada"}})
+        with self.assertRaisesRegex(OperationFailure, "range specification is required"):
+            compile_search_range_query({"index": "by_text", "text": {"query": "ada"}})
+        with self.assertRaisesRegex(OperationFailure, "requires a document specification"):
+            search_module._compile_search_equals_clause("by_text", [])
+        with self.assertRaisesRegex(OperationFailure, "path must be a non-empty string"):
+            search_module._compile_search_equals_clause("by_text", {"path": "", "value": "x"})
+        with self.assertRaisesRegex(OperationFailure, "must be null, bool, finite number, string, date or datetime"):
+            search_module._compile_search_equals_clause("by_text", {"path": "kind", "value": float("inf")})
+        with self.assertRaisesRegex(OperationFailure, "requires a document specification"):
+            search_module._compile_search_range_clause("by_text", [])
+        with self.assertRaisesRegex(OperationFailure, "path must be a non-empty string"):
+            search_module._compile_search_range_clause("by_text", {"path": "", "gte": 1})
+        with self.assertRaisesRegex(OperationFailure, "must be a finite number, date or datetime"):
+            search_module._compile_search_range_clause("by_text", {"path": "score", "gte": "bad"})
+        with self.assertRaisesRegex(OperationFailure, "must be a finite number, date or datetime"):
+            search_module._compile_search_range_clause("by_text", {"path": "score", "gte": True})
+
+        self.assertEqual(
+            search_module._compile_search_near_clause(
+                "by_text",
+                {"path": "metrics.score", "origin": 10, "pivot": 2},
+            ),
+            SearchNearQuery(
+                index_name="by_text",
+                path="metrics.score",
+                origin=10,
+                pivot=2.0,
+                origin_kind="number",
+            ),
+        )
+
+        self.assertIsNone(search_module._normalize_search_scalar_value(float("inf")))
+        dt = datetime.datetime(2024, 1, 1, 12, 0, 0)
+        self.assertEqual(search_module._normalize_search_scalar_value(dt), ("datetime", dt))
+        self.assertEqual(search_module._search_path_scalar_values({}, "missing"), ())
+        self.assertEqual(search_module._search_path_scalar_values({"meta": {"x": 1}}, "meta"), ())
+
+        number_range = SearchRangeQuery(index_name="by_text", path="score", gt=5.0, gte=6.0, lt=10.0, lte=9.0, bound_kind="number")
+        self.assertFalse(search_module._search_range_matches_value(candidate_kind="string", candidate_value="7", query=number_range))
+        self.assertFalse(search_module._search_range_matches_value(candidate_kind="number", candidate_value=5.0, query=number_range))
+        self.assertFalse(search_module._search_range_matches_value(candidate_kind="number", candidate_value=5.5, query=number_range))
+        self.assertFalse(search_module._search_range_matches_value(candidate_kind="number", candidate_value=10.0, query=number_range))
+        self.assertFalse(search_module._search_range_matches_value(candidate_kind="number", candidate_value=9.5, query=number_range))
+        self.assertTrue(search_module._search_range_matches_value(candidate_kind="number", candidate_value=7.0, query=number_range))
+
+        must_query = SearchCompoundQuery(
+            index_name="by_text",
+            must=(SearchTextQuery(index_name="by_text", raw_query="missing", terms=("missing",), paths=("title",)),),
+        )
+        filter_query = SearchCompoundQuery(
+            index_name="by_text",
+            filter=(SearchEqualsQuery(index_name="by_text", path="kind", value="note", value_kind="string"),),
+        )
+        self.assertFalse(
+            matches_search_compound_query(
+                {"title": "Ada algorithms", "kind": "reference"},
+                definition=definition,
+                query=must_query,
+            )
+        )
+        self.assertFalse(
+            matches_search_compound_query(
+                {"title": "Ada algorithms", "kind": "reference"},
+                definition=definition,
+                query=filter_query,
+            )
+        )
+
+        no_near_match = SearchNearQuery(index_name="by_text", path="score", origin=10, pivot=1.0, origin_kind="number")
+        self.assertEqual(
+            search_module.search_clause_ranking(
+                {"score": [1, 2]},
+                definition=definition,
+                query=no_near_match,
+            ),
+            (False, 0.0, None),
+        )
+        self.assertIsNone(search_module._search_near_scalar_distance(1, origin=1, origin_kind="unsupported"))
+
+    def test_search_wrapper_success_and_fallback_ranking_paths_are_covered(self) -> None:
+        definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text")
+        exists_query = compile_search_exists_query({"index": "by_text", "exists": {"path": "title"}})
+        self.assertEqual(exists_query, SearchExistsQuery(index_name="by_text", paths=("title",)))
+
+        failing_compound = SearchCompoundQuery(
+            index_name="by_text",
+            must=(SearchTextQuery(index_name="by_text", raw_query="missing", terms=("missing",), paths=("title",)),),
+        )
+        self.assertEqual(
+            search_module.search_clause_ranking(
+                {"title": "Ada"},
+                definition=definition,
+                query=failing_compound,
+            ),
+            (False, 0.0, None),
+        )
+
+        @dataclass(frozen=True, slots=True)
+        class _FallbackQuery:
+            token: str = "ok"
+
+        def _fallback_matcher(document, definition, query, materialized):
+            del definition
+            del query
+            del materialized
+            return bool(document.get("ok"))
+
+        with patch.dict(search_module._SEARCH_QUERY_MATCHERS, {_FallbackQuery: _fallback_matcher}, clear=False):
+            self.assertEqual(
+                search_module.search_clause_ranking(
+                    {"ok": True},
+                    definition=definition,
+                    query=_FallbackQuery(),
+                ),
+                (True, 1.0, None),
+            )
+            self.assertEqual(
+                search_module.search_clause_ranking(
+                    {"ok": False},
+                    definition=definition,
+                    query=_FallbackQuery(),
+                ),
+                (False, 0.0, None),
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
+            search_module._compile_search_range_clause("by_text", {"path": "score", "gte": 1, "boost": 2})
+        with self.assertRaisesRegex(OperationFailure, "must be a finite number, date or datetime"):
+            search_module._compile_search_range_clause("by_text", {"path": "score", "gte": float("inf")})
+        self.assertIsNone(search_near_distance({}, query=SearchNearQuery(index_name="by_text", path="score", origin=10, pivot=1.0, origin_kind="number")))
 
     def test_search_explain_and_operator_helpers_cover_remaining_shapes(self) -> None:
         vector_query = SearchVectorQuery(index_name="vec", path="embedding", query_vector=(1.0, 0.0), limit=2, num_candidates=3, filter_spec={"kind": "keep"})
@@ -706,6 +892,31 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(
             compile_search_stage(
                 "$search",
+                {"index": "by_text", "equals": {"path": "kind", "value": "note"}},
+            ),
+            SearchEqualsQuery(
+                index_name="by_text",
+                path="kind",
+                value="note",
+                value_kind="string",
+            ),
+        )
+        self.assertEqual(
+            compile_search_stage(
+                "$search",
+                {"index": "by_text", "range": {"path": "score", "gte": 5, "lt": 10}},
+            ),
+            SearchRangeQuery(
+                index_name="by_text",
+                path="score",
+                gte=5.0,
+                lt=10.0,
+                bound_kind="number",
+            ),
+        )
+        self.assertEqual(
+            compile_search_stage(
+                "$search",
                 {"index": "by_text", "near": {"path": "score", "origin": 10, "pivot": 2}},
             ),
             SearchNearQuery(
@@ -725,6 +936,18 @@ class SearchCoreTests(unittest.TestCase):
                 clause_spec={"path": "title"},
             ),
             SearchExistsQuery(index_name="by_text", paths=("title",)),
+        )
+        self.assertEqual(
+            compile_search_equals_query(
+                {"index": "by_text", "equals": {"path": "kind", "value": "note"}}
+            ),
+            SearchEqualsQuery(index_name="by_text", path="kind", value="note", value_kind="string"),
+        )
+        self.assertEqual(
+            compile_search_range_query(
+                {"index": "by_text", "range": {"path": "score", "gte": 5, "lt": 10}}
+            ),
+            SearchRangeQuery(index_name="by_text", path="score", gte=5.0, lt=10.0, bound_kind="number"),
         )
         with self.assertRaises(OperationFailure):
             compile_search_compound_query({"index": "by_text", "compound": []})
@@ -811,9 +1034,25 @@ class SearchCoreTests(unittest.TestCase):
                 },
             }
         )
+        equals = compile_search_equals_query(
+            {
+                "index": "by_text",
+                "equals": {"path": "kind", "value": "note"},
+            }
+        )
+        range_query = compile_search_range_query(
+            {
+                "index": "by_text",
+                "range": {"path": "score", "gte": 5, "lt": 10},
+            }
+        )
 
         self.assertEqual(search_query_operator_name(wildcard), "wildcard")
         self.assertEqual(search_query_explain_details(wildcard)["paths"], ["title"])
+        self.assertEqual(search_query_operator_name(equals), "equals")
+        self.assertEqual(search_query_explain_details(equals)["value"], "note")
+        self.assertEqual(search_query_operator_name(range_query), "range")
+        self.assertEqual(search_query_explain_details(range_query)["range"]["boundKind"], "number")
         self.assertEqual(search_query_operator_name(near), "near")
         self.assertEqual(search_query_explain_details(near)["originKind"], "date")
         self.assertEqual(search_query_operator_name(compound), "compound")

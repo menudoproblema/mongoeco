@@ -1333,9 +1333,9 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                 collection = client.search_runtime.get_collection("docs")
                 await collection.insert_many(
                     [
-                        {"_id": "1", "title": "Ada Lovelace", "body": "Analytical engine notes", "score": 9, "embedding": [1.0, 0.0, 0.0]},
-                        {"_id": "2", "title": "Grace Hopper", "body": "Compiler pioneer", "score": 15, "embedding": [0.0, 1.0, 0.0]},
-                        {"_id": "3", "title": "Notes", "body": "Ada wrote the first algorithm", "score": 11, "embedding": [0.9, 0.1, 0.0]},
+                        {"_id": "1", "title": "Ada Lovelace", "body": "Analytical engine notes", "kind": "reference", "score": 9, "embedding": [1.0, 0.0, 0.0]},
+                        {"_id": "2", "title": "Grace Hopper", "body": "Compiler pioneer", "kind": "note", "score": 15, "embedding": [0.0, 1.0, 0.0]},
+                        {"_id": "3", "title": "Notes", "body": "Ada wrote the first algorithm", "kind": "note", "score": 11, "embedding": [0.9, 0.1, 0.0]},
                     ]
                 )
                 await collection.create_search_indexes(
@@ -1391,6 +1391,18 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                 exists_hits = await collection.aggregate(
                     [
                         {"$search": {"index": "by_text", "exists": {"path": "title"}}},
+                        {"$sort": {"_id": 1}},
+                    ]
+                ).to_list()
+                equals_hits = await collection.aggregate(
+                    [
+                        {"$search": {"index": "by_text", "equals": {"path": "kind", "value": "note"}}},
+                        {"$sort": {"_id": 1}},
+                    ]
+                ).to_list()
+                range_hits = await collection.aggregate(
+                    [
+                        {"$search": {"index": "by_text", "range": {"path": "score", "gte": 9, "lte": 11}}},
                         {"$sort": {"_id": 1}},
                     ]
                 ).to_list()
@@ -1519,6 +1531,12 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                 exists_explain = await collection.aggregate(
                     [{"$search": {"index": "by_text", "exists": {"path": "title"}}}]
                 ).explain()
+                equals_explain = await collection.aggregate(
+                    [{"$search": {"index": "by_text", "equals": {"path": "kind", "value": "note"}}}]
+                ).explain()
+                range_explain = await collection.aggregate(
+                    [{"$search": {"index": "by_text", "range": {"path": "score", "gte": 9, "lte": 11}}}]
+                ).explain()
                 near_explain = await collection.aggregate(
                     [{"$search": {"index": "by_text", "near": {"path": "score", "origin": 10, "pivot": 2}}}]
                 ).explain()
@@ -1595,6 +1613,8 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "autocomplete_hits": [document["_id"] for document in autocomplete_hits],
                     "wildcard_hits": [document["_id"] for document in wildcard_hits],
                     "exists_hits": [document["_id"] for document in exists_hits],
+                    "equals_hits": [document["_id"] for document in equals_hits],
+                    "range_hits": [document["_id"] for document in range_hits],
                     "near_hits": [document["_id"] for document in near_hits],
                     "compound_hits": [document["_id"] for document in compound_hits],
                     "compound_should_near_hits": [document["_id"] for document in compound_should_near_hits],
@@ -1623,6 +1643,16 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "exists_explain": {
                         "query_operator": exists_explain["engine_plan"]["details"]["queryOperator"],
                         "paths": exists_explain["engine_plan"]["details"]["paths"],
+                    },
+                    "equals_explain": {
+                        "query_operator": equals_explain["engine_plan"]["details"]["queryOperator"],
+                        "path": equals_explain["engine_plan"]["details"]["path"],
+                        "value": equals_explain["engine_plan"]["details"]["value"],
+                    },
+                    "range_explain": {
+                        "query_operator": range_explain["engine_plan"]["details"]["queryOperator"],
+                        "path": range_explain["engine_plan"]["details"]["path"],
+                        "range": range_explain["engine_plan"]["details"]["range"],
                     },
                     "near_explain": {
                         "query_operator": near_explain["engine_plan"]["details"]["queryOperator"],

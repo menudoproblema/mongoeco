@@ -9,10 +9,12 @@ from typing import Protocol
 from mongoeco.core.search import (
     SearchAutocompleteQuery,
     SearchCompoundQuery,
+    SearchEqualsQuery,
     SearchExistsQuery,
     SearchNearQuery,
     SearchPhraseQuery,
     SearchQuery,
+    SearchRangeQuery,
     SearchTextQuery,
     SearchWildcardQuery,
     materialize_search_document,
@@ -381,9 +383,11 @@ def clause_search_paths(clause: SearchQuery) -> tuple[str, ...] | None:
             SearchAutocompleteQuery,
             SearchWildcardQuery,
             SearchExistsQuery,
+            SearchEqualsQuery,
+            SearchRangeQuery,
         ),
     ):
-        return clause.paths
+        return (clause.path,) if isinstance(clause, (SearchEqualsQuery, SearchRangeQuery)) else clause.paths
     return None
 
 
@@ -408,7 +412,10 @@ def compound_entry_ranking_supported(
     return bool(
         physical_name
         and query.should
-        and not any(isinstance(clause, (SearchNearQuery, SearchCompoundQuery)) for clause in query.should)
+        and not any(
+            isinstance(clause, (SearchEqualsQuery, SearchRangeQuery, SearchNearQuery, SearchCompoundQuery))
+            for clause in query.should
+        )
     )
 
 

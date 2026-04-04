@@ -5,10 +5,12 @@ from dataclasses import dataclass
 from mongoeco.core.search import (
     SearchAutocompleteQuery,
     SearchCompoundQuery,
+    SearchEqualsQuery,
     SearchExistsQuery,
     SearchNearQuery,
     SearchPhraseQuery,
     SearchQuery,
+    SearchRangeQuery,
     SearchTextQuery,
     SearchVectorQuery,
     SearchWildcardQuery,
@@ -66,7 +68,17 @@ def decide_sqlite_search_backend(
         )
     return SQLiteSearchBackendDecision(
         backend="python",
-        backend_available=isinstance(query, (SearchWildcardQuery, SearchExistsQuery, SearchNearQuery, SearchCompoundQuery)) or bool(fts5_available),
+        backend_available=isinstance(
+            query,
+            (
+                SearchWildcardQuery,
+                SearchExistsQuery,
+                SearchEqualsQuery,
+                SearchRangeQuery,
+                SearchNearQuery,
+                SearchCompoundQuery,
+            ),
+        ) or bool(fts5_available),
         backend_materialized=backend_materialized,
         fts5_available=fts5_available,
         ann_available=ann_available,

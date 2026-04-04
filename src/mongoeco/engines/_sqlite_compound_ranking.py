@@ -10,8 +10,10 @@ from typing import Protocol
 from mongoeco.core.search import (
     MaterializedSearchDocument,
     SearchCompoundQuery,
+    SearchEqualsQuery,
     SearchNearQuery,
     SearchQuery,
+    SearchRangeQuery,
     search_clause_ranking,
     search_compound_ranking,
     search_near_distance,
@@ -418,7 +420,10 @@ def exact_candidateable_should_scores(
     query: SearchCompoundQuery,
     candidate_storage_keys: list[str],
 ) -> dict[str, dict[str, float]] | None:
-    if physical_name is None or not candidate_storage_keys or any(isinstance(clause, (SearchNearQuery, SearchCompoundQuery)) for clause in query.should):
+    if physical_name is None or not candidate_storage_keys or any(
+        isinstance(clause, (SearchEqualsQuery, SearchRangeQuery, SearchNearQuery, SearchCompoundQuery))
+        for clause in query.should
+    ):
         return None
     score_cache = _compound_should_score_cache_bucket(
         engine,

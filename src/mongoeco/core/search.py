@@ -72,6 +72,25 @@ class SearchExistsQuery:
 
 
 @dataclass(frozen=True, slots=True)
+class SearchEqualsQuery:
+    index_name: str
+    path: str
+    value: object
+    value_kind: str
+
+
+@dataclass(frozen=True, slots=True)
+class SearchRangeQuery:
+    index_name: str
+    path: str
+    gt: object | None = None
+    gte: object | None = None
+    lt: object | None = None
+    lte: object | None = None
+    bound_kind: str = "number"
+
+
+@dataclass(frozen=True, slots=True)
 class SearchNearQuery:
     index_name: str
     path: str
@@ -83,10 +102,10 @@ class SearchNearQuery:
 @dataclass(frozen=True, slots=True)
 class SearchCompoundQuery:
     index_name: str
-    must: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
-    should: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
-    filter: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
-    must_not: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
+    must: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
+    should: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
+    filter: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
+    must_not: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
     minimum_should_match: int = 0
 
 
@@ -119,6 +138,8 @@ type SearchTextLikeQuery = (
     | SearchAutocompleteQuery
     | SearchWildcardQuery
     | SearchExistsQuery
+    | SearchEqualsQuery
+    | SearchRangeQuery
     | SearchNearQuery
     | SearchCompoundQuery
 )
@@ -398,6 +419,20 @@ def compile_search_exists_query(spec: object) -> SearchExistsQuery:
     return query
 
 
+def compile_search_equals_query(spec: object) -> SearchEqualsQuery:
+    query = compile_search_text_like_query(spec)
+    if not isinstance(query, SearchEqualsQuery):
+        raise OperationFailure("$search.equals specification is required")
+    return query
+
+
+def compile_search_range_query(spec: object) -> SearchRangeQuery:
+    query = compile_search_text_like_query(spec)
+    if not isinstance(query, SearchRangeQuery):
+        raise OperationFailure("$search.range specification is required")
+    return query
+
+
 def compile_search_near_query(spec: object) -> SearchNearQuery:
     query = compile_search_text_like_query(spec)
     if not isinstance(query, SearchNearQuery):
@@ -520,6 +555,40 @@ def matches_search_exists_query(
     return any(path in allowed for path in prepared.searchable_paths)
 
 
+def matches_search_equals_query(
+    document: Document,
+    *,
+    definition: SearchIndexDefinition,
+    query: SearchEqualsQuery,
+    materialized: MaterializedSearchDocument | None = None,
+) -> bool:
+    del definition
+    del materialized
+    return any(
+        candidate_kind == query.value_kind and candidate_value == query.value
+        for candidate_kind, candidate_value in _search_path_scalar_values(document, query.path)
+    )
+
+
+def matches_search_range_query(
+    document: Document,
+    *,
+    definition: SearchIndexDefinition,
+    query: SearchRangeQuery,
+    materialized: MaterializedSearchDocument | None = None,
+) -> bool:
+    del definition
+    del materialized
+    return any(
+        _search_range_matches_value(
+            candidate_kind=candidate_kind,
+            candidate_value=candidate_value,
+            query=query,
+        )
+        for candidate_kind, candidate_value in _search_path_scalar_values(document, query.path)
+    )
+
+
 def matches_search_near_query(
     document: Document,
     *,
@@ -635,6 +704,28 @@ def search_clause_ranking(
             score = float(len(prepared.searchable_paths))
         else:
             score = float(sum(1 for path in query.paths if path in prepared.searchable_paths))
+        return score > 0.0, score, None
+    if isinstance(query, SearchEqualsQuery):
+        score = float(
+            sum(
+                1
+                for candidate_kind, candidate_value in _search_path_scalar_values(document, query.path)
+                if candidate_kind == query.value_kind and candidate_value == query.value
+            )
+        )
+        return score > 0.0, score, None
+    if isinstance(query, SearchRangeQuery):
+        score = float(
+            sum(
+                1
+                for candidate_kind, candidate_value in _search_path_scalar_values(document, query.path)
+                if _search_range_matches_value(
+                    candidate_kind=candidate_kind,
+                    candidate_value=candidate_value,
+                    query=query,
+                )
+            )
+        )
         return score > 0.0, score, None
     if isinstance(query, SearchCompoundQuery):
         if not matches_search_compound_query(
@@ -994,6 +1085,76 @@ def _compile_search_exists_clause(index_name: str, clause_spec: object) -> Searc
     )
 
 
+def _compile_search_equals_clause(index_name: str, clause_spec: object) -> SearchEqualsQuery:
+    if not isinstance(clause_spec, dict):
+        raise OperationFailure("$search.equals requires a document specification")
+    unsupported_options = sorted(set(clause_spec) - {"path", "value"})
+    if unsupported_options:
+        raise OperationFailure(
+            "$search.equals only supports path and value; unsupported keys: "
+            + ", ".join(unsupported_options)
+        )
+    path = clause_spec.get("path")
+    if not isinstance(path, str) or not path:
+        raise OperationFailure("$search.equals.path must be a non-empty string")
+    normalized_value = _normalize_search_scalar_value(clause_spec.get("value"))
+    if normalized_value is None:
+        raise OperationFailure(
+            "$search.equals.value must be null, bool, finite number, string, date or datetime"
+        )
+    value_kind, value = normalized_value
+    return SearchEqualsQuery(
+        index_name=index_name,
+        path=path,
+        value=value,
+        value_kind=value_kind,
+    )
+
+
+def _compile_search_range_clause(index_name: str, clause_spec: object) -> SearchRangeQuery:
+    if not isinstance(clause_spec, dict):
+        raise OperationFailure("$search.range requires a document specification")
+    unsupported_options = sorted(set(clause_spec) - {"path", "gt", "gte", "lt", "lte"})
+    if unsupported_options:
+        raise OperationFailure(
+            "$search.range only supports path, gt, gte, lt and lte; unsupported keys: "
+            + ", ".join(unsupported_options)
+        )
+    path = clause_spec.get("path")
+    if not isinstance(path, str) or not path:
+        raise OperationFailure("$search.range.path must be a non-empty string")
+    normalized_bounds: dict[str, tuple[str, object]] = {}
+    for option_name in ("gt", "gte", "lt", "lte"):
+        if option_name not in clause_spec:
+            continue
+        normalized_value = _normalize_search_scalar_value(clause_spec.get(option_name))
+        if normalized_value is None:
+            raise OperationFailure(
+                f"$search.range.{option_name} must be a finite number, date or datetime"
+            )
+        bound_kind, bound_value = normalized_value
+        if bound_kind not in {"number", "date", "datetime"}:
+            raise OperationFailure(
+                f"$search.range.{option_name} must be a finite number, date or datetime"
+            )
+        normalized_bounds[option_name] = (bound_kind, bound_value)
+    if not normalized_bounds:
+        raise OperationFailure("$search.range requires at least one of gt, gte, lt or lte")
+    bound_kinds = {kind for kind, _value in normalized_bounds.values()}
+    if len(bound_kinds) != 1:
+        raise OperationFailure("$search.range bounds must use the same value family")
+    bound_kind = next(iter(bound_kinds))
+    return SearchRangeQuery(
+        index_name=index_name,
+        path=path,
+        gt=normalized_bounds.get("gt", (bound_kind, None))[1],
+        gte=normalized_bounds.get("gte", (bound_kind, None))[1],
+        lt=normalized_bounds.get("lt", (bound_kind, None))[1],
+        lte=normalized_bounds.get("lte", (bound_kind, None))[1],
+        bound_kind=bound_kind,
+    )
+
+
 def _compile_search_near_clause(index_name: str, clause_spec: object) -> SearchNearQuery:
     if not isinstance(clause_spec, dict):
         raise OperationFailure("$search.near requires a document specification")
@@ -1176,6 +1337,8 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
         "query": query.raw_query,
         "paths": list(query.paths) if query.paths is not None else None,
         "compound": None,
+        "value": None,
+        "range": None,
         "origin": None,
         "originKind": None,
         "pivot": None,
@@ -1193,10 +1356,56 @@ def _explain_exists_query(query: SearchExistsQuery) -> dict[str, object | None]:
         "query": None,
         "paths": list(query.paths) if query.paths is not None else None,
         "compound": None,
+        "value": None,
+        "range": None,
         "origin": None,
         "originKind": None,
         "pivot": None,
         "path": None,
+        "queryVector": None,
+        "limit": None,
+        "numCandidates": None,
+        "filter": None,
+        "similarity": None,
+    }
+
+
+def _explain_equals_query(query: SearchEqualsQuery) -> dict[str, object | None]:
+    return {
+        "query": None,
+        "paths": None,
+        "compound": None,
+        "value": query.value,
+        "range": None,
+        "origin": None,
+        "originKind": None,
+        "pivot": None,
+        "path": query.path,
+        "queryVector": None,
+        "limit": None,
+        "numCandidates": None,
+        "filter": None,
+        "similarity": None,
+    }
+
+
+def _explain_range_query(query: SearchRangeQuery) -> dict[str, object | None]:
+    return {
+        "query": None,
+        "paths": None,
+        "compound": None,
+        "value": None,
+        "range": {
+            "gt": query.gt,
+            "gte": query.gte,
+            "lt": query.lt,
+            "lte": query.lte,
+            "boundKind": query.bound_kind,
+        },
+        "origin": None,
+        "originKind": None,
+        "pivot": None,
+        "path": query.path,
         "queryVector": None,
         "limit": None,
         "numCandidates": None,
@@ -1210,6 +1419,8 @@ def _explain_near_query(query: SearchNearQuery) -> dict[str, object | None]:
         "query": None,
         "paths": None,
         "compound": None,
+        "value": None,
+        "range": None,
         "origin": query.origin,
         "originKind": query.origin_kind,
         "pivot": query.pivot,
@@ -1249,6 +1460,8 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
             "usesShouldRanking": bool(query.should),
             "nearAware": any(isinstance(clause, SearchNearQuery) for clause in query.should),
         },
+        "value": None,
+        "range": None,
         "origin": None,
         "originKind": None,
         "pivot": None,
@@ -1266,6 +1479,8 @@ def _explain_vector_query(query: SearchVectorQuery) -> dict[str, object | None]:
         "query": None,
         "paths": None,
         "compound": None,
+        "value": None,
+        "range": None,
         "origin": None,
         "originKind": None,
         "pivot": None,
@@ -1289,6 +1504,8 @@ _SEARCH_CLAUSE_COMPILERS: dict[str, _SearchClauseCompiler] = {
     "autocomplete": _compile_search_autocomplete_clause,
     "wildcard": _compile_search_wildcard_clause,
     "exists": _compile_search_exists_clause,
+    "equals": _compile_search_equals_clause,
+    "range": _compile_search_range_clause,
     "near": _compile_search_near_clause,
     "compound": _compile_search_compound_clause,
 }
@@ -1299,6 +1516,8 @@ _SEARCH_QUERY_OPERATOR_NAMES: dict[type[Any], str] = {
     SearchAutocompleteQuery: "autocomplete",
     SearchWildcardQuery: "wildcard",
     SearchExistsQuery: "exists",
+    SearchEqualsQuery: "equals",
+    SearchRangeQuery: "range",
     SearchNearQuery: "near",
     SearchCompoundQuery: "compound",
 }
@@ -1309,6 +1528,8 @@ _SEARCH_QUERY_MATCHERS: dict[type[Any], _SearchMatcher] = {
     SearchAutocompleteQuery: lambda document, definition, query, materialized=None: matches_search_autocomplete_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
     SearchWildcardQuery: lambda document, definition, query, materialized=None: matches_search_wildcard_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
     SearchExistsQuery: lambda document, definition, query, materialized=None: matches_search_exists_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
+    SearchEqualsQuery: lambda document, definition, query, materialized=None: matches_search_equals_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
+    SearchRangeQuery: lambda document, definition, query, materialized=None: matches_search_range_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
     SearchNearQuery: lambda document, definition, query, materialized=None: matches_search_near_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
     SearchCompoundQuery: lambda document, definition, query, materialized=None: matches_search_compound_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
 }
@@ -1319,6 +1540,8 @@ _SEARCH_QUERY_EXPLAINERS: dict[type[Any], _SearchExplainBuilder] = {
     SearchAutocompleteQuery: lambda query: _explain_text_like_query(query),  # type: ignore[arg-type]
     SearchWildcardQuery: lambda query: _explain_text_like_query(query),  # type: ignore[arg-type]
     SearchExistsQuery: lambda query: _explain_exists_query(query),  # type: ignore[arg-type]
+    SearchEqualsQuery: lambda query: _explain_equals_query(query),  # type: ignore[arg-type]
+    SearchRangeQuery: lambda query: _explain_range_query(query),  # type: ignore[arg-type]
     SearchNearQuery: lambda query: _explain_near_query(query),  # type: ignore[arg-type]
     SearchCompoundQuery: lambda query: _explain_compound_query(query),  # type: ignore[arg-type]
     SearchVectorQuery: lambda query: _explain_vector_query(query),  # type: ignore[arg-type]
@@ -1386,6 +1609,64 @@ def _search_near_origin_kind(value: object) -> str | None:
     if isinstance(value, datetime.date):
         return "date"
     return None
+
+
+def _normalize_search_scalar_value(value: object) -> tuple[str, object] | None:
+    if value is None:
+        return "null", None
+    if isinstance(value, bool):
+        return "bool", value
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        numeric = float(value)
+        if not math.isfinite(numeric):
+            return None
+        return "number", numeric
+    if isinstance(value, datetime.datetime):
+        return "datetime", value
+    if isinstance(value, datetime.date):
+        return "date", value
+    if isinstance(value, str):
+        return "string", value
+    return None
+
+
+def _search_path_scalar_values(
+    document: Document,
+    path: str,
+) -> tuple[tuple[str, object], ...]:
+    found, value = get_document_value(document, path)
+    if not found:
+        return ()
+    normalized = _normalize_search_scalar_value(value)
+    if normalized is not None:
+        return (normalized,)
+    if not isinstance(value, list):
+        return ()
+    values: list[tuple[str, object]] = []
+    for item in value:
+        normalized_item = _normalize_search_scalar_value(item)
+        if normalized_item is not None:
+            values.append(normalized_item)
+    return tuple(values)
+
+
+def _search_range_matches_value(
+    *,
+    candidate_kind: str,
+    candidate_value: object,
+    query: SearchRangeQuery,
+) -> bool:
+    if candidate_kind != query.bound_kind:
+        return False
+    if query.gt is not None and not candidate_value > query.gt:
+        return False
+    if query.gte is not None and not candidate_value >= query.gte:
+        return False
+    if query.lt is not None and not candidate_value < query.lt:
+        return False
+    if query.lte is not None and not candidate_value <= query.lte:
+        return False
+    return True
 
 
 def _datetime_to_sortable_number(value: datetime.date | datetime.datetime) -> float:

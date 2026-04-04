@@ -29,10 +29,12 @@ from mongoeco.core.search import (
     tokenize_classic_text,
     SearchAutocompleteQuery,
     SearchCompoundQuery,
+    SearchEqualsQuery,
     SearchExistsQuery,
     SearchNearQuery,
     SearchPhraseQuery,
     SearchQuery,
+    SearchRangeQuery,
     SearchTextQuery,
     SearchVectorQuery,
     SearchWildcardQuery,
@@ -348,7 +350,7 @@ def _sqlite_candidate_storage_keys_for_query(
             query=query,
         )
         return candidates, backend, exact
-    if isinstance(query, SearchNearQuery):
+    if isinstance(query, (SearchEqualsQuery, SearchRangeQuery, SearchNearQuery)):
         return None, None, False
     return None, None, False
 

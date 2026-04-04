@@ -117,6 +117,31 @@ def assert_filtered_vector_explanation(
     case.assertLess(details["documentsScannedAfterPrefilter"], details["documentsScanned"])
 
 
+def assert_equals_and_range_explanations(
+    case: unittest.TestCase,
+    equals_explanation: dict[str, object],
+    range_explanation: dict[str, object],
+    *,
+    engine_name: str,
+) -> None:
+    equals_details = equals_explanation["engine_plan"]["details"]
+    case.assertEqual(equals_details["queryOperator"], "equals")
+    case.assertEqual(equals_details["path"], "kind")
+    case.assertEqual(equals_details["value"], "note")
+    case.assertEqual(equals_details["backend"], "python")
+    case.assertEqual(equals_details["compound"], None)
+    range_details = range_explanation["engine_plan"]["details"]
+    case.assertEqual(range_details["queryOperator"], "range")
+    case.assertEqual(range_details["path"], "score")
+    case.assertEqual(
+        range_details["range"],
+        {"gt": None, "gte": 9.0, "lt": None, "lte": 11.0, "boundKind": "number"},
+    )
+    case.assertEqual(range_details["backend"], "python")
+    if engine_name == "sqlite":
+        case.assertFalse(bool(range_details.get("fts5_match")))
+
+
 def assert_ranged_vector_explanation(
     case: unittest.TestCase,
     explanation: dict[str, object],
