@@ -12,6 +12,7 @@ from mongoeco.api.operations import FindOperation
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.core.search_filter_prefilter import evaluate_candidate_filter
 from mongoeco.core.search import (
     MaterializedSearchDocument,
     build_search_index_document,
@@ -40,6 +41,27 @@ from mongoeco.core.search import (
     vector_field_paths,
 )
 from mongoeco.engines._sqlite_catalog import load_search_index_rows as _sqlite_load_search_index_rows
+from mongoeco.engines._sqlite_compound_prefilter import (
+    clause_search_paths as _compound_clause_search_paths,
+    compound_clause_candidate_state as _compound_clause_candidate_state,
+    describe_compound_prefilter as _describe_compound_prefilter,
+    document_for_search_path as _compound_document_for_search_path,
+    downstream_filter_implies_clause as _compound_downstream_filter_implies_clause,
+    sqlite_compound_candidate_plan as _sqlite_compound_candidate_plan,
+    textual_search_field_types as _compound_textual_search_field_types,
+)
+from mongoeco.engines._sqlite_compound_ranking import (
+    exact_candidateable_should_scores as _compound_exact_candidateable_should_scores,
+    load_materialized_search_documents_by_storage_key as _compound_load_materialized_search_documents_by_storage_key,
+    load_search_entries_by_storage_key as _compound_load_search_entries_by_storage_key,
+    materialized_search_document_from_entries as _compound_materialized_search_document_from_entries,
+    materialized_search_entry_cache_bucket as _compound_materialized_search_entry_cache_bucket,
+    prefilter_candidate_storage_keys_by_matched_should as _compound_prefilter_candidate_storage_keys_by_matched_should,
+    prune_candidate_storage_keys_for_topk as _compound_prune_candidate_storage_keys_for_topk,
+    prune_candidate_storage_keys_with_candidateable_ranking as _compound_prune_candidate_storage_keys_with_candidateable_ranking,
+    rank_compound_candidate_storage_keys_from_entries as _compound_rank_candidate_storage_keys_from_entries,
+    sort_search_documents_for_query as _compound_sort_search_documents_for_query,
+)
 from mongoeco.engines._sqlite_search_admin import (
     create_search_index as _sqlite_create_search_index,
     drop_search_index as _sqlite_drop_search_index,
@@ -351,167 +373,46 @@ def _sqlite_compound_candidate_state(
     downstream_filter_spec: dict[str, object] | None = None,
     downstream_filter_exact: bool = False,
 ) -> tuple[list[str] | None, str | None, bool, list[list[str]], int]:
-    candidate_intersections: list[list[str]] = []
-    should_candidates: list[list[str]] = []
-    non_candidateable_should = 0
-    exact = True
-
-    for clause in (*query.must, *query.filter):
-        storage_keys, _backend, clause_exact, _refinement = _sqlite_candidate_state_for_compound_clause(
+    plan = _sqlite_compound_candidate_plan(
+        definition,
+        query,
+        candidate_resolver=lambda clause: _sqlite_candidate_storage_keys_for_query(
             engine,
             conn,
             physical_name=physical_name,
-            definition=definition,
-            clause=clause,
-            downstream_filter_storage_keys=downstream_filter_storage_keys,
-            downstream_filter_spec=downstream_filter_spec,
-            downstream_filter_exact=downstream_filter_exact,
-        )
-        if storage_keys is not None:
-            candidate_intersections.append(storage_keys)
-            exact = exact and clause_exact
-        else:
-            exact = False
-
-    for clause in query.should:
-        storage_keys, _backend, clause_exact, _refinement = _sqlite_candidate_state_for_compound_clause(
+            query=clause,
+        ),
+        must_not_resolver=lambda clause: _sqlite_candidate_storage_keys_for_query(
             engine,
             conn,
             physical_name=physical_name,
+            query=clause,
             definition=definition,
-            clause=clause,
-            downstream_filter_storage_keys=downstream_filter_storage_keys,
-            downstream_filter_spec=downstream_filter_spec,
-            downstream_filter_exact=downstream_filter_exact,
-        )
-        if storage_keys is None:
-            non_candidateable_should += 1
-            exact = False
-            continue
-        should_candidates.append(storage_keys)
-        exact = exact and clause_exact
-
-    candidates = _intersect_storage_key_lists(candidate_intersections) if candidate_intersections else None
-
-    if should_candidates:
-        required_candidateable_should = max(
-            0,
-            query.minimum_should_match - non_candidateable_should,
-        )
-        if required_candidateable_should > 0:
-            merged_should = _storage_keys_with_minimum_frequency(
-                should_candidates,
-                required_candidateable_should,
-            )
-            if candidates is None:
-                candidates = merged_should
-            else:
-                merged_should_set = set(merged_should)
-                candidates = [
-                    storage_key
-                    for storage_key in candidates
-                    if storage_key in merged_should_set
-                ]
-    elif candidates is None:
-        return None, None, False, should_candidates, non_candidateable_should
-
-    if candidates is None:
-        return None, None, False, should_candidates, non_candidateable_should
-    if downstream_filter_storage_keys is not None:
-        downstream_set = set(downstream_filter_storage_keys)
-        candidates = [
-            storage_key
-            for storage_key in candidates
-            if storage_key in downstream_set
-        ]
-        exact = exact and downstream_filter_exact
-    if query.must_not:
-        excluded: set[str] = set()
-        for clause in query.must_not:
-            storage_keys, _backend, clause_exact = _sqlite_candidate_storage_keys_for_query(
-                engine,
-                conn,
-                physical_name=physical_name,
-                query=clause,
-                definition=definition,
-            )
-            if storage_keys is None:
-                exact = False
-                continue
-            if clause_exact:
-                excluded.update(storage_keys)
-            else:
-                exact = False
-        if excluded:
-            candidates = [storage_key for storage_key in candidates if storage_key not in excluded]
-    return candidates, "fts5-prefilter", exact, should_candidates, non_candidateable_should
+        ),
+        downstream_filter_storage_keys=downstream_filter_storage_keys,
+        downstream_filter_spec=downstream_filter_spec,
+        downstream_filter_exact=downstream_filter_exact,
+    )
+    return plan.to_legacy_tuple()
 
 
 def _textual_search_field_types(definition: SearchIndexDefinition) -> dict[str, str]:
-    result: dict[str, str] = {}
-    mappings = definition.definition.get("mappings")
-    if not isinstance(mappings, dict):
-        return result
-
-    def _walk(node: dict[str, object], prefix: str = "") -> None:
-        fields = node.get("fields")
-        if not isinstance(fields, dict):
-            return
-        for field_name, field_spec in fields.items():
-            if not isinstance(field_name, str) or not isinstance(field_spec, dict):
-                continue
-            path = f"{prefix}.{field_name}" if prefix else field_name
-            mapping_type = field_spec.get("type", "document")
-            if mapping_type == "document":
-                _walk(field_spec, path)
-                continue
-            if isinstance(mapping_type, str):
-                result[path] = mapping_type
-
-    _walk(mappings)
-    return result
+    return _compound_textual_search_field_types(definition)
 
 
 def _flatten_downstream_filter_clauses(filter_spec: dict[str, object]) -> list[tuple[str, object]] | None:
-    candidate_state = _candidate_storage_keys_for_downstream_filter_node(
-        None,
-        None,
-        None,
-        filter_spec=filter_spec,
-        field_types={},
-        return_clauses_only=True,
-    )
-    if candidate_state is None:
-        return None
-    return candidate_state["clauses"]
+    from mongoeco.core.search_filter_prefilter import flatten_candidate_filter_clauses
+
+    clauses = flatten_candidate_filter_clauses(filter_spec)
+    return list(clauses) if clauses is not None else None
 
 
 def _document_for_search_path(path: str, value: object) -> Document:
-    parts = [part for part in path.split(".") if part]
-    document: dict[str, object] = {}
-    current = document
-    for part in parts[:-1]:
-        nested: dict[str, object] = {}
-        current[part] = nested
-        current = nested
-    if parts:
-        current[parts[-1]] = value
-    return document
+    return _compound_document_for_search_path(path, value)
 
 
 def _clause_search_paths(clause: SearchQuery) -> tuple[str, ...] | None:
-    if isinstance(
-        clause,
-        (
-            SearchTextQuery,
-            SearchPhraseQuery,
-            SearchAutocompleteQuery,
-            SearchWildcardQuery,
-            SearchExistsQuery,
-        ),
-    ):
-        return clause.paths
-    return None
+    return _compound_clause_search_paths(clause)
 
 
 def _downstream_filter_implies_clause(
@@ -520,39 +421,11 @@ def _downstream_filter_implies_clause(
     definition: SearchIndexDefinition,
     filter_spec: dict[str, object] | None,
 ) -> tuple[str | None, list[object] | None]:
-    if filter_spec is None:
-        return None, None
-    clauses = _flatten_downstream_filter_clauses(filter_spec)
-    search_paths = _clause_search_paths(clause)
-    if clauses is None or search_paths is None:
-        return None, None
-    for path, raw_value in clauses:
-        if path not in search_paths:
-            continue
-        values: list[object]
-        if raw_value == {"$exists": True}:
-            if isinstance(clause, SearchExistsQuery):
-                return path, [object()]
-            continue
-        if isinstance(raw_value, str):
-            values = [raw_value]
-        elif isinstance(raw_value, dict) and set(raw_value) == {"$in"} and isinstance(raw_value["$in"], list):
-            if not raw_value["$in"] or not all(isinstance(item, str) for item in raw_value["$in"]):
-                continue
-            values = list(raw_value["$in"])
-        else:
-            continue
-        if all(
-            matches_search_query(
-                _document_for_search_path(path, value),
-                definition=definition,
-                query=clause,
-                materialized=materialize_search_document(_document_for_search_path(path, value), definition),
-            )
-            for value in values
-        ):
-            return path, values
-    return None, None
+    return _compound_downstream_filter_implies_clause(
+        clause,
+        definition=definition,
+        filter_spec=filter_spec,
+    )
 
 
 def _sqlite_candidate_state_for_compound_clause(
@@ -566,32 +439,20 @@ def _sqlite_candidate_state_for_compound_clause(
     downstream_filter_spec: dict[str, object] | None,
     downstream_filter_exact: bool,
 ) -> tuple[list[str] | None, str | None, bool, dict[str, object] | None]:
-    storage_keys, backend, clause_exact = _sqlite_candidate_storage_keys_for_query(
-        engine,
-        conn,
-        physical_name=physical_name,
-        query=clause,
-    )
-    implied_path, implied_values = _downstream_filter_implies_clause(
-        clause,
+    storage_keys, backend, clause_exact, refinement = _compound_clause_candidate_state(
         definition=definition,
-        filter_spec=downstream_filter_spec,
+        clause=clause,
+        candidate_resolver=lambda query: _sqlite_candidate_storage_keys_for_query(
+            engine,
+            conn,
+            physical_name=physical_name,
+            query=query,
+        ),
+        downstream_filter_storage_keys=downstream_filter_storage_keys,
+        downstream_filter_spec=downstream_filter_spec,
+        downstream_filter_exact=downstream_filter_exact,
     )
-    if implied_path is None or downstream_filter_storage_keys is None:
-        return storage_keys, backend, clause_exact, None
-    refined_keys = downstream_filter_storage_keys
-    if storage_keys is not None:
-        refined_set = set(refined_keys)
-        refined_keys = [storage_key for storage_key in storage_keys if storage_key in refined_set]
-    refined_backend = "downstream-filter" if backend is None else f"{backend}+downstream-filter"
-    refinement = {
-        "applied": True,
-        "path": implied_path,
-        "valueCount": len(implied_values or ()),
-        "backend": refined_backend,
-        "exact": downstream_filter_exact and (clause_exact if storage_keys is not None else True),
-    }
-    return refined_keys, refined_backend, refinement["exact"], refinement
+    return storage_keys, backend, clause_exact, refinement.to_dict() if refinement is not None else None
 
 
 def _sqlite_candidate_storage_keys_for_downstream_filter(
@@ -605,14 +466,19 @@ def _sqlite_candidate_storage_keys_for_downstream_filter(
     if physical_name is None or filter_spec is None or not engine._sqlite_table_exists(conn, physical_name):
         return None, None
     field_types = _textual_search_field_types(definition)
-    candidate_state = _candidate_storage_keys_for_downstream_filter_node(
-        engine,
-        conn,
-        physical_name,
-        filter_spec=filter_spec,
-        field_types=field_types,
+    candidate_result = evaluate_candidate_filter(
+        filter_spec,
+        all_candidates=(),
+        clause_resolver=lambda path, clause: _candidate_storage_keys_for_downstream_clause(
+            engine,
+            conn,
+            physical_name,
+            path=path,
+            clause=clause,
+            field_types=field_types,
+        ),
     )
-    if candidate_state is None:
+    if candidate_result is None:
         return None, {
             "spec": deepcopy(filter_spec),
             "candidateable": False,
@@ -624,30 +490,19 @@ def _sqlite_candidate_storage_keys_for_downstream_filter(
             "supportedOperators": [],
             "booleanShape": None,
         }
-    if candidate_state["keys"] is None:
+    if candidate_result.matches is None:
         return None, {
             "spec": deepcopy(filter_spec),
             "candidateable": False,
             "exact": False,
             "backend": None,
-            "supportedPaths": candidate_state["supported_paths"],
-            "supportedClauseCount": candidate_state["supported_clause_count"],
-            "unsupportedClauseCount": candidate_state["unsupported_clause_count"],
-            "supportedOperators": candidate_state["supported_operators"],
-            "booleanShape": candidate_state["shape"],
+            "supportedPaths": list(candidate_result.plan.supported_paths),
+            "supportedClauseCount": candidate_result.plan.supported_clause_count,
+            "unsupportedClauseCount": candidate_result.plan.unsupported_clause_count,
+            "supportedOperators": list(candidate_result.plan.supported_operators),
+            "booleanShape": candidate_result.plan.shape,
         }
-
-    return candidate_state["keys"], {
-        "spec": deepcopy(filter_spec),
-        "candidateable": True,
-        "exact": candidate_state["exact"],
-        "backend": "fts5-downstream-filter",
-        "supportedPaths": candidate_state["supported_paths"],
-        "supportedClauseCount": candidate_state["supported_clause_count"],
-        "unsupportedClauseCount": candidate_state["unsupported_clause_count"],
-        "supportedOperators": candidate_state["supported_operators"],
-        "booleanShape": candidate_state["shape"],
-    }
+    return list(candidate_result.matches), candidate_result.to_metadata(backend="fts5-downstream-filter")
 
 
 def _candidate_storage_keys_for_downstream_filter_node(
@@ -831,66 +686,20 @@ def _describe_compound_prefilter_sync(
     downstream_filter: dict[str, object] | None = None,
     downstream_filter_storage_keys: list[str] | None = None,
 ) -> dict[str, object]:
-    def _describe_clause(clause: SearchQuery) -> dict[str, object]:
-        storage_keys, backend, exact, refinement = _sqlite_candidate_state_for_compound_clause(
+    return _describe_compound_prefilter(
+        definition,
+        query,
+        candidate_resolver=lambda clause: _sqlite_candidate_storage_keys_for_query(
             engine,
             conn,
             physical_name=physical_name,
+            query=clause,
             definition=definition,
-            clause=clause,
-            downstream_filter_storage_keys=downstream_filter_storage_keys,
-            downstream_filter_spec=downstream_filter.get("spec") if isinstance(downstream_filter, dict) and isinstance(downstream_filter.get("spec"), dict) else None,
-            downstream_filter_exact=bool(isinstance(downstream_filter, dict) and downstream_filter.get("exact")),
-        )
-        description = {
-            "operator": search_query_operator_name(clause),
-            "candidateable": storage_keys is not None,
-            "exact": exact if storage_keys is not None else False,
-            "backend": backend,
-        }
-        if refinement is not None:
-            description["downstreamRefinement"] = refinement
-        return description
-
-    should_descriptions = [_describe_clause(clause) for clause in query.should]
-    non_candidateable_should = sum(
-        1
-        for clause in should_descriptions
-        if not bool(clause["candidateable"])
+        ),
+        physical_name=physical_name,
+        downstream_filter=downstream_filter,
+        downstream_filter_storage_keys=downstream_filter_storage_keys,
     )
-    return {
-        "must": [_describe_clause(clause) for clause in query.must],
-        "filter": [_describe_clause(clause) for clause in query.filter],
-        "should": should_descriptions,
-        "mustNot": [_describe_clause(clause) for clause in query.must_not],
-        "clauseClasses": {
-            "must": [_compound_clause_class(_describe_clause(clause)) for clause in query.must],
-            "filter": [_compound_clause_class(_describe_clause(clause)) for clause in query.filter],
-            "should": [_compound_clause_class(clause) for clause in should_descriptions],
-            "mustNot": [_compound_clause_class(_describe_clause(clause)) for clause in query.must_not],
-        },
-        "downstreamFilter": deepcopy(downstream_filter) if downstream_filter is not None else None,
-        "requiredCandidateableShould": max(
-            0,
-            query.minimum_should_match - non_candidateable_should,
-        ),
-        "candidateableShouldCount": sum(
-            1
-            for clause in should_descriptions
-            if bool(clause["candidateable"])
-        ),
-        "candidateableShouldOperators": [
-            str(clause["operator"])
-            for clause in should_descriptions
-            if bool(clause["candidateable"])
-        ],
-        "partialRanking": {
-            "supported": _compound_entry_ranking_supported(query, physical_name=physical_name),
-            "strategy": "fts-materialized-entries"
-            if _compound_entry_ranking_supported(query, physical_name=physical_name)
-            else None,
-        },
-    }
 
 
 def _compound_clause_class(description: dict[str, object]) -> str:
@@ -914,183 +723,24 @@ def _prune_candidate_storage_keys_for_topk(
     result_limit_hint: int | None,
     should_candidates: list[list[str]] | None = None,
 ) -> tuple[list[str] | None, dict[str, object] | None]:
-    if (
-        candidate_storage_keys is None
-        or result_limit_hint is None
-        or result_limit_hint <= 0
-        or len(candidate_storage_keys) <= result_limit_hint
-    ):
-        return candidate_storage_keys, None
-    before_count = len(candidate_storage_keys)
-    if not candidate_exact:
-        return candidate_storage_keys, None
-    if not isinstance(query, SearchCompoundQuery) or not query.should:
-        return (
-            candidate_storage_keys[:result_limit_hint],
-            {
-                "applied": True,
-                "beforeCount": before_count,
-                "afterCount": min(before_count, result_limit_hint),
-                "strategy": "stable-prefix",
-                "cutoffMatchedShould": None,
-            },
-        )
-
-    candidate_set = set(candidate_storage_keys)
-    resolved_should_candidates = list(should_candidates or [])
-    if not resolved_should_candidates:
-        for clause in query.should:
-            storage_keys, _backend, clause_exact = _sqlite_candidate_storage_keys_for_query(
-                engine,
-                conn,
-                physical_name=physical_name,
-                query=clause,
-            )
-            if storage_keys is None or not clause_exact:
-                return candidate_storage_keys, None
-            resolved_should_candidates.append(storage_keys)
-
-    coarse_prefiltered_keys, matched_should_cutoff = _prefilter_candidate_storage_keys_by_matched_should(
-        candidate_storage_keys,
-        resolved_should_candidates,
-        result_limit_hint=result_limit_hint,
-    )
-    exact_score_input_keys = coarse_prefiltered_keys or candidate_storage_keys
-    exact_should_scores = _exact_candidateable_should_scores(
+    return _compound_prune_candidate_storage_keys_for_topk(
         engine,
         conn,
         db_name=db_name,
         coll_name=coll_name,
         physical_name=physical_name,
         query=query,
-        candidate_storage_keys=exact_score_input_keys,
-    )
-    if exact_should_scores is not None:
-        selected: set[str] = set()
-        selected_count = 0
-        cutoff: tuple[int, float] | None = None
-        exact_tiers = sorted(
-            {
-                (
-                    score["matchedShould"],
-                    round(float(score["shouldScore"]), 12),
-                )
-                for score in exact_should_scores.values()
-            },
-            reverse=True,
-        )
-        for tier_key in exact_tiers:
-            tier = [
-                storage_key
-                for storage_key in exact_score_input_keys
-                if (
-                    exact_should_scores[storage_key]["matchedShould"],
-                    round(float(exact_should_scores[storage_key]["shouldScore"]), 12),
-                ) == tier_key
-            ]
-            if not tier:
-                continue
-            selected.update(tier)
-            selected_count += len(tier)
-            cutoff = tier_key
-            if selected_count >= result_limit_hint:
-                break
-        pruned = [
-            storage_key
-            for storage_key in exact_score_input_keys
-            if storage_key in selected
-        ]
-        if len(pruned) < before_count:
-            return (
-                pruned,
-                {
-                    "applied": True,
-                    "beforeCount": before_count,
-                    "afterCount": len(pruned),
-                    "strategy": "exact-should-score-tier",
-                    "cutoffMatchedShould": cutoff[0] if cutoff is not None else None,
-                    "cutoffShouldScore": cutoff[1] if cutoff is not None else None,
-                    "cutoffTier": {
-                        "matchedShould": cutoff[0] if cutoff is not None else None,
-                        "shouldScore": cutoff[1] if cutoff is not None else None,
-                    },
-                    "candidateCountBeforePartialRanking": before_count,
-                    "candidateCountAfterPartialRanking": len(exact_score_input_keys),
-                    "partialRanking": {
-                        "strategy": "matched-should-prefilter+exact-should-score-tier",
-                        "matchedShouldCutoff": matched_should_cutoff,
-                    },
-                },
-            )
-
-    if isinstance(query, SearchCompoundQuery):
-        pre_ranked = _prune_candidate_storage_keys_with_candidateable_ranking(
-            candidate_storage_keys,
-            resolved_should_candidates,
-            result_limit_hint=result_limit_hint,
-        )
-        if pre_ranked is not None:
-            pruned, matched_cutoff = pre_ranked
-            if len(pruned) < before_count:
-                return (
-                    pruned,
-                    {
-                        "applied": True,
-                        "beforeCount": before_count,
-                        "afterCount": len(pruned),
-                        "strategy": "candidateable-should-ranking-tier",
-                        "cutoffMatchedShould": matched_cutoff,
-                        "cutoffTier": {
-                            "matchedShould": matched_cutoff,
-                        },
-                    },
-                )
-
-    match_counts: Counter[str] = Counter()
-    for values in resolved_should_candidates:
-        for storage_key in values:
-            if storage_key in candidate_set:
-                match_counts[storage_key] += 1
-
-    selected: set[str] = set()
-    selected_count = 0
-    cutoff_matched_should: int | None = None
-    for matched_should in sorted(
-        {match_counts.get(storage_key, 0) for storage_key in candidate_storage_keys},
-        reverse=True,
-    ):
-        tier = [
-            storage_key
-            for storage_key in candidate_storage_keys
-            if match_counts.get(storage_key, 0) == matched_should
-        ]
-        if not tier:
-            continue
-        selected.update(tier)
-        selected_count += len(tier)
-        cutoff_matched_should = matched_should
-        if selected_count >= result_limit_hint:
-            break
-
-    pruned = [
-        storage_key
-        for storage_key in candidate_storage_keys
-        if storage_key in selected
-    ]
-    if len(pruned) >= before_count:
-        return candidate_storage_keys, None
-    return (
-        pruned,
-        {
-            "applied": True,
-            "beforeCount": before_count,
-            "afterCount": len(pruned),
-            "strategy": "matched-should-tier",
-            "cutoffMatchedShould": cutoff_matched_should,
-            "cutoffTier": {
-                "matchedShould": cutoff_matched_should,
-            },
-        },
+        candidate_storage_keys=candidate_storage_keys,
+        candidate_exact=candidate_exact,
+        result_limit_hint=result_limit_hint,
+        should_candidates=should_candidates,
+        candidate_resolver=lambda clause: _sqlite_candidate_storage_keys_for_query(
+            engine,
+            conn,
+            physical_name=physical_name,
+            query=clause,
+            definition=None,
+        ),
     )
 
 
@@ -1100,60 +750,11 @@ def _prune_candidate_storage_keys_with_candidateable_ranking(
     *,
     result_limit_hint: int,
 ) -> tuple[list[str], int | None] | None:
-    if not should_candidates:
-        return None
-    candidate_set = set(candidate_storage_keys)
-    match_counts: Counter[str] = Counter()
-    coverage_counts: Counter[str] = Counter()
-    for candidate_list in should_candidates:
-        seen_in_clause: set[str] = set()
-        for storage_key in candidate_list:
-            if storage_key not in candidate_set or storage_key in seen_in_clause:
-                continue
-            seen_in_clause.add(storage_key)
-            match_counts[storage_key] += 1
-            coverage_counts[storage_key] += 1
-
-    if not match_counts:
-        return None
-
-    selected: set[str] = set()
-    selected_count = 0
-    cutoff_matched_should: int | None = None
-    tiers = sorted(
-        {
-            (
-                match_counts.get(storage_key, 0),
-                coverage_counts.get(storage_key, 0),
-            )
-            for storage_key in candidate_storage_keys
-        },
-        reverse=True,
+    return _compound_prune_candidate_storage_keys_with_candidateable_ranking(
+        candidate_storage_keys,
+        should_candidates,
+        result_limit_hint=result_limit_hint,
     )
-    for matched_should, coverage_count in tiers:
-        tier = [
-            storage_key
-            for storage_key in candidate_storage_keys
-            if (
-                match_counts.get(storage_key, 0),
-                coverage_counts.get(storage_key, 0),
-            )
-            == (matched_should, coverage_count)
-        ]
-        if not tier:
-            continue
-        selected.update(tier)
-        selected_count += len(tier)
-        cutoff_matched_should = matched_should
-        if selected_count >= result_limit_hint:
-            break
-
-    pruned = [
-        storage_key
-        for storage_key in candidate_storage_keys
-        if storage_key in selected
-    ]
-    return pruned, cutoff_matched_should
 
 
 def _prefilter_candidate_storage_keys_by_matched_should(
@@ -1162,46 +763,11 @@ def _prefilter_candidate_storage_keys_by_matched_should(
     *,
     result_limit_hint: int,
 ) -> tuple[list[str] | None, int | None]:
-    if not should_candidates or result_limit_hint <= 0:
-        return None, None
-    candidate_set = set(candidate_storage_keys)
-    match_counts: Counter[str] = Counter()
-    for candidate_list in should_candidates:
-        seen_in_clause: set[str] = set()
-        for storage_key in candidate_list:
-            if storage_key not in candidate_set or storage_key in seen_in_clause:
-                continue
-            seen_in_clause.add(storage_key)
-            match_counts[storage_key] += 1
-    if not match_counts:
-        return None, None
-    selected: set[str] = set()
-    selected_count = 0
-    cutoff_matched_should: int | None = None
-    for matched_should in sorted(
-        {match_counts.get(storage_key, 0) for storage_key in candidate_storage_keys},
-        reverse=True,
-    ):
-        tier = [
-            storage_key
-            for storage_key in candidate_storage_keys
-            if match_counts.get(storage_key, 0) == matched_should
-        ]
-        if not tier:
-            continue
-        selected.update(tier)
-        selected_count += len(tier)
-        cutoff_matched_should = matched_should
-        if selected_count >= result_limit_hint:
-            break
-    prefitered = [
-        storage_key
-        for storage_key in candidate_storage_keys
-        if storage_key in selected
-    ]
-    if len(prefitered) >= len(candidate_storage_keys):
-        return None, cutoff_matched_should
-    return prefitered, cutoff_matched_should
+    return _compound_prefilter_candidate_storage_keys_by_matched_should(
+        candidate_storage_keys,
+        should_candidates,
+        result_limit_hint=result_limit_hint,
+    )
 
 
 def _exact_candidateable_should_scores(
@@ -1263,35 +829,14 @@ def _load_search_entries_by_storage_key(
     physical_name: str,
     storage_keys: list[str],
 ) -> dict[str, tuple[tuple[str, str], ...]]:
-    if not storage_keys:
-        return {}
-    cache_bucket = _materialized_search_entry_cache_bucket(
+    return _compound_load_search_entries_by_storage_key(
         engine,
+        conn,
         db_name=db_name,
         coll_name=coll_name,
         physical_name=physical_name,
+        storage_keys=storage_keys,
     )
-    missing_storage_keys = [storage_key for storage_key in storage_keys if storage_key not in cache_bucket]
-    if missing_storage_keys:
-        grouped_entries: dict[str, list[tuple[str, str]]] = {
-            storage_key: []
-            for storage_key in missing_storage_keys
-        }
-        placeholders = ", ".join("?" for _ in missing_storage_keys)
-        sql = (
-            f"SELECT storage_key, field_path, content FROM {engine._quote_identifier(physical_name)} "
-            f"WHERE storage_key IN ({placeholders})"
-        )
-        for storage_key, field_path, content in conn.execute(sql, tuple(missing_storage_keys)).fetchall():
-            grouped_entries.setdefault(str(storage_key), []).append((str(field_path), str(content)))
-        for storage_key in missing_storage_keys:
-            entries = tuple(grouped_entries.get(storage_key, ()))
-            cache_bucket[storage_key] = (entries, _materialized_search_document_from_entries(entries))
-    return {
-        storage_key: cache_bucket[storage_key][0]
-        for storage_key in storage_keys
-        if storage_key in cache_bucket
-    }
 
 
 def _load_materialized_search_documents_by_storage_key(
@@ -1303,7 +848,7 @@ def _load_materialized_search_documents_by_storage_key(
     physical_name: str,
     storage_keys: list[str],
 ) -> dict[str, MaterializedSearchDocument]:
-    _load_search_entries_by_storage_key(
+    return _compound_load_materialized_search_documents_by_storage_key(
         engine,
         conn,
         db_name=db_name,
@@ -1311,17 +856,6 @@ def _load_materialized_search_documents_by_storage_key(
         physical_name=physical_name,
         storage_keys=storage_keys,
     )
-    cache_bucket = _materialized_search_entry_cache_bucket(
-        engine,
-        db_name=db_name,
-        coll_name=coll_name,
-        physical_name=physical_name,
-    )
-    return {
-        storage_key: cache_bucket[storage_key][1]
-        for storage_key in storage_keys
-        if storage_key in cache_bucket
-    }
 
 
 def _materialized_search_entry_cache_bucket(
@@ -1331,52 +865,18 @@ def _materialized_search_entry_cache_bucket(
     coll_name: str,
     physical_name: str,
 ) -> dict[str, tuple[tuple[tuple[str, str], ...], MaterializedSearchDocument]]:
-    cache_key = (
-        db_name,
-        coll_name,
-        physical_name,
-        engine._search_backend_version(db_name, coll_name),
+    return _compound_materialized_search_entry_cache_bucket(
+        engine,
+        db_name=db_name,
+        coll_name=coll_name,
+        physical_name=physical_name,
     )
-    return engine._materialized_search_entry_cache.setdefault(cache_key, {})
 
 
 def _materialized_search_document_from_entries(
     entries: list[tuple[str, str]] | tuple[tuple[str, str], ...],
 ) -> MaterializedSearchDocument:
-    searchable_paths: set[str] = set()
-    lowered_values: list[str] = []
-    lowered_values_by_path: dict[str, list[str]] = {}
-    token_counter_by_path: dict[str, Counter[str]] = {}
-    token_counter: Counter[str] = Counter()
-    token_sets_by_path: dict[str, set[str]] = {}
-    token_set: set[str] = set()
-    for field_path, value in entries:
-        searchable_paths.add(field_path)
-        lowered = value.lower()
-        lowered_values.append(lowered)
-        lowered_values_by_path.setdefault(field_path, []).append(lowered)
-        tokens_counter = Counter(tokenize_classic_text(value))
-        tokens = set(tokens_counter)
-        token_counter.update(tokens_counter)
-        token_counter_by_path.setdefault(field_path, Counter()).update(tokens_counter)
-        token_set.update(tokens)
-        token_sets_by_path.setdefault(field_path, set()).update(tokens)
-    return MaterializedSearchDocument(
-        entries=tuple(entries),
-        searchable_paths=frozenset(searchable_paths),
-        lowered_values=tuple(lowered_values),
-        lowered_values_by_path={
-            field_path: tuple(values)
-            for field_path, values in lowered_values_by_path.items()
-        },
-        token_counter_by_path=token_counter_by_path,
-        token_counter=token_counter,
-        token_sets_by_path={
-            field_path: frozenset(values)
-            for field_path, values in token_sets_by_path.items()
-        },
-        token_set=frozenset(token_set),
-    )
+    return _compound_materialized_search_document_from_entries(entries)
 
 
 def _sort_search_documents_for_query(
@@ -1384,35 +884,7 @@ def _sort_search_documents_for_query(
     *,
     query: SearchQuery,
 ) -> list[Document]:
-    if isinstance(query, SearchNearQuery):
-        ranked: list[tuple[float, Document]] = []
-        for document, _definition, _materialized in documents:
-            distance = search_near_distance(document, query=query)
-            ranked.append((distance if distance is not None else float("inf"), document))
-        ranked.sort(key=lambda item: item[0])
-        return [document for _distance, document in ranked]
-    if isinstance(query, SearchCompoundQuery) and query.should:
-        ranked_compound: list[tuple[tuple[float, float, float], Document]] = []
-        for document, definition, materialized in documents:
-            matched_should, should_score, best_near_distance = search_compound_ranking(
-                document,
-                definition=definition,
-                query=query,
-                materialized=materialized,
-            )
-            ranked_compound.append(
-                (
-                    (
-                        -float(matched_should),
-                        -should_score,
-                        best_near_distance,
-                    ),
-                    document,
-                )
-            )
-        ranked_compound.sort(key=lambda item: item[0])
-        return [document for _score, document in ranked_compound]
-    return [document for document, _definition, _materialized in documents]
+    return _compound_sort_search_documents_for_query(documents, query=query)
 
 
 def _compound_entry_ranking_supported(
@@ -1420,11 +892,9 @@ def _compound_entry_ranking_supported(
     *,
     physical_name: str | None,
 ) -> bool:
-    return bool(
-        physical_name
-        and query.should
-        and not any(isinstance(clause, (SearchNearQuery, SearchCompoundQuery)) for clause in query.should)
-    )
+    from mongoeco.engines._sqlite_compound_prefilter import compound_entry_ranking_supported
+
+    return compound_entry_ranking_supported(query, physical_name=physical_name)
 
 
 def _rank_compound_candidate_storage_keys_from_entries(
@@ -1438,39 +908,16 @@ def _rank_compound_candidate_storage_keys_from_entries(
     candidate_storage_keys: list[str],
     result_limit_hint: int | None,
 ) -> list[str] | None:
-    if not candidate_storage_keys:
-        return []
-    if not _compound_entry_ranking_supported(query, physical_name=physical_name):
-        return None
-    prepared_by_storage_key = _load_materialized_search_documents_by_storage_key(
+    return _compound_rank_candidate_storage_keys_from_entries(
         engine,
         conn,
         db_name=db_name,
         coll_name=coll_name,
         physical_name=physical_name,
-        storage_keys=candidate_storage_keys,
+        query=query,
+        candidate_storage_keys=candidate_storage_keys,
+        result_limit_hint=result_limit_hint,
     )
-    ranked: list[tuple[tuple[float, float], int, str]] = []
-    for order, storage_key in enumerate(candidate_storage_keys):
-        prepared = prepared_by_storage_key.get(storage_key, _materialized_search_document_from_entries(()))
-        matched_should = 0
-        should_score = 0.0
-        for clause in query.should:
-            matched, clause_score, _near_distance = search_clause_ranking(
-                {},
-                definition=_SEARCH_RUNTIME_DUMMY_DEFINITION,
-                query=clause,
-                materialized=prepared,
-            )
-            if not matched:
-                continue
-            matched_should += 1
-            should_score += clause_score
-        ranked.append(((-float(matched_should), -should_score), order, storage_key))
-    if result_limit_hint is not None and result_limit_hint > 0 and len(ranked) > result_limit_hint:
-        ranked = heapq.nsmallest(result_limit_hint, ranked, key=lambda item: item[:2])
-    ranked.sort(key=lambda item: item[:2])
-    return [storage_key for _rank, _order, storage_key in ranked]
 
 
 def _next_vector_candidate_request(

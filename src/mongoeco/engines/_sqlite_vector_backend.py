@@ -1,19 +1,22 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import datetime
 import time
-from typing import TypeAlias
 
 import numpy as np
 from usearch.index import Index, MetricKind
 
 from mongoeco.core.paths import get_document_value
+from mongoeco.core.search_filter_prefilter import (
+    collect_filterable_values,
+    evaluate_candidate_filter,
+    filter_value_key,
+    value_key_matches_range,
+)
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, SearchIndexDefinition
 
-
-_FilterValueKey: TypeAlias = tuple[str, object]
+_FilterValueKey = tuple[str, object]
 
 
 @dataclass(slots=True)
@@ -174,35 +177,30 @@ def vector_filter_candidate_storage_keys(
 ) -> tuple[list[str] | None, dict[str, object] | None]:
     if filter_spec is None:
         return None, None
-    candidate_state = _candidate_storage_keys_for_filter_node(
-        state,
+    candidate_result = evaluate_candidate_filter(
         filter_spec,
-        all_storage_keys=set(state.storage_keys_by_slot),
+        all_candidates=state.storage_keys_by_slot,
+        ordered_candidates=state.storage_keys_by_slot,
+        clause_resolver=lambda path, clause: _candidate_storage_keys_for_filter_clause(
+            state,
+            path=path,
+            clause=clause,
+            all_storage_keys=set(state.storage_keys_by_slot),
+        ),
     )
-    if candidate_state is None or candidate_state["keys"] is None:
+    if candidate_result is None or candidate_result.matches is None:
         return None, {
             "spec": filter_spec,
             "candidateable": False,
             "exact": False,
             "backend": None,
-            "supportedPaths": [] if candidate_state is None else candidate_state["supported_paths"],
-            "supportedClauseCount": 0 if candidate_state is None else candidate_state["supported_clause_count"],
-            "unsupportedClauseCount": 1 if candidate_state is None else candidate_state["unsupported_clause_count"],
-            "supportedOperators": [] if candidate_state is None else candidate_state["supported_operators"],
-            "booleanShape": None if candidate_state is None else candidate_state["shape"],
+            "supportedPaths": [] if candidate_result is None else list(candidate_result.plan.supported_paths),
+            "supportedClauseCount": 0 if candidate_result is None else candidate_result.plan.supported_clause_count,
+            "unsupportedClauseCount": 1 if candidate_result is None else candidate_result.plan.unsupported_clause_count,
+            "supportedOperators": [] if candidate_result is None else list(candidate_result.plan.supported_operators),
+            "booleanShape": None if candidate_result is None else candidate_result.plan.shape,
         }
-    ordered = [storage_key for storage_key in state.storage_keys_by_slot if storage_key in candidate_state["keys"]]
-    return ordered, {
-        "spec": filter_spec,
-        "candidateable": True,
-        "exact": candidate_state["exact"],
-        "backend": "vector-filter-index",
-        "supportedPaths": candidate_state["supported_paths"],
-        "supportedClauseCount": candidate_state["supported_clause_count"],
-        "unsupportedClauseCount": candidate_state["unsupported_clause_count"],
-        "supportedOperators": candidate_state["supported_operators"],
-        "booleanShape": candidate_state["shape"],
-    }
+    return list(candidate_result.matches), candidate_result.to_metadata(backend="vector-filter-index")
 
 
 def _extract_vector(
@@ -229,165 +227,13 @@ def _index_filterable_document(
     scalar_filter_index: dict[str, dict[_FilterValueKey, list[str]]],
     exists_filter_index: dict[str, list[str]],
 ) -> None:
-    for path, values in _collect_filterable_values(document):
+    for path, values in collect_filterable_values(document):
         exists_filter_index.setdefault(path, []).append(storage_key)
         if not values:
             continue
         path_index = scalar_filter_index.setdefault(path, {})
         for value in values:
             path_index.setdefault(value, []).append(storage_key)
-
-
-def _collect_filterable_values(
-    value: object,
-    *,
-    prefix: str = "",
-) -> list[tuple[str, set[_FilterValueKey]]]:
-    entries: list[tuple[str, set[_FilterValueKey]]] = []
-    if isinstance(value, dict):
-        for key, item in value.items():
-            if not isinstance(key, str) or not key:
-                continue
-            path = f"{prefix}.{key}" if prefix else key
-            entries.extend(_collect_filterable_values(item, prefix=path))
-        return entries
-    if not prefix:
-        return entries
-    if isinstance(value, list):
-        scalar_values = {
-            normalized
-            for item in value
-            if (normalized := _filter_value_key(item)) is not None
-        }
-        entries.append((prefix, scalar_values))
-        return entries
-    entries.append((prefix, {_filter_value_key(value)} if _filter_value_key(value) is not None else set()))
-    return entries
-
-
-def _filter_value_key(value: object) -> _FilterValueKey | None:
-    if value is None:
-        return ("null", None)
-    if isinstance(value, bool):
-        return ("bool", value)
-    if isinstance(value, (int, float)):
-        number = float(value)
-        if not np.isfinite(number):
-            return None
-        return ("number", number)
-    if isinstance(value, str):
-        return ("string", value)
-    if isinstance(value, datetime.datetime):
-        return ("datetime", value)
-    if isinstance(value, datetime.date):
-        return ("date", value)
-    return None
-
-
-def _candidate_storage_keys_for_filter_node(
-    state: SQLiteVectorBackendState,
-    filter_spec: dict[str, object],
-    *,
-    all_storage_keys: set[str],
-) -> dict[str, object] | None:
-    keys: set[str] | None = None
-    supported_paths: list[str] = []
-    supported_operators: list[str] = []
-    supported_clause_count = 0
-    unsupported_clause_count = 0
-    exact = True
-    shapes: list[str] = []
-
-    for key, value in filter_spec.items():
-        if key == "$and":
-            if not isinstance(value, list):
-                return None
-            shapes.append("$and")
-            local_keys: set[str] | None = None
-            local_supported = False
-            for item in value:
-                if not isinstance(item, dict):
-                    return None
-                nested = _candidate_storage_keys_for_filter_node(
-                    state,
-                    item,
-                    all_storage_keys=all_storage_keys,
-                )
-                if nested is None:
-                    return None
-                supported_paths.extend(nested["supported_paths"])
-                supported_operators.extend(nested["supported_operators"])
-                supported_clause_count += nested["supported_clause_count"]
-                unsupported_clause_count += nested["unsupported_clause_count"]
-                exact = exact and nested["exact"]
-                if nested["keys"] is not None:
-                    local_supported = True
-                    local_keys = set(nested["keys"]) if local_keys is None else local_keys & set(nested["keys"])
-            if local_supported:
-                keys = set(local_keys) if keys is None else keys & set(local_keys)
-            continue
-        if key == "$or":
-            if not isinstance(value, list) or not value:
-                return None
-            shapes.append("$or")
-            branch_sets: list[set[str]] = []
-            branch_exact = True
-            for item in value:
-                if not isinstance(item, dict):
-                    return None
-                nested = _candidate_storage_keys_for_filter_node(
-                    state,
-                    item,
-                    all_storage_keys=all_storage_keys,
-                )
-                if nested is None:
-                    return None
-                supported_paths.extend(nested["supported_paths"])
-                supported_operators.extend(nested["supported_operators"])
-                supported_clause_count += nested["supported_clause_count"]
-                unsupported_clause_count += nested["unsupported_clause_count"]
-                branch_exact = branch_exact and nested["exact"]
-                if nested["keys"] is None:
-                    return {
-                        "keys": None,
-                        "supported_paths": supported_paths,
-                        "supported_operators": supported_operators,
-                        "supported_clause_count": supported_clause_count,
-                        "unsupported_clause_count": unsupported_clause_count + 1,
-                        "exact": False,
-                        "shape": "+".join(shapes) if shapes else "flat",
-                    }
-                branch_sets.append(set(nested["keys"]))
-            union = set().union(*branch_sets)
-            keys = union if keys is None else keys & union
-            exact = exact and branch_exact
-            continue
-        if key.startswith("$"):
-            return None
-        matched_keys, operator_name = _candidate_storage_keys_for_filter_clause(
-            state,
-            path=key,
-            clause=value,
-            all_storage_keys=all_storage_keys,
-        )
-        if matched_keys is None:
-            unsupported_clause_count += 1
-            exact = False
-            continue
-        supported_paths.append(key)
-        supported_operators.append(operator_name)
-        supported_clause_count += 1
-        keys = set(matched_keys) if keys is None else keys & set(matched_keys)
-
-    return {
-        "keys": keys,
-        "supported_paths": supported_paths,
-        "supported_operators": supported_operators,
-        "supported_clause_count": supported_clause_count,
-        "unsupported_clause_count": unsupported_clause_count,
-        "exact": exact and unsupported_clause_count == 0,
-        "shape": "+".join(shapes) if shapes else "flat",
-    }
 
 
 def _candidate_storage_keys_for_filter_clause(
@@ -403,7 +249,7 @@ def _candidate_storage_keys_for_filter_clause(
     if isinstance(clause, dict) and set(clause) == {"$in"} and isinstance(clause["$in"], list):
         matched_keys: set[str] = set()
         for item in clause["$in"]:
-            value_key = _filter_value_key(item)
+            value_key = filter_value_key(item)
             if value_key is None:
                 return None, "$in"
             matched_keys.update(state.scalar_filter_index.get(path, {}).get(value_key, ()))
@@ -416,10 +262,39 @@ def _candidate_storage_keys_for_filter_clause(
         )
         if range_storage_keys is not None:
             return range_storage_keys, "range"
-    value_key = _filter_value_key(clause)
+    value_key = filter_value_key(clause)
     if value_key is None:
         return None, "eq"
     return set(state.scalar_filter_index.get(path, {}).get(value_key, ())), "eq"
+
+
+def _candidate_storage_keys_for_filter_node(
+    state: SQLiteVectorBackendState,
+    filter_spec: dict[str, object],
+    *,
+    all_storage_keys: set[str],
+) -> dict[str, object] | None:
+    result = evaluate_candidate_filter(
+        filter_spec,
+        all_candidates=tuple(all_storage_keys),
+        clause_resolver=lambda path, clause: _candidate_storage_keys_for_filter_clause(
+            state,
+            path=path,
+            clause=clause,
+            all_storage_keys=all_storage_keys,
+        ),
+    )
+    if result is None:
+        return None
+    return {
+        "keys": set(result.matches) if result.matches is not None else None,
+        "supported_paths": list(result.plan.supported_paths),
+        "supported_operators": list(result.plan.supported_operators),
+        "supported_clause_count": result.plan.supported_clause_count,
+        "unsupported_clause_count": result.plan.unsupported_clause_count,
+        "exact": result.plan.exact,
+        "shape": result.plan.shape,
+    }
 
 
 def _candidate_storage_keys_for_range_clause(
@@ -432,47 +307,49 @@ def _candidate_storage_keys_for_range_clause(
     if not clause or any(operator not in supported_operators for operator in clause):
         return None
 
-    normalized_bounds: dict[str, _FilterValueKey] = {}
+    bound_kind: str | None = None
     for operator, raw_value in clause.items():
-        value_key = _filter_value_key(raw_value)
+        value_key = filter_value_key(raw_value)
         if value_key is None or value_key[0] not in {"number", "date", "datetime"}:
             return None
-        normalized_bounds[operator] = value_key
+        if bound_kind is None:
+            bound_kind = value_key[0]
+        elif bound_kind != value_key[0]:
+            return None
 
     path_index = state.scalar_filter_index.get(path)
     if not path_index:
         return set()
 
-    bound_kinds = {value_key[0] for value_key in normalized_bounds.values()}
-    if len(bound_kinds) != 1:
-        return None
-    bound_kind = next(iter(bound_kinds))
-
     matched: set[str] = set()
     for value_key, storage_keys in path_index.items():
         if value_key[0] != bound_kind:
             continue
-        if _value_key_matches_range(value_key, normalized_bounds):
+        if value_key_matches_range(value_key, clause):
             matched.update(storage_keys)
     return matched
 
 
+def _collect_filterable_values(
+    value: object,
+    *,
+    prefix: str = "",
+) -> list[tuple[str, set[_FilterValueKey]]]:
+    return collect_filterable_values(value, prefix=prefix)
+
+
+def _filter_value_key(value: object) -> _FilterValueKey | None:
+    return filter_value_key(value)
+
+
 def _value_key_matches_range(
     value_key: _FilterValueKey,
-    bounds: dict[str, _FilterValueKey],
+    bounds: dict[str, object],
 ) -> bool:
-    value = value_key[1]
-    for operator, bound_key in bounds.items():
-        bound = bound_key[1]
-        if operator == "$gt" and not (value > bound):
-            return False
-        if operator == "$gte" and not (value >= bound):
-            return False
-        if operator == "$lt" and not (value < bound):
-            return False
-        if operator == "$lte" and not (value <= bound):
-            return False
-    return True
+    if bounds and all(isinstance(value, tuple) and len(value) == 2 for value in bounds.values()):
+        raw_bounds = {operator: value[1] for operator, value in bounds.items()}
+        return value_key_matches_range(value_key, raw_bounds)
+    return value_key_matches_range(value_key, bounds)
 
 
 def _metric_kind(similarity: str) -> MetricKind:
