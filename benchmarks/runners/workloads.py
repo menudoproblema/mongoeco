@@ -674,6 +674,7 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
     compound_candidateable_should_matched_metrics: list[Metrics] = []
     compound_candidateable_should_title_metrics: list[Metrics] = []
     compound_candidateable_should_msm2_metrics: list[Metrics] = []
+    compound_candidateable_should_tie_heavy_metrics: list[Metrics] = []
 
     db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_augment_search_documents)
     try:
@@ -814,6 +815,23 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
             },
             {"$limit": 10},
         ]
+        compound_candidateable_should_tie_heavy_pipeline = [
+            {
+                "$search": {
+                    "index": "by_text",
+                    "compound": {
+                        "must": [{"text": {"query": "vector", "path": ["title", "body"]}}],
+                        "should": [
+                            {"exists": {"path": "title"}},
+                            {"exists": {"path": "body"}},
+                            {"wildcard": {"query": "*vector*", "path": "body"}},
+                        ],
+                        "minimumShouldMatch": 1,
+                    },
+                }
+            },
+            {"$limit": 10},
+        ]
 
         return {
             "search_text_topk_100": _measure_single_task(
@@ -949,6 +967,23 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                     "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+minimumShouldMatch(2)",
                 },
             ),
+            "search_compound_candidateable_should_tie_heavy_topk_100": _measure_single_task(
+                compound_candidateable_should_tie_heavy_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, compound_candidateable_should_tie_heavy_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            compound_candidateable_should_tie_heavy_pipeline,
+                        )
+                    ),
+                    "query_shape": "$search.compound must(text=vector)+should(exists(title),exists(body),wildcard(body=*vector*))",
+                },
+            ),
         }
     finally:
         engine.teardown()
@@ -959,6 +994,7 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
     ann_metrics: list[Metrics] = []
     filtered_metrics: list[Metrics] = []
     filtered_boolean_metrics: list[Metrics] = []
+    filtered_underflow_metrics: list[Metrics] = []
 
     db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_augment_search_documents)
     try:
@@ -1022,6 +1058,23 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                 }
             }
         ]
+        filtered_underflow_pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": "by_vector",
+                    "path": "embedding",
+                    "queryVector": [1.0, 0.0, 0.0],
+                    "numCandidates": 10,
+                    "limit": 10,
+                    "filter": {
+                        "$and": [
+                            {"kind": "reference"},
+                            {"score": {"$gte": 10}},
+                        ]
+                    },
+                }
+            }
+        ]
 
         return {
             "vector_search_ann_topk_100": _measure_single_task(
@@ -1061,6 +1114,19 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                         engine.explain_aggregate(db_name, coll_name, filtered_boolean_pipeline)
                     ),
                     "query_shape": "$vectorSearch cosine topk + boolean candidate filter",
+                },
+            ),
+            "vector_search_filtered_underflow_topk_100": _measure_single_task(
+                filtered_underflow_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, filtered_underflow_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, filtered_underflow_pipeline)
+                    ),
+                    "query_shape": "$vectorSearch cosine topk + rare boolean candidate filter",
                 },
             ),
         }

@@ -71,6 +71,20 @@ class CompoundTopKPrefilter:
         return payload
 
 
+def _ordered_tier_buckets[TTier](
+    candidate_storage_keys: list[str],
+    *,
+    tier_key,
+) -> list[tuple[TTier, list[str]]]:
+    buckets: dict[TTier, list[str]] = {}
+    for storage_key in candidate_storage_keys:
+        buckets.setdefault(tier_key(storage_key), []).append(storage_key)
+    return [
+        (tier, buckets[tier])
+        for tier in sorted(buckets, reverse=True)
+    ]
+
+
 def prune_candidate_storage_keys_for_topk(
     engine: _SQLiteCompoundRankingEngine,
     conn: sqlite3.Connection,
@@ -134,27 +148,13 @@ def prune_candidate_storage_keys_for_topk(
         selected: set[str] = set()
         selected_count = 0
         cutoff: tuple[int, float] | None = None
-        exact_tiers = sorted(
-            {
-                (
-                    int(score["matchedShould"]),
-                    round(float(score["shouldScore"]), 12),
-                )
-                for score in exact_should_scores.values()
-            },
-            reverse=True,
-        )
-        for tier_key in exact_tiers:
-            tier = [
-                storage_key
-                for storage_key in exact_score_input_keys
-                if (
-                    int(exact_should_scores[storage_key]["matchedShould"]),
-                    round(float(exact_should_scores[storage_key]["shouldScore"]), 12),
-                ) == tier_key
-            ]
-            if not tier:
-                continue
+        for tier_key, tier in _ordered_tier_buckets(
+            exact_score_input_keys,
+            tier_key=lambda storage_key: (
+                int(exact_should_scores[storage_key]["matchedShould"]),
+                round(float(exact_should_scores[storage_key]["shouldScore"]), 12),
+            ),
+        ):
             selected.update(tier)
             selected_count += len(tier)
             cutoff = tier_key
@@ -214,10 +214,10 @@ def prune_candidate_storage_keys_for_topk(
     selected: set[str] = set()
     selected_count = 0
     cutoff_matched_should: int | None = None
-    for matched_should in sorted({match_counts.get(storage_key, 0) for storage_key in candidate_storage_keys}, reverse=True):
-        tier = [storage_key for storage_key in candidate_storage_keys if match_counts.get(storage_key, 0) == matched_should]
-        if not tier:
-            continue
+    for matched_should, tier in _ordered_tier_buckets(
+        candidate_storage_keys,
+        tier_key=lambda storage_key: match_counts.get(storage_key, 0),
+    ):
         selected.update(tier)
         selected_count += len(tier)
         cutoff_matched_should = matched_should
@@ -264,18 +264,13 @@ def prune_candidate_storage_keys_with_candidateable_ranking(
     selected: set[str] = set()
     selected_count = 0
     cutoff_matched_should: int | None = None
-    tiers = sorted(
-        {(match_counts.get(storage_key, 0), coverage_counts.get(storage_key, 0)) for storage_key in candidate_storage_keys},
-        reverse=True,
-    )
-    for matched_should, coverage_count in tiers:
-        tier = [
-            storage_key
-            for storage_key in candidate_storage_keys
-            if (match_counts.get(storage_key, 0), coverage_counts.get(storage_key, 0)) == (matched_should, coverage_count)
-        ]
-        if not tier:
-            continue
+    for (matched_should, _coverage_count), tier in _ordered_tier_buckets(
+        candidate_storage_keys,
+        tier_key=lambda storage_key: (
+            match_counts.get(storage_key, 0),
+            coverage_counts.get(storage_key, 0),
+        ),
+    ):
         selected.update(tier)
         selected_count += len(tier)
         cutoff_matched_should = matched_should
@@ -307,10 +302,10 @@ def prefilter_candidate_storage_keys_by_matched_should(
     selected: set[str] = set()
     selected_count = 0
     cutoff_matched_should: int | None = None
-    for matched_should in sorted({match_counts.get(storage_key, 0) for storage_key in candidate_storage_keys}, reverse=True):
-        tier = [storage_key for storage_key in candidate_storage_keys if match_counts.get(storage_key, 0) == matched_should]
-        if not tier:
-            continue
+    for matched_should, tier in _ordered_tier_buckets(
+        candidate_storage_keys,
+        tier_key=lambda storage_key: match_counts.get(storage_key, 0),
+    ):
         selected.update(tier)
         selected_count += len(tier)
         cutoff_matched_should = matched_should
