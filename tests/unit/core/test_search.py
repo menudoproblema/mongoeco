@@ -472,6 +472,200 @@ class SearchCoreTests(unittest.TestCase):
                 paths=("title",),
             ),
         )
+
+    def test_wrapper_compilers_reject_wrong_operator_shapes(self) -> None:
+        with self.assertRaisesRegex(OperationFailure, "exists specification is required"):
+            compile_search_exists_query({"index": "by_text", "text": {"query": "ada"}})
+        with self.assertRaisesRegex(OperationFailure, "near specification is required"):
+            compile_search_near_query({"index": "by_text", "text": {"query": "ada"}})
+        with self.assertRaisesRegex(OperationFailure, "compound specification is required"):
+            compile_search_compound_query({"index": "by_text", "text": {"query": "ada"}})
+
+    def test_compile_vector_search_query_and_search_stage_error_paths(self) -> None:
+        with self.assertRaisesRegex(OperationFailure, "requires a document specification"):
+            compile_vector_search_query([])
+        with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
+            compile_vector_search_query(
+                {
+                    "index": "vec",
+                    "path": "embedding",
+                    "queryVector": [1.0],
+                    "limit": 1,
+                    "extra": True,
+                }
+            )
+        with self.assertRaisesRegex(OperationFailure, "non-empty string"):
+            compile_vector_search_query(
+                {"index": "", "path": "embedding", "queryVector": [1.0], "limit": 1}
+            )
+        with self.assertRaisesRegex(OperationFailure, "path must be a non-empty string"):
+            compile_vector_search_query(
+                {"index": "vec", "path": "", "queryVector": [1.0], "limit": 1}
+            )
+        with self.assertRaisesRegex(OperationFailure, "queryVector must be a non-empty array"):
+            compile_vector_search_query(
+                {"index": "vec", "path": "embedding", "queryVector": [], "limit": 1}
+            )
+        with self.assertRaisesRegex(OperationFailure, "limit must be a positive integer"):
+            compile_vector_search_query(
+                {"index": "vec", "path": "embedding", "queryVector": [1.0], "limit": 0}
+            )
+        with self.assertRaisesRegex(OperationFailure, "numCandidates must be an integer >= limit"):
+            compile_vector_search_query(
+                {
+                    "index": "vec",
+                    "path": "embedding",
+                    "queryVector": [1.0],
+                    "limit": 1,
+                    "numCandidates": 0,
+                }
+            )
+        with self.assertRaisesRegex(OperationFailure, "requires a document specification"):
+            compile_search_stage("$search", [])
+        with self.assertRaisesRegex(OperationFailure, "unsupported search stage operator"):
+            compile_search_stage("$other", {})
+
+    def test_matches_and_ranking_cover_more_search_query_branches(self) -> None:
+        definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text")
+        document = {
+            "title": "Ada algorithms",
+            "body": "Ada wrote algorithm notes",
+            "count": 7,
+            "published": datetime.datetime(2024, 1, 1, 12, 0, 0),
+            "tags": ["ada", "math"],
+        }
+        prepared = materialize_search_document(document, definition)
+
+        exists_any = SearchExistsQuery(index_name="by_text", paths=None)
+        self.assertTrue(matches_search_exists_query(document, definition=definition, query=exists_any, materialized=prepared))
+        self.assertFalse(matches_search_exists_query({}, definition=definition, query=exists_any))
+
+        text_query = SearchTextQuery(index_name="by_text", raw_query="Ada", terms=("ada",), paths=("title", "body"))
+        phrase_query = SearchPhraseQuery(index_name="by_text", raw_query="Ada algorithms", paths=("title",))
+        autocomplete_query = SearchAutocompleteQuery(index_name="by_text", raw_query="alg", terms=("alg",), paths=("title", "body"))
+        wildcard_query = SearchWildcardQuery(index_name="by_text", raw_query="*algorithm*", normalized_pattern="*algorithm*", paths=("body",))
+        near_query = SearchNearQuery(index_name="by_text", path="count", origin=10, pivot=4.0, origin_kind="number")
+        compound_query = SearchCompoundQuery(
+            index_name="by_text",
+            must=(text_query,),
+            should=(autocomplete_query, near_query),
+            filter=(),
+            must_not=(),
+            minimum_should_match=0,
+        )
+
+        self.assertTrue(matches_search_query(document, definition=definition, query=text_query, materialized=prepared))
+        self.assertTrue(matches_search_phrase_query(document, definition=definition, query=phrase_query, materialized=prepared))
+        self.assertTrue(matches_search_autocomplete_query(document, definition=definition, query=autocomplete_query, materialized=prepared))
+        self.assertTrue(matches_search_wildcard_query(document, definition=definition, query=wildcard_query, materialized=prepared))
+        self.assertTrue(matches_search_near_query(document, definition=definition, query=near_query, materialized=prepared))
+        self.assertTrue(matches_search_compound_query(document, definition=definition, query=compound_query, materialized=prepared))
+        self.assertEqual(search_module.search_clause_ranking(document, definition=definition, query=text_query, materialized=prepared), (True, 2.0, None))
+        self.assertEqual(search_module.search_clause_ranking(document, definition=definition, query=phrase_query, materialized=prepared), (True, 1.0, None))
+        self.assertEqual(search_module.search_clause_ranking(document, definition=definition, query=wildcard_query, materialized=prepared), (True, 1.0, None))
+        self.assertEqual(
+            search_module.search_clause_ranking(
+                document,
+                definition=definition,
+                query=exists_any,
+                materialized=prepared,
+            ),
+            (True, float(len(prepared.searchable_paths)), None),
+        )
+        compound_rank = search_module.search_clause_ranking(
+            document,
+            definition=definition,
+            query=compound_query,
+            materialized=prepared,
+        )
+        self.assertTrue(compound_rank[0])
+        self.assertGreater(compound_rank[1], 1.0)
+        matched_should, should_score, best_near_distance = search_compound_ranking(
+            document,
+            definition=definition,
+            query=compound_query,
+            materialized=prepared,
+        )
+        self.assertEqual(matched_should, 2)
+        self.assertGreater(should_score, 0.0)
+        self.assertLess(best_near_distance, float("inf"))
+
+    def test_search_helper_functions_cover_materialized_and_near_paths(self) -> None:
+        definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text")
+        document = {
+            "title": "Ada algorithms",
+            "body": ["Compiler pioneer", "Algorithm notes"],
+            "published": datetime.date(2024, 1, 1),
+            "score": [7, 11],
+        }
+        prepared = materialize_search_document(document, definition)
+
+        self.assertEqual(search_module._materialized_lowered_values(prepared, None), prepared.lowered_values)
+        self.assertTrue(search_module._materialized_lowered_values(prepared, ("title",)))
+        self.assertEqual(search_module._materialized_token_sets(prepared, None), tuple(prepared.token_sets_by_path.values()))
+        self.assertTrue(search_module._materialized_token_sets(prepared, ("title",)))
+        self.assertEqual(search_module._materialized_token_set(prepared, None), prepared.token_set)
+        self.assertTrue(search_module._materialized_token_set(prepared, ("body",)))
+        self.assertEqual(search_module._materialized_token_counter(prepared, None), prepared.token_counter)
+        self.assertTrue(search_module._materialized_token_counter(prepared, ("title",)))
+        self.assertEqual(search_module._materialized_token_counters(prepared, None), tuple(prepared.token_counter_by_path.values()))
+        self.assertTrue(search_module._materialized_token_counters(prepared, ("title",)))
+        self.assertEqual(vector_field_paths(SearchIndexDefinition({"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2}]}, name="vec", index_type="vectorSearch")), ("embedding",))
+        self.assertEqual(iter_searchable_text_entries({"x": 1}, SearchIndexDefinition({}, name="plain", index_type="vectorSearch")), [])
+        self.assertEqual(sqlite_fts5_query(SearchAutocompleteQuery(index_name="by_text", raw_query="Ada Al", terms=("ada", "al"), paths=("title",))), '"ada"* AND "al"*')
+        self.assertEqual(search_module._normalize_search_paths({"wildcard": "*"}), None)
+        with self.assertRaisesRegex(OperationFailure, "must be a non-empty string"):
+            search_module._normalize_search_paths("")
+
+        self.assertIsNone(search_module._search_near_origin_kind(True))
+        self.assertEqual(search_module._search_near_origin_kind(datetime.date(2024, 1, 1)), "date")
+        self.assertIsNone(search_module._search_near_scalar_distance(True, origin=1.0, origin_kind="number"))
+        self.assertIsNone(search_module._search_near_scalar_distance(float("inf"), origin=1.0, origin_kind="number"))
+        self.assertIsNone(search_module._search_near_scalar_distance("x", origin=datetime.date(2024, 1, 1), origin_kind="date"))
+        self.assertGreater(search_module._datetime_to_sortable_number(datetime.datetime(2024, 1, 1, 1, 2, 3, 4)), 0.0)
+        near_date_query = SearchNearQuery(
+            index_name="by_text",
+            path="published",
+            origin=datetime.date(2024, 1, 2),
+            pivot=100000.0,
+            origin_kind="date",
+        )
+        near_list_query = SearchNearQuery(
+            index_name="by_text",
+            path="score",
+            origin=10,
+            pivot=5.0,
+            origin_kind="number",
+        )
+        self.assertIsNotNone(search_near_distance(document, query=near_date_query))
+        self.assertIsNotNone(search_near_distance(document, query=near_list_query))
+        self.assertIsNone(search_near_distance({"score": ["bad"]}, query=near_list_query))
+
+    def test_compile_clause_helpers_cover_invalid_subdocuments(self) -> None:
+        with self.assertRaisesRegex(OperationFailure, "at least one searchable token"):
+            search_module._compile_search_text_clause("by_text", {"query": "!!!"})
+        with self.assertRaisesRegex(OperationFailure, "non-empty string"):
+            search_module._compile_search_phrase_clause("by_text", {"query": ""})
+        with self.assertRaisesRegex(OperationFailure, "at least one searchable token"):
+            search_module._compile_search_autocomplete_clause("by_text", {"query": "!!!"})
+        with self.assertRaisesRegex(OperationFailure, "non-empty string"):
+            search_module._compile_search_wildcard_clause("by_text", {"query": ""})
+        with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
+            search_module._compile_search_exists_clause("by_text", {"path": "title", "extra": 1})
+        with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
+            search_module._compile_search_near_clause("by_text", {"path": "score", "origin": 1, "pivot": 1, "extra": 1})
+        with self.assertRaisesRegex(OperationFailure, "origin must be"):
+            search_module._compile_search_near_clause("by_text", {"path": "score", "origin": object(), "pivot": 1})
+        with self.assertRaisesRegex(OperationFailure, "pivot must be"):
+            search_module._compile_search_near_clause("by_text", {"path": "score", "origin": 1, "pivot": 0})
+
+    def test_search_explain_and_operator_helpers_cover_remaining_shapes(self) -> None:
+        vector_query = SearchVectorQuery(index_name="vec", path="embedding", query_vector=(1.0, 0.0), limit=2, num_candidates=3, filter_spec={"kind": "keep"})
+        self.assertIsNone(search_query_operator_name(vector_query))
+        details = search_query_explain_details(vector_query)
+        self.assertEqual(details["path"], "embedding")
+        self.assertEqual(details["filter"], {"kind": "keep"})
+        self.assertEqual(details["numCandidates"], 3)
         self.assertEqual(
             compile_search_stage(
                 "$vectorSearch",
