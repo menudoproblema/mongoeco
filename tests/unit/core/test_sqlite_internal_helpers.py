@@ -311,6 +311,16 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         self.assertFalse(unsupported_or_description["candidateable"])
         self.assertEqual(unsupported_or_description["booleanShape"], "$or")
 
+        range_keys, range_description = vector_backend.vector_filter_candidate_storage_keys(
+            state,
+            filter_spec={"meta.rank": {"$gte": 1, "$lt": 2}},
+        )
+        self.assertEqual(range_keys, ["1"])
+        self.assertTrue(range_description["candidateable"])
+        self.assertTrue(range_description["exact"])
+        self.assertEqual(range_description["supportedOperators"], ["range"])
+        self.assertEqual(range_description["supportedPaths"], ["meta.rank"])
+
     def test_sqlite_search_runtime_exact_should_score_prefilter_and_vector_prefilter_helpers(self):
         async def _run() -> None:
             engine = SQLiteEngine()
@@ -400,6 +410,44 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     )
                     self.assertEqual(pruned_keys, [engine._storage_key(1)])
                     self.assertEqual(topk_prefilter["strategy"], "exact-should-score-tier")
+
+                    ranking_query = search_runtime_module.compile_search_stage(
+                        "$search",
+                        {
+                            "index": "by_text",
+                            "compound": {
+                                "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                "should": [
+                                    {
+                                        "compound": {
+                                            "must": [
+                                                {"autocomplete": {"query": "alg", "path": ["title", "body"]}}
+                                            ]
+                                        }
+                                    },
+                                    {"exists": {"path": "title"}},
+                                ],
+                                "minimumShouldMatch": 1,
+                            },
+                        },
+                    )
+                    ranking_candidates, _backend, _ranking_exact, ranking_should_candidates, _non_candidateable = search_runtime_module._sqlite_compound_candidate_state(
+                        engine,
+                        conn,
+                        physical_name=resolved_physical_name,
+                        definition=text_definition,
+                        query=ranking_query,
+                    )
+                    ranking_pruned_keys, ranking_cutoff = search_runtime_module._prune_candidate_storage_keys_with_candidateable_ranking(
+                        ranking_candidates,
+                        ranking_should_candidates or [],
+                        result_limit_hint=1,
+                    )
+                    self.assertEqual(
+                        ranking_pruned_keys,
+                        [engine._storage_key(1), engine._storage_key(2)],
+                    )
+                    self.assertEqual(ranking_cutoff, 1)
 
                     entries_by_key = search_runtime_module._load_search_entries_by_storage_key(
                         engine,
@@ -636,6 +684,56 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     )
                     self.assertEqual(compound_backend, "fts5-prefilter")
                     self.assertTrue(compound_keys)
+                    self.assertTrue(
+                        search_runtime_module._compound_entry_ranking_supported(
+                            compound_query,
+                            physical_name=resolved_physical,
+                        )
+                    )
+                    self.assertFalse(
+                        search_runtime_module._compound_entry_ranking_supported(
+                            compile_search_stage(
+                                "$search",
+                                {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [{"text": {"query": "vector", "path": ["title", "body"]}}],
+                                        "should": [{"near": {"path": "score", "origin": 8, "pivot": 2}}],
+                                    },
+                                },
+                            ),
+                            physical_name=resolved_physical,
+                        )
+                    )
+                    self.assertEqual(
+                        search_runtime_module._rank_compound_candidate_storage_keys_from_entries(
+                            engine,
+                            conn,
+                            physical_name=resolved_physical,
+                            query=compound_query,
+                            candidate_storage_keys=[],
+                            result_limit_hint=1,
+                        ),
+                        [],
+                    )
+                    self.assertEqual(
+                        search_runtime_module._next_vector_candidate_request(
+                            4,
+                            matched_count=0,
+                            limit=2,
+                            max_requested=16,
+                        ),
+                        16,
+                    )
+                    self.assertEqual(
+                        search_runtime_module._next_vector_candidate_request(
+                            8,
+                            matched_count=2,
+                            limit=4,
+                            max_requested=16,
+                        ),
+                        16,
+                    )
 
                     self.assertEqual(search_runtime_module._textual_search_field_types(SearchIndexDefinition({"mappings": "bad"}, name="x", index_type="search")), {})
                     self.assertIsNone(search_runtime_module._flatten_downstream_filter_clauses({"$or": "bad"}))
@@ -765,6 +863,82 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 await engine.disconnect()
 
         asyncio.run(_run())
+
+    def test_sqlite_vector_backend_low_level_filter_helpers_cover_conservative_branches(self):
+        state = SimpleNamespace(
+            scalar_filter_index={
+                "score": {
+                    ("number", 1.0): ("a",),
+                    ("number", 2.0): ("b",),
+                    ("number", 3.0): ("c",),
+                    ("string", "x"): ("d",),
+                }
+            },
+            exists_filter_index={"score": ("a", "b", "c", "d")},
+        )
+
+        self.assertEqual(
+            vector_backend._collect_filterable_values({"": 1, "score": [1, "x"]}),
+            [("score", {("number", 1.0), ("string", "x")})],
+        )
+        self.assertEqual(vector_backend._collect_filterable_values([], prefix="items"), [("items", set())])
+        self.assertEqual(vector_backend._filter_value_key(True), ("bool", True))
+        self.assertIsNone(vector_backend._filter_value_key(float("inf")))
+        self.assertIsNone(
+            vector_backend._candidate_storage_keys_for_range_clause(
+                state,  # type: ignore[arg-type]
+                path="score",
+                clause={"$gt": "x"},
+            )
+        )
+        self.assertIsNone(
+            vector_backend._candidate_storage_keys_for_range_clause(
+                state,  # type: ignore[arg-type]
+                path="score",
+                clause={"$gt": 1, "$regex": "bad"},
+            )
+        )
+        self.assertEqual(
+            vector_backend._candidate_storage_keys_for_range_clause(
+                state,  # type: ignore[arg-type]
+                path="score",
+                clause={"$gt": 1, "$lte": 2},
+            ),
+            {"b"},
+        )
+        self.assertFalse(
+            vector_backend._value_key_matches_range(
+                ("number", 2.0),
+                {"$gt": ("number", 2.0)},
+            )
+        )
+        self.assertTrue(
+            vector_backend._value_key_matches_range(
+                ("number", 2.0),
+                {"$gte": ("number", 2.0), "$lte": ("number", 2.0)},
+            )
+        )
+        self.assertIsNone(
+            vector_backend._candidate_storage_keys_for_filter_node(
+                state,  # type: ignore[arg-type]
+                {"$and": "bad"},
+                all_storage_keys={"a", "b"},
+            )
+        )
+        self.assertIsNone(
+            vector_backend._candidate_storage_keys_for_filter_node(
+                state,  # type: ignore[arg-type]
+                {"$or": []},
+                all_storage_keys={"a", "b"},
+            )
+        )
+        self.assertIsNone(
+            vector_backend._candidate_storage_keys_for_filter_node(
+                state,  # type: ignore[arg-type]
+                {"$bad": 1},
+                all_storage_keys={"a", "b"},
+            )
+        )
 
     def test_sqlite_profile_namespace_paths_delegate_to_admin_runtime(self):
         engine = SQLiteEngine()

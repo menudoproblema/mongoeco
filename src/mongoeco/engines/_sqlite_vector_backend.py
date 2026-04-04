@@ -408,10 +408,71 @@ def _candidate_storage_keys_for_filter_clause(
                 return None, "$in"
             matched_keys.update(state.scalar_filter_index.get(path, {}).get(value_key, ()))
         return matched_keys, "$in"
+    if isinstance(clause, dict):
+        range_storage_keys = _candidate_storage_keys_for_range_clause(
+            state,
+            path=path,
+            clause=clause,
+        )
+        if range_storage_keys is not None:
+            return range_storage_keys, "range"
     value_key = _filter_value_key(clause)
     if value_key is None:
         return None, "eq"
     return set(state.scalar_filter_index.get(path, {}).get(value_key, ())), "eq"
+
+
+def _candidate_storage_keys_for_range_clause(
+    state: SQLiteVectorBackendState,
+    *,
+    path: str,
+    clause: dict[str, object],
+) -> set[str] | None:
+    supported_operators = {"$gt", "$gte", "$lt", "$lte"}
+    if not clause or any(operator not in supported_operators for operator in clause):
+        return None
+
+    normalized_bounds: dict[str, _FilterValueKey] = {}
+    for operator, raw_value in clause.items():
+        value_key = _filter_value_key(raw_value)
+        if value_key is None or value_key[0] not in {"number", "date", "datetime"}:
+            return None
+        normalized_bounds[operator] = value_key
+
+    path_index = state.scalar_filter_index.get(path)
+    if not path_index:
+        return set()
+
+    bound_kinds = {value_key[0] for value_key in normalized_bounds.values()}
+    if len(bound_kinds) != 1:
+        return None
+    bound_kind = next(iter(bound_kinds))
+
+    matched: set[str] = set()
+    for value_key, storage_keys in path_index.items():
+        if value_key[0] != bound_kind:
+            continue
+        if _value_key_matches_range(value_key, normalized_bounds):
+            matched.update(storage_keys)
+    return matched
+
+
+def _value_key_matches_range(
+    value_key: _FilterValueKey,
+    bounds: dict[str, _FilterValueKey],
+) -> bool:
+    value = value_key[1]
+    for operator, bound_key in bounds.items():
+        bound = bound_key[1]
+        if operator == "$gt" and not (value > bound):
+            return False
+        if operator == "$gte" and not (value >= bound):
+            return False
+        if operator == "$lt" and not (value < bound):
+            return False
+        if operator == "$lte" and not (value <= bound):
+            return False
+    return True
 
 
 def _metric_kind(similarity: str) -> MetricKind:

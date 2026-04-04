@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from copy import deepcopy
+import heapq
 import math
 import sqlite3
 import time
@@ -978,6 +979,26 @@ def _prune_candidate_storage_keys_for_topk(
                 },
             )
 
+    if isinstance(query, SearchCompoundQuery):
+        pre_ranked = _prune_candidate_storage_keys_with_candidateable_ranking(
+            candidate_storage_keys,
+            resolved_should_candidates,
+            result_limit_hint=result_limit_hint,
+        )
+        if pre_ranked is not None:
+            pruned, matched_cutoff = pre_ranked
+            if len(pruned) < before_count:
+                return (
+                    pruned,
+                    {
+                        "applied": True,
+                        "beforeCount": before_count,
+                        "afterCount": len(pruned),
+                        "strategy": "candidateable-should-ranking-tier",
+                        "cutoffMatchedShould": matched_cutoff,
+                    },
+                )
+
     match_counts: Counter[str] = Counter()
     for values in resolved_should_candidates:
         for storage_key in values:
@@ -1021,6 +1042,68 @@ def _prune_candidate_storage_keys_for_topk(
             "cutoffMatchedShould": cutoff_matched_should,
         },
     )
+
+
+def _prune_candidate_storage_keys_with_candidateable_ranking(
+    candidate_storage_keys: list[str],
+    should_candidates: list[list[str]],
+    *,
+    result_limit_hint: int,
+) -> tuple[list[str], int | None] | None:
+    if not should_candidates:
+        return None
+    candidate_set = set(candidate_storage_keys)
+    match_counts: Counter[str] = Counter()
+    coverage_counts: Counter[str] = Counter()
+    for candidate_list in should_candidates:
+        seen_in_clause: set[str] = set()
+        for storage_key in candidate_list:
+            if storage_key not in candidate_set or storage_key in seen_in_clause:
+                continue
+            seen_in_clause.add(storage_key)
+            match_counts[storage_key] += 1
+            coverage_counts[storage_key] += 1
+
+    if not match_counts:
+        return None
+
+    selected: set[str] = set()
+    selected_count = 0
+    cutoff_matched_should: int | None = None
+    tiers = sorted(
+        {
+            (
+                match_counts.get(storage_key, 0),
+                coverage_counts.get(storage_key, 0),
+            )
+            for storage_key in candidate_storage_keys
+        },
+        reverse=True,
+    )
+    for matched_should, coverage_count in tiers:
+        tier = [
+            storage_key
+            for storage_key in candidate_storage_keys
+            if (
+                match_counts.get(storage_key, 0),
+                coverage_counts.get(storage_key, 0),
+            )
+            == (matched_should, coverage_count)
+        ]
+        if not tier:
+            continue
+        selected.update(tier)
+        selected_count += len(tier)
+        cutoff_matched_should = matched_should
+        if selected_count >= result_limit_hint:
+            break
+
+    pruned = [
+        storage_key
+        for storage_key in candidate_storage_keys
+        if storage_key in selected
+    ]
+    return pruned, cutoff_matched_should
 
 
 def _exact_candidateable_should_scores(
@@ -1160,6 +1243,60 @@ def _sort_search_documents_for_query(
         ranked_compound.sort(key=lambda item: item[0])
         return [document for _score, document in ranked_compound]
     return [document for document, _definition, _materialized in documents]
+
+
+def _compound_entry_ranking_supported(
+    query: SearchCompoundQuery,
+    *,
+    physical_name: str | None,
+) -> bool:
+    return bool(
+        physical_name
+        and query.should
+        and not any(isinstance(clause, (SearchNearQuery, SearchCompoundQuery)) for clause in query.should)
+    )
+
+
+def _rank_compound_candidate_storage_keys_from_entries(
+    engine: _SQLiteSearchRuntimeEngine,
+    conn: sqlite3.Connection,
+    *,
+    physical_name: str,
+    query: SearchCompoundQuery,
+    candidate_storage_keys: list[str],
+    result_limit_hint: int | None,
+) -> list[str] | None:
+    if not candidate_storage_keys:
+        return []
+    if not _compound_entry_ranking_supported(query, physical_name=physical_name):
+        return None
+    entries_by_storage_key = _load_search_entries_by_storage_key(
+        engine,
+        conn,
+        physical_name=physical_name,
+        storage_keys=candidate_storage_keys,
+    )
+    ranked: list[tuple[tuple[float, float], int, str]] = []
+    for order, storage_key in enumerate(candidate_storage_keys):
+        prepared = _materialized_search_document_from_entries(entries_by_storage_key.get(storage_key, ()))
+        matched_should = 0
+        should_score = 0.0
+        for clause in query.should:
+            matched, clause_score, _near_distance = search_clause_ranking(
+                {},
+                definition=_SEARCH_RUNTIME_DUMMY_DEFINITION,
+                query=clause,
+                materialized=prepared,
+            )
+            if not matched:
+                continue
+            matched_should += 1
+            should_score += clause_score
+        ranked.append(((-float(matched_should), -should_score), order, storage_key))
+    if result_limit_hint is not None and result_limit_hint > 0 and len(ranked) > result_limit_hint:
+        ranked = heapq.nsmallest(result_limit_hint, ranked, key=lambda item: item[:2])
+    ranked.sort(key=lambda item: item[:2])
+    return [storage_key for _rank, _order, storage_key in ranked]
 
 
 def _next_vector_candidate_request(
@@ -1636,15 +1773,46 @@ def execute_sqlite_search_query(
     if candidate_storage_keys is not None:
         if not candidate_storage_keys:
             return []
-        candidate_documents = _load_candidate_documents(
-            engine,
-            db_name,
-            coll_name,
-            candidate_storage_keys,
-        )
         if candidate_exact:
             enforce_deadline(deadline)
             if isinstance(query, SearchCompoundQuery) and query.should:
+                if resolved_physical_name is not None and _compound_entry_ranking_supported(
+                    query,
+                    physical_name=resolved_physical_name,
+                ):
+                    ranked_storage_keys = _rank_compound_candidate_storage_keys_from_entries(
+                        engine,
+                        conn,
+                        physical_name=resolved_physical_name,
+                        query=query,
+                        candidate_storage_keys=candidate_storage_keys,
+                        result_limit_hint=result_limit_hint,
+                    )
+                    if ranked_storage_keys is not None:
+                        ranked_documents_by_key = engine._load_documents_by_storage_keys(
+                            db_name,
+                            coll_name,
+                            ranked_storage_keys,
+                        )
+                        return [
+                            ranked_documents_by_key[storage_key]
+                            for storage_key in ranked_storage_keys
+                            if storage_key in ranked_documents_by_key
+                            and (
+                                downstream_filter_spec is None
+                                or QueryEngine.match(
+                                    ranked_documents_by_key[storage_key],
+                                    downstream_filter_spec,
+                                    dialect=MONGODB_DIALECT_70,
+                                )
+                            )
+                        ]
+                candidate_documents = _load_candidate_documents(
+                    engine,
+                    db_name,
+                    coll_name,
+                    candidate_storage_keys,
+                )
                 exact_documents = [
                     (
                         document,
@@ -1657,6 +1825,12 @@ def execute_sqlite_search_query(
                 ]
                 sorted_documents = _sort_search_documents_for_query(exact_documents, query=query)
                 return sorted_documents[:result_limit_hint] if result_limit_hint is not None else sorted_documents
+            candidate_documents = _load_candidate_documents(
+                engine,
+                db_name,
+                coll_name,
+                candidate_storage_keys,
+            )
             documents = [
                 document
                 for _storage_key, document in candidate_documents
@@ -1664,6 +1838,12 @@ def execute_sqlite_search_query(
                 or QueryEngine.match(document, downstream_filter_spec, dialect=MONGODB_DIALECT_70)
             ]
             return documents[:result_limit_hint] if result_limit_hint is not None else documents
+        candidate_documents = _load_candidate_documents(
+            engine,
+            db_name,
+            coll_name,
+            candidate_storage_keys,
+        )
         filtered_documents = [
             (document, definition, materialized_search_document)
             for _storage_key, document in candidate_documents
@@ -2008,6 +2188,13 @@ def explain_search_documents_sync(
             "compoundPrefilter": compound_prefilter,
             "topKLimitHint": result_limit_hint,
             "topKPrefilter": topk_prefilter,
+            "rankingSource": (
+                "fts-materialized-entries"
+                if isinstance(query, SearchCompoundQuery)
+                and candidate_exact
+                and _compound_entry_ranking_supported(query, physical_name=resolved_physical_name)
+                else None
+            ),
             "downstreamFilterPrefilter": deepcopy(downstream_filter_spec) if downstream_filter_spec is not None else None,
             "exactFallbackReason": exact_fallback_reason,
             "candidatesEvaluated": (

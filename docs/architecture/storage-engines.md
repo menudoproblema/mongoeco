@@ -186,6 +186,10 @@ En search existe ya otra frontera explicita por capas:
   puede reconstruir exactamente desde las filas FTS, SQLite puede hacer poda
   top-k por tiers exactos de `matchedShould` + `shouldScore` antes del ranking
   documental final.
+- cuando la ordenacion final de un `compound` puede reconstruirse solo desde
+  las entradas materializadas de FTS, SQLite expone
+  `rankingSource="fts-materialized-entries"` y evita cargar todos los
+  documentos candidatos antes de aplicar la ventana final.
 - los prefiltros candidateables de search/vector aceptan ya una booleana local
   conservadora:
   - `$and` puede intersectar la parte soportada aunque queden ramas no
@@ -199,7 +203,9 @@ En search existe ya otra frontera explicita por capas:
   materializar el backend ANN, `vectorSearch` puede generar un
   `vectorFilterPrefilter` exacto o parcial antes de cargar documentos; el
   `filterMode` de `explain()` distingue si ese filtro se resuelve solo como
-  prefilter o si aun necesita validacion documental posterior.
+  prefilter o si aun necesita validacion documental posterior. Ese prefilter ya
+  cubre igualdad, `$in`, `$exists`, rangos simples y booleanos conservadores
+  (`$and` parcial y `$or` totalmente soportado).
 
 Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
 ruta de ejecucion, en la de `explain()` y en el lifecycle documental de los

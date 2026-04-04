@@ -401,6 +401,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             compound_candidateable_should_explanation["engine_plan"]["details"]["compoundPrefilter"]["candidateableShouldOperators"],
                             ["exists", "wildcard", "autocomplete"],
                         )
+                        self.assertEqual(
+                            compound_candidateable_should_explanation["engine_plan"]["details"]["rankingSource"],
+                            "fts-materialized-entries",
+                        )
                     compound_candidateable_should_hits = await collection.aggregate(
                         [
                             {
@@ -465,6 +469,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         self.assertLess(
                             compound_candidateable_should_limited_explanation["engine_plan"]["details"]["candidateCount"],
                             compound_candidateable_should_limited_explanation["engine_plan"]["details"]["candidateCountBeforeTopK"],
+                        )
+                        self.assertEqual(
+                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["rankingSource"],
+                            "fts-materialized-entries",
                         )
 
                     compound_candidateable_should_limited_hits = await collection.aggregate(
@@ -688,6 +696,37 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(
                             filtered_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["supportedPaths"],
                             ["kind"],
+                        )
+
+                    ranged_vector_explanation = await collection.aggregate(
+                        [
+                            {
+                                "$vectorSearch": {
+                                    "index": "by_vector",
+                                    "path": "embedding",
+                                    "queryVector": [1.0, 0.0, 0.0],
+                                    "limit": 2,
+                                    "numCandidates": 2,
+                                    "filter": {"score": {"$gte": 11, "$lt": 16}},
+                                }
+                            }
+                        ]
+                    ).explain()
+                    if engine_name == "sqlite":
+                        self.assertEqual(
+                            ranged_vector_explanation["engine_plan"]["details"]["filterMode"],
+                            "candidate-prefilter",
+                        )
+                        self.assertEqual(
+                            ranged_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["supportedPaths"],
+                            ["score"],
+                        )
+                        self.assertEqual(
+                            ranged_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["supportedOperators"],
+                            ["range"],
+                        )
+                        self.assertTrue(
+                            ranged_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["exact"]
                         )
 
                     with self.assertRaises(OperationFailure):

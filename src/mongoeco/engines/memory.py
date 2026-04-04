@@ -3,6 +3,7 @@ from contextlib import AsyncExitStack
 import datetime
 import heapq
 import inspect
+import math
 import threading
 import time
 import uuid
@@ -1915,8 +1916,8 @@ class MemoryEngine(AsyncStorageEngine):
                     distance_hits.sort(key=lambda item: item[0])
                 return [document for _distance, document in distance_hits]
             if isinstance(query, SearchCompoundQuery) and query.should:
-                ranked_documents: list[tuple[tuple[float, float, float], Document]] = []
-                for document, materialized in materialized_documents:
+                ranked_documents: list[tuple[tuple[int, float, float], int, Document]] = []
+                for order, (document, materialized) in enumerate(materialized_documents):
                     if downstream_filter_spec is not None and not QueryEngine.match(
                         document,
                         downstream_filter_spec,
@@ -1936,25 +1937,23 @@ class MemoryEngine(AsyncStorageEngine):
                         query=query,
                         materialized=materialized,
                     )
-                    ranked_documents.append(
-                        (
-                            (
-                                -float(matched_should),
-                                -should_score,
-                                best_near_distance,
-                            ),
-                            document,
-                        )
+                    rank = (
+                        matched_should,
+                        should_score,
+                        -best_near_distance if math.isfinite(best_near_distance) else float("-inf"),
                     )
+                    if effective_limit is not None:
+                        if len(ranked_documents) < effective_limit:
+                            heapq.heappush(ranked_documents, (rank, -order, document))
+                        elif (rank, -order) > ranked_documents[0][:2]:
+                            heapq.heapreplace(ranked_documents, (rank, -order, document))
+                    else:
+                        ranked_documents.append((rank, -order, document))
                 if effective_limit is not None:
-                    ranked_documents = heapq.nsmallest(
-                        effective_limit,
-                        ranked_documents,
-                        key=lambda item: item[0],
-                    )
+                    ranked_documents.sort(key=lambda item: item[:2], reverse=True)
                 else:
-                    ranked_documents.sort(key=lambda item: item[0])
-                return [document for _score, document in ranked_documents]
+                    ranked_documents.sort(key=lambda item: item[:2], reverse=True)
+                return [document for _score, _order, document in ranked_documents]
             matches: list[Document] = []
             for document, materialized in materialized_documents:
                 if downstream_filter_spec is not None and not QueryEngine.match(
@@ -1975,8 +1974,9 @@ class MemoryEngine(AsyncStorageEngine):
                     break
             return matches
         documents = [document for document, _materialized in materialized_documents]
-        vector_hits: list[tuple[float, Document]] = []
-        for document in documents:
+        effective_vector_limit = min(query.limit, effective_limit) if effective_limit is not None else query.limit
+        vector_hits: list[tuple[float, int, Document]] = []
+        for order, document in enumerate(documents):
             if downstream_filter_spec is not None and not QueryEngine.match(
                 document,
                 downstream_filter_spec,
@@ -1996,9 +1996,15 @@ class MemoryEngine(AsyncStorageEngine):
             )
             if score is None:
                 continue
-            vector_hits.append((score, document))
-        vector_hits.sort(key=lambda item: item[0], reverse=True)
-        return [document for _score, document in vector_hits[: query.limit]]
+            if effective_vector_limit is not None:
+                if len(vector_hits) < effective_vector_limit:
+                    heapq.heappush(vector_hits, (score, -order, document))
+                elif (score, -order) > vector_hits[0][:2]:
+                    heapq.heapreplace(vector_hits, (score, -order, document))
+            else:
+                vector_hits.append((score, -order, document))
+        vector_hits.sort(key=lambda item: item[:2], reverse=True)
+        return [document for _score, _order, document in vector_hits[:effective_vector_limit]]
 
     async def explain_search_documents(
         self,
