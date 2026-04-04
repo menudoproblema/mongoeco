@@ -2318,6 +2318,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             )
             self.assertTrue(vector_explanation.details["vectorFilterPrefilter"]["candidateable"])
             self.assertFalse(vector_explanation.details["vectorFilterPrefilter"]["exact"])
+            self.assertTrue(vector_explanation.details["vectorFilterResidual"]["required"])
+            self.assertEqual(vector_explanation.details["vectorFilterResidual"]["reason"], "unsupported-clauses")
             self.assertGreaterEqual(
                 vector_explanation.details["documentsScanned"],
                 vector_explanation.details["documentsScannedAfterPrefilter"],

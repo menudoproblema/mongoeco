@@ -104,7 +104,10 @@ Esto implica:
   el subconjunto es exacto, `filterMode` pasa a `candidate-prefilter`.
 * `MemoryEngine` tambien materializa ya un subset local para `vectorSearch` y
   deja visible en `explain()` tanto `vectorFilterPrefilter` como
-  `documentsScannedAfterPrefilter`, sin cambiar la shape publica del stage.
+  `documentsScannedAfterPrefilter`; cuando queda filtro documental residual,
+  `vectorFilterResidual` deja visible si ese resto viene de clausulas no
+  candidateables o de un prefilter no exacto, sin cambiar la shape publica del
+  stage.
 * la proyeccion avanzada de `find` cubre ya el subconjunto diario mas util
   (`$slice`, `$elemMatch`, proyeccion posicional y `$meta: "textScore"`);
 * `$collStats` existe tanto como comando administrativo como stage de

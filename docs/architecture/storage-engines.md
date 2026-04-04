@@ -222,6 +222,9 @@ En search existe ya otra frontera explicita por capas:
   prefilter o si aun necesita validacion documental posterior. Ese prefilter ya
   cubre igualdad, `$in`, `$exists`, rangos simples y booleanos conservadores
   (`$and` parcial y `$or` totalmente soportado).
+- cuando sigue quedando validacion documental posterior, `vectorFilterResidual`
+  deja visible si el resto viene de clausulas no candidateables o de un
+  prefilter no exacto.
 
 `MemoryEngine` mantiene el contrato semantico local pero ya no trata
 `vectorSearch` ni `$search.compound` como puro full-scan documental:
@@ -230,7 +233,8 @@ En search existe ya otra frontera explicita por capas:
   de campos para no reextraerlos en cada consulta;
 - `vectorSearch` deja visible en `explain()` cuanta lectura documental se evita
   con `vectorFilterPrefilter`, `filterMode`, `documentsScanned` y
-  `documentsScannedAfterPrefilter`;
+  `documentsScannedAfterPrefilter`; si hay resto documental, tambien expone
+  `vectorFilterResidual`;
 - `$search.compound` reutiliza ese mismo enfoque para aplicar antes filtros
   simples aguas abajo cuando son candidateables localmente.
 

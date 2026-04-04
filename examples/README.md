@@ -15,7 +15,8 @@ Available examples:
 * [sqlite_embedded_app.py](/Users/uve/Proyectos/mongoeco2/examples/sqlite_embedded_app.py)
   Small embedded application with `SQLiteEngine`.
 * [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
-  Local `$search` and `$vectorSearch`, including `equals` and `range`.
+  Local `$search` and `$vectorSearch`, including `exists`/`in`/`range` inside
+  `compound` and a boolean `vectorSearch.filter` with residual explain output.
 
 Run them from the repository root after installing the package:
 

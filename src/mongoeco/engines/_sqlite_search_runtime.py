@@ -119,6 +119,38 @@ class _SQLiteSearchRuntimeEngine(Protocol):
     def _bind_connection(self, conn: sqlite3.Connection) -> Any: ...
 
 
+def _vector_filter_residual_description(
+    filter_spec: dict[str, object] | None,
+    vector_filter_description: dict[str, object] | None,
+) -> dict[str, object] | None:
+    if filter_spec is None:
+        return None
+    if vector_filter_description is None:
+        return {
+            "required": True,
+            "reason": "filter-not-candidateable",
+            "candidateable": False,
+            "exact": False,
+            "spec": deepcopy(filter_spec),
+        }
+    residual_required = not bool(vector_filter_description.get("exact"))
+    return {
+        "required": residual_required,
+        "reason": (
+            None
+            if not residual_required
+            else "unsupported-clauses"
+            if int(vector_filter_description.get("unsupportedClauseCount", 0)) > 0
+            else "non-exact-prefilter"
+        ),
+        "candidateable": bool(vector_filter_description.get("candidateable")),
+        "exact": bool(vector_filter_description.get("exact")),
+        "supportedClauseCount": int(vector_filter_description.get("supportedClauseCount", 0)),
+        "unsupportedClauseCount": int(vector_filter_description.get("unsupportedClauseCount", 0)),
+        "spec": deepcopy(filter_spec),
+    }
+
+
 def load_search_index_rows(
     engine: _SQLiteSearchRuntimeEngine,
     db_name: str,
@@ -1747,6 +1779,11 @@ def explain_search_documents_sync(
             ),
             "vectorFilterPrefilter": (
                 vector_filter_description
+                if isinstance(query, SearchVectorQuery)
+                else None
+            ),
+            "vectorFilterResidual": (
+                _vector_filter_residual_description(query.filter_spec, vector_filter_description)
                 if isinstance(query, SearchVectorQuery)
                 else None
             ),

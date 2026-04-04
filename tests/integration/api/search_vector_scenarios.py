@@ -162,3 +162,25 @@ def assert_ranged_vector_explanation(
     case.assertEqual(details["vectorFilterPrefilter"]["supportedPaths"], ["score"])
     case.assertEqual(details["vectorFilterPrefilter"]["supportedOperators"], ["range"])
     case.assertTrue(details["vectorFilterPrefilter"]["exact"])
+
+
+def assert_boolean_vector_residual_explanation(
+    case: unittest.TestCase,
+    explanation: dict[str, object],
+    *,
+    engine_name: str,
+) -> None:
+    details = explanation["engine_plan"]["details"]
+    case.assertEqual(details["filterMode"], "candidate-prefilter+post-candidate")
+    case.assertTrue(details["vectorFilterPrefilter"]["candidateable"])
+    case.assertFalse(details["vectorFilterPrefilter"]["exact"])
+    case.assertEqual(details["vectorFilterPrefilter"]["booleanShape"], "$and")
+    case.assertEqual(details["vectorFilterPrefilter"]["supportedPaths"], ["kind", "score"])
+    case.assertEqual(details["vectorFilterPrefilter"]["supportedOperators"], ["$in", "range"])
+    case.assertTrue(details["vectorFilterResidual"]["required"])
+    case.assertEqual(details["vectorFilterResidual"]["reason"], "unsupported-clauses")
+    case.assertEqual(details["vectorFilterResidual"]["unsupportedClauseCount"], 1)
+    if engine_name == "sqlite":
+        case.assertEqual(details["vectorFilterPrefilter"]["backend"], "vector-filter-index")
+    else:
+        case.assertEqual(details["vectorFilterPrefilter"]["backend"], "memory-vector-filter-index")

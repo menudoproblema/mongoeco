@@ -48,6 +48,7 @@ from tests.integration.api.search_vector_scenarios import (
     assert_compound_candidateable_should_matched_limited_explanation,
     assert_compound_candidateable_should_title_prefilter_explanation,
     assert_compound_should_near_explanation,
+    assert_boolean_vector_residual_explanation,
     assert_in_equals_and_range_explanations,
     assert_filtered_vector_explanation,
     assert_ranged_vector_explanation,
@@ -157,7 +158,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [
                             {"_id": 1, "title": "Ada", "body": "Analytical engine notes", "kind": "reference", "score": 9, "publishedAt": datetime.datetime(2024, 1, 1, 12, 0, 0), "embedding": [1.0, 0.0, 0.0]},
                             {"_id": 2, "title": "Grace", "body": "Compiler pioneer", "kind": "note", "score": 15, "publishedAt": datetime.datetime(2024, 1, 1, 12, 5, 0), "embedding": [0.1, 0.9, 0.0]},
-                            {"_id": 3, "title": "Notes", "body": "Ada wrote the first algorithm", "kind": "note", "score": 11, "publishedAt": datetime.datetime(2024, 1, 1, 12, 1, 0), "embedding": [0.9, 0.1, 0.0]},
+                            {"_id": 3, "title": "Notes", "body": "Ada wrote the first algorithm", "kind": "note", "score": 11, "publishedAt": datetime.datetime(2024, 1, 1, 12, 1, 0), "embedding": [0.9, 0.1, 0.0], "summary": "Algorithm summary"},
                         ]
                     )
                     await collection.create_search_indexes(
@@ -169,6 +170,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                         "fields": {
                                             "title": {"type": "string"},
                                             "body": {"type": "string"},
+                                            "summary": {"type": "string"},
                                             "score": {"type": "number"},
                                             "publishedAt": {"type": "date"},
                                         },
@@ -332,6 +334,24 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ]
                     ).to_list()
                     self.assertEqual([document["_id"] for document in compound_hits], [3])
+                    compound_scalar_hits = await collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "filter": [
+                                            {"exists": {"path": "summary"}},
+                                            {"in": {"path": "kind", "value": ["note", "reference"]}},
+                                            {"range": {"path": "score", "gte": 9}},
+                                        ],
+                                    },
+                                }
+                            }
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in compound_scalar_hits], [3])
                     compound_explanation = await collection.aggregate(
                         [
                             {
@@ -346,6 +366,28 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ]
                     ).explain()
                     self.assertEqual(compound_explanation["engine_plan"]["details"]["queryOperator"], "compound")
+                    self.assertEqual(
+                        (
+                            await collection.aggregate(
+                                [
+                                    {
+                                        "$search": {
+                                            "index": "by_text",
+                                            "compound": {
+                                                "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                                "filter": [
+                                                    {"exists": {"path": "summary"}},
+                                                    {"in": {"path": "kind", "value": ["note", "reference"]}},
+                                                    {"range": {"path": "score", "gte": 9}},
+                                                ],
+                                            },
+                                        }
+                                    }
+                                ]
+                            ).explain()
+                        )["engine_plan"]["details"]["compound"]["filterOperators"],
+                        ["exists", "in", "range"],
+                    )
                     if engine_name == "sqlite":
                         self.assertEqual(compound_explanation["engine_plan"]["details"]["backend"], "fts5-prefilter")
                         self.assertEqual(compound_explanation["engine_plan"]["details"]["candidateCount"], 1)
@@ -673,6 +715,31 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     assert_ranged_vector_explanation(
                         self,
                         ranged_vector_explanation,
+                        engine_name=engine_name,
+                    )
+                    boolean_vector_explanation = await collection.aggregate(
+                        [
+                            {
+                                "$vectorSearch": {
+                                    "index": "by_vector",
+                                    "path": "embedding",
+                                    "queryVector": [1.0, 0.0, 0.0],
+                                    "limit": 2,
+                                    "numCandidates": 3,
+                                    "filter": {
+                                        "$and": [
+                                            {"kind": {"$in": ["note", "reference"]}},
+                                            {"score": {"$gte": 9}},
+                                            {"title": {"$regex": "Ada"}},
+                                        ]
+                                    },
+                                }
+                            }
+                        ]
+                    ).explain()
+                    assert_boolean_vector_residual_explanation(
+                        self,
+                        boolean_vector_explanation,
                         engine_name=engine_name,
                     )
 

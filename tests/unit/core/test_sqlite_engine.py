@@ -4619,6 +4619,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explanation.details["vectorFilterPrefilter"]["backend"], "vector-filter-index")
         self.assertEqual(explanation.details["vectorFilterPrefilter"]["supportedPaths"], ["kind"])
         self.assertTrue(explanation.details["vectorFilterPrefilter"]["exact"])
+        self.assertFalse(explanation.details["vectorFilterResidual"]["required"])
+        self.assertIsNone(explanation.details["vectorFilterResidual"]["reason"])
         self.assertEqual(explanation.details["vectorBackend"]["backend"], "usearch")
         self.assertEqual(explanation.details["vectorBackend"]["connectivity"], 8)
         self.assertEqual(explanation.details["vectorBackend"]["expansionAdd"], 16)

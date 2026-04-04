@@ -31,6 +31,7 @@ def main() -> None:
                     "title": "Ada Lovelace notes",
                     "kind": "note",
                     "score": 10,
+                    "summary": "Local search summary",
                     "embedding": [1.0, 0.0, 0.0],
                 },
                 {
@@ -45,6 +46,7 @@ def main() -> None:
                     "title": "Ada algorithms handbook",
                     "kind": "note",
                     "score": 9,
+                    "summary": "Algorithm summary",
                     "embedding": [0.9, 0.1, 0.0],
                 },
             ]
@@ -58,6 +60,7 @@ def main() -> None:
                             "dynamic": False,
                             "fields": {
                                 "title": {"type": "string"},
+                                "summary": {"type": "string"},
                                 "kind": {"type": "token"},
                                 "score": {"type": "number"},
                             },
@@ -93,6 +96,7 @@ def main() -> None:
                         "compound": {
                             "must": [{"text": {"query": "ada", "path": "title"}}],
                             "filter": [
+                                {"exists": {"path": "summary"}},
                                 {"in": {"path": "kind", "value": ["note", "reference"]}},
                                 {"range": {"path": "score", "gte": 9}},
                             ],
@@ -112,12 +116,41 @@ def main() -> None:
                         "queryVector": [1.0, 0.0, 0.0],
                         "numCandidates": 10,
                         "limit": 2,
-                        "filter": {"kind": "note"},
+                        "filter": {
+                            "$and": [
+                                {"kind": {"$in": ["note", "reference"]}},
+                                {"score": {"$gte": 9}},
+                                {"title": {"$regex": "Ada"}},
+                            ]
+                        },
                     }
                 }
             ]
         ).to_list()
         print("$vectorSearch results:", vector_results)
+        vector_explain = collection.aggregate(
+            [
+                {
+                    "$vectorSearch": {
+                        "index": "embedding_search",
+                        "path": "embedding",
+                        "queryVector": [1.0, 0.0, 0.0],
+                        "numCandidates": 10,
+                        "limit": 2,
+                        "filter": {
+                            "$and": [
+                                {"kind": {"$in": ["note", "reference"]}},
+                                {"score": {"$gte": 9}},
+                                {"title": {"$regex": "Ada"}},
+                            ]
+                        },
+                    }
+                }
+            ]
+        ).explain()
+        details = vector_explain["engine_plan"]["details"]
+        print("$vectorSearch prefilter:", details["vectorFilterPrefilter"])
+        print("$vectorSearch residual:", details["vectorFilterResidual"])
 
 
 if __name__ == "__main__":
