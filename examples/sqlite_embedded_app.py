@@ -1,25 +1,17 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from mongoeco import MongoClient
 from mongoeco.engines.sqlite import SQLiteEngine
+from _demo_support import EMBEDDED_APP_DOCUMENTS, demo_database_path, load_demo_documents
 
 
 def main() -> None:
-    database_path = Path("mongoeco-example.db")
+    database_path = demo_database_path("mongoeco-example.db")
 
     with MongoClient(SQLiteEngine(database_path)) as client:
         collection = client.embedded.todos
 
-        collection.delete_many({})
-        collection.insert_many(
-            [
-                {"_id": 1, "kind": "task", "title": "Ship release notes", "done": False},
-                {"_id": 2, "kind": "task", "title": "Benchmark search runtime", "done": True},
-                {"_id": 3, "kind": "note", "title": "Keep docs aligned", "done": False},
-            ]
-        )
+        load_demo_documents(collection, EMBEDDED_APP_DOCUMENTS)
 
         collection.create_index([("kind", 1)], name="kind_idx")
 

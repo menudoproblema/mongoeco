@@ -1,20 +1,14 @@
 from __future__ import annotations
 
-import time
-from pathlib import Path
-
-from mongoeco import MongoClient, SearchIndexModel
+from mongoeco import MongoClient
 from mongoeco.engines.sqlite import SQLiteEngine
-
-
-def wait_until_ready(collection, index_name: str, timeout_seconds: float = 2.0) -> None:
-    deadline = time.time() + timeout_seconds
-    while time.time() < deadline:
-        indexes = collection.list_search_indexes(index_name).to_list()
-        if indexes and indexes[0]["status"] == "READY":
-            return
-        time.sleep(0.02)
-    raise RuntimeError(f"search index {index_name!r} did not become ready in time")
+from _demo_support import (
+    VECTOR_DIAGNOSTIC_DOCUMENTS,
+    build_vector_index,
+    create_demo_search_indexes,
+    demo_database_path,
+    load_demo_documents,
+)
 
 
 def print_vector_case(collection, label: str, stage: dict[str, object]) -> None:
@@ -41,73 +35,20 @@ def print_vector_case(collection, label: str, stage: dict[str, object]) -> None:
 
 
 def main() -> None:
-    database_path = Path("mongoeco-vector-diagnostics.db")
+    database_path = demo_database_path("mongoeco-vector-diagnostics.db")
 
     with MongoClient(SQLiteEngine(database_path)) as client:
         collection = client.demo.docs
 
-        collection.delete_many({})
-        collection.insert_many(
+        load_demo_documents(collection, VECTOR_DIAGNOSTIC_DOCUMENTS)
+        create_demo_search_indexes(
+            collection,
             [
-                {"_id": 1, "title": "Ada search notes", "kind": "note", "score": 10, "embedding": [1.0, 0.0, 0.0]},
-                {"_id": 2, "title": "Compiler reference", "kind": "reference", "score": 7, "embedding": [0.8, 0.2, 0.0]},
-                {"_id": 3, "title": "Ada algorithms handbook", "kind": "note", "score": 9, "embedding": [0.9, 0.1, 0.0]},
-                {"_id": 4, "title": "Vector ranking field guide", "kind": "reference", "score": 4, "embedding": [0.0, 0.0, 1.0]},
-                {"_id": 5, "title": "Low-score reference", "kind": "reference", "score": 3, "embedding": [0.7, 0.1, 0.2]},
-                {"_id": 6, "title": "Strong note candidate", "kind": "note", "score": 11, "embedding": [0.95, 0.05, 0.0]},
-            ]
+                build_vector_index(name="embedding_cosine", similarity="cosine"),
+                build_vector_index(name="embedding_dot", similarity="dotProduct"),
+                build_vector_index(name="embedding_euclidean", similarity="euclidean"),
+            ],
         )
-
-        collection.create_search_indexes(
-            [
-                SearchIndexModel(
-                    {
-                        "fields": [
-                            {
-                                "type": "vector",
-                                "path": "embedding",
-                                "numDimensions": 3,
-                                "similarity": "cosine",
-                            }
-                        ]
-                    },
-                    name="embedding_cosine",
-                    type="vectorSearch",
-                ),
-                SearchIndexModel(
-                    {
-                        "fields": [
-                            {
-                                "type": "vector",
-                                "path": "embedding",
-                                "numDimensions": 3,
-                                "similarity": "dotProduct",
-                            }
-                        ]
-                    },
-                    name="embedding_dot",
-                    type="vectorSearch",
-                ),
-                SearchIndexModel(
-                    {
-                        "fields": [
-                            {
-                                "type": "vector",
-                                "path": "embedding",
-                                "numDimensions": 3,
-                                "similarity": "euclidean",
-                            }
-                        ]
-                    },
-                    name="embedding_euclidean",
-                    type="vectorSearch",
-                ),
-            ]
-        )
-
-        wait_until_ready(collection, "embedding_cosine")
-        wait_until_ready(collection, "embedding_dot")
-        wait_until_ready(collection, "embedding_euclidean")
 
         print_vector_case(
             collection,

@@ -334,7 +334,7 @@ def _sqlite_leaf_candidate_storage_keys(
         )
         params = [sqlite_fts5_query(query)]
         backend = "fts5"
-        exact = not isinstance(query, SearchPhraseQuery)
+        exact = not isinstance(query, SearchPhraseQuery) or query.slop == 0
     elif isinstance(query, SearchWildcardQuery):
         sql = (
             f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
@@ -1780,6 +1780,10 @@ def explain_search_documents_sync(
                 else None
             ),
             "fts5_match": decision.fts5_match,
+            "candidateExact": candidate_exact if is_text_search_query(query) else None,
+            "postCandidateValidationRequired": (
+                is_text_search_query(query) and candidate_exact is False
+            ),
             "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
             "mode": (
                 "ann"

@@ -698,7 +698,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         engine, conn, physical_name=resolved_physical, query=phrase_query
                     )
                     self.assertEqual(phrase_backend, "fts5")
-                    self.assertFalse(phrase_exact)
+                    self.assertTrue(phrase_exact)
                     self.assertEqual(phrase_keys, [engine._storage_key(1)])
 
                     autocomplete_keys, _, _ = search_runtime_module._sqlite_leaf_candidate_storage_keys(
@@ -1117,7 +1117,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     )
                     self.assertEqual(
                         described["clauseClasses"]["should"],
-                        ["candidateable-ranking", "candidateable-exact"],
+                        ["candidateable-exact", "candidateable-exact"],
                     )
                     self.assertTrue(described["partialRanking"]["supported"])
                     self.assertEqual(described["partialRanking"]["strategy"], "fts-materialized-entries")
@@ -1140,7 +1140,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     )
                     self.assertEqual(compound_keys, [engine._storage_key(1)])
                     self.assertEqual(backend, "fts5-prefilter")
-                    self.assertFalse(exact)
+                    self.assertTrue(exact)
                     self.assertEqual(non_candidateable, 0)
                     self.assertEqual(len(should_candidates), 2)
 

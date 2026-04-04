@@ -175,6 +175,23 @@ def assert_phrase_in_range_compound_explanation(
     case.assertEqual(details["compound"]["shouldOperators"], ["exists", "regex"])
 
 
+def assert_phrase_slop_explanation(
+    case: unittest.TestCase,
+    explanation: dict[str, object],
+    *,
+    engine_name: str,
+    expected_slop: int,
+    expected_match: str | None,
+) -> None:
+    details = explanation["engine_plan"]["details"]
+    case.assertEqual(details["queryOperator"], "phrase")
+    case.assertEqual(details["slop"], expected_slop)
+    if engine_name == "sqlite":
+        case.assertEqual(details["fts5_match"], expected_match)
+        case.assertEqual(details["candidateExact"], expected_slop == 0)
+        case.assertEqual(details["postCandidateValidationRequired"], expected_slop > 0)
+
+
 def assert_vector_similarity_explanation(
     case: unittest.TestCase,
     explanation: dict[str, object],

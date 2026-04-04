@@ -50,6 +50,7 @@ from tests.integration.api.search_vector_scenarios import (
     assert_boolean_vector_residual_explanation,
     assert_in_equals_and_range_explanations,
     assert_filtered_vector_explanation,
+    assert_phrase_slop_explanation,
     assert_phrase_in_range_compound_explanation,
     assert_regex_explanation,
     assert_ranged_vector_explanation,
@@ -952,14 +953,139 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     phrase_explanation = collection.aggregate(
                         [{"$search": {"index": "by_text", "phrase": {"query": "Ada wrote the first algorithm", "path": "body"}}}]
                     ).explain()
-                    self.assertEqual(phrase_explanation["engine_plan"]["details"]["queryOperator"], "phrase")
-                    if engine_name == "sqlite":
-                        self.assertEqual(
-                            phrase_explanation["engine_plan"]["details"]["fts5_match"],
-                            '"Ada wrote the first algorithm"',
-                        )
+                    assert_phrase_slop_explanation(
+                        self,
+                        phrase_explanation,
+                        engine_name=engine_name,
+                        expected_slop=0,
+                        expected_match='"Ada wrote the first algorithm"',
+                    )
                     with self.assertRaises(OperationFailure):
                         collection.create_search_index({"mappings": {"fields": {"title": {"type": "boolean"}}}})
+
+    def test_search_phrase_slop_keeps_parity_between_memory_and_sqlite(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.docs.get_collection("phrases")
+                    collection.insert_many(
+                        [
+                            {
+                                "_id": 1,
+                                "kind": "note",
+                                "title": "Exact phrase",
+                                "body": "Ada wrote the first algorithm for the engine.",
+                            },
+                            {
+                                "_id": 2,
+                                "kind": "note",
+                                "title": "Flexible phrase",
+                                "body": "Ada wrote the practical first algorithm for the engine.",
+                            },
+                            {
+                                "_id": 3,
+                                "kind": "reference",
+                                "title": "Different topic",
+                                "body": "Grace documented the compiler pipeline.",
+                            },
+                        ]
+                    )
+                    collection.create_search_indexes(
+                        [
+                            SearchIndexModel(
+                                {
+                                    "mappings": {
+                                        "dynamic": False,
+                                        "fields": {
+                                            "title": {"type": "string"},
+                                            "body": {"type": "string"},
+                                            "kind": {"type": "token"},
+                                        },
+                                    }
+                                },
+                                name="by_text",
+                            )
+                        ]
+                    )
+
+                    exact_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "phrase": {
+                                        "query": "Ada wrote the first algorithm",
+                                        "path": "body",
+                                    },
+                                }
+                            },
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in exact_hits], [1])
+
+                    slop_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "phrase": {
+                                        "query": "Ada wrote the first algorithm",
+                                        "path": "body",
+                                        "slop": 1,
+                                    },
+                                }
+                            },
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in slop_hits], [1, 2])
+
+                    compound_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [
+                                            {
+                                                "phrase": {
+                                                    "query": "Ada wrote the first algorithm",
+                                                    "path": "body",
+                                                    "slop": 1,
+                                                }
+                                            }
+                                        ],
+                                        "filter": [{"equals": {"path": "kind", "value": "note"}}],
+                                    },
+                                }
+                            },
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in compound_hits], [1, 2])
+
+                    slop_explanation = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "phrase": {
+                                        "query": "Ada wrote the first algorithm",
+                                        "path": "body",
+                                        "slop": 1,
+                                    },
+                                }
+                            }
+                        ]
+                    ).explain()
+                    assert_phrase_slop_explanation(
+                        self,
+                        slop_explanation,
+                        engine_name=engine_name,
+                        expected_slop=1,
+                        expected_match='"ada" AND "wrote" AND "the" AND "first" AND "algorithm"',
+                    )
 
     def test_aggregate_explain_reports_pipeline_pushdown_summary(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

@@ -107,6 +107,60 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(results["memory"], results["sqlite"])
 
+    async def test_search_phrase_slop_matches_in_memory_and_sqlite(self):
+        results: dict[str, list[dict[str, object]]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("articles")
+                await collection.insert_many(
+                    [
+                        {"_id": "1", "kind": "note", "content": "Ada wrote the first algorithm"},
+                        {"_id": "2", "kind": "note", "content": "Ada wrote the practical first algorithm"},
+                        {"_id": "3", "kind": "reference", "content": "Grace built the first compiler"},
+                    ]
+                )
+                await collection.create_search_indexes(
+                    [
+                        SearchIndexModel(
+                            {
+                                "mappings": {
+                                    "dynamic": False,
+                                    "fields": {
+                                        "content": {"type": "string"},
+                                        "kind": {"type": "token"},
+                                    },
+                                }
+                            },
+                            name="by_text",
+                        )
+                    ]
+                )
+                results[engine_name] = await collection.aggregate(
+                    [
+                        {
+                            "$search": {
+                                "index": "by_text",
+                                "compound": {
+                                    "must": [
+                                        {
+                                            "phrase": {
+                                                "query": "Ada wrote the first algorithm",
+                                                "path": "content",
+                                                "slop": 1,
+                                            }
+                                        }
+                                    ],
+                                    "filter": [{"equals": {"path": "kind", "value": "note"}}],
+                                },
+                            }
+                        },
+                        {"$project": {"_id": 1}},
+                        {"$sort": {"_id": 1}},
+                    ]
+                ).to_list()
+
+        self.assertEqual(results["memory"], results["sqlite"])
+
     async def test_dbref_subfield_filter_and_lookup_match_in_memory_and_sqlite(self):
         results: dict[str, dict[str, list[object]]] = {}
         for engine_name in ("memory", "sqlite"):

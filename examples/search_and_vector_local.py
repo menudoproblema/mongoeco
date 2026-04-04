@@ -1,98 +1,33 @@
 from __future__ import annotations
 
-import time
-from pathlib import Path
-
-from mongoeco import MongoClient, SearchIndexModel
+from mongoeco import MongoClient
 from mongoeco.engines.sqlite import SQLiteEngine
-
-
-def wait_until_ready(collection, index_name: str, timeout_seconds: float = 2.0) -> None:
-    deadline = time.time() + timeout_seconds
-    while time.time() < deadline:
-        indexes = collection.list_search_indexes(index_name).to_list()
-        if indexes and indexes[0]["status"] == "READY":
-            return
-        time.sleep(0.02)
-    raise RuntimeError(f"search index {index_name!r} did not become ready in time")
+from _demo_support import (
+    LOCAL_SEARCH_DOCUMENTS,
+    build_content_search_index,
+    build_vector_index,
+    create_demo_search_indexes,
+    demo_database_path,
+    load_demo_documents,
+)
 
 
 def main() -> None:
-    database_path = Path("mongoeco-search-example.db")
+    database_path = demo_database_path("mongoeco-search-example.db")
 
     with MongoClient(SQLiteEngine(database_path)) as client:
         collection = client.demo.docs
 
-        collection.delete_many({})
-        collection.insert_many(
+        load_demo_documents(collection, LOCAL_SEARCH_DOCUMENTS)
+        create_demo_search_indexes(
+            collection,
             [
-                {
-                    "_id": 1,
-                    "title": "Ada Lovelace notes",
-                    "kind": "note",
-                    "score": 10,
-                    "summary": "Local search summary",
-                    "body": "Ada designed local search patterns for algorithm notes.",
-                    "embedding": [1.0, 0.0, 0.0],
-                },
-                {
-                    "_id": 2,
-                    "title": "Compiler reference",
-                    "kind": "reference",
-                    "score": 7,
-                    "body": "Compiler references rarely repeat the same phrase exactly.",
-                    "embedding": [0.8, 0.2, 0.0],
-                },
-                {
-                    "_id": 3,
-                    "title": "Ada algorithms handbook",
-                    "kind": "note",
-                    "score": 9,
-                    "summary": "Algorithm summary",
-                    "body": "Ada designed local search patterns for algorithm ranking demos.",
-                    "embedding": [0.9, 0.1, 0.0],
-                },
-            ]
+                build_content_search_index(name="content_search"),
+                build_vector_index(name="embedding_search"),
+            ],
         )
 
-        collection.create_search_indexes(
-            [
-                SearchIndexModel(
-                    {
-                        "mappings": {
-                            "dynamic": False,
-                            "fields": {
-                                "title": {"type": "string"},
-                                "summary": {"type": "string"},
-                                "body": {"type": "string"},
-                                "kind": {"type": "token"},
-                                "score": {"type": "number"},
-                            },
-                        }
-                    },
-                    name="content_search",
-                ),
-                SearchIndexModel(
-                    {
-                        "fields": [
-                            {
-                                "type": "vector",
-                                "path": "embedding",
-                                "numDimensions": 3,
-                                "similarity": "cosine",
-                            }
-                        ]
-                    },
-                    name="embedding_search",
-                    type="vectorSearch",
-                ),
-            ]
-        )
-
-        wait_until_ready(collection, "content_search")
-        wait_until_ready(collection, "embedding_search")
-
-        phrase_results = collection.aggregate(
+        exact_phrase_results = collection.aggregate(
             [
                 {
                     "$search": {
@@ -106,7 +41,44 @@ def main() -> None:
                 {"$project": {"_id": 1, "title": 1, "body": 1}},
             ]
         ).to_list()
-        print("$search phrase body results:", phrase_results)
+        print("$search phrase exact results:", exact_phrase_results)
+
+        slop_phrase_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "phrase": {
+                            "query": "Ada designed local search patterns",
+                            "path": "body",
+                            "slop": 2,
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "body": 1}},
+            ]
+        ).to_list()
+        print("$search phrase with slop results:", slop_phrase_results)
+        slop_explain = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "phrase": {
+                            "query": "Ada designed local search patterns",
+                            "path": "body",
+                            "slop": 2,
+                        },
+                    }
+                }
+            ]
+        ).explain()
+        print(
+            "$search phrase with slop explain:",
+            slop_explain["engine_plan"]["details"]["slop"],
+            slop_explain["engine_plan"]["details"]["backend"],
+            slop_explain["engine_plan"]["details"].get("postCandidateValidationRequired"),
+        )
 
         search_results = collection.aggregate(
             [
@@ -131,6 +103,7 @@ def main() -> None:
                                     "phrase": {
                                         "query": "Ada designed local search patterns",
                                         "path": "body",
+                                        "slop": 2,
                                     }
                                 },
                                 {"exists": {"path": "summary"}},
@@ -142,7 +115,7 @@ def main() -> None:
                 {"$project": {"_id": 1, "title": 1, "score": 1, "summary": 1, "body": 1}},
             ]
         ).to_list()
-        print("$search compound title/body phrase + in + range + exists + regex results:", search_results)
+        print("$search compound phrase + in + range + exists + regex results:", search_results)
         search_explain = collection.aggregate(
             [
                 {
@@ -166,6 +139,7 @@ def main() -> None:
                                     "phrase": {
                                         "query": "Ada designed local search patterns",
                                         "path": "body",
+                                        "slop": 2,
                                     }
                                 },
                                 {"exists": {"path": "summary"}},
@@ -231,7 +205,11 @@ def main() -> None:
         details = vector_explain["engine_plan"]["details"]
         print("$vectorSearch similarity:", details["similarity"])
         print("$vectorSearch mode:", details["mode"])
-        print("$vectorSearch numCandidates requested/evaluated:", details["candidatesRequested"], details["candidatesEvaluated"])
+        print(
+            "$vectorSearch numCandidates requested/evaluated:",
+            details["candidatesRequested"],
+            details["candidatesEvaluated"],
+        )
         print("$vectorSearch fallback:", details["exactFallbackReason"])
         print("$vectorSearch prefilter:", details["vectorFilterPrefilter"])
         print("$vectorSearch residual:", details["vectorFilterResidual"])

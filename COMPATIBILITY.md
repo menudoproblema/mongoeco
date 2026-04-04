@@ -421,7 +421,7 @@ El runtime local soporta ya un subset explícito de `$search`:
 
 * operadores:
   * `text`
-  * `phrase`
+  * `phrase` (con `slop` local opcional)
   * `autocomplete`
   * `wildcard`
   * `regex`
@@ -454,11 +454,17 @@ Límites conscientes:
 * `compound` se limita a combinar el subset local soportado
   (`text`/`phrase`/`autocomplete`/`wildcard`/`regex`/`exists`/`in`/`equals`/`range`/`near`)
   con `must`, `should`, `filter`, `mustNot` y `minimumShouldMatch`;
-* `SQLiteEngine` usa FTS5 directo para `text`, `phrase` y `autocomplete`, y
+* `phrase` acepta `slop` entero no negativo como subset local explícito; con
+  `slop=0` conserva la frase exacta, y con `slop>0` permite tokens
+  intermedios extra entre términos manteniendo orden;
+* `SQLiteEngine` usa FTS5 directo para `text`, `phrase` con `slop=0` y
+  `autocomplete`, y
   usa el backend materializado como prefilter de candidatos para `wildcard`,
   `exists` y parte de `compound` antes del matching Python exacto; `in`,
   `equals` y `range` siguen entrando como operadores locales honestos sobre el runtime
-  Python cuando no hay una traducción candidateable defendible;
+  Python cuando no hay una traducción candidateable defendible; cuando
+  `phrase.slop > 0`, SQLite puede usar FTS5 como prefilter candidato, pero la
+  validación exacta final sigue siendo local y visible en `explain()`;
 * `$vectorSearch` debe seguir siendo el primer stage;
 * la semantica sigue siendo local, no de cluster o servicio remoto.
 

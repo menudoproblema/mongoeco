@@ -308,6 +308,28 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(sqlite_fts5_query(query), '"ada lovelace"')
 
+    def test_compile_search_phrase_query_supports_slop(self) -> None:
+        query = compile_search_phrase_query(
+            {
+                "index": "by_text",
+                "phrase": {
+                    "query": "ada lovelace",
+                    "path": ["title", "body"],
+                    "slop": 2,
+                },
+            }
+        )
+        self.assertEqual(
+            query,
+            SearchPhraseQuery(
+                index_name="by_text",
+                raw_query="ada lovelace",
+                paths=("title", "body"),
+                slop=2,
+            ),
+        )
+        self.assertEqual(sqlite_fts5_query(query), '"ada" AND "lovelace"')
+
     def test_search_compilers_cover_unsupported_keys_and_registry_gaps(self) -> None:
         with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
             compile_search_text_like_query(
@@ -1092,6 +1114,12 @@ class SearchCoreTests(unittest.TestCase):
         )
 
     def test_search_query_explain_details_reuse_operator_contract(self) -> None:
+        phrase = compile_search_phrase_query(
+            {
+                "index": "by_text",
+                "phrase": {"query": "Ada Lovelace", "path": "title", "slop": 1},
+            }
+        )
         wildcard = compile_search_wildcard_query(
             {
                 "index": "by_text",
@@ -1144,6 +1172,8 @@ class SearchCoreTests(unittest.TestCase):
         )
 
         self.assertEqual(search_query_operator_name(in_query), "in")
+        self.assertEqual(search_query_operator_name(phrase), "phrase")
+        self.assertEqual(search_query_explain_details(phrase)["slop"], 1)
         self.assertEqual(search_query_explain_details(in_query)["value"], ["note", "reference"])
         self.assertEqual(search_query_operator_name(wildcard), "wildcard")
         self.assertEqual(search_query_explain_details(wildcard)["paths"], ["title"])
@@ -1272,12 +1302,49 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(query.minimum_should_match, 1)
 
-    def test_compile_search_phrase_query_rejects_unsupported_options(self) -> None:
+    def test_compile_search_phrase_query_rejects_invalid_slop(self) -> None:
         with self.assertRaises(OperationFailure):
             compile_search_phrase_query(
                 {
                     "index": "by_text",
-                    "phrase": {"query": "ada", "path": "title", "slop": 2},
+                    "phrase": {"query": "ada", "path": "title", "slop": -1},
+                }
+            )
+        with self.assertRaises(OperationFailure):
+            compile_search_phrase_query(
+                {
+                    "index": "by_text",
+                    "phrase": {"query": "ada", "path": "title", "slop": True},
+                }
+            )
+        with self.assertRaises(OperationFailure):
+            compile_search_phrase_query(
+                {
+                    "index": "by_text",
+                    "phrase": {"query": "ada", "path": "title", "slop": 1.5},
+                }
+            )
+
+    def test_compile_search_phrase_and_regex_queries_reject_unsupported_shapes(self) -> None:
+        with self.assertRaises(OperationFailure):
+            compile_search_phrase_query(
+                {
+                    "index": "by_text",
+                    "phrase": {"query": "ada", "path": "title", "boost": 2},
+                }
+            )
+        with self.assertRaises(OperationFailure):
+            compile_search_phrase_query(
+                {
+                    "index": "by_text",
+                    "phrase": {"query": "!!!", "path": "title"},
+                }
+            )
+        with self.assertRaises(OperationFailure):
+            compile_search_regex_query(
+                {
+                    "index": "by_text",
+                    "regex": {"query": "Ada.*", "path": "title", "flags": "i"},
                 }
             )
 
@@ -1556,6 +1623,72 @@ class SearchCoreTests(unittest.TestCase):
             )
         )
 
+    def test_matches_search_phrase_queries_with_slop_and_multiple_paths(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "string"},
+                        "body": {"type": "string"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+        document = {
+            "title": "Ada wrote the first truly published algorithm",
+            "body": "The first practical algorithm was described by Ada.",
+        }
+        self.assertFalse(
+            matches_search_phrase_query(
+                document,
+                definition=definition,
+                query=SearchPhraseQuery(
+                    index_name="by_text",
+                    raw_query="first algorithm",
+                    paths=("title",),
+                    slop=0,
+                ),
+            )
+        )
+        self.assertTrue(
+            matches_search_phrase_query(
+                document,
+                definition=definition,
+                query=SearchPhraseQuery(
+                    index_name="by_text",
+                    raw_query="first algorithm",
+                    paths=("title",),
+                    slop=2,
+                ),
+            )
+        )
+        self.assertFalse(
+            matches_search_phrase_query(
+                document,
+                definition=definition,
+                query=SearchPhraseQuery(
+                    index_name="by_text",
+                    raw_query="first algorithm",
+                    paths=("title",),
+                    slop=1,
+                ),
+            )
+        )
+        self.assertTrue(
+            matches_search_phrase_query(
+                document,
+                definition=definition,
+                query=SearchPhraseQuery(
+                    index_name="by_text",
+                    raw_query="practical algorithm",
+                    paths=("title", "body"),
+                    slop=0,
+                ),
+            )
+        )
+
     def test_matches_search_autocomplete_and_wildcard_queries_against_mapping(self) -> None:
         definition = SearchIndexDefinition(
             {
@@ -1568,6 +1701,64 @@ class SearchCoreTests(unittest.TestCase):
                 }
             },
             name="by_text",
+        )
+
+    def test_matches_search_regex_query_rejects_invalid_patterns(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "string"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+        self.assertFalse(
+            search_module.matches_search_regex_query(
+                {"title": "Ada algorithms"},
+                definition=definition,
+                query=SearchRegexQuery(index_name="by_text", raw_query="(", paths=("title",)),
+            )
+        )
+
+    def test_search_phrase_ranking_handles_tokenless_queries_and_short_values(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "string"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+        short_document = {"title": "Ada"}
+        self.assertEqual(
+            search_module.search_clause_ranking(
+                short_document,
+                definition=definition,
+                query=SearchPhraseQuery(
+                    index_name="by_text",
+                    raw_query="Ada Lovelace",
+                    paths=("title",),
+                ),
+            ),
+            (False, 0.0, None),
+        )
+        self.assertEqual(
+            search_module.search_clause_ranking(
+                short_document,
+                definition=definition,
+                query=SearchPhraseQuery(
+                    index_name="by_text",
+                    raw_query="!!!",
+                    paths=("title",),
+                ),
+            ),
+            (False, 0.0, None),
         )
 
     def test_matches_search_compound_queries_against_mapping(self) -> None:

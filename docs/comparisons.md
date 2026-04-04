@@ -39,6 +39,27 @@ The project is no longer positioned as "another mock".
 `mongomock` can still be enough when you only want a very lightweight fake for
 simple CRUD tests and you do not need the heavier local runtime surface.
 
+## `MemoryEngine` vs `SQLiteEngine`
+
+Use `MemoryEngine` when you want:
+
+* very fast local setup;
+* deterministic tests without filesystem state;
+* the semantic baseline for parity checks.
+
+Use `SQLiteEngine` when you want:
+
+* local persistence on disk;
+* stronger pushdown for reads, aggregation and local search;
+* FTS5-backed `$search` candidates and ANN-backed `$vectorSearch`.
+
+Do not treat them as interchangeable just because they share the same API:
+
+* `MemoryEngine` is usually the right fit for lightweight tests and fast local
+  contracts;
+* `SQLiteEngine` is usually the right fit for embedded apps, explainable local
+  indexing and search/vector demos.
+
 ## Positioning in one sentence
 
 `mongoeco` is best understood as an embedded MongoDB-like runtime for local

@@ -49,6 +49,7 @@ class SearchPhraseQuery:
     index_name: str
     raw_query: str
     paths: tuple[str, ...] | None = None
+    slop: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -559,9 +560,8 @@ def matches_search_phrase_query(
     query: SearchPhraseQuery,
     materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
-    phrase = query.raw_query.strip().lower()
     prepared = materialized or materialize_search_document(document, definition)
-    return any(phrase in value for value in _materialized_lowered_values(prepared, query.paths))
+    return _phrase_query_score(prepared, query) > 0.0
 
 
 def matches_search_autocomplete_query(
@@ -764,8 +764,7 @@ def search_clause_ranking(
         score = float(sum(token_counter.get(term.lower(), 0) for term in query.terms))
         return score > 0.0, score, None
     if isinstance(query, SearchPhraseQuery):
-        phrase = query.raw_query.strip().lower()
-        score = float(sum(value.count(phrase) for value in _materialized_lowered_values(prepared, query.paths)))
+        score = _phrase_query_score(prepared, query)
         return score > 0.0, score, None
     if isinstance(query, SearchAutocompleteQuery):
         score = 0.0
@@ -1056,6 +1055,8 @@ def iter_searchable_text_entries(
 
 def sqlite_fts5_query(query: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery) -> str:
     if isinstance(query, SearchPhraseQuery):
+        if query.slop > 0:
+            return " AND ".join(_quote_fts_term(term) for term in tokenize_classic_text(query.raw_query))
         return _quote_fts_term(query.raw_query.strip())
     if isinstance(query, SearchAutocompleteQuery):
         return " AND ".join(f"{_quote_fts_term(term)}*" for term in query.terms)
@@ -1120,19 +1121,25 @@ def _compile_search_text_clause(index_name: str, clause_spec: object) -> SearchT
 def _compile_search_phrase_clause(index_name: str, clause_spec: object) -> SearchPhraseQuery:
     if not isinstance(clause_spec, dict):
         raise OperationFailure("$search.phrase requires a document specification")
-    unsupported_options = sorted(set(clause_spec) - {"query", "path"})
+    unsupported_options = sorted(set(clause_spec) - {"query", "path", "slop"})
     if unsupported_options:
         raise OperationFailure(
-            "$search.phrase only supports query and path; unsupported keys: "
+            "$search.phrase only supports query, path and slop; unsupported keys: "
             + ", ".join(unsupported_options)
         )
     raw_query = clause_spec.get("query")
     if not isinstance(raw_query, str) or not raw_query.strip():
         raise OperationFailure("$search.phrase.query must be a non-empty string")
+    if not tokenize_classic_text(raw_query):
+        raise OperationFailure("$search.phrase.query must contain at least one searchable token")
+    slop = clause_spec.get("slop", 0)
+    if not isinstance(slop, int) or isinstance(slop, bool) or slop < 0:
+        raise OperationFailure("$search.phrase.slop must be a non-negative integer")
     return SearchPhraseQuery(
         index_name=index_name,
         raw_query=raw_query,
         paths=_normalize_search_paths(clause_spec.get("path")),
+        slop=slop,
     )
 
 
@@ -1505,6 +1512,7 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
     return {
         "query": query.raw_query,
         "paths": list(query.paths) if query.paths is not None else None,
+        "slop": query.slop if isinstance(query, SearchPhraseQuery) else None,
         "compound": None,
         "value": None,
         "range": None,
@@ -1518,6 +1526,75 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
         "filter": None,
         "similarity": None,
     }
+
+
+def _phrase_query_score(
+    prepared: MaterializedSearchDocument,
+    query: SearchPhraseQuery,
+) -> float:
+    terms = tokenize_classic_text(query.raw_query)
+    if not terms:
+        return 0.0
+    score = 0.0
+    for value in _materialized_lowered_values(prepared, query.paths):
+        score += _phrase_value_score(value, terms=terms, slop=query.slop)
+    return score
+
+
+def _phrase_value_score(
+    value: str,
+    *,
+    terms: tuple[str, ...],
+    slop: int,
+) -> float:
+    tokens = tokenize_classic_text(value)
+    if len(tokens) < len(terms):
+        return 0.0
+    score = 0.0
+    for start_index, token in enumerate(tokens):
+        if token != terms[0]:
+            continue
+        gap_sum = _phrase_match_gap_sum(tokens, terms=terms, slop=slop, start_index=start_index)
+        if gap_sum is None:
+            continue
+        score += 1.0 / (1.0 + float(gap_sum))
+    return score
+
+
+def _phrase_match_gap_sum(
+    tokens: tuple[str, ...],
+    *,
+    terms: tuple[str, ...],
+    slop: int,
+    start_index: int,
+) -> int | None:
+    current_index = start_index
+    total_gap = 0
+    for term in terms[1:]:
+        next_index = _find_phrase_term_index(
+            tokens,
+            term=term,
+            start=current_index + 1,
+            stop=min(len(tokens), current_index + slop + 2),
+        )
+        if next_index is None:
+            return None
+        total_gap += next_index - current_index - 1
+        current_index = next_index
+    return total_gap
+
+
+def _find_phrase_term_index(
+    tokens: tuple[str, ...],
+    *,
+    term: str,
+    start: int,
+    stop: int,
+) -> int | None:
+    for index in range(start, stop):
+        if tokens[index] == term:
+            return index
+    return None
 
 
 def _explain_exists_query(query: SearchExistsQuery) -> dict[str, object | None]:

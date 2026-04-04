@@ -1,84 +1,45 @@
 # Use Cases
 
-## When `mongoeco` fits well
+`mongoeco` is easiest to adopt when you start from a concrete local-first
+workflow rather than from the full compatibility matrix.
 
-`mongoeco` is strongest when you need MongoDB-like semantics locally without
-running a real server for every workflow.
+Use one of these three entry points:
 
-Good fits:
+## 1. Embedded App
 
-* local development where the code already speaks PyMongo-style collections;
-* test suites that need more semantic fidelity than a lightweight mock;
-* embedded applications that want persistence without a separate database
-  process;
-* compatibility tooling, demos and contract tests that must exercise query,
-  aggregation, `$text`, `$search` or `$vectorSearch` locally;
-* offline or single-node workflows where local explainability matters more
-  than distributed scale.
+Choose this when you want persistence on disk, a PyMongo-shaped API and a
+single-process local runtime.
 
-## Typical usage patterns
+* Guide: [docs/use-cases/embedded-app.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases/embedded-app.md)
+* Example: [examples/sqlite_embedded_app.py](/Users/uve/Proyectos/mongoeco2/examples/sqlite_embedded_app.py)
 
-### 1. In-memory development and tests
+## 2. Test Runtime
 
-Use `MemoryEngine` when you want:
+Choose this when you want a local contract runtime that is more faithful than a
+lightweight mock and can run against both memory and SQLite.
 
-* fast local setup;
-* semantic baseline behavior;
-* deterministic tests without filesystem state.
+* Guide: [docs/use-cases/test-runtime.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases/test-runtime.md)
+* Examples:
+  * [examples/memory_quickstart.py](/Users/uve/Proyectos/mongoeco2/examples/memory_quickstart.py)
+  * [examples/test_runtime_local.py](/Users/uve/Proyectos/mongoeco2/examples/test_runtime_local.py)
 
-Reference:
+## 3. Local Search And Retrieval
 
-* [examples/memory_quickstart.py](/Users/uve/Proyectos/mongoeco2/examples/memory_quickstart.py)
+Choose this when you want local `$search` and `$vectorSearch` with explicit
+diagnostics, not a hidden Atlas-like promise.
 
-### 2. Embedded persistence with SQLite
+* Guide: [docs/use-cases/local-search-and-retrieval.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases/local-search-and-retrieval.md)
+* Examples:
+  * [examples/search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
+  * [examples/vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
 
-Use `SQLiteEngine` when you want:
+## What `mongoeco` is not
 
-* local persistence on disk;
-* explainable pushdown and local indexing;
-* stronger search and vector execution through FTS5 and `usearch`.
-
-Reference:
-
-* [examples/sqlite_embedded_app.py](/Users/uve/Proyectos/mongoeco2/examples/sqlite_embedded_app.py)
-
-### 3. Local search and vector workflows
-
-Use the local search surface when you want:
-
-* Atlas-like query shapes in local development;
-* explicit, honest fallbacks instead of pretending full Atlas Search parity;
-* embedded `$search` and `$vectorSearch` with visible explain metadata.
-
-Current local `$search` subset includes:
-
-* `text`
-* `phrase`
-* `autocomplete`
-* `wildcard`
-* `regex`
-* `exists`
-* `in`
-* `equals`
-* `range`
-* `near`
-* `compound`
-
-Reference:
-
-* [examples/search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
-* [examples/vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
-
-## When `mongoeco` is not the right tool
-
-Avoid `mongoeco` when you need:
+`mongoeco` is not the right fit when you need:
 
 * a production MongoDB cluster replacement;
-* Atlas Search parity or service-level scaling guarantees;
-* distributed transactions, distributed change streams or distributed
-  topology behavior;
-* geodesic spatial behavior instead of the documented local planar subset.
+* Atlas Search parity or remote service semantics;
+* distributed topology behavior;
+* server-grade operational guarantees outside the documented subset.
 
-For the exact compatibility envelope, see:
-
-* [COMPATIBILITY.md](/Users/uve/Proyectos/mongoeco2/COMPATIBILITY.md)
+For the exact compatibility envelope, see [COMPATIBILITY.md](/Users/uve/Proyectos/mongoeco2/COMPATIBILITY.md).

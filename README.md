@@ -40,6 +40,9 @@ What this is not:
 Reference:
 
 * [docs/use-cases.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases.md)
+* [docs/use-cases/embedded-app.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases/embedded-app.md)
+* [docs/use-cases/test-runtime.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases/test-runtime.md)
+* [docs/use-cases/local-search-and-retrieval.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases/local-search-and-retrieval.md)
 * [docs/comparisons.md](/Users/uve/Proyectos/mongoeco2/docs/comparisons.md)
 
 ## Installation
@@ -182,13 +185,14 @@ Executable examples live under [examples/README.md](/Users/uve/Proyectos/mongoec
 
 * [memory_quickstart.py](/Users/uve/Proyectos/mongoeco2/examples/memory_quickstart.py)
 * [sqlite_embedded_app.py](/Users/uve/Proyectos/mongoeco2/examples/sqlite_embedded_app.py)
+* [test_runtime_local.py](/Users/uve/Proyectos/mongoeco2/examples/test_runtime_local.py)
 * [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
 
 The local `$search` subset now includes:
 
 * `text`
-* `phrase`
+* `phrase` with optional `slop`
 * `autocomplete`
 * `wildcard`
 * `regex`
@@ -201,9 +205,12 @@ The local `$search` subset now includes:
 
 Examples worth showing first:
 
+* [test_runtime_local.py](/Users/uve/Proyectos/mongoeco2/examples/test_runtime_local.py)
+  demonstrates `MemoryEngine` and `SQLiteEngine` as local contract runtimes
+  with the same `$search.phrase` behavior.
 * [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
-  demonstrates a local `compound` query with title/body `phrase` + `in` +
-  `range` + `exists` + `regex`.
+  demonstrates exact `phrase` versus `phrase.slop`, plus a local `compound`
+  query with title/body `phrase` + `in` + `range` + `exists` + `regex`.
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
   demonstrates how to read `similarity`, `numCandidates`, `minScore`,
   projected `vectorSearchScore`, residual filtering and exact fallback in local
