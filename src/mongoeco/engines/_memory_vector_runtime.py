@@ -157,18 +157,26 @@ def vector_scores_for_positions(
     matrix = vector_index.vector_matrices.get(query.path)
     if matrix is None or matrix.size == 0:
         return []
-    row_index_by_position = vector_index.vector_row_index_by_position.get(query.path, {})
-    selected_rows: list[int] = []
-    selected_positions: list[int] = []
-    for position in candidate_positions:
-        row_index = row_index_by_position.get(position)
-        if row_index is None:
-            continue
-        selected_rows.append(row_index)
-        selected_positions.append(position)
-    if not selected_rows:
+    selected_positions = list(candidate_positions)
+    row_positions = vector_index.vector_row_positions.get(query.path)
+    if not selected_positions or row_positions is None:
         return []
-    candidate_matrix = matrix[np.asarray(selected_rows, dtype=np.int32)]
+    if tuple(selected_positions) == row_positions:
+        candidate_matrix = matrix
+    else:
+        row_index_by_position = vector_index.vector_row_index_by_position.get(query.path, {})
+        selected_rows: list[int] = []
+        filtered_positions: list[int] = []
+        for position in selected_positions:
+            row_index = row_index_by_position.get(position)
+            if row_index is None:
+                continue
+            selected_rows.append(row_index)
+            filtered_positions.append(position)
+        if not selected_rows:
+            return []
+        selected_positions = filtered_positions
+        candidate_matrix = matrix[np.asarray(selected_rows, dtype=np.int32)]
     query_vector = np.asarray(query.query_vector, dtype=np.float32)
     similarity = str(vector_index.vector_specs.get(query.path, {}).get("similarity", query.similarity))
     if similarity == "dotProduct":

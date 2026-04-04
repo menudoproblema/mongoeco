@@ -148,12 +148,11 @@ async def execute_search_documents(
         return matches
 
     effective_vector_limit = min(query.limit, effective_limit) if effective_limit is not None else query.limit
-    vector_hits: list[tuple[float, int, Document]] = []
     if vector_index is None:
         return []
     query_filter_positions, _query_filter_description = candidate_positions_for_vector_filter(vector_index, filter_spec=query.filter_spec)
     downstream_filter_positions, _downstream_filter_description = candidate_positions_for_vector_filter(vector_index, filter_spec=downstream_filter_spec)
-    candidate_positions = list(range(len(vector_index.documents)))
+    candidate_positions = list(vector_index.vector_row_positions.get(query.path, ()))
     if query_filter_positions is not None:
         allowed = set(query_filter_positions)
         candidate_positions = [position for position in candidate_positions if position in allowed]
@@ -168,15 +167,23 @@ async def execute_search_documents(
         candidate_positions=candidate_positions,
         limit=effective_vector_limit,
     )
+    query_requires_postfilter = query.filter_spec is not None and query_filter_positions is None
+    downstream_requires_postfilter = downstream_filter_spec is not None and downstream_filter_positions is None
+    if not query_requires_postfilter and not downstream_requires_postfilter:
+        return [
+            vector_index.documents[position].document
+            for _score, position in scored_positions[:effective_vector_limit]
+        ]
+    vector_hits: list[tuple[float, int, Document]] = []
     for order, (score, position) in enumerate(scored_positions):
         prepared = vector_index.documents[position]
-        if downstream_filter_spec is not None and downstream_filter_positions is None:
+        if downstream_requires_postfilter:
             candidateable_match = matches_candidateable_filter(prepared.document, downstream_filter_spec)
             if candidateable_match is False:
                 continue
             if candidateable_match is None and not QueryEngine.match(prepared.document, downstream_filter_spec, dialect=MONGODB_DIALECT_70):
                 continue
-        if query.filter_spec is not None and query_filter_positions is None:
+        if query_requires_postfilter:
             candidateable_match = matches_candidateable_filter(prepared.document, query.filter_spec)
             if candidateable_match is False:
                 continue
