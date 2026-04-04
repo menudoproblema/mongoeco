@@ -236,6 +236,22 @@ class SQLiteCompoundRankingTests(unittest.TestCase):
         )
         self.assertEqual(exact_pruned, ["a"])
         self.assertEqual(exact_meta["strategy"], "exact-should-score-tier")
+        self.conn.execute(f'DELETE FROM "{self.physical_name}"')
+        cached_pruned, cached_meta = prune_candidate_storage_keys_for_topk(
+            self.engine,
+            self.conn,
+            db_name="db",
+            coll_name="coll",
+            physical_name=self.physical_name,
+            query=compound,
+            candidate_storage_keys=["a", "b", "c"],
+            candidate_exact=True,
+            result_limit_hint=1,
+            should_candidates=[["a"], ["a", "b"]],
+            candidate_resolver=lambda clause: (["missing"], "fts5", True),
+        )
+        self.assertEqual(cached_pruned, ["a"])
+        self.assertEqual(cached_meta["strategy"], "exact-should-score-tier")
 
         broad_compound = compile_search_stage(
             "$search",

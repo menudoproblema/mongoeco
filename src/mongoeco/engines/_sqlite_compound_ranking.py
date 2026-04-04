@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from copy import deepcopy
 import heapq
 import sqlite3
 from dataclasses import dataclass
@@ -71,6 +72,28 @@ def _compound_rank_cache_bucket(
     if cache is None:
         cache = {}
         setattr(engine, "_compound_rank_cache", cache)
+    cache_key = (
+        db_name,
+        coll_name,
+        physical_name,
+        engine._search_backend_version(db_name, coll_name),
+        repr(query),
+    )
+    return cache.setdefault(cache_key, {})
+
+
+def _compound_topk_prefilter_cache_bucket(
+    engine: _SQLiteCompoundRankingEngine,
+    *,
+    db_name: str,
+    coll_name: str,
+    physical_name: str,
+    query: SearchCompoundQuery,
+) -> dict[tuple[tuple[str, ...], int, tuple[tuple[str, ...], ...] | None], tuple[tuple[str, ...], dict[str, object]]]:
+    cache = getattr(engine, "_compound_topk_prefilter_cache", None)
+    if cache is None:
+        cache = {}
+        setattr(engine, "_compound_topk_prefilter_cache", cache)
     cache_key = (
         db_name,
         coll_name,
@@ -172,6 +195,24 @@ def prune_candidate_storage_keys_for_topk(
             if storage_keys is None or not clause_exact:
                 return candidate_storage_keys, None
             resolved_should_candidates.append(storage_keys)
+    if physical_name is not None:
+        topk_cache = _compound_topk_prefilter_cache_bucket(
+            engine,
+            db_name=db_name,
+            coll_name=coll_name,
+            physical_name=physical_name,
+            query=query,
+        )
+        cached_prefilter = topk_cache.get(
+            (
+                tuple(candidate_storage_keys),
+                result_limit_hint,
+                tuple(tuple(values) for values in resolved_should_candidates),
+            )
+        )
+        if cached_prefilter is not None:
+            cached_keys, cached_metadata = cached_prefilter
+            return list(cached_keys), deepcopy(cached_metadata)
 
     coarse_prefiltered_keys, matched_should_cutoff = prefilter_candidate_storage_keys_by_matched_should(
         candidate_storage_keys,
@@ -206,26 +247,32 @@ def prune_candidate_storage_keys_for_topk(
                 break
         pruned = [storage_key for storage_key in exact_score_input_keys if storage_key in selected]
         if len(pruned) < before_count:
+            metadata = CompoundTopKPrefilter(
+                applied=True,
+                before_count=before_count,
+                after_count=len(pruned),
+                strategy="exact-should-score-tier",
+                cutoff_matched_should=cutoff[0] if cutoff is not None else None,
+                cutoff_should_score=cutoff[1] if cutoff is not None else None,
+                cutoff_tier={
+                    "matchedShould": cutoff[0] if cutoff is not None else None,
+                    "shouldScore": cutoff[1] if cutoff is not None else None,
+                },
+                candidate_count_before_partial_ranking=before_count,
+                candidate_count_after_partial_ranking=len(exact_score_input_keys),
+                partial_ranking={
+                    "strategy": "matched-should-prefilter+exact-should-score-tier",
+                    "matchedShouldCutoff": matched_should_cutoff,
+                },
+            ).to_dict()
+            if physical_name is not None:
+                topk_cache[(tuple(candidate_storage_keys), result_limit_hint, tuple(tuple(values) for values in resolved_should_candidates))] = (
+                    tuple(pruned),
+                    deepcopy(metadata),
+                )
             return (
                 pruned,
-                CompoundTopKPrefilter(
-                    applied=True,
-                    before_count=before_count,
-                    after_count=len(pruned),
-                    strategy="exact-should-score-tier",
-                    cutoff_matched_should=cutoff[0] if cutoff is not None else None,
-                    cutoff_should_score=cutoff[1] if cutoff is not None else None,
-                    cutoff_tier={
-                        "matchedShould": cutoff[0] if cutoff is not None else None,
-                        "shouldScore": cutoff[1] if cutoff is not None else None,
-                    },
-                    candidate_count_before_partial_ranking=before_count,
-                    candidate_count_after_partial_ranking=len(exact_score_input_keys),
-                    partial_ranking={
-                        "strategy": "matched-should-prefilter+exact-should-score-tier",
-                        "matchedShouldCutoff": matched_should_cutoff,
-                    },
-                ).to_dict(),
+                metadata,
             )
 
     if isinstance(query, SearchCompoundQuery):
