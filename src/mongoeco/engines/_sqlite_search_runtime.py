@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from copy import deepcopy
+import math
 import sqlite3
 import time
 from typing import Any, Protocol
@@ -852,6 +853,20 @@ def _sort_search_documents_for_query(
     return [document for document, _definition, _materialized in documents]
 
 
+def _next_vector_candidate_request(
+    current_request: int,
+    *,
+    matched_count: int,
+    limit: int,
+    max_requested: int,
+) -> int:
+    if matched_count <= 0:
+        return min(max_requested, max(current_request + 1, current_request * 4))
+    estimated = math.ceil((current_request * limit) / matched_count)
+    safety_margin = max(1, limit - matched_count)
+    return min(max_requested, max(current_request + 1, estimated + safety_margin))
+
+
 def ensure_vector_search_backend_sync(
     engine: _SQLiteSearchRuntimeEngine,
     conn: sqlite3.Connection,
@@ -1149,7 +1164,12 @@ def _sqlite_vector_candidate_documents(
                 )
         if query.filter_spec is None or current_request >= max_requested:
             break
-        current_request = min(max_requested, current_request * 2)
+        current_request = _next_vector_candidate_request(
+            current_request,
+            matched_count=len(matched_documents),
+            limit=query.limit,
+            max_requested=max_requested,
+        )
 
     if query.filter_spec is not None and len(matched_documents) < query.limit:
         exact_fallback_reason = "post-filter-underflow"
@@ -1629,6 +1649,11 @@ def explain_search_documents_sync(
                 else None
             ),
             "filterMode": "post-candidate" if isinstance(query, SearchVectorQuery) and query.filter_spec is not None else None,
+            "candidateExpansionStrategy": (
+                "adaptive-retention"
+                if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
+                else None
+            ),
             "candidateCount": len(candidate_storage_keys) if candidate_storage_keys is not None else None,
             "candidateCountBeforeTopK": candidate_count_before_topk,
             "candidatePrefilterExact": candidate_exact,

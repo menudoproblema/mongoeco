@@ -648,6 +648,30 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         self.assertEqual(vector_explanation["engine_plan"]["details"]["backend"], "python")
                     self.assertEqual(vector_explanation["engine_plan"]["details"]["path"], "embedding")
 
+                    filtered_vector_explanation = collection.aggregate(
+                        [
+                            {
+                                "$vectorSearch": {
+                                    "index": "by_vector",
+                                    "path": "embedding",
+                                    "queryVector": [1.0, 0.0, 0.0],
+                                    "limit": 1,
+                                    "numCandidates": 1,
+                                    "filter": {"kind": "reference"},
+                                }
+                            }
+                        ]
+                    ).explain()
+                    if engine_name == "sqlite":
+                        self.assertEqual(
+                            filtered_vector_explanation["engine_plan"]["details"]["candidateExpansionStrategy"],
+                            "adaptive-retention",
+                        )
+                        self.assertEqual(
+                            filtered_vector_explanation["engine_plan"]["details"]["filterMode"],
+                            "post-candidate",
+                        )
+
                     with self.assertRaises(OperationFailure):
                         collection.aggregate(
                             [

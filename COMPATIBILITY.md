@@ -74,6 +74,10 @@ Esto implica:
 * si ese `$match` simple implica exactamente una clausula textual del
   `compound`, `explain()` lo deja visible como `downstreamRefinement` sobre esa
   clausula y el runtime usa ese refinamiento para estrechar candidatos.
+* en `vectorSearch` con `filter`, SQLite declara ya
+  `candidateExpansionStrategy="adaptive-retention"` en `explain()` para dejar
+  visible que la expansion ANN posterior al filtro ya no usa una heuristica
+  fija.
 * la proyeccion avanzada de `find` cubre ya el subconjunto diario mas util
   (`$slice`, `$elemMatch`, proyeccion posicional y `$meta: "textScore"`);
 * `$collStats` existe tanto como comando administrativo como stage de

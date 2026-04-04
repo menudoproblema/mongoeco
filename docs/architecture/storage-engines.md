@@ -182,6 +182,10 @@ En search existe ya otra frontera explicita por capas:
   `compound.must`, `compound.filter` o `compound.should`, SQLite marca esa
   clausula como refinada por `downstreamFilter` dentro de `compoundPrefilter`
   y estrecha su conjunto de candidatos antes del ranking final.
+- en `vectorSearch`, cuando el `post-filter` documental descarta demasiados
+  candidatos ANN, SQLite ya no expande `numCandidates` doblando a ciegas: usa
+  `candidateExpansionStrategy="adaptive-retention"` para estimar la siguiente
+  expansion segun la retencion observada.
 
 Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
 ruta de ejecucion, en la de `explain()` y en el lifecycle documental de los

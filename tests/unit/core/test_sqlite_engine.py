@@ -4698,6 +4698,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 )
             self.assertEqual(explanation.details["exactFallbackReason"], "post-filter-underflow")
             self.assertEqual(explanation.details["documentsFiltered"], 1)
+            self.assertEqual(explanation.details["candidateExpansionStrategy"], "adaptive-retention")
 
             with self.assertRaisesRegex(OperationFailure, "search index not found"):
                 await engine.explain_search_documents(
