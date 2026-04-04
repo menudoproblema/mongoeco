@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import Counter
 from copy import deepcopy
 import heapq
 import math
@@ -12,7 +11,7 @@ from mongoeco.api.operations import FindOperation
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
-from mongoeco.core.search_filter_prefilter import evaluate_candidate_filter
+from mongoeco.core.search_filter_prefilter import evaluate_candidate_filter, flatten_candidate_filter_clauses
 from mongoeco.core.search import (
     MaterializedSearchDocument,
     build_search_index_document,
@@ -22,7 +21,6 @@ from mongoeco.core.search import (
     materialize_search_document,
     matches_search_query,
     search_compound_ranking,
-    search_clause_ranking,
     search_near_distance,
     score_vector_document,
     search_query_explain_details,
@@ -80,13 +78,6 @@ from mongoeco.engines._sqlite_read_ops import search_documents as _sqlite_search
 from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import Document, QueryPlanExplanation, SearchIndexDefinition, SearchIndexDocument
-
-_SEARCH_RUNTIME_DUMMY_DEFINITION = SearchIndexDefinition(
-    {"mappings": {"dynamic": True}},
-    name="local",
-    index_type="search",
-)
-
 
 class _SQLiteSearchRuntimeEngine(Protocol):
     _simulate_search_index_latency: float
@@ -278,11 +269,11 @@ def _storage_keys_with_minimum_frequency(
 ) -> list[str]:
     if minimum <= 1:
         return _union_storage_key_lists(lists)
-    counts: Counter[str] = Counter()
+    counts: dict[str, int] = {}
     order: dict[str, int] = {}
     for values in lists:
         for storage_key in values:
-            counts[storage_key] += 1
+            counts[storage_key] = counts.get(storage_key, 0) + 1
             order.setdefault(storage_key, len(order))
     return [
         storage_key
@@ -401,8 +392,6 @@ def _textual_search_field_types(definition: SearchIndexDefinition) -> dict[str, 
 
 
 def _flatten_downstream_filter_clauses(filter_spec: dict[str, object]) -> list[tuple[str, object]] | None:
-    from mongoeco.core.search_filter_prefilter import flatten_candidate_filter_clauses
-
     clauses = flatten_candidate_filter_clauses(filter_spec)
     return list(clauses) if clauses is not None else None
 
@@ -514,119 +503,45 @@ def _candidate_storage_keys_for_downstream_filter_node(
     field_types: dict[str, str],
     return_clauses_only: bool = False,
 ) -> dict[str, object] | None:
-    clauses: list[tuple[str, object]] = []
-    supported_paths: list[str] = []
-    supported_operators: list[str] = []
-    supported_clause_count = 0
-    unsupported_clause_count = 0
-    exact = True
-    keys: list[str] | None = None
-    shapes: list[str] = []
-
-    for key, value in filter_spec.items():
-        if key == "$and":
-            if not isinstance(value, list):
-                return None
-            shapes.append("$and")
-            local_supported = False
-            local_keys: list[str] | None = None
-            for item in value:
-                if not isinstance(item, dict):
-                    return None
-                nested = _candidate_storage_keys_for_downstream_filter_node(
-                    engine,
-                    conn,
-                    physical_name,
-                    filter_spec=item,
-                    field_types=field_types,
-                    return_clauses_only=return_clauses_only,
-                )
-                if nested is None:
-                    return None
-                clauses.extend(nested["clauses"])
-                supported_paths.extend(nested["supported_paths"])
-                supported_operators.extend(nested["supported_operators"])
-                supported_clause_count += nested["supported_clause_count"]
-                unsupported_clause_count += nested["unsupported_clause_count"]
-                exact = exact and nested["exact"]
-                if not return_clauses_only and nested["keys"] is not None:
-                    local_supported = True
-                    local_keys = nested["keys"] if local_keys is None else _intersect_storage_key_lists([local_keys, nested["keys"]])
-            if not return_clauses_only and local_supported:
-                keys = local_keys if keys is None else _intersect_storage_key_lists([keys, local_keys])
-            continue
-        if key == "$or":
-            if not isinstance(value, list) or not value:
-                return None
-            shapes.append("$or")
-            branch_lists: list[list[str]] = []
-            for item in value:
-                if not isinstance(item, dict):
-                    return None
-                nested = _candidate_storage_keys_for_downstream_filter_node(
-                    engine,
-                    conn,
-                    physical_name,
-                    filter_spec=item,
-                    field_types=field_types,
-                    return_clauses_only=return_clauses_only,
-                )
-                if nested is None:
-                    return None
-                clauses.extend(nested["clauses"])
-                supported_paths.extend(nested["supported_paths"])
-                supported_operators.extend(nested["supported_operators"])
-                supported_clause_count += nested["supported_clause_count"]
-                unsupported_clause_count += nested["unsupported_clause_count"]
-                exact = exact and nested["exact"]
-                if not return_clauses_only:
-                    if nested["keys"] is None:
-                        return {
-                            "clauses": clauses,
-                            "keys": None,
-                            "supported_paths": supported_paths,
-                            "supported_operators": supported_operators,
-                            "supported_clause_count": supported_clause_count,
-                            "unsupported_clause_count": unsupported_clause_count + 1,
-                            "exact": False,
-                            "shape": "+".join(shapes) if shapes else "flat",
-                        }
-                    branch_lists.append(nested["keys"])
-            if not return_clauses_only:
-                union = _union_storage_key_lists(branch_lists)
-                keys = union if keys is None else _intersect_storage_key_lists([keys, union])
-            continue
-        if key.startswith("$"):
-            return None
-        clauses.append((key, value))
-        if return_clauses_only:
-            continue
-        storage_keys, operator_name = _candidate_storage_keys_for_downstream_clause(
+    clauses = flatten_candidate_filter_clauses(filter_spec)
+    if clauses is None:
+        return None
+    if return_clauses_only:
+        return {
+            "clauses": list(clauses),
+            "keys": None,
+            "supported_paths": [],
+            "supported_operators": [],
+            "supported_clause_count": 0,
+            "unsupported_clause_count": 0,
+            "exact": True,
+            "shape": None,
+        }
+    all_candidates: tuple[str, ...] = ()
+    result = evaluate_candidate_filter(
+        filter_spec,
+        all_candidates=all_candidates,
+        clause_resolver=lambda path, clause: _candidate_storage_keys_for_downstream_clause(
             engine,
             conn,
             physical_name,
-            path=key,
-            clause=value,
+            path=path,
+            clause=clause,
             field_types=field_types,
-        )
-        if storage_keys is None:
-            unsupported_clause_count += 1
-            exact = False
-            continue
-        supported_paths.append(key)
-        supported_operators.append(operator_name)
-        supported_clause_count += 1
-        keys = storage_keys if keys is None else _intersect_storage_key_lists([keys, storage_keys])
-
+        ),
+    )
+    if result is None:
+        return None
+    plan = result.plan
     return {
-        "clauses": clauses,
-        "keys": keys,
-        "supported_paths": supported_paths,
-        "supported_operators": supported_operators,
-        "supported_clause_count": supported_clause_count,
-        "unsupported_clause_count": unsupported_clause_count,
-        "exact": exact and unsupported_clause_count == 0,
-        "shape": "+".join(shapes) if shapes else "flat",
+        "clauses": list(clauses),
+        "keys": list(result.matches) if result.matches is not None else None,
+        "supported_paths": list(plan.supported_paths),
+        "supported_operators": list(plan.supported_operators),
+        "supported_clause_count": plan.supported_clause_count,
+        "unsupported_clause_count": plan.unsupported_clause_count,
+        "exact": plan.exact,
+        "shape": plan.shape,
     }
 
 
@@ -797,27 +712,15 @@ def _exact_candidateable_should_scores(
     )
     if not prepared_by_storage_key:
         return None
-    scores: dict[str, dict[str, float]] = {}
-    for storage_key in candidate_storage_keys:
-        prepared = prepared_by_storage_key.get(storage_key, _materialized_search_document_from_entries(()))
-        matched_should = 0
-        should_score = 0.0
-        for clause in query.should:
-            matched, clause_score, _near_distance = search_clause_ranking(
-                {},
-                definition=_SEARCH_RUNTIME_DUMMY_DEFINITION,
-                query=clause,
-                materialized=prepared,
-            )
-            if not matched:
-                continue
-            matched_should += 1
-            should_score += clause_score
-        scores[storage_key] = {
-            "matchedShould": float(matched_should),
-            "shouldScore": should_score,
-        }
-    return scores
+    return _compound_exact_candidateable_should_scores(
+        engine,
+        conn,
+        db_name=db_name,
+        coll_name=coll_name,
+        physical_name=physical_name,
+        query=query,
+        candidate_storage_keys=candidate_storage_keys,
+    )
 
 
 def _load_search_entries_by_storage_key(

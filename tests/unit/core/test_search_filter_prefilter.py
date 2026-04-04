@@ -54,3 +54,49 @@ class SearchFilterPrefilterTests(unittest.TestCase):
         self.assertEqual(result.matches, ("a",))
         self.assertEqual(result.plan.supported_clause_count, 3)
         self.assertEqual(result.plan.shape, "$and")
+
+    def test_matches_candidateable_filter_covers_invalid_and_missing_shapes(self):
+        document = {"kind": "note", "score": 12, "meta": {"visible": True}, "tags": ["a", "b"]}
+        self.assertIsNone(matches_candidateable_filter(document, {"$and": "bad"}))
+        self.assertIsNone(matches_candidateable_filter(document, {"$and": ["bad"]}))
+        self.assertIsNone(matches_candidateable_filter(document, {"$or": []}))
+        self.assertIsNone(matches_candidateable_filter(document, {"$or": ["bad"]}))
+        self.assertIsNone(matches_candidateable_filter(document, {"$unknown": 1}))
+        self.assertFalse(matches_candidateable_filter(document, {"meta.missing": {"$exists": True}}))
+        self.assertFalse(matches_candidateable_filter(document, {"missing": 1}))
+        self.assertFalse(matches_candidateable_filter(document, {"kind": {"$in": [object()]}}))
+        self.assertFalse(matches_candidateable_filter(document, {"score": {"$gte": "bad"}}))
+        self.assertIsNone(matches_candidateable_filter(document, {"kind": object()}))
+
+    def test_flatten_and_evaluate_candidate_filter_cover_invalid_and_partial_boolean_paths(self):
+        self.assertIsNone(flatten_candidate_filter_clauses({"$or": []}))
+        self.assertIsNone(flatten_candidate_filter_clauses({"$and": ["bad"]}))
+
+        def resolver(path: str, clause: object):
+            if path == "kind" and clause == "note":
+                return ("a", "b"), "eq"
+            if path == "flag" and clause == {"$exists": True}:
+                return ("a",), "$exists"
+            return None, "eq"
+
+        unsupported_or = evaluate_candidate_filter(
+            {"$or": [{"kind": "note"}, {"flag": {"$regex": "^y"}}]},
+            all_candidates=("a", "b", "c"),
+            ordered_candidates=("a", "b", "c"),
+            clause_resolver=resolver,
+        )
+        assert unsupported_or is not None
+        self.assertIsNone(unsupported_or.matches)
+        self.assertFalse(unsupported_or.plan.candidateable)
+        self.assertGreaterEqual(unsupported_or.plan.unsupported_clause_count, 1)
+
+        partial_and = evaluate_candidate_filter(
+            {"$and": [{"kind": "note"}, {"flag": {"$exists": True}}]},
+            all_candidates=("a", "b", "c"),
+            ordered_candidates=("c", "b", "a"),
+            clause_resolver=resolver,
+        )
+        assert partial_and is not None
+        self.assertEqual(partial_and.matches, ("a",))
+        self.assertEqual(partial_and.plan.supported_clause_count, 2)
+        self.assertTrue(partial_and.plan.exact)

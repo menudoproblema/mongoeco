@@ -39,6 +39,8 @@ from mongoeco.engines._memory_search_runtime import (
 from mongoeco.engines._memory_vector_runtime import (
     MaterializedVectorIndex as _RuntimeMaterializedVectorIndex,
     build_materialized_vector_index as _build_memory_vector_index,
+    candidate_positions_for_vector_filter as _memory_candidate_positions_for_vector_filter,
+    vector_scores_for_positions as _memory_vector_scores_for_positions,
 )
 from mongoeco.engines._runtime_metrics import LocalRuntimeMetrics
 from mongoeco.engines._shared_ttl import coerce_ttl_datetime, document_expired_by_ttl
@@ -90,6 +92,12 @@ from mongoeco.core.search import (
     validate_search_index_definition,
     vector_field_specs,
     vector_field_paths,
+)
+from mongoeco.core.search_filter_prefilter import (
+    collect_filterable_values as _shared_collect_filterable_values,
+    filter_value_key as _shared_filter_value_key,
+    matches_candidateable_filter as _shared_matches_candidateable_filter,
+    value_key_matches_range as _shared_value_key_matches_range,
 )
 from mongoeco.core.aggregation import AggregationSpillPolicy
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, OperationFailure
@@ -156,22 +164,7 @@ class _MaterializedVectorIndex:
 
 
 def _filter_value_key(value: object) -> _FilterValueKey | None:
-    if value is None:
-        return ("null", None)
-    if isinstance(value, bool):
-        return ("bool", value)
-    if isinstance(value, (int, float)) and not isinstance(value, bool):
-        number = float(value)
-        if not math.isfinite(number):
-            return None
-        return ("number", number)
-    if isinstance(value, str):
-        return ("string", value)
-    if isinstance(value, datetime.datetime):
-        return ("datetime", value)
-    if isinstance(value, datetime.date):
-        return ("date", value)
-    return None
+    return _shared_filter_value_key(value)
 
 
 def _collect_filterable_values(
@@ -179,140 +172,18 @@ def _collect_filterable_values(
     *,
     prefix: str = "",
 ) -> list[tuple[str, set[_FilterValueKey]]]:
-    entries: list[tuple[str, set[_FilterValueKey]]] = []
-    if isinstance(value, dict):
-        for key, item in value.items():
-            if not isinstance(key, str) or not key:
-                continue
-            path = f"{prefix}.{key}" if prefix else key
-            entries.extend(_collect_filterable_values(item, prefix=path))
-        return entries
-    if not prefix:
-        return entries
-    if isinstance(value, list):
-        scalar_values = {
-            normalized
-            for item in value
-            if (normalized := _filter_value_key(item)) is not None
-        }
-        entries.append((prefix, scalar_values))
-        return entries
-    normalized = _filter_value_key(value)
-    entries.append((prefix, {normalized} if normalized is not None else set()))
-    return entries
+    return _shared_collect_filterable_values(value, prefix=prefix)
 
 
 def _build_materialized_vector_index(
     documents: list[Document],
     definition: SearchIndexDefinition,
 ) -> _MaterializedVectorIndex:
-    specs = vector_field_specs(definition)
-    exists_index: dict[str, set[int]] = {}
-    scalar_index: dict[str, dict[_FilterValueKey, set[int]]] = {}
-    scalar_values_by_path: dict[str, list[tuple[int, _FilterValueKey]]] = {}
-    valid_vector_counts = {path: 0 for path in specs}
-    vector_rows: dict[str, list[tuple[float, ...]]] = {path: [] for path in specs}
-    vector_row_positions: dict[str, list[int]] = {path: [] for path in specs}
-    materialized_documents: list[_MaterializedVectorDocument] = []
-    for position, document in enumerate(documents):
-        vectors_by_path: dict[str, tuple[float, ...]] = {}
-        for path, field_spec in specs.items():
-            found, value = get_document_value(document, path)
-            if not found or not isinstance(value, list):
-                continue
-            candidate = tuple(
-                float(item)
-                for item in value
-                if isinstance(item, (int, float)) and not isinstance(item, bool)
-            )
-            if len(candidate) != len(value):
-                continue
-            if len(candidate) != int(field_spec["numDimensions"]):
-                continue
-            vectors_by_path[path] = candidate
-            valid_vector_counts[path] += 1
-            vector_rows[path].append(candidate)
-            vector_row_positions[path].append(position)
-        exists_paths: set[str] = set()
-        scalar_values: dict[str, tuple[_FilterValueKey, ...]] = {}
-        for path, values in _collect_filterable_values(document):
-            exists_paths.add(path)
-            exists_index.setdefault(path, set()).add(position)
-            normalized_values = tuple(sorted(values))
-            scalar_values[path] = normalized_values
-            if not normalized_values:
-                continue
-            path_index = scalar_index.setdefault(path, {})
-            values_by_path = scalar_values_by_path.setdefault(path, [])
-            for normalized in normalized_values:
-                path_index.setdefault(normalized, set()).add(position)
-                values_by_path.append((position, normalized))
-        materialized_documents.append(
-            _MaterializedVectorDocument(
-                document=document,
-                vectors_by_path=vectors_by_path,
-                exists_paths=frozenset(exists_paths),
-                scalar_values=scalar_values,
-            )
-        )
-    return _MaterializedVectorIndex(
-        documents=tuple(materialized_documents),
-        vector_paths=tuple(specs),
-        vector_specs=specs,
-        valid_vector_counts=valid_vector_counts,
-        vector_matrices={
-            path: np.asarray(values, dtype=np.float32)
-            for path, values in vector_rows.items()
-            if values
-        },
-        vector_row_positions={
-            path: tuple(values)
-            for path, values in vector_row_positions.items()
-            if values
-        },
-        vector_row_index_by_position={
-            path: {position: row_index for row_index, position in enumerate(values)}
-            for path, values in vector_row_positions.items()
-            if values
-        },
-        exists_filter_index={
-            path: frozenset(values)
-            for path, values in exists_index.items()
-        },
-        scalar_filter_index={
-            path: {
-                value_key: frozenset(values)
-                for value_key, values in path_values.items()
-            }
-            for path, path_values in scalar_index.items()
-        },
-        scalar_values_by_path={
-            path: tuple(values)
-            for path, values in scalar_values_by_path.items()
-        },
-    )
+    return _build_memory_vector_index(documents, definition)
 
 
 def _value_key_matches_range(value_key: _FilterValueKey, clause: dict[str, object]) -> bool:
-    kind, value = value_key
-    if kind not in {"number", "date", "datetime"}:
-        return False
-    for operator, bound in clause.items():
-        if operator not in {"$gt", "$gte", "$lt", "$lte"}:
-            return False
-        bound_key = _filter_value_key(bound)
-        if bound_key is None or bound_key[0] != kind:
-            return False
-        bound_value = bound_key[1]
-        if operator == "$gt" and not (value > bound_value):
-            return False
-        if operator == "$gte" and not (value >= bound_value):
-            return False
-        if operator == "$lt" and not (value < bound_value):
-            return False
-        if operator == "$lte" and not (value <= bound_value):
-            return False
-    return True
+    return _shared_value_key_matches_range(value_key, clause)
 
 
 def _candidate_positions_for_vector_filter(
@@ -320,247 +191,11 @@ def _candidate_positions_for_vector_filter(
     *,
     filter_spec: dict[str, object] | None,
 ) -> tuple[list[int] | None, dict[str, object] | None]:
-    if filter_spec is None:
-        return None, None
-    all_positions = set(range(len(vector_index.documents)))
-    candidate_state = _candidate_positions_for_vector_filter_node(
-        vector_index,
-        filter_spec,
-        all_positions=all_positions,
-    )
-    if candidate_state is None or candidate_state["positions"] is None:
-        return None, {
-            "spec": deepcopy(filter_spec),
-            "candidateable": False,
-            "exact": False,
-            "backend": None,
-            "supportedPaths": [] if candidate_state is None else candidate_state["supported_paths"],
-            "supportedClauseCount": 0 if candidate_state is None else candidate_state["supported_clause_count"],
-            "unsupportedClauseCount": 1 if candidate_state is None else candidate_state["unsupported_clause_count"],
-            "supportedOperators": [] if candidate_state is None else candidate_state["supported_operators"],
-            "booleanShape": None if candidate_state is None else candidate_state["shape"],
-        }
-    ordered_positions = [position for position in range(len(vector_index.documents)) if position in candidate_state["positions"]]
-    return ordered_positions, {
-        "spec": deepcopy(filter_spec),
-        "candidateable": True,
-        "exact": candidate_state["exact"],
-        "backend": "memory-vector-filter-index",
-        "supportedPaths": candidate_state["supported_paths"],
-        "supportedClauseCount": candidate_state["supported_clause_count"],
-        "unsupportedClauseCount": candidate_state["unsupported_clause_count"],
-        "supportedOperators": candidate_state["supported_operators"],
-        "booleanShape": candidate_state["shape"],
-    }
-
-
-def _candidate_positions_for_vector_filter_node(
-    vector_index: _MaterializedVectorIndex,
-    filter_spec: dict[str, object],
-    *,
-    all_positions: set[int],
-) -> dict[str, object] | None:
-    positions: set[int] | None = None
-    supported_paths: list[str] = []
-    supported_operators: list[str] = []
-    supported_clause_count = 0
-    unsupported_clause_count = 0
-    exact = True
-    shapes: list[str] = []
-    for key, value in filter_spec.items():
-        if key == "$and":
-            if not isinstance(value, list):
-                return None
-            shapes.append("$and")
-            local_positions: set[int] | None = None
-            local_supported = False
-            for item in value:
-                if not isinstance(item, dict):
-                    return None
-                nested = _candidate_positions_for_vector_filter_node(
-                    vector_index,
-                    item,
-                    all_positions=all_positions,
-                )
-                if nested is None:
-                    return None
-                supported_paths.extend(nested["supported_paths"])
-                supported_operators.extend(nested["supported_operators"])
-                supported_clause_count += nested["supported_clause_count"]
-                unsupported_clause_count += nested["unsupported_clause_count"]
-                exact = exact and nested["exact"]
-                if nested["positions"] is not None:
-                    local_supported = True
-                    local_positions = set(nested["positions"]) if local_positions is None else local_positions & set(nested["positions"])
-            if local_supported:
-                positions = set(local_positions) if positions is None else positions & set(local_positions)
-            continue
-        if key == "$or":
-            if not isinstance(value, list) or not value:
-                return None
-            shapes.append("$or")
-            branch_sets: list[set[int]] = []
-            branch_exact = True
-            for item in value:
-                if not isinstance(item, dict):
-                    return None
-                nested = _candidate_positions_for_vector_filter_node(
-                    vector_index,
-                    item,
-                    all_positions=all_positions,
-                )
-                if nested is None:
-                    return None
-                supported_paths.extend(nested["supported_paths"])
-                supported_operators.extend(nested["supported_operators"])
-                supported_clause_count += nested["supported_clause_count"]
-                unsupported_clause_count += nested["unsupported_clause_count"]
-                branch_exact = branch_exact and nested["exact"]
-                if nested["positions"] is None:
-                    return {
-                        "positions": None,
-                        "supported_paths": supported_paths,
-                        "supported_operators": supported_operators,
-                        "supported_clause_count": supported_clause_count,
-                        "unsupported_clause_count": unsupported_clause_count + 1,
-                        "exact": False,
-                        "shape": "+".join(shapes) if shapes else "flat",
-                    }
-                branch_sets.append(set(nested["positions"]))
-            union = set().union(*branch_sets)
-            positions = union if positions is None else positions & union
-            exact = exact and branch_exact
-            continue
-        if key.startswith("$"):
-            return None
-        matched_positions, operator_name = _candidate_positions_for_vector_filter_clause(
-            vector_index,
-            path=key,
-            clause=value,
-            all_positions=all_positions,
-        )
-        if matched_positions is None:
-            unsupported_clause_count += 1
-            exact = False
-            continue
-        supported_paths.append(key)
-        supported_operators.append(operator_name)
-        supported_clause_count += 1
-        positions = set(matched_positions) if positions is None else positions & set(matched_positions)
-    return {
-        "positions": positions,
-        "supported_paths": supported_paths,
-        "supported_operators": supported_operators,
-        "supported_clause_count": supported_clause_count,
-        "unsupported_clause_count": unsupported_clause_count,
-        "exact": exact and unsupported_clause_count == 0,
-        "shape": "+".join(shapes) if shapes else "flat",
-    }
-
-
-def _candidate_positions_for_vector_filter_clause(
-    vector_index: _MaterializedVectorIndex,
-    *,
-    path: str,
-    clause: object,
-    all_positions: set[int],
-) -> tuple[set[int] | None, str]:
-    if isinstance(clause, dict) and set(clause) == {"$exists"} and isinstance(clause["$exists"], bool):
-        existing = set(vector_index.exists_filter_index.get(path, ()))
-        return (existing if clause["$exists"] else all_positions - existing), "$exists"
-    if isinstance(clause, dict) and set(clause) == {"$in"} and isinstance(clause["$in"], list):
-        matched_positions: set[int] = set()
-        for item in clause["$in"]:
-            value_key = _filter_value_key(item)
-            if value_key is None:
-                return None, "$in"
-            matched_positions.update(vector_index.scalar_filter_index.get(path, {}).get(value_key, ()))
-        return matched_positions, "$in"
-    if isinstance(clause, dict) and clause and set(clause).issubset({"$gt", "$gte", "$lt", "$lte"}):
-        matched_positions = {
-            position
-            for position, value_key in vector_index.scalar_values_by_path.get(path, ())
-            if _value_key_matches_range(value_key, clause)
-        }
-        return matched_positions, "range"
-    value_key = _filter_value_key(clause)
-    if value_key is None:
-        return None, "eq"
-    return set(vector_index.scalar_filter_index.get(path, {}).get(value_key, ())), "eq"
+    return _memory_candidate_positions_for_vector_filter(vector_index, filter_spec=filter_spec)
 
 
 def _matches_candidateable_filter(document: Document, filter_spec: dict[str, object]) -> bool | None:
-    for key, value in filter_spec.items():
-        if key == "$and":
-            if not isinstance(value, list):
-                return None
-            for item in value:
-                if not isinstance(item, dict):
-                    return None
-                matched = _matches_candidateable_filter(document, item)
-                if matched is None:
-                    return None
-                if not matched:
-                    return False
-            continue
-        if key == "$or":
-            if not isinstance(value, list) or not value:
-                return None
-            branch_supported = False
-            for item in value:
-                if not isinstance(item, dict):
-                    return None
-                matched = _matches_candidateable_filter(document, item)
-                if matched is None:
-                    return None
-                branch_supported = True
-                if matched:
-                    return True
-            return False if branch_supported else None
-        if key.startswith("$"):
-            return None
-        found, raw_value = get_document_value(document, key)
-        candidate_values = raw_value if isinstance(raw_value, list) else [raw_value]
-        if isinstance(value, dict) and set(value) == {"$exists"} and isinstance(value["$exists"], bool):
-            if found != value["$exists"]:
-                return False
-            continue
-        if not found:
-            return False
-        if isinstance(value, dict) and set(value) == {"$in"} and isinstance(value["$in"], list):
-            normalized_candidates = {
-                normalized
-                for item in candidate_values
-                if (normalized := _filter_value_key(item)) is not None
-            }
-            normalized_filter_values = {
-                normalized
-                for item in value["$in"]
-                if (normalized := _filter_value_key(item)) is not None
-            }
-            if not normalized_filter_values or normalized_candidates.isdisjoint(normalized_filter_values):
-                return False
-            continue
-        if isinstance(value, dict) and value and set(value).issubset({"$gt", "$gte", "$lt", "$lte"}):
-            normalized_candidates = [
-                normalized
-                for item in candidate_values
-                if (normalized := _filter_value_key(item)) is not None
-            ]
-            if not normalized_candidates or not any(_value_key_matches_range(item, value) for item in normalized_candidates):
-                return False
-            continue
-        normalized_clause = _filter_value_key(value)
-        if normalized_clause is None:
-            return None
-        normalized_candidates = {
-            normalized
-            for item in candidate_values
-            if (normalized := _filter_value_key(item)) is not None
-        }
-        if normalized_clause not in normalized_candidates:
-            return False
-    return True
+    return _shared_matches_candidateable_filter(document, filter_spec)
 
 
 def _vector_scores_for_positions(
@@ -570,50 +205,12 @@ def _vector_scores_for_positions(
     candidate_positions: list[int],
     limit: int | None,
 ) -> list[tuple[float, int]]:
-    matrix = vector_index.vector_matrices.get(query.path)
-    if matrix is None or matrix.size == 0:
-        return []
-    row_index_by_position = vector_index.vector_row_index_by_position.get(query.path, {})
-    selected_rows: list[int] = []
-    selected_positions: list[int] = []
-    for position in candidate_positions:
-        row_index = row_index_by_position.get(position)
-        if row_index is None:
-            continue
-        selected_rows.append(row_index)
-        selected_positions.append(position)
-    if not selected_rows:
-        return []
-    candidate_matrix = matrix[np.asarray(selected_rows, dtype=np.int32)]
-    query_vector = np.asarray(query.query_vector, dtype=np.float32)
-    similarity = str(vector_index.vector_specs.get(query.path, {}).get("similarity", query.similarity))
-    if similarity == "dotProduct":
-        scores = candidate_matrix @ query_vector
-    elif similarity == "euclidean":
-        scores = -np.linalg.norm(candidate_matrix - query_vector, axis=1)
-    else:
-        candidate_norms = np.linalg.norm(candidate_matrix, axis=1)
-        query_norm = float(np.linalg.norm(query_vector))
-        denominator = candidate_norms * query_norm
-        raw_scores = candidate_matrix @ query_vector
-        scores = np.divide(
-            raw_scores,
-            denominator,
-            out=np.zeros_like(raw_scores, dtype=np.float32),
-            where=denominator > 0,
-        )
-    if limit is not None and limit > 0 and len(scores) > limit:
-        top_indexes = np.argpartition(scores, -limit)[-limit:]
-        ordered_indexes = top_indexes[np.argsort(scores[top_indexes])[::-1]]
-        return [
-            (float(scores[int(index)]), selected_positions[int(index)])
-            for index in ordered_indexes
-        ]
-    ordered_indexes = np.argsort(scores)[::-1]
-    return [
-        (float(scores[int(index)]), selected_positions[int(index)])
-        for index in ordered_indexes
-    ]
+    return _memory_vector_scores_for_positions(
+        vector_index,
+        query=query,
+        candidate_positions=candidate_positions,
+        limit=limit,
+    )
 
 
 class MemoryEngine(AsyncStorageEngine):
