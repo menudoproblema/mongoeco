@@ -31,6 +31,7 @@ from mongoeco.core.search import (
     SearchCompoundQuery,
     SearchEqualsQuery,
     SearchExistsQuery,
+    SearchInQuery,
     SearchNearQuery,
     SearchPhraseQuery,
     SearchQuery,
@@ -350,7 +351,7 @@ def _sqlite_candidate_storage_keys_for_query(
             query=query,
         )
         return candidates, backend, exact
-    if isinstance(query, (SearchEqualsQuery, SearchRangeQuery, SearchNearQuery)):
+    if isinstance(query, (SearchInQuery, SearchEqualsQuery, SearchRangeQuery, SearchNearQuery)):
         return None, None, False
     return None, None, False
 

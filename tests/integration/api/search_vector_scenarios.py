@@ -117,13 +117,20 @@ def assert_filtered_vector_explanation(
     case.assertLess(details["documentsScannedAfterPrefilter"], details["documentsScanned"])
 
 
-def assert_equals_and_range_explanations(
+def assert_in_equals_and_range_explanations(
     case: unittest.TestCase,
+    in_explanation: dict[str, object],
     equals_explanation: dict[str, object],
     range_explanation: dict[str, object],
     *,
     engine_name: str,
 ) -> None:
+    in_details = in_explanation["engine_plan"]["details"]
+    case.assertEqual(in_details["queryOperator"], "in")
+    case.assertEqual(in_details["path"], "kind")
+    case.assertEqual(in_details["value"], ["note", "reference"])
+    case.assertEqual(in_details["backend"], "python")
+    case.assertEqual(in_details["compound"], None)
     equals_details = equals_explanation["engine_plan"]["details"]
     case.assertEqual(equals_details["queryOperator"], "equals")
     case.assertEqual(equals_details["path"], "kind")

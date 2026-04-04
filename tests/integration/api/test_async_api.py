@@ -48,7 +48,7 @@ from tests.integration.api.search_vector_scenarios import (
     assert_compound_candidateable_should_matched_limited_explanation,
     assert_compound_candidateable_should_title_prefilter_explanation,
     assert_compound_should_near_explanation,
-    assert_equals_and_range_explanations,
+    assert_in_equals_and_range_explanations,
     assert_filtered_vector_explanation,
     assert_ranged_vector_explanation,
 )
@@ -137,7 +137,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(only_default[0]["queryMode"], "text")
                     self.assertEqual(
                         only_default[0]["capabilities"],
-                        ["text", "phrase", "autocomplete", "wildcard", "exists", "equals", "range", "near", "compound"],
+                        ["text", "phrase", "autocomplete", "wildcard", "exists", "in", "equals", "range", "near", "compound"],
                     )
 
                     await collection.update_search_index("default", {"mappings": {"dynamic": True}})
@@ -280,6 +280,13 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     else:
                         self.assertEqual(exists_explanation["engine_plan"]["details"]["backend"], "python")
 
+                    in_hits = await collection.aggregate(
+                        [
+                            {"$search": {"index": "by_text", "in": {"path": "kind", "value": ["note", "reference"]}}},
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in in_hits], [2, 3])
                     equals_hits = await collection.aggregate(
                         [
                             {"$search": {"index": "by_text", "equals": {"path": "kind", "value": "note"}}},
@@ -294,14 +301,18 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ]
                     ).to_list()
                     self.assertEqual([document["_id"] for document in range_hits], [3])
+                    in_explanation = await collection.aggregate(
+                        [{"$search": {"index": "by_text", "in": {"path": "kind", "value": ["note", "reference"]}}}]
+                    ).explain()
                     equals_explanation = await collection.aggregate(
                         [{"$search": {"index": "by_text", "equals": {"path": "kind", "value": "note"}}}]
                     ).explain()
                     range_explanation = await collection.aggregate(
                         [{"$search": {"index": "by_text", "range": {"path": "score", "gte": 9, "lte": 11}}}]
                     ).explain()
-                    assert_equals_and_range_explanations(
+                    assert_in_equals_and_range_explanations(
                         self,
+                        in_explanation,
                         equals_explanation,
                         range_explanation,
                         engine_name=engine_name,

@@ -93,7 +93,7 @@ def main() -> None:
                         "compound": {
                             "must": [{"text": {"query": "ada", "path": "title"}}],
                             "filter": [
-                                {"equals": {"path": "kind", "value": "note"}},
+                                {"in": {"path": "kind", "value": ["note", "reference"]}},
                                 {"range": {"path": "score", "gte": 9}},
                             ],
                         },

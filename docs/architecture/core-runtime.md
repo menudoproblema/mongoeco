@@ -94,6 +94,7 @@ Y el runtime local de `search` queda ya ampliado a un subset explicito de
 - `autocomplete`;
 - `wildcard`;
 - `exists`;
+- `in`;
 - `equals`;
 - `range`;
 - `near`;
@@ -114,7 +115,7 @@ La regla arquitectonica es la misma:
   (`text`, `phrase`, `autocomplete`) y, en `wildcard`, `exists` y parte de
   `compound`, usa la tabla materializada como prefilter de candidatos antes
   del matching Python exacto;
-- `equals` y `range` entran ya como operadores locales explicitos sobre paths
+- `in`, `equals` y `range` entran ya como operadores locales explicitos sobre paths
   escalares, con matching baseline compartido y explain coherente aunque no
   intenten fingir una traduccion Atlas-like al backend;
 - `compound` deja visible en `explain()` tanto el inventario de operadores por

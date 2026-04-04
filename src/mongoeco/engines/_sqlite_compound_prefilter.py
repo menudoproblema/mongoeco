@@ -11,6 +11,7 @@ from mongoeco.core.search import (
     SearchCompoundQuery,
     SearchEqualsQuery,
     SearchExistsQuery,
+    SearchInQuery,
     SearchNearQuery,
     SearchPhraseQuery,
     SearchQuery,
@@ -383,11 +384,12 @@ def clause_search_paths(clause: SearchQuery) -> tuple[str, ...] | None:
             SearchAutocompleteQuery,
             SearchWildcardQuery,
             SearchExistsQuery,
+            SearchInQuery,
             SearchEqualsQuery,
             SearchRangeQuery,
         ),
     ):
-        return (clause.path,) if isinstance(clause, (SearchEqualsQuery, SearchRangeQuery)) else clause.paths
+        return (clause.path,) if isinstance(clause, (SearchInQuery, SearchEqualsQuery, SearchRangeQuery)) else clause.paths
     return None
 
 
@@ -413,7 +415,7 @@ def compound_entry_ranking_supported(
         physical_name
         and query.should
         and not any(
-            isinstance(clause, (SearchEqualsQuery, SearchRangeQuery, SearchNearQuery, SearchCompoundQuery))
+            isinstance(clause, (SearchInQuery, SearchEqualsQuery, SearchRangeQuery, SearchNearQuery, SearchCompoundQuery))
             for clause in query.should
         )
     )

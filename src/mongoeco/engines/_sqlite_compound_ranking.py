@@ -11,6 +11,7 @@ from mongoeco.core.search import (
     MaterializedSearchDocument,
     SearchCompoundQuery,
     SearchEqualsQuery,
+    SearchInQuery,
     SearchNearQuery,
     SearchQuery,
     SearchRangeQuery,
@@ -421,7 +422,7 @@ def exact_candidateable_should_scores(
     candidate_storage_keys: list[str],
 ) -> dict[str, dict[str, float]] | None:
     if physical_name is None or not candidate_storage_keys or any(
-        isinstance(clause, (SearchEqualsQuery, SearchRangeQuery, SearchNearQuery, SearchCompoundQuery))
+        isinstance(clause, (SearchInQuery, SearchEqualsQuery, SearchRangeQuery, SearchNearQuery, SearchCompoundQuery))
         for clause in query.should
     ):
         return None

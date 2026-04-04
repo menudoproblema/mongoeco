@@ -26,6 +26,7 @@ Pendientes:
   * `autocomplete`
   * `wildcard`
   * `exists`
+  * `in`
   * `equals`
   * `range`
   * `near`

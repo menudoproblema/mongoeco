@@ -14,6 +14,9 @@ usa Semantic Versioning.
   manteniendo `MemoryEngine` como baseline semantico y dejando visible en
   `explain()` que esos operadores siguen siendo un subset local honesto sobre
   paths escalares.
+- El subset local de `$search` soporta ahora tambien `in` sobre paths
+  escalares, con explain/parity alineados entre `MemoryEngine` y
+  `SQLiteEngine`.
 - La documentacion publica gana ahora ejemplos ejecutables bajo `examples/` y
   guias cortas de casos de uso y comparacion frente a MongoDB real y
   `mongomock`, para hacer mas claro donde encaja el producto y donde termina su

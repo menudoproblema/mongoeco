@@ -36,6 +36,7 @@ LOCAL_RUNTIME_SUBSET_CATALOG: dict[str, dict[str, object]] = {
             "autocomplete",
             "wildcard",
             "exists",
+            "in",
             "equals",
             "range",
             "near",

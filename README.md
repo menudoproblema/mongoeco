@@ -191,6 +191,7 @@ The local `$search` subset now includes:
 * `autocomplete`
 * `wildcard`
 * `exists`
+* `in`
 * `equals`
 * `range`
 * `near`
@@ -269,7 +270,7 @@ Current rule of thumb from local diagnostics:
 
 * `MemoryEngine` remains strongest on many Python-baseline filter paths;
 * `SQLiteEngine` is strongest when it can push work to SQL, FTS5 or `usearch`;
-* `wildcard`, `exists`, `equals`, `range` and some `compound` search shapes in
+* `wildcard`, `exists`, `in`, `equals`, `range` and some `compound` search shapes in
   SQLite now use a mix of materialized candidate prefilters and exact Python
   matching, depending on the operator/backend path;
 * `vectorSearch` on SQLite is already materially faster than the exact

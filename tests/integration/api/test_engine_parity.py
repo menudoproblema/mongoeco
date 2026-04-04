@@ -1394,6 +1394,12 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         {"$sort": {"_id": 1}},
                     ]
                 ).to_list()
+                in_hits = await collection.aggregate(
+                    [
+                        {"$search": {"index": "by_text", "in": {"path": "kind", "value": ["note", "reference"]}}},
+                        {"$sort": {"_id": 1}},
+                    ]
+                ).to_list()
                 equals_hits = await collection.aggregate(
                     [
                         {"$search": {"index": "by_text", "equals": {"path": "kind", "value": "note"}}},
@@ -1531,6 +1537,9 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                 exists_explain = await collection.aggregate(
                     [{"$search": {"index": "by_text", "exists": {"path": "title"}}}]
                 ).explain()
+                in_explain = await collection.aggregate(
+                    [{"$search": {"index": "by_text", "in": {"path": "kind", "value": ["note", "reference"]}}}]
+                ).explain()
                 equals_explain = await collection.aggregate(
                     [{"$search": {"index": "by_text", "equals": {"path": "kind", "value": "note"}}}]
                 ).explain()
@@ -1613,6 +1622,7 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "autocomplete_hits": [document["_id"] for document in autocomplete_hits],
                     "wildcard_hits": [document["_id"] for document in wildcard_hits],
                     "exists_hits": [document["_id"] for document in exists_hits],
+                    "in_hits": [document["_id"] for document in in_hits],
                     "equals_hits": [document["_id"] for document in equals_hits],
                     "range_hits": [document["_id"] for document in range_hits],
                     "near_hits": [document["_id"] for document in near_hits],
@@ -1643,6 +1653,11 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                     "exists_explain": {
                         "query_operator": exists_explain["engine_plan"]["details"]["queryOperator"],
                         "paths": exists_explain["engine_plan"]["details"]["paths"],
+                    },
+                    "in_explain": {
+                        "query_operator": in_explain["engine_plan"]["details"]["queryOperator"],
+                        "path": in_explain["engine_plan"]["details"]["path"],
+                        "value": in_explain["engine_plan"]["details"]["value"],
                     },
                     "equals_explain": {
                         "query_operator": equals_explain["engine_plan"]["details"]["queryOperator"],

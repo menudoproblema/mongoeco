@@ -590,7 +590,7 @@
 - `note`: `The embedded runtime uses planar local geometry operations. $nearSphere and 2dsphere remain Mongo-like names over local planar distance.`
 
 ### `search`
-- `operators`: `text`, `phrase`, `autocomplete`, `wildcard`, `exists`, `equals`, `range`, `near`, `compound`
+- `operators`: `text`, `phrase`, `autocomplete`, `wildcard`, `exists`, `in`, `equals`, `range`, `near`, `compound`
 - `sqliteBackends`: `fts5`, `fts5-glob`, `fts5-path`, `fts5-prefilter`, `python`
 - `note`: `The local $search surface remains an explicit Atlas-like subset.`
 
