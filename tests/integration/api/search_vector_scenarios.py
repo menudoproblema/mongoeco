@@ -149,6 +149,21 @@ def assert_in_equals_and_range_explanations(
         case.assertFalse(bool(range_details.get("fts5_match")))
 
 
+def assert_regex_explanation(
+    case: unittest.TestCase,
+    explanation: dict[str, object],
+    *,
+    engine_name: str,
+) -> None:
+    details = explanation["engine_plan"]["details"]
+    case.assertEqual(details["queryOperator"], "regex")
+    case.assertEqual(details["query"], "Ada.*algorithm")
+    case.assertEqual(details["paths"], ["body"])
+    case.assertEqual(details["backend"], "python")
+    if engine_name == "sqlite":
+        case.assertFalse(bool(details.get("fts5_match")))
+
+
 def assert_phrase_in_range_compound_explanation(
     case: unittest.TestCase,
     explanation: dict[str, object],
@@ -157,7 +172,7 @@ def assert_phrase_in_range_compound_explanation(
     case.assertEqual(details["queryOperator"], "compound")
     case.assertEqual(details["compound"]["mustOperators"], ["phrase"])
     case.assertEqual(details["compound"]["filterOperators"], ["in", "range"])
-    case.assertEqual(details["compound"]["shouldOperators"], ["exists"])
+    case.assertEqual(details["compound"]["shouldOperators"], ["exists", "regex"])
 
 
 def assert_vector_similarity_explanation(

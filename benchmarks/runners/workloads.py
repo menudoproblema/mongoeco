@@ -670,6 +670,7 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
     text_metrics: list[Metrics] = []
     autocomplete_metrics: list[Metrics] = []
     wildcard_metrics: list[Metrics] = []
+    regex_metrics: list[Metrics] = []
     compound_metrics: list[Metrics] = []
     compound_near_metrics: list[Metrics] = []
     compound_candidateable_should_metrics: list[Metrics] = []
@@ -713,6 +714,10 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
         ]
         wildcard_pipeline = [
             {"$search": {"index": "by_text", "wildcard": {"query": "*vector*", "path": "body"}}},
+            {"$limit": 10},
+        ]
+        regex_pipeline = [
+            {"$search": {"index": "by_text", "regex": {"query": "Ada.*algorithms", "path": "title"}}},
             {"$limit": 10},
         ]
         compound_pipeline = [
@@ -873,6 +878,19 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                         engine.explain_aggregate(db_name, coll_name, wildcard_pipeline)
                     ),
                     "query_shape": "$search.wildcard body *vector*",
+                },
+            ),
+            "search_regex_topk_100": _measure_single_task(
+                regex_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, regex_pipeline)
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_search_explain(
+                        engine.explain_aggregate(db_name, coll_name, regex_pipeline)
+                    ),
+                    "query_shape": "$search.regex title Ada.*algorithms",
                 },
             ),
             "search_compound_hybrid_topk_100": _measure_single_task(

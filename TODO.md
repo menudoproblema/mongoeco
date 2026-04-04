@@ -25,6 +25,7 @@ Pendientes:
   * `phrase`
   * `autocomplete`
   * `wildcard`
+  * `regex`
   * `exists`
   * `in`
   * `equals`

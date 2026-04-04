@@ -14,6 +14,7 @@ from mongoeco.core.search import (
     SearchInQuery,
     SearchNearQuery,
     SearchPhraseQuery,
+    SearchRegexQuery,
     SearchRangeQuery,
     SearchTextQuery,
     SearchVectorQuery,
@@ -28,6 +29,7 @@ from mongoeco.core.search import (
     compile_search_exists_query,
     compile_search_in_query,
     compile_search_near_query,
+    compile_search_regex_query,
     is_queryable_search_definition,
     compile_search_range_query,
     compile_search_text_like_query,
@@ -47,6 +49,7 @@ from mongoeco.core.search import (
     matches_search_near_query,
     matches_search_query,
     matches_search_phrase_query,
+    matches_search_regex_query,
     matches_search_range_query,
     matches_search_text_query,
     matches_search_wildcard_query,
@@ -466,6 +469,8 @@ class SearchCoreTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             compile_search_wildcard_query({"index": "by_text", "wildcard": {"query": ""}})
         with self.assertRaises(OperationFailure):
+            compile_search_regex_query({"index": "by_text", "regex": {"query": ""}})
+        with self.assertRaises(OperationFailure):
             compile_vector_search_query({"index": "vec", "path": "", "queryVector": [1], "limit": 1})
         with self.assertRaises(OperationFailure):
             compile_vector_search_query({"index": "vec", "path": "embedding", "queryVector": [1], "limit": 1, "filter": []})
@@ -488,6 +493,8 @@ class SearchCoreTests(unittest.TestCase):
             compile_search_exists_query({"index": "by_text", "text": {"query": "ada"}})
         with self.assertRaisesRegex(OperationFailure, "near specification is required"):
             compile_search_near_query({"index": "by_text", "text": {"query": "ada"}})
+        with self.assertRaisesRegex(OperationFailure, "regex specification is required"):
+            compile_search_regex_query({"index": "by_text", "text": {"query": "ada"}})
         with self.assertRaisesRegex(OperationFailure, "compound specification is required"):
             compile_search_compound_query({"index": "by_text", "text": {"query": "ada"}})
 
@@ -1980,9 +1987,13 @@ class SearchCoreTests(unittest.TestCase):
         with self.assertRaisesRegex(OperationFailure, "document specification"):
             compile_search_wildcard_query({"wildcard": "bad"})
         with self.assertRaisesRegex(OperationFailure, "document specification"):
+            compile_search_regex_query({"regex": "bad"})
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
             compile_search_exists_query({"exists": "bad"})
         with self.assertRaisesRegex(OperationFailure, "document specification"):
             compile_search_near_query({"near": "bad"})
+        with self.assertRaisesRegex(OperationFailure, "valid regular expression"):
+            compile_search_regex_query({"regex": {"query": "[", "path": "name"}})
         with self.assertRaisesRegex(OperationFailure, "positive finite number"):
             compile_search_near_query({"near": {"path": "score", "origin": 1, "pivot": 0}})
         with self.assertRaisesRegex(OperationFailure, "entries must be documents"):
@@ -2009,6 +2020,13 @@ class SearchCoreTests(unittest.TestCase):
                 {"name": None},
                 definition=definition,
                 query=SearchWildcardQuery(index_name="default", raw_query="Ada*", normalized_pattern="ada*", paths=("name",)),
+            )
+        )
+        self.assertFalse(
+            matches_search_regex_query(
+                {"name": None},
+                definition=definition,
+                query=SearchRegexQuery(index_name="default", raw_query="Ada.*", paths=("name",)),
             )
         )
         self.assertTrue(
@@ -2113,6 +2131,12 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(exists_details["queryOperator"], "exists")
         self.assertEqual(exists_details["paths"], ["title"])
+        regex_details = search_query_explain_details(
+            SearchRegexQuery(index_name="by_text", raw_query="Ada.*algorithm", paths=("body",))
+        )
+        self.assertEqual(regex_details["queryOperator"], "regex")
+        self.assertEqual(regex_details["query"], "Ada.*algorithm")
+        self.assertEqual(regex_details["paths"], ["body"])
         near_details = search_query_explain_details(
             SearchNearQuery(
                 index_name="by_text",
@@ -2153,6 +2177,14 @@ class SearchCoreTests(unittest.TestCase):
                 document,
                 definition=definition,
                 query=SearchExistsQuery(index_name="by_text", paths=("title",)),
+                materialized=prepared,
+            )
+        )
+        self.assertTrue(
+            matches_search_regex_query(
+                document,
+                definition=definition,
+                query=SearchRegexQuery(index_name="by_text", raw_query="Ada.*vector", paths=("body",)),
                 materialized=prepared,
             )
         )

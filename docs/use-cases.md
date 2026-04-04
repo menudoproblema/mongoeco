@@ -56,6 +56,7 @@ Current local `$search` subset includes:
 * `phrase`
 * `autocomplete`
 * `wildcard`
+* `regex`
 * `exists`
 * `in`
 * `equals`

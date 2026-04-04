@@ -52,6 +52,7 @@ from tests.integration.api.search_vector_scenarios import (
     assert_in_equals_and_range_explanations,
     assert_filtered_vector_explanation,
     assert_phrase_in_range_compound_explanation,
+    assert_regex_explanation,
     assert_ranged_vector_explanation,
     assert_vector_similarity_explanation,
 )
@@ -140,7 +141,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(only_default[0]["queryMode"], "text")
                     self.assertEqual(
                         only_default[0]["capabilities"],
-                        ["text", "phrase", "autocomplete", "wildcard", "exists", "in", "equals", "range", "near", "compound"],
+                        ["text", "phrase", "autocomplete", "wildcard", "regex", "exists", "in", "equals", "range", "near", "compound"],
                     )
 
                     await collection.update_search_index("default", {"mappings": {"dynamic": True}})
@@ -349,6 +350,20 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         range_explanation,
                         engine_name=engine_name,
                     )
+                    regex_hits = await collection.aggregate(
+                        [
+                            {"$search": {"index": "by_text", "regex": {"query": "Ada.*algorithm", "path": "body"}}},
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in regex_hits], [3])
+                    assert_regex_explanation(
+                        self,
+                        await collection.aggregate(
+                            [{"$search": {"index": "by_text", "regex": {"query": "Ada.*algorithm", "path": "body"}}}]
+                        ).explain(),
+                        engine_name=engine_name,
+                    )
 
                     compound_hits = await collection.aggregate(
                         [
@@ -436,7 +451,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                             {"in": {"path": "kind", "value": ["note", "reference"]}},
                                             {"range": {"path": "score", "gte": 9}},
                                         ],
-                                        "should": [{"exists": {"path": "summary"}}],
+                                        "should": [
+                                            {"exists": {"path": "summary"}},
+                                            {"regex": {"query": "Algorithm.*", "path": "summary"}},
+                                        ],
                                     },
                                 }
                             }
@@ -463,7 +481,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                                 {"in": {"path": "kind", "value": ["note", "reference"]}},
                                                 {"range": {"path": "score", "gte": 9}},
                                             ],
-                                            "should": [{"exists": {"path": "summary"}}],
+                                            "should": [
+                                                {"exists": {"path": "summary"}},
+                                                {"regex": {"query": "Algorithm.*", "path": "summary"}},
+                                            ],
                                         },
                                     }
                                 }

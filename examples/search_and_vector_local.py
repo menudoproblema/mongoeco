@@ -106,14 +106,17 @@ def main() -> None:
                                 {"in": {"path": "kind", "value": ["note", "reference"]}},
                                 {"range": {"path": "score", "gte": 9}},
                             ],
-                            "should": [{"exists": {"path": "summary"}}],
+                            "should": [
+                                {"exists": {"path": "summary"}},
+                                {"regex": {"query": "Algorithm.*", "path": "summary"}},
+                            ],
                         },
                     }
                 },
                 {"$project": {"_id": 1, "title": 1, "score": 1, "summary": 1}},
             ]
         ).to_list()
-        print("$search compound phrase+in+range results:", search_results)
+        print("$search compound phrase+in+range+regex results:", search_results)
         search_explain = collection.aggregate(
             [
                 {
@@ -132,7 +135,10 @@ def main() -> None:
                                 {"in": {"path": "kind", "value": ["note", "reference"]}},
                                 {"range": {"path": "score", "gte": 9}},
                             ],
-                            "should": [{"exists": {"path": "summary"}}],
+                            "should": [
+                                {"exists": {"path": "summary"}},
+                                {"regex": {"query": "Algorithm.*", "path": "summary"}},
+                            ],
                         },
                     }
                 }

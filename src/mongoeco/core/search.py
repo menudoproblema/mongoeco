@@ -66,6 +66,13 @@ class SearchWildcardQuery:
 
 
 @dataclass(frozen=True, slots=True)
+class SearchRegexQuery:
+    index_name: str
+    raw_query: str
+    paths: tuple[str, ...] | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class SearchExistsQuery:
     index_name: str
     paths: tuple[str, ...] | None = None
@@ -110,10 +117,10 @@ class SearchNearQuery:
 @dataclass(frozen=True, slots=True)
 class SearchCompoundQuery:
     index_name: str
-    must: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
-    should: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
-    filter: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
-    must_not: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
+    must: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
+    should: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
+    filter: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
+    must_not: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
     minimum_should_match: int = 0
 
 
@@ -145,6 +152,7 @@ type SearchTextLikeQuery = (
     | SearchPhraseQuery
     | SearchAutocompleteQuery
     | SearchWildcardQuery
+    | SearchRegexQuery
     | SearchExistsQuery
     | SearchInQuery
     | SearchEqualsQuery
@@ -421,6 +429,13 @@ def compile_search_wildcard_query(spec: object) -> SearchWildcardQuery:
     return query
 
 
+def compile_search_regex_query(spec: object) -> SearchRegexQuery:
+    query = compile_search_text_like_query(spec)
+    if not isinstance(query, SearchRegexQuery):
+        raise OperationFailure("$search.regex specification is required")
+    return query
+
+
 def compile_search_exists_query(spec: object) -> SearchExistsQuery:
     query = compile_search_text_like_query(spec)
     if not isinstance(query, SearchExistsQuery):
@@ -553,6 +568,25 @@ def matches_search_wildcard_query(
     pattern = query.normalized_pattern
     prepared = materialized or materialize_search_document(document, definition)
     return any(fnmatch.fnmatchcase(value, pattern) for value in _materialized_lowered_values(prepared, query.paths))
+
+
+def matches_search_regex_query(
+    document: Document,
+    *,
+    definition: SearchIndexDefinition,
+    query: SearchRegexQuery,
+    materialized: MaterializedSearchDocument | None = None,
+) -> bool:
+    prepared = materialized or materialize_search_document(document, definition)
+    try:
+        compiled = re.compile(query.raw_query)
+    except re.error:
+        return False
+    return any(
+        compiled.search(value) is not None
+        for field_path, value in prepared.entries
+        if query.paths is None or field_path in query.paths
+    )
 
 
 def matches_search_exists_query(
@@ -727,6 +761,17 @@ def search_clause_ranking(
                 1
                 for value in _materialized_lowered_values(prepared, query.paths)
                 if fnmatch.fnmatchcase(value, query.normalized_pattern)
+            )
+        )
+        return score > 0.0, score, None
+    if isinstance(query, SearchRegexQuery):
+        compiled = re.compile(query.raw_query)
+        score = float(
+            sum(
+                1
+                for field_path, value in prepared.entries
+                if (query.paths is None or field_path in query.paths)
+                and compiled.search(value) is not None
             )
         )
         return score > 0.0, score, None
@@ -1110,6 +1155,29 @@ def _compile_search_wildcard_clause(index_name: str, clause_spec: object) -> Sea
     )
 
 
+def _compile_search_regex_clause(index_name: str, clause_spec: object) -> SearchRegexQuery:
+    if not isinstance(clause_spec, dict):
+        raise OperationFailure("$search.regex requires a document specification")
+    unsupported_options = sorted(set(clause_spec) - {"query", "path"})
+    if unsupported_options:
+        raise OperationFailure(
+            "$search.regex only supports query and path; unsupported keys: "
+            + ", ".join(unsupported_options)
+        )
+    raw_query = clause_spec.get("query")
+    if not isinstance(raw_query, str) or not raw_query.strip():
+        raise OperationFailure("$search.regex.query must be a non-empty string")
+    try:
+        re.compile(raw_query)
+    except re.error as exc:
+        raise OperationFailure(f"$search.regex.query must be a valid regular expression: {exc}") from exc
+    return SearchRegexQuery(
+        index_name=index_name,
+        raw_query=raw_query,
+        paths=_normalize_search_paths(clause_spec.get("path")),
+    )
+
+
 def _compile_search_exists_clause(index_name: str, clause_spec: object) -> SearchExistsQuery:
     if not isinstance(clause_spec, dict):
         raise OperationFailure("$search.exists requires a document specification")
@@ -1409,7 +1477,7 @@ def _validate_field_mapping(field_spec: Document) -> None:
         )
 
 
-def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery) -> dict[str, object | None]:
+def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery) -> dict[str, object | None]:
     return {
         "query": query.raw_query,
         "paths": list(query.paths) if query.paths is not None else None,
@@ -1599,6 +1667,7 @@ _SEARCH_CLAUSE_COMPILERS: dict[str, _SearchClauseCompiler] = {
     "phrase": _compile_search_phrase_clause,
     "autocomplete": _compile_search_autocomplete_clause,
     "wildcard": _compile_search_wildcard_clause,
+    "regex": _compile_search_regex_clause,
     "exists": _compile_search_exists_clause,
     "in": _compile_search_in_clause,
     "equals": _compile_search_equals_clause,
@@ -1612,6 +1681,7 @@ _SEARCH_QUERY_OPERATOR_NAMES: dict[type[Any], str] = {
     SearchPhraseQuery: "phrase",
     SearchAutocompleteQuery: "autocomplete",
     SearchWildcardQuery: "wildcard",
+    SearchRegexQuery: "regex",
     SearchExistsQuery: "exists",
     SearchInQuery: "in",
     SearchEqualsQuery: "equals",
@@ -1625,6 +1695,7 @@ _SEARCH_QUERY_MATCHERS: dict[type[Any], _SearchMatcher] = {
     SearchPhraseQuery: lambda document, definition, query, materialized=None: matches_search_phrase_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
     SearchAutocompleteQuery: lambda document, definition, query, materialized=None: matches_search_autocomplete_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
     SearchWildcardQuery: lambda document, definition, query, materialized=None: matches_search_wildcard_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
+    SearchRegexQuery: lambda document, definition, query, materialized=None: matches_search_regex_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
     SearchExistsQuery: lambda document, definition, query, materialized=None: matches_search_exists_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
     SearchInQuery: lambda document, definition, query, materialized=None: matches_search_in_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
     SearchEqualsQuery: lambda document, definition, query, materialized=None: matches_search_equals_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
@@ -1638,6 +1709,7 @@ _SEARCH_QUERY_EXPLAINERS: dict[type[Any], _SearchExplainBuilder] = {
     SearchPhraseQuery: lambda query: _explain_text_like_query(query),  # type: ignore[arg-type]
     SearchAutocompleteQuery: lambda query: _explain_text_like_query(query),  # type: ignore[arg-type]
     SearchWildcardQuery: lambda query: _explain_text_like_query(query),  # type: ignore[arg-type]
+    SearchRegexQuery: lambda query: _explain_text_like_query(query),  # type: ignore[arg-type]
     SearchExistsQuery: lambda query: _explain_exists_query(query),  # type: ignore[arg-type]
     SearchInQuery: lambda query: _explain_in_query(query),  # type: ignore[arg-type]
     SearchEqualsQuery: lambda query: _explain_equals_query(query),  # type: ignore[arg-type]

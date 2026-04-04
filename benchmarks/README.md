@@ -224,6 +224,10 @@ What to look at in the vector metadata:
 
 Public-facing search/vector snapshot:
 
+`search_diagnostics` now includes a visible `$search.regex` workload so the
+public report shows both token-based search and Python-backed regex matching in
+the documented local subset.
+
 ```bash
 python -m benchmarks.report \
   --engine all \

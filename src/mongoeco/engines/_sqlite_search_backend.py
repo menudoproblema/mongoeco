@@ -11,6 +11,7 @@ from mongoeco.core.search import (
     SearchNearQuery,
     SearchPhraseQuery,
     SearchQuery,
+    SearchRegexQuery,
     SearchRangeQuery,
     SearchTextQuery,
     SearchVectorQuery,
@@ -73,6 +74,7 @@ def decide_sqlite_search_backend(
             query,
             (
                 SearchWildcardQuery,
+                SearchRegexQuery,
                 SearchExistsQuery,
                 SearchInQuery,
                 SearchEqualsQuery,

@@ -52,7 +52,7 @@ Esto implica:
 * `$text` clásico existe ya como subset local explícito, con `textScore`
   observable pero sin pretender semántica full-text de servidor MongoDB.
 * `$search` local soporta ya `text`, `phrase`, `autocomplete`, `wildcard`,
-  `exists`, `in`, `equals`, `range`, `near` y `compound`
+  `regex`, `exists`, `in`, `equals`, `range`, `near` y `compound`
   como subset explícito y documentado, sin pretender semántica Atlas Search
   completa.
 * cuando una pipeline deja un `skip/limit` seguro tras `$search`, el runtime
@@ -421,6 +421,7 @@ El runtime local soporta ya un subset explícito de `$search`:
   * `phrase`
   * `autocomplete`
   * `wildcard`
+  * `regex`
   * `exists`
   * `in`
   * `equals`
@@ -437,6 +438,8 @@ Límites conscientes:
 
 * no hay `facet` ni scoring Atlas-like;
 * `wildcard` sigue siendo matching local simple, no sintaxis Atlas Search;
+* `regex` entra como matching Python local sobre entradas materializadas, sin
+  flags ni semántica Atlas Search avanzada;
 * `autocomplete` es local y basado en prefijos de tokens, no en analyzer
   avanzado;
 * `in`, `equals` y `range` entran como operadores locales sobre paths escalares,
@@ -446,7 +449,7 @@ Límites conscientes:
   con `path`, `origin` y `pivot`, y ordena por cercania local sin pretender
   scoring Atlas Search completo;
 * `compound` se limita a combinar el subset local soportado
-  (`text`/`phrase`/`autocomplete`/`wildcard`/`exists`/`in`/`equals`/`range`/`near`)
+  (`text`/`phrase`/`autocomplete`/`wildcard`/`regex`/`exists`/`in`/`equals`/`range`/`near`)
   con `must`, `should`, `filter`, `mustNot` y `minimumShouldMatch`;
 * `SQLiteEngine` usa FTS5 directo para `text`, `phrase` y `autocomplete`, y
   usa el backend materializado como prefilter de candidatos para `wildcard`,
