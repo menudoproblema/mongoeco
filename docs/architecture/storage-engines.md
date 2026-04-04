@@ -162,6 +162,9 @@ En search existe ya otra frontera explicita por capas:
 - ese mismo contrato deja visible cuando un `should` candidateable sigue siendo
   demasiado amplio y solo aporta ranking, no una reduccion material de
   candidatos.
+- cuando `aggregate()` deja un `top-k` seguro tras `$search`, SQLite lo usa ya
+  como `limit hint` interno para recortar candidatos exactos antes de cargar
+  todos los documentos necesarios para el ranking final.
 
 Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
 ruta de ejecucion, en la de `explain()` y en el lifecycle documental de los

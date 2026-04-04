@@ -118,6 +118,10 @@ La regla arquitectonica es la misma:
 - cuando los `should` candidateables son amplios, `compoundPrefilter` deja
   visible tambien cuantas clausulas `should` son realmente candidateables para
   distinguir ranking util de falso pruning.
+- cuando despues de `$search` solo hay stages que preservan orden/cardinalidad
+  y una ventana final `skip/limit`, el runtime propaga ese `top-k` seguro al
+  engine; en SQLite eso permite recortar candidatos antes de materializar todo
+  el conjunto para ranking final.
 - `near` entra como operador local para numericos y fecha/datetime con
   `path`, `origin` y `pivot`, y mantiene explain/backends explicitos en vez de
   fingir scoring Atlas Search completo.

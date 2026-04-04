@@ -59,7 +59,8 @@ def search_documents(
     load_search_index_rows: Callable[[str, str, str | None], list[tuple[object, str | None, float | None]]],
     search_index_is_ready: Callable[[float | None], bool],
     load_documents: Callable[[str, str], list[tuple[str, Document]]],
-    search_sql: Callable[[str, str, object, object, str | None], list[Document]],
+    search_sql: Callable[[str, str, object, object, str | None, int | None], list[Document]],
+    result_limit_hint: int | None = None,
 ) -> list[Document]:
     query = compile_search_stage(operator, spec)
     rows = load_search_index_rows(db_name, coll_name, query.index_name)
@@ -72,7 +73,7 @@ def search_documents(
         raise OperationFailure(f"search index [{query.index_name}] does not support $search")
     if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
         raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
-    return search_sql(db_name, coll_name, definition, query, physical_name)
+    return search_sql(db_name, coll_name, definition, query, physical_name, result_limit_hint)
 
 
 def build_search_explain(

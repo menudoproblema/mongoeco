@@ -86,6 +86,9 @@ def _summarize_search_explain(explain: dict[str, Any]) -> dict[str, Any]:
     summary["candidates_requested"] = details.get("candidatesRequested")
     summary["documents_filtered"] = details.get("documentsFiltered")
     summary["candidate_count"] = details.get("candidateCount")
+    summary["candidate_count_before_topk"] = details.get("candidateCountBeforeTopK")
+    summary["topk_limit_hint"] = details.get("topKLimitHint")
+    summary["topk_prefilter"] = details.get("topKPrefilter")
     return summary
 
 

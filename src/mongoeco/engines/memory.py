@@ -1,6 +1,7 @@
 import asyncio
 from contextlib import AsyncExitStack
 import datetime
+import heapq
 import inspect
 import threading
 import time
@@ -1854,9 +1855,15 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
+        result_limit_hint: int | None = None,
     ) -> list[Document]:
         deadline = operation_deadline(max_time_ms)
         query = compile_search_stage(operator, spec)
+        effective_limit = (
+            result_limit_hint
+            if isinstance(result_limit_hint, int) and result_limit_hint > 0
+            else None
+        )
         async with self._get_lock(db_name, coll_name):
             indexes = deepcopy(
                 self._search_indexes_view(context).get(db_name, {}).get(coll_name, [])
@@ -1891,7 +1898,14 @@ class MemoryEngine(AsyncStorageEngine):
                     if distance is None:
                         continue
                     distance_hits.append((distance, document))
-                distance_hits.sort(key=lambda item: item[0])
+                if effective_limit is not None:
+                    distance_hits = heapq.nsmallest(
+                        effective_limit,
+                        distance_hits,
+                        key=lambda item: item[0],
+                    )
+                else:
+                    distance_hits.sort(key=lambda item: item[0])
                 return [document for _distance, document in distance_hits]
             if isinstance(query, SearchCompoundQuery) and query.should:
                 ranked_documents: list[tuple[tuple[float, float, float], Document]] = []
@@ -1919,18 +1933,28 @@ class MemoryEngine(AsyncStorageEngine):
                             document,
                         )
                     )
-                ranked_documents.sort(key=lambda item: item[0])
+                if effective_limit is not None:
+                    ranked_documents = heapq.nsmallest(
+                        effective_limit,
+                        ranked_documents,
+                        key=lambda item: item[0],
+                    )
+                else:
+                    ranked_documents.sort(key=lambda item: item[0])
                 return [document for _score, document in ranked_documents]
-            return [
-                document
-                for document, materialized in materialized_documents
-                if matches_search_query(
+            matches: list[Document] = []
+            for document, materialized in materialized_documents:
+                if not matches_search_query(
                     document,
                     definition=definition,
                     query=query,
                     materialized=materialized,
-                )
-            ]
+                ):
+                    continue
+                matches.append(document)
+                if effective_limit is not None and len(matches) >= effective_limit:
+                    break
+            return matches
         documents = [document for document, _materialized in materialized_documents]
         vector_hits: list[tuple[float, Document]] = []
         for document in documents:
@@ -1960,6 +1984,7 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
+        result_limit_hint: int | None = None,
     ) -> QueryPlanExplanation:
         query = compile_search_stage(operator, spec)
         async with self._get_lock(db_name, coll_name):
@@ -1999,6 +2024,7 @@ class MemoryEngine(AsyncStorageEngine):
                 ),
                 **search_query_explain_details(query),
                 "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
+                "topKLimitHint": result_limit_hint,
             },
         )
 

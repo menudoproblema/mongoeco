@@ -168,6 +168,19 @@ class _AsyncAggregationCursorStub:
 
 
 class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
+    def test_search_result_limit_hint_is_only_exposed_for_safe_trailing_window(self):
+        self.assertEqual(
+            AsyncAggregationCursor._search_result_limit_hint(
+                [{"$project": {"_id": 1}}, {"$skip": 2}, {"$limit": 3}]
+            ),
+            5,
+        )
+        self.assertIsNone(
+            AsyncAggregationCursor._search_result_limit_hint(
+                [{"$match": {"kind": "view"}}, {"$limit": 3}]
+            )
+        )
+
     async def test_search_helpers_cover_missing_invalid_and_engine_fallback_paths(self):
         collection = _FakeCollection([])
         cursor = AsyncAggregationCursor(collection, [])

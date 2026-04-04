@@ -55,6 +55,9 @@ Esto implica:
   `exists`, `near` y `compound`
   como subset explícito y documentado, sin pretender semántica Atlas Search
   completa.
+* cuando una pipeline deja un `skip/limit` seguro tras `$search`, el runtime
+  local puede usar ese `top-k` para limitar candidatos y materialización sin
+  cambiar el contrato observable.
 * la proyeccion avanzada de `find` cubre ya el subconjunto diario mas util
   (`$slice`, `$elemMatch`, proyeccion posicional y `$meta: "textScore"`);
 * `$collStats` existe tanto como comando administrativo como stage de

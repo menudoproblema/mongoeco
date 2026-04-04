@@ -37,6 +37,17 @@ from mongoeco.types import AggregateExplanation, Document, QueryPlanExplanation
 class AsyncAggregationCursor:
     """Cursor async mínimo para resultados de aggregate()."""
 
+    _SEARCH_TOPK_SAFE_STAGE_OPERATORS = frozenset(
+        {
+            "$project",
+            "$unset",
+            "$addFields",
+            "$set",
+            "$replaceRoot",
+            "$replaceWith",
+        }
+    )
+
     def __init__(
         self,
         collection,
@@ -92,6 +103,30 @@ class AsyncAggregationCursor:
         if leading_search is None:
             return self._pipeline
         return self._pipeline[1:]
+
+    @classmethod
+    def _search_result_limit_hint(cls, pipeline: Pipeline) -> int | None:
+        trailing_skip = 0
+        trailing_limit: int | None = None
+        seen_window = False
+        for stage in pipeline:
+            if not isinstance(stage, dict) or len(stage) != 1:
+                return None
+            operator, spec = next(iter(stage.items()))
+            if operator == "$skip":
+                seen_window = True
+                trailing_skip += int(spec)
+                continue
+            if operator == "$limit":
+                seen_window = True
+                value = int(spec)
+                trailing_limit = value if trailing_limit is None else min(trailing_limit, value)
+                continue
+            if seen_window or operator not in cls._SEARCH_TOPK_SAFE_STAGE_OPERATORS:
+                return None
+        if trailing_limit is None:
+            return None
+        return trailing_skip + trailing_limit
 
     @staticmethod
     def _split_terminal_writeback_stage(pipeline: Pipeline) -> tuple[Pipeline, tuple[str, object] | None]:
@@ -187,6 +222,8 @@ class AsyncAggregationCursor:
         if leading_search is None:
             raise OperationFailure("search stage was not present")
         operator, spec = leading_search
+        effective_pipeline, writeback_stage = self._split_terminal_writeback_stage(self._effective_pipeline())
+        result_limit_hint = None if writeback_stage is not None else self._search_result_limit_hint(effective_pipeline)
         search_documents = getattr(self._collection._engine, "search_documents", None)
         if not callable(search_documents):
             raise OperationFailure(f"{operator} is not supported by this engine")
@@ -197,6 +234,7 @@ class AsyncAggregationCursor:
             spec,
             max_time_ms=self._max_time_ms,
             context=self._session,
+            result_limit_hint=result_limit_hint,
         )
 
     @staticmethod
@@ -656,6 +694,7 @@ class AsyncAggregationCursor:
         if self._leading_search_stage() is not None:
             operator, spec = self._leading_search_stage()
             remaining_pipeline = self._effective_pipeline()
+            result_limit_hint = self._search_result_limit_hint(remaining_pipeline)
             streamable_pipeline = remaining_pipeline
             pushdown_summary = {
                 "mode": "search",
@@ -663,6 +702,7 @@ class AsyncAggregationCursor:
                 "pushedDownStages": 1,
                 "remainingStages": len(remaining_pipeline),
                 "leadingSearchOperator": operator,
+                "searchResultLimitHint": result_limit_hint,
             }
             explain_search_documents = getattr(
                 self._collection._engine,
@@ -677,6 +717,7 @@ class AsyncAggregationCursor:
                     spec,
                     max_time_ms=self._max_time_ms,
                     context=self._session,
+                    result_limit_hint=result_limit_hint,
                 )
             else:
                 engine_plan = QueryPlanExplanation(
