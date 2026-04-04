@@ -583,6 +583,13 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             compound_candidateable_should_title_prefilter_explanation["engine_plan"]["details"]["compoundPrefilter"]["downstreamFilter"]["supportedPaths"],
                             ["title"],
                         )
+                        self.assertTrue(
+                            compound_candidateable_should_title_prefilter_explanation["engine_plan"]["details"]["compoundPrefilter"]["should"][0]["downstreamRefinement"]["applied"]
+                        )
+                        self.assertEqual(
+                            compound_candidateable_should_title_prefilter_explanation["engine_plan"]["details"]["compoundPrefilter"]["should"][0]["downstreamRefinement"]["path"],
+                            "title",
+                        )
 
                     near_hits = collection.aggregate(
                         [

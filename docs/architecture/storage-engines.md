@@ -178,6 +178,10 @@ En search existe ya otra frontera explicita por capas:
 - si ese `$match` simple restringe paths textuales realmente indexados
   (`token`, `string`, `autocomplete`), SQLite puede convertir parte de ese
   filtro en interseccion candidateable de `storage_key` antes del ranking.
+- cuando ese filtro simple ademas implica exactamente una clausula textual de
+  `compound.must`, `compound.filter` o `compound.should`, SQLite marca esa
+  clausula como refinada por `downstreamFilter` dentro de `compoundPrefilter`
+  y estrecha su conjunto de candidatos antes del ranking final.
 
 Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
 ruta de ejecucion, en la de `explain()` y en el lifecycle documental de los
