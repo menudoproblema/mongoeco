@@ -23,6 +23,8 @@ from mongoeco.core.search import (
 from mongoeco.core.search_filter_prefilter import matches_candidateable_filter
 from mongoeco.engines._memory_vector_runtime import (
     candidate_positions_for_vector_filter,
+    candidate_rows_for_vector_filter,
+    vector_scores_for_rows,
     vector_scores_for_positions,
 )
 from mongoeco.engines._shared_search_admin import ensure_search_index_query_supported, search_index_not_found
@@ -153,36 +155,36 @@ async def execute_search_documents(
     if query.path not in vector_index.vector_specs:
         return []
     path_positions = vector_index.vector_row_positions.get(query.path, ())
-    query_filter_positions, _query_filter_description = candidate_positions_for_vector_filter(
+    query_filter_rows, _query_filter_description = candidate_rows_for_vector_filter(
         vector_index,
+        query_path=query.path,
         filter_spec=query.filter_spec,
-        candidate_positions=path_positions,
     )
-    downstream_filter_positions, _downstream_filter_description = candidate_positions_for_vector_filter(
+    downstream_filter_rows, _downstream_filter_description = candidate_rows_for_vector_filter(
         vector_index,
+        query_path=query.path,
         filter_spec=downstream_filter_spec,
-        candidate_positions=path_positions,
     )
-    candidate_positions = list(query_filter_positions if query_filter_positions is not None else path_positions)
-    if downstream_filter_positions is not None:
-        allowed = set(downstream_filter_positions)
-        candidate_positions = [position for position in candidate_positions if position in allowed]
-    scored_positions = vector_scores_for_positions(
+    candidate_rows = list(query_filter_rows if query_filter_rows is not None else range(len(path_positions)))
+    if downstream_filter_rows is not None:
+        allowed = set(downstream_filter_rows)
+        candidate_rows = [row_index for row_index in candidate_rows if row_index in allowed]
+    scored_rows = vector_scores_for_rows(
         vector_index,
         query=query,
-        candidate_positions=candidate_positions,
+        candidate_rows=candidate_rows,
         limit=effective_vector_limit,
     )
-    query_requires_postfilter = query.filter_spec is not None and query_filter_positions is None
-    downstream_requires_postfilter = downstream_filter_spec is not None and downstream_filter_positions is None
+    query_requires_postfilter = query.filter_spec is not None and query_filter_rows is None
+    downstream_requires_postfilter = downstream_filter_spec is not None and downstream_filter_rows is None
     if not query_requires_postfilter and not downstream_requires_postfilter:
         return [
-            vector_index.documents[position].document
-            for _score, position in scored_positions[:effective_vector_limit]
+            vector_index.documents[path_positions[row_index]].document
+            for _score, row_index in scored_rows[:effective_vector_limit]
         ]
     vector_hits: list[tuple[float, int, Document]] = []
-    for order, (score, position) in enumerate(scored_positions):
-        prepared = vector_index.documents[position]
+    for order, (score, row_index) in enumerate(scored_rows):
+        prepared = vector_index.documents[path_positions[row_index]]
         if downstream_requires_postfilter:
             candidateable_match = matches_candidateable_filter(prepared.document, downstream_filter_spec)
             if candidateable_match is False:
