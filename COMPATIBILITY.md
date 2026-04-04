@@ -68,6 +68,9 @@ Esto implica:
   usar ese filtro como `downstreamFilterPrefilter` exacto antes del ranking
   final; no se promete lo mismo para filtros colocados despues de stages que
   transformen documentos.
+* en SQLite, un `$match` simple sobre paths textuales realmente indexados puede
+  volverse candidateable dentro de `compoundPrefilter.downstreamFilter`, no solo
+  un filtro documental posterior.
 * la proyeccion avanzada de `find` cubre ya el subconjunto diario mas util
   (`$slice`, `$elemMatch`, proyeccion posicional y `$meta: "textScore"`);
 * `$collStats` existe tanto como comando administrativo como stage de

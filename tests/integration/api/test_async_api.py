@@ -530,6 +530,11 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         compound_candidateable_should_matched_limited_explanation["engine_plan"]["details"]["downstreamFilterPrefilter"],
                         {"_id": 3},
                     )
+                    if engine_name == "sqlite":
+                        self.assertEqual(
+                            compound_candidateable_should_matched_limited_explanation["engine_plan"]["details"]["compoundPrefilter"]["downstreamFilter"]["candidateable"],
+                            False,
+                        )
 
                     compound_candidateable_should_matched_limited_hits = await collection.aggregate(
                         [
@@ -553,6 +558,37 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ]
                     ).to_list()
                     self.assertEqual([document["_id"] for document in compound_candidateable_should_matched_limited_hits], [3])
+
+                    compound_candidateable_should_title_prefilter_explanation = await collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "should": [
+                                            {"exists": {"path": "title"}},
+                                            {"wildcard": {"query": "*algorithm*", "path": "body"}},
+                                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                                        ],
+                                        "minimumShouldMatch": 1,
+                                    },
+                                }
+                            },
+                            {"$match": {"title": "Notes"}},
+                            {"$project": {"_id": 1}},
+                            {"$limit": 1},
+                        ]
+                    ).explain()
+                    if engine_name == "sqlite":
+                        self.assertEqual(
+                            compound_candidateable_should_title_prefilter_explanation["engine_plan"]["details"]["compoundPrefilter"]["downstreamFilter"]["candidateable"],
+                            True,
+                        )
+                        self.assertEqual(
+                            compound_candidateable_should_title_prefilter_explanation["engine_plan"]["details"]["compoundPrefilter"]["downstreamFilter"]["supportedPaths"],
+                            ["title"],
+                        )
 
                     near_hits = await collection.aggregate(
                         [

@@ -175,6 +175,9 @@ En search existe ya otra frontera explicita por capas:
   pipeline posterior a `$search` empieza por `$match`; con eso reduce el coste
   del ranking final sin alterar el orden observable de los documentos que
   sobreviven a ese filtro.
+- si ese `$match` simple restringe paths textuales realmente indexados
+  (`token`, `string`, `autocomplete`), SQLite puede convertir parte de ese
+  filtro en interseccion candidateable de `storage_key` antes del ranking.
 
 Eso evita que `sqlite.py` siga replicando en paralelo la misma decision en la
 ruta de ejecucion, en la de `explain()` y en el lifecycle documental de los
