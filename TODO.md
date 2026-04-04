@@ -26,6 +26,8 @@ Pendientes:
   * `autocomplete`
   * `wildcard`
   * `exists`
+  * `equals`
+  * `range`
   * `near`
   * `compound`
 * ampliar mappings locales más allá de:
@@ -73,16 +75,14 @@ Objetivo: dejar el proyecto preparado para una primera release pública, si se d
 Pendientes:
 
 * revisar packaging y metadatos de distribución;
-* preparar documentación pública de uso y alcance;
+* seguir endureciendo documentación pública de uso, alcance y posicionamiento;
 * decidir política de compatibilidad y de versiones;
 * decidir qué hacer con:
   * `benchmarks/`
   * `mongoeco-rs/`
   * `MEMORIES.md`
-* revisar si conviene añadir una guía corta de:
-  * alcance soportado
-  * diferencias deliberadas frente a MongoDB real
-  * diferencias deliberadas frente a `mongomock`
+* seguir ampliando ejemplos públicos reales si aparecen nuevos flujos
+  representativos del producto.
 
 ## Anotaciones de estado
 

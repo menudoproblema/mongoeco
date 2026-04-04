@@ -3,8 +3,8 @@
 `mongoeco` is an async-first MongoDB-like persistence library with pluggable
 storage engines.
 
-It is designed for local development, test environments, embedded persistence
-and compatibility work where a PyMongo-shaped API is useful without requiring a
+It is built for local development, test environments, embedded persistence and
+compatibility work where a PyMongo-shaped API is useful without requiring a
 real MongoDB server for every workflow.
 
 ## Current Scope
@@ -25,6 +25,22 @@ What this is not:
 * a full Atlas Search implementation
 * a geodesic geospatial engine
 * a full-text/vector engine with server-grade scaling guarantees
+
+## When To Use `mongoeco`
+
+`mongoeco` fits well when you want:
+
+* a local PyMongo-like runtime for development or CI;
+* more semantic fidelity than a lightweight mock;
+* embedded persistence with either memory or SQLite;
+* local `$text`, `$search` and `$vectorSearch` without standing up a server;
+* explicit compatibility and `explain()` diagnostics instead of opaque best
+  effort behavior.
+
+Reference:
+
+* [docs/use-cases.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases.md)
+* [docs/comparisons.md](/Users/uve/Proyectos/mongoeco2/docs/comparisons.md)
 
 ## Installation
 
@@ -160,6 +176,26 @@ with MongoClient(SQLiteEngine("mongoeco.db")) as client:
     print(collection.find_one({"_id": "1"}))
 ```
 
+## Examples
+
+Executable examples live under [examples/README.md](/Users/uve/Proyectos/mongoeco2/examples/README.md):
+
+* [memory_quickstart.py](/Users/uve/Proyectos/mongoeco2/examples/memory_quickstart.py)
+* [sqlite_embedded_app.py](/Users/uve/Proyectos/mongoeco2/examples/sqlite_embedded_app.py)
+* [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
+
+The local `$search` subset now includes:
+
+* `text`
+* `phrase`
+* `autocomplete`
+* `wildcard`
+* `exists`
+* `equals`
+* `range`
+* `near`
+* `compound`
+
 ## Compatibility
 
 `mongoeco` models two separate axes:
@@ -179,6 +215,7 @@ See:
 * [COMPATIBILITY.md](COMPATIBILITY.md)
 * [DIALECTS.md](DIALECTS.md)
 * [docs/architecture/index.md](docs/architecture/index.md)
+* [docs/comparisons.md](docs/comparisons.md)
 
 ## Testing
 
@@ -232,9 +269,9 @@ Current rule of thumb from local diagnostics:
 
 * `MemoryEngine` remains strongest on many Python-baseline filter paths;
 * `SQLiteEngine` is strongest when it can push work to SQL, FTS5 or `usearch`;
-* `wildcard`, `exists` and some `compound` search shapes in SQLite now use the
-  materialized search backend as a candidate prefilter before exact Python
-  matching;
+* `wildcard`, `exists`, `equals`, `range` and some `compound` search shapes in
+  SQLite now use a mix of materialized candidate prefilters and exact Python
+  matching, depending on the operator/backend path;
 * `vectorSearch` on SQLite is already materially faster than the exact
   baseline when the ANN backend is materialized.
 

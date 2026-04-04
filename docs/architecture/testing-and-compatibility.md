@@ -196,7 +196,7 @@ En la fase actual, eso incluye ya explicitamente:
   `$text` clasico con `textScore`;
 - parity async/sync, cross-engine y `explain()` coherente para el subset local
   de `$search` (`text`, `phrase`, `autocomplete`, `wildcard`, `exists`,
-  `near`,
+  `equals`, `range`, `near`,
   `compound`);
 - parity async/sync y cross-engine para projection avanzada de `find`
   (`$slice`, `$elemMatch` y proyeccion posicional);

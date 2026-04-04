@@ -159,6 +159,9 @@ En search existe ya otra frontera explicita por capas:
 - en `compound`, esos candidatos se usan tambien para ordenar mejor las
   clausulas `should`, y `near` participa ya en el ranking local cuando aparece
   dentro de esa familia.
+- `equals` y `range` forman parte del mismo contrato local de `$search`, pero
+  se mantienen como operadores honestos de matching/ranking sobre paths
+  escalares, sin forzar una traduccion FTS que no preserve semantica.
 - ese mismo contrato deja visible cuando un `should` candidateable sigue siendo
   demasiado amplio y solo aporta ranking, no una reduccion material de
   candidatos.

@@ -52,7 +52,7 @@ Esto implica:
 * `$text` clásico existe ya como subset local explícito, con `textScore`
   observable pero sin pretender semántica full-text de servidor MongoDB.
 * `$search` local soporta ya `text`, `phrase`, `autocomplete`, `wildcard`,
-  `exists`, `near` y `compound`
+  `exists`, `equals`, `range`, `near` y `compound`
   como subset explícito y documentado, sin pretender semántica Atlas Search
   completa.
 * cuando una pipeline deja un `skip/limit` seguro tras `$search`, el runtime
@@ -415,6 +415,8 @@ El runtime local soporta ya un subset explícito de `$search`:
   * `autocomplete`
   * `wildcard`
   * `exists`
+  * `equals`
+  * `range`
   * `near`
   * `compound`
 * surface observable:
@@ -425,19 +427,24 @@ El runtime local soporta ya un subset explícito de `$search`:
 
 Límites conscientes:
 
-* no hay `facet`, `range` ni scoring Atlas-like;
+* no hay `facet` ni scoring Atlas-like;
 * `wildcard` sigue siendo matching local simple, no sintaxis Atlas Search;
 * `autocomplete` es local y basado en prefijos de tokens, no en analyzer
   avanzado;
+* `equals` y `range` entran como operadores locales sobre paths escalares,
+  con matching exacto/por rango y backend Python explícito cuando no hay una
+  traducción materializada defendible;
 * `near` entra como subset local para valores numericos y fecha/datetime,
   con `path`, `origin` y `pivot`, y ordena por cercania local sin pretender
   scoring Atlas Search completo;
 * `compound` se limita a combinar el subset local soportado
-  (`text`/`phrase`/`autocomplete`/`wildcard`/`exists`/`near`) con `must`,
-  `should`, `filter`, `mustNot` y `minimumShouldMatch`;
+  (`text`/`phrase`/`autocomplete`/`wildcard`/`exists`/`equals`/`range`/`near`)
+  con `must`, `should`, `filter`, `mustNot` y `minimumShouldMatch`;
 * `SQLiteEngine` usa FTS5 directo para `text`, `phrase` y `autocomplete`, y
   usa el backend materializado como prefilter de candidatos para `wildcard`,
-  `exists` y parte de `compound` antes del matching Python exacto;
+  `exists` y parte de `compound` antes del matching Python exacto; `equals`
+  y `range` siguen entrando como operadores locales honestos sobre el runtime
+  Python cuando no hay una traducción candidateable defendible;
 * `$vectorSearch` debe seguir siendo el primer stage;
 * la semantica sigue siendo local, no de cluster o servicio remoto.
 

@@ -30,7 +30,17 @@ LOCAL_RUNTIME_SUBSET_CATALOG: dict[str, dict[str, object]] = {
         ),
     },
     "search": {
-        "operators": ["text", "phrase", "autocomplete", "wildcard", "exists", "near", "compound"],
+        "operators": [
+            "text",
+            "phrase",
+            "autocomplete",
+            "wildcard",
+            "exists",
+            "equals",
+            "range",
+            "near",
+            "compound",
+        ],
         "sqliteBackends": ["fts5", "fts5-glob", "fts5-path", "fts5-prefilter", "python"],
         "note": "The local $search surface remains an explicit Atlas-like subset.",
     },
