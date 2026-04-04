@@ -115,6 +115,18 @@ class SQLiteCompoundRankingTests(unittest.TestCase):
         assert scores is not None
         self.assertGreaterEqual(scores["a"]["matchedShould"], 1.0)
         self.assertIn("missing", scores)
+        self.conn.execute(f'DELETE FROM "{self.physical_name}"')
+        cached_scores = exact_candidateable_should_scores(
+            self.engine,
+            self.conn,
+            db_name="db",
+            coll_name="coll",
+            physical_name=self.physical_name,
+            query=query,
+            candidate_storage_keys=["a"],
+        )
+        assert cached_scores is not None
+        self.assertEqual(cached_scores["a"], scores["a"])
 
         self.assertEqual(load_search_entries_by_storage_key(
             self.engine,

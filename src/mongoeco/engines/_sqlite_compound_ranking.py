@@ -37,6 +37,28 @@ class _SQLiteCompoundRankingEngine(Protocol):
     def _search_backend_version(self, db_name: str, coll_name: str) -> int: ...
 
 
+def _compound_should_score_cache_bucket(
+    engine: _SQLiteCompoundRankingEngine,
+    *,
+    db_name: str,
+    coll_name: str,
+    physical_name: str,
+    query: SearchCompoundQuery,
+) -> dict[str, dict[str, float]]:
+    cache = getattr(engine, "_compound_should_score_cache", None)
+    if cache is None:
+        cache = {}
+        setattr(engine, "_compound_should_score_cache", cache)
+    cache_key = (
+        db_name,
+        coll_name,
+        physical_name,
+        engine._search_backend_version(db_name, coll_name),
+        repr(query),
+    )
+    return cache.setdefault(cache_key, {})
+
+
 @dataclass(frozen=True, slots=True)
 class CompoundTopKPrefilter:
     applied: bool
@@ -329,18 +351,30 @@ def exact_candidateable_should_scores(
 ) -> dict[str, dict[str, float]] | None:
     if physical_name is None or not candidate_storage_keys or any(isinstance(clause, (SearchNearQuery, SearchCompoundQuery)) for clause in query.should):
         return None
+    score_cache = _compound_should_score_cache_bucket(
+        engine,
+        db_name=db_name,
+        coll_name=coll_name,
+        physical_name=physical_name,
+        query=query,
+    )
+    missing_storage_keys = [storage_key for storage_key in candidate_storage_keys if storage_key not in score_cache]
+    if not missing_storage_keys:
+        return {
+            storage_key: score_cache[storage_key]
+            for storage_key in candidate_storage_keys
+        }
     prepared_by_storage_key = load_materialized_search_documents_by_storage_key(
         engine,
         conn,
         db_name=db_name,
         coll_name=coll_name,
         physical_name=physical_name,
-        storage_keys=candidate_storage_keys,
+        storage_keys=missing_storage_keys,
     )
     if not prepared_by_storage_key:
         return None
-    scores: dict[str, dict[str, float]] = {}
-    for storage_key in candidate_storage_keys:
+    for storage_key in missing_storage_keys:
         prepared = prepared_by_storage_key.get(storage_key, materialized_search_document_from_entries(()))
         matched_should = 0
         should_score = 0.0
@@ -355,11 +389,14 @@ def exact_candidateable_should_scores(
                 continue
             matched_should += 1
             should_score += clause_score
-        scores[storage_key] = {
+        score_cache[storage_key] = {
             "matchedShould": float(matched_should),
             "shouldScore": should_score,
         }
-    return scores
+    return {
+        storage_key: score_cache[storage_key]
+        for storage_key in candidate_storage_keys
+    }
 
 
 def load_search_entries_by_storage_key(
