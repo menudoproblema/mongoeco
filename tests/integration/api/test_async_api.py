@@ -42,6 +42,15 @@ from mongoeco.errors import (
     InvalidOperation,
     OperationFailure,
 )
+from tests.integration.api.search_vector_scenarios import (
+    assert_compound_candidateable_should_explanation,
+    assert_compound_candidateable_should_limited_explanation,
+    assert_compound_candidateable_should_matched_limited_explanation,
+    assert_compound_candidateable_should_title_prefilter_explanation,
+    assert_compound_should_near_explanation,
+    assert_filtered_vector_explanation,
+    assert_ranged_vector_explanation,
+)
 from tests.integration.api.admin_command_cases import (
     assert_build_info_command_shares_source_of_truth_with_server_info,
     assert_client_server_info_reflects_target_dialect,
@@ -336,22 +345,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             }
                         ]
                     ).explain()
-                    self.assertEqual(
-                        compound_should_near_explanation["engine_plan"]["details"]["compound"]["shouldOperators"],
-                        ["exists", "near"],
-                    )
-                    if engine_name == "sqlite":
-                        self.assertEqual(
-                            compound_should_near_explanation["engine_plan"]["details"]["compoundPrefilter"]["requiredCandidateableShould"],
-                            1,
-                        )
-                        self.assertEqual(
-                            compound_should_near_explanation["engine_plan"]["details"]["compoundPrefilter"]["candidateableShouldOperators"],
-                            ["exists"],
-                        )
-                    self.assertEqual(
-                        compound_should_near_explanation["engine_plan"]["details"]["ranking"],
-                        {"usesShouldRanking": True, "nearAware": True},
+                    assert_compound_should_near_explanation(
+                        self,
+                        compound_should_near_explanation,
+                        engine_name=engine_name,
                     )
 
                     compound_should_near_hits = await collection.aggregate(
@@ -392,23 +389,11 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             }
                         ]
                     ).explain()
-                    if engine_name == "sqlite":
-                        self.assertEqual(
-                            compound_candidateable_should_explanation["engine_plan"]["details"]["compoundPrefilter"]["candidateableShouldCount"],
-                            3,
-                        )
-                        self.assertEqual(
-                            compound_candidateable_should_explanation["engine_plan"]["details"]["compoundPrefilter"]["clauseClasses"]["should"],
-                            ["candidateable-exact", "candidateable-exact", "candidateable-exact"],
-                        )
-                        self.assertEqual(
-                            compound_candidateable_should_explanation["engine_plan"]["details"]["compoundPrefilter"]["candidateableShouldOperators"],
-                            ["exists", "wildcard", "autocomplete"],
-                        )
-                        self.assertEqual(
-                            compound_candidateable_should_explanation["engine_plan"]["details"]["rankingSource"],
-                            "fts-materialized-entries",
-                        )
+                    assert_compound_candidateable_should_explanation(
+                        self,
+                        compound_candidateable_should_explanation,
+                        engine_name=engine_name,
+                    )
                     compound_candidateable_should_hits = await collection.aggregate(
                         [
                             {
@@ -450,46 +435,11 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             {"$limit": 1},
                         ]
                     ).explain()
-                    self.assertEqual(
-                        compound_candidateable_should_limited_explanation["pushdown"]["searchResultLimitHint"],
-                        1,
+                    assert_compound_candidateable_should_limited_explanation(
+                        self,
+                        compound_candidateable_should_limited_explanation,
+                        engine_name=engine_name,
                     )
-                    self.assertEqual(
-                        compound_candidateable_should_limited_explanation["pushdown"]["searchTopKStrategy"],
-                        "direct-window",
-                    )
-                    self.assertEqual(
-                        compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKLimitHint"],
-                        1,
-                    )
-                    if engine_name == "sqlite":
-                        self.assertTrue(
-                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["applied"]
-                        )
-                        self.assertEqual(
-                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["strategy"],
-                            "exact-should-score-tier",
-                        )
-                        self.assertGreaterEqual(
-                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["cutoffTier"]["matchedShould"],
-                            2,
-                        )
-                        self.assertEqual(
-                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["partialRanking"]["strategy"],
-                            "matched-should-prefilter+exact-should-score-tier",
-                        )
-                        self.assertGreaterEqual(
-                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["candidateCountBeforePartialRanking"],
-                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["topKPrefilter"]["candidateCountAfterPartialRanking"],
-                        )
-                        self.assertLess(
-                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["candidateCount"],
-                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["candidateCountBeforeTopK"],
-                        )
-                        self.assertEqual(
-                            compound_candidateable_should_limited_explanation["engine_plan"]["details"]["rankingSource"],
-                            "fts-materialized-entries",
-                        )
 
                     compound_candidateable_should_limited_hits = await collection.aggregate(
                         [
@@ -534,35 +484,11 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             {"$limit": 1},
                         ]
                     ).explain()
-                    self.assertEqual(
-                        compound_candidateable_should_matched_limited_explanation["pushdown"]["searchResultLimitHint"],
-                        1,
+                    assert_compound_candidateable_should_matched_limited_explanation(
+                        self,
+                        compound_candidateable_should_matched_limited_explanation,
+                        engine_name=engine_name,
                     )
-                    self.assertEqual(
-                        compound_candidateable_should_matched_limited_explanation["pushdown"]["searchTopKStrategy"],
-                        "prefix-iterative",
-                    )
-                    self.assertEqual(
-                        compound_candidateable_should_matched_limited_explanation["pushdown"]["searchTopKGrowthStrategy"],
-                        "adaptive-retention",
-                    )
-                    self.assertEqual(
-                        compound_candidateable_should_matched_limited_explanation["pushdown"]["searchDownstreamFilterPrefilter"],
-                        True,
-                    )
-                    self.assertEqual(
-                        compound_candidateable_should_matched_limited_explanation["engine_plan"]["details"]["topKLimitHint"],
-                        1,
-                    )
-                    self.assertEqual(
-                        compound_candidateable_should_matched_limited_explanation["engine_plan"]["details"]["downstreamFilterPrefilter"],
-                        {"_id": 3},
-                    )
-                    if engine_name == "sqlite":
-                        self.assertEqual(
-                            compound_candidateable_should_matched_limited_explanation["engine_plan"]["details"]["compoundPrefilter"]["downstreamFilter"]["candidateable"],
-                            False,
-                        )
 
                     compound_candidateable_should_matched_limited_hits = await collection.aggregate(
                         [
@@ -608,22 +534,11 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             {"$limit": 1},
                         ]
                     ).explain()
-                    if engine_name == "sqlite":
-                        self.assertEqual(
-                            compound_candidateable_should_title_prefilter_explanation["engine_plan"]["details"]["compoundPrefilter"]["downstreamFilter"]["candidateable"],
-                            True,
-                        )
-                        self.assertEqual(
-                            compound_candidateable_should_title_prefilter_explanation["engine_plan"]["details"]["compoundPrefilter"]["downstreamFilter"]["supportedPaths"],
-                            ["title"],
-                        )
-                        self.assertTrue(
-                            compound_candidateable_should_title_prefilter_explanation["engine_plan"]["details"]["compoundPrefilter"]["should"][0]["downstreamRefinement"]["applied"]
-                        )
-                        self.assertEqual(
-                            compound_candidateable_should_title_prefilter_explanation["engine_plan"]["details"]["compoundPrefilter"]["should"][0]["downstreamRefinement"]["path"],
-                            "title",
-                        )
+                    assert_compound_candidateable_should_title_prefilter_explanation(
+                        self,
+                        compound_candidateable_should_title_prefilter_explanation,
+                        engine_name=engine_name,
+                    )
 
                     near_hits = await collection.aggregate(
                         [
@@ -696,36 +611,11 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             }
                         ]
                     ).explain()
-                    if engine_name == "sqlite":
-                        self.assertEqual(
-                            filtered_vector_explanation["engine_plan"]["details"]["candidateExpansionStrategy"],
-                            "adaptive-retention",
-                        )
-                        self.assertEqual(
-                            filtered_vector_explanation["engine_plan"]["details"]["filterMode"],
-                            "candidate-prefilter",
-                        )
-                        self.assertEqual(
-                            filtered_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["backend"],
-                            "vector-filter-index",
-                        )
-                        self.assertEqual(
-                            filtered_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["supportedPaths"],
-                            ["kind"],
-                        )
-                    else:
-                        self.assertEqual(
-                            filtered_vector_explanation["engine_plan"]["details"]["filterMode"],
-                            "candidate-prefilter",
-                        )
-                        self.assertEqual(
-                            filtered_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["backend"],
-                            "memory-vector-filter-index",
-                        )
-                        self.assertLess(
-                            filtered_vector_explanation["engine_plan"]["details"]["documentsScannedAfterPrefilter"],
-                            filtered_vector_explanation["engine_plan"]["details"]["documentsScanned"],
-                        )
+                    assert_filtered_vector_explanation(
+                        self,
+                        filtered_vector_explanation,
+                        engine_name=engine_name,
+                    )
 
                     ranged_vector_explanation = await collection.aggregate(
                         [
@@ -741,22 +631,11 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             }
                         ]
                     ).explain()
-                    if engine_name == "sqlite":
-                        self.assertEqual(
-                            ranged_vector_explanation["engine_plan"]["details"]["filterMode"],
-                            "candidate-prefilter",
-                        )
-                        self.assertEqual(
-                            ranged_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["supportedPaths"],
-                            ["score"],
-                        )
-                        self.assertEqual(
-                            ranged_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["supportedOperators"],
-                            ["range"],
-                        )
-                        self.assertTrue(
-                            ranged_vector_explanation["engine_plan"]["details"]["vectorFilterPrefilter"]["exact"]
-                        )
+                    assert_ranged_vector_explanation(
+                        self,
+                        ranged_vector_explanation,
+                        engine_name=engine_name,
+                    )
 
                     with self.assertRaises(OperationFailure):
                         collection.aggregate(
