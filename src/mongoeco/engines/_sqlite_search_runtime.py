@@ -1057,6 +1057,7 @@ def exact_vector_hits_sync(
     query: SearchVectorQuery,
     *,
     candidate_storage_keys: list[str] | None = None,
+    skip_filter_match: bool = False,
 ) -> list[tuple[float, Document]]:
     vector_hits: list[tuple[float, Document]] = []
     if candidate_storage_keys is not None:
@@ -1071,7 +1072,7 @@ def exact_vector_hits_sync(
     else:
         documents = engine._load_documents(db_name, coll_name)
     for _, document in documents:
-        if query.filter_spec is not None and not QueryEngine.match(
+        if not skip_filter_match and query.filter_spec is not None and not QueryEngine.match(
             document,
             query.filter_spec,
             dialect=MONGODB_DIALECT_70,
@@ -1093,6 +1094,7 @@ def _sqlite_vector_candidate_documents(
     engine: _SQLiteSearchRuntimeEngine,
     db_name: str,
     coll_name: str,
+    definition: SearchIndexDefinition,
     query: SearchVectorQuery,
     backend_state: SQLiteVectorBackendState,
     prefilter_storage_keys: list[str] | None,
@@ -1223,6 +1225,7 @@ def execute_sqlite_search_query(
                 engine,
                 db_name,
                 coll_name,
+                definition,
                 query,
                 backend_state,
                 prefilter_storage_keys=vector_filter_storage_keys,
@@ -1250,6 +1253,11 @@ def execute_sqlite_search_query(
                 and vector_filter_description is not None
                 and bool(vector_filter_description.get("exact"))
                 else None
+            ),
+            skip_filter_match=bool(
+                vector_filter_storage_keys is not None
+                and vector_filter_description is not None
+                and bool(vector_filter_description.get("exact"))
             ),
         )
         enforce_deadline(deadline)
@@ -1665,6 +1673,7 @@ def explain_search_documents_sync(
                 engine,
                 db_name,
                 coll_name,
+                definition,
                 query,
                 vector_state,
                 prefilter_storage_keys=vector_filter_storage_keys if vector_state is not None else None,
