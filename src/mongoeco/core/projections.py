@@ -5,7 +5,7 @@ from typing import Any
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import get_document_value, set_document_value
-from mongoeco.core.search import TEXT_SCORE_FIELD
+from mongoeco.core.search import TEXT_SCORE_FIELD, VECTOR_SEARCH_SCORE_FIELD
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, Filter, Projection
 
@@ -191,8 +191,10 @@ def _parse_projection_operator_value(
             raise OperationFailure("$elemMatch projection requires a document specification")
         return _ProjectionOperatorSpec(operator=operator, value=operand)
     if operator == "$meta":
-        if operand != "textScore":
-            raise OperationFailure("$meta projection only supports 'textScore'")
+        if operand not in {"textScore", "vectorSearchScore"}:
+            raise OperationFailure(
+                "$meta projection only supports 'textScore' or 'vectorSearchScore'"
+            )
         return _ProjectionOperatorSpec(operator=operator, value=operand)
     raise OperationFailure(f"Unsupported projection operator: {operator} for field {path}")
 
@@ -280,9 +282,14 @@ def _apply_meta_projection(
     path: str,
     operand: object,
 ) -> None:
-    if operand != "textScore":
-        raise OperationFailure("$meta projection only supports 'textScore'")
-    found, value = get_document_value(source, TEXT_SCORE_FIELD)
+    if operand == "textScore":
+        found, value = get_document_value(source, TEXT_SCORE_FIELD)
+    elif operand == "vectorSearchScore":
+        found, value = get_document_value(source, VECTOR_SEARCH_SCORE_FIELD)
+    else:
+        raise OperationFailure(
+            "$meta projection only supports 'textScore' or 'vectorSearchScore'"
+        )
     set_document_value(target, path, deepcopy(value) if found else None)
 
 

@@ -20,6 +20,7 @@ from mongoeco.core.search import (
     SearchVectorQuery,
     SearchWildcardQuery,
     attach_text_score,
+    attach_vector_search_score,
     build_search_index_document,
     classic_text_score,
     compile_search_autocomplete_query,
@@ -60,6 +61,7 @@ from mongoeco.core.search import (
     search_query_explain_details,
     search_query_operator_name,
     sqlite_fts5_query,
+    strip_search_result_metadata,
     tokenize_classic_text,
     validate_search_index_definition,
     validate_search_stage_pipeline,
@@ -136,6 +138,21 @@ class SearchCoreTests(unittest.TestCase):
             )
         )
         self.assertEqual(attach_text_score({"_id": 1}, 2.0)["__mongoeco_textScore__"], 2.0)
+        self.assertEqual(
+            attach_vector_search_score({"_id": 1}, 0.9)["__mongoeco_vectorSearchScore__"],
+            0.9,
+        )
+        self.assertEqual(
+            strip_search_result_metadata(
+                {
+                    "_id": 1,
+                    "__mongoeco_textScore__": 2.0,
+                    "__mongoeco_vectorSearchScore__": 0.9,
+                    "name": "Ada",
+                }
+            ),
+            {"_id": 1, "name": "Ada"},
+        )
         self.assertIsNone(
             classic_text_score(
                 {"body": [1, 2, 3]},

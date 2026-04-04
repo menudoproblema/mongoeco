@@ -204,6 +204,20 @@ def assert_vector_min_score_explanation(
         case.assertIsNone(details["documentsFilteredByMinScore"])
 
 
+def assert_vector_score_projection_results(
+    case: unittest.TestCase,
+    hits: list[dict[str, object]],
+    *,
+    expected_ids: list[object],
+) -> None:
+    case.assertEqual([document["_id"] for document in hits], expected_ids)
+    case.assertIn("vectorScore", hits[0])
+    case.assertIn("vectorScore", hits[1])
+    case.assertGreater(float(hits[0]["vectorScore"]), float(hits[1]["vectorScore"]))
+    case.assertNotIn("__mongoeco_vectorSearchScore__", hits[0])
+    case.assertNotIn("__mongoeco_vectorSearchScore__", hits[1])
+
+
 def assert_ranged_vector_explanation(
     case: unittest.TestCase,
     explanation: dict[str, object],

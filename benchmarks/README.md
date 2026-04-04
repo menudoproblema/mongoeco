@@ -215,6 +215,9 @@ What to look at in the vector metadata:
 
 - `similarity`: metric configured by the vector index (`cosine`,
   `dotProduct`, `euclidean`)
+- projected `vectorSearchScore`: public result metadata you can surface in
+  demos or downstream stages with
+  `{field: {"$meta": "vectorSearchScore"}}`
 - `candidates_requested` / `candidates_evaluated`: how much work the engine
   really did for the chosen `numCandidates`
 - `exact_fallback_reason`: whether filtered ANN had to degrade to exact

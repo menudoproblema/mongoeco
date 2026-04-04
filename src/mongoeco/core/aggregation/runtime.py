@@ -44,6 +44,7 @@ from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import delete_document_value, get_document_value, set_document_value
 from mongoeco.core.projections import apply_projection, validate_projection_spec
 from mongoeco.core.query_plan import compile_filter
+from mongoeco.core.search import TEXT_SCORE_FIELD, VECTOR_SEARCH_SCORE_FIELD
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Binary, DBRef, Decimal128, Document, ObjectId, Regex, Timestamp, UndefinedType
 from mongoeco.core.aggregation.accumulators import _evaluate_pick_n_input
@@ -583,6 +584,16 @@ def evaluate_expression(
                         ),
                         missing_sentinel=_MISSING,
                     ),
+                )
+            if operator == "$meta":
+                if spec == "textScore":
+                    found, value = get_document_value(document, TEXT_SCORE_FIELD)
+                    return None if not found else deepcopy(value)
+                if spec == "vectorSearchScore":
+                    found, value = get_document_value(document, VECTOR_SEARCH_SCORE_FIELD)
+                    return None if not found else deepcopy(value)
+                raise OperationFailure(
+                    "$meta aggregation expression only supports 'textScore' or 'vectorSearchScore'"
                 )
             if not dialect.supports_aggregation_expression_operator(operator):
                 raise OperationFailure(f"Unsupported aggregation expression: {operator}")

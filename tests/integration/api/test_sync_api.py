@@ -54,6 +54,7 @@ from tests.integration.api.search_vector_scenarios import (
     assert_regex_explanation,
     assert_ranged_vector_explanation,
     assert_vector_min_score_explanation,
+    assert_vector_score_projection_results,
     assert_vector_similarity_explanation,
 )
 from tests.integration.api.admin_command_cases import (
@@ -919,6 +920,21 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         expected_min_score=0.95,
                         engine_name=engine_name,
                     )
+                    vector_score_hits = collection.aggregate(
+                        [
+                            {
+                                "$vectorSearch": {
+                                    "index": "by_vector",
+                                    "path": "embedding",
+                                    "queryVector": [1.0, 0.0, 0.0],
+                                    "limit": 2,
+                                    "numCandidates": 3,
+                                }
+                            },
+                            {"$project": {"_id": 1, "title": 1, "vectorScore": {"$meta": "vectorSearchScore"}}},
+                        ]
+                    ).to_list()
+                    assert_vector_score_projection_results(self, vector_score_hits, expected_ids=[3, 2])
 
                     with self.assertRaises(OperationFailure):
                         collection.aggregate(

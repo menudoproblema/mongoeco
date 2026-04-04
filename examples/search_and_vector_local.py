@@ -32,6 +32,7 @@ def main() -> None:
                     "kind": "note",
                     "score": 10,
                     "summary": "Local search summary",
+                    "body": "Ada designed local search patterns for algorithm notes.",
                     "embedding": [1.0, 0.0, 0.0],
                 },
                 {
@@ -39,6 +40,7 @@ def main() -> None:
                     "title": "Compiler reference",
                     "kind": "reference",
                     "score": 7,
+                    "body": "Compiler references rarely repeat the same phrase exactly.",
                     "embedding": [0.8, 0.2, 0.0],
                 },
                 {
@@ -47,6 +49,7 @@ def main() -> None:
                     "kind": "note",
                     "score": 9,
                     "summary": "Algorithm summary",
+                    "body": "Ada designed local search patterns for algorithm ranking demos.",
                     "embedding": [0.9, 0.1, 0.0],
                 },
             ]
@@ -61,6 +64,7 @@ def main() -> None:
                             "fields": {
                                 "title": {"type": "string"},
                                 "summary": {"type": "string"},
+                                "body": {"type": "string"},
                                 "kind": {"type": "token"},
                                 "score": {"type": "number"},
                             },
@@ -88,6 +92,22 @@ def main() -> None:
         wait_until_ready(collection, "content_search")
         wait_until_ready(collection, "embedding_search")
 
+        phrase_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "phrase": {
+                            "query": "Ada designed local search patterns",
+                            "path": "body",
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "body": 1}},
+            ]
+        ).to_list()
+        print("$search phrase body results:", phrase_results)
+
         search_results = collection.aggregate(
             [
                 {
@@ -107,16 +127,22 @@ def main() -> None:
                                 {"range": {"path": "score", "gte": 9}},
                             ],
                             "should": [
+                                {
+                                    "phrase": {
+                                        "query": "Ada designed local search patterns",
+                                        "path": "body",
+                                    }
+                                },
                                 {"exists": {"path": "summary"}},
                                 {"regex": {"query": "Algorithm.*", "path": "summary"}},
                             ],
                         },
                     }
                 },
-                {"$project": {"_id": 1, "title": 1, "score": 1, "summary": 1}},
+                {"$project": {"_id": 1, "title": 1, "score": 1, "summary": 1, "body": 1}},
             ]
         ).to_list()
-        print("$search compound phrase+in+range+regex results:", search_results)
+        print("$search compound title/body phrase + in + range + exists + regex results:", search_results)
         search_explain = collection.aggregate(
             [
                 {
@@ -136,6 +162,12 @@ def main() -> None:
                                 {"range": {"path": "score", "gte": 9}},
                             ],
                             "should": [
+                                {
+                                    "phrase": {
+                                        "query": "Ada designed local search patterns",
+                                        "path": "body",
+                                    }
+                                },
                                 {"exists": {"path": "summary"}},
                                 {"regex": {"query": "Algorithm.*", "path": "summary"}},
                             ],
@@ -163,7 +195,16 @@ def main() -> None:
                             ]
                         },
                     }
-                }
+                },
+                {
+                    "$project": {
+                        "_id": 1,
+                        "title": 1,
+                        "score": 1,
+                        "vectorScore": {"$meta": "vectorSearchScore"},
+                    }
+                },
+                {"$sort": {"vectorScore": -1, "_id": 1}},
             ]
         ).to_list()
         print("$vectorSearch results:", vector_results)

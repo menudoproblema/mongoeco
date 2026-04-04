@@ -397,6 +397,8 @@ con baseline exacta y backend ANN:
 * surface:
   * `filter` opcional reutilizando `QueryEngine`;
   * `minScore` opcional como corte local explícito por score;
+  * proyeccion `{campo: {"$meta": "vectorSearchScore"}}` sobre resultados de
+    `$vectorSearch`;
   * `explain` con backend, modo, similitud, escaneo, candidatos evaluados,
     corte `minScore`, vectores válidos/inválidos y razones de degradación.
 * backend:

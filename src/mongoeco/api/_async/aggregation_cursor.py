@@ -30,6 +30,7 @@ from mongoeco.core.aggregation import (
 )
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
+from mongoeco.core.search import strip_search_result_metadata
 from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import AggregateExplanation, Document, QueryPlanExplanation
@@ -256,7 +257,7 @@ class AsyncAggregationCursor:
 
         target_collection = self._target_database(target_db_name).get_collection(target_coll_name)
         for source_document in documents:
-            candidate = deepcopy(source_document)
+            candidate = strip_search_result_metadata(deepcopy(source_document))
             if "_id" not in candidate:
                 raise OperationFailure("$merge currently requires documents with _id")
             existing = await target_collection.find_one({"_id": candidate["_id"]}, session=self._session)
@@ -601,7 +602,7 @@ class AsyncAggregationCursor:
                 _operator, spec = writeback_stage
                 await self._apply_merge_stage(result, spec)
                 return []
-            return [DocumentCodec.to_public(document) for document in result]
+            return [DocumentCodec.to_public(strip_search_result_metadata(document)) for document in result]
 
     def _cost_policy(self) -> AggregationCostPolicy | None:
         policy = getattr(self._collection._engine, "aggregation_cost_policy", None)
@@ -730,7 +731,7 @@ class AsyncAggregationCursor:
                 remaining_limit -= len(transformed)
 
             for document in transformed:
-                yield DocumentCodec.to_public(document)
+                yield DocumentCodec.to_public(strip_search_result_metadata(document))
 
     async def to_list(self) -> list[Document]:
         started_at = time.perf_counter_ns()

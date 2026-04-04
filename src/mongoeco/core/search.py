@@ -23,6 +23,8 @@ from mongoeco.types import Document, EngineIndexRecord, SearchIndexDefinition, S
 SUPPORTED_SEARCH_INDEX_TYPES = {"search", "vectorSearch"}
 TEXTUAL_SEARCH_INDEX_TYPES = {"search"}
 TEXT_SCORE_FIELD = "__mongoeco_textScore__"
+VECTOR_SEARCH_SCORE_FIELD = "__mongoeco_vectorSearchScore__"
+SEARCH_RESULT_METADATA_FIELDS = frozenset({TEXT_SCORE_FIELD, VECTOR_SEARCH_SCORE_FIELD})
 _TEXT_TOKEN_RE = re.compile(r"\w+", re.UNICODE)
 
 
@@ -280,6 +282,21 @@ def attach_text_score(document: Document, score: float) -> Document:
     enriched = dict(document)
     enriched[TEXT_SCORE_FIELD] = float(score)
     return enriched
+
+
+def attach_vector_search_score(document: Document, score: float) -> Document:
+    enriched = dict(document)
+    enriched[VECTOR_SEARCH_SCORE_FIELD] = float(score)
+    return enriched
+
+
+def strip_search_result_metadata(document: Document) -> Document:
+    if not any(field in document for field in SEARCH_RESULT_METADATA_FIELDS):
+        return document
+    cleaned = dict(document)
+    for field in SEARCH_RESULT_METADATA_FIELDS:
+        cleaned.pop(field, None)
+    return cleaned
 
 
 def iter_classic_text_values(document: Document, field: str) -> tuple[str, ...]:

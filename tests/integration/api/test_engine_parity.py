@@ -1524,6 +1524,20 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         {"$project": {"_id": 1, "title": 1}},
                     ]
                 ).to_list()
+                vector_score_hits = await collection.aggregate(
+                    [
+                        {
+                            "$vectorSearch": {
+                                "index": "by_vector",
+                                "path": "embedding",
+                                "queryVector": [1.0, 0.0, 0.0],
+                                "limit": 2,
+                                "numCandidates": 3,
+                            }
+                        },
+                        {"$project": {"_id": 1, "vectorScore": {"$meta": "vectorSearchScore"}}},
+                    ]
+                ).to_list()
 
                 search_explain = await collection.aggregate(
                     [{"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}}]
@@ -1634,6 +1648,10 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                         document["_id"] for document in compound_candidateable_should_matched_limited_hits
                     ],
                     "vector_hits": [document["_id"] for document in vector_hits],
+                    "vector_score_hits": [
+                        {"_id": document["_id"], "vectorScore": round(float(document["vectorScore"]), 6)}
+                        for document in vector_score_hits
+                    ],
                     "search_explain": {
                         "hint": search_explain["hint"],
                         "batch_size": search_explain["batch_size"],

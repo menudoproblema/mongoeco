@@ -11,7 +11,7 @@ from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll, QueryNode, ensure_query_plan
-from mongoeco.core.search import ClassicTextQuery, TEXT_SCORE_FIELD
+from mongoeco.core.search import ClassicTextQuery, strip_search_result_metadata
 from mongoeco.core.schema_validation import (
     CompiledCollectionValidator,
     SchemaValidationResult,
@@ -422,8 +422,4 @@ def build_query_plan_explanation(
 
 
 def _strip_result_metadata(document: Document) -> Document:
-    if TEXT_SCORE_FIELD not in document:
-        return document
-    cleaned = dict(document)
-    del cleaned[TEXT_SCORE_FIELD]
-    return cleaned
+    return strip_search_result_metadata(document)

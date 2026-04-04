@@ -11,6 +11,7 @@ from mongoeco.core.search import (
     SearchCompoundQuery,
     SearchNearQuery,
     SearchVectorQuery,
+    attach_vector_search_score,
     build_search_index_document,
     compile_search_stage,
     is_text_search_query,
@@ -211,8 +212,11 @@ async def execute_search_documents(
     downstream_requires_postfilter = downstream_filter_spec is not None and downstream_filter_rows is None
     if not query_requires_postfilter and not downstream_requires_postfilter:
         return [
-            vector_index.documents[path_positions[row_index]].document
-            for _score, row_index in scored_rows[:effective_vector_limit]
+            attach_vector_search_score(
+                vector_index.documents[path_positions[row_index]].document,
+                vector_score,
+            )
+            for vector_score, row_index in scored_rows[:effective_vector_limit]
         ]
     vector_hits: list[tuple[float, int, Document]] = []
     for order, (score, row_index) in enumerate(scored_rows):
@@ -229,7 +233,7 @@ async def execute_search_documents(
                 continue
             if candidateable_match is None and not QueryEngine.match(prepared.document, query.filter_spec, dialect=MONGODB_DIALECT_70):
                 continue
-        vector_hits.append((score, -order, prepared.document))
+        vector_hits.append((score, -order, attach_vector_search_score(prepared.document, score)))
     vector_hits.sort(key=lambda item: item[:2], reverse=True)
     return [document for _score, _order, document in vector_hits[:effective_vector_limit]]
 

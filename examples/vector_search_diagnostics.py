@@ -18,11 +18,18 @@ def wait_until_ready(collection, index_name: str, timeout_seconds: float = 2.0) 
 
 
 def print_vector_case(collection, label: str, stage: dict[str, object]) -> None:
-    results = collection.aggregate([{"$vectorSearch": stage}, {"$project": {"_id": 1, "title": 1, "kind": 1, "score": 1}}]).to_list()
+    results = collection.aggregate(
+        [
+            {"$vectorSearch": stage},
+            {"$project": {"_id": 1, "title": 1, "kind": 1, "score": 1, "vectorScore": {"$meta": "vectorSearchScore"}}},
+            {"$sort": {"vectorScore": -1, "_id": 1}},
+        ]
+    ).to_list()
     explain = collection.aggregate([{"$vectorSearch": stage}]).explain()
     details = explain["engine_plan"]["details"]
     print(f"\n[{label}]")
     print("results:", results)
+    print("top result score:", results[0]["vectorScore"] if results else None)
     print("similarity:", details["similarity"])
     print("mode:", details["mode"])
     print("numCandidates requested/evaluated:", details["candidatesRequested"], details["candidatesEvaluated"])

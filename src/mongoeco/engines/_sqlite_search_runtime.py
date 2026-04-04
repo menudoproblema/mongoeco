@@ -14,6 +14,7 @@ from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.search_filter_prefilter import evaluate_candidate_filter, flatten_candidate_filter_clauses
 from mongoeco.core.search import (
     MaterializedSearchDocument,
+    attach_vector_search_score,
     build_search_index_document,
     compile_search_stage,
     is_text_search_query,
@@ -1192,7 +1193,7 @@ def _sqlite_vector_candidate_documents(
             if query.min_score is not None and score < query.min_score:
                 documents_filtered_by_min_score += 1
                 continue
-            matched_documents.append(document)
+            matched_documents.append(attach_vector_search_score(document, score))
             if len(matched_documents) >= query.limit:
                 return (
                     matched_documents[: query.limit],
@@ -1313,7 +1314,10 @@ def execute_sqlite_search_query(
         )
         enforce_deadline(deadline)
         effective_limit = min(query.limit, result_limit_hint) if result_limit_hint is not None else query.limit
-        return [document for _score, document in exact_hits[:effective_limit]]
+        return [
+            attach_vector_search_score(document, score)
+            for score, document in exact_hits[:effective_limit]
+        ]
 
     decision = decide_sqlite_search_backend(
         query,

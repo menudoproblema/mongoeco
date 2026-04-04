@@ -146,6 +146,14 @@ class ProjectionTests(unittest.TestCase):
             {"score": 3.0},
         )
 
+    def test_projection_supports_meta_vector_search_score(self):
+        doc = {"_id": 1, "name": "Ada", "__mongoeco_vectorSearchScore__": 0.99}
+
+        self.assertEqual(
+            apply_projection(doc, {"score": {"$meta": "vectorSearchScore"}, "_id": 0}),  # type: ignore[dict-item]
+            {"score": 0.99},
+        )
+
     def test_projection_supports_slice_as_exclusion_style_projection(self):
         doc = {"_id": 1, "name": "Ada", "items": [1, 2, 3, 4], "role": "admin"}
 

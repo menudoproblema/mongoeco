@@ -202,10 +202,12 @@ The local `$search` subset now includes:
 Examples worth showing first:
 
 * [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
-  demonstrates a local `compound` query with `phrase` + `in` + `range` + `regex`.
+  demonstrates a local `compound` query with title/body `phrase` + `in` +
+  `range` + `exists` + `regex`.
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
   demonstrates how to read `similarity`, `numCandidates`, `minScore`,
-  residual filtering and exact fallback in local `$vectorSearch`.
+  projected `vectorSearchScore`, residual filtering and exact fallback in local
+  `$vectorSearch`.
 
 ## Compatibility
 
