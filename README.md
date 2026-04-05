@@ -1,6 +1,7 @@
 # mongoeco
 
-`mongoeco` is an async-first MongoDB-like persistence library with pluggable
+`mongoeco` is an async-first embedded runtime aligned with the canonical CXP
+`database/mongodb` interface, with a MongoDB-like surface and pluggable
 storage engines.
 
 It is built for local development, test environments, embedded persistence and
@@ -15,6 +16,7 @@ What is already in place:
 * memory and SQLite engines
 * transactional local sessions and local admin/runtime introspection
 * aggregation runtime with pushdown and spill guardrails
+* a canonical public capability model for `database/mongodb` through CXP
 * compatibility modeling across MongoDB dialects and PyMongo profiles
 * local wire/driver runtime
 * local geospatial, classic `$text`, `$search` and ANN-backed `$vectorSearch`
@@ -30,7 +32,8 @@ What this is not:
 
 `mongoeco` fits well when you want:
 
-* a local PyMongo-like runtime for development or CI;
+* a local `database/mongodb` runtime for development or CI;
+* a local PyMongo-like runtime without a server process;
 * more semantic fidelity than a lightweight mock;
 * embedded persistence with either memory or SQLite;
 * local `$text`, `$search` and `$vectorSearch` without standing up a server;
@@ -57,6 +60,52 @@ Development install:
 
 ```bash
 python -m pip install -e .[dev]
+```
+
+The base install now also includes `cxp>=1.0.0`, so `mongoeco` can expose the
+canonical `database/mongodb` contract directly.
+Reference:
+
+* [docs/cxp.md](/Users/uve/Proyectos/mongoeco2/docs/cxp.md)
+
+The public compatibility export and the top-level `cxp` blocks surfaced by
+`find(...).explain()` / `aggregate(...).explain()` are now projected from that
+canonical CXP capability model.
+
+The public CXP story now includes canonical first-level operation bindings as
+well:
+
+* `read` -> `find`, `find_one`, `count_documents`, `estimated_document_count`,
+  `distinct`
+* `write` -> `insert_one`, `insert_many`, `update_one`, `update_many`,
+  `replace_one`, `delete_one`, `delete_many`, `bulk_write`
+* `aggregation` -> `aggregate`
+* `change_streams` -> `watch`
+* `transactions` -> `start_session`, `with_transaction`
+
+For `search` and `vector_search`, `mongoeco` still binds the public operation
+`aggregate` and uses metadata to describe the supported stage-level subset.
+
+`mongoeco` does not ship a live CXP provider wrapper for its clients. Instead,
+it exposes the canonical catalog and projects the active capability path
+through `compat` and `explain()`. External systems can wrap `mongoeco` if they
+want to negotiate profiles or instantiate resources through CXP.
+
+The direct path from `mongoeco` itself is:
+
+```python
+from mongoeco import MongoClient, MONGODB_CATALOG, export_cxp_catalog
+from mongoeco.engines.memory import MemoryEngine
+
+
+print(export_cxp_catalog()["interface"])
+
+with MongoClient(MemoryEngine()) as client:
+    collection = client.get_database("demo").get_collection("items")
+    collection.insert_one({"_id": 1, "score": 8})
+    explain = collection.aggregate([{"$match": {"score": {"$gte": 8}}}]).explain()
+    print(MONGODB_CATALOG.interface)
+    print(explain["cxp"])
 ```
 
 The base package now includes `pyuca` as a runtime dependency so Unicode
@@ -188,6 +237,7 @@ Executable examples live under [examples/README.md](/Users/uve/Proyectos/mongoec
 * [test_runtime_local.py](/Users/uve/Proyectos/mongoeco2/examples/test_runtime_local.py)
 * [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
+* [cxp_adapter.py](/Users/uve/Proyectos/mongoeco2/examples/cxp_adapter.py)
 
 The local `$search` subset now includes:
 
@@ -215,11 +265,15 @@ Examples worth showing first:
   demonstrates how to read `similarity`, `numCandidates`, `minScore`,
   projected `vectorSearchScore`, residual filtering and exact fallback in local
   `$vectorSearch`.
+* [cxp_adapter.py](/Users/uve/Proyectos/mongoeco2/examples/cxp_adapter.py)
+  demonstrates the canonical CXP `database/mongodb` catalog and the `cxp`
+  projection exposed by `aggregate(...).explain()`.
 
 ## Compatibility
 
-`mongoeco` models two separate axes:
+`mongoeco` now exposes three public contract layers:
 
+* the canonical CXP capability model for `database/mongodb`
 * MongoDB server semantics through `mongodb_dialect`
 * PyMongo surface compatibility through `pymongo_profile`
 
@@ -311,6 +365,8 @@ best treated as pre-release.
 Release-readiness checklist:
 
 * [docs/release-checklist.md](docs/release-checklist.md)
+* [docs/roadmap-3.2.md](/Users/uve/Proyectos/mongoeco2/docs/roadmap-3.2.md)
+* [docs/release-3.2.0-draft.md](/Users/uve/Proyectos/mongoeco2/docs/release-3.2.0-draft.md)
 
 ## License
 

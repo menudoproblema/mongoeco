@@ -17,6 +17,7 @@ from mongoeco.api.operations import (
     compile_find_operation,
 )
 from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.cxp.capabilities import build_mongodb_explain_projection
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.aggregation import (
     AggregationCostPolicy,
@@ -113,6 +114,21 @@ class AsyncAggregationCursor:
         if leading_search is None:
             return self._pipeline
         return self._pipeline[1:]
+
+    def _cxp_explain_projection(self) -> dict[str, object]:
+        leading_search = self._leading_search_stage()
+        if leading_search is None:
+            return build_mongodb_explain_projection(capability='aggregation')
+        operator, _spec = leading_search
+        if operator == '$vectorSearch':
+            return build_mongodb_explain_projection(
+                capability='aggregation',
+                additional_capabilities=('vector_search',),
+            )
+        return build_mongodb_explain_projection(
+            capability='aggregation',
+            additional_capabilities=('search',),
+        )
 
     @classmethod
     def _search_result_limit_hint(cls, pipeline: Pipeline) -> int | None:
@@ -778,7 +794,7 @@ class AsyncAggregationCursor:
 
     async def explain(self) -> dict[str, object]:
         if self._operation.planning_issues:
-            return AggregateExplanation(
+            explanation = AggregateExplanation(
                 engine_plan=QueryPlanExplanation(
                     engine="planner",
                     strategy="deferred",
@@ -813,6 +829,8 @@ class AsyncAggregationCursor:
                 planning_mode=self._operation.planning_mode,
                 planning_issues=self._operation.planning_issues,
             ).to_document()
+            explanation['cxp'] = self._cxp_explain_projection()
+            return explanation
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
         streamable_pipeline: list[object] = []
         pushdown_summary: dict[str, object]
@@ -905,7 +923,7 @@ class AsyncAggregationCursor:
         pushdown_summary["streamableStageCount"] = (
             len(streaming_split[0]) if streaming_split is not None else 0
         )
-        return AggregateExplanation(
+        explanation = AggregateExplanation(
             engine_plan=engine_plan,
             remaining_pipeline=remaining_pipeline,
             pushdown=pushdown_summary,
@@ -917,6 +935,8 @@ class AsyncAggregationCursor:
             let=self._let,
             streaming_batch_execution=bool(pushdown_summary["streamingEligible"]),
         ).to_document()
+        explanation['cxp'] = self._cxp_explain_projection()
+        return explanation
 
     def __aiter__(self) -> AsyncIterator[Document]:
         return self._stream_batches()

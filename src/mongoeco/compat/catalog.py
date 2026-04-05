@@ -29,6 +29,7 @@ from mongoeco.compat._catalog_data import (
     SUPPORTED_WINDOW_ACCUMULATORS,
 )
 from mongoeco.compat._catalog_export import (
+    export_cxp_catalog,
     export_database_command_catalog,
     export_database_command_option_catalog,
     export_full_compat_catalog,

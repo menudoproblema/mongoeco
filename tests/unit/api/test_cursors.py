@@ -609,7 +609,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(cursor.alive)
         self.assertEqual(await cursor.first(), {"_id": "2"})
 
-        self.assertEqual(await cursor.explain(), {"engine": "stub", "details": ["IXSCAN"]})
+        explanation = await cursor.explain()
+        self.assertEqual(explanation["engine"], "stub")
+        self.assertEqual(explanation["details"], ["IXSCAN"])
+        self.assertEqual(explanation["cxp"]["interface"], "database/mongodb")
+        self.assertEqual(explanation["cxp"]["provider"], "mongoeco")
+        self.assertEqual(explanation["cxp"]["capability"], "read")
         semantics = collection._engine.explain_semantics_calls[0][0][2]
         self.assertEqual(semantics.sort, [("_id", 1)])
         self.assertEqual(semantics.hint, "name_1")
@@ -793,6 +798,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             explanation["details"]["reason"],
             "operation has deferred planning issues (relaxed): query: Unsupported top-level query operator: $where",
         )
+        self.assertEqual(explanation["cxp"]["capability"], "read")
 
     def test_sync_cursor_accepts_dict_sort_and_hint(self):
         cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
@@ -1112,7 +1118,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         cursor.rewind()
         self.assertTrue(cursor.alive)
         self.assertEqual(cursor.first(), {"_id": "1"})
-        self.assertEqual(cursor.explain(), {"engine": "stub", "details": ["IXSCAN"]})
+        explanation = cursor.explain()
+        self.assertEqual(explanation["engine"], "stub")
+        self.assertEqual(explanation["details"], ["IXSCAN"])
+        self.assertEqual(explanation["cxp"]["interface"], "database/mongodb")
+        self.assertEqual(explanation["cxp"]["provider"], "mongoeco")
+        self.assertEqual(explanation["cxp"]["capability"], "read")
         self.assertEqual(collection._engine.explain_semantics_calls[0][1]["context"], None)
         semantics = collection._engine.explain_semantics_calls[0][0][2]
         self.assertEqual(semantics.hint, "name_1")

@@ -8,6 +8,7 @@ from mongoeco.api.argument_validation import (
 from mongoeco.api._async.cursor import (
     MONGODB_DIALECT_70,
     _DEFAULT_LOCAL_PREFETCH_SIZE,
+    _find_explain_cxp_projection,
     _operation_issue_message,
     _resolve_planning_mode,
     _serialize_explanation,
@@ -348,7 +349,7 @@ class Cursor:
         self._ensure_open()
         operation = self._as_operation()
         if operation.planning_issues:
-            return QueryPlanExplanation(
+            explanation = QueryPlanExplanation(
                 engine="planner",
                 strategy="deferred",
                 plan="planning-issues",
@@ -363,11 +364,13 @@ class Cursor:
                 planning_mode=operation.planning_mode,
                 planning_issues=operation.planning_issues,
             ).to_document()
+            explanation['cxp'] = _find_explain_cxp_projection(self._filter_spec)
+            return explanation
         dialect = getattr(self._async_collection, "mongodb_dialect", None)
         from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
 
         semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
-        return _serialize_explanation(
+        explanation = _serialize_explanation(
             self._client._run(
                 self._async_collection._engine.explain_find_semantics(
                     self._async_collection._db_name,
@@ -377,6 +380,8 @@ class Cursor:
                 )
             )
         )
+        explanation['cxp'] = _find_explain_cxp_projection(self._filter_spec)
+        return explanation
 
     def close(self) -> None:
         if self._closed:

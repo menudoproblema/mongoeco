@@ -10,6 +10,20 @@ Esta guía resume cómo configurar `mongoeco` cuando quieres controlar:
 * la semántica objetivo de MongoDB (`mongodb_dialect`)
 * la superficie pública objetivo de PyMongo (`pymongo_profile`)
 
+Tambien expone ya un tercer eje publico de descripcion interoperable:
+
+* el capability model CXP canónico para `database/mongodb`
+
+Regla importante:
+
+* el export publico de compatibilidad y los bloques `cxp` de `explain()` se
+  proyectan desde ese modelo canónico;
+* el bloque `cxp` publica capabilities canónicas, operaciones públicas de
+  primer nivel y metadata estructurada del subset real cuando el lenguaje de
+  una operación no está soportado completo;
+* `local_runtime_subsets` sigue existiendo por compatibilidad documental, pero
+  ya no es la fuente primaria de verdad.
+
 ## 1. Dos ejes distintos
 
 `mongoeco` separa dos conceptos:

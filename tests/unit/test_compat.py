@@ -52,6 +52,7 @@ from mongoeco.compat import (
     export_full_compat_catalog_markdown,
     export_database_command_catalog,
     export_database_command_option_catalog,
+    export_cxp_catalog,
     export_mongodb_dialect_catalog,
     export_local_runtime_subset_catalog,
     export_operation_option_catalog,
@@ -321,6 +322,7 @@ class CompatResolutionTests(unittest.TestCase):
         operation_catalog = export_operation_option_catalog()
         database_command_option_catalog = export_database_command_option_catalog()
         runtime_subset_catalog = export_local_runtime_subset_catalog()
+        cxp_catalog = export_cxp_catalog()
         full_catalog = export_full_compat_catalog()
 
         self.assertEqual(set(mongodb_catalog), set(MONGODB_DIALECTS))
@@ -332,7 +334,18 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertEqual(full_catalog['database_commands'], database_command_catalog)
         self.assertEqual(full_catalog['operation_options'], operation_catalog)
         self.assertEqual(full_catalog['database_command_options'], database_command_option_catalog)
+        self.assertEqual(full_catalog['cxp'], cxp_catalog)
         self.assertEqual(full_catalog['local_runtime_subsets'], runtime_subset_catalog)
+        self.assertEqual(full_catalog['cxp']['interface'], 'database/mongodb')
+        self.assertIn('search', full_catalog['cxp']['capabilities'])
+        self.assertEqual(
+            full_catalog['cxp']['capabilities']['aggregation']['operations'][0]['name'],
+            'aggregate',
+        )
+        self.assertIn(
+            '$group',
+            full_catalog['cxp']['capabilities']['aggregation']['metadata']['supportedStages'],
+        )
         self.assertIn('query_field_operators', mongodb_catalog['7.0'])
         self.assertIn('behavior_flags', mongodb_catalog['7.0'])
         self.assertIn('behavior_flags', pymongo_catalog['4.9'])

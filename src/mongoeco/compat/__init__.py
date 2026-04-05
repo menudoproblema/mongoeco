@@ -28,6 +28,7 @@ from mongoeco.compat.base import (
 from mongoeco.compat.catalog import (
     DATABASE_COMMAND_SUPPORT_CATALOG,
     DATABASE_COMMAND_OPTION_SUPPORT_CATALOG,
+    export_cxp_catalog,
     export_full_compat_catalog,
     export_full_compat_catalog_markdown,
     export_database_command_catalog,
@@ -105,6 +106,7 @@ __all__ = [
     'export_operation_option_catalog',
     'export_database_command_catalog',
     'export_database_command_option_catalog',
+    'export_cxp_catalog',
     'export_local_runtime_subset_catalog',
     'export_full_compat_catalog',
     'export_full_compat_catalog_markdown',

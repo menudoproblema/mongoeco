@@ -10,17 +10,36 @@ usa Semantic Versioning.
 
 ### Added
 
-- El subset local de `$search` soporta ahora tambien `equals` y `range`,
-  manteniendo `MemoryEngine` como baseline semantico y dejando visible en
-  `explain()` que esos operadores siguen siendo un subset local honesto sobre
-  paths escalares.
-- El subset local de `$search` soporta ahora tambien `in` sobre paths
-  escalares, con explain/parity alineados entre `MemoryEngine` y
-  `SQLiteEngine`.
-- La documentacion publica gana ahora ejemplos ejecutables bajo `examples/` y
-  guias cortas de casos de uso y comparacion frente a MongoDB real y
-  `mongomock`, para hacer mas claro donde encaja el producto y donde termina su
-  contrato.
+- CXP pasa a actuar como fuente canonica del capability model publico para
+  `database/mongodb`, y `compat`, `explain()` y la narrativa publica se
+  proyectan ya desde ese modelo en vez de mantener fuentes paralelas.
+- `mongoeco` expone ahora su contrato publico en vocabulario canonico de CXP
+  para `database/mongodb`, sin asumir responsabilidades de provider ni de
+  resolucion de instancias.
+- El catalogo local `database/mongodb` canoniza ahora tambien operaciones
+  publicas de primer nivel (`find`, `insert_one`, `update_one`,
+  `aggregate`, `watch`, `with_transaction`, etc.) para que los snapshots CXP
+  puedan declarar bindings interoperables y no solo capabilities gruesas.
+- El export publico de compatibilidad incluye ya un bloque top-level `cxp`, y
+  `local_runtime_subsets` queda como proyeccion legacy derivada del modelo
+  canonico, no como fuente primaria de verdad.
+- `find(...).explain()` y `aggregate(...).explain()` exponen ya un bloque
+  top-level `cxp` para dejar visible que capability publica de
+  `database/mongodb` se esta ejerciendo.
+- Los snapshots CXP publican ya bindings de operaciones publicas por
+  capability, y `aggregation` expone ademas metadata estructurada del subset
+  real soportado (`supportedStages`, expresiones y acumuladores) en vez de
+  fingir soporte total del lenguaje de agregacion.
+- El subset local de `$search` soporta ahora tambien `equals`, `range`, `in`,
+  `regex` y `phrase.slop`, manteniendo `MemoryEngine` como baseline semantico
+  y `SQLiteEngine` como pushdown/fallback honesto segun el shape real.
+- `$vectorSearch` deja mas visibles sus knobs y metadata publicas de producto:
+  `similarity`, `numCandidates`, `minScore`, `vectorSearchScore`, residual
+  filter y exact fallback diagnostics.
+- La documentacion publica gana ahora ejemplos ejecutables bajo `examples/`,
+  guias cortas de casos de uso, comparativas frente a MongoDB real y
+  `mongomock`, y una narrativa de release ya ordenada por capabilities
+  canonicas.
 
 ## [3.1.0] - 2026-04-04
 

@@ -573,24 +573,137 @@
 - `background`: `status`="effective", `note`="Validated and surfaced in the validation snapshot contract."
 - `comment`: `status`="effective", `note`="Recorded in engine session metadata for the validation command."
 
-## Local Runtime Subsets
-### `vectorSearch`
+## CXP
+- `interface`: `database/mongodb`
+### `read`
+- `description`: `Consultas básicas de lectura.`
+- `tiers`: `core`, `search`, `platform`
+- `operations`: `find`, `find_one`, `count_documents`, `estimated_document_count`, `distinct`
+- `embedded`: `True`
+- `sync`: `True`
+- `async`: `True`
+- `queryFieldOperators`: `$all`, `$bitsAllClear`, `$bitsAllSet`, `$bitsAnyClear`, `$bitsAnySet`, `$cmp`, `$elemMatch`, `$eq`, `$exists`, `$geoIntersects`, `$geoWithin`, `$gt`, `$gte`, `$in`, `$lt`, `$lte`, `$mod`, `$ne`, `$near`, `$nearSphere`, `$nin`, `$not`, `$options`, `$regex`, `$size`, `$type`
+- `queryTopLevelOperators`: `$and`, `$comment`, `$expr`, `$jsonSchema`, `$nor`, `$or`, `$text`
+
+### `write`
+- `description`: `Inserción, actualización y borrado de documentos.`
+- `tiers`: `core`, `search`, `platform`
+- `operations`: `insert_one`, `insert_many`, `update_one`, `update_many`, `replace_one`, `delete_one`, `delete_many`, `bulk_write`
+- `embedded`: `True`
+- `sync`: `True`
+- `async`: `True`
+- `updateOperators`: `$addToSet`, `$bit`, `$currentDate`, `$inc`, `$max`, `$min`, `$mul`, `$pop`, `$pull`, `$pullAll`, `$push`, `$rename`, `$set`, `$setOnInsert`, `$unset`
+- `supportsPipelineUpdate`: `True`
+
+### `transactions`
+- `description`: `Operaciones multi-documento atómicas.`
+- `tiers`: `platform`
+- `operations`: `start_session`, `with_transaction`
+- `embedded`: `True`
+- `sync`: `True`
+- `async`: `True`
+- `distributed`: `False`
+- `mode`: `local`
+
+### `aggregation`
+- `description`: `Soporte para el framework de agregación.`
+- `tiers`: `core`, `search`, `platform`
+- `operations`: `aggregate`
+- `embedded`: `True`
+- `sync`: `True`
+- `async`: `True`
+- `explainable`: `True`
+- `supportedStages`: `$addFields`, `$bucket`, `$bucketAuto`, `$collStats`, `$count`, `$densify`, `$documents`, `$facet`, `$fill`, `$geoNear`, `$group`, `$limit`, `$lookup`, `$match`, `$merge`, `$project`, `$replaceRoot`, `$replaceWith`, `$sample`, `$set`, `$setWindowFields`, `$skip`, `$sort`, `$sortByCount`, `$unionWith`, `$unset`, `$unwind`
+- `supportedExpressionOperators`: `$abs`, `$add`, `$all`, `$allElementsTrue`, `$and`, `$anyElementTrue`, `$arrayElemAt`, `$arrayToObject`, `$binarySize`, `$bitAnd`, `$bitNot`, `$bitOr`, `$bitXor`, `$bsonSize`, `$ceil`, `$cmp`, `$concat`, `$concatArrays`, `$cond`, `$convert`, `$dateAdd`, `$dateDiff`, `$dateFromParts`, `$dateFromString`, `$dateSubtract`, `$dateToParts`, `$dateToString`, `$dateTrunc`, `$dayOfMonth`, `$dayOfWeek`, `$dayOfYear`, `$divide`, `$elemMatch`, `$eq`, `$exists`, `$exp`, `$filter`, `$first`, `$firstN`, `$floor`, `$getField`, `$gt`, `$gte`, `$hour`, `$ifNull`, `$in`, `$indexOfArray`, `$indexOfBytes`, `$indexOfCP`, `$isArray`, `$isNumber`, `$isoDayOfWeek`, `$isoWeek`, `$isoWeekYear`, `$lastN`, `$let`, `$literal`, `$ln`, `$log`, `$log10`, `$lt`, `$lte`, `$ltrim`, `$map`, `$maxN`, `$median`, `$mergeObjects`, `$millisecond`, `$minN`, `$minute`, `$mod`, `$month`, `$multiply`, `$ne`, `$nin`, `$objectToArray`, `$or`, `$percentile`, `$pow`, `$rand`, `$range`, `$reduce`, `$regexFind`, `$regexFindAll`, `$regexMatch`, `$replaceAll`, `$replaceOne`, `$reverseArray`, `$round`, `$rtrim`, `$second`, `$setDifference`, `$setEquals`, `$setField`, `$setIntersection`, `$setIsSubset`, `$setUnion`, `$size`, `$slice`, `$sortArray`, `$split`, `$sqrt`, `$stdDevPop`, `$stdDevSamp`, `$strLenBytes`, `$strLenCP`, `$strcasecmp`, `$substr`, `$substrBytes`, `$substrCP`, `$subtract`, `$switch`, `$toBool`, `$toDate`, `$toDecimal`, `$toDouble`, `$toInt`, `$toLong`, `$toLower`, `$toObjectId`, `$toString`, `$toUUID`, `$toUpper`, `$trim`, `$trunc`, `$type`, `$unsetField`, `$week`, `$year`, `$zip`
+- `supportedGroupAccumulators`: `$addToSet`, `$avg`, `$bottom`, `$bottomN`, `$count`, `$first`, `$firstN`, `$last`, `$lastN`, `$max`, `$maxN`, `$median`, `$mergeObjects`, `$min`, `$minN`, `$percentile`, `$push`, `$stdDevPop`, `$stdDevSamp`, `$sum`, `$top`, `$topN`
+- `supportedWindowAccumulators`: `$addToSet`, `$avg`, `$bottom`, `$bottomN`, `$count`, `$denseRank`, `$documentNumber`, `$first`, `$firstN`, `$last`, `$lastN`, `$max`, `$maxN`, `$median`, `$min`, `$minN`, `$percentile`, `$push`, `$rank`, `$stdDevPop`, `$stdDevSamp`, `$sum`, `$top`, `$topN`
+
+### `change_streams`
+- `description`: `Observabilidad de cambios en tiempo real.`
+- `tiers`: `platform`
+- `operations`: `watch`
+- `implementation`: `local`
+- `distributed`: `False`
+- `persistent`: `False`
+- `resumable`: `True`
+- `resumableAcrossClientRestarts`: `False`
+- `resumableAcrossProcesses`: `False`
+- `resumableAcrossNodes`: `False`
+- `boundedHistory`: `True`
+
+### `search`
+- `description`: `Soporte para consultas textuales de tipo search.`
+- `tiers`: `search`
+- `operations`: `aggregate`
+- `operators`: `text`, `phrase`, `autocomplete`, `wildcard`, `exists`, `in`, `equals`, `range`, `near`, `compound`, `regex`
+- `aggregateStage`: `$search`
+- `sqliteBackends`: `fts5`, `fts5-glob`, `fts5-path`, `fts5-prefilter`, `python`
+- `note`: `The local $search surface remains an explicit Atlas-like subset.`
+
+### `vector_search`
+- `description`: `Búsquedas por similitud semántica.`
+- `tiers`: `search`
+- `operations`: `aggregate`
 - `backend`: `usearch`
+- `aggregateStage`: `$vectorSearch`
 - `mode`: `local-ann-with-exact-baseline`
 - `similarities`: `cosine`, `dotProduct`, `euclidean`
 - `filterMode`: `post-candidate-with-adaptive-candidate-expansion`
 - `fallback`: `exact`
 - `note`: `SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.`
 
+### `collation`
+- `description`: `Ordenación y comparación sensibles a collation.`
+- `tiers`: `platform`
+- `operations`: _empty_
+- `backendContract`: `local-collation-introspection`
+- `metadataSources`: `collation_backend_info`, `collation_capabilities_info`
+
+### `persistence`
+- `description`: `Persistencia de datos más allá del proceso.`
+- `tiers`: `platform`
+- `operations`: _empty_
+- `runtimeDependent`: `True`
+- `embedded`: `True`
+- `note`: `Persistence depends on the selected embedded backend and its storage mode.`
+
+### `topology_discovery`
+- `description`: `Descubrimiento de topología y estado de nodos.`
+- `tiers`: `platform`
+- `operations`: _empty_
+- `metadataSources`: `topology_description`, `sdam_capabilities`
+- `distributed`: `False`
+- `mode`: `local-sdam-subset`
+
+## CXP Extensions
+### `classicText`
+- `supportsTextScore`: `True`
+- `supportsMetaProjection`: `True`
+- `supportsSortByTextScore`: `True`
+- `projectsFromCapability`: `search`
+- `note`: `The classic $text subset remains local, token-based and intentionally lighter than MongoDB server full-text behavior.`
+
 ### `geospatial`
 - `semantics`: `planar-local`
 - `storedGeometries`: `Point`, `LineString`, `Polygon`, `MultiPoint`, `MultiLineString`, `MultiPolygon`, `GeometryCollection`, `legacy [x, y]`
 - `queryOperators`: `$geoWithin`, `$geoIntersects`, `$near`, `$nearSphere`
 - `aggregationStages`: `$geoNear`
+- `projectsFromCapability`: `read`
 - `note`: `The embedded runtime uses planar local geometry operations. $nearSphere and 2dsphere remain Mongo-like names over local planar distance.`
 
+## Local Runtime Subsets
+### `vectorSearch`
+- `backend`: `usearch`
+- `aggregateStage`: `$vectorSearch`
+- `mode`: `local-ann-with-exact-baseline`
+- `similarities`: `cosine`, `dotProduct`, `euclidean`
+- `filterMode`: `post-candidate-with-adaptive-candidate-expansion`
+- `fallback`: `exact`
+- `note`: `SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.`
+
 ### `search`
-- `operators`: `text`, `phrase`, `autocomplete`, `wildcard`, `exists`, `in`, `equals`, `range`, `near`, `compound`
+- `operators`: `text`, `phrase`, `autocomplete`, `wildcard`, `exists`, `in`, `equals`, `range`, `near`, `compound`, `regex`
+- `aggregateStage`: `$search`
 - `sqliteBackends`: `fts5`, `fts5-glob`, `fts5-path`, `fts5-prefilter`, `python`
 - `note`: `The local $search surface remains an explicit Atlas-like subset.`
 
@@ -598,4 +711,13 @@
 - `supportsTextScore`: `True`
 - `supportsMetaProjection`: `True`
 - `supportsSortByTextScore`: `True`
+- `projectsFromCapability`: `search`
 - `note`: `The classic $text subset remains local, token-based and intentionally lighter than MongoDB server full-text behavior.`
+
+### `geospatial`
+- `semantics`: `planar-local`
+- `storedGeometries`: `Point`, `LineString`, `Polygon`, `MultiPoint`, `MultiLineString`, `MultiPolygon`, `GeometryCollection`, `legacy [x, y]`
+- `queryOperators`: `$geoWithin`, `$geoIntersects`, `$near`, `$nearSphere`
+- `aggregationStages`: `$geoNear`
+- `projectsFromCapability`: `read`
+- `note`: `The embedded runtime uses planar local geometry operations. $nearSphere and 2dsphere remain Mongo-like names over local planar distance.`

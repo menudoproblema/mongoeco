@@ -13,7 +13,6 @@ from mongoeco.compat._catalog_constants import (
 from mongoeco.compat._catalog_data import (
     DATABASE_COMMAND_SUPPORT_CATALOG,
     DATABASE_COMMAND_OPTION_SUPPORT_CATALOG,
-    LOCAL_RUNTIME_SUBSET_CATALOG,
     MONGODB_DIALECT_CATALOG,
     OPERATION_OPTION_SUPPORT_CATALOG,
     PYMONGO_PROFILE_CATALOG,
@@ -26,6 +25,10 @@ from mongoeco.compat._catalog_data import (
     SUPPORTED_QUERY_TOP_LEVEL_OPERATORS,
     SUPPORTED_UPDATE_OPERATORS,
     SUPPORTED_WINDOW_ACCUMULATORS,
+)
+from mongoeco.cxp.capabilities import (
+    export_cxp_capability_catalog,
+    export_legacy_runtime_subset_catalog,
 )
 
 
@@ -115,10 +118,11 @@ def export_database_command_catalog() -> dict[str, dict[str, object]]:
 
 
 def export_local_runtime_subset_catalog() -> dict[str, dict[str, object]]:
-    return {
-        name: dict(entry)
-        for name, entry in LOCAL_RUNTIME_SUBSET_CATALOG.items()
-    }
+    return export_legacy_runtime_subset_catalog()
+
+
+def export_cxp_catalog() -> dict[str, object]:
+    return export_cxp_capability_catalog()
 
 
 def export_full_compat_catalog() -> dict[str, object]:
@@ -142,6 +146,7 @@ def export_full_compat_catalog() -> dict[str, object]:
         "database_commands": export_database_command_catalog(),
         "operation_options": export_operation_option_catalog(),
         "database_command_options": export_database_command_option_catalog(),
+        "cxp": export_cxp_catalog(),
         "local_runtime_subsets": export_local_runtime_subset_catalog(),
     }
 
@@ -226,6 +231,52 @@ def export_full_compat_catalog_markdown() -> str:
                 for field, value in support.items()
             )
             lines.append(f"- `{option}`: {rendered}")
+        lines.append("")
+
+    cxp_catalog = catalog["cxp"]
+    assert isinstance(cxp_catalog, dict)
+    lines.append("## CXP")
+    lines.append(f"- `interface`: `{cxp_catalog['interface']}`")
+    capabilities = cxp_catalog["capabilities"]
+    assert isinstance(capabilities, dict)
+    for name, entry in capabilities.items():
+        assert isinstance(entry, dict)
+        lines.append(f"### `{name}`")
+        description = entry.get("description")
+        lines.append(f"- `description`: `{description}`")
+        tiers = entry.get("tiers", ())
+        rendered_tiers = ", ".join(f"`{value}`" for value in tiers) or "_empty_"
+        lines.append(f"- `tiers`: {rendered_tiers}")
+        operations = entry.get("operations", ())
+        if isinstance(operations, list):
+            rendered_operations = ", ".join(
+                f"`{operation.get('name')}`"
+                for operation in operations
+                if isinstance(operation, dict)
+            ) or "_empty_"
+            lines.append(f"- `operations`: {rendered_operations}")
+        metadata = entry.get("metadata", {})
+        assert isinstance(metadata, dict)
+        for field_name, field_value in metadata.items():
+            if isinstance(field_value, list):
+                rendered = ", ".join(f"`{item}`" for item in field_value) or "_empty_"
+            else:
+                rendered = f"`{field_value}`"
+            lines.append(f"- `{field_name}`: {rendered}")
+        lines.append("")
+
+    extensions = cxp_catalog["extensions"]
+    assert isinstance(extensions, dict)
+    lines.append("## CXP Extensions")
+    for name, entry in extensions.items():
+        assert isinstance(entry, dict)
+        lines.append(f"### `{name}`")
+        for field_name, field_value in entry.items():
+            if isinstance(field_value, list):
+                rendered = ", ".join(f"`{item}`" for item in field_value) or "_empty_"
+            else:
+                rendered = f"`{field_value}`"
+            lines.append(f"- `{field_name}`: {rendered}")
         lines.append("")
 
     runtime_subsets = catalog["local_runtime_subsets"]

@@ -1,6 +1,12 @@
 from mongoeco.api import AsyncMongoClient, MongoClient
 from mongoeco._version import __version__
 from mongoeco.change_streams import ChangeStreamBackendInfo
+from mongoeco.cxp import (
+    MONGODB_CATALOG,
+    MONGODB_INTERFACE,
+    MONGODB_SEARCH,
+    MONGODB_VECTOR_SEARCH,
+)
 from mongoeco.core.collation import (
     CollationBackendInfo,
     CollationCapabilitiesInfo,
@@ -109,6 +115,7 @@ from mongoeco.compat import (
     OperationOptionSupport,
     OptionSupportStatus,
     export_full_compat_catalog,
+    export_cxp_catalog,
     export_mongodb_dialect_catalog,
     export_operation_option_catalog,
     export_pymongo_profile_catalog,
@@ -169,6 +176,7 @@ __all__ = [
     "export_pymongo_profile_catalog",
     "export_operation_option_catalog",
     "export_full_compat_catalog",
+    "export_cxp_catalog",
     "UNSUPPORTED_OPERATION_OPTION",
     "get_operation_option_support",
     "is_operation_option_effective",
@@ -250,6 +258,10 @@ __all__ = [
     "WireProtocolCommandTransport",
     "CollectionInvalid",
     "ChangeStreamBackendInfo",
+    "MONGODB_INTERFACE",
+    "MONGODB_CATALOG",
+    "MONGODB_SEARCH",
+    "MONGODB_VECTOR_SEARCH",
     "InsertOne",
     "UpdateOne",
     "UpdateMany",

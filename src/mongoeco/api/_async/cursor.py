@@ -11,6 +11,7 @@ from mongoeco.api.argument_validation import (
     validate_sort_spec as _validate_sort_spec,
 )
 from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.cxp.capabilities import build_mongodb_explain_projection
 from mongoeco.core.query_plan import QueryNode
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
@@ -26,6 +27,16 @@ def _serialize_explanation(result: object) -> dict[str, object]:
     if isinstance(result, dict):
         return result
     raise TypeError(f"Unsupported explain result type: {type(result)!r}")
+
+
+def _find_explain_cxp_projection(filter_spec: Filter) -> dict[str, object]:
+    metadata: dict[str, object] | None = None
+    if isinstance(filter_spec, dict) and '$text' in filter_spec:
+        metadata = {'nonCanonicalFeature': 'classicText'}
+    return build_mongodb_explain_projection(
+        capability='read',
+        metadata=metadata,
+    )
 
 
 def _operation_issue_message(operation) -> str:
@@ -486,7 +497,7 @@ class AsyncCursor:
     async def explain(self) -> dict[str, object]:
         operation = self._as_operation()
         if operation.planning_issues:
-            return QueryPlanExplanation(
+            explanation = QueryPlanExplanation(
                 engine="planner",
                 strategy="deferred",
                 plan="planning-issues",
@@ -501,6 +512,8 @@ class AsyncCursor:
                 planning_mode=operation.planning_mode,
                 planning_issues=operation.planning_issues,
             ).to_document()
+            explanation['cxp'] = _find_explain_cxp_projection(self._filter_spec)
+            return explanation
         engine = self._collection._engine
         semantics = self._base_semantics()
         result = await engine.explain_find_semantics(
@@ -509,4 +522,6 @@ class AsyncCursor:
             semantics,
             context=self._session,
         )
-        return _serialize_explanation(result)
+        explanation = _serialize_explanation(result)
+        explanation['cxp'] = _find_explain_cxp_projection(self._filter_spec)
+        return explanation
