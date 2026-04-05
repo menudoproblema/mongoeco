@@ -584,6 +584,7 @@
 - `async`: `True`
 - `queryFieldOperators`: `$all`, `$bitsAllClear`, `$bitsAllSet`, `$bitsAnyClear`, `$bitsAnySet`, `$cmp`, `$elemMatch`, `$eq`, `$exists`, `$geoIntersects`, `$geoWithin`, `$gt`, `$gte`, `$in`, `$lt`, `$lte`, `$mod`, `$ne`, `$near`, `$nearSphere`, `$nin`, `$not`, `$options`, `$regex`, `$size`, `$type`
 - `queryTopLevelOperators`: `$and`, `$comment`, `$expr`, `$jsonSchema`, `$nor`, `$or`, `$text`
+- `operationMetadata`: `{'find': {'supportedOptions': ['batch_size', 'comment', 'hint', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True}, 'find_one': {'supportedOptions': [], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False}, 'count_documents': {'supportedOptions': ['comment', 'hint', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False}, 'estimated_document_count': {'supportedOptions': ['comment', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False}, 'distinct': {'supportedOptions': ['comment', 'hint', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False}}`
 
 ### `write`
 - `description`: `Insert, update, and delete document operations.`
@@ -594,6 +595,7 @@
 - `async`: `True`
 - `updateOperators`: `$addToSet`, `$bit`, `$currentDate`, `$inc`, `$max`, `$min`, `$mul`, `$pop`, `$pull`, `$pullAll`, `$push`, `$rename`, `$set`, `$setOnInsert`, `$unset`
 - `supportsPipelineUpdate`: `True`
+- `operationMetadata`: `{'insert_one': {'supportedOptions': [], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False}, 'insert_many': {'supportedOptions': [], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False}, 'update_one': {'supportedOptions': ['array_filters', 'comment', 'hint', 'let', 'sort'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'supportsPipelineUpdate': True, 'supportedUpdateOperators': ['$addToSet', '$bit', '$currentDate', '$inc', '$max', '$min', '$mul', '$pop', '$pull', '$pullAll', '$push', '$rename', '$set', '$setOnInsert', '$unset']}, 'update_many': {'supportedOptions': ['array_filters', 'comment', 'hint', 'let'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'supportsPipelineUpdate': True, 'supportedUpdateOperators': ['$addToSet', '$bit', '$currentDate', '$inc', '$max', '$min', '$mul', '$pop', '$pull', '$pullAll', '$push', '$rename', '$set', '$setOnInsert', '$unset']}, 'replace_one': {'supportedOptions': ['comment', 'hint', 'let', 'sort'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'supportsReplacementDocument': True}, 'delete_one': {'supportedOptions': ['comment', 'hint', 'let'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False}, 'delete_many': {'supportedOptions': ['comment', 'hint', 'let'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False}, 'bulk_write': {'supportedOptions': ['comment', 'let'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False}}`
 
 ### `transactions`
 - `description`: `Atomic multi-document operations.`
@@ -617,6 +619,7 @@
 - `sync`: `True`
 - `async`: `True`
 - `explainable`: `True`
+- `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'supportedStages': ['$addFields', '$bucket', '$bucketAuto', '$collStats', '$count', '$densify', '$documents', '$facet', '$fill', '$geoNear', '$group', '$limit', '$lookup', '$match', '$merge', '$project', '$replaceRoot', '$replaceWith', '$sample', '$set', '$setWindowFields', '$skip', '$sort', '$sortByCount', '$unionWith', '$unset', '$unwind'], 'supportedExpressionOperators': ['$abs', '$add', '$all', '$allElementsTrue', '$and', '$anyElementTrue', '$arrayElemAt', '$arrayToObject', '$binarySize', '$bitAnd', '$bitNot', '$bitOr', '$bitXor', '$bsonSize', '$ceil', '$cmp', '$concat', '$concatArrays', '$cond', '$convert', '$dateAdd', '$dateDiff', '$dateFromParts', '$dateFromString', '$dateSubtract', '$dateToParts', '$dateToString', '$dateTrunc', '$dayOfMonth', '$dayOfWeek', '$dayOfYear', '$divide', '$elemMatch', '$eq', '$exists', '$exp', '$filter', '$first', '$firstN', '$floor', '$getField', '$gt', '$gte', '$hour', '$ifNull', '$in', '$indexOfArray', '$indexOfBytes', '$indexOfCP', '$isArray', '$isNumber', '$isoDayOfWeek', '$isoWeek', '$isoWeekYear', '$lastN', '$let', '$literal', '$ln', '$log', '$log10', '$lt', '$lte', '$ltrim', '$map', '$maxN', '$median', '$mergeObjects', '$millisecond', '$minN', '$minute', '$mod', '$month', '$multiply', '$ne', '$nin', '$objectToArray', '$or', '$percentile', '$pow', '$rand', '$range', '$reduce', '$regexFind', '$regexFindAll', '$regexMatch', '$replaceAll', '$replaceOne', '$reverseArray', '$round', '$rtrim', '$second', '$setDifference', '$setEquals', '$setField', '$setIntersection', '$setIsSubset', '$setUnion', '$size', '$slice', '$sortArray', '$split', '$sqrt', '$stdDevPop', '$stdDevSamp', '$strLenBytes', '$strLenCP', '$strcasecmp', '$substr', '$substrBytes', '$substrCP', '$subtract', '$switch', '$toBool', '$toDate', '$toDecimal', '$toDouble', '$toInt', '$toLong', '$toLower', '$toObjectId', '$toString', '$toUUID', '$toUpper', '$trim', '$trunc', '$type', '$unsetField', '$week', '$year', '$zip'], 'supportedGroupAccumulators': ['$addToSet', '$avg', '$bottom', '$bottomN', '$count', '$first', '$firstN', '$last', '$lastN', '$max', '$maxN', '$median', '$mergeObjects', '$min', '$minN', '$percentile', '$push', '$stdDevPop', '$stdDevSamp', '$sum', '$top', '$topN'], 'supportedWindowAccumulators': ['$addToSet', '$avg', '$bottom', '$bottomN', '$count', '$denseRank', '$documentNumber', '$first', '$firstN', '$last', '$lastN', '$max', '$maxN', '$median', '$min', '$minN', '$percentile', '$push', '$rank', '$stdDevPop', '$stdDevSamp', '$sum', '$top', '$topN']}}`
 
 ### `change_streams`
 - `description`: `Realtime change observability.`
@@ -637,7 +640,11 @@
 - `operations`: `aggregate`
 - `operators`: `text`, `phrase`, `autocomplete`, `wildcard`, `exists`, `in`, `equals`, `range`, `near`, `compound`, `regex`
 - `aggregateStage`: `$search`
+- `fieldMappings`: `autocomplete`, `boolean`, `date`, `number`, `objectId`, `string`, `token`, `uuid`
+- `textualFieldMappings`: `autocomplete`, `string`, `token`
+- `exactFilterFieldMappings`: `boolean`, `date`, `number`, `objectId`, `uuid`
 - `sqliteBackends`: `fts5`, `fts5-glob`, `fts5-path`, `fts5-prefilter`, `python`
+- `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'aggregateStage': '$search', 'operators': ['text', 'phrase', 'autocomplete', 'wildcard', 'exists', 'in', 'equals', 'range', 'near', 'compound', 'regex']}}`
 - `note`: `The local $search surface remains an explicit Atlas-like subset.`
 
 ### `vector_search`
@@ -650,6 +657,7 @@
 - `mode`: `local-ann-with-exact-baseline`
 - `filterMode`: `post-candidate-with-adaptive-candidate-expansion`
 - `fallback`: `exact`
+- `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'aggregateStage': '$vectorSearch', 'similarities': ['cosine', 'dotProduct', 'euclidean']}}`
 - `note`: `SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.`
 
 ### `collation`
@@ -699,12 +707,17 @@
 - `mode`: `local-ann-with-exact-baseline`
 - `filterMode`: `post-candidate-with-adaptive-candidate-expansion`
 - `fallback`: `exact`
+- `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'aggregateStage': '$vectorSearch', 'similarities': ['cosine', 'dotProduct', 'euclidean']}}`
 - `note`: `SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.`
 
 ### `search`
 - `operators`: `text`, `phrase`, `autocomplete`, `wildcard`, `exists`, `in`, `equals`, `range`, `near`, `compound`, `regex`
 - `aggregateStage`: `$search`
+- `fieldMappings`: `autocomplete`, `boolean`, `date`, `number`, `objectId`, `string`, `token`, `uuid`
+- `textualFieldMappings`: `autocomplete`, `string`, `token`
+- `exactFilterFieldMappings`: `boolean`, `date`, `number`, `objectId`, `uuid`
 - `sqliteBackends`: `fts5`, `fts5-glob`, `fts5-path`, `fts5-prefilter`, `python`
+- `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'aggregateStage': '$search', 'operators': ['text', 'phrase', 'autocomplete', 'wildcard', 'exists', 'in', 'equals', 'range', 'near', 'compound', 'regex']}}`
 - `note`: `The local $search surface remains an explicit Atlas-like subset.`
 
 ### `classicText`

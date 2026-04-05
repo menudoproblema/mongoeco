@@ -961,7 +961,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         expected_match='"Ada wrote the first algorithm"',
                     )
                     with self.assertRaises(OperationFailure):
-                        collection.create_search_index({"mappings": {"fields": {"title": {"type": "boolean"}}}})
+                        collection.create_search_index({"mappings": {"fields": {"title": {"type": "decimal"}}}})
 
     def test_search_phrase_slop_keeps_parity_between_memory_and_sqlite(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

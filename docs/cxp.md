@@ -68,19 +68,27 @@ Some capabilities need more detail than a single operation name.
 
 `mongoeco` therefore publishes structured metadata such as:
 
+* `read.operationMetadata`
+* `write.operationMetadata`
 * `aggregation.supportedStages`
 * `aggregation.supportedExpressionOperators`
 * `aggregation.supportedGroupAccumulators`
 * `aggregation.supportedWindowAccumulators`
+* `aggregation.operationMetadata`
 * `search.operators`
+* `search.fieldMappings`
+* `search.operationMetadata`
 * `search.aggregateStage`
 * `vector_search.similarities`
+* `vector_search.operationMetadata`
 * `vector_search.aggregateStage`
 
 This keeps the CXP model honest:
 
 * `aggregate` is the public operation
 * stages and operators remain part of the supported subset metadata
+* first-level operations keep their own option and subset metadata instead of
+  pretending that every provider exposes the full MongoDB surface
 
 ## Reusable profiles
 

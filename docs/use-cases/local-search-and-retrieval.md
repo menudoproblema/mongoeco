@@ -7,7 +7,8 @@ Use local `$search` and `$vectorSearch` when you want:
 * Atlas-like query shapes for demos, local development or embedded apps;
 * explicit local matching and explain metadata;
 * a search/vector workflow without running a separate service;
-* search operators that are good enough to demonstrate product behavior.
+* search operators that are good enough to demonstrate product behavior;
+* explicit local field mappings for both textual and scalar search fields.
 
 ## Choosing Between `text`, `phrase` and `phrase.slop`
 
@@ -48,6 +49,20 @@ Expected result:
 * `SQLiteEngine` may use FTS5 as a candidate prefilter and then apply exact
   local validation in Python when `slop > 0`.
 
+## Field Mappings You Can Declare Locally
+
+Local search index mappings now accept:
+
+* textual fields: `string`, `autocomplete`, `token`
+* scalar fields for exact/range-style matching: `number`, `date`, `boolean`,
+  `objectId`, `uuid`
+
+That keeps the product story honest:
+
+* textual operators stay tied to textual mappings;
+* scalar operators such as `equals`, `in`, `range` and `near` can target
+  explicitly declared local scalar fields.
+
 ## Minimal Recipe
 
 ```python
@@ -83,7 +98,8 @@ with MongoClient(SQLiteEngine("search.db")) as client:
 These examples show:
 
 * exact `phrase` versus `phrase.slop`;
-* `compound` with `phrase`, `in`, `range`, `exists` and `regex`;
+* `near` over numeric fields with visible ranking metadata;
+* `compound` with `phrase`, `equals`, `in`, `range`, `near`, `exists` and `regex`;
 * public vector diagnostics such as `similarity`, `numCandidates`,
   `vectorSearchScore`, residual filters and fallback reasons.
 

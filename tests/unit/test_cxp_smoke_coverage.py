@@ -1,5 +1,6 @@
 import unittest
 
+from mongoeco.compat._catalog_models import OperationOptionSupport, OptionSupportStatus
 from mongoeco.cxp import capabilities as cxp_capabilities
 from mongoeco.cxp import contracts as cxp_contracts
 from mongoeco.cxp import handshake as cxp_handshake
@@ -66,3 +67,26 @@ class CxpSmokeCoverageTests(unittest.TestCase):
                 cxp_capabilities.export_legacy_runtime_subset_catalog()
         finally:
             cxp_capabilities.export_cxp_capability_catalog = original_export
+
+    def test_operation_option_metadata_covers_all_support_statuses(self) -> None:
+        original_catalog = cxp_capabilities.OPERATION_OPTION_SUPPORT_CATALOG
+        cxp_capabilities.OPERATION_OPTION_SUPPORT_CATALOG = {
+            "demo": {
+                "effective": OperationOptionSupport(
+                    status=OptionSupportStatus.EFFECTIVE
+                ),
+                "accepted": OperationOptionSupport(
+                    status=OptionSupportStatus.ACCEPTED_NOOP
+                ),
+                "unsupported": OperationOptionSupport(
+                    status=OptionSupportStatus.UNSUPPORTED
+                ),
+            }
+        }
+        try:
+            metadata = cxp_capabilities._operation_option_metadata("demo")
+        finally:
+            cxp_capabilities.OPERATION_OPTION_SUPPORT_CATALOG = original_catalog
+        self.assertEqual(metadata["supportedOptions"], ["effective"])
+        self.assertEqual(metadata["acceptedNoopOptions"], ["accepted"])
+        self.assertEqual(metadata["unsupportedOptions"], ["unsupported"])

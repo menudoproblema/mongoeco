@@ -26,6 +26,19 @@ TEXT_SCORE_FIELD = "__mongoeco_textScore__"
 VECTOR_SEARCH_SCORE_FIELD = "__mongoeco_vectorSearchScore__"
 SEARCH_RESULT_METADATA_FIELDS = frozenset({TEXT_SCORE_FIELD, VECTOR_SEARCH_SCORE_FIELD})
 _TEXT_TOKEN_RE = re.compile(r"\w+", re.UNICODE)
+SUPPORTED_SEARCH_FIELD_MAPPING_TYPES = frozenset(
+    {
+        "string",
+        "autocomplete",
+        "token",
+        "number",
+        "date",
+        "boolean",
+        "objectId",
+        "uuid",
+    }
+)
+TEXTUAL_SEARCH_FIELD_MAPPING_TYPES = frozenset({"string", "autocomplete", "token"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -1499,7 +1512,7 @@ def _validate_field_mapping(field_spec: Document) -> None:
     if mapping_type == "document":
         _validate_mappings_document(field_spec)
         return
-    if mapping_type not in {"string", "autocomplete", "token", "number", "date"}:
+    if mapping_type not in SUPPORTED_SEARCH_FIELD_MAPPING_TYPES:
         raise OperationFailure(f"unsupported local search field mapping type: {mapping_type}")
     unsupported = set(field_spec) - {"type", "analyzer", "searchAnalyzer"}
     if unsupported:
@@ -1684,6 +1697,11 @@ def _explain_near_query(query: SearchNearQuery) -> dict[str, object | None]:
         "query": None,
         "paths": None,
         "compound": None,
+        "ranking": {
+            "distanceMode": "pivot-decay",
+            "distanceUnit": query.origin_kind,
+            "scoreFormula": "1 + 1 / (1 + distance / pivot)",
+        },
         "value": None,
         "range": None,
         "origin": query.origin,
@@ -1724,6 +1742,15 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
         "ranking": {
             "usesShouldRanking": bool(query.should),
             "nearAware": any(isinstance(clause, SearchNearQuery) for clause in query.should),
+            "nearAwareShouldCount": sum(
+                1 for clause in query.should if isinstance(clause, SearchNearQuery)
+            ),
+            "shouldRankingMode": (
+                "matched-should-plus-clause-score"
+                if query.should
+                else "no-should-ranking"
+            ),
+            "minimumShouldMatchApplied": query.minimum_should_match > 0,
         },
         "value": None,
         "range": None,
@@ -1837,6 +1864,8 @@ def _collect_entries_from_mapping(document: object, mappings: Document, prefix: 
         mapping_type = field_spec.get("type", "document")
         if mapping_type == "document":
             entries.extend(_collect_entries_from_mapping(value, field_spec, prefix=path))
+            continue
+        if mapping_type not in TEXTUAL_SEARCH_FIELD_MAPPING_TYPES:
             continue
         entries.extend(_collect_text_leaf_entries(value, path))
     return entries

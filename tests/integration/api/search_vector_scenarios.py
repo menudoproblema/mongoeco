@@ -14,7 +14,16 @@ def assert_compound_should_near_explanation(
     if engine_name == "sqlite":
         case.assertEqual(details["compoundPrefilter"]["requiredCandidateableShould"], 1)
         case.assertEqual(details["compoundPrefilter"]["candidateableShouldOperators"], ["exists"])
-    case.assertEqual(details["ranking"], {"usesShouldRanking": True, "nearAware": True})
+    case.assertEqual(
+        details["ranking"],
+        {
+            "usesShouldRanking": True,
+            "nearAware": True,
+            "nearAwareShouldCount": 1,
+            "shouldRankingMode": "matched-should-plus-clause-score",
+            "minimumShouldMatchApplied": True,
+        },
+    )
 
 
 def assert_compound_candidateable_should_explanation(

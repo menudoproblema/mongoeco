@@ -6,6 +6,7 @@ import msgspec
 
 from cxp.capabilities import Capability, CapabilityMatrix, CapabilityMetadata
 from mongoeco.compat._catalog_data import (
+    OPERATION_OPTION_SUPPORT_CATALOG,
     SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS,
     SUPPORTED_AGGREGATION_STAGES,
     SUPPORTED_GROUP_ACCUMULATORS,
@@ -14,22 +15,41 @@ from mongoeco.compat._catalog_data import (
     SUPPORTED_UPDATE_OPERATORS,
     SUPPORTED_WINDOW_ACCUMULATORS,
 )
+from mongoeco.compat._catalog_models import OptionSupportStatus
 from mongoeco.cxp.catalogs.interfaces.database.mongodb import (
     MongoAggregationMetadata,
     MongoSearchMetadata,
     MongoVectorSearchMetadata,
     MONGODB_AGGREGATION,
+    MONGODB_AGGREGATE,
+    MONGODB_BULK_WRITE,
     MONGODB_CATALOG,
     MONGODB_CHANGE_STREAMS,
     MONGODB_COLLATION,
+    MONGODB_COUNT_DOCUMENTS,
+    MONGODB_DELETE_MANY,
+    MONGODB_DELETE_ONE,
+    MONGODB_DISTINCT,
+    MONGODB_ESTIMATED_DOCUMENT_COUNT,
+    MONGODB_FIND,
+    MONGODB_FIND_ONE,
     MONGODB_INTERFACE,
+    MONGODB_INSERT_MANY,
+    MONGODB_INSERT_ONE,
     MONGODB_PERSISTENCE,
     MONGODB_READ,
+    MONGODB_REPLACE_ONE,
     MONGODB_SEARCH,
     MONGODB_TOPOLOGY_DISCOVERY,
     MONGODB_TRANSACTIONS,
+    MONGODB_UPDATE_MANY,
+    MONGODB_UPDATE_ONE,
     MONGODB_VECTOR_SEARCH,
     MONGODB_WRITE,
+)
+from mongoeco.core.search import (
+    SUPPORTED_SEARCH_FIELD_MAPPING_TYPES,
+    TEXTUAL_SEARCH_FIELD_MAPPING_TYPES,
 )
 
 __all__ = (
@@ -44,6 +64,33 @@ __all__ = (
 )
 
 
+def _operation_option_metadata(
+    operation_name: str,
+    *,
+    supports_explain: bool = False,
+    extra_metadata: dict[str, object] | None = None,
+) -> dict[str, object]:
+    supported_options: list[str] = []
+    accepted_noop_options: list[str] = []
+    unsupported_options: list[str] = []
+    for option_name, support in OPERATION_OPTION_SUPPORT_CATALOG.get(operation_name, {}).items():
+        if support.status is OptionSupportStatus.EFFECTIVE:
+            supported_options.append(option_name)
+        elif support.status is OptionSupportStatus.ACCEPTED_NOOP:
+            accepted_noop_options.append(option_name)
+        else:
+            unsupported_options.append(option_name)
+    metadata: dict[str, object] = {
+        'supportedOptions': sorted(supported_options),
+        'acceptedNoopOptions': sorted(accepted_noop_options),
+        'unsupportedOptions': sorted(unsupported_options),
+        'supportsExplain': supports_explain,
+    }
+    if extra_metadata:
+        metadata.update(extra_metadata)
+    return metadata
+
+
 _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
     MONGODB_READ: {
         'embedded': True,
@@ -51,6 +98,20 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
         'async': True,
         'queryFieldOperators': sorted(SUPPORTED_QUERY_FIELD_OPERATORS),
         'queryTopLevelOperators': sorted(SUPPORTED_QUERY_TOP_LEVEL_OPERATORS),
+        'operationMetadata': {
+            MONGODB_FIND: _operation_option_metadata(
+                MONGODB_FIND,
+                supports_explain=True,
+            ),
+            MONGODB_FIND_ONE: _operation_option_metadata(MONGODB_FIND_ONE),
+            MONGODB_COUNT_DOCUMENTS: _operation_option_metadata(
+                MONGODB_COUNT_DOCUMENTS,
+            ),
+            MONGODB_ESTIMATED_DOCUMENT_COUNT: _operation_option_metadata(
+                MONGODB_ESTIMATED_DOCUMENT_COUNT,
+            ),
+            MONGODB_DISTINCT: _operation_option_metadata(MONGODB_DISTINCT),
+        },
     },
     MONGODB_WRITE: {
         'embedded': True,
@@ -58,6 +119,31 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
         'async': True,
         'updateOperators': sorted(SUPPORTED_UPDATE_OPERATORS),
         'supportsPipelineUpdate': True,
+        'operationMetadata': {
+            MONGODB_INSERT_ONE: _operation_option_metadata(MONGODB_INSERT_ONE),
+            MONGODB_INSERT_MANY: _operation_option_metadata(MONGODB_INSERT_MANY),
+            MONGODB_UPDATE_ONE: _operation_option_metadata(
+                MONGODB_UPDATE_ONE,
+                extra_metadata={
+                    'supportsPipelineUpdate': True,
+                    'supportedUpdateOperators': sorted(SUPPORTED_UPDATE_OPERATORS),
+                },
+            ),
+            MONGODB_UPDATE_MANY: _operation_option_metadata(
+                MONGODB_UPDATE_MANY,
+                extra_metadata={
+                    'supportsPipelineUpdate': True,
+                    'supportedUpdateOperators': sorted(SUPPORTED_UPDATE_OPERATORS),
+                },
+            ),
+            MONGODB_REPLACE_ONE: _operation_option_metadata(
+                MONGODB_REPLACE_ONE,
+                extra_metadata={'supportsReplacementDocument': True},
+            ),
+            MONGODB_DELETE_ONE: _operation_option_metadata(MONGODB_DELETE_ONE),
+            MONGODB_DELETE_MANY: _operation_option_metadata(MONGODB_DELETE_MANY),
+            MONGODB_BULK_WRITE: _operation_option_metadata(MONGODB_BULK_WRITE),
+        },
     },
     MONGODB_AGGREGATION: {},
     MONGODB_TRANSACTIONS: {
@@ -179,6 +265,24 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_AGGREGATION] = {
     'sync': True,
     'async': True,
     'explainable': True,
+    'operationMetadata': {
+        MONGODB_AGGREGATE: _operation_option_metadata(
+            MONGODB_AGGREGATE,
+            supports_explain=True,
+            extra_metadata={
+                'supportedStages': sorted(SUPPORTED_AGGREGATION_STAGES),
+                'supportedExpressionOperators': sorted(
+                    SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS,
+                ),
+                'supportedGroupAccumulators': sorted(
+                    SUPPORTED_GROUP_ACCUMULATORS,
+                ),
+                'supportedWindowAccumulators': sorted(
+                    SUPPORTED_WINDOW_ACCUMULATORS,
+                ),
+            },
+        ),
+    },
 }
 
 _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
@@ -199,6 +303,12 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
             ),
         ),
     ),
+    'fieldMappings': sorted(SUPPORTED_SEARCH_FIELD_MAPPING_TYPES),
+    'textualFieldMappings': sorted(TEXTUAL_SEARCH_FIELD_MAPPING_TYPES),
+    'exactFilterFieldMappings': sorted(
+        SUPPORTED_SEARCH_FIELD_MAPPING_TYPES
+        - TEXTUAL_SEARCH_FIELD_MAPPING_TYPES
+    ),
     'sqliteBackends': [
         'fts5',
         'fts5-glob',
@@ -206,6 +316,28 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
         'fts5-prefilter',
         'python',
     ],
+    'operationMetadata': {
+        MONGODB_AGGREGATE: _operation_option_metadata(
+            MONGODB_AGGREGATE,
+            supports_explain=True,
+            extra_metadata={
+                'aggregateStage': '$search',
+                'operators': [
+                    'text',
+                    'phrase',
+                    'autocomplete',
+                    'wildcard',
+                    'exists',
+                    'in',
+                    'equals',
+                    'range',
+                    'near',
+                    'compound',
+                    'regex',
+                ],
+            },
+        ),
+    },
     'note': (
         'The local $search surface remains an explicit Atlas-like subset.'
     ),
@@ -221,6 +353,16 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_VECTOR_SEARCH] = {
     'mode': 'local-ann-with-exact-baseline',
     'filterMode': 'post-candidate-with-adaptive-candidate-expansion',
     'fallback': 'exact',
+    'operationMetadata': {
+        MONGODB_AGGREGATE: _operation_option_metadata(
+            MONGODB_AGGREGATE,
+            supports_explain=True,
+            extra_metadata={
+                'aggregateStage': '$vectorSearch',
+                'similarities': ['cosine', 'dotProduct', 'euclidean'],
+            },
+        ),
+    },
     'note': (
         'SQLiteEngine uses a local usearch ANN backend when the vector '
         'index is materialized; MemoryEngine remains the exact semantic '

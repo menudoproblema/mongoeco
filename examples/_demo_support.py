@@ -3,8 +3,10 @@ from __future__ import annotations
 from copy import deepcopy
 from pathlib import Path
 import time
+import uuid
 
 from mongoeco import SearchIndexModel
+from mongoeco.types import ObjectId
 
 
 EMBEDDED_APP_DOCUMENTS = [
@@ -18,6 +20,9 @@ LOCAL_SEARCH_DOCUMENTS = [
         "_id": 1,
         "title": "Ada Lovelace notes",
         "kind": "note",
+        "published": True,
+        "ownerId": ObjectId("656565656565656565656561"),
+        "externalUuid": uuid.UUID("11111111-1111-1111-1111-111111111111"),
         "score": 10,
         "summary": "Local search summary",
         "body": "Ada designed local search patterns for algorithm notes.",
@@ -27,6 +32,9 @@ LOCAL_SEARCH_DOCUMENTS = [
         "_id": 2,
         "title": "Compiler reference",
         "kind": "reference",
+        "published": False,
+        "ownerId": ObjectId("656565656565656565656562"),
+        "externalUuid": uuid.UUID("22222222-2222-2222-2222-222222222222"),
         "score": 7,
         "body": "Compiler references rarely repeat the same phrase exactly.",
         "embedding": [0.8, 0.2, 0.0],
@@ -35,6 +43,9 @@ LOCAL_SEARCH_DOCUMENTS = [
         "_id": 3,
         "title": "Ada algorithms handbook",
         "kind": "note",
+        "published": True,
+        "ownerId": ObjectId("656565656565656565656563"),
+        "externalUuid": uuid.UUID("33333333-3333-3333-3333-333333333333"),
         "score": 9,
         "summary": "Algorithm summary",
         "body": "Ada designed the practical local search patterns for algorithm ranking demos.",
@@ -98,6 +109,9 @@ def build_content_search_index(name: str = "content_search") -> SearchIndexModel
                     "summary": {"type": "string"},
                     "body": {"type": "string"},
                     "kind": {"type": "token"},
+                    "published": {"type": "boolean"},
+                    "ownerId": {"type": "objectId"},
+                    "externalUuid": {"type": "uuid"},
                     "score": {"type": "number"},
                 },
             }

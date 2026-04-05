@@ -150,6 +150,34 @@ class CxpAlignmentTests(unittest.TestCase):
                 'supportedStages'
             ],
         )
+        self.assertIn(
+            'operationMetadata',
+            exported['capabilities']['read']['metadata'],
+        )
+        self.assertTrue(
+            exported['capabilities']['read']['metadata']['operationMetadata'][
+                'find'
+            ]['supportsExplain']
+        )
+        self.assertTrue(
+            exported['capabilities']['write']['metadata']['operationMetadata'][
+                'update_one'
+            ]['supportsPipelineUpdate']
+        )
+        self.assertIn(
+            'fieldMappings',
+            exported['capabilities']['search']['metadata'],
+        )
+        self.assertIn(
+            'boolean',
+            exported['capabilities']['search']['metadata']['fieldMappings'],
+        )
+        self.assertEqual(
+            exported['capabilities']['search']['metadata']['operationMetadata'][
+                'aggregate'
+            ]['aggregateStage'],
+            '$search',
+        )
         self.assertEqual(
             exported['capabilities']['search']['metadata']['operators'],
             metadata['search']['operators'],

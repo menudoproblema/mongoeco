@@ -69,6 +69,11 @@ Esto implica:
   `regex`, `exists`, `in`, `equals`, `range`, `near` y `compound`
   como subset explícito y documentado, sin pretender semántica Atlas Search
   completa.
+* los mappings locales de `$search` cubren ya una familia más rica de campos:
+  `string`, `autocomplete`, `token`, `number`, `date`, `boolean`,
+  `objectId` y `uuid`; los tipos textuales siguen siendo `string`,
+  `autocomplete` y `token`, y el resto se usa para filtros y matching escalar
+  honesto.
 * cuando una pipeline deja un `skip/limit` seguro tras `$search`, el runtime
   local puede usar ese `top-k` para limitar candidatos y materialización sin
   cambiar el contrato observable.

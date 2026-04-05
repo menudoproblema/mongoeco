@@ -80,6 +80,42 @@ def main() -> None:
             slop_explain["engine_plan"]["details"].get("postCandidateValidationRequired"),
         )
 
+        near_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "near": {
+                            "path": "score",
+                            "origin": 10,
+                            "pivot": 2,
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "score": 1}},
+            ]
+        ).to_list()
+        print("$search near results:", near_results)
+        near_explain = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "near": {
+                            "path": "score",
+                            "origin": 10,
+                            "pivot": 2,
+                        },
+                    }
+                }
+            ]
+        ).explain()
+        print(
+            "$search near explain:",
+            near_explain["engine_plan"]["details"]["originKind"],
+            near_explain["engine_plan"]["details"]["ranking"]["scoreFormula"],
+        )
+
         search_results = collection.aggregate(
             [
                 {
@@ -96,6 +132,7 @@ def main() -> None:
                             ],
                             "filter": [
                                 {"in": {"path": "kind", "value": ["note", "reference"]}},
+                                {"equals": {"path": "published", "value": True}},
                                 {"range": {"path": "score", "gte": 9}},
                             ],
                             "should": [
@@ -106,16 +143,35 @@ def main() -> None:
                                         "slop": 2,
                                     }
                                 },
+                                {
+                                    "near": {
+                                        "path": "score",
+                                        "origin": 10,
+                                        "pivot": 2,
+                                    }
+                                },
                                 {"exists": {"path": "summary"}},
                                 {"regex": {"query": "Algorithm.*", "path": "summary"}},
                             ],
                         },
                     }
                 },
-                {"$project": {"_id": 1, "title": 1, "score": 1, "summary": 1, "body": 1}},
+                {
+                    "$project": {
+                        "_id": 1,
+                        "title": 1,
+                        "published": 1,
+                        "score": 1,
+                        "summary": 1,
+                        "body": 1,
+                    }
+                },
             ]
         ).to_list()
-        print("$search compound phrase + in + range + exists + regex results:", search_results)
+        print(
+            "$search compound phrase + equals + in + range + near + exists + regex results:",
+            search_results,
+        )
         search_explain = collection.aggregate(
             [
                 {
@@ -132,6 +188,7 @@ def main() -> None:
                             ],
                             "filter": [
                                 {"in": {"path": "kind", "value": ["note", "reference"]}},
+                                {"equals": {"path": "published", "value": True}},
                                 {"range": {"path": "score", "gte": 9}},
                             ],
                             "should": [
@@ -140,6 +197,13 @@ def main() -> None:
                                         "query": "Ada designed local search patterns",
                                         "path": "body",
                                         "slop": 2,
+                                    }
+                                },
+                                {
+                                    "near": {
+                                        "path": "score",
+                                        "origin": 10,
+                                        "pivot": 2,
                                     }
                                 },
                                 {"exists": {"path": "summary"}},
@@ -151,6 +215,8 @@ def main() -> None:
             ]
         ).explain()
         print("$search compound explain operator:", search_explain["engine_plan"]["details"]["queryOperator"])
+        print("$search compound explain should operators:", search_explain["engine_plan"]["details"]["compound"]["shouldOperators"])
+        print("$search compound explain ranking:", search_explain["engine_plan"]["details"]["ranking"])
 
         vector_results = collection.aggregate(
             [

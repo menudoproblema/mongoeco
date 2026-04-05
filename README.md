@@ -259,8 +259,9 @@ Examples worth showing first:
   demonstrates `MemoryEngine` and `SQLiteEngine` as local contract runtimes
   with the same `$search.phrase` behavior.
 * [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
-  demonstrates exact `phrase` versus `phrase.slop`, plus a local `compound`
-  query with title/body `phrase` + `in` + `range` + `exists` + `regex`.
+  demonstrates exact `phrase` versus `phrase.slop`, numeric `near`, richer
+  local search field mappings, and a local `compound` query with
+  `equals` + `in` + `range` + `near` + `exists` + `regex`.
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
   demonstrates how to read `similarity`, `numCandidates`, `minScore`,
   projected `vectorSearchScore`, residual filtering and exact fallback in local

@@ -174,18 +174,22 @@ class SearchCoreTests(unittest.TestCase):
                 ]
             )
 
-    def test_validate_search_index_definition_rejects_unsupported_field_type(self) -> None:
-        with self.assertRaises(OperationFailure):
-            validate_search_index_definition(
-                {
-                    "mappings": {
-                        "fields": {
-                            "title": {"type": "boolean"},
-                        }
+    def test_validate_search_index_definition_accepts_extended_scalar_mapping_types(self) -> None:
+        normalized = validate_search_index_definition(
+            {
+                "mappings": {
+                    "fields": {
+                        "published": {"type": "boolean"},
+                        "ownerId": {"type": "objectId"},
+                        "externalUuid": {"type": "uuid"},
                     }
-                },
-                index_type="search",
-            )
+                }
+            },
+            index_type="search",
+        )
+        self.assertEqual(normalized["mappings"]["fields"]["published"]["type"], "boolean")
+        self.assertEqual(normalized["mappings"]["fields"]["ownerId"]["type"], "objectId")
+        self.assertEqual(normalized["mappings"]["fields"]["externalUuid"]["type"], "uuid")
 
     def test_build_search_index_document_marks_pending_queryable_vector_search(self) -> None:
         document = build_search_index_document(
@@ -2079,6 +2083,11 @@ class SearchCoreTests(unittest.TestCase):
                 {"mappings": {"fields": {"nested": {"type": "document", "fields": {"title": {"type": "string"}}}}}},
                 index_type="search",
             )
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition(
+                {"mappings": {"fields": {"flag": {"type": "decimal"}}}},
+                index_type="search",
+            )
 
     def test_validate_vector_search_definition_rejects_invalid_similarity_and_path(self) -> None:
         with self.assertRaises(OperationFailure):
@@ -2364,7 +2373,16 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(details["compound"]["must"], 1)
         self.assertEqual(details["compound"]["mustOperators"], ["text"])
         self.assertEqual(details["compound"]["shouldOperators"], [])
-        self.assertEqual(details["ranking"], {"usesShouldRanking": False, "nearAware": False})
+        self.assertEqual(
+            details["ranking"],
+            {
+                "usesShouldRanking": False,
+                "nearAware": False,
+                "nearAwareShouldCount": 0,
+                "shouldRankingMode": "no-should-ranking",
+                "minimumShouldMatchApplied": False,
+            },
+        )
         exists_details = search_query_explain_details(
             SearchExistsQuery(index_name="by_text", paths=("title",))
         )
@@ -2387,6 +2405,38 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(near_details["queryOperator"], "near")
         self.assertEqual(near_details["pivot"], 5.0)
+        self.assertEqual(near_details["ranking"]["distanceMode"], "pivot-decay")
+        self.assertEqual(
+            near_details["ranking"]["scoreFormula"],
+            "1 + 1 / (1 + distance / pivot)",
+        )
+        richer_compound = search_query_explain_details(
+            SearchCompoundQuery(
+                index_name="by_text",
+                should=(
+                    SearchNearQuery(
+                        index_name="by_text",
+                        path="score",
+                        origin=10,
+                        pivot=5.0,
+                        origin_kind="number",
+                    ),
+                    SearchPhraseQuery(
+                        index_name="by_text",
+                        raw_query="Ada algorithm",
+                        paths=("body",),
+                        slop=1,
+                    ),
+                ),
+                minimum_should_match=1,
+            )
+        )
+        self.assertEqual(richer_compound["ranking"]["nearAwareShouldCount"], 1)
+        self.assertEqual(
+            richer_compound["ranking"]["shouldRankingMode"],
+            "matched-should-plus-clause-score",
+        )
+        self.assertTrue(richer_compound["ranking"]["minimumShouldMatchApplied"])
 
     def test_materialized_search_document_reuses_entries_for_multiple_matchers(self) -> None:
         definition = SearchIndexDefinition(
@@ -2427,6 +2477,33 @@ class SearchCoreTests(unittest.TestCase):
                 materialized=prepared,
             )
         )
+
+    def test_materialized_search_document_ignores_non_textual_mappings_for_text_entries(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "string"},
+                        "published": {"type": "boolean"},
+                        "score": {"type": "number"},
+                        "ownerId": {"type": "objectId"},
+                        "externalUuid": {"type": "uuid"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+        document = {
+            "title": "Ada Algorithms",
+            "published": True,
+            "score": "not-a-number",
+            "ownerId": "656565656565656565656561",
+            "externalUuid": "11111111-1111-1111-1111-111111111111",
+        }
+        prepared = materialize_search_document(document, definition)
+        self.assertEqual(prepared.entries, (("title", "Ada Algorithms"),))
+        self.assertEqual(prepared.searchable_paths, frozenset({"title"}))
 
     def test_search_compound_ranking_prefers_more_should_hits_and_near_closeness(self) -> None:
         definition = SearchIndexDefinition(

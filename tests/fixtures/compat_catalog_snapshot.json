@@ -7,6 +7,232 @@
           "async": true,
           "embedded": true,
           "explainable": true,
+          "operationMetadata": {
+            "aggregate": {
+              "acceptedNoopOptions": [],
+              "supportedExpressionOperators": [
+                "$abs",
+                "$add",
+                "$all",
+                "$allElementsTrue",
+                "$and",
+                "$anyElementTrue",
+                "$arrayElemAt",
+                "$arrayToObject",
+                "$binarySize",
+                "$bitAnd",
+                "$bitNot",
+                "$bitOr",
+                "$bitXor",
+                "$bsonSize",
+                "$ceil",
+                "$cmp",
+                "$concat",
+                "$concatArrays",
+                "$cond",
+                "$convert",
+                "$dateAdd",
+                "$dateDiff",
+                "$dateFromParts",
+                "$dateFromString",
+                "$dateSubtract",
+                "$dateToParts",
+                "$dateToString",
+                "$dateTrunc",
+                "$dayOfMonth",
+                "$dayOfWeek",
+                "$dayOfYear",
+                "$divide",
+                "$elemMatch",
+                "$eq",
+                "$exists",
+                "$exp",
+                "$filter",
+                "$first",
+                "$firstN",
+                "$floor",
+                "$getField",
+                "$gt",
+                "$gte",
+                "$hour",
+                "$ifNull",
+                "$in",
+                "$indexOfArray",
+                "$indexOfBytes",
+                "$indexOfCP",
+                "$isArray",
+                "$isNumber",
+                "$isoDayOfWeek",
+                "$isoWeek",
+                "$isoWeekYear",
+                "$lastN",
+                "$let",
+                "$literal",
+                "$ln",
+                "$log",
+                "$log10",
+                "$lt",
+                "$lte",
+                "$ltrim",
+                "$map",
+                "$maxN",
+                "$median",
+                "$mergeObjects",
+                "$millisecond",
+                "$minN",
+                "$minute",
+                "$mod",
+                "$month",
+                "$multiply",
+                "$ne",
+                "$nin",
+                "$objectToArray",
+                "$or",
+                "$percentile",
+                "$pow",
+                "$rand",
+                "$range",
+                "$reduce",
+                "$regexFind",
+                "$regexFindAll",
+                "$regexMatch",
+                "$replaceAll",
+                "$replaceOne",
+                "$reverseArray",
+                "$round",
+                "$rtrim",
+                "$second",
+                "$setDifference",
+                "$setEquals",
+                "$setField",
+                "$setIntersection",
+                "$setIsSubset",
+                "$setUnion",
+                "$size",
+                "$slice",
+                "$sortArray",
+                "$split",
+                "$sqrt",
+                "$stdDevPop",
+                "$stdDevSamp",
+                "$strLenBytes",
+                "$strLenCP",
+                "$strcasecmp",
+                "$substr",
+                "$substrBytes",
+                "$substrCP",
+                "$subtract",
+                "$switch",
+                "$toBool",
+                "$toDate",
+                "$toDecimal",
+                "$toDouble",
+                "$toInt",
+                "$toLong",
+                "$toLower",
+                "$toObjectId",
+                "$toString",
+                "$toUUID",
+                "$toUpper",
+                "$trim",
+                "$trunc",
+                "$type",
+                "$unsetField",
+                "$week",
+                "$year",
+                "$zip"
+              ],
+              "supportedGroupAccumulators": [
+                "$addToSet",
+                "$avg",
+                "$bottom",
+                "$bottomN",
+                "$count",
+                "$first",
+                "$firstN",
+                "$last",
+                "$lastN",
+                "$max",
+                "$maxN",
+                "$median",
+                "$mergeObjects",
+                "$min",
+                "$minN",
+                "$percentile",
+                "$push",
+                "$stdDevPop",
+                "$stdDevSamp",
+                "$sum",
+                "$top",
+                "$topN"
+              ],
+              "supportedOptions": [
+                "allow_disk_use",
+                "batch_size",
+                "comment",
+                "hint",
+                "let",
+                "max_time_ms"
+              ],
+              "supportedStages": [
+                "$addFields",
+                "$bucket",
+                "$bucketAuto",
+                "$collStats",
+                "$count",
+                "$densify",
+                "$documents",
+                "$facet",
+                "$fill",
+                "$geoNear",
+                "$group",
+                "$limit",
+                "$lookup",
+                "$match",
+                "$merge",
+                "$project",
+                "$replaceRoot",
+                "$replaceWith",
+                "$sample",
+                "$set",
+                "$setWindowFields",
+                "$skip",
+                "$sort",
+                "$sortByCount",
+                "$unionWith",
+                "$unset",
+                "$unwind"
+              ],
+              "supportedWindowAccumulators": [
+                "$addToSet",
+                "$avg",
+                "$bottom",
+                "$bottomN",
+                "$count",
+                "$denseRank",
+                "$documentNumber",
+                "$first",
+                "$firstN",
+                "$last",
+                "$lastN",
+                "$max",
+                "$maxN",
+                "$median",
+                "$min",
+                "$minN",
+                "$percentile",
+                "$push",
+                "$rank",
+                "$stdDevPop",
+                "$stdDevSamp",
+                "$sum",
+                "$top",
+                "$topN"
+              ],
+              "supportsExplain": true,
+              "unsupportedOptions": []
+            }
+          },
           "supportedExpressionOperators": [
             "$abs",
             "$add",
@@ -287,6 +513,54 @@
         "metadata": {
           "async": true,
           "embedded": true,
+          "operationMetadata": {
+            "count_documents": {
+              "acceptedNoopOptions": [],
+              "supportedOptions": [
+                "comment",
+                "hint",
+                "max_time_ms"
+              ],
+              "supportsExplain": false,
+              "unsupportedOptions": []
+            },
+            "distinct": {
+              "acceptedNoopOptions": [],
+              "supportedOptions": [
+                "comment",
+                "hint",
+                "max_time_ms"
+              ],
+              "supportsExplain": false,
+              "unsupportedOptions": []
+            },
+            "estimated_document_count": {
+              "acceptedNoopOptions": [],
+              "supportedOptions": [
+                "comment",
+                "max_time_ms"
+              ],
+              "supportsExplain": false,
+              "unsupportedOptions": []
+            },
+            "find": {
+              "acceptedNoopOptions": [],
+              "supportedOptions": [
+                "batch_size",
+                "comment",
+                "hint",
+                "max_time_ms"
+              ],
+              "supportsExplain": true,
+              "unsupportedOptions": []
+            },
+            "find_one": {
+              "acceptedNoopOptions": [],
+              "supportedOptions": [],
+              "supportsExplain": false,
+              "unsupportedOptions": []
+            }
+          },
           "queryFieldOperators": [
             "$all",
             "$bitsAllClear",
@@ -363,7 +637,53 @@
         "description": "Support for Atlas Search-style textual queries.",
         "metadata": {
           "aggregateStage": "$search",
+          "exactFilterFieldMappings": [
+            "boolean",
+            "date",
+            "number",
+            "objectId",
+            "uuid"
+          ],
+          "fieldMappings": [
+            "autocomplete",
+            "boolean",
+            "date",
+            "number",
+            "objectId",
+            "string",
+            "token",
+            "uuid"
+          ],
           "note": "The local $search surface remains an explicit Atlas-like subset.",
+          "operationMetadata": {
+            "aggregate": {
+              "acceptedNoopOptions": [],
+              "aggregateStage": "$search",
+              "operators": [
+                "text",
+                "phrase",
+                "autocomplete",
+                "wildcard",
+                "exists",
+                "in",
+                "equals",
+                "range",
+                "near",
+                "compound",
+                "regex"
+              ],
+              "supportedOptions": [
+                "allow_disk_use",
+                "batch_size",
+                "comment",
+                "hint",
+                "let",
+                "max_time_ms"
+              ],
+              "supportsExplain": true,
+              "unsupportedOptions": []
+            }
+          },
           "operators": [
             "text",
             "phrase",
@@ -383,6 +703,11 @@
             "fts5-path",
             "fts5-prefilter",
             "python"
+          ],
+          "textualFieldMappings": [
+            "autocomplete",
+            "string",
+            "token"
           ]
         },
         "operations": [
@@ -445,6 +770,27 @@
           "filterMode": "post-candidate-with-adaptive-candidate-expansion",
           "mode": "local-ann-with-exact-baseline",
           "note": "SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.",
+          "operationMetadata": {
+            "aggregate": {
+              "acceptedNoopOptions": [],
+              "aggregateStage": "$vectorSearch",
+              "similarities": [
+                "cosine",
+                "dotProduct",
+                "euclidean"
+              ],
+              "supportedOptions": [
+                "allow_disk_use",
+                "batch_size",
+                "comment",
+                "hint",
+                "let",
+                "max_time_ms"
+              ],
+              "supportsExplain": true,
+              "unsupportedOptions": []
+            }
+          },
           "similarities": [
             "cosine",
             "dotProduct",
@@ -467,6 +813,120 @@
         "metadata": {
           "async": true,
           "embedded": true,
+          "operationMetadata": {
+            "bulk_write": {
+              "acceptedNoopOptions": [],
+              "supportedOptions": [
+                "comment",
+                "let"
+              ],
+              "supportsExplain": false,
+              "unsupportedOptions": []
+            },
+            "delete_many": {
+              "acceptedNoopOptions": [],
+              "supportedOptions": [
+                "comment",
+                "hint",
+                "let"
+              ],
+              "supportsExplain": false,
+              "unsupportedOptions": []
+            },
+            "delete_one": {
+              "acceptedNoopOptions": [],
+              "supportedOptions": [
+                "comment",
+                "hint",
+                "let"
+              ],
+              "supportsExplain": false,
+              "unsupportedOptions": []
+            },
+            "insert_many": {
+              "acceptedNoopOptions": [],
+              "supportedOptions": [],
+              "supportsExplain": false,
+              "unsupportedOptions": []
+            },
+            "insert_one": {
+              "acceptedNoopOptions": [],
+              "supportedOptions": [],
+              "supportsExplain": false,
+              "unsupportedOptions": []
+            },
+            "replace_one": {
+              "acceptedNoopOptions": [],
+              "supportedOptions": [
+                "comment",
+                "hint",
+                "let",
+                "sort"
+              ],
+              "supportsExplain": false,
+              "supportsReplacementDocument": true,
+              "unsupportedOptions": []
+            },
+            "update_many": {
+              "acceptedNoopOptions": [],
+              "supportedOptions": [
+                "array_filters",
+                "comment",
+                "hint",
+                "let"
+              ],
+              "supportedUpdateOperators": [
+                "$addToSet",
+                "$bit",
+                "$currentDate",
+                "$inc",
+                "$max",
+                "$min",
+                "$mul",
+                "$pop",
+                "$pull",
+                "$pullAll",
+                "$push",
+                "$rename",
+                "$set",
+                "$setOnInsert",
+                "$unset"
+              ],
+              "supportsExplain": false,
+              "supportsPipelineUpdate": true,
+              "unsupportedOptions": []
+            },
+            "update_one": {
+              "acceptedNoopOptions": [],
+              "supportedOptions": [
+                "array_filters",
+                "comment",
+                "hint",
+                "let",
+                "sort"
+              ],
+              "supportedUpdateOperators": [
+                "$addToSet",
+                "$bit",
+                "$currentDate",
+                "$inc",
+                "$max",
+                "$min",
+                "$mul",
+                "$pop",
+                "$pull",
+                "$pullAll",
+                "$push",
+                "$rename",
+                "$set",
+                "$setOnInsert",
+                "$unset"
+              ],
+              "supportsExplain": false,
+              "supportsPipelineUpdate": true,
+              "unsupportedOptions": []
+            }
+          },
           "supportsPipelineUpdate": true,
           "sync": true,
           "updateOperators": [
@@ -1332,7 +1792,53 @@
     },
     "search": {
       "aggregateStage": "$search",
+      "exactFilterFieldMappings": [
+        "boolean",
+        "date",
+        "number",
+        "objectId",
+        "uuid"
+      ],
+      "fieldMappings": [
+        "autocomplete",
+        "boolean",
+        "date",
+        "number",
+        "objectId",
+        "string",
+        "token",
+        "uuid"
+      ],
       "note": "The local $search surface remains an explicit Atlas-like subset.",
+      "operationMetadata": {
+        "aggregate": {
+          "acceptedNoopOptions": [],
+          "aggregateStage": "$search",
+          "operators": [
+            "text",
+            "phrase",
+            "autocomplete",
+            "wildcard",
+            "exists",
+            "in",
+            "equals",
+            "range",
+            "near",
+            "compound",
+            "regex"
+          ],
+          "supportedOptions": [
+            "allow_disk_use",
+            "batch_size",
+            "comment",
+            "hint",
+            "let",
+            "max_time_ms"
+          ],
+          "supportsExplain": true,
+          "unsupportedOptions": []
+        }
+      },
       "operators": [
         "text",
         "phrase",
@@ -1352,6 +1858,11 @@
         "fts5-path",
         "fts5-prefilter",
         "python"
+      ],
+      "textualFieldMappings": [
+        "autocomplete",
+        "string",
+        "token"
       ]
     },
     "vectorSearch": {
@@ -1361,6 +1872,27 @@
       "filterMode": "post-candidate-with-adaptive-candidate-expansion",
       "mode": "local-ann-with-exact-baseline",
       "note": "SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.",
+      "operationMetadata": {
+        "aggregate": {
+          "acceptedNoopOptions": [],
+          "aggregateStage": "$vectorSearch",
+          "similarities": [
+            "cosine",
+            "dotProduct",
+            "euclidean"
+          ],
+          "supportedOptions": [
+            "allow_disk_use",
+            "batch_size",
+            "comment",
+            "hint",
+            "let",
+            "max_time_ms"
+          ],
+          "supportsExplain": true,
+          "unsupportedOptions": []
+        }
+      },
       "similarities": [
         "cosine",
         "dotProduct",

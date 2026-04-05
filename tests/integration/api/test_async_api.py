@@ -964,7 +964,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         expected_match='"Ada wrote the first algorithm"',
                     )
                     with self.assertRaises(OperationFailure):
-                        await collection.create_search_index({"mappings": {"fields": {"title": {"type": "boolean"}}}})
+                        await collection.create_search_index({"mappings": {"fields": {"title": {"type": "decimal"}}}})
 
     async def test_search_phrase_slop_keeps_parity_between_memory_and_sqlite(self):
         for engine_name in ENGINE_FACTORIES:
