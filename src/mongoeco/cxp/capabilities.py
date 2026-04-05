@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+import msgspec
+
 from cxp.capabilities import Capability, CapabilityMatrix, CapabilityMetadata
 from mongoeco.compat._catalog_data import (
     SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS,
@@ -13,6 +15,9 @@ from mongoeco.compat._catalog_data import (
     SUPPORTED_WINDOW_ACCUMULATORS,
 )
 from mongoeco.cxp.catalogs.interfaces.database.mongodb import (
+    MongoAggregationMetadata,
+    MongoSearchMetadata,
+    MongoVectorSearchMetadata,
     MONGODB_AGGREGATION,
     MONGODB_CATALOG,
     MONGODB_CHANGE_STREAMS,
@@ -54,18 +59,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
         'updateOperators': sorted(SUPPORTED_UPDATE_OPERATORS),
         'supportsPipelineUpdate': True,
     },
-    MONGODB_AGGREGATION: {
-        'embedded': True,
-        'sync': True,
-        'async': True,
-        'explainable': True,
-        'supportedStages': sorted(SUPPORTED_AGGREGATION_STAGES),
-        'supportedExpressionOperators': sorted(
-            SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS,
-        ),
-        'supportedGroupAccumulators': sorted(SUPPORTED_GROUP_ACCUMULATORS),
-        'supportedWindowAccumulators': sorted(SUPPORTED_WINDOW_ACCUMULATORS),
-    },
+    MONGODB_AGGREGATION: {},
     MONGODB_TRANSACTIONS: {
         'embedded': True,
         'sync': True,
@@ -83,46 +77,8 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
         'resumableAcrossNodes': False,
         'boundedHistory': True,
     },
-    MONGODB_SEARCH: {
-        'operators': [
-            'text',
-            'phrase',
-            'autocomplete',
-            'wildcard',
-            'exists',
-            'in',
-            'equals',
-            'range',
-            'near',
-            'compound',
-            'regex',
-        ],
-        'aggregateStage': '$search',
-        'sqliteBackends': [
-            'fts5',
-            'fts5-glob',
-            'fts5-path',
-            'fts5-prefilter',
-            'python',
-        ],
-        'note': (
-            'The local $search surface remains an explicit Atlas-like '
-            'subset.'
-        ),
-    },
-    MONGODB_VECTOR_SEARCH: {
-        'backend': 'usearch',
-        'aggregateStage': '$vectorSearch',
-        'mode': 'local-ann-with-exact-baseline',
-        'similarities': ['cosine', 'dotProduct', 'euclidean'],
-        'filterMode': 'post-candidate-with-adaptive-candidate-expansion',
-        'fallback': 'exact',
-        'note': (
-            'SQLiteEngine uses a local usearch ANN backend when the vector '
-            'index is materialized; MemoryEngine remains the exact semantic '
-            'baseline.'
-        ),
-    },
+    MONGODB_SEARCH: {},
+    MONGODB_VECTOR_SEARCH: {},
     MONGODB_COLLATION: {
         'backendContract': 'local-collation-introspection',
         'metadataSources': [
@@ -185,6 +141,94 @@ _MONGOECO_PUBLIC_CXP_EXTENSIONS: dict[str, dict[str, object]] = {
 }
 
 
+def _metadata_to_document(value: msgspec.Struct) -> dict[str, object]:
+    document = msgspec.to_builtins(value)
+    if not isinstance(document, dict):
+        message = 'msgspec metadata did not serialize to a mapping'
+        raise TypeError(message)
+    return _normalize_json_like(document)
+
+
+def _normalize_json_like(value: object) -> object:
+    if isinstance(value, tuple | list):
+        return [_normalize_json_like(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            str(key): _normalize_json_like(item)
+            for key, item in value.items()
+        }
+    return value
+
+
+_MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_AGGREGATION] = {
+    **_metadata_to_document(
+        MongoAggregationMetadata(
+            supportedStages=tuple(sorted(SUPPORTED_AGGREGATION_STAGES)),
+            supportedExpressionOperators=tuple(
+                sorted(SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS),
+            ),
+            supportedGroupAccumulators=tuple(
+                sorted(SUPPORTED_GROUP_ACCUMULATORS),
+            ),
+            supportedWindowAccumulators=tuple(
+                sorted(SUPPORTED_WINDOW_ACCUMULATORS),
+            ),
+        ),
+    ),
+    'embedded': True,
+    'sync': True,
+    'async': True,
+    'explainable': True,
+}
+
+_MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
+    **_metadata_to_document(
+        MongoSearchMetadata(
+            operators=(
+                'text',
+                'phrase',
+                'autocomplete',
+                'wildcard',
+                'exists',
+                'in',
+                'equals',
+                'range',
+                'near',
+                'compound',
+                'regex',
+            ),
+        ),
+    ),
+    'sqliteBackends': [
+        'fts5',
+        'fts5-glob',
+        'fts5-path',
+        'fts5-prefilter',
+        'python',
+    ],
+    'note': (
+        'The local $search surface remains an explicit Atlas-like subset.'
+    ),
+}
+
+_MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_VECTOR_SEARCH] = {
+    **_metadata_to_document(
+        MongoVectorSearchMetadata(
+            similarities=('cosine', 'dotProduct', 'euclidean'),
+        ),
+    ),
+    'backend': 'usearch',
+    'mode': 'local-ann-with-exact-baseline',
+    'filterMode': 'post-candidate-with-adaptive-candidate-expansion',
+    'fallback': 'exact',
+    'note': (
+        'SQLiteEngine uses a local usearch ANN backend when the vector '
+        'index is materialized; MemoryEngine remains the exact semantic '
+        'baseline.'
+    ),
+}
+
+
 def mongoeco_public_cxp_capability_metadata() -> dict[str, dict[str, object]]:
     return deepcopy(_MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA)
 
@@ -230,7 +274,9 @@ def export_cxp_capability_catalog() -> dict[str, object]:
 
 def export_legacy_runtime_subset_catalog() -> dict[str, dict[str, object]]:
     capability_catalog = export_cxp_capability_catalog()['capabilities']
-    assert isinstance(capability_catalog, dict)
+    if not isinstance(capability_catalog, dict):
+        message = 'capability catalog must serialize to a mapping'
+        raise TypeError(message)
     vector_search = capability_catalog[MONGODB_VECTOR_SEARCH]
     search = capability_catalog[MONGODB_SEARCH]
     extensions = export_cxp_extension_catalog()

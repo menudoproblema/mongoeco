@@ -11,7 +11,7 @@ from mongoeco.api.argument_validation import (
     validate_sort_spec as _validate_sort_spec,
 )
 from mongoeco.compat import MONGODB_DIALECT_70
-from mongoeco.cxp.capabilities import build_mongodb_explain_projection
+from mongoeco.cxp import build_mongodb_explain_projection
 from mongoeco.core.query_plan import QueryNode
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession

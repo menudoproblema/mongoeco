@@ -5,10 +5,9 @@ import mongoeco.cxp.capabilities as cxp_capabilities_module
 import mongoeco.cxp.integration as cxp_integration_module
 from mongoeco.compat import export_cxp_catalog, export_full_compat_catalog
 from mongoeco.cxp import (
-    CapabilityDescriptor,
-    CapabilityOperationBinding,
-    ComponentCapabilitySnapshot,
-    ComponentIdentity,
+    MongoAggregationMetadata,
+    MongoSearchMetadata,
+    MongoVectorSearchMetadata,
     MONGODB_AGGREGATE,
     MONGODB_AGGREGATE_RICH_PROFILE,
     MONGODB_CATALOG,
@@ -17,10 +16,18 @@ from mongoeco.cxp import (
     MONGODB_PLATFORM_PROFILE,
     MONGODB_SEARCH_PROFILE,
 )
+from mongoeco.cxp.descriptors import (
+    CapabilityDescriptor,
+    CapabilityOperationBinding,
+    ComponentCapabilitySnapshot,
+)
+from mongoeco.cxp.types import ComponentIdentity
 
 
 class CxpAlignmentTests(unittest.TestCase):
-    def test_mongoeco_cxp_exposes_canonical_database_mongodb_interface(self) -> None:
+    def test_mongoeco_cxp_exposes_canonical_database_mongodb_interface(
+        self,
+    ) -> None:
         self.assertEqual(MONGODB_CATALOG.interface, MONGODB_INTERFACE)
         self.assertEqual(MONGODB_INTERFACE, 'database/mongodb')
         self.assertEqual(
@@ -36,9 +43,22 @@ class CxpAlignmentTests(unittest.TestCase):
             MONGODB_AGGREGATE_RICH_PROFILE.name,
             'mongodb-aggregate-rich',
         )
+        self.assertEqual(
+            MongoAggregationMetadata.__name__,
+            'MongoAggregationMetadata',
+        )
+        self.assertEqual(MongoSearchMetadata.__name__, 'MongoSearchMetadata')
+        self.assertEqual(
+            MongoVectorSearchMetadata.__name__,
+            'MongoVectorSearchMetadata',
+        )
 
-    def test_cxp_capability_exports_and_legacy_runtime_projection_share_a_canonical_source(self) -> None:
-        metadata = cxp_capabilities_module.mongoeco_public_cxp_capability_metadata()
+    def test_cxp_capability_exports_and_legacy_runtime_projection_share_a_canonical_source(
+        self,
+    ) -> None:
+        metadata = (
+            cxp_capabilities_module.mongoeco_public_cxp_capability_metadata()
+        )
         exported = cxp_capabilities_module.export_cxp_capability_catalog()
         legacy = cxp_capabilities_module.export_legacy_runtime_subset_catalog()
         projection = cxp_capabilities_module.build_mongodb_explain_projection(
@@ -54,7 +74,9 @@ class CxpAlignmentTests(unittest.TestCase):
         )
         self.assertIn(
             '$group',
-            exported['capabilities']['aggregation']['metadata']['supportedStages'],
+            exported['capabilities']['aggregation']['metadata'][
+                'supportedStages'
+            ],
         )
         self.assertEqual(
             exported['capabilities']['search']['metadata']['operators'],
@@ -68,7 +90,9 @@ class CxpAlignmentTests(unittest.TestCase):
         self.assertEqual(projection['additionalCapabilities'], ['search'])
         self.assertEqual(projection['metadata'], {'mode': 'local'})
 
-    def test_profiles_validate_snapshot_requirements_for_reusable_test_gates(self) -> None:
+    def test_profiles_validate_snapshot_requirements_for_reusable_test_gates(
+        self,
+    ) -> None:
         snapshot = ComponentCapabilitySnapshot(
             component_name='provider',
             identity=ComponentIdentity(
@@ -117,7 +141,10 @@ class CxpAlignmentTests(unittest.TestCase):
                     name='search',
                     level='supported',
                     operations=(CapabilityOperationBinding('aggregate'),),
-                    metadata={'operators': ['text'], 'aggregateStage': '$search'},
+                    metadata={
+                        'operators': ['text'],
+                        'aggregateStage': '$search',
+                    },
                 ),
                 CapabilityDescriptor(
                     name='vector_search',
@@ -154,7 +181,11 @@ class CxpAlignmentTests(unittest.TestCase):
                 CapabilityDescriptor(
                     name='topology_discovery',
                     level='supported',
-                    metadata={'topologyType': 'single', 'serverCount': 1, 'sdam': {}},
+                    metadata={
+                        'topologyType': 'single',
+                        'serverCount': 1,
+                        'sdam': {},
+                    },
                 ),
             ),
         )
@@ -184,13 +215,17 @@ class CxpAlignmentTests(unittest.TestCase):
             )
         )
 
-    def test_compat_export_surfaces_operations_and_aggregation_subset_metadata(self) -> None:
+    def test_compat_export_surfaces_operations_and_aggregation_subset_metadata(
+        self,
+    ) -> None:
         full_catalog = export_full_compat_catalog()
         cxp_catalog = export_cxp_catalog()
 
         self.assertEqual(full_catalog['cxp'], cxp_catalog)
         self.assertEqual(
-            cxp_catalog['capabilities']['aggregation']['operations'][0]['name'],
+            cxp_catalog['capabilities']['aggregation']['operations'][0][
+                'name'
+            ],
             'aggregate',
         )
         self.assertIn(
@@ -198,8 +233,19 @@ class CxpAlignmentTests(unittest.TestCase):
             cxp_catalog['capabilities']['aggregation']['metadata'],
         )
 
-    def test_cxp_module_reexports_generic_integration_helpers_without_local_provider_wrapper(self) -> None:
-        self.assertTrue(hasattr(mongoeco_cxp, 'collect_provider_capability_snapshot'))
-        self.assertTrue(hasattr(cxp_integration_module, 'negotiate_with_provider'))
+    def test_cxp_module_stays_minimal_while_integration_helpers_remain_available_in_submodule(
+        self,
+    ) -> None:
+        self.assertFalse(
+            hasattr(mongoeco_cxp, 'collect_provider_capability_snapshot')
+        )
+        self.assertTrue(
+            hasattr(
+                cxp_integration_module, 'collect_provider_capability_snapshot'
+            )
+        )
+        self.assertTrue(
+            hasattr(cxp_integration_module, 'negotiate_with_provider')
+        )
         self.assertFalse(hasattr(mongoeco_cxp, 'CxpProvider'))
         self.assertFalse(hasattr(mongoeco_cxp, 'AsyncCxpProvider'))

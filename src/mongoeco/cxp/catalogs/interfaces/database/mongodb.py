@@ -1,4 +1,10 @@
 from cxp.catalogs.interfaces.database.mongodb import (
+    MongoAggregationMetadata,
+    MongoCollationMetadata,
+    MongoPersistenceMetadata,
+    MongoSearchMetadata,
+    MongoTopologyDiscoveryMetadata,
+    MongoVectorSearchMetadata,
     MONGODB_AGGREGATE,
     MONGODB_AGGREGATE_RICH_PROFILE,
     MONGODB_AGGREGATE_RICH_PROFILE_NAME,
@@ -44,6 +50,12 @@ from cxp.catalogs.interfaces.database.mongodb import (
 )
 
 __all__ = (
+    'MongoAggregationMetadata',
+    'MongoCollationMetadata',
+    'MongoPersistenceMetadata',
+    'MongoSearchMetadata',
+    'MongoTopologyDiscoveryMetadata',
+    'MongoVectorSearchMetadata',
     'MONGODB_AGGREGATE',
     'MONGODB_AGGREGATE_RICH_PROFILE',
     'MONGODB_AGGREGATE_RICH_PROFILE_NAME',

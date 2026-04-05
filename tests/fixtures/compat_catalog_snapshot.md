@@ -609,14 +609,14 @@
 - `description`: `Soporte para el framework de agregación.`
 - `tiers`: `core`, `search`, `platform`
 - `operations`: `aggregate`
-- `embedded`: `True`
-- `sync`: `True`
-- `async`: `True`
-- `explainable`: `True`
 - `supportedStages`: `$addFields`, `$bucket`, `$bucketAuto`, `$collStats`, `$count`, `$densify`, `$documents`, `$facet`, `$fill`, `$geoNear`, `$group`, `$limit`, `$lookup`, `$match`, `$merge`, `$project`, `$replaceRoot`, `$replaceWith`, `$sample`, `$set`, `$setWindowFields`, `$skip`, `$sort`, `$sortByCount`, `$unionWith`, `$unset`, `$unwind`
 - `supportedExpressionOperators`: `$abs`, `$add`, `$all`, `$allElementsTrue`, `$and`, `$anyElementTrue`, `$arrayElemAt`, `$arrayToObject`, `$binarySize`, `$bitAnd`, `$bitNot`, `$bitOr`, `$bitXor`, `$bsonSize`, `$ceil`, `$cmp`, `$concat`, `$concatArrays`, `$cond`, `$convert`, `$dateAdd`, `$dateDiff`, `$dateFromParts`, `$dateFromString`, `$dateSubtract`, `$dateToParts`, `$dateToString`, `$dateTrunc`, `$dayOfMonth`, `$dayOfWeek`, `$dayOfYear`, `$divide`, `$elemMatch`, `$eq`, `$exists`, `$exp`, `$filter`, `$first`, `$firstN`, `$floor`, `$getField`, `$gt`, `$gte`, `$hour`, `$ifNull`, `$in`, `$indexOfArray`, `$indexOfBytes`, `$indexOfCP`, `$isArray`, `$isNumber`, `$isoDayOfWeek`, `$isoWeek`, `$isoWeekYear`, `$lastN`, `$let`, `$literal`, `$ln`, `$log`, `$log10`, `$lt`, `$lte`, `$ltrim`, `$map`, `$maxN`, `$median`, `$mergeObjects`, `$millisecond`, `$minN`, `$minute`, `$mod`, `$month`, `$multiply`, `$ne`, `$nin`, `$objectToArray`, `$or`, `$percentile`, `$pow`, `$rand`, `$range`, `$reduce`, `$regexFind`, `$regexFindAll`, `$regexMatch`, `$replaceAll`, `$replaceOne`, `$reverseArray`, `$round`, `$rtrim`, `$second`, `$setDifference`, `$setEquals`, `$setField`, `$setIntersection`, `$setIsSubset`, `$setUnion`, `$size`, `$slice`, `$sortArray`, `$split`, `$sqrt`, `$stdDevPop`, `$stdDevSamp`, `$strLenBytes`, `$strLenCP`, `$strcasecmp`, `$substr`, `$substrBytes`, `$substrCP`, `$subtract`, `$switch`, `$toBool`, `$toDate`, `$toDecimal`, `$toDouble`, `$toInt`, `$toLong`, `$toLower`, `$toObjectId`, `$toString`, `$toUUID`, `$toUpper`, `$trim`, `$trunc`, `$type`, `$unsetField`, `$week`, `$year`, `$zip`
 - `supportedGroupAccumulators`: `$addToSet`, `$avg`, `$bottom`, `$bottomN`, `$count`, `$first`, `$firstN`, `$last`, `$lastN`, `$max`, `$maxN`, `$median`, `$mergeObjects`, `$min`, `$minN`, `$percentile`, `$push`, `$stdDevPop`, `$stdDevSamp`, `$sum`, `$top`, `$topN`
 - `supportedWindowAccumulators`: `$addToSet`, `$avg`, `$bottom`, `$bottomN`, `$count`, `$denseRank`, `$documentNumber`, `$first`, `$firstN`, `$last`, `$lastN`, `$max`, `$maxN`, `$median`, `$min`, `$minN`, `$percentile`, `$push`, `$rank`, `$stdDevPop`, `$stdDevSamp`, `$sum`, `$top`, `$topN`
+- `embedded`: `True`
+- `sync`: `True`
+- `async`: `True`
+- `explainable`: `True`
 
 ### `change_streams`
 - `description`: `Observabilidad de cambios en tiempo real.`
@@ -644,10 +644,10 @@
 - `description`: `Búsquedas por similitud semántica.`
 - `tiers`: `search`
 - `operations`: `aggregate`
-- `backend`: `usearch`
-- `aggregateStage`: `$vectorSearch`
-- `mode`: `local-ann-with-exact-baseline`
 - `similarities`: `cosine`, `dotProduct`, `euclidean`
+- `aggregateStage`: `$vectorSearch`
+- `backend`: `usearch`
+- `mode`: `local-ann-with-exact-baseline`
 - `filterMode`: `post-candidate-with-adaptive-candidate-expansion`
 - `fallback`: `exact`
 - `note`: `SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.`
@@ -693,10 +693,10 @@
 
 ## Local Runtime Subsets
 ### `vectorSearch`
-- `backend`: `usearch`
-- `aggregateStage`: `$vectorSearch`
-- `mode`: `local-ann-with-exact-baseline`
 - `similarities`: `cosine`, `dotProduct`, `euclidean`
+- `aggregateStage`: `$vectorSearch`
+- `backend`: `usearch`
+- `mode`: `local-ann-with-exact-baseline`
 - `filterMode`: `post-candidate-with-adaptive-candidate-expansion`
 - `fallback`: `exact`
 - `note`: `SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.`

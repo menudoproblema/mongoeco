@@ -94,6 +94,19 @@ Each profile expresses:
 `mongoeco` reexports those profiles through `mongoeco.cxp`, but does not
 perform profile negotiation itself.
 
+The canonical MongoDB catalog also defines typed metadata schemas for the
+capabilities that need a richer subset contract, such as:
+
+* `MongoAggregationMetadata`
+* `MongoSearchMetadata`
+* `MongoVectorSearchMetadata`
+* `MongoCollationMetadata`
+* `MongoPersistenceMetadata`
+* `MongoTopologyDiscoveryMetadata`
+
+`mongoeco.cxp` reexports that MongoDB-facing vocabulary so the public
+integration stays aligned with CXP instead of carrying a parallel local model.
+
 ## Example
 
 ```python

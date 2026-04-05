@@ -62,7 +62,7 @@ Development install:
 python -m pip install -e .[dev]
 ```
 
-The base install now also includes `cxp>=1.0.0`, so `mongoeco` can expose the
+The base install now also includes `cxp>=2.0.0`, so `mongoeco` can expose the
 canonical `database/mongodb` contract directly.
 Reference:
 

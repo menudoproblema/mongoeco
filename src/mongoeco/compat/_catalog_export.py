@@ -26,7 +26,7 @@ from mongoeco.compat._catalog_data import (
     SUPPORTED_UPDATE_OPERATORS,
     SUPPORTED_WINDOW_ACCUMULATORS,
 )
-from mongoeco.cxp.capabilities import (
+from mongoeco.cxp import (
     export_cxp_capability_catalog,
     export_legacy_runtime_subset_catalog,
 )

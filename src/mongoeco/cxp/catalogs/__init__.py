@@ -1,35 +1,12 @@
-from mongoeco.cxp.catalogs.base import (
-    CapabilityCatalog,
-    CapabilityProfile,
-    CapabilityProfileValidationResult,
-    CapabilityRequirement,
-    CapabilityMatrixValidationResult,
-    CapabilityMetadataSchema,
-    CatalogCapability,
-    CatalogOperation,
-    CatalogRegistry,
-    ConformanceTier,
-    DEFAULT_CATALOG_REGISTRY,
-    DescriptorValidationResult,
-    UnknownCapabilityOperations,
-    get_catalog,
-    register_catalog,
-)
+from . import base as _base
 
-__all__ = (
-    'CapabilityCatalog',
-    'CapabilityProfile',
-    'CapabilityProfileValidationResult',
-    'CapabilityRequirement',
-    'CapabilityMatrixValidationResult',
-    'CapabilityMetadataSchema',
-    'CatalogCapability',
-    'CatalogOperation',
-    'CatalogRegistry',
-    'ConformanceTier',
-    'DEFAULT_CATALOG_REGISTRY',
-    'DescriptorValidationResult',
-    'UnknownCapabilityOperations',
-    'get_catalog',
-    'register_catalog',
-)
+
+def _reexport(module) -> tuple[str, ...]:
+    names = tuple(getattr(module, '__all__', ()))
+    globals().update({name: getattr(module, name) for name in names})
+    return names
+
+
+_BASE_EXPORTS = _reexport(_base)
+
+__all__ = [*_BASE_EXPORTS]

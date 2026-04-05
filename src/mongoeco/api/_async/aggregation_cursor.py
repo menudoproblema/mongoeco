@@ -17,7 +17,7 @@ from mongoeco.api.operations import (
     compile_find_operation,
 )
 from mongoeco.compat import MONGODB_DIALECT_70
-from mongoeco.cxp.capabilities import build_mongodb_explain_projection
+from mongoeco.cxp import build_mongodb_explain_projection
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.aggregation import (
     AggregationCostPolicy,
