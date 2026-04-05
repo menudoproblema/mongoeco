@@ -1,5 +1,6 @@
 import asyncio
 import ast
+import datetime
 import json
 from pathlib import Path
 import sqlite3
@@ -1343,6 +1344,16 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         self.assertEqual(vector_backend._collect_filterable_values([], prefix="items"), [("items", set())])
         self.assertEqual(vector_backend._filter_value_key(True), ("bool", True))
         self.assertIsNone(vector_backend._filter_value_key(float("inf")))
+        scalar_filter_index: dict[str, dict[tuple[str, object], list[str]]] = {}
+        exists_filter_index: dict[str, list[str]] = {}
+        vector_backend._index_filterable_document(
+            {"items": []},
+            storage_key="empty",
+            scalar_filter_index=scalar_filter_index,
+            exists_filter_index=exists_filter_index,
+        )
+        self.assertEqual(exists_filter_index["items"], ["empty"])
+        self.assertEqual(scalar_filter_index, {})
         self.assertIsNone(
             vector_backend._candidate_storage_keys_for_range_clause(
                 state,  # type: ignore[arg-type]
@@ -1365,6 +1376,21 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             ),
             {"b"},
         )
+        self.assertIsNone(
+            vector_backend._candidate_storage_keys_for_range_clause(
+                state,  # type: ignore[arg-type]
+                path="score",
+                clause={"$gt": 1, "$lte": datetime.datetime.now(datetime.timezone.utc)},
+            )
+        )
+        self.assertEqual(
+            vector_backend._candidate_storage_keys_for_range_clause(
+                state,  # type: ignore[arg-type]
+                path="missing",
+                clause={"$gt": 1},
+            ),
+            set(),
+        )
         self.assertFalse(
             vector_backend._value_key_matches_range(
                 ("number", 2.0),
@@ -1376,6 +1402,21 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 ("number", 2.0),
                 {"$gte": ("number", 2.0), "$lte": ("number", 2.0)},
             )
+        )
+        self.assertTrue(
+            vector_backend._value_key_matches_range(
+                ("number", 2.0),
+                {"$gte": 2, "$lte": 2},
+            )
+        )
+        self.assertEqual(
+            vector_backend._candidate_storage_keys_for_filter_clause(
+                state,  # type: ignore[arg-type]
+                path="score",
+                clause={"$in": [object()]},
+                all_storage_keys={"a", "b", "c", "d"},
+            ),
+            (None, "$in"),
         )
         self.assertIsNone(
             vector_backend._candidate_storage_keys_for_filter_node(
@@ -1398,6 +1439,73 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 all_storage_keys={"a", "b"},
             )
         )
+        backend_state = SimpleNamespace(
+            storage_keys_by_slot=("a", "b"),
+            scalar_filter_index=state.scalar_filter_index,
+            exists_filter_index=state.exists_filter_index,
+        )
+        self.assertEqual(
+            vector_backend.vector_filter_candidate_storage_keys(
+                backend_state,  # type: ignore[arg-type]
+                filter_spec=None,
+            ),
+            (None, None),
+        )
+        with patch.object(vector_backend, "evaluate_candidate_filter", return_value=None):
+            self.assertIsNone(
+                vector_backend._candidate_storage_keys_for_filter_node(
+                    state,  # type: ignore[arg-type]
+                    {"score": 1},
+                    all_storage_keys={"a", "b"},
+                )
+            )
+        with patch.object(
+            vector_backend,
+            "evaluate_candidate_filter",
+            return_value=SimpleNamespace(
+                matches=None,
+                plan=SimpleNamespace(
+                    supported_paths=("score",),
+                    supported_operators=("eq",),
+                    supported_clause_count=1,
+                    unsupported_clause_count=0,
+                    exact=False,
+                    shape="flat",
+                ),
+            ),
+        ):
+            keys, description = vector_backend.vector_filter_candidate_storage_keys(
+                backend_state,  # type: ignore[arg-type]
+                filter_spec={"score": 1},
+            )
+        self.assertIsNone(keys)
+        self.assertFalse(description["exact"])
+        with patch.object(
+            vector_backend,
+            "evaluate_candidate_filter",
+            return_value=SimpleNamespace(
+                matches=("a",),
+                plan=SimpleNamespace(
+                    supported_paths=("score",),
+                    supported_operators=("eq",),
+                    supported_clause_count=1,
+                    unsupported_clause_count=0,
+                    exact=True,
+                    shape="flat",
+                ),
+            ),
+        ):
+            node = vector_backend._candidate_storage_keys_for_filter_node(
+                state,  # type: ignore[arg-type]
+                {"score": 1},
+                all_storage_keys={"a", "b"},
+            )
+        self.assertEqual(node["keys"], {"a"})
+        with self.assertRaisesRegex(OperationFailure, "top-level fields array"):
+            vector_backend._require_vector_field_spec(
+                SearchIndexDefinition({"mappings": {"dynamic": True}}, name="bad", index_type="vectorSearch"),
+                "embedding",
+            )
 
     def test_sqlite_profile_namespace_paths_delegate_to_admin_runtime(self):
         engine = SQLiteEngine()

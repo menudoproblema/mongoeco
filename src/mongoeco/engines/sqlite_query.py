@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, assert_never
+from typing import Any
 import uuid
 
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS
@@ -133,16 +133,14 @@ def parse_safe_literal_regex(pattern: str, options: str) -> tuple[str, str, bool
             literal_chars.append(char)
         index += 1
 
-    if not literal_chars:
-        return None
     literal = "".join(literal_chars)
-    if anchored_start and anchored_end:
+    if anchored_start and anchored_end and literal:
         return ("exact", literal, ignore_case)
-    if anchored_start:
+    if anchored_start and literal:
         return ("prefix", literal, ignore_case)
-    if anchored_end:
+    if anchored_end and literal:
         return ("suffix", literal, ignore_case)
-    return ("contains", literal, ignore_case)
+    return ("contains", literal, ignore_case) if literal else None
 
 
 def _path_has_numeric_segment(path: str) -> bool:
@@ -1052,5 +1050,4 @@ def translate_query_plan(plan: QueryNode) -> SqlFragment:
                 sql_clauses.append(f"({clause_sql})")
                 params.extend(clause_params)
             return " OR ".join(sql_clauses), params
-        case _:
-            assert_never(plan)
+    raise AssertionError("translate_query_plan exhausted supported query nodes")  # pragma: no cover

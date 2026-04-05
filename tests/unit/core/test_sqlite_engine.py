@@ -21,6 +21,7 @@ from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.engines.sqlite import _SQLITE_SHARED_EXECUTORS, _shutdown_sqlite_shared_executors
+from mongoeco.engines.sqlite_planner import SQLiteReadExecutionPlan
 from mongoeco.errors import CollectionInvalid, DuplicateKeyError, ExecutionTimeout, InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import Decimal128, EngineIndexRecord, ObjectId, SearchIndexDefinition, UNDEFINED
@@ -2173,6 +2174,444 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(purged, 0)
         connection.close()
+
+    async def test_sqlite_low_level_helper_branches_cover_empty_hint_metadata_and_wrappers(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "1", "kind": "note", "tag": "visible", "expires_at": datetime.datetime.now(datetime.timezone.utc)},
+            )
+            await engine.create_index("db", "coll", ["kind"], unique=False, hidden=True, name="idx_kind_hidden")
+            await engine.create_index("db", "coll", ["tag"], unique=False, name="idx_tag_visible")
+
+            self.assertEqual(engine._load_documents_by_storage_keys("db", "coll", []), {})
+            self.assertEqual(engine._find_scalar_index("db", "coll", "tag")["name"], "idx_tag_visible")
+            self.assertIsNone(engine._lookup_collection_id(engine._require_connection(), "db", "missing", create=False))
+            missing_conn = Mock()
+            missing_conn.execute.return_value.fetchone.return_value = None
+            self.assertIsNone(engine._lookup_collection_id(missing_conn, "db", "still-missing", create=False))
+            retry_missing_conn = Mock()
+            retry_missing_conn.execute.return_value.fetchone.side_effect = [None, None]
+            with patch.object(engine, "_ensure_collection_row", return_value=None):
+                self.assertIsNone(engine._lookup_collection_id(retry_missing_conn, "db", "missing-after-create", create=True))
+            with self.assertRaises(OperationFailure):
+                engine._resolve_hint_index("db", "coll", [("kind", 1)])
+
+            self.assertEqual(engine._index_value({"other": 1}, "kind"), engine._typed_engine_key(None))
+            self.assertEqual(
+                engine._build_scalar_rows_for_document(
+                    "key",
+                    {"kind": "note"},
+                    [EngineIndexRecord(name="text_idx", fields=["kind"], key=[("kind", "text")], unique=False)],
+                ),
+                [],
+            )
+            self.assertIsNone(
+                engine._unique_index_conflict_via_scalar_entries(
+                    engine._require_connection(),
+                    1,
+                    EngineIndexRecord(name="idx", fields=["kind"], key=[("kind", 1)], unique=True),
+                    {"kind": "note"},
+                    exclude_storage_key=None,
+                )
+            )
+            self.assertIsNone(
+                engine._unique_index_conflict_via_scalar_entries(
+                    engine._require_connection(),
+                    1,
+                    EngineIndexRecord(
+                        name="idx",
+                        fields=["kind"],
+                        key=[("kind", 1)],
+                        unique=True,
+                        scalar_physical_name="scalar_idx",
+                    ),
+                    {"other": "note"},
+                    exclude_storage_key=None,
+                )
+            )
+            with patch("mongoeco.engines.sqlite._sqlite_runtime_select_first_document_for_scalar_index", return_value=("k", {"_id": "1"})):
+                self.assertEqual(
+                    engine._select_first_document_for_scalar_index("db", "coll", field="kind", value="note"),
+                    ("k", {"_id": "1"}),
+                )
+            with patch("mongoeco.engines.sqlite._sqlite_runtime_select_first_document_for_scalar_range", return_value=("k", {"_id": "1"})):
+                self.assertEqual(
+                    engine._select_first_document_for_scalar_range("db", "coll", field="kind", value="note", operator=">"),
+                    ("k", {"_id": "1"}),
+                )
+
+            conn = engine._require_connection()
+            conn.execute(
+                """
+                INSERT INTO indexes (
+                    db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag,
+                    hidden_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "db",
+                    "meta",
+                    "legacy_idx",
+                    "idx_legacy",
+                    '["kind"]',
+                    None,
+                    0,
+                    0,
+                    0,
+                    None,
+                    None,
+                    0,
+                    "mkidx_legacy",
+                    "scalar_legacy",
+                ),
+            )
+            engine._index_cache.pop(("db", "meta"), None)
+            self.assertEqual(engine._load_indexes("db", "meta")[0]["key"], [("kind", 1)])
+            conn.execute(
+                """
+                INSERT INTO indexes (
+                    db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag,
+                    hidden_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "db",
+                    "meta",
+                    "broken_partial",
+                    "idx_broken",
+                    '["kind"]',
+                    '[["kind", 1]]',
+                    0,
+                    0,
+                    0,
+                    '{"broken"',
+                    None,
+                    0,
+                    "mkidx_broken",
+                    "scalar_broken",
+                ),
+            )
+            engine._index_cache.pop(("db", "meta"), None)
+            with self.assertRaises(OperationFailure):
+                engine._load_indexes("db", "meta")
+
+            with patch("mongoeco.engines.sqlite._sqlite_ensure_vector_search_backend_sync", return_value="sentinel"):
+                self.assertEqual(
+                    engine._ensure_vector_search_backend_sync(
+                        engine._require_connection(),
+                        "db",
+                        "coll",
+                        SearchIndexDefinition(
+                            {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2}]},
+                            name="vec",
+                            index_type="vectorSearch",
+                        ),
+                        "phys",
+                        "embedding",
+                    ),
+                    "sentinel",
+                )
+        finally:
+            await engine.disconnect()
+
+    def test_translate_multikey_and_unique_validation_cover_remaining_helper_branches(self):
+        engine = SQLiteEngine()
+        engine._load_documents = Mock(
+            return_value=[
+                ("skip", {"kind": "note", "active": True}),
+                ("other", {"kind": "note", "active": False}),
+            ]
+        )
+        partial_index = EngineIndexRecord(
+            name="idx_kind",
+            fields=["kind"],
+            key=[("kind", 1)],
+            unique=True,
+            partial_filter_expression={"active": True},
+        )
+        with (
+            patch.object(engine, "_require_connection", return_value=Mock()),
+            patch.object(engine, "_lookup_collection_id", return_value=1),
+            patch.object(engine, "_load_indexes", return_value=[partial_index]),
+            patch.object(engine, "_unique_index_conflict_via_scalar_entries", return_value=None),
+        ):
+            engine._validate_document_against_unique_indexes(
+                "db",
+                "coll",
+                {"kind": "note", "active": True},
+                exclude_storage_key="skip",
+            )
+
+        engine._find_multikey_index = Mock(return_value={"name": "idx_tags", "multikey_physical_name": "mkidx_test"})
+        engine._lookup_collection_id = Mock(return_value=None)
+        with patch.object(engine, "_require_connection", return_value=Mock()):
+            in_sql, _ = engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"tags": {"$in": ["python"]}}))
+        self.assertIn("json_each", in_sql)
+
+        engine._find_multikey_index = Mock(return_value=None)
+        with (
+            patch.object(engine, "_field_is_top_level_array_in_collection", return_value=False),
+            patch.object(engine, "_field_has_comparison_type_mismatch_in_collection", return_value=False),
+        ):
+            gt_same_type_sql, _ = engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"score": {"$gt": 2}}))
+            lt_same_type_sql, _ = engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"score": {"$lt": 2}}))
+            lte_same_type_sql, _ = engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"score": {"$lte": 2}}))
+        self.assertIn("json_extract", gt_same_type_sql)
+        self.assertIn("json_extract", lt_same_type_sql)
+        self.assertIn("json_extract", lte_same_type_sql)
+
+        engine._find_multikey_index = Mock(return_value={"name": "idx_tags", "multikey_physical_name": "mkidx_test"})
+        engine._lookup_collection_id = Mock(return_value=None)
+        with patch.object(engine, "_require_connection", return_value=Mock()):
+            self.assertIn("json_extract", engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"score": {"$gt": 2}}))[0])
+            self.assertIn("json_extract", engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"score": {"$gte": 2}}))[0])
+            self.assertIn("json_extract", engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"score": {"$lt": 2}}))[0])
+            self.assertIn("json_extract", engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"score": {"$lte": 2}}))[0])
+
+        engine._find_multikey_index = Mock(return_value=None)
+        with (
+            patch.object(engine, "_field_is_top_level_array_in_collection", return_value=False),
+            patch.object(engine, "_field_has_comparison_type_mismatch_in_collection", return_value=True),
+        ):
+            lte_fallback_sql, _ = engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"score": {"$lte": 2}}))
+        self.assertIn("json_type", lte_fallback_sql)
+
+        engine._find_multikey_index = Mock(return_value={"name": "idx_tags", "multikey_physical_name": "mkidx_test"})
+        engine._lookup_collection_id = Mock(return_value=7)
+        engine._translate_range_with_multikey = Mock(return_value=("range-sql", [1]))
+        with patch.object(engine, "_require_connection", return_value=Mock()):
+            self.assertEqual(
+                engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"score": {"$lt": 2}})),
+                ("range-sql", [1]),
+            )
+            self.assertEqual(
+                engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"score": {"$lte": 2}})),
+                ("range-sql", [1]),
+            )
+
+    async def test_sqlite_runtime_branches_cover_profile_scan_fast_path_and_non_dict_details(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "kind": "note"})
+            await engine.put_document("db", "coll", {"_id": "2", "kind": "note"})
+
+            with (
+                patch.object(engine._admin_runtime, "profile_namespace_document", None),
+                patch.object(engine._admin_runtime, "profile_document", return_value=None, create=True),
+            ):
+                self.assertIsNone(engine._get_document_sync("db", engine._PROFILE_COLLECTION_NAME, 99, None))
+
+            engine._profiler.set_level("db", 2)
+            engine._profiler.record("db", op="query", namespace="db.system.profile", command={"comment": "trace"}, duration_micros=1000)
+            engine._profiler.record("db", op="query", namespace="db.system.profile", command={"comment": "trace-2"}, duration_micros=1100)
+            stop_event = threading.Event()
+            stop_event.set()
+            self.assertEqual(
+                list(
+                    engine._iter_scan_documents_sync(
+                        "db",
+                        engine._PROFILE_COLLECTION_NAME,
+                        None,
+                        None,
+                        None,
+                        None,
+                        0,
+                        None,
+                        None,
+                        stop_event,
+                    )
+                ),
+                [],
+            )
+            profile_sorted = list(
+                engine._iter_scan_documents_sync(
+                    "db",
+                    engine._PROFILE_COLLECTION_NAME,
+                    None,
+                    None,
+                    None,
+                    [("_id", 1)],
+                    0,
+                    None,
+                    None,
+                    None,
+                )
+            )
+            self.assertGreaterEqual(len(profile_sorted), 1)
+            profile_stop_event = threading.Event()
+            profile_seen: list[dict[str, object]] = []
+            for document in engine._iter_scan_documents_sync(
+                "db",
+                engine._PROFILE_COLLECTION_NAME,
+                None,
+                None,
+                None,
+                [("_id", 1)],
+                0,
+                None,
+                None,
+                profile_stop_event,
+            ):
+                profile_seen.append(document)
+                profile_stop_event.set()
+            self.assertEqual(len(profile_seen), 1)
+
+            fast_docs = list(
+                engine._iter_scan_documents_sync(
+                    "db",
+                    "coll",
+                    {"kind": "note"},
+                    None,
+                    None,
+                    None,
+                    0,
+                    1,
+                    None,
+                    None,
+                )
+            )
+            self.assertEqual(len(fast_docs), 1)
+
+            sql_stop_event = threading.Event()
+            seen: list[dict[str, object]] = []
+            for document in engine._iter_scan_documents_sync(
+                "db",
+                "coll",
+                {"kind": "note"},
+                None,
+                None,
+                [("_id", 1)],
+                0,
+                None,
+                None,
+                sql_stop_event,
+            ):
+                seen.append(document)
+                sql_stop_event.set()
+            self.assertEqual(seen, [{"_id": "1", "kind": "note"}])
+
+            file_engine_path = tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False)
+            file_engine_path.close()
+            file_engine = SQLiteEngine(path=file_engine_path.name)
+            await file_engine.connect()
+            try:
+                await file_engine.put_document("db", "coll", {"_id": "1", "kind": "note"})
+                await file_engine.put_document("db", "coll", {"_id": "2", "kind": "note"})
+                session = ClientSession()
+                file_engine.create_session_state(session)
+                with patch.object(file_engine, "_session_owns_transaction", return_value=True), patch.object(
+                    file_engine, "_can_use_dedicated_reader", return_value=False
+                ):
+                    docs_in_tx = list(
+                        file_engine._iter_scan_documents_sync(
+                            "db",
+                            "coll",
+                            {"kind": "note"},
+                            None,
+                            None,
+                            [("_id", 1)],
+                            0,
+                            None,
+                            session,
+                        )
+                    )
+                self.assertEqual(docs_in_tx, [{"_id": "1", "kind": "note"}, {"_id": "2", "kind": "note"}])
+
+                created_connections: list[sqlite3.Connection] = []
+                original_create = file_engine._create_sqlite_connection
+
+                def _tracking_create():
+                    connection = original_create()
+                    created_connections.append(connection)
+                    return connection
+
+                with patch.object(file_engine, "_create_sqlite_connection", side_effect=_tracking_create):
+                    docs_dedicated = list(
+                        file_engine._iter_scan_documents_sync(
+                            "db",
+                            "coll",
+                            {"kind": "note"},
+                            None,
+                            None,
+                            [("_id", 1)],
+                            0,
+                            None,
+                            None,
+                        )
+                    )
+                self.assertEqual(docs_dedicated, [{"_id": "1", "kind": "note"}, {"_id": "2", "kind": "note"}])
+                self.assertTrue(created_connections)
+
+                semantics = compile_find_semantics({"kind": "note"}, sort=[("_id", 1)])
+                execution_plan = SQLiteReadExecutionPlan(
+                    semantics=semantics,
+                    strategy="sqlite",
+                    execution_lineage=[],
+                    physical_plan=[],
+                    use_sql=True,
+                    sql="SELECT document FROM documents WHERE db_name = ? AND coll_name = ? ORDER BY storage_key",
+                    params=("db", "coll"),
+                    apply_python_sort=True,
+                )
+                sorted_stop_event = threading.Event()
+                sorted_seen: list[dict[str, object]] = []
+                with (
+                    patch.object(file_engine, "_compile_read_execution_plan", return_value=execution_plan),
+                    patch("mongoeco.engines.sqlite._sqlite_require_sql_execution_plan", return_value=(execution_plan.sql, execution_plan.params)),
+                ):
+                    for document in file_engine._iter_scan_documents_sync(
+                        "db",
+                        "coll",
+                        semantics,
+                        context=None,
+                        stop_event=sorted_stop_event,
+                    ):
+                        sorted_seen.append(document)
+                        sorted_stop_event.set()
+                self.assertEqual(sorted_seen, [{"_id": "1", "kind": "note"}])
+            finally:
+                await file_engine.disconnect()
+                Path(file_engine_path.name).unlink(missing_ok=True)
+
+            await engine.create_index("db", "coll", [("title", "text")], name="title_text")
+            with patch("mongoeco.engines.sqlite.sqlite_pushdown_details", return_value="legacy"), patch(
+                "mongoeco.engines.sqlite.describe_virtual_index_usage",
+                return_value={"virtual": True},
+            ):
+                explanation = await engine.explain_find_semantics("db", "coll", compile_find_semantics({"kind": "note"}))
+            with patch("mongoeco.engines.sqlite.sqlite_pushdown_details", return_value="legacy"):
+                text_explanation = await engine.explain_find_semantics(
+                    "db",
+                    "coll",
+                    compile_find_semantics(text_query=compile_classic_text_query({"$search": "note"})),
+                )
+            self.assertEqual(explanation.details["pushdown"], "legacy")
+            self.assertTrue(explanation.details["virtual"])
+            self.assertEqual(text_explanation.details["textQuery"]["backend"], "python")
+        finally:
+            await engine.disconnect()
+
+    async def test_purge_expired_documents_sync_rolls_back_when_delete_hooks_fail(self):
+        engine = SQLiteEngine()
+        past = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=120)
+        await engine.connect()
+        try:
+            await engine.put_document("db", "ttl", {"_id": "expired", "expires_at": past})
+            await engine.create_index("db", "ttl", ["expires_at"], expire_after_seconds=0)
+            conn = engine._require_connection()
+            with patch.object(engine, "_delete_search_entries_for_storage_key", side_effect=RuntimeError("boom")), patch.object(
+                engine, "_rollback_write", wraps=engine._rollback_write
+            ) as rollback_write:
+                with self.assertRaisesRegex(RuntimeError, "boom"):
+                    engine._purge_expired_documents_sync(conn, "db", "ttl", context=None)
+            self.assertGreaterEqual(rollback_write.call_count, 1)
+        finally:
+            await engine.disconnect()
 
     async def test_drop_index_and_drop_indexes_preserve_builtin_id_index(self):
         engine = SQLiteEngine()

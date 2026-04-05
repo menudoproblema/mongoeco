@@ -2,7 +2,7 @@ import unittest
 
 from mongoeco.core.compiled_query import CompiledQuery
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.query_plan import compile_filter
+from mongoeco.core.query_plan import AndCondition, OrCondition, compile_filter
 from mongoeco.engines.semantic_core import compile_find_semantics, iter_filtered_documents
 
 
@@ -89,3 +89,8 @@ class CompiledQueryTests(unittest.TestCase):
             list(iter_filtered_documents(documents, semantics)),
             [{"_id": 1, "tags": ["python", "mongo"]}],
         )
+
+    def test_compiled_query_covers_inline_prefix_and_empty_boolean_nodes(self):
+        self.assertEqual(CompiledQuery(AndCondition(())).get_inline_code(prefix="tmp"), "True")
+        self.assertEqual(CompiledQuery(OrCondition(())).get_inline_code(), "False")
+        self.assertTrue(CompiledQuery(compile_filter({"score": {"$lte": 5}})).match({"score": 5}))

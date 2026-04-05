@@ -14,6 +14,8 @@ class AggregationScalarExpressionTests(unittest.TestCase):
         with self.assertRaisesRegex(OperationFailure, "cannot convert the value"):
             evaluate_expression({"value": math.inf}, {"$toLong": "$value"})
         with self.assertRaisesRegex(OperationFailure, "overflow"):
+            evaluate_expression({"value": float(2**63)}, {"$toLong": "$value"})
+        with self.assertRaisesRegex(OperationFailure, "overflow"):
             evaluate_expression({"value": str(1 << 80)}, {"$toLong": "$value"})
 
         class BrokenUUID:

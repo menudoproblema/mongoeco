@@ -103,6 +103,8 @@ class DocumentCodecTests(unittest.TestCase):
 
         with self.assertRaisesRegex(TypeError, "set values are not BSON-serializable"):
             DocumentCodec.encode({"items": {1, 2}})
+        with self.assertRaisesRegex(TypeError, "set values are not BSON-serializable"):
+            DocumentCodec.encode(frozenset({1, 2}))
 
     def test_document_codec_round_trip_restores_undefined(self):
         original = {"value": UNDEFINED, "items": [1, UNDEFINED]}

@@ -19,6 +19,7 @@ from mongoeco.engines._shared_ttl import (
     document_expired_by_ttl,
     ttl_expiration_datetime,
 )
+from mongoeco.engines._runtime_metrics import LocalRuntimeMetrics
 from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.errors import CollectionInvalid, OperationFailure
 from mongoeco.types import EngineIndexRecord, SearchIndexDefinition
@@ -49,6 +50,7 @@ class SharedTtlHelperTests(unittest.TestCase):
             datetime.datetime(2026, 4, 1, 12, 1, tzinfo=datetime.timezone.utc),
         )
         self.assertIsNone(ttl_expiration_datetime(["skip"], expire_after_seconds=60))
+        self.assertIsNone(ttl_expiration_datetime([datetime.datetime(2026, 4, 1, 12, 0)], expire_after_seconds=None))
 
     def test_document_expired_by_ttl_uses_extract_values_and_ignores_non_dates(self):
         index = EngineIndexRecord(
@@ -161,6 +163,17 @@ class SharedNamespaceAdminTests(unittest.TestCase):
             ),
             ["docs", "system.profile"],
         )
+
+
+class RuntimeMetricsTests(unittest.TestCase):
+    def test_runtime_metrics_ignore_non_positive_and_unknown_operations(self):
+        metrics = LocalRuntimeMetrics()
+
+        metrics.record("query", amount=0)
+        metrics.record("unknown", amount=2)
+        metrics.record("query", amount=2)
+
+        self.assertEqual(metrics.snapshot()["query"], 2)
 
 
 class SharedSearchAdminTests(unittest.TestCase):

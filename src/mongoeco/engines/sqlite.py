@@ -4640,8 +4640,6 @@ class SQLiteEngine(AsyncStorageEngine):
         if virtual_details is not None:
             if isinstance(details, dict):
                 details = {**details, **virtual_details}
-            else:
-                details = {"engine_details": details, **virtual_details}
         if semantics.text_query is not None:
             text_index_name, text_field = resolve_classic_text_index(
                 await self._run_blocking(self._load_indexes, db_name, coll_name),
@@ -4660,8 +4658,6 @@ class SQLiteEngine(AsyncStorageEngine):
             }
             if isinstance(details, dict):
                 details = {**details, **text_details}
-            else:
-                details = text_details
         planning_issues = sqlite_planning_issues(execution_plan.fallback_reason)
         pushdown_hints = sqlite_pushdown_followup_hints(
             semantics.query_plan,

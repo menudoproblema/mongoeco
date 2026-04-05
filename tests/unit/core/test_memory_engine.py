@@ -4,6 +4,11 @@ import unittest
 import uuid
 from unittest.mock import patch
 
+from mongoeco.engines._memory_vector_runtime import (
+    _candidate_positions_for_vector_filter_clause,
+    _candidate_rows_for_vector_filter_clause,
+    candidate_rows_for_vector_filter,
+)
 from mongoeco.api.operations import compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.codec import DocumentCodec
@@ -1629,6 +1634,31 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_memory_unique_index_fallback_scan_skips_excluded_and_non_virtual_rows(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index(
+                "db",
+                "coll",
+                ["email"],
+                name="active_email_unique",
+                unique=True,
+                partial_filter_expression={"active": True},
+            )
+            await engine.put_document("db", "coll", {"_id": "1", "email": "ada@example.com", "active": True})
+            await engine.put_document("db", "coll", {"_id": "2", "email": "ada@example.com", "active": False})
+            engine._index_data.clear()
+
+            engine._ensure_unique_indexes(
+                "db",
+                "coll",
+                {"_id": "1", "email": "ada@example.com", "active": True},
+                exclude_storage_key="1",
+            )
+        finally:
+            await engine.disconnect()
+
     async def test_memory_search_index_lifecycle_conflict_update_missing_and_phrase_vector_paths(self):
         engine = MemoryEngine()
         await engine.connect()
@@ -1715,6 +1745,23 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 {"index": "search", "text": {"query": "ada", "path": "title"}},
             )
             self.assertEqual(second_hits, [])
+        finally:
+            await engine.disconnect()
+
+    async def test_memory_search_runtime_cache_invalidation_clears_collection_vector_entries(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            engine._search_document_cache[("db", "coll", "search")] = (object(), [])
+            engine._search_document_cache[("db", "other", "search")] = (object(), [])
+            engine._vector_document_cache[("db", "coll", "vec")] = (object(), [])
+            engine._vector_document_cache[("db", "other", "vec")] = (object(), [])
+
+            engine._invalidate_search_runtime_cache("db", "coll")
+            self.assertNotIn(("db", "coll", "search"), engine._search_document_cache)
+            self.assertIn(("db", "other", "search"), engine._search_document_cache)
+            self.assertNotIn(("db", "coll", "vec"), engine._vector_document_cache)
+            self.assertIn(("db", "other", "vec"), engine._vector_document_cache)
         finally:
             await engine.disconnect()
 
@@ -2125,6 +2172,53 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             ),
             [],
         )
+        cosine_definition = SearchIndexDefinition(
+            {
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": 2,
+                        "similarity": "cosine",
+                    }
+                ]
+            },
+            name="vec_cosine",
+            index_type="vectorSearch",
+        )
+        cosine_index = memory_module._build_materialized_vector_index(documents[:2], cosine_definition)
+        cosine_scores = memory_module._vector_scores_for_positions(
+            cosine_index,
+            query=SearchVectorQuery(
+                index_name="vec_cosine",
+                path="embedding",
+                query_vector=(1.0, 0.0),
+                limit=2,
+                num_candidates=4,
+                similarity="dotProduct",
+            ),
+            candidate_positions=[0, 1],
+            limit=None,
+        )
+        self.assertEqual([position for _score, position in cosine_scores], [0, 1])
+        broken_index = memory_module._build_materialized_vector_index(documents[:2], cosine_definition)
+        broken_index.vector_row_positions.pop("embedding")
+        self.assertEqual(
+            memory_module._vector_scores_for_positions(
+                broken_index,
+                query=SearchVectorQuery(
+                    index_name="vec_cosine",
+                    path="embedding",
+                    query_vector=(1.0, 0.0),
+                    limit=2,
+                    num_candidates=4,
+                    similarity="cosine",
+                ),
+                candidate_positions=[0],
+                limit=None,
+            ),
+            [],
+        )
         min_score_position_scores = memory_module._vector_scores_for_positions(
             vector_index,
             query=SearchVectorQuery(
@@ -2356,3 +2450,176 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             )
         finally:
             await engine.disconnect()
+
+    def test_memory_vector_runtime_covers_cache_and_empty_helper_branches(self) -> None:
+        documents = [
+            {"_id": 1, "kind": "note", "score": 8, "embedding": [1.0, 0.0]},
+            {"_id": 2, "kind": "reference", "score": 3, "embedding": [0.0, 1.0]},
+            {"_id": 3, "kind": "note", "score": 5},
+        ]
+        vector_index = memory_module._build_materialized_vector_index(
+            documents,
+            SearchIndexDefinition(
+                {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2, "similarity": "euclidean"}]},
+                name="vec",
+                index_type="vectorSearch",
+            ),
+        )
+
+        cached_rows, cached_metadata = candidate_rows_for_vector_filter(
+            vector_index,
+            query_path="embedding",
+            filter_spec={"kind": {"$in": ["note", "reference"]}},
+        )
+        self.assertEqual(cached_rows, [0, 1])
+        cached_again_rows, cached_again_metadata = candidate_rows_for_vector_filter(
+            vector_index,
+            query_path="embedding",
+            filter_spec={"kind": {"$in": ["note", "reference"]}},
+        )
+        self.assertEqual(cached_again_rows, [0, 1])
+        self.assertEqual(cached_again_metadata, cached_metadata)
+
+        empty_rows, empty_metadata = candidate_rows_for_vector_filter(
+            vector_index,
+            query_path="missing",
+            filter_spec={"kind": "note"},
+        )
+        self.assertEqual(empty_rows, [])
+        self.assertTrue(empty_metadata["exact"])
+
+        unsupported_rows, unsupported_metadata = candidate_rows_for_vector_filter(
+            vector_index,
+            query_path="embedding",
+            filter_spec={"kind": {"$regex": "^n"}},
+        )
+        self.assertIsNone(unsupported_rows)
+        self.assertFalse(unsupported_metadata["candidateable"])
+
+        self.assertEqual(
+            memory_module._vector_scores_for_positions(
+                vector_index,
+                query=SearchVectorQuery(
+                    index_name="vec",
+                    path="missing",
+                    query_vector=(1.0, 0.0),
+                    limit=2,
+                    num_candidates=4,
+                    similarity="cosine",
+                ),
+                candidate_positions=[0, 1],
+                limit=None,
+            ),
+            [],
+        )
+        self.assertEqual(
+            memory_module._vector_scores_for_positions(
+                vector_index,
+                query=SearchVectorQuery(
+                    index_name="vec",
+                    path="embedding",
+                    query_vector=(1.0, 0.0),
+                    limit=2,
+                    num_candidates=4,
+                    similarity="cosine",
+                    min_score=2.0,
+                ),
+                candidate_positions=[0, 1],
+                limit=None,
+            ),
+            [],
+        )
+        self.assertEqual(
+            memory_module._vector_scores_for_rows(
+                vector_index,
+                query=SearchVectorQuery(
+                    index_name="vec",
+                    path="embedding",
+                    query_vector=(1.0, 0.0),
+                    limit=2,
+                    num_candidates=4,
+                    similarity="euclidean",
+                ),
+                candidate_rows=[],
+                limit=None,
+            ),
+            [],
+        )
+
+        for index in range(128):
+            vector_index.vector_ranked_row_cache[("embedding", (1.0, 0.0), "cosine", (index,), 1, None)] = ((1.0, 0),)
+        memory_module._vector_scores_for_rows(
+            vector_index,
+            query=SearchVectorQuery(
+                index_name="vec",
+                path="embedding",
+                query_vector=(1.0, 0.0),
+                limit=2,
+                num_candidates=4,
+                similarity="euclidean",
+            ),
+            candidate_rows=[0],
+            limit=1,
+        )
+        self.assertLessEqual(len(vector_index.vector_ranked_row_cache), 2)
+
+        all_positions = {0, 1, 2}
+        self.assertEqual(
+            _candidate_positions_for_vector_filter_clause(
+                vector_index,
+                path="missing",
+                clause={"$exists": False},
+                all_positions=all_positions,
+            ),
+            (all_positions, "$exists"),
+        )
+        self.assertEqual(
+            _candidate_positions_for_vector_filter_clause(
+                vector_index,
+                path="kind",
+                clause={"$in": [object()]},
+                all_positions=all_positions,
+            ),
+            (None, "$in"),
+        )
+        self.assertEqual(
+            _candidate_positions_for_vector_filter_clause(
+                vector_index,
+                path="kind",
+                clause=object(),
+                all_positions=all_positions,
+            ),
+            (None, "eq"),
+        )
+
+        all_rows = {0, 1}
+        self.assertEqual(
+            _candidate_rows_for_vector_filter_clause(
+                vector_index,
+                query_path="embedding",
+                path="missing",
+                clause={"$exists": False},
+                all_rows=all_rows,
+            ),
+            (all_rows, "$exists"),
+        )
+        self.assertEqual(
+            _candidate_rows_for_vector_filter_clause(
+                vector_index,
+                query_path="embedding",
+                path="kind",
+                clause={"$in": [object()]},
+                all_rows=all_rows,
+            ),
+            (None, "$in"),
+        )
+        self.assertEqual(
+            _candidate_rows_for_vector_filter_clause(
+                vector_index,
+                query_path="embedding",
+                path="kind",
+                clause=object(),
+                all_rows=all_rows,
+            ),
+            (None, "eq"),
+        )

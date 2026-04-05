@@ -409,6 +409,47 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         self.assertEqual(stored["kind"], "missing")
         self.assertTrue(stored["done"])
 
+    def test_update_one_with_sort_returns_zero_result_when_no_document_matches_without_upsert(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll", pymongo_profile="4.11")
+                return await collection.update_one(
+                    {"kind": "missing"},
+                    {"$set": {"done": True}},
+                    sort=[("rank", 1)],
+                    upsert=False,
+                )
+            finally:
+                await engine.disconnect()
+
+        result = asyncio.run(_exercise())
+
+        self.assertEqual(result.matched_count, 0)
+        self.assertEqual(result.modified_count, 0)
+
+    def test_update_one_with_hint_returns_zero_result_when_no_document_matches_without_upsert(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                await collection.create_index([("kind", 1)], name="kind_1")
+                return await collection.update_one(
+                    {"kind": "missing"},
+                    {"$set": {"done": True}},
+                    hint="kind_1",
+                    upsert=False,
+                )
+            finally:
+                await engine.disconnect()
+
+        result = asyncio.run(_exercise())
+
+        self.assertEqual(result.matched_count, 0)
+        self.assertEqual(result.modified_count, 0)
+
     def test_find_one_and_update_propagates_sort_to_update_one_on_upsert(self):
         async def _exercise():
             engine = MemoryEngine()
@@ -790,7 +831,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         self.assertEqual(result, [[1, 2, 3]])
 
     def test_resolve_distinct_candidates_covers_array_and_missing_edge_cases(self):
-        from mongoeco.api._async.collection import _resolve_distinct_candidates
+        from mongoeco.api._async._collection_reads import resolve_distinct_candidates as _resolve_distinct_candidates
 
         self.assertEqual(
             _resolve_distinct_candidates([], exact_found=False, exact_value=None),
@@ -819,6 +860,14 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         self.assertEqual(
             _resolve_distinct_candidates([1, 2], exact_found=False, exact_value=None),
             [1, 2],
+        )
+        self.assertEqual(
+            _resolve_distinct_candidates([[1, 2], 1, 2], exact_found=True, exact_value=[9, 9]),
+            [[1, 2], 1, 2],
+        )
+        self.assertEqual(
+            _resolve_distinct_candidates([[1, 2], 1, 3], exact_found=True, exact_value=[1, 2]),
+            [[1, 2], 1, 3],
         )
 
     def test_distinct_supports_nested_empty_array_values(self):

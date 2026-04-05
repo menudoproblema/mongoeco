@@ -69,6 +69,17 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
                 ["2", "1", "3"],
             )
 
+        policy = AggregationSpillPolicy(threshold=1)
+        chunk_results = iter([[], [{"_id": "2"}]])
+        with patch(
+            "mongoeco.core.aggregation.spill.sort_documents",
+            side_effect=lambda docs, sort, *, dialect=None, collation=None: next(chunk_results),
+        ), patch("mongoeco.core.aggregation.spill.os.unlink", side_effect=FileNotFoundError):
+            self.assertEqual(
+                policy.sort_with_spill([{"_id": "1"}, {"_id": "2"}], [("_id", 1)]),
+                [{"_id": "2"}],
+            )
+
     def test_evaluate_expression_rejects_currently_unsupported_operators_explicitly(self):
         document = {"value": "10", "tags": ["a", "b"]}
 

@@ -1,6 +1,7 @@
 import unittest
 
 from mongoeco.core.search_filter_prefilter import (
+    _evaluate_candidate_filter_node,
     collect_filterable_values,
     evaluate_candidate_filter,
     filter_value_key,
@@ -100,3 +101,55 @@ class SearchFilterPrefilterTests(unittest.TestCase):
         self.assertEqual(partial_and.matches, ("a",))
         self.assertEqual(partial_and.plan.supported_clause_count, 2)
         self.assertTrue(partial_and.plan.exact)
+
+    def test_candidateable_filter_boolean_edge_cases_cover_nested_none_and_false_paths(self):
+        document = {"kind": "note"}
+        self.assertIsNone(matches_candidateable_filter(document, {"$and": [{"kind": {"$regex": "^n"}}]}))
+        self.assertIsNone(matches_candidateable_filter(document, {"$or": [{"kind": {"$regex": "^n"}}]}))
+        self.assertFalse(matches_candidateable_filter(document, {"$or": [{"kind": "ref"}, {"kind": "other"}]}))
+        self.assertTrue(matches_candidateable_filter(document, {"$or": [{"kind": "ref"}, {"kind": "note"}]}))
+        self.assertTrue(matches_candidateable_filter(document, {"kind": {"$exists": True}}))
+
+    def test_evaluate_candidate_filter_covers_nested_none_and_clauses_only_paths(self):
+        def resolver(path: str, clause: object):
+            if path == "kind" and clause == "note":
+                return ("a", "b"), "eq"
+            if path == "flag" and clause == {"$exists": True}:
+                return ("a",), "$exists"
+            return None, "eq"
+
+        self.assertIsNone(
+            evaluate_candidate_filter(
+                {"$and": [{"$or": [{"kind": "note"}, {"$bad": 1}]}]},
+                all_candidates=("a", "b"),
+                ordered_candidates=("a", "b"),
+                clause_resolver=resolver,
+            )
+        )
+        self.assertIsNone(
+            evaluate_candidate_filter(
+                {"$or": [{"kind": "note"}, {"$and": "bad"}]},
+                all_candidates=("a", "b"),
+                ordered_candidates=("a", "b"),
+                clause_resolver=resolver,
+            )
+        )
+        self.assertIsNone(
+            _evaluate_candidate_filter_node(
+                {"$or": ["bad"]},  # type: ignore[list-item]
+                all_candidates=("a", "b"),
+                clause_resolver=resolver,
+                clauses_only=False,
+            )
+        )
+
+        clauses_only = _evaluate_candidate_filter_node(
+            {"$or": [{"kind": "note"}, {"flag": {"$exists": True}}]},
+            all_candidates=("a", "b", "c"),
+            clause_resolver=resolver,
+            clauses_only=True,
+        )
+        assert clauses_only is not None
+        self.assertEqual(clauses_only.matches, ("a", "b", "c"))
+        self.assertEqual(len(clauses_only.clauses), 2)
+        self.assertEqual(clauses_only.shape, "$or")

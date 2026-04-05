@@ -335,6 +335,21 @@ class SyncClientUnitTests(unittest.TestCase):
         finally:
             client.close()
 
+    def test_sync_collection_exposes_subcollections_and_change_stream_helpers(self):
+        client = MongoClient(MemoryEngine())
+        try:
+            collection = client.get_database("alpha").get_collection("events")
+            self.assertEqual(collection.logs.name, "events.logs")
+            self.assertEqual(collection["audit"].name, "events.audit")
+            self.assertEqual(collection.change_stream_state()["retainedEvents"], 0)
+            self.assertEqual(collection.change_stream_backend_info()["implementation"], "local")
+            with self.assertRaises(AttributeError):
+                _ = collection._private
+            with self.assertRaises(TypeError):
+                _ = collection[""]  # type: ignore[index]
+        finally:
+            client.close()
+
     def test_client_drop_database_prefers_engine_fast_path(self):
         class EngineStub:
             def __init__(self):

@@ -323,9 +323,6 @@ def _stage_densify(
             for document in ordered
         }
         ordered_values = list(present_values)
-        if not ordered_values:
-            result.extend(ordered)
-            continue
         lower, upper = _resolve_densify_bounds(bounds, ordered_values)
         current = lower
         while _densify_value_leq(current, upper):

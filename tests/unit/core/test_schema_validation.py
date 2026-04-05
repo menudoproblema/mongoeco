@@ -229,7 +229,9 @@ class SchemaValidationTests(unittest.TestCase):
     def test_json_schema_rejects_invalid_schema_shapes(self):
         for schema in (
             {"type": 1},
+            {"enum": "bad"},
             {"properties": []},
+            {"properties": {"name": 1}},
             {"required": "name"},
             {"additionalProperties": "yes"},
             {"items": []},
@@ -373,3 +375,7 @@ class SchemaValidationTests(unittest.TestCase):
         self.assertTrue(any("longer than 3" in message for message in rendered))
         self.assertTrue(any("does not satisfy anyOf" in message for message in rendered))
         self.assertIsNone(schema._as_decimal(object()))
+        self.assertEqual(schema._as_decimal(4), decimal.Decimal(4))
+
+    def test_as_decimal_returns_none_for_non_numeric_scalars(self):
+        self.assertIsNone(CompiledJsonSchema._as_decimal("bad"))

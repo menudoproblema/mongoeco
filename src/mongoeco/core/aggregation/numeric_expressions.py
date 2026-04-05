@@ -253,9 +253,7 @@ def _require_numeric(operator: str, value: object) -> object:
         raise OperationFailure(f"{operator} requires numeric arguments")
     if is_bson_numeric(value):
         return value
-    if not isinstance(value, (int, float, decimal.Decimal)):
-        raise OperationFailure(f"{operator} requires numeric arguments")
-    return value
+    raise OperationFailure(f"{operator} requires numeric arguments")
 
 
 def _is_numeric(value: object) -> bool:
@@ -275,8 +273,6 @@ def _stddev_accumulator_operand(value: Any) -> float | None:
         return None
     if is_bson_numeric(value):
         return float(unwrap_bson_numeric(value))
-    if isinstance(value, (int, float, decimal.Decimal)):
-        return float(value)
     return None
 
 

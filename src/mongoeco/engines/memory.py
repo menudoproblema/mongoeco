@@ -1790,9 +1790,12 @@ class MemoryEngine(AsyncStorageEngine):
                     )
                     break
             else:
-                if isinstance(index_or_name, str):
-                    raise OperationFailure(f"index not found with name [{index_or_name}]")
-                raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
+                missing_target = (
+                    f"index not found with name [{index_or_name}]"
+                    if isinstance(index_or_name, str)
+                    else f"index not found with key pattern {normalized_keys!r}"
+                )
+                raise OperationFailure(missing_target)
 
             if db_name in indexes_view and coll_name in indexes_view[db_name] and not indexes_view[db_name][coll_name]:
                 del indexes_view[db_name][coll_name]

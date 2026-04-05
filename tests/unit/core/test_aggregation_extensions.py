@@ -57,3 +57,17 @@ class AggregationExtensionRegistryTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             register_aggregation_stage("decorate", handler)
+
+    def test_extension_registries_validate_handlers_and_execution_mode(self):
+        with self.assertRaisesRegex(TypeError, "handler must be callable"):
+            register_aggregation_expression_operator("$bad_expr", 1)  # type: ignore[arg-type]
+
+        with self.assertRaisesRegex(TypeError, "handler must be callable"):
+            register_aggregation_stage("$bad_stage", 1)  # type: ignore[arg-type]
+
+        with self.assertRaisesRegex(ValueError, "execution_mode must be 'streamable' or 'materializing'"):
+            register_aggregation_stage(
+                "$bad_mode",
+                lambda documents, spec, context: documents,
+                execution_mode="hybrid",  # type: ignore[arg-type]
+            )

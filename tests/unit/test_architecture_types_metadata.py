@@ -86,15 +86,18 @@ from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.types import EngineIndexRecord, IndexDefinition, IndexInformation, IndexModel, default_id_index_definition
 from mongoeco.types import (
     AggregateExplanation,
+    Binary,
     ChangeEventSnapshot,
     BulkWriteErrorDetails,
     CodecOptions,
     DBRef,
+    Decimal128,
     ExecutionLineageStep,
     ProfileEntrySnapshot,
     PhysicalPlanStep,
     PlanningIssue,
     ProfilingCommandResult,
+    Regex,
     SON,
     SearchIndexDefinition,
     SearchIndexModel,
@@ -104,6 +107,7 @@ from mongoeco.types import (
     ReadPreference,
     ReadPreferenceMode,
     TransactionOptions,
+    Timestamp,
     WriteConcern,
     BuildInfoDocument,
     CollectionStatsSnapshot,
@@ -209,10 +213,9 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         self.assertEqual(change_event.to_document()["fullDocument"]["name"], "Ada")
 
     def test_public_bson_value_types_normalize_equality_and_ordering(self):
-        from mongoeco.types import Binary, Decimal128, Regex, Timestamp
-
         self.assertNotEqual(Binary(b"x", subtype=0), Binary(b"x", subtype=5))
         self.assertEqual(hash(Binary(b"x", subtype=5)), hash(Binary(b"x", subtype=5)))
+        self.assertEqual(repr(Binary(b"x", subtype=5)), "Binary(b'x', subtype=5)")
         with self.assertRaises(ValueError):
             Binary(b"x", subtype=999)
         self.assertEqual(Regex("^a", "mi"), Regex("^a", "im"))
@@ -226,6 +229,8 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             Timestamp(-1, 0)
         self.assertEqual(Decimal128(decimal.Decimal("NaN")), Decimal128(decimal.Decimal("NaN")))
         self.assertEqual(hash(Decimal128(decimal.Decimal("NaN"))), hash(Decimal128(decimal.Decimal("NaN"))))
+        self.assertIs(Decimal128("1.25").__eq__(object()), NotImplemented)
+        self.assertEqual(hash(Decimal128("1.25")), hash(decimal.Decimal("1.25")))
         self.assertEqual(str(Decimal128("1.25")), "1.25")
         self.assertIn("Decimal128", repr(Decimal128("1.25")))
 
@@ -441,6 +446,8 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             set(exported["database_commands"]),
             set(DATABASE_COMMAND_SUPPORT_CATALOG),
         )
+        self.assertEqual(exported["cxp"]["interface"], "database/mongodb")
+        self.assertIn("search", exported["cxp"]["capabilities"])
         self.assertIn("vectorSearch", exported["local_runtime_subsets"])
         self.assertIn("geospatial", exported["local_runtime_subsets"])
 
@@ -895,15 +902,24 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             IndexDefinition([("tenant", 1)], name="bad", sparse=1)  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
+            IndexDefinition([("tenant", 1)], name="bad", hidden=1)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
             IndexDefinition([("tenant", 1)], name="bad", partial_filter_expression="x")  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
             IndexModel([("tenant", 1)], unique=1)  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
             IndexModel([("tenant", 1)], sparse=1)  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
+            IndexModel([("tenant", 1)], hidden=1)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
             IndexModel([("tenant", 1)], partialFilterExpression="x")  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
             IndexModel([("tenant", 1)], unexpected=True)  # type: ignore[arg-type]
+
+        hidden_definition = IndexDefinition([("tenant", 1)], name="tenant_hidden", hidden=True)
+        hidden_model = IndexModel([("tenant", 1)], name="tenant_hidden", hidden=True)
+        self.assertTrue(hidden_definition.to_model_document()["hidden"])
+        self.assertTrue(hidden_model.document["hidden"])
 
     def test_search_index_types_expose_search_and_vector_snapshots(self):
         search_definition = SearchIndexDefinition(

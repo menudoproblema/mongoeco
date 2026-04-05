@@ -8,6 +8,7 @@ from mongoeco.api._async import _database_command_contract as command_contract
 from mongoeco.api._async.database_commands import (
     AsyncDatabaseCommandService,
     BuildInfoResult,
+    _LegacyAdminRoutingAdapter,
     _storage_engine_name,
     build_info_document,
     cmd_line_opts_document,
@@ -277,6 +278,10 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
             service.parse_raw_command({"killOp": 1, "op": ""})
         with self.assertRaisesRegex(TypeError, "collections must be a list of non-empty strings"):
             service.parse_raw_command({"dbHash": 1, "collections": ["users", ""]})
+        with self.assertRaisesRegex(TypeError, "comment must be a string"):
+            service.parse_raw_command({"dbHash": 1, "comment": 1})
+        with self.assertRaisesRegex(TypeError, "killOp command value must be 1"):
+            service.parse_raw_command({"killOp": 0, "op": "op-1"})
         with self.assertRaisesRegex(TypeError, "slowms must be an integer"):
             service.parse_raw_command({"profile": 1, "slowms": "bad"})
         with self.assertRaisesRegex(TypeError, "command name must be a string"):
@@ -318,6 +323,49 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
 
             current = await service.execute_document({"currentOp": 1})
             self.assertEqual(current["inprog"], [])
+
+        asyncio.run(_run())
+
+    def test_legacy_admin_routing_adapter_delegates_find_and_modify_calls(self):
+        admin = _FakeAdmin()
+        adapter = _LegacyAdminRoutingAdapter(admin)
+
+        async def _run():
+            result = await adapter.execute_find_and_modify("opts", session="session-token")
+            self.assertEqual(result.value, {"_id": 1})
+
+        asyncio.run(_run())
+
+    def test_legacy_admin_routing_adapter_covers_command_passthrough_and_getattr(self):
+        admin = _FakeAdmin()
+        adapter = _LegacyAdminRoutingAdapter(admin)
+
+        async def _run():
+            self.assertEqual(
+                await adapter.execute_find_command("users", admin.find_operation, session="session-token"),
+                {"cursor": {"firstBatch": []}},
+            )
+            self.assertEqual(
+                await adapter.execute_aggregate_command("users", admin.aggregate_operation, session="session-token"),
+                {"cursor": {"firstBatch": []}},
+            )
+            self.assertEqual(
+                await adapter.execute_count_command("users", admin.count_operation, session="session-token"),
+                {"n": 1},
+            )
+            self.assertEqual(
+                await adapter.execute_db_hash_command(("users",), comment="trace", session="session-token"),
+                {"host": "local", "collections": {"users": "abc"}, "md5": "abc", "timeMillis": 1},
+            )
+            self.assertEqual(
+                await adapter.execute_distinct_command("users", "name", admin.distinct_operation, session="session-token"),
+                {"values": ["Ada"]},
+            )
+            self.assertEqual(
+                await adapter.execute_list_indexes_command("users", comment="trace", session="session-token"),
+                {"cursor": {"firstBatch": []}},
+            )
+            self.assertIs(adapter.find_operation, admin.find_operation)
 
         asyncio.run(_run())
 

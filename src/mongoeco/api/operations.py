@@ -300,8 +300,6 @@ def _collect_update_planning_issues(
         except OperationFailure as exc:
             issues.append(PlanningIssue(scope="update", message=str(exc)))
         return tuple(issues)
-    if not isinstance(update_spec, dict):
-        return (PlanningIssue(scope="update", message="update specification must be a document or pipeline"),)
     for operator in update_spec:
         if isinstance(operator, str) and operator.startswith("$") and not dialect.supports_update_operator(operator):
             issues.append(PlanningIssue(scope="update", message=f"Unsupported update operator: {operator}"))

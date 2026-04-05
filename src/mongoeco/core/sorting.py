@@ -255,11 +255,7 @@ def sort_documents_window(
         )
         if result != 0:
             return result
-        if left_index < right_index:
-            return -1
-        if left_index > right_index:
-            return 1
-        return 0
+        return (left_index > right_index) - (left_index < right_index)
 
     class _HeapItem:
         __slots__ = ("keys", "doc", "index")

@@ -1,5 +1,6 @@
 import asyncio
 import unittest
+from unittest.mock import Mock
 
 from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.sqlite import SQLiteEngine
@@ -74,3 +75,24 @@ class SQLitePlannerUnitTests(unittest.TestCase):
             self.assertTrue(any(step.runtime == "python" and step.phase == "sort" for step in plan.execution_lineage))
 
         asyncio.run(_run())
+
+    def test_sqlite_read_execution_plan_falls_back_to_python_when_sort_sql_is_not_translatable(self):
+        semantics = compile_find_semantics({"kind": "view"}, sort=[("payload", 1)])
+        plan = compile_sqlite_read_execution_plan(
+            db_name="db",
+            coll_name="users",
+            semantics=semantics,
+            hint=None,
+            dialect_requires_python_fallback=lambda _dialect: False,
+            plan_has_array_traversing_paths=lambda *_args: False,
+            plan_requires_python_for_dbref_paths=lambda *_args: False,
+            plan_requires_python_for_array_comparisons=lambda *_args: False,
+            plan_requires_python_for_undefined=lambda *_args: False,
+            plan_requires_python_for_bytes=lambda *_args: False,
+            sort_requires_python=lambda *_args: True,
+            build_select_sql=Mock(side_effect=NotImplementedError("fallback")),
+        )
+
+        self.assertFalse(plan.use_sql)
+        self.assertEqual(plan.strategy, "python")
+        self.assertEqual(plan.fallback_reason, "Sort requires Python fallback")

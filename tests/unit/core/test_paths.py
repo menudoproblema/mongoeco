@@ -219,3 +219,11 @@ class PathHelpersTests(unittest.TestCase):
         self.assertEqual(get_document_value(document, "author.$db"), (True, "observe"))
         self.assertEqual(get_document_value(document, "author.tenant"), (True, "t1"))
         self.assertEqual(get_document_value(document, "author.meta.region"), (True, "eu"))
+
+    def test_get_document_value_covers_dbref_root_and_scalar_nested_failures(self):
+        author = DBRef("users", "ada", extras={"tenant": "t1"})
+
+        self.assertEqual(get_document_value(author, "$ref"), (True, "users"))
+        self.assertEqual(get_document_value([[{"name": "Ada"}]], "0.0.name"), (True, "Ada"))
+        self.assertEqual(get_document_value({"items": ["Ada"]}, "items.0.name"), (False, None))
+        self.assertEqual(get_document_value({"profile": 1}, "profile.name"), (False, None))

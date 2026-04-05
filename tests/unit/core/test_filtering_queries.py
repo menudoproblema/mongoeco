@@ -368,6 +368,8 @@ class QueryEngineTests(unittest.TestCase):
         self.assertTrue(QueryEngine.match({"score": decimal.Decimal("7.5")}, {"score": {"$type": "Decimal"}}))
         with self.assertRaises(ValueError):
             QueryEngine.match({"score": 7}, {"score": {"$type": True}})
+        with self.assertRaisesRegex(ValueError, "codigo BSON no soportado"):
+            QueryEngine._normalize_type_specifier(999)  # type: ignore[arg-type]
 
     def test_query_engine_supports_bitwise_query_operators(self):
         document = {

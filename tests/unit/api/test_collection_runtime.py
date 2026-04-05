@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import unittest
 
 from mongoeco.api._async.collection import AsyncCollection
+from mongoeco.api._async._collection_runtime import CollectionRuntimeCoordinator
 from mongoeco.session import ClientSession
 
 
@@ -73,6 +74,11 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         class EngineStub:
             pass
 
+        AsyncCollection(EngineStub(), "db", "coll")._runtime.publish_change_event(
+            operation_type="insert",
+            document_key={"_id": "noop"},
+        )
+
         hub_calls = []
         hub = SimpleNamespace(publish=lambda **payload: hub_calls.append(payload))
         collection = AsyncCollection(EngineStub(), "db", "coll", change_hub=hub)
@@ -97,3 +103,14 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
             ],
         )
 
+    def test_publish_change_event_returns_early_when_collection_has_no_change_hub(self):
+        collection = SimpleNamespace(
+            _change_hub=None,
+            _db_name="db",
+            _collection_name="coll",
+        )
+
+        CollectionRuntimeCoordinator(collection).publish_change_event(
+            operation_type="update",
+            document_key={"_id": "1"},
+        )

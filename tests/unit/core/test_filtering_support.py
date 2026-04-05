@@ -81,3 +81,8 @@ class FilteringSupportTests(unittest.TestCase):
         document = {"items": [[{"name": "Ada"}], []], "tags": [["a", "b"]]}
         self.assertEqual(extract_all_candidates(document, "items.0.name"), ["Ada", "Ada", "Ada"])
         self.assertEqual(extract_all_candidates(document, "tags.0"), ["a", "b", "a"])
+
+    def test_extract_all_candidates_covers_non_last_scalar_values_inside_lists(self):
+        document = {"items": [{"profile": {"name": "Ada"}}, {"profile": {"name": "Grace"}}]}
+
+        self.assertEqual(extract_all_candidates(document, "items.profile.name"), ["Ada", "Grace", "Ada", "Grace"])

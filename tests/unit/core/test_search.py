@@ -537,6 +537,18 @@ class SearchCoreTests(unittest.TestCase):
         with self.assertRaisesRegex(OperationFailure, "compound specification is required"):
             compile_search_compound_query({"index": "by_text", "text": {"query": "ada"}})
 
+    def test_compile_search_regex_query_accepts_valid_regex_specification(self) -> None:
+        query = compile_search_regex_query(
+            {
+                "index": "by_text",
+                "regex": {"query": "Ada.*", "path": "title"},
+            }
+        )
+
+        self.assertEqual(query.index_name, "by_text")
+        self.assertEqual(query.raw_query, "Ada.*")
+        self.assertEqual(query.paths, ("title",))
+
     def test_compile_vector_search_query_and_search_stage_error_paths(self) -> None:
         with self.assertRaisesRegex(OperationFailure, "requires a document specification"):
             compile_vector_search_query([])

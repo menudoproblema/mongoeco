@@ -12,7 +12,10 @@ from mongoeco.core.aggregation import array_string_expressions as array_module
 from mongoeco.core.aggregation import compiled_aggregation as compiled_module
 from mongoeco.core.aggregation import control_object_expressions as control_module
 from mongoeco.core.aggregation import date_expressions as date_module
+from mongoeco.core.aggregation import grouping_stages
+from mongoeco.core.aggregation import join_stages
 from mongoeco.core.aggregation import numeric_expressions as numeric_module
+from mongoeco.core.aggregation import planning as planning_module
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Decimal128, Regex, UNDEFINED
@@ -73,10 +76,13 @@ class ArrayStringHelperBranchTests(unittest.TestCase):
             evaluate_expression({"a": [[1], [2]]}, {"$zip": {"inputs": "$a", "defaults": "bad"}})
         with self.assertRaisesRegex(OperationFailure, "\\$zip defaults length must match inputs length"):
             evaluate_expression({"a": [[1], [2]]}, {"$zip": {"inputs": "$a", "defaults": [0]}})
+        self.assertIsNone(evaluate_expression({"a": None}, {"$zip": {"inputs": "$a"}}))
 
         self.assertIsNone(evaluate_expression({"text": None}, {"$indexOfBytes": ["$text", "a"]}))
         self.assertEqual(evaluate_expression({"text": "abcd"}, {"$indexOfBytes": ["$text", "a", 5, 6]}), -1)
         self.assertEqual(evaluate_expression({"text": "abcd"}, {"$indexOfCP": ["$text", "a", 5, 6]}), -1)
+        self.assertEqual(evaluate_expression({"text": "abcd"}, {"$indexOfBytes": ["$text", "a", 3, 1]}), -1)
+        self.assertEqual(evaluate_expression({"text": "abcd"}, {"$indexOfCP": ["$text", "a", 3, 1]}), -1)
         with self.assertRaisesRegex(OperationFailure, "start must be an integer"):
             array_module._normalize_index_bounds("$indexOfBytes", "x", None, 5)
         with self.assertRaisesRegex(OperationFailure, "end must be an integer"):
@@ -453,6 +459,21 @@ class NumericHelperBranchTests(unittest.TestCase):
         self.assertEqual(numeric_module._sum_accumulator_operand(BsonInt32(3)), BsonInt32(3))
         self.assertEqual(numeric_module._stddev_accumulator_operand(UNDEFINED), None)
         self.assertEqual(numeric_module._stddev_accumulator_operand(decimal.Decimal("1.5")), 1.5)
+        self.assertEqual(numeric_module._stddev_accumulator_operand(2), 2.0)
+        self.assertEqual(numeric_module._require_numeric("$add", 1.5), 1.5)
+        self.assertEqual(numeric_module._require_numeric("$add", 3), 3)
+        self.assertTrue(math.isnan(evaluate_expression({"left": float("nan"), "right": 10}, {"$log": ["$left", "$right"]})))
+        self.assertEqual(
+            numeric_module._stddev_expression_values(
+                {},
+                [["x"], decimal.Decimal("1.5"), None, UNDEFINED],
+                None,
+                evaluate_expression=lambda _doc, expr, _vars=None: expr,
+                evaluate_expression_with_missing=lambda _doc, expr, _vars=None: expr,
+                missing_sentinel=object(),
+            ),
+            [1.5],
+        )
 
         with self.assertRaisesRegex(OperationFailure, "p must evaluate to an array"):
             numeric_module._normalize_percentile_probabilities("$percentile", "bad")
@@ -606,6 +627,12 @@ class AccumulatorHelperBranchTests(unittest.TestCase):
                 {"top": {"$topN": {"sortBy": {"rank": 1}, "output": "$rank", "n": 3}}},
                 {"rank": 1},
             )
+        with self.assertRaisesRegex(OperationFailure, "consistent positive integer within the group"):
+            accumulators_module._apply_accumulators(
+                {"firstOne": accumulators_module._PickNAccumulator(items=[1], n=1)},
+                {"firstOne": {"$firstN": {"input": "$value", "n": 2}}},
+                {"value": 2},
+            )
         with self.assertRaisesRegex(OperationFailure, "consistent array within the group"):
             accumulators_module._apply_accumulators(
                 {"pct": accumulators_module._PercentileAccumulator(probabilities=[0.5])},
@@ -692,6 +719,36 @@ class CompiledAggregationHelperBranchTests(unittest.TestCase):
         self.assertEqual(compiled._compile_expression({"$literal": "value"}, "x"), "'value'")
         self.assertEqual(compiled._compile_expression({"nested": True}, "x").startswith("_evaluate("), True)
         self.assertIn("state[0] += 1", "\n".join(compiled_module.CompiledGroup({"_id": "$kind", "count": {"$count": {}}})._compile_logic_only()))
+
+
+class GroupingHelperBranchTests(unittest.TestCase):
+    def test_grouping_helpers_cover_mutable_copy_and_bucket_bounds(self):
+        copied = grouping_stages._copy_if_mutable({"tags": {1}})
+        copied["tags"].add(2)
+        self.assertEqual(copied, {"tags": {1, 2}})
+        self.assertEqual(grouping_stages._copy_if_mutable(5), 5)
+
+        self.assertIsNone(grouping_stages._find_bucket_index(-1, [0, 5, 10]))
+        self.assertIsNone(grouping_stages._find_bucket_index(10, [0, 5, 10]))
+        self.assertEqual(grouping_stages._find_bucket_index(7, [0, 5, 10]), 1)
+
+
+class PlanningAndJoinHelperBranchTests(unittest.TestCase):
+    def test_planning_and_join_helpers_cover_documents_stage_and_lookup_let_validation(self):
+        with self.assertRaisesRegex(OperationFailure, "\\$documents requires an array of documents"):
+            planning_module._require_documents_stage("bad")
+
+        with self.assertRaisesRegex(OperationFailure, "must begin with a lowercase letter or non-ascii character"):
+            join_stages._apply_lookup(
+                [{"tenant": "eu"}],
+                {
+                    "from": "users",
+                    "as": "matches",
+                    "pipeline": [],
+                    "let": {"ROOT": "$tenant"},
+                },
+                lambda _name: [{"tenant": "eu"}],
+            )
 
 
 class ControlObjectHelperBranchTests(unittest.TestCase):

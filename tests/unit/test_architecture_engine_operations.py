@@ -375,6 +375,34 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
             ),
         )
 
+        self.assertEqual(
+            operations_module._collect_update_planning_issues(
+                object(),
+                dialect=operations_module.MONGODB_DIALECT_70,
+                planning_mode=PlanningMode.RELAXED,
+            ),
+            (
+                operations_module.PlanningIssue(
+                    scope="update",
+                    message="update specification must be a document or pipeline",
+                ),
+            ),
+        )
+
+        self.assertEqual(
+            operations_module._collect_update_planning_issues(
+                "bad",  # type: ignore[arg-type]
+                dialect=operations_module.MONGODB_DIALECT_70,
+                planning_mode=PlanningMode.RELAXED,
+            ),
+            (
+                operations_module.PlanningIssue(
+                    scope="update",
+                    message="update specification must be a document or pipeline",
+                ),
+            ),
+        )
+
     def test_private_update_planning_issue_collector_reports_validation_failures(self):
         with mock.patch.object(
             operations_module.UpdateEngine,

@@ -319,9 +319,12 @@ def drop_index(
         target_name = str(matches[0]["name"])
     target = next((index for index in indexes if index["name"] == target_name), None)
     if target is None:
-        if isinstance(index_or_name, str):
-            raise OperationFailure(f"index not found with name [{index_or_name}]")
-        raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
+        missing_target = (
+            f"index not found with name [{index_or_name}]"
+            if isinstance(index_or_name, str)
+            else f"index not found with key pattern {normalized_keys!r}"
+        )
+        raise OperationFailure(missing_target)
 
     try:
         begin_write(conn)

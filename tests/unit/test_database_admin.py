@@ -930,6 +930,33 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
 
         asyncio.run(_run())
 
+    def test_database_admin_read_commands_validate_and_dispatch_list_indexes(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin
+
+        async def _run():
+            with patch.object(
+                service._read_commands,
+                "execute_list_indexes_command",
+                return_value={"cursor": {"firstBatch": []}},
+            ) as execute_list_indexes:
+                with self.assertRaisesRegex(TypeError, "comment must be a string"):
+                    await service._read_commands.command_list_indexes(
+                        {"listIndexes": "users", "comment": 1}
+                    )
+
+                result = await service._read_commands.command_list_indexes(
+                    {"listIndexes": "users", "comment": "trace"}
+                )
+                self.assertEqual(result, {"cursor": {"firstBatch": []}})
+                execute_list_indexes.assert_awaited_once_with(
+                    "users",
+                    comment="trace",
+                    session=None,
+                )
+
+        asyncio.run(_run())
+
     def test_validate_warnings_cover_emulated_runtime_flags(self):
         database = AsyncDatabase(MemoryEngine(), "db")
         service = database._admin
@@ -984,6 +1011,26 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
             )
 
         asyncio.run(_run())
+
+    def test_ttl_validation_warnings_support_fields_fallback_and_skip_invalid_field_shapes(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        namespace = database._admin._namespace_admin
+
+        warnings = namespace._ttl_validation_warnings(
+            "users",
+            documents=[{"expires_at": "soon"}, {"expires_at": None}],
+            indexes=[
+                {"name": "ttl_fields", "fields": ["expires_at"], "expireAfterSeconds": 30},
+                {"name": "ttl_bad", "fields": [1], "expireAfterSeconds": 30},
+            ],
+        )
+
+        self.assertEqual(
+            warnings,
+            [
+                "TTL index 'ttl_fields' on 'users.expires_at' has 2 document(s) with no date values; those documents will not expire under local TTL semantics",
+            ],
+        )
 
 
 if __name__ == "__main__":

@@ -151,6 +151,7 @@ class BsonScalarTests(unittest.TestCase):
         self.assertEqual(compare_bson_numeric(1.5, 2.5), -1)
         self.assertEqual(compare_bson_numeric(2.5, 1.5), 1)
         self.assertEqual(compare_bson_numeric(Decimal128("2.50"), decimal.Decimal("2.5")), 0)
+        self.assertEqual(compare_bson_numeric(Decimal128("2.75"), decimal.Decimal("2.5")), 1)
         self.assertEqual(compare_bson_numeric(float("inf"), float("inf")), 0)
         self.assertEqual(compare_bson_numeric(1.0, float("inf")), -1)
         self.assertEqual(compare_bson_numeric(1.0, float("-inf")), 1)

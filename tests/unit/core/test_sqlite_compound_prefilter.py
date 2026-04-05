@@ -2,6 +2,8 @@ import unittest
 
 from mongoeco.core.search import compile_search_stage, search_query_operator_name
 from mongoeco.engines._sqlite_compound_prefilter import (
+    _intersect_storage_key_lists,
+    _storage_keys_with_minimum_frequency,
     compound_clause_candidate_state,
     compound_entry_ranking_supported,
     describe_compound_prefilter,
@@ -201,3 +203,139 @@ class SQLiteCompoundPrefilterTests(unittest.TestCase):
             ),
             physical_name="fts_table",
         ))
+
+    def test_compound_plan_and_downstream_implication_cover_empty_and_skip_paths(self) -> None:
+        only_should = compile_search_stage(
+            "$search",
+            {
+                "index": "by_text",
+                "compound": {
+                    "should": [{"text": {"query": "ada", "path": "title"}}],
+                    "minimumShouldMatch": 1,
+                },
+            },
+        )
+        plan = sqlite_compound_candidate_plan(
+            self.definition,
+            only_should,
+            candidate_resolver=lambda _clause: (["a", "b"], "fts5", True),
+        )
+        self.assertEqual(plan.candidates, ("a", "b"))
+        self.assertTrue(plan.exact)
+
+        impossible = sqlite_compound_candidate_plan(
+            self.definition,
+            only_should,
+            candidate_resolver=lambda _clause: ([], "fts5", True),
+        )
+        self.assertEqual(impossible.candidates, ())
+        self.assertTrue(impossible.exact)
+
+        must_only = compile_search_stage(
+            "$search",
+            {
+                "index": "by_text",
+                "compound": {
+                    "must": [{"text": {"query": "ada", "path": "title"}}],
+                },
+            },
+        )
+        no_candidates = sqlite_compound_candidate_plan(
+            self.definition,
+            must_only,
+            candidate_resolver=lambda _clause: (None, None, False),
+        )
+        self.assertIsNone(no_candidates.candidates)
+        self.assertFalse(no_candidates.exact)
+
+        optional_should = compile_search_stage(
+            "$search",
+            {
+                "index": "by_text",
+                "compound": {
+                    "should": [{"text": {"query": "ada", "path": "title"}}],
+                    "minimumShouldMatch": 0,
+                },
+            },
+        )
+        no_candidates_after_should = sqlite_compound_candidate_plan(
+            self.definition,
+            optional_should,
+            candidate_resolver=lambda _clause: (["a"], "fts5", True),
+        )
+        self.assertIsNone(no_candidates_after_should.candidates)
+        self.assertFalse(no_candidates_after_should.exact)
+
+        must_not_unknown = compile_search_stage(
+            "$search",
+            {
+                "index": "by_text",
+                "compound": {
+                    "must": [{"text": {"query": "ada", "path": "title"}}],
+                    "mustNot": [{"exists": {"path": "title"}}],
+                },
+            },
+        )
+        must_not_plan = sqlite_compound_candidate_plan(
+            self.definition,
+            must_not_unknown,
+            candidate_resolver=lambda clause: (["a"], "fts5", True),
+            must_not_resolver=lambda _clause: (None, None, False),
+        )
+        self.assertEqual(must_not_plan.candidates, ("a",))
+        self.assertFalse(must_not_plan.exact)
+
+        text_clause = compile_search_stage("$search", {"index": "by_text", "text": {"query": "ada", "path": "title"}})
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={"body": {"$exists": True}},
+            ),
+            (None, None),
+        )
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={"title": {"$in": [1]}},
+            ),
+            (None, None),
+        )
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={"title": {"$in": []}},
+            ),
+            (None, None),
+        )
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={"title": {"$exists": True}},
+            ),
+            (None, None),
+        )
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={"title": 5},
+            ),
+            (None, None),
+        )
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={"title": {"$in": ["ada", "ada"]}},
+            ),
+            ("title", ["ada", "ada"]),
+        )
+
+    def test_storage_key_helpers_cover_empty_and_frequency_paths(self) -> None:
+        self.assertEqual(_intersect_storage_key_lists([]), [])
+        self.assertEqual(_storage_keys_with_minimum_frequency([["a", "b"], ["b", "c"]], 1), ["a", "b", "c"])
+        self.assertEqual(_storage_keys_with_minimum_frequency([["a", "b"], ["b", "c"], ["b"]], 2), ["b"])

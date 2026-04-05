@@ -48,6 +48,30 @@ class SqlTranslationTests(unittest.TestCase):
         self.assertIn("WHERE db_name = ? AND coll_name = ? AND (1 = 1)", statement.sql)
         self.assertEqual(statement.params, ("db", "coll", 5, 2))
 
+    def test_base_sql_translator_build_select_statement_requires_plan_or_fragment(self):
+        translator = _MinimalTranslator()
+        with self.assertRaisesRegex(ValueError, "requires plan or where_fragment"):
+            translator.build_select_statement(
+                select_clause="document",
+                from_clause="documents",
+                namespace_sql="db_name = ?",
+                namespace_params=("db",),
+            )
+
+    def test_base_sql_translator_builds_offset_only_statement(self):
+        translator = _MinimalTranslator()
+        statement = translator.build_select_statement(
+            select_clause="document",
+            from_clause="documents",
+            namespace_sql="db_name = ?",
+            namespace_params=("db",),
+            plan=compile_filter({"name": "Ada"}),
+            skip=3,
+        )
+        self.assertIn("LIMIT -1", statement.sql)
+        self.assertIn("OFFSET ?", statement.sql)
+        self.assertEqual(statement.params[-1], 3)
+
     def test_sqlite_query_translator_translates_simple_query_plan(self):
         translator = SQLiteQueryTranslator()
 

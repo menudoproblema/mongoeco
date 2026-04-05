@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
+import mongoeco._types._bson_objectid as objectid_module
 from mongoeco.types import DeleteResult, InsertManyResult, InsertOneResult, ObjectId, UNDEFINED, UndefinedType, UpdateResult
 try:
     from bson.objectid import ObjectId as BsonObjectId
@@ -79,6 +80,14 @@ class TestObjectId(unittest.TestCase):
 
         self.assertEqual(str(converted), str(original))
         self.assertIsInstance(original, BsonObjectId)
+
+    def test_pymongo_wrapper_reraises_non_bytes_type_errors_when_available(self):
+        if BsonObjectId is None:
+            self.skipTest("bson is not installed")
+
+        with patch.object(objectid_module._PyMongoObjectId, "__init__", side_effect=TypeError("boom")):
+            with self.assertRaisesRegex(TypeError, "boom"):
+                ObjectId("0" * 24)
 
     def test_equality_and_ordering_with_other_types(self):
         oid = ObjectId()

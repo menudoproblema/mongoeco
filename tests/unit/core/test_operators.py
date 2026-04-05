@@ -1,16 +1,20 @@
 import math
 import re
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 try:
     from bson.objectid import ObjectId as BsonObjectId
 except Exception:  # pragma: no cover - optional dependency
     BsonObjectId = None
 
+import mongoeco.core.operators as operators_module
 from mongoeco.compat import MongoDialect
 from mongoeco.core.bson_scalars import BsonInt32, BsonInt64
 from mongoeco.core.collation import normalize_collation
-from mongoeco.core.operators import UpdateEngine
+from mongoeco.core.operators import CompiledUpdatePipelinePlan, UpdateEngine
+from mongoeco.core.update_paths import ResolvedUpdatePath, compile_update_path
 from mongoeco.core.update_scalar_operators import _path_array_prefixes
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ObjectId, Timestamp
@@ -132,6 +136,20 @@ class UpdateEngineTests(unittest.TestCase):
 
         self.assertEqual([target.concrete_path for target in targets], ["items.0.0.qty"])
 
+    def test_update_engine_resolve_update_targets_deduplicates_duplicate_expansions(self):
+        compiled_path = compile_update_path("items.$[].qty")
+        duplicate_target = ResolvedUpdatePath(requested=compiled_path, concrete_path="items.0.qty")
+
+        with patch.object(operators_module, "resolve_positional_update_paths", return_value=[duplicate_target, duplicate_target]):
+            targets = UpdateEngine._resolve_update_targets(
+                {"items": [{"qty": 1}]},
+                compiled_path,
+                array_filters={},
+                allow_positional=True,
+            )
+
+        self.assertEqual(targets, [duplicate_target])
+
     def test_update_engine_compiles_resolved_instruction_applications(self):
         context = UpdateEngine.build_execution_context(
             selector_filter={"items.qty": {"$gt": 0}},
@@ -211,11 +229,35 @@ class UpdateEngineTests(unittest.TestCase):
                 context=context,
             )
 
+    def test_compiled_update_pipeline_plan_rejects_non_document_output(self):
+        context = UpdateEngine.build_execution_context()
+        plan = CompiledUpdatePipelinePlan(
+            update_spec=[{"$set": {"done": True}}],
+            context=context,
+            compiled_pipeline=SimpleNamespace(execute=lambda _docs, variables=None: [1]),
+        )
+
+        with self.assertRaisesRegex(OperationFailure, "single document"):
+            plan.apply({"done": False})
+
+    def test_compiled_update_pipeline_plan_uses_pipeline_fallback_when_not_precompiled(self):
+        context = UpdateEngine.build_execution_context()
+        plan = CompiledUpdatePipelinePlan(
+            update_spec=[{"$set": {"done": True}}],
+            context=context,
+        )
+        document = {"done": False}
+
+        self.assertTrue(plan.apply(document))
+        self.assertEqual(document, {"done": True})
+
     def test_validate_update_pipeline_rejects_invalid_stage_shapes(self):
         with self.assertRaisesRegex(OperationFailure, "single-key document"):
             UpdateEngine.validate_update_pipeline([{"$set": {"a": 1}, "$unset": {"b": ""}}])
         with self.assertRaisesRegex(OperationFailure, "operator must start with '\\$'"):
             UpdateEngine.validate_update_pipeline([{"set": {"a": 1}}])
+        with self.assertRaisesRegex(OperationFailure, "Unsupported update pipeline stage: \\$future"):
+            UpdateEngine.validate_update_pipeline([{"$future": {}}])
 
         class _NoProjectDialect(MongoDialect):
             def supports_aggregation_stage(self, name: str) -> bool:
@@ -226,6 +268,12 @@ class UpdateEngineTests(unittest.TestCase):
                 [{"$project": {"a": 1}}],
                 dialect=_NoProjectDialect(key="test", server_version="test", label="No Project"),
             )
+
+    def test_normalize_update_collation_accepts_documents(self):
+        self.assertEqual(
+            operators_module._normalize_update_collation({"locale": "en", "strength": 2}),
+            normalize_collation({"locale": "en", "strength": 2}),
+        )
 
     def test_set_same_value_is_noop(self):
         document = {"field": 1}

@@ -139,6 +139,29 @@ class CollationTests(unittest.TestCase):
         self.assertNotEqual(compare_with_collation("Alice", "alice", collation=strength_three), 0)
         self.assertNotEqual(compare_with_collation("Alice", "alice", collation=case_level), 0)
 
+    def test_compare_with_collation_fallback_case_level_covers_case_tie_breaks(self):
+        spec = CollationSpec(locale="en", strength=3, case_level=True)
+
+        with patch.object(collation_module, "_can_use_icu_collation", return_value=False), patch.object(
+            collation_module,
+            "_can_use_pyuca_collation",
+            return_value=False,
+        ):
+            self.assertEqual(compare_with_collation("same", "same", collation=spec), 0)
+            self.assertLess(compare_with_collation("A", "a", collation=spec), 0)
+            self.assertGreater(compare_with_collation("a", "A", collation=spec), 0)
+
+    def test_compare_with_collation_fallback_uses_original_strings_after_primary_tie(self):
+        spec = CollationSpec(locale="en", strength=3)
+
+        with (
+            patch.object(collation_module, "_can_use_icu_collation", return_value=False),
+            patch.object(collation_module, "_can_use_pyuca_collation", return_value=False),
+            patch.object(collation_module, "_collation_primary_key", return_value="same"),
+        ):
+            self.assertEqual(compare_with_collation("A", "a", collation=spec), -1)
+            self.assertEqual(compare_with_collation("a", "A", collation=spec), 1)
+
     def test_compare_with_collation_supports_numeric_ordering(self):
         lexical = normalize_collation({"locale": "en", "strength": 2})
         numeric = normalize_collation({"locale": "en", "strength": 2, "numericOrdering": True})

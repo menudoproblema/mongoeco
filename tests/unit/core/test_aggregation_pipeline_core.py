@@ -1498,6 +1498,7 @@ class AggregationPipelineCoreTests(unittest.TestCase):
         self.assertEqual(policy.sort_calls, [[("score", 1)]])
 
     def test_sort_window_for_following_slices_requires_contiguous_skip_and_limit(self):
+        self.assertEqual(_densify_datetime_delta(1, "millisecond"), datetime.timedelta(milliseconds=1))
         self.assertEqual(
             _sort_window_for_following_slices(
                 [
@@ -1551,6 +1552,32 @@ class AggregationPipelineCoreTests(unittest.TestCase):
 
         self.assertIsNone(
             _sort_window_for_following_slices(
+                [
+                    {"$sort": {"score": 1}},
+                    {"$limit": 2},
+                    {"$skip": 1},
+                ],
+                0,
+            )
+        )
+
+    def test_compiled_pipeline_private_helpers_cover_registered_operator_and_unreachable_match_guard(self):
+        import mongoeco.core.aggregation.compiled_pipeline as compiled_pipeline_module
+        from mongoeco.core.aggregation.compiled_pipeline import _compile_match_step, _sort_window_for_following_slices as _compiled_sort_window
+
+        with patch.object(
+            compiled_pipeline_module,
+            "get_registered_aggregation_stage_registration",
+            return_value=object(),
+        ):
+            self.assertIsNone(compiled_pipeline_module.compile_pipeline([{"$match": {"x": 1}}]))
+
+        with patch.object(compiled_pipeline_module, "_apply_match", return_value=[]):
+            with self.assertRaisesRegex(AssertionError, "unreachable"):
+                _compile_match_step([], dialect=MONGODB_DIALECT_70)  # type: ignore[arg-type]
+
+        self.assertIsNone(
+            _compiled_sort_window(
                 [
                     {"$sort": {"score": 1}},
                     {"$limit": 2},

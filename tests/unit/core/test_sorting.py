@@ -227,6 +227,8 @@ class SortingHelpersTests(unittest.TestCase):
         self.assertEqual(_compare_native_sort_scalars(b"a", b"b"), -1)
         self.assertEqual(_compare_native_sort_scalars(bytes([97]), b"a"), 0)
         self.assertEqual(_compare_native_sort_scalars(2.0, 2.0), 0)
+        self.assertEqual(_compare_native_sort_scalars(1.0, 2.0), -1)
+        self.assertEqual(_compare_native_sort_scalars(float("2.0"), float("2.0")), 0)
         self.assertIsNone(_compare_native_sort_scalars("a", 1))
         self.assertIsNone(_compare_native_sort_scalars(datetime.datetime.now(), datetime.datetime.now()))
         self.assertEqual(_compare_native_sort_scalars(math.nan, math.nan), 0)
@@ -267,4 +269,12 @@ class SortingHelpersTests(unittest.TestCase):
         self.assertEqual(
             sort_documents_window(documents, [("rank", 1)], window=None),
             sort_documents(documents, [("rank", 1)]),
+        )
+
+    def test_sort_documents_window_preserves_stable_order_for_equal_keys(self):
+        documents = [{"_id": "1", "rank": 1}, {"_id": "2", "rank": 1}]
+
+        self.assertEqual(
+            [document["_id"] for document in sort_documents_window(documents, [("rank", 1)], window=2)],
+            ["1", "2"],
         )

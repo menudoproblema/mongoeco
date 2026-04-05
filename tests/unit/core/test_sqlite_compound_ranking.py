@@ -1,6 +1,8 @@
 import sqlite3
 import unittest
+from unittest.mock import patch
 
+import mongoeco.engines._sqlite_compound_ranking as compound_ranking_module
 from mongoeco.core.search import materialize_search_document, compile_search_stage
 from mongoeco.engines._sqlite_compound_ranking import (
     CompoundTopKPrefilter,
@@ -309,3 +311,202 @@ class SQLiteCompoundRankingTests(unittest.TestCase):
             ),
             None,
         )
+
+    def test_remaining_topk_and_fallback_ranking_branches(self) -> None:
+        supported_query = compile_search_stage(
+            "$search",
+            {
+                "index": "by_text",
+                "compound": {
+                    "should": [
+                        {"text": {"query": "ada", "path": "title"}},
+                        {"autocomplete": {"query": "vec", "path": "body"}},
+                    ]
+                },
+            },
+        )
+
+        resolved_pruned, resolved_meta = prune_candidate_storage_keys_for_topk(
+            self.engine,
+            self.conn,
+            db_name="db",
+            coll_name="coll",
+            physical_name=self.physical_name,
+            query=supported_query,
+            candidate_storage_keys=["a", "b", "c"],
+            candidate_exact=True,
+            result_limit_hint=1,
+            should_candidates=[],
+            candidate_resolver=lambda clause: (
+                ["a"] if getattr(clause, "path", None) == "title" else ["a", "b"],
+                "fts5",
+                True,
+            ),
+        )
+        self.assertEqual(resolved_pruned, ["a"])
+        self.assertEqual(resolved_meta["strategy"], "exact-should-score-tier")
+
+        with (
+            patch.object(compound_ranking_module, "exact_candidateable_should_scores", return_value=None),
+            patch.object(
+                compound_ranking_module,
+                "prune_candidate_storage_keys_with_candidateable_ranking",
+                return_value=(["a", "b"], 2),
+            ),
+        ):
+            pre_ranked_keys, pre_ranked_meta = prune_candidate_storage_keys_for_topk(
+                self.engine,
+                self.conn,
+                db_name="db",
+                coll_name="coll",
+                physical_name=self.physical_name,
+                query=supported_query,
+                candidate_storage_keys=["a", "b", "c"],
+                candidate_exact=True,
+                result_limit_hint=1,
+                should_candidates=[["a", "b"], ["a"]],
+                candidate_resolver=lambda clause: (["a"], "fts5", True),
+            )
+        self.assertEqual(pre_ranked_keys, ["a", "b"])
+        self.assertEqual(pre_ranked_meta["strategy"], "candidateable-should-ranking-tier")
+
+        with (
+            patch.object(compound_ranking_module, "exact_candidateable_should_scores", return_value=None),
+            patch.object(
+                compound_ranking_module,
+                "prune_candidate_storage_keys_with_candidateable_ranking",
+                return_value=None,
+            ),
+        ):
+            matched_tier_keys, matched_tier_meta = prune_candidate_storage_keys_for_topk(
+                self.engine,
+                self.conn,
+                db_name="db",
+                coll_name="coll",
+                physical_name=self.physical_name,
+                query=supported_query,
+                candidate_storage_keys=["a", "b", "c"],
+                candidate_exact=True,
+                result_limit_hint=1,
+                should_candidates=[["a"], ["b"]],
+                candidate_resolver=lambda clause: (["a"], "fts5", True),
+            )
+        self.assertEqual(matched_tier_keys, ["a", "b"])
+        self.assertEqual(matched_tier_meta["strategy"], "matched-should-tier")
+
+        with (
+            patch.object(compound_ranking_module, "exact_candidateable_should_scores", return_value=None),
+            patch.object(
+                compound_ranking_module,
+                "prune_candidate_storage_keys_with_candidateable_ranking",
+                return_value=None,
+            ),
+        ):
+            unchanged_keys, unchanged_meta = prune_candidate_storage_keys_for_topk(
+                self.engine,
+                self.conn,
+                db_name="db",
+                coll_name="coll",
+                physical_name=self.physical_name,
+                query=supported_query,
+                candidate_storage_keys=["a", "b"],
+                candidate_exact=True,
+                result_limit_hint=1,
+                should_candidates=[["a", "b"]],
+                candidate_resolver=lambda clause: (["a", "b"], "fts5", True),
+            )
+        self.assertEqual(unchanged_keys, ["a", "b"])
+        self.assertIsNone(unchanged_meta)
+
+        self.assertIsNone(
+            prune_candidate_storage_keys_with_candidateable_ranking(
+                ["a"],
+                [["x"]],
+                result_limit_hint=1,
+            )
+        )
+        self.assertEqual(
+            prefilter_candidate_storage_keys_by_matched_should(
+                ["a"],
+                [["x"]],
+                result_limit_hint=1,
+            ),
+            (None, None),
+        )
+        self.assertEqual(
+            prefilter_candidate_storage_keys_by_matched_should(
+                ["a"],
+                [["a"]],
+                result_limit_hint=1,
+            ),
+            (None, 1),
+        )
+
+        fresh_engine = _FakeRankingEngine()
+        empty_conn = sqlite3.connect(":memory:")
+        try:
+            empty_conn.execute(
+                f'CREATE TABLE "{self.physical_name}" (storage_key TEXT, field_path TEXT, content TEXT)'
+            )
+            with patch.object(
+                compound_ranking_module,
+                "load_materialized_search_documents_by_storage_key",
+                return_value={},
+            ):
+                self.assertIsNone(
+                    exact_candidateable_should_scores(
+                        fresh_engine,
+                        empty_conn,
+                        db_name="db",
+                        coll_name="coll",
+                        physical_name=self.physical_name,
+                        query=supported_query,
+                        candidate_storage_keys=["a"],
+                    )
+                )
+            self.assertEqual(
+                rank_compound_candidate_storage_keys_from_entries(
+                    fresh_engine,
+                    empty_conn,
+                    db_name="db",
+                    coll_name="coll",
+                    physical_name=self.physical_name,
+                    query=supported_query,
+                    candidate_storage_keys=["a", "b"],
+                    result_limit_hint=1,
+                ),
+                ["a"],
+            )
+            fallback_engine = _FakeRankingEngine()
+            with patch.object(compound_ranking_module, "exact_candidateable_should_scores", return_value=None):
+                self.assertEqual(
+                    rank_compound_candidate_storage_keys_from_entries(
+                        fallback_engine,
+                        empty_conn,
+                        db_name="db",
+                        coll_name="coll",
+                        physical_name=self.physical_name,
+                        query=supported_query,
+                        candidate_storage_keys=["a", "b"],
+                        result_limit_hint=1,
+                    ),
+                    ["a"],
+                )
+        finally:
+            empty_conn.close()
+
+        fallback_matching_engine = _FakeRankingEngine()
+        with patch.object(compound_ranking_module, "exact_candidateable_should_scores", return_value=None):
+            self.assertEqual(
+                rank_compound_candidate_storage_keys_from_entries(
+                    fallback_matching_engine,
+                    self.conn,
+                    db_name="db",
+                    coll_name="coll",
+                    physical_name=self.physical_name,
+                    query=supported_query,
+                    candidate_storage_keys=["a", "b"],
+                    result_limit_hint=1,
+                ),
+                ["a"],
+            )

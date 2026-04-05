@@ -1273,6 +1273,11 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         query_response = await proxy._dispatch_wire_request(query_header, query_payload, connection=connection)
         self.assertEqual(query_response[12:16], struct.pack("<i", 1))
 
+        weird_header = parse_message_header(struct.pack("<iiii", 16, 11, 0, 9999))
+        with patch("mongoeco.wire.proxy.WireSurface.supports_opcode", return_value=True):
+            weird_response = await proxy._dispatch_wire_request(weird_header, b"", connection=connection)
+        self.assertEqual(weird_response[12:16], struct.pack("<i", OP_MSG))
+
     async def test_executor_normalizes_legacy_queries_rejects_invalid_shapes_and_updates_cursor_specs(self):
         with self.assertRaisesRegex(OperationFailure, "must be a document"):
             WireCommandExecutor._normalize_legacy_query_body([], number_to_return=None)  # type: ignore[arg-type]
@@ -1409,6 +1414,9 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaisesRegex(TypeError, "collection must be a string"):
             store.get_more({"getMore": 1, "collection": 1}, db_name="alpha")
+
+        with self.assertRaisesRegex(TypeError, "cursor id must be an integer"):
+            store.get_more({"getMore": True, "collection": "events"}, db_name="alpha")
 
         with self.assertRaisesRegex(TypeError, "batchSize"):
             store.get_more({"getMore": 1, "collection": "events", "batchSize": -1}, db_name="alpha")

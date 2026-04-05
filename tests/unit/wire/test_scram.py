@@ -57,6 +57,7 @@ class ScramHelperTests(unittest.TestCase):
             scram._decode_scram_payload(b"\xff")
         with self.assertRaisesRegex(OperationFailure, "invalid attribute"):
             scram._parse_scram_attributes("broken")
+        self.assertEqual(scram._parse_scram_attributes("n=user,,r=nonce"), {"n": "user", "r": "nonce"})
 
         with self.assertRaisesRegex(OperationFailure, "gs2 header"):
             scram.parse_scram_client_start(b"p,,n=user,r=x", mechanism="SCRAM-SHA-256")
@@ -123,6 +124,14 @@ class ScramHelperTests(unittest.TestCase):
                 client_first_bare=start.first_bare,
                 server_first_message=server_first.message,
             )
+        with self.assertRaisesRegex(OperationFailure, "requires nonce"):
+            scram.verify_scram_client_final(
+                b"c=biws,p=abcd",
+                password="pencil",
+                mechanism="SCRAM-SHA-256",
+                client_first_bare=start.first_bare,
+                server_first_message=server_first.message,
+            )
         with self.assertRaisesRegex(OperationFailure, "valid base64"):
             scram.verify_scram_client_final(
                 b"c=biws,r=clientnonceservernonce,p=***",
@@ -152,3 +161,11 @@ class ScramHelperTests(unittest.TestCase):
             scram.verify_scram_server_final(b"r=nonce", expected_server_signature="sig")
         with self.assertRaisesRegex(OperationFailure, "did not match"):
             scram.verify_scram_server_final(b"v=bad", expected_server_signature="sig")
+        with self.assertRaisesRegex(OperationFailure, "client-first message requires nonce"):
+            scram.verify_scram_client_final(
+                final.payload,
+                password="pencil",
+                mechanism="SCRAM-SHA-256",
+                client_first_bare="n=ada",
+                server_first_message=server_first.message,
+            )

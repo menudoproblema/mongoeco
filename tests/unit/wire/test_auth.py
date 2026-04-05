@@ -36,6 +36,8 @@ class WireAuthenticationServiceTests(unittest.TestCase):
             service._payload_bytes("abc", "saslStart")
         with self.assertRaisesRegex(OperationFailure, "Authentication failed"):
             service._find_user(username="ada", database="other", mechanism="SCRAM-SHA-256")
+        with self.assertRaisesRegex(OperationFailure, "Authentication failed"):
+            service._find_user(username="ada", database="admin", mechanism="MONGODB-X509")
 
     def test_sasl_start_and_continue_cover_error_and_success_paths(self):
         service = WireAuthenticationService(
@@ -124,3 +126,9 @@ class WireAuthenticationServiceTests(unittest.TestCase):
         with patch("mongoeco.wire.auth.BsonBinary", type("_MissingBsonBinary", (bytes,), {})):
             with self.assertRaisesRegex(OperationFailure, "optional 'pymongo'/'bson' dependency"):
                 service.sasl_start({"mechanism": "SCRAM-SHA-256", "payload": b"x", "db": "admin"}, connection=connection)
+
+        class _PatchedBsonBinary(bytes):
+            pass
+
+        with patch("mongoeco.wire.auth.BsonBinary", _PatchedBsonBinary):
+            self.assertEqual(service._payload_bytes(_PatchedBsonBinary(b"xyz"), "saslStart"), b"xyz")

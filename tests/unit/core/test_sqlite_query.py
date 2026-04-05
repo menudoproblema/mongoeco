@@ -193,12 +193,19 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
 
     def test_sqlite_query_private_translation_helpers_cover_remaining_none_and_error_branches(self):
         self.assertIsNone(parse_safe_literal_regex("^$", ""))
+        self.assertIsNone(parse_safe_literal_regex("", ""))
         with patch("mongoeco.engines.sqlite_query._translate_json_each_scalar_match", return_value=("bad", [])):
             self.assertIsNone(_translate_json_each_value_plan(EqualsCondition("value", 1)))
         with patch("mongoeco.engines.sqlite_query.parse_safe_literal_regex", return_value=("mystery", "Ada", False)):
             self.assertIsNone(_translate_json_each_value_plan(RegexCondition("value", "Ada", "")))
         with self.assertRaisesRegex(NotImplementedError, "Unsupported array-aware comparison value"):
             _translate_scalar_or_array_same_type_comparison(">", "items", ObjectId("0123456789abcdef01234567"))
+
+        class UnknownPlan(QueryNode):
+            pass
+
+        with self.assertRaisesRegex(TypeError, "Unsupported query plan node"):
+            translate_query_plan(UnknownPlan())
     def test_path_array_prefixes_keep_non_numeric_prefixes_before_index_segments(self):
         self.assertEqual(path_array_prefixes("a.0.b.c"), ("a", "a.0.b"))
         self.assertEqual(path_array_prefixes("items.0"), ("items",))

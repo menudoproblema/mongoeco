@@ -465,6 +465,8 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({"location": {"$geoIntersects": {"$geometry": {"type": "Circle", "coordinates": [0, 0]}}}})
         with self.assertRaises(OperationFailure):
             compile_filter({"location": {"$near": {"$geometry": {"type": "Polygon", "coordinates": []}}}})
+        with self.assertRaisesRegex(OperationFailure, "supports only \\$geometry Polygon or legacy \\$box"):
+            compile_filter({"location": {"$geoWithin": {"$center": [[0, 0], 2]}}})
 
     def test_compile_filter_supports_broader_local_geo_shapes(self):
         within_plan = compile_filter(

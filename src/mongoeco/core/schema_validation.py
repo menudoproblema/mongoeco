@@ -356,7 +356,6 @@ class CompiledJsonSchema:
             return decimal.Decimal(str(value))
         if isinstance(value, int):
             return decimal.Decimal(value)
-        return None
 
     @staticmethod
     def _matches_any_type(value: object, type_names: list[str]) -> bool:

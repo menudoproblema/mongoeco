@@ -964,6 +964,39 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
             asyncio.run(_exercise())
         self.assertEqual(holder["engine"].dropped, ["idx_a"])
 
+    def test_create_indexes_ignores_drop_failures_during_rollback(self):
+        class EngineStub:
+            def __init__(self):
+                self.created = []
+                self.drop_attempts = []
+
+            async def index_information(self, *args, **kwargs):
+                return {}
+
+            async def create_index(self, _db, _coll, keys, **kwargs):
+                if not self.created:
+                    self.created.append("idx_a")
+                    return "idx_a"
+                raise RuntimeError("boom")
+
+            async def drop_index(self, _db, _coll, name, **kwargs):
+                self.drop_attempts.append(name)
+                raise RuntimeError("drop failed")
+
+        holder = {}
+
+        async def _exercise():
+            engine = EngineStub()
+            holder["engine"] = engine
+            collection = AsyncCollection(engine, "db", "coll")
+            await collection.create_indexes(
+                [IndexModel([("a", 1)], name="idx_a"), IndexModel([("b", 1)], name="idx_b")]
+            )
+
+        with self.assertRaisesRegex(RuntimeError, "boom"):
+            asyncio.run(_exercise())
+        self.assertEqual(holder["engine"].drop_attempts, ["idx_a"])
+
     def test_update_one_hint_and_change_hub_paths_publish_expected_events(self):
         class HubStub:
             def __init__(self):

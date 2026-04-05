@@ -1,22 +1,24 @@
 import decimal
+import re
 import unittest
 import uuid
 from unittest.mock import patch
 
 from bson.code import Code as BsonCode
 from bson import Decimal128
-from bson.binary import Binary, STANDARD
+from bson.binary import Binary, STANDARD, UUID_SUBTYPE
 from bson.dbref import DBRef as BsonDBRef
 from bson.int64 import Int64
 from bson.max_key import MaxKey as BsonMaxKey
 from bson.min_key import MinKey as BsonMinKey
 from bson.objectid import ObjectId as BsonObjectId
 from bson.regex import Regex
+from bson.son import SON as BsonSON
 from bson.timestamp import Timestamp as BsonTimestamp
 
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.types import Binary as MongoecoBinary, DBRef, Decimal128 as MongoecoDecimal128, ObjectId, Regex as MongoecoRegex, SON, Timestamp, UNDEFINED
-from mongoeco.wire.bson_bridge import decode_wire_value, encode_wire_value
+from mongoeco.wire.bson_bridge import _regex_flags_to_string, decode_wire_value, encode_wire_value
 
 
 class WireBsonBridgeTests(unittest.TestCase):
@@ -117,3 +119,22 @@ class WireBsonBridgeTests(unittest.TestCase):
             decode_wire_value(Regex("^ab", 0)),
             MongoecoRegex("^ab", ""),
         )
+
+    def test_bson_bridge_covers_son_uuid_fallback_and_regex_flag_rendering(self):
+        decoded = decode_wire_value(BsonSON([("payload", BsonCode("function() { return 2; }"))]))
+        self.assertEqual(decoded, SON([("payload", BsonCode("function() { return 2; }"))]))
+
+        bad_uuid_binary = Binary(b"not-a-valid-uuid", subtype=UUID_SUBTYPE)
+        with patch.object(Binary, "as_uuid", side_effect=TypeError("bad")):
+            self.assertEqual(
+                decode_wire_value(bad_uuid_binary),
+                MongoecoBinary(b"not-a-valid-uuid", subtype=UUID_SUBTYPE),
+            )
+
+        self.assertEqual(
+            decode_wire_value(Regex("^ab", re.DOTALL | re.VERBOSE)),
+            MongoecoRegex("^ab", "sx"),
+        )
+        self.assertEqual(_regex_flags_to_string("sx"), "sx")
+        self.assertEqual(decode_wire_value(Regex("^ab", "sx")), MongoecoRegex("^ab", "sx"))
+        self.assertEqual(encode_wire_value(MongoecoRegex("^ab", "sx")), Regex("^ab", "sx"))

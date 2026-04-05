@@ -217,6 +217,38 @@ class WireProtocolTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "must not duplicate a body field"):
             decode_op_msg(header, duplicate_identifier_payload)
 
+        sequence_docs = BSON.encode({"_id": "1"})
+        identifier = b"documents\x00"
+        section = struct.pack("<i", 4 + len(identifier) + len(sequence_docs)) + identifier + sequence_docs
+        second_section = struct.pack("<i", 4 + len(identifier) + len(sequence_docs)) + identifier + sequence_docs
+        payload = struct.pack("<i", 0) + b"\x01" + section + b"\x01" + second_section + b"\x00" + BSON.encode({"ping": 1})
+        header = parse_message_header(struct.pack("<iiii", 16 + len(payload), 7, 0, OP_MSG))
+
+        with self.assertRaisesRegex(ValueError, "identifier must be unique"):
+            decode_op_msg(header, payload)
+
+        body = BSON.encode({"documents": []})
+        sequence_docs = BSON.encode({"_id": "1"})
+        identifier = b"documents\x00"
+        section = struct.pack("<i", 4 + len(identifier) + len(sequence_docs)) + identifier + sequence_docs
+        sequence_before_body_payload = struct.pack("<i", 0) + b"\x01" + section + b"\x00" + body
+        header = parse_message_header(struct.pack("<iiii", 16 + len(sequence_before_body_payload), 7, 0, OP_MSG))
+
+        with self.assertRaisesRegex(ValueError, "must not duplicate a body field"):
+            decode_op_msg(header, sequence_before_body_payload)
+
+    def test_decode_op_msg_merges_sequence_before_body_when_identifiers_do_not_conflict(self):
+        body = BSON.encode({"ping": 1})
+        sequence_docs = BSON.encode({"_id": "1"})
+        identifier = b"documents\x00"
+        section = struct.pack("<i", 4 + len(identifier) + len(sequence_docs)) + identifier + sequence_docs
+        payload = struct.pack("<i", 0) + b"\x01" + section + b"\x00" + body
+        header = parse_message_header(struct.pack("<iiii", 16 + len(payload), 7, 0, OP_MSG))
+
+        decoded = decode_op_msg(header, payload)
+
+        self.assertEqual(decoded.body, {"ping": 1, "documents": [{"_id": "1"}]})
+
     def test_decode_op_query_rejects_wrong_opcode_short_and_invalid_documents(self):
         wrong_header = parse_message_header(struct.pack("<iiii", 0, 9, 0, OP_MSG))
         with self.assertRaisesRegex(ValueError, "unsupported wire opCode"):

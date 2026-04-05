@@ -1,7 +1,7 @@
 import unittest
 
 from mongoeco.compat import MongoDialect
-from mongoeco.core.projections import apply_projection, validate_projection_spec
+from mongoeco.core.projections import _apply_meta_projection, apply_projection, validate_projection_spec
 from mongoeco.errors import OperationFailure
 
 
@@ -137,6 +137,10 @@ class ProjectionTests(unittest.TestCase):
             apply_projection(doc, {1: 1})  # type: ignore[dict-item]
         with self.assertRaises(OperationFailure):
             apply_projection(doc, {"score": {"$meta": "other"}})  # type: ignore[dict-item]
+        with self.assertRaises(OperationFailure):
+            apply_projection(doc, {"a": 0, "score": {"$meta": "vectorSearchScore"}})  # type: ignore[dict-item]
+        with self.assertRaises(OperationFailure):
+            apply_projection(doc, {"score": {"$unknown": 1}})  # type: ignore[dict-item]
 
     def test_projection_supports_meta_text_score(self):
         doc = {"_id": 1, "name": "Ada", "__mongoeco_textScore__": 3.0}
@@ -153,6 +157,10 @@ class ProjectionTests(unittest.TestCase):
             apply_projection(doc, {"score": {"$meta": "vectorSearchScore"}, "_id": 0}),  # type: ignore[dict-item]
             {"score": 0.99},
         )
+
+    def test_apply_meta_projection_rejects_unknown_meta_operands(self):
+        with self.assertRaises(OperationFailure):
+            _apply_meta_projection({}, {}, "score", "other")
 
     def test_projection_supports_slice_as_exclusion_style_projection(self):
         doc = {"_id": 1, "name": "Ada", "items": [1, 2, 3, 4], "role": "admin"}

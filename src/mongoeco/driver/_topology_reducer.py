@@ -89,9 +89,7 @@ def derive_topology_type(
         return TopologyType.SHARDED
     if family is TopologyType.REPLICA_SET:
         return TopologyType.REPLICA_SET
-    if family is TopologyType.SINGLE:
-        return TopologyType.SINGLE
-    return fallback
+    return TopologyType.SINGLE
 
 
 def server_family(server_type: ServerType) -> TopologyType | None:
