@@ -10,6 +10,11 @@ usa Semantic Versioning.
 
 ### Added
 
+- Nothing yet.
+
+## [3.2.0] - 2026-04-06
+### Added
+
 - CXP pasa a actuar como fuente canonica del capability model publico para
   `database/mongodb`, y `compat`, `explain()` y la narrativa publica se
   proyectan ya desde ese modelo en vez de mantener fuentes paralelas.

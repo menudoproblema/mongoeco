@@ -1,5 +1,8 @@
 # Release Draft 3.2.0
 
+Status: prepared locally for the `3.2.0` cut. Publication to PyPI remains
+deferred.
+
 ## Headline
 
 `mongoeco 3.2.0` makes the embedded/local runtime easier to understand and
