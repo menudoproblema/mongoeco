@@ -1,7 +1,8 @@
 # CXP Integration
 
 `mongoeco` treats CXP as the canonical public capability model for the
-`database/mongodb` interface.
+`database/mongodb` interface, and reexports the related execution catalogs that
+matter for consumers already working against the CXP catalog surface.
 
 That means:
 
@@ -16,13 +17,19 @@ belong to the system that wants to use `mongoeco` as a resource or provider.
 
 ## What `mongoeco` publishes
 
-The package publishes the canonical `database/mongodb` catalog and its public
-metadata through:
+The package publishes the canonical `database/mongodb` catalog, the aligned
+execution catalogs, and its public metadata through:
 
 * `mongoeco.cxp`
 * `mongoeco.compat.export_cxp_catalog()`
 * the top-level `cxp` block exposed by `find(...).explain()` and
   `aggregate(...).explain()`
+
+Through `mongoeco.cxp`, the public catalog surface includes:
+
+* `database/mongodb`
+* the abstract family `execution/engine`
+* the concrete execution catalog `execution/plan-run`
 
 The canonical capabilities are:
 
@@ -104,8 +111,9 @@ capabilities that need a richer subset contract, such as:
 * `MongoPersistenceMetadata`
 * `MongoTopologyDiscoveryMetadata`
 
-`mongoeco.cxp` reexports that MongoDB-facing vocabulary so the public
-integration stays aligned with CXP instead of carrying a parallel local model.
+`mongoeco.cxp` reexports that MongoDB-facing vocabulary, together with the
+aligned execution catalogs, so the public integration stays aligned with CXP
+instead of carrying a parallel local model.
 
 ## Example
 
@@ -132,6 +140,6 @@ Current limits of the `mongoeco` side of the integration:
 * `mongoeco` does not ship a live CXP provider wrapper for its clients;
 * it does not negotiate profiles or capabilities on behalf of external
   frameworks;
-* it exposes canonical capabilities, canonical first-level operations and
-  structured subset metadata, but keeps implementation-specific details out of
-  the catalog.
+* it exposes canonical capabilities, canonical first-level operations,
+  structured subset metadata, and aligned catalog reexports, but keeps
+  implementation-specific details out of the catalog.

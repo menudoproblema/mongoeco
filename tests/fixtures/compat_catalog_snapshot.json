@@ -2,7 +2,7 @@
   "cxp": {
     "capabilities": {
       "aggregation": {
-        "description": "Soporte para el framework de agregaci\u00f3n.",
+        "description": "Support for the aggregation framework.",
         "metadata": {
           "async": true,
           "embedded": true,
@@ -234,7 +234,7 @@
         ]
       },
       "change_streams": {
-        "description": "Observabilidad de cambios en tiempo real.",
+        "description": "Realtime change observability.",
         "metadata": {
           "boundedHistory": true,
           "distributed": false,
@@ -257,7 +257,7 @@
         ]
       },
       "collation": {
-        "description": "Ordenaci\u00f3n y comparaci\u00f3n sensibles a collation.",
+        "description": "Collation-aware sorting and comparison.",
         "metadata": {
           "backendContract": "local-collation-introspection",
           "metadataSources": [
@@ -271,7 +271,7 @@
         ]
       },
       "persistence": {
-        "description": "Persistencia de datos m\u00e1s all\u00e1 del proceso.",
+        "description": "Data persistence beyond process lifetime.",
         "metadata": {
           "embedded": true,
           "note": "Persistence depends on the selected embedded backend and its storage mode.",
@@ -283,7 +283,7 @@
         ]
       },
       "read": {
-        "description": "Consultas b\u00e1sicas de lectura.",
+        "description": "Basic read queries.",
         "metadata": {
           "async": true,
           "embedded": true,
@@ -360,7 +360,7 @@
         ]
       },
       "search": {
-        "description": "Soporte para consultas textuales de tipo search.",
+        "description": "Support for Atlas Search-style textual queries.",
         "metadata": {
           "aggregateStage": "$search",
           "note": "The local $search surface remains an explicit Atlas-like subset.",
@@ -397,7 +397,7 @@
         ]
       },
       "topology_discovery": {
-        "description": "Descubrimiento de topolog\u00eda y estado de nodos.",
+        "description": "Topology and node-state discovery.",
         "metadata": {
           "distributed": false,
           "metadataSources": [
@@ -412,7 +412,7 @@
         ]
       },
       "transactions": {
-        "description": "Operaciones multi-documento at\u00f3micas.",
+        "description": "Atomic multi-document operations.",
         "metadata": {
           "async": true,
           "distributed": false,
@@ -437,7 +437,7 @@
         ]
       },
       "vector_search": {
-        "description": "B\u00fasquedas por similitud sem\u00e1ntica.",
+        "description": "Semantic similarity search support.",
         "metadata": {
           "aggregateStage": "$vectorSearch",
           "backend": "usearch",
@@ -463,7 +463,7 @@
         ]
       },
       "write": {
-        "description": "Inserci\u00f3n, actualizaci\u00f3n y borrado de documentos.",
+        "description": "Insert, update, and delete document operations.",
         "metadata": {
           "async": true,
           "embedded": true,

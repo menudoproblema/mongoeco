@@ -5,6 +5,15 @@ import mongoeco.cxp.capabilities as cxp_capabilities_module
 import mongoeco.cxp.integration as cxp_integration_module
 from mongoeco.compat import export_cxp_catalog, export_full_compat_catalog
 from mongoeco.cxp import (
+    EXECUTION_ENGINE_CATALOG,
+    EXECUTION_ENGINE_EXECUTION_STATUS,
+    EXECUTION_ENGINE_EXECUTION_STREAM,
+    EXECUTION_ENGINE_FAMILY_CATALOG,
+    EXECUTION_ENGINE_FAMILY_INTERFACE,
+    EXECUTION_ENGINE_INTERFACE,
+    EXECUTION_ENGINE_INPUT_VALIDATION,
+    EXECUTION_ENGINE_PLANNING,
+    EXECUTION_ENGINE_RUN,
     MongoAggregationMetadata,
     MongoSearchMetadata,
     MongoVectorSearchMetadata,
@@ -15,6 +24,13 @@ from mongoeco.cxp import (
     MONGODB_INTERFACE,
     MONGODB_PLATFORM_PROFILE,
     MONGODB_SEARCH_PROFILE,
+    PLAN_RUN_EXECUTION_CATALOG,
+    PLAN_RUN_EXECUTION_EXECUTION_STATUS,
+    PLAN_RUN_EXECUTION_EXECUTION_STREAM,
+    PLAN_RUN_EXECUTION_INPUT_VALIDATION,
+    PLAN_RUN_EXECUTION_INTERFACE,
+    PLAN_RUN_EXECUTION_PLANNING,
+    PLAN_RUN_EXECUTION_RUN,
 )
 from mongoeco.cxp.descriptors import (
     CapabilityDescriptor,
@@ -51,6 +67,62 @@ class CxpAlignmentTests(unittest.TestCase):
         self.assertEqual(
             MongoVectorSearchMetadata.__name__,
             'MongoVectorSearchMetadata',
+        )
+
+    def test_execution_catalog_surface_is_aligned_with_cxp_2(self) -> None:
+        self.assertEqual(EXECUTION_ENGINE_FAMILY_INTERFACE, 'execution/engine')
+        self.assertEqual(
+            EXECUTION_ENGINE_FAMILY_CATALOG.interface,
+            'execution/engine',
+        )
+        self.assertEqual(
+            EXECUTION_ENGINE_INTERFACE,
+            'execution/plan-run',
+        )
+        self.assertEqual(
+            EXECUTION_ENGINE_CATALOG.interface,
+            'execution/plan-run',
+        )
+        self.assertEqual(
+            PLAN_RUN_EXECUTION_INTERFACE,
+            'execution/plan-run',
+        )
+        self.assertEqual(
+            PLAN_RUN_EXECUTION_CATALOG.interface,
+            'execution/plan-run',
+        )
+        self.assertEqual(
+            PLAN_RUN_EXECUTION_CATALOG.capability_names(),
+            (
+                PLAN_RUN_EXECUTION_RUN,
+                PLAN_RUN_EXECUTION_PLANNING,
+                PLAN_RUN_EXECUTION_INPUT_VALIDATION,
+                PLAN_RUN_EXECUTION_EXECUTION_STATUS,
+                PLAN_RUN_EXECUTION_EXECUTION_STREAM,
+            ),
+        )
+        self.assertEqual(EXECUTION_ENGINE_RUN, PLAN_RUN_EXECUTION_RUN)
+        self.assertEqual(
+            EXECUTION_ENGINE_PLANNING,
+            PLAN_RUN_EXECUTION_PLANNING,
+        )
+        self.assertEqual(
+            EXECUTION_ENGINE_INPUT_VALIDATION,
+            PLAN_RUN_EXECUTION_INPUT_VALIDATION,
+        )
+        self.assertEqual(
+            EXECUTION_ENGINE_EXECUTION_STATUS,
+            PLAN_RUN_EXECUTION_EXECUTION_STATUS,
+        )
+        self.assertEqual(
+            EXECUTION_ENGINE_EXECUTION_STREAM,
+            PLAN_RUN_EXECUTION_EXECUTION_STREAM,
+        )
+        self.assertFalse(
+            hasattr(mongoeco_cxp, 'EXECUTION_ENGINE_DRAFT_VALIDATION')
+        )
+        self.assertFalse(
+            hasattr(mongoeco_cxp, 'EXECUTION_ENGINE_LIVE_EXECUTION_OBSERVABILITY')
         )
 
     def test_cxp_capability_exports_and_legacy_runtime_projection_share_a_canonical_source(

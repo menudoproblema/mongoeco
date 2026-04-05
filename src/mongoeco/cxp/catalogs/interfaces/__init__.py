@@ -1,5 +1,5 @@
 from . import database as _database
-from .execution import engine as _engine
+from . import execution as _execution
 
 
 def _reexport(module) -> tuple[str, ...]:
@@ -9,6 +9,6 @@ def _reexport(module) -> tuple[str, ...]:
 
 
 _DATABASE_EXPORTS = _reexport(_database)
-_ENGINE_EXPORTS = _reexport(_engine)
+_EXECUTION_EXPORTS = _reexport(_execution)
 
-__all__ = [*_DATABASE_EXPORTS, *_ENGINE_EXPORTS]
+__all__ = tuple([*_DATABASE_EXPORTS, *_EXECUTION_EXPORTS])

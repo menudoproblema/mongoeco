@@ -9,4 +9,4 @@ def _reexport(module) -> tuple[str, ...]:
 
 _BASE_EXPORTS = _reexport(_base)
 
-__all__ = [*_BASE_EXPORTS]
+__all__ = tuple([*_BASE_EXPORTS])

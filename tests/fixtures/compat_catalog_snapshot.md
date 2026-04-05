@@ -576,7 +576,7 @@
 ## CXP
 - `interface`: `database/mongodb`
 ### `read`
-- `description`: `Consultas básicas de lectura.`
+- `description`: `Basic read queries.`
 - `tiers`: `core`, `search`, `platform`
 - `operations`: `find`, `find_one`, `count_documents`, `estimated_document_count`, `distinct`
 - `embedded`: `True`
@@ -586,7 +586,7 @@
 - `queryTopLevelOperators`: `$and`, `$comment`, `$expr`, `$jsonSchema`, `$nor`, `$or`, `$text`
 
 ### `write`
-- `description`: `Inserción, actualización y borrado de documentos.`
+- `description`: `Insert, update, and delete document operations.`
 - `tiers`: `core`, `search`, `platform`
 - `operations`: `insert_one`, `insert_many`, `update_one`, `update_many`, `replace_one`, `delete_one`, `delete_many`, `bulk_write`
 - `embedded`: `True`
@@ -596,7 +596,7 @@
 - `supportsPipelineUpdate`: `True`
 
 ### `transactions`
-- `description`: `Operaciones multi-documento atómicas.`
+- `description`: `Atomic multi-document operations.`
 - `tiers`: `platform`
 - `operations`: `start_session`, `with_transaction`
 - `embedded`: `True`
@@ -606,7 +606,7 @@
 - `mode`: `local`
 
 ### `aggregation`
-- `description`: `Soporte para el framework de agregación.`
+- `description`: `Support for the aggregation framework.`
 - `tiers`: `core`, `search`, `platform`
 - `operations`: `aggregate`
 - `supportedStages`: `$addFields`, `$bucket`, `$bucketAuto`, `$collStats`, `$count`, `$densify`, `$documents`, `$facet`, `$fill`, `$geoNear`, `$group`, `$limit`, `$lookup`, `$match`, `$merge`, `$project`, `$replaceRoot`, `$replaceWith`, `$sample`, `$set`, `$setWindowFields`, `$skip`, `$sort`, `$sortByCount`, `$unionWith`, `$unset`, `$unwind`
@@ -619,7 +619,7 @@
 - `explainable`: `True`
 
 ### `change_streams`
-- `description`: `Observabilidad de cambios en tiempo real.`
+- `description`: `Realtime change observability.`
 - `tiers`: `platform`
 - `operations`: `watch`
 - `implementation`: `local`
@@ -632,7 +632,7 @@
 - `boundedHistory`: `True`
 
 ### `search`
-- `description`: `Soporte para consultas textuales de tipo search.`
+- `description`: `Support for Atlas Search-style textual queries.`
 - `tiers`: `search`
 - `operations`: `aggregate`
 - `operators`: `text`, `phrase`, `autocomplete`, `wildcard`, `exists`, `in`, `equals`, `range`, `near`, `compound`, `regex`
@@ -641,7 +641,7 @@
 - `note`: `The local $search surface remains an explicit Atlas-like subset.`
 
 ### `vector_search`
-- `description`: `Búsquedas por similitud semántica.`
+- `description`: `Semantic similarity search support.`
 - `tiers`: `search`
 - `operations`: `aggregate`
 - `similarities`: `cosine`, `dotProduct`, `euclidean`
@@ -653,14 +653,14 @@
 - `note`: `SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.`
 
 ### `collation`
-- `description`: `Ordenación y comparación sensibles a collation.`
+- `description`: `Collation-aware sorting and comparison.`
 - `tiers`: `platform`
 - `operations`: _empty_
 - `backendContract`: `local-collation-introspection`
 - `metadataSources`: `collation_backend_info`, `collation_capabilities_info`
 
 ### `persistence`
-- `description`: `Persistencia de datos más allá del proceso.`
+- `description`: `Data persistence beyond process lifetime.`
 - `tiers`: `platform`
 - `operations`: _empty_
 - `runtimeDependent`: `True`
@@ -668,7 +668,7 @@
 - `note`: `Persistence depends on the selected embedded backend and its storage mode.`
 
 ### `topology_discovery`
-- `description`: `Descubrimiento de topología y estado de nodos.`
+- `description`: `Topology and node-state discovery.`
 - `tiers`: `platform`
 - `operations`: _empty_
 - `metadataSources`: `topology_description`, `sdam_capabilities`

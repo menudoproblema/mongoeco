@@ -1,5 +1,6 @@
 from . import capabilities as _capabilities
 from .catalogs.interfaces import database as _database
+from .catalogs.interfaces import execution as _execution
 
 
 def _reexport(module) -> tuple[str, ...]:
@@ -10,5 +11,6 @@ def _reexport(module) -> tuple[str, ...]:
 
 _CAPABILITY_EXPORTS = _reexport(_capabilities)
 _DATABASE_EXPORTS = _reexport(_database)
+_EXECUTION_EXPORTS = _reexport(_execution)
 
-__all__ = [*_CAPABILITY_EXPORTS, *_DATABASE_EXPORTS]
+__all__ = tuple([*_CAPABILITY_EXPORTS, *_DATABASE_EXPORTS, *_EXECUTION_EXPORTS])
