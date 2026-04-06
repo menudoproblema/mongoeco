@@ -9,7 +9,6 @@ from mongoeco.cxp import (
     MongoAggregationMetadata,
     MongoSearchMetadata,
     MongoVectorSearchMetadata,
-    MONGODB_AGGREGATE,
     MONGODB_AGGREGATE_RICH_PROFILE,
     MONGODB_CATALOG,
     MONGODB_CORE_PROFILE,
@@ -18,6 +17,7 @@ from mongoeco.cxp import (
     MONGODB_TEXT_SEARCH_PROFILE,
     MONGODB_SEARCH_PROFILE,
 )
+from mongoeco.cxp.catalogs.interfaces.database import MONGODB_AGGREGATE
 from mongoeco.cxp.catalogs.interfaces.execution import (
     EXECUTION_ENGINE_CATALOG,
     EXECUTION_ENGINE_EXECUTION_STATUS,
@@ -143,6 +143,9 @@ class CxpAlignmentTests(unittest.TestCase):
         self.assertFalse(
             hasattr(mongoeco_cxp, 'export_cxp_extension_catalog')
         )
+        self.assertFalse(hasattr(mongoeco_cxp, 'MONGODB_FIND'))
+        self.assertFalse(hasattr(mongoeco_cxp, 'MONGODB_UPDATE_ONE'))
+        self.assertFalse(hasattr(mongoeco_cxp, 'MONGODB_SEARCH'))
 
     def test_cxp_capability_exports_and_legacy_runtime_projection_share_a_canonical_source(
         self,

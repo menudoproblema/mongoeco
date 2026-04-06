@@ -27,9 +27,9 @@ execution catalogs, and its public metadata through:
 
 Through `mongoeco.cxp`, the public catalog surface includes:
 
-* `database/mongodb`
-* the abstract family `execution/engine`
-* the concrete execution catalog `execution/plan-run`
+* the canonical MongoDB contract surface
+* reusable MongoDB profiles
+* typed metadata schemas for richer MongoDB capabilities
 
 The canonical capabilities are:
 
@@ -212,9 +212,12 @@ capabilities that need a richer subset contract, such as:
 * `MongoPersistenceMetadata`
 * `MongoTopologyDiscoveryMetadata`
 
-`mongoeco.cxp` reexports that MongoDB-facing vocabulary, together with the
-aligned execution catalogs, so the public integration stays aligned with CXP
-instead of carrying a parallel local model.
+`mongoeco.cxp` reexports that MongoDB-facing contract surface. The full
+MongoDB capability and operation vocabulary remains available from explicit
+catalog modules such as
+`mongoeco.cxp.catalogs.interfaces.database.mongodb`, and the aligned
+execution catalogs remain available from
+`mongoeco.cxp.catalogs.interfaces.execution`.
 
 ## Driver telemetry projection
 
