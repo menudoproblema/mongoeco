@@ -731,6 +731,34 @@ class SearchCoreTests(unittest.TestCase):
             search_module._search_path_scalar_values({"count": [7, "x", True]}, "count"),
             (("number", 7.0), ("string", "x"), ("bool", True)),
         )
+        self.assertEqual(
+            search_module._search_path_values({"items": [1, 2, 3]}, "items"),
+            (1, 2, 3),
+        )
+        self.assertEqual(
+            search_module._search_path_values({"items": [{"score": 7}, {"score": 9}]}, "items.1.score"),
+            (9,),
+        )
+        self.assertEqual(
+            search_module._search_path_values({"items": [{"score": 7}]}, "items.9.score"),
+            (),
+        )
+        self.assertEqual(
+            search_module._search_path_values({"items": [1, 2, 3]}, "items.score"),
+            (),
+        )
+        self.assertEqual(
+            search_module._search_path_values({"items": {"score": 7}}, "items.missing"),
+            (),
+        )
+        self.assertEqual(
+            search_module._search_path_values({"items": {"score": 7}}, "items.score.value"),
+            (),
+        )
+        self.assertEqual(
+            search_module._search_path_values({"items": {}}, "items.score.value"),
+            (),
+        )
         self.assertIsNone(search_module._search_near_scalar_distance(True, origin=1.0, origin_kind="number"))
         self.assertIsNone(search_module._search_near_scalar_distance(float("inf"), origin=1.0, origin_kind="number"))
         self.assertIsNone(search_module._search_near_scalar_distance("x", origin=datetime.date(2024, 1, 1), origin_kind="date"))
@@ -2609,7 +2637,12 @@ class SearchCoreTests(unittest.TestCase):
             matches_search_wildcard_query(
                 document,
                 definition=definition,
-                query=SearchWildcardQuery(index_name="by_text", raw_query="*vector*", normalized_pattern="*vector*", paths=("body",)),
+                query=SearchWildcardQuery(
+                    index_name="by_text",
+                    raw_query="*vector*",
+                    normalized_pattern="*vector*",
+                    paths=("body",),
+                ),
                 materialized=prepared,
             )
         )
@@ -2625,9 +2658,79 @@ class SearchCoreTests(unittest.TestCase):
             matches_search_regex_query(
                 document,
                 definition=definition,
-                query=SearchRegexQuery(index_name="by_text", raw_query="Ada.*vector", paths=("body",)),
+                query=SearchRegexQuery(
+                    index_name="by_text",
+                    raw_query="Ada.*vector",
+                    paths=("body",),
+                ),
                 materialized=prepared,
             )
+        )
+
+    def test_search_scalar_operators_follow_embedded_document_paths(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "contributors": {
+                            "type": "embeddedDocuments",
+                            "fields": {
+                                "verified": {"type": "boolean"},
+                                "impact": {"type": "number"},
+                            },
+                        }
+                    },
+                }
+            },
+            name="by_text",
+        )
+        document = {
+            "contributors": [
+                {"verified": True, "impact": 10},
+                {"verified": False, "impact": 2},
+            ]
+        }
+
+        self.assertTrue(
+            matches_search_equals_query(
+                document,
+                definition=definition,
+                query=SearchEqualsQuery(
+                    index_name="by_text",
+                    path="contributors.verified",
+                    value_kind="bool",
+                    value=True,
+                ),
+            )
+        )
+        self.assertTrue(
+            matches_search_range_query(
+                document,
+                definition=definition,
+                query=SearchRangeQuery(
+                    index_name="by_text",
+                    path="contributors.impact",
+                    bound_kind="number",
+                    gt=None,
+                    gte=9.0,
+                    lt=None,
+                    lte=None,
+                ),
+            )
+        )
+        self.assertEqual(
+            search_near_distance(
+                document,
+                query=SearchNearQuery(
+                    index_name="by_text",
+                    path="contributors.impact",
+                    origin=8.0,
+                    origin_kind="number",
+                    pivot=3.0,
+                ),
+            ),
+            2.0,
         )
 
     def test_materialized_search_document_ignores_non_textual_mappings_for_text_entries(self) -> None:

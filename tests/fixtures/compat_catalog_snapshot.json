@@ -523,6 +523,7 @@
           "operationMetadata": {
             "count_documents": {
               "acceptedNoopOptions": [],
+              "acceptsCollation": true,
               "acceptsComment": true,
               "acceptsFilter": true,
               "acceptsHint": true,
@@ -540,6 +541,7 @@
             },
             "distinct": {
               "acceptedNoopOptions": [],
+              "acceptsCollation": true,
               "acceptsComment": true,
               "acceptsFieldPath": true,
               "acceptsFilter": true,
@@ -574,6 +576,7 @@
             "find": {
               "acceptedNoopOptions": [],
               "acceptsBatchSize": true,
+              "acceptsCollation": true,
               "acceptsComment": true,
               "acceptsFilter": true,
               "acceptsHint": true,
@@ -598,6 +601,7 @@
             "find_one": {
               "acceptedNoopOptions": [],
               "acceptsBatchSize": false,
+              "acceptsCollation": true,
               "acceptsComment": false,
               "acceptsFilter": true,
               "acceptsHint": false,
@@ -905,6 +909,7 @@
             },
             "delete_many": {
               "acceptedNoopOptions": [],
+              "acceptsCollation": true,
               "acceptsComment": true,
               "acceptsFilter": true,
               "acceptsHint": true,
@@ -922,6 +927,7 @@
             },
             "delete_one": {
               "acceptedNoopOptions": [],
+              "acceptsCollation": true,
               "acceptsComment": true,
               "acceptsFilter": true,
               "acceptsHint": true,
@@ -963,6 +969,7 @@
             },
             "replace_one": {
               "acceptedNoopOptions": [],
+              "acceptsCollation": true,
               "acceptsComment": true,
               "acceptsFilter": true,
               "acceptsHint": true,
@@ -986,6 +993,7 @@
             "update_many": {
               "acceptedNoopOptions": [],
               "acceptsArrayFilters": true,
+              "acceptsCollation": true,
               "acceptsComment": true,
               "acceptsFilter": true,
               "acceptsHint": true,
@@ -1026,6 +1034,7 @@
             "update_one": {
               "acceptedNoopOptions": [],
               "acceptsArrayFilters": true,
+              "acceptsCollation": true,
               "acceptsComment": true,
               "acceptsFilter": true,
               "acceptsHint": true,

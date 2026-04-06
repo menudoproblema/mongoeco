@@ -1998,6 +1998,39 @@ def _collect_text_leaf_entries(value: object, path: str) -> list[tuple[str, str]
     return []
 
 
+def _search_path_values(value: object, path: str) -> tuple[object, ...]:
+    if not path:
+        if isinstance(value, list):
+            return tuple(value)
+        return (value,)
+
+    if isinstance(value, list):
+        segment = path.split(".", 1)[0]
+        if segment.isdigit():
+            index = int(segment)
+            if index >= len(value):
+                return ()
+            rest = path.split(".", 1)[1] if "." in path else ""
+            return _search_path_values(value[index], rest)
+        values: list[object] = []
+        for item in value:
+            values.extend(_search_path_values(item, path))
+        return tuple(values)
+
+    if not isinstance(value, dict):
+        return ()
+
+    if "." not in path:
+        if path not in value:
+            return ()
+        return _search_path_values(value[path], "")
+
+    first, rest = path.split(".", 1)
+    if first not in value:
+        return ()
+    return _search_path_values(value[first], rest)
+
+
 def _search_near_origin_kind(value: object) -> str | None:
     if isinstance(value, bool):
         return None
@@ -2033,16 +2066,8 @@ def _search_path_scalar_values(
     document: Document,
     path: str,
 ) -> tuple[tuple[str, object], ...]:
-    found, value = get_document_value(document, path)
-    if not found:
-        return ()
-    normalized = _normalize_search_scalar_value(value)
-    if normalized is not None:
-        return (normalized,)
-    if not isinstance(value, list):
-        return ()
     values: list[tuple[str, object]] = []
-    for item in value:
+    for item in _search_path_values(document, path):
         normalized_item = _normalize_search_scalar_value(item)
         if normalized_item is not None:
             values.append(normalized_item)
@@ -2104,27 +2129,22 @@ def search_near_distance(
     *,
     query: SearchNearQuery,
 ) -> float | None:
-    found, value = get_document_value(document, query.path)
-    if not found:
+    distances = [
+        distance
+        for item in _search_path_values(document, query.path)
+        if (
+            distance := _search_near_scalar_distance(
+                item,
+                origin=query.origin,
+                origin_kind=query.origin_kind,
+            )
+        )
+        is not None
+    ]
+    if not distances:
         return None
-    if isinstance(value, list):
-        distances = [
-            distance
-            for item in value
-            if (distance := _search_near_scalar_distance(item, origin=query.origin, origin_kind=query.origin_kind)) is not None
-        ]
-        if not distances:
-            return None
-        best = min(distances)
-        return best if best <= query.pivot else None
-    distance = _search_near_scalar_distance(
-        value,
-        origin=query.origin,
-        origin_kind=query.origin_kind,
-    )
-    if distance is None or distance > query.pivot:
-        return None
-    return distance
+    best = min(distances)
+    return best if best <= query.pivot else None
 
 
 def _vector_field_specs(definition: SearchIndexDefinition) -> dict[str, dict[str, object]]:

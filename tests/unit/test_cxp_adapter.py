@@ -215,6 +215,16 @@ class CxpAlignmentTests(unittest.TestCase):
                 'bulk_write'
             ]['acceptsOrderedExecution']
         )
+        self.assertTrue(
+            exported['capabilities']['read']['metadata']['operationMetadata'][
+                'find'
+            ]['acceptsCollation']
+        )
+        self.assertTrue(
+            exported['capabilities']['write']['metadata']['operationMetadata'][
+                'update_one'
+            ]['acceptsCollation']
+        )
         self.assertEqual(
             exported['capabilities']['search']['metadata']['operationMetadata'][
                 'aggregate'

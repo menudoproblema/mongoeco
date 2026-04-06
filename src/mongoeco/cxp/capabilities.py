@@ -152,6 +152,7 @@ def _input_shape_metadata(
     accepts_comment: bool | None = None,
     accepts_max_time_ms: bool | None = None,
     accepts_let: bool | None = None,
+    accepts_collation: bool | None = None,
     accepts_array_filters: bool | None = None,
     accepts_ordered_execution: bool | None = None,
 ) -> dict[str, object]:
@@ -172,6 +173,8 @@ def _input_shape_metadata(
         metadata['acceptsMaxTimeMs'] = accepts_max_time_ms
     if accepts_let is not None:
         metadata['acceptsLet'] = accepts_let
+    if accepts_collation is not None:
+        metadata['acceptsCollation'] = accepts_collation
     if accepts_array_filters is not None:
         metadata['acceptsArrayFilters'] = accepts_array_filters
     if accepts_ordered_execution is not None:
@@ -224,6 +227,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                     accepts_comment=True,
                     accepts_max_time_ms=True,
                     accepts_let=True,
+                    accepts_collation=True,
                 ),
             ),
             MONGODB_FIND_ONE: _operation_option_metadata(
@@ -242,6 +246,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                     accepts_comment=False,
                     accepts_max_time_ms=False,
                     accepts_let=False,
+                    accepts_collation=True,
                 ),
             ),
             MONGODB_COUNT_DOCUMENTS: _operation_option_metadata(
@@ -254,6 +259,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                     accepts_hint=True,
                     accepts_comment=True,
                     accepts_max_time_ms=True,
+                    accepts_collation=True,
                 ),
             ),
             MONGODB_ESTIMATED_DOCUMENT_COUNT: _operation_option_metadata(
@@ -278,6 +284,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                     accepts_hint=True,
                     accepts_comment=True,
                     accepts_max_time_ms=True,
+                    accepts_collation=True,
                 ),
             ),
         },
@@ -325,6 +332,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                         accepts_hint=True,
                         accepts_comment=True,
                         accepts_let=True,
+                        accepts_collation=True,
                         accepts_array_filters=True,
                     ),
                     'supportsPipelineUpdate': True,
@@ -345,6 +353,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                         accepts_hint=True,
                         accepts_comment=True,
                         accepts_let=True,
+                        accepts_collation=True,
                         accepts_array_filters=True,
                     ),
                     'supportsPipelineUpdate': True,
@@ -365,6 +374,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                         accepts_hint=True,
                         accepts_comment=True,
                         accepts_let=True,
+                        accepts_collation=True,
                     ),
                     'supportsReplacementDocument': True,
                 },
@@ -379,6 +389,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                     accepts_hint=True,
                     accepts_comment=True,
                     accepts_let=True,
+                    accepts_collation=True,
                 ),
             ),
             MONGODB_DELETE_MANY: _operation_option_metadata(
@@ -391,6 +402,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                     accepts_hint=True,
                     accepts_comment=True,
                     accepts_let=True,
+                    accepts_collation=True,
                 ),
             ),
             MONGODB_BULK_WRITE: _operation_option_metadata(

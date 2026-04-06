@@ -204,6 +204,11 @@ class CompatResolutionTests(unittest.TestCase):
                 "update_one"
             ]["acceptsArrayFilters"]
         )
+        self.assertTrue(
+            catalog["capabilities"]["read"]["metadata"]["operationMetadata"][
+                "find"
+            ]["acceptsCollation"]
+        )
 
     def test_catalog_is_exposed_as_immutable_global_data(self):
         self.assertIsInstance(MONGODB_DIALECTS, MappingProxyType)

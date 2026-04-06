@@ -28,8 +28,8 @@ LOCAL_SEARCH_DOCUMENTS = [
             "publishedAt": datetime.datetime(2024, 1, 10, 0, 0, 0),
         },
         "contributors": [
-            {"name": "Ada Lovelace", "role": "author", "verified": True},
-            {"name": "Charles Babbage", "role": "editor", "verified": False},
+            {"name": "Ada Lovelace", "role": "author", "verified": True, "impact": 10},
+            {"name": "Charles Babbage", "role": "editor", "verified": False, "impact": 2},
         ],
         "ownerId": ObjectId("656565656565656565656561"),
         "externalUuid": uuid.UUID("11111111-1111-1111-1111-111111111111"),
@@ -49,7 +49,7 @@ LOCAL_SEARCH_DOCUMENTS = [
             "publishedAt": datetime.datetime(2024, 2, 20, 0, 0, 0),
         },
         "contributors": [
-            {"name": "Grace Hopper", "role": "author", "verified": True},
+            {"name": "Grace Hopper", "role": "author", "verified": False, "impact": 4},
         ],
         "ownerId": ObjectId("656565656565656565656562"),
         "externalUuid": uuid.UUID("22222222-2222-2222-2222-222222222222"),
@@ -68,8 +68,8 @@ LOCAL_SEARCH_DOCUMENTS = [
             "publishedAt": datetime.datetime(2024, 1, 18, 0, 0, 0),
         },
         "contributors": [
-            {"name": "Ada Byron", "role": "author", "verified": True},
-            {"name": "Compiler Team", "role": "reviewer", "verified": False},
+            {"name": "Ada Byron", "role": "author", "verified": True, "impact": 7},
+            {"name": "Compiler Team", "role": "reviewer", "verified": False, "impact": 1},
         ],
         "ownerId": ObjectId("656565656565656565656563"),
         "externalUuid": uuid.UUID("33333333-3333-3333-3333-333333333333"),
@@ -151,6 +151,7 @@ def build_content_search_index(name: str = "content_search") -> SearchIndexModel
                             "name": {"type": "string"},
                             "role": {"type": "token"},
                             "verified": {"type": "boolean"},
+                            "impact": {"type": "number"},
                         },
                     },
                     "ownerId": {"type": "objectId"},

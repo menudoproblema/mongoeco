@@ -76,7 +76,7 @@ Esto implica:
   para filtros y matching escalar honesto, `document` deja declarar objetos
   anidados explícitos como `metadata.topic`, y `embeddedDocuments` deja
   declarar arrays de documentos anidados con paths explícitos como
-  `contributors.name`.
+  `contributors.name`, `contributors.verified` o `contributors.impact`.
 * cuando una pipeline deja un `skip/limit` seguro tras `$search`, el runtime
   local puede usar ese `top-k` para limitar candidatos y materialización sin
   cambiar el contrato observable.

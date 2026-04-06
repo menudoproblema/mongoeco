@@ -101,6 +101,45 @@ def main() -> None:
             contributor_results,
         )
 
+        contributor_equals_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "equals": {
+                            "path": "contributors.verified",
+                            "value": True,
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1}},
+            ]
+        ).to_list()
+        print(
+            "$search embeddedDocuments equals results:",
+            contributor_equals_results,
+        )
+
+        contributor_near_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "near": {
+                            "path": "contributors.impact",
+                            "origin": 8,
+                            "pivot": 3,
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "contributors": 1}},
+            ]
+        ).to_list()
+        print(
+            "$search embeddedDocuments near results:",
+            contributor_near_results,
+        )
+
         nested_document_results = collection.aggregate(
             [
                 {

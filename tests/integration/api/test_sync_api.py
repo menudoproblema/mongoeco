@@ -1119,22 +1119,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "_id": 1,
                                 "title": "Local search handbook",
                                 "contributors": [
-                                    {"name": "Ada Lovelace", "role": "author", "verified": True},
-                                    {"name": "Charles Babbage", "role": "editor", "verified": False},
+                                    {"name": "Ada Lovelace", "role": "author", "verified": True, "impact": 10},
+                                    {"name": "Charles Babbage", "role": "editor", "verified": False, "impact": 2},
                                 ],
                             },
                             {
                                 "_id": 2,
                                 "title": "Compiler reference",
                                 "contributors": [
-                                    {"name": "Grace Hopper", "role": "author", "verified": True},
+                                    {"name": "Grace Hopper", "role": "author", "verified": False, "impact": 4},
                                 ],
                             },
                             {
                                 "_id": 3,
                                 "title": "Ada algorithms handbook",
                                 "contributors": [
-                                    {"name": "Ada Byron", "role": "author", "verified": True},
+                                    {"name": "Ada Byron", "role": "author", "verified": True, "impact": 7},
                                 ],
                             },
                         ]
@@ -1152,6 +1152,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                                 "name": {"type": "string"},
                                                 "role": {"type": "token"},
                                                 "verified": {"type": "boolean"},
+                                                "impact": {"type": "number"},
                                             },
                                         },
                                     },
@@ -1177,6 +1178,40 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ]
                     ).to_list()
                     self.assertEqual([document["_id"] for document in hits], [1, 3])
+
+                    equals_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "equals": {
+                                        "path": "contributors.verified",
+                                        "value": True,
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in equals_hits], [1, 3])
+
+                    near_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "near": {
+                                        "path": "contributors.impact",
+                                        "origin": 8,
+                                        "pivot": 3,
+                                    },
+                                }
+                            },
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in near_hits], [3, 1])
 
     def test_search_document_mapping_and_date_near_keep_parity_between_memory_and_sqlite(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

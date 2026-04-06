@@ -103,6 +103,8 @@ These examples show:
 
 * exact `phrase` versus `phrase.slop`;
 * `embeddedDocuments` mappings for paths such as `contributors.name`;
+* scalar operators over `embeddedDocuments` paths such as
+  `contributors.verified` or `contributors.impact`;
 * explicit `document` mappings for paths such as `metadata.topic`;
 * `near` over numeric and date fields with visible ranking metadata;
 * `near` and `compound` explain blocks with explicit path summaries;
