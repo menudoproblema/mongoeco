@@ -744,7 +744,7 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
 
         unsupported_window_operators = [
             "$covariancePop", "$covarianceSamp",
-            "$derivative", "$expMovingAvg", "$integral",
+            "$derivative", "$integral",
         ]
         for operator in unsupported_window_operators:
             with self.subTest(window_operator=operator):
@@ -937,6 +937,99 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
             grouping_stages._apply_linear_fill([True, None, 3])
         with self.assertRaises(OperationFailure):
             grouping_stages._apply_linear_fill([1, None, True])
+
+    def test_set_window_fields_supports_exp_moving_avg(self):
+        result = apply_pipeline(
+            [
+                {"_id": "1", "group": "a", "value": 10},
+                {"_id": "2", "group": "a", "value": 20},
+                {"_id": "3", "group": "a", "value": None},
+                {"_id": "4", "group": "a", "value": 40},
+            ],
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"_id": 1},
+                        "output": {
+                            "emaN": {"$expMovingAvg": {"input": "$value", "N": 3}},
+                            "emaAlpha": {"$expMovingAvg": {"input": "$value", "alpha": 0.5}},
+                        },
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {"_id": "1", "group": "a", "value": 10, "emaN": 10.0, "emaAlpha": 10.0},
+                {"_id": "2", "group": "a", "value": 20, "emaN": 15.0, "emaAlpha": 15.0},
+                {"_id": "3", "group": "a", "value": None, "emaN": 15.0, "emaAlpha": 15.0},
+                {"_id": "4", "group": "a", "value": 40, "emaN": 27.5, "emaAlpha": 27.5},
+            ],
+        )
+
+    def test_set_window_fields_exp_moving_avg_rejects_invalid_payloads(self):
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"output": {"result": {"$expMovingAvg": {"input": "$value", "N": 3}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$expMovingAvg": {"input": "$value", "N": 3}, "window": {"documents": ["unbounded", "current"]}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$expMovingAvg": {"input": "$value"}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$expMovingAvg": {"input": "$value", "N": 3, "alpha": 0.5}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$expMovingAvg": {"input": "$value", "N": 0}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$expMovingAvg": {"input": "$value", "alpha": 0.0}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": "bad"}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$expMovingAvg": {"input": "$value", "N": 3}}}}}],
+            )
+
+    def test_exp_moving_avg_helpers_cover_alpha_variants(self):
+        self.assertAlmostEqual(
+            grouping_stages._exp_moving_avg_alpha({"input": "$value", "N": 3}),
+            0.5,
+        )
+        self.assertAlmostEqual(
+            grouping_stages._exp_moving_avg_alpha({"input": "$value", "alpha": 0.25}),
+            0.25,
+        )
+        self.assertEqual(
+            grouping_stages._apply_exp_moving_avg(
+                [{"value": 10}, {"value": None}, {"value": 30}],
+                {"input": "$value", "alpha": 0.5},
+                None,
+            ),
+            [10.0, 10.0, 20.0],
+        )
+        with self.assertRaises(OperationFailure):
+            grouping_stages._exp_moving_avg_alpha("$value")
+        with self.assertRaises(OperationFailure):
+            grouping_stages._exp_moving_avg_alpha({"input": "$value", "alpha": 0.5, "extra": 1})
+        with self.assertRaises(OperationFailure):
+            grouping_stages._exp_moving_avg_alpha({"input": "$value", "alpha": True})
 
     def test_evaluate_expression_supports_dotted_variable_paths(self):
         document = {"profile": {"city": "Sevilla"}}

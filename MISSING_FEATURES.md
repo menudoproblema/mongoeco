@@ -12,7 +12,7 @@ arquitectonica y las decisiones de endurecimiento del diseno viven ya en
 | 11.5      | Ampliar mappings locales de `$search` mas alla de `string`/`token`/`autocomplete`/`number`/`date`/`boolean`/`objectId`/`uuid`/`document`/`embeddedDocuments` | Medio-Alto  | Medio       | `search.py:29`<br>`TODO.md:29`                                    |
 | 14        | Llevar `vectorSearch` mas alla del retrieval hibrido local actual | Medio-Alto  | Alto        | `README.md:20`<br>`search.py:187`<br>`TODO.md:25`                 |
 | 18        | `codec options` avanzadas                                         | Medio       | Medio       | `types.py:1244`                                                   |
-| 19        | Window functions avanzadas restantes en `$setWindowFields` (`derivative`, `expMovingAvg`, `integral`) | Medio       | Medio-Alto  | `test_aggregation_expression_basics.py:745`                      |
+| 19        | Window functions avanzadas restantes en `$setWindowFields` (`derivative`, `integral`) | Medio       | Medio-Alto  | `test_aggregation_expression_basics.py:745`                      |
 | 20        | `$redact` en agregacion                                           | Medio-Bajo  | Medio-Alto  | `stages.py:256`                                                   |
 | 21        | Stages admin/introspeccion en agregacion                          | Bajo        | Medio       | `stages.py:256`                                                   |
 | 23        | Query top-level `$where`                                          | Bajo        | Bajo-Medio  | `test_query_plan.py:72`<br>`test_query_plan.py:243`               |

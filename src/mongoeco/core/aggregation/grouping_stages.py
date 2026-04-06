@@ -89,6 +89,57 @@ def _apply_linear_fill(values: list[Any]) -> list[Any]:
     return filled
 
 
+def _exp_moving_avg_alpha(expression: object) -> float:
+    if not isinstance(expression, dict) or "input" not in expression:
+        raise OperationFailure("$expMovingAvg requires input plus N or alpha")
+    has_n = "N" in expression
+    has_alpha = "alpha" in expression
+    if has_n == has_alpha:
+        raise OperationFailure("$expMovingAvg requires exactly one of N or alpha")
+    unsupported_keys = set(expression) - {"input", "N", "alpha"}
+    if unsupported_keys:
+        raise OperationFailure("$expMovingAvg supports only input plus N or alpha")
+    if has_n:
+        n = expression["N"]
+        if not isinstance(n, int) or isinstance(n, bool) or n <= 0:
+            raise OperationFailure("$expMovingAvg N must be a positive integer")
+        return 2.0 / (n + 1)
+    alpha = expression["alpha"]
+    if not isinstance(alpha, (int, float)) or isinstance(alpha, bool):
+        raise OperationFailure("$expMovingAvg alpha must be numeric")
+    alpha_value = float(alpha)
+    if not (0.0 < alpha_value <= 1.0):
+        raise OperationFailure("$expMovingAvg alpha must be in (0, 1]")
+    return alpha_value
+
+
+def _apply_exp_moving_avg(
+    documents: list[Document],
+    expression: object,
+    variables: dict[str, Any] | None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> list[Any]:
+    alpha = _exp_moving_avg_alpha(expression)
+    input_expression = expression["input"] if isinstance(expression, dict) else None
+    results: list[Any] = []
+    current_average: float | None = None
+    for document in documents:
+        value = evaluate_expression(document, input_expression, variables, dialect=dialect)
+        if value is None:
+            results.append(current_average)
+            continue
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            raise OperationFailure("$expMovingAvg currently supports only numeric inputs")
+        numeric_value = float(value)
+        if current_average is None:
+            current_average = numeric_value
+        else:
+            current_average = (alpha * numeric_value) + ((1.0 - alpha) * current_average)
+        results.append(current_average)
+    return results
+
+
 def _build_accumulator_runtime(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
@@ -413,7 +464,7 @@ def _apply_set_window_fields(
         operator, expression, window = _require_window_output_spec(field_spec)
         if not dialect.supports_window_accumulator(operator):
             raise OperationFailure(f"Unsupported $setWindowFields accumulator: {operator}")
-        if operator in {"$rank", "$denseRank", "$documentNumber", "$shift", "$locf", "$linearFill"}:
+        if operator in {"$rank", "$denseRank", "$documentNumber", "$shift", "$locf", "$linearFill", "$expMovingAvg"}:
             prepared_window_outputs[field] = (operator, expression, window, ())
             continue
         prepared_specs = _prepare_accumulator_specs(
@@ -506,6 +557,19 @@ def _apply_set_window_fields(
                         else _apply_linear_fill(partition_values)
                     )
                     set_document_value(enriched, field, filled_values[current_index])
+                    continue
+                if operator == "$expMovingAvg":
+                    if sort_spec is None:
+                        raise OperationFailure("$expMovingAvg requires sortBy")
+                    if window is not None:
+                        raise OperationFailure("$expMovingAvg does not support an explicit window")
+                    values = _apply_exp_moving_avg(
+                        ordered,
+                        expression,
+                        variables,
+                        dialect=dialect,
+                    )
+                    set_document_value(enriched, field, values[current_index])
                     continue
                 if window is None:
                     window_documents = ordered
