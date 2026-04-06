@@ -1569,10 +1569,45 @@ def _validate_field_mapping(field_spec: Document) -> None:
 
 def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery) -> dict[str, object | None]:
     paths = list(query.paths) if query.paths is not None else None
+    query_semantics: dict[str, object]
+    if isinstance(query, SearchPhraseQuery):
+        query_semantics = {
+            "matchingMode": "ordered-token-window",
+            "supportsSlop": True,
+            "scope": "local-text-tier",
+        }
+    elif isinstance(query, SearchAutocompleteQuery):
+        query_semantics = {
+            "matchingMode": "token-prefix",
+            "tokenization": "classic-text-local",
+            "atlasParity": "subset",
+            "scope": "local-text-tier",
+        }
+    elif isinstance(query, SearchWildcardQuery):
+        query_semantics = {
+            "matchingMode": "glob-local",
+            "patternSyntax": "fnmatch-like",
+            "atlasParity": "subset",
+            "scope": "local-text-tier",
+        }
+    elif isinstance(query, SearchRegexQuery):
+        query_semantics = {
+            "matchingMode": "python-regex-local",
+            "supportsFlags": False,
+            "atlasParity": "subset",
+            "scope": "local-text-tier",
+        }
+    else:
+        query_semantics = {
+            "matchingMode": "tokenized-any-term",
+            "scoringMode": "term-frequency-local",
+            "scope": "local-text-tier",
+        }
     return {
         "query": query.raw_query,
         "paths": paths,
         "slop": query.slop if isinstance(query, SearchPhraseQuery) else None,
+        "querySemantics": query_semantics,
         "compound": None,
         "value": None,
         "range": None,
@@ -1663,6 +1698,10 @@ def _explain_exists_query(query: SearchExistsQuery) -> dict[str, object | None]:
     return {
         "query": None,
         "paths": paths,
+        "querySemantics": {
+            "matchingMode": "field-presence",
+            "scope": "local-text-tier",
+        },
         "compound": None,
         "value": None,
         "range": None,
@@ -1683,6 +1722,10 @@ def _explain_in_query(query: SearchInQuery) -> dict[str, object | None]:
     return {
         "query": None,
         "paths": None,
+        "querySemantics": {
+            "matchingMode": "exact-membership",
+            "scope": "local-filter-tier",
+        },
         "compound": None,
         "value": list(query.values),
         "range": None,
@@ -1703,6 +1746,10 @@ def _explain_equals_query(query: SearchEqualsQuery) -> dict[str, object | None]:
     return {
         "query": None,
         "paths": None,
+        "querySemantics": {
+            "matchingMode": "exact-equality",
+            "scope": "local-filter-tier",
+        },
         "compound": None,
         "value": query.value,
         "range": None,
@@ -1723,6 +1770,10 @@ def _explain_range_query(query: SearchRangeQuery) -> dict[str, object | None]:
     return {
         "query": None,
         "paths": None,
+        "querySemantics": {
+            "matchingMode": "range-comparison",
+            "scope": "local-filter-tier",
+        },
         "compound": None,
         "value": None,
         "range": {
@@ -1749,6 +1800,10 @@ def _explain_near_query(query: SearchNearQuery) -> dict[str, object | None]:
     return {
         "query": None,
         "paths": None,
+        "querySemantics": {
+            "matchingMode": "distance-ranking",
+            "scope": "local-filter-tier",
+        },
         "compound": None,
         "ranking": {
             "distanceMode": "pivot-decay",

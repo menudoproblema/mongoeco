@@ -694,6 +694,14 @@
       "search": {
         "description": "Support for Atlas Search-style textual queries.",
         "metadata": {
+          "advancedAtlasLikeGaps": [
+            "facet",
+            "highlight",
+            "count",
+            "advancedAutocompleteSemantics",
+            "advancedWildcardSemantics",
+            "advancedRegexOptions"
+          ],
           "aggregateStage": "$search",
           "exactFilterFieldMappings": [
             "boolean",
@@ -705,7 +713,8 @@
           "explainFeatures": [
             "pathSummary",
             "resolvedLeafPaths",
-            "structuredParentPathResolution"
+            "structuredParentPathResolution",
+            "querySemantics"
           ],
           "fieldMappings": [
             "autocomplete",
@@ -719,7 +728,7 @@
             "token",
             "uuid"
           ],
-          "note": "The local $search surface remains an explicit Atlas-like subset.",
+          "note": "The local textual $search tier is closed in its documented subset; remaining gaps are advanced Atlas-like features.",
           "operationMetadata": {
             "aggregate": {
               "acceptedNoopOptions": [],
@@ -755,6 +764,55 @@
               "unsupportedOptions": []
             }
           },
+          "operatorSemantics": {
+            "autocomplete": {
+              "atlasParity": "subset",
+              "matchingMode": "token-prefix",
+              "scope": "local-text-tier",
+              "tokenization": "classic-text-local"
+            },
+            "equals": {
+              "matchingMode": "exact-equality",
+              "scope": "local-filter-tier"
+            },
+            "exists": {
+              "matchingMode": "field-presence",
+              "scope": "local-text-tier"
+            },
+            "in": {
+              "matchingMode": "exact-membership",
+              "scope": "local-filter-tier"
+            },
+            "near": {
+              "matchingMode": "distance-ranking",
+              "scope": "local-filter-tier"
+            },
+            "phrase": {
+              "matchingMode": "ordered-token-window",
+              "scope": "local-text-tier",
+              "supportsSlop": true
+            },
+            "range": {
+              "matchingMode": "range-comparison",
+              "scope": "local-filter-tier"
+            },
+            "regex": {
+              "atlasParity": "subset",
+              "matchingMode": "python-regex-local",
+              "scope": "local-text-tier",
+              "supportsFlags": false
+            },
+            "text": {
+              "matchingMode": "tokenized-any-term",
+              "scope": "local-text-tier"
+            },
+            "wildcard": {
+              "atlasParity": "subset",
+              "matchingMode": "glob-local",
+              "patternSyntax": "fnmatch-like",
+              "scope": "local-text-tier"
+            }
+          },
           "operators": [
             "text",
             "phrase",
@@ -787,6 +845,7 @@
             "regex",
             "exists"
           ],
+          "textSearchTier": "closed-local-tier",
           "textualFieldMappings": [
             "autocomplete",
             "string",
@@ -5847,6 +5906,14 @@
       ]
     },
     "search": {
+      "advancedAtlasLikeGaps": [
+        "facet",
+        "highlight",
+        "count",
+        "advancedAutocompleteSemantics",
+        "advancedWildcardSemantics",
+        "advancedRegexOptions"
+      ],
       "aggregateStage": "$search",
       "exactFilterFieldMappings": [
         "boolean",
@@ -5858,7 +5925,8 @@
       "explainFeatures": [
         "pathSummary",
         "resolvedLeafPaths",
-        "structuredParentPathResolution"
+        "structuredParentPathResolution",
+        "querySemantics"
       ],
       "fieldMappings": [
         "autocomplete",
@@ -5872,7 +5940,7 @@
         "token",
         "uuid"
       ],
-      "note": "The local $search surface remains an explicit Atlas-like subset.",
+      "note": "The local textual $search tier is closed in its documented subset; remaining gaps are advanced Atlas-like features.",
       "operationMetadata": {
         "aggregate": {
           "acceptedNoopOptions": [],
@@ -5908,6 +5976,55 @@
           "unsupportedOptions": []
         }
       },
+      "operatorSemantics": {
+        "autocomplete": {
+          "atlasParity": "subset",
+          "matchingMode": "token-prefix",
+          "scope": "local-text-tier",
+          "tokenization": "classic-text-local"
+        },
+        "equals": {
+          "matchingMode": "exact-equality",
+          "scope": "local-filter-tier"
+        },
+        "exists": {
+          "matchingMode": "field-presence",
+          "scope": "local-text-tier"
+        },
+        "in": {
+          "matchingMode": "exact-membership",
+          "scope": "local-filter-tier"
+        },
+        "near": {
+          "matchingMode": "distance-ranking",
+          "scope": "local-filter-tier"
+        },
+        "phrase": {
+          "matchingMode": "ordered-token-window",
+          "scope": "local-text-tier",
+          "supportsSlop": true
+        },
+        "range": {
+          "matchingMode": "range-comparison",
+          "scope": "local-filter-tier"
+        },
+        "regex": {
+          "atlasParity": "subset",
+          "matchingMode": "python-regex-local",
+          "scope": "local-text-tier",
+          "supportsFlags": false
+        },
+        "text": {
+          "matchingMode": "tokenized-any-term",
+          "scope": "local-text-tier"
+        },
+        "wildcard": {
+          "atlasParity": "subset",
+          "matchingMode": "glob-local",
+          "patternSyntax": "fnmatch-like",
+          "scope": "local-text-tier"
+        }
+      },
       "operators": [
         "text",
         "phrase",
@@ -5940,6 +6057,7 @@
         "regex",
         "exists"
       ],
+      "textSearchTier": "closed-local-tier",
       "textualFieldMappings": [
         "autocomplete",
         "string",

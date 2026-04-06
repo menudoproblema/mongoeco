@@ -16,22 +16,17 @@ describen aquí. Su referencia canónica vive ya repartida en
 
 ## 1. Search: siguiente nivel
 
-Objetivo: ampliar el runtime local de búsqueda más allá del perímetro actual sin degradar la honestidad del contrato.
+Objetivo: ampliar búsqueda local solo donde el siguiente salto aporte valor real, sin desdibujar el cierre del tier textual local ya documentado.
 
 Pendientes:
 
-* decidir si merece la pena ampliar `$search` más allá del subset actual:
-  * `text`
-  * `phrase`
-  * `autocomplete`
-  * `wildcard`
-  * `regex`
-  * `exists`
-  * `in`
-  * `equals`
-  * `range`
-  * `near`
-  * `compound`
+* decidir si merece la pena ir más allá del tier textual local ya cerrado hacia features Atlas-like avanzadas, sobre todo:
+  * `facet`
+  * `highlight`
+  * `count`
+  * semántica más rica de `autocomplete`
+  * semántica más rica de `wildcard`
+  * opciones/flags más ricos de `regex`
 * ampliar mappings locales más allá de:
   * `string`
   * `token`

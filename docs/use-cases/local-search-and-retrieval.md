@@ -114,6 +114,7 @@ These examples show:
 * scalar `equals`, `range` and `near` now expose consistent `pathSummary`
   metadata in `explain()`, so tooling can reason about leaf versus parent
   paths without special cases;
+* text-like and scalar operators now expose `querySemantics` in `explain()`;
 * explicit `document` mappings for paths such as `metadata.topic`;
 * `near` over numeric and date fields with visible ranking metadata;
 * `near` and `compound` explain blocks with explicit path summaries,
@@ -124,8 +125,9 @@ These examples show:
 
 ## Limits To Keep In Mind
 
-* The local subset is deliberate and documented; it does not claim Atlas Search
-  parity.
+* The local textual subset is deliberate, documented and treated as closed in
+  its current tier.
+* Atlas Search parity is still not the goal here.
 * `vectorSearch` stays local-first and must still be the first pipeline stage.
 * `explain()` is part of the contract: use it to see candidate prefilters,
   residual filters and fallback behavior.

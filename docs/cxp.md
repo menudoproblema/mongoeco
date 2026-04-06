@@ -110,6 +110,8 @@ without guessing:
 * scalar search operators now expose consistent `pathSummary` metadata too,
   which makes `read`/`aggregation` tooling easier to build without operator-
   specific heuristics.
+* `search.operatorSemantics` and `querySemantics` in `explain()` make the local
+  textual tier explicit and machine-readable.
 
 ## Reusable profiles
 

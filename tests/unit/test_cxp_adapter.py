@@ -261,7 +261,20 @@ class CxpAlignmentTests(unittest.TestCase):
         )
         self.assertEqual(
             exported['capabilities']['search']['metadata']['explainFeatures'],
-            ['pathSummary', 'resolvedLeafPaths', 'structuredParentPathResolution'],
+            ['pathSummary', 'resolvedLeafPaths', 'structuredParentPathResolution', 'querySemantics'],
+        )
+        self.assertEqual(
+            exported['capabilities']['search']['metadata']['textSearchTier'],
+            'closed-local-tier',
+        )
+        self.assertEqual(
+            exported['capabilities']['search']['metadata']['operatorSemantics']['autocomplete'],
+            {
+                'matchingMode': 'token-prefix',
+                'tokenization': 'classic-text-local',
+                'atlasParity': 'subset',
+                'scope': 'local-text-tier',
+            },
         )
         self.assertTrue(
             exported['capabilities']['read']['metadata']['operationMetadata'][

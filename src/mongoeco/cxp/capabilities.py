@@ -866,6 +866,65 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
         'pathSummary',
         'resolvedLeafPaths',
         'structuredParentPathResolution',
+        'querySemantics',
+    ],
+    'operatorSemantics': {
+        'text': {
+            'matchingMode': 'tokenized-any-term',
+            'scope': 'local-text-tier',
+        },
+        'phrase': {
+            'matchingMode': 'ordered-token-window',
+            'supportsSlop': True,
+            'scope': 'local-text-tier',
+        },
+        'autocomplete': {
+            'matchingMode': 'token-prefix',
+            'tokenization': 'classic-text-local',
+            'atlasParity': 'subset',
+            'scope': 'local-text-tier',
+        },
+        'wildcard': {
+            'matchingMode': 'glob-local',
+            'patternSyntax': 'fnmatch-like',
+            'atlasParity': 'subset',
+            'scope': 'local-text-tier',
+        },
+        'regex': {
+            'matchingMode': 'python-regex-local',
+            'supportsFlags': False,
+            'atlasParity': 'subset',
+            'scope': 'local-text-tier',
+        },
+        'exists': {
+            'matchingMode': 'field-presence',
+            'scope': 'local-text-tier',
+        },
+        'in': {
+            'matchingMode': 'exact-membership',
+            'scope': 'local-filter-tier',
+        },
+        'equals': {
+            'matchingMode': 'exact-equality',
+            'scope': 'local-filter-tier',
+        },
+        'range': {
+            'matchingMode': 'range-comparison',
+            'scope': 'local-filter-tier',
+        },
+        'near': {
+            'matchingMode': 'distance-ranking',
+            'scope': 'local-filter-tier',
+        },
+    },
+    'textSearchTier': 'closed-local-tier',
+    'advancedAtlasLikeGaps': [
+        'facet',
+        'highlight',
+        'count',
+        'advancedAutocompleteSemantics',
+        'advancedWildcardSemantics',
+        'advancedRegexOptions',
     ],
     'sqliteBackends': [
         'fts5',
@@ -903,7 +962,8 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
         ),
     },
     'note': (
-        'The local $search surface remains an explicit Atlas-like subset.'
+        'The local textual $search tier is closed in its documented subset; '
+        'remaining gaps are advanced Atlas-like features.'
     ),
 }
 

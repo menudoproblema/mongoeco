@@ -2542,6 +2542,15 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(regex_details["query"], "Ada.*algorithm")
         self.assertEqual(regex_details["paths"], ["body"])
         self.assertEqual(
+            regex_details["querySemantics"],
+            {
+                "matchingMode": "python-regex-local",
+                "supportsFlags": False,
+                "atlasParity": "subset",
+                "scope": "local-text-tier",
+            },
+        )
+        self.assertEqual(
             regex_details["pathSummary"],
             {
                 "all": ["body"],
@@ -2564,6 +2573,13 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(near_details["queryOperator"], "near")
         self.assertEqual(near_details["pivot"], 5.0)
+        self.assertEqual(
+            near_details["querySemantics"],
+            {
+                "matchingMode": "distance-ranking",
+                "scope": "local-filter-tier",
+            },
+        )
         self.assertEqual(near_details["ranking"]["distanceMode"], "pivot-decay")
         self.assertEqual(
             near_details["ranking"]["scoreFormula"],
@@ -2652,6 +2668,14 @@ class SearchCoreTests(unittest.TestCase):
                 "unresolvedPaths": [],
             },
         )
+        self.assertEqual(
+            text_details["querySemantics"],
+            {
+                "matchingMode": "tokenized-any-term",
+                "scoringMode": "term-frequency-local",
+                "scope": "local-text-tier",
+            },
+        )
         exists_details = search_query_explain_details(
             SearchExistsQuery(index_name="by_text", paths=("metadata", "contributors.verified")),
             definition=definition,
@@ -2673,6 +2697,13 @@ class SearchCoreTests(unittest.TestCase):
                     "metadata.topic",
                 ],
                 "unresolvedPaths": [],
+            },
+        )
+        self.assertEqual(
+            exists_details["querySemantics"],
+            {
+                "matchingMode": "field-presence",
+                "scope": "local-text-tier",
             },
         )
         scalar_details = search_query_explain_details(
@@ -2698,6 +2729,13 @@ class SearchCoreTests(unittest.TestCase):
                 "sections": ["near"],
                 "resolvedLeafPaths": ["contributors.impact"],
                 "unresolvedPaths": [],
+            },
+        )
+        self.assertEqual(
+            scalar_details["querySemantics"],
+            {
+                "matchingMode": "distance-ranking",
+                "scope": "local-filter-tier",
             },
         )
         richer_compound = search_query_explain_details(

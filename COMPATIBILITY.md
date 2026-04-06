@@ -86,6 +86,9 @@ Esto implica:
   `regex`, `exists`, `in`, `equals`, `range`, `near` y `compound`
   como subset explícito y documentado, sin pretender semántica Atlas Search
   completa.
+* ese subset textual local se considera ya cerrado como tier; lo pendiente se
+  concentra en `facet`, `highlight`, `count` y semánticas Atlas-like más ricas
+  de `autocomplete` / `wildcard` / `regex`.
 * los mappings locales de `$search` cubren ya una familia más rica de campos:
   `string`, `autocomplete`, `token`, `number`, `date`, `boolean`,
   `objectId`, `uuid`, `document` y `embeddedDocuments`; los tipos textuales

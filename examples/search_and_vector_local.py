@@ -155,6 +155,10 @@ def main() -> None:
             "$search embeddedDocuments parent-path autocomplete explain:",
             contributor_autocomplete_explain["engine_plan"]["details"]["pathSummary"],
         )
+        print(
+            "$search embeddedDocuments parent-path autocomplete semantics:",
+            contributor_autocomplete_explain["engine_plan"]["details"]["querySemantics"],
+        )
 
         contributor_equals_results = collection.aggregate(
             [
@@ -359,6 +363,7 @@ def main() -> None:
             near_explain["engine_plan"]["details"]["originKind"],
             near_explain["engine_plan"]["details"]["ranking"]["scoreFormula"],
             near_explain["engine_plan"]["details"]["pathSummary"],
+            near_explain["engine_plan"]["details"]["querySemantics"],
         )
 
         near_date_results = collection.aggregate(

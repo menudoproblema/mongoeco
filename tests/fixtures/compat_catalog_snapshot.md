@@ -661,10 +661,13 @@
 - `textualFieldMappings`: `autocomplete`, `string`, `token`
 - `exactFilterFieldMappings`: `boolean`, `date`, `number`, `objectId`, `uuid`
 - `structuredParentPathOperators`: `text`, `phrase`, `autocomplete`, `wildcard`, `regex`, `exists`
-- `explainFeatures`: `pathSummary`, `resolvedLeafPaths`, `structuredParentPathResolution`
+- `explainFeatures`: `pathSummary`, `resolvedLeafPaths`, `structuredParentPathResolution`, `querySemantics`
+- `operatorSemantics`: `{'text': {'matchingMode': 'tokenized-any-term', 'scope': 'local-text-tier'}, 'phrase': {'matchingMode': 'ordered-token-window', 'supportsSlop': True, 'scope': 'local-text-tier'}, 'autocomplete': {'matchingMode': 'token-prefix', 'tokenization': 'classic-text-local', 'atlasParity': 'subset', 'scope': 'local-text-tier'}, 'wildcard': {'matchingMode': 'glob-local', 'patternSyntax': 'fnmatch-like', 'atlasParity': 'subset', 'scope': 'local-text-tier'}, 'regex': {'matchingMode': 'python-regex-local', 'supportsFlags': False, 'atlasParity': 'subset', 'scope': 'local-text-tier'}, 'exists': {'matchingMode': 'field-presence', 'scope': 'local-text-tier'}, 'in': {'matchingMode': 'exact-membership', 'scope': 'local-filter-tier'}, 'equals': {'matchingMode': 'exact-equality', 'scope': 'local-filter-tier'}, 'range': {'matchingMode': 'range-comparison', 'scope': 'local-filter-tier'}, 'near': {'matchingMode': 'distance-ranking', 'scope': 'local-filter-tier'}}`
+- `textSearchTier`: `closed-local-tier`
+- `advancedAtlasLikeGaps`: `facet`, `highlight`, `count`, `advancedAutocompleteSemantics`, `advancedWildcardSemantics`, `advancedRegexOptions`
 - `sqliteBackends`: `fts5`, `fts5-glob`, `fts5-path`, `fts5-prefilter`, `python`
 - `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'resultType': 'cursor', 'supportsCollectionScope': True, 'supportsDatabaseScope': False, 'supportsSession': True, 'acceptsPipeline': True, 'aggregateStage': '$search', 'operators': ['text', 'phrase', 'autocomplete', 'wildcard', 'exists', 'in', 'equals', 'range', 'near', 'compound', 'regex'], 'requiresLeadingStage': True}}`
-- `note`: `The local $search surface remains an explicit Atlas-like subset.`
+- `note`: `The local textual $search tier is closed in its documented subset; remaining gaps are advanced Atlas-like features.`
 
 ### `vector_search`
 - `description`: `Semantic similarity search support.`
@@ -737,10 +740,13 @@
 - `textualFieldMappings`: `autocomplete`, `string`, `token`
 - `exactFilterFieldMappings`: `boolean`, `date`, `number`, `objectId`, `uuid`
 - `structuredParentPathOperators`: `text`, `phrase`, `autocomplete`, `wildcard`, `regex`, `exists`
-- `explainFeatures`: `pathSummary`, `resolvedLeafPaths`, `structuredParentPathResolution`
+- `explainFeatures`: `pathSummary`, `resolvedLeafPaths`, `structuredParentPathResolution`, `querySemantics`
+- `operatorSemantics`: `{'text': {'matchingMode': 'tokenized-any-term', 'scope': 'local-text-tier'}, 'phrase': {'matchingMode': 'ordered-token-window', 'supportsSlop': True, 'scope': 'local-text-tier'}, 'autocomplete': {'matchingMode': 'token-prefix', 'tokenization': 'classic-text-local', 'atlasParity': 'subset', 'scope': 'local-text-tier'}, 'wildcard': {'matchingMode': 'glob-local', 'patternSyntax': 'fnmatch-like', 'atlasParity': 'subset', 'scope': 'local-text-tier'}, 'regex': {'matchingMode': 'python-regex-local', 'supportsFlags': False, 'atlasParity': 'subset', 'scope': 'local-text-tier'}, 'exists': {'matchingMode': 'field-presence', 'scope': 'local-text-tier'}, 'in': {'matchingMode': 'exact-membership', 'scope': 'local-filter-tier'}, 'equals': {'matchingMode': 'exact-equality', 'scope': 'local-filter-tier'}, 'range': {'matchingMode': 'range-comparison', 'scope': 'local-filter-tier'}, 'near': {'matchingMode': 'distance-ranking', 'scope': 'local-filter-tier'}}`
+- `textSearchTier`: `closed-local-tier`
+- `advancedAtlasLikeGaps`: `facet`, `highlight`, `count`, `advancedAutocompleteSemantics`, `advancedWildcardSemantics`, `advancedRegexOptions`
 - `sqliteBackends`: `fts5`, `fts5-glob`, `fts5-path`, `fts5-prefilter`, `python`
 - `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'resultType': 'cursor', 'supportsCollectionScope': True, 'supportsDatabaseScope': False, 'supportsSession': True, 'acceptsPipeline': True, 'aggregateStage': '$search', 'operators': ['text', 'phrase', 'autocomplete', 'wildcard', 'exists', 'in', 'equals', 'range', 'near', 'compound', 'regex'], 'requiresLeadingStage': True}}`
-- `note`: `The local $search surface remains an explicit Atlas-like subset.`
+- `note`: `The local textual $search tier is closed in its documented subset; remaining gaps are advanced Atlas-like features.`
 
 ### `classicText`
 - `supportsTextScore`: `True`

@@ -274,6 +274,9 @@ The local `$search` subset now includes:
 * `range`
 * `near`
 * `compound`
+* this local textual tier is now considered closed in its documented subset;
+  what remains is advanced Atlas-like behavior, not the daily embedded
+  perimeter.
 
 Examples worth showing first:
 
@@ -286,7 +289,8 @@ Examples worth showing first:
   `embeddedDocuments` paths, parent-path resolution for `metadata` and
   `contributors`, numeric/date `near`, parent-path `exists` over structured
   mappings, parent-path `autocomplete` / `wildcard` / `regex` over structured
-  mappings with resolved descendant leaf paths in `explain()`, consistent
+  mappings with resolved descendant leaf paths in `explain()`, explicit
+  operator `querySemantics`, consistent
   scalar `pathSummary` metadata for `equals` / `range` / `near`, scalar filters
   over embedded-document paths, and a local
   `compound` query with visible embedded path/ranking explain metadata plus
