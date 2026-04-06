@@ -398,6 +398,29 @@ def _compatible_profile_names_for_projection(
     return []
 
 
+def _operation_name_for_projection(
+    capability: str,
+    additional_capabilities: tuple[str, ...],
+) -> str | None:
+    if capability == MONGODB_READ:
+        return MONGODB_FIND
+    if capability == MONGODB_AGGREGATION:
+        return MONGODB_AGGREGATE
+    return None
+
+
+def _metadata_capability_for_projection(
+    capability: str,
+    additional_capabilities: tuple[str, ...],
+) -> str:
+    if capability == MONGODB_AGGREGATION:
+        if MONGODB_VECTOR_SEARCH in additional_capabilities:
+            return MONGODB_VECTOR_SEARCH
+        if MONGODB_SEARCH in additional_capabilities:
+            return MONGODB_SEARCH
+    return capability
+
+
 _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
     MONGODB_READ: {
         'embedded': True,
@@ -935,6 +958,13 @@ def build_mongodb_explain_projection(
         'provider': 'mongoeco',
         'capability': capability,
     }
+    metadata_capability = _metadata_capability_for_projection(
+        capability,
+        additional_capabilities,
+    )
+    capability_metadata = deepcopy(
+        _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA.get(metadata_capability, {})
+    )
     if additional_capabilities:
         projection['additionalCapabilities'] = list(additional_capabilities)
     minimal_profile = _minimal_profile_name_for_projection(
@@ -952,6 +982,23 @@ def build_mongodb_explain_projection(
     )
     if compatible_profiles:
         projection['compatibleProfiles'] = compatible_profiles
+        projection['compatibleProfileSupport'] = {
+            name: deepcopy(_exported_profile_support()[name])
+            for name in compatible_profiles
+        }
+    operation_name = _operation_name_for_projection(
+        capability,
+        additional_capabilities,
+    )
+    if operation_name is not None:
+        operation_metadata = capability_metadata.get('operationMetadata', {})
+        if isinstance(operation_metadata, dict):
+            selected_operation_metadata = operation_metadata.get(operation_name)
+            if isinstance(selected_operation_metadata, dict):
+                projection['operationName'] = operation_name
+                projection['operationMetadata'] = deepcopy(
+                    selected_operation_metadata
+                )
     if metadata:
         projection['metadata'] = deepcopy(metadata)
     return projection

@@ -286,6 +286,16 @@ class CxpAlignmentTests(unittest.TestCase):
             projection['compatibleProfiles'],
             ['mongodb-text-search', 'mongodb-search'],
         )
+        self.assertEqual(projection['operationName'], 'aggregate')
+        self.assertEqual(
+            projection['operationMetadata']['aggregateStage'],
+            '$search',
+        )
+        self.assertTrue(
+            projection['compatibleProfileSupport']['mongodb-text-search'][
+                'supported'
+            ]
+        )
         self.assertEqual(
             projection['minimalProfileRequirements'][-1],
             {
@@ -300,6 +310,8 @@ class CxpAlignmentTests(unittest.TestCase):
             write_projection['compatibleProfiles'],
             ['mongodb-core', 'mongodb-platform'],
         )
+        self.assertNotIn('operationName', write_projection)
+        self.assertNotIn('operationMetadata', write_projection)
         self.assertNotIn('minimalProfile', platform_projection)
         self.assertNotIn('minimalProfileRequirements', platform_projection)
         self.assertNotIn('compatibleProfiles', platform_projection)

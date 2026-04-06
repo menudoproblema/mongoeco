@@ -187,6 +187,20 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             ["mongodb-core", "mongodb-platform", "mongodb-aggregate-rich"],
         )
         self.assertEqual(
+            plain._cxp_explain_projection()["operationName"],
+            "aggregate",
+        )
+        self.assertTrue(
+            plain._cxp_explain_projection()["operationMetadata"][
+                "supportsDatabaseScope"
+            ]
+        )
+        self.assertTrue(
+            plain._cxp_explain_projection()["compatibleProfileSupport"][
+                "mongodb-aggregate-rich"
+            ]["supported"]
+        )
+        self.assertEqual(
             plain._cxp_explain_projection()["minimalProfileRequirements"][0]["capabilityName"],
             "read",
         )
@@ -199,6 +213,16 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             ["mongodb-text-search", "mongodb-search"],
         )
         self.assertEqual(
+            text_search._cxp_explain_projection()["operationName"],
+            "aggregate",
+        )
+        self.assertEqual(
+            text_search._cxp_explain_projection()["operationMetadata"][
+                "aggregateStage"
+            ],
+            "$search",
+        )
+        self.assertEqual(
             text_search._cxp_explain_projection()["minimalProfileRequirements"][-1]["capabilityName"],
             "search",
         )
@@ -209,6 +233,16 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             vector_search._cxp_explain_projection()["compatibleProfiles"],
             ["mongodb-search"],
+        )
+        self.assertEqual(
+            vector_search._cxp_explain_projection()["operationName"],
+            "aggregate",
+        )
+        self.assertEqual(
+            vector_search._cxp_explain_projection()["operationMetadata"][
+                "aggregateStage"
+            ],
+            "$vectorSearch",
         )
         self.assertEqual(
             vector_search._cxp_explain_projection()["minimalProfileRequirements"][-1]["capabilityName"],

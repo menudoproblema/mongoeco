@@ -103,6 +103,8 @@ profiles for the current capability path when that can be inferred honestly.
 If a consumer only needs the reusable profile catalog, `mongoeco` also exposes
 `export_cxp_profile_catalog()`. If it wants the same profiles annotated with
 current runtime support, it can use `export_cxp_profile_support_catalog()`.
+That is enough to build simple test gates without coupling `mongoeco` to any
+particular runner or resource system.
 
 `mongoeco` does not ship a live CXP provider wrapper for its clients. Instead,
 it exposes the canonical catalog and projects the active capability path

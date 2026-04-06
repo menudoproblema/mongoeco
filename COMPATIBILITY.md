@@ -28,6 +28,8 @@ Regla importante:
   expone `export_cxp_profile_catalog()`, y si quieres ese mismo catálogo con
   soporte evaluado contra el runtime público actual, expone también
   `export_cxp_profile_support_catalog()`;
+* eso permite hacer gating simple de tests o recursos desde tooling externo,
+  sin que `mongoeco` tenga que negociar características ni resolver instancias;
 * esos perfiles se exportan con requisitos estructurados
   (`capabilityName`, `requiredOperations`, `requiredMetadataKeys`) y
   `explain()` deja visible tanto el perfil mínimo aplicable como sus

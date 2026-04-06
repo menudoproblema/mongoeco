@@ -145,12 +145,19 @@ the current public runtime surface, `mongoeco` also exposes:
 * `mongoeco.export_cxp_profile_support_catalog()`
 * `mongoeco.compat.export_cxp_profile_support_catalog()`
 
+That makes it possible to gate tests or resources without negotiating through
+`mongoeco` itself: a consumer can inspect `supported` and the validation
+messages for each reusable profile and decide whether to run or skip.
+
 The same requirement shape is now reused in `explain()["cxp"]` whenever
 `mongoeco` can infer a minimal reusable profile honestly, through:
 
 * `minimalProfile`
 * `minimalProfileRequirements`
 * `compatibleProfiles`
+* `compatibleProfileSupport`
+* `operationName`
+* `operationMetadata`
 
 `mongoeco` reexports those profiles through `mongoeco.cxp`, but does not
 perform profile negotiation itself.

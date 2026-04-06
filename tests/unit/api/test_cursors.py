@@ -250,6 +250,22 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             ["mongodb-core", "mongodb-platform"],
         )
         self.assertEqual(
+            async_cursor_module._find_explain_cxp_projection({"name": "Ada"})[
+                "operationName"
+            ],
+            "find",
+        )
+        self.assertTrue(
+            async_cursor_module._find_explain_cxp_projection({"name": "Ada"})[
+                "operationMetadata"
+            ]["acceptsSort"]
+        )
+        self.assertTrue(
+            async_cursor_module._find_explain_cxp_projection({"name": "Ada"})[
+                "compatibleProfileSupport"
+            ]["mongodb-core"]["supported"]
+        )
+        self.assertEqual(
             async_cursor_module._find_explain_cxp_projection(
                 {"$text": {"$search": "ada"}}
             )["minimalProfile"],
