@@ -27,8 +27,9 @@ Use them when you want to answer one of these questions quickly:
 
 * [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
   Local `$search` and `$vectorSearch`, including exact `phrase` versus
-  `phrase.slop`, numeric `near`, richer field mappings, plus title/body
-  `compound` with `equals` + `in` + `range` + `near` + `exists` + `regex`, and projected
+  `phrase.slop`, numeric `near`, richer field mappings including
+  `embeddedDocuments`, plus title/body and embedded-path `compound` with
+  `equals` + `in` + `range` + `near` + `exists` + `regex`, and projected
   `vectorSearchScore`.
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
   Public-facing `vectorSearch` diagnostics: compare `similarity`,

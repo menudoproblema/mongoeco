@@ -1087,6 +1087,76 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         expected_match='"ada" AND "wrote" AND "the" AND "first" AND "algorithm"',
                     )
 
+    def test_search_embedded_documents_mapping_keeps_parity_between_memory_and_sqlite(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.docs.get_collection("embedded_search")
+                    collection.insert_many(
+                        [
+                            {
+                                "_id": 1,
+                                "title": "Local search handbook",
+                                "contributors": [
+                                    {"name": "Ada Lovelace", "role": "author", "verified": True},
+                                    {"name": "Charles Babbage", "role": "editor", "verified": False},
+                                ],
+                            },
+                            {
+                                "_id": 2,
+                                "title": "Compiler reference",
+                                "contributors": [
+                                    {"name": "Grace Hopper", "role": "author", "verified": True},
+                                ],
+                            },
+                            {
+                                "_id": 3,
+                                "title": "Ada algorithms handbook",
+                                "contributors": [
+                                    {"name": "Ada Byron", "role": "author", "verified": True},
+                                ],
+                            },
+                        ]
+                    )
+                    collection.create_search_index(
+                        SearchIndexModel(
+                            {
+                                "mappings": {
+                                    "dynamic": False,
+                                    "fields": {
+                                        "title": {"type": "string"},
+                                        "contributors": {
+                                            "type": "embeddedDocuments",
+                                            "fields": {
+                                                "name": {"type": "string"},
+                                                "role": {"type": "token"},
+                                                "verified": {"type": "boolean"},
+                                            },
+                                        },
+                                    },
+                                }
+                            },
+                            name="by_text",
+                        )
+                    )
+
+                    hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "text": {
+                                        "query": "Ada",
+                                        "path": "contributors.name",
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in hits], [1, 3])
+
     def test_aggregate_explain_reports_pipeline_pushdown_summary(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

@@ -38,6 +38,10 @@ Pendientes:
   * `autocomplete`
   * `number`
   * `date`
+  * `boolean`
+  * `objectId`
+  * `uuid`
+  * `embeddedDocuments`
 * decidir si el backend ANN local actual de `vectorSearch`, ya con
   ampliacion adaptativa de candidatos antes del fallback exacto, es suficiente
   o si necesita una siguiente fase mas ambiciosa;
@@ -79,6 +83,17 @@ Pendientes:
 * revisar packaging y metadatos de distribución;
 * seguir endureciendo documentación pública de uso, alcance y posicionamiento;
 * decidir política de compatibilidad y de versiones;
+* seguir enriqueciendo la metadata pública por operación en CXP/compat,
+  especialmente en:
+  * `read`
+  * `write`
+  * `aggregation`
+* decidir si compensa publicar un adaptador CXP live opcional sobre `mongoeco`
+  ahora que:
+  * capabilities, operations y profiles ya salen del catálogo canónico
+  * existe proyección de telemetría del driver al vocabulario `db.client.*`
+  * y la responsabilidad de negotiation / lifecycle no tiene por qué vivir en
+    el runtime base;
 * decidir qué hacer con:
   * `benchmarks/`
   * `mongoeco-rs/`
@@ -110,6 +125,10 @@ Pendientes:
 * valorar si tiene sentido un SDK o contrato más explícito para backends terceros;
 * estudiar si un backend SQL adicional (`DuckDB`, `PostgreSQL`) compensa ahora que el contrato interno está más limpio;
 * evaluar si el runtime de driver debe seguir creciendo como producto propio o quedarse como soporte local suficiente.
+* valorar si el provider CXP live debe vivir:
+  * dentro de `mongoeco` como capa opcional muy separada
+  * en un paquete/adaptador externo
+  * o no existir mientras baste con catálogo, profiles y telemetría proyectada
 
 ## 6. Referencia futura: Rust
 

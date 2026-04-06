@@ -5,6 +5,7 @@ from copy import deepcopy
 import msgspec
 
 from cxp.capabilities import Capability, CapabilityMatrix, CapabilityMetadata
+from cxp.catalogs.base import CapabilityCatalog
 from mongoeco.compat._catalog_data import (
     OPERATION_OPTION_SUPPORT_CATALOG,
     SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS,
@@ -48,6 +49,8 @@ from mongoeco.cxp.catalogs.interfaces.database.mongodb import (
     MONGODB_WRITE,
 )
 from mongoeco.core.search import (
+    EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES,
+    STRUCTURED_SEARCH_FIELD_MAPPING_TYPES,
     SUPPORTED_SEARCH_FIELD_MAPPING_TYPES,
     TEXTUAL_SEARCH_FIELD_MAPPING_TYPES,
 )
@@ -67,7 +70,23 @@ __all__ = (
 def _operation_option_metadata(
     operation_name: str,
     *,
+    result_type: str | None = None,
+    collection_scoped: bool | None = None,
+    supports_collection_scope: bool | None = None,
+    supports_database_scope: bool | None = None,
+    supports_session: bool | None = None,
     supports_explain: bool = False,
+    accepts_filter: bool | None = None,
+    accepts_projection: bool | None = None,
+    accepts_field_path: bool | None = None,
+    accepts_document: bool | None = None,
+    accepts_documents: bool | None = None,
+    accepts_update_document: bool | None = None,
+    accepts_replacement_document: bool | None = None,
+    accepts_write_models: bool | None = None,
+    accepts_pipeline: bool | None = None,
+    supports_ordered_execution: bool | None = None,
+    supports_upsert: bool | None = None,
     extra_metadata: dict[str, object] | None = None,
 ) -> dict[str, object]:
     supported_options: list[str] = []
@@ -86,9 +105,61 @@ def _operation_option_metadata(
         'unsupportedOptions': sorted(unsupported_options),
         'supportsExplain': supports_explain,
     }
+    if result_type is not None:
+        metadata['resultType'] = result_type
+    if collection_scoped is not None:
+        metadata['collectionScoped'] = collection_scoped
+    if supports_collection_scope is not None:
+        metadata['supportsCollectionScope'] = supports_collection_scope
+    if supports_database_scope is not None:
+        metadata['supportsDatabaseScope'] = supports_database_scope
+    if supports_session is not None:
+        metadata['supportsSession'] = supports_session
+    if accepts_filter is not None:
+        metadata['acceptsFilter'] = accepts_filter
+    if accepts_projection is not None:
+        metadata['acceptsProjection'] = accepts_projection
+    if accepts_field_path is not None:
+        metadata['acceptsFieldPath'] = accepts_field_path
+    if accepts_document is not None:
+        metadata['acceptsDocument'] = accepts_document
+    if accepts_documents is not None:
+        metadata['acceptsDocuments'] = accepts_documents
+    if accepts_update_document is not None:
+        metadata['acceptsUpdateDocument'] = accepts_update_document
+    if accepts_replacement_document is not None:
+        metadata['acceptsReplacementDocument'] = accepts_replacement_document
+    if accepts_write_models is not None:
+        metadata['acceptsWriteModels'] = accepts_write_models
+    if accepts_pipeline is not None:
+        metadata['acceptsPipeline'] = accepts_pipeline
+    if supports_ordered_execution is not None:
+        metadata['supportsOrderedExecution'] = supports_ordered_execution
+    if supports_upsert is not None:
+        metadata['supportsUpsert'] = supports_upsert
     if extra_metadata:
         metadata.update(extra_metadata)
     return metadata
+
+
+def _catalog_operation_result_types(catalog: CapabilityCatalog) -> dict[str, str]:
+    operation_result_types: dict[str, str] = {}
+    for catalog_capability in catalog.capabilities:
+        for catalog_operation in catalog_capability.operations:
+            existing = operation_result_types.get(catalog_operation.name)
+            if existing is not None and existing != catalog_operation.result_type:
+                message = (
+                    'catalog operation result types must stay consistent '
+                    f"across capabilities for {catalog_operation.name!r}"
+                )
+                raise ValueError(message)
+            operation_result_types[catalog_operation.name] = (
+                catalog_operation.result_type
+            )
+    return operation_result_types
+
+
+_OPERATION_RESULT_TYPES = _catalog_operation_result_types(MONGODB_CATALOG)
 
 
 _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
@@ -101,16 +172,43 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
         'operationMetadata': {
             MONGODB_FIND: _operation_option_metadata(
                 MONGODB_FIND,
+                result_type=_OPERATION_RESULT_TYPES[MONGODB_FIND],
+                collection_scoped=True,
+                supports_session=True,
                 supports_explain=True,
+                accepts_filter=True,
+                accepts_projection=True,
             ),
-            MONGODB_FIND_ONE: _operation_option_metadata(MONGODB_FIND_ONE),
+            MONGODB_FIND_ONE: _operation_option_metadata(
+                MONGODB_FIND_ONE,
+                result_type=_OPERATION_RESULT_TYPES[MONGODB_FIND_ONE],
+                collection_scoped=True,
+                supports_session=True,
+                accepts_filter=True,
+                accepts_projection=True,
+            ),
             MONGODB_COUNT_DOCUMENTS: _operation_option_metadata(
                 MONGODB_COUNT_DOCUMENTS,
+                result_type=_OPERATION_RESULT_TYPES[MONGODB_COUNT_DOCUMENTS],
+                collection_scoped=True,
+                supports_session=True,
+                accepts_filter=True,
             ),
             MONGODB_ESTIMATED_DOCUMENT_COUNT: _operation_option_metadata(
                 MONGODB_ESTIMATED_DOCUMENT_COUNT,
+                result_type=_OPERATION_RESULT_TYPES[MONGODB_ESTIMATED_DOCUMENT_COUNT],
+                collection_scoped=True,
+                supports_session=True,
+                accepts_filter=False,
             ),
-            MONGODB_DISTINCT: _operation_option_metadata(MONGODB_DISTINCT),
+            MONGODB_DISTINCT: _operation_option_metadata(
+                MONGODB_DISTINCT,
+                result_type=_OPERATION_RESULT_TYPES[MONGODB_DISTINCT],
+                collection_scoped=True,
+                supports_session=True,
+                accepts_filter=True,
+                accepts_field_path=True,
+            ),
         },
     },
     MONGODB_WRITE: {
@@ -120,10 +218,29 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
         'updateOperators': sorted(SUPPORTED_UPDATE_OPERATORS),
         'supportsPipelineUpdate': True,
         'operationMetadata': {
-            MONGODB_INSERT_ONE: _operation_option_metadata(MONGODB_INSERT_ONE),
-            MONGODB_INSERT_MANY: _operation_option_metadata(MONGODB_INSERT_MANY),
+            MONGODB_INSERT_ONE: _operation_option_metadata(
+                MONGODB_INSERT_ONE,
+                result_type=_OPERATION_RESULT_TYPES[MONGODB_INSERT_ONE],
+                collection_scoped=True,
+                supports_session=True,
+                accepts_document=True,
+            ),
+            MONGODB_INSERT_MANY: _operation_option_metadata(
+                MONGODB_INSERT_MANY,
+                result_type=_OPERATION_RESULT_TYPES[MONGODB_INSERT_MANY],
+                collection_scoped=True,
+                supports_session=True,
+                accepts_documents=True,
+                supports_ordered_execution=True,
+            ),
             MONGODB_UPDATE_ONE: _operation_option_metadata(
                 MONGODB_UPDATE_ONE,
+                result_type=_OPERATION_RESULT_TYPES[MONGODB_UPDATE_ONE],
+                collection_scoped=True,
+                supports_session=True,
+                accepts_filter=True,
+                accepts_update_document=True,
+                supports_upsert=True,
                 extra_metadata={
                     'supportsPipelineUpdate': True,
                     'supportedUpdateOperators': sorted(SUPPORTED_UPDATE_OPERATORS),
@@ -131,6 +248,12 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
             ),
             MONGODB_UPDATE_MANY: _operation_option_metadata(
                 MONGODB_UPDATE_MANY,
+                result_type=_OPERATION_RESULT_TYPES[MONGODB_UPDATE_MANY],
+                collection_scoped=True,
+                supports_session=True,
+                accepts_filter=True,
+                accepts_update_document=True,
+                supports_upsert=True,
                 extra_metadata={
                     'supportsPipelineUpdate': True,
                     'supportedUpdateOperators': sorted(SUPPORTED_UPDATE_OPERATORS),
@@ -138,11 +261,36 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
             ),
             MONGODB_REPLACE_ONE: _operation_option_metadata(
                 MONGODB_REPLACE_ONE,
+                result_type=_OPERATION_RESULT_TYPES[MONGODB_REPLACE_ONE],
+                collection_scoped=True,
+                supports_session=True,
+                accepts_filter=True,
+                accepts_replacement_document=True,
+                supports_upsert=True,
                 extra_metadata={'supportsReplacementDocument': True},
             ),
-            MONGODB_DELETE_ONE: _operation_option_metadata(MONGODB_DELETE_ONE),
-            MONGODB_DELETE_MANY: _operation_option_metadata(MONGODB_DELETE_MANY),
-            MONGODB_BULK_WRITE: _operation_option_metadata(MONGODB_BULK_WRITE),
+            MONGODB_DELETE_ONE: _operation_option_metadata(
+                MONGODB_DELETE_ONE,
+                result_type=_OPERATION_RESULT_TYPES[MONGODB_DELETE_ONE],
+                collection_scoped=True,
+                supports_session=True,
+                accepts_filter=True,
+            ),
+            MONGODB_DELETE_MANY: _operation_option_metadata(
+                MONGODB_DELETE_MANY,
+                result_type=_OPERATION_RESULT_TYPES[MONGODB_DELETE_MANY],
+                collection_scoped=True,
+                supports_session=True,
+                accepts_filter=True,
+            ),
+            MONGODB_BULK_WRITE: _operation_option_metadata(
+                MONGODB_BULK_WRITE,
+                result_type=_OPERATION_RESULT_TYPES[MONGODB_BULK_WRITE],
+                collection_scoped=True,
+                supports_session=True,
+                accepts_write_models=True,
+                supports_ordered_execution=True,
+            ),
         },
     },
     MONGODB_AGGREGATION: {},
@@ -268,7 +416,12 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_AGGREGATION] = {
     'operationMetadata': {
         MONGODB_AGGREGATE: _operation_option_metadata(
             MONGODB_AGGREGATE,
+            result_type=_OPERATION_RESULT_TYPES[MONGODB_AGGREGATE],
+            supports_collection_scope=True,
+            supports_database_scope=True,
+            supports_session=True,
             supports_explain=True,
+            accepts_pipeline=True,
             extra_metadata={
                 'supportedStages': sorted(SUPPORTED_AGGREGATION_STAGES),
                 'supportedExpressionOperators': sorted(
@@ -280,6 +433,8 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_AGGREGATION] = {
                 'supportedWindowAccumulators': sorted(
                     SUPPORTED_WINDOW_ACCUMULATORS,
                 ),
+                'supportsLeadingSearchStage': True,
+                'supportsLeadingVectorSearchStage': True,
             },
         ),
     },
@@ -304,11 +459,9 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
         ),
     ),
     'fieldMappings': sorted(SUPPORTED_SEARCH_FIELD_MAPPING_TYPES),
+    'structuredFieldMappings': sorted(STRUCTURED_SEARCH_FIELD_MAPPING_TYPES),
     'textualFieldMappings': sorted(TEXTUAL_SEARCH_FIELD_MAPPING_TYPES),
-    'exactFilterFieldMappings': sorted(
-        SUPPORTED_SEARCH_FIELD_MAPPING_TYPES
-        - TEXTUAL_SEARCH_FIELD_MAPPING_TYPES
-    ),
+    'exactFilterFieldMappings': sorted(EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES),
     'sqliteBackends': [
         'fts5',
         'fts5-glob',
@@ -319,7 +472,12 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
     'operationMetadata': {
         MONGODB_AGGREGATE: _operation_option_metadata(
             MONGODB_AGGREGATE,
+            result_type=_OPERATION_RESULT_TYPES[MONGODB_AGGREGATE],
+            supports_collection_scope=True,
+            supports_database_scope=False,
+            supports_session=True,
             supports_explain=True,
+            accepts_pipeline=True,
             extra_metadata={
                 'aggregateStage': '$search',
                 'operators': [
@@ -335,6 +493,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
                     'compound',
                     'regex',
                 ],
+                'requiresLeadingStage': True,
             },
         ),
     },
@@ -356,10 +515,16 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_VECTOR_SEARCH] = {
     'operationMetadata': {
         MONGODB_AGGREGATE: _operation_option_metadata(
             MONGODB_AGGREGATE,
+            result_type=_OPERATION_RESULT_TYPES[MONGODB_AGGREGATE],
+            supports_collection_scope=True,
+            supports_database_scope=False,
+            supports_session=True,
             supports_explain=True,
+            accepts_pipeline=True,
             extra_metadata={
                 'aggregateStage': '$vectorSearch',
                 'similarities': ['cosine', 'dotProduct', 'euclidean'],
+                'requiresLeadingStage': True,
             },
         ),
     },

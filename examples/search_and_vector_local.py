@@ -80,6 +80,25 @@ def main() -> None:
             slop_explain["engine_plan"]["details"].get("postCandidateValidationRequired"),
         )
 
+        contributor_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "text": {
+                            "query": "Ada",
+                            "path": "contributors.name",
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "contributors": 1}},
+            ]
+        ).to_list()
+        print(
+            "$search embeddedDocuments contributor results:",
+            contributor_results,
+        )
+
         near_results = collection.aggregate(
             [
                 {

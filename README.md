@@ -85,6 +85,9 @@ well:
 
 For `search` and `vector_search`, `mongoeco` still binds the public operation
 `aggregate` and uses metadata to describe the supported stage-level subset.
+That metadata also carries operation-level hints such as result shape, scope,
+session support and core accepted inputs for `read`, `write` and
+`aggregation`.
 
 `mongoeco` does not ship a live CXP provider wrapper for its clients. Instead,
 it exposes the canonical catalog and projects the active capability path
@@ -260,7 +263,8 @@ Examples worth showing first:
   with the same `$search.phrase` behavior.
 * [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
   demonstrates exact `phrase` versus `phrase.slop`, numeric `near`, richer
-  local search field mappings, and a local `compound` query with
+  local search field mappings including embedded-document paths, and a local
+  `compound` query with
   `equals` + `in` + `range` + `near` + `exists` + `regex`.
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
   demonstrates how to read `similarity`, `numCandidates`, `minScore`,

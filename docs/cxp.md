@@ -90,6 +90,19 @@ This keeps the CXP model honest:
 * first-level operations keep their own option and subset metadata instead of
   pretending that every provider exposes the full MongoDB surface
 
+In practice, the per-operation metadata is now rich enough to drive tooling
+without guessing:
+
+* `read.operationMetadata.find` carries scope, result type, session support and
+  whether `filter` / `projection` are accepted;
+* `write.operationMetadata.update_one` and `update_many` expose pipeline-update
+  support, upsert support and the supported update operators;
+* `aggregation.operationMetadata.aggregate` carries scope, result type,
+  session support, accepted pipeline input and the supported stage/operator
+  subset;
+* `search.fieldMappings` now includes `embeddedDocuments`, making nested search
+  paths part of the public subset instead of an undocumented local trick.
+
 ## Reusable profiles
 
 The canonical `database/mongodb` catalog also exposes reusable profiles that

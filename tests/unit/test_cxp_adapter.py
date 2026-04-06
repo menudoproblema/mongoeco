@@ -1,4 +1,5 @@
 import unittest
+from types import SimpleNamespace
 
 import mongoeco.cxp as mongoeco_cxp
 import mongoeco.cxp.capabilities as cxp_capabilities_module
@@ -159,18 +160,45 @@ class CxpAlignmentTests(unittest.TestCase):
                 'find'
             ]['supportsExplain']
         )
+        self.assertEqual(
+            exported['capabilities']['read']['metadata']['operationMetadata'][
+                'find'
+            ]['resultType'],
+            'cursor',
+        )
+        self.assertTrue(
+            exported['capabilities']['read']['metadata']['operationMetadata'][
+                'find'
+            ]['acceptsProjection']
+        )
         self.assertTrue(
             exported['capabilities']['write']['metadata']['operationMetadata'][
                 'update_one'
             ]['supportsPipelineUpdate']
+        )
+        self.assertTrue(
+            exported['capabilities']['write']['metadata']['operationMetadata'][
+                'update_one'
+            ]['supportsUpsert']
+        )
+        self.assertTrue(
+            exported['capabilities']['aggregation']['metadata'][
+                'operationMetadata'
+            ]['aggregate']['supportsDatabaseScope']
         )
         self.assertIn(
             'fieldMappings',
             exported['capabilities']['search']['metadata'],
         )
         self.assertIn(
-            'boolean',
+            'embeddedDocuments',
             exported['capabilities']['search']['metadata']['fieldMappings'],
+        )
+        self.assertEqual(
+            exported['capabilities']['search']['metadata'][
+                'structuredFieldMappings'
+            ],
+            ['embeddedDocuments'],
         )
         self.assertEqual(
             exported['capabilities']['search']['metadata']['operationMetadata'][
@@ -189,6 +217,35 @@ class CxpAlignmentTests(unittest.TestCase):
         self.assertEqual(projection['provider'], 'mongoeco')
         self.assertEqual(projection['additionalCapabilities'], ['search'])
         self.assertEqual(projection['metadata'], {'mode': 'local'})
+
+    def test_catalog_operation_result_types_reject_inconsistent_catalog_entries(
+        self,
+    ) -> None:
+        conflicting_catalog = SimpleNamespace(
+            capabilities=(
+                SimpleNamespace(
+                    operations=(
+                        SimpleNamespace(name='aggregate', result_type='cursor'),
+                    ),
+                ),
+                SimpleNamespace(
+                    operations=(
+                        SimpleNamespace(
+                            name='aggregate',
+                            result_type='document',
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "catalog operation result types must stay consistent",
+        ):
+            cxp_capabilities_module._catalog_operation_result_types(
+                conflicting_catalog,
+            )
 
     def test_profiles_validate_snapshot_requirements_for_reusable_test_gates(
         self,

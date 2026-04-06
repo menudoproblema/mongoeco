@@ -21,6 +21,10 @@ LOCAL_SEARCH_DOCUMENTS = [
         "title": "Ada Lovelace notes",
         "kind": "note",
         "published": True,
+        "contributors": [
+            {"name": "Ada Lovelace", "role": "author", "verified": True},
+            {"name": "Charles Babbage", "role": "editor", "verified": False},
+        ],
         "ownerId": ObjectId("656565656565656565656561"),
         "externalUuid": uuid.UUID("11111111-1111-1111-1111-111111111111"),
         "score": 10,
@@ -33,6 +37,9 @@ LOCAL_SEARCH_DOCUMENTS = [
         "title": "Compiler reference",
         "kind": "reference",
         "published": False,
+        "contributors": [
+            {"name": "Grace Hopper", "role": "author", "verified": True},
+        ],
         "ownerId": ObjectId("656565656565656565656562"),
         "externalUuid": uuid.UUID("22222222-2222-2222-2222-222222222222"),
         "score": 7,
@@ -44,6 +51,10 @@ LOCAL_SEARCH_DOCUMENTS = [
         "title": "Ada algorithms handbook",
         "kind": "note",
         "published": True,
+        "contributors": [
+            {"name": "Ada Byron", "role": "author", "verified": True},
+            {"name": "Compiler Team", "role": "reviewer", "verified": False},
+        ],
         "ownerId": ObjectId("656565656565656565656563"),
         "externalUuid": uuid.UUID("33333333-3333-3333-3333-333333333333"),
         "score": 9,
@@ -110,6 +121,14 @@ def build_content_search_index(name: str = "content_search") -> SearchIndexModel
                     "body": {"type": "string"},
                     "kind": {"type": "token"},
                     "published": {"type": "boolean"},
+                    "contributors": {
+                        "type": "embeddedDocuments",
+                        "fields": {
+                            "name": {"type": "string"},
+                            "role": {"type": "token"},
+                            "verified": {"type": "boolean"},
+                        },
+                    },
                     "ownerId": {"type": "objectId"},
                     "externalUuid": {"type": "uuid"},
                     "score": {"type": "number"},

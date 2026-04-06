@@ -171,6 +171,30 @@ class CompatResolutionTests(unittest.TestCase):
 
         self.assertEqual(export_full_compat_catalog_markdown(), expected)
 
+    def test_exported_cxp_catalog_includes_richer_operation_metadata_and_search_mappings(self):
+        catalog = export_cxp_catalog()
+
+        self.assertEqual(
+            catalog["capabilities"]["read"]["metadata"]["operationMetadata"][
+                "find"
+            ]["resultType"],
+            "cursor",
+        )
+        self.assertTrue(
+            catalog["capabilities"]["write"]["metadata"]["operationMetadata"][
+                "update_one"
+            ]["supportsUpsert"]
+        )
+        self.assertTrue(
+            catalog["capabilities"]["aggregation"]["metadata"][
+                "operationMetadata"
+            ]["aggregate"]["supportsCollectionScope"]
+        )
+        self.assertIn(
+            "embeddedDocuments",
+            catalog["capabilities"]["search"]["metadata"]["fieldMappings"],
+        )
+
     def test_catalog_is_exposed_as_immutable_global_data(self):
         self.assertIsInstance(MONGODB_DIALECTS, MappingProxyType)
         self.assertIsInstance(MONGODB_DIALECT_ALIASES, MappingProxyType)

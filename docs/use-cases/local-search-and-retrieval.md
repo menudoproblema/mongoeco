@@ -56,12 +56,15 @@ Local search index mappings now accept:
 * textual fields: `string`, `autocomplete`, `token`
 * scalar fields for exact/range-style matching: `number`, `date`, `boolean`,
   `objectId`, `uuid`
+* structured arrays of nested documents with `embeddedDocuments`
 
 That keeps the product story honest:
 
 * textual operators stay tied to textual mappings;
 * scalar operators such as `equals`, `in`, `range` and `near` can target
   explicitly declared local scalar fields.
+* nested textual paths can still be made explicit without pretending every
+  array/document shape is auto-indexed.
 
 ## Minimal Recipe
 
@@ -98,6 +101,7 @@ with MongoClient(SQLiteEngine("search.db")) as client:
 These examples show:
 
 * exact `phrase` versus `phrase.slop`;
+* `embeddedDocuments` mappings for paths such as `contributors.name`;
 * `near` over numeric fields with visible ranking metadata;
 * `compound` with `phrase`, `equals`, `in`, `range`, `near`, `exists` and `regex`;
 * public vector diagnostics such as `similarity`, `numCandidates`,

@@ -2078,6 +2078,31 @@ class SearchCoreTests(unittest.TestCase):
             nested["mappings"]["fields"]["nested"]["fields"]["title"]["type"],
             "string",
         )
+        embedded = validate_search_index_definition(
+            {
+                "mappings": {
+                    "fields": {
+                        "contributors": {
+                            "type": "embeddedDocuments",
+                            "fields": {
+                                "name": {"type": "string"},
+                                "role": {"type": "token"},
+                                "verified": {"type": "boolean"},
+                            },
+                        }
+                    }
+                }
+            },
+            index_type="search",
+        )
+        self.assertEqual(
+            embedded["mappings"]["fields"]["contributors"]["type"],
+            "embeddedDocuments",
+        )
+        self.assertEqual(
+            embedded["mappings"]["fields"]["contributors"]["fields"]["name"]["type"],
+            "string",
+        )
         with self.assertRaises(OperationFailure):
             validate_search_index_definition(
                 {"mappings": {"fields": {"nested": {"type": "document", "fields": {"title": {"type": "string"}}}}}},
@@ -2086,6 +2111,20 @@ class SearchCoreTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             validate_search_index_definition(
                 {"mappings": {"fields": {"flag": {"type": "decimal"}}}},
+                index_type="search",
+            )
+        with self.assertRaises(OperationFailure):
+            validate_search_index_definition(
+                {
+                    "mappings": {
+                        "fields": {
+                            "contributors": {
+                                "type": "embeddedDocuments",
+                                "fields": [],
+                            }
+                        }
+                    }
+                },
                 index_type="search",
             )
 
@@ -2504,6 +2543,65 @@ class SearchCoreTests(unittest.TestCase):
         prepared = materialize_search_document(document, definition)
         self.assertEqual(prepared.entries, (("title", "Ada Algorithms"),))
         self.assertEqual(prepared.searchable_paths, frozenset({"title"}))
+
+    def test_materialized_search_document_supports_embedded_documents_paths(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "string"},
+                        "contributors": {
+                            "type": "embeddedDocuments",
+                            "fields": {
+                                "name": {"type": "string"},
+                                "role": {"type": "token"},
+                                "verified": {"type": "boolean"},
+                            },
+                        },
+                    },
+                }
+            },
+            name="by_text",
+        )
+        document = {
+            "title": "Local search handbook",
+            "contributors": [
+                {"name": "Ada Lovelace", "role": "author", "verified": True},
+                {"name": "Charles Babbage", "role": "editor", "verified": False},
+                "ignored",
+            ],
+        }
+
+        prepared = materialize_search_document(document, definition)
+
+        self.assertEqual(
+            prepared.entries,
+            (
+                ("title", "Local search handbook"),
+                ("contributors.name", "Ada Lovelace"),
+                ("contributors.role", "author"),
+                ("contributors.name", "Charles Babbage"),
+                ("contributors.role", "editor"),
+            ),
+        )
+        self.assertEqual(
+            prepared.searchable_paths,
+            frozenset({"title", "contributors.name", "contributors.role"}),
+        )
+        self.assertTrue(
+            matches_search_text_query(
+                document,
+                definition=definition,
+                query=SearchTextQuery(
+                    index_name="by_text",
+                    raw_query="Ada",
+                    terms=("ada",),
+                    paths=("contributors.name",),
+                ),
+                materialized=prepared,
+            )
+        )
 
     def test_search_compound_ranking_prefers_more_should_hits_and_near_closeness(self) -> None:
         definition = SearchIndexDefinition(

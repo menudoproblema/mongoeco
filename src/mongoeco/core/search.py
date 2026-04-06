@@ -26,11 +26,9 @@ TEXT_SCORE_FIELD = "__mongoeco_textScore__"
 VECTOR_SEARCH_SCORE_FIELD = "__mongoeco_vectorSearchScore__"
 SEARCH_RESULT_METADATA_FIELDS = frozenset({TEXT_SCORE_FIELD, VECTOR_SEARCH_SCORE_FIELD})
 _TEXT_TOKEN_RE = re.compile(r"\w+", re.UNICODE)
-SUPPORTED_SEARCH_FIELD_MAPPING_TYPES = frozenset(
+TEXTUAL_SEARCH_FIELD_MAPPING_TYPES = frozenset({"string", "autocomplete", "token"})
+EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES = frozenset(
     {
-        "string",
-        "autocomplete",
-        "token",
         "number",
         "date",
         "boolean",
@@ -38,7 +36,12 @@ SUPPORTED_SEARCH_FIELD_MAPPING_TYPES = frozenset(
         "uuid",
     }
 )
-TEXTUAL_SEARCH_FIELD_MAPPING_TYPES = frozenset({"string", "autocomplete", "token"})
+STRUCTURED_SEARCH_FIELD_MAPPING_TYPES = frozenset({"embeddedDocuments"})
+SUPPORTED_SEARCH_FIELD_MAPPING_TYPES = frozenset(
+    TEXTUAL_SEARCH_FIELD_MAPPING_TYPES
+    | EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES
+    | STRUCTURED_SEARCH_FIELD_MAPPING_TYPES
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1512,6 +1515,12 @@ def _validate_field_mapping(field_spec: Document) -> None:
     if mapping_type == "document":
         _validate_mappings_document(field_spec)
         return
+    if mapping_type == "embeddedDocuments":
+        nested_mapping = {
+            key: value for key, value in field_spec.items() if key != "type"
+        }
+        _validate_mappings_document(nested_mapping)
+        return
     if mapping_type not in SUPPORTED_SEARCH_FIELD_MAPPING_TYPES:
         raise OperationFailure(f"unsupported local search field mapping type: {mapping_type}")
     unsupported = set(field_spec) - {"type", "analyzer", "searchAnalyzer"}
@@ -1864,6 +1873,18 @@ def _collect_entries_from_mapping(document: object, mappings: Document, prefix: 
         mapping_type = field_spec.get("type", "document")
         if mapping_type == "document":
             entries.extend(_collect_entries_from_mapping(value, field_spec, prefix=path))
+            continue
+        if mapping_type == "embeddedDocuments":
+            if isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        entries.extend(
+                            _collect_entries_from_mapping(
+                                item,
+                                field_spec,
+                                prefix=path,
+                            )
+                        )
             continue
         if mapping_type not in TEXTUAL_SEARCH_FIELD_MAPPING_TYPES:
             continue

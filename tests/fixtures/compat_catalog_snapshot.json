@@ -10,6 +10,8 @@
           "operationMetadata": {
             "aggregate": {
               "acceptedNoopOptions": [],
+              "acceptsPipeline": true,
+              "resultType": "cursor",
               "supportedExpressionOperators": [
                 "$abs",
                 "$add",
@@ -229,7 +231,12 @@
                 "$top",
                 "$topN"
               ],
+              "supportsCollectionScope": true,
+              "supportsDatabaseScope": true,
               "supportsExplain": true,
+              "supportsLeadingSearchStage": true,
+              "supportsLeadingVectorSearchStage": true,
+              "supportsSession": true,
               "unsupportedOptions": []
             }
           },
@@ -516,35 +523,52 @@
           "operationMetadata": {
             "count_documents": {
               "acceptedNoopOptions": [],
+              "acceptsFilter": true,
+              "collectionScoped": true,
+              "resultType": "count",
               "supportedOptions": [
                 "comment",
                 "hint",
                 "max_time_ms"
               ],
               "supportsExplain": false,
+              "supportsSession": true,
               "unsupportedOptions": []
             },
             "distinct": {
               "acceptedNoopOptions": [],
+              "acceptsFieldPath": true,
+              "acceptsFilter": true,
+              "collectionScoped": true,
+              "resultType": "array",
               "supportedOptions": [
                 "comment",
                 "hint",
                 "max_time_ms"
               ],
               "supportsExplain": false,
+              "supportsSession": true,
               "unsupportedOptions": []
             },
             "estimated_document_count": {
               "acceptedNoopOptions": [],
+              "acceptsFilter": false,
+              "collectionScoped": true,
+              "resultType": "count",
               "supportedOptions": [
                 "comment",
                 "max_time_ms"
               ],
               "supportsExplain": false,
+              "supportsSession": true,
               "unsupportedOptions": []
             },
             "find": {
               "acceptedNoopOptions": [],
+              "acceptsFilter": true,
+              "acceptsProjection": true,
+              "collectionScoped": true,
+              "resultType": "cursor",
               "supportedOptions": [
                 "batch_size",
                 "comment",
@@ -552,12 +576,18 @@
                 "max_time_ms"
               ],
               "supportsExplain": true,
+              "supportsSession": true,
               "unsupportedOptions": []
             },
             "find_one": {
               "acceptedNoopOptions": [],
+              "acceptsFilter": true,
+              "acceptsProjection": true,
+              "collectionScoped": true,
+              "resultType": "document",
               "supportedOptions": [],
               "supportsExplain": false,
+              "supportsSession": true,
               "unsupportedOptions": []
             }
           },
@@ -648,6 +678,7 @@
             "autocomplete",
             "boolean",
             "date",
+            "embeddedDocuments",
             "number",
             "objectId",
             "string",
@@ -658,6 +689,7 @@
           "operationMetadata": {
             "aggregate": {
               "acceptedNoopOptions": [],
+              "acceptsPipeline": true,
               "aggregateStage": "$search",
               "operators": [
                 "text",
@@ -672,6 +704,8 @@
                 "compound",
                 "regex"
               ],
+              "requiresLeadingStage": true,
+              "resultType": "cursor",
               "supportedOptions": [
                 "allow_disk_use",
                 "batch_size",
@@ -680,7 +714,10 @@
                 "let",
                 "max_time_ms"
               ],
+              "supportsCollectionScope": true,
+              "supportsDatabaseScope": false,
               "supportsExplain": true,
+              "supportsSession": true,
               "unsupportedOptions": []
             }
           },
@@ -703,6 +740,9 @@
             "fts5-path",
             "fts5-prefilter",
             "python"
+          ],
+          "structuredFieldMappings": [
+            "embeddedDocuments"
           ],
           "textualFieldMappings": [
             "autocomplete",
@@ -773,7 +813,10 @@
           "operationMetadata": {
             "aggregate": {
               "acceptedNoopOptions": [],
+              "acceptsPipeline": true,
               "aggregateStage": "$vectorSearch",
+              "requiresLeadingStage": true,
+              "resultType": "cursor",
               "similarities": [
                 "cosine",
                 "dotProduct",
@@ -787,7 +830,10 @@
                 "let",
                 "max_time_ms"
               ],
+              "supportsCollectionScope": true,
+              "supportsDatabaseScope": false,
               "supportsExplain": true,
+              "supportsSession": true,
               "unsupportedOptions": []
             }
           },
@@ -816,47 +862,73 @@
           "operationMetadata": {
             "bulk_write": {
               "acceptedNoopOptions": [],
+              "acceptsWriteModels": true,
+              "collectionScoped": true,
+              "resultType": "bulk_write_result",
               "supportedOptions": [
                 "comment",
                 "let"
               ],
               "supportsExplain": false,
+              "supportsOrderedExecution": true,
+              "supportsSession": true,
               "unsupportedOptions": []
             },
             "delete_many": {
               "acceptedNoopOptions": [],
+              "acceptsFilter": true,
+              "collectionScoped": true,
+              "resultType": "delete_result",
               "supportedOptions": [
                 "comment",
                 "hint",
                 "let"
               ],
               "supportsExplain": false,
+              "supportsSession": true,
               "unsupportedOptions": []
             },
             "delete_one": {
               "acceptedNoopOptions": [],
+              "acceptsFilter": true,
+              "collectionScoped": true,
+              "resultType": "delete_result",
               "supportedOptions": [
                 "comment",
                 "hint",
                 "let"
               ],
               "supportsExplain": false,
+              "supportsSession": true,
               "unsupportedOptions": []
             },
             "insert_many": {
               "acceptedNoopOptions": [],
+              "acceptsDocuments": true,
+              "collectionScoped": true,
+              "resultType": "insert_many_result",
               "supportedOptions": [],
               "supportsExplain": false,
+              "supportsOrderedExecution": true,
+              "supportsSession": true,
               "unsupportedOptions": []
             },
             "insert_one": {
               "acceptedNoopOptions": [],
+              "acceptsDocument": true,
+              "collectionScoped": true,
+              "resultType": "insert_result",
               "supportedOptions": [],
               "supportsExplain": false,
+              "supportsSession": true,
               "unsupportedOptions": []
             },
             "replace_one": {
               "acceptedNoopOptions": [],
+              "acceptsFilter": true,
+              "acceptsReplacementDocument": true,
+              "collectionScoped": true,
+              "resultType": "update_result",
               "supportedOptions": [
                 "comment",
                 "hint",
@@ -865,10 +937,16 @@
               ],
               "supportsExplain": false,
               "supportsReplacementDocument": true,
+              "supportsSession": true,
+              "supportsUpsert": true,
               "unsupportedOptions": []
             },
             "update_many": {
               "acceptedNoopOptions": [],
+              "acceptsFilter": true,
+              "acceptsUpdateDocument": true,
+              "collectionScoped": true,
+              "resultType": "update_result",
               "supportedOptions": [
                 "array_filters",
                 "comment",
@@ -894,10 +972,16 @@
               ],
               "supportsExplain": false,
               "supportsPipelineUpdate": true,
+              "supportsSession": true,
+              "supportsUpsert": true,
               "unsupportedOptions": []
             },
             "update_one": {
               "acceptedNoopOptions": [],
+              "acceptsFilter": true,
+              "acceptsUpdateDocument": true,
+              "collectionScoped": true,
+              "resultType": "update_result",
               "supportedOptions": [
                 "array_filters",
                 "comment",
@@ -924,6 +1008,8 @@
               ],
               "supportsExplain": false,
               "supportsPipelineUpdate": true,
+              "supportsSession": true,
+              "supportsUpsert": true,
               "unsupportedOptions": []
             }
           },
@@ -1803,6 +1889,7 @@
         "autocomplete",
         "boolean",
         "date",
+        "embeddedDocuments",
         "number",
         "objectId",
         "string",
@@ -1813,6 +1900,7 @@
       "operationMetadata": {
         "aggregate": {
           "acceptedNoopOptions": [],
+          "acceptsPipeline": true,
           "aggregateStage": "$search",
           "operators": [
             "text",
@@ -1827,6 +1915,8 @@
             "compound",
             "regex"
           ],
+          "requiresLeadingStage": true,
+          "resultType": "cursor",
           "supportedOptions": [
             "allow_disk_use",
             "batch_size",
@@ -1835,7 +1925,10 @@
             "let",
             "max_time_ms"
           ],
+          "supportsCollectionScope": true,
+          "supportsDatabaseScope": false,
           "supportsExplain": true,
+          "supportsSession": true,
           "unsupportedOptions": []
         }
       },
@@ -1859,6 +1952,9 @@
         "fts5-prefilter",
         "python"
       ],
+      "structuredFieldMappings": [
+        "embeddedDocuments"
+      ],
       "textualFieldMappings": [
         "autocomplete",
         "string",
@@ -1875,7 +1971,10 @@
       "operationMetadata": {
         "aggregate": {
           "acceptedNoopOptions": [],
+          "acceptsPipeline": true,
           "aggregateStage": "$vectorSearch",
+          "requiresLeadingStage": true,
+          "resultType": "cursor",
           "similarities": [
             "cosine",
             "dotProduct",
@@ -1889,7 +1988,10 @@
             "let",
             "max_time_ms"
           ],
+          "supportsCollectionScope": true,
+          "supportsDatabaseScope": false,
           "supportsExplain": true,
+          "supportsSession": true,
           "unsupportedOptions": []
         }
       },
