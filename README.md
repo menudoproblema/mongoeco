@@ -284,9 +284,9 @@ Examples worth showing first:
   demonstrates exact `phrase` versus `phrase.slop`, numeric `near`, richer
   local search field mappings including explicit `document` and
   `embeddedDocuments` paths, parent-path resolution for `metadata` and
-  `contributors`, numeric/date `near`, scalar filters over embedded-document
-  paths, and a local `compound` query with visible
-  embedded path/ranking explain metadata plus
+  `contributors`, numeric/date `near`, parent-path `exists` over structured
+  mappings, scalar filters over embedded-document paths, and a local
+  `compound` query with visible embedded path/ranking explain metadata plus
   `equals` + `in` + `range` + `near` + `exists` + `regex`.
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
   demonstrates how to read `similarity`, `numCandidates`, `minScore`,

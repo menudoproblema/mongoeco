@@ -197,6 +197,42 @@ def main() -> None:
             nested_document_parent_results,
         )
 
+        nested_document_exists_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "exists": {
+                            "path": "metadata",
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "metadata": 1}},
+            ]
+        ).to_list()
+        print(
+            "$search document parent-path exists results:",
+            nested_document_exists_results,
+        )
+
+        embedded_exists_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "exists": {
+                            "path": "contributors",
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "contributors": 1}},
+            ]
+        ).to_list()
+        print(
+            "$search embeddedDocuments parent-path exists results:",
+            embedded_exists_results,
+        )
+
         near_results = collection.aggregate(
             [
                 {

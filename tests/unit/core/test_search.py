@@ -2490,12 +2490,41 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(exists_details["queryOperator"], "exists")
         self.assertEqual(exists_details["paths"], ["title"])
+        self.assertEqual(
+            exists_details["pathSummary"],
+            {
+                "all": ["title"],
+                "pathCount": 1,
+                "multiPath": False,
+                "usesEmbeddedPaths": False,
+                "embeddedPaths": [],
+                "parentPaths": ["title"],
+                "leafPaths": [],
+            },
+        )
+        self.assertIsNone(
+            search_query_explain_details(
+                SearchExistsQuery(index_name="by_text", paths=None)
+            )["pathSummary"]
+        )
         regex_details = search_query_explain_details(
             SearchRegexQuery(index_name="by_text", raw_query="Ada.*algorithm", paths=("body",))
         )
         self.assertEqual(regex_details["queryOperator"], "regex")
         self.assertEqual(regex_details["query"], "Ada.*algorithm")
         self.assertEqual(regex_details["paths"], ["body"])
+        self.assertEqual(
+            regex_details["pathSummary"],
+            {
+                "all": ["body"],
+                "pathCount": 1,
+                "multiPath": False,
+                "usesEmbeddedPaths": False,
+                "embeddedPaths": [],
+                "parentPaths": ["body"],
+                "leafPaths": [],
+            },
+        )
         near_details = search_query_explain_details(
             SearchNearQuery(
                 index_name="by_text",
@@ -2530,6 +2559,43 @@ class SearchCoreTests(unittest.TestCase):
                 "baselineScore": 1.0,
                 "maxScore": 2.0,
                 "pivot": 5.0,
+            },
+        )
+
+    def test_search_query_explain_details_report_parent_and_embedded_paths_for_text_like_and_exists(self) -> None:
+        text_details = search_query_explain_details(
+            SearchTextQuery(
+                index_name="by_text",
+                raw_query="Ada",
+                terms=("ada",),
+                paths=("contributors", "metadata.topic"),
+            )
+        )
+        self.assertEqual(
+            text_details["pathSummary"],
+            {
+                "all": ["contributors", "metadata.topic"],
+                "pathCount": 2,
+                "multiPath": True,
+                "usesEmbeddedPaths": True,
+                "embeddedPaths": ["metadata.topic"],
+                "parentPaths": ["contributors"],
+                "leafPaths": ["metadata.topic"],
+            },
+        )
+        exists_details = search_query_explain_details(
+            SearchExistsQuery(index_name="by_text", paths=("metadata", "contributors.verified"))
+        )
+        self.assertEqual(
+            exists_details["pathSummary"],
+            {
+                "all": ["metadata", "contributors.verified"],
+                "pathCount": 2,
+                "multiPath": True,
+                "usesEmbeddedPaths": True,
+                "embeddedPaths": ["contributors.verified"],
+                "parentPaths": ["metadata"],
+                "leafPaths": ["contributors.verified"],
             },
         )
         richer_compound = search_query_explain_details(

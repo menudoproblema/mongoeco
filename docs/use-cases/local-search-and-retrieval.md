@@ -105,6 +105,8 @@ These examples show:
 * `embeddedDocuments` mappings for paths such as `contributors.name`;
 * parent-path resolution for structured mappings such as `contributors` or
   `metadata`, which resolve to mapped descendant leaf fields;
+* parent-path `exists` checks over structured mappings such as `contributors`
+  or `metadata`;
 * scalar operators over `embeddedDocuments` paths such as
   `contributors.verified` or `contributors.impact`;
 * explicit `document` mappings for paths such as `metadata.topic`;

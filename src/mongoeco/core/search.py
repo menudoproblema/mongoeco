@@ -1558,9 +1558,10 @@ def _validate_field_mapping(field_spec: Document) -> None:
 
 
 def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery) -> dict[str, object | None]:
+    paths = list(query.paths) if query.paths is not None else None
     return {
         "query": query.raw_query,
-        "paths": list(query.paths) if query.paths is not None else None,
+        "paths": paths,
         "slop": query.slop if isinstance(query, SearchPhraseQuery) else None,
         "compound": None,
         "value": None,
@@ -1574,6 +1575,7 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
         "numCandidates": None,
         "filter": None,
         "similarity": None,
+        "pathSummary": _search_path_summary(paths),
     }
 
 
@@ -1647,9 +1649,10 @@ def _find_phrase_term_index(
 
 
 def _explain_exists_query(query: SearchExistsQuery) -> dict[str, object | None]:
+    paths = list(query.paths) if query.paths is not None else None
     return {
         "query": None,
-        "paths": list(query.paths) if query.paths is not None else None,
+        "paths": paths,
         "compound": None,
         "value": None,
         "range": None,
@@ -1662,6 +1665,7 @@ def _explain_exists_query(query: SearchExistsQuery) -> dict[str, object | None]:
         "numCandidates": None,
         "filter": None,
         "similarity": None,
+        "pathSummary": _search_path_summary(paths),
     }
 
 
@@ -1930,6 +1934,23 @@ def _query_paths(query: SearchTextLikeQuery) -> tuple[str, ...]:
                 collected.extend(_query_paths(clause))
         return tuple(dict.fromkeys(collected))
     return ()
+
+
+def _search_path_summary(paths: list[str] | None) -> dict[str, object] | None:
+    if paths is None:
+        return None
+    embedded_paths = [path for path in paths if "." in path]
+    parent_paths = [path for path in paths if "." not in path]
+    leaf_paths = [path for path in paths if "." in path]
+    return {
+        "all": list(paths),
+        "pathCount": len(paths),
+        "multiPath": len(paths) > 1,
+        "usesEmbeddedPaths": bool(embedded_paths),
+        "embeddedPaths": embedded_paths,
+        "parentPaths": parent_paths,
+        "leafPaths": leaf_paths,
+    }
 
 
 def _count_nested_compounds(query: SearchCompoundQuery) -> int:

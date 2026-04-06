@@ -1202,6 +1202,25 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     ).to_list()
                     self.assertEqual([document["_id"] for document in parent_hits], [1, 3])
 
+                    parent_exists_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "exists": {
+                                        "path": "contributors",
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual(
+                        [document["_id"] for document in parent_exists_hits],
+                        [1, 2, 3],
+                    )
+
                     equals_hits = collection.aggregate(
                         [
                             {
@@ -1414,6 +1433,25 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ]
                     ).to_list()
                     self.assertEqual([document["_id"] for document in parent_topic_hits], [1])
+
+                    parent_exists_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "exists": {
+                                        "path": "metadata",
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual(
+                        [document["_id"] for document in parent_exists_hits],
+                        [1, 2, 3],
+                    )
 
                     near_hits = collection.aggregate(
                         [
