@@ -121,6 +121,10 @@ internals. It centers on:
 Lower-level driver/runtime details remain available from subpackages such as
 `mongoeco.driver`, `mongoeco.compat` and `mongoeco.cxp`.
 
+`mongoeco.compat` follows the same idea: the top-level package keeps the
+catalog exports, profile resolution helpers and option-support surface, while
+more tactical constants and raw catalog data stay in explicit submodules.
+
 `mongoeco` does not ship a live CXP provider wrapper for its clients. Instead,
 it exposes the canonical catalog and projects the active capability path
 through `compat` and `explain()`. External systems can wrap `mongoeco` if they

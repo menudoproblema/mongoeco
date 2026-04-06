@@ -67,7 +67,7 @@ from mongoeco.compat.registry import (
     STRICT_AUTO_INSTALLED_PYMONGO_PROFILE,
 )
 
-__all__ = [
+_DIALECT_EXPORTS = (
     'MongoDialect',
     'MONGODB_DIALECT_HOOK_NAMES',
     'MONGODB_DIALECT_70',
@@ -80,7 +80,14 @@ __all__ = [
     'MongoDialect70',
     'MongoDialect80',
     'MongoBehaviorPolicySpec',
-    'MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED',
+    'SUPPORTED_MONGODB_MAJORS',
+    'DEFAULT_MONGODB_DIALECT',
+    'MongoDialectResolution',
+    'resolve_mongodb_dialect',
+    'resolve_mongodb_dialect_resolution',
+)
+
+_PROFILE_EXPORTS = (
     'PyMongoProfile',
     'PYMONGO_PROFILE_HOOK_NAMES',
     'PYMONGO_PROFILE_49',
@@ -90,42 +97,46 @@ __all__ = [
     'PYMONGO_PROFILE_ALIASES',
     'PYMONGO_PROFILE_CAPABILITIES',
     'PYMONGO_PROFILE_BEHAVIOR_FLAGS',
-    'PYMONGO_CAP_UPDATE_ONE_SORT',
     'PyMongoProfile49',
     'PyMongoProfile411',
     'PyMongoProfile413',
-    'SUPPORTED_MONGODB_MAJORS',
     'SUPPORTED_PYMONGO_MAJORS',
-    'DEFAULT_MONGODB_DIALECT',
     'DEFAULT_PYMONGO_PROFILE',
     'AUTO_INSTALLED_PYMONGO_PROFILE',
     'STRICT_AUTO_INSTALLED_PYMONGO_PROFILE',
-    'MongoDialectResolution',
+    'PyMongoProfileResolution',
+    'resolve_pymongo_profile',
+    'resolve_pymongo_profile_resolution',
+    'detect_installed_pymongo_profile',
+    'detect_installed_pymongo_profile_resolution',
+)
+
+_OPTION_EXPORTS = (
     'OptionSupportStatus',
     'OperationOptionSupport',
     'OPERATION_OPTION_SUPPORT',
+    'UNSUPPORTED_OPERATION_OPTION',
+    'get_operation_option_support',
+    'is_operation_option_effective',
+    'export_operation_option_catalog',
+)
+
+_CATALOG_EXPORTS = (
     'export_mongodb_dialect_catalog',
     'export_pymongo_profile_catalog',
-    'export_operation_option_catalog',
     'export_database_command_catalog',
     'export_database_command_option_catalog',
     'export_cxp_catalog',
     'export_cxp_operation_catalog',
     'export_cxp_profile_catalog',
     'export_cxp_profile_support_catalog',
-    'export_local_runtime_subset_catalog',
     'export_full_compat_catalog',
     'export_full_compat_catalog_markdown',
-    'DATABASE_COMMAND_SUPPORT_CATALOG',
-    'DATABASE_COMMAND_OPTION_SUPPORT_CATALOG',
-    'UNSUPPORTED_OPERATION_OPTION',
-    'get_operation_option_support',
-    'is_operation_option_effective',
-    'resolve_mongodb_dialect',
-    'resolve_mongodb_dialect_resolution',
-    'resolve_pymongo_profile',
-    'resolve_pymongo_profile_resolution',
-    'detect_installed_pymongo_profile',
-    'detect_installed_pymongo_profile_resolution',
-    'PyMongoProfileResolution',
+)
+
+__all__ = [
+    *_DIALECT_EXPORTS,
+    *_PROFILE_EXPORTS,
+    *_OPTION_EXPORTS,
+    *_CATALOG_EXPORTS,
 ]

@@ -77,3 +77,14 @@ class PublicExportsTests(unittest.TestCase):
         self.assertEqual(sync_api.ListingCursor.__name__, "ListingCursor")
         self.assertEqual(sync_api.SearchIndexCursor.__name__, "SearchIndexCursor")
         self.assertEqual(sync_api.RawBatchCursor.__name__, "RawBatchCursor")
+
+    def test_compat_package_keeps_a_curated_public_surface(self):
+        import mongoeco.compat as compat_module
+
+        self.assertIn("export_cxp_catalog", compat_module.__all__)
+        self.assertIn("export_full_compat_catalog", compat_module.__all__)
+        self.assertNotIn("export_local_runtime_subset_catalog", compat_module.__all__)
+        self.assertNotIn("DATABASE_COMMAND_SUPPORT_CATALOG", compat_module.__all__)
+        self.assertNotIn("DATABASE_COMMAND_OPTION_SUPPORT_CATALOG", compat_module.__all__)
+        self.assertNotIn("MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED", compat_module.__all__)
+        self.assertNotIn("PYMONGO_CAP_UPDATE_ONE_SORT", compat_module.__all__)
