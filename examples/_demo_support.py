@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import datetime
 from pathlib import Path
 import time
 import uuid
@@ -21,6 +22,11 @@ LOCAL_SEARCH_DOCUMENTS = [
         "title": "Ada Lovelace notes",
         "kind": "note",
         "published": True,
+        "metadata": {
+            "topic": "Local search",
+            "series": "analysis",
+            "publishedAt": datetime.datetime(2024, 1, 10, 0, 0, 0),
+        },
         "contributors": [
             {"name": "Ada Lovelace", "role": "author", "verified": True},
             {"name": "Charles Babbage", "role": "editor", "verified": False},
@@ -37,6 +43,11 @@ LOCAL_SEARCH_DOCUMENTS = [
         "title": "Compiler reference",
         "kind": "reference",
         "published": False,
+        "metadata": {
+            "topic": "Compiler internals",
+            "series": "reference",
+            "publishedAt": datetime.datetime(2024, 2, 20, 0, 0, 0),
+        },
         "contributors": [
             {"name": "Grace Hopper", "role": "author", "verified": True},
         ],
@@ -51,6 +62,11 @@ LOCAL_SEARCH_DOCUMENTS = [
         "title": "Ada algorithms handbook",
         "kind": "note",
         "published": True,
+        "metadata": {
+            "topic": "Algorithm ranking",
+            "series": "analysis",
+            "publishedAt": datetime.datetime(2024, 1, 18, 0, 0, 0),
+        },
         "contributors": [
             {"name": "Ada Byron", "role": "author", "verified": True},
             {"name": "Compiler Team", "role": "reviewer", "verified": False},
@@ -121,6 +137,14 @@ def build_content_search_index(name: str = "content_search") -> SearchIndexModel
                     "body": {"type": "string"},
                     "kind": {"type": "token"},
                     "published": {"type": "boolean"},
+                    "metadata": {
+                        "type": "document",
+                        "fields": {
+                            "topic": {"type": "string"},
+                            "series": {"type": "token"},
+                            "publishedAt": {"type": "date"},
+                        },
+                    },
                     "contributors": {
                         "type": "embeddedDocuments",
                         "fields": {

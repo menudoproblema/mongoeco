@@ -523,7 +523,10 @@
           "operationMetadata": {
             "count_documents": {
               "acceptedNoopOptions": [],
+              "acceptsComment": true,
               "acceptsFilter": true,
+              "acceptsHint": true,
+              "acceptsMaxTimeMs": true,
               "collectionScoped": true,
               "resultType": "count",
               "supportedOptions": [
@@ -537,8 +540,11 @@
             },
             "distinct": {
               "acceptedNoopOptions": [],
+              "acceptsComment": true,
               "acceptsFieldPath": true,
               "acceptsFilter": true,
+              "acceptsHint": true,
+              "acceptsMaxTimeMs": true,
               "collectionScoped": true,
               "resultType": "array",
               "supportedOptions": [
@@ -552,7 +558,9 @@
             },
             "estimated_document_count": {
               "acceptedNoopOptions": [],
+              "acceptsComment": true,
               "acceptsFilter": false,
+              "acceptsMaxTimeMs": true,
               "collectionScoped": true,
               "resultType": "count",
               "supportedOptions": [
@@ -565,8 +573,16 @@
             },
             "find": {
               "acceptedNoopOptions": [],
+              "acceptsBatchSize": true,
+              "acceptsComment": true,
               "acceptsFilter": true,
+              "acceptsHint": true,
+              "acceptsLet": true,
+              "acceptsLimit": true,
+              "acceptsMaxTimeMs": true,
               "acceptsProjection": true,
+              "acceptsSkip": true,
+              "acceptsSort": true,
               "collectionScoped": true,
               "resultType": "cursor",
               "supportedOptions": [
@@ -581,8 +597,16 @@
             },
             "find_one": {
               "acceptedNoopOptions": [],
+              "acceptsBatchSize": false,
+              "acceptsComment": false,
               "acceptsFilter": true,
+              "acceptsHint": false,
+              "acceptsLet": false,
+              "acceptsLimit": false,
+              "acceptsMaxTimeMs": false,
               "acceptsProjection": true,
+              "acceptsSkip": false,
+              "acceptsSort": false,
               "collectionScoped": true,
               "resultType": "document",
               "supportedOptions": [],
@@ -678,6 +702,7 @@
             "autocomplete",
             "boolean",
             "date",
+            "document",
             "embeddedDocuments",
             "number",
             "objectId",
@@ -742,6 +767,7 @@
             "python"
           ],
           "structuredFieldMappings": [
+            "document",
             "embeddedDocuments"
           ],
           "textualFieldMappings": [
@@ -862,6 +888,9 @@
           "operationMetadata": {
             "bulk_write": {
               "acceptedNoopOptions": [],
+              "acceptsComment": true,
+              "acceptsLet": true,
+              "acceptsOrderedExecution": true,
               "acceptsWriteModels": true,
               "collectionScoped": true,
               "resultType": "bulk_write_result",
@@ -876,7 +905,10 @@
             },
             "delete_many": {
               "acceptedNoopOptions": [],
+              "acceptsComment": true,
               "acceptsFilter": true,
+              "acceptsHint": true,
+              "acceptsLet": true,
               "collectionScoped": true,
               "resultType": "delete_result",
               "supportedOptions": [
@@ -890,7 +922,10 @@
             },
             "delete_one": {
               "acceptedNoopOptions": [],
+              "acceptsComment": true,
               "acceptsFilter": true,
+              "acceptsHint": true,
+              "acceptsLet": true,
               "collectionScoped": true,
               "resultType": "delete_result",
               "supportedOptions": [
@@ -904,7 +939,9 @@
             },
             "insert_many": {
               "acceptedNoopOptions": [],
+              "acceptsComment": false,
               "acceptsDocuments": true,
+              "acceptsOrderedExecution": true,
               "collectionScoped": true,
               "resultType": "insert_many_result",
               "supportedOptions": [],
@@ -915,6 +952,7 @@
             },
             "insert_one": {
               "acceptedNoopOptions": [],
+              "acceptsComment": false,
               "acceptsDocument": true,
               "collectionScoped": true,
               "resultType": "insert_result",
@@ -925,8 +963,12 @@
             },
             "replace_one": {
               "acceptedNoopOptions": [],
+              "acceptsComment": true,
               "acceptsFilter": true,
+              "acceptsHint": true,
+              "acceptsLet": true,
               "acceptsReplacementDocument": true,
+              "acceptsSort": true,
               "collectionScoped": true,
               "resultType": "update_result",
               "supportedOptions": [
@@ -943,7 +985,12 @@
             },
             "update_many": {
               "acceptedNoopOptions": [],
+              "acceptsArrayFilters": true,
+              "acceptsComment": true,
               "acceptsFilter": true,
+              "acceptsHint": true,
+              "acceptsLet": true,
+              "acceptsSort": false,
               "acceptsUpdateDocument": true,
               "collectionScoped": true,
               "resultType": "update_result",
@@ -978,7 +1025,12 @@
             },
             "update_one": {
               "acceptedNoopOptions": [],
+              "acceptsArrayFilters": true,
+              "acceptsComment": true,
               "acceptsFilter": true,
+              "acceptsHint": true,
+              "acceptsLet": true,
+              "acceptsSort": true,
               "acceptsUpdateDocument": true,
               "collectionScoped": true,
               "resultType": "update_result",
@@ -1889,6 +1941,7 @@
         "autocomplete",
         "boolean",
         "date",
+        "document",
         "embeddedDocuments",
         "number",
         "objectId",
@@ -1953,6 +2006,7 @@
         "python"
       ],
       "structuredFieldMappings": [
+        "document",
         "embeddedDocuments"
       ],
       "textualFieldMappings": [

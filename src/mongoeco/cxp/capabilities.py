@@ -142,6 +142,43 @@ def _operation_option_metadata(
     return metadata
 
 
+def _input_shape_metadata(
+    *,
+    accepts_sort: bool | None = None,
+    accepts_skip: bool | None = None,
+    accepts_limit: bool | None = None,
+    accepts_batch_size: bool | None = None,
+    accepts_hint: bool | None = None,
+    accepts_comment: bool | None = None,
+    accepts_max_time_ms: bool | None = None,
+    accepts_let: bool | None = None,
+    accepts_array_filters: bool | None = None,
+    accepts_ordered_execution: bool | None = None,
+) -> dict[str, object]:
+    metadata: dict[str, object] = {}
+    if accepts_sort is not None:
+        metadata['acceptsSort'] = accepts_sort
+    if accepts_skip is not None:
+        metadata['acceptsSkip'] = accepts_skip
+    if accepts_limit is not None:
+        metadata['acceptsLimit'] = accepts_limit
+    if accepts_batch_size is not None:
+        metadata['acceptsBatchSize'] = accepts_batch_size
+    if accepts_hint is not None:
+        metadata['acceptsHint'] = accepts_hint
+    if accepts_comment is not None:
+        metadata['acceptsComment'] = accepts_comment
+    if accepts_max_time_ms is not None:
+        metadata['acceptsMaxTimeMs'] = accepts_max_time_ms
+    if accepts_let is not None:
+        metadata['acceptsLet'] = accepts_let
+    if accepts_array_filters is not None:
+        metadata['acceptsArrayFilters'] = accepts_array_filters
+    if accepts_ordered_execution is not None:
+        metadata['acceptsOrderedExecution'] = accepts_ordered_execution
+    return metadata
+
+
 def _catalog_operation_result_types(catalog: CapabilityCatalog) -> dict[str, str]:
     operation_result_types: dict[str, str] = {}
     for catalog_capability in catalog.capabilities:
@@ -178,6 +215,16 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                 supports_explain=True,
                 accepts_filter=True,
                 accepts_projection=True,
+                extra_metadata=_input_shape_metadata(
+                    accepts_sort=True,
+                    accepts_skip=True,
+                    accepts_limit=True,
+                    accepts_batch_size=True,
+                    accepts_hint=True,
+                    accepts_comment=True,
+                    accepts_max_time_ms=True,
+                    accepts_let=True,
+                ),
             ),
             MONGODB_FIND_ONE: _operation_option_metadata(
                 MONGODB_FIND_ONE,
@@ -186,6 +233,16 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                 supports_session=True,
                 accepts_filter=True,
                 accepts_projection=True,
+                extra_metadata=_input_shape_metadata(
+                    accepts_sort=False,
+                    accepts_skip=False,
+                    accepts_limit=False,
+                    accepts_batch_size=False,
+                    accepts_hint=False,
+                    accepts_comment=False,
+                    accepts_max_time_ms=False,
+                    accepts_let=False,
+                ),
             ),
             MONGODB_COUNT_DOCUMENTS: _operation_option_metadata(
                 MONGODB_COUNT_DOCUMENTS,
@@ -193,6 +250,11 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                 collection_scoped=True,
                 supports_session=True,
                 accepts_filter=True,
+                extra_metadata=_input_shape_metadata(
+                    accepts_hint=True,
+                    accepts_comment=True,
+                    accepts_max_time_ms=True,
+                ),
             ),
             MONGODB_ESTIMATED_DOCUMENT_COUNT: _operation_option_metadata(
                 MONGODB_ESTIMATED_DOCUMENT_COUNT,
@@ -200,6 +262,10 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                 collection_scoped=True,
                 supports_session=True,
                 accepts_filter=False,
+                extra_metadata=_input_shape_metadata(
+                    accepts_comment=True,
+                    accepts_max_time_ms=True,
+                ),
             ),
             MONGODB_DISTINCT: _operation_option_metadata(
                 MONGODB_DISTINCT,
@@ -208,6 +274,11 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                 supports_session=True,
                 accepts_filter=True,
                 accepts_field_path=True,
+                extra_metadata=_input_shape_metadata(
+                    accepts_hint=True,
+                    accepts_comment=True,
+                    accepts_max_time_ms=True,
+                ),
             ),
         },
     },
@@ -224,6 +295,9 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                 collection_scoped=True,
                 supports_session=True,
                 accepts_document=True,
+                extra_metadata=_input_shape_metadata(
+                    accepts_comment=False,
+                ),
             ),
             MONGODB_INSERT_MANY: _operation_option_metadata(
                 MONGODB_INSERT_MANY,
@@ -232,6 +306,10 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                 supports_session=True,
                 accepts_documents=True,
                 supports_ordered_execution=True,
+                extra_metadata=_input_shape_metadata(
+                    accepts_ordered_execution=True,
+                    accepts_comment=False,
+                ),
             ),
             MONGODB_UPDATE_ONE: _operation_option_metadata(
                 MONGODB_UPDATE_ONE,
@@ -242,6 +320,13 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                 accepts_update_document=True,
                 supports_upsert=True,
                 extra_metadata={
+                    **_input_shape_metadata(
+                        accepts_sort=True,
+                        accepts_hint=True,
+                        accepts_comment=True,
+                        accepts_let=True,
+                        accepts_array_filters=True,
+                    ),
                     'supportsPipelineUpdate': True,
                     'supportedUpdateOperators': sorted(SUPPORTED_UPDATE_OPERATORS),
                 },
@@ -255,6 +340,13 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                 accepts_update_document=True,
                 supports_upsert=True,
                 extra_metadata={
+                    **_input_shape_metadata(
+                        accepts_sort=False,
+                        accepts_hint=True,
+                        accepts_comment=True,
+                        accepts_let=True,
+                        accepts_array_filters=True,
+                    ),
                     'supportsPipelineUpdate': True,
                     'supportedUpdateOperators': sorted(SUPPORTED_UPDATE_OPERATORS),
                 },
@@ -267,7 +359,15 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                 accepts_filter=True,
                 accepts_replacement_document=True,
                 supports_upsert=True,
-                extra_metadata={'supportsReplacementDocument': True},
+                extra_metadata={
+                    **_input_shape_metadata(
+                        accepts_sort=True,
+                        accepts_hint=True,
+                        accepts_comment=True,
+                        accepts_let=True,
+                    ),
+                    'supportsReplacementDocument': True,
+                },
             ),
             MONGODB_DELETE_ONE: _operation_option_metadata(
                 MONGODB_DELETE_ONE,
@@ -275,6 +375,11 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                 collection_scoped=True,
                 supports_session=True,
                 accepts_filter=True,
+                extra_metadata=_input_shape_metadata(
+                    accepts_hint=True,
+                    accepts_comment=True,
+                    accepts_let=True,
+                ),
             ),
             MONGODB_DELETE_MANY: _operation_option_metadata(
                 MONGODB_DELETE_MANY,
@@ -282,6 +387,11 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                 collection_scoped=True,
                 supports_session=True,
                 accepts_filter=True,
+                extra_metadata=_input_shape_metadata(
+                    accepts_hint=True,
+                    accepts_comment=True,
+                    accepts_let=True,
+                ),
             ),
             MONGODB_BULK_WRITE: _operation_option_metadata(
                 MONGODB_BULK_WRITE,
@@ -290,6 +400,11 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
                 supports_session=True,
                 accepts_write_models=True,
                 supports_ordered_execution=True,
+                extra_metadata=_input_shape_metadata(
+                    accepts_ordered_execution=True,
+                    accepts_comment=True,
+                    accepts_let=True,
+                ),
             ),
         },
     },

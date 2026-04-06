@@ -2078,6 +2078,32 @@ class SearchCoreTests(unittest.TestCase):
             nested["mappings"]["fields"]["nested"]["fields"]["title"]["type"],
             "string",
         )
+        explicit_document = validate_search_index_definition(
+            {
+                "mappings": {
+                    "fields": {
+                        "metadata": {
+                            "type": "document",
+                            "fields": {
+                                "topic": {"type": "string"},
+                                "publishedAt": {"type": "date"},
+                            },
+                        }
+                    }
+                }
+            },
+            index_type="search",
+        )
+        self.assertEqual(
+            explicit_document["mappings"]["fields"]["metadata"]["type"],
+            "document",
+        )
+        self.assertEqual(
+            explicit_document["mappings"]["fields"]["metadata"]["fields"][
+                "publishedAt"
+            ]["type"],
+            "date",
+        )
         embedded = validate_search_index_definition(
             {
                 "mappings": {
@@ -2105,7 +2131,16 @@ class SearchCoreTests(unittest.TestCase):
         )
         with self.assertRaises(OperationFailure):
             validate_search_index_definition(
-                {"mappings": {"fields": {"nested": {"type": "document", "fields": {"title": {"type": "string"}}}}}},
+                {
+                    "mappings": {
+                        "fields": {
+                            "nested": {
+                                "type": "document",
+                                "fields": [],
+                            }
+                        }
+                    }
+                },
                 index_type="search",
             )
         with self.assertRaises(OperationFailure):
@@ -2676,6 +2711,60 @@ class SearchCoreTests(unittest.TestCase):
                     raw_query="Ada",
                     terms=("ada",),
                     paths=("contributors.name",),
+                ),
+                materialized=prepared,
+            )
+        )
+
+    def test_materialized_search_document_supports_explicit_document_paths(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "metadata": {
+                            "type": "document",
+                            "fields": {
+                                "topic": {"type": "string"},
+                                "series": {"type": "token"},
+                                "publishedAt": {"type": "date"},
+                            },
+                        }
+                    },
+                }
+            },
+            name="by_text",
+        )
+        document = {
+            "metadata": {
+                "topic": "Local search",
+                "series": "analysis",
+                "publishedAt": datetime.date(2024, 1, 10),
+            }
+        }
+
+        prepared = materialize_search_document(document, definition)
+
+        self.assertEqual(
+            prepared.entries,
+            (
+                ("metadata.topic", "Local search"),
+                ("metadata.series", "analysis"),
+            ),
+        )
+        self.assertEqual(
+            prepared.searchable_paths,
+            frozenset({"metadata.topic", "metadata.series"}),
+        )
+        self.assertTrue(
+            matches_search_text_query(
+                document,
+                definition=definition,
+                query=SearchTextQuery(
+                    index_name="by_text",
+                    raw_query="Local",
+                    terms=("local",),
+                    paths=("metadata.topic",),
                 ),
                 materialized=prepared,
             )

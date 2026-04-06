@@ -36,7 +36,9 @@ EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES = frozenset(
         "uuid",
     }
 )
-STRUCTURED_SEARCH_FIELD_MAPPING_TYPES = frozenset({"embeddedDocuments"})
+STRUCTURED_SEARCH_FIELD_MAPPING_TYPES = frozenset(
+    {"document", "embeddedDocuments"}
+)
 SUPPORTED_SEARCH_FIELD_MAPPING_TYPES = frozenset(
     TEXTUAL_SEARCH_FIELD_MAPPING_TYPES
     | EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES
@@ -1512,10 +1514,7 @@ def _validate_mappings_document(mappings: Document) -> None:
 
 def _validate_field_mapping(field_spec: Document) -> None:
     mapping_type = field_spec.get("type", "document")
-    if mapping_type == "document":
-        _validate_mappings_document(field_spec)
-        return
-    if mapping_type == "embeddedDocuments":
+    if mapping_type in STRUCTURED_SEARCH_FIELD_MAPPING_TYPES:
         nested_mapping = {
             key: value for key, value in field_spec.items() if key != "type"
         }

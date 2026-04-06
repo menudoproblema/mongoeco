@@ -56,6 +56,7 @@ Local search index mappings now accept:
 * textual fields: `string`, `autocomplete`, `token`
 * scalar fields for exact/range-style matching: `number`, `date`, `boolean`,
   `objectId`, `uuid`
+* nested documents with explicit `document`
 * structured arrays of nested documents with `embeddedDocuments`
 
 That keeps the product story honest:
@@ -102,7 +103,8 @@ These examples show:
 
 * exact `phrase` versus `phrase.slop`;
 * `embeddedDocuments` mappings for paths such as `contributors.name`;
-* `near` over numeric fields with visible ranking metadata;
+* explicit `document` mappings for paths such as `metadata.topic`;
+* `near` over numeric and date fields with visible ranking metadata;
 * `near` and `compound` explain blocks with explicit path summaries;
 * `compound` with `phrase`, `equals`, `in`, `range`, `near`, `exists` and `regex`;
 * public vector diagnostics such as `similarity`, `numCandidates`,

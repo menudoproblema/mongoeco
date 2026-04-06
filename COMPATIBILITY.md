@@ -71,10 +71,12 @@ Esto implica:
   completa.
 * los mappings locales de `$search` cubren ya una familia más rica de campos:
   `string`, `autocomplete`, `token`, `number`, `date`, `boolean`,
-  `objectId`, `uuid` y `embeddedDocuments`; los tipos textuales siguen siendo
-  `string`, `autocomplete` y `token`, el subset escalar se usa para filtros y
-  matching escalar honesto, y `embeddedDocuments` deja declarar arrays de
-  documentos anidados con paths explícitos como `contributors.name`.
+  `objectId`, `uuid`, `document` y `embeddedDocuments`; los tipos textuales
+  siguen siendo `string`, `autocomplete` y `token`, el subset escalar se usa
+  para filtros y matching escalar honesto, `document` deja declarar objetos
+  anidados explícitos como `metadata.topic`, y `embeddedDocuments` deja
+  declarar arrays de documentos anidados con paths explícitos como
+  `contributors.name`.
 * cuando una pipeline deja un `skip/limit` seguro tras `$search`, el runtime
   local puede usar ese `top-k` para limitar candidatos y materialización sin
   cambiar el contrato observable.

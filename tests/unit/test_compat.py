@@ -191,8 +191,18 @@ class CompatResolutionTests(unittest.TestCase):
             ]["aggregate"]["supportsCollectionScope"]
         )
         self.assertIn(
-            "embeddedDocuments",
+            "document",
             catalog["capabilities"]["search"]["metadata"]["fieldMappings"],
+        )
+        self.assertTrue(
+            catalog["capabilities"]["read"]["metadata"]["operationMetadata"][
+                "find"
+            ]["acceptsSort"]
+        )
+        self.assertTrue(
+            catalog["capabilities"]["write"]["metadata"]["operationMetadata"][
+                "update_one"
+            ]["acceptsArrayFilters"]
         )
 
     def test_catalog_is_exposed_as_immutable_global_data(self):

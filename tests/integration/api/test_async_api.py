@@ -1181,6 +1181,97 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     ).to_list()
                     self.assertEqual([document["_id"] for document in hits], [1, 3])
 
+    async def test_search_document_mapping_and_date_near_keep_parity_between_memory_and_sqlite(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.docs.get_collection("document_search")
+                    await collection.insert_many(
+                        [
+                            {
+                                "_id": 1,
+                                "title": "Local search handbook",
+                                "metadata": {
+                                    "topic": "Local search",
+                                    "series": "analysis",
+                                    "publishedAt": datetime.datetime(2024, 1, 10, 0, 0, 0),
+                                },
+                            },
+                            {
+                                "_id": 2,
+                                "title": "Compiler reference",
+                                "metadata": {
+                                    "topic": "Compiler internals",
+                                    "series": "reference",
+                                    "publishedAt": datetime.datetime(2024, 2, 20, 0, 0, 0),
+                                },
+                            },
+                            {
+                                "_id": 3,
+                                "title": "Ada algorithms handbook",
+                                "metadata": {
+                                    "topic": "Algorithm ranking",
+                                    "series": "analysis",
+                                    "publishedAt": datetime.datetime(2024, 1, 18, 0, 0, 0),
+                                },
+                            },
+                        ]
+                    )
+                    await collection.create_search_index(
+                        SearchIndexModel(
+                            {
+                                "mappings": {
+                                    "dynamic": False,
+                                    "fields": {
+                                        "metadata": {
+                                            "type": "document",
+                                            "fields": {
+                                                "topic": {"type": "string"},
+                                                "series": {"type": "token"},
+                                                "publishedAt": {"type": "date"},
+                                            },
+                                        },
+                                    },
+                                }
+                            },
+                            name="by_text",
+                        )
+                    )
+
+                    topic_hits = await collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "text": {
+                                        "query": "Local",
+                                        "path": "metadata.topic",
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in topic_hits], [1])
+
+                    near_hits = await collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "near": {
+                                        "path": "metadata.publishedAt",
+                                        "origin": datetime.date(2024, 1, 15),
+                                        "pivot": 10 * 86400,
+                                    },
+                                }
+                            },
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in near_hits], [3, 1])
+
     async def test_aggregate_explain_reports_pipeline_pushdown_summary(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

@@ -198,7 +198,22 @@ class CxpAlignmentTests(unittest.TestCase):
             exported['capabilities']['search']['metadata'][
                 'structuredFieldMappings'
             ],
-            ['embeddedDocuments'],
+            ['document', 'embeddedDocuments'],
+        )
+        self.assertTrue(
+            exported['capabilities']['read']['metadata']['operationMetadata'][
+                'find'
+            ]['acceptsSort']
+        )
+        self.assertTrue(
+            exported['capabilities']['write']['metadata']['operationMetadata'][
+                'update_one'
+            ]['acceptsArrayFilters']
+        )
+        self.assertTrue(
+            exported['capabilities']['write']['metadata']['operationMetadata'][
+                'bulk_write'
+            ]['acceptsOrderedExecution']
         )
         self.assertEqual(
             exported['capabilities']['search']['metadata']['operationMetadata'][

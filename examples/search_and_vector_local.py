@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import datetime
+
 from mongoeco import MongoClient
 from mongoeco.engines.sqlite import SQLiteEngine
 from _demo_support import (
@@ -99,6 +101,25 @@ def main() -> None:
             contributor_results,
         )
 
+        nested_document_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "text": {
+                            "query": "Local",
+                            "path": "metadata.topic",
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "metadata": 1}},
+            ]
+        ).to_list()
+        print(
+            "$search document mapping metadata results:",
+            nested_document_results,
+        )
+
         near_results = collection.aggregate(
             [
                 {
@@ -134,6 +155,42 @@ def main() -> None:
             near_explain["engine_plan"]["details"]["originKind"],
             near_explain["engine_plan"]["details"]["ranking"]["scoreFormula"],
             near_explain["engine_plan"]["details"]["pathSummary"],
+        )
+
+        near_date_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "near": {
+                            "path": "metadata.publishedAt",
+                            "origin": datetime.date(2024, 1, 15),
+                            "pivot": 10 * 86400,
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "metadata": 1}},
+            ]
+        ).to_list()
+        print("$search date near results:", near_date_results)
+        near_date_explain = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "near": {
+                            "path": "metadata.publishedAt",
+                            "origin": datetime.date(2024, 1, 15),
+                            "pivot": 10 * 86400,
+                        },
+                    }
+                }
+            ]
+        ).explain()
+        print(
+            "$search date near explain:",
+            near_date_explain["engine_plan"]["details"]["originKind"],
+            near_date_explain["engine_plan"]["details"]["pathSummary"],
         )
 
         search_results = collection.aggregate(
