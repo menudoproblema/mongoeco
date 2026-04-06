@@ -32,9 +32,10 @@ Use them when you want to answer one of these questions quickly:
   `equals` + `in` + `range` + `near` + `exists` + `regex`, and projected
   `vectorSearchScore`.
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
-  Public-facing `vectorSearch` diagnostics: compare `similarity`,
-  `numCandidates`, `minScore`, projected `vectorSearchScore`, residual filters
-  and exact fallback.
+  Public-facing local hybrid retrieval diagnostics: compare `MemoryEngine`
+  versus `SQLiteEngine`, read `scoreBreakdown`, `candidatePlan`,
+  `hybridRetrieval`, projected `vectorSearchScore`, residual filters and exact
+  fallback.
 * [cxp_adapter.py](/Users/uve/Proyectos/mongoeco2/examples/cxp_adapter.py)
   Inspect the canonical `database/mongodb` catalog, the reusable CXP profile
   export, the evaluated profile support view, an operation-centric catalog, a

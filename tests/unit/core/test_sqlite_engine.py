@@ -5060,6 +5060,11 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(explanation.details["vectorFilterPrefilter"]["exact"])
         self.assertFalse(explanation.details["vectorFilterResidual"]["required"])
         self.assertIsNone(explanation.details["vectorFilterResidual"]["reason"])
+        self.assertEqual(explanation.details["queryOperator"], "vectorSearch")
+        self.assertEqual(explanation.details["scoreBreakdown"]["scoreField"], "vectorSearchScore")
+        self.assertEqual(explanation.details["candidatePlan"]["mode"], "ann")
+        self.assertEqual(explanation.details["hybridRetrieval"]["filterMode"], "candidate-prefilter")
+        self.assertEqual(explanation.details["documentsMatchedBeforeLimit"], 1)
         self.assertEqual(explanation.details["vectorBackend"]["backend"], "usearch")
         self.assertEqual(explanation.details["vectorBackend"]["connectivity"], 8)
         self.assertEqual(explanation.details["vectorBackend"]["expansionAdd"], 16)
@@ -5160,6 +5165,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(explanation.details["exactFallbackReason"], "candidate-prefilter-underflow")
             self.assertEqual(explanation.details["documentsFiltered"], 0)
             self.assertEqual(explanation.details["candidateExpansionStrategy"], "adaptive-retention")
+            self.assertEqual(explanation.details["candidatePlan"]["exactFallbackReason"], "candidate-prefilter-underflow")
+            self.assertEqual(explanation.details["hybridRetrieval"]["residual"]["required"], False)
+            self.assertEqual(explanation.details["scoreBreakdown"]["backend"], "usearch")
 
             with self.assertRaisesRegex(OperationFailure, "search index not found"):
                 await engine.explain_search_documents(

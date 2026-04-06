@@ -1569,6 +1569,7 @@ def explain_search_documents_sync(
     vector_filter_storage_keys: list[str] | None = None
     vector_filter_description: dict[str, object] | None = None
     exact_fallback_reason: str | None = None
+    matched_vector_documents: list[Document] | None = None
     documents_filtered = 0
     documents_filtered_by_min_score: int | None = None
     candidates_evaluated: int | None = None
@@ -1724,7 +1725,7 @@ def explain_search_documents_sync(
             )
         if isinstance(query, SearchVectorQuery) and vector_state is not None:
             (
-                _matched_documents,
+                matched_vector_documents,
                 candidates_requested,
                 evaluated_count,
                 documents_filtered,
@@ -1741,6 +1742,83 @@ def explain_search_documents_sync(
                 prefilter_exact=bool(vector_filter_description and vector_filter_description.get("exact")),
             )
             candidates_evaluated = evaluated_count
+    vector_filter_mode = (
+        "candidate-prefilter"
+        if isinstance(query, SearchVectorQuery)
+        and query.filter_spec is not None
+        and bool(vector_filter_description and vector_filter_description.get("exact"))
+        else "candidate-prefilter+post-candidate"
+        if isinstance(query, SearchVectorQuery)
+        and query.filter_spec is not None
+        and vector_filter_description is not None
+        else "post-candidate"
+        if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
+        else None
+    )
+    vector_prefilter_candidate_count = (
+        len(vector_filter_storage_keys)
+        if isinstance(query, SearchVectorQuery) and vector_filter_storage_keys is not None
+        else vector_state.valid_vectors
+        if isinstance(query, SearchVectorQuery) and vector_state is not None
+        else None
+    )
+    vector_documents_matched_before_limit = (
+        len(matched_vector_documents)
+        if isinstance(query, SearchVectorQuery) and matched_vector_documents is not None
+        else None
+    )
+    vector_score_breakdown = (
+        {
+            "similarity": vector_state.similarity if vector_state is not None else query.similarity,
+            "scoreField": "vectorSearchScore",
+            "scoreDirection": "higher-is-better",
+            "scoreFormula": (
+                "dot(query, candidate) / (||query|| * ||candidate||)"
+                if (vector_state.similarity if vector_state is not None else query.similarity) == "cosine"
+                else "sum(query[i] * candidate[i])"
+                if (vector_state.similarity if vector_state is not None else query.similarity) == "dotProduct"
+                else "-sqrt(sum((query[i] - candidate[i])^2))"
+            ),
+            "minScore": query.min_score,
+            "documentsFilteredByMinScore": documents_filtered_by_min_score,
+            "backend": decision.backend,
+            "exactBaseline": True,
+        }
+        if isinstance(query, SearchVectorQuery)
+        else None
+    )
+    vector_candidate_plan = (
+        {
+            "mode": "ann" if decision.backend == "usearch" else "exact",
+            "requestedCandidates": candidates_requested,
+            "evaluatedCandidates": candidates_evaluated,
+            "prefilterCandidateCount": vector_prefilter_candidate_count,
+            "documentsMatchedBeforeLimit": vector_documents_matched_before_limit,
+            "documentsScanned": vector_state.documents_scanned if vector_state is not None else None,
+            "candidateExpansionStrategy": (
+                "adaptive-retention" if query.filter_spec is not None else None
+            ),
+            "exactFallbackReason": exact_fallback_reason,
+            "topKLimitHint": result_limit_hint,
+        }
+        if isinstance(query, SearchVectorQuery)
+        else None
+    )
+    vector_hybrid_retrieval = (
+        {
+            "filterMode": vector_filter_mode,
+            "queryFilter": deepcopy(query.filter_spec) if query.filter_spec is not None else None,
+            "downstreamFilter": deepcopy(downstream_filter_spec) if downstream_filter_spec is not None else None,
+            "prefilter": deepcopy(vector_filter_description),
+            "residual": _vector_filter_residual_description(
+                query.filter_spec,
+                vector_filter_description,
+            ),
+            "documentsFilteredPostCandidate": documents_filtered,
+        }
+        if isinstance(query, SearchVectorQuery)
+        else None
+    )
     if is_text_search_query(query):
         stage_options = getattr(query, "stage_options", None)
         if stage_options is not None and any(
@@ -1822,19 +1900,7 @@ def explain_search_documents_sync(
                 if isinstance(query, SearchVectorQuery)
                 else None
             ),
-            "filterMode": (
-                "candidate-prefilter"
-                if isinstance(query, SearchVectorQuery)
-                and query.filter_spec is not None
-                and bool(vector_filter_description and vector_filter_description.get("exact"))
-                else "candidate-prefilter+post-candidate"
-                if isinstance(query, SearchVectorQuery)
-                and query.filter_spec is not None
-                and vector_filter_description is not None
-                else "post-candidate"
-                if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
-                else None
-            ),
+            "filterMode": vector_filter_mode,
             "candidateExpansionStrategy": (
                 "adaptive-retention"
                 if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
@@ -1850,6 +1916,7 @@ def explain_search_documents_sync(
                 if isinstance(query, SearchVectorQuery)
                 else None
             ),
+            "prefilterCandidateCount": vector_prefilter_candidate_count,
             "candidateCount": len(candidate_storage_keys) if candidate_storage_keys is not None else None,
             "candidateCountBeforeTopK": candidate_count_before_topk,
             "candidatePrefilterExact": candidate_exact,
@@ -1880,6 +1947,7 @@ def explain_search_documents_sync(
                 if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
                 else None
             ),
+            "documentsMatchedBeforeLimit": vector_documents_matched_before_limit,
             "documentsFilteredByMinScore": (
                 documents_filtered_by_min_score
                 if isinstance(query, SearchVectorQuery) and query.min_score is not None
@@ -1905,6 +1973,9 @@ def explain_search_documents_sync(
                 if isinstance(query, SearchVectorQuery) and vector_state is not None
                 else None
             ),
+            "scoreBreakdown": vector_score_breakdown,
+            "candidatePlan": vector_candidate_plan,
+            "hybridRetrieval": vector_hybrid_retrieval,
             **stage_option_previews,
         },
     )

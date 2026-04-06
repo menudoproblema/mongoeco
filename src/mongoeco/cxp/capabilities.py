@@ -1047,6 +1047,20 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_VECTOR_SEARCH] = {
     'mode': 'local-ann-with-exact-baseline',
     'filterMode': 'post-candidate-with-adaptive-candidate-expansion',
     'fallback': 'exact',
+    'hybridFilterModes': [
+        'candidate-prefilter',
+        'candidate-prefilter+post-candidate',
+        'post-candidate',
+    ],
+    'explainFeatures': [
+        'pathSummary',
+        'resolvedLeafPaths',
+        'querySemantics',
+        'scoreBreakdown',
+        'candidatePlan',
+        'hybridRetrieval',
+        'vectorBackend',
+    ],
     'operationMetadata': {
         MONGODB_AGGREGATE: _operation_option_metadata(
             MONGODB_AGGREGATE,
@@ -1059,6 +1073,21 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_VECTOR_SEARCH] = {
             extra_metadata={
                 'aggregateStage': '$vectorSearch',
                 'similarities': ['cosine', 'dotProduct', 'euclidean'],
+                'scoreField': 'vectorSearchScore',
+                'hybridFilterModes': [
+                    'candidate-prefilter',
+                    'candidate-prefilter+post-candidate',
+                    'post-candidate',
+                ],
+                'explainFeatures': [
+                    'pathSummary',
+                    'resolvedLeafPaths',
+                    'querySemantics',
+                    'scoreBreakdown',
+                    'candidatePlan',
+                    'hybridRetrieval',
+                    'vectorBackend',
+                ],
                 'requiresLeadingStage': True,
             },
         ),

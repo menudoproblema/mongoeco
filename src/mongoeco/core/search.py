@@ -902,7 +902,7 @@ def is_text_search_query(query: SearchQuery) -> bool:
 
 def search_query_operator_name(query: SearchQuery) -> str | None:
     if isinstance(query, SearchVectorQuery):
-        return None
+        return "vectorSearch"
     return _SEARCH_QUERY_OPERATOR_NAMES.get(type(query))
 
 
@@ -2474,6 +2474,14 @@ def _scalar_search_path_summary(path: str, *, section_name: str) -> dict[str, ob
     return path_summary
 
 
+def _vector_score_formula(similarity: str) -> str:
+    if similarity == "dotProduct":
+        return "sum(query[i] * candidate[i])"
+    if similarity == "euclidean":
+        return "-sqrt(sum((query[i] - candidate[i])^2))"
+    return "dot(query, candidate) / (||query|| * ||candidate||)"
+
+
 def _enrich_search_explain_details(
     details: dict[str, object | None],
     *,
@@ -2505,6 +2513,15 @@ def _enrich_search_explain_details(
             paths=list(query.paths) if query.paths is not None else None,
             available_leaf_paths=_mapped_leaf_search_paths(definition),
         )
+        return
+    if isinstance(query, SearchVectorQuery):
+        path_value = details.get("path")
+        if isinstance(path_value, str) and path_value:
+            _attach_resolved_leaf_paths(
+                path_summary,
+                paths=[path_value],
+                available_leaf_paths=vector_field_paths(definition),
+            )
         return
     if isinstance(query, (SearchInQuery, SearchEqualsQuery, SearchRangeQuery, SearchNearQuery)):
         path_value = details.get("path")
@@ -2572,9 +2589,29 @@ def _compound_max_depth(query: SearchCompoundQuery) -> int:
 
 
 def _explain_vector_query(query: SearchVectorQuery) -> dict[str, object | None]:
+    similarity = query.similarity
     return {
         "query": None,
         "paths": None,
+        "querySemantics": {
+            "matchingMode": "nearest-neighbor",
+            "scope": "local-vector-tier",
+            "requiresLeadingStage": True,
+            "supportsStructuredFilter": True,
+        },
+        "scoreBreakdown": {
+            "similarity": similarity,
+            "scoreField": "vectorSearchScore",
+            "scoreDirection": "higher-is-better",
+            "scoreFormula": _vector_score_formula(similarity),
+            "minScoreApplied": query.min_score is not None,
+        },
+        "candidatePlan": {
+            "requestedCandidates": query.num_candidates,
+            "resultLimit": query.limit,
+            "structuredFilterPresent": query.filter_spec is not None,
+            "minScorePresent": query.min_score is not None,
+        },
         "compound": None,
         "value": None,
         "range": None,
@@ -2586,8 +2623,9 @@ def _explain_vector_query(query: SearchVectorQuery) -> dict[str, object | None]:
         "limit": query.limit,
         "numCandidates": query.num_candidates,
         "filter": deepcopy(query.filter_spec) if query.filter_spec is not None else None,
-        "similarity": query.similarity,
+        "similarity": similarity,
         "minScore": query.min_score,
+        "pathSummary": _scalar_search_path_summary(query.path, section_name="vectorSearch"),
     }
 
 

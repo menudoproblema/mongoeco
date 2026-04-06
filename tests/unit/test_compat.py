@@ -240,6 +240,24 @@ class CompatResolutionTests(unittest.TestCase):
                 "resultField": "searchHighlights",
             },
         )
+        self.assertEqual(
+            catalog["capabilities"]["vector_search"]["metadata"]["hybridFilterModes"],
+            [
+                "candidate-prefilter",
+                "candidate-prefilter+post-candidate",
+                "post-candidate",
+            ],
+        )
+        self.assertIn(
+            "candidatePlan",
+            catalog["capabilities"]["vector_search"]["metadata"]["explainFeatures"],
+        )
+        self.assertEqual(
+            catalog["capabilities"]["vector_search"]["metadata"]["operationMetadata"][
+                "aggregate"
+            ]["scoreField"],
+            "vectorSearchScore",
+        )
         self.assertTrue(
             catalog["capabilities"]["read"]["metadata"]["operationMetadata"][
                 "find"

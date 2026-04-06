@@ -1012,7 +1012,7 @@ class SearchCoreTests(unittest.TestCase):
             filter_spec={"kind": "keep"},
             min_score=0.75,
         )
-        self.assertIsNone(search_query_operator_name(vector_query))
+        self.assertEqual(search_query_operator_name(vector_query), "vectorSearch")
         details = search_query_explain_details(vector_query)
         self.assertEqual(details["path"], "embedding")
         self.assertEqual(details["filter"], {"kind": "keep"})
@@ -1288,8 +1288,50 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(search_query_explain_details(near)["originKind"], "date")
         self.assertEqual(search_query_operator_name(compound), "compound")
         self.assertEqual(search_query_explain_details(compound)["compound"]["must"], 1)
-        self.assertIsNone(search_query_operator_name(vector))
-        self.assertEqual(search_query_explain_details(vector)["path"], "embedding")
+        self.assertEqual(search_query_operator_name(vector), "vectorSearch")
+        vector_details = search_query_explain_details(vector)
+        self.assertEqual(vector_details["path"], "embedding")
+        self.assertEqual(
+            vector_details["querySemantics"],
+            {
+                "matchingMode": "nearest-neighbor",
+                "scope": "local-vector-tier",
+                "requiresLeadingStage": True,
+                "supportsStructuredFilter": True,
+            },
+        )
+        self.assertEqual(
+            vector_details["scoreBreakdown"],
+            {
+                "similarity": "cosine",
+                "scoreField": "vectorSearchScore",
+                "scoreDirection": "higher-is-better",
+                "scoreFormula": "dot(query, candidate) / (||query|| * ||candidate||)",
+                "minScoreApplied": False,
+            },
+        )
+        self.assertEqual(
+            vector_details["candidatePlan"],
+            {
+                "requestedCandidates": 2,
+                "resultLimit": 2,
+                "structuredFilterPresent": False,
+                "minScorePresent": False,
+            },
+        )
+        self.assertEqual(
+            vector_details["pathSummary"],
+            {
+                "all": ["embedding"],
+                "pathCount": 1,
+                "multiPath": False,
+                "usesEmbeddedPaths": False,
+                "embeddedPaths": [],
+                "parentPaths": ["embedding"],
+                "leafPaths": [],
+                "sections": ["vectorSearch"],
+            },
+        )
         self.assertEqual(
             compile_search_stage(
                 "$search",
@@ -3382,6 +3424,23 @@ class SearchCoreTests(unittest.TestCase):
             vector_text_details["pathSummary"]["unresolvedPaths"],
             ["title"],
         )
+        vector_query_details = search_query_explain_details(
+            SearchVectorQuery(
+                index_name="by_vector",
+                path="embedding",
+                query_vector=(1.0, 0.0, 0.0),
+                limit=2,
+                num_candidates=4,
+                min_score=0.9,
+            ),
+            definition=vector_definition,
+        )
+        self.assertEqual(vector_query_details["queryOperator"], "vectorSearch")
+        self.assertEqual(
+            vector_query_details["pathSummary"]["resolvedLeafPaths"],
+            ["embedding"],
+        )
+        self.assertEqual(vector_query_details["pathSummary"]["unresolvedPaths"], [])
         self.assertEqual(search_module._mapped_leaf_search_paths(vector_definition), ())
 
         no_mapping_definition = SearchIndexDefinition(
@@ -3404,6 +3463,27 @@ class SearchCoreTests(unittest.TestCase):
             ),
             ["metadata.topic"],
         )
+        self.assertEqual(
+            search_module._vector_score_formula("dotProduct"),
+            "sum(query[i] * candidate[i])",
+        )
+        self.assertEqual(
+            search_module._vector_score_formula("euclidean"),
+            "-sqrt(sum((query[i] - candidate[i])^2))",
+        )
+        missing_path_summary_details = {"pathSummary": None}
+        search_module._enrich_search_explain_details(
+            missing_path_summary_details,
+            query=SearchVectorQuery(
+                index_name="by_vector",
+                path="embedding",
+                query_vector=(1.0, 0.0, 0.0),
+                limit=2,
+                num_candidates=4,
+            ),
+            definition=vector_definition,
+        )
+        self.assertEqual(missing_path_summary_details, {"pathSummary": None})
 
     def test_materialized_search_document_reuses_entries_for_multiple_matchers(self) -> None:
         definition = SearchIndexDefinition(

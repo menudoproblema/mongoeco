@@ -680,7 +680,9 @@
 - `mode`: `local-ann-with-exact-baseline`
 - `filterMode`: `post-candidate-with-adaptive-candidate-expansion`
 - `fallback`: `exact`
-- `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'resultType': 'cursor', 'supportsCollectionScope': True, 'supportsDatabaseScope': False, 'supportsSession': True, 'acceptsPipeline': True, 'aggregateStage': '$vectorSearch', 'similarities': ['cosine', 'dotProduct', 'euclidean'], 'requiresLeadingStage': True}}`
+- `hybridFilterModes`: `candidate-prefilter`, `candidate-prefilter+post-candidate`, `post-candidate`
+- `explainFeatures`: `pathSummary`, `resolvedLeafPaths`, `querySemantics`, `scoreBreakdown`, `candidatePlan`, `hybridRetrieval`, `vectorBackend`
+- `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'resultType': 'cursor', 'supportsCollectionScope': True, 'supportsDatabaseScope': False, 'supportsSession': True, 'acceptsPipeline': True, 'aggregateStage': '$vectorSearch', 'similarities': ['cosine', 'dotProduct', 'euclidean'], 'scoreField': 'vectorSearchScore', 'hybridFilterModes': ['candidate-prefilter', 'candidate-prefilter+post-candidate', 'post-candidate'], 'explainFeatures': ['pathSummary', 'resolvedLeafPaths', 'querySemantics', 'scoreBreakdown', 'candidatePlan', 'hybridRetrieval', 'vectorBackend'], 'requiresLeadingStage': True}}`
 - `note`: `SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.`
 
 ### `collation`
@@ -729,7 +731,9 @@
 - `mode`: `local-ann-with-exact-baseline`
 - `filterMode`: `post-candidate-with-adaptive-candidate-expansion`
 - `fallback`: `exact`
-- `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'resultType': 'cursor', 'supportsCollectionScope': True, 'supportsDatabaseScope': False, 'supportsSession': True, 'acceptsPipeline': True, 'aggregateStage': '$vectorSearch', 'similarities': ['cosine', 'dotProduct', 'euclidean'], 'requiresLeadingStage': True}}`
+- `hybridFilterModes`: `candidate-prefilter`, `candidate-prefilter+post-candidate`, `post-candidate`
+- `explainFeatures`: `pathSummary`, `resolvedLeafPaths`, `querySemantics`, `scoreBreakdown`, `candidatePlan`, `hybridRetrieval`, `vectorBackend`
+- `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'resultType': 'cursor', 'supportsCollectionScope': True, 'supportsDatabaseScope': False, 'supportsSession': True, 'acceptsPipeline': True, 'aggregateStage': '$vectorSearch', 'similarities': ['cosine', 'dotProduct', 'euclidean'], 'scoreField': 'vectorSearchScore', 'hybridFilterModes': ['candidate-prefilter', 'candidate-prefilter+post-candidate', 'post-candidate'], 'explainFeatures': ['pathSummary', 'resolvedLeafPaths', 'querySemantics', 'scoreBreakdown', 'candidatePlan', 'hybridRetrieval', 'vectorBackend'], 'requiresLeadingStage': True}}`
 - `note`: `SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.`
 
 ### `search`

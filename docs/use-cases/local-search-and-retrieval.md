@@ -124,8 +124,10 @@ These examples show:
 * `near` and `compound` explain blocks with explicit path summaries,
   textual/scalar path grouping and embedded-path sections;
 * `compound` with `phrase`, `equals`, `in`, `range`, `near`, `exists` and `regex`;
-* public vector diagnostics such as `similarity`, `numCandidates`,
-  `vectorSearchScore`, residual filters and fallback reasons.
+* local hybrid retrieval diagnostics such as `scoreBreakdown`,
+  `candidatePlan`, `hybridRetrieval`, `vectorSearchScore`, residual filters
+  and fallback reasons, with clearer parity between `MemoryEngine` and
+  `SQLiteEngine`.
 
 ## Limits To Keep In Mind
 
@@ -136,4 +138,4 @@ These examples show:
   advanced subset support, not as collector parity.
 * `vectorSearch` stays local-first and must still be the first pipeline stage.
 * `explain()` is part of the contract: use it to see candidate prefilters,
-  residual filters and fallback behavior.
+  residual filters, score breakdown and fallback behavior.

@@ -982,8 +982,22 @@
         "metadata": {
           "aggregateStage": "$vectorSearch",
           "backend": "usearch",
+          "explainFeatures": [
+            "pathSummary",
+            "resolvedLeafPaths",
+            "querySemantics",
+            "scoreBreakdown",
+            "candidatePlan",
+            "hybridRetrieval",
+            "vectorBackend"
+          ],
           "fallback": "exact",
           "filterMode": "post-candidate-with-adaptive-candidate-expansion",
+          "hybridFilterModes": [
+            "candidate-prefilter",
+            "candidate-prefilter+post-candidate",
+            "post-candidate"
+          ],
           "mode": "local-ann-with-exact-baseline",
           "note": "SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.",
           "operationMetadata": {
@@ -991,8 +1005,23 @@
               "acceptedNoopOptions": [],
               "acceptsPipeline": true,
               "aggregateStage": "$vectorSearch",
+              "explainFeatures": [
+                "pathSummary",
+                "resolvedLeafPaths",
+                "querySemantics",
+                "scoreBreakdown",
+                "candidatePlan",
+                "hybridRetrieval",
+                "vectorBackend"
+              ],
+              "hybridFilterModes": [
+                "candidate-prefilter",
+                "candidate-prefilter+post-candidate",
+                "post-candidate"
+              ],
               "requiresLeadingStage": true,
               "resultType": "cursor",
+              "scoreField": "vectorSearchScore",
               "similarities": [
                 "cosine",
                 "dotProduct",
@@ -2033,8 +2062,23 @@
             "acceptedNoopOptions": [],
             "acceptsPipeline": true,
             "aggregateStage": "$vectorSearch",
+            "explainFeatures": [
+              "pathSummary",
+              "resolvedLeafPaths",
+              "querySemantics",
+              "scoreBreakdown",
+              "candidatePlan",
+              "hybridRetrieval",
+              "vectorBackend"
+            ],
+            "hybridFilterModes": [
+              "candidate-prefilter",
+              "candidate-prefilter+post-candidate",
+              "post-candidate"
+            ],
             "requiresLeadingStage": true,
             "resultType": "cursor",
+            "scoreField": "vectorSearchScore",
             "similarities": [
               "cosine",
               "dotProduct",
@@ -5993,8 +6037,22 @@
     "vectorSearch": {
       "aggregateStage": "$vectorSearch",
       "backend": "usearch",
+      "explainFeatures": [
+        "pathSummary",
+        "resolvedLeafPaths",
+        "querySemantics",
+        "scoreBreakdown",
+        "candidatePlan",
+        "hybridRetrieval",
+        "vectorBackend"
+      ],
       "fallback": "exact",
       "filterMode": "post-candidate-with-adaptive-candidate-expansion",
+      "hybridFilterModes": [
+        "candidate-prefilter",
+        "candidate-prefilter+post-candidate",
+        "post-candidate"
+      ],
       "mode": "local-ann-with-exact-baseline",
       "note": "SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.",
       "operationMetadata": {
@@ -6002,8 +6060,23 @@
           "acceptedNoopOptions": [],
           "acceptsPipeline": true,
           "aggregateStage": "$vectorSearch",
+          "explainFeatures": [
+            "pathSummary",
+            "resolvedLeafPaths",
+            "querySemantics",
+            "scoreBreakdown",
+            "candidatePlan",
+            "hybridRetrieval",
+            "vectorBackend"
+          ],
+          "hybridFilterModes": [
+            "candidate-prefilter",
+            "candidate-prefilter+post-candidate",
+            "post-candidate"
+          ],
           "requiresLeadingStage": true,
           "resultType": "cursor",
+          "scoreField": "vectorSearchScore",
           "similarities": [
             "cosine",
             "dotProduct",

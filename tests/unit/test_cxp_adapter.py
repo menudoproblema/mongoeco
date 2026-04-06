@@ -413,6 +413,24 @@ class CxpAlignmentTests(unittest.TestCase):
             legacy['vectorSearch']['similarities'],
             metadata['vector_search']['similarities'],
         )
+        self.assertEqual(
+            exported['capabilities']['vector_search']['metadata']['hybridFilterModes'],
+            [
+                'candidate-prefilter',
+                'candidate-prefilter+post-candidate',
+                'post-candidate',
+            ],
+        )
+        self.assertIn(
+            'scoreBreakdown',
+            exported['capabilities']['vector_search']['metadata']['explainFeatures'],
+        )
+        self.assertEqual(
+            exported['capabilities']['vector_search']['metadata']['operationMetadata'][
+                'aggregate'
+            ]['scoreField'],
+            'vectorSearchScore',
+        )
         self.assertEqual(projection['provider'], 'mongoeco')
         self.assertEqual(projection['minimalProfile'], 'mongodb-text-search')
         self.assertEqual(
@@ -541,6 +559,7 @@ class CxpAlignmentTests(unittest.TestCase):
                     metadata={
                         'similarities': ['cosine'],
                         'aggregateStage': '$vectorSearch',
+                        'scoreField': 'vectorSearchScore',
                     },
                 ),
                 CapabilityDescriptor(

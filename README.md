@@ -340,9 +340,10 @@ Examples worth showing first:
   `compound` query with visible embedded path/ranking explain metadata plus
   `equals` + `in` + `range` + `near` + `exists` + `regex`.
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
-  demonstrates how to read `similarity`, `numCandidates`, `minScore`,
-  projected `vectorSearchScore`, residual filtering and exact fallback in local
-  `$vectorSearch`.
+  compares `MemoryEngine` and `SQLiteEngine` for local hybrid retrieval,
+  including `scoreBreakdown`, `candidatePlan`, `hybridRetrieval`,
+  projected `vectorSearchScore`, residual filtering and exact fallback in
+  local `$vectorSearch`.
 * [cxp_adapter.py](/Users/uve/Proyectos/mongoeco2/examples/cxp_adapter.py)
   demonstrates the canonical CXP `database/mongodb` catalog and the `cxp`
   projection exposed by `aggregate(...).explain()`.

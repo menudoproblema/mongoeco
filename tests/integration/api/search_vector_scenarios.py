@@ -115,6 +115,16 @@ def assert_filtered_vector_explanation(
     engine_name: str,
 ) -> None:
     details = explanation["engine_plan"]["details"]
+    case.assertEqual(details["hybridRetrieval"]["filterMode"], "candidate-prefilter")
+    case.assertLessEqual(
+        details["candidatePlan"]["prefilterCandidateCount"],
+        details["documentsScanned"],
+    )
+    if details.get("documentsScannedAfterPrefilter") is not None:
+        case.assertEqual(
+            details["candidatePlan"]["prefilterCandidateCount"],
+            details["documentsScannedAfterPrefilter"],
+        )
     if engine_name == "sqlite":
         case.assertEqual(details["candidateExpansionStrategy"], "adaptive-retention")
         case.assertEqual(details["filterMode"], "candidate-prefilter")
@@ -296,7 +306,16 @@ def assert_vector_similarity_explanation(
     expected_similarity: str,
 ) -> None:
     details = explanation["engine_plan"]["details"]
+    case.assertEqual(details["queryOperator"], "vectorSearch")
     case.assertEqual(details["similarity"], expected_similarity)
+    case.assertEqual(details["scoreBreakdown"]["similarity"], expected_similarity)
+    case.assertEqual(details["scoreBreakdown"]["scoreField"], "vectorSearchScore")
+    case.assertEqual(details["candidatePlan"]["requestedCandidates"], details["candidatesRequested"])
+    case.assertEqual(details["candidatePlan"]["evaluatedCandidates"], details["candidatesEvaluated"])
+    case.assertEqual(
+        details["pathSummary"]["resolvedLeafPaths"],
+        [details["path"]],
+    )
     candidates_requested = details.get("candidatesRequested")
     candidates_evaluated = details.get("candidatesEvaluated")
     if candidates_requested is not None and candidates_evaluated is not None:
@@ -312,10 +331,9 @@ def assert_vector_min_score_explanation(
 ) -> None:
     details = explanation["engine_plan"]["details"]
     case.assertEqual(details["minScore"], expected_min_score)
-    if engine_name == "sqlite":
-        case.assertEqual(details["documentsFilteredByMinScore"], 1)
-    else:
-        case.assertIsNone(details["documentsFilteredByMinScore"])
+    case.assertEqual(details["documentsFilteredByMinScore"], 1)
+    case.assertEqual(details["scoreBreakdown"]["documentsFilteredByMinScore"], 1)
+    case.assertEqual(details["scoreBreakdown"]["minScore"], expected_min_score)
 
 
 def assert_vector_score_projection_results(
@@ -345,6 +363,7 @@ def assert_ranged_vector_explanation(
     case.assertEqual(details["vectorFilterPrefilter"]["supportedPaths"], ["score"])
     case.assertEqual(details["vectorFilterPrefilter"]["supportedOperators"], ["range"])
     case.assertTrue(details["vectorFilterPrefilter"]["exact"])
+    case.assertEqual(details["hybridRetrieval"]["filterMode"], "candidate-prefilter")
 
 
 def assert_boolean_vector_residual_explanation(
@@ -363,6 +382,10 @@ def assert_boolean_vector_residual_explanation(
     case.assertTrue(details["vectorFilterResidual"]["required"])
     case.assertEqual(details["vectorFilterResidual"]["reason"], "unsupported-clauses")
     case.assertEqual(details["vectorFilterResidual"]["unsupportedClauseCount"], 1)
+    case.assertEqual(
+        details["hybridRetrieval"]["documentsFilteredPostCandidate"],
+        details["documentsFiltered"],
+    )
     if engine_name == "sqlite":
         case.assertEqual(details["vectorFilterPrefilter"]["backend"], "vector-filter-index")
     else:

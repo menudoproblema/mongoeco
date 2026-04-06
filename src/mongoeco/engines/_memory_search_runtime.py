@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import replace
 import heapq
 import math
 from typing import Protocol
@@ -89,6 +90,43 @@ def _vector_filter_residual_description(
         "unsupportedClauseCount": int(vector_filter_description.get("unsupportedClauseCount", 0)),
         "spec": deepcopy(filter_spec),
     }
+
+
+def _memory_vector_backend_document(
+    *,
+    query: SearchVectorQuery,
+    vector_index,
+) -> dict[str, object]:
+    field_spec = vector_index.vector_specs.get(query.path, {})
+    return {
+        "backend": "memory-exact-baseline",
+        "physicalName": None,
+        "path": query.path,
+        "similarity": str(field_spec.get("similarity", query.similarity)),
+        "numDimensions": int(field_spec.get("numDimensions", len(query.query_vector))),
+        "documentsScanned": vector_index.valid_vector_counts.get(query.path, 0),
+        "validVectors": vector_index.valid_vector_counts.get(query.path, 0),
+        "invalidVectors": max(
+            0,
+            len(vector_index.documents) - vector_index.valid_vector_counts.get(query.path, 0),
+        ),
+        "exactBaseline": True,
+    }
+
+
+def _matches_vector_postfilter(
+    document: Document,
+    *,
+    filter_spec: dict[str, object] | None,
+) -> bool:
+    if filter_spec is None:
+        return True
+    candidateable_match = matches_candidateable_filter(document, filter_spec)
+    if candidateable_match is False:
+        return False
+    if candidateable_match is None:
+        return bool(QueryEngine.match(document, filter_spec, dialect=MONGODB_DIALECT_70))
+    return True
 
 
 async def execute_search_documents(
@@ -286,6 +324,157 @@ async def explain_search_documents(
         if isinstance(query, SearchVectorQuery) and vector_index is not None
         else (None, None)
     )
+    resolved_similarity = (
+        str(vector_index.vector_specs.get(query.path, {}).get("similarity", query.similarity))
+        if isinstance(query, SearchVectorQuery) and vector_index is not None
+        else query.similarity
+        if isinstance(query, SearchVectorQuery)
+        else None
+    )
+    vector_backend = (
+        _memory_vector_backend_document(query=query, vector_index=vector_index)
+        if isinstance(query, SearchVectorQuery) and vector_index is not None
+        else None
+    )
+    vector_candidates_requested: int | None = None
+    vector_candidates_evaluated: int | None = None
+    vector_prefilter_candidate_count: int | None = None
+    vector_documents_matched_before_limit: int | None = None
+    vector_documents_filtered: int | None = None
+    vector_documents_filtered_by_min_score: int | None = None
+    vector_mode: str | None = None
+    vector_filter_mode: str | None = None
+    if isinstance(query, SearchVectorQuery) and vector_index is not None:
+        vector_mode = "exact"
+        path_positions = vector_index.vector_row_positions.get(query.path, ())
+        query_filter_rows, _query_filter_description = candidate_rows_for_vector_filter(
+            vector_index,
+            query_path=query.path,
+            filter_spec=query.filter_spec,
+        )
+        downstream_filter_rows, _downstream_filter_description = candidate_rows_for_vector_filter(
+            vector_index,
+            query_path=query.path,
+            filter_spec=downstream_filter_spec,
+        )
+        candidate_rows = list(
+            query_filter_rows if query_filter_rows is not None else range(len(path_positions))
+        )
+        if downstream_filter_rows is not None:
+            allowed = set(downstream_filter_rows)
+            candidate_rows = [
+                row_index for row_index in candidate_rows if row_index in allowed
+            ]
+        vector_prefilter_candidate_count = len(candidate_rows)
+        vector_candidates_requested = min(query.num_candidates, len(candidate_rows))
+        raw_scored_rows = vector_scores_for_rows(
+            vector_index,
+            query=replace(query, min_score=None),
+            candidate_rows=candidate_rows,
+            limit=None,
+        )
+        scored_rows = vector_scores_for_rows(
+            vector_index,
+            query=query,
+            candidate_rows=candidate_rows,
+            limit=None,
+        )
+        vector_candidates_evaluated = len(raw_scored_rows)
+        if query.min_score is not None:
+            vector_documents_filtered_by_min_score = max(
+                0,
+                len(raw_scored_rows) - len(scored_rows),
+            )
+        query_requires_postfilter = query.filter_spec is not None and query_filter_rows is None
+        downstream_requires_postfilter = (
+            downstream_filter_spec is not None and downstream_filter_rows is None
+        )
+        vector_filter_mode = (
+            "candidate-prefilter"
+            if query.filter_spec is not None
+            and bool(vector_filter_description and vector_filter_description.get("exact"))
+            else "candidate-prefilter+post-candidate"
+            if query.filter_spec is not None and vector_filter_description is not None
+            else "post-candidate"
+            if query.filter_spec is not None
+            else None
+        )
+        passing_hits = 0
+        rejected_hits = 0
+        for _score, row_index in scored_rows:
+            document = vector_index.documents[path_positions[row_index]].document
+            if downstream_requires_postfilter and not _matches_vector_postfilter(
+                document,
+                filter_spec=downstream_filter_spec,
+            ):
+                rejected_hits += 1
+                continue
+            if query_requires_postfilter and not _matches_vector_postfilter(
+                document,
+                filter_spec=query.filter_spec,
+            ):
+                rejected_hits += 1
+                continue
+            passing_hits += 1
+        vector_documents_matched_before_limit = passing_hits
+        vector_documents_filtered = rejected_hits
+    vector_score_breakdown = (
+        {
+            "similarity": resolved_similarity,
+            "scoreField": "vectorSearchScore",
+            "scoreDirection": "higher-is-better",
+            "scoreFormula": (
+                "dot(query, candidate) / (||query|| * ||candidate||)"
+                if resolved_similarity == "cosine"
+                else "sum(query[i] * candidate[i])"
+                if resolved_similarity == "dotProduct"
+                else "-sqrt(sum((query[i] - candidate[i])^2))"
+            ),
+            "minScore": query.min_score,
+            "documentsFilteredByMinScore": vector_documents_filtered_by_min_score,
+            "backend": "memory-exact-baseline",
+        }
+        if isinstance(query, SearchVectorQuery)
+        else None
+    )
+    vector_candidate_plan = (
+        {
+            "mode": vector_mode,
+            "requestedCandidates": vector_candidates_requested,
+            "evaluatedCandidates": vector_candidates_evaluated,
+            "prefilterCandidateCount": vector_prefilter_candidate_count,
+            "documentsMatchedBeforeLimit": vector_documents_matched_before_limit,
+            "documentsScanned": (
+                vector_index.valid_vector_counts.get(query.path, 0)
+                if vector_index is not None
+                else None
+            ),
+            "documentsScannedAfterPrefilter": vector_prefilter_candidate_count,
+            "topKLimitHint": result_limit_hint,
+            "candidateExpansionStrategy": "exact-baseline",
+        }
+        if isinstance(query, SearchVectorQuery)
+        else None
+    )
+    vector_hybrid_retrieval = (
+        {
+            "filterMode": vector_filter_mode,
+            "queryFilter": deepcopy(query.filter_spec) if query.filter_spec is not None else None,
+            "downstreamFilter": (
+                deepcopy(downstream_filter_spec)
+                if downstream_filter_spec is not None
+                else None
+            ),
+            "prefilter": deepcopy(vector_filter_description),
+            "residual": _vector_filter_residual_description(
+                query.filter_spec,
+                vector_filter_description,
+            ),
+            "documentsFilteredPostCandidate": vector_documents_filtered,
+        }
+        if isinstance(query, SearchVectorQuery)
+        else None
+    )
     return QueryPlanExplanation(
         engine="memory",
         strategy="search",
@@ -313,50 +502,41 @@ async def explain_search_documents(
                 ready_at_epoch=engine._search_index_ready_at.get((db_name, coll_name, query.index_name)),
             ),
             **search_query_explain_details(query, definition=definition),
-            "similarity": (
-                str(vector_index.vector_specs.get(query.path, {}).get("similarity", query.similarity))
-                if isinstance(query, SearchVectorQuery) and vector_index is not None
-                else query.similarity
-                if isinstance(query, SearchVectorQuery)
-                else None
-            ),
+            "similarity": resolved_similarity,
             "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
-            "filterMode": (
-                "candidate-prefilter"
-                if isinstance(query, SearchVectorQuery)
-                and query.filter_spec is not None
-                and bool(vector_filter_description and vector_filter_description.get("exact"))
-                else "candidate-prefilter+post-candidate"
-                if isinstance(query, SearchVectorQuery)
-                and query.filter_spec is not None
-                and vector_filter_description is not None
-                else "post-candidate"
-                if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
-                else None
-            ),
+            "mode": vector_mode,
+            "filterMode": vector_filter_mode,
             "vectorFilterPrefilter": vector_filter_description if isinstance(query, SearchVectorQuery) else None,
             "vectorFilterResidual": (
                 _vector_filter_residual_description(query.filter_spec, vector_filter_description)
                 if isinstance(query, SearchVectorQuery)
                 else None
             ),
-            "documentsFilteredByMinScore": (
-                None
-                if not isinstance(query, SearchVectorQuery) or query.min_score is None
-                else None
-            ),
+            "candidatesRequested": vector_candidates_requested,
+            "candidatesEvaluated": vector_candidates_evaluated,
+            "prefilterCandidateCount": vector_prefilter_candidate_count,
+            "documentsMatchedBeforeLimit": vector_documents_matched_before_limit,
+            "documentsFiltered": vector_documents_filtered,
+            "documentsFilteredByMinScore": vector_documents_filtered_by_min_score,
             "documentsScanned": (
                 vector_index.valid_vector_counts.get(query.path, 0)
                 if isinstance(query, SearchVectorQuery) and vector_index is not None
                 else None
             ),
             "documentsScannedAfterPrefilter": (
-                len(vector_filter_positions)
-                if isinstance(query, SearchVectorQuery) and vector_filter_positions is not None
-                else vector_index.valid_vector_counts.get(query.path, 0)
-                if isinstance(query, SearchVectorQuery) and vector_index is not None
+                vector_prefilter_candidate_count
+                if isinstance(query, SearchVectorQuery)
                 else None
             ),
+            "candidateExpansionStrategy": (
+                "exact-baseline"
+                if isinstance(query, SearchVectorQuery)
+                else None
+            ),
+            "vectorBackend": vector_backend,
+            "scoreBreakdown": vector_score_breakdown,
+            "candidatePlan": vector_candidate_plan,
+            "hybridRetrieval": vector_hybrid_retrieval,
             "topKLimitHint": result_limit_hint,
             "downstreamFilterPrefilter": deepcopy(downstream_filter_spec) if downstream_filter_spec is not None else None,
             **(

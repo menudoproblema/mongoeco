@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import mongoeco.engines._memory_search_runtime as memory_search_runtime_module
 from mongoeco.engines._memory_search_runtime import (
+    _matches_vector_postfilter,
     _vector_filter_residual_description,
     execute_search_documents,
     explain_search_documents,
@@ -57,6 +58,30 @@ class MemorySearchRuntimeTests(unittest.TestCase):
             )["reason"],
             "non-exact-prefilter",
         )
+
+    def test_matches_vector_postfilter_covers_all_candidateable_paths(self) -> None:
+        self.assertTrue(_matches_vector_postfilter({"_id": 1}, filter_spec=None))
+
+        with patch.object(
+            memory_search_runtime_module,
+            "matches_candidateable_filter",
+            return_value=False,
+        ):
+            self.assertFalse(
+                _matches_vector_postfilter({"_id": 1}, filter_spec={"kind": "note"})
+            )
+
+        with (
+            patch.object(
+                memory_search_runtime_module,
+                "matches_candidateable_filter",
+                return_value=None,
+            ),
+            patch.object(memory_search_runtime_module.QueryEngine, "match", return_value=True),
+        ):
+            self.assertTrue(
+                _matches_vector_postfilter({"_id": 1}, filter_spec={"kind": "note"})
+            )
 
     def test_execute_and_explain_cover_near_compound_and_vector_paths(self) -> None:
         async def _run() -> None:
@@ -177,7 +202,29 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                 self.assertEqual(vector_explain.details["topKLimitHint"], 1)
                 self.assertEqual(vector_explain.details["documentsScannedAfterPrefilter"], 1)
                 self.assertEqual(vector_explain.details["minScore"], 0.95)
-                self.assertIsNone(vector_explain.details["documentsFilteredByMinScore"])
+                self.assertEqual(vector_explain.details["documentsFilteredByMinScore"], 0)
+                self.assertEqual(vector_explain.details["queryOperator"], "vectorSearch")
+                self.assertEqual(vector_explain.details["mode"], "exact")
+                self.assertEqual(
+                    vector_explain.details["pathSummary"]["resolvedLeafPaths"],
+                    ["embedding"],
+                )
+                self.assertEqual(
+                    vector_explain.details["scoreBreakdown"]["scoreField"],
+                    "vectorSearchScore",
+                )
+                self.assertEqual(
+                    vector_explain.details["candidatePlan"]["candidateExpansionStrategy"],
+                    "exact-baseline",
+                )
+                self.assertEqual(
+                    vector_explain.details["hybridRetrieval"]["filterMode"],
+                    "candidate-prefilter",
+                )
+                self.assertEqual(
+                    vector_explain.details["vectorBackend"]["backend"],
+                    "memory-exact-baseline",
+                )
             finally:
                 await engine.disconnect()
 
@@ -314,6 +361,96 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                         downstream_filter_spec={"kind": {"$regex": "^n"}},
                     )
                 self.assertEqual(downstream_postfilter_hits, [])
+            finally:
+                await engine.disconnect()
+
+        asyncio.run(_run())
+
+    def test_explain_search_documents_covers_vector_candidate_intersection_and_postfilters(self) -> None:
+        async def _run() -> None:
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                await engine.put_document("db", "coll", {"_id": 1, "kind": "note", "embedding": [1.0, 0.0]})
+                await engine.put_document("db", "coll", {"_id": 2, "kind": "reference", "embedding": [0.5, 0.5]})
+                await engine.create_search_index(
+                    "db",
+                    "coll",
+                    SearchIndexDefinition(
+                        {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2}]},
+                        name="by_vector",
+                        index_type="vectorSearch",
+                    ),
+                )
+
+                with (
+                    patch.object(
+                        memory_search_runtime_module,
+                        "candidate_rows_for_vector_filter",
+                        side_effect=[
+                            ([0, 1], {"exact": True}),
+                            ([1], {"exact": True}),
+                        ],
+                    ),
+                    patch.object(
+                        memory_search_runtime_module,
+                        "vector_scores_for_rows",
+                        side_effect=[[(0.5, 1)], [(0.5, 1)]],
+                    ),
+                ):
+                    explanation = await explain_search_documents(
+                        engine,
+                        "db",
+                        "coll",
+                        "$vectorSearch",
+                        {
+                            "index": "by_vector",
+                            "path": "embedding",
+                            "queryVector": [1.0, 0.0],
+                            "limit": 2,
+                            "filter": {"kind": "reference"},
+                        },
+                        downstream_filter_spec={"kind": "reference"},
+                    )
+                self.assertEqual(explanation.details["prefilterCandidateCount"], 1)
+                self.assertEqual(explanation.details["documentsScannedAfterPrefilter"], 1)
+
+                with (
+                    patch.object(
+                        memory_search_runtime_module,
+                        "candidate_rows_for_vector_filter",
+                        side_effect=[(None, None), (None, None)],
+                    ),
+                    patch.object(
+                        memory_search_runtime_module,
+                        "vector_scores_for_rows",
+                        side_effect=[[(1.0, 0), (0.9, 1)], [(1.0, 0), (0.9, 1)]],
+                    ),
+                    patch.object(
+                        memory_search_runtime_module,
+                        "matches_candidateable_filter",
+                        side_effect=[False, True, False],
+                    ),
+                ):
+                    rejected = await explain_search_documents(
+                        engine,
+                        "db",
+                        "coll",
+                        "$vectorSearch",
+                        {
+                            "index": "by_vector",
+                            "path": "embedding",
+                            "queryVector": [1.0, 0.0],
+                            "limit": 2,
+                            "filter": {"kind": "note"},
+                        },
+                        downstream_filter_spec={"kind": "reference"},
+                    )
+                self.assertEqual(rejected.details["documentsFiltered"], 2)
+                self.assertEqual(
+                    rejected.details["hybridRetrieval"]["documentsFilteredPostCandidate"],
+                    2,
+                )
             finally:
                 await engine.disconnect()
 
