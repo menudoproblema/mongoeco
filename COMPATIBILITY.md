@@ -24,6 +24,10 @@ Regla importante:
 * el export `cxp` incluye también perfiles reutilizables recomendados, como
   `mongodb-text-search` para tests de `$search` textual sin exigir
   `vector_search`;
+* esos perfiles se exportan con requisitos estructurados
+  (`capabilityName`, `requiredOperations`, `requiredMetadataKeys`) y
+  `explain()` deja visible el perfil mínimo aplicable cuando puede inferirse
+  honestamente;
 * `local_runtime_subsets` sigue existiendo por compatibilidad documental, pero
   ya no es la fuente primaria de verdad.
 

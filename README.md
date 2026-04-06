@@ -95,6 +95,11 @@ For reusable profile gates, the practical split is now:
   `vector_search`;
 * `mongodb-search` when you need both textual and vector search.
 
+The public compat export serializes those profiles with structured
+requirements, and the `cxp` block in `explain()` now carries the minimal
+reusable profile for the current capability path when that can be inferred
+honestly.
+
 `mongoeco` does not ship a live CXP provider wrapper for its clients. Instead,
 it exposes the canonical catalog and projects the active capability path
 through `compat` and `explain()`. External systems can wrap `mongoeco` if they

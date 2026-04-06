@@ -141,12 +141,25 @@ class CxpAlignmentTests(unittest.TestCase):
             additional_capabilities=('search',),
             metadata={'mode': 'local'},
         )
+        platform_projection = (
+            cxp_capabilities_module.build_mongodb_explain_projection(
+                capability='transactions',
+            )
+        )
 
         self.assertEqual(exported['interface'], 'database/mongodb')
         self.assertIn('profiles', exported)
         self.assertEqual(
             exported['profiles']['mongodb-text-search']['recommendedFor'],
             ['text-search-tests', 'search-without-vector-search'],
+        )
+        self.assertEqual(
+            exported['profiles']['mongodb-text-search']['requirements'][-1],
+            {
+                'capabilityName': 'search',
+                'requiredOperations': ['aggregate'],
+                'requiredMetadataKeys': ['operators', 'aggregateStage'],
+            },
         )
         self.assertEqual(
             exported['capabilities']['aggregation']['operations'][0]['name'],
@@ -247,8 +260,10 @@ class CxpAlignmentTests(unittest.TestCase):
             metadata['vector_search']['similarities'],
         )
         self.assertEqual(projection['provider'], 'mongoeco')
+        self.assertEqual(projection['minimalProfile'], 'mongodb-text-search')
         self.assertEqual(projection['additionalCapabilities'], ['search'])
         self.assertEqual(projection['metadata'], {'mode': 'local'})
+        self.assertNotIn('minimalProfile', platform_projection)
 
     def test_catalog_operation_result_types_reject_inconsistent_catalog_entries(
         self,

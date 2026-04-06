@@ -125,6 +125,15 @@ textual `$search` conformance but does not want to force `vector_search`.
 `mongodb-search` remains the broader profile for providers that support both
 textual and vector search through `aggregate`.
 
+`mongoeco.compat.export_cxp_catalog()` now also serializes each profile with:
+
+* `requirements[].capabilityName`
+* `requirements[].requiredOperations`
+* `requirements[].requiredMetadataKeys`
+
+That keeps the public export directly useful for profile-aware tooling without
+forcing every consumer to import `cxp` just to inspect profile shape.
+
 `mongoeco` reexports those profiles through `mongoeco.cxp`, but does not
 perform profile negotiation itself.
 
@@ -225,6 +234,13 @@ with MongoClient(MemoryEngine()) as client:
     ).explain()
     print(explain["cxp"])
 ```
+
+When `mongoeco` can infer it honestly, the `cxp` block in `explain()` also
+exposes the minimal reusable MongoDB profile for that capability path:
+
+* `find(...)` -> `mongodb-core`
+* `aggregate([{"$search": ...}])` -> `mongodb-text-search`
+* `aggregate([{"$vectorSearch": ...}])` -> `mongodb-search`
 
 ## Limits
 

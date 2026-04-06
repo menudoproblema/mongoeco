@@ -168,6 +168,29 @@ class _AsyncAggregationCursorStub:
 
 
 class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
+    def test_cxp_projection_reports_minimal_profile_for_aggregation_search_paths(self):
+        collection = _FakeCollection([])
+
+        plain = AsyncAggregationCursor(collection, [])
+        text_search = AsyncAggregationCursor(
+            collection,
+            [{"$search": {"text": {"query": "ada", "path": "name"}}}],
+        )
+        vector_search = AsyncAggregationCursor(
+            collection,
+            [{"$vectorSearch": {"path": "embedding", "queryVector": [0.1], "numCandidates": 5, "limit": 2}}],
+        )
+
+        self.assertEqual(plain._cxp_explain_projection()["minimalProfile"], "mongodb-core")
+        self.assertEqual(
+            text_search._cxp_explain_projection()["minimalProfile"],
+            "mongodb-text-search",
+        )
+        self.assertEqual(
+            vector_search._cxp_explain_projection()["minimalProfile"],
+            "mongodb-search",
+        )
+
     def test_search_result_limit_hint_is_only_exposed_for_safe_trailing_window(self):
         self.assertEqual(
             AsyncAggregationCursor._search_result_limit_hint(

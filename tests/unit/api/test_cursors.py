@@ -231,6 +231,18 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             async_cursor_module._operation_issue_message(operation),
             "operation has deferred planning issues (relaxed): find: blocked",
         )
+        self.assertEqual(
+            async_cursor_module._find_explain_cxp_projection({"name": "Ada"})[
+                "minimalProfile"
+            ],
+            "mongodb-core",
+        )
+        self.assertEqual(
+            async_cursor_module._find_explain_cxp_projection(
+                {"$text": {"$search": "ada"}}
+            )["minimalProfile"],
+            "mongodb-core",
+        )
         no_scope_operation = type(
             "Operation",
             (),

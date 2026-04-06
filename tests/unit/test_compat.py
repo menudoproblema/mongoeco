@@ -180,6 +180,10 @@ class CompatResolutionTests(unittest.TestCase):
             "mongodb-text-search",
         )
         self.assertEqual(
+            catalog["profiles"]["mongodb-core"]["requirements"][0]["capabilityName"],
+            "read",
+        )
+        self.assertEqual(
             catalog["capabilities"]["read"]["metadata"]["operationMetadata"][
                 "find"
             ]["resultType"],

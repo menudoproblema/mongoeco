@@ -5,7 +5,7 @@ from copy import deepcopy
 import msgspec
 
 from cxp.capabilities import Capability, CapabilityMatrix, CapabilityMetadata
-from cxp.catalogs.base import CapabilityCatalog
+from cxp.catalogs.base import CapabilityCatalog, CapabilityProfile
 from mongoeco.compat._catalog_data import (
     OPERATION_OPTION_SUPPORT_CATALOG,
     SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS,
@@ -210,6 +210,38 @@ def _catalog_operation_result_types(catalog: CapabilityCatalog) -> dict[str, str
 
 
 _OPERATION_RESULT_TYPES = _catalog_operation_result_types(MONGODB_CATALOG)
+
+
+def _serialize_profile(profile: CapabilityProfile, *, recommended_for: list[str]) -> dict[str, object]:
+    return {
+        'name': profile.name,
+        'description': profile.description,
+        'recommendedFor': list(recommended_for),
+        'requirements': [
+            {
+                'capabilityName': requirement.capability_name,
+                'requiredOperations': list(requirement.required_operations),
+                'requiredMetadataKeys': list(requirement.required_metadata_keys),
+            }
+            for requirement in profile.requirements
+        ],
+    }
+
+
+def _minimal_profile_name_for_projection(
+    capability: str,
+    additional_capabilities: tuple[str, ...],
+) -> str | None:
+    additional = frozenset(additional_capabilities)
+    if capability in {MONGODB_READ, MONGODB_WRITE}:
+        return MONGODB_CORE_PROFILE_NAME
+    if capability == MONGODB_AGGREGATION:
+        if MONGODB_VECTOR_SEARCH in additional:
+            return MONGODB_SEARCH_PROFILE_NAME
+        if MONGODB_SEARCH in additional:
+            return MONGODB_TEXT_SEARCH_PROFILE_NAME
+        return MONGODB_CORE_PROFILE_NAME
+    return None
 
 
 _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
@@ -712,40 +744,35 @@ def export_cxp_capability_catalog() -> dict[str, object]:
     return {
         'interface': MONGODB_INTERFACE,
         'profiles': {
-            MONGODB_CORE_PROFILE_NAME: {
-                'name': MONGODB_CORE_PROFILE.name,
-                'description': MONGODB_CORE_PROFILE.description,
-                'recommendedFor': ['core-tests', 'general-resources'],
-            },
-            MONGODB_TEXT_SEARCH_PROFILE_NAME: {
-                'name': MONGODB_TEXT_SEARCH_PROFILE.name,
-                'description': MONGODB_TEXT_SEARCH_PROFILE.description,
-                'recommendedFor': [
+            MONGODB_CORE_PROFILE_NAME: _serialize_profile(
+                MONGODB_CORE_PROFILE,
+                recommended_for=['core-tests', 'general-resources'],
+            ),
+            MONGODB_TEXT_SEARCH_PROFILE_NAME: _serialize_profile(
+                MONGODB_TEXT_SEARCH_PROFILE,
+                recommended_for=[
                     'text-search-tests',
                     'search-without-vector-search',
                 ],
-            },
-            MONGODB_SEARCH_PROFILE_NAME: {
-                'name': MONGODB_SEARCH_PROFILE.name,
-                'description': MONGODB_SEARCH_PROFILE.description,
-                'recommendedFor': [
+            ),
+            MONGODB_SEARCH_PROFILE_NAME: _serialize_profile(
+                MONGODB_SEARCH_PROFILE,
+                recommended_for=[
                     'full-search-tests',
                     'search-with-vector-search',
                 ],
-            },
-            MONGODB_PLATFORM_PROFILE_NAME: {
-                'name': MONGODB_PLATFORM_PROFILE.name,
-                'description': MONGODB_PLATFORM_PROFILE.description,
-                'recommendedFor': ['platform-tests', 'runtime-conformance'],
-            },
-            MONGODB_AGGREGATE_RICH_PROFILE_NAME: {
-                'name': MONGODB_AGGREGATE_RICH_PROFILE.name,
-                'description': MONGODB_AGGREGATE_RICH_PROFILE.description,
-                'recommendedFor': [
+            ),
+            MONGODB_PLATFORM_PROFILE_NAME: _serialize_profile(
+                MONGODB_PLATFORM_PROFILE,
+                recommended_for=['platform-tests', 'runtime-conformance'],
+            ),
+            MONGODB_AGGREGATE_RICH_PROFILE_NAME: _serialize_profile(
+                MONGODB_AGGREGATE_RICH_PROFILE,
+                recommended_for=[
                     'aggregation-rich-tests',
                     'subset-sensitive-tooling',
                 ],
-            },
+            ),
         },
         'capabilities': capabilities,
         'extensions': export_cxp_extension_catalog(),
@@ -781,6 +808,12 @@ def build_mongodb_explain_projection(
     }
     if additional_capabilities:
         projection['additionalCapabilities'] = list(additional_capabilities)
+    minimal_profile = _minimal_profile_name_for_projection(
+        capability,
+        additional_capabilities,
+    )
+    if minimal_profile is not None:
+        projection['minimalProfile'] = minimal_profile
     if metadata:
         projection['metadata'] = deepcopy(metadata)
     return projection
