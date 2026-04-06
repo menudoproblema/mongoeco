@@ -745,7 +745,6 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         unsupported_window_operators = [
             "$covariancePop", "$covarianceSamp",
             "$derivative", "$expMovingAvg", "$integral",
-            "$linearFill", "$locf",
         ]
         for operator in unsupported_window_operators:
             with self.subTest(window_operator=operator):
@@ -861,19 +860,83 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
                 [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$shift": {"output": "$value", "extra": 1}}}}}],
             )
 
-    def test_set_window_fields_rejects_locf_with_dedicated_test(self):
-        with self.assertRaises(OperationFailure):
-            apply_pipeline(
-                [{"_id": "1", "value": 10}],
-                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$locf": "$value"}}}}],
-            )
+    def test_set_window_fields_supports_locf_and_linear_fill(self):
+        result = apply_pipeline(
+            [
+                {"_id": "1", "group": "a", "value": 10},
+                {"_id": "2", "group": "a", "value": None},
+                {"_id": "3", "group": "a", "value": 30},
+                {"_id": "4", "group": "a", "value": None},
+                {"_id": "5", "group": "a", "value": 50},
+            ],
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"_id": 1},
+                        "output": {
+                            "carry": {"$locf": "$value"},
+                            "interpolated": {"$linearFill": "$value"},
+                        },
+                    }
+                }
+            ],
+        )
 
-    def test_set_window_fields_rejects_linear_fill_with_dedicated_test(self):
+        self.assertEqual(
+            result,
+            [
+                {"_id": "1", "group": "a", "value": 10, "carry": 10, "interpolated": 10},
+                {"_id": "2", "group": "a", "value": None, "carry": 10, "interpolated": 20.0},
+                {"_id": "3", "group": "a", "value": 30, "carry": 30, "interpolated": 30},
+                {"_id": "4", "group": "a", "value": None, "carry": 30, "interpolated": 40.0},
+                {"_id": "5", "group": "a", "value": 50, "carry": 50, "interpolated": 50},
+            ],
+        )
+
+    def test_set_window_fields_locf_and_linear_fill_reject_invalid_payloads(self):
         with self.assertRaises(OperationFailure):
             apply_pipeline(
                 [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"output": {"result": {"$locf": "$value"}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$linearFill": "$value", "window": {"documents": ["unbounded", "current"]}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": "a"}, {"_id": "2", "value": None}, {"_id": "3", "value": "b"}],
                 [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$linearFill": "$value"}}}}],
             )
+
+    def test_window_fill_helpers_cover_leading_nulls_dates_and_invalid_bool(self):
+        self.assertEqual(
+            grouping_stages._apply_locf_fill([None, 10, None, 20]),
+            [None, 10, 10, 20],
+        )
+        self.assertEqual(
+            grouping_stages._apply_linear_fill([10, None, 30, 40]),
+            [10, 20.0, 30, 40],
+        )
+
+        start = datetime.datetime(2026, 4, 1, tzinfo=datetime.UTC)
+        end = datetime.datetime(2026, 4, 3, tzinfo=datetime.UTC)
+        filled = grouping_stages._apply_linear_fill([start, None, end])
+        self.assertEqual(
+            filled,
+            [
+                start,
+                datetime.datetime(2026, 4, 2, tzinfo=datetime.UTC),
+                end,
+            ],
+        )
+        self.assertEqual(grouping_stages._apply_linear_fill([10, 20]), [10, 20])
+        with self.assertRaises(OperationFailure):
+            grouping_stages._apply_linear_fill([True, None, 3])
+        with self.assertRaises(OperationFailure):
+            grouping_stages._apply_linear_fill([1, None, True])
 
     def test_evaluate_expression_supports_dotted_variable_paths(self):
         document = {"profile": {"city": "Sevilla"}}

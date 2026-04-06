@@ -56,5 +56,6 @@ SUPPORTED_GROUP_ACCUMULATORS = frozenset(
 SUPPORTED_WINDOW_ACCUMULATORS = frozenset(
     {"$sum", "$count", "$min", "$max", "$avg", "$stdDevPop", "$stdDevSamp", "$push", "$addToSet",
      "$first", "$last", "$firstN", "$lastN", "$maxN", "$minN", "$top", "$bottom", "$topN",
-     "$bottomN", "$median", "$percentile", "$documentNumber", "$rank", "$denseRank", "$shift"}
+     "$bottomN", "$median", "$percentile", "$documentNumber", "$rank", "$denseRank", "$shift",
+     "$locf", "$linearFill"}
 )

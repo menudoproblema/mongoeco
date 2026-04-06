@@ -1,5 +1,6 @@
 from functools import cmp_to_key
 from copy import deepcopy
+import datetime
 import math
 from typing import Any
 
@@ -40,6 +41,52 @@ def _copy_if_mutable(value: Any) -> Any:
     if isinstance(value, (dict, list, set)):
         return deepcopy(value)
     return value
+
+
+def _apply_locf_fill(values: list[Any]) -> list[Any]:
+    filled: list[Any] = []
+    previous: Any = None
+    has_previous = False
+    for value in values:
+        if value is not None:
+            filled.append(_copy_if_mutable(value))
+            previous = value
+            has_previous = True
+            continue
+        if has_previous:
+            filled.append(_copy_if_mutable(previous))
+        else:
+            filled.append(None)
+    return filled
+
+
+def _apply_linear_fill(values: list[Any]) -> list[Any]:
+    filled = [_copy_if_mutable(value) for value in values]
+    known_points = [
+        (index, value)
+        for index, value in enumerate(values)
+        if value is not None
+    ]
+    for point_index, (left_index, left_value) in enumerate(known_points[:-1]):
+        right_index, right_value = known_points[point_index + 1]
+        gap = right_index - left_index
+        if gap <= 1:
+            continue
+        if isinstance(left_value, datetime.datetime) and isinstance(right_value, datetime.datetime):
+            total = (right_value - left_value).total_seconds()
+            for offset in range(1, gap):
+                filled[left_index + offset] = left_value + datetime.timedelta(
+                    seconds=(total * offset) / gap
+                )
+            continue
+        if not isinstance(left_value, (int, float)) or isinstance(left_value, bool):
+            raise OperationFailure("$linearFill currently supports only numeric or date values")
+        if not isinstance(right_value, (int, float)) or isinstance(right_value, bool):
+            raise OperationFailure("$linearFill currently supports only numeric or date values")
+        step = (right_value - left_value) / gap
+        for offset in range(1, gap):
+            filled[left_index + offset] = left_value + (step * offset)
+    return filled
 
 
 def _build_accumulator_runtime(
@@ -366,7 +413,7 @@ def _apply_set_window_fields(
         operator, expression, window = _require_window_output_spec(field_spec)
         if not dialect.supports_window_accumulator(operator):
             raise OperationFailure(f"Unsupported $setWindowFields accumulator: {operator}")
-        if operator in {"$rank", "$denseRank", "$documentNumber", "$shift"}:
+        if operator in {"$rank", "$denseRank", "$documentNumber", "$shift", "$locf", "$linearFill"}:
             prepared_window_outputs[field] = (operator, expression, window, ())
             continue
         prepared_specs = _prepare_accumulator_specs(
@@ -438,6 +485,27 @@ def _apply_set_window_fields(
                     else:
                         shifted_value = deepcopy(expression.get("default"))
                     set_document_value(enriched, field, shifted_value)
+                    continue
+                if operator in {"$locf", "$linearFill"}:
+                    if sort_spec is None:
+                        raise OperationFailure(f"{operator} requires sortBy")
+                    if window is not None:
+                        raise OperationFailure(f"{operator} does not support an explicit window")
+                    partition_values = [
+                        evaluate_expression(
+                            candidate_document,
+                            expression,
+                            variables,
+                            dialect=dialect,
+                        )
+                        for candidate_document in ordered
+                    ]
+                    filled_values = (
+                        _apply_locf_fill(partition_values)
+                        if operator == "$locf"
+                        else _apply_linear_fill(partition_values)
+                    )
+                    set_document_value(enriched, field, filled_values[current_index])
                     continue
                 if window is None:
                     window_documents = ordered
