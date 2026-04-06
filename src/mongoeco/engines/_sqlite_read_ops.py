@@ -91,7 +91,7 @@ def build_search_explain(
         "indexType": definition.index_type,
         "physicalName": physical_name,
         "fts5_match": fts5_match,
-        **search_query_explain_details(query),
+        **search_query_explain_details(query, definition=definition),
         "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
     }
 

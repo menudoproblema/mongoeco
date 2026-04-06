@@ -761,8 +761,18 @@ def search_query_operator_name(query: SearchQuery) -> str | None:
     return _SEARCH_QUERY_OPERATOR_NAMES.get(type(query))
 
 
-def search_query_explain_details(query: SearchQuery) -> dict[str, object | None]:
+def search_query_explain_details(
+    query: SearchQuery,
+    *,
+    definition: SearchIndexDefinition | None = None,
+) -> dict[str, object | None]:
     details = _SEARCH_QUERY_EXPLAINERS[type(query)](query)
+    if definition is not None:
+        _enrich_search_explain_details(
+            details,
+            query=query,
+            definition=definition,
+        )
     details["queryOperator"] = search_query_operator_name(query)
     return details
 
@@ -1965,6 +1975,76 @@ def _search_path_summary(paths: list[str] | None) -> dict[str, object] | None:
     }
 
 
+def _enrich_search_explain_details(
+    details: dict[str, object | None],
+    *,
+    query: SearchQuery,
+    definition: SearchIndexDefinition,
+) -> None:
+    path_summary = details.get("pathSummary")
+    if not isinstance(path_summary, dict):
+        return
+    if isinstance(
+        query,
+        (
+            SearchTextQuery,
+            SearchPhraseQuery,
+            SearchAutocompleteQuery,
+            SearchWildcardQuery,
+            SearchRegexQuery,
+        ),
+    ):
+        _attach_resolved_leaf_paths(
+            path_summary,
+            paths=list(query.paths) if query.paths is not None else None,
+            available_leaf_paths=_mapped_textual_search_paths(definition),
+        )
+        return
+    if isinstance(query, SearchExistsQuery):
+        _attach_resolved_leaf_paths(
+            path_summary,
+            paths=list(query.paths) if query.paths is not None else None,
+            available_leaf_paths=_mapped_leaf_search_paths(definition),
+        )
+        return
+    if isinstance(query, SearchCompoundQuery):
+        all_paths = path_summary.get("all")
+        textual_paths = path_summary.get("textualPaths")
+        scalar_paths = path_summary.get("scalarPaths")
+        all_available_leaf_paths = _mapped_leaf_search_paths(definition)
+        if isinstance(all_paths, list):
+            _attach_resolved_leaf_paths(path_summary, paths=all_paths, available_leaf_paths=all_available_leaf_paths)
+        if isinstance(textual_paths, list):
+            path_summary["resolvedTextualLeafPaths"] = _resolve_requested_leaf_paths(
+                textual_paths,
+                available_leaf_paths=_mapped_textual_search_paths(definition),
+            )
+        if isinstance(scalar_paths, list):
+            path_summary["resolvedScalarLeafPaths"] = _resolve_requested_leaf_paths(
+                scalar_paths,
+                available_leaf_paths=_mapped_scalar_search_paths(definition),
+            )
+
+
+def _attach_resolved_leaf_paths(
+    path_summary: dict[str, object | None],
+    *,
+    paths: list[str] | None,
+    available_leaf_paths: tuple[str, ...],
+) -> None:
+    if paths is None:
+        return
+    resolved_leaf_paths = _resolve_requested_leaf_paths(
+        paths,
+        available_leaf_paths=available_leaf_paths,
+    )
+    path_summary["resolvedLeafPaths"] = resolved_leaf_paths
+    path_summary["unresolvedPaths"] = _unresolved_requested_paths(
+        paths,
+        available_leaf_paths=available_leaf_paths,
+    )
+
+
 def _count_nested_compounds(query: SearchCompoundQuery) -> int:
     total = 0
     for clauses in (query.must, query.should, query.filter, query.must_not):
@@ -2140,6 +2220,43 @@ def _mapped_search_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:
     return tuple(_iter_mapped_search_paths(mappings))
 
 
+def _mapped_leaf_search_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:
+    if definition.index_type not in TEXTUAL_SEARCH_INDEX_TYPES:
+        return ()
+    mappings = definition.definition.get("mappings")
+    if not isinstance(mappings, dict):
+        return ()
+    return tuple(_iter_mapped_leaf_search_paths(mappings))
+
+
+def _mapped_textual_search_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:
+    if definition.index_type not in TEXTUAL_SEARCH_INDEX_TYPES:
+        return ()
+    mappings = definition.definition.get("mappings")
+    if not isinstance(mappings, dict):
+        return ()
+    return tuple(
+        _iter_mapped_leaf_search_paths(
+            mappings,
+            allowed_mapping_types=TEXTUAL_SEARCH_FIELD_MAPPING_TYPES,
+        )
+    )
+
+
+def _mapped_scalar_search_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:
+    if definition.index_type not in TEXTUAL_SEARCH_INDEX_TYPES:
+        return ()
+    mappings = definition.definition.get("mappings")
+    if not isinstance(mappings, dict):
+        return ()
+    return tuple(
+        _iter_mapped_leaf_search_paths(
+            mappings,
+            allowed_mapping_types=EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES,
+        )
+    )
+
+
 def _iter_mapped_search_paths(mappings: Document, prefix: str = "") -> tuple[str, ...]:
     fields = mappings.get("fields", {})
     if not isinstance(fields, dict):
@@ -2155,6 +2272,72 @@ def _iter_mapped_search_paths(mappings: Document, prefix: str = "") -> tuple[str
             nested_mapping = {key: value for key, value in field_spec.items() if key != "type"}
             collected.extend(_iter_mapped_search_paths(nested_mapping, prefix=path))
     return tuple(dict.fromkeys(collected))
+
+
+def _iter_mapped_leaf_search_paths(
+    mappings: Document,
+    prefix: str = "",
+    *,
+    allowed_mapping_types: frozenset[str] | None = None,
+) -> tuple[str, ...]:
+    fields = mappings.get("fields", {})
+    if not isinstance(fields, dict):
+        return ()
+    collected: list[str] = []
+    for field_name, field_spec in fields.items():
+        if not isinstance(field_name, str) or not field_name or not isinstance(field_spec, dict):
+            continue
+        path = f"{prefix}.{field_name}" if prefix else field_name
+        mapping_type = field_spec.get("type", "document")
+        if mapping_type in STRUCTURED_SEARCH_FIELD_MAPPING_TYPES:
+            nested_mapping = {key: value for key, value in field_spec.items() if key != "type"}
+            collected.extend(
+                _iter_mapped_leaf_search_paths(
+                    nested_mapping,
+                    prefix=path,
+                    allowed_mapping_types=allowed_mapping_types,
+                )
+            )
+            continue
+        if allowed_mapping_types is not None and mapping_type not in allowed_mapping_types:
+            continue
+        collected.append(path)
+    return tuple(dict.fromkeys(collected))
+
+
+def _resolve_requested_leaf_paths(
+    requested_paths: list[str],
+    *,
+    available_leaf_paths: tuple[str, ...],
+) -> list[str]:
+    resolved: list[str] = []
+    seen: set[str] = set()
+    for requested_path in requested_paths:
+        for candidate_path in available_leaf_paths:
+            if candidate_path != requested_path and not candidate_path.startswith(f"{requested_path}."):
+                continue
+            if candidate_path in seen:
+                continue
+            seen.add(candidate_path)
+            resolved.append(candidate_path)
+    return sorted(resolved)
+
+
+def _unresolved_requested_paths(
+    requested_paths: list[str],
+    *,
+    available_leaf_paths: tuple[str, ...],
+) -> list[str]:
+    unresolved: list[str] = []
+    for requested_path in requested_paths:
+        if any(
+            candidate_path == requested_path
+            or candidate_path.startswith(f"{requested_path}.")
+            for candidate_path in available_leaf_paths
+        ):
+            continue
+        unresolved.append(requested_path)
+    return sorted(unresolved)
 
 
 def _search_path_values(value: object, path: str) -> tuple[object, ...]:

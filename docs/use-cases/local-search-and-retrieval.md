@@ -107,6 +107,8 @@ These examples show:
   `metadata`, which resolve to mapped descendant leaf fields;
 * parent-path `exists` checks over structured mappings such as `contributors`
   or `metadata`;
+* parent-path `autocomplete`, `wildcard` and `regex` over structured mappings,
+  with `explain()` showing the resolved descendant leaf fields;
 * scalar operators over `embeddedDocuments` paths such as
   `contributors.verified` or `contributors.impact`;
 * explicit `document` mappings for paths such as `metadata.topic`;

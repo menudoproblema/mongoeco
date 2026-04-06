@@ -854,6 +854,19 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
     'structuredFieldMappings': sorted(STRUCTURED_SEARCH_FIELD_MAPPING_TYPES),
     'textualFieldMappings': sorted(TEXTUAL_SEARCH_FIELD_MAPPING_TYPES),
     'exactFilterFieldMappings': sorted(EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES),
+    'structuredParentPathOperators': [
+        'text',
+        'phrase',
+        'autocomplete',
+        'wildcard',
+        'regex',
+        'exists',
+    ],
+    'explainFeatures': [
+        'pathSummary',
+        'resolvedLeafPaths',
+        'structuredParentPathResolution',
+    ],
     'sqliteBackends': [
         'fts5',
         'fts5-glob',

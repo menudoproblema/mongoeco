@@ -77,6 +77,8 @@ Some capabilities need more detail than a single operation name.
 * `aggregation.operationMetadata`
 * `search.operators`
 * `search.fieldMappings`
+* `search.structuredParentPathOperators`
+* `search.explainFeatures`
 * `search.operationMetadata`
 * `search.aggregateStage`
 * `vector_search.similarities`
@@ -101,7 +103,10 @@ without guessing:
   session support, accepted pipeline input and the supported stage/operator
   subset;
 * `search.fieldMappings` now includes `embeddedDocuments`, making nested search
-  paths part of the public subset instead of an undocumented local trick.
+  paths part of the public subset instead of an undocumented local trick;
+* `search.structuredParentPathOperators` and `search.explainFeatures` make it
+  explicit that structured parent paths work across the visible textual subset
+  and that `explain()` resolves them to mapped leaf paths.
 
 ## Reusable profiles
 

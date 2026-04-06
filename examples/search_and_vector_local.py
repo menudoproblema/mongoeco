@@ -120,6 +120,42 @@ def main() -> None:
             contributor_parent_results,
         )
 
+        contributor_autocomplete_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "autocomplete": {
+                            "query": "Ada Lo",
+                            "path": "contributors",
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1}},
+            ]
+        ).to_list()
+        print(
+            "$search embeddedDocuments parent-path autocomplete results:",
+            contributor_autocomplete_results,
+        )
+        contributor_autocomplete_explain = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "autocomplete": {
+                            "query": "Ada Lo",
+                            "path": "contributors",
+                        },
+                    }
+                }
+            ]
+        ).explain()
+        print(
+            "$search embeddedDocuments parent-path autocomplete explain:",
+            contributor_autocomplete_explain["engine_plan"]["details"]["pathSummary"],
+        )
+
         contributor_equals_results = collection.aggregate(
             [
                 {
@@ -195,6 +231,44 @@ def main() -> None:
         print(
             "$search document parent-path results:",
             nested_document_parent_results,
+        )
+
+        nested_document_wildcard_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "wildcard": {
+                            "query": "*search*",
+                            "path": "metadata",
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "metadata": 1}},
+            ]
+        ).to_list()
+        print(
+            "$search document parent-path wildcard results:",
+            nested_document_wildcard_results,
+        )
+
+        contributor_regex_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "regex": {
+                            "query": "Charles.*",
+                            "path": "contributors",
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "contributors": 1}},
+            ]
+        ).to_list()
+        print(
+            "$search embeddedDocuments parent-path regex results:",
+            contributor_regex_results,
         )
 
         nested_document_exists_results = collection.aggregate(
@@ -439,6 +513,11 @@ def main() -> None:
             "$search compound explain embedded paths:",
             search_explain["engine_plan"]["details"]["pathSummary"]["embeddedPaths"],
             search_explain["engine_plan"]["details"]["pathSummary"]["embeddedPathSections"],
+        )
+        print(
+            "$search compound explain resolved leaf paths:",
+            search_explain["engine_plan"]["details"]["pathSummary"]["resolvedTextualLeafPaths"],
+            search_explain["engine_plan"]["details"]["pathSummary"]["resolvedScalarLeafPaths"],
         )
         print("$search compound explain ranking:", search_explain["engine_plan"]["details"]["ranking"])
 

@@ -536,6 +536,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             "usesEmbeddedPaths": False,
                             "nestedCompoundCount": 0,
                             "maxClauseDepth": 1,
+                            "resolvedLeafPaths": ["body", "title"],
+                            "resolvedTextualLeafPaths": ["body", "title"],
+                            "resolvedScalarLeafPaths": [],
+                            "unresolvedPaths": [],
                         },
                     )
 
@@ -1211,6 +1215,40 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     ).to_list()
                     self.assertEqual([document["_id"] for document in parent_hits], [1, 3])
 
+                    parent_autocomplete_hits = await collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "autocomplete": {
+                                        "query": "Ada Lo",
+                                        "path": "contributors",
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in parent_autocomplete_hits], [1])
+
+                    parent_regex_hits = await collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "regex": {
+                                        "query": "Charles.*",
+                                        "path": "contributors",
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in parent_regex_hits], [1])
+
                     parent_exists_hits = await collection.aggregate(
                         [
                             {
@@ -1351,6 +1389,18 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ],
                         ["contributors.impact", "contributors.verified"],
                     )
+                    self.assertEqual(
+                        compound_explain["engine_plan"]["details"]["pathSummary"][
+                            "resolvedTextualLeafPaths"
+                        ],
+                        ["contributors.name", "title"],
+                    )
+                    self.assertEqual(
+                        compound_explain["engine_plan"]["details"]["pathSummary"][
+                            "resolvedScalarLeafPaths"
+                        ],
+                        ["contributors.impact", "contributors.verified"],
+                    )
 
     async def test_search_document_mapping_and_date_near_keep_parity_between_memory_and_sqlite(self):
         for engine_name in ENGINE_FACTORIES:
@@ -1443,6 +1493,23 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     ).to_list()
                     self.assertEqual([document["_id"] for document in parent_topic_hits], [1])
 
+                    parent_wildcard_hits = await collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "wildcard": {
+                                        "query": "*search*",
+                                        "path": "metadata",
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in parent_wildcard_hits], [1])
+
                     parent_exists_hits = await collection.aggregate(
                         [
                             {
@@ -1460,6 +1527,25 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(
                         [document["_id"] for document in parent_exists_hits],
                         [1, 2, 3],
+                    )
+
+                    parent_exists_explain = await collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "exists": {
+                                        "path": "metadata",
+                                    },
+                                }
+                            }
+                        ]
+                    ).explain()
+                    self.assertEqual(
+                        parent_exists_explain["engine_plan"]["details"]["pathSummary"][
+                            "resolvedLeafPaths"
+                        ],
+                        ["metadata.publishedAt", "metadata.series", "metadata.topic"],
                     )
 
                     near_hits = await collection.aggregate(

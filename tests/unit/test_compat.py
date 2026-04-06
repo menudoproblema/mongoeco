@@ -206,6 +206,16 @@ class CompatResolutionTests(unittest.TestCase):
             "document",
             catalog["capabilities"]["search"]["metadata"]["fieldMappings"],
         )
+        self.assertEqual(
+            catalog["capabilities"]["search"]["metadata"][
+                "structuredParentPathOperators"
+            ],
+            ["text", "phrase", "autocomplete", "wildcard", "regex", "exists"],
+        )
+        self.assertEqual(
+            catalog["capabilities"]["search"]["metadata"]["explainFeatures"],
+            ["pathSummary", "resolvedLeafPaths", "structuredParentPathResolution"],
+        )
         self.assertTrue(
             catalog["capabilities"]["read"]["metadata"]["operationMetadata"][
                 "find"

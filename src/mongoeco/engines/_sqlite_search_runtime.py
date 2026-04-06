@@ -1773,7 +1773,7 @@ def explain_search_documents_sync(
                 ready=ready,
                 ready_at_epoch=ready_at_epoch,
             ),
-            **search_query_explain_details(query),
+            **search_query_explain_details(query, definition=definition),
             "similarity": (
                 vector_state.similarity
                 if isinstance(query, SearchVectorQuery) and vector_state is not None

@@ -660,6 +660,8 @@
 - `structuredFieldMappings`: `document`, `embeddedDocuments`
 - `textualFieldMappings`: `autocomplete`, `string`, `token`
 - `exactFilterFieldMappings`: `boolean`, `date`, `number`, `objectId`, `uuid`
+- `structuredParentPathOperators`: `text`, `phrase`, `autocomplete`, `wildcard`, `regex`, `exists`
+- `explainFeatures`: `pathSummary`, `resolvedLeafPaths`, `structuredParentPathResolution`
 - `sqliteBackends`: `fts5`, `fts5-glob`, `fts5-path`, `fts5-prefilter`, `python`
 - `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'resultType': 'cursor', 'supportsCollectionScope': True, 'supportsDatabaseScope': False, 'supportsSession': True, 'acceptsPipeline': True, 'aggregateStage': '$search', 'operators': ['text', 'phrase', 'autocomplete', 'wildcard', 'exists', 'in', 'equals', 'range', 'near', 'compound', 'regex'], 'requiresLeadingStage': True}}`
 - `note`: `The local $search surface remains an explicit Atlas-like subset.`
@@ -734,6 +736,8 @@
 - `structuredFieldMappings`: `document`, `embeddedDocuments`
 - `textualFieldMappings`: `autocomplete`, `string`, `token`
 - `exactFilterFieldMappings`: `boolean`, `date`, `number`, `objectId`, `uuid`
+- `structuredParentPathOperators`: `text`, `phrase`, `autocomplete`, `wildcard`, `regex`, `exists`
+- `explainFeatures`: `pathSummary`, `resolvedLeafPaths`, `structuredParentPathResolution`
 - `sqliteBackends`: `fts5`, `fts5-glob`, `fts5-path`, `fts5-prefilter`, `python`
 - `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'resultType': 'cursor', 'supportsCollectionScope': True, 'supportsDatabaseScope': False, 'supportsSession': True, 'acceptsPipeline': True, 'aggregateStage': '$search', 'operators': ['text', 'phrase', 'autocomplete', 'wildcard', 'exists', 'in', 'equals', 'range', 'near', 'compound', 'regex'], 'requiresLeadingStage': True}}`
 - `note`: `The local $search surface remains an explicit Atlas-like subset.`

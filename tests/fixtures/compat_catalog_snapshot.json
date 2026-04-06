@@ -702,6 +702,11 @@
             "objectId",
             "uuid"
           ],
+          "explainFeatures": [
+            "pathSummary",
+            "resolvedLeafPaths",
+            "structuredParentPathResolution"
+          ],
           "fieldMappings": [
             "autocomplete",
             "boolean",
@@ -773,6 +778,14 @@
           "structuredFieldMappings": [
             "document",
             "embeddedDocuments"
+          ],
+          "structuredParentPathOperators": [
+            "text",
+            "phrase",
+            "autocomplete",
+            "wildcard",
+            "regex",
+            "exists"
           ],
           "textualFieldMappings": [
             "autocomplete",
@@ -5842,6 +5855,11 @@
         "objectId",
         "uuid"
       ],
+      "explainFeatures": [
+        "pathSummary",
+        "resolvedLeafPaths",
+        "structuredParentPathResolution"
+      ],
       "fieldMappings": [
         "autocomplete",
         "boolean",
@@ -5913,6 +5931,14 @@
       "structuredFieldMappings": [
         "document",
         "embeddedDocuments"
+      ],
+      "structuredParentPathOperators": [
+        "text",
+        "phrase",
+        "autocomplete",
+        "wildcard",
+        "regex",
+        "exists"
       ],
       "textualFieldMappings": [
         "autocomplete",

@@ -94,7 +94,9 @@ Esto implica:
   anidados explícitos como `metadata.topic`, y tanto `document` como
   `embeddedDocuments` admiten ya búsquedas por path padre estructurado
   (`metadata`, `contributors`) que se resuelven contra sus leafs textuales
-  mapeados; además `embeddedDocuments` deja declarar arrays de documentos
+  mapeados en `text`, `phrase`, `autocomplete`, `wildcard` y `regex`, y
+  contra leafs mapeados en `exists`; `explain()` publica ya los
+  `resolvedLeafPaths` de esa resolución; además `embeddedDocuments` deja declarar arrays de documentos
   anidados con paths explícitos como `contributors.name`,
   `contributors.verified` o `contributors.impact`.
 * cuando una pipeline deja un `skip/limit` seguro tras `$search`, el runtime

@@ -253,6 +253,16 @@ class CxpAlignmentTests(unittest.TestCase):
             ],
             ['document', 'embeddedDocuments'],
         )
+        self.assertEqual(
+            exported['capabilities']['search']['metadata'][
+                'structuredParentPathOperators'
+            ],
+            ['text', 'phrase', 'autocomplete', 'wildcard', 'regex', 'exists'],
+        )
+        self.assertEqual(
+            exported['capabilities']['search']['metadata']['explainFeatures'],
+            ['pathSummary', 'resolvedLeafPaths', 'structuredParentPathResolution'],
+        )
         self.assertTrue(
             exported['capabilities']['read']['metadata']['operationMetadata'][
                 'find'

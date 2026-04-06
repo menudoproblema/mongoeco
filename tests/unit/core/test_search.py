@@ -2110,6 +2110,8 @@ class SearchCoreTests(unittest.TestCase):
             {
                 "mappings": {
                     "fields": {
+                        "body": {"type": "string"},
+                        "score": {"type": "number"},
                         "metadata": {
                             "type": "document",
                             "fields": {
@@ -2563,13 +2565,43 @@ class SearchCoreTests(unittest.TestCase):
         )
 
     def test_search_query_explain_details_report_parent_and_embedded_paths_for_text_like_and_exists(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "body": {"type": "string"},
+                        "score": {"type": "number"},
+                        "metadata": {
+                            "type": "document",
+                            "fields": {
+                                "topic": {"type": "string"},
+                                "series": {"type": "token"},
+                                "publishedAt": {"type": "date"},
+                            },
+                        },
+                        "contributors": {
+                            "type": "embeddedDocuments",
+                            "fields": {
+                                "name": {"type": "string"},
+                                "role": {"type": "token"},
+                                "verified": {"type": "boolean"},
+                                "impact": {"type": "number"},
+                            },
+                        },
+                    },
+                }
+            },
+            name="by_text",
+        )
         text_details = search_query_explain_details(
             SearchTextQuery(
                 index_name="by_text",
                 raw_query="Ada",
                 terms=("ada",),
                 paths=("contributors", "metadata.topic"),
-            )
+            ),
+            definition=definition,
         )
         self.assertEqual(
             text_details["pathSummary"],
@@ -2581,10 +2613,17 @@ class SearchCoreTests(unittest.TestCase):
                 "embeddedPaths": ["metadata.topic"],
                 "parentPaths": ["contributors"],
                 "leafPaths": ["metadata.topic"],
+                "resolvedLeafPaths": [
+                    "contributors.name",
+                    "contributors.role",
+                    "metadata.topic",
+                ],
+                "unresolvedPaths": [],
             },
         )
         exists_details = search_query_explain_details(
-            SearchExistsQuery(index_name="by_text", paths=("metadata", "contributors.verified"))
+            SearchExistsQuery(index_name="by_text", paths=("metadata", "contributors.verified")),
+            definition=definition,
         )
         self.assertEqual(
             exists_details["pathSummary"],
@@ -2596,6 +2635,13 @@ class SearchCoreTests(unittest.TestCase):
                 "embeddedPaths": ["contributors.verified"],
                 "parentPaths": ["metadata"],
                 "leafPaths": ["contributors.verified"],
+                "resolvedLeafPaths": [
+                    "contributors.verified",
+                    "metadata.publishedAt",
+                    "metadata.series",
+                    "metadata.topic",
+                ],
+                "unresolvedPaths": [],
             },
         )
         richer_compound = search_query_explain_details(
@@ -2617,7 +2663,8 @@ class SearchCoreTests(unittest.TestCase):
                     ),
                 ),
                 minimum_should_match=1,
-            )
+            ),
+            definition=definition,
         )
         self.assertEqual(richer_compound["ranking"]["nearAwareShouldCount"], 1)
         self.assertEqual(
@@ -2648,6 +2695,10 @@ class SearchCoreTests(unittest.TestCase):
                 "usesEmbeddedPaths": False,
                 "nestedCompoundCount": 0,
                 "maxClauseDepth": 1,
+                "resolvedLeafPaths": ["body", "score"],
+                "resolvedTextualLeafPaths": ["body"],
+                "resolvedScalarLeafPaths": ["score"],
+                "unresolvedPaths": [],
             },
         )
 
@@ -2707,6 +2758,65 @@ class SearchCoreTests(unittest.TestCase):
             },
         )
         self.assertEqual(search_module._query_paths(object()), ())
+
+    def test_search_explain_resolution_helpers_cover_edge_cases(self) -> None:
+        path_summary: dict[str, object | None] = {}
+        search_module._attach_resolved_leaf_paths(
+            path_summary,
+            paths=None,
+            available_leaf_paths=(),
+        )
+        self.assertEqual(path_summary, {})
+
+        vector_definition = SearchIndexDefinition(
+            {
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": 3,
+                    }
+                ]
+            },
+            name="by_vector",
+            index_type="vectorSearch",
+        )
+        vector_text_details = search_query_explain_details(
+            SearchTextQuery(
+                index_name="by_vector",
+                raw_query="Ada",
+                terms=("ada",),
+                paths=("title",),
+            ),
+            definition=vector_definition,
+        )
+        self.assertEqual(vector_text_details["pathSummary"]["resolvedLeafPaths"], [])
+        self.assertEqual(
+            vector_text_details["pathSummary"]["unresolvedPaths"],
+            ["title"],
+        )
+        self.assertEqual(search_module._mapped_leaf_search_paths(vector_definition), ())
+
+        no_mapping_definition = SearchIndexDefinition(
+            {"mappings": []},
+            name="by_text",
+        )
+        self.assertEqual(search_module._mapped_leaf_search_paths(no_mapping_definition), ())
+        self.assertEqual(search_module._mapped_textual_search_paths(no_mapping_definition), ())
+        self.assertEqual(search_module._mapped_scalar_search_paths(no_mapping_definition), ())
+        self.assertEqual(search_module._mapped_scalar_search_paths(vector_definition), ())
+        self.assertEqual(search_module._iter_mapped_leaf_search_paths({"fields": []}), ())
+        self.assertEqual(
+            search_module._iter_mapped_leaf_search_paths({"fields": {"": {}, "ok": "bad"}}),
+            (),
+        )
+        self.assertEqual(
+            search_module._resolve_requested_leaf_paths(
+                ["metadata", "metadata.topic"],
+                available_leaf_paths=("metadata.topic",),
+            ),
+            ["metadata.topic"],
+        )
 
     def test_materialized_search_document_reuses_entries_for_multiple_matchers(self) -> None:
         definition = SearchIndexDefinition(

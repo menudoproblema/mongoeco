@@ -299,7 +299,7 @@ async def explain_search_documents(
                 ready=ready,
                 ready_at_epoch=engine._search_index_ready_at.get((db_name, coll_name, query.index_name)),
             ),
-            **search_query_explain_details(query),
+            **search_query_explain_details(query, definition=definition),
             "similarity": (
                 str(vector_index.vector_specs.get(query.path, {}).get("similarity", query.similarity))
                 if isinstance(query, SearchVectorQuery) and vector_index is not None
