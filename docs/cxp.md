@@ -109,6 +109,7 @@ The canonical `database/mongodb` catalog also exposes reusable profiles that
 external systems can use for tests, resources or conformance checks:
 
 * `mongodb-core`
+* `mongodb-text-search`
 * `mongodb-search`
 * `mongodb-platform`
 * `mongodb-aggregate-rich`
@@ -118,6 +119,11 @@ Each profile expresses:
 * required capabilities
 * required first-level operations
 * required metadata keys
+
+`mongodb-text-search` is the useful middle ground for tooling that needs
+textual `$search` conformance but does not want to force `vector_search`.
+`mongodb-search` remains the broader profile for providers that support both
+textual and vector search through `aggregate`.
 
 `mongoeco` reexports those profiles through `mongoeco.cxp`, but does not
 perform profile negotiation itself.

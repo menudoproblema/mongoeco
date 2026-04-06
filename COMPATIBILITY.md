@@ -21,6 +21,9 @@ Regla importante:
 * el bloque `cxp` publica capabilities canónicas, operaciones públicas de
   primer nivel y metadata estructurada del subset real cuando el lenguaje de
   una operación no está soportado completo;
+* el export `cxp` incluye también perfiles reutilizables recomendados, como
+  `mongodb-text-search` para tests de `$search` textual sin exigir
+  `vector_search`;
 * `local_runtime_subsets` sigue existiendo por compatibilidad documental, pero
   ya no es la fuente primaria de verdad.
 

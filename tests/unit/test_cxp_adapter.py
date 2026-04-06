@@ -24,6 +24,7 @@ from mongoeco.cxp import (
     MONGODB_CORE_PROFILE,
     MONGODB_INTERFACE,
     MONGODB_PLATFORM_PROFILE,
+    MONGODB_TEXT_SEARCH_PROFILE,
     MONGODB_SEARCH_PROFILE,
     PLAN_RUN_EXECUTION_CATALOG,
     PLAN_RUN_EXECUTION_EXECUTION_STATUS,
@@ -54,6 +55,7 @@ class CxpAlignmentTests(unittest.TestCase):
 
     def test_profiles_are_reexported_from_canonical_cxp_catalog(self) -> None:
         self.assertEqual(MONGODB_CORE_PROFILE.interface, MONGODB_INTERFACE)
+        self.assertEqual(MONGODB_TEXT_SEARCH_PROFILE.name, 'mongodb-text-search')
         self.assertEqual(MONGODB_SEARCH_PROFILE.name, 'mongodb-search')
         self.assertEqual(MONGODB_PLATFORM_PROFILE.name, 'mongodb-platform')
         self.assertEqual(
@@ -141,6 +143,11 @@ class CxpAlignmentTests(unittest.TestCase):
         )
 
         self.assertEqual(exported['interface'], 'database/mongodb')
+        self.assertIn('profiles', exported)
+        self.assertEqual(
+            exported['profiles']['mongodb-text-search']['recommendedFor'],
+            ['text-search-tests', 'search-without-vector-search'],
+        )
         self.assertEqual(
             exported['capabilities']['aggregation']['operations'][0]['name'],
             MONGODB_AGGREGATE,
@@ -381,6 +388,12 @@ class CxpAlignmentTests(unittest.TestCase):
         self.assertTrue(
             MONGODB_CATALOG.is_component_snapshot_profile_compliant(
                 snapshot,
+                MONGODB_TEXT_SEARCH_PROFILE,
+            )
+        )
+        self.assertTrue(
+            MONGODB_CATALOG.is_component_snapshot_profile_compliant(
+                snapshot,
                 MONGODB_SEARCH_PROFILE,
             )
         )
@@ -410,6 +423,7 @@ class CxpAlignmentTests(unittest.TestCase):
             ],
             'aggregate',
         )
+        self.assertIn('mongodb-text-search', cxp_catalog['profiles'])
         self.assertIn(
             'supportedStages',
             cxp_catalog['capabilities']['aggregation']['metadata'],

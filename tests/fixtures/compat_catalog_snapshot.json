@@ -1176,7 +1176,49 @@
         ]
       }
     },
-    "interface": "database/mongodb"
+    "interface": "database/mongodb",
+    "profiles": {
+      "mongodb-aggregate-rich": {
+        "description": "Reusable profile for tests that need a richer aggregation subset.",
+        "name": "mongodb-aggregate-rich",
+        "recommendedFor": [
+          "aggregation-rich-tests",
+          "subset-sensitive-tooling"
+        ]
+      },
+      "mongodb-core": {
+        "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+        "name": "mongodb-core",
+        "recommendedFor": [
+          "core-tests",
+          "general-resources"
+        ]
+      },
+      "mongodb-platform": {
+        "description": "Reusable profile for MongoDB runtimes with platform surface.",
+        "name": "mongodb-platform",
+        "recommendedFor": [
+          "platform-tests",
+          "runtime-conformance"
+        ]
+      },
+      "mongodb-search": {
+        "description": "Reusable profile for tests and resources with search and vector search.",
+        "name": "mongodb-search",
+        "recommendedFor": [
+          "full-search-tests",
+          "search-with-vector-search"
+        ]
+      },
+      "mongodb-text-search": {
+        "description": "Reusable profile for tests and resources that need textual $search without requiring vector search.",
+        "name": "mongodb-text-search",
+        "recommendedFor": [
+          "text-search-tests",
+          "search-without-vector-search"
+        ]
+      }
+    }
   },
   "database_command_options": {
     "aggregate": {

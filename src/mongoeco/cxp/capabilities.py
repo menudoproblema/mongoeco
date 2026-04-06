@@ -21,6 +21,8 @@ from mongoeco.cxp.catalogs.interfaces.database.mongodb import (
     MongoAggregationMetadata,
     MongoSearchMetadata,
     MongoVectorSearchMetadata,
+    MONGODB_AGGREGATE_RICH_PROFILE,
+    MONGODB_AGGREGATE_RICH_PROFILE_NAME,
     MONGODB_AGGREGATION,
     MONGODB_AGGREGATE,
     MONGODB_BULK_WRITE,
@@ -28,6 +30,8 @@ from mongoeco.cxp.catalogs.interfaces.database.mongodb import (
     MONGODB_CHANGE_STREAMS,
     MONGODB_COLLATION,
     MONGODB_COUNT_DOCUMENTS,
+    MONGODB_CORE_PROFILE,
+    MONGODB_CORE_PROFILE_NAME,
     MONGODB_DELETE_MANY,
     MONGODB_DELETE_ONE,
     MONGODB_DISTINCT,
@@ -38,9 +42,15 @@ from mongoeco.cxp.catalogs.interfaces.database.mongodb import (
     MONGODB_INSERT_MANY,
     MONGODB_INSERT_ONE,
     MONGODB_PERSISTENCE,
+    MONGODB_PLATFORM_PROFILE,
+    MONGODB_PLATFORM_PROFILE_NAME,
     MONGODB_READ,
     MONGODB_REPLACE_ONE,
     MONGODB_SEARCH,
+    MONGODB_SEARCH_PROFILE,
+    MONGODB_SEARCH_PROFILE_NAME,
+    MONGODB_TEXT_SEARCH_PROFILE,
+    MONGODB_TEXT_SEARCH_PROFILE_NAME,
     MONGODB_TOPOLOGY_DISCOVERY,
     MONGODB_TRANSACTIONS,
     MONGODB_UPDATE_MANY,
@@ -701,6 +711,42 @@ def export_cxp_capability_catalog() -> dict[str, object]:
 
     return {
         'interface': MONGODB_INTERFACE,
+        'profiles': {
+            MONGODB_CORE_PROFILE_NAME: {
+                'name': MONGODB_CORE_PROFILE.name,
+                'description': MONGODB_CORE_PROFILE.description,
+                'recommendedFor': ['core-tests', 'general-resources'],
+            },
+            MONGODB_TEXT_SEARCH_PROFILE_NAME: {
+                'name': MONGODB_TEXT_SEARCH_PROFILE.name,
+                'description': MONGODB_TEXT_SEARCH_PROFILE.description,
+                'recommendedFor': [
+                    'text-search-tests',
+                    'search-without-vector-search',
+                ],
+            },
+            MONGODB_SEARCH_PROFILE_NAME: {
+                'name': MONGODB_SEARCH_PROFILE.name,
+                'description': MONGODB_SEARCH_PROFILE.description,
+                'recommendedFor': [
+                    'full-search-tests',
+                    'search-with-vector-search',
+                ],
+            },
+            MONGODB_PLATFORM_PROFILE_NAME: {
+                'name': MONGODB_PLATFORM_PROFILE.name,
+                'description': MONGODB_PLATFORM_PROFILE.description,
+                'recommendedFor': ['platform-tests', 'runtime-conformance'],
+            },
+            MONGODB_AGGREGATE_RICH_PROFILE_NAME: {
+                'name': MONGODB_AGGREGATE_RICH_PROFILE.name,
+                'description': MONGODB_AGGREGATE_RICH_PROFILE.description,
+                'recommendedFor': [
+                    'aggregation-rich-tests',
+                    'subset-sensitive-tooling',
+                ],
+            },
+        },
         'capabilities': capabilities,
         'extensions': export_cxp_extension_catalog(),
     }

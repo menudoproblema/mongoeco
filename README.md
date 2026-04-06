@@ -89,6 +89,12 @@ That metadata also carries operation-level hints such as result shape, scope,
 session support and core accepted inputs for `read`, `write` and
 `aggregation`.
 
+For reusable profile gates, the practical split is now:
+
+* `mongodb-text-search` when you need textual `$search` without requiring
+  `vector_search`;
+* `mongodb-search` when you need both textual and vector search.
+
 `mongoeco` does not ship a live CXP provider wrapper for its clients. Instead,
 it exposes the canonical catalog and projects the active capability path
 through `compat` and `explain()`. External systems can wrap `mongoeco` if they

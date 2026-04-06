@@ -174,6 +174,11 @@ class CompatResolutionTests(unittest.TestCase):
     def test_exported_cxp_catalog_includes_richer_operation_metadata_and_search_mappings(self):
         catalog = export_cxp_catalog()
 
+        self.assertIn("profiles", catalog)
+        self.assertEqual(
+            catalog["profiles"]["mongodb-text-search"]["name"],
+            "mongodb-text-search",
+        )
         self.assertEqual(
             catalog["capabilities"]["read"]["metadata"]["operationMetadata"][
                 "find"

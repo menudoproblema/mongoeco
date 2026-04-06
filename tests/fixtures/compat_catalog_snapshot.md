@@ -575,6 +575,22 @@
 
 ## CXP
 - `interface`: `database/mongodb`
+### Profiles
+#### `mongodb-core`
+- `description`: `Reusable minimum profile for basic MongoDB tests and resources.`
+- `recommendedFor`: `core-tests`, `general-resources`
+#### `mongodb-text-search`
+- `description`: `Reusable profile for tests and resources that need textual $search without requiring vector search.`
+- `recommendedFor`: `text-search-tests`, `search-without-vector-search`
+#### `mongodb-search`
+- `description`: `Reusable profile for tests and resources with search and vector search.`
+- `recommendedFor`: `full-search-tests`, `search-with-vector-search`
+#### `mongodb-platform`
+- `description`: `Reusable profile for MongoDB runtimes with platform surface.`
+- `recommendedFor`: `platform-tests`, `runtime-conformance`
+#### `mongodb-aggregate-rich`
+- `description`: `Reusable profile for tests that need a richer aggregation subset.`
+- `recommendedFor`: `aggregation-rich-tests`, `subset-sensitive-tooling`
 ### `read`
 - `description`: `Basic read queries.`
 - `tiers`: `core`, `search`, `platform`

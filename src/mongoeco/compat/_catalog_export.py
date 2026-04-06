@@ -237,6 +237,23 @@ def export_full_compat_catalog_markdown() -> str:
     assert isinstance(cxp_catalog, dict)
     lines.append("## CXP")
     lines.append(f"- `interface`: `{cxp_catalog['interface']}`")
+    profiles = cxp_catalog.get("profiles", {})
+    assert isinstance(profiles, dict)
+    if profiles:
+        lines.append("### Profiles")
+        for name, entry in profiles.items():
+            assert isinstance(entry, dict)
+            lines.append(f"#### `{name}`")
+            description = entry.get("description")
+            lines.append(f"- `description`: `{description}`")
+            recommended_for = entry.get("recommendedFor", ())
+            if isinstance(recommended_for, list):
+                rendered_recommended_for = ", ".join(
+                    f"`{value}`" for value in recommended_for
+                ) or "_empty_"
+                lines.append(
+                    f"- `recommendedFor`: {rendered_recommended_for}"
+                )
     capabilities = cxp_catalog["capabilities"]
     assert isinstance(capabilities, dict)
     for name, entry in capabilities.items():
