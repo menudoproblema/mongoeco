@@ -2449,6 +2449,26 @@ class SearchCoreTests(unittest.TestCase):
             near_details["ranking"]["scoreFormula"],
             "1 + 1 / (1 + distance / pivot)",
         )
+        self.assertEqual(
+            near_details["pathSummary"],
+            {
+                "sections": ["near"],
+                "all": ["score"],
+                "usesEmbeddedPaths": False,
+            },
+        )
+        self.assertEqual(
+            near_details["supportedOriginKinds"],
+            ["number", "date", "datetime"],
+        )
+        self.assertEqual(
+            near_details["pivotDecay"],
+            {
+                "baselineScore": 1.0,
+                "maxScore": 2.0,
+                "pivot": 5.0,
+            },
+        )
         richer_compound = search_query_explain_details(
             SearchCompoundQuery(
                 index_name="by_text",
@@ -2476,6 +2496,64 @@ class SearchCoreTests(unittest.TestCase):
             "matched-should-plus-clause-score",
         )
         self.assertTrue(richer_compound["ranking"]["minimumShouldMatchApplied"])
+        self.assertEqual(
+            richer_compound["pathSummary"],
+            {
+                "must": [],
+                "should": ["body", "score"],
+                "filter": [],
+                "mustNot": [],
+                "all": ["body", "score"],
+                "usesEmbeddedPaths": False,
+                "nestedCompoundCount": 0,
+                "maxClauseDepth": 1,
+            },
+        )
+
+    def test_search_query_explain_details_reports_nested_compound_structure(self) -> None:
+        nested = SearchCompoundQuery(
+            index_name="by_text",
+            must=(
+                SearchTextQuery(
+                    index_name="by_text",
+                    raw_query="Ada",
+                    terms=("ada",),
+                    paths=("contributors.name",),
+                ),
+            ),
+            should=(
+                SearchCompoundQuery(
+                    index_name="by_text",
+                    should=(
+                        SearchNearQuery(
+                            index_name="by_text",
+                            path="metrics.score",
+                            origin=10,
+                            pivot=2.0,
+                            origin_kind="number",
+                        ),
+                    ),
+                    minimum_should_match=1,
+                ),
+            ),
+        )
+
+        details = search_query_explain_details(nested)
+
+        self.assertEqual(
+            details["pathSummary"],
+            {
+                "must": ["contributors.name"],
+                "should": ["metrics.score"],
+                "filter": [],
+                "mustNot": [],
+                "all": ["contributors.name", "metrics.score"],
+                "usesEmbeddedPaths": True,
+                "nestedCompoundCount": 1,
+                "maxClauseDepth": 2,
+            },
+        )
+        self.assertEqual(search_module._query_paths(object()), ())
 
     def test_materialized_search_document_reuses_entries_for_multiple_matchers(self) -> None:
         definition = SearchIndexDefinition(

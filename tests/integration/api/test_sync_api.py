@@ -510,6 +510,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "mustNotOperators": [],
                         },
                     )
+                    self.assertEqual(
+                        compound_explanation["engine_plan"]["details"]["pathSummary"],
+                        {
+                            "must": ["body", "title"],
+                            "should": [],
+                            "filter": ["body"],
+                            "mustNot": [],
+                            "all": ["body", "title"],
+                            "usesEmbeddedPaths": False,
+                            "nestedCompoundCount": 0,
+                            "maxClauseDepth": 1,
+                        },
+                    )
 
                     compound_should_near_explanation = collection.aggregate(
                         [
@@ -737,6 +750,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(near_explanation["engine_plan"]["details"]["queryOperator"], "near")
                     self.assertEqual(near_explanation["engine_plan"]["details"]["path"], "score")
                     self.assertEqual(near_explanation["engine_plan"]["details"]["pivot"], 2.0)
+                    self.assertEqual(
+                        near_explanation["engine_plan"]["details"]["pathSummary"],
+                        {
+                            "sections": ["near"],
+                            "all": ["score"],
+                            "usesEmbeddedPaths": False,
+                        },
+                    )
                     self.assertEqual(near_explanation["engine_plan"]["details"]["backend"], "python")
 
                     vector_hits = collection.aggregate(

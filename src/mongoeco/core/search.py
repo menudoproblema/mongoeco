@@ -1722,6 +1722,17 @@ def _explain_near_query(query: SearchNearQuery) -> dict[str, object | None]:
         "numCandidates": None,
         "filter": None,
         "similarity": None,
+        "pathSummary": {
+            "sections": ["near"],
+            "all": [query.path],
+            "usesEmbeddedPaths": "." in query.path,
+        },
+        "supportedOriginKinds": ["number", "date", "datetime"],
+        "pivotDecay": {
+            "baselineScore": 1.0,
+            "maxScore": 2.0,
+            "pivot": query.pivot,
+        },
     }
 
 
@@ -1733,6 +1744,14 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
             _SEARCH_QUERY_OPERATOR_NAMES.get(type(clause), type(clause).__name__)
             for clause in clauses
         ]
+
+    def _clause_paths(
+        clauses: tuple[SearchTextLikeQuery, ...],
+    ) -> list[str]:
+        collected: set[str] = set()
+        for clause in clauses:
+            collected.update(_query_paths(clause))
+        return sorted(collected)
 
     return {
         "query": None,
@@ -1747,6 +1766,18 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
             "shouldOperators": _clause_operator_names(query.should),
             "filterOperators": _clause_operator_names(query.filter),
             "mustNotOperators": _clause_operator_names(query.must_not),
+        },
+        "pathSummary": {
+            "must": _clause_paths(query.must),
+            "should": _clause_paths(query.should),
+            "filter": _clause_paths(query.filter),
+            "mustNot": _clause_paths(query.must_not),
+            "all": sorted(_query_paths(query)),
+            "usesEmbeddedPaths": any(
+                "." in path for path in _query_paths(query)
+            ),
+            "nestedCompoundCount": _count_nested_compounds(query),
+            "maxClauseDepth": _compound_max_depth(query),
         },
         "ranking": {
             "usesShouldRanking": bool(query.should),
@@ -1773,6 +1804,51 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
         "filter": None,
         "similarity": None,
     }
+
+
+def _query_paths(query: SearchTextLikeQuery) -> tuple[str, ...]:
+    if isinstance(
+        query,
+        (
+            SearchTextQuery,
+            SearchPhraseQuery,
+            SearchAutocompleteQuery,
+            SearchWildcardQuery,
+            SearchRegexQuery,
+            SearchExistsQuery,
+        ),
+    ):
+        return query.paths or ()
+    if isinstance(
+        query,
+        (SearchInQuery, SearchEqualsQuery, SearchRangeQuery, SearchNearQuery),
+    ):
+        return (query.path,)
+    if isinstance(query, SearchCompoundQuery):
+        collected: list[str] = []
+        for clauses in (query.must, query.should, query.filter, query.must_not):
+            for clause in clauses:
+                collected.extend(_query_paths(clause))
+        return tuple(dict.fromkeys(collected))
+    return ()
+
+
+def _count_nested_compounds(query: SearchCompoundQuery) -> int:
+    total = 0
+    for clauses in (query.must, query.should, query.filter, query.must_not):
+        for clause in clauses:
+            if isinstance(clause, SearchCompoundQuery):
+                total += 1 + _count_nested_compounds(clause)
+    return total
+
+
+def _compound_max_depth(query: SearchCompoundQuery) -> int:
+    max_depth = 1
+    for clauses in (query.must, query.should, query.filter, query.must_not):
+        for clause in clauses:
+            if isinstance(clause, SearchCompoundQuery):
+                max_depth = max(max_depth, 1 + _compound_max_depth(clause))
+    return max_depth
 
 
 def _explain_vector_query(query: SearchVectorQuery) -> dict[str, object | None]:

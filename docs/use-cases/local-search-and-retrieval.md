@@ -103,6 +103,7 @@ These examples show:
 * exact `phrase` versus `phrase.slop`;
 * `embeddedDocuments` mappings for paths such as `contributors.name`;
 * `near` over numeric fields with visible ranking metadata;
+* `near` and `compound` explain blocks with explicit path summaries;
 * `compound` with `phrase`, `equals`, `in`, `range`, `near`, `exists` and `regex`;
 * public vector diagnostics such as `similarity`, `numCandidates`,
   `vectorSearchScore`, residual filters and fallback reasons.

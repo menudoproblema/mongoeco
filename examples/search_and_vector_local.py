@@ -133,6 +133,7 @@ def main() -> None:
             "$search near explain:",
             near_explain["engine_plan"]["details"]["originKind"],
             near_explain["engine_plan"]["details"]["ranking"]["scoreFormula"],
+            near_explain["engine_plan"]["details"]["pathSummary"],
         )
 
         search_results = collection.aggregate(
@@ -235,6 +236,7 @@ def main() -> None:
         ).explain()
         print("$search compound explain operator:", search_explain["engine_plan"]["details"]["queryOperator"])
         print("$search compound explain should operators:", search_explain["engine_plan"]["details"]["compound"]["shouldOperators"])
+        print("$search compound explain paths:", search_explain["engine_plan"]["details"]["pathSummary"])
         print("$search compound explain ranking:", search_explain["engine_plan"]["details"]["ranking"])
 
         vector_results = collection.aggregate(
