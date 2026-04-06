@@ -6,15 +6,6 @@ import mongoeco.cxp.capabilities as cxp_capabilities_module
 import mongoeco.cxp.integration as cxp_integration_module
 from mongoeco.compat import export_cxp_catalog, export_full_compat_catalog
 from mongoeco.cxp import (
-    EXECUTION_ENGINE_CATALOG,
-    EXECUTION_ENGINE_EXECUTION_STATUS,
-    EXECUTION_ENGINE_EXECUTION_STREAM,
-    EXECUTION_ENGINE_FAMILY_CATALOG,
-    EXECUTION_ENGINE_FAMILY_INTERFACE,
-    EXECUTION_ENGINE_INTERFACE,
-    EXECUTION_ENGINE_INPUT_VALIDATION,
-    EXECUTION_ENGINE_PLANNING,
-    EXECUTION_ENGINE_RUN,
     MongoAggregationMetadata,
     MongoSearchMetadata,
     MongoVectorSearchMetadata,
@@ -26,6 +17,17 @@ from mongoeco.cxp import (
     MONGODB_PLATFORM_PROFILE,
     MONGODB_TEXT_SEARCH_PROFILE,
     MONGODB_SEARCH_PROFILE,
+)
+from mongoeco.cxp.catalogs.interfaces.execution import (
+    EXECUTION_ENGINE_CATALOG,
+    EXECUTION_ENGINE_EXECUTION_STATUS,
+    EXECUTION_ENGINE_EXECUTION_STREAM,
+    EXECUTION_ENGINE_FAMILY_CATALOG,
+    EXECUTION_ENGINE_FAMILY_INTERFACE,
+    EXECUTION_ENGINE_INTERFACE,
+    EXECUTION_ENGINE_INPUT_VALIDATION,
+    EXECUTION_ENGINE_PLANNING,
+    EXECUTION_ENGINE_RUN,
     PLAN_RUN_EXECUTION_CATALOG,
     PLAN_RUN_EXECUTION_EXECUTION_STATUS,
     PLAN_RUN_EXECUTION_EXECUTION_STREAM,
@@ -127,6 +129,8 @@ class CxpAlignmentTests(unittest.TestCase):
         self.assertFalse(
             hasattr(mongoeco_cxp, 'EXECUTION_ENGINE_LIVE_EXECUTION_OBSERVABILITY')
         )
+        self.assertFalse(hasattr(mongoeco_cxp, 'EXECUTION_ENGINE_CATALOG'))
+        self.assertFalse(hasattr(mongoeco_cxp, 'PLAN_RUN_EXECUTION_CATALOG'))
         self.assertFalse(hasattr(mongoeco_cxp, 'Capability'))
         self.assertFalse(hasattr(mongoeco_cxp, 'CapabilityMatrix'))
         self.assertFalse(hasattr(mongoeco_cxp, 'CapabilityMetadata'))

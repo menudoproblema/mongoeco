@@ -162,11 +162,11 @@ The top-level `mongoeco.cxp` package is intentionally narrower than the full
 `cxp` toolkit. It is a curated facade for:
 
 * the canonical MongoDB catalog and profiles
-* the aligned execution catalog surface
 * the public `mongoeco` projection helpers used by `compat` and `explain()`
 
 Generic CXP toolkit types and lower-level helper exports stay in explicit
-submodules such as `mongoeco.cxp.capabilities`, or in `cxp` itself.
+submodules such as `mongoeco.cxp.capabilities`,
+`mongoeco.cxp.catalogs.interfaces.execution`, or in `cxp` itself.
 
 If a consumer only wants the reusable profile catalog, `mongoeco` also exposes:
 
