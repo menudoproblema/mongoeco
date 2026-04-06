@@ -158,6 +158,16 @@ backed by canonical metadata for:
 That keeps the public export directly useful for profile-aware tooling without
 forcing every consumer to import `cxp` just to inspect profile shape.
 
+The top-level `mongoeco.cxp` package is intentionally narrower than the full
+`cxp` toolkit. It is a curated facade for:
+
+* the canonical MongoDB catalog and profiles
+* the aligned execution catalog surface
+* the public `mongoeco` projection helpers used by `compat` and `explain()`
+
+Generic CXP toolkit types and lower-level helper exports stay in explicit
+submodules such as `mongoeco.cxp.capabilities`, or in `cxp` itself.
+
 If a consumer only wants the reusable profile catalog, `mongoeco` also exposes:
 
 * `mongoeco.export_cxp_profile_catalog()`

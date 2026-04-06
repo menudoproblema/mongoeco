@@ -1,16 +1,23 @@
-from . import capabilities as _capabilities
-from .catalogs.interfaces import database as _database
-from .catalogs.interfaces import execution as _execution
+from mongoeco.cxp.capabilities import (
+    build_mongodb_explain_projection,
+    export_cxp_capability_catalog,
+    export_cxp_operation_catalog,
+    export_cxp_profile_support_catalog,
+)
+from mongoeco.cxp.catalogs.interfaces.database import *  # noqa: F403
+from mongoeco.cxp.catalogs.interfaces.database import __all__ as _DATABASE_EXPORTS
+from mongoeco.cxp.catalogs.interfaces.execution import *  # noqa: F403
+from mongoeco.cxp.catalogs.interfaces.execution import __all__ as _EXECUTION_EXPORTS
 
+_FACADE_EXPORTS = (
+    'build_mongodb_explain_projection',
+    'export_cxp_capability_catalog',
+    'export_cxp_operation_catalog',
+    'export_cxp_profile_support_catalog',
+)
 
-def _reexport(module) -> tuple[str, ...]:
-    names = tuple(getattr(module, '__all__', ()))
-    globals().update({name: getattr(module, name) for name in names})
-    return names
-
-
-_CAPABILITY_EXPORTS = _reexport(_capabilities)
-_DATABASE_EXPORTS = _reexport(_database)
-_EXECUTION_EXPORTS = _reexport(_execution)
-
-__all__ = tuple([*_CAPABILITY_EXPORTS, *_DATABASE_EXPORTS, *_EXECUTION_EXPORTS])
+__all__ = tuple([
+    *_FACADE_EXPORTS,
+    *_DATABASE_EXPORTS,
+    *_EXECUTION_EXPORTS,
+])

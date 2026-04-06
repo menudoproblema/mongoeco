@@ -127,6 +127,18 @@ class CxpAlignmentTests(unittest.TestCase):
         self.assertFalse(
             hasattr(mongoeco_cxp, 'EXECUTION_ENGINE_LIVE_EXECUTION_OBSERVABILITY')
         )
+        self.assertFalse(hasattr(mongoeco_cxp, 'Capability'))
+        self.assertFalse(hasattr(mongoeco_cxp, 'CapabilityMatrix'))
+        self.assertFalse(hasattr(mongoeco_cxp, 'CapabilityMetadata'))
+        self.assertFalse(
+            hasattr(mongoeco_cxp, 'mongoeco_public_cxp_capability_metadata')
+        )
+        self.assertFalse(
+            hasattr(mongoeco_cxp, 'export_legacy_runtime_subset_catalog')
+        )
+        self.assertFalse(
+            hasattr(mongoeco_cxp, 'export_cxp_extension_catalog')
+        )
 
     def test_cxp_capability_exports_and_legacy_runtime_projection_share_a_canonical_source(
         self,
