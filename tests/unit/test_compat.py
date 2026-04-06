@@ -53,6 +53,8 @@ from mongoeco.compat import (
     export_database_command_catalog,
     export_database_command_option_catalog,
     export_cxp_catalog,
+    export_cxp_profile_catalog,
+    export_cxp_profile_support_catalog,
     export_mongodb_dialect_catalog,
     export_local_runtime_subset_catalog,
     export_operation_option_catalog,
@@ -217,6 +219,24 @@ class CompatResolutionTests(unittest.TestCase):
             catalog["capabilities"]["read"]["metadata"]["operationMetadata"][
                 "find"
             ]["acceptsCollation"]
+        )
+
+    def test_exported_cxp_profile_catalog_matches_cxp_catalog_profiles(self):
+        self.assertEqual(
+            export_cxp_profile_catalog(),
+            export_cxp_catalog()["profiles"],
+        )
+
+    def test_exported_cxp_profile_support_catalog_matches_cxp_catalog_profile_support(self):
+        support_catalog = export_cxp_profile_support_catalog()
+        self.assertEqual(
+            support_catalog,
+            export_cxp_catalog()["profileSupport"],
+        )
+        self.assertTrue(support_catalog["mongodb-core"]["supported"])
+        self.assertEqual(
+            support_catalog["mongodb-core"]["validation"]["messages"],
+            [],
         )
 
     def test_catalog_is_exposed_as_immutable_global_data(self):

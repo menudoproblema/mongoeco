@@ -1,5 +1,6 @@
 import unittest
 
+from mongoeco.compat import _catalog_export as compat_catalog_export
 from mongoeco.compat._catalog_models import OperationOptionSupport, OptionSupportStatus
 from mongoeco.cxp import capabilities as cxp_capabilities
 from mongoeco.cxp import contracts as cxp_contracts
@@ -67,6 +68,35 @@ class CxpSmokeCoverageTests(unittest.TestCase):
                 cxp_capabilities.export_legacy_runtime_subset_catalog()
         finally:
             cxp_capabilities.export_cxp_capability_catalog = original_export
+
+    def test_profile_catalog_exports_validate_mapping_shape(self) -> None:
+        original_export = compat_catalog_export.export_cxp_catalog
+
+        def _bad_profiles() -> dict[str, object]:
+            return {'profiles': ['not-a-mapping']}
+
+        def _bad_profile_support() -> dict[str, object]:
+            return {'profileSupport': ['not-a-mapping']}
+
+        compat_catalog_export.export_cxp_catalog = _bad_profiles
+        try:
+            with self.assertRaises(TypeError):
+                compat_catalog_export.export_cxp_profile_catalog()
+        finally:
+            compat_catalog_export.export_cxp_catalog = original_export
+
+        compat_catalog_export.export_cxp_catalog = _bad_profile_support
+        try:
+            with self.assertRaises(TypeError):
+                compat_catalog_export.export_cxp_profile_support_catalog()
+        finally:
+            compat_catalog_export.export_cxp_catalog = original_export
+
+    def test_profile_support_catalog_export_matches_canonical_projection(self) -> None:
+        self.assertEqual(
+            cxp_capabilities.export_cxp_profile_support_catalog(),
+            cxp_capabilities.export_cxp_capability_catalog()['profileSupport'],
+        )
 
     def test_operation_option_metadata_covers_all_support_statuses(self) -> None:
         original_catalog = cxp_capabilities.OPERATION_OPTION_SUPPORT_CATALOG

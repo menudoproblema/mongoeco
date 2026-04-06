@@ -6,6 +6,12 @@ import msgspec
 
 from cxp.capabilities import Capability, CapabilityMatrix, CapabilityMetadata
 from cxp.catalogs.base import CapabilityCatalog, CapabilityProfile
+from cxp.descriptors import (
+    CapabilityDescriptor,
+    CapabilityOperationBinding,
+    ComponentCapabilitySnapshot,
+)
+from cxp.types import ComponentIdentity
 from mongoeco.compat._catalog_data import (
     OPERATION_OPTION_SUPPORT_CATALOG,
     SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS,
@@ -72,6 +78,7 @@ __all__ = (
     'build_mongodb_explain_projection',
     'export_cxp_capability_catalog',
     'export_cxp_extension_catalog',
+    'export_cxp_profile_support_catalog',
     'export_legacy_runtime_subset_catalog',
     'mongoeco_public_cxp_capability_metadata',
 )
@@ -260,6 +267,89 @@ def _exported_profiles() -> dict[str, dict[str, object]]:
             ],
         ),
     }
+
+
+def _build_public_cxp_component_snapshot() -> ComponentCapabilitySnapshot:
+    descriptors: list[CapabilityDescriptor] = []
+    for catalog_capability in MONGODB_CATALOG.capabilities:
+        descriptors.append(
+            CapabilityDescriptor(
+                name=catalog_capability.name,
+                level='supported',
+                operations=tuple(
+                    CapabilityOperationBinding(
+                        operation.name,
+                        result_type=operation.result_type,
+                    )
+                    for operation in catalog_capability.operations
+                ),
+                metadata=deepcopy(
+                    _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA.get(
+                        catalog_capability.name,
+                        {},
+                    ),
+                ),
+            )
+        )
+    return ComponentCapabilitySnapshot(
+        component_name='mongoeco',
+        identity=ComponentIdentity(
+            interface=MONGODB_INTERFACE,
+            provider='mongoeco',
+            version='public-catalog',
+        ),
+        capabilities=tuple(descriptors),
+    )
+
+
+def _serialize_profile_validation(validation: object) -> dict[str, object]:
+    missing_operations = getattr(validation, 'missing_operations', ())
+    return {
+        'messages': list(validation.messages()),
+        'unknownProfileCapabilities': list(
+            getattr(validation, 'unknown_profile_capabilities', ())
+        ),
+        'missingCapabilities': list(
+            getattr(validation, 'missing_capabilities', ())
+        ),
+        'missingOperations': [
+            {
+                'capabilityName': missing.capability_name,
+                'operationNames': list(missing.operation_names),
+            }
+            for missing in missing_operations
+        ],
+        'missingMetadataKeys': list(
+            getattr(validation, 'missing_metadata_keys', ())
+        ),
+        'invalidMetadata': list(getattr(validation, 'invalid_metadata', ())),
+        'interfaceMismatch': getattr(validation, 'interface_mismatch', None),
+        'expectedInterface': getattr(validation, 'expected_interface', None),
+    }
+
+
+def _exported_profile_support() -> dict[str, dict[str, object]]:
+    snapshot = _build_public_cxp_component_snapshot()
+    exported_profiles = _exported_profiles()
+    profile_entries = (
+        (MONGODB_CORE_PROFILE_NAME, MONGODB_CORE_PROFILE),
+        (MONGODB_TEXT_SEARCH_PROFILE_NAME, MONGODB_TEXT_SEARCH_PROFILE),
+        (MONGODB_SEARCH_PROFILE_NAME, MONGODB_SEARCH_PROFILE),
+        (MONGODB_PLATFORM_PROFILE_NAME, MONGODB_PLATFORM_PROFILE),
+        (MONGODB_AGGREGATE_RICH_PROFILE_NAME, MONGODB_AGGREGATE_RICH_PROFILE),
+    )
+    support: dict[str, dict[str, object]] = {}
+    for profile_name, profile in profile_entries:
+        validation = MONGODB_CATALOG.validate_component_snapshot_against_profile(
+            snapshot,
+            profile,
+        )
+        support[profile_name] = {
+            **deepcopy(exported_profiles[profile_name]),
+            'supported': validation.is_valid(),
+            'validation': _serialize_profile_validation(validation),
+        }
+    return support
 
 
 def _minimal_profile_name_for_projection(
@@ -778,9 +868,14 @@ def export_cxp_capability_catalog() -> dict[str, object]:
     return {
         'interface': MONGODB_INTERFACE,
         'profiles': _exported_profiles(),
+        'profileSupport': _exported_profile_support(),
         'capabilities': capabilities,
         'extensions': export_cxp_extension_catalog(),
     }
+
+
+def export_cxp_profile_support_catalog() -> dict[str, dict[str, object]]:
+    return _exported_profile_support()
 
 
 def export_legacy_runtime_subset_catalog() -> dict[str, dict[str, object]]:

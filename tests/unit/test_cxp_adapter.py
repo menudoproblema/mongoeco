@@ -161,6 +161,22 @@ class CxpAlignmentTests(unittest.TestCase):
                 'requiredMetadataKeys': ['operators', 'aggregateStage'],
             },
         )
+        self.assertTrue(
+            exported['profileSupport']['mongodb-text-search']['supported']
+        )
+        self.assertEqual(
+            exported['profileSupport']['mongodb-text-search']['validation'],
+            {
+                'messages': [],
+                'unknownProfileCapabilities': [],
+                'missingCapabilities': [],
+                'missingOperations': [],
+                'missingMetadataKeys': [],
+                'invalidMetadata': [],
+                'interfaceMismatch': None,
+                'expectedInterface': None,
+            },
+        )
         self.assertEqual(
             exported['capabilities']['aggregation']['operations'][0]['name'],
             MONGODB_AGGREGATE,

@@ -134,6 +134,17 @@ textual and vector search through `aggregate`.
 That keeps the public export directly useful for profile-aware tooling without
 forcing every consumer to import `cxp` just to inspect profile shape.
 
+If a consumer only wants the reusable profile catalog, `mongoeco` also exposes:
+
+* `mongoeco.export_cxp_profile_catalog()`
+* `mongoeco.compat.export_cxp_profile_catalog()`
+
+If it wants the same reusable profiles annotated with support status against
+the current public runtime surface, `mongoeco` also exposes:
+
+* `mongoeco.export_cxp_profile_support_catalog()`
+* `mongoeco.compat.export_cxp_profile_support_catalog()`
+
 The same requirement shape is now reused in `explain()["cxp"]` whenever
 `mongoeco` can infer a minimal reusable profile honestly, through:
 

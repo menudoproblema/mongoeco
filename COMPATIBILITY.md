@@ -24,6 +24,10 @@ Regla importante:
 * el export `cxp` incluye también perfiles reutilizables recomendados, como
   `mongodb-text-search` para tests de `$search` textual sin exigir
   `vector_search`;
+* si solo quieres el catálogo de perfiles reutilizables, la API pública
+  expone `export_cxp_profile_catalog()`, y si quieres ese mismo catálogo con
+  soporte evaluado contra el runtime público actual, expone también
+  `export_cxp_profile_support_catalog()`;
 * esos perfiles se exportan con requisitos estructurados
   (`capabilityName`, `requiredOperations`, `requiredMetadataKeys`) y
   `explain()` deja visible tanto el perfil mínimo aplicable como sus

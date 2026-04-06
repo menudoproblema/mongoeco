@@ -2,7 +2,12 @@ import json
 
 import msgspec
 
-from mongoeco import MongoClient, export_cxp_catalog
+from mongoeco import (
+    MongoClient,
+    export_cxp_catalog,
+    export_cxp_profile_catalog,
+    export_cxp_profile_support_catalog,
+)
 from mongoeco.engines.memory import MemoryEngine
 
 
@@ -13,6 +18,10 @@ def _pretty(value: object) -> str:
 def main() -> None:
     print('Canonical CXP catalog:')
     print(_pretty(export_cxp_catalog()))
+    print('\nReusable CXP profiles:')
+    print(_pretty(export_cxp_profile_catalog()))
+    print('\nReusable CXP profile support:')
+    print(_pretty(export_cxp_profile_support_catalog()))
 
     with MongoClient(MemoryEngine()) as client:
         collection = client.get_database('demo').get_collection('items')

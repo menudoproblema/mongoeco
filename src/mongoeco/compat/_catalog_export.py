@@ -125,6 +125,24 @@ def export_cxp_catalog() -> dict[str, object]:
     return export_cxp_capability_catalog()
 
 
+def export_cxp_profile_catalog() -> dict[str, dict[str, object]]:
+    catalog = export_cxp_catalog()
+    profiles = catalog.get("profiles", {})
+    if not isinstance(profiles, dict):
+        message = 'cxp catalog profiles must serialize to a mapping'
+        raise TypeError(message)
+    return profiles
+
+
+def export_cxp_profile_support_catalog() -> dict[str, dict[str, object]]:
+    catalog = export_cxp_catalog()
+    profile_support = catalog.get("profileSupport", {})
+    if not isinstance(profile_support, dict):
+        message = 'cxp profile support must serialize to a mapping'
+        raise TypeError(message)
+    return profile_support
+
+
 def export_full_compat_catalog() -> dict[str, object]:
     return {
         "defaults": {

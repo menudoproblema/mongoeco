@@ -1177,6 +1177,345 @@
       }
     },
     "interface": "database/mongodb",
+    "profileSupport": {
+      "mongodb-aggregate-rich": {
+        "description": "Reusable profile for tests that need a richer aggregation subset.",
+        "name": "mongodb-aggregate-rich",
+        "recommendedFor": [
+          "aggregation-rich-tests",
+          "subset-sensitive-tooling"
+        ],
+        "requirements": [
+          {
+            "capabilityName": "aggregation",
+            "requiredMetadataKeys": [
+              "supportedStages",
+              "supportedExpressionOperators",
+              "supportedGroupAccumulators",
+              "supportedWindowAccumulators"
+            ],
+            "requiredOperations": [
+              "aggregate"
+            ]
+          }
+        ],
+        "supported": true,
+        "validation": {
+          "expectedInterface": null,
+          "interfaceMismatch": null,
+          "invalidMetadata": [],
+          "messages": [],
+          "missingCapabilities": [],
+          "missingMetadataKeys": [],
+          "missingOperations": [],
+          "unknownProfileCapabilities": []
+        }
+      },
+      "mongodb-core": {
+        "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+        "name": "mongodb-core",
+        "recommendedFor": [
+          "core-tests",
+          "general-resources"
+        ],
+        "requirements": [
+          {
+            "capabilityName": "read",
+            "requiredMetadataKeys": [],
+            "requiredOperations": [
+              "find",
+              "find_one",
+              "count_documents",
+              "estimated_document_count",
+              "distinct"
+            ]
+          },
+          {
+            "capabilityName": "write",
+            "requiredMetadataKeys": [],
+            "requiredOperations": [
+              "insert_one",
+              "insert_many",
+              "update_one",
+              "update_many",
+              "replace_one",
+              "delete_one",
+              "delete_many",
+              "bulk_write"
+            ]
+          },
+          {
+            "capabilityName": "aggregation",
+            "requiredMetadataKeys": [
+              "supportedStages"
+            ],
+            "requiredOperations": [
+              "aggregate"
+            ]
+          }
+        ],
+        "supported": true,
+        "validation": {
+          "expectedInterface": null,
+          "interfaceMismatch": null,
+          "invalidMetadata": [],
+          "messages": [],
+          "missingCapabilities": [],
+          "missingMetadataKeys": [],
+          "missingOperations": [],
+          "unknownProfileCapabilities": []
+        }
+      },
+      "mongodb-platform": {
+        "description": "Reusable profile for MongoDB runtimes with platform surface.",
+        "name": "mongodb-platform",
+        "recommendedFor": [
+          "platform-tests",
+          "runtime-conformance"
+        ],
+        "requirements": [
+          {
+            "capabilityName": "read",
+            "requiredMetadataKeys": [],
+            "requiredOperations": [
+              "find",
+              "find_one",
+              "count_documents",
+              "estimated_document_count",
+              "distinct"
+            ]
+          },
+          {
+            "capabilityName": "write",
+            "requiredMetadataKeys": [],
+            "requiredOperations": [
+              "insert_one",
+              "insert_many",
+              "update_one",
+              "update_many",
+              "replace_one",
+              "delete_one",
+              "delete_many",
+              "bulk_write"
+            ]
+          },
+          {
+            "capabilityName": "aggregation",
+            "requiredMetadataKeys": [
+              "supportedStages"
+            ],
+            "requiredOperations": [
+              "aggregate"
+            ]
+          },
+          {
+            "capabilityName": "transactions",
+            "requiredMetadataKeys": [],
+            "requiredOperations": [
+              "start_session",
+              "with_transaction"
+            ]
+          },
+          {
+            "capabilityName": "change_streams",
+            "requiredMetadataKeys": [],
+            "requiredOperations": [
+              "watch"
+            ]
+          },
+          {
+            "capabilityName": "collation",
+            "requiredMetadataKeys": [
+              "backend",
+              "capabilities"
+            ],
+            "requiredOperations": []
+          },
+          {
+            "capabilityName": "persistence",
+            "requiredMetadataKeys": [
+              "persistent",
+              "storageEngine"
+            ],
+            "requiredOperations": []
+          },
+          {
+            "capabilityName": "topology_discovery",
+            "requiredMetadataKeys": [
+              "topologyType",
+              "serverCount",
+              "sdam"
+            ],
+            "requiredOperations": []
+          }
+        ],
+        "supported": false,
+        "validation": {
+          "expectedInterface": null,
+          "interfaceMismatch": null,
+          "invalidMetadata": [
+            "persistence",
+            "topology_discovery"
+          ],
+          "messages": [
+            "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
+            "Invalid metadata for capabilities: persistence, topology_discovery"
+          ],
+          "missingCapabilities": [],
+          "missingMetadataKeys": [
+            "collation.backend",
+            "collation.capabilities",
+            "persistence.persistent",
+            "persistence.storageEngine",
+            "topology_discovery.topologyType",
+            "topology_discovery.serverCount",
+            "topology_discovery.sdam"
+          ],
+          "missingOperations": [],
+          "unknownProfileCapabilities": []
+        }
+      },
+      "mongodb-search": {
+        "description": "Reusable profile for tests and resources with search and vector search.",
+        "name": "mongodb-search",
+        "recommendedFor": [
+          "full-search-tests",
+          "search-with-vector-search"
+        ],
+        "requirements": [
+          {
+            "capabilityName": "read",
+            "requiredMetadataKeys": [],
+            "requiredOperations": [
+              "find",
+              "find_one",
+              "count_documents",
+              "estimated_document_count",
+              "distinct"
+            ]
+          },
+          {
+            "capabilityName": "write",
+            "requiredMetadataKeys": [],
+            "requiredOperations": [
+              "insert_one",
+              "insert_many",
+              "update_one",
+              "update_many",
+              "replace_one",
+              "delete_one",
+              "delete_many",
+              "bulk_write"
+            ]
+          },
+          {
+            "capabilityName": "aggregation",
+            "requiredMetadataKeys": [
+              "supportedStages"
+            ],
+            "requiredOperations": [
+              "aggregate"
+            ]
+          },
+          {
+            "capabilityName": "search",
+            "requiredMetadataKeys": [
+              "operators",
+              "aggregateStage"
+            ],
+            "requiredOperations": [
+              "aggregate"
+            ]
+          },
+          {
+            "capabilityName": "vector_search",
+            "requiredMetadataKeys": [
+              "similarities",
+              "aggregateStage"
+            ],
+            "requiredOperations": [
+              "aggregate"
+            ]
+          }
+        ],
+        "supported": true,
+        "validation": {
+          "expectedInterface": null,
+          "interfaceMismatch": null,
+          "invalidMetadata": [],
+          "messages": [],
+          "missingCapabilities": [],
+          "missingMetadataKeys": [],
+          "missingOperations": [],
+          "unknownProfileCapabilities": []
+        }
+      },
+      "mongodb-text-search": {
+        "description": "Reusable profile for tests and resources that need textual $search without requiring vector search.",
+        "name": "mongodb-text-search",
+        "recommendedFor": [
+          "text-search-tests",
+          "search-without-vector-search"
+        ],
+        "requirements": [
+          {
+            "capabilityName": "read",
+            "requiredMetadataKeys": [],
+            "requiredOperations": [
+              "find",
+              "find_one",
+              "count_documents",
+              "estimated_document_count",
+              "distinct"
+            ]
+          },
+          {
+            "capabilityName": "write",
+            "requiredMetadataKeys": [],
+            "requiredOperations": [
+              "insert_one",
+              "insert_many",
+              "update_one",
+              "update_many",
+              "replace_one",
+              "delete_one",
+              "delete_many",
+              "bulk_write"
+            ]
+          },
+          {
+            "capabilityName": "aggregation",
+            "requiredMetadataKeys": [
+              "supportedStages"
+            ],
+            "requiredOperations": [
+              "aggregate"
+            ]
+          },
+          {
+            "capabilityName": "search",
+            "requiredMetadataKeys": [
+              "operators",
+              "aggregateStage"
+            ],
+            "requiredOperations": [
+              "aggregate"
+            ]
+          }
+        ],
+        "supported": true,
+        "validation": {
+          "expectedInterface": null,
+          "interfaceMismatch": null,
+          "invalidMetadata": [],
+          "messages": [],
+          "missingCapabilities": [],
+          "missingMetadataKeys": [],
+          "missingOperations": [],
+          "unknownProfileCapabilities": []
+        }
+      }
+    },
     "profiles": {
       "mongodb-aggregate-rich": {
         "description": "Reusable profile for tests that need a richer aggregation subset.",
