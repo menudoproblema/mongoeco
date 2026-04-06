@@ -5,6 +5,7 @@ import msgspec
 from mongoeco import (
     MongoClient,
     export_cxp_catalog,
+    export_cxp_operation_catalog,
     export_cxp_profile_catalog,
     export_cxp_profile_support_catalog,
 )
@@ -32,6 +33,16 @@ def main() -> None:
     print(_pretty(export_cxp_profile_catalog()))
     print('\nReusable CXP profile support:')
     print(_pretty(export_cxp_profile_support_catalog()))
+    print('\nOperation-centric CXP view:')
+    print(
+        _pretty(
+            {
+                'find': export_cxp_operation_catalog()['find'],
+                'update_one': export_cxp_operation_catalog()['update_one'],
+                'aggregate': export_cxp_operation_catalog()['aggregate'],
+            }
+        )
+    )
     print('\nSimple profile gating:')
     _require_profile('mongodb-core')
     _require_profile('mongodb-text-search')

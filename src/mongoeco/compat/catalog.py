@@ -30,6 +30,7 @@ from mongoeco.compat._catalog_data import (
 )
 from mongoeco.compat._catalog_export import (
     export_cxp_catalog,
+    export_cxp_operation_catalog,
     export_cxp_profile_catalog,
     export_cxp_profile_support_catalog,
     export_database_command_catalog,

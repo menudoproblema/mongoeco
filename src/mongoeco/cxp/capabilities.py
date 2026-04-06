@@ -78,6 +78,7 @@ __all__ = (
     'build_mongodb_explain_projection',
     'export_cxp_capability_catalog',
     'export_cxp_extension_catalog',
+    'export_cxp_operation_catalog',
     'export_cxp_profile_support_catalog',
     'export_legacy_runtime_subset_catalog',
     'mongoeco_public_cxp_capability_metadata',
@@ -350,6 +351,51 @@ def _exported_profile_support() -> dict[str, dict[str, object]]:
             'validation': _serialize_profile_validation(validation),
         }
     return support
+
+
+def _compatible_profile_names_for_capability(capability_name: str) -> list[str]:
+    if capability_name == MONGODB_READ:
+        return [MONGODB_CORE_PROFILE_NAME, MONGODB_PLATFORM_PROFILE_NAME]
+    if capability_name == MONGODB_WRITE:
+        return [MONGODB_CORE_PROFILE_NAME, MONGODB_PLATFORM_PROFILE_NAME]
+    if capability_name == MONGODB_AGGREGATION:
+        return [
+            MONGODB_CORE_PROFILE_NAME,
+            MONGODB_PLATFORM_PROFILE_NAME,
+            MONGODB_AGGREGATE_RICH_PROFILE_NAME,
+        ]
+    if capability_name == MONGODB_SEARCH:
+        return [MONGODB_TEXT_SEARCH_PROFILE_NAME, MONGODB_SEARCH_PROFILE_NAME]
+    if capability_name == MONGODB_VECTOR_SEARCH:
+        return [MONGODB_SEARCH_PROFILE_NAME]
+    return []
+
+
+def _exported_operation_catalog() -> dict[str, list[dict[str, object]]]:
+    operation_catalog: dict[str, list[dict[str, object]]] = {}
+    profile_support = _exported_profile_support()
+    for capability_name, metadata in _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA.items():
+        operation_metadata = metadata.get('operationMetadata', {})
+        if not isinstance(operation_metadata, dict):
+            continue
+        for operation_name, operation_entry in operation_metadata.items():
+            if not isinstance(operation_entry, dict):
+                continue
+            compatible_profiles = _compatible_profile_names_for_capability(
+                capability_name
+            )
+            operation_catalog.setdefault(operation_name, []).append(
+                {
+                    'capabilityName': capability_name,
+                    'compatibleProfiles': compatible_profiles,
+                    'compatibleProfileSupport': {
+                        name: deepcopy(profile_support[name])
+                        for name in compatible_profiles
+                    },
+                    'metadata': deepcopy(operation_entry),
+                }
+            )
+    return operation_catalog
 
 
 def _minimal_profile_name_for_projection(
@@ -922,9 +968,14 @@ def export_cxp_capability_catalog() -> dict[str, object]:
         'interface': MONGODB_INTERFACE,
         'profiles': _exported_profiles(),
         'profileSupport': _exported_profile_support(),
+        'operations': _exported_operation_catalog(),
         'capabilities': capabilities,
         'extensions': export_cxp_extension_catalog(),
     }
+
+
+def export_cxp_operation_catalog() -> dict[str, list[dict[str, object]]]:
+    return _exported_operation_catalog()
 
 
 def export_cxp_profile_support_catalog() -> dict[str, dict[str, object]]:

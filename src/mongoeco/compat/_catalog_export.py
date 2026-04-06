@@ -143,6 +143,15 @@ def export_cxp_profile_support_catalog() -> dict[str, dict[str, object]]:
     return profile_support
 
 
+def export_cxp_operation_catalog() -> dict[str, list[dict[str, object]]]:
+    catalog = export_cxp_catalog()
+    operations = catalog.get("operations", {})
+    if not isinstance(operations, dict):
+        message = 'cxp operation catalog must serialize to a mapping'
+        raise TypeError(message)
+    return operations
+
+
 def export_full_compat_catalog() -> dict[str, object]:
     return {
         "defaults": {

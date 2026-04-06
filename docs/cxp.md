@@ -145,9 +145,18 @@ the current public runtime surface, `mongoeco` also exposes:
 * `mongoeco.export_cxp_profile_support_catalog()`
 * `mongoeco.compat.export_cxp_profile_support_catalog()`
 
+If it wants a more tooling-friendly view centered on public operations instead
+of capabilities, `mongoeco` also exposes:
+
+* `mongoeco.export_cxp_operation_catalog()`
+* `mongoeco.compat.export_cxp_operation_catalog()`
+
 That makes it possible to gate tests or resources without negotiating through
 `mongoeco` itself: a consumer can inspect `supported` and the validation
 messages for each reusable profile and decide whether to run or skip.
+The operation catalog is the complementary view for questions like "what does
+`find` support?" or "under which profiles does `update_one` fit?" without
+walking the full capability tree.
 
 The same requirement shape is now reused in `explain()["cxp"]` whenever
 `mongoeco` can infer a minimal reusable profile honestly, through:

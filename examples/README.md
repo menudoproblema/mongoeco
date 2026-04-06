@@ -37,9 +37,9 @@ Use them when you want to answer one of these questions quickly:
   and exact fallback.
 * [cxp_adapter.py](/Users/uve/Proyectos/mongoeco2/examples/cxp_adapter.py)
   Inspect the canonical `database/mongodb` catalog, the reusable CXP profile
-  export, the evaluated profile support view, a simple profile gate, write
-  operation metadata, and the `cxp` projection exposed by `find(...).explain()`
-  and `aggregate(...).explain()`.
+  export, the evaluated profile support view, an operation-centric catalog, a
+  simple profile gate, write operation metadata, and the `cxp` projection
+  exposed by `find(...).explain()` and `aggregate(...).explain()`.
 
 Run them from the repository root after installing the package:
 

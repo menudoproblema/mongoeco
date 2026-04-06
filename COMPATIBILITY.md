@@ -28,6 +28,9 @@ Regla importante:
   expone `export_cxp_profile_catalog()`, y si quieres ese mismo catálogo con
   soporte evaluado contra el runtime público actual, expone también
   `export_cxp_profile_support_catalog()`;
+* si quieres consumir la surface pública desde el punto de vista de las
+  operaciones (`find`, `update_one`, `aggregate`), también expone
+  `export_cxp_operation_catalog()`;
 * eso permite hacer gating simple de tests o recursos desde tooling externo,
   sin que `mongoeco` tenga que negociar características ni resolver instancias;
 * esos perfiles se exportan con requisitos estructurados

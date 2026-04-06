@@ -78,6 +78,9 @@ class CxpSmokeCoverageTests(unittest.TestCase):
         def _bad_profile_support() -> dict[str, object]:
             return {'profileSupport': ['not-a-mapping']}
 
+        def _bad_operations() -> dict[str, object]:
+            return {'operations': ['not-a-mapping']}
+
         compat_catalog_export.export_cxp_catalog = _bad_profiles
         try:
             with self.assertRaises(TypeError):
@@ -92,10 +95,44 @@ class CxpSmokeCoverageTests(unittest.TestCase):
         finally:
             compat_catalog_export.export_cxp_catalog = original_export
 
+        compat_catalog_export.export_cxp_catalog = _bad_operations
+        try:
+            with self.assertRaises(TypeError):
+                compat_catalog_export.export_cxp_operation_catalog()
+        finally:
+            compat_catalog_export.export_cxp_catalog = original_export
+
     def test_profile_support_catalog_export_matches_canonical_projection(self) -> None:
         self.assertEqual(
             cxp_capabilities.export_cxp_profile_support_catalog(),
             cxp_capabilities.export_cxp_capability_catalog()['profileSupport'],
+        )
+
+    def test_operation_catalog_export_covers_unknown_capabilities_and_invalid_entries(self) -> None:
+        self.assertEqual(
+            cxp_capabilities._compatible_profile_names_for_capability('unknown'),
+            [],
+        )
+
+        original_metadata = cxp_capabilities._MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA
+        cxp_capabilities._MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA = {
+            **original_metadata,
+            'broken': {'operationMetadata': ['not-a-mapping']},
+            'broken-entry': {
+                'operationMetadata': {
+                    'demo': ['not-a-mapping'],
+                }
+            },
+        }
+        try:
+            operation_catalog = cxp_capabilities.export_cxp_operation_catalog()
+        finally:
+            cxp_capabilities._MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA = original_metadata
+
+        self.assertNotIn('demo', operation_catalog)
+        self.assertEqual(
+            operation_catalog['find'][0]['capabilityName'],
+            'read',
         )
 
     def test_operation_option_metadata_covers_all_support_statuses(self) -> None:
