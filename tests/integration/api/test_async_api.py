@@ -16,9 +16,7 @@ from mongoeco import (
     IndexModel,
     InsertOne,
     MongoClient,
-    MongoDialect80,
     ObjectId,
-    PyMongoProfile413,
     ReadConcern,
     ReadPreference,
     ReadPreferenceMode,
@@ -32,6 +30,7 @@ from mongoeco import (
 )
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api._async.cursor import AsyncCursor
+from mongoeco.compat import MongoDialect80, PyMongoProfile413
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import (

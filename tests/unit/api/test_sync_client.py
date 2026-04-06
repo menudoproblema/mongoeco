@@ -4,7 +4,7 @@ import threading
 import time
 from unittest.mock import patch
 
-from mongoeco import MongoDialect80, PyMongoProfile413
+from mongoeco.compat import MongoDialect80, PyMongoProfile413
 from mongoeco.api._sync.client import MongoClient, _SyncRunner
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import ExecutionTimeout, InvalidOperation, ServerSelectionTimeoutError

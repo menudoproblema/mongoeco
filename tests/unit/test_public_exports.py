@@ -102,3 +102,7 @@ class PublicExportsTests(unittest.TestCase):
         self.assertFalse(hasattr(mongoeco, "PreparedRequestExecution"))
         self.assertFalse(hasattr(mongoeco, "MONGODB_SEARCH"))
         self.assertFalse(hasattr(mongoeco, "MONGODB_VECTOR_SEARCH"))
+        self.assertFalse(hasattr(mongoeco, "MONGODB_CATALOG"))
+        self.assertFalse(hasattr(mongoeco, "export_cxp_catalog"))
+        self.assertFalse(hasattr(mongoeco, "MongoDialect80"))
+        self.assertFalse(hasattr(mongoeco, "PyMongoProfile413"))

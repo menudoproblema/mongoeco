@@ -170,19 +170,16 @@ submodules such as `mongoeco.cxp.capabilities`,
 
 If a consumer only wants the reusable profile catalog, `mongoeco` also exposes:
 
-* `mongoeco.export_cxp_profile_catalog()`
 * `mongoeco.compat.export_cxp_profile_catalog()`
 
 If it wants the same reusable profiles annotated with support status against
 the current public runtime surface, `mongoeco` also exposes:
 
-* `mongoeco.export_cxp_profile_support_catalog()`
 * `mongoeco.compat.export_cxp_profile_support_catalog()`
 
 If it wants a more tooling-friendly view centered on public operations instead
 of capabilities, `mongoeco` also exposes:
 
-* `mongoeco.export_cxp_operation_catalog()`
 * `mongoeco.compat.export_cxp_operation_catalog()`
 
 That makes it possible to gate tests or resources without negotiating through
@@ -288,7 +285,8 @@ example:
 ## Example
 
 ```python
-from mongoeco import MongoClient, export_cxp_catalog
+from mongoeco import MongoClient
+from mongoeco.compat import export_cxp_catalog
 from mongoeco.engines.memory import MemoryEngine
 
 

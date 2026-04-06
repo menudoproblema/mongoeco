@@ -102,24 +102,30 @@ requirements, and the `cxp` block in `explain()` now carries the minimal
 reusable profile, its structured requirements and the broader compatible
 profiles for the current capability path when that can be inferred honestly.
 
-If a consumer only needs the reusable profile catalog, `mongoeco` also exposes
-`export_cxp_profile_catalog()`. If it wants the same profiles annotated with
-current runtime support, it can use `export_cxp_profile_support_catalog()`.
+If a consumer only needs the reusable profile catalog, it can use
+`mongoeco.compat.export_cxp_profile_catalog()`. If it wants the same profiles
+annotated with current runtime support, it can use
+`mongoeco.compat.export_cxp_profile_support_catalog()`.
 That is enough to build simple test gates without coupling `mongoeco` to any
 particular runner or resource system.
 If it wants to consume support from the operation point of view, it can also
-use `export_cxp_operation_catalog()`.
+use `mongoeco.compat.export_cxp_operation_catalog()`.
 
 The root `mongoeco` package is intentionally narrower than the full runtime
 internals. It centers on:
 
-* clients and common BSON-facing types
-* compatibility/profile exports
-* the canonical MongoDB CXP contract surface
-* runtime metadata helpers such as collation and SDAM summaries
+* clients and session entry points
+* common BSON-facing types and operation models
+* URI/configuration helpers needed by the main runtime surface
+
+Compatibility tooling and the canonical MongoDB CXP contract surface live in
+their own packages:
+
+* `mongoeco.compat`
+* `mongoeco.cxp`
 
 Lower-level driver/runtime details remain available from subpackages such as
-`mongoeco.driver`, `mongoeco.compat` and `mongoeco.cxp`.
+`mongoeco.driver`.
 
 `mongoeco.compat` follows the same idea: the top-level package keeps the
 catalog exports, profile resolution helpers and option-support surface, while
@@ -130,10 +136,12 @@ it exposes the canonical catalog and projects the active capability path
 through `compat` and `explain()`. External systems can wrap `mongoeco` if they
 want to negotiate profiles or instantiate resources through CXP.
 
-The direct path from `mongoeco` itself is:
+The direct path for CXP-facing tooling is:
 
 ```python
-from mongoeco import MongoClient, MONGODB_CATALOG, export_cxp_catalog
+from mongoeco import MongoClient
+from mongoeco.compat import export_cxp_catalog
+from mongoeco.cxp import MONGODB_CATALOG
 from mongoeco.engines.memory import MemoryEngine
 
 

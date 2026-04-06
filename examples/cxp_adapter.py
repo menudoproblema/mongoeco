@@ -2,8 +2,8 @@ import json
 
 import msgspec
 
-from mongoeco import (
-    MongoClient,
+from mongoeco import MongoClient
+from mongoeco.compat import (
     export_cxp_catalog,
     export_cxp_operation_catalog,
     export_cxp_profile_catalog,
