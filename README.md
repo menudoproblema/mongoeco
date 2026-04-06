@@ -110,6 +110,17 @@ particular runner or resource system.
 If it wants to consume support from the operation point of view, it can also
 use `export_cxp_operation_catalog()`.
 
+The root `mongoeco` package is intentionally narrower than the full runtime
+internals. It centers on:
+
+* clients and common BSON-facing types
+* compatibility/profile exports
+* the canonical MongoDB CXP contract surface
+* runtime metadata helpers such as collation and SDAM summaries
+
+Lower-level driver/runtime details remain available from subpackages such as
+`mongoeco.driver`, `mongoeco.compat` and `mongoeco.cxp`.
+
 `mongoeco` does not ship a live CXP provider wrapper for its clients. Instead,
 it exposes the canonical catalog and projects the active capability path
 through `compat` and `explain()`. External systems can wrap `mongoeco` if they
