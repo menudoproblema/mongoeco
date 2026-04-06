@@ -26,8 +26,6 @@ from mongoeco.compat.base import (
     SUPPORTED_PYMONGO_MAJORS,
 )
 from mongoeco.compat.catalog import (
-    DATABASE_COMMAND_SUPPORT_CATALOG,
-    DATABASE_COMMAND_OPTION_SUPPORT_CATALOG,
     export_cxp_catalog,
     export_cxp_operation_catalog,
     export_cxp_profile_catalog,
@@ -37,11 +35,8 @@ from mongoeco.compat.catalog import (
     export_database_command_catalog,
     export_database_command_option_catalog,
     export_mongodb_dialect_catalog,
-    MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED,
     MongoBehaviorPolicySpec,
-    export_local_runtime_subset_catalog,
     export_operation_option_catalog,
-    PYMONGO_CAP_UPDATE_ONE_SORT,
     export_pymongo_profile_catalog,
 )
 from mongoeco.compat.operation_support import (

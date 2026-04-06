@@ -88,3 +88,17 @@ class PublicExportsTests(unittest.TestCase):
         self.assertNotIn("DATABASE_COMMAND_OPTION_SUPPORT_CATALOG", compat_module.__all__)
         self.assertNotIn("MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED", compat_module.__all__)
         self.assertNotIn("PYMONGO_CAP_UPDATE_ONE_SORT", compat_module.__all__)
+        self.assertFalse(hasattr(compat_module, "export_local_runtime_subset_catalog"))
+        self.assertFalse(hasattr(compat_module, "DATABASE_COMMAND_SUPPORT_CATALOG"))
+        self.assertFalse(hasattr(compat_module, "DATABASE_COMMAND_OPTION_SUPPORT_CATALOG"))
+        self.assertFalse(hasattr(compat_module, "MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED"))
+        self.assertFalse(hasattr(compat_module, "PYMONGO_CAP_UPDATE_ONE_SORT"))
+
+    def test_root_package_keeps_low_level_driver_symbols_out_of_effective_namespace(self):
+        import mongoeco
+
+        self.assertFalse(hasattr(mongoeco, "DriverRuntime"))
+        self.assertFalse(hasattr(mongoeco, "ConnectionPool"))
+        self.assertFalse(hasattr(mongoeco, "PreparedRequestExecution"))
+        self.assertFalse(hasattr(mongoeco, "MONGODB_SEARCH"))
+        self.assertFalse(hasattr(mongoeco, "MONGODB_VECTOR_SEARCH"))

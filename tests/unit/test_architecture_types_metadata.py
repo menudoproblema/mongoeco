@@ -41,14 +41,14 @@ from mongoeco.api._sync._materialized_cursor import MaterializedCursor
 from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.compat import (
-    DATABASE_COMMAND_SUPPORT_CATALOG,
-    DATABASE_COMMAND_OPTION_SUPPORT_CATALOG,
     OPERATION_OPTION_SUPPORT,
     OptionSupportStatus,
     export_full_compat_catalog,
     get_operation_option_support,
     is_operation_option_effective,
 )
+from mongoeco.compat._catalog_database_commands import DATABASE_COMMAND_SUPPORT_CATALOG
+from mongoeco.compat._catalog_operation_options import DATABASE_COMMAND_OPTION_SUPPORT_CATALOG
 from mongoeco.compat.operation_support import (
     MANAGED_OPERATION_OPTION_NAMES,
     OPERATION_OPTION_SIGNATURE_EXCLUSIONS,

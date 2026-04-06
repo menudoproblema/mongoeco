@@ -4,12 +4,12 @@ from types import MappingProxyType
 
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.compat import (
-    MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED,
     MongoBehaviorPolicySpec,
     MongoDialect70,
     MongoDialect80,
     PyMongoProfile49,
 )
+from mongoeco.compat._catalog_constants import MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.engines.memory import MemoryEngine

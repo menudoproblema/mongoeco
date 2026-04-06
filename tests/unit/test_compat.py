@@ -8,12 +8,9 @@ from unittest.mock import patch
 
 from mongoeco.compat import (
     AUTO_INSTALLED_PYMONGO_PROFILE,
-    DATABASE_COMMAND_SUPPORT_CATALOG,
-    DATABASE_COMMAND_OPTION_SUPPORT_CATALOG,
     DEFAULT_MONGODB_DIALECT,
     DEFAULT_PYMONGO_PROFILE,
     detect_installed_pymongo_profile_resolution,
-    MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED,
     MONGODB_DIALECT_HOOK_NAMES,
     MONGODB_DIALECT_70,
     MONGODB_DIALECT_80,
@@ -33,7 +30,6 @@ from mongoeco.compat import (
     PYMONGO_PROFILE_ALIASES,
     PYMONGO_PROFILE_BEHAVIOR_FLAGS,
     PYMONGO_PROFILE_CAPABILITIES,
-    PYMONGO_CAP_UPDATE_ONE_SORT,
     PYMONGO_PROFILE_HOOK_NAMES,
     PYMONGO_PROFILES,
     PyMongoProfile49,
@@ -57,13 +53,17 @@ from mongoeco.compat import (
     export_cxp_profile_catalog,
     export_cxp_profile_support_catalog,
     export_mongodb_dialect_catalog,
-    export_local_runtime_subset_catalog,
     export_operation_option_catalog,
     export_pymongo_profile_catalog,
+)
+from mongoeco.compat._catalog_constants import (
+    MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED,
+    PYMONGO_CAP_UPDATE_ONE_SORT,
 )
 from mongoeco.compat import _catalog_data as catalog_data
 from mongoeco.compat import _catalog_database_commands as catalog_database_commands
 from mongoeco.compat import _catalog_dialects as catalog_dialects
+from mongoeco.compat import _catalog_export as catalog_export
 from mongoeco.compat import _catalog_operation_options as catalog_operation_options
 from mongoeco.compat import _catalog_profiles as catalog_profiles
 from mongoeco.compat.base import (
@@ -75,6 +75,13 @@ from mongoeco.compat.base import (
     build_mongo_behavior_policy,
 )
 from mongoeco.types import Binary, Timestamp
+
+
+DATABASE_COMMAND_SUPPORT_CATALOG = catalog_database_commands.DATABASE_COMMAND_SUPPORT_CATALOG
+DATABASE_COMMAND_OPTION_SUPPORT_CATALOG = (
+    catalog_operation_options.DATABASE_COMMAND_OPTION_SUPPORT_CATALOG
+)
+export_local_runtime_subset_catalog = catalog_export.export_local_runtime_subset_catalog
 
 
 class _FlatComparable:
