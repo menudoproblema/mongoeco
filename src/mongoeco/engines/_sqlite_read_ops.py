@@ -7,6 +7,7 @@ import sqlite3
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.search import (
+    attach_search_highlights,
     compile_search_stage,
     is_text_search_query,
     SearchQuery,
@@ -73,7 +74,13 @@ def search_documents(
         raise OperationFailure(f"search index [{query.index_name}] does not support $search")
     if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
         raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
-    return search_sql(db_name, coll_name, definition, query, physical_name, result_limit_hint)
+    result = search_sql(db_name, coll_name, definition, query, physical_name, result_limit_hint)
+    if is_text_search_query(query):
+        return [
+            attach_search_highlights(document, definition=definition, query=query)
+            for document in result
+        ]
+    return result
 
 
 def build_search_explain(

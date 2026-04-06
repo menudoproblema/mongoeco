@@ -11,7 +11,9 @@ from mongoeco.core.search import (
     SearchCompoundQuery,
     SearchNearQuery,
     SearchVectorQuery,
+    attach_search_highlights,
     attach_vector_search_score,
+    build_search_stage_option_previews,
     build_search_index_document,
     compile_search_stage,
     is_text_search_query,
@@ -135,7 +137,11 @@ async def execute_search_documents(
                 distance_hits = heapq.nsmallest(effective_limit, distance_hits, key=lambda item: item[0])
             else:
                 distance_hits.sort(key=lambda item: item[0])
-            return [document for _distance, document in distance_hits]
+            results = [document for _distance, document in distance_hits]
+            return [
+                attach_search_highlights(document, definition=definition, query=query)
+                for document in results
+            ]
         if isinstance(query, SearchCompoundQuery) and query.should:
             ranked_documents: list[tuple[tuple[int, float, float], int, Document]] = []
             for order, (document, materialized) in enumerate(materialized_documents):
@@ -166,7 +172,11 @@ async def execute_search_documents(
                 else:
                     ranked_documents.append((rank, -order, document))
             ranked_documents.sort(key=lambda item: item[:2], reverse=True)
-            return [document for _score, _order, document in ranked_documents]
+            results = [document for _score, _order, document in ranked_documents]
+            return [
+                attach_search_highlights(document, definition=definition, query=query)
+                for document in results
+            ]
         matches: list[Document] = []
         for document, materialized in materialized_documents:
             if downstream_filter_spec is not None:
@@ -180,7 +190,10 @@ async def execute_search_documents(
             matches.append(document)
             if effective_limit is not None and len(matches) >= effective_limit:
                 break
-        return matches
+        return [
+            attach_search_highlights(document, definition=definition, query=query)
+            for document in matches
+        ]
 
     effective_vector_limit = min(query.limit, effective_limit) if effective_limit is not None else query.limit
     if vector_index is None:
@@ -346,5 +359,31 @@ async def explain_search_documents(
             ),
             "topKLimitHint": result_limit_hint,
             "downstreamFilterPrefilter": deepcopy(downstream_filter_spec) if downstream_filter_spec is not None else None,
+            **(
+                build_search_stage_option_previews(
+                    await execute_search_documents(
+                        engine,
+                        db_name,
+                        coll_name,
+                        operator,
+                        spec,
+                        context=context,
+                        result_limit_hint=None,
+                        downstream_filter_spec=downstream_filter_spec,
+                    ),
+                    definition=definition,
+                    query=query,
+                )
+                if is_text_search_query(query)
+                and any(
+                    value is not None
+                    for value in (
+                        getattr(query, "stage_options", None).count if hasattr(query, "stage_options") else None,
+                        getattr(query, "stage_options", None).highlight if hasattr(query, "stage_options") else None,
+                        getattr(query, "stage_options", None).facet if hasattr(query, "stage_options") else None,
+                    )
+                )
+                else {}
+            ),
         },
     )

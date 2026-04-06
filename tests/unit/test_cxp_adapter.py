@@ -261,7 +261,16 @@ class CxpAlignmentTests(unittest.TestCase):
         )
         self.assertEqual(
             exported['capabilities']['search']['metadata']['explainFeatures'],
-            ['pathSummary', 'resolvedLeafPaths', 'structuredParentPathResolution', 'querySemantics'],
+            [
+                'pathSummary',
+                'resolvedLeafPaths',
+                'structuredParentPathResolution',
+                'querySemantics',
+                'stageOptions',
+                'countPreview',
+                'highlightPreview',
+                'facetPreview',
+            ],
         )
         self.assertEqual(
             exported['capabilities']['search']['metadata']['textSearchTier'],
@@ -272,8 +281,27 @@ class CxpAlignmentTests(unittest.TestCase):
             {
                 'matchingMode': 'token-prefix',
                 'tokenization': 'classic-text-local',
+                'tokenOrder': ['any', 'sequential'],
                 'atlasParity': 'subset',
                 'scope': 'local-text-tier',
+            },
+        )
+        self.assertEqual(
+            exported['capabilities']['search']['metadata']['operatorSemantics']['regex'],
+            {
+                'matchingMode': 'python-regex-local',
+                'supportsFlags': True,
+                'supportedFlags': ['i', 'm', 's'],
+                'atlasParity': 'subset',
+                'scope': 'local-text-tier',
+            },
+        )
+        self.assertEqual(
+            exported['capabilities']['search']['metadata']['stageOptions']['highlight'],
+            {
+                'supportsPath': True,
+                'supportsMaxChars': True,
+                'resultField': 'searchHighlights',
             },
         )
         self.assertTrue(

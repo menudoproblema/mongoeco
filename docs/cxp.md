@@ -112,6 +112,9 @@ without guessing:
   specific heuristics.
 * `search.operatorSemantics` and `querySemantics` in `explain()` make the local
   textual tier explicit and machine-readable.
+* `search.stageOptions` now declares the local advanced subset for
+  `count`, `highlight` and `facet`, and `explain()` exposes
+  `countPreview`, `highlightPreview` and `facetPreview`.
 
 ## Reusable profiles
 

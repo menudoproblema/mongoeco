@@ -42,6 +42,7 @@ from mongoeco.errors import (
     OperationFailure,
 )
 from tests.integration.api.search_vector_scenarios import (
+    assert_search_advanced_option_explanation,
     assert_compound_candidateable_should_explanation,
     assert_compound_candidateable_should_limited_explanation,
     assert_compound_candidateable_should_matched_limited_explanation,
@@ -362,9 +363,76 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     assert_regex_explanation(
                         self,
                         collection.aggregate(
-                            [{"$search": {"index": "by_text", "regex": {"query": "Ada.*algorithm", "path": "body"}}}]
+                            [
+                                {
+                                    "$search": {
+                                        "index": "by_text",
+                                        "regex": {
+                                            "query": "Ada.*algorithm",
+                                            "path": "body",
+                                            "flags": "i",
+                                        },
+                                    }
+                                }
+                            ]
                         ).explain(),
                         engine_name=engine_name,
+                    )
+                    sequential_autocomplete_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "autocomplete": {
+                                        "query": "ada alg",
+                                        "path": "body",
+                                        "tokenOrder": "sequential",
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in sequential_autocomplete_hits], [3])
+                    advanced_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "text": {"query": "ada", "path": ["title", "body"]},
+                                    "count": {"type": "total"},
+                                    "highlight": {
+                                        "path": ["title", "body"],
+                                        "maxChars": 40,
+                                    },
+                                    "facet": {"path": "kind", "numBuckets": 5},
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in advanced_hits], [2, 3])
+                    self.assertIn("searchHighlights", advanced_hits[0])
+                    self.assertTrue(advanced_hits[0]["searchHighlights"])
+                    advanced_explanation = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "text": {"query": "ada", "path": ["title", "body"]},
+                                    "count": {"type": "total"},
+                                    "highlight": {
+                                        "path": ["title", "body"],
+                                        "maxChars": 40,
+                                    },
+                                    "facet": {"path": "kind", "numBuckets": 5},
+                                }
+                            }
+                        ]
+                    ).explain()
+                    assert_search_advanced_option_explanation(
+                        self,
+                        advanced_explanation,
                     )
 
                     compound_hits = collection.aggregate(

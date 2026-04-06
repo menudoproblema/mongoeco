@@ -218,6 +218,49 @@ def assert_regex_explanation(
         case.assertFalse(bool(details.get("fts5_match")))
 
 
+def assert_search_advanced_option_explanation(
+    case: unittest.TestCase,
+    explanation: dict[str, object],
+) -> None:
+    details = explanation["engine_plan"]["details"]
+    case.assertEqual(
+        details["stageOptions"],
+        {
+            "count": {"type": "total"},
+            "highlight": {
+                "paths": ["title", "body"],
+                "maxChars": 40,
+                "resultField": "searchHighlights",
+            },
+            "facet": {
+                "path": "kind",
+                "numBuckets": 5,
+                "previewOnly": True,
+            },
+        },
+    )
+    case.assertEqual(
+        details["countPreview"],
+        {
+            "type": "total",
+            "value": 2,
+            "exact": True,
+        },
+    )
+    case.assertEqual(
+        details["facetPreview"],
+        {
+            "path": "kind",
+            "numBuckets": 5,
+            "buckets": [{"value": "note", "count": 2}],
+        },
+    )
+    case.assertEqual(details["highlightPreview"]["resultField"], "searchHighlights")
+    case.assertEqual(details["highlightPreview"]["requestedPaths"], ["title", "body"])
+    case.assertGreaterEqual(details["highlightPreview"]["fragmentCount"], 1)
+    case.assertTrue(details["highlightPreview"]["sample"])
+
+
 def assert_phrase_in_range_compound_explanation(
     case: unittest.TestCase,
     explanation: dict[str, object],

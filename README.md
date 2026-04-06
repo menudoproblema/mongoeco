@@ -277,6 +277,14 @@ The local `$search` subset now includes:
 * this local textual tier is now considered closed in its documented subset;
   what remains is advanced Atlas-like behavior, not the daily embedded
   perimeter.
+* the advanced local subset now also exposes:
+  * `autocomplete.tokenOrder` with `any` / `sequential`
+  * `regex.flags` with `i` / `m` / `s`
+  * `wildcard.allowAnalyzedField`
+  * `$search.count`, `$search.highlight` and `$search.facet` as local
+    stage options, with `highlight` visible in result documents through
+    `searchHighlights` and `count` / `facet` / `highlight` previews in
+    `explain()`
 
 Examples worth showing first:
 
@@ -292,7 +300,8 @@ Examples worth showing first:
   mappings with resolved descendant leaf paths in `explain()`, explicit
   operator `querySemantics`, consistent
   scalar `pathSummary` metadata for `equals` / `range` / `near`, scalar filters
-  over embedded-document paths, and a local
+  over embedded-document paths, `searchHighlights` in local result documents,
+  `count` / `facet` previews in `explain()`, and a local
   `compound` query with visible embedded path/ranking explain metadata plus
   `equals` + `in` + `range` + `near` + `exists` + `regex`.
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)

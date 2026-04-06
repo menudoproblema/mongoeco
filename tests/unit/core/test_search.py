@@ -350,13 +350,17 @@ class SearchCoreTests(unittest.TestCase):
                     "text": {"query": "ada", "path": "title", "score": {"boost": 2}},
                 }
             )
-        with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
-            compile_search_autocomplete_query(
-                {
-                    "index": "by_text",
-                    "autocomplete": {"query": "ada", "path": "title", "tokenOrder": "any"},
-                }
-            )
+        autocomplete = compile_search_autocomplete_query(
+            {
+                "index": "by_text",
+                "autocomplete": {
+                    "query": "ada",
+                    "path": "title",
+                    "tokenOrder": "sequential",
+                },
+            }
+        )
+        self.assertEqual(autocomplete.token_order, "sequential")
         with self.assertRaisesRegex(OperationFailure, "at least one searchable token"):
             compile_search_autocomplete_query(
                 {
@@ -364,13 +368,17 @@ class SearchCoreTests(unittest.TestCase):
                     "autocomplete": {"query": "!!!", "path": "title"},
                 }
             )
-        with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
-            compile_search_wildcard_query(
-                {
-                    "index": "by_text",
-                    "wildcard": {"query": "ada*", "path": "title", "allowAnalyzedField": True},
-                }
-            )
+        wildcard = compile_search_wildcard_query(
+            {
+                "index": "by_text",
+                "wildcard": {
+                    "query": "ada*",
+                    "path": "title",
+                    "allowAnalyzedField": True,
+                },
+            }
+        )
+        self.assertTrue(wildcard.allow_analyzed_field)
         with patch.dict(search_module._SEARCH_CLAUSE_COMPILERS, {"text": None}, clear=False):
             with self.assertRaisesRegex(OperationFailure, "unsupported local \\$search operator: text"):
                 compile_search_text_like_query(
@@ -416,6 +424,31 @@ class SearchCoreTests(unittest.TestCase):
         self.assertFalse(
             matches_search_autocomplete_query(
                 {"title": "!!!"},
+                definition=definition,
+                query=query,
+            )
+        )
+
+    def test_matches_search_autocomplete_query_supports_sequential_token_order(self) -> None:
+        definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text")
+        query = SearchAutocompleteQuery(
+            index_name="by_text",
+            raw_query="ada alg",
+            terms=("ada", "alg"),
+            paths=("title",),
+            token_order="sequential",
+        )
+
+        self.assertTrue(
+            matches_search_autocomplete_query(
+                {"title": "Ada algorithm handbook"},
+                definition=definition,
+                query=query,
+            )
+        )
+        self.assertFalse(
+            matches_search_autocomplete_query(
+                {"title": "Algorithm notes by Ada"},
                 definition=definition,
                 query=query,
             )
@@ -1410,11 +1443,18 @@ class SearchCoreTests(unittest.TestCase):
                     "phrase": {"query": "!!!", "path": "title"},
                 }
             )
+        query = compile_search_regex_query(
+            {
+                "index": "by_text",
+                "regex": {"query": "Ada.*", "path": "title", "flags": "i"},
+            }
+        )
+        self.assertEqual(query.flags, "i")
         with self.assertRaises(OperationFailure):
             compile_search_regex_query(
                 {
                     "index": "by_text",
-                    "regex": {"query": "Ada.*", "path": "title", "flags": "i"},
+                    "regex": {"query": "Ada.*", "path": "title", "flags": "x"},
                 }
             )
 
@@ -1450,6 +1490,22 @@ class SearchCoreTests(unittest.TestCase):
                 paths=("title", "body"),
             ),
         )
+
+    def test_compile_search_text_like_query_supports_stage_options(self) -> None:
+        query = compile_search_text_like_query(
+            {
+                "index": "by_text",
+                "text": {"query": "Ada", "path": "body"},
+                "count": {"type": "total"},
+                "highlight": {"path": ["body"], "maxChars": 32},
+                "facet": {"path": "kind", "numBuckets": 4},
+            }
+        )
+        self.assertEqual(query.stage_options.count.mode, "total")
+        self.assertEqual(query.stage_options.highlight.paths, ("body",))
+        self.assertEqual(query.stage_options.highlight.max_chars, 32)
+        self.assertEqual(query.stage_options.facet.path, "kind")
+        self.assertEqual(query.stage_options.facet.num_buckets, 4)
 
     def test_compile_search_text_query_supports_wildcard_path(self) -> None:
         query = compile_search_text_query(
@@ -1790,6 +1846,31 @@ class SearchCoreTests(unittest.TestCase):
                 {"title": "Ada algorithms"},
                 definition=definition,
                 query=SearchRegexQuery(index_name="by_text", raw_query="(", paths=("title",)),
+            )
+        )
+
+    def test_matches_search_regex_query_supports_flags(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "body": {"type": "string"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+        self.assertTrue(
+            matches_search_regex_query(
+                {"body": "Ada\nalgorithm"},
+                definition=definition,
+                query=SearchRegexQuery(
+                    index_name="by_text",
+                    raw_query="ada.*algorithm",
+                    paths=("body",),
+                    flags="is",
+                ),
             )
         )
 
@@ -2536,7 +2617,17 @@ class SearchCoreTests(unittest.TestCase):
             )["pathSummary"]
         )
         regex_details = search_query_explain_details(
-            SearchRegexQuery(index_name="by_text", raw_query="Ada.*algorithm", paths=("body",))
+            SearchRegexQuery(
+                index_name="by_text",
+                raw_query="Ada.*algorithm",
+                paths=("body",),
+                flags="i",
+                stage_options=search_module.SearchStageOptions(
+                    count=search_module.SearchCountSpec(mode="total"),
+                    highlight=search_module.SearchHighlightSpec(paths=("body",), max_chars=40),
+                    facet=search_module.SearchFacetSpec(path="kind", num_buckets=3),
+                ),
+            )
         )
         self.assertEqual(regex_details["queryOperator"], "regex")
         self.assertEqual(regex_details["query"], "Ada.*algorithm")
@@ -2545,9 +2636,26 @@ class SearchCoreTests(unittest.TestCase):
             regex_details["querySemantics"],
             {
                 "matchingMode": "python-regex-local",
-                "supportsFlags": False,
+                "flags": "i",
+                "supportsFlags": True,
                 "atlasParity": "subset",
                 "scope": "local-text-tier",
+            },
+        )
+        self.assertEqual(
+            regex_details["stageOptions"],
+            {
+                "count": {"type": "total"},
+                "highlight": {
+                    "paths": ["body"],
+                    "maxChars": 40,
+                    "resultField": "searchHighlights",
+                },
+                "facet": {
+                    "path": "kind",
+                    "numBuckets": 3,
+                    "previewOnly": True,
+                },
             },
         )
         self.assertEqual(
@@ -2852,6 +2960,391 @@ class SearchCoreTests(unittest.TestCase):
             },
         )
         self.assertEqual(search_module._query_paths(object()), ())
+
+    def test_search_highlights_and_stage_option_previews_cover_local_advanced_subset(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "autocomplete"},
+                        "body": {"type": "string"},
+                        "kind": {"type": "token"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+        query = SearchTextQuery(
+            index_name="by_text",
+            raw_query="Ada",
+            terms=("ada",),
+            paths=("title", "body"),
+            stage_options=search_module.SearchStageOptions(
+                count=search_module.SearchCountSpec(mode="total"),
+                highlight=search_module.SearchHighlightSpec(paths=("title", "body"), max_chars=20),
+                facet=search_module.SearchFacetSpec(path="kind", num_buckets=3),
+            ),
+        )
+        highlighted = search_module.attach_search_highlights(
+            {
+                "_id": 1,
+                "title": "Ada Lovelace notes",
+                "body": "Ada designed local search patterns.",
+                "kind": "note",
+            },
+            definition=definition,
+            query=query,
+        )
+        self.assertIn("searchHighlights", highlighted)
+        previews = search_module.build_search_stage_option_previews(
+            [highlighted],
+            definition=definition,
+            query=query,
+        )
+        self.assertEqual(
+            previews["countPreview"],
+            {"type": "total", "value": 1, "exact": True},
+        )
+        self.assertEqual(
+            previews["facetPreview"],
+            {"path": "kind", "numBuckets": 3, "buckets": [{"value": "note", "count": 1}]},
+        )
+        self.assertEqual(previews["highlightPreview"]["resultField"], "searchHighlights")
+        self.assertTrue(previews["highlightPreview"]["sample"])
+
+    def test_search_advanced_option_validators_cover_invalid_shapes(self) -> None:
+        invalid_specs = (
+            (
+                search_module._compile_search_count_spec,
+                [],
+                "count requires a document specification",
+            ),
+            (
+                search_module._compile_search_count_spec,
+                {"type": "total", "extra": True},
+                "count only supports type",
+            ),
+            (
+                search_module._compile_search_count_spec,
+                {"type": "approx"},
+                "count.type must be 'total' or 'lowerBound'",
+            ),
+            (
+                search_module._compile_search_highlight_spec,
+                [],
+                "highlight requires a document specification",
+            ),
+            (
+                search_module._compile_search_highlight_spec,
+                {"path": "title", "extra": True},
+                "highlight only supports path and maxChars",
+            ),
+            (
+                search_module._compile_search_highlight_spec,
+                {"path": {"wildcard": "*"}},
+                "highlight.path must be a string",
+            ),
+            (
+                search_module._compile_search_highlight_spec,
+                {"path": "title", "maxChars": 0},
+                "highlight.maxChars must be a positive integer",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                [],
+                "facet requires a document specification",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                {"path": "kind", "extra": True},
+                "facet only supports path and numBuckets",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                {"path": ""},
+                "facet.path must be a non-empty string",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                {"path": "kind", "numBuckets": 0},
+                "facet.numBuckets must be a positive integer",
+            ),
+        )
+        for compiler, spec, pattern in invalid_specs:
+            with self.subTest(spec=spec), self.assertRaisesRegex(OperationFailure, pattern):
+                compiler(spec)
+
+        invalid_queries = (
+            (
+                compile_search_autocomplete_query,
+                {
+                    "index": "by_text",
+                    "autocomplete": {"query": "Ada", "path": "title", "tokenOrder": "random"},
+                },
+                "tokenOrder",
+            ),
+            (
+                compile_search_autocomplete_query,
+                {
+                    "index": "by_text",
+                    "autocomplete": {"query": "Ada", "path": "title", "boost": 2},
+                },
+                "only supports query and path",
+            ),
+            (
+                compile_search_wildcard_query,
+                {
+                    "index": "by_text",
+                    "wildcard": {"query": "*ada*", "path": "title", "allowAnalyzedField": "yes"},
+                },
+                "allowAnalyzedField must be a boolean",
+            ),
+            (
+                compile_search_wildcard_query,
+                {
+                    "index": "by_text",
+                    "wildcard": {"query": "*ada*", "path": "title", "boost": 2},
+                },
+                "only supports query and path",
+            ),
+            (
+                compile_search_regex_query,
+                {
+                    "index": "by_text",
+                    "regex": {"query": "Ada.*", "path": "title", "flags": 1},
+                },
+                "flags must be a string",
+            ),
+            (
+                compile_search_regex_query,
+                {
+                    "index": "by_text",
+                    "regex": {"query": "Ada.*", "path": "title", "boost": 2},
+                },
+                "only supports query and path",
+            ),
+        )
+        for compiler, spec, pattern in invalid_queries:
+            with self.subTest(spec=spec), self.assertRaisesRegex(OperationFailure, pattern):
+                compiler(spec)
+
+    def test_search_advanced_text_helpers_cover_private_branches(self) -> None:
+        self.assertFalse(search_module._token_sequence_matches(("ada",), ()))
+        self.assertEqual(
+            search_module._regex_compile_flags("ms"),
+            search_module.re.MULTILINE | search_module.re.DOTALL,
+        )
+
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "autocomplete"},
+                        "body": {"type": "string"},
+                        "kind": {"type": "token"},
+                        "count": {"type": "number"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+        document = {
+            "title": "Ada algorithms handbook",
+            "body": "Ada algorithm notes",
+            "kind": "note",
+            "count": 2,
+        }
+        sequential = SearchAutocompleteQuery(
+            index_name="by_text",
+            raw_query="Ada alg",
+            terms=("ada", "alg"),
+            paths=("body",),
+            token_order="sequential",
+        )
+        matched, score, _near = search_module.search_clause_ranking(
+            document,
+            definition=definition,
+            query=sequential,
+        )
+        self.assertTrue(matched)
+        self.assertEqual(score, 2.0)
+
+        non_compound = search_module._highlightable_textual_clauses(
+            SearchNearQuery(index_name="by_text", path="count", origin=2, pivot=1.0, origin_kind="number")
+        )
+        self.assertEqual(non_compound, ())
+
+        recursive = SearchCompoundQuery(
+            index_name="by_text",
+            must=(SearchTextQuery(index_name="by_text", raw_query="Ada", terms=("ada",), paths=("title",)),),
+            should=(
+                SearchCompoundQuery(
+                    index_name="by_text",
+                    should=(sequential,),
+                    minimum_should_match=1,
+                ),
+            ),
+        )
+        recursive_clauses = search_module._highlightable_textual_clauses(recursive)
+        self.assertEqual(len(recursive_clauses), 2)
+        self.assertIn(sequential, recursive_clauses)
+        self.assertIsNone(
+            search_module._resolved_highlight_clause_paths(
+                SearchTextQuery(index_name="by_text", raw_query="Ada", terms=("ada",), paths=None),
+                available_leaf_paths=("title", "body"),
+            )
+        )
+
+    def test_search_highlight_helpers_cover_dedup_empty_and_payload_variants(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "string"},
+                        "body": {"type": "string"},
+                        "kind": {"type": "token"},
+                        "score": {"type": "number"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+        no_highlight_query = SearchTextQuery(index_name="by_text", raw_query="Ada", terms=("ada",), paths=("title",))
+        original = {"title": "Compiler reference"}
+        self.assertIs(
+            search_module.attach_search_highlights(original, definition=definition, query=no_highlight_query),
+            original,
+        )
+        unmatched_query = SearchTextQuery(
+            index_name="by_text",
+            raw_query="Ada",
+            terms=("ada",),
+            paths=("title",),
+            stage_options=search_module.SearchStageOptions(
+                highlight=search_module.SearchHighlightSpec(paths=("title",), max_chars=10),
+            ),
+        )
+        unmatched_document = {"title": "Compiler reference"}
+        self.assertIs(
+            search_module.attach_search_highlights(
+                unmatched_document,
+                definition=definition,
+                query=unmatched_query,
+            ),
+            unmatched_document,
+        )
+
+        duplicate_query = SearchCompoundQuery(
+            index_name="by_text",
+            must=(
+                SearchTextQuery(index_name="by_text", raw_query="Ada", terms=("ada",), paths=("body",)),
+                SearchTextQuery(index_name="by_text", raw_query="Ada", terms=("ada",), paths=("title",)),
+                SearchTextQuery(index_name="by_text", raw_query="Ada", terms=("ada",), paths=("title",)),
+            ),
+        )
+        highlights = search_module.build_search_highlights(
+            {"title": "Ada title", "score": 7},
+            definition=definition,
+            query=duplicate_query,
+            spec=search_module.SearchHighlightSpec(paths=("body", "title"), max_chars=20),
+        )
+        self.assertEqual(
+            highlights,
+            [{"path": "title", "operator": "text", "text": "Ada title", "matchedTerms": ["ada"]}],
+        )
+
+        preview_query = SearchTextQuery(
+            index_name="by_text",
+            raw_query="Ada",
+            terms=("ada",),
+            paths=("title",),
+            stage_options=search_module.SearchStageOptions(
+                count=search_module.SearchCountSpec(mode="lowerBound"),
+                highlight=search_module.SearchHighlightSpec(paths=("title",), max_chars=10),
+                facet=search_module.SearchFacetSpec(path="kind", num_buckets=2),
+            ),
+        )
+        preview_documents = [
+            {"kind": "note", "searchHighlights": [{"path": "title", "operator": "text", "text": f"Ada {index}"}]}
+            for index in range(4)
+        ]
+        preview_documents[0]["kind"] = {"bad": True}
+        preview_documents[1]["kind"] = ["note", "note"]
+        previews = search_module.build_search_stage_option_previews(
+            preview_documents,
+            definition=definition,
+            query=preview_query,
+        )
+        self.assertEqual(previews["countPreview"]["type"], "lowerBound")
+        self.assertEqual(len(previews["highlightPreview"]["sample"]), 3)
+        self.assertEqual(previews["facetPreview"]["buckets"], [{"value": "note", "count": 3}])
+
+        phrase = SearchPhraseQuery(index_name="by_text", raw_query="Ada title", paths=("title",), slop=1)
+        wildcard = SearchWildcardQuery(
+            index_name="by_text",
+            raw_query="Ada*",
+            normalized_pattern="ada*",
+            paths=("title",),
+            allow_analyzed_field=True,
+        )
+        regex = SearchRegexQuery(
+            index_name="by_text",
+            raw_query="Ada.+",
+            paths=("title",),
+            flags="i",
+        )
+        self.assertTrue(search_module._text_value_matches_clause("Ada title", phrase))
+        self.assertTrue(search_module._text_value_matches_clause("Ada title", sequential := SearchAutocompleteQuery(
+            index_name="by_text",
+            raw_query="Ada ti",
+            terms=("ada", "ti"),
+            paths=("title",),
+            token_order="sequential",
+        )))
+        self.assertTrue(
+            search_module._text_value_matches_clause(
+                "Ada title",
+                SearchAutocompleteQuery(
+                    index_name="by_text",
+                    raw_query="Ada ti",
+                    terms=("ada", "ti"),
+                    paths=("title",),
+                ),
+            )
+        )
+        self.assertTrue(search_module._text_value_matches_clause("Ada title", wildcard))
+        self.assertTrue(search_module._text_value_matches_clause("Ada title", regex))
+        self.assertEqual(
+            search_module._highlight_payload_for_clause("title", "Ada title", clause=phrase, max_chars=50),
+            {
+                "path": "title",
+                "operator": "phrase",
+                "text": "Ada title",
+                "matchedPhrase": "Ada title",
+            },
+        )
+        self.assertEqual(
+            search_module._highlight_payload_for_clause("title", "Ada title", clause=wildcard, max_chars=50),
+            {
+                "path": "title",
+                "operator": "wildcard",
+                "text": "Ada title",
+                "pattern": "Ada*",
+            },
+        )
+        self.assertEqual(
+            search_module._highlight_payload_for_clause("title", "Ada title", clause=regex, max_chars=50),
+            {
+                "path": "title",
+                "operator": "regex",
+                "text": "Ada title",
+                "pattern": "Ada.+",
+                "flags": "i",
+            },
+        )
 
     def test_search_explain_resolution_helpers_cover_edge_cases(self) -> None:
         path_summary: dict[str, object | None] = {}

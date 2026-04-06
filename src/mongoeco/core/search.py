@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 import datetime
 import fnmatch
 import math
@@ -44,6 +44,31 @@ SUPPORTED_SEARCH_FIELD_MAPPING_TYPES = frozenset(
     | EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES
     | STRUCTURED_SEARCH_FIELD_MAPPING_TYPES
 )
+SEARCH_HIGHLIGHTS_FIELD = "searchHighlights"
+
+
+@dataclass(frozen=True, slots=True)
+class SearchCountSpec:
+    mode: str = "total"
+
+
+@dataclass(frozen=True, slots=True)
+class SearchHighlightSpec:
+    paths: tuple[str, ...] | None = None
+    max_chars: int = 120
+
+
+@dataclass(frozen=True, slots=True)
+class SearchFacetSpec:
+    path: str = ""
+    num_buckets: int = 10
+
+
+@dataclass(frozen=True, slots=True)
+class SearchStageOptions:
+    count: SearchCountSpec | None = None
+    highlight: SearchHighlightSpec | None = None
+    facet: SearchFacetSpec | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +85,7 @@ class SearchTextQuery:
     raw_query: str
     terms: tuple[str, ...]
     paths: tuple[str, ...] | None = None
+    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +94,7 @@ class SearchPhraseQuery:
     raw_query: str
     paths: tuple[str, ...] | None = None
     slop: int = 0
+    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,6 +103,8 @@ class SearchAutocompleteQuery:
     raw_query: str
     terms: tuple[str, ...]
     paths: tuple[str, ...] | None = None
+    token_order: str = "any"
+    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,6 +113,8 @@ class SearchWildcardQuery:
     raw_query: str
     normalized_pattern: str
     paths: tuple[str, ...] | None = None
+    allow_analyzed_field: bool = False
+    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,12 +122,15 @@ class SearchRegexQuery:
     index_name: str
     raw_query: str
     paths: tuple[str, ...] | None = None
+    flags: str = ""
+    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
 @dataclass(frozen=True, slots=True)
 class SearchExistsQuery:
     index_name: str
     paths: tuple[str, ...] | None = None
+    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,6 +139,7 @@ class SearchInQuery:
     path: str
     values: tuple[object, ...]
     normalized_values: frozenset[tuple[str, object]]
+    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,6 +148,7 @@ class SearchEqualsQuery:
     path: str
     value: object
     value_kind: str
+    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,6 +160,7 @@ class SearchRangeQuery:
     lt: object | None = None
     lte: object | None = None
     bound_kind: str = "number"
+    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,6 +170,7 @@ class SearchNearQuery:
     origin: float | datetime.date | datetime.datetime
     pivot: float
     origin_kind: str
+    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
 @dataclass(frozen=True, slots=True)
@@ -143,6 +181,7 @@ class SearchCompoundQuery:
     filter: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
     must_not: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
     minimum_should_match: int = 0
+    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
 @dataclass(frozen=True, slots=True)
@@ -409,7 +448,9 @@ def compile_search_stage(operator: str, spec: object) -> SearchQuery:
 def compile_search_text_like_query(spec: object) -> SearchTextLikeQuery:
     if not isinstance(spec, dict):
         raise OperationFailure("$search requires a document specification")
-    unsupported_operators = sorted(set(spec) - {"index", *TEXT_SEARCH_OPERATOR_NAMES})
+    unsupported_operators = sorted(
+        set(spec) - {"index", "count", "highlight", "facet", *TEXT_SEARCH_OPERATOR_NAMES}
+    )
     if unsupported_operators:
         raise OperationFailure(
             "$search local runtime supports only "
@@ -435,7 +476,78 @@ def compile_search_text_like_query(spec: object) -> SearchTextLikeQuery:
     compiler = _SEARCH_CLAUSE_COMPILERS.get(clause_name)
     if compiler is None:
         raise OperationFailure(f"unsupported local $search operator: {clause_name}")
-    return compiler(index_name, clause_spec)
+    query = compiler(index_name, clause_spec)
+    stage_options = SearchStageOptions(
+        count=_compile_search_count_spec(spec.get("count")),
+        highlight=_compile_search_highlight_spec(spec.get("highlight")),
+        facet=_compile_search_facet_spec(spec.get("facet")),
+    )
+    return replace(query, stage_options=stage_options)
+
+
+def _compile_search_count_spec(spec: object) -> SearchCountSpec | None:
+    if spec is None:
+        return None
+    if not isinstance(spec, dict):
+        raise OperationFailure("$search.count requires a document specification")
+    unsupported_options = sorted(set(spec) - {"type"})
+    if unsupported_options:
+        raise OperationFailure(
+            "$search.count only supports type; unsupported keys: "
+            + ", ".join(unsupported_options)
+        )
+    mode = spec.get("type", "total")
+    if mode not in {"total", "lowerBound"}:
+        raise OperationFailure("$search.count.type must be 'total' or 'lowerBound'")
+    return SearchCountSpec(mode=mode)
+
+
+def _compile_search_highlight_spec(spec: object) -> SearchHighlightSpec | None:
+    if spec is None:
+        return None
+    if not isinstance(spec, dict):
+        raise OperationFailure("$search.highlight requires a document specification")
+    unsupported_options = sorted(set(spec) - {"path", "maxChars"})
+    if unsupported_options:
+        raise OperationFailure(
+            "$search.highlight only supports path and maxChars; unsupported keys: "
+            + ", ".join(unsupported_options)
+        )
+    paths = _normalize_search_paths(spec.get("path"))
+    if paths is None:
+        raise OperationFailure("$search.highlight.path must be a string or list of strings")
+    max_chars = spec.get("maxChars", 120)
+    if (
+        not isinstance(max_chars, int)
+        or isinstance(max_chars, bool)
+        or max_chars <= 0
+    ):
+        raise OperationFailure("$search.highlight.maxChars must be a positive integer")
+    return SearchHighlightSpec(paths=paths, max_chars=max_chars)
+
+
+def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
+    if spec is None:
+        return None
+    if not isinstance(spec, dict):
+        raise OperationFailure("$search.facet requires a document specification")
+    unsupported_options = sorted(set(spec) - {"path", "numBuckets"})
+    if unsupported_options:
+        raise OperationFailure(
+            "$search.facet only supports path and numBuckets; unsupported keys: "
+            + ", ".join(unsupported_options)
+        )
+    path = spec.get("path")
+    if not isinstance(path, str) or not path:
+        raise OperationFailure("$search.facet.path must be a non-empty string")
+    num_buckets = spec.get("numBuckets", 10)
+    if (
+        not isinstance(num_buckets, int)
+        or isinstance(num_buckets, bool)
+        or num_buckets <= 0
+    ):
+        raise OperationFailure("$search.facet.numBuckets must be a positive integer")
+    return SearchFacetSpec(path=path, num_buckets=num_buckets)
 
 
 def compile_search_text_query(spec: object) -> SearchTextQuery:
@@ -592,9 +704,15 @@ def matches_search_autocomplete_query(
     prepared = materialized or materialize_search_document(document, definition)
     query_terms = tuple(term.lower() for term in query.terms)
     token_sets = _materialized_token_sets(prepared, query.paths)
+    token_counters = _materialized_token_counters(prepared, query.paths)
     if not token_sets:
         return False
-    for token_set in token_sets:
+    for index, token_set in enumerate(token_sets):
+        if query.token_order == "sequential":
+            token_counter = token_counters[index] if index < len(token_counters) else Counter()
+            if _token_sequence_matches(tuple(token_counter), query_terms):
+                return True
+            continue
         if all(any(token.startswith(term) for token in token_set) for term in query_terms):
             return True
     return False
@@ -621,7 +739,7 @@ def matches_search_regex_query(
 ) -> bool:
     prepared = materialized or materialize_search_document(document, definition)
     try:
-        compiled = re.compile(query.raw_query)
+        compiled = re.compile(query.raw_query, _regex_compile_flags(query.flags))
     except re.error:
         return False
     allowed_paths = None if query.paths is None else frozenset(
@@ -632,6 +750,33 @@ def matches_search_regex_query(
         for field_path, value in prepared.entries
         if allowed_paths is None or field_path in allowed_paths
     )
+
+
+def _token_sequence_matches(
+    tokens: tuple[str, ...],
+    query_terms: tuple[str, ...],
+) -> bool:
+    if not query_terms:
+        return False
+    position = 0
+    for term in query_terms:
+        while position < len(tokens) and not tokens[position].startswith(term):
+            position += 1
+        if position >= len(tokens):
+            return False
+        position += 1
+    return True
+
+
+def _regex_compile_flags(flags: str) -> int:
+    compiled_flags = 0
+    if "i" in flags:
+        compiled_flags |= re.IGNORECASE
+    if "m" in flags:
+        compiled_flags |= re.MULTILINE
+    if "s" in flags:
+        compiled_flags |= re.DOTALL
+    return compiled_flags
 
 
 def matches_search_exists_query(
@@ -774,7 +919,36 @@ def search_query_explain_details(
             definition=definition,
         )
     details["queryOperator"] = search_query_operator_name(query)
+    stage_options = _serialized_search_stage_options(query)
+    if stage_options:
+        details["stageOptions"] = stage_options
     return details
+
+
+def _search_stage_options(query: SearchQuery) -> SearchStageOptions:
+    if isinstance(query, SearchVectorQuery):
+        return SearchStageOptions()
+    return getattr(query, "stage_options", SearchStageOptions())
+
+
+def _serialized_search_stage_options(query: SearchQuery) -> dict[str, object] | None:
+    options = _search_stage_options(query)
+    serialized: dict[str, object] = {}
+    if options.count is not None:
+        serialized["count"] = {"type": options.count.mode}
+    if options.highlight is not None:
+        serialized["highlight"] = {
+            "paths": list(options.highlight.paths) if options.highlight.paths is not None else None,
+            "maxChars": options.highlight.max_chars,
+            "resultField": SEARCH_HIGHLIGHTS_FIELD,
+        }
+    if options.facet is not None:
+        serialized["facet"] = {
+            "path": options.facet.path,
+            "numBuckets": options.facet.num_buckets,
+            "previewOnly": True,
+        }
+    return serialized or None
 
 
 def search_clause_ranking(
@@ -800,6 +974,11 @@ def search_clause_ranking(
     if isinstance(query, SearchAutocompleteQuery):
         score = 0.0
         for token_counter in _materialized_token_counters(prepared, query.paths):
+            if query.token_order == "sequential":
+                ordered_tokens = tuple(token_counter)
+                if _token_sequence_matches(ordered_tokens, tuple(term.lower() for term in query.terms)):
+                    score = max(score, float(len(query.terms)))
+                continue
             local = 0.0
             for term in query.terms:
                 matches = [token for token in token_counter if token.startswith(term.lower())]
@@ -819,7 +998,7 @@ def search_clause_ranking(
         )
         return score > 0.0, score, None
     if isinstance(query, SearchRegexQuery):
-        compiled = re.compile(query.raw_query)
+        compiled = re.compile(query.raw_query, _regex_compile_flags(query.flags))
         allowed_paths = None if query.paths is None else frozenset(
             _resolved_materialized_paths(prepared, query.paths)
         )
@@ -1202,7 +1381,7 @@ def _compile_search_phrase_clause(index_name: str, clause_spec: object) -> Searc
 def _compile_search_autocomplete_clause(index_name: str, clause_spec: object) -> SearchAutocompleteQuery:
     if not isinstance(clause_spec, dict):
         raise OperationFailure("$search.autocomplete requires a document specification")
-    unsupported_options = sorted(set(clause_spec) - {"query", "path"})
+    unsupported_options = sorted(set(clause_spec) - {"query", "path", "tokenOrder"})
     if unsupported_options:
         raise OperationFailure(
             "$search.autocomplete only supports query and path; unsupported keys: "
@@ -1214,18 +1393,22 @@ def _compile_search_autocomplete_clause(index_name: str, clause_spec: object) ->
     terms = tokenize_classic_text(raw_query)
     if not terms:
         raise OperationFailure("$search.autocomplete.query must contain at least one searchable token")
+    token_order = clause_spec.get("tokenOrder", "any")
+    if token_order not in {"any", "sequential"}:
+        raise OperationFailure("$search.autocomplete.tokenOrder must be 'any' or 'sequential'")
     return SearchAutocompleteQuery(
         index_name=index_name,
         raw_query=raw_query,
         terms=terms,
         paths=_normalize_search_paths(clause_spec.get("path")),
+        token_order=token_order,
     )
 
 
 def _compile_search_wildcard_clause(index_name: str, clause_spec: object) -> SearchWildcardQuery:
     if not isinstance(clause_spec, dict):
         raise OperationFailure("$search.wildcard requires a document specification")
-    unsupported_options = sorted(set(clause_spec) - {"query", "path"})
+    unsupported_options = sorted(set(clause_spec) - {"query", "path", "allowAnalyzedField"})
     if unsupported_options:
         raise OperationFailure(
             "$search.wildcard only supports query and path; unsupported keys: "
@@ -1234,18 +1417,22 @@ def _compile_search_wildcard_clause(index_name: str, clause_spec: object) -> Sea
     raw_query = clause_spec.get("query")
     if not isinstance(raw_query, str) or not raw_query.strip():
         raise OperationFailure("$search.wildcard.query must be a non-empty string")
+    allow_analyzed_field = clause_spec.get("allowAnalyzedField", False)
+    if not isinstance(allow_analyzed_field, bool):
+        raise OperationFailure("$search.wildcard.allowAnalyzedField must be a boolean")
     return SearchWildcardQuery(
         index_name=index_name,
         raw_query=raw_query,
         normalized_pattern=raw_query.strip().lower(),
         paths=_normalize_search_paths(clause_spec.get("path")),
+        allow_analyzed_field=allow_analyzed_field,
     )
 
 
 def _compile_search_regex_clause(index_name: str, clause_spec: object) -> SearchRegexQuery:
     if not isinstance(clause_spec, dict):
         raise OperationFailure("$search.regex requires a document specification")
-    unsupported_options = sorted(set(clause_spec) - {"query", "path"})
+    unsupported_options = sorted(set(clause_spec) - {"query", "path", "flags"})
     if unsupported_options:
         raise OperationFailure(
             "$search.regex only supports query and path; unsupported keys: "
@@ -1254,14 +1441,20 @@ def _compile_search_regex_clause(index_name: str, clause_spec: object) -> Search
     raw_query = clause_spec.get("query")
     if not isinstance(raw_query, str) or not raw_query.strip():
         raise OperationFailure("$search.regex.query must be a non-empty string")
+    flags = clause_spec.get("flags", "")
+    if not isinstance(flags, str):
+        raise OperationFailure("$search.regex.flags must be a string")
+    if any(flag not in {"i", "m", "s"} for flag in flags):
+        raise OperationFailure("$search.regex.flags only supports i, m and s")
     try:
-        re.compile(raw_query)
+        re.compile(raw_query, _regex_compile_flags(flags))
     except re.error as exc:
         raise OperationFailure(f"$search.regex.query must be a valid regular expression: {exc}") from exc
     return SearchRegexQuery(
         index_name=index_name,
         raw_query=raw_query,
         paths=_normalize_search_paths(clause_spec.get("path")),
+        flags=flags,
     )
 
 
@@ -1581,19 +1774,22 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
             "matchingMode": "token-prefix",
             "tokenization": "classic-text-local",
             "atlasParity": "subset",
+            "tokenOrder": query.token_order,
             "scope": "local-text-tier",
         }
     elif isinstance(query, SearchWildcardQuery):
         query_semantics = {
             "matchingMode": "glob-local",
             "patternSyntax": "fnmatch-like",
+            "allowAnalyzedField": query.allow_analyzed_field,
             "atlasParity": "subset",
             "scope": "local-text-tier",
         }
     elif isinstance(query, SearchRegexQuery):
         query_semantics = {
             "matchingMode": "python-regex-local",
-            "supportsFlags": False,
+            "flags": query.flags,
+            "supportsFlags": True,
             "atlasParity": "subset",
             "scope": "local-text-tier",
         }
@@ -2010,6 +2206,249 @@ def _query_paths(query: SearchTextLikeQuery) -> tuple[str, ...]:
                 collected.extend(_query_paths(clause))
         return tuple(dict.fromkeys(collected))
     return ()
+
+
+def attach_search_highlights(
+    document: Document,
+    *,
+    definition: SearchIndexDefinition,
+    query: SearchTextLikeQuery,
+) -> Document:
+    options = _search_stage_options(query)
+    if options.highlight is None:
+        return document
+    highlights = build_search_highlights(
+        document,
+        definition=definition,
+        query=query,
+        spec=options.highlight,
+    )
+    if not highlights:
+        return document
+    highlighted = deepcopy(document)
+    highlighted[SEARCH_HIGHLIGHTS_FIELD] = highlights
+    return highlighted
+
+
+def build_search_stage_option_previews(
+    documents: list[Document],
+    *,
+    definition: SearchIndexDefinition,
+    query: SearchTextLikeQuery,
+) -> dict[str, object]:
+    options = _search_stage_options(query)
+    previews: dict[str, object] = {}
+    if options.count is not None:
+        previews["countPreview"] = {
+            "type": options.count.mode,
+            "value": len(documents),
+            "exact": True,
+        }
+    if options.highlight is not None:
+        preview_fragments: list[dict[str, object]] = []
+        for document in documents:
+            value = document.get(SEARCH_HIGHLIGHTS_FIELD)
+            if isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        preview_fragments.append(deepcopy(item))
+            if len(preview_fragments) >= 3:
+                break
+        previews["highlightPreview"] = {
+            "resultField": SEARCH_HIGHLIGHTS_FIELD,
+            "requestedPaths": list(options.highlight.paths or ()),
+            "fragmentCount": sum(
+                len(document.get(SEARCH_HIGHLIGHTS_FIELD, ()))
+                for document in documents
+                if isinstance(document.get(SEARCH_HIGHLIGHTS_FIELD), list)
+            ),
+            "sample": preview_fragments[:3],
+        }
+    if options.facet is not None:
+        previews["facetPreview"] = _facet_preview(documents, options.facet)
+    return previews
+
+
+def build_search_highlights(
+    document: Document,
+    *,
+    definition: SearchIndexDefinition,
+    query: SearchTextLikeQuery,
+    spec: SearchHighlightSpec,
+) -> list[dict[str, object]]:
+    available_leaf_paths = _mapped_textual_search_paths(definition)
+    requested_paths = list(spec.paths or ())
+    resolved_paths = _resolve_requested_leaf_paths(
+        requested_paths,
+        available_leaf_paths=available_leaf_paths,
+    )
+    clauses = _highlightable_textual_clauses(query)
+    highlights: list[dict[str, object]] = []
+    seen: set[tuple[str, str, str]] = set()
+    for path in resolved_paths:
+        values = [
+            value
+            for value in _search_path_values(document, path)
+            if isinstance(value, str)
+        ]
+        if not values:
+            continue
+        for clause in clauses:
+            clause_paths = _resolved_highlight_clause_paths(
+                clause,
+                available_leaf_paths=available_leaf_paths,
+            )
+            if clause_paths is not None and path not in clause_paths:
+                continue
+            for value in values:
+                if not _text_value_matches_clause(value, clause):
+                    continue
+                payload = _highlight_payload_for_clause(
+                    path,
+                    value,
+                    clause=clause,
+                    max_chars=spec.max_chars,
+                )
+                marker = (
+                    str(payload["path"]),
+                    str(payload["operator"]),
+                    str(payload["text"]),
+                )
+                if marker in seen:
+                    continue
+                seen.add(marker)
+                highlights.append(payload)
+    return highlights
+
+
+def _highlightable_textual_clauses(
+    query: SearchTextLikeQuery,
+) -> tuple[
+    SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery,
+    ...,
+]:
+    if isinstance(
+        query,
+        (
+            SearchTextQuery,
+            SearchPhraseQuery,
+            SearchAutocompleteQuery,
+            SearchWildcardQuery,
+            SearchRegexQuery,
+        ),
+    ):
+        return (query,)
+    if not isinstance(query, SearchCompoundQuery):
+        return ()
+    clauses: list[
+        SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery
+    ] = []
+    for group in (query.must, query.should, query.filter, query.must_not):
+        for clause in group:
+            clauses.extend(_highlightable_textual_clauses(clause))
+    return tuple(clauses)
+
+
+def _resolved_highlight_clause_paths(
+    clause: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery,
+    *,
+    available_leaf_paths: tuple[str, ...],
+) -> set[str] | None:
+    if clause.paths is None:
+        return None
+    return set(
+        _resolve_requested_leaf_paths(
+            list(clause.paths),
+            available_leaf_paths=available_leaf_paths,
+        )
+    )
+
+
+def _text_value_matches_clause(
+    value: str,
+    clause: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery,
+) -> bool:
+    lowered = value.lower()
+    if isinstance(clause, SearchTextQuery):
+        token_set = set(tokenize_classic_text(value))
+        return all(term.lower() in token_set for term in clause.terms)
+    if isinstance(clause, SearchPhraseQuery):
+        return _phrase_value_score(
+            value,
+            terms=tokenize_classic_text(clause.raw_query),
+            slop=clause.slop,
+        ) > 0.0
+    if isinstance(clause, SearchAutocompleteQuery):
+        tokens = tokenize_classic_text(value)
+        if clause.token_order == "sequential":
+            return _token_sequence_matches(tokens, tuple(term.lower() for term in clause.terms))
+        return all(any(token.startswith(term.lower()) for token in tokens) for term in clause.terms)
+    if isinstance(clause, SearchWildcardQuery):
+        return fnmatch.fnmatchcase(lowered, clause.normalized_pattern)
+    compiled = re.compile(clause.raw_query, _regex_compile_flags(clause.flags))
+    return compiled.search(value) is not None
+
+
+def _highlight_payload_for_clause(
+    path: str,
+    value: str,
+    *,
+    clause: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery,
+    max_chars: int,
+) -> dict[str, object]:
+    operator = _SEARCH_QUERY_OPERATOR_NAMES[type(clause)]
+    payload: dict[str, object] = {
+        "path": path,
+        "operator": operator,
+        "text": _truncate_highlight_value(value, max_chars=max_chars),
+    }
+    if isinstance(clause, (SearchTextQuery, SearchAutocompleteQuery)):
+        payload["matchedTerms"] = list(clause.terms)
+    elif isinstance(clause, SearchPhraseQuery):
+        payload["matchedPhrase"] = clause.raw_query
+    elif isinstance(clause, SearchWildcardQuery):
+        payload["pattern"] = clause.raw_query
+    elif isinstance(clause, SearchRegexQuery):
+        payload["pattern"] = clause.raw_query
+        payload["flags"] = clause.flags
+    return payload
+
+
+def _truncate_highlight_value(value: str, *, max_chars: int) -> str:
+    if len(value) <= max_chars:
+        return value
+    return value[: max_chars - 1] + "…"
+
+
+def _facet_preview(
+    documents: list[Document],
+    spec: SearchFacetSpec,
+) -> dict[str, object]:
+    counts: dict[tuple[str, object], int] = {}
+    labels: dict[tuple[str, object], object] = {}
+    for document in documents:
+        seen_in_document: set[tuple[str, object]] = set()
+        for value in _search_path_values(document, spec.path):
+            normalized = _normalize_search_scalar_value(value)
+            if normalized is None:
+                continue
+            if normalized in seen_in_document:
+                continue
+            seen_in_document.add(normalized)
+            counts[normalized] = counts.get(normalized, 0) + 1
+            labels[normalized] = normalized[1]
+    buckets = [
+        {"value": labels[key], "count": count}
+        for key, count in sorted(
+            counts.items(),
+            key=lambda item: (-item[1], str(labels[item[0]])),
+        )[: spec.num_buckets]
+    ]
+    return {
+        "path": spec.path,
+        "numBuckets": spec.num_buckets,
+        "buckets": buckets,
+    }
 
 
 def _search_path_summary(paths: list[str] | None) -> dict[str, object] | None:

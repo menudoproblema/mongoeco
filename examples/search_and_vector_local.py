@@ -159,6 +159,25 @@ def main() -> None:
             "$search embeddedDocuments parent-path autocomplete semantics:",
             contributor_autocomplete_explain["engine_plan"]["details"]["querySemantics"],
         )
+        contributor_sequential_autocomplete_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "autocomplete": {
+                            "query": "Ada Lo",
+                            "path": "contributors",
+                            "tokenOrder": "sequential",
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1}},
+            ]
+        ).to_list()
+        print(
+            "$search embeddedDocuments parent-path sequential autocomplete results:",
+            contributor_sequential_autocomplete_results,
+        )
 
         contributor_equals_results = collection.aggregate(
             [
@@ -291,6 +310,24 @@ def main() -> None:
             "$search embeddedDocuments parent-path regex results:",
             contributor_regex_results,
         )
+        contributor_regex_explain = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "regex": {
+                            "query": "charles.*",
+                            "path": "contributors",
+                            "flags": "i",
+                        },
+                    }
+                }
+            ]
+        ).explain()
+        print(
+            "$search embeddedDocuments parent-path regex semantics:",
+            contributor_regex_explain["engine_plan"]["details"]["querySemantics"],
+        )
 
         nested_document_exists_results = collection.aggregate(
             [
@@ -420,6 +457,59 @@ def main() -> None:
             "$search range explain:",
             score_range_explain["engine_plan"]["details"]["range"],
             score_range_explain["engine_plan"]["details"]["pathSummary"],
+        )
+        advanced_search_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "text": {
+                            "query": "Ada",
+                            "path": ["title", "body"],
+                        },
+                        "count": {"type": "total"},
+                        "highlight": {
+                            "path": ["title", "body"],
+                            "maxChars": 40,
+                        },
+                        "facet": {
+                            "path": "metadata.series",
+                            "numBuckets": 5,
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "searchHighlights": 1}},
+            ]
+        ).to_list()
+        print("$search count/highlight/facet results:", advanced_search_results)
+        advanced_search_explain = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "text": {
+                            "query": "Ada",
+                            "path": ["title", "body"],
+                        },
+                        "count": {"type": "total"},
+                        "highlight": {
+                            "path": ["title", "body"],
+                            "maxChars": 40,
+                        },
+                        "facet": {
+                            "path": "metadata.series",
+                            "numBuckets": 5,
+                        },
+                    }
+                }
+            ]
+        ).explain()
+        print(
+            "$search count/highlight/facet explain:",
+            advanced_search_explain["engine_plan"]["details"]["stageOptions"],
+            advanced_search_explain["engine_plan"]["details"]["countPreview"],
+            advanced_search_explain["engine_plan"]["details"]["facetPreview"],
+            advanced_search_explain["engine_plan"]["details"]["highlightPreview"],
         )
 
         search_results = collection.aggregate(

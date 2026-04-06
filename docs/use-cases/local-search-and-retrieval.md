@@ -109,12 +109,16 @@ These examples show:
   or `metadata`;
 * parent-path `autocomplete`, `wildcard` and `regex` over structured mappings,
   with `explain()` showing the resolved descendant leaf fields;
+* richer textual semantics with `autocomplete.tokenOrder`, `regex.flags` and
+  `wildcard.allowAnalyzedField`;
 * scalar operators over `embeddedDocuments` paths such as
   `contributors.verified` or `contributors.impact`;
 * scalar `equals`, `range` and `near` now expose consistent `pathSummary`
   metadata in `explain()`, so tooling can reason about leaf versus parent
   paths without special cases;
 * text-like and scalar operators now expose `querySemantics` in `explain()`;
+* local `$search.count`, `$search.highlight` and `$search.facet` stage options,
+  with `searchHighlights` in results and previews in `explain()`;
 * explicit `document` mappings for paths such as `metadata.topic`;
 * `near` over numeric and date fields with visible ranking metadata;
 * `near` and `compound` explain blocks with explicit path summaries,
@@ -128,6 +132,8 @@ These examples show:
 * The local textual subset is deliberate, documented and treated as closed in
   its current tier.
 * Atlas Search parity is still not the goal here.
+* The newer `count` / `highlight` / `facet` support should be read as local
+  advanced subset support, not as collector parity.
 * `vectorSearch` stays local-first and must still be the first pipeline stage.
 * `explain()` is part of the contract: use it to see candidate prefilters,
   residual filters and fallback behavior.

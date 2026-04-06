@@ -867,6 +867,10 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
         'resolvedLeafPaths',
         'structuredParentPathResolution',
         'querySemantics',
+        'stageOptions',
+        'countPreview',
+        'highlightPreview',
+        'facetPreview',
     ],
     'operatorSemantics': {
         'text': {
@@ -881,18 +885,21 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
         'autocomplete': {
             'matchingMode': 'token-prefix',
             'tokenization': 'classic-text-local',
+            'tokenOrder': ['any', 'sequential'],
             'atlasParity': 'subset',
             'scope': 'local-text-tier',
         },
         'wildcard': {
             'matchingMode': 'glob-local',
             'patternSyntax': 'fnmatch-like',
+            'allowAnalyzedField': True,
             'atlasParity': 'subset',
             'scope': 'local-text-tier',
         },
         'regex': {
             'matchingMode': 'python-regex-local',
-            'supportsFlags': False,
+            'supportsFlags': True,
+            'supportedFlags': ['i', 'm', 's'],
             'atlasParity': 'subset',
             'scope': 'local-text-tier',
         },
@@ -918,10 +925,23 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
         },
     },
     'textSearchTier': 'closed-local-tier',
+    'stageOptions': {
+        'count': ['total', 'lowerBound'],
+        'highlight': {
+            'supportsPath': True,
+            'supportsMaxChars': True,
+            'resultField': 'searchHighlights',
+        },
+        'facet': {
+            'supportsPath': True,
+            'supportsNumBuckets': True,
+            'previewOnly': True,
+        },
+    },
     'advancedAtlasLikeGaps': [
-        'facet',
-        'highlight',
-        'count',
+        'fullFacetCollectorParity',
+        'fullHighlightParity',
+        'countMetaParity',
         'advancedAutocompleteSemantics',
         'advancedWildcardSemantics',
         'advancedRegexOptions',
@@ -957,6 +977,19 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
                     'compound',
                     'regex',
                 ],
+                'stageOptions': {
+                    'count': ['total', 'lowerBound'],
+                    'highlight': {
+                        'supportsPath': True,
+                        'supportsMaxChars': True,
+                        'resultField': 'searchHighlights',
+                    },
+                    'facet': {
+                        'supportsPath': True,
+                        'supportsNumBuckets': True,
+                        'previewOnly': True,
+                    },
+                },
                 'requiresLeadingStage': True,
             },
         ),

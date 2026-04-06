@@ -89,6 +89,12 @@ Esto implica:
 * ese subset textual local se considera ya cerrado como tier; lo pendiente se
   concentra en `facet`, `highlight`, `count` y semánticas Atlas-like más ricas
   de `autocomplete` / `wildcard` / `regex`.
+* el runtime local añade ya un siguiente subset avanzado y explícito:
+  * `autocomplete.tokenOrder` con `any` y `sequential`;
+  * `regex.flags` con `i`, `m` y `s`;
+  * `wildcard.allowAnalyzedField`;
+  * `$search.count`, `$search.highlight` y `$search.facet` como stage options
+    locales, con `searchHighlights` en resultados y previews en `explain()`.
 * los mappings locales de `$search` cubren ya una familia más rica de campos:
   `string`, `autocomplete`, `token`, `number`, `date`, `boolean`,
   `objectId`, `uuid`, `document` y `embeddedDocuments`; los tipos textuales
@@ -486,12 +492,16 @@ El runtime local soporta ya un subset explícito de `$search`:
 
 Límites conscientes:
 
-* no hay `facet` ni scoring Atlas-like;
-* `wildcard` sigue siendo matching local simple, no sintaxis Atlas Search;
-* `regex` entra como matching Python local sobre entradas materializadas, sin
-  flags ni semántica Atlas Search avanzada;
-* `autocomplete` es local y basado en prefijos de tokens, no en analyzer
-  avanzado;
+* no hay collector `facet` completo ni `searchMeta` Atlas-like;
+* `count`, `highlight` y `facet` entran hoy como subset local visible en
+  `explain()` y `highlight` además como metadata de resultados, no como paridad
+  total de Atlas Search;
+* `wildcard` sigue siendo matching local `fnmatch` y no sintaxis Atlas Search
+  completa;
+* `regex` entra como matching Python local sobre entradas materializadas, ahora
+  con flags `i` / `m` / `s`, pero sin semántica Atlas Search avanzada completa;
+* `autocomplete` es local y basado en prefijos de tokens, ahora con
+  `tokenOrder`, pero no en analyzer avanzado;
 * `in`, `equals` y `range` entran como operadores locales sobre paths escalares,
   con matching exacto/por rango y backend Python explícito cuando no hay una
   traducción materializada defendible;

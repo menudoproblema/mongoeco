@@ -695,9 +695,9 @@
         "description": "Support for Atlas Search-style textual queries.",
         "metadata": {
           "advancedAtlasLikeGaps": [
-            "facet",
-            "highlight",
-            "count",
+            "fullFacetCollectorParity",
+            "fullHighlightParity",
+            "countMetaParity",
             "advancedAutocompleteSemantics",
             "advancedWildcardSemantics",
             "advancedRegexOptions"
@@ -714,7 +714,11 @@
             "pathSummary",
             "resolvedLeafPaths",
             "structuredParentPathResolution",
-            "querySemantics"
+            "querySemantics",
+            "stageOptions",
+            "countPreview",
+            "highlightPreview",
+            "facetPreview"
           ],
           "fieldMappings": [
             "autocomplete",
@@ -749,6 +753,22 @@
               ],
               "requiresLeadingStage": true,
               "resultType": "cursor",
+              "stageOptions": {
+                "count": [
+                  "total",
+                  "lowerBound"
+                ],
+                "facet": {
+                  "previewOnly": true,
+                  "supportsNumBuckets": true,
+                  "supportsPath": true
+                },
+                "highlight": {
+                  "resultField": "searchHighlights",
+                  "supportsMaxChars": true,
+                  "supportsPath": true
+                }
+              },
               "supportedOptions": [
                 "allow_disk_use",
                 "batch_size",
@@ -769,6 +789,10 @@
               "atlasParity": "subset",
               "matchingMode": "token-prefix",
               "scope": "local-text-tier",
+              "tokenOrder": [
+                "any",
+                "sequential"
+              ],
               "tokenization": "classic-text-local"
             },
             "equals": {
@@ -800,13 +824,19 @@
               "atlasParity": "subset",
               "matchingMode": "python-regex-local",
               "scope": "local-text-tier",
-              "supportsFlags": false
+              "supportedFlags": [
+                "i",
+                "m",
+                "s"
+              ],
+              "supportsFlags": true
             },
             "text": {
               "matchingMode": "tokenized-any-term",
               "scope": "local-text-tier"
             },
             "wildcard": {
+              "allowAnalyzedField": true,
               "atlasParity": "subset",
               "matchingMode": "glob-local",
               "patternSyntax": "fnmatch-like",
@@ -833,6 +863,22 @@
             "fts5-prefilter",
             "python"
           ],
+          "stageOptions": {
+            "count": [
+              "total",
+              "lowerBound"
+            ],
+            "facet": {
+              "previewOnly": true,
+              "supportsNumBuckets": true,
+              "supportsPath": true
+            },
+            "highlight": {
+              "resultField": "searchHighlights",
+              "supportsMaxChars": true,
+              "supportsPath": true
+            }
+          },
           "structuredFieldMappings": [
             "document",
             "embeddedDocuments"
@@ -1856,6 +1902,22 @@
             ],
             "requiresLeadingStage": true,
             "resultType": "cursor",
+            "stageOptions": {
+              "count": [
+                "total",
+                "lowerBound"
+              ],
+              "facet": {
+                "previewOnly": true,
+                "supportsNumBuckets": true,
+                "supportsPath": true
+              },
+              "highlight": {
+                "resultField": "searchHighlights",
+                "supportsMaxChars": true,
+                "supportsPath": true
+              }
+            },
             "supportedOptions": [
               "allow_disk_use",
               "batch_size",
@@ -5907,9 +5969,9 @@
     },
     "search": {
       "advancedAtlasLikeGaps": [
-        "facet",
-        "highlight",
-        "count",
+        "fullFacetCollectorParity",
+        "fullHighlightParity",
+        "countMetaParity",
         "advancedAutocompleteSemantics",
         "advancedWildcardSemantics",
         "advancedRegexOptions"
@@ -5926,7 +5988,11 @@
         "pathSummary",
         "resolvedLeafPaths",
         "structuredParentPathResolution",
-        "querySemantics"
+        "querySemantics",
+        "stageOptions",
+        "countPreview",
+        "highlightPreview",
+        "facetPreview"
       ],
       "fieldMappings": [
         "autocomplete",
@@ -5961,6 +6027,22 @@
           ],
           "requiresLeadingStage": true,
           "resultType": "cursor",
+          "stageOptions": {
+            "count": [
+              "total",
+              "lowerBound"
+            ],
+            "facet": {
+              "previewOnly": true,
+              "supportsNumBuckets": true,
+              "supportsPath": true
+            },
+            "highlight": {
+              "resultField": "searchHighlights",
+              "supportsMaxChars": true,
+              "supportsPath": true
+            }
+          },
           "supportedOptions": [
             "allow_disk_use",
             "batch_size",
@@ -5981,6 +6063,10 @@
           "atlasParity": "subset",
           "matchingMode": "token-prefix",
           "scope": "local-text-tier",
+          "tokenOrder": [
+            "any",
+            "sequential"
+          ],
           "tokenization": "classic-text-local"
         },
         "equals": {
@@ -6012,13 +6098,19 @@
           "atlasParity": "subset",
           "matchingMode": "python-regex-local",
           "scope": "local-text-tier",
-          "supportsFlags": false
+          "supportedFlags": [
+            "i",
+            "m",
+            "s"
+          ],
+          "supportsFlags": true
         },
         "text": {
           "matchingMode": "tokenized-any-term",
           "scope": "local-text-tier"
         },
         "wildcard": {
+          "allowAnalyzedField": true,
           "atlasParity": "subset",
           "matchingMode": "glob-local",
           "patternSyntax": "fnmatch-like",
@@ -6045,6 +6137,22 @@
         "fts5-prefilter",
         "python"
       ],
+      "stageOptions": {
+        "count": [
+          "total",
+          "lowerBound"
+        ],
+        "facet": {
+          "previewOnly": true,
+          "supportsNumBuckets": true,
+          "supportsPath": true
+        },
+        "highlight": {
+          "resultField": "searchHighlights",
+          "supportsMaxChars": true,
+          "supportsPath": true
+        }
+      },
       "structuredFieldMappings": [
         "document",
         "embeddedDocuments"

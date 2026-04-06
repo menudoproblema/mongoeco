@@ -15,6 +15,7 @@ from mongoeco.core.search_filter_prefilter import evaluate_candidate_filter, fla
 from mongoeco.core.search import (
     MaterializedSearchDocument,
     attach_vector_search_score,
+    build_search_stage_option_previews,
     build_search_index_document,
     compile_search_stage,
     is_text_search_query,
@@ -1577,6 +1578,7 @@ def explain_search_documents_sync(
     candidate_exact: bool | None = None
     topk_prefilter: dict[str, object] | None = None
     compound_prefilter: dict[str, object] | None = None
+    stage_option_previews: dict[str, object] = {}
     conn = engine._require_connection(context)
     with engine._bind_connection(conn):
         rows = engine._load_search_index_rows(db_name, coll_name, name=query.index_name)
@@ -1739,6 +1741,32 @@ def explain_search_documents_sync(
                 prefilter_exact=bool(vector_filter_description and vector_filter_description.get("exact")),
             )
             candidates_evaluated = evaluated_count
+    if is_text_search_query(query):
+        stage_options = getattr(query, "stage_options", None)
+        if stage_options is not None and any(
+            option is not None
+            for option in (
+                stage_options.count,
+                stage_options.highlight,
+                stage_options.facet,
+            )
+        ):
+            matched_documents = search_documents_sync(
+                engine,
+                db_name,
+                coll_name,
+                operator,
+                spec,
+                max_time_ms,
+                context,
+                None,
+                downstream_filter_spec,
+            )
+            stage_option_previews = build_search_stage_option_previews(
+                matched_documents,
+                definition=definition,
+                query=query,
+            )
 
     return QueryPlanExplanation(
         engine="sqlite",
@@ -1877,5 +1905,6 @@ def explain_search_documents_sync(
                 if isinstance(query, SearchVectorQuery) and vector_state is not None
                 else None
             ),
+            **stage_option_previews,
         },
     )

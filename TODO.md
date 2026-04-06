@@ -21,12 +21,12 @@ Objetivo: ampliar búsqueda local solo donde el siguiente salto aporte valor rea
 Pendientes:
 
 * decidir si merece la pena ir más allá del tier textual local ya cerrado hacia features Atlas-like avanzadas, sobre todo:
-  * `facet`
-  * `highlight`
-  * `count`
-  * semántica más rica de `autocomplete`
-  * semántica más rica de `wildcard`
-  * opciones/flags más ricos de `regex`
+  * collector `facet` completo / `searchMeta`
+  * `highlight` con semántica más rica que snippets locales
+  * `count` como meta/collector más allá del preview local
+  * semántica todavía más rica de `autocomplete`
+  * semántica todavía más rica de `wildcard`
+  * opciones/flags todavía más ricos de `regex`
 * ampliar mappings locales más allá de:
   * `string`
   * `token`

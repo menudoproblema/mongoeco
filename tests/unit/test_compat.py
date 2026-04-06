@@ -219,7 +219,19 @@ class CompatResolutionTests(unittest.TestCase):
                 "resolvedLeafPaths",
                 "structuredParentPathResolution",
                 "querySemantics",
+                "stageOptions",
+                "countPreview",
+                "highlightPreview",
+                "facetPreview",
             ],
+        )
+        self.assertEqual(
+            catalog["capabilities"]["search"]["metadata"]["stageOptions"]["highlight"],
+            {
+                "supportsPath": True,
+                "supportsMaxChars": True,
+                "resultField": "searchHighlights",
+            },
         )
         self.assertTrue(
             catalog["capabilities"]["read"]["metadata"]["operationMetadata"][
