@@ -262,8 +262,13 @@ class CompatResolutionTests(unittest.TestCase):
             export_cxp_catalog()["profileSupport"],
         )
         self.assertTrue(support_catalog["mongodb-core"]["supported"])
+        self.assertTrue(support_catalog["mongodb-platform"]["supported"])
         self.assertEqual(
             support_catalog["mongodb-core"]["validation"]["messages"],
+            [],
+        )
+        self.assertEqual(
+            support_catalog["mongodb-platform"]["validation"]["messages"],
             [],
         )
 

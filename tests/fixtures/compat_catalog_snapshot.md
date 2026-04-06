@@ -687,24 +687,23 @@
 - `description`: `Collation-aware sorting and comparison.`
 - `tiers`: `platform`
 - `operations`: _empty_
-- `backendContract`: `local-collation-introspection`
-- `metadataSources`: `collation_backend_info`, `collation_capabilities_info`
+- `backend`: `{'selectedBackend': 'pyuca', 'availableBackends': ['pyuca'], 'unicodeAvailable': True, 'advancedOptionsAvailable': False}`
+- `capabilities`: `{'supportedLocales': ['simple', 'en'], 'supportedStrengths': [1, 2, 3], 'supportsCaseLevel': True, 'supportsNumericOrdering': True, 'optionalIcuBackend': True, 'fallbackBackend': 'pyuca', 'advancedOptionsRequireIcu': ['backwards', 'alternate', 'maxVariable', 'normalization']}`
 
 ### `persistence`
 - `description`: `Data persistence beyond process lifetime.`
 - `tiers`: `platform`
 - `operations`: _empty_
-- `runtimeDependent`: `True`
-- `embedded`: `True`
-- `note`: `Persistence depends on the selected embedded backend and its storage mode.`
+- `persistent`: `True`
+- `storageEngine`: `runtime-dependent`
 
 ### `topology_discovery`
 - `description`: `Topology and node-state discovery.`
 - `tiers`: `platform`
 - `operations`: _empty_
-- `metadataSources`: `topology_description`, `sdam_capabilities`
-- `distributed`: `False`
-- `mode`: `local-sdam-subset`
+- `topologyType`: `unknown`
+- `serverCount`: `1`
+- `sdam`: `{'fullSdam': False, 'topologyVersionAware': True, 'helloMemberDiscovery': True, 'serverHealthTracking': True, 'electionMetadataAware': True, 'longPollingHello': False, 'distributedMonitoring': False}`
 
 ## CXP Extensions
 ### `classicText`

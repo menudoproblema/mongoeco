@@ -93,7 +93,9 @@ For reusable profile gates, the practical split is now:
 
 * `mongodb-text-search` when you need textual `$search` without requiring
   `vector_search`;
-* `mongodb-search` when you need both textual and vector search.
+* `mongodb-search` when you need both textual and vector search;
+* `mongodb-platform` when you need the broader platform surface, including
+  canonical metadata for collation, persistence and topology discovery.
 
 The public compat export serializes those profiles with structured
 requirements, and the `cxp` block in `explain()` now carries the minimal

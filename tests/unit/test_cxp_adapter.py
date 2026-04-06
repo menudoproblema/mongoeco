@@ -181,6 +181,9 @@ class CxpAlignmentTests(unittest.TestCase):
         self.assertTrue(
             exported['profileSupport']['mongodb-text-search']['supported']
         )
+        self.assertTrue(
+            exported['profileSupport']['mongodb-platform']['supported']
+        )
         self.assertEqual(
             exported['profileSupport']['mongodb-text-search']['validation'],
             {
@@ -302,6 +305,54 @@ class CxpAlignmentTests(unittest.TestCase):
                 'supportsPath': True,
                 'supportsMaxChars': True,
                 'resultField': 'searchHighlights',
+            },
+        )
+        self.assertEqual(
+            exported['capabilities']['collation']['metadata'],
+            {
+                'backend': {
+                    'selectedBackend': 'pyuca',
+                    'availableBackends': ['pyuca'],
+                    'unicodeAvailable': True,
+                    'advancedOptionsAvailable': False,
+                },
+                'capabilities': {
+                    'supportedLocales': ['simple', 'en'],
+                    'supportedStrengths': [1, 2, 3],
+                    'supportsCaseLevel': True,
+                    'supportsNumericOrdering': True,
+                    'optionalIcuBackend': True,
+                    'fallbackBackend': 'pyuca',
+                    'advancedOptionsRequireIcu': [
+                        'backwards',
+                        'alternate',
+                        'maxVariable',
+                        'normalization',
+                    ],
+                },
+            },
+        )
+        self.assertEqual(
+            exported['capabilities']['persistence']['metadata'],
+            {
+                'persistent': True,
+                'storageEngine': 'runtime-dependent',
+            },
+        )
+        self.assertEqual(
+            exported['capabilities']['topology_discovery']['metadata'],
+            {
+                'topologyType': 'unknown',
+                'serverCount': 1,
+                'sdam': {
+                    'fullSdam': False,
+                    'topologyVersionAware': True,
+                    'helloMemberDiscovery': True,
+                    'serverHealthTracking': True,
+                    'electionMetadataAware': True,
+                    'longPollingHello': False,
+                    'distributedMonitoring': False,
+                },
             },
         )
         self.assertTrue(

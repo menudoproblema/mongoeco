@@ -23,7 +23,8 @@ Regla importante:
   una operación no está soportado completo;
 * el export `cxp` incluye también perfiles reutilizables recomendados, como
   `mongodb-text-search` para tests de `$search` textual sin exigir
-  `vector_search`;
+  `vector_search`, y `mongodb-platform` para consumers que quieran apoyarse en
+  metadata canónica de `collation`, `persistence` y `topology_discovery`;
 * si solo quieres el catálogo de perfiles reutilizables, la API pública
   expone `export_cxp_profile_catalog()`, y si quieres ese mismo catálogo con
   soporte evaluado contra el runtime público actual, expone también

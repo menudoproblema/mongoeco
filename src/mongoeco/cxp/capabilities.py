@@ -25,7 +25,10 @@ from mongoeco.compat._catalog_data import (
 from mongoeco.compat._catalog_models import OptionSupportStatus
 from mongoeco.cxp.catalogs.interfaces.database.mongodb import (
     MongoAggregationMetadata,
+    MongoCollationMetadata,
+    MongoPersistenceMetadata,
     MongoSearchMetadata,
+    MongoTopologyDiscoveryMetadata,
     MongoVectorSearchMetadata,
     MONGODB_AGGREGATE_RICH_PROFILE,
     MONGODB_AGGREGATE_RICH_PROFILE_NAME,
@@ -218,6 +221,57 @@ def _catalog_operation_result_types(catalog: CapabilityCatalog) -> dict[str, str
 
 
 _OPERATION_RESULT_TYPES = _catalog_operation_result_types(MONGODB_CATALOG)
+
+
+def _mongoeco_collation_metadata() -> dict[str, object]:
+    metadata = MongoCollationMetadata(
+        backend={
+            'selectedBackend': 'pyuca',
+            'availableBackends': ['pyuca'],
+            'unicodeAvailable': True,
+            'advancedOptionsAvailable': False,
+        },
+        capabilities={
+            'supportedLocales': ['simple', 'en'],
+            'supportedStrengths': [1, 2, 3],
+            'supportsCaseLevel': True,
+            'supportsNumericOrdering': True,
+            'optionalIcuBackend': True,
+            'fallbackBackend': 'pyuca',
+            'advancedOptionsRequireIcu': [
+                'backwards',
+                'alternate',
+                'maxVariable',
+                'normalization',
+            ],
+        },
+    )
+    return msgspec.to_builtins(metadata)
+
+
+def _mongoeco_persistence_metadata() -> dict[str, object]:
+    metadata = MongoPersistenceMetadata(
+        persistent=True,
+        storageEngine='runtime-dependent',
+    )
+    return msgspec.to_builtins(metadata)
+
+
+def _mongoeco_topology_discovery_metadata() -> dict[str, object]:
+    metadata = MongoTopologyDiscoveryMetadata(
+        topologyType='unknown',
+        serverCount=1,
+        sdam={
+            'fullSdam': False,
+            'topologyVersionAware': True,
+            'helloMemberDiscovery': True,
+            'serverHealthTracking': True,
+            'electionMetadataAware': True,
+            'longPollingHello': False,
+            'distributedMonitoring': False,
+        },
+    )
+    return msgspec.to_builtins(metadata)
 
 
 def _serialize_profile(profile: CapabilityProfile, *, recommended_for: list[str]) -> dict[str, object]:
@@ -705,26 +759,9 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
     },
     MONGODB_SEARCH: {},
     MONGODB_VECTOR_SEARCH: {},
-    MONGODB_COLLATION: {
-        'backendContract': 'local-collation-introspection',
-        'metadataSources': [
-            'collation_backend_info',
-            'collation_capabilities_info',
-        ],
-    },
-    MONGODB_PERSISTENCE: {
-        'runtimeDependent': True,
-        'embedded': True,
-        'note': (
-            'Persistence depends on the selected embedded backend and its '
-            'storage mode.'
-        ),
-    },
-    MONGODB_TOPOLOGY_DISCOVERY: {
-        'metadataSources': ['topology_description', 'sdam_capabilities'],
-        'distributed': False,
-        'mode': 'local-sdam-subset',
-    },
+    MONGODB_COLLATION: _mongoeco_collation_metadata(),
+    MONGODB_PERSISTENCE: _mongoeco_persistence_metadata(),
+    MONGODB_TOPOLOGY_DISCOVERY: _mongoeco_topology_discovery_metadata(),
 }
 
 _MONGOECO_PUBLIC_CXP_EXTENSIONS: dict[str, dict[str, object]] = {

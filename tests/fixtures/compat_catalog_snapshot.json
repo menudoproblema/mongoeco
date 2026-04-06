@@ -492,11 +492,35 @@
       "collation": {
         "description": "Collation-aware sorting and comparison.",
         "metadata": {
-          "backendContract": "local-collation-introspection",
-          "metadataSources": [
-            "collation_backend_info",
-            "collation_capabilities_info"
-          ]
+          "backend": {
+            "advancedOptionsAvailable": false,
+            "availableBackends": [
+              "pyuca"
+            ],
+            "selectedBackend": "pyuca",
+            "unicodeAvailable": true
+          },
+          "capabilities": {
+            "advancedOptionsRequireIcu": [
+              "backwards",
+              "alternate",
+              "maxVariable",
+              "normalization"
+            ],
+            "fallbackBackend": "pyuca",
+            "optionalIcuBackend": true,
+            "supportedLocales": [
+              "simple",
+              "en"
+            ],
+            "supportedStrengths": [
+              1,
+              2,
+              3
+            ],
+            "supportsCaseLevel": true,
+            "supportsNumericOrdering": true
+          }
         },
         "operations": [],
         "tiers": [
@@ -506,9 +530,8 @@
       "persistence": {
         "description": "Data persistence beyond process lifetime.",
         "metadata": {
-          "embedded": true,
-          "note": "Persistence depends on the selected embedded backend and its storage mode.",
-          "runtimeDependent": true
+          "persistent": true,
+          "storageEngine": "runtime-dependent"
         },
         "operations": [],
         "tiers": [
@@ -912,12 +935,17 @@
       "topology_discovery": {
         "description": "Topology and node-state discovery.",
         "metadata": {
-          "distributed": false,
-          "metadataSources": [
-            "topology_description",
-            "sdam_capabilities"
-          ],
-          "mode": "local-sdam-subset"
+          "sdam": {
+            "distributedMonitoring": false,
+            "electionMetadataAware": true,
+            "fullSdam": false,
+            "helloMemberDiscovery": true,
+            "longPollingHello": false,
+            "serverHealthTracking": true,
+            "topologyVersionAware": true
+          },
+          "serverCount": 1,
+          "topologyType": "unknown"
         },
         "operations": [],
         "tiers": [
@@ -1471,28 +1499,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -2184,28 +2198,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -2376,28 +2376,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -2569,28 +2555,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -2762,28 +2734,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -2955,28 +2913,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -3149,28 +3093,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -3339,28 +3269,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -3539,28 +3455,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -3734,28 +3636,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -3922,28 +3810,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -4108,28 +3982,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -4306,28 +4166,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -4522,28 +4368,14 @@
                   "requiredOperations": []
                 }
               ],
-              "supported": false,
+              "supported": true,
               "validation": {
                 "expectedInterface": null,
                 "interfaceMismatch": null,
-                "invalidMetadata": [
-                  "persistence",
-                  "topology_discovery"
-                ],
-                "messages": [
-                  "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-                  "Invalid metadata for capabilities: persistence, topology_discovery"
-                ],
+                "invalidMetadata": [],
+                "messages": [],
                 "missingCapabilities": [],
-                "missingMetadataKeys": [
-                  "collation.backend",
-                  "collation.capabilities",
-                  "persistence.persistent",
-                  "persistence.storageEngine",
-                  "topology_discovery.topologyType",
-                  "topology_discovery.serverCount",
-                  "topology_discovery.sdam"
-                ],
+                "missingMetadataKeys": [],
                 "missingOperations": [],
                 "unknownProfileCapabilities": []
               }
@@ -4770,28 +4602,14 @@
             "requiredOperations": []
           }
         ],
-        "supported": false,
+        "supported": true,
         "validation": {
           "expectedInterface": null,
           "interfaceMismatch": null,
-          "invalidMetadata": [
-            "persistence",
-            "topology_discovery"
-          ],
-          "messages": [
-            "Missing metadata keys: collation.backend, collation.capabilities, persistence.persistent, persistence.storageEngine, topology_discovery.topologyType, topology_discovery.serverCount, topology_discovery.sdam",
-            "Invalid metadata for capabilities: persistence, topology_discovery"
-          ],
+          "invalidMetadata": [],
+          "messages": [],
           "missingCapabilities": [],
-          "missingMetadataKeys": [
-            "collation.backend",
-            "collation.capabilities",
-            "persistence.persistent",
-            "persistence.storageEngine",
-            "topology_discovery.topologyType",
-            "topology_discovery.serverCount",
-            "topology_discovery.sdam"
-          ],
+          "missingMetadataKeys": [],
           "missingOperations": [],
           "unknownProfileCapabilities": []
         }

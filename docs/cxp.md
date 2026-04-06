@@ -138,6 +138,17 @@ textual `$search` conformance but does not want to force `vector_search`.
 `mongodb-search` remains the broader profile for providers that support both
 textual and vector search through `aggregate`.
 
+`mongoeco` now validates `mongodb-platform` as well. The platform tier is
+backed by canonical metadata for:
+
+* `collation.backend`
+* `collation.capabilities`
+* `persistence.persistent`
+* `persistence.storageEngine`
+* `topology_discovery.topologyType`
+* `topology_discovery.serverCount`
+* `topology_discovery.sdam`
+
 `mongoeco.compat.export_cxp_catalog()` now also serializes each profile with:
 
 * `requirements[].capabilityName`
