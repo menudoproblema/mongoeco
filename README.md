@@ -131,6 +131,16 @@ Lower-level driver/runtime details remain available from subpackages such as
 catalog exports, profile resolution helpers and option-support surface, while
 more tactical constants and raw catalog data stay in explicit submodules.
 
+Import guidance by layer:
+
+* use `mongoeco` for clients, sessions, BSON-facing types and URI/config helpers
+* use `mongoeco.compat` for dialect/profile resolution and compat/tooling exports
+* use `mongoeco.cxp` for the curated MongoDB CXP contract and reusable profiles
+* use `mongoeco.cxp.catalogs.interfaces.database.mongodb` for the full
+  MongoDB capability/operation vocabulary
+* use `mongoeco.driver`, `mongoeco.engines` and `mongoeco.wire` only when you
+  intentionally need lower-level runtime surfaces
+
 `mongoeco` does not ship a live CXP provider wrapper for its clients. Instead,
 it exposes the canonical catalog and projects the active capability path
 through `compat` and `explain()`. External systems can wrap `mongoeco` if they

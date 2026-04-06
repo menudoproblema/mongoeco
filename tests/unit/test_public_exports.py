@@ -18,6 +18,7 @@ class PublicExportsTests(unittest.TestCase):
             'mongoeco.api._async',
             'mongoeco.api._sync',
             'mongoeco.compat',
+            'mongoeco.cxp',
             'mongoeco.core.aggregation',
             'mongoeco.driver',
             'mongoeco.engines',
@@ -106,3 +107,17 @@ class PublicExportsTests(unittest.TestCase):
         self.assertFalse(hasattr(mongoeco, "export_cxp_catalog"))
         self.assertFalse(hasattr(mongoeco, "MongoDialect80"))
         self.assertFalse(hasattr(mongoeco, "PyMongoProfile413"))
+
+    def test_cxp_package_keeps_a_contract_focused_public_surface(self):
+        import mongoeco.cxp as cxp_module
+
+        self.assertIn("MONGODB_CATALOG", cxp_module.__all__)
+        self.assertIn("MONGODB_CORE_PROFILE", cxp_module.__all__)
+        self.assertIn("MongoSearchMetadata", cxp_module.__all__)
+        self.assertIn("export_cxp_capability_catalog", cxp_module.__all__)
+        self.assertNotIn("MONGODB_FIND", cxp_module.__all__)
+        self.assertNotIn("MONGODB_UPDATE_ONE", cxp_module.__all__)
+        self.assertNotIn("MONGODB_SEARCH", cxp_module.__all__)
+        self.assertFalse(hasattr(cxp_module, "MONGODB_FIND"))
+        self.assertFalse(hasattr(cxp_module, "MONGODB_UPDATE_ONE"))
+        self.assertFalse(hasattr(cxp_module, "MONGODB_SEARCH"))
