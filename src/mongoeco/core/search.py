@@ -1811,6 +1811,12 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
     def _embedded_paths(paths: list[str]) -> list[str]:
         return [path for path in paths if "." in path]
 
+    def _parent_paths(paths: list[str]) -> list[str]:
+        return [path for path in paths if "." not in path]
+
+    def _leaf_paths(paths: list[str]) -> list[str]:
+        return [path for path in paths if "." in path]
+
     must_paths = _clause_paths(query.must)
     should_paths = _clause_paths(query.should)
     filter_paths = _clause_paths(query.filter)
@@ -1872,8 +1878,14 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
             "filter": filter_paths,
             "mustNot": must_not_paths,
             "all": all_paths,
+            "parentPaths": _parent_paths(all_paths),
+            "leafPaths": _leaf_paths(all_paths),
             "textualPaths": textual_paths,
+            "textualParentPaths": _parent_paths(textual_paths),
+            "textualLeafPaths": _leaf_paths(textual_paths),
             "scalarPaths": scalar_paths,
+            "scalarParentPaths": _parent_paths(scalar_paths),
+            "scalarLeafPaths": _leaf_paths(scalar_paths),
             "embeddedPaths": _embedded_paths(all_paths),
             "embeddedTextualPaths": _embedded_paths(textual_paths),
             "embeddedScalarPaths": _embedded_paths(scalar_paths),
