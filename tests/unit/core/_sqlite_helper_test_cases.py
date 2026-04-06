@@ -1941,6 +1941,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     unique_flag INTEGER NOT NULL,
                     sparse_flag INTEGER NOT NULL DEFAULT 0,
                     hidden_flag INTEGER NOT NULL DEFAULT 0,
+                    collation_json TEXT,
                     partial_filter_json TEXT,
                     expire_after_seconds INTEGER,
                     multikey_flag INTEGER NOT NULL DEFAULT 0,
@@ -1988,7 +1989,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 "CREATE TABLE documents (db_name TEXT NOT NULL, coll_name TEXT NOT NULL, storage_key TEXT NOT NULL, document TEXT NOT NULL)"
             )
             conn.execute(
-                "CREATE TABLE indexes (db_name TEXT NOT NULL, coll_name TEXT NOT NULL, name TEXT, physical_name TEXT, multikey_physical_name TEXT, scalar_physical_name TEXT)"
+                "CREATE TABLE indexes (db_name TEXT NOT NULL, coll_name TEXT NOT NULL, name TEXT, physical_name TEXT, multikey_physical_name TEXT, scalar_physical_name TEXT, collation_json TEXT)"
             )
             conn.execute(
                 "CREATE TABLE search_indexes (db_name TEXT NOT NULL, coll_name TEXT NOT NULL, name TEXT, definition_json TEXT, physical_name TEXT, ready_at_epoch REAL)"
@@ -2574,6 +2575,8 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 keys TEXT,
                 unique_flag INTEGER,
                 sparse_flag INTEGER,
+                hidden_flag INTEGER,
+                collation_json TEXT,
                 partial_filter_json TEXT,
                 expire_after_seconds INTEGER,
                 multikey_flag INTEGER,
@@ -2646,6 +2649,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 name=None,
                 sparse=False,
                 hidden=False,
+                collation=None,
                 partial_filter_expression=None,
                 expire_after_seconds=None,
                 deadline=None,

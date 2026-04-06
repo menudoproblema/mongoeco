@@ -25,6 +25,7 @@ class SQLiteIndexHelperCoverageTests(unittest.TestCase):
                 name=None,
                 sparse=False,
                 hidden="yes",
+                collation=None,
                 partial_filter_expression=None,
                 expire_after_seconds=None,
                 deadline=None,
@@ -108,6 +109,7 @@ class SQLiteIndexHelperCoverageTests(unittest.TestCase):
                 None,
                 None,
                 0,
+                None,
                 None,
                 "idx_kind_scalar",
             )

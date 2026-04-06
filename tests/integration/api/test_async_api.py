@@ -6321,6 +6321,41 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertIsNone(found)
                     self.assertEqual(documents, [{"kind": "new"}])
 
+    async def test_create_index_and_create_indexes_round_trip_collation_metadata(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+
+                    created_name = await collection.create_index(
+                        [("name", 1)],
+                        collation={"locale": "en", "strength": 2},
+                    )
+                    created_names = await collection.create_indexes(
+                        [
+                            IndexModel(
+                                [("alias", 1)],
+                                name="alias_1",
+                                collation={"locale": "en", "strength": 1},
+                            )
+                        ]
+                    )
+                    indexes = await collection.list_indexes().to_list()
+                    info = await collection.index_information()
+
+                    self.assertEqual(created_name, "name_1")
+                    self.assertEqual(created_names, ["alias_1"])
+                    self.assertIn(
+                        {
+                            "name": "name_1",
+                            "key": {"name": 1},
+                            "unique": False,
+                            "collation": {"locale": "en", "strength": 2},
+                        },
+                        indexes,
+                    )
+                    self.assertEqual(info["alias_1"]["collation"], {"locale": "en", "strength": 1})
+
     async def test_create_index_rejects_invalid_ttl_definitions(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

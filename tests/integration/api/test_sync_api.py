@@ -5913,6 +5913,41 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertIsNone(found)
                     self.assertEqual(documents, [{"kind": "new"}])
 
+    def test_create_index_and_create_indexes_round_trip_collation_metadata(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.events
+
+                    created_name = collection.create_index(
+                        [("name", 1)],
+                        collation={"locale": "en", "strength": 2},
+                    )
+                    created_names = collection.create_indexes(
+                        [
+                            IndexModel(
+                                [("alias", 1)],
+                                name="alias_1",
+                                collation={"locale": "en", "strength": 1},
+                            )
+                        ]
+                    )
+                    indexes = collection.list_indexes().to_list()
+                    info = collection.index_information()
+
+                    self.assertEqual(created_name, "name_1")
+                    self.assertEqual(created_names, ["alias_1"])
+                    self.assertIn(
+                        {
+                            "name": "name_1",
+                            "key": {"name": 1},
+                            "unique": False,
+                            "collation": {"locale": "en", "strength": 2},
+                        },
+                        indexes,
+                    )
+                    self.assertEqual(info["alias_1"]["collation"], {"locale": "en", "strength": 1})
+
     def test_create_index_rejects_invalid_ttl_definitions(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

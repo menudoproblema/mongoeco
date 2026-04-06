@@ -1591,6 +1591,7 @@ class MemoryEngine(AsyncStorageEngine):
         name: str | None = None,
         sparse: bool = False,
         hidden: bool = False,
+        collation: Filter | None = None,
         partial_filter_expression: Filter | None = None,
         expire_after_seconds: int | None = None,
         max_time_ms: int | None = None,
@@ -1615,6 +1616,8 @@ class MemoryEngine(AsyncStorageEngine):
                 raise OperationFailure("TTL indexes cannot be created on _id")
         if not isinstance(hidden, bool):
             raise TypeError("hidden must be a bool")
+        if collation is not None and not isinstance(collation, dict):
+            raise TypeError("collation must be a dict or None")
         if special_directions:
             if len(normalized_keys) != 1:
                 raise OperationFailure("special index types currently require a single-field key pattern")
@@ -1625,6 +1628,7 @@ class MemoryEngine(AsyncStorageEngine):
                 name not in (None, "_id_")
                 or sparse
                 or hidden
+                or collation is not None
                 or partial_filter_expression is not None
                 or expire_after_seconds is not None
                 or not unique
@@ -1658,6 +1662,7 @@ class MemoryEngine(AsyncStorageEngine):
                         or index["unique"] != unique
                         or index.get("sparse") != sparse
                         or index.get("hidden") != hidden
+                        or index.get("collation") != collation
                         or index.get("partial_filter_expression") != partial_filter_expression
                         or index.get("expire_after_seconds") != expire_after_seconds
                     ):
@@ -1670,6 +1675,7 @@ class MemoryEngine(AsyncStorageEngine):
                         index["unique"] != unique
                         or index.get("sparse") != sparse
                         or index.get("hidden") != hidden
+                        or index.get("collation") != collation
                         or index.get("partial_filter_expression") != partial_filter_expression
                         or index.get("expire_after_seconds") != expire_after_seconds
                     ):
@@ -1685,6 +1691,7 @@ class MemoryEngine(AsyncStorageEngine):
                 unique=unique,
                 sparse=sparse,
                 hidden=hidden,
+                collation=deepcopy(collation),
                 partial_filter_expression=deepcopy(partial_filter_expression),
                 expire_after_seconds=expire_after_seconds,
             )

@@ -2284,7 +2284,7 @@ class SQLiteEngine(AsyncStorageEngine):
         conn = self._require_connection()
         cursor = conn.execute(
             """
-            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
+            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
             FROM indexes
             WHERE db_name = ? AND coll_name = ?
             ORDER BY name
@@ -2306,6 +2306,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     multikey_physical_name,
                 ) = row
                 hidden_flag = 0
+                collation_json = None
                 expire_after_seconds = None
                 scalar_physical_name = None
             elif len(row) == 10:
@@ -2322,6 +2323,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     multikey_physical_name,
                 ) = row
                 hidden_flag = 0
+                collation_json = None
                 scalar_physical_name = None
             elif len(row) == 11:
                 (
@@ -2337,7 +2339,24 @@ class SQLiteEngine(AsyncStorageEngine):
                     multikey_flag,
                     multikey_physical_name,
                 ) = row
+                collation_json = None
                 scalar_physical_name = None
+            elif len(row) == 12:
+                (
+                    name,
+                    physical_name,
+                    fields,
+                    keys,
+                    unique_flag,
+                    sparse_flag,
+                    hidden_flag,
+                    partial_filter_json,
+                    expire_after_seconds,
+                    multikey_flag,
+                    multikey_physical_name,
+                    scalar_physical_name,
+                ) = row
+                collation_json = None
             else:
                 (
                     name,
@@ -2347,6 +2366,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     unique_flag,
                     sparse_flag,
                     hidden_flag,
+                    collation_json,
                     partial_filter_json,
                     expire_after_seconds,
                     multikey_flag,
@@ -2372,6 +2392,19 @@ class SQLiteEngine(AsyncStorageEngine):
                     raise OperationFailure(
                         f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
                     ) from exc
+            collation: Filter | None = None
+            if collation_json is not None:
+                try:
+                    parsed_collation = json_loads(collation_json)
+                except json.JSONDecodeError as exc:
+                    raise OperationFailure(
+                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                    ) from exc
+                if not isinstance(parsed_collation, dict):
+                    raise OperationFailure(
+                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                    )
+                collation = parsed_collation
             partial_filter_expression: Filter | None = None
             if partial_filter_json is not None:
                 try:
@@ -2389,6 +2422,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     unique=bool(unique_flag),
                     sparse=bool(sparse_flag),
                     hidden=bool(hidden_flag),
+                    collation=collation,
                     partial_filter_expression=partial_filter_expression,
                     expire_after_seconds=(
                         int(expire_after_seconds)
@@ -2719,6 +2753,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         unique_flag INTEGER NOT NULL,
                         sparse_flag INTEGER NOT NULL DEFAULT 0,
                         hidden_flag INTEGER NOT NULL DEFAULT 0,
+                        collation_json TEXT,
                         partial_filter_json TEXT,
                         expire_after_seconds INTEGER,
                         multikey_flag INTEGER NOT NULL DEFAULT 0,
@@ -2790,6 +2825,8 @@ class SQLiteEngine(AsyncStorageEngine):
                     connection.execute("ALTER TABLE indexes ADD COLUMN partial_filter_json TEXT")
                 if "hidden_flag" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN hidden_flag INTEGER NOT NULL DEFAULT 0")
+                if "collation_json" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN collation_json TEXT")
                 if "expire_after_seconds" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN expire_after_seconds INTEGER")
                 if "multikey_flag" not in columns:
@@ -3685,6 +3722,7 @@ class SQLiteEngine(AsyncStorageEngine):
         name: str | None,
         sparse: bool,
         hidden: bool,
+        collation: Filter | None,
         partial_filter_expression: Filter | None,
         expire_after_seconds: int | None,
         max_time_ms: int | None,
@@ -3703,6 +3741,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     name=name,
                     sparse=sparse,
                     hidden=hidden,
+                    collation=collation,
                     partial_filter_expression=partial_filter_expression,
                     expire_after_seconds=expire_after_seconds,
                     deadline=deadline,
@@ -4409,6 +4448,7 @@ class SQLiteEngine(AsyncStorageEngine):
         name: str | None = None,
         sparse: bool = False,
         hidden: bool = False,
+        collation: Filter | None = None,
         partial_filter_expression: Filter | None = None,
         expire_after_seconds: int | None = None,
         max_time_ms: int | None = None,
@@ -4423,6 +4463,7 @@ class SQLiteEngine(AsyncStorageEngine):
             name,
             sparse,
             hidden,
+            collation,
             partial_filter_expression,
             expire_after_seconds,
             max_time_ms,

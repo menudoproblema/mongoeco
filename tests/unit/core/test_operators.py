@@ -717,6 +717,31 @@ class UpdateEngineTests(unittest.TestCase):
                 {"items.qty": {"$gte": 1}},
             )
 
+    def test_resolve_legacy_positional_path_raises_when_shared_resolver_returns_empty(self):
+        with patch.object(operators_module, "resolve_positional_update_paths", return_value=[]):
+            with self.assertRaisesRegex(OperationFailure, "did not find the match needed"):
+                UpdateEngine._resolve_legacy_positional_path(
+                    {"items": [{"qty": 1}]},
+                    "items.$.qty",
+                    {"items.qty": {"$gte": 1}},
+                )
+
+    def test_resolve_legacy_positional_path_returns_first_resolved_target(self):
+        compiled_path = compile_update_path("items.$.qty")
+        resolved_target = ResolvedUpdatePath(
+            requested=compiled_path,
+            concrete_path="items.0.qty",
+        )
+
+        with patch.object(operators_module, "resolve_positional_update_paths", return_value=[resolved_target]):
+            resolved = UpdateEngine._resolve_legacy_positional_path(
+                {"items": [{"qty": 1}]},
+                compiled_path,
+                {"items.qty": {"$gte": 1}},
+            )
+
+        self.assertIs(resolved, resolved_target)
+
     def test_bit_supports_and_or_xor_and_positional_targets(self):
         document = {"score": 13, "flags": [1, 3, 4]}
 

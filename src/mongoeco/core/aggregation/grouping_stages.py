@@ -366,7 +366,7 @@ def _apply_set_window_fields(
         operator, expression, window = _require_window_output_spec(field_spec)
         if not dialect.supports_window_accumulator(operator):
             raise OperationFailure(f"Unsupported $setWindowFields accumulator: {operator}")
-        if operator in {"$rank", "$denseRank", "$documentNumber"}:
+        if operator in {"$rank", "$denseRank", "$documentNumber", "$shift"}:
             prepared_window_outputs[field] = (operator, expression, window, ())
             continue
         prepared_specs = _prepare_accumulator_specs(
@@ -413,6 +413,31 @@ def _apply_set_window_fields(
                         set_document_value(enriched, field, current_index + 1)
                         continue
                     set_document_value(enriched, field, ranks[current_index] if operator == "$rank" else dense_ranks[current_index])
+                    continue
+                if operator == "$shift":
+                    if sort_spec is None:
+                        raise OperationFailure("$shift requires sortBy")
+                    if window is not None:
+                        raise OperationFailure("$shift does not support an explicit window")
+                    if not isinstance(expression, dict) or "output" not in expression:
+                        raise OperationFailure("$shift requires output")
+                    unsupported_keys = set(expression) - {"output", "by", "default"}
+                    if unsupported_keys:
+                        raise OperationFailure("$shift supports only output, by and default")
+                    by = expression.get("by", 0)
+                    if not isinstance(by, int) or isinstance(by, bool):
+                        raise OperationFailure("$shift by must be an integer")
+                    target_index = current_index + by
+                    if 0 <= target_index <= last_index:
+                        shifted_value = evaluate_expression(
+                            ordered[target_index],
+                            expression["output"],
+                            variables,
+                            dialect=dialect,
+                        )
+                    else:
+                        shifted_value = deepcopy(expression.get("default"))
+                    set_document_value(enriched, field, shifted_value)
                     continue
                 if window is None:
                     window_documents = ordered

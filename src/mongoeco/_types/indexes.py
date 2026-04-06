@@ -113,6 +113,7 @@ class IndexDefinition:
     unique: bool = False
     sparse: bool = False
     hidden: bool = False
+    collation: Document | None = None
     partial_filter_expression: Filter | None = None
     expire_after_seconds: int | None = None
 
@@ -124,6 +125,7 @@ class IndexDefinition:
         unique: bool = False,
         sparse: bool = False,
         hidden: bool = False,
+        collation: Document | None = None,
         partial_filter_expression: Filter | None = None,
         expire_after_seconds: int | None = None,
     ):
@@ -136,6 +138,8 @@ class IndexDefinition:
             raise TypeError("sparse must be a bool")
         if not isinstance(hidden, bool):
             raise TypeError("hidden must be a bool")
+        if collation is not None and not isinstance(collation, dict):
+            raise TypeError("collation must be a dict or None")
         if partial_filter_expression is not None and not isinstance(partial_filter_expression, dict):
             raise TypeError("partial_filter_expression must be a dict or None")
         if expire_after_seconds is not None and (
@@ -149,6 +153,7 @@ class IndexDefinition:
         object.__setattr__(self, "unique", unique)
         object.__setattr__(self, "sparse", sparse)
         object.__setattr__(self, "hidden", hidden)
+        object.__setattr__(self, "collation", deepcopy(collation))
         object.__setattr__(self, "partial_filter_expression", deepcopy(partial_filter_expression))
         object.__setattr__(self, "expire_after_seconds", expire_after_seconds)
 
@@ -166,6 +171,8 @@ class IndexDefinition:
             document["sparse"] = True
         if self.hidden:
             document["hidden"] = True
+        if self.collation is not None:
+            document["collation"] = deepcopy(self.collation)
         if self.partial_filter_expression is not None:
             document["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
         if self.expire_after_seconds is not None:
@@ -183,6 +190,8 @@ class IndexDefinition:
             document["sparse"] = True
         if self.hidden:
             document["hidden"] = True
+        if self.collation is not None:
+            document["collation"] = deepcopy(self.collation)
         if self.partial_filter_expression is not None:
             document["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
         if self.expire_after_seconds is not None:
@@ -197,6 +206,8 @@ class IndexDefinition:
             entry["sparse"] = True
         if self.hidden:
             entry["hidden"] = True
+        if self.collation is not None:
+            entry["collation"] = deepcopy(self.collation)
         if self.partial_filter_expression is not None:
             entry["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
         if self.expire_after_seconds is not None:
@@ -226,6 +237,7 @@ class IndexModel:
     unique: bool = False
     sparse: bool = False
     hidden: bool = False
+    collation: Document | None = None
     partial_filter_expression: Filter | None = None
     expire_after_seconds: int | None = None
 
@@ -235,6 +247,7 @@ class IndexModel:
         unique = kwargs.pop("unique", False)
         sparse = kwargs.pop("sparse", False)
         hidden = kwargs.pop("hidden", False)
+        collation = kwargs.pop("collation", None)
         partial_filter_expression = kwargs.pop("partialFilterExpression", None)
         if partial_filter_expression is None:
             partial_filter_expression = kwargs.pop("partial_filter_expression", None)
@@ -249,6 +262,8 @@ class IndexModel:
             raise TypeError("sparse must be a bool")
         if not isinstance(hidden, bool):
             raise TypeError("hidden must be a bool")
+        if collation is not None and not isinstance(collation, dict):
+            raise TypeError("collation must be a dict or None")
         if partial_filter_expression is not None and not isinstance(partial_filter_expression, dict):
             raise TypeError("partial_filter_expression must be a dict or None")
         if expire_after_seconds is not None and (
@@ -265,6 +280,7 @@ class IndexModel:
         object.__setattr__(self, "unique", unique)
         object.__setattr__(self, "sparse", sparse)
         object.__setattr__(self, "hidden", hidden)
+        object.__setattr__(self, "collation", deepcopy(collation))
         object.__setattr__(self, "partial_filter_expression", deepcopy(partial_filter_expression))
         object.__setattr__(self, "expire_after_seconds", expire_after_seconds)
 
@@ -280,6 +296,7 @@ class IndexModel:
             unique=self.unique,
             sparse=self.sparse,
             hidden=self.hidden,
+            collation=self.collation,
             partial_filter_expression=self.partial_filter_expression,
             expire_after_seconds=self.expire_after_seconds,
         )

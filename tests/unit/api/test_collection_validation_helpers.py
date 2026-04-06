@@ -164,9 +164,18 @@ class AsyncCollectionValidationTests(AsyncCollectionHelperBase):
                 type(
                     "Model",
                     (),
-                    {"document": {"key": {"email": 1}, "name": "idx", "hidden": True}},
+                    {"document": {"key": {"email": 1}, "name": "idx", "unknown": True}},
                 )()
             )
+        normalized = AsyncCollection._normalize_index_model(
+            type(
+                "Model",
+                (),
+                {"document": {"key": {"email": 1}, "name": "idx", "hidden": True, "collation": {"locale": "en"}}},
+            )()
+        )
+        self.assertTrue(normalized.hidden)
+        self.assertEqual(normalized.collation, {"locale": "en"})
 
     def test_collection_require_helpers_reject_invalid_inputs(self):
         self.assertEqual(AsyncCollection._require_documents(({"_id": "1"},)), [{"_id": "1"}])

@@ -770,6 +770,39 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertTrue(info["email_hidden"]["hidden"])
 
+    async def test_list_indexes_and_index_information_include_collation_metadata(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["name"], collation={"locale": "en", "strength": 2})
+            indexes = await engine.list_indexes("db", "coll")
+            info = await engine.index_information("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(
+            indexes[1],
+            {
+                "name": "name_1",
+                "key": {"name": 1},
+                "unique": False,
+                "collation": {"locale": "en", "strength": 2},
+            },
+        )
+        self.assertEqual(
+            info["name_1"],
+            {"key": [("name", 1)], "collation": {"locale": "en", "strength": 2}},
+        )
+
+    async def test_create_index_rejects_invalid_collation_type(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            with self.assertRaisesRegex(TypeError, "collation must be a dict or None"):
+                await engine.create_index("db", "coll", ["name"], collation=["en"])  # type: ignore[arg-type]
+        finally:
+            await engine.disconnect()
+
     async def test_ttl_index_metadata_and_opportunistic_expiration_round_trip(self):
         engine = MemoryEngine()
         past = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=120)

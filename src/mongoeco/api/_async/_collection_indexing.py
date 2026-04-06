@@ -26,6 +26,7 @@ async def create_index(
     name: str | None = None,
     sparse: bool = False,
     hidden: bool = False,
+    collation: dict[str, object] | None = None,
     partial_filter_expression: dict[str, object] | None = None,
     expire_after_seconds: int | None = None,
     comment: object | None = None,
@@ -43,6 +44,7 @@ async def create_index(
         name=name,
         sparse=sparse,
         hidden=hidden,
+        collation=collation,
         partial_filter_expression=partial_filter_expression,
         expire_after_seconds=expire_after_seconds,
         max_time_ms=max_time_ms,
@@ -86,6 +88,7 @@ async def create_indexes(
                 name=index.name,
                 sparse=index.sparse,
                 hidden=index.hidden,
+                collation=index.collation,
                 partial_filter_expression=index.partial_filter_expression,
                 expire_after_seconds=index.expire_after_seconds,
                 max_time_ms=None if deadline is None else max(

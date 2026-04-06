@@ -257,6 +257,7 @@ class EngineIndexRecord:
     physical_name: str | None = None
     sparse: bool = False
     hidden: bool = False
+    collation: dict[str, object] | None = None
     partial_filter_expression: Filter | None = None
     expire_after_seconds: int | None = None
     multikey: bool = False
@@ -278,6 +279,7 @@ class EngineIndexRecord:
             unique=self.unique,
             sparse=self.sparse,
             hidden=self.hidden,
+            collation=deepcopy(self.collation),
             partial_filter_expression=deepcopy(self.partial_filter_expression),
             expire_after_seconds=self.expire_after_seconds,
         )

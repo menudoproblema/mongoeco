@@ -1958,6 +1958,39 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             },
         )
 
+    async def test_collation_index_metadata_round_trips(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["name"], collation={"locale": "en", "strength": 2})
+            indexes = await engine.list_indexes("db", "coll")
+            info = await engine.index_information("db", "coll")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(
+            indexes[1],
+            {
+                "name": "name_1",
+                "key": {"name": 1},
+                "unique": False,
+                "collation": {"locale": "en", "strength": 2},
+            },
+        )
+        self.assertEqual(
+            info["name_1"],
+            {"key": [("name", 1)], "collation": {"locale": "en", "strength": 2}},
+        )
+
+    async def test_create_index_rejects_invalid_collation_type(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            with self.assertRaisesRegex(TypeError, "collation must be a dict or None"):
+                await engine.create_index("db", "coll", ["name"], collation=["en"])  # type: ignore[arg-type]
+        finally:
+            await engine.disconnect()
+
     async def test_ttl_index_metadata_and_opportunistic_expiration_round_trip(self):
         engine = SQLiteEngine()
         past = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=120)
@@ -4660,6 +4693,14 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(indexes[0]["expire_after_seconds"], 0)
 
         cursor.fetchall.return_value = [
+            ("legacy12", "idx_legacy12", '["email"]', '[["email", 1]]', 0, 0, 0, None, None, 0, None, "scalar_idx"),
+        ]
+        engine._mark_index_metadata_changed("db", "coll")
+        indexes = engine._load_indexes("db", "coll")
+        self.assertTrue(any(index["name"] == "legacy12" for index in indexes))
+        self.assertIsNone(indexes[0].get("collation"))
+
+        cursor.fetchall.return_value = [
             ("bad_fields", "idx_bad_fields", '["email", 1]', '[["email", 1]]', 0, 0, None, None, 0, None, None),
         ]
         engine._mark_index_metadata_changed("db", "coll")
@@ -4668,6 +4709,20 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         cursor.fetchall.return_value = [
             ("bad_keys", "idx_bad_keys", '["email"]', '[["email", 2]]', 0, 0, None, None, 0, None, None),
+        ]
+        engine._mark_index_metadata_changed("db", "coll")
+        with self.assertRaises(OperationFailure):
+            engine._load_indexes("db", "coll")
+
+        cursor.fetchall.return_value = [
+            ("bad_collation_json", "idx_bad_collation_json", '["email"]', '[["email", 1]]', 0, 0, 0, "{", None, 0, None, None, "scalar_idx"),
+        ]
+        engine._mark_index_metadata_changed("db", "coll")
+        with self.assertRaises(OperationFailure):
+            engine._load_indexes("db", "coll")
+
+        cursor.fetchall.return_value = [
+            ("bad_collation_type", "idx_bad_collation_type", '["email"]', '[["email", 1]]', 0, 0, 0, '"en"', None, 0, None, None, "scalar_idx"),
         ]
         engine._mark_index_metadata_changed("db", "coll")
         with self.assertRaises(OperationFailure):

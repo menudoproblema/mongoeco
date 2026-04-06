@@ -100,11 +100,14 @@ def expand_positional_update_paths(
     path: str | CompiledUpdatePath,
     *,
     filtered_matcher: Callable[[str, object], bool],
+    legacy_matcher: Callable[[object], bool] | None = None,
 ) -> list[str]:
     compiled = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
     segments = compiled.segments
     if not update_path_has_positional_segment(compiled):
         return [compiled.raw]
+    if sum(1 for segment in segments if segment.kind == "positional") > 1:
+        raise OperationFailure("Legacy positional '$' update paths support exactly one positional segment")
 
     expanded: list[str] = []
 
@@ -133,7 +136,18 @@ def expand_positional_update_paths(
             return
 
         if segment.kind == "positional":
-            raise OperationFailure("Legacy positional '$' update paths are not supported")
+            if legacy_matcher is None:
+                raise OperationFailure("Legacy positional '$' update paths are not supported")
+            if not isinstance(current, list):
+                raise OperationFailure("The positional operator did not find the match needed from the query")
+            for item_index, item in enumerate(current):
+                if not legacy_matcher(item):
+                    continue
+                built.append(str(item_index))
+                _walk(item, index + 1, built)
+                built.pop()
+                return
+            raise OperationFailure("The positional operator did not find the match needed from the query")
 
         if not isinstance(current, list):
             return
@@ -165,6 +179,7 @@ def resolve_positional_update_paths(
     path: str | CompiledUpdatePath,
     *,
     filtered_matcher: Callable[[str, object], bool],
+    legacy_matcher: Callable[[object], bool] | None = None,
 ) -> list[ResolvedUpdatePath]:
     compiled = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
     return [
@@ -173,5 +188,6 @@ def resolve_positional_update_paths(
             doc,
             compiled,
             filtered_matcher=filtered_matcher,
+            legacy_matcher=legacy_matcher,
         )
     ]

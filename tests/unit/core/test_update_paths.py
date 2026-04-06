@@ -169,3 +169,11 @@ class UpdatePathParsingTests(unittest.TestCase):
             ),
             ["items.0.tags.1", "items.1.tags.1"],
         )
+
+    def test_expand_positional_update_paths_rejects_multiple_positional_segments(self):
+        with self.assertRaisesRegex(OperationFailure, "exactly one positional segment"):
+            expand_positional_update_paths(
+                {"items": [[{"qty": 1}]]},
+                "items.$.$.qty",
+                filtered_matcher=lambda _identifier, _candidate: True,
+            )

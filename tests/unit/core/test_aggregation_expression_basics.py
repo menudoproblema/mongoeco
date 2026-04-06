@@ -745,7 +745,7 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         unsupported_window_operators = [
             "$covariancePop", "$covarianceSamp",
             "$derivative", "$expMovingAvg", "$integral",
-            "$linearFill", "$locf", "$shift",
+            "$linearFill", "$locf",
         ]
         for operator in unsupported_window_operators:
             with self.subTest(window_operator=operator):
@@ -804,11 +804,61 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
                 [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$denseRank": {}, "window": {"documents": ["unbounded", "current"]}}}}}],
             )
 
-    def test_set_window_fields_rejects_shift_with_dedicated_test(self):
+    def test_set_window_fields_supports_shift(self):
+        result = apply_pipeline(
+            [
+                {"_id": "1", "group": "a", "value": 10},
+                {"_id": "2", "group": "a", "value": 20},
+                {"_id": "3", "group": "a", "value": 30},
+            ],
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"_id": 1},
+                        "output": {
+                            "nextValue": {"$shift": {"output": "$value", "by": 1}},
+                            "previousOrZero": {"$shift": {"output": "$value", "by": -1, "default": 0}},
+                        },
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {"_id": "1", "group": "a", "value": 10, "nextValue": 20, "previousOrZero": 0},
+                {"_id": "2", "group": "a", "value": 20, "nextValue": 30, "previousOrZero": 10},
+                {"_id": "3", "group": "a", "value": 30, "nextValue": None, "previousOrZero": 20},
+            ],
+        )
+
+    def test_set_window_fields_shift_rejects_invalid_payloads(self):
         with self.assertRaises(OperationFailure):
             apply_pipeline(
                 [{"_id": "1", "value": 10}],
-                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$shift": {"output": "$value", "by": 1}}}}}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$shift": "$value"}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"output": {"result": {"$shift": {"output": "$value", "by": 1}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$shift": {"output": "$value", "by": True}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$shift": {"output": "$value", "by": 1}, "window": {"documents": ["unbounded", "current"]}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$shift": {"output": "$value", "extra": 1}}}}}],
             )
 
     def test_set_window_fields_rejects_locf_with_dedicated_test(self):

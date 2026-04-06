@@ -246,6 +246,28 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         self.assertIsInstance(generated.generation_time, int)
         with self.assertRaises(TypeError):
             ObjectId(1)  # type: ignore[arg-type]
+
+    def test_index_models_and_definitions_round_trip_collation_metadata(self):
+        model = IndexModel(
+            [("email", 1)],
+            name="email_1",
+            unique=True,
+            collation={"locale": "en", "strength": 2},
+        )
+        definition = model.definition
+        self.assertEqual(definition.collation, {"locale": "en", "strength": 2})
+        self.assertEqual(
+            model.document["collation"],
+            {"locale": "en", "strength": 2},
+        )
+        self.assertEqual(
+            definition.to_information_entry()["collation"],
+            {"locale": "en", "strength": 2},
+        )
+
+    def test_object_id_rejects_invalid_values(self):
+        from mongoeco.types import ObjectId
+
         with self.assertRaises(ValueError):
             ObjectId("abc")
         with self.assertRaises(ValueError):
@@ -500,6 +522,33 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         self.assertEqual(model.document["expireAfterSeconds"], 30)
         self.assertEqual(model.definition.expire_after_seconds, 30)
 
+    def test_index_definition_and_model_round_trip_collation(self):
+        from mongoeco.types import IndexModel
+
+        definition = IndexDefinition(
+            [("name", 1)],
+            name="name_1",
+            collation={"locale": "en", "strength": 2},
+        )
+        model = IndexModel([("name", 1)], collation={"locale": "en", "strength": 2})
+
+        self.assertEqual(
+            definition.to_list_document(),
+            {
+                "name": "name_1",
+                "key": {"name": 1},
+                "unique": False,
+                "collation": {"locale": "en", "strength": 2},
+            },
+        )
+        self.assertEqual(
+            definition.to_information_entry(),
+            {"key": [("name", 1)], "collation": {"locale": "en", "strength": 2}},
+        )
+        self.assertEqual(model.collation, {"locale": "en", "strength": 2})
+        self.assertEqual(model.document["collation"], {"locale": "en", "strength": 2})
+        self.assertEqual(model.definition.collation, {"locale": "en", "strength": 2})
+
     def test_index_definition_and_model_reject_invalid_expire_after_seconds(self):
         from mongoeco.types import IndexModel
 
@@ -509,6 +558,10 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             IndexModel([("expires_at", 1)], expireAfterSeconds=-1)
         with self.assertRaises(TypeError):
             IndexModel([("expires_at", 1)], expireAfterSeconds=True)
+        with self.assertRaises(TypeError):
+            IndexDefinition([("name", 1)], name="name_1", collation="en")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            IndexModel([("name", 1)], collation="en")  # type: ignore[arg-type]
 
     def test_index_information_annotations_share_type_alias(self):
         async_index_hints = get_type_hints(AsyncCollection.index_information)

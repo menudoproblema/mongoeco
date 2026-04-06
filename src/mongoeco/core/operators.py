@@ -438,17 +438,6 @@ class UpdateEngine:
             for segment in segments
         ):
             raise OperationFailure("Positional and array-filter update paths are not supported")
-        if any(segment.kind == "positional" for segment in segments):
-            if selector_filter is None:
-                raise OperationFailure("The positional operator did not find the match needed from the query")
-            return [
-                UpdateEngine._resolve_legacy_positional_path(
-                    doc,
-                    compiled_path,
-                    selector_filter,
-                    dialect=dialect,
-                )
-            ]
         concrete_paths = resolve_positional_update_paths(
             doc,
             compiled_path,
@@ -458,6 +447,15 @@ class UpdateEngine:
                 array_filters=array_filters,
                 dialect=dialect,
                 collation=collation,
+            ),
+            legacy_matcher=(
+                None
+                if selector_filter is None or not any(segment.kind == "positional" for segment in segments)
+                else UpdateEngine._build_legacy_positional_matcher(
+                    ".".join(segment.raw for segment in segments[: next(index for index, segment in enumerate(segments) if segment.kind == "positional")]),
+                    selector_filter,
+                    dialect=dialect,
+                )
             ),
         )
         deduplicated: list[ResolvedUpdatePath] = []
@@ -510,26 +508,20 @@ class UpdateEngine:
             raise OperationFailure("Legacy positional '$' update paths support exactly one positional segment")
         positional_index = positional_indexes[0]
         array_prefix = ".".join(segment.raw for segment in segments[:positional_index])
-        suffix = ".".join(segment.raw for segment in segments[positional_index + 1 :])
-        found, array_value = get_document_value(doc, array_prefix)
-        if not found or not isinstance(array_value, list):
-            raise OperationFailure("The positional operator did not find the match needed from the query")
-
         matcher = UpdateEngine._build_legacy_positional_matcher(
             array_prefix,
             selector_filter,
             dialect=dialect,
         )
-        for item_index, item in enumerate(array_value):
-            if matcher(item):
-                parts = [array_prefix, str(item_index)]
-                if suffix:
-                    parts.append(suffix)
-                return ResolvedUpdatePath(
-                    requested=compiled_path,
-                    concrete_path=".".join(parts),
-                )
-        raise OperationFailure("The positional operator did not find the match needed from the query")
+        resolved = resolve_positional_update_paths(
+            doc,
+            compiled_path,
+            filtered_matcher=lambda _identifier, _candidate: False,
+            legacy_matcher=matcher,
+        )
+        if not resolved:
+            raise OperationFailure("The positional operator did not find the match needed from the query")
+        return resolved[0]
 
     @staticmethod
     def _build_legacy_positional_matcher(

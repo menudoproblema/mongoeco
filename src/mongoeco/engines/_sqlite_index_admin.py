@@ -52,6 +52,7 @@ def create_index(
     name: str | None,
     sparse: bool,
     hidden: bool,
+    collation: Filter | None,
     partial_filter_expression: Filter | None,
     expire_after_seconds: int | None,
     deadline: float | None,
@@ -92,6 +93,8 @@ def create_index(
             raise OperationFailure("TTL indexes cannot be created on _id")
     if not isinstance(hidden, bool):
         raise TypeError("hidden must be a bool")
+    if collation is not None and not isinstance(collation, dict):
+        raise TypeError("collation must be a dict or None")
     if special_directions:
         if len(normalized_keys) != 1:
             raise OperationFailure("special index types currently require a single-field key pattern")
@@ -102,6 +105,7 @@ def create_index(
             name not in (None, "_id_")
             or sparse
             or hidden
+            or collation is not None
             or partial_filter_expression is not None
             or expire_after_seconds is not None
             or not unique
@@ -134,6 +138,7 @@ def create_index(
                 or index["unique"] != unique
                 or index.get("sparse") != sparse
                 or index.get("hidden") != hidden
+                or index.get("collation") != collation
                 or index.get("partial_filter_expression") != partial_filter_expression
                 or index.get("expire_after_seconds") != expire_after_seconds
             ):
@@ -144,6 +149,7 @@ def create_index(
                 index["unique"] != unique
                 or index.get("sparse") != sparse
                 or index.get("hidden") != hidden
+                or index.get("collation") != collation
                 or index.get("partial_filter_expression") != partial_filter_expression
                 or index.get("expire_after_seconds") != expire_after_seconds
             ):
@@ -194,9 +200,9 @@ def create_index(
         conn.execute(
             """
             INSERT INTO indexes (
-                db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
+                db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 db_name,
@@ -208,6 +214,7 @@ def create_index(
                 1 if unique else 0,
                 1 if sparse else 0,
                 1 if hidden else 0,
+                json_dumps_compact(collation) if collation is not None else None,
                 json_dumps_compact(partial_filter_expression) if partial_filter_expression is not None else None,
                 expire_after_seconds,
                 1 if multikey else 0,
@@ -225,6 +232,7 @@ def create_index(
                 unique=unique,
                 sparse=sparse,
                 hidden=hidden,
+                collation=deepcopy(collation),
                 partial_filter_expression=deepcopy(partial_filter_expression),
                 expire_after_seconds=expire_after_seconds,
                 multikey=True,
@@ -251,6 +259,7 @@ def create_index(
                 unique=unique,
                 sparse=sparse,
                 hidden=hidden,
+                collation=deepcopy(collation),
                 partial_filter_expression=deepcopy(partial_filter_expression),
                 expire_after_seconds=expire_after_seconds,
                 multikey=multikey,

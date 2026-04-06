@@ -232,7 +232,7 @@ def backfill_scalar_indexes_sync(
     indexes = conn.execute(
         """
         SELECT db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag,
-               hidden_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
+               hidden_flag, collation_json, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
         FROM indexes
         ORDER BY db_name, coll_name, name
         """
@@ -250,6 +250,7 @@ def backfill_scalar_indexes_sync(
         unique_flag,
         sparse_flag,
         hidden_flag,
+        collation_json,
         partial_filter_json,
         expire_after_seconds,
         multikey_flag,
@@ -258,6 +259,7 @@ def backfill_scalar_indexes_sync(
     ) in indexes:
         parsed_fields = json_loads(fields)
         parsed_keys = normalize_index_keys(json_loads(keys)) if keys is not None else [(field, 1) for field in parsed_fields]
+        collation = json_loads(collation_json) if collation_json is not None else None
         partial_filter_expression = (
             normalize_partial_filter_expression(json_loads(partial_filter_json))
             if partial_filter_json is not None
@@ -283,6 +285,7 @@ def backfill_scalar_indexes_sync(
                 unique=bool(unique_flag),
                 sparse=bool(sparse_flag),
                 hidden=bool(hidden_flag),
+                collation=collation,
                 partial_filter_expression=partial_filter_expression,
                 expire_after_seconds=int(expire_after_seconds) if expire_after_seconds is not None else None,
                 multikey=bool(multikey_flag),
