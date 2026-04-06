@@ -250,6 +250,7 @@ def main() -> None:
                                 {"in": {"path": "kind", "value": ["note", "reference"]}},
                                 {"equals": {"path": "published", "value": True}},
                                 {"range": {"path": "score", "gte": 9}},
+                                {"equals": {"path": "contributors.verified", "value": True}},
                             ],
                             "should": [
                                 {
@@ -264,6 +265,19 @@ def main() -> None:
                                         "path": "score",
                                         "origin": 10,
                                         "pivot": 2,
+                                    }
+                                },
+                                {
+                                    "text": {
+                                        "query": "Ada",
+                                        "path": "contributors.name",
+                                    }
+                                },
+                                {
+                                    "near": {
+                                        "path": "contributors.impact",
+                                        "origin": 8,
+                                        "pivot": 3,
                                     }
                                 },
                                 {"exists": {"path": "summary"}},
@@ -306,6 +320,7 @@ def main() -> None:
                                 {"in": {"path": "kind", "value": ["note", "reference"]}},
                                 {"equals": {"path": "published", "value": True}},
                                 {"range": {"path": "score", "gte": 9}},
+                                {"equals": {"path": "contributors.verified", "value": True}},
                             ],
                             "should": [
                                 {
@@ -322,6 +337,19 @@ def main() -> None:
                                         "pivot": 2,
                                     }
                                 },
+                                {
+                                    "text": {
+                                        "query": "Ada",
+                                        "path": "contributors.name",
+                                    }
+                                },
+                                {
+                                    "near": {
+                                        "path": "contributors.impact",
+                                        "origin": 8,
+                                        "pivot": 3,
+                                    }
+                                },
                                 {"exists": {"path": "summary"}},
                                 {"regex": {"query": "Algorithm.*", "path": "summary"}},
                             ],
@@ -333,6 +361,11 @@ def main() -> None:
         print("$search compound explain operator:", search_explain["engine_plan"]["details"]["queryOperator"])
         print("$search compound explain should operators:", search_explain["engine_plan"]["details"]["compound"]["shouldOperators"])
         print("$search compound explain paths:", search_explain["engine_plan"]["details"]["pathSummary"])
+        print(
+            "$search compound explain embedded paths:",
+            search_explain["engine_plan"]["details"]["pathSummary"]["embeddedPaths"],
+            search_explain["engine_plan"]["details"]["pathSummary"]["embeddedPathSections"],
+        )
         print("$search compound explain ranking:", search_explain["engine_plan"]["details"]["ranking"])
 
         vector_results = collection.aggregate(

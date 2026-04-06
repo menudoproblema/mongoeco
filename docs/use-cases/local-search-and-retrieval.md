@@ -107,7 +107,8 @@ These examples show:
   `contributors.verified` or `contributors.impact`;
 * explicit `document` mappings for paths such as `metadata.topic`;
 * `near` over numeric and date fields with visible ranking metadata;
-* `near` and `compound` explain blocks with explicit path summaries;
+* `near` and `compound` explain blocks with explicit path summaries,
+  textual/scalar path grouping and embedded-path sections;
 * `compound` with `phrase`, `equals`, `in`, `range`, `near`, `exists` and `regex`;
 * public vector diagnostics such as `similarity`, `numCandidates`,
   `vectorSearchScore`, residual filters and fallback reasons.

@@ -266,7 +266,7 @@ Examples worth showing first:
   local search field mappings including explicit `document` and
   `embeddedDocuments` paths, plus numeric/date `near`, scalar filters over
   embedded-document paths, and a local `compound` query with visible
-  path/ranking explain metadata plus
+  embedded path/ranking explain metadata plus
   `equals` + `in` + `range` + `near` + `exists` + `regex`.
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
   demonstrates how to read `similarity`, `numCandidates`, `minScore`,

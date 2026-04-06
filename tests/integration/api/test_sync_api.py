@@ -518,6 +518,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "filter": ["body"],
                             "mustNot": [],
                             "all": ["body", "title"],
+                            "textualPaths": ["body", "title"],
+                            "scalarPaths": [],
+                            "embeddedPaths": [],
+                            "embeddedTextualPaths": [],
+                            "embeddedScalarPaths": [],
+                            "embeddedPathSections": [],
                             "usesEmbeddedPaths": False,
                             "nestedCompoundCount": 0,
                             "maxClauseDepth": 1,
@@ -1212,6 +1218,94 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ]
                     ).to_list()
                     self.assertEqual([document["_id"] for document in near_hits], [3, 1])
+
+                    compound_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [
+                                            {
+                                                "text": {
+                                                    "query": "Ada",
+                                                    "path": ["title", "contributors.name"],
+                                                }
+                                            }
+                                        ],
+                                        "filter": [
+                                            {
+                                                "equals": {
+                                                    "path": "contributors.verified",
+                                                    "value": True,
+                                                }
+                                            }
+                                        ],
+                                        "should": [
+                                            {
+                                                "near": {
+                                                    "path": "contributors.impact",
+                                                    "origin": 8,
+                                                    "pivot": 3,
+                                                }
+                                            }
+                                        ],
+                                    },
+                                }
+                            },
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in compound_hits], [3, 1])
+
+                    compound_explain = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "compound": {
+                                        "must": [
+                                            {
+                                                "text": {
+                                                    "query": "Ada",
+                                                    "path": ["title", "contributors.name"],
+                                                }
+                                            }
+                                        ],
+                                        "filter": [
+                                            {
+                                                "equals": {
+                                                    "path": "contributors.verified",
+                                                    "value": True,
+                                                }
+                                            }
+                                        ],
+                                        "should": [
+                                            {
+                                                "near": {
+                                                    "path": "contributors.impact",
+                                                    "origin": 8,
+                                                    "pivot": 3,
+                                                }
+                                            }
+                                        ],
+                                    },
+                                }
+                            }
+                        ]
+                    ).explain()
+                    self.assertEqual(
+                        compound_explain["engine_plan"]["details"]["pathSummary"][
+                            "embeddedPathSections"
+                        ],
+                        ["must", "should", "filter"],
+                    )
+                    self.assertEqual(
+                        compound_explain["engine_plan"]["details"]["pathSummary"][
+                            "embeddedScalarPaths"
+                        ],
+                        ["contributors.impact", "contributors.verified"],
+                    )
 
     def test_search_document_mapping_and_date_near_keep_parity_between_memory_and_sqlite(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

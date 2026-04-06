@@ -1752,6 +1752,74 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
             collected.update(_query_paths(clause))
         return sorted(collected)
 
+    def _typed_clause_paths(
+        clauses: tuple[SearchTextLikeQuery, ...],
+        *,
+        query_type: type[SearchTextLikeQuery] | tuple[type[SearchTextLikeQuery], ...],
+    ) -> list[str]:
+        collected: set[str] = set()
+        for clause in clauses:
+            if isinstance(clause, query_type):
+                collected.update(_query_paths(clause))
+            elif isinstance(clause, SearchCompoundQuery):
+                for nested_clauses in (
+                    clause.must,
+                    clause.should,
+                    clause.filter,
+                    clause.must_not,
+                ):
+                    collected.update(
+                        _typed_clause_paths(
+                            nested_clauses,
+                            query_type=query_type,
+                        )
+                    )
+        return sorted(collected)
+
+    def _embedded_paths(paths: list[str]) -> list[str]:
+        return [path for path in paths if "." in path]
+
+    must_paths = _clause_paths(query.must)
+    should_paths = _clause_paths(query.should)
+    filter_paths = _clause_paths(query.filter)
+    must_not_paths = _clause_paths(query.must_not)
+    all_paths = sorted(_query_paths(query))
+    textual_types = (
+        SearchTextQuery,
+        SearchPhraseQuery,
+        SearchAutocompleteQuery,
+        SearchWildcardQuery,
+        SearchRegexQuery,
+    )
+    scalar_types = (
+        SearchInQuery,
+        SearchEqualsQuery,
+        SearchRangeQuery,
+        SearchNearQuery,
+    )
+    textual_paths = sorted(
+        set(_typed_clause_paths(query.must, query_type=textual_types))
+        | set(_typed_clause_paths(query.should, query_type=textual_types))
+        | set(_typed_clause_paths(query.filter, query_type=textual_types))
+        | set(_typed_clause_paths(query.must_not, query_type=textual_types))
+    )
+    scalar_paths = sorted(
+        set(_typed_clause_paths(query.must, query_type=scalar_types))
+        | set(_typed_clause_paths(query.should, query_type=scalar_types))
+        | set(_typed_clause_paths(query.filter, query_type=scalar_types))
+        | set(_typed_clause_paths(query.must_not, query_type=scalar_types))
+    )
+    embedded_path_sections = [
+        section
+        for section, paths in (
+            ("must", must_paths),
+            ("should", should_paths),
+            ("filter", filter_paths),
+            ("mustNot", must_not_paths),
+        )
+        if any("." in path for path in paths)
+    ]
+
     return {
         "query": None,
         "paths": None,
@@ -1767,14 +1835,18 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
             "mustNotOperators": _clause_operator_names(query.must_not),
         },
         "pathSummary": {
-            "must": _clause_paths(query.must),
-            "should": _clause_paths(query.should),
-            "filter": _clause_paths(query.filter),
-            "mustNot": _clause_paths(query.must_not),
-            "all": sorted(_query_paths(query)),
-            "usesEmbeddedPaths": any(
-                "." in path for path in _query_paths(query)
-            ),
+            "must": must_paths,
+            "should": should_paths,
+            "filter": filter_paths,
+            "mustNot": must_not_paths,
+            "all": all_paths,
+            "textualPaths": textual_paths,
+            "scalarPaths": scalar_paths,
+            "embeddedPaths": _embedded_paths(all_paths),
+            "embeddedTextualPaths": _embedded_paths(textual_paths),
+            "embeddedScalarPaths": _embedded_paths(scalar_paths),
+            "embeddedPathSections": embedded_path_sections,
+            "usesEmbeddedPaths": bool(embedded_path_sections),
             "nestedCompoundCount": _count_nested_compounds(query),
             "maxClauseDepth": _compound_max_depth(query),
         },

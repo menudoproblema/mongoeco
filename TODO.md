@@ -155,3 +155,20 @@ Orden recomendado a partir de aquí:
 2. subir cobertura selectiva en `search` / `virtual_indexes` / `sqlite` / `transports`;
 3. preparar publicación si el objetivo es sacar versión;
 4. dejar Rust como línea futura, no como trabajo inmediato.
+
+## 8. Pensando 4.0
+
+No es objetivo inmediato, pero sí conviene ir observando qué justificaría una
+`4.0.0` de verdad.
+
+Líneas a vigilar:
+
+* consolidar `mongoeco` como runtime claramente CXP-first, no solo alineado;
+* decidir si la metadata pública por operación llega al punto de sustituir
+  parte del relato legacy de `compat`;
+* evaluar si `$search` y `vectorSearch` pasan de subset útil a superficie de
+  producto claramente diferenciada;
+* decidir si un provider CXP live opcional merece vivir como adaptador externo
+  o como capa separada dentro del proyecto;
+* reservar una `4.0.0` solo para un cambio real de centro de gravedad, no para
+  seguir ampliando subset local dentro de `3.x`.
