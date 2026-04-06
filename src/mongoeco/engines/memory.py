@@ -1619,8 +1619,11 @@ class MemoryEngine(AsyncStorageEngine):
         if collation is not None and not isinstance(collation, dict):
             raise TypeError("collation must be a dict or None")
         if special_directions:
-            if len(normalized_keys) != 1:
-                raise OperationFailure("special index types currently require a single-field key pattern")
+            if not all(direction == "text" for direction in special_directions):
+                if len(normalized_keys) != 1:
+                    raise OperationFailure("special index types currently require a single-field key pattern")
+            elif len(special_directions) != len(normalized_keys):
+                raise OperationFailure("local text indexes currently support only text key patterns")
             if unique:
                 raise OperationFailure(f"{special_directions[0]} indexes do not support unique")
         if self._is_builtin_id_index(normalized_keys):
@@ -2072,11 +2075,11 @@ class MemoryEngine(AsyncStorageEngine):
         text_query = semantics.text_query
         if text_query is None:
             return documents
-        _index_name, field = resolve_classic_text_index(indexes)
+        _index_name, fields = resolve_classic_text_index(indexes)
 
         def _iter():
             for document in documents:
-                score = classic_text_score(document, field=field, query=text_query)
+                score = classic_text_score(document, field=fields, query=text_query)
                 if score is None:
                     continue
                 yield attach_text_score(document, score)
@@ -2125,12 +2128,12 @@ class MemoryEngine(AsyncStorageEngine):
             dialect=semantics.dialect,
         )
         if semantics.text_query is not None:
-            text_index_name, text_field = resolve_classic_text_index(indexes)
+            text_index_name, text_fields = resolve_classic_text_index(indexes)
             text_details = {
                 "textQuery": {
                     "backend": "python",
                     "index": text_index_name,
-                    "field": text_field,
+                    "fields": list(text_fields),
                     "rawQuery": semantics.text_query.raw_query,
                     "terms": list(semantics.text_query.terms),
                     "tokenizer": "lowercase+punctuation-split",

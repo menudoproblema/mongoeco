@@ -96,8 +96,11 @@ def create_index(
     if collation is not None and not isinstance(collation, dict):
         raise TypeError("collation must be a dict or None")
     if special_directions:
-        if len(normalized_keys) != 1:
-            raise OperationFailure("special index types currently require a single-field key pattern")
+        if not all(direction == "text" for direction in special_directions):
+            if len(normalized_keys) != 1:
+                raise OperationFailure("special index types currently require a single-field key pattern")
+        elif len(special_directions) != len(normalized_keys):
+            raise OperationFailure("local text indexes currently support only text key patterns")
         if unique:
             raise OperationFailure(f"{special_directions[0]} indexes do not support unique")
     if is_builtin_id_index(normalized_keys):

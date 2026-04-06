@@ -6121,6 +6121,54 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(OperationFailure):
                         await collection.create_index([("content", "hashed")], unique=True)
 
+    async def test_collection_supports_multi_field_local_text_indexes(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.articles
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "title": "Ada", "content": "First algorithm"},
+                            {"_id": "2", "title": "Grace", "content": "Compiler pioneer"},
+                            {"_id": "3", "title": "Ada", "content": "Algorithm notes"},
+                        ]
+                    )
+
+                    index_name = await collection.create_index([("title", "text"), ("content", "text")])
+                    indexes = await collection.list_indexes().to_list()
+                    info = await collection.index_information()
+                    results = await collection.find(
+                        {"$text": {"$search": "Ada algorithm"}},
+                        {"_id": 1, "score": {"$meta": "textScore"}},
+                        sort={"score": {"$meta": "textScore"}},
+                    ).to_list()
+                    explain = await collection.find({"$text": {"$search": "Ada algorithm"}}).explain()
+
+                    self.assertEqual(index_name, "title_text_content_text")
+                    self.assertIn(
+                        {
+                            "name": "title_text_content_text",
+                            "key": {"title": "text", "content": "text"},
+                            "unique": False,
+                        },
+                        indexes,
+                    )
+                    self.assertEqual(
+                        info["title_text_content_text"],
+                        {"key": [("title", "text"), ("content", "text")]},
+                    )
+                    self.assertEqual(
+                        results,
+                        [
+                            {"_id": "1", "score": 2.0},
+                            {"_id": "3", "score": 2.0},
+                        ],
+                    )
+                    self.assertEqual(
+                        explain["details"]["textQuery"]["fields"],
+                        ["title", "content"],
+                    )
+
     async def test_collection_supports_local_geo_queries_and_geo_near(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

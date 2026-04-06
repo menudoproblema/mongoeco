@@ -109,7 +109,7 @@ class SearchCoreTests(unittest.TestCase):
             EngineIndexRecord(name="body_text", fields=["body"], key=[("body", "text")], unique=False),
             EngineIndexRecord(name="title_text", fields=["title"], key=[("title", "text")], unique=False),
         ]
-        with self.assertRaisesRegex(OperationFailure, "single-field text index"):
+        with self.assertRaisesRegex(OperationFailure, "text index not found with name \\[missing\\]"):
             resolve_classic_text_index(indexes, hinted_name="missing")
 
         duplicate_named_indexes = [
@@ -160,12 +160,40 @@ class SearchCoreTests(unittest.TestCase):
                 query=query,
             )
         )
+        self.assertEqual(
+            classic_text_score(
+                {"title": "Ada", "body": "Algorithm Ada"},
+                field=("title", "body"),
+                query=query,
+            ),
+            3.0,
+        )
+        self.assertIsNone(
+            classic_text_score(
+                {"body": "Ada"},
+                field=(),
+                query=query,
+            )
+        )
 
     def test_resolve_classic_text_index_requires_single_unambiguous_text_index(self) -> None:
         indexes = [
             EngineIndexRecord(name="content_text", fields=["content"], key=[("content", "text")], unique=False),
         ]
-        self.assertEqual(resolve_classic_text_index(indexes), ("content_text", "content"))
+        self.assertEqual(resolve_classic_text_index(indexes), ("content_text", ("content",)))
+        self.assertEqual(
+            resolve_classic_text_index(
+                [
+                    EngineIndexRecord(
+                        name="content_title_text",
+                        fields=["content", "title"],
+                        key=[("content", "text"), ("title", "text")],
+                        unique=False,
+                    ),
+                ]
+            ),
+            ("content_title_text", ("content", "title")),
+        )
         with self.assertRaises(OperationFailure):
             resolve_classic_text_index(
                 indexes
@@ -2463,7 +2491,12 @@ class SearchCoreTests(unittest.TestCase):
             compile_classic_text_query({"$search": "Ada", "$language": "en"})
         with self.assertRaisesRegex(OperationFailure, "searchable token"):
             compile_classic_text_query({"$search": "!!!"})
-        with self.assertRaisesRegex(OperationFailure, "single-field text index"):
+        with self.assertRaisesRegex(
+            OperationFailure,
+            "classic \\$text requires a local text index on the collection",
+        ):
+            resolve_classic_text_index([])
+        with self.assertRaisesRegex(OperationFailure, "text index not found with name \\[missing\\]"):
             resolve_classic_text_index(
                 [EngineIndexRecord(name="content_text", fields=["content"], key=[("content", "text")], unique=False)],
                 hinted_name="missing",

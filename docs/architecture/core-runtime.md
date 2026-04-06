@@ -81,6 +81,7 @@ SQLite, hoy queda documentado como fallback explícito y observable vía
 Tambien entra ya un subset local de `$text` clasico:
 
 - filtro top-level `$text`;
+- indices `text` locales de uno o varios campos `text` puros;
 - tokenizacion local explicita;
 - `textScore` materializado para proyeccion y ordenacion;
 - `MemoryEngine` como baseline semantico y `SQLiteEngine` como fallback Python

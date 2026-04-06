@@ -4611,8 +4611,16 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 await engine.create_index("db", "coll", [("a", 1), ("b", 1)], expire_after_seconds=10)
             with self.assertRaisesRegex(OperationFailure, "TTL indexes cannot be created on _id"):
                 await engine.create_index("db", "coll", ["_id"], expire_after_seconds=10)
-            with self.assertRaisesRegex(OperationFailure, "special index types currently require a single-field key pattern"):
+            with self.assertRaisesRegex(
+                OperationFailure,
+                "local text indexes currently support only text key patterns",
+            ):
                 await engine.create_index("db", "coll", [("a", "text"), ("b", 1)])
+            with self.assertRaisesRegex(
+                OperationFailure,
+                "special index types currently require a single-field key pattern",
+            ):
+                await engine.create_index("db", "coll", [("geo", "2dsphere"), ("b", 1)])
             with self.assertRaisesRegex(OperationFailure, "do not support unique"):
                 await engine.create_index("db", "coll", [("a", "text")], unique=True)
             with self.assertRaisesRegex(OperationFailure, "Conflicting index definition for '_id_'"):

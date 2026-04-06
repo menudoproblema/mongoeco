@@ -293,41 +293,48 @@ def resolve_classic_text_index(
     indexes: list[EngineIndexRecord],
     *,
     hinted_name: str | None = None,
-) -> tuple[str, str]:
+) -> tuple[str, tuple[str, ...]]:
     candidates = [
         index
         for index in indexes
-        if len(index.key) == 1 and index.key[0][1] == "text"
+        if index.key
+        and all(direction == "text" for _field, direction in index.key)
     ]
     if hinted_name is not None:
         candidates = [index for index in candidates if index.name == hinted_name]
     if not candidates:
-        raise OperationFailure("classic $text requires a single-field text index on the collection")
+        if hinted_name is not None:
+            raise OperationFailure(f"text index not found with name [{hinted_name}]")
+        raise OperationFailure("classic $text requires a local text index on the collection")
     if len(candidates) > 1:
         if hinted_name is not None:
             raise OperationFailure(f"text index not found with name [{hinted_name}]")
         raise OperationFailure(
-            "classic $text is ambiguous with multiple text indexes; use a single text index per collection"
+            "classic $text is ambiguous with multiple text indexes; use a single local text index per collection"
         )
     index = candidates[0]
-    return index.name, index.key[0][0]
+    return index.name, tuple(field for field, _direction in index.key)
 
 
 def classic_text_score(
     document: Document,
     *,
-    field: str,
+    field: str | tuple[str, ...] | list[str],
     query: ClassicTextQuery,
 ) -> float | None:
+    fields = (field,) if isinstance(field, str) else tuple(field)
+    if not fields:
+        return None
     token_counter = Counter()
-    for value in iter_classic_text_values(document, field):
-        token_counter.update(
-            tokenize_classic_text(
-                value,
-                case_sensitive=query.case_sensitive,
-                diacritic_sensitive=query.diacritic_sensitive,
+    for current_field in fields:
+        for value in iter_classic_text_values(document, current_field):
+            token_counter.update(
+                tokenize_classic_text(
+                    value,
+                    case_sensitive=query.case_sensitive,
+                    diacritic_sensitive=query.diacritic_sensitive,
+                )
             )
-        )
     if not token_counter:
         return None
     score = sum(token_counter.get(term, 0) for term in query.terms)

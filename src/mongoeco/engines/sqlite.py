@@ -3356,11 +3356,11 @@ class SQLiteEngine(AsyncStorageEngine):
         if text_query is None:
             return documents
         indexes = self._load_indexes(db_name, coll_name)
-        _index_name, field = resolve_classic_text_index(indexes)
+        _index_name, fields = resolve_classic_text_index(indexes)
 
         def _iter():
             for document in documents:
-                score = classic_text_score(document, field=field, query=text_query)
+                score = classic_text_score(document, field=fields, query=text_query)
                 if score is None:
                     continue
                 yield attach_text_score(document, score)
@@ -4682,14 +4682,14 @@ class SQLiteEngine(AsyncStorageEngine):
             if isinstance(details, dict):
                 details = {**details, **virtual_details}
         if semantics.text_query is not None:
-            text_index_name, text_field = resolve_classic_text_index(
+            text_index_name, text_fields = resolve_classic_text_index(
                 await self._run_blocking(self._load_indexes, db_name, coll_name),
             )
             text_details = {
                 "textQuery": {
                     "backend": "python",
                     "index": text_index_name,
-                    "field": text_field,
+                    "fields": list(text_fields),
                     "rawQuery": semantics.text_query.raw_query,
                     "terms": list(semantics.text_query.terms),
                     "tokenizer": "lowercase+punctuation-split",

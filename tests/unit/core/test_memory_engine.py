@@ -803,6 +803,18 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_create_index_rejects_multi_field_non_text_special_key_patterns(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            with self.assertRaisesRegex(
+                OperationFailure,
+                "special index types currently require a single-field key pattern",
+            ):
+                await engine.create_index("db", "coll", [("geo", "2dsphere"), ("kind", 1)])
+        finally:
+            await engine.disconnect()
+
     async def test_ttl_index_metadata_and_opportunistic_expiration_round_trip(self):
         engine = MemoryEngine()
         past = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=120)
