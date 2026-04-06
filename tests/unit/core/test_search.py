@@ -2830,6 +2830,27 @@ class SearchCoreTests(unittest.TestCase):
                 materialized=prepared,
             )
         )
+        self.assertTrue(
+            matches_search_text_query(
+                document,
+                definition=definition,
+                query=SearchTextQuery(
+                    index_name="by_text",
+                    raw_query="Ada",
+                    terms=("ada",),
+                    paths=("contributors",),
+                ),
+                materialized=prepared,
+            )
+        )
+        self.assertTrue(
+            matches_search_exists_query(
+                document,
+                definition=definition,
+                query=SearchExistsQuery(index_name="by_text", paths=("contributors",)),
+                materialized=prepared,
+            )
+        )
 
     def test_materialized_search_document_supports_explicit_document_paths(self) -> None:
         definition = SearchIndexDefinition(
@@ -2884,6 +2905,271 @@ class SearchCoreTests(unittest.TestCase):
                 materialized=prepared,
             )
         )
+        self.assertTrue(
+            matches_search_text_query(
+                document,
+                definition=definition,
+                query=SearchTextQuery(
+                    index_name="by_text",
+                    raw_query="Local",
+                    terms=("local",),
+                    paths=("metadata",),
+                ),
+                materialized=prepared,
+            )
+        )
+
+    def test_search_parent_paths_resolve_descendant_text_entries(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "metadata": {
+                            "type": "document",
+                            "fields": {
+                                "topic": {"type": "string"},
+                                "series": {"type": "token"},
+                            },
+                        },
+                        "contributors": {
+                            "type": "embeddedDocuments",
+                            "fields": {
+                                "name": {"type": "string"},
+                                "role": {"type": "token"},
+                            },
+                        },
+                    },
+                }
+            },
+            name="by_text",
+        )
+        document = {
+            "metadata": {"topic": "Local search", "series": "analysis"},
+            "contributors": [
+                {"name": "Ada Lovelace", "role": "author"},
+                {"name": "Charles Babbage", "role": "editor"},
+            ],
+        }
+        prepared = materialize_search_document(document, definition)
+
+        self.assertTrue(
+            matches_search_phrase_query(
+                document,
+                definition=definition,
+                query=SearchPhraseQuery(
+                    index_name="by_text",
+                    raw_query="Local search",
+                    paths=("metadata",),
+                ),
+                materialized=prepared,
+            )
+        )
+        self.assertTrue(
+            matches_search_autocomplete_query(
+                document,
+                definition=definition,
+                query=SearchAutocompleteQuery(
+                    index_name="by_text",
+                    raw_query="Ada",
+                    terms=("ada",),
+                    paths=("contributors",),
+                ),
+                materialized=prepared,
+            )
+        )
+        self.assertTrue(
+            matches_search_wildcard_query(
+                document,
+                definition=definition,
+                query=SearchWildcardQuery(
+                    index_name="by_text",
+                    raw_query="*search*",
+                    normalized_pattern="*search*",
+                    paths=("metadata",),
+                ),
+                materialized=prepared,
+            )
+        )
+        self.assertTrue(
+            matches_search_regex_query(
+                document,
+                definition=definition,
+                query=SearchRegexQuery(
+                    index_name="by_text",
+                    raw_query="Charles.*",
+                    paths=("contributors",),
+                ),
+                materialized=prepared,
+            )
+        )
+
+    def test_search_exists_uses_field_presence_for_structured_and_scalar_paths(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "metadata": {
+                            "type": "document",
+                            "fields": {
+                                "topic": {"type": "string"},
+                            },
+                        },
+                        "contributors": {
+                            "type": "embeddedDocuments",
+                            "fields": {
+                                "verified": {"type": "boolean"},
+                            },
+                        },
+                    },
+                }
+            },
+            name="by_text",
+        )
+        document = {
+            "metadata": {"topic": "Local search"},
+            "contributors": [],
+        }
+
+        self.assertTrue(
+            matches_search_exists_query(
+                document,
+                definition=definition,
+                query=SearchExistsQuery(index_name="by_text", paths=("metadata",)),
+            )
+        )
+        self.assertTrue(
+            matches_search_exists_query(
+                document,
+                definition=definition,
+                query=SearchExistsQuery(index_name="by_text", paths=("contributors",)),
+            )
+        )
+        self.assertFalse(
+            matches_search_exists_query(
+                document,
+                definition=definition,
+                query=SearchExistsQuery(index_name="by_text", paths=("contributors.verified",)),
+            )
+        )
+
+    def test_search_exists_without_explicit_paths_uses_mapped_paths_or_materialized_entries(self) -> None:
+        scalar_definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "published": {"type": "boolean"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+        exists_any = SearchExistsQuery(index_name="by_text", paths=None)
+        self.assertTrue(
+            matches_search_exists_query(
+                {"published": True},
+                definition=scalar_definition,
+                query=exists_any,
+            )
+        )
+        matched, score, _near = search_module.search_clause_ranking(
+            {"published": True},
+            definition=scalar_definition,
+            query=exists_any,
+        )
+        self.assertTrue(matched)
+        self.assertEqual(score, 1.0)
+
+        dynamic_definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text")
+        self.assertTrue(
+            matches_search_exists_query(
+                {"title": "Ada"},
+                definition=dynamic_definition,
+                query=exists_any,
+            )
+        )
+        matched, score, _near = search_module.search_clause_ranking(
+            {"title": "Ada"},
+            definition=dynamic_definition,
+            query=exists_any,
+        )
+        self.assertTrue(matched)
+        self.assertEqual(score, 1.0)
+
+    def test_search_parent_path_helpers_cover_descendant_resolution_and_presence(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "metadata": {
+                            "type": "document",
+                            "fields": {
+                                "topic": {"type": "string"},
+                                "series": {"type": "token"},
+                            },
+                        },
+                        "contributors": {
+                            "type": "embeddedDocuments",
+                            "fields": {
+                                "name": {"type": "string"},
+                            },
+                        },
+                    },
+                }
+            },
+            name="by_text",
+        )
+        prepared = materialize_search_document(
+            {
+                "metadata": {"topic": "Local search", "series": "analysis"},
+                "contributors": [{"name": "Ada Lovelace"}],
+            },
+            definition,
+        )
+
+        self.assertEqual(
+            search_module._resolved_materialized_paths(
+                prepared,
+                ("metadata", "metadata.topic", "contributors"),
+            ),
+            ("metadata.topic", "metadata.series", "contributors.name"),
+        )
+        self.assertEqual(
+            search_module._mapped_search_paths(definition),
+            (
+                "metadata",
+                "metadata.topic",
+                "metadata.series",
+                "contributors",
+                "contributors.name",
+            ),
+        )
+        self.assertEqual(search_module._mapped_search_paths(SearchIndexDefinition({}, name="vec", index_type="vectorSearch")), ())
+        self.assertEqual(search_module._mapped_search_paths(SearchIndexDefinition({"mappings": []}, name="by_text")), ())
+        self.assertEqual(search_module._iter_mapped_search_paths({"fields": []}), ())
+        self.assertEqual(
+            search_module._iter_mapped_search_paths(
+                {
+                    "fields": {
+                        "": {"type": "string"},
+                        "metadata": {"type": "document", "fields": {"topic": {"type": "string"}}},
+                        "bad": "nope",
+                    }
+                }
+            ),
+            ("metadata", "metadata.topic"),
+        )
+        self.assertTrue(search_module._search_path_exists({"contributors": []}, "contributors"))
+        self.assertFalse(search_module._search_path_exists({"contributors": []}, "contributors.name"))
+        self.assertTrue(search_module._search_path_exists({"contributors": [{"name": "Ada"}]}, "contributors.name"))
+        self.assertTrue(search_module._search_path_exists({"history": [1, 2]}, "history.1"))
+        self.assertFalse(search_module._search_path_exists({"history": [1]}, "history.3"))
+        self.assertFalse(search_module._search_path_exists(5, "history"))
+        self.assertFalse(search_module._search_path_exists({"history": [1]}, "scores.0"))
+        self.assertTrue(search_module._search_path_exists({"value": None}, ""))
 
     def test_search_compound_ranking_prefers_more_should_hits_and_near_closeness(self) -> None:
         definition = SearchIndexDefinition(

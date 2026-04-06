@@ -624,10 +624,13 @@ def matches_search_regex_query(
         compiled = re.compile(query.raw_query)
     except re.error:
         return False
+    allowed_paths = None if query.paths is None else frozenset(
+        _resolved_materialized_paths(prepared, query.paths)
+    )
     return any(
         compiled.search(value) is not None
         for field_path, value in prepared.entries
-        if query.paths is None or field_path in query.paths
+        if allowed_paths is None or field_path in allowed_paths
     )
 
 
@@ -639,12 +642,12 @@ def matches_search_exists_query(
     materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
     prepared = materialized or materialize_search_document(document, definition)
-    if not prepared.entries:
-        return False
     if query.paths is None:
-        return True
-    allowed = set(query.paths)
-    return any(path in allowed for path in prepared.searchable_paths)
+        mapped_paths = _mapped_search_paths(definition)
+        if mapped_paths:
+            return any(_search_path_exists(document, path) for path in mapped_paths)
+        return bool(prepared.entries)
+    return any(_search_path_exists(document, path) for path in query.paths)
 
 
 def matches_search_in_query(
@@ -807,20 +810,27 @@ def search_clause_ranking(
         return score > 0.0, score, None
     if isinstance(query, SearchRegexQuery):
         compiled = re.compile(query.raw_query)
+        allowed_paths = None if query.paths is None else frozenset(
+            _resolved_materialized_paths(prepared, query.paths)
+        )
         score = float(
             sum(
                 1
                 for field_path, value in prepared.entries
-                if (query.paths is None or field_path in query.paths)
+                if (allowed_paths is None or field_path in allowed_paths)
                 and compiled.search(value) is not None
             )
         )
         return score > 0.0, score, None
     if isinstance(query, SearchExistsQuery):
         if query.paths is None:
-            score = float(len(prepared.searchable_paths))
+            mapped_paths = _mapped_search_paths(definition)
+            if mapped_paths:
+                score = float(sum(1 for path in mapped_paths if _search_path_exists(document, path)))
+            else:
+                score = float(len(prepared.searchable_paths))
         else:
-            score = float(sum(1 for path in query.paths if path in prepared.searchable_paths))
+            score = float(sum(1 for path in query.paths if _search_path_exists(document, path)))
         return score > 0.0, score, None
     if isinstance(query, SearchInQuery):
         score = float(
@@ -983,7 +993,7 @@ def _materialized_lowered_values(
     if paths is None:
         return prepared.lowered_values
     values: list[str] = []
-    for path in paths:
+    for path in _resolved_materialized_paths(prepared, paths):
         values.extend(prepared.lowered_values_by_path.get(path, ()))
     return tuple(values)
 
@@ -996,7 +1006,7 @@ def _materialized_token_sets(
         return tuple(prepared.token_sets_by_path.values())
     return tuple(
         prepared.token_sets_by_path[path]
-        for path in paths
+        for path in _resolved_materialized_paths(prepared, paths)
         if path in prepared.token_sets_by_path
     )
 
@@ -1008,7 +1018,7 @@ def _materialized_token_set(
     if paths is None:
         return prepared.token_set
     tokens: set[str] = set()
-    for path in paths:
+    for path in _resolved_materialized_paths(prepared, paths):
         tokens.update(prepared.token_sets_by_path.get(path, ()))
     return frozenset(tokens)
 
@@ -1020,7 +1030,7 @@ def _materialized_token_counter(
     if paths is None:
         return prepared.token_counter
     tokens: Counter[str] = Counter()
-    for path in paths:
+    for path in _resolved_materialized_paths(prepared, paths):
         tokens.update(prepared.token_counter_by_path.get(path, Counter()))
     return tokens
 
@@ -1033,9 +1043,27 @@ def _materialized_token_counters(
         return tuple(prepared.token_counter_by_path.values())
     return tuple(
         prepared.token_counter_by_path[path]
-        for path in paths
+        for path in _resolved_materialized_paths(prepared, paths)
         if path in prepared.token_counter_by_path
     )
+
+
+def _resolved_materialized_paths(
+    prepared: MaterializedSearchDocument,
+    paths: tuple[str, ...],
+) -> tuple[str, ...]:
+    available_paths = tuple(prepared.lowered_values_by_path)
+    resolved: list[str] = []
+    seen: set[str] = set()
+    for path in paths:
+        for candidate in available_paths:
+            if candidate != path and not candidate.startswith(f"{path}."):
+                continue
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            resolved.append(candidate)
+    return tuple(resolved)
 
 
 def vector_field_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:
@@ -2070,6 +2098,32 @@ def _collect_text_leaf_entries(value: object, path: str) -> list[tuple[str, str]
     return []
 
 
+def _mapped_search_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:
+    if definition.index_type not in TEXTUAL_SEARCH_INDEX_TYPES:
+        return ()
+    mappings = definition.definition.get("mappings")
+    if not isinstance(mappings, dict):
+        return ()
+    return tuple(_iter_mapped_search_paths(mappings))
+
+
+def _iter_mapped_search_paths(mappings: Document, prefix: str = "") -> tuple[str, ...]:
+    fields = mappings.get("fields", {})
+    if not isinstance(fields, dict):
+        return ()
+    collected: list[str] = []
+    for field_name, field_spec in fields.items():
+        if not isinstance(field_name, str) or not field_name or not isinstance(field_spec, dict):
+            continue
+        path = f"{prefix}.{field_name}" if prefix else field_name
+        mapping_type = field_spec.get("type", "document")
+        collected.append(path)
+        if mapping_type in STRUCTURED_SEARCH_FIELD_MAPPING_TYPES:
+            nested_mapping = {key: value for key, value in field_spec.items() if key != "type"}
+            collected.extend(_iter_mapped_search_paths(nested_mapping, prefix=path))
+    return tuple(dict.fromkeys(collected))
+
+
 def _search_path_values(value: object, path: str) -> tuple[object, ...]:
     if not path:
         if isinstance(value, list):
@@ -2101,6 +2155,32 @@ def _search_path_values(value: object, path: str) -> tuple[object, ...]:
     if first not in value:
         return ()
     return _search_path_values(value[first], rest)
+
+
+def _search_path_exists(value: object, path: str) -> bool:
+    if not path:
+        return True
+
+    if isinstance(value, list):
+        segment = path.split(".", 1)[0]
+        if segment.isdigit():
+            index = int(segment)
+            if index >= len(value):
+                return False
+            rest = path.split(".", 1)[1] if "." in path else ""
+            return _search_path_exists(value[index], rest)
+        return any(_search_path_exists(item, path) for item in value)
+
+    if not isinstance(value, dict):
+        return False
+
+    if "." not in path:
+        return path in value
+
+    first, rest = path.split(".", 1)
+    if first not in value:
+        return False
+    return _search_path_exists(value[first], rest)
 
 
 def _search_near_origin_kind(value: object) -> str | None:

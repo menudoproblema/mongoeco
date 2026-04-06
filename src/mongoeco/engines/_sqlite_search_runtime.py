@@ -349,10 +349,12 @@ def _sqlite_leaf_candidate_storage_keys(
         backend = "fts5-path"
         exact = True
     if query.paths is not None:
-        placeholders = ", ".join("?" for _ in query.paths)
-        clause = f"field_path IN ({placeholders})"
-        sql = f"{sql} WHERE {clause}" if " WHERE " not in sql else f"{sql} AND {clause}"
-        params.extend(query.paths)
+        path_clauses: list[str] = []
+        for path in query.paths:
+            path_clauses.append("(field_path = ? OR field_path LIKE ?)")
+            params.extend([path, f"{path}.%"])
+        clause = " OR ".join(path_clauses)
+        sql = f"{sql} WHERE ({clause})" if " WHERE " not in sql else f"{sql} AND ({clause})"
     return [row[0] for row in conn.execute(sql, tuple(params)).fetchall()], backend, exact
 
 

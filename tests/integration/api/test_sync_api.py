@@ -1185,6 +1185,23 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     ).to_list()
                     self.assertEqual([document["_id"] for document in hits], [1, 3])
 
+                    parent_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "text": {
+                                        "query": "Ada",
+                                        "path": "contributors",
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in parent_hits], [1, 3])
+
                     equals_hits = collection.aggregate(
                         [
                             {
@@ -1380,6 +1397,23 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ]
                     ).to_list()
                     self.assertEqual([document["_id"] for document in topic_hits], [1])
+
+                    parent_topic_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "text": {
+                                        "query": "Local",
+                                        "path": "metadata",
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in parent_topic_hits], [1])
 
                     near_hits = collection.aggregate(
                         [

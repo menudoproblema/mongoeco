@@ -74,9 +74,12 @@ Esto implica:
   `objectId`, `uuid`, `document` y `embeddedDocuments`; los tipos textuales
   siguen siendo `string`, `autocomplete` y `token`, el subset escalar se usa
   para filtros y matching escalar honesto, `document` deja declarar objetos
-  anidados explícitos como `metadata.topic`, y `embeddedDocuments` deja
-  declarar arrays de documentos anidados con paths explícitos como
-  `contributors.name`, `contributors.verified` o `contributors.impact`.
+  anidados explícitos como `metadata.topic`, y tanto `document` como
+  `embeddedDocuments` admiten ya búsquedas por path padre estructurado
+  (`metadata`, `contributors`) que se resuelven contra sus leafs textuales
+  mapeados; además `embeddedDocuments` deja declarar arrays de documentos
+  anidados con paths explícitos como `contributors.name`,
+  `contributors.verified` o `contributors.impact`.
 * cuando una pipeline deja un `skip/limit` seguro tras `$search`, el runtime
   local puede usar ese `top-k` para limitar candidatos y materialización sin
   cambiar el contrato observable.

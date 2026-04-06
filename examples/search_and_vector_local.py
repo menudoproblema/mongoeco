@@ -101,6 +101,25 @@ def main() -> None:
             contributor_results,
         )
 
+        contributor_parent_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "text": {
+                            "query": "Ada",
+                            "path": "contributors",
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1}},
+            ]
+        ).to_list()
+        print(
+            "$search embeddedDocuments parent-path results:",
+            contributor_parent_results,
+        )
+
         contributor_equals_results = collection.aggregate(
             [
                 {
@@ -157,6 +176,25 @@ def main() -> None:
         print(
             "$search document mapping metadata results:",
             nested_document_results,
+        )
+
+        nested_document_parent_results = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "text": {
+                            "query": "Local",
+                            "path": "metadata",
+                        },
+                    }
+                },
+                {"$project": {"_id": 1, "title": 1, "metadata": 1}},
+            ]
+        ).to_list()
+        print(
+            "$search document parent-path results:",
+            nested_document_parent_results,
         )
 
         near_results = collection.aggregate(

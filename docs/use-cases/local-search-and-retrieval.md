@@ -103,6 +103,8 @@ These examples show:
 
 * exact `phrase` versus `phrase.slop`;
 * `embeddedDocuments` mappings for paths such as `contributors.name`;
+* parent-path resolution for structured mappings such as `contributors` or
+  `metadata`, which resolve to mapped descendant leaf fields;
 * scalar operators over `embeddedDocuments` paths such as
   `contributors.verified` or `contributors.impact`;
 * explicit `document` mappings for paths such as `metadata.topic`;
