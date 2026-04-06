@@ -150,6 +150,7 @@ The same requirement shape is now reused in `explain()["cxp"]` whenever
 
 * `minimalProfile`
 * `minimalProfileRequirements`
+* `compatibleProfiles`
 
 `mongoeco` reexports those profiles through `mongoeco.cxp`, but does not
 perform profile negotiation itself.

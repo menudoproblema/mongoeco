@@ -146,6 +146,11 @@ class CxpAlignmentTests(unittest.TestCase):
                 capability='transactions',
             )
         )
+        write_projection = (
+            cxp_capabilities_module.build_mongodb_explain_projection(
+                capability='write',
+            )
+        )
 
         self.assertEqual(exported['interface'], 'database/mongodb')
         self.assertIn('profiles', exported)
@@ -278,6 +283,10 @@ class CxpAlignmentTests(unittest.TestCase):
         self.assertEqual(projection['provider'], 'mongoeco')
         self.assertEqual(projection['minimalProfile'], 'mongodb-text-search')
         self.assertEqual(
+            projection['compatibleProfiles'],
+            ['mongodb-text-search', 'mongodb-search'],
+        )
+        self.assertEqual(
             projection['minimalProfileRequirements'][-1],
             {
                 'capabilityName': 'search',
@@ -287,8 +296,13 @@ class CxpAlignmentTests(unittest.TestCase):
         )
         self.assertEqual(projection['additionalCapabilities'], ['search'])
         self.assertEqual(projection['metadata'], {'mode': 'local'})
+        self.assertEqual(
+            write_projection['compatibleProfiles'],
+            ['mongodb-core', 'mongodb-platform'],
+        )
         self.assertNotIn('minimalProfile', platform_projection)
         self.assertNotIn('minimalProfileRequirements', platform_projection)
+        self.assertNotIn('compatibleProfiles', platform_projection)
 
     def test_catalog_operation_result_types_reject_inconsistent_catalog_entries(
         self,

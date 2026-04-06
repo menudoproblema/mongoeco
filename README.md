@@ -97,8 +97,8 @@ For reusable profile gates, the practical split is now:
 
 The public compat export serializes those profiles with structured
 requirements, and the `cxp` block in `explain()` now carries the minimal
-reusable profile and its structured requirements for the current capability
-path when that can be inferred honestly.
+reusable profile, its structured requirements and the broader compatible
+profiles for the current capability path when that can be inferred honestly.
 
 If a consumer only needs the reusable profile catalog, `mongoeco` also exposes
 `export_cxp_profile_catalog()`. If it wants the same profiles annotated with

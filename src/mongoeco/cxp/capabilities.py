@@ -368,6 +368,36 @@ def _minimal_profile_name_for_projection(
     return None
 
 
+def _compatible_profile_names_for_projection(
+    capability: str,
+    additional_capabilities: tuple[str, ...],
+) -> list[str]:
+    if capability == MONGODB_READ:
+        return [
+            MONGODB_CORE_PROFILE_NAME,
+            MONGODB_PLATFORM_PROFILE_NAME,
+        ]
+    if capability == MONGODB_WRITE:
+        return [
+            MONGODB_CORE_PROFILE_NAME,
+            MONGODB_PLATFORM_PROFILE_NAME,
+        ]
+    if capability == MONGODB_AGGREGATION:
+        if MONGODB_VECTOR_SEARCH in additional_capabilities:
+            return [MONGODB_SEARCH_PROFILE_NAME]
+        if MONGODB_SEARCH in additional_capabilities:
+            return [
+                MONGODB_TEXT_SEARCH_PROFILE_NAME,
+                MONGODB_SEARCH_PROFILE_NAME,
+            ]
+        return [
+            MONGODB_CORE_PROFILE_NAME,
+            MONGODB_PLATFORM_PROFILE_NAME,
+            MONGODB_AGGREGATE_RICH_PROFILE_NAME,
+        ]
+    return []
+
+
 _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
     MONGODB_READ: {
         'embedded': True,
@@ -916,6 +946,12 @@ def build_mongodb_explain_projection(
         projection['minimalProfileRequirements'] = deepcopy(
             _exported_profiles()[minimal_profile]['requirements']
         )
+    compatible_profiles = _compatible_profile_names_for_projection(
+        capability,
+        additional_capabilities,
+    )
+    if compatible_profiles:
+        projection['compatibleProfiles'] = compatible_profiles
     if metadata:
         projection['metadata'] = deepcopy(metadata)
     return projection

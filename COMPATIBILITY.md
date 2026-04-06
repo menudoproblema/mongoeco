@@ -31,7 +31,8 @@ Regla importante:
 * esos perfiles se exportan con requisitos estructurados
   (`capabilityName`, `requiredOperations`, `requiredMetadataKeys`) y
   `explain()` deja visible tanto el perfil mínimo aplicable como sus
-  requisitos estructurados cuando puede inferirse honestamente;
+  requisitos estructurados y los perfiles compatibles más amplios cuando puede
+  inferirse honestamente;
 * `local_runtime_subsets` sigue existiendo por compatibilidad documental, pero
   ya no es la fuente primaria de verdad.
 
