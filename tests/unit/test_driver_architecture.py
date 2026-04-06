@@ -845,6 +845,9 @@ class ClientDriverArchitectureTests(unittest.TestCase):
         self.assertIsInstance(events[2], CommandStartedEvent)
         self.assertIsInstance(events[3], CommandSucceededEvent)
         self.assertIsInstance(events[4], ConnectionCheckedInEvent)
+        request_ids = {event.request_id for event in events}
+        self.assertEqual(len(request_ids), 1)
+        self.assertTrue(next(iter(request_ids)))
 
     def test_sync_client_execute_driver_command_wraps_async_runtime(self):
         client = MongoClient(uri="mongodb://db1:27017/")
@@ -1190,6 +1193,11 @@ class RequestExecutionPipelineTests(unittest.TestCase):
             ],
         )
         self.assertTrue(runtime.monitor.history[3].retryable)
+        first_request_ids = {event.request_id for event in runtime.monitor.history[:5]}
+        second_request_ids = {event.request_id for event in runtime.monitor.history[5:]}
+        self.assertEqual(len(first_request_ids), 1)
+        self.assertEqual(len(second_request_ids), 1)
+        self.assertNotEqual(first_request_ids, second_request_ids)
 
     def test_local_command_transport_executes_database_commands_with_session(self):
         async def _run() -> tuple[str, dict[str, object]]:

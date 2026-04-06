@@ -12,8 +12,8 @@ That means:
   as a live CXP provider.
 
 It does **not** mean that `mongoeco` ships a built-in provider implementation
-for negotiation, instance resolution or telemetry collection. Those concerns
-belong to the system that wants to use `mongoeco` as a resource or provider.
+for negotiation or instance resolution. Those concerns belong to the system
+that wants to use `mongoeco` as a resource or provider.
 
 ## What `mongoeco` publishes
 
@@ -123,6 +123,72 @@ capabilities that need a richer subset contract, such as:
 aligned execution catalogs, so the public integration stays aligned with CXP
 instead of carrying a parallel local model.
 
+## Driver telemetry projection
+
+`mongoeco` now also ships a reusable projection from driver monitor events to
+the canonical `db.client.*` telemetry declared by the `database/mongodb`
+catalog.
+
+The source of truth remains the internal driver monitor:
+
+* `ServerSelectedEvent`
+* `ConnectionCheckedOutEvent`
+* `ConnectionCheckedInEvent`
+* `CommandStartedEvent`
+* `CommandSucceededEvent`
+* `CommandFailedEvent`
+
+The public adapter lives in `mongoeco.cxp.telemetry`:
+
+```python
+from mongoeco import MongoClient
+from mongoeco.cxp.telemetry import DriverTelemetryProjector
+
+
+with MongoClient() as client:
+    projector = DriverTelemetryProjector(provider_id="mongoeco-local")
+    projector.attach(client.driver_monitor)
+
+    client.execute_driver_command(
+        "demo",
+        "insert",
+        {"insert": "items", "documents": [{"_id": 1}]},
+        read_only=False,
+    )
+
+    snapshot = projector.snapshot()
+    print(snapshot)
+```
+
+Current v1 coverage is intentionally conservative:
+
+* `read`
+* `write`
+* `aggregation`
+* `search`
+* `vector_search`
+
+`mongoeco` projects command attempts to the canonical signals declared by the
+catalog:
+
+* `db.client.operation*`
+* `db.client.aggregate*`
+* `db.client.search*`
+* `db.client.vector_search*`
+
+The driver events keep their richer internal details. The CXP side only emits
+the canonical fields that can be derived reliably from the command attempt, for
+example:
+
+* `db.system.name`
+* `db.operation.name`
+* `db.namespace.name`
+* `db.operation.outcome`
+* `db.pipeline.stage.count`
+* `db.pipeline.stage.name`
+* `db.search.operator`
+* `db.vector_search.similarity`
+
 ## Example
 
 ```python
@@ -146,8 +212,11 @@ with MongoClient(MemoryEngine()) as client:
 Current limits of the `mongoeco` side of the integration:
 
 * `mongoeco` does not ship a live CXP provider wrapper for its clients;
-* it does not negotiate profiles or capabilities on behalf of external
+* it does not negotiate profiles, telemetry streams or capabilities on behalf of external
   frameworks;
+* the built-in telemetry projection is limited to canonical command telemetry
+  for `read`, `write`, `aggregation`, `search` and `vector_search`;
 * it exposes canonical capabilities, canonical first-level operations,
-  structured subset metadata, and aligned catalog reexports, but keeps
-  implementation-specific details out of the catalog.
+  structured subset metadata, aligned catalog reexports, and a reusable driver
+  telemetry projector, but keeps implementation-specific details out of the
+  catalog.

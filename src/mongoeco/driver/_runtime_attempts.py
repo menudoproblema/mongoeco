@@ -53,6 +53,7 @@ class RuntimeAttemptLifecycle:
                 attempt_number=attempt_number,
                 read_only=plan.request.read_only,
                 session_id=plan.request.session_id,
+                request_id=execution.request_id,
             )
         )
         self._monitor.emit(
@@ -63,6 +64,7 @@ class RuntimeAttemptLifecycle:
                 connection_id=lease.connection_id,
                 attempt_number=attempt_number,
                 session_id=plan.request.session_id,
+                request_id=execution.request_id,
             )
         )
         return execution
@@ -77,6 +79,7 @@ class RuntimeAttemptLifecycle:
                 connection_id=execution.connection.connection_id,
                 attempt_number=execution.attempt_number,
                 session_id=execution.plan.request.session_id,
+                request_id=execution.request_id,
             )
         )
 

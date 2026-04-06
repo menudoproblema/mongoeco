@@ -94,6 +94,7 @@ async def execute_request_pipeline(
                     attempt_number=execution.attempt_number,
                     read_only=plan.request.read_only,
                     session_id=plan.request.session_id,
+                    request_id=execution.request_id,
                 )
             )
         try:
@@ -115,6 +116,7 @@ async def execute_request_pipeline(
                         attempt_number=execution.attempt_number,
                         duration_ms=(time.perf_counter() - started_at) * 1000,
                         session_id=plan.request.session_id,
+                        request_id=execution.request_id,
                     )
                 )
         except Exception as exc:  # noqa: BLE001
@@ -139,6 +141,7 @@ async def execute_request_pipeline(
                         duration_ms=(time.perf_counter() - started_at) * 1000,
                         retryable=outcome.retryable,
                         session_id=plan.request.session_id,
+                        request_id=execution.request_id,
                     )
                 )
         finally:

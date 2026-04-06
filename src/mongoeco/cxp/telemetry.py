@@ -9,9 +9,11 @@ from cxp.telemetry import (
     TelemetrySnapshot,
     TelemetrySpan,
 )
+from mongoeco.cxp.driver_telemetry import DriverTelemetryProjector
 
 __all__ = (
     'ComponentStatus',
+    'DriverTelemetryProjector',
     'TelemetryBuffer',
     'TelemetryBufferOverflow',
     'TelemetryContext',

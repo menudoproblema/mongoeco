@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
+from uuid import uuid4
 
 from mongoeco.driver.connections import ConnectionLease
 from mongoeco.driver.policies import ConcernPolicy, RetryPolicy, SelectionPolicy, TimeoutPolicy
@@ -56,3 +57,4 @@ class PreparedRequestExecution:
     selected_server: ServerDescription
     connection: ConnectionLease
     attempt_number: int = 1
+    request_id: str = field(default_factory=lambda: uuid4().hex)
