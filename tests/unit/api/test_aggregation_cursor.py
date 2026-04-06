@@ -183,12 +183,24 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(plain._cxp_explain_projection()["minimalProfile"], "mongodb-core")
         self.assertEqual(
+            plain._cxp_explain_projection()["minimalProfileRequirements"][0]["capabilityName"],
+            "read",
+        )
+        self.assertEqual(
             text_search._cxp_explain_projection()["minimalProfile"],
             "mongodb-text-search",
         )
         self.assertEqual(
+            text_search._cxp_explain_projection()["minimalProfileRequirements"][-1]["capabilityName"],
+            "search",
+        )
+        self.assertEqual(
             vector_search._cxp_explain_projection()["minimalProfile"],
             "mongodb-search",
+        )
+        self.assertEqual(
+            vector_search._cxp_explain_projection()["minimalProfileRequirements"][-1]["capabilityName"],
+            "vector_search",
         )
 
     def test_search_result_limit_hint_is_only_exposed_for_safe_trailing_window(self):

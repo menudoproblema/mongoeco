@@ -26,8 +26,8 @@ Regla importante:
   `vector_search`;
 * esos perfiles se exportan con requisitos estructurados
   (`capabilityName`, `requiredOperations`, `requiredMetadataKeys`) y
-  `explain()` deja visible el perfil mínimo aplicable cuando puede inferirse
-  honestamente;
+  `explain()` deja visible tanto el perfil mínimo aplicable como sus
+  requisitos estructurados cuando puede inferirse honestamente;
 * `local_runtime_subsets` sigue existiendo por compatibilidad documental, pero
   ya no es la fuente primaria de verdad.
 

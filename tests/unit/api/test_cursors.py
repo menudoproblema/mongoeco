@@ -238,6 +238,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             "mongodb-core",
         )
         self.assertEqual(
+            async_cursor_module._find_explain_cxp_projection({"name": "Ada"})[
+                "minimalProfileRequirements"
+            ][0]["capabilityName"],
+            "read",
+        )
+        self.assertEqual(
             async_cursor_module._find_explain_cxp_projection(
                 {"$text": {"$search": "ada"}}
             )["minimalProfile"],

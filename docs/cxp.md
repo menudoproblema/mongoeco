@@ -134,6 +134,12 @@ textual and vector search through `aggregate`.
 That keeps the public export directly useful for profile-aware tooling without
 forcing every consumer to import `cxp` just to inspect profile shape.
 
+The same requirement shape is now reused in `explain()["cxp"]` whenever
+`mongoeco` can infer a minimal reusable profile honestly, through:
+
+* `minimalProfile`
+* `minimalProfileRequirements`
+
 `mongoeco` reexports those profiles through `mongoeco.cxp`, but does not
 perform profile negotiation itself.
 
@@ -241,6 +247,11 @@ exposes the minimal reusable MongoDB profile for that capability path:
 * `find(...)` -> `mongodb-core`
 * `aggregate([{"$search": ...}])` -> `mongodb-text-search`
 * `aggregate([{"$vectorSearch": ...}])` -> `mongodb-search`
+
+That means a consumer can inspect one `explain()` result and recover both:
+
+* the canonical capability path being exercised;
+* the profile gate and exact profile requirements that would cover that path.
 
 ## Limits
 

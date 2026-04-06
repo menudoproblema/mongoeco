@@ -261,9 +261,18 @@ class CxpAlignmentTests(unittest.TestCase):
         )
         self.assertEqual(projection['provider'], 'mongoeco')
         self.assertEqual(projection['minimalProfile'], 'mongodb-text-search')
+        self.assertEqual(
+            projection['minimalProfileRequirements'][-1],
+            {
+                'capabilityName': 'search',
+                'requiredOperations': ['aggregate'],
+                'requiredMetadataKeys': ['operators', 'aggregateStage'],
+            },
+        )
         self.assertEqual(projection['additionalCapabilities'], ['search'])
         self.assertEqual(projection['metadata'], {'mode': 'local'})
         self.assertNotIn('minimalProfile', platform_projection)
+        self.assertNotIn('minimalProfileRequirements', platform_projection)
 
     def test_catalog_operation_result_types_reject_inconsistent_catalog_entries(
         self,

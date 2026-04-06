@@ -228,6 +228,40 @@ def _serialize_profile(profile: CapabilityProfile, *, recommended_for: list[str]
     }
 
 
+def _exported_profiles() -> dict[str, dict[str, object]]:
+    return {
+        MONGODB_CORE_PROFILE_NAME: _serialize_profile(
+            MONGODB_CORE_PROFILE,
+            recommended_for=['core-tests', 'general-resources'],
+        ),
+        MONGODB_TEXT_SEARCH_PROFILE_NAME: _serialize_profile(
+            MONGODB_TEXT_SEARCH_PROFILE,
+            recommended_for=[
+                'text-search-tests',
+                'search-without-vector-search',
+            ],
+        ),
+        MONGODB_SEARCH_PROFILE_NAME: _serialize_profile(
+            MONGODB_SEARCH_PROFILE,
+            recommended_for=[
+                'full-search-tests',
+                'search-with-vector-search',
+            ],
+        ),
+        MONGODB_PLATFORM_PROFILE_NAME: _serialize_profile(
+            MONGODB_PLATFORM_PROFILE,
+            recommended_for=['platform-tests', 'runtime-conformance'],
+        ),
+        MONGODB_AGGREGATE_RICH_PROFILE_NAME: _serialize_profile(
+            MONGODB_AGGREGATE_RICH_PROFILE,
+            recommended_for=[
+                'aggregation-rich-tests',
+                'subset-sensitive-tooling',
+            ],
+        ),
+    }
+
+
 def _minimal_profile_name_for_projection(
     capability: str,
     additional_capabilities: tuple[str, ...],
@@ -743,37 +777,7 @@ def export_cxp_capability_catalog() -> dict[str, object]:
 
     return {
         'interface': MONGODB_INTERFACE,
-        'profiles': {
-            MONGODB_CORE_PROFILE_NAME: _serialize_profile(
-                MONGODB_CORE_PROFILE,
-                recommended_for=['core-tests', 'general-resources'],
-            ),
-            MONGODB_TEXT_SEARCH_PROFILE_NAME: _serialize_profile(
-                MONGODB_TEXT_SEARCH_PROFILE,
-                recommended_for=[
-                    'text-search-tests',
-                    'search-without-vector-search',
-                ],
-            ),
-            MONGODB_SEARCH_PROFILE_NAME: _serialize_profile(
-                MONGODB_SEARCH_PROFILE,
-                recommended_for=[
-                    'full-search-tests',
-                    'search-with-vector-search',
-                ],
-            ),
-            MONGODB_PLATFORM_PROFILE_NAME: _serialize_profile(
-                MONGODB_PLATFORM_PROFILE,
-                recommended_for=['platform-tests', 'runtime-conformance'],
-            ),
-            MONGODB_AGGREGATE_RICH_PROFILE_NAME: _serialize_profile(
-                MONGODB_AGGREGATE_RICH_PROFILE,
-                recommended_for=[
-                    'aggregation-rich-tests',
-                    'subset-sensitive-tooling',
-                ],
-            ),
-        },
+        'profiles': _exported_profiles(),
         'capabilities': capabilities,
         'extensions': export_cxp_extension_catalog(),
     }
@@ -814,6 +818,9 @@ def build_mongodb_explain_projection(
     )
     if minimal_profile is not None:
         projection['minimalProfile'] = minimal_profile
+        projection['minimalProfileRequirements'] = deepcopy(
+            _exported_profiles()[minimal_profile]['requirements']
+        )
     if metadata:
         projection['metadata'] = deepcopy(metadata)
     return projection
