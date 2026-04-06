@@ -1223,8 +1223,34 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(search_query_explain_details(wildcard)["paths"], ["title"])
         self.assertEqual(search_query_operator_name(equals), "equals")
         self.assertEqual(search_query_explain_details(equals)["value"], "note")
+        self.assertEqual(
+            search_query_explain_details(equals)["pathSummary"],
+            {
+                "all": ["kind"],
+                "pathCount": 1,
+                "multiPath": False,
+                "usesEmbeddedPaths": False,
+                "embeddedPaths": [],
+                "parentPaths": ["kind"],
+                "leafPaths": [],
+                "sections": ["equals"],
+            },
+        )
         self.assertEqual(search_query_operator_name(range_query), "range")
         self.assertEqual(search_query_explain_details(range_query)["range"]["boundKind"], "number")
+        self.assertEqual(
+            search_query_explain_details(range_query)["pathSummary"],
+            {
+                "all": ["score"],
+                "pathCount": 1,
+                "multiPath": False,
+                "usesEmbeddedPaths": False,
+                "embeddedPaths": [],
+                "parentPaths": ["score"],
+                "leafPaths": [],
+                "sections": ["range"],
+            },
+        )
         self.assertEqual(search_query_operator_name(near), "near")
         self.assertEqual(search_query_explain_details(near)["originKind"], "date")
         self.assertEqual(search_query_operator_name(compound), "compound")
@@ -2546,9 +2572,14 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(
             near_details["pathSummary"],
             {
-                "sections": ["near"],
                 "all": ["score"],
+                "pathCount": 1,
+                "multiPath": False,
                 "usesEmbeddedPaths": False,
+                "embeddedPaths": [],
+                "parentPaths": ["score"],
+                "leafPaths": [],
+                "sections": ["near"],
             },
         )
         self.assertEqual(
@@ -2641,6 +2672,31 @@ class SearchCoreTests(unittest.TestCase):
                     "metadata.series",
                     "metadata.topic",
                 ],
+                "unresolvedPaths": [],
+            },
+        )
+        scalar_details = search_query_explain_details(
+            SearchNearQuery(
+                index_name="by_text",
+                path="contributors.impact",
+                origin=8,
+                pivot=3.0,
+                origin_kind="number",
+            ),
+            definition=definition,
+        )
+        self.assertEqual(
+            scalar_details["pathSummary"],
+            {
+                "all": ["contributors.impact"],
+                "pathCount": 1,
+                "multiPath": False,
+                "usesEmbeddedPaths": True,
+                "embeddedPaths": ["contributors.impact"],
+                "parentPaths": [],
+                "leafPaths": ["contributors.impact"],
+                "sections": ["near"],
+                "resolvedLeafPaths": ["contributors.impact"],
                 "unresolvedPaths": [],
             },
         )

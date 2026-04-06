@@ -107,6 +107,9 @@ without guessing:
 * `search.structuredParentPathOperators` and `search.explainFeatures` make it
   explicit that structured parent paths work across the visible textual subset
   and that `explain()` resolves them to mapped leaf paths.
+* scalar search operators now expose consistent `pathSummary` metadata too,
+  which makes `read`/`aggregation` tooling easier to build without operator-
+  specific heuristics.
 
 ## Reusable profiles
 

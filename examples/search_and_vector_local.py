@@ -174,6 +174,23 @@ def main() -> None:
             "$search embeddedDocuments equals results:",
             contributor_equals_results,
         )
+        contributor_equals_explain = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "equals": {
+                            "path": "contributors.verified",
+                            "value": True,
+                        },
+                    }
+                }
+            ]
+        ).explain()
+        print(
+            "$search embeddedDocuments equals explain:",
+            contributor_equals_explain["engine_plan"]["details"]["pathSummary"],
+        )
 
         contributor_near_results = collection.aggregate(
             [
@@ -378,6 +395,26 @@ def main() -> None:
             "$search date near explain:",
             near_date_explain["engine_plan"]["details"]["originKind"],
             near_date_explain["engine_plan"]["details"]["pathSummary"],
+        )
+
+        score_range_explain = collection.aggregate(
+            [
+                {
+                    "$search": {
+                        "index": "content_search",
+                        "range": {
+                            "path": "score",
+                            "gte": 9,
+                            "lte": 10,
+                        },
+                    }
+                }
+            ]
+        ).explain()
+        print(
+            "$search range explain:",
+            score_range_explain["engine_plan"]["details"]["range"],
+            score_range_explain["engine_plan"]["details"]["pathSummary"],
         )
 
         search_results = collection.aggregate(

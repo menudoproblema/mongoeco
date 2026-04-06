@@ -140,12 +140,42 @@ def assert_in_equals_and_range_explanations(
     case.assertEqual(in_details["value"], ["note", "reference"])
     case.assertEqual(in_details["backend"], "python")
     case.assertEqual(in_details["compound"], None)
+    case.assertEqual(
+        in_details["pathSummary"],
+        {
+            "all": ["kind"],
+            "pathCount": 1,
+            "multiPath": False,
+            "usesEmbeddedPaths": False,
+            "embeddedPaths": [],
+            "parentPaths": ["kind"],
+            "leafPaths": [],
+            "sections": ["in"],
+            "resolvedLeafPaths": [],
+            "unresolvedPaths": ["kind"],
+        },
+    )
     equals_details = equals_explanation["engine_plan"]["details"]
     case.assertEqual(equals_details["queryOperator"], "equals")
     case.assertEqual(equals_details["path"], "kind")
     case.assertEqual(equals_details["value"], "note")
     case.assertEqual(equals_details["backend"], "python")
     case.assertEqual(equals_details["compound"], None)
+    case.assertEqual(
+        equals_details["pathSummary"],
+        {
+            "all": ["kind"],
+            "pathCount": 1,
+            "multiPath": False,
+            "usesEmbeddedPaths": False,
+            "embeddedPaths": [],
+            "parentPaths": ["kind"],
+            "leafPaths": [],
+            "sections": ["equals"],
+            "resolvedLeafPaths": [],
+            "unresolvedPaths": ["kind"],
+        },
+    )
     range_details = range_explanation["engine_plan"]["details"]
     case.assertEqual(range_details["queryOperator"], "range")
     case.assertEqual(range_details["path"], "score")
@@ -154,6 +184,21 @@ def assert_in_equals_and_range_explanations(
         {"gt": None, "gte": 9.0, "lt": None, "lte": 11.0, "boundKind": "number"},
     )
     case.assertEqual(range_details["backend"], "python")
+    case.assertEqual(
+        range_details["pathSummary"],
+        {
+            "all": ["score"],
+            "pathCount": 1,
+            "multiPath": False,
+            "usesEmbeddedPaths": False,
+            "embeddedPaths": [],
+            "parentPaths": ["score"],
+            "leafPaths": [],
+            "sections": ["range"],
+            "resolvedLeafPaths": ["score"],
+            "unresolvedPaths": [],
+        },
+    )
     if engine_name == "sqlite":
         case.assertFalse(bool(range_details.get("fts5_match")))
 

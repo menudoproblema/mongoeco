@@ -1695,6 +1695,7 @@ def _explain_in_query(query: SearchInQuery) -> dict[str, object | None]:
         "numCandidates": None,
         "filter": None,
         "similarity": None,
+        "pathSummary": _scalar_search_path_summary(query.path, section_name="in"),
     }
 
 
@@ -1714,6 +1715,7 @@ def _explain_equals_query(query: SearchEqualsQuery) -> dict[str, object | None]:
         "numCandidates": None,
         "filter": None,
         "similarity": None,
+        "pathSummary": _scalar_search_path_summary(query.path, section_name="equals"),
     }
 
 
@@ -1739,6 +1741,7 @@ def _explain_range_query(query: SearchRangeQuery) -> dict[str, object | None]:
         "numCandidates": None,
         "filter": None,
         "similarity": None,
+        "pathSummary": _scalar_search_path_summary(query.path, section_name="range"),
     }
 
 
@@ -1763,11 +1766,7 @@ def _explain_near_query(query: SearchNearQuery) -> dict[str, object | None]:
         "numCandidates": None,
         "filter": None,
         "similarity": None,
-        "pathSummary": {
-            "sections": ["near"],
-            "all": [query.path],
-            "usesEmbeddedPaths": "." in query.path,
-        },
+        "pathSummary": _scalar_search_path_summary(query.path, section_name="near"),
         "supportedOriginKinds": ["number", "date", "datetime"],
         "pivotDecay": {
             "baselineScore": 1.0,
@@ -1975,6 +1974,12 @@ def _search_path_summary(paths: list[str] | None) -> dict[str, object] | None:
     }
 
 
+def _scalar_search_path_summary(path: str, *, section_name: str) -> dict[str, object]:
+    path_summary = _search_path_summary([path]) or {}
+    path_summary["sections"] = [section_name]
+    return path_summary
+
+
 def _enrich_search_explain_details(
     details: dict[str, object | None],
     *,
@@ -2006,6 +2011,15 @@ def _enrich_search_explain_details(
             paths=list(query.paths) if query.paths is not None else None,
             available_leaf_paths=_mapped_leaf_search_paths(definition),
         )
+        return
+    if isinstance(query, (SearchInQuery, SearchEqualsQuery, SearchRangeQuery, SearchNearQuery)):
+        path_value = details.get("path")
+        if isinstance(path_value, str) and path_value:
+            _attach_resolved_leaf_paths(
+                path_summary,
+                paths=[path_value],
+                available_leaf_paths=_mapped_scalar_search_paths(definition),
+            )
         return
     if isinstance(query, SearchCompoundQuery):
         all_paths = path_summary.get("all")

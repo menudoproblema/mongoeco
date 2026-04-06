@@ -498,6 +498,9 @@ Límites conscientes:
 * `compound` se limita a combinar el subset local soportado
   (`text`/`phrase`/`autocomplete`/`wildcard`/`regex`/`exists`/`in`/`equals`/`range`/`near`)
   con `must`, `should`, `filter`, `mustNot` y `minimumShouldMatch`;
+* `explain()` publica ya `pathSummary` consistente tambien para `in`,
+  `equals`, `range` y `near`, incluyendo `resolvedLeafPaths` cuando la query
+  se apoya sobre mappings escalares conocidos;
 * `phrase` acepta `slop` entero no negativo como subset local explícito; con
   `slop=0` conserva la frase exacta, y con `slop>0` permite tokens
   intermedios extra entre términos manteniendo orden;

@@ -769,9 +769,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         near_explanation["engine_plan"]["details"]["pathSummary"],
                         {
-                            "sections": ["near"],
                             "all": ["score"],
+                            "pathCount": 1,
+                            "multiPath": False,
+                            "parentPaths": ["score"],
+                            "leafPaths": [],
+                            "sections": ["near"],
+                            "resolvedLeafPaths": ["score"],
+                            "unresolvedPaths": [],
                             "usesEmbeddedPaths": False,
+                            "embeddedPaths": [],
                         },
                     )
                     self.assertEqual(near_explanation["engine_plan"]["details"]["backend"], "python")

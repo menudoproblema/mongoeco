@@ -286,7 +286,8 @@ Examples worth showing first:
   `embeddedDocuments` paths, parent-path resolution for `metadata` and
   `contributors`, numeric/date `near`, parent-path `exists` over structured
   mappings, parent-path `autocomplete` / `wildcard` / `regex` over structured
-  mappings with resolved descendant leaf paths in `explain()`, scalar filters
+  mappings with resolved descendant leaf paths in `explain()`, consistent
+  scalar `pathSummary` metadata for `equals` / `range` / `near`, scalar filters
   over embedded-document paths, and a local
   `compound` query with visible embedded path/ranking explain metadata plus
   `equals` + `in` + `range` + `near` + `exists` + `regex`.
