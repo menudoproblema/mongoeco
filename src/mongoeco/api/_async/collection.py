@@ -355,6 +355,11 @@ class AsyncCollection:
             "partial_filter_expression",
             "expireAfterSeconds",
             "expire_after_seconds",
+            "weights",
+            "defaultLanguage",
+            "default_language",
+            "languageOverride",
+            "language_override",
         }
         if unsupported:
             unsupported_names = ", ".join(sorted(unsupported))
@@ -370,6 +375,11 @@ class AsyncCollection:
             "partial_filter_expression",
             "expireAfterSeconds",
             "expire_after_seconds",
+            "weights",
+            "defaultLanguage",
+            "default_language",
+            "languageOverride",
+            "language_override",
         ):
             if field in document:
                 kwargs[field] = document[field]
@@ -1412,6 +1422,9 @@ class AsyncCollection:
         collation: dict[str, object] | None = None,
         partial_filter_expression: dict[str, object] | None = None,
         expire_after_seconds: int | None = None,
+        weights: dict[str, int] | None = None,
+        default_language: str | None = None,
+        language_override: str | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
@@ -1426,6 +1439,9 @@ class AsyncCollection:
             collation=collation,
             partial_filter_expression=partial_filter_expression,
             expire_after_seconds=expire_after_seconds,
+            weights=weights,
+            default_language=default_language,
+            language_override=language_override,
             comment=comment,
             max_time_ms=max_time_ms,
             session=session,

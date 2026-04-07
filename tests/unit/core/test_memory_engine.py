@@ -12,7 +12,7 @@ from mongoeco.engines._memory_vector_runtime import (
 from mongoeco.api.operations import compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.codec import DocumentCodec
-from mongoeco.core.search import SearchVectorQuery, compile_search_stage
+from mongoeco.core.search import SearchVectorQuery, compile_classic_text_query, compile_search_stage
 from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.engines import memory as memory_module
 from mongoeco.engines.semantic_core import compile_find_semantics
@@ -812,8 +812,109 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 "special index types currently require a single-field key pattern",
             ):
                 await engine.create_index("db", "coll", [("geo", "2dsphere"), ("kind", 1)])
+            with self.assertRaisesRegex(OperationFailure, "only supported for text indexes"):
+                await engine.create_index("db", "coll", [("title", 1)], weights={"title": 2})
         finally:
             await engine.disconnect()
+
+    async def test_create_index_accepts_text_index_with_ordered_prefix_suffix_keys(self) -> None:
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            index_name = await engine.create_index(
+                "db",
+                "coll",
+                [("title", "text"), ("createdAt", -1)],
+                name="title_text_createdAt_1",
+            )
+            indexes = await engine.list_indexes("db", "coll")
+            self.assertEqual(indexes[1]["name"], "title_text_createdAt_1")
+            self.assertEqual(indexes[1]["key"], {"title": "text", "createdAt": -1})
+            self.assertEqual(index_name, "title_text_createdAt_1")
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada", "createdAt": 1})
+            found = [
+                document
+                async for document in engine.scan_find_semantics(
+                    "db",
+                    "coll",
+                    compile_find_semantics(
+                        {},
+                        text_query=compile_classic_text_query({"$search": "Ada"}),
+                    ),
+                )
+            ]
+            self.assertEqual(found, [{"_id": "1", "title": "Ada", "createdAt": 1}])
+        finally:
+            await engine.disconnect()
+
+    async def test_create_index_persists_text_weights_and_language_metadata(self) -> None:
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index(
+                "db",
+                "coll",
+                [("title", "text"), ("body", "text")],
+                name="title_text_body_text",
+                weights={"title": 5, "body": 1},
+                default_language="english",
+                language_override="lang",
+            )
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada", "body": "none"})
+            await engine.put_document("db", "coll", {"_id": "2", "title": "none", "body": "Ada"})
+            indexes = await engine.list_indexes("db", "coll")
+            info = await engine.index_information("db", "coll")
+            semantics = compile_find_semantics(
+                text_query=compile_classic_text_query({"$search": "Ada"})
+            )
+            scored_documents = list(
+                engine._iter_documents_for_classic_text_query(
+                    [
+                        {"_id": "1", "title": "Ada", "body": "none"},
+                        {"_id": "2", "title": "none", "body": "Ada"},
+                    ],
+                    indexes=engine._indexes["db"]["coll"],
+                    semantics=semantics,
+                )
+            )
+            explanation = await engine.explain_find_semantics(
+                "db",
+                "coll",
+                semantics,
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertIn(
+            {
+                "name": "title_text_body_text",
+                "key": {"title": "text", "body": "text"},
+                "unique": False,
+                "weights": {"title": 5, "body": 1},
+                "default_language": "english",
+                "language_override": "lang",
+            },
+            indexes,
+        )
+        self.assertEqual(
+            info["title_text_body_text"],
+            {
+                "key": [("title", "text"), ("body", "text")],
+                "weights": {"title": 5, "body": 1},
+                "default_language": "english",
+                "language_override": "lang",
+            },
+        )
+        self.assertEqual(
+            scored_documents,
+            [
+                {"_id": "1", "title": "Ada", "body": "none", "__mongoeco_textScore__": 5.0},
+                {"_id": "2", "title": "none", "body": "Ada", "__mongoeco_textScore__": 1.0},
+            ],
+        )
+        self.assertEqual(explanation.details["textQuery"]["weights"], {"title": 5, "body": 1})
+        self.assertEqual(explanation.details["textQuery"]["defaultLanguage"], "english")
+        self.assertEqual(explanation.details["textQuery"]["languageOverride"], "lang")
 
     async def test_ttl_index_metadata_and_opportunistic_expiration_round_trip(self):
         engine = MemoryEngine()

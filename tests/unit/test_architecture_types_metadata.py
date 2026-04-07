@@ -549,6 +549,49 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         self.assertEqual(model.document["collation"], {"locale": "en", "strength": 2})
         self.assertEqual(model.definition.collation, {"locale": "en", "strength": 2})
 
+    def test_index_definition_and_model_round_trip_text_weights_and_language_metadata(self):
+        definition = IndexDefinition(
+            [("title", "text"), ("content", "text")],
+            name="title_text_content_text",
+            weights={"title": 5, "content": 1},
+            default_language="english",
+            language_override="lang",
+        )
+        model = IndexModel(
+            [("title", "text"), ("content", "text")],
+            weights={"title": 5, "content": 1},
+            default_language="english",
+            language_override="lang",
+        )
+
+        self.assertEqual(
+            definition.to_list_document(),
+            {
+                "name": "title_text_content_text",
+                "key": {"title": "text", "content": "text"},
+                "unique": False,
+                "weights": {"title": 5, "content": 1},
+                "default_language": "english",
+                "language_override": "lang",
+            },
+        )
+        self.assertEqual(
+            definition.to_information_entry(),
+            {
+                "key": [("title", "text"), ("content", "text")],
+                "weights": {"title": 5, "content": 1},
+                "default_language": "english",
+                "language_override": "lang",
+            },
+        )
+        self.assertEqual(model.weights, {"title": 5, "content": 1})
+        self.assertEqual(model.default_language, "english")
+        self.assertEqual(model.language_override, "lang")
+        self.assertEqual(
+            model.document["weights"],
+            {"title": 5, "content": 1},
+        )
+
     def test_index_definition_and_model_reject_invalid_expire_after_seconds(self):
         from mongoeco.types import IndexModel
 
@@ -562,6 +605,12 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             IndexDefinition([("name", 1)], name="name_1", collation="en")  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
             IndexModel([("name", 1)], collation="en")  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            IndexModel([("title", 1)], weights={"title": 2})
+        with self.assertRaises(ValueError):
+            IndexDefinition([("title", "text")], name="title_text", weights={"body": 2})
+        with self.assertRaises(TypeError):
+            IndexModel([("title", "text")], default_language="")
 
     def test_index_information_annotations_share_type_alias(self):
         async_index_hints = get_type_hints(AsyncCollection.index_information)

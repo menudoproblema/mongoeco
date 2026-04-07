@@ -84,6 +84,19 @@ class AdminParsingTests(unittest.TestCase):
             [{"key": {"expires_at": 1}, "expireAfterSeconds": 60}]
         )
         self.assertEqual(ttl_models[0].expire_after_seconds, 60)
+        text_models = normalize_index_models_from_command(
+            [
+                {
+                    "key": {"title": "text", "content": "text"},
+                    "weights": {"title": 5, "content": 1},
+                    "defaultLanguage": "english",
+                    "languageOverride": "lang",
+                }
+            ]
+        )
+        self.assertEqual(text_models[0].weights, {"title": 5, "content": 1})
+        self.assertEqual(text_models[0].default_language, "english")
+        self.assertEqual(text_models[0].language_override, "lang")
 
         with self.assertRaises(TypeError):
             normalize_index_models_from_command("email_1")

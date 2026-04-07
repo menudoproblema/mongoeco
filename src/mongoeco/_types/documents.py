@@ -260,6 +260,9 @@ class EngineIndexRecord:
     collation: dict[str, object] | None = None
     partial_filter_expression: Filter | None = None
     expire_after_seconds: int | None = None
+    weights: dict[str, int] | None = None
+    default_language: str | None = None
+    language_override: str | None = None
     multikey: bool = False
     multikey_physical_name: str | None = None
     scalar_physical_name: str | None = None
@@ -282,6 +285,9 @@ class EngineIndexRecord:
             collation=deepcopy(self.collation),
             partial_filter_expression=deepcopy(self.partial_filter_expression),
             expire_after_seconds=self.expire_after_seconds,
+            weights=deepcopy(self.weights),
+            default_language=self.default_language,
+            language_override=self.language_override,
         )
 
 

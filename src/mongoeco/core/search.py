@@ -26,6 +26,13 @@ TEXT_SCORE_FIELD = "__mongoeco_textScore__"
 VECTOR_SEARCH_SCORE_FIELD = "__mongoeco_vectorSearchScore__"
 SEARCH_RESULT_METADATA_FIELDS = frozenset({TEXT_SCORE_FIELD, VECTOR_SEARCH_SCORE_FIELD})
 _TEXT_TOKEN_RE = re.compile(r"\w+", re.UNICODE)
+_SUPPORTED_REGEX_FLAGS = {
+    "i": re.IGNORECASE,
+    "m": re.MULTILINE,
+    "s": re.DOTALL,
+    "x": re.VERBOSE,
+}
+_SUPPORTED_REGEX_FLAGS_LABEL = ", ".join(sorted(_SUPPORTED_REGEX_FLAGS))
 TEXTUAL_SEARCH_FIELD_MAPPING_TYPES = frozenset({"string", "autocomplete", "token"})
 EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES = frozenset(
     {
@@ -77,6 +84,7 @@ class ClassicTextQuery:
     terms: tuple[str, ...]
     case_sensitive: bool = False
     diacritic_sensitive: bool = False
+    language: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -233,29 +241,41 @@ type _SearchExplainBuilder = Callable[[SearchQuery], dict[str, object | None]]
 def compile_classic_text_query(spec: object) -> ClassicTextQuery:
     if not isinstance(spec, dict):
         raise OperationFailure("$text requires a document specification")
-    unsupported = sorted(set(spec) - {"$search", "$caseSensitive", "$diacriticSensitive"})
+    unsupported = sorted(
+        set(spec) - {"$search", "$caseSensitive", "$diacriticSensitive", "$language"}
+    )
     if unsupported:
         raise OperationFailure(
-            "$text local runtime supports only $search, $caseSensitive and $diacriticSensitive; unsupported keys: "
+            "$text local runtime supports only $search, $caseSensitive, $diacriticSensitive and $language; unsupported keys: "
             + ", ".join(unsupported)
         )
     raw_query = spec.get("$search")
     if not isinstance(raw_query, str) or not raw_query.strip():
         raise OperationFailure("$text.$search must be a non-empty string")
-    case_sensitive = bool(spec.get("$caseSensitive", False))
-    diacritic_sensitive = bool(spec.get("$diacriticSensitive", False))
-    if case_sensitive:
-        raise OperationFailure("$text.$caseSensitive=true is not supported in the local runtime")
-    if diacritic_sensitive:
-        raise OperationFailure("$text.$diacriticSensitive=true is not supported in the local runtime")
-    terms = tuple(tokenize_classic_text(raw_query))
+    case_sensitive = spec.get("$caseSensitive", False)
+    if not isinstance(case_sensitive, bool):
+        raise OperationFailure("$text.$caseSensitive must be a boolean")
+    diacritic_sensitive = spec.get("$diacriticSensitive", False)
+    if not isinstance(diacritic_sensitive, bool):
+        raise OperationFailure("$text.$diacriticSensitive must be a boolean")
+    language = spec.get("$language")
+    if language is not None and not isinstance(language, str):
+        raise OperationFailure("$text.$language must be a string")
+    terms = tuple(
+        tokenize_classic_text(
+            raw_query,
+            case_sensitive=case_sensitive,
+            diacritic_sensitive=diacritic_sensitive,
+        )
+    )
     if not terms:
         raise OperationFailure("$text.$search must contain at least one searchable token")
     return ClassicTextQuery(
         raw_query=raw_query,
         terms=terms,
-        case_sensitive=False,
-        diacritic_sensitive=False,
+        case_sensitive=case_sensitive,
+        diacritic_sensitive=diacritic_sensitive,
+        language=language,
     )
 
 
@@ -294,12 +314,15 @@ def resolve_classic_text_index(
     *,
     hinted_name: str | None = None,
 ) -> tuple[str, tuple[str, ...]]:
-    candidates = [
-        index
-        for index in indexes
-        if index.key
-        and all(direction == "text" for _field, direction in index.key)
-    ]
+    candidates = []
+    for index in indexes:
+        if not index.key:
+            continue
+        directions = tuple(direction for _field, direction in index.key)
+        has_text = "text" in directions
+        unsupported_directions = [direction for direction in directions if direction not in (1, -1, "text")]
+        if has_text and not unsupported_directions:
+            candidates.append(index)
     if hinted_name is not None:
         candidates = [index for index in candidates if index.name == hinted_name]
     if not candidates:
@@ -313,7 +336,7 @@ def resolve_classic_text_index(
             "classic $text is ambiguous with multiple text indexes; use a single local text index per collection"
         )
     index = candidates[0]
-    return index.name, tuple(field for field, _direction in index.key)
+    return index.name, tuple(field for field, direction in index.key if direction == "text")
 
 
 def classic_text_score(
@@ -321,12 +344,14 @@ def classic_text_score(
     *,
     field: str | tuple[str, ...] | list[str],
     query: ClassicTextQuery,
+    weights: dict[str, int] | None = None,
 ) -> float | None:
     fields = (field,) if isinstance(field, str) else tuple(field)
     if not fields:
         return None
-    token_counter = Counter()
+    score = 0.0
     for current_field in fields:
+        token_counter = Counter()
         for value in iter_classic_text_values(document, current_field):
             token_counter.update(
                 tokenize_classic_text(
@@ -335,9 +360,21 @@ def classic_text_score(
                     diacritic_sensitive=query.diacritic_sensitive,
                 )
             )
-    if not token_counter:
-        return None
-    score = sum(token_counter.get(term, 0) for term in query.terms)
+        if not token_counter:
+            continue
+        field_score = sum(token_counter.get(term, 0) for term in query.terms)
+        if field_score <= 0:
+            continue
+        weight = 1.0
+        if weights is not None:
+            candidate = weights.get(current_field)
+            if (
+                isinstance(candidate, int)
+                and not isinstance(candidate, bool)
+                and candidate > 0
+            ):
+                weight = float(candidate)
+        score += field_score * weight
     if score <= 0:
         return None
     return float(score)
@@ -777,12 +814,8 @@ def _token_sequence_matches(
 
 def _regex_compile_flags(flags: str) -> int:
     compiled_flags = 0
-    if "i" in flags:
-        compiled_flags |= re.IGNORECASE
-    if "m" in flags:
-        compiled_flags |= re.MULTILINE
-    if "s" in flags:
-        compiled_flags |= re.DOTALL
+    for flag in flags:
+        compiled_flags |= _SUPPORTED_REGEX_FLAGS[flag]
     return compiled_flags
 
 
@@ -1442,7 +1475,7 @@ def _compile_search_regex_clause(index_name: str, clause_spec: object) -> Search
     unsupported_options = sorted(set(clause_spec) - {"query", "path", "flags"})
     if unsupported_options:
         raise OperationFailure(
-            "$search.regex only supports query and path; unsupported keys: "
+            "$search.regex only supports query, path and flags; unsupported keys: "
             + ", ".join(unsupported_options)
         )
     raw_query = clause_spec.get("query")
@@ -1451,8 +1484,16 @@ def _compile_search_regex_clause(index_name: str, clause_spec: object) -> Search
     flags = clause_spec.get("flags", "")
     if not isinstance(flags, str):
         raise OperationFailure("$search.regex.flags must be a string")
-    if any(flag not in {"i", "m", "s"} for flag in flags):
-        raise OperationFailure("$search.regex.flags only supports i, m and s")
+    unsupported_flags = sorted(
+        {flag for flag in flags if flag not in _SUPPORTED_REGEX_FLAGS}
+    )
+    if unsupported_flags:
+        raise OperationFailure(
+            "$search.regex.flags only supports "
+            + _SUPPORTED_REGEX_FLAGS_LABEL
+            + "; unsupported: "
+            + ", ".join(unsupported_flags)
+        )
     try:
         re.compile(raw_query, _regex_compile_flags(flags))
     except re.error as exc:
@@ -2249,7 +2290,7 @@ def build_search_stage_option_previews(
         previews["countPreview"] = {
             "type": options.count.mode,
             "value": len(documents),
-            "exact": True,
+            "exact": options.count.mode == "total",
         }
     if options.highlight is not None:
         preview_fragments: list[dict[str, object]] = []

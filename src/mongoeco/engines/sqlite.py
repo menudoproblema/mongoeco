@@ -2285,7 +2285,7 @@ class SQLiteEngine(AsyncStorageEngine):
         conn = self._require_connection()
         cursor = conn.execute(
             """
-            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
+            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, multikey_flag, multikey_physical_name, scalar_physical_name
             FROM indexes
             WHERE db_name = ? AND coll_name = ?
             ORDER BY name
@@ -2309,6 +2309,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 hidden_flag = 0
                 collation_json = None
                 expire_after_seconds = None
+                text_weights_json = None
+                default_language = None
+                language_override = None
                 scalar_physical_name = None
             elif len(row) == 10:
                 (
@@ -2325,6 +2328,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 ) = row
                 hidden_flag = 0
                 collation_json = None
+                text_weights_json = None
+                default_language = None
+                language_override = None
                 scalar_physical_name = None
             elif len(row) == 11:
                 (
@@ -2341,6 +2347,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     multikey_physical_name,
                 ) = row
                 collation_json = None
+                text_weights_json = None
+                default_language = None
+                language_override = None
                 scalar_physical_name = None
             elif len(row) == 12:
                 (
@@ -2358,6 +2367,28 @@ class SQLiteEngine(AsyncStorageEngine):
                     scalar_physical_name,
                 ) = row
                 collation_json = None
+                text_weights_json = None
+                default_language = None
+                language_override = None
+            elif len(row) == 13:
+                (
+                    name,
+                    physical_name,
+                    fields,
+                    keys,
+                    unique_flag,
+                    sparse_flag,
+                    hidden_flag,
+                    collation_json,
+                    partial_filter_json,
+                    expire_after_seconds,
+                    multikey_flag,
+                    multikey_physical_name,
+                    scalar_physical_name,
+                ) = row
+                text_weights_json = None
+                default_language = None
+                language_override = None
             else:
                 (
                     name,
@@ -2370,6 +2401,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     collation_json,
                     partial_filter_json,
                     expire_after_seconds,
+                    text_weights_json,
+                    default_language,
+                    language_override,
                     multikey_flag,
                     multikey_physical_name,
                     scalar_physical_name,
@@ -2414,6 +2448,42 @@ class SQLiteEngine(AsyncStorageEngine):
                     raise OperationFailure(
                         f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
                     ) from exc
+            text_weights: dict[str, int] | None = None
+            if text_weights_json is not None:
+                try:
+                    parsed_weights = json_loads(text_weights_json)
+                except json.JSONDecodeError as exc:
+                    raise OperationFailure(
+                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                    ) from exc
+                if (
+                    not isinstance(parsed_weights, dict)
+                    or not all(isinstance(field, str) and field for field in parsed_weights)
+                    or not all(
+                        isinstance(weight, int)
+                        and not isinstance(weight, bool)
+                        and weight > 0
+                        for weight in parsed_weights.values()
+                    )
+                ):
+                    raise OperationFailure(
+                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                    )
+                text_weights = {field: int(weight) for field, weight in parsed_weights.items()}
+            if default_language is not None and (
+                not isinstance(default_language, str)
+                or not default_language
+            ):
+                raise OperationFailure(
+                    f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                )
+            if language_override is not None and (
+                not isinstance(language_override, str)
+                or not language_override
+            ):
+                raise OperationFailure(
+                    f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                )
             indexes.append(
                 EngineIndexRecord(
                     name=name,
@@ -2430,6 +2500,9 @@ class SQLiteEngine(AsyncStorageEngine):
                         if expire_after_seconds is not None
                         else None
                     ),
+                    weights=text_weights,
+                    default_language=default_language,
+                    language_override=language_override,
                     multikey=bool(multikey_flag),
                     multikey_physical_name=multikey_physical_name
                     or self._physical_multikey_index_name(db_name, coll_name, name),
@@ -2757,6 +2830,9 @@ class SQLiteEngine(AsyncStorageEngine):
                         collation_json TEXT,
                         partial_filter_json TEXT,
                         expire_after_seconds INTEGER,
+                        text_weights_json TEXT,
+                        default_language TEXT,
+                        language_override TEXT,
                         multikey_flag INTEGER NOT NULL DEFAULT 0,
                         multikey_physical_name TEXT,
                         PRIMARY KEY (db_name, coll_name, name)
@@ -2830,6 +2906,12 @@ class SQLiteEngine(AsyncStorageEngine):
                     connection.execute("ALTER TABLE indexes ADD COLUMN collation_json TEXT")
                 if "expire_after_seconds" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN expire_after_seconds INTEGER")
+                if "text_weights_json" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN text_weights_json TEXT")
+                if "default_language" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN default_language TEXT")
+                if "language_override" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN language_override TEXT")
                 if "multikey_flag" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN multikey_flag INTEGER NOT NULL DEFAULT 0")
                 if "multikey_physical_name" not in columns:
@@ -3357,11 +3439,18 @@ class SQLiteEngine(AsyncStorageEngine):
         if text_query is None:
             return documents
         indexes = self._load_indexes(db_name, coll_name)
-        _index_name, fields = resolve_classic_text_index(indexes)
+        index_name, fields = resolve_classic_text_index(indexes)
+        matched_index = next((index for index in indexes if index.name == index_name), None)
+        weights = matched_index.weights if matched_index is not None else None
 
         def _iter():
             for document in documents:
-                score = classic_text_score(document, field=fields, query=text_query)
+                score = classic_text_score(
+                    document,
+                    field=fields,
+                    query=text_query,
+                    weights=weights,
+                )
                 if score is None:
                     continue
                 yield attach_text_score(document, score)
@@ -3726,6 +3815,9 @@ class SQLiteEngine(AsyncStorageEngine):
         collation: Filter | None,
         partial_filter_expression: Filter | None,
         expire_after_seconds: int | None,
+        weights: dict[str, int] | None,
+        default_language: str | None,
+        language_override: str | None,
         max_time_ms: int | None,
         context: ClientSession | None,
     ) -> str:
@@ -3745,6 +3837,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     collation=collation,
                     partial_filter_expression=partial_filter_expression,
                     expire_after_seconds=expire_after_seconds,
+                    weights=weights,
+                    default_language=default_language,
+                    language_override=language_override,
                     deadline=deadline,
                     enforce_deadline_fn=enforce_deadline,
                     begin_write=lambda current: self._begin_write(current, context),
@@ -4452,6 +4547,9 @@ class SQLiteEngine(AsyncStorageEngine):
         collation: Filter | None = None,
         partial_filter_expression: Filter | None = None,
         expire_after_seconds: int | None = None,
+        weights: dict[str, int] | None = None,
+        default_language: str | None = None,
+        language_override: str | None = None,
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> str:
@@ -4467,6 +4565,9 @@ class SQLiteEngine(AsyncStorageEngine):
             collation,
             partial_filter_expression,
             expire_after_seconds,
+            weights,
+            default_language,
+            language_override,
             max_time_ms,
             context,
         )
@@ -4683,8 +4784,15 @@ class SQLiteEngine(AsyncStorageEngine):
             if isinstance(details, dict):
                 details = {**details, **virtual_details}
         if semantics.text_query is not None:
-            text_index_name, text_fields = resolve_classic_text_index(
-                await self._run_blocking(self._load_indexes, db_name, coll_name),
+            indexes = await self._run_blocking(self._load_indexes, db_name, coll_name)
+            text_index_name, text_fields = resolve_classic_text_index(indexes)
+            text_index_metadata = next(
+                (
+                    index
+                    for index in indexes
+                    if index.name == text_index_name
+                ),
+                None,
             )
             text_details = {
                 "textQuery": {
@@ -4694,10 +4802,19 @@ class SQLiteEngine(AsyncStorageEngine):
                     "rawQuery": semantics.text_query.raw_query,
                     "terms": list(semantics.text_query.terms),
                     "tokenizer": "lowercase+punctuation-split",
-                    "caseSensitive": False,
-                    "diacriticSensitive": False,
+                    "caseSensitive": semantics.text_query.case_sensitive,
+                    "diacriticSensitive": semantics.text_query.diacritic_sensitive,
                 }
             }
+            if semantics.text_query.language is not None:
+                text_details["textQuery"]["language"] = semantics.text_query.language
+            if text_index_metadata is not None:
+                if text_index_metadata.weights is not None:
+                    text_details["textQuery"]["weights"] = deepcopy(text_index_metadata.weights)
+                if text_index_metadata.default_language is not None:
+                    text_details["textQuery"]["defaultLanguage"] = text_index_metadata.default_language
+                if text_index_metadata.language_override is not None:
+                    text_details["textQuery"]["languageOverride"] = text_index_metadata.language_override
             if isinstance(details, dict):
                 details = {**details, **text_details}
         planning_issues = sqlite_planning_issues(execution_plan.fallback_reason)

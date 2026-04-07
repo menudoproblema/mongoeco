@@ -17,6 +17,7 @@ type IndexDocument = dict[str, object]
 type IndexInformationEntry = dict[str, object]
 type IndexInformation = dict[str, IndexInformationEntry]
 type SearchIndexDocument = dict[str, object]
+type TextIndexWeights = dict[str, int]
 
 _SPECIAL_INDEX_DIRECTIONS = frozenset({"text", "hashed", "2dsphere", "2d"})
 
@@ -106,6 +107,45 @@ def index_key_document(keys: IndexKeySpec) -> dict[str, IndexDirection]:
     return {field: direction for field, direction in keys}
 
 
+def _text_index_fields(keys: IndexKeySpec) -> tuple[str, ...]:
+    return tuple(field for field, direction in keys if direction == "text")
+
+
+def _validate_text_index_weights(
+    weights: object,
+    *,
+    text_fields: tuple[str, ...],
+) -> TextIndexWeights:
+    if not isinstance(weights, dict):
+        raise TypeError("weights must be a dict or None")
+    normalized: TextIndexWeights = {}
+    for field, value in weights.items():
+        if not isinstance(field, str) or not field:
+            raise TypeError("weights field names must be non-empty strings")
+        if (
+            not isinstance(value, int)
+            or isinstance(value, bool)
+            or value <= 0
+        ):
+            raise TypeError("weights values must be positive integers")
+        normalized[field] = value
+    unknown_fields = sorted(set(normalized) - set(text_fields))
+    if unknown_fields:
+        raise ValueError(
+            "weights fields must belong to text index keys; unknown fields: "
+            + ", ".join(unknown_fields)
+        )
+    return normalized
+
+
+def _normalize_text_index_language(value: object, *, field_name: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value:
+        raise TypeError(f"{field_name} must be a non-empty string or None")
+    return value
+
+
 @dataclass(frozen=True, slots=True)
 class IndexDefinition:
     keys: IndexKeySpec
@@ -116,6 +156,9 @@ class IndexDefinition:
     collation: Document | None = None
     partial_filter_expression: Filter | None = None
     expire_after_seconds: int | None = None
+    weights: TextIndexWeights | None = None
+    default_language: str | None = None
+    language_override: str | None = None
 
     def __init__(
         self,
@@ -128,8 +171,12 @@ class IndexDefinition:
         collation: Document | None = None,
         partial_filter_expression: Filter | None = None,
         expire_after_seconds: int | None = None,
+        weights: TextIndexWeights | None = None,
+        default_language: str | None = None,
+        language_override: str | None = None,
     ):
         normalized = normalize_index_keys(keys)
+        text_fields = _text_index_fields(normalized)
         if not isinstance(name, str) or not name:
             raise ValueError("name must be a non-empty string")
         if not isinstance(unique, bool):
@@ -148,6 +195,29 @@ class IndexDefinition:
             or expire_after_seconds < 0
         ):
             raise TypeError("expire_after_seconds must be a non-negative int or None")
+        normalized_weights: TextIndexWeights | None = None
+        if weights is not None:
+            if not text_fields:
+                raise ValueError("weights are only supported for text indexes")
+            normalized_weights = _validate_text_index_weights(
+                weights,
+                text_fields=text_fields,
+            )
+        normalized_default_language = _normalize_text_index_language(
+            default_language,
+            field_name="default_language",
+        )
+        normalized_language_override = _normalize_text_index_language(
+            language_override,
+            field_name="language_override",
+        )
+        if (
+            normalized_default_language is not None
+            or normalized_language_override is not None
+        ) and not text_fields:
+            raise ValueError(
+                "default_language and language_override are only supported for text indexes"
+            )
         object.__setattr__(self, "keys", normalized)
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "unique", unique)
@@ -156,6 +226,9 @@ class IndexDefinition:
         object.__setattr__(self, "collation", deepcopy(collation))
         object.__setattr__(self, "partial_filter_expression", deepcopy(partial_filter_expression))
         object.__setattr__(self, "expire_after_seconds", expire_after_seconds)
+        object.__setattr__(self, "weights", deepcopy(normalized_weights))
+        object.__setattr__(self, "default_language", normalized_default_language)
+        object.__setattr__(self, "language_override", normalized_language_override)
 
     @property
     def fields(self) -> list[str]:
@@ -177,6 +250,12 @@ class IndexDefinition:
             document["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
         if self.expire_after_seconds is not None:
             document["expireAfterSeconds"] = self.expire_after_seconds
+        if self.weights is not None:
+            document["weights"] = deepcopy(self.weights)
+        if self.default_language is not None:
+            document["default_language"] = self.default_language
+        if self.language_override is not None:
+            document["language_override"] = self.language_override
         return document
 
     def to_model_document(self) -> IndexDocument:
@@ -196,6 +275,12 @@ class IndexDefinition:
             document["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
         if self.expire_after_seconds is not None:
             document["expireAfterSeconds"] = self.expire_after_seconds
+        if self.weights is not None:
+            document["weights"] = deepcopy(self.weights)
+        if self.default_language is not None:
+            document["default_language"] = self.default_language
+        if self.language_override is not None:
+            document["language_override"] = self.language_override
         return document
 
     def to_information_entry(self) -> IndexInformationEntry:
@@ -212,6 +297,12 @@ class IndexDefinition:
             entry["partialFilterExpression"] = deepcopy(self.partial_filter_expression)
         if self.expire_after_seconds is not None:
             entry["expireAfterSeconds"] = self.expire_after_seconds
+        if self.weights is not None:
+            entry["weights"] = deepcopy(self.weights)
+        if self.default_language is not None:
+            entry["default_language"] = self.default_language
+        if self.language_override is not None:
+            entry["language_override"] = self.language_override
         return entry
 
     def to_information_entry_map(self) -> IndexInformation:
@@ -240,6 +331,9 @@ class IndexModel:
     collation: Document | None = None
     partial_filter_expression: Filter | None = None
     expire_after_seconds: int | None = None
+    weights: TextIndexWeights | None = None
+    default_language: str | None = None
+    language_override: str | None = None
 
     def __init__(self, keys: object, **kwargs: Any):
         normalized = normalize_index_keys(keys)
@@ -254,6 +348,13 @@ class IndexModel:
         expire_after_seconds = kwargs.pop("expireAfterSeconds", None)
         if expire_after_seconds is None:
             expire_after_seconds = kwargs.pop("expire_after_seconds", None)
+        weights = kwargs.pop("weights", None)
+        default_language = kwargs.pop("defaultLanguage", None)
+        if default_language is None:
+            default_language = kwargs.pop("default_language", None)
+        language_override = kwargs.pop("languageOverride", None)
+        if language_override is None:
+            language_override = kwargs.pop("language_override", None)
         if name is not None and (not isinstance(name, str) or not name):
             raise ValueError("name must be a non-empty string")
         if not isinstance(unique, bool):
@@ -272,6 +373,30 @@ class IndexModel:
             or expire_after_seconds < 0
         ):
             raise TypeError("expire_after_seconds must be a non-negative int or None")
+        text_fields = _text_index_fields(normalized)
+        normalized_weights: TextIndexWeights | None = None
+        if weights is not None:
+            if not text_fields:
+                raise ValueError("weights are only supported for text indexes")
+            normalized_weights = _validate_text_index_weights(
+                weights,
+                text_fields=text_fields,
+            )
+        normalized_default_language = _normalize_text_index_language(
+            default_language,
+            field_name="default_language",
+        )
+        normalized_language_override = _normalize_text_index_language(
+            language_override,
+            field_name="language_override",
+        )
+        if (
+            normalized_default_language is not None
+            or normalized_language_override is not None
+        ) and not text_fields:
+            raise ValueError(
+                "default_language and language_override are only supported for text indexes"
+            )
         if kwargs:
             unsupported = ", ".join(sorted(kwargs))
             raise TypeError(f"unsupported IndexModel options: {unsupported}")
@@ -283,6 +408,9 @@ class IndexModel:
         object.__setattr__(self, "collation", deepcopy(collation))
         object.__setattr__(self, "partial_filter_expression", deepcopy(partial_filter_expression))
         object.__setattr__(self, "expire_after_seconds", expire_after_seconds)
+        object.__setattr__(self, "weights", deepcopy(normalized_weights))
+        object.__setattr__(self, "default_language", normalized_default_language)
+        object.__setattr__(self, "language_override", normalized_language_override)
 
     @property
     def resolved_name(self) -> str:
@@ -299,6 +427,9 @@ class IndexModel:
             collation=self.collation,
             partial_filter_expression=self.partial_filter_expression,
             expire_after_seconds=self.expire_after_seconds,
+            weights=self.weights,
+            default_language=self.default_language,
+            language_override=self.language_override,
         )
 
     @property

@@ -110,7 +110,7 @@ from mongoeco.types import (
     ProfilingCommandResult,
     Projection, QueryPlanExplanation, SortSpec, Update, UpdateResult, default_index_name,
     default_id_index_definition, default_id_index_document, default_id_index_information, index_fields,
-    EngineIndexRecord, SearchIndexDefinition, SearchIndexDocument, is_ordered_index_spec,
+    EngineIndexRecord, IndexDefinition, SearchIndexDefinition, SearchIndexDocument, is_ordered_index_spec,
     normalize_index_keys, special_index_directions,
 )
 
@@ -1594,13 +1594,32 @@ class MemoryEngine(AsyncStorageEngine):
         collation: Filter | None = None,
         partial_filter_expression: Filter | None = None,
         expire_after_seconds: int | None = None,
+        weights: dict[str, int] | None = None,
+        default_language: str | None = None,
+        language_override: str | None = None,
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> str:
         normalized_keys = normalize_index_keys(keys)
         partial_filter_expression = normalize_partial_filter_expression(partial_filter_expression)
-        fields = index_fields(normalized_keys)
         index_name = name or default_index_name(normalized_keys)
+        try:
+            index_definition = IndexDefinition(
+                normalized_keys,
+                name=index_name,
+                unique=unique,
+                sparse=sparse,
+                hidden=hidden,
+                collation=collation,
+                partial_filter_expression=partial_filter_expression,
+                expire_after_seconds=expire_after_seconds,
+                weights=weights,
+                default_language=default_language,
+                language_override=language_override,
+            )
+        except ValueError as exc:
+            raise OperationFailure(str(exc)) from exc
+        fields = index_fields(normalized_keys)
         special_directions = special_index_directions(normalized_keys)
         deadline = operation_deadline(max_time_ms)
         if expire_after_seconds is not None:
@@ -1622,8 +1641,6 @@ class MemoryEngine(AsyncStorageEngine):
             if not all(direction == "text" for direction in special_directions):
                 if len(normalized_keys) != 1:
                     raise OperationFailure("special index types currently require a single-field key pattern")
-            elif len(special_directions) != len(normalized_keys):
-                raise OperationFailure("local text indexes currently support only text key patterns")
             if unique:
                 raise OperationFailure(f"{special_directions[0]} indexes do not support unique")
         if self._is_builtin_id_index(normalized_keys):
@@ -1634,6 +1651,9 @@ class MemoryEngine(AsyncStorageEngine):
                 or collation is not None
                 or partial_filter_expression is not None
                 or expire_after_seconds is not None
+                or weights is not None
+                or default_language is not None
+                or language_override is not None
                 or not unique
             ):
                 raise OperationFailure("Conflicting index definition for '_id_'")
@@ -1668,6 +1688,9 @@ class MemoryEngine(AsyncStorageEngine):
                         or index.get("collation") != collation
                         or index.get("partial_filter_expression") != partial_filter_expression
                         or index.get("expire_after_seconds") != expire_after_seconds
+                        or index.get("weights") != index_definition.weights
+                        or index.get("default_language") != index_definition.default_language
+                        or index.get("language_override") != index_definition.language_override
                     ):
                         raise OperationFailure(
                             f"Conflicting index definition for '{index_name}'"
@@ -1681,6 +1704,9 @@ class MemoryEngine(AsyncStorageEngine):
                         or index.get("collation") != collation
                         or index.get("partial_filter_expression") != partial_filter_expression
                         or index.get("expire_after_seconds") != expire_after_seconds
+                        or index.get("weights") != index_definition.weights
+                        or index.get("default_language") != index_definition.default_language
+                        or index.get("language_override") != index_definition.language_override
                     ):
                         raise OperationFailure(
                             f"Conflicting index definition for key pattern '{normalized_keys!r}'"
@@ -1697,6 +1723,9 @@ class MemoryEngine(AsyncStorageEngine):
                 collation=deepcopy(collation),
                 partial_filter_expression=deepcopy(partial_filter_expression),
                 expire_after_seconds=expire_after_seconds,
+                weights=deepcopy(index_definition.weights),
+                default_language=index_definition.default_language,
+                language_override=index_definition.language_override,
             )
 
             if unique:
@@ -2075,11 +2104,18 @@ class MemoryEngine(AsyncStorageEngine):
         text_query = semantics.text_query
         if text_query is None:
             return documents
-        _index_name, fields = resolve_classic_text_index(indexes)
+        index_name, fields = resolve_classic_text_index(indexes)
+        matched_index = next((index for index in indexes if index.name == index_name), None)
+        weights = matched_index.weights if matched_index is not None else None
 
         def _iter():
             for document in documents:
-                score = classic_text_score(document, field=fields, query=text_query)
+                score = classic_text_score(
+                    document,
+                    field=fields,
+                    query=text_query,
+                    weights=weights,
+                )
                 if score is None:
                     continue
                 yield attach_text_score(document, score)
@@ -2129,6 +2165,10 @@ class MemoryEngine(AsyncStorageEngine):
         )
         if semantics.text_query is not None:
             text_index_name, text_fields = resolve_classic_text_index(indexes)
+            text_index_metadata = next(
+                (index for index in indexes if index.name == text_index_name),
+                None,
+            )
             text_details = {
                 "textQuery": {
                     "backend": "python",
@@ -2137,10 +2177,19 @@ class MemoryEngine(AsyncStorageEngine):
                     "rawQuery": semantics.text_query.raw_query,
                     "terms": list(semantics.text_query.terms),
                     "tokenizer": "lowercase+punctuation-split",
-                    "caseSensitive": False,
-                    "diacriticSensitive": False,
+                    "caseSensitive": semantics.text_query.case_sensitive,
+                    "diacriticSensitive": semantics.text_query.diacritic_sensitive,
                 }
             }
+            if semantics.text_query.language is not None:
+                text_details["textQuery"]["language"] = semantics.text_query.language
+            if text_index_metadata is not None:
+                if text_index_metadata.weights is not None:
+                    text_details["textQuery"]["weights"] = deepcopy(text_index_metadata.weights)
+                if text_index_metadata.default_language is not None:
+                    text_details["textQuery"]["defaultLanguage"] = text_index_metadata.default_language
+                if text_index_metadata.language_override is not None:
+                    text_details["textQuery"]["languageOverride"] = text_index_metadata.language_override
             details = {**details, **text_details} if isinstance(details, dict) else text_details
         return build_query_plan_explanation(
             engine="memory",

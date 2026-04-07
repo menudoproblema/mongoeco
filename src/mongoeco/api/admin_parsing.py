@@ -101,6 +101,11 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
             "collation",
             "partialFilterExpression",
             "expireAfterSeconds",
+            "weights",
+            "defaultLanguage",
+            "languageOverride",
+            "default_language",
+            "language_override",
         }
         if unsupported:
             unsupported_names = ", ".join(sorted(unsupported))
@@ -123,6 +128,16 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
             kwargs["partialFilterExpression"] = raw_index["partialFilterExpression"]
         if "expireAfterSeconds" in raw_index:
             kwargs["expireAfterSeconds"] = raw_index["expireAfterSeconds"]
+        if "weights" in raw_index:
+            kwargs["weights"] = raw_index["weights"]
+        if "defaultLanguage" in raw_index:
+            kwargs["defaultLanguage"] = raw_index["defaultLanguage"]
+        if "languageOverride" in raw_index:
+            kwargs["languageOverride"] = raw_index["languageOverride"]
+        if "default_language" in raw_index:
+            kwargs["default_language"] = raw_index["default_language"]
+        if "language_override" in raw_index:
+            kwargs["language_override"] = raw_index["language_override"]
         normalized.append(IndexModel(raw_index["key"], **kwargs))
     return normalized
 

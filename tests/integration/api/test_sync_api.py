@@ -5708,10 +5708,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
 
-                    with self.assertRaises(OperationFailure):
-                        collection.create_index([("tenant", 1), ("content", "text")])
+                    index_name = collection.create_index([("tenant", 1), ("content", "text")])
                     with self.assertRaises(OperationFailure):
                         collection.create_index([("content", "hashed")], unique=True)
+
+                    indexes = collection.list_indexes().to_list()
+                    self.assertIn(
+                        {
+                            "name": index_name,
+                            "key": {"tenant": 1, "content": "text"},
+                            "unique": False,
+                        },
+                        indexes,
+                    )
 
     def test_collection_supports_multi_field_local_text_indexes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -5760,6 +5769,66 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         explain["details"]["textQuery"]["fields"],
                         ["title", "content"],
                     )
+
+    def test_collection_text_index_supports_weights_and_language_metadata(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.articles
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "title": "Ada", "content": "none"},
+                            {"_id": "2", "title": "none", "content": "Ada"},
+                        ]
+                    )
+
+                    index_name = collection.create_index(
+                        [("title", "text"), ("content", "text")],
+                        name="title_text_content_text",
+                        weights={"title": 5, "content": 1},
+                        default_language="english",
+                        language_override="lang",
+                    )
+                    indexes = collection.list_indexes().to_list()
+                    info = collection.index_information()
+                    results = collection.find(
+                        {"$text": {"$search": "Ada"}},
+                        {"_id": 1, "score": {"$meta": "textScore"}},
+                        sort={"score": {"$meta": "textScore"}},
+                    ).to_list()
+                    explain = collection.find({"$text": {"$search": "Ada"}}).explain()
+
+                    self.assertEqual(index_name, "title_text_content_text")
+                    self.assertIn(
+                        {
+                            "name": "title_text_content_text",
+                            "key": {"title": "text", "content": "text"},
+                            "unique": False,
+                            "weights": {"title": 5, "content": 1},
+                            "default_language": "english",
+                            "language_override": "lang",
+                        },
+                        indexes,
+                    )
+                    self.assertEqual(
+                        info["title_text_content_text"],
+                        {
+                            "key": [("title", "text"), ("content", "text")],
+                            "weights": {"title": 5, "content": 1},
+                            "default_language": "english",
+                            "language_override": "lang",
+                        },
+                    )
+                    self.assertEqual(
+                        results,
+                        [{"_id": "1", "score": 5.0}, {"_id": "2", "score": 1.0}],
+                    )
+                    self.assertEqual(
+                        explain["details"]["textQuery"]["weights"],
+                        {"title": 5, "content": 1},
+                    )
+                    self.assertEqual(explain["details"]["textQuery"]["defaultLanguage"], "english")
+                    self.assertEqual(explain["details"]["textQuery"]["languageOverride"], "lang")
 
     def test_collection_supports_local_geo_queries_and_geo_near(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

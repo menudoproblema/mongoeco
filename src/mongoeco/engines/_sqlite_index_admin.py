@@ -12,6 +12,7 @@ from mongoeco.types import (
     Document,
     EngineIndexRecord,
     Filter,
+    IndexDefinition,
     IndexDocument,
     IndexInformation,
     IndexKeySpec,
@@ -74,11 +75,30 @@ def create_index(
     replace_scalar_entries_for_document: Callable[[sqlite3.Connection, str, str, str, Document, EngineIndexRecord], None],
     load_documents: Callable[[str, str], Iterable[tuple[str, Document]]],
     quote_identifier: Callable[[str], str],
+    weights: dict[str, int] | None = None,
+    default_language: str | None = None,
+    language_override: str | None = None,
 ) -> str:
     normalized_keys = normalize_index_keys(keys)
     partial_filter_expression = normalize_partial_filter_expression(partial_filter_expression)
-    fields = index_fields(normalized_keys)
     index_name = name or default_index_name(normalized_keys)
+    try:
+        definition = IndexDefinition(
+            normalized_keys,
+            name=index_name,
+            unique=unique,
+            sparse=sparse,
+            hidden=hidden,
+            collation=collation,
+            partial_filter_expression=partial_filter_expression,
+            expire_after_seconds=expire_after_seconds,
+            weights=weights,
+            default_language=default_language,
+            language_override=language_override,
+        )
+    except ValueError as exc:
+        raise OperationFailure(str(exc)) from exc
+    fields = index_fields(normalized_keys)
     special_directions = special_index_directions(normalized_keys)
     if expire_after_seconds is not None:
         if (
@@ -99,8 +119,6 @@ def create_index(
         if not all(direction == "text" for direction in special_directions):
             if len(normalized_keys) != 1:
                 raise OperationFailure("special index types currently require a single-field key pattern")
-        elif len(special_directions) != len(normalized_keys):
-            raise OperationFailure("local text indexes currently support only text key patterns")
         if unique:
             raise OperationFailure(f"{special_directions[0]} indexes do not support unique")
     if is_builtin_id_index(normalized_keys):
@@ -111,6 +129,9 @@ def create_index(
             or collation is not None
             or partial_filter_expression is not None
             or expire_after_seconds is not None
+            or weights is not None
+            or default_language is not None
+            or language_override is not None
             or not unique
         ):
             raise OperationFailure("Conflicting index definition for '_id_'")
@@ -144,6 +165,9 @@ def create_index(
                 or index.get("collation") != collation
                 or index.get("partial_filter_expression") != partial_filter_expression
                 or index.get("expire_after_seconds") != expire_after_seconds
+                or index.get("weights") != definition.weights
+                or index.get("default_language") != definition.default_language
+                or index.get("language_override") != definition.language_override
             ):
                 raise OperationFailure(f"Conflicting index definition for '{index_name}'")
             return index_name
@@ -155,6 +179,9 @@ def create_index(
                 or index.get("collation") != collation
                 or index.get("partial_filter_expression") != partial_filter_expression
                 or index.get("expire_after_seconds") != expire_after_seconds
+                or index.get("weights") != definition.weights
+                or index.get("default_language") != definition.default_language
+                or index.get("language_override") != definition.language_override
             ):
                 raise OperationFailure(
                     f"Conflicting index definition for key pattern '{normalized_keys!r}'"
@@ -203,9 +230,9 @@ def create_index(
         conn.execute(
             """
             INSERT INTO indexes (
-                db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name
+                db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, multikey_flag, multikey_physical_name, scalar_physical_name
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 db_name,
@@ -220,6 +247,9 @@ def create_index(
                 json_dumps_compact(collation) if collation is not None else None,
                 json_dumps_compact(partial_filter_expression) if partial_filter_expression is not None else None,
                 expire_after_seconds,
+                json_dumps_compact(definition.weights) if definition.weights is not None else None,
+                definition.default_language,
+                definition.language_override,
                 1 if multikey else 0,
                 multikey_physical_name if multikey else None,
                 scalar_physical_name,
@@ -238,6 +268,9 @@ def create_index(
                 collation=deepcopy(collation),
                 partial_filter_expression=deepcopy(partial_filter_expression),
                 expire_after_seconds=expire_after_seconds,
+                weights=deepcopy(definition.weights),
+                default_language=definition.default_language,
+                language_override=definition.language_override,
                 multikey=True,
                 multikey_physical_name=multikey_physical_name,
                 scalar_physical_name=scalar_physical_name,
@@ -265,6 +298,9 @@ def create_index(
                 collation=deepcopy(collation),
                 partial_filter_expression=deepcopy(partial_filter_expression),
                 expire_after_seconds=expire_after_seconds,
+                weights=deepcopy(definition.weights),
+                default_language=definition.default_language,
+                language_override=definition.language_override,
                 multikey=multikey,
                 multikey_physical_name=multikey_physical_name,
                 scalar_physical_name=scalar_physical_name,

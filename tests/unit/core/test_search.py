@@ -75,7 +75,12 @@ class SearchCoreTests(unittest.TestCase):
     def test_compile_classic_text_query_and_filter_split(self) -> None:
         remaining, query = split_classic_text_filter(
             {
-                "$text": {"$search": "Ada Lovelace", "$caseSensitive": False},
+                "$text": {
+                    "$search": "Ada Lovelace",
+                    "$caseSensitive": True,
+                    "$diacriticSensitive": True,
+                    "$language": "en",
+                },
                 "kind": "person",
             }
         )
@@ -83,22 +88,26 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(remaining, {"kind": "person"})
         self.assertEqual(
             query,
-            ClassicTextQuery(raw_query="Ada Lovelace", terms=("ada", "lovelace")),
+            ClassicTextQuery(
+                raw_query="Ada Lovelace",
+                terms=("Ada", "Lovelace"),
+                case_sensitive=True,
+                diacritic_sensitive=True,
+                language="en",
+            ),
         )
 
-    def test_compile_classic_text_query_rejects_sensitive_flags(self) -> None:
+    def test_compile_classic_text_query_rejects_non_boolean_flags(self) -> None:
         with self.assertRaises(OperationFailure):
-            compile_classic_text_query({"$search": "Ada", "$caseSensitive": True})
+            compile_classic_text_query({"$search": "Ada", "$caseSensitive": "yes"})
         with self.assertRaises(OperationFailure):
-            compile_classic_text_query({"$search": "Ada", "$diacriticSensitive": True})
+            compile_classic_text_query({"$search": "Ada", "$diacriticSensitive": "yes"})
 
     def test_classic_text_helpers_cover_invalid_shapes_and_ambiguous_hints(self) -> None:
         with self.assertRaises(OperationFailure):
             compile_classic_text_query([])
         with self.assertRaises(OperationFailure):
             compile_classic_text_query({"$search": ""})
-        with self.assertRaises(OperationFailure):
-            compile_classic_text_query({"$search": "Ada", "$language": "en"})
         with self.assertRaises(OperationFailure):
             split_classic_text_filter({"$text": None})
         self.assertEqual(tokenize_classic_text(1), ())
@@ -121,7 +130,18 @@ class SearchCoreTests(unittest.TestCase):
 
     def test_tokenize_and_score_classic_text_query(self) -> None:
         query = compile_classic_text_query({"$search": "Ada algOrithm"})
+        case_sensitive_query = compile_classic_text_query(
+            {"$search": "Ada", "$caseSensitive": True}
+        )
+        diacritic_query = compile_classic_text_query(
+            {"$search": "Áda", "$diacriticSensitive": True}
+        )
+        normalized_query = compile_classic_text_query(
+            {"$search": "Áda", "$diacriticSensitive": False}
+        )
         self.assertEqual(tokenize_classic_text("Áda wrote algorithms"), ("ada", "wrote", "algorithms"))
+        self.assertEqual(tokenize_classic_text("Ada", case_sensitive=True), ("Ada",))
+        self.assertEqual(tokenize_classic_text("Áda", diacritic_sensitive=True), ("áda",))
         self.assertEqual(
             classic_text_score(
                 {"body": "Ada wrote the first algorithm. Ada again."},
@@ -129,6 +149,14 @@ class SearchCoreTests(unittest.TestCase):
                 query=query,
             ),
             3.0,
+        )
+        self.assertEqual(
+            classic_text_score(
+                {"body": "ada"},
+                field="body",
+                query=case_sensitive_query,
+            ),
+            None,
         )
         self.assertIsNone(
             classic_text_score(
@@ -168,12 +196,29 @@ class SearchCoreTests(unittest.TestCase):
             ),
             3.0,
         )
+        self.assertEqual(
+            classic_text_score(
+                {"title": "Ada", "body": "Algorithm Ada"},
+                field=("title", "body"),
+                query=query,
+                weights={"title": 5, "body": 1},
+            ),
+            7.0,
+        )
         self.assertIsNone(
             classic_text_score(
                 {"body": "Ada"},
                 field=(),
                 query=query,
             )
+        )
+        self.assertEqual(
+            classic_text_score({"body": "Áda"}, field="body", query=diacritic_query),
+            1.0,
+        )
+        self.assertEqual(
+            classic_text_score({"body": "Áda"}, field="body", query=normalized_query),
+            1.0,
         )
 
     def test_resolve_classic_text_index_requires_single_unambiguous_text_index(self) -> None:
@@ -193,6 +238,19 @@ class SearchCoreTests(unittest.TestCase):
                 ]
             ),
             ("content_title_text", ("content", "title")),
+        )
+        self.assertEqual(
+            resolve_classic_text_index(
+                [
+                    EngineIndexRecord(
+                        name="content_title_rank_text",
+                        fields=["content", "rank"],
+                        key=[("content", "text"), ("rank", -1)],
+                        unique=False,
+                    ),
+                ]
+            ),
+            ("content_title_rank_text", ("content",)),
         )
         with self.assertRaises(OperationFailure):
             resolve_classic_text_index(
@@ -613,6 +671,20 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(query.index_name, "by_text")
         self.assertEqual(query.raw_query, "Ada.*")
         self.assertEqual(query.paths, ("title",))
+        self.assertEqual(query.flags, "")
+
+        query = compile_search_regex_query(
+            {
+                "index": "by_text",
+                "regex": {
+                    "query": "Ada.*",
+                    "path": "title",
+                    "flags": "imsx",
+                },
+            }
+        )
+
+        self.assertEqual(query.flags, "imsx")
 
     def test_compile_vector_search_query_and_search_stage_error_paths(self) -> None:
         with self.assertRaisesRegex(OperationFailure, "requires a document specification"):
@@ -1520,13 +1592,13 @@ class SearchCoreTests(unittest.TestCase):
             }
         )
         self.assertEqual(query.flags, "i")
-        with self.assertRaises(OperationFailure):
-            compile_search_regex_query(
-                {
-                    "index": "by_text",
-                    "regex": {"query": "Ada.*", "path": "title", "flags": "x"},
-                }
-            )
+        query = compile_search_regex_query(
+            {
+                "index": "by_text",
+                "regex": {"query": "Ada.*", "path": "title", "flags": "x"},
+            }
+        )
+        self.assertEqual(query.flags, "x")
 
     def test_compile_search_autocomplete_and_wildcard_queries_support_paths(self) -> None:
         autocomplete = compile_search_autocomplete_query(
@@ -1940,6 +2012,29 @@ class SearchCoreTests(unittest.TestCase):
                     raw_query="ada.*algorithm",
                     paths=("body",),
                     flags="is",
+                ),
+            )
+        )
+        self.assertFalse(
+            matches_search_regex_query(
+                {"body": "ab"},
+                definition=definition,
+                query=SearchRegexQuery(
+                    index_name="by_text",
+                    raw_query="a b",
+                    paths=("body",),
+                ),
+            )
+        )
+        self.assertTrue(
+            matches_search_regex_query(
+                {"body": "ab"},
+                definition=definition,
+                query=SearchRegexQuery(
+                    index_name="by_text",
+                    raw_query="a # comment\nb",
+                    paths=("body",),
+                    flags="x",
                 ),
             )
         )
@@ -2488,7 +2583,7 @@ class SearchCoreTests(unittest.TestCase):
 
     def test_search_contract_helpers_cover_additional_error_paths(self) -> None:
         with self.assertRaisesRegex(OperationFailure, "unsupported keys"):
-            compile_classic_text_query({"$search": "Ada", "$language": "en"})
+            compile_classic_text_query({"$search": "Ada", "$unsupported": True})
         with self.assertRaisesRegex(OperationFailure, "searchable token"):
             compile_classic_text_query({"$search": "!!!"})
         with self.assertRaisesRegex(
@@ -3195,9 +3290,17 @@ class SearchCoreTests(unittest.TestCase):
                 compile_search_regex_query,
                 {
                     "index": "by_text",
+                    "regex": {"query": "Ada.*", "path": "title", "flags": "z"},
+                },
+                "unsupported: z",
+            ),
+            (
+                compile_search_regex_query,
+                {
+                    "index": "by_text",
                     "regex": {"query": "Ada.*", "path": "title", "boost": 2},
                 },
-                "only supports query and path",
+                "only supports query, path and flags",
             ),
         )
         for compiler, spec, pattern in invalid_queries:
@@ -3207,8 +3310,11 @@ class SearchCoreTests(unittest.TestCase):
     def test_search_advanced_text_helpers_cover_private_branches(self) -> None:
         self.assertFalse(search_module._token_sequence_matches(("ada",), ()))
         self.assertEqual(
-            search_module._regex_compile_flags("ms"),
-            search_module.re.MULTILINE | search_module.re.DOTALL,
+            search_module._regex_compile_flags("imsx"),
+            search_module.re.IGNORECASE
+            | search_module.re.MULTILINE
+            | search_module.re.DOTALL
+            | search_module.re.VERBOSE,
         )
 
         definition = SearchIndexDefinition(
@@ -3354,6 +3460,7 @@ class SearchCoreTests(unittest.TestCase):
             query=preview_query,
         )
         self.assertEqual(previews["countPreview"]["type"], "lowerBound")
+        self.assertEqual(previews["countPreview"]["exact"], False)
         self.assertEqual(len(previews["highlightPreview"]["sample"]), 3)
         self.assertEqual(previews["facetPreview"]["buckets"], [{"value": "note", "count": 3}])
 

@@ -35,6 +35,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         coll_name: str,
         filter_spec: dict[str, object] | None = None,
         *,
+        text_query=None,
         plan=None,
         projection=None,
         collation=None,
@@ -52,6 +53,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             coll_name,
             compile_find_semantics(
                 filter_spec,
+                text_query=text_query,
                 plan=plan,
                 projection=projection,
                 collation=collation,
@@ -2626,6 +2628,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(explanation.details["pushdown"], "legacy")
             self.assertTrue(explanation.details["virtual"])
             self.assertEqual(text_explanation.details["textQuery"]["backend"], "python")
+            self.assertFalse(text_explanation.details["textQuery"]["caseSensitive"])
+            self.assertFalse(text_explanation.details["textQuery"]["diacriticSensitive"])
         finally:
             await engine.disconnect()
 
@@ -4613,16 +4617,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 await engine.create_index("db", "coll", ["_id"], expire_after_seconds=10)
             with self.assertRaisesRegex(
                 OperationFailure,
-                "local text indexes currently support only text key patterns",
-            ):
-                await engine.create_index("db", "coll", [("a", "text"), ("b", 1)])
-            with self.assertRaisesRegex(
-                OperationFailure,
                 "special index types currently require a single-field key pattern",
             ):
                 await engine.create_index("db", "coll", [("geo", "2dsphere"), ("b", 1)])
             with self.assertRaisesRegex(OperationFailure, "do not support unique"):
                 await engine.create_index("db", "coll", [("a", "text")], unique=True)
+            with self.assertRaisesRegex(OperationFailure, "only supported for text indexes"):
+                await engine.create_index("db", "coll", [("title", 1)], weights={"title": 2})
             with self.assertRaisesRegex(OperationFailure, "Conflicting index definition for '_id_'"):
                 await engine.create_index("db", "coll", ["_id"], unique=False)
             with self.assertRaisesRegex(OperationFailure, "Conflicting index definition for '_id_'"):
@@ -4639,6 +4640,101 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 await engine.rename_collection("db", "coll", "other")
         finally:
             await engine.disconnect()
+
+    async def test_sqlite_create_index_accepts_text_index_with_ordered_tail_key(self) -> None:
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            index_name = await engine.create_index("db", "coll", [("title", "text"), ("createdAt", -1)])
+            indexes = await engine.list_indexes("db", "coll")
+            self.assertEqual(index_name, "title_text_createdAt_-1")
+            self.assertEqual(indexes[1]["name"], "title_text_createdAt_-1")
+            self.assertEqual(indexes[1]["key"], {"title": "text", "createdAt": -1})
+
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada", "createdAt": 1})
+            found = [
+                document
+                async for document in self._scan(
+                    engine,
+                    "db",
+                    "coll",
+                    text_query=compile_classic_text_query({"$search": "Ada"}),
+                )
+            ]
+            self.assertEqual(found, [{"_id": "1", "title": "Ada", "createdAt": 1}])
+        finally:
+            await engine.disconnect()
+
+    async def test_sqlite_text_index_persists_weights_and_language_metadata(self) -> None:
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index(
+                "db",
+                "coll",
+                [("title", "text"), ("body", "text")],
+                name="title_text_body_text",
+                weights={"title": 5, "body": 1},
+                default_language="english",
+                language_override="lang",
+            )
+            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada", "body": "none"})
+            await engine.put_document("db", "coll", {"_id": "2", "title": "none", "body": "Ada"})
+
+            indexes = await engine.list_indexes("db", "coll")
+            info = await engine.index_information("db", "coll")
+            semantics = compile_find_semantics(
+                text_query=compile_classic_text_query({"$search": "Ada"})
+            )
+            scored_documents = list(
+                engine._iter_documents_for_classic_text_query_sync(
+                    "db",
+                    "coll",
+                    [
+                        {"_id": "1", "title": "Ada", "body": "none"},
+                        {"_id": "2", "title": "none", "body": "Ada"},
+                    ],
+                    semantics=semantics,
+                )
+            )
+            explanation = await engine.explain_find_semantics(
+                "db",
+                "coll",
+                semantics,
+            )
+        finally:
+            await engine.disconnect()
+
+        self.assertIn(
+            {
+                "name": "title_text_body_text",
+                "key": {"title": "text", "body": "text"},
+                "unique": False,
+                "weights": {"title": 5, "body": 1},
+                "default_language": "english",
+                "language_override": "lang",
+            },
+            indexes,
+        )
+        self.assertEqual(
+            info["title_text_body_text"],
+            {
+                "key": [("title", "text"), ("body", "text")],
+                "weights": {"title": 5, "body": 1},
+                "default_language": "english",
+                "language_override": "lang",
+            },
+        )
+        self.assertEqual(
+            scored_documents,
+            [
+                {"_id": "1", "title": "Ada", "body": "none", "__mongoeco_textScore__": 5.0},
+                {"_id": "2", "title": "none", "body": "Ada", "__mongoeco_textScore__": 1.0},
+            ],
+        )
+        self.assertEqual(explanation.details["textQuery"]["weights"], {"title": 5, "body": 1})
+        self.assertEqual(explanation.details["textQuery"]["defaultLanguage"], "english")
+        self.assertEqual(explanation.details["textQuery"]["languageOverride"], "lang")
 
     async def test_sqlite_search_admin_and_namespace_error_paths(self):
         engine = SQLiteEngine()
@@ -4953,7 +5049,16 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 text_explanation = await engine.explain_find_semantics(
                     "db",
                     "coll",
-                    compile_find_semantics(text_query=compile_classic_text_query({"$search": "Ada"})),
+                    compile_find_semantics(
+                        text_query=compile_classic_text_query(
+                            {
+                                "$search": "Ada",
+                                "$caseSensitive": True,
+                                "$diacriticSensitive": True,
+                                "$language": "en",
+                            }
+                        )
+                    ),
                 )
         finally:
             await engine.disconnect()
@@ -4962,6 +5067,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(explanation.details["engine_details"], list)
         self.assertTrue(explanation.details["virtual"])
         self.assertIn("textQuery", text_explanation.details)
+        self.assertTrue(text_explanation.details["textQuery"]["caseSensitive"])
+        self.assertTrue(text_explanation.details["textQuery"]["diacriticSensitive"])
+        self.assertEqual(text_explanation.details["textQuery"]["language"], "en")
 
     async def test_explain_elem_match_filter_reports_operator_pushdown_hint(self):
         engine = SQLiteEngine()
