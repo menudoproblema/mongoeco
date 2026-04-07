@@ -1,5 +1,3 @@
-import warnings
-
 from mongoeco.api import AsyncMongoClient, MongoClient
 from mongoeco._version import __version__
 from mongoeco.driver import (
@@ -69,22 +67,4 @@ __all__ = [
 
 
 def __getattr__(name: str):
-    if name in {
-        "CallbackCommandTransport",
-        "LocalCommandTransport",
-        "WireProtocolCommandTransport",
-    }:
-        warnings.warn(
-            (
-                f"mongoeco.{name} is a compatibility alias and will be removed in 4.0. "
-                f"Import it from mongoeco.driver instead."
-            ),
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        from mongoeco.driver import __getattr__ as _driver_getattr
-
-        value = _driver_getattr(name)
-        globals()[name] = value
-        return value
     raise AttributeError(name)

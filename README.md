@@ -149,14 +149,8 @@ The 3.x contract is intentionally explicit:
 * each root surface is curated through its `__all__`
 * lower-level runtime symbols stay in explicit subpackages
 
-The root package still exposes three transport names as compatibility aliases:
-
-* `CallbackCommandTransport`
-* `LocalCommandTransport`
-* `WireProtocolCommandTransport`
-
-Those aliases are deprecated in 3.x and scheduled for removal in 4.0. Import
-them from `mongoeco.driver` directly in new code.
+The root package no longer exposes transport aliases. Import transport classes
+from `mongoeco.driver` directly.
 
 `mongoeco` does not ship a live CXP provider wrapper for its clients. Instead,
 it exposes the canonical catalog and projects the active capability path

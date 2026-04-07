@@ -37,6 +37,7 @@ from mongoeco.core.query_plan import (
     BitwiseCondition,
     DeferredQueryNode,
     ExprCondition,
+    WhereCondition,
     is_concrete_query_node,
 )
 from mongoeco.types import SortSpec, Update
@@ -69,6 +70,7 @@ HANDLED_SQL_QUERY_NODE_TYPES: tuple[type[QueryNode], ...] = (
     ElemMatchCondition,
     BitwiseCondition,
     ExprCondition,
+    WhereCondition,
     JsonSchemaCondition,
     AndCondition,
     OrCondition,
@@ -1034,7 +1036,7 @@ def translate_query_plan(plan: QueryNode) -> SqlFragment:
             raise NotImplementedError("Query operator not yet translated to SQL")
         case GeoWithinCondition() | GeoIntersectsCondition() | NearCondition():
             raise NotImplementedError("Geospatial operators require Python query fallback")
-        case BitwiseCondition() | ExprCondition() | JsonSchemaCondition():
+        case BitwiseCondition() | ExprCondition() | WhereCondition() | JsonSchemaCondition():
             raise NotImplementedError("Query operator not yet translated to SQL")
         case AndCondition(clauses=clauses):
             sql_clauses: list[str] = []

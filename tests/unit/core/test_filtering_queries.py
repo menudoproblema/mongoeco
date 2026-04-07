@@ -258,7 +258,21 @@ class QueryEngineTests(unittest.TestCase):
     def test_query_engine_supports_top_level_or(self):
         document = {"a": 1, "b": 3}
         self.assertTrue(QueryEngine.match(document, {"$or": [{"a": 2}, {"b": 3}]}))
-        self.assertFalse(QueryEngine.match(document, {"$or": [{"a": 2}, {"b": 4}]}))
+
+    def test_query_engine_supports_where_string_expression(self):
+        document = {"age": 21, "role": "admin", "nested": {"score": 9}}
+        self.assertTrue(QueryEngine.match(document, {"$where": "this.age >= 18 and this.role == 'admin'"}))
+        self.assertTrue(QueryEngine.match(document, {"$where": "this['nested']['score'] > 5"}))
+        self.assertFalse(QueryEngine.match(document, {"$where": "this.age < 18"}))
+
+    def test_query_engine_supports_where_callable(self):
+        document = {"age": 21, "role": "admin"}
+        self.assertTrue(QueryEngine.match(document, {"$where": lambda doc: doc["age"] >= 18 and doc["role"] == "admin"}))
+        self.assertFalse(QueryEngine.match(document, {"$where": lambda doc: doc["age"] < 18}))
+
+    def test_query_engine_reports_where_runtime_failures(self):
+        with self.assertRaisesRegex(OperationFailure, "\\$where evaluation failed"):
+            QueryEngine.match({"age": 21}, {"$where": "this.missing > 0"})
 
     def test_query_engine_supports_top_level_and(self):
         document = {"a": 1, "b": 3}

@@ -752,7 +752,8 @@
             "$jsonSchema",
             "$nor",
             "$or",
-            "$text"
+            "$text",
+            "$where"
           ],
           "sync": true
         },
@@ -8197,7 +8198,8 @@
         "$jsonSchema",
         "$nor",
         "$or",
-        "$text"
+        "$text",
+        "$where"
       ],
       "server_version": "7.0",
       "update_operators": [
@@ -8486,7 +8488,8 @@
         "$jsonSchema",
         "$nor",
         "$or",
-        "$text"
+        "$text",
+        "$where"
       ],
       "server_version": "8.0",
       "update_operators": [

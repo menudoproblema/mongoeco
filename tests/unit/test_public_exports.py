@@ -4,7 +4,6 @@ import subprocess
 import sys
 import textwrap
 import unittest
-import warnings
 
 
 class PublicExportsTests(unittest.TestCase):
@@ -109,24 +108,11 @@ class PublicExportsTests(unittest.TestCase):
         self.assertFalse(hasattr(mongoeco, "MongoDialect80"))
         self.assertFalse(hasattr(mongoeco, "PyMongoProfile413"))
 
-    def test_root_transport_aliases_emit_deprecation_warning(self):
+    def test_root_transport_aliases_are_not_exposed_anymore(self):
         import mongoeco
-        from mongoeco import driver as driver_module
-
-        mongoeco.__dict__.pop("LocalCommandTransport", None)
-
-        with warnings.catch_warnings(record=True) as captured:
-            warnings.simplefilter("always")
-            transport = mongoeco.LocalCommandTransport
-
-        self.assertIs(transport, driver_module.LocalCommandTransport)
-        self.assertTrue(
-            any(
-                issubclass(warning.category, DeprecationWarning)
-                and "mongoeco.LocalCommandTransport is a compatibility alias" in str(warning.message)
-                for warning in captured
-            )
-        )
+        self.assertFalse(hasattr(mongoeco, "CallbackCommandTransport"))
+        self.assertFalse(hasattr(mongoeco, "LocalCommandTransport"))
+        self.assertFalse(hasattr(mongoeco, "WireProtocolCommandTransport"))
 
     def test_cxp_package_keeps_a_contract_focused_public_surface(self):
         import mongoeco.cxp as cxp_module

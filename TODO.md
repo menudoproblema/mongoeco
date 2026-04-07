@@ -113,8 +113,8 @@ Ya no forman parte del backlog pendiente básico:
 * recorte explícito de ambigüedad pública en `3.x`:
   * surface raíz estable y deliberadamente curada en `mongoeco`,
     `mongoeco.compat` y `mongoeco.cxp`;
-  * aliases legacy de transport en `mongoeco.*` marcados como deprecados y
-    con ruta clara de migración a `mongoeco.driver`.
+  * aliases legacy de transport en `mongoeco.*` retirados; imports de
+    transport concentrados en `mongoeco.driver`.
 
 ## 5. Backends y extensibilidad
 

@@ -828,7 +828,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
     def test_sync_cursor_explain_surfaces_deferred_reason_details(self):
         collection = _PlanningIssueCollectionStub([{"_id": "1"}])
-        cursor = Cursor(_SyncClientStub(), collection, {"$where": "this.a > 1"}, None)
+        cursor = Cursor(_SyncClientStub(), collection, {"$futureTopLevel": 1}, None)
 
         explanation = cursor.explain()
 
@@ -836,7 +836,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explanation["planning_mode"], "relaxed")
         self.assertEqual(
             explanation["details"]["reason"],
-            "operation has deferred planning issues (relaxed): query: Unsupported top-level query operator: $where",
+            "operation has deferred planning issues (relaxed): query: Unsupported top-level query operator: $futureTopLevel",
         )
         self.assertEqual(explanation["cxp"]["capability"], "read")
 

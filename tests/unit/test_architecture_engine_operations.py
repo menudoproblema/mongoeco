@@ -302,13 +302,13 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
                     "users",
                     planning_mode=PlanningMode.RELAXED,
                 )
-                cursor = collection.find({"$where": "this.a > 1"})
+                cursor = collection.find({"$futureTopLevel": 1})
                 explanation = await cursor.explain()
                 self.assertEqual(explanation["planning_mode"], "relaxed")
                 self.assertTrue(explanation["planning_issues"])
                 self.assertEqual(
                     explanation["details"]["reason"],
-                    "operation has deferred planning issues (relaxed): query: Unsupported top-level query operator: $where",
+                    "operation has deferred planning issues (relaxed): query: Unsupported top-level query operator: $futureTopLevel",
                 )
                 with self.assertRaises(Exception):
                     await cursor.to_list()

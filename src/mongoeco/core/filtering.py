@@ -47,6 +47,7 @@ from mongoeco.core.query_plan import (
     RegexCondition,
     SizeCondition,
     TypeCondition,
+    WhereCondition,
     compile_filter,
     is_concrete_query_node,
 )
@@ -76,10 +77,55 @@ HANDLED_QUERY_NODE_TYPES: tuple[type[QueryNode], ...] = (
     TypeCondition,
     BitwiseCondition,
     ExprCondition,
+    WhereCondition,
     JsonSchemaCondition,
     AndCondition,
     OrCondition,
 )
+
+
+class _WhereDocumentView:
+    def __init__(self, value: object):
+        self._value = value
+
+    @staticmethod
+    def _wrap(value: object) -> object:
+        if isinstance(value, dict | list | tuple):
+            return _WhereDocumentView(value)
+        return value
+
+    def __getattr__(self, name: str) -> object:
+        if isinstance(self._value, dict) and name in self._value:
+            return self._wrap(self._value[name])
+        raise AttributeError(name)
+
+    def __getitem__(self, key: object) -> object:
+        if isinstance(self._value, dict):
+            return self._wrap(self._value[key])
+        if isinstance(self._value, list | tuple):
+            if not isinstance(key, int):
+                raise TypeError("list/tuple $where indexing requires an integer")
+            return self._wrap(self._value[key])
+        raise TypeError("value does not support indexing")
+
+    def __iter__(self):
+        if isinstance(self._value, dict):
+            for key in self._value:
+                yield key
+            return
+        if isinstance(self._value, list | tuple):
+            for item in self._value:
+                yield self._wrap(item)
+            return
+        raise TypeError("value is not iterable")
+
+    def __len__(self) -> int:
+        if isinstance(self._value, dict | list | tuple):
+            return len(self._value)
+        raise TypeError("value has no length")
+
+    def __bool__(self) -> bool:
+        return bool(self._value)
 
 
 class BSONComparator:
@@ -284,6 +330,29 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
 
                 value = evaluate_expression(document, expression, variables, dialect=dialect)
                 return _expression_truthy(value, dialect=dialect)
+            case WhereCondition(
+                expression=expression,
+                predicate=predicate,
+                compiled_expression=compiled_expression,
+            ):
+                try:
+                    if predicate is not None:
+                        return bool(predicate(document))
+                    if compiled_expression is None:
+                        raise ValueError("missing compiled expression")
+                    wrapped = _WhereDocumentView(document)
+                    return bool(
+                        eval(  # noqa: S307 - bounded sandbox by AST restrictions in query_plan
+                            compiled_expression,
+                            {"__builtins__": {}},
+                            {"this": wrapped, "doc": wrapped},
+                        )
+                    )
+                except Exception as exc:  # pragma: no cover - covered by public tests
+                    message = "$where evaluation failed"
+                    if expression is not None:
+                        message += f" for expression {expression!r}"
+                    raise OperationFailure(f"{message}: {exc}") from exc
             case JsonSchemaCondition(schema=schema, compiled_schema=compiled_schema):
                 from mongoeco.core.schema_validation import CompiledJsonSchema
 

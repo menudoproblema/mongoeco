@@ -29,6 +29,7 @@ from mongoeco.core.query_plan import (
     RegexCondition,
     SizeCondition,
     TypeCondition,
+    WhereCondition,
     _coerce_bitwise_mask,
     _normalize_type_specifier,
     _regex_options_from_pattern,
@@ -80,14 +81,34 @@ class QueryPlanTests(unittest.TestCase):
                 ),
             )
 
-    def test_compile_filter_relaxed_mode_defers_validation_failures(self):
+    def test_compile_filter_relaxed_mode_defers_invalid_where_failures(self):
         plan = compile_filter(
-            {"$where": "this.a > 1"},
+            {"$where": "len(this.a) > 1"},
             planning_mode=PlanningMode.RELAXED,
         )
 
         self.assertIsInstance(plan, DeferredQueryNode)
         self.assertEqual(plan.issue.scope, "query")
+
+    def test_compile_filter_supports_safe_where_expressions_and_callables(self):
+        where_expression_plan = compile_filter({"$where": "this.age >= 18 and this.role == 'admin'"})
+        self.assertIsInstance(where_expression_plan, WhereCondition)
+        self.assertEqual(where_expression_plan.expression, "this.age >= 18 and this.role == 'admin'")
+        self.assertIsNotNone(where_expression_plan.compiled_expression)
+        self.assertIsNone(where_expression_plan.predicate)
+
+        where_callable = lambda doc: doc.get("age", 0) >= 18
+        where_callable_plan = compile_filter({"$where": where_callable})
+        self.assertIsInstance(where_callable_plan, WhereCondition)
+        self.assertIs(where_callable_plan.predicate, where_callable)
+        self.assertIsNone(where_callable_plan.expression)
+        self.assertIsNone(where_callable_plan.compiled_expression)
+
+    def test_compile_filter_rejects_unsafe_where_expressions(self):
+        with self.assertRaisesRegex(ValueError, "safe local expression subset"):
+            compile_filter({"$where": "len(this.tags) > 0"})
+        with self.assertRaisesRegex(ValueError, "must be a non-empty string or callable"):
+            compile_filter({"$where": ""})
 
     def test_geo_query_plan_rejects_invalid_local_runtime_shapes(self):
         with self.assertRaisesRegex(ValueError, "\\$geoWithin requires a document specification"):
@@ -363,8 +384,6 @@ class QueryPlanTests(unittest.TestCase):
     def test_compile_filter_rejects_unknown_top_level_operators(self):
         with self.assertRaises(OperationFailure):
             compile_filter({"$foo": 1})
-        with self.assertRaises(OperationFailure):
-            compile_filter({"$where": "this.a > 1"})
     def test_compile_filter_accepts_top_level_json_schema(self):
         compiled = compile_filter({"$jsonSchema": {"required": ["name"]}})
 
@@ -409,10 +428,6 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({"$jsonSchema": 1})
         with self.assertRaises(OperationFailure):
             compile_filter({"$jsonSchema": {"required": "name"}})
-
-    def test_compile_filter_rejects_where_with_dedicated_test(self):
-        with self.assertRaises(OperationFailure):
-            compile_filter({"$where": "this.a > 1"})
 
     def test_compile_filter_supports_local_geo_subset(self):
         box_plan = compile_filter(

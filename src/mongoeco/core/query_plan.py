@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import ast
 from dataclasses import dataclass
 import math
 import re
 import uuid
-from typing import Any, TypeIs
+from typing import Any, Callable, TypeIs
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_scalars import INT32_MAX, unwrap_bson_numeric
@@ -169,6 +170,13 @@ class ExprCondition(QueryNode):
 
 
 @dataclass(frozen=True)
+class WhereCondition(QueryNode):
+    expression: str | None = None
+    predicate: Callable[[dict[str, Any]], object] | None = None
+    compiled_expression: object | None = None
+
+
+@dataclass(frozen=True)
 class JsonSchemaCondition(QueryNode):
     schema: Filter
     compiled_schema: object | None = None
@@ -208,6 +216,7 @@ type ConcreteQueryNode = (
     | TypeCondition
     | BitwiseCondition
     | ExprCondition
+    | WhereCondition
     | JsonSchemaCondition
     | AndCondition
     | OrCondition
@@ -241,10 +250,76 @@ def is_concrete_query_node(node: QueryNode) -> TypeIs[ConcreteQueryNode]:
             TypeCondition,
             BitwiseCondition,
             ExprCondition,
+            WhereCondition,
             JsonSchemaCondition,
             AndCondition,
             OrCondition,
         ),
+    )
+
+
+_WHERE_ALLOWED_AST_NODES = (
+    ast.Expression,
+    ast.BoolOp,
+    ast.UnaryOp,
+    ast.BinOp,
+    ast.Compare,
+    ast.Name,
+    ast.Load,
+    ast.Attribute,
+    ast.Subscript,
+    ast.Constant,
+    ast.Tuple,
+    ast.List,
+    ast.Dict,
+    ast.And,
+    ast.Or,
+    ast.Not,
+    ast.Add,
+    ast.Sub,
+    ast.Mult,
+    ast.Div,
+    ast.Mod,
+    ast.Pow,
+    ast.USub,
+    ast.UAdd,
+    ast.Eq,
+    ast.NotEq,
+    ast.Lt,
+    ast.LtE,
+    ast.Gt,
+    ast.GtE,
+    ast.In,
+    ast.NotIn,
+    ast.Is,
+    ast.IsNot,
+)
+
+_WHERE_ALLOWED_NAMES = frozenset({"this", "doc", "True", "False", "None"})
+
+
+def _compile_where_condition(condition: object) -> WhereCondition:
+    if callable(condition):
+        return WhereCondition(
+            predicate=condition,
+        )
+    if not isinstance(condition, str) or not condition.strip():
+        raise ValueError("$where must be a non-empty string or callable")
+    expression = condition.strip()
+    parsed = ast.parse(expression, mode="eval")
+    for node in ast.walk(parsed):
+        if not isinstance(node, _WHERE_ALLOWED_AST_NODES):
+            raise ValueError(
+                "$where only supports a safe local expression subset"
+            )
+        if isinstance(node, ast.Name) and node.id not in _WHERE_ALLOWED_NAMES:
+            raise ValueError(
+                "$where only supports names: this, doc, True, False, None"
+            )
+    compiled = compile(parsed, "<mongoeco-$where>", "eval")
+    return WhereCondition(
+        expression=expression,
+        compiled_expression=compiled,
     )
 
 
@@ -659,6 +734,9 @@ def _compile_filter_strict(
             continue
         if key == "$expr":
             clauses.append(ExprCondition(value, {} if variables is None else dict(variables)))
+            continue
+        if key == "$where":
+            clauses.append(_compile_where_condition(value))
             continue
         if key == "$jsonSchema":
             if not isinstance(value, dict):

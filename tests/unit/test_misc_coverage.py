@@ -3,7 +3,6 @@ from types import SimpleNamespace
 
 import mongoeco
 from mongoeco.driver._runtime_attempts import RuntimeAttemptLifecycle
-from mongoeco.driver import LocalCommandTransport
 from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.core.update_paths import CompiledUpdateInstruction, compile_update_path
 from mongoeco.core.update_scalar_operators import apply_bit, apply_rename
@@ -13,8 +12,9 @@ from mongoeco.session import ClientSession
 
 
 class MiscCoverageTests(unittest.TestCase):
-    def test_package_getattr_resolves_driver_exports(self):
-        self.assertIs(mongoeco.__getattr__("LocalCommandTransport"), LocalCommandTransport)
+    def test_package_getattr_rejects_removed_root_transport_aliases(self):
+        with self.assertRaises(AttributeError):
+            mongoeco.__getattr__("LocalCommandTransport")
 
     def test_package_getattr_rejects_unknown_export(self):
         with self.assertRaises(AttributeError):
