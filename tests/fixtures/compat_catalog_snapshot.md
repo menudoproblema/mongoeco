@@ -691,6 +691,7 @@
 - `operations`: _empty_
 - `backend`: `{'selectedBackend': 'pyuca', 'availableBackends': ['pyuca'], 'unicodeAvailable': True, 'advancedOptionsAvailable': False}`
 - `capabilities`: `{'supportedLocales': ['simple', 'en'], 'supportedStrengths': [1, 2, 3], 'supportsCaseLevel': True, 'supportsNumericOrdering': True, 'optionalIcuBackend': True, 'fallbackBackend': 'pyuca', 'advancedOptionsRequireIcu': ['backwards', 'alternate', 'maxVariable', 'normalization']}`
+- `operationMetadata`: `{'find': {'supportsCollation': True, 'scope': 'collection-query', 'behavior': 'filter-and-sort'}, 'find_one': {'supportsCollation': True, 'scope': 'collection-query', 'behavior': 'filter'}, 'count_documents': {'supportsCollation': True, 'scope': 'collection-query', 'behavior': 'filter'}, 'distinct': {'supportsCollation': True, 'scope': 'collection-query', 'behavior': 'dedup'}, 'update_one': {'supportsCollation': True, 'scope': 'collection-write', 'behavior': 'filter-match'}, 'update_many': {'supportsCollation': True, 'scope': 'collection-write', 'behavior': 'filter-match'}, 'replace_one': {'supportsCollation': True, 'scope': 'collection-write', 'behavior': 'filter-match'}, 'delete_one': {'supportsCollation': True, 'scope': 'collection-write', 'behavior': 'filter-match'}, 'delete_many': {'supportsCollation': True, 'scope': 'collection-write', 'behavior': 'filter-match'}, 'serverStatus': {'supportsCapabilityInspection': True, 'inspectionSurface': 'database.command', 'metadataPath': 'mongoeco.collation'}}`
 
 ### `persistence`
 - `description`: `Data persistence beyond process lifetime.`
@@ -698,6 +699,7 @@
 - `operations`: _empty_
 - `persistent`: `True`
 - `storageEngine`: `runtime-dependent`
+- `operationMetadata`: `{'serverStatus': {'supportsCapabilityInspection': True, 'inspectionSurface': 'database.command', 'metadataPaths': ['storageEngine.name', 'mongoeco.engineRuntime']}, 'listDatabases': {'supportsCapabilityInspection': True, 'inspectionSurface': 'database.command', 'behavior': 'list-visible-databases'}}`
 
 ### `topology_discovery`
 - `description`: `Topology and node-state discovery.`
@@ -706,6 +708,7 @@
 - `topologyType`: `unknown`
 - `serverCount`: `1`
 - `sdam`: `{'fullSdam': False, 'topologyVersionAware': True, 'helloMemberDiscovery': True, 'serverHealthTracking': True, 'electionMetadataAware': True, 'longPollingHello': False, 'distributedMonitoring': False}`
+- `operationMetadata`: `{'hello': {'supportsCapabilityInspection': True, 'inspectionSurface': 'database.command', 'metadataPaths': ['helloOk', 'isWritablePrimary', 'maxWireVersion']}, 'isMaster': {'supportsCapabilityInspection': True, 'inspectionSurface': 'database.command', 'legacyAliasOf': 'hello'}, 'serverStatus': {'supportsCapabilityInspection': True, 'inspectionSurface': 'database.command', 'metadataPath': 'mongoeco.sdam'}, 'sdam_capabilities': {'supportsCapabilityInspection': True, 'inspectionSurface': 'mongoeco.client', 'metadataPath': 'sdam_capabilities()'}}`
 
 ## CXP Extensions
 ### `classicText`

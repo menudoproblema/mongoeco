@@ -249,12 +249,85 @@ def _mongoeco_collation_metadata() -> dict[str, object]:
     return msgspec.to_builtins(metadata)
 
 
+def _mongoeco_collation_operation_metadata() -> dict[str, dict[str, object]]:
+    return {
+        MONGODB_FIND: {
+            'supportsCollation': True,
+            'scope': 'collection-query',
+            'behavior': 'filter-and-sort',
+        },
+        MONGODB_FIND_ONE: {
+            'supportsCollation': True,
+            'scope': 'collection-query',
+            'behavior': 'filter',
+        },
+        MONGODB_COUNT_DOCUMENTS: {
+            'supportsCollation': True,
+            'scope': 'collection-query',
+            'behavior': 'filter',
+        },
+        MONGODB_DISTINCT: {
+            'supportsCollation': True,
+            'scope': 'collection-query',
+            'behavior': 'dedup',
+        },
+        MONGODB_UPDATE_ONE: {
+            'supportsCollation': True,
+            'scope': 'collection-write',
+            'behavior': 'filter-match',
+        },
+        MONGODB_UPDATE_MANY: {
+            'supportsCollation': True,
+            'scope': 'collection-write',
+            'behavior': 'filter-match',
+        },
+        MONGODB_REPLACE_ONE: {
+            'supportsCollation': True,
+            'scope': 'collection-write',
+            'behavior': 'filter-match',
+        },
+        MONGODB_DELETE_ONE: {
+            'supportsCollation': True,
+            'scope': 'collection-write',
+            'behavior': 'filter-match',
+        },
+        MONGODB_DELETE_MANY: {
+            'supportsCollation': True,
+            'scope': 'collection-write',
+            'behavior': 'filter-match',
+        },
+        'serverStatus': {
+            'supportsCapabilityInspection': True,
+            'inspectionSurface': 'database.command',
+            'metadataPath': 'mongoeco.collation',
+        },
+    }
+
+
 def _mongoeco_persistence_metadata() -> dict[str, object]:
     metadata = MongoPersistenceMetadata(
         persistent=True,
         storageEngine='runtime-dependent',
     )
     return msgspec.to_builtins(metadata)
+
+
+def _mongoeco_persistence_operation_metadata() -> dict[str, dict[str, object]]:
+    return {
+        'serverStatus': {
+            'supportsCapabilityInspection': True,
+            'inspectionSurface': 'database.command',
+            'metadataPaths': [
+                'storageEngine.name',
+                'mongoeco.engineRuntime',
+            ],
+        },
+        'listDatabases': {
+            'supportsCapabilityInspection': True,
+            'inspectionSurface': 'database.command',
+            'behavior': 'list-visible-databases',
+        },
+    }
 
 
 def _mongoeco_topology_discovery_metadata() -> dict[str, object]:
@@ -272,6 +345,35 @@ def _mongoeco_topology_discovery_metadata() -> dict[str, object]:
         },
     )
     return msgspec.to_builtins(metadata)
+
+
+def _mongoeco_topology_discovery_operation_metadata() -> dict[str, dict[str, object]]:
+    return {
+        'hello': {
+            'supportsCapabilityInspection': True,
+            'inspectionSurface': 'database.command',
+            'metadataPaths': [
+                'helloOk',
+                'isWritablePrimary',
+                'maxWireVersion',
+            ],
+        },
+        'isMaster': {
+            'supportsCapabilityInspection': True,
+            'inspectionSurface': 'database.command',
+            'legacyAliasOf': 'hello',
+        },
+        'serverStatus': {
+            'supportsCapabilityInspection': True,
+            'inspectionSurface': 'database.command',
+            'metadataPath': 'mongoeco.sdam',
+        },
+        'sdam_capabilities': {
+            'supportsCapabilityInspection': True,
+            'inspectionSurface': 'mongoeco.client',
+            'metadataPath': 'sdam_capabilities()',
+        },
+    }
 
 
 def _serialize_profile(profile: CapabilityProfile, *, recommended_for: list[str]) -> dict[str, object]:
@@ -422,6 +524,12 @@ def _compatible_profile_names_for_capability(capability_name: str) -> list[str]:
         return [MONGODB_TEXT_SEARCH_PROFILE_NAME, MONGODB_SEARCH_PROFILE_NAME]
     if capability_name == MONGODB_VECTOR_SEARCH:
         return [MONGODB_SEARCH_PROFILE_NAME]
+    if capability_name == MONGODB_COLLATION:
+        return [MONGODB_PLATFORM_PROFILE_NAME]
+    if capability_name == MONGODB_PERSISTENCE:
+        return [MONGODB_PLATFORM_PROFILE_NAME]
+    if capability_name == MONGODB_TOPOLOGY_DISCOVERY:
+        return [MONGODB_PLATFORM_PROFILE_NAME]
     return []
 
 
@@ -759,9 +867,18 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA: dict[str, dict[str, object]] = {
     },
     MONGODB_SEARCH: {},
     MONGODB_VECTOR_SEARCH: {},
-    MONGODB_COLLATION: _mongoeco_collation_metadata(),
-    MONGODB_PERSISTENCE: _mongoeco_persistence_metadata(),
-    MONGODB_TOPOLOGY_DISCOVERY: _mongoeco_topology_discovery_metadata(),
+    MONGODB_COLLATION: {
+        **_mongoeco_collation_metadata(),
+        'operationMetadata': _mongoeco_collation_operation_metadata(),
+    },
+    MONGODB_PERSISTENCE: {
+        **_mongoeco_persistence_metadata(),
+        'operationMetadata': _mongoeco_persistence_operation_metadata(),
+    },
+    MONGODB_TOPOLOGY_DISCOVERY: {
+        **_mongoeco_topology_discovery_metadata(),
+        'operationMetadata': _mongoeco_topology_discovery_operation_metadata(),
+    },
 }
 
 _MONGOECO_PUBLIC_CXP_EXTENSIONS: dict[str, dict[str, object]] = {

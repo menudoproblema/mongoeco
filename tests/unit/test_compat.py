@@ -258,6 +258,24 @@ class CompatResolutionTests(unittest.TestCase):
             ]["scoreField"],
             "vectorSearchScore",
         )
+        self.assertEqual(
+            catalog["capabilities"]["collation"]["metadata"]["operationMetadata"][
+                "serverStatus"
+            ]["metadataPath"],
+            "mongoeco.collation",
+        )
+        self.assertEqual(
+            catalog["capabilities"]["persistence"]["metadata"]["operationMetadata"][
+                "serverStatus"
+            ]["metadataPaths"],
+            ["storageEngine.name", "mongoeco.engineRuntime"],
+        )
+        self.assertEqual(
+            catalog["capabilities"]["topology_discovery"]["metadata"][
+                "operationMetadata"
+            ]["sdam_capabilities"]["metadataPath"],
+            "sdam_capabilities()",
+        )
         self.assertTrue(
             catalog["capabilities"]["read"]["metadata"]["operationMetadata"][
                 "find"
@@ -310,6 +328,14 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertEqual(
             operation_catalog["update_one"][0]["compatibleProfiles"],
             ["mongodb-core", "mongodb-platform"],
+        )
+        self.assertEqual(
+            operation_catalog["serverStatus"][0]["compatibleProfiles"],
+            ["mongodb-platform"],
+        )
+        self.assertEqual(
+            operation_catalog["sdam_capabilities"][0]["capabilityName"],
+            "topology_discovery",
         )
 
     def test_catalog_is_exposed_as_immutable_global_data(self):

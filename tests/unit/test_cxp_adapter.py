@@ -197,6 +197,22 @@ class CxpAlignmentTests(unittest.TestCase):
             exported['operations']['aggregate'][1]['capabilityName'],
             'search',
         )
+        self.assertEqual(
+            exported['operations']['serverStatus'][0]['capabilityName'],
+            'collation',
+        )
+        self.assertEqual(
+            exported['operations']['serverStatus'][0]['compatibleProfiles'],
+            ['mongodb-platform'],
+        )
+        self.assertEqual(
+            exported['operations']['sdam_capabilities'][0]['capabilityName'],
+            'topology_discovery',
+        )
+        self.assertEqual(
+            exported['operations']['listDatabases'][0]['capabilityName'],
+            'persistence',
+        )
         self.assertTrue(
             exported['profileSupport']['mongodb-text-search']['supported']
         )
@@ -349,6 +365,58 @@ class CxpAlignmentTests(unittest.TestCase):
                         'normalization',
                     ],
                 },
+                'operationMetadata': {
+                    'find': {
+                        'supportsCollation': True,
+                        'scope': 'collection-query',
+                        'behavior': 'filter-and-sort',
+                    },
+                    'find_one': {
+                        'supportsCollation': True,
+                        'scope': 'collection-query',
+                        'behavior': 'filter',
+                    },
+                    'count_documents': {
+                        'supportsCollation': True,
+                        'scope': 'collection-query',
+                        'behavior': 'filter',
+                    },
+                    'distinct': {
+                        'supportsCollation': True,
+                        'scope': 'collection-query',
+                        'behavior': 'dedup',
+                    },
+                    'update_one': {
+                        'supportsCollation': True,
+                        'scope': 'collection-write',
+                        'behavior': 'filter-match',
+                    },
+                    'update_many': {
+                        'supportsCollation': True,
+                        'scope': 'collection-write',
+                        'behavior': 'filter-match',
+                    },
+                    'replace_one': {
+                        'supportsCollation': True,
+                        'scope': 'collection-write',
+                        'behavior': 'filter-match',
+                    },
+                    'delete_one': {
+                        'supportsCollation': True,
+                        'scope': 'collection-write',
+                        'behavior': 'filter-match',
+                    },
+                    'delete_many': {
+                        'supportsCollation': True,
+                        'scope': 'collection-write',
+                        'behavior': 'filter-match',
+                    },
+                    'serverStatus': {
+                        'supportsCapabilityInspection': True,
+                        'inspectionSurface': 'database.command',
+                        'metadataPath': 'mongoeco.collation',
+                    },
+                },
             },
         )
         self.assertEqual(
@@ -356,6 +424,21 @@ class CxpAlignmentTests(unittest.TestCase):
             {
                 'persistent': True,
                 'storageEngine': 'runtime-dependent',
+                'operationMetadata': {
+                    'serverStatus': {
+                        'supportsCapabilityInspection': True,
+                        'inspectionSurface': 'database.command',
+                        'metadataPaths': [
+                            'storageEngine.name',
+                            'mongoeco.engineRuntime',
+                        ],
+                    },
+                    'listDatabases': {
+                        'supportsCapabilityInspection': True,
+                        'inspectionSurface': 'database.command',
+                        'behavior': 'list-visible-databases',
+                    },
+                },
             },
         )
         self.assertEqual(
@@ -371,6 +454,32 @@ class CxpAlignmentTests(unittest.TestCase):
                     'electionMetadataAware': True,
                     'longPollingHello': False,
                     'distributedMonitoring': False,
+                },
+                'operationMetadata': {
+                    'hello': {
+                        'supportsCapabilityInspection': True,
+                        'inspectionSurface': 'database.command',
+                        'metadataPaths': [
+                            'helloOk',
+                            'isWritablePrimary',
+                            'maxWireVersion',
+                        ],
+                    },
+                    'isMaster': {
+                        'supportsCapabilityInspection': True,
+                        'inspectionSurface': 'database.command',
+                        'legacyAliasOf': 'hello',
+                    },
+                    'serverStatus': {
+                        'supportsCapabilityInspection': True,
+                        'inspectionSurface': 'database.command',
+                        'metadataPath': 'mongoeco.sdam',
+                    },
+                    'sdam_capabilities': {
+                        'supportsCapabilityInspection': True,
+                        'inspectionSurface': 'mongoeco.client',
+                        'metadataPath': 'sdam_capabilities()',
+                    },
                 },
             },
         )
