@@ -19,7 +19,7 @@ from copy import deepcopy
 from decimal import Decimal
 from typing import Any, AsyncIterable, override
 
-from mongoeco.api.operations import UpdateOperation, compile_update_operation
+from mongoeco.api.operations import FindOperation, UpdateOperation, compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect, MongoDialect70, MongoDialect80
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS, bson_engine_key, bson_numeric_index_key
 from mongoeco.core.codec import DocumentCodec
@@ -58,6 +58,7 @@ from mongoeco.core.query_plan import (
     ensure_query_plan,
 )
 from mongoeco.core.search import (
+    SearchQuery,
     attach_text_score,
     classic_text_score,
     resolve_classic_text_index,
