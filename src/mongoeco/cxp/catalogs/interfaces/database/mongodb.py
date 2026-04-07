@@ -35,8 +35,6 @@ from cxp.catalogs.interfaces.database.mongodb import (
     MONGODB_READ,
     MONGODB_REPLACE_ONE,
     MONGODB_SEARCH,
-    MONGODB_TEXT_SEARCH_PROFILE,
-    MONGODB_TEXT_SEARCH_PROFILE_NAME,
     MONGODB_SEARCH_PROFILE,
     MONGODB_SEARCH_PROFILE_NAME,
     MONGODB_SEARCH_TIER,
@@ -50,6 +48,16 @@ from cxp.catalogs.interfaces.database.mongodb import (
     MONGODB_WITH_TRANSACTION,
     MONGODB_WRITE,
 )
+
+try:
+    from cxp.catalogs.interfaces.database.mongodb import (
+        MONGODB_TEXT_SEARCH_PROFILE,
+        MONGODB_TEXT_SEARCH_PROFILE_NAME,
+    )
+except ImportError:
+    # Compatibilidad con versiones de cxp que aun no exportan perfil text-search.
+    MONGODB_TEXT_SEARCH_PROFILE = MONGODB_SEARCH_PROFILE
+    MONGODB_TEXT_SEARCH_PROFILE_NAME = MONGODB_SEARCH_PROFILE_NAME
 
 __all__ = (
     'MongoAggregationMetadata',

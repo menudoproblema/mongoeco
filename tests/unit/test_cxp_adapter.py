@@ -1,5 +1,10 @@
+import importlib.util
+from pathlib import Path
+import sys
+import types
 import unittest
 from types import SimpleNamespace
+from unittest import mock
 
 import mongoeco.cxp as mongoeco_cxp
 import mongoeco.cxp.capabilities as cxp_capabilities_module
@@ -72,6 +77,75 @@ class CxpAlignmentTests(unittest.TestCase):
         self.assertEqual(
             MongoVectorSearchMetadata.__name__,
             'MongoVectorSearchMetadata',
+        )
+
+    def test_catalog_wrapper_falls_back_when_text_search_profile_is_not_exported(self) -> None:
+        module_path = (
+            Path(__file__).resolve().parents[2]
+            / 'src'
+            / 'mongoeco'
+            / 'cxp'
+            / 'catalogs'
+            / 'interfaces'
+            / 'database'
+            / 'mongodb.py'
+        )
+        search_profile = SimpleNamespace(name='mongodb-search')
+
+        fake_leaf = types.ModuleType('cxp.catalogs.interfaces.database.mongodb')
+        fake_leaf.MONGODB_SEARCH_PROFILE = search_profile
+        fake_leaf.MONGODB_SEARCH_PROFILE_NAME = 'mongodb-search'
+
+        def _fallback_getattr(name: str):
+            if name.startswith('__'):
+                raise AttributeError(name)
+            if name in (
+                'MONGODB_TEXT_SEARCH_PROFILE',
+                'MONGODB_TEXT_SEARCH_PROFILE_NAME',
+            ):
+                raise AttributeError(name)
+            return SimpleNamespace(name=name)
+
+        fake_leaf.__getattr__ = _fallback_getattr
+
+        fake_cxp = types.ModuleType('cxp')
+        fake_catalogs = types.ModuleType('cxp.catalogs')
+        fake_interfaces = types.ModuleType('cxp.catalogs.interfaces')
+        fake_database = types.ModuleType('cxp.catalogs.interfaces.database')
+        fake_cxp.__path__ = []
+        fake_catalogs.__path__ = []
+        fake_interfaces.__path__ = []
+        fake_database.__path__ = []
+        fake_cxp.catalogs = fake_catalogs
+        fake_catalogs.interfaces = fake_interfaces
+        fake_interfaces.database = fake_database
+        fake_database.mongodb = fake_leaf
+
+        module_spec = importlib.util.spec_from_file_location(
+            'mongoeco_test_cxp_mongodb_wrapper_legacy',
+            module_path,
+        )
+        self.assertIsNotNone(module_spec)
+        self.assertIsNotNone(module_spec.loader)
+        module = importlib.util.module_from_spec(module_spec)
+
+        with mock.patch.dict(
+            sys.modules,
+            {
+                'cxp': fake_cxp,
+                'cxp.catalogs': fake_catalogs,
+                'cxp.catalogs.interfaces': fake_interfaces,
+                'cxp.catalogs.interfaces.database': fake_database,
+                'cxp.catalogs.interfaces.database.mongodb': fake_leaf,
+            },
+            clear=False,
+        ):
+            module_spec.loader.exec_module(module)
+
+        self.assertIs(module.MONGODB_TEXT_SEARCH_PROFILE, search_profile)
+        self.assertEqual(
+            module.MONGODB_TEXT_SEARCH_PROFILE_NAME,
+            'mongodb-search',
         )
 
     def test_execution_catalog_surface_is_aligned_with_cxp_2(self) -> None:
