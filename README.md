@@ -141,6 +141,23 @@ Import guidance by layer:
 * use `mongoeco.driver`, `mongoeco.engines` and `mongoeco.wire` only when you
   intentionally need lower-level runtime surfaces
 
+## Public Surface Stability (3.x)
+
+The 3.x contract is intentionally explicit:
+
+* stable import roots are `mongoeco`, `mongoeco.compat` and `mongoeco.cxp`
+* each root surface is curated through its `__all__`
+* lower-level runtime symbols stay in explicit subpackages
+
+The root package still exposes three transport names as compatibility aliases:
+
+* `CallbackCommandTransport`
+* `LocalCommandTransport`
+* `WireProtocolCommandTransport`
+
+Those aliases are deprecated in 3.x and scheduled for removal in 4.0. Import
+them from `mongoeco.driver` directly in new code.
+
 `mongoeco` does not ship a live CXP provider wrapper for its clients. Instead,
 it exposes the canonical catalog and projects the active capability path
 through `compat` and `explain()`. External systems can wrap `mongoeco` if they
@@ -206,10 +223,8 @@ Example:
 MONGOECO_JSON_BACKEND=orjson python your_app.py
 ```
 
-Unicode collation backend:
+Runtime behavior highlights:
 
-* `mongoeco` prefers `PyICU` when it is available
-* otherwise it uses the bundled `pyuca` dependency
 * the `simple` collation keeps using the BSON/Python baseline comparator and
   rejects Unicode tailoring knobs such as `caseLevel` or `numericOrdering`
 * the currently supported locale surface is `simple` and `en`
@@ -314,7 +329,7 @@ The local `$search` subset now includes:
   perimeter.
 * the advanced local subset now also exposes:
   * `autocomplete.tokenOrder` with `any` / `sequential`
-  * `regex.flags` with `i` / `m` / `s`
+  * `regex.flags` with `i` / `m` / `s` / `x`
   * `wildcard.allowAnalyzedField`
   * `$search.count`, `$search.highlight` and `$search.facet` as local
     stage options, with `highlight` visible in result documents through
@@ -372,11 +387,11 @@ See:
 
 ## Testing
 
-The repository currently uses the standard library test runner:
+The repository uses `pytest` as the primary test runner:
 
 ```bash
 python -m pip install -e .[dev,wire]
-python -m unittest discover -s tests -p 'test*.py'
+python -m pytest -q
 ```
 
 Contract-testing rule for new features:
@@ -444,8 +459,9 @@ best treated as pre-release.
 Release-readiness checklist:
 
 * [docs/release-checklist.md](docs/release-checklist.md)
-* [docs/roadmap-3.2.md](/Users/uve/Proyectos/mongoeco2/docs/roadmap-3.2.md)
 * [docs/release-3.2.0-draft.md](/Users/uve/Proyectos/mongoeco2/docs/release-3.2.0-draft.md)
+* [TODO.md](/Users/uve/Proyectos/mongoeco2/TODO.md)
+* [MISSING_FEATURES.md](/Users/uve/Proyectos/mongoeco2/MISSING_FEATURES.md)
 
 ## License
 

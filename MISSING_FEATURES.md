@@ -16,3 +16,4 @@ arquitectonica y las decisiones de endurecimiento del diseno viven ya en
 | 20        | `$redact` en agregacion                                           | Medio-Bajo  | Medio-Alto  | `stages.py:256`                                                   |
 | 21        | Stages admin/introspeccion en agregacion                          | Bajo        | Medio       | `stages.py:256`                                                   |
 | 23        | Query top-level `$where`                                          | Bajo        | Bajo-Medio  | `test_query_plan.py:72`<br>`test_query_plan.py:243`               |
+| 24        | Retirar aliases legacy de transport en root package (`mongoeco.*`) al cerrar 4.0 | Bajo        | Bajo        | `src/mongoeco/__init__.py:71`<br>`README.md:145`                  |
