@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Mapping, Sequence
 
 from mongoeco.core.search import TEXT_SCORE_FIELD

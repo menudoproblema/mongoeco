@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import cmp_to_key
 import heapq
 import math
