@@ -49,6 +49,7 @@ def _print_vector_case(
     print("score breakdown:", details["scoreBreakdown"])
     print("candidate plan:", details["candidatePlan"])
     print("hybrid retrieval:", details["hybridRetrieval"])
+    print("pruning summary:", details["pruningSummary"])
     print("query filter prefilter:", details["vectorFilterPrefilter"])
     print("downstream filter prefilter:", details["downstreamFilterCandidatePrefilter"])
     print("query/downstream filter mode:", details["filterMode"], details["downstreamFilterMode"])

@@ -166,6 +166,51 @@ def _vector_filter_mode(
     return "candidate-prefilter+post-candidate"
 
 
+def _safe_ratio(numerator: int | None, denominator: int | None) -> float | None:
+    if numerator is None or denominator is None or denominator <= 0:
+        return None
+    return float(numerator) / float(denominator)
+
+
+def _vector_pruning_summary(
+    *,
+    documents_scanned: int | None,
+    prefilter_candidate_count: int | None,
+    candidates_evaluated: int | None,
+    post_candidate_filtered_count: int | None,
+    min_score_filtered_count: int | None,
+) -> dict[str, object] | None:
+    if (
+        documents_scanned is None
+        and prefilter_candidate_count is None
+        and candidates_evaluated is None
+    ):
+        return None
+    prefilter_pruned_count = (
+        max(0, documents_scanned - prefilter_candidate_count)
+        if documents_scanned is not None and prefilter_candidate_count is not None
+        else None
+    )
+    candidates_skipped_before_evaluation = (
+        max(0, prefilter_candidate_count - candidates_evaluated)
+        if prefilter_candidate_count is not None and candidates_evaluated is not None
+        else None
+    )
+    return {
+        "documentsScanned": documents_scanned,
+        "prefilterCandidateCount": prefilter_candidate_count,
+        "prefilterPrunedCount": prefilter_pruned_count,
+        "prefilterPrunedRatio": _safe_ratio(prefilter_pruned_count, documents_scanned),
+        "candidatesEvaluated": candidates_evaluated,
+        "candidatesSkippedBeforeEvaluation": candidates_skipped_before_evaluation,
+        "candidateEvaluationRatio": _safe_ratio(candidates_evaluated, prefilter_candidate_count),
+        "postCandidateFilteredCount": post_candidate_filtered_count,
+        "postCandidateFilteredRatio": _safe_ratio(post_candidate_filtered_count, candidates_evaluated),
+        "minScoreFilteredCount": min_score_filtered_count,
+        "minScoreFilteredRatio": _safe_ratio(min_score_filtered_count, candidates_evaluated),
+    }
+
+
 def load_search_index_rows(
     engine: _SQLiteSearchRuntimeEngine,
     db_name: str,
@@ -2031,6 +2076,17 @@ def explain_search_documents_sync(
         if isinstance(query, SearchVectorQuery)
         else None
     )
+    vector_pruning_summary = (
+        _vector_pruning_summary(
+            documents_scanned=vector_state.documents_scanned if vector_state is not None else None,
+            prefilter_candidate_count=vector_prefilter_candidate_count,
+            candidates_evaluated=candidates_evaluated,
+            post_candidate_filtered_count=documents_filtered,
+            min_score_filtered_count=documents_filtered_by_min_score,
+        )
+        if isinstance(query, SearchVectorQuery)
+        else None
+    )
     if is_text_search_query(query):
         stage_options = getattr(query, "stage_options", None)
         if stage_options is not None and any(
@@ -2203,6 +2259,7 @@ def explain_search_documents_sync(
             "scoreBreakdown": vector_score_breakdown,
             "candidatePlan": vector_candidate_plan,
             "hybridRetrieval": vector_hybrid_retrieval,
+            "pruningSummary": vector_pruning_summary,
             **stage_option_previews,
         },
     )

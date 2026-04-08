@@ -118,6 +118,19 @@ def assert_filtered_vector_explanation(
     case.assertEqual(details["hybridRetrieval"]["filterMode"], "candidate-prefilter")
     case.assertEqual(details["hybridRetrieval"]["queryFilterMode"], "candidate-prefilter")
     case.assertIsNone(details["hybridRetrieval"]["downstreamFilterMode"])
+    case.assertIsNotNone(details["pruningSummary"])
+    case.assertEqual(
+        details["pruningSummary"]["prefilterCandidateCount"],
+        details["candidatePlan"]["prefilterCandidateCount"],
+    )
+    case.assertEqual(
+        details["pruningSummary"]["candidatesEvaluated"],
+        details["candidatePlan"]["evaluatedCandidates"],
+    )
+    case.assertEqual(
+        details["pruningSummary"]["postCandidateFilteredCount"],
+        details["documentsFiltered"],
+    )
     case.assertEqual(
         details["candidatePlan"]["combinedPrefilterCandidateCount"],
         details["candidatePlan"]["prefilterCandidateCount"],
@@ -175,6 +188,19 @@ def assert_vector_downstream_filter_explanation(
     case.assertEqual(
         details["candidatePlan"]["queryPrefilterCandidateCount"],
         details["documentsScanned"],
+    )
+    case.assertIsNotNone(details["pruningSummary"])
+    case.assertEqual(
+        details["pruningSummary"]["prefilterCandidateCount"],
+        details["candidatePlan"]["prefilterCandidateCount"],
+    )
+    case.assertEqual(
+        details["pruningSummary"]["candidatesEvaluated"],
+        details["candidatePlan"]["evaluatedCandidates"],
+    )
+    case.assertEqual(
+        details["pruningSummary"]["postCandidateFilteredCount"],
+        0,
     )
     case.assertEqual(
         details["candidatePlan"]["combinedPrefilterCandidateCount"],
