@@ -435,6 +435,8 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         now: datetime.datetime,
     ) -> bool:
+        if not document_in_virtual_index(document, index):
+            return False
         return document_expired_by_ttl(
             document,
             index,

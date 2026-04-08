@@ -426,6 +426,49 @@ class StorageEngineContractTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(DuplicateKeyError):
                         await engine.put_document("db", "partial_users", {"_id": "4", "email": "a@example.com", "active": True})
 
+    async def test_engine_ttl_respects_partial_filter_expression_membership(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_engine(engine_name) as engine:
+                    now = datetime.datetime.now(datetime.timezone.utc)
+                    expired = now - datetime.timedelta(seconds=120)
+                    fresh = now + datetime.timedelta(seconds=120)
+
+                    await engine.put_document(
+                        "db",
+                        "events",
+                        {"_id": "expired-active", "active": True, "expires_at": expired},
+                    )
+                    await engine.put_document(
+                        "db",
+                        "events",
+                        {"_id": "expired-inactive", "active": False, "expires_at": expired},
+                    )
+                    await engine.put_document(
+                        "db",
+                        "events",
+                        {"_id": "fresh-active", "active": True, "expires_at": fresh},
+                    )
+
+                    await engine.create_index(
+                        "db",
+                        "events",
+                        ["expires_at"],
+                        expire_after_seconds=30,
+                        partial_filter_expression={"active": True},
+                    )
+
+                    remaining = [
+                        document["_id"]
+                        async for document in engine.scan_find_semantics(
+                            "db",
+                            "events",
+                            compile_find_semantics({}),
+                        )
+                    ]
+
+                    self.assertEqual(set(remaining), {"expired-inactive", "fresh-active"})
+
     async def test_engine_find_semantics_respects_collation_for_filter_sort_and_count(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
