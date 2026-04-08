@@ -1254,6 +1254,8 @@ class SearchCoreTests(unittest.TestCase):
                         "returnedBucketCount": 1,
                         "otherBucketCount": 1,
                         "countedValueCount": 3,
+                        "returnedValueCount": 2,
+                        "omittedValueCount": 1,
                     },
                 }
             },
@@ -1308,6 +1310,8 @@ class SearchCoreTests(unittest.TestCase):
                                 "returnedBucketCount": 1,
                                 "otherBucketCount": 1,
                                 "countedValueCount": 3,
+                                "returnedValueCount": 2,
+                                "omittedValueCount": 1,
                             },
                         },
                         "titleFacet": {

@@ -691,6 +691,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                                 "returnedBucketCount": 1,
                                                 "otherBucketCount": 0,
                                                 "countedValueCount": 2,
+                                                "returnedValueCount": 2,
+                                                "omittedValueCount": 0,
                                             },
                                         },
                                         "titleFacet": {

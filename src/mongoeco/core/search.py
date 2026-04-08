@@ -3195,11 +3195,18 @@ def _facet_preview(
     if spec.include_meta:
         distinct_value_count = len(counts)
         returned_bucket_count = len(buckets)
+        counted_value_count = sum(counts.values())
+        returned_value_count = sum(
+            int(bucket["count"])
+            for bucket in buckets
+        )
         preview["meta"] = {
             "distinctValueCount": distinct_value_count,
             "returnedBucketCount": returned_bucket_count,
             "otherBucketCount": max(distinct_value_count - returned_bucket_count, 0),
-            "countedValueCount": sum(counts.values()),
+            "countedValueCount": counted_value_count,
+            "returnedValueCount": returned_value_count,
+            "omittedValueCount": max(counted_value_count - returned_value_count, 0),
         }
     return preview
 
