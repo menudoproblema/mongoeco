@@ -325,6 +325,7 @@ class _FailCommandInjection:
     error_code: int
     error_message: str
     error_labels: tuple[str, ...]
+    write_concern_error: dict[str, object] | None = None
     namespaces: frozenset[str] | None = None
     close_connection: bool = False
     block_time_ms: int = 0
@@ -345,6 +346,7 @@ class _CommandFailPointState:
         error_code: int,
         error_message: str,
         error_labels: tuple[str, ...],
+        write_concern_error: dict[str, object] | None = None,
         namespaces: tuple[str, ...] | None = None,
         close_connection: bool = False,
         block_time_ms: int = 0,
@@ -366,6 +368,11 @@ class _CommandFailPointState:
                 error_code=error_code,
                 error_message=error_message,
                 error_labels=error_labels,
+                write_concern_error=(
+                    _clone_write_concern_error(write_concern_error)
+                    if write_concern_error is not None
+                    else None
+                ),
                 namespaces=normalized_namespaces,
                 close_connection=close_connection,
                 block_time_ms=block_time_ms,
@@ -380,6 +387,10 @@ class _CommandFailPointState:
                 "blockConnection": block_time_ms > 0,
                 "blockTimeMS": block_time_ms,
             }
+            if write_concern_error is not None:
+                data["writeConcernError"] = _clone_write_concern_error(
+                    write_concern_error
+                )
             if normalized_namespaces:
                 sorted_namespaces = sorted(normalized_namespaces)
                 if len(sorted_namespaces) == 1:
@@ -414,6 +425,11 @@ class _CommandFailPointState:
                 error_code=fail_command.error_code,
                 error_message=fail_command.error_message,
                 error_labels=fail_command.error_labels,
+                write_concern_error=(
+                    _clone_write_concern_error(fail_command.write_concern_error)
+                    if fail_command.write_concern_error is not None
+                    else None
+                ),
                 namespaces=fail_command.namespaces,
                 close_connection=fail_command.close_connection,
                 block_time_ms=fail_command.block_time_ms,
@@ -424,6 +440,16 @@ class _CommandFailPointState:
                 if fail_command.remaining_times <= 0:
                     self._fail_command = None
             return consumed
+
+
+def _clone_write_concern_error(
+    value: dict[str, object],
+) -> dict[str, object]:
+    cloned = dict(value)
+    err_info = cloned.get("errInfo")
+    if isinstance(err_info, dict):
+        cloned["errInfo"] = dict(err_info)
+    return cloned
 
 
 def build_info_document(mongodb_dialect: "MongoDialect") -> BuildInfoDocument:
@@ -740,6 +766,7 @@ class AsyncDatabaseCommandService:
         error_code: int = _FAIL_COMMAND_DEFAULT_CODE
         error_message: str = _FAIL_COMMAND_DEFAULT_MESSAGE
         error_labels: tuple[str, ...] = ()
+        write_concern_error: dict[str, object] | None = None
         namespaces: tuple[str, ...] | None = None
         close_connection: bool = False
         block_time_ms: int = 0
@@ -823,6 +850,7 @@ class AsyncDatabaseCommandService:
         int,
         str,
         tuple[str, ...],
+        dict[str, object] | None,
         tuple[str, ...] | None,
         bool,
         int,
@@ -837,6 +865,7 @@ class AsyncDatabaseCommandService:
                 _FAIL_COMMAND_DEFAULT_CODE,
                 _FAIL_COMMAND_DEFAULT_MESSAGE,
                 (),
+                None,
                 None,
                 False,
                 0,
@@ -876,6 +905,57 @@ class AsyncDatabaseCommandService:
         ):
             raise TypeError("configureFailPoint data.errorLabels must be a list of strings")
         error_labels = tuple(labels_spec)
+        write_concern_error_spec = data_spec.get("writeConcernError")
+        write_concern_error: dict[str, object] | None = None
+        if write_concern_error_spec is not None:
+            if not isinstance(write_concern_error_spec, dict):
+                raise TypeError(
+                    "configureFailPoint data.writeConcernError must be a document"
+                )
+            write_concern_error_code = write_concern_error_spec.get("code", 64)
+            if (
+                not isinstance(write_concern_error_code, int)
+                or isinstance(write_concern_error_code, bool)
+            ):
+                raise TypeError(
+                    "configureFailPoint data.writeConcernError.code must be an integer"
+                )
+            write_concern_error_message = write_concern_error_spec.get(
+                "errmsg",
+                "waiting for replication timed out",
+            )
+            if (
+                not isinstance(write_concern_error_message, str)
+                or not write_concern_error_message
+            ):
+                raise TypeError(
+                    "configureFailPoint data.writeConcernError.errmsg must be a non-empty string"
+                )
+            write_concern_error_name = write_concern_error_spec.get(
+                "codeName",
+                "WriteConcernFailed",
+            )
+            if (
+                not isinstance(write_concern_error_name, str)
+                or not write_concern_error_name
+            ):
+                raise TypeError(
+                    "configureFailPoint data.writeConcernError.codeName must be a non-empty string"
+                )
+            write_concern_error_info = write_concern_error_spec.get(
+                "errInfo",
+                {"wtimeout": True},
+            )
+            if not isinstance(write_concern_error_info, dict):
+                raise TypeError(
+                    "configureFailPoint data.writeConcernError.errInfo must be a document"
+                )
+            write_concern_error = {
+                "code": write_concern_error_code,
+                "errmsg": write_concern_error_message,
+                "codeName": write_concern_error_name,
+                "errInfo": dict(write_concern_error_info),
+            }
         namespace = data_spec.get("namespace")
         namespaces_spec = data_spec.get("namespaces")
         if namespace is not None and namespaces_spec is not None:
@@ -937,6 +1017,7 @@ class AsyncDatabaseCommandService:
             error_code,
             error_message,
             error_labels,
+            write_concern_error,
             namespaces,
             close_connection,
             block_time_ms,
@@ -1051,6 +1132,7 @@ class AsyncDatabaseCommandService:
                 error_code,
                 error_message,
                 error_labels,
+                write_concern_error,
                 namespaces,
                 close_connection,
                 block_time_ms,
@@ -1071,6 +1153,7 @@ class AsyncDatabaseCommandService:
                 error_code=error_code,
                 error_message=error_message,
                 error_labels=error_labels,
+                write_concern_error=write_concern_error,
                 namespaces=namespaces,
                 close_connection=close_connection,
                 block_time_ms=block_time_ms,
@@ -1239,6 +1322,7 @@ class AsyncDatabaseCommandService:
                 error_code=command.error_code,
                 error_message=command.error_message,
                 error_labels=command.error_labels,
+                write_concern_error=command.write_concern_error,
                 namespaces=command.namespaces,
                 close_connection=command.close_connection,
                 block_time_ms=command.block_time_ms,
@@ -1401,13 +1485,35 @@ class AsyncDatabaseCommandService:
                             fail_command.error_message,
                             error_labels=fail_command.error_labels,
                         )
+                    failure_details: dict[str, object] = {
+                        "failPoint": "failCommand",
+                        "commandName": parsed.command_name,
+                    }
+                    if fail_command.write_concern_error is not None:
+                        write_concern_error = _clone_write_concern_error(
+                            fail_command.write_concern_error
+                        )
+                        failure_details["writeConcernError"] = write_concern_error
+                        raise OperationFailure(
+                            str(
+                                write_concern_error.get(
+                                    "errmsg",
+                                    fail_command.error_message,
+                                )
+                            ),
+                            code=int(
+                                write_concern_error.get(
+                                    "code",
+                                    fail_command.error_code,
+                                )
+                            ),
+                            details=failure_details,
+                            error_labels=fail_command.error_labels,
+                        )
                     raise OperationFailure(
                         fail_command.error_message,
                         code=fail_command.error_code,
-                        details={
-                            "failPoint": "failCommand",
-                            "commandName": parsed.command_name,
-                        },
+                        details=failure_details,
                         error_labels=fail_command.error_labels,
                     )
             with track_active_operation(

@@ -8,7 +8,12 @@ from mongoeco.driver.execution import (
     classify_request_exception,
     execute_request_pipeline,
 )
-from mongoeco.driver.monitoring import ConnectionCheckedInEvent, ConnectionCheckedOutEvent, ServerSelectedEvent
+from mongoeco.driver.monitoring import (
+    ConnectionCheckedInEvent,
+    ConnectionCheckedOutEvent,
+    ServerSelectedEvent,
+    ServerSelectionFailedEvent,
+)
 from mongoeco.errors import ServerSelectionTimeoutError
 
 if TYPE_CHECKING:
@@ -89,9 +94,24 @@ class RuntimeAttemptLifecycle:
     async def execute(self, plan: "RequestExecutionPlan", *, transport) -> RequestExecutionResult:
         resolved_plan = self._resolve_plan(plan)
         if not resolved_plan.candidate_servers:
-            error = ServerSelectionTimeoutError(
-                f"no eligible servers found within {resolved_plan.timeout_policy.server_selection_timeout_ms}ms"
+            reason = (
+                f"no eligible servers found within "
+                f"{resolved_plan.timeout_policy.server_selection_timeout_ms}ms"
             )
+            self._monitor.emit(
+                ServerSelectionFailedEvent(
+                    database=resolved_plan.request.database,
+                    command_name=resolved_plan.request.command_name,
+                    reason=reason,
+                    topology_type=resolved_plan.topology.topology_type.value,
+                    known_server_count=len(resolved_plan.topology.servers),
+                    timeout_ms=resolved_plan.timeout_policy.server_selection_timeout_ms,
+                    read_only=resolved_plan.request.read_only,
+                    session_id=resolved_plan.request.session_id,
+                    request_id=None,
+                )
+            )
+            error = ServerSelectionTimeoutError(reason)
             return RequestExecutionResult(
                 outcome=classify_request_exception(error, plan=resolved_plan),
                 trace=RequestExecutionTrace(),

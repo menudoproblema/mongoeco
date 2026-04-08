@@ -16,6 +16,7 @@ from mongoeco.driver.monitoring import (
     DriverEvent,
     DriverMonitor,
     ServerSelectedEvent,
+    ServerSelectionFailedEvent,
 )
 from mongoeco.driver.connections import (
     ConnectionLease,
@@ -96,6 +97,7 @@ __all__ = [
     "DriverEvent",
     "DriverMonitor",
     "ServerSelectedEvent",
+    "ServerSelectionFailedEvent",
     "ConnectionCheckedOutEvent",
     "ConnectionCheckedInEvent",
     "CommandStartedEvent",

@@ -31,6 +31,7 @@ from mongoeco.driver import (
     RequestExecutionResult,
     RequestExecutionTrace,
     ServerSelectedEvent,
+    ServerSelectionFailedEvent,
     ServerDescription,
     ServerState,
     ServerType,
@@ -1259,6 +1260,12 @@ class RequestExecutionPipelineTests(unittest.TestCase):
 
         self.assertFalse(result.outcome.ok)
         self.assertIn("no eligible servers", result.outcome.error or "")
+        self.assertEqual(len(runtime.monitor.history), 1)
+        selection_failed = runtime.monitor.history[0]
+        self.assertIsInstance(selection_failed, ServerSelectionFailedEvent)
+        self.assertEqual(selection_failed.topology_type, "unknown")
+        self.assertEqual(selection_failed.known_server_count, 0)
+        self.assertEqual(selection_failed.timeout_ms, 30000)
 
     def test_unknown_topology_still_uses_provisional_seed_selection(self):
         runtime = DriverRuntime(

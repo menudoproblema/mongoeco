@@ -20,6 +20,7 @@ from mongoeco.driver.monitoring import (
     DriverEventListener,
     DriverMonitor,
     ServerSelectedEvent,
+    ServerSelectionFailedEvent,
 )
 
 _READ_COMMANDS = {
@@ -119,7 +120,12 @@ class DriverTelemetryProjector:
             return
         if isinstance(
             event,
-            (ServerSelectedEvent, ConnectionCheckedOutEvent, ConnectionCheckedInEvent),
+            (
+                ServerSelectedEvent,
+                ServerSelectionFailedEvent,
+                ConnectionCheckedOutEvent,
+                ConnectionCheckedInEvent,
+            ),
         ):
             return
 

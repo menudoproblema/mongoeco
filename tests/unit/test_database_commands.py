@@ -270,6 +270,33 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
             ),
             service.ConfigureFailPointCommand,
         )
+        parsed_with_write_concern_error = service.parse_raw_command(
+            {
+                "configureFailPoint": "failCommand",
+                "mode": "alwaysOn",
+                "data": {
+                    "failCommands": ["count"],
+                    "writeConcernError": {
+                        "code": 64,
+                        "errmsg": "simulated write concern timeout",
+                        "errInfo": {"wtimeout": True},
+                    },
+                },
+            }
+        )
+        self.assertIsInstance(
+            parsed_with_write_concern_error,
+            service.ConfigureFailPointCommand,
+        )
+        self.assertEqual(
+            parsed_with_write_concern_error.write_concern_error,
+            {
+                "code": 64,
+                "errmsg": "simulated write concern timeout",
+                "codeName": "WriteConcernFailed",
+                "errInfo": {"wtimeout": True},
+            },
+        )
         self.assertIsInstance(service.parse_raw_command({"validate": "users"}), service.ValidateCollectionCommand)
         self.assertIsInstance(service.parse_raw_command({"findAndModify": "users", "query": {}, "update": {"$set": {"a": 1}}}), service.FindAndModifyCommand)
         self.assertIsInstance(service.parse_raw_command({"find": "users"}), service.FindCommand)
@@ -384,6 +411,61 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
                     "data": {
                         "failCommands": ["count"],
                         "errorLabels": ["RetryableWriteError", 1],
+                    },
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "writeConcernError must be a document"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "writeConcernError": "timeout",
+                    },
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "writeConcernError.code must be an integer"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "writeConcernError": {"code": "64"},
+                    },
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "writeConcernError.errmsg must be a non-empty string"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "writeConcernError": {"errmsg": 64},
+                    },
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "writeConcernError.codeName must be a non-empty string"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "writeConcernError": {"codeName": 64},
+                    },
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "writeConcernError.errInfo must be a document"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "writeConcernError": {"errInfo": "bad"},
                     },
                 }
             )
@@ -673,6 +755,28 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
                 with self.assertRaisesRegex(OperationFailure, "delayed failpoint"):
                     await service.execute_document({"count": "users"})
                 sleep_mock.assert_awaited_once_with(0.025)
+
+            await service.execute_document(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": {"times": 1},
+                    "data": {
+                        "failCommands": ["count"],
+                        "writeConcernError": {
+                            "code": 64,
+                            "errmsg": "simulated write concern timeout",
+                            "errInfo": {"wtimeout": True},
+                        },
+                    },
+                }
+            )
+            with self.assertRaisesRegex(OperationFailure, "simulated write concern timeout") as timeout_ctx:
+                await service.execute_document({"count": "users"})
+            self.assertEqual(timeout_ctx.exception.code, 64)
+            self.assertEqual(
+                timeout_ctx.exception.details.get("writeConcernError", {}).get("errInfo", {}),
+                {"wtimeout": True},
+            )
 
             disabled = await service.execute_document(
                 {"configureFailPoint": "failCommand", "mode": "off"}
