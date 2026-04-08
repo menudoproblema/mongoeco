@@ -31,6 +31,21 @@ jobs:
             tests.unit.test_module_imports \
             tests.unit.test_public_exports
 
+  released-artifact-contract:
+    name: Released artifact contract (mongoeco 3.3.0)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Validate published PyPI artifact contract
+        run: python scripts/smoke_pypi_contract.py --version 3.3.0
+
   test:
     name: Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
