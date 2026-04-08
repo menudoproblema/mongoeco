@@ -1175,6 +1175,120 @@ class SearchCoreTests(unittest.TestCase):
             },
         )
 
+    def test_compile_search_meta_stage_supports_facet_include_meta(self) -> None:
+        query = compile_search_stage(
+            "$searchMeta",
+            {
+                "index": "by_text",
+                "text": {"query": "ada", "path": "title"},
+                "facet": {"path": "kind", "numBuckets": 1, "includeMeta": True},
+            },
+        )
+        self.assertEqual(
+            search_module.build_search_meta_document(
+                [
+                    {"title": "Ada", "kind": "note"},
+                    {"title": "Ada", "kind": "note"},
+                    {"title": "Ada", "kind": "reference"},
+                ],
+                query=query,
+            ),
+            {
+                "facet": {
+                    "type": "string",
+                    "path": "kind",
+                    "numBuckets": 1,
+                    "buckets": [{"value": "note", "count": 2}],
+                    "meta": {
+                        "distinctValueCount": 2,
+                        "returnedBucketCount": 1,
+                        "otherBucketCount": 1,
+                        "countedValueCount": 3,
+                    },
+                }
+            },
+        )
+        self.assertEqual(
+            search_query_explain_details(query)["stageOptions"]["facet"],  # type: ignore[index]
+            {
+                "type": "string",
+                "path": "kind",
+                "numBuckets": 1,
+                "includeMeta": True,
+                "previewOnly": True,
+            },
+        )
+
+        named_query = compile_search_stage(
+            "$searchMeta",
+            {
+                "index": "by_text",
+                "text": {"query": "ada", "path": "title"},
+                "facet": {
+                    "facets": {
+                        "kindFacet": {
+                            "path": "kind",
+                            "numBuckets": 1,
+                            "includeMeta": True,
+                        },
+                        "titleFacet": {"path": "title", "numBuckets": 2},
+                    }
+                },
+            },
+        )
+        self.assertEqual(
+            search_module.build_search_meta_document(
+                [
+                    {"title": "Ada", "kind": "note"},
+                    {"title": "Notes", "kind": "note"},
+                    {"title": "Ada", "kind": "reference"},
+                ],
+                query=named_query,
+            ),
+            {
+                "facet": {
+                    "facets": {
+                        "kindFacet": {
+                            "type": "string",
+                            "path": "kind",
+                            "numBuckets": 1,
+                            "buckets": [{"value": "note", "count": 2}],
+                            "meta": {
+                                "distinctValueCount": 2,
+                                "returnedBucketCount": 1,
+                                "otherBucketCount": 1,
+                                "countedValueCount": 3,
+                            },
+                        },
+                        "titleFacet": {
+                            "type": "string",
+                            "path": "title",
+                            "numBuckets": 2,
+                            "buckets": [
+                                {"value": "Ada", "count": 2},
+                                {"value": "Notes", "count": 1},
+                            ],
+                        },
+                    }
+                }
+            },
+        )
+        self.assertEqual(
+            search_query_explain_details(named_query)["stageOptions"]["facet"],  # type: ignore[index]
+            {
+                "facets": {
+                    "kindFacet": {
+                        "type": "string",
+                        "path": "kind",
+                        "numBuckets": 1,
+                        "includeMeta": True,
+                    },
+                    "titleFacet": {"type": "string", "path": "title", "numBuckets": 2},
+                },
+                "previewOnly": True,
+            },
+        )
+
     def test_compile_search_meta_stage_supports_collector_operator_form(self) -> None:
         query = compile_search_stage(
             "$searchMeta",
@@ -4037,7 +4151,7 @@ class SearchCoreTests(unittest.TestCase):
             (
                 search_module._compile_search_facet_spec,
                 {"path": "kind", "extra": True},
-                "facet only supports type, path and numBuckets",
+                "facet only supports type, path, numBuckets and includeMeta",
             ),
             (
                 search_module._compile_search_facet_spec,
@@ -4062,7 +4176,7 @@ class SearchCoreTests(unittest.TestCase):
             (
                 search_module._compile_search_facet_spec,
                 {"facets": {"kind": {"path": "kind", "extra": True}}},
-                "facets only support type, path and numBuckets",
+                "facets only support type, path, numBuckets and includeMeta",
             ),
             (
                 search_module._compile_search_facet_spec,
@@ -4081,6 +4195,11 @@ class SearchCoreTests(unittest.TestCase):
             ),
             (
                 search_module._compile_search_facet_spec,
+                {"facets": {"kind": {"path": "kind", "includeMeta": "yes"}}},
+                "includeMeta must be a boolean",
+            ),
+            (
+                search_module._compile_search_facet_spec,
                 {"path": ""},
                 "facet.path must be a non-empty string",
             ),
@@ -4093,6 +4212,11 @@ class SearchCoreTests(unittest.TestCase):
                 search_module._compile_search_facet_spec,
                 {"path": "kind", "type": "object"},
                 "facet.type must be one of",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                {"path": "kind", "includeMeta": "yes"},
+                "facet.includeMeta must be a boolean",
             ),
         )
         for compiler, spec, pattern in invalid_specs:

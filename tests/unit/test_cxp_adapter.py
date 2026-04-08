@@ -375,6 +375,7 @@ class CxpAlignmentTests(unittest.TestCase):
                 'supportsPath': True,
                 'supportsNumBuckets': True,
                 'supportsType': True,
+                'supportsIncludeMeta': True,
                 'supportedTypes': [
                     'string',
                     'number',

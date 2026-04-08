@@ -87,7 +87,9 @@ class SearchFacetSpec:
     path: str = ""
     num_buckets: int = 10
     facet_type: str = "string"
+    include_meta: bool = False
     facets: tuple[tuple[str, str, str, int], ...] = ()
+    facet_include_meta: tuple[tuple[str, bool], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -800,6 +802,7 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
         if not isinstance(raw_facets, dict) or not raw_facets:
             raise OperationFailure("$search.facet.facets must be a non-empty document")
         resolved_facets: list[tuple[str, str, str, int]] = []
+        resolved_facet_include_meta: list[tuple[str, bool]] = []
         for facet_name, facet_spec in raw_facets.items():
             if not isinstance(facet_name, str) or not facet_name:
                 raise OperationFailure("$search.facet facet names must be non-empty strings")
@@ -808,11 +811,11 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
                     f"$search.facet facet '{facet_name}' must be a document specification"
                 )
             facet_unsupported_options = sorted(
-                set(facet_spec) - {"type", "path", "numBuckets"}
+                set(facet_spec) - {"type", "path", "numBuckets", "includeMeta"}
             )
             if facet_unsupported_options:
                 raise OperationFailure(
-                    "$search.facet facets only support type, path and numBuckets; unsupported keys: "
+                    "$search.facet facets only support type, path, numBuckets and includeMeta; unsupported keys: "
                     + ", ".join(facet_unsupported_options)
                 )
             facet_type = facet_spec.get("type", "string")
@@ -831,12 +834,22 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
                 or facet_num_buckets <= 0
             ):
                 raise OperationFailure("$search.facet facet numBuckets must be a positive integer")
+            include_meta = facet_spec.get("includeMeta", False)
+            if not isinstance(include_meta, bool):
+                raise OperationFailure(
+                    f"$search.facet facet '{facet_name}' includeMeta must be a boolean"
+                )
             resolved_facets.append((facet_name, facet_path, facet_type, facet_num_buckets))
-        return SearchFacetSpec(facets=tuple(resolved_facets))
-    unsupported_options = sorted(set(spec) - {"type", "path", "numBuckets"})
+            if include_meta:
+                resolved_facet_include_meta.append((facet_name, True))
+        return SearchFacetSpec(
+            facets=tuple(resolved_facets),
+            facet_include_meta=tuple(resolved_facet_include_meta),
+        )
+    unsupported_options = sorted(set(spec) - {"type", "path", "numBuckets", "includeMeta"})
     if unsupported_options:
         raise OperationFailure(
-            "$search.facet only supports type, path and numBuckets; unsupported keys: "
+            "$search.facet only supports type, path, numBuckets and includeMeta; unsupported keys: "
             + ", ".join(unsupported_options)
         )
     path = spec.get("path")
@@ -855,7 +868,15 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
         or num_buckets <= 0
     ):
         raise OperationFailure("$search.facet.numBuckets must be a positive integer")
-    return SearchFacetSpec(path=path, num_buckets=num_buckets, facet_type=facet_type)
+    include_meta = spec.get("includeMeta", False)
+    if not isinstance(include_meta, bool):
+        raise OperationFailure("$search.facet.includeMeta must be a boolean")
+    return SearchFacetSpec(
+        path=path,
+        num_buckets=num_buckets,
+        facet_type=facet_type,
+        include_meta=include_meta,
+    )
 
 
 def compile_search_text_query(spec: object) -> SearchTextQuery:
@@ -1376,20 +1397,31 @@ def _serialized_search_stage_options(query: SearchQuery) -> dict[str, object] | 
         serialized["highlight"] = serialized_highlight
     if options.facet is not None:
         if options.facet.facets:
+            facet_include_meta = dict(options.facet.facet_include_meta)
+            facets: dict[str, dict[str, object]] = {}
+            for name, path, facet_type, num_buckets in options.facet.facets:
+                facet_definition: dict[str, object] = {
+                    "type": facet_type,
+                    "path": path,
+                    "numBuckets": num_buckets,
+                }
+                if facet_include_meta.get(name, False):
+                    facet_definition["includeMeta"] = True
+                facets[name] = facet_definition
             serialized["facet"] = {
-                "facets": {
-                    name: {"type": facet_type, "path": path, "numBuckets": num_buckets}
-                    for name, path, facet_type, num_buckets in options.facet.facets
-                },
+                "facets": facets,
                 "previewOnly": True,
             }
         else:
-            serialized["facet"] = {
+            serialized_facet: dict[str, object] = {
                 "type": options.facet.facet_type,
                 "path": options.facet.path,
                 "numBuckets": options.facet.num_buckets,
                 "previewOnly": True,
             }
+            if options.facet.include_meta:
+                serialized_facet["includeMeta"] = True
+            serialized["facet"] = serialized_facet
     return serialized or None
 
 
@@ -2853,11 +2885,17 @@ def _facet_preview_payload(
     spec: SearchFacetSpec,
 ) -> dict[str, object]:
     if spec.facets:
+        facet_include_meta = dict(spec.facet_include_meta)
         return {
             "facets": {
                 name: _facet_preview(
                     documents,
-                    SearchFacetSpec(path=path, num_buckets=num_buckets, facet_type=facet_type),
+                    SearchFacetSpec(
+                        path=path,
+                        num_buckets=num_buckets,
+                        facet_type=facet_type,
+                        include_meta=facet_include_meta.get(name, False),
+                    ),
                 )
                 for name, path, facet_type, num_buckets in spec.facets
             }
@@ -3069,12 +3107,22 @@ def _facet_preview(
             key=lambda item: (-item[1], str(labels[item[0]])),
         )[: spec.num_buckets]
     ]
-    return {
+    preview: dict[str, object] = {
         "type": spec.facet_type,
         "path": spec.path,
         "numBuckets": spec.num_buckets,
         "buckets": buckets,
     }
+    if spec.include_meta:
+        distinct_value_count = len(counts)
+        returned_bucket_count = len(buckets)
+        preview["meta"] = {
+            "distinctValueCount": distinct_value_count,
+            "returnedBucketCount": returned_bucket_count,
+            "otherBucketCount": max(distinct_value_count - returned_bucket_count, 0),
+            "countedValueCount": sum(counts.values()),
+        }
+    return preview
 
 
 def _search_path_summary(paths: list[str] | None) -> dict[str, object] | None:

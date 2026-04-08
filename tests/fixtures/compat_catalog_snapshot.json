@@ -1402,6 +1402,7 @@
                     "objectId",
                     "uuid"
                   ],
+                  "supportsIncludeMeta": true,
                   "supportsNumBuckets": true,
                   "supportsPath": true,
                   "supportsType": true
@@ -1555,6 +1556,7 @@
                 "uuid"
               ],
               "supportsCollectorOperator": true,
+              "supportsIncludeMeta": true,
               "supportsNumBuckets": true,
               "supportsPath": true,
               "supportsType": true
@@ -3279,6 +3281,7 @@
                   "objectId",
                   "uuid"
                 ],
+                "supportsIncludeMeta": true,
                 "supportsNumBuckets": true,
                 "supportsPath": true,
                 "supportsType": true
@@ -12033,6 +12036,7 @@
                 "objectId",
                 "uuid"
               ],
+              "supportsIncludeMeta": true,
               "supportsNumBuckets": true,
               "supportsPath": true,
               "supportsType": true
@@ -12186,6 +12190,7 @@
             "uuid"
           ],
           "supportsCollectorOperator": true,
+          "supportsIncludeMeta": true,
           "supportsNumBuckets": true,
           "supportsPath": true,
           "supportsType": true

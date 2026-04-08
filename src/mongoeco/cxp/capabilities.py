@@ -1174,6 +1174,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
             'supportsPath': True,
             'supportsNumBuckets': True,
             'supportsType': True,
+            'supportsIncludeMeta': True,
             'supportedTypes': [
                 'string',
                 'number',
@@ -1254,6 +1255,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
                         'supportsPath': True,
                         'supportsNumBuckets': True,
                         'supportsType': True,
+                        'supportsIncludeMeta': True,
                         'supportedTypes': [
                             'string',
                             'number',

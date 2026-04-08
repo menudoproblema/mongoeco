@@ -627,7 +627,12 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                     "text": {"query": "ada", "path": ["title", "body"]},
                                     "facet": {
                                         "facets": {
-                                            "kindFacet": {"type": "string", "path": "kind", "numBuckets": 5},
+                                            "kindFacet": {
+                                                "type": "string",
+                                                "path": "kind",
+                                                "numBuckets": 5,
+                                                "includeMeta": True,
+                                            },
                                             "titleFacet": {"path": "title", "numBuckets": 3},
                                             "activeFacet": {"type": "boolean", "path": "active", "numBuckets": 2},
                                             "ownerFacet": {"type": "objectId", "path": "owner", "numBuckets": 2},
@@ -649,6 +654,12 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                             "path": "kind",
                                             "numBuckets": 5,
                                             "buckets": [{"value": "note", "count": 2}],
+                                            "meta": {
+                                                "distinctValueCount": 1,
+                                                "returnedBucketCount": 1,
+                                                "otherBucketCount": 0,
+                                                "countedValueCount": 2,
+                                            },
                                         },
                                         "titleFacet": {
                                             "type": "string",
