@@ -3207,6 +3207,16 @@ def _facet_preview(
             "countedValueCount": counted_value_count,
             "returnedValueCount": returned_value_count,
             "omittedValueCount": max(counted_value_count - returned_value_count, 0),
+            "returnedValueRatio": (
+                float(returned_value_count) / float(counted_value_count)
+                if counted_value_count > 0
+                else None
+            ),
+            "bucketCoverageRatio": (
+                float(returned_bucket_count) / float(distinct_value_count)
+                if distinct_value_count > 0
+                else None
+            ),
         }
     return preview
 

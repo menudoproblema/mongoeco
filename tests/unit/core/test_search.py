@@ -1256,6 +1256,8 @@ class SearchCoreTests(unittest.TestCase):
                         "countedValueCount": 3,
                         "returnedValueCount": 2,
                         "omittedValueCount": 1,
+                        "returnedValueRatio": 2.0 / 3.0,
+                        "bucketCoverageRatio": 0.5,
                     },
                 }
             },
@@ -1312,6 +1314,8 @@ class SearchCoreTests(unittest.TestCase):
                                 "countedValueCount": 3,
                                 "returnedValueCount": 2,
                                 "omittedValueCount": 1,
+                                "returnedValueRatio": 2.0 / 3.0,
+                                "bucketCoverageRatio": 0.5,
                             },
                         },
                         "titleFacet": {
