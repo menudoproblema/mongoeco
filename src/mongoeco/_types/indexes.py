@@ -179,6 +179,26 @@ def _validate_wildcard_projection(value: object) -> Document:
     return normalized
 
 
+def _normalize_index_numeric_bound(
+    value: object,
+    *,
+    field_name: str,
+) -> float | int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError(f"{field_name} must be a number or None")
+    return value
+
+
+def _normalize_bucket_size(value: object) -> float | int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
+        raise TypeError("bucket_size must be a positive number or None")
+    return value
+
+
 @dataclass(frozen=True, slots=True)
 class IndexDefinition:
     keys: IndexKeySpec
@@ -193,6 +213,9 @@ class IndexDefinition:
     wildcard_projection: Document | None = None
     default_language: str | None = None
     language_override: str | None = None
+    min_value: float | int | None = None
+    max_value: float | int | None = None
+    bucket_size: float | int | None = None
 
     def __init__(
         self,
@@ -209,6 +232,9 @@ class IndexDefinition:
         wildcard_projection: Document | None = None,
         default_language: str | None = None,
         language_override: str | None = None,
+        min_value: float | int | None = None,
+        max_value: float | int | None = None,
+        bucket_size: float | int | None = None,
     ):
         normalized = normalize_index_keys(keys)
         text_fields = _text_index_fields(normalized)
@@ -255,6 +281,15 @@ class IndexDefinition:
             language_override,
             field_name="language_override",
         )
+        normalized_min_value = _normalize_index_numeric_bound(
+            min_value,
+            field_name="min_value",
+        )
+        normalized_max_value = _normalize_index_numeric_bound(
+            max_value,
+            field_name="max_value",
+        )
+        normalized_bucket_size = _normalize_bucket_size(bucket_size)
         if (
             normalized_default_language is not None
             or normalized_language_override is not None
@@ -278,6 +313,9 @@ class IndexDefinition:
         )
         object.__setattr__(self, "default_language", normalized_default_language)
         object.__setattr__(self, "language_override", normalized_language_override)
+        object.__setattr__(self, "min_value", normalized_min_value)
+        object.__setattr__(self, "max_value", normalized_max_value)
+        object.__setattr__(self, "bucket_size", normalized_bucket_size)
 
     @property
     def fields(self) -> list[str]:
@@ -307,6 +345,12 @@ class IndexDefinition:
             document["default_language"] = self.default_language
         if self.language_override is not None:
             document["language_override"] = self.language_override
+        if self.min_value is not None:
+            document["min"] = self.min_value
+        if self.max_value is not None:
+            document["max"] = self.max_value
+        if self.bucket_size is not None:
+            document["bucketSize"] = self.bucket_size
         return document
 
     def to_model_document(self) -> IndexDocument:
@@ -334,6 +378,12 @@ class IndexDefinition:
             document["default_language"] = self.default_language
         if self.language_override is not None:
             document["language_override"] = self.language_override
+        if self.min_value is not None:
+            document["min"] = self.min_value
+        if self.max_value is not None:
+            document["max"] = self.max_value
+        if self.bucket_size is not None:
+            document["bucketSize"] = self.bucket_size
         return document
 
     def to_information_entry(self) -> IndexInformationEntry:
@@ -358,6 +408,12 @@ class IndexDefinition:
             entry["default_language"] = self.default_language
         if self.language_override is not None:
             entry["language_override"] = self.language_override
+        if self.min_value is not None:
+            entry["min"] = self.min_value
+        if self.max_value is not None:
+            entry["max"] = self.max_value
+        if self.bucket_size is not None:
+            entry["bucketSize"] = self.bucket_size
         return entry
 
     def to_information_entry_map(self) -> IndexInformation:
@@ -391,6 +447,9 @@ class IndexModel:
     wildcard_projection: Document | None = None
     default_language: str | None = None
     language_override: str | None = None
+    min_value: float | int | None = None
+    max_value: float | int | None = None
+    bucket_size: float | int | None = None
 
     def __init__(self, keys: object, **kwargs: Any):
         normalized = normalize_index_keys(keys)
@@ -416,6 +475,15 @@ class IndexModel:
         language_override = kwargs.pop("languageOverride", None)
         if language_override is None:
             language_override = kwargs.pop("language_override", None)
+        min_value = kwargs.pop("min", None)
+        if min_value is None:
+            min_value = kwargs.pop("min_value", None)
+        max_value = kwargs.pop("max", None)
+        if max_value is None:
+            max_value = kwargs.pop("max_value", None)
+        bucket_size = kwargs.pop("bucketSize", None)
+        if bucket_size is None:
+            bucket_size = kwargs.pop("bucket_size", None)
         if name is not None and (not isinstance(name, str) or not name):
             raise ValueError("name must be a non-empty string")
         if not isinstance(unique, bool):
@@ -462,6 +530,15 @@ class IndexModel:
             language_override,
             field_name="language_override",
         )
+        normalized_min_value = _normalize_index_numeric_bound(
+            min_value,
+            field_name="min_value",
+        )
+        normalized_max_value = _normalize_index_numeric_bound(
+            max_value,
+            field_name="max_value",
+        )
+        normalized_bucket_size = _normalize_bucket_size(bucket_size)
         if (
             normalized_default_language is not None
             or normalized_language_override is not None
@@ -489,6 +566,9 @@ class IndexModel:
         )
         object.__setattr__(self, "default_language", normalized_default_language)
         object.__setattr__(self, "language_override", normalized_language_override)
+        object.__setattr__(self, "min_value", normalized_min_value)
+        object.__setattr__(self, "max_value", normalized_max_value)
+        object.__setattr__(self, "bucket_size", normalized_bucket_size)
 
     @property
     def resolved_name(self) -> str:
@@ -509,6 +589,9 @@ class IndexModel:
             wildcard_projection=self.wildcard_projection,
             default_language=self.default_language,
             language_override=self.language_override,
+            min_value=self.min_value,
+            max_value=self.max_value,
+            bucket_size=self.bucket_size,
         )
 
     @property

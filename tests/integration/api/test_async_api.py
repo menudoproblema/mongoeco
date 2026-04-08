@@ -6799,6 +6799,42 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     )
                     self.assertEqual(info["alias_1"]["collation"], {"locale": "en", "strength": 1})
 
+    async def test_create_indexes_round_trip_min_max_and_bucket_size_metadata(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.events
+
+                    created_names = await collection.create_indexes(
+                        [
+                            IndexModel(
+                                [("location", "2d")],
+                                name="location_2d",
+                                min=-180,
+                                max=180,
+                                bucketSize=0.5,
+                            )
+                        ]
+                    )
+                    indexes = await collection.list_indexes().to_list()
+                    info = await collection.index_information()
+
+                    self.assertEqual(created_names, ["location_2d"])
+                    self.assertIn(
+                        {
+                            "name": "location_2d",
+                            "key": {"location": "2d"},
+                            "unique": False,
+                            "min": -180,
+                            "max": 180,
+                            "bucketSize": 0.5,
+                        },
+                        indexes,
+                    )
+                    self.assertEqual(info["location_2d"]["min"], -180)
+                    self.assertEqual(info["location_2d"]["max"], 180)
+                    self.assertEqual(info["location_2d"]["bucketSize"], 0.5)
+
     async def test_create_index_rejects_invalid_ttl_definitions(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

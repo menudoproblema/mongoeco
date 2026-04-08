@@ -2288,7 +2288,7 @@ class SQLiteEngine(AsyncStorageEngine):
         conn = self._require_connection()
         cursor = conn.execute(
             """
-            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, multikey_flag, multikey_physical_name, scalar_physical_name
+            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name
             FROM indexes
             WHERE db_name = ? AND coll_name = ?
             ORDER BY name
@@ -2315,6 +2315,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 text_weights_json = None
                 default_language = None
                 language_override = None
+                min_value = None
+                max_value = None
+                bucket_size = None
                 scalar_physical_name = None
             elif len(row) == 10:
                 (
@@ -2334,6 +2337,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 text_weights_json = None
                 default_language = None
                 language_override = None
+                min_value = None
+                max_value = None
+                bucket_size = None
                 scalar_physical_name = None
             elif len(row) == 11:
                 (
@@ -2353,6 +2359,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 text_weights_json = None
                 default_language = None
                 language_override = None
+                min_value = None
+                max_value = None
+                bucket_size = None
                 scalar_physical_name = None
             elif len(row) == 12:
                 (
@@ -2373,6 +2382,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 text_weights_json = None
                 default_language = None
                 language_override = None
+                min_value = None
+                max_value = None
+                bucket_size = None
             elif len(row) == 13:
                 (
                     name,
@@ -2392,7 +2404,10 @@ class SQLiteEngine(AsyncStorageEngine):
                 text_weights_json = None
                 default_language = None
                 language_override = None
-            else:
+                min_value = None
+                max_value = None
+                bucket_size = None
+            elif len(row) == 16:
                 (
                     name,
                     physical_name,
@@ -2411,6 +2426,35 @@ class SQLiteEngine(AsyncStorageEngine):
                     multikey_physical_name,
                     scalar_physical_name,
                 ) = row
+                min_value = None
+                max_value = None
+                bucket_size = None
+            elif len(row) == 19:
+                (
+                    name,
+                    physical_name,
+                    fields,
+                    keys,
+                    unique_flag,
+                    sparse_flag,
+                    hidden_flag,
+                    collation_json,
+                    partial_filter_json,
+                    expire_after_seconds,
+                    text_weights_json,
+                    default_language,
+                    language_override,
+                    min_value,
+                    max_value,
+                    bucket_size,
+                    multikey_flag,
+                    multikey_physical_name,
+                    scalar_physical_name,
+                ) = row
+            else:
+                raise OperationFailure(
+                    f"Invalid SQLite index metadata for {db_name}.{coll_name}"
+                )
             try:
                 parsed_fields = json_loads(fields)
             except json.JSONDecodeError as exc:
@@ -2506,6 +2550,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     weights=text_weights,
                     default_language=default_language,
                     language_override=language_override,
+                    min_value=min_value,
+                    max_value=max_value,
+                    bucket_size=bucket_size,
                     multikey=bool(multikey_flag),
                     multikey_physical_name=multikey_physical_name
                     or self._physical_multikey_index_name(db_name, coll_name, name),
@@ -2836,6 +2883,9 @@ class SQLiteEngine(AsyncStorageEngine):
                         text_weights_json TEXT,
                         default_language TEXT,
                         language_override TEXT,
+                        min_value REAL,
+                        max_value REAL,
+                        bucket_size REAL,
                         multikey_flag INTEGER NOT NULL DEFAULT 0,
                         multikey_physical_name TEXT,
                         PRIMARY KEY (db_name, coll_name, name)
@@ -2915,6 +2965,12 @@ class SQLiteEngine(AsyncStorageEngine):
                     connection.execute("ALTER TABLE indexes ADD COLUMN default_language TEXT")
                 if "language_override" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN language_override TEXT")
+                if "min_value" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN min_value REAL")
+                if "max_value" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN max_value REAL")
+                if "bucket_size" not in columns:
+                    connection.execute("ALTER TABLE indexes ADD COLUMN bucket_size REAL")
                 if "multikey_flag" not in columns:
                     connection.execute("ALTER TABLE indexes ADD COLUMN multikey_flag INTEGER NOT NULL DEFAULT 0")
                 if "multikey_physical_name" not in columns:
@@ -3821,6 +3877,9 @@ class SQLiteEngine(AsyncStorageEngine):
         weights: dict[str, int] | None,
         default_language: str | None,
         language_override: str | None,
+        min_value: float | int | None,
+        max_value: float | int | None,
+        bucket_size: float | int | None,
         max_time_ms: int | None,
         context: ClientSession | None,
     ) -> str:
@@ -3843,6 +3902,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     weights=weights,
                     default_language=default_language,
                     language_override=language_override,
+                    min_value=min_value,
+                    max_value=max_value,
+                    bucket_size=bucket_size,
                     deadline=deadline,
                     enforce_deadline_fn=enforce_deadline,
                     begin_write=lambda current: self._begin_write(current, context),
@@ -4553,6 +4615,9 @@ class SQLiteEngine(AsyncStorageEngine):
         weights: dict[str, int] | None = None,
         default_language: str | None = None,
         language_override: str | None = None,
+        min_value: float | int | None = None,
+        max_value: float | int | None = None,
+        bucket_size: float | int | None = None,
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> str:
@@ -4571,6 +4636,9 @@ class SQLiteEngine(AsyncStorageEngine):
             weights,
             default_language,
             language_override,
+            min_value,
+            max_value,
+            bucket_size,
             max_time_ms,
             context,
         )

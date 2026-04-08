@@ -269,6 +269,9 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                         "weights": None,
                         "default_language": None,
                         "language_override": None,
+                        "min_value": None,
+                        "max_value": None,
+                        "bucket_size": None,
                         "max_time_ms": None,
                         "context": None,
                     },
@@ -360,6 +363,9 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                         "weights": None,
                         "default_language": None,
                         "language_override": None,
+                        "min_value": None,
+                        "max_value": None,
+                        "bucket_size": None,
                         "max_time_ms": None,
                         "context": None,
                     },
@@ -377,12 +383,50 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                         "weights": None,
                         "default_language": None,
                         "language_override": None,
+                        "min_value": None,
+                        "max_value": None,
+                        "bucket_size": None,
                         "max_time_ms": None,
                         "context": None,
                     },
                 ),
             ],
         )
+
+    def test_create_indexes_forwards_optional_min_max_and_bucket_size_metadata(self):
+        class EngineStub:
+            def __init__(self):
+                self.calls = []
+
+            async def create_index(self, *args, **kwargs):
+                self.calls.append((args, kwargs))
+                return kwargs["name"] or "idx"
+
+            async def index_information(self, *args, **kwargs):
+                return {"_id_": {"key": [("_id", 1)], "unique": True}}
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        names = asyncio.run(
+            collection.create_indexes(
+                [
+                    IndexModel(
+                        [("location", "2d")],
+                        name="location_2d",
+                        min=-180,
+                        max=180,
+                        bucketSize=0.5,
+                    )
+                ]
+            )
+        )
+
+        self.assertEqual(names, ["location_2d"])
+        self.assertEqual(len(engine.calls), 1)
+        self.assertEqual(engine.calls[0][1]["min_value"], -180)
+        self.assertEqual(engine.calls[0][1]["max_value"], 180)
+        self.assertEqual(engine.calls[0][1]["bucket_size"], 0.5)
 
     def test_create_index_forwards_sparse_and_partial_filter_expression(self):
         class EngineStub:

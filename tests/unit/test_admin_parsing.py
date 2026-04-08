@@ -70,6 +70,9 @@ class AdminParsingTests(unittest.TestCase):
                     "background": True,
                     "collation": {"locale": "en", "strength": 2},
                     "partialFilterExpression": {"active": True},
+                    "min": -180,
+                    "max": 180,
+                    "bucketSize": 0.5,
                 }
             ]
         )
@@ -82,6 +85,9 @@ class AdminParsingTests(unittest.TestCase):
         self.assertTrue(model.background)
         self.assertEqual(model.collation, {"locale": "en", "strength": 2})
         self.assertEqual(model.partial_filter_expression, {"active": True})
+        self.assertEqual(model.min_value, -180)
+        self.assertEqual(model.max_value, 180)
+        self.assertEqual(model.bucket_size, 0.5)
         ttl_models = normalize_index_models_from_command(
             [{"key": {"expires_at": 1}, "expireAfterSeconds": 60}]
         )
@@ -131,6 +137,19 @@ class AdminParsingTests(unittest.TestCase):
             snake_case_wildcard_models[0].wildcard_projection,
             {"private": 1},
         )
+        snake_case_bounds_models = normalize_index_models_from_command(
+            [
+                {
+                    "key": {"location": "2d"},
+                    "min_value": -90,
+                    "max_value": 90,
+                    "bucket_size": 1,
+                }
+            ]
+        )
+        self.assertEqual(snake_case_bounds_models[0].min_value, -90)
+        self.assertEqual(snake_case_bounds_models[0].max_value, 90)
+        self.assertEqual(snake_case_bounds_models[0].bucket_size, 1)
 
         with self.assertRaises(TypeError):
             normalize_index_models_from_command("email_1")

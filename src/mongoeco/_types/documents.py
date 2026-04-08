@@ -263,6 +263,9 @@ class EngineIndexRecord:
     weights: dict[str, int] | None = None
     default_language: str | None = None
     language_override: str | None = None
+    min_value: float | int | None = None
+    max_value: float | int | None = None
+    bucket_size: float | int | None = None
     multikey: bool = False
     multikey_physical_name: str | None = None
     scalar_physical_name: str | None = None
@@ -288,6 +291,9 @@ class EngineIndexRecord:
             weights=deepcopy(self.weights),
             default_language=self.default_language,
             language_override=self.language_override,
+            min_value=self.min_value,
+            max_value=self.max_value,
+            bucket_size=self.bucket_size,
         )
 
 

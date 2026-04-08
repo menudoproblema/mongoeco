@@ -1605,6 +1605,9 @@ class MemoryEngine(AsyncStorageEngine):
         weights: dict[str, int] | None = None,
         default_language: str | None = None,
         language_override: str | None = None,
+        min_value: float | int | None = None,
+        max_value: float | int | None = None,
+        bucket_size: float | int | None = None,
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> str:
@@ -1624,6 +1627,9 @@ class MemoryEngine(AsyncStorageEngine):
                 weights=weights,
                 default_language=default_language,
                 language_override=language_override,
+                min_value=min_value,
+                max_value=max_value,
+                bucket_size=bucket_size,
             )
         except ValueError as exc:
             raise OperationFailure(str(exc)) from exc
@@ -1662,6 +1668,9 @@ class MemoryEngine(AsyncStorageEngine):
                 or weights is not None
                 or default_language is not None
                 or language_override is not None
+                or min_value is not None
+                or max_value is not None
+                or bucket_size is not None
                 or not unique
             ):
                 raise OperationFailure("Conflicting index definition for '_id_'")
@@ -1699,6 +1708,9 @@ class MemoryEngine(AsyncStorageEngine):
                         or index.get("weights") != index_definition.weights
                         or index.get("default_language") != index_definition.default_language
                         or index.get("language_override") != index_definition.language_override
+                        or index.get("min_value") != index_definition.min_value
+                        or index.get("max_value") != index_definition.max_value
+                        or index.get("bucket_size") != index_definition.bucket_size
                     ):
                         raise OperationFailure(
                             f"Conflicting index definition for '{index_name}'"
@@ -1715,6 +1727,9 @@ class MemoryEngine(AsyncStorageEngine):
                         or index.get("weights") != index_definition.weights
                         or index.get("default_language") != index_definition.default_language
                         or index.get("language_override") != index_definition.language_override
+                        or index.get("min_value") != index_definition.min_value
+                        or index.get("max_value") != index_definition.max_value
+                        or index.get("bucket_size") != index_definition.bucket_size
                     ):
                         raise OperationFailure(
                             f"Conflicting index definition for key pattern '{normalized_keys!r}'"
@@ -1734,6 +1749,9 @@ class MemoryEngine(AsyncStorageEngine):
                 weights=deepcopy(index_definition.weights),
                 default_language=index_definition.default_language,
                 language_override=index_definition.language_override,
+                min_value=index_definition.min_value,
+                max_value=index_definition.max_value,
+                bucket_size=index_definition.bucket_size,
             )
 
             if unique:

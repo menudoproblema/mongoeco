@@ -1010,6 +1010,19 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             [("$**", 1)],
             wildcardProjection={"private": 0},
         )
+        bounded_definition = IndexDefinition(
+            [("location", "2d")],
+            name="location_2d",
+            min_value=-180,
+            max_value=180,
+            bucket_size=0.5,
+        )
+        bounded_model = IndexModel(
+            [("location", "2d")],
+            min=-180,
+            max=180,
+            bucketSize=0.5,
+        )
         self.assertEqual(
             wildcard_definition.to_model_document()["wildcardProjection"],
             {"private": 0},
@@ -1034,6 +1047,24 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             bool_wildcard_model.document["wildcardProjection"],
             {"private": 0},
         )
+        self.assertEqual(
+            bounded_definition.to_model_document()["min"],
+            -180,
+        )
+        self.assertEqual(
+            bounded_definition.to_model_document()["max"],
+            180,
+        )
+        self.assertEqual(
+            bounded_definition.to_model_document()["bucketSize"],
+            0.5,
+        )
+        self.assertEqual(bounded_model.min_value, -180)
+        self.assertEqual(bounded_model.max_value, 180)
+        self.assertEqual(bounded_model.bucket_size, 0.5)
+        self.assertEqual(bounded_model.document["min"], -180)
+        self.assertEqual(bounded_model.document["max"], 180)
+        self.assertEqual(bounded_model.document["bucketSize"], 0.5)
 
         with self.assertRaises(TypeError):
             IndexDefinition([("tenant", 1)], name="bad", unique=1)  # type: ignore[arg-type]
@@ -1053,6 +1084,12 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             IndexModel([("tenant", 1)], hidden=1)  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
             IndexModel([("tenant", 1)], partialFilterExpression="x")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            IndexModel([("location", "2d")], min=True)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            IndexModel([("location", "2d")], max="180")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            IndexModel([("location", "2d")], bucketSize=0)
         with self.assertRaises(TypeError):
             IndexModel([("$**", 1)], wildcardProjection=2)  # type: ignore[arg-type]
         with self.assertRaises(TypeError):

@@ -106,9 +106,15 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
             "wildcardProjection",
             "defaultLanguage",
             "languageOverride",
+            "min",
+            "max",
+            "bucketSize",
             "wildcard_projection",
             "default_language",
             "language_override",
+            "min_value",
+            "max_value",
+            "bucket_size",
         }
         if unsupported:
             unsupported_names = ", ".join(sorted(unsupported))
@@ -141,12 +147,24 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
             kwargs["defaultLanguage"] = raw_index["defaultLanguage"]
         if "languageOverride" in raw_index:
             kwargs["languageOverride"] = raw_index["languageOverride"]
+        if "min" in raw_index:
+            kwargs["min"] = raw_index["min"]
+        if "max" in raw_index:
+            kwargs["max"] = raw_index["max"]
+        if "bucketSize" in raw_index:
+            kwargs["bucketSize"] = raw_index["bucketSize"]
         if "wildcard_projection" in raw_index:
             kwargs["wildcard_projection"] = raw_index["wildcard_projection"]
         if "default_language" in raw_index:
             kwargs["default_language"] = raw_index["default_language"]
         if "language_override" in raw_index:
             kwargs["language_override"] = raw_index["language_override"]
+        if "min_value" in raw_index:
+            kwargs["min_value"] = raw_index["min_value"]
+        if "max_value" in raw_index:
+            kwargs["max_value"] = raw_index["max_value"]
+        if "bucket_size" in raw_index:
+            kwargs["bucket_size"] = raw_index["bucket_size"]
         normalized.append(IndexModel(raw_index["key"], **kwargs))
     return normalized
 

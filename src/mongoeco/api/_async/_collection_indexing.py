@@ -106,6 +106,9 @@ async def create_indexes(
                 weights=index.weights,
                 default_language=index.default_language,
                 language_override=index.language_override,
+                min_value=index.min_value,
+                max_value=index.max_value,
+                bucket_size=index.bucket_size,
                 max_time_ms=None if deadline is None else max(
                     1,
                     int((deadline - time.monotonic()) * 1000),

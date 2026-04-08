@@ -78,6 +78,9 @@ def create_index(
     weights: dict[str, int] | None = None,
     default_language: str | None = None,
     language_override: str | None = None,
+    min_value: float | int | None = None,
+    max_value: float | int | None = None,
+    bucket_size: float | int | None = None,
 ) -> str:
     normalized_keys = normalize_index_keys(keys)
     partial_filter_expression = normalize_partial_filter_expression(partial_filter_expression)
@@ -95,6 +98,9 @@ def create_index(
             weights=weights,
             default_language=default_language,
             language_override=language_override,
+            min_value=min_value,
+            max_value=max_value,
+            bucket_size=bucket_size,
         )
     except ValueError as exc:
         raise OperationFailure(str(exc)) from exc
@@ -132,6 +138,9 @@ def create_index(
             or weights is not None
             or default_language is not None
             or language_override is not None
+            or min_value is not None
+            or max_value is not None
+            or bucket_size is not None
             or not unique
         ):
             raise OperationFailure("Conflicting index definition for '_id_'")
@@ -168,6 +177,9 @@ def create_index(
                 or index.get("weights") != definition.weights
                 or index.get("default_language") != definition.default_language
                 or index.get("language_override") != definition.language_override
+                or index.get("min_value") != definition.min_value
+                or index.get("max_value") != definition.max_value
+                or index.get("bucket_size") != definition.bucket_size
             ):
                 raise OperationFailure(f"Conflicting index definition for '{index_name}'")
             return index_name
@@ -182,6 +194,9 @@ def create_index(
                 or index.get("weights") != definition.weights
                 or index.get("default_language") != definition.default_language
                 or index.get("language_override") != definition.language_override
+                or index.get("min_value") != definition.min_value
+                or index.get("max_value") != definition.max_value
+                or index.get("bucket_size") != definition.bucket_size
             ):
                 raise OperationFailure(
                     f"Conflicting index definition for key pattern '{normalized_keys!r}'"
@@ -230,9 +245,9 @@ def create_index(
         conn.execute(
             """
             INSERT INTO indexes (
-                db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, multikey_flag, multikey_physical_name, scalar_physical_name
+                db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 db_name,
@@ -250,6 +265,9 @@ def create_index(
                 json_dumps_compact(definition.weights) if definition.weights is not None else None,
                 definition.default_language,
                 definition.language_override,
+                definition.min_value,
+                definition.max_value,
+                definition.bucket_size,
                 1 if multikey else 0,
                 multikey_physical_name if multikey else None,
                 scalar_physical_name,
@@ -271,6 +289,9 @@ def create_index(
                 weights=deepcopy(definition.weights),
                 default_language=definition.default_language,
                 language_override=definition.language_override,
+                min_value=definition.min_value,
+                max_value=definition.max_value,
+                bucket_size=definition.bucket_size,
                 multikey=True,
                 multikey_physical_name=multikey_physical_name,
                 scalar_physical_name=scalar_physical_name,
@@ -301,6 +322,9 @@ def create_index(
                 weights=deepcopy(definition.weights),
                 default_language=definition.default_language,
                 language_override=definition.language_override,
+                min_value=definition.min_value,
+                max_value=definition.max_value,
+                bucket_size=definition.bucket_size,
                 multikey=multikey,
                 multikey_physical_name=multikey_physical_name,
                 scalar_physical_name=scalar_physical_name,

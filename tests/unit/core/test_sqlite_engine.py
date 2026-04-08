@@ -4928,6 +4928,28 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(OperationFailure):
             engine._load_indexes("db", "coll")
 
+        cursor.fetchall.return_value = [
+            (
+                "bad_row_shape",
+                "idx_bad_row_shape",
+                '["email"]',
+                '[["email", 1]]',
+                0,
+                0,
+                0,
+                None,
+                None,
+                0,
+                None,
+                None,
+                None,
+                0,
+            ),
+        ]
+        engine._mark_index_metadata_changed("db", "coll")
+        with self.assertRaises(OperationFailure):
+            engine._load_indexes("db", "coll")
+
     async def test_sqlite_search_sync_and_explain_details_cover_empty_and_fallback_shapes(self):
         engine = SQLiteEngine()
         await engine.connect()

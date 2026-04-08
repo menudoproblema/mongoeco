@@ -6366,6 +6366,42 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     )
                     self.assertEqual(info["alias_1"]["collation"], {"locale": "en", "strength": 1})
 
+    def test_create_indexes_round_trip_min_max_and_bucket_size_metadata(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.events
+
+                    created_names = collection.create_indexes(
+                        [
+                            IndexModel(
+                                [("location", "2d")],
+                                name="location_2d",
+                                min=-180,
+                                max=180,
+                                bucketSize=0.5,
+                            )
+                        ]
+                    )
+                    indexes = collection.list_indexes().to_list()
+                    info = collection.index_information()
+
+                    self.assertEqual(created_names, ["location_2d"])
+                    self.assertIn(
+                        {
+                            "name": "location_2d",
+                            "key": {"location": "2d"},
+                            "unique": False,
+                            "min": -180,
+                            "max": 180,
+                            "bucketSize": 0.5,
+                        },
+                        indexes,
+                    )
+                    self.assertEqual(info["location_2d"]["min"], -180)
+                    self.assertEqual(info["location_2d"]["max"], 180)
+                    self.assertEqual(info["location_2d"]["bucketSize"], 0.5)
+
     def test_create_index_rejects_invalid_ttl_definitions(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
