@@ -90,6 +90,7 @@ from mongoeco.core.search import (
     is_text_search_query,
     matches_search_query,
     resolve_classic_text_index,
+    resolve_classic_text_index_for_hint,
     search_near_distance,
     search_query_explain_details,
     validate_search_index_definition,
@@ -1267,14 +1268,17 @@ class MemoryEngine(AsyncStorageEngine):
                     index_data_view=self._index_data_view(context),
                     storage_view=self._storage_view(context),
                 )
-                self._resolve_hint_index(
-                    db_name,
-                    coll_name,
-                    semantics.hint,
-                    indexes=indexes,
-                    plan=semantics.query_plan,
-                    dialect=semantics.dialect,
-                )
+                if semantics.text_query is None:
+                    self._resolve_hint_index(
+                        db_name,
+                        coll_name,
+                        semantics.hint,
+                        indexes=indexes,
+                        plan=semantics.query_plan,
+                        dialect=semantics.dialect,
+                    )
+                else:
+                    resolve_classic_text_index_for_hint(indexes, semantics.hint)
 
                 # Intento de optimización: Point lookup por _id
                 from mongoeco.core.query_plan import EqualsCondition, AndCondition
@@ -2106,7 +2110,7 @@ class MemoryEngine(AsyncStorageEngine):
         text_query = semantics.text_query
         if text_query is None:
             return documents
-        index_name, fields = resolve_classic_text_index(indexes)
+        index_name, fields = resolve_classic_text_index_for_hint(indexes, semantics.hint)
         matched_index = next((index for index in indexes if index.name == index_name), None)
         weights = matched_index.weights if matched_index is not None else None
 
@@ -2144,14 +2148,29 @@ class MemoryEngine(AsyncStorageEngine):
         enforce_deadline(deadline)
         async with self._get_lock(db_name, coll_name):
             indexes = deepcopy(self._indexes.get(db_name, {}).get(coll_name, []))
-        hinted_index = self._resolve_hint_index(
-            db_name,
-            coll_name,
-            semantics.hint,
-            indexes=indexes,
-            plan=semantics.query_plan,
-            dialect=semantics.dialect,
-        )
+        text_index_resolution: tuple[str, tuple[str, ...]] | None = None
+        if semantics.text_query is None:
+            hinted_index = self._resolve_hint_index(
+                db_name,
+                coll_name,
+                semantics.hint,
+                indexes=indexes,
+                plan=semantics.query_plan,
+                dialect=semantics.dialect,
+            )
+        else:
+            text_index_resolution = resolve_classic_text_index_for_hint(indexes, semantics.hint)
+            hinted_index = None
+            if semantics.hint is not None:
+                hinted_text_index_name, _ = text_index_resolution
+                hinted_index = next(
+                    (
+                        deepcopy(index)
+                        for index in indexes
+                        if index.name == hinted_text_index_name
+                    ),
+                    None,
+                )
         enforce_deadline(deadline)
         execution_plan = await self.plan_find_semantics(
             db_name,
@@ -2166,7 +2185,8 @@ class MemoryEngine(AsyncStorageEngine):
             dialect=semantics.dialect,
         )
         if semantics.text_query is not None:
-            text_index_name, text_fields = resolve_classic_text_index(indexes)
+            assert text_index_resolution is not None
+            text_index_name, text_fields = text_index_resolution
             text_index_metadata = next(
                 (index for index in indexes if index.name == text_index_name),
                 None,

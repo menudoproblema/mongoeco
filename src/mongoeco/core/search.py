@@ -17,7 +17,14 @@ from mongoeco.core._search_contract import (
 )
 from mongoeco.core.paths import get_document_value
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, EngineIndexRecord, SearchIndexDefinition, SearchIndexDocument
+from mongoeco.types import (
+    Document,
+    EngineIndexRecord,
+    IndexKeySpec,
+    SearchIndexDefinition,
+    SearchIndexDocument,
+    normalize_index_keys,
+)
 
 
 SUPPORTED_SEARCH_INDEX_TYPES = {"search", "vectorSearch"}
@@ -336,6 +343,44 @@ def resolve_classic_text_index(
             "classic $text is ambiguous with multiple text indexes; use a single local text index per collection"
         )
     index = candidates[0]
+    return index.name, tuple(field for field, direction in index.key if direction == "text")
+
+
+def resolve_classic_text_index_for_hint(
+    indexes: list[EngineIndexRecord],
+    hint: str | IndexKeySpec | None,
+) -> tuple[str, tuple[str, ...]]:
+    if hint is None:
+        return resolve_classic_text_index(indexes)
+    if isinstance(hint, str):
+        index_name, fields = resolve_classic_text_index(indexes, hinted_name=hint)
+        matched_index = next((index for index in indexes if index.name == index_name), None)
+        if matched_index is not None and matched_index.hidden:
+            raise OperationFailure("hint does not correspond to a usable index for this query")
+        return index_name, fields
+
+    normalized_hint = normalize_index_keys(hint)
+    matching_indexes = [index for index in indexes if index.key == normalized_hint]
+    if not matching_indexes:
+        raise OperationFailure("hint does not correspond to an existing index")
+    usable_indexes = [index for index in matching_indexes if not index.hidden]
+    if not usable_indexes:
+        raise OperationFailure("hint does not correspond to a usable index for this query")
+
+    text_indexes = []
+    for index in usable_indexes:
+        directions = tuple(direction for _field, direction in index.key)
+        has_text = "text" in directions
+        unsupported_directions = [direction for direction in directions if direction not in (1, -1, "text")]
+        if has_text and not unsupported_directions:
+            text_indexes.append(index)
+    if not text_indexes:
+        raise OperationFailure("hint does not correspond to a text index for classic $text query")
+    if len(text_indexes) > 1:
+        raise OperationFailure(
+            f"multiple text indexes found with key pattern {normalized_hint!r}; hint by name instead"
+        )
+    index = text_indexes[0]
     return index.name, tuple(field for field, direction in index.key if direction == "text")
 
 

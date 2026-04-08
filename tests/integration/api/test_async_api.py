@@ -6312,6 +6312,72 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(explain["details"]["textQuery"]["defaultLanguage"], "english")
                     self.assertEqual(explain["details"]["textQuery"]["languageOverride"], "lang")
 
+    async def test_collection_text_query_hint_selects_text_index_and_rejects_non_text_hint(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.text_hint
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "title": "Ada", "body": "none", "rank": 1},
+                            {"_id": "2", "title": "none", "body": "Ada", "rank": 2},
+                            {"_id": "3", "title": "Ada", "body": "Ada", "rank": 3},
+                        ]
+                    )
+                    await collection.create_index([("title", "text")], name="title_text")
+                    await collection.create_index([("body", "text")], name="body_text")
+                    await collection.create_index([("rank", 1)], name="rank_1")
+
+                    with self.assertRaisesRegex(OperationFailure, "ambiguous"):
+                        await collection.find({"$text": {"$search": "Ada"}}).to_list()
+
+                    title_results = await collection.find(
+                        {"$text": {"$search": "Ada"}},
+                        {"_id": 1, "score": {"$meta": "textScore"}},
+                        sort={"score": {"$meta": "textScore"}},
+                        hint="title_text",
+                    ).to_list()
+                    body_results = await collection.find(
+                        {"$text": {"$search": "Ada"}},
+                        {"_id": 1, "score": {"$meta": "textScore"}},
+                        sort={"score": {"$meta": "textScore"}},
+                        hint="body_text",
+                    ).to_list()
+                    command_result = await client.analytics.command(
+                        {
+                            "find": "text_hint",
+                            "filter": {"$text": {"$search": "Ada"}},
+                            "projection": {"_id": 1, "score": {"$meta": "textScore"}},
+                            "sort": {"score": {"$meta": "textScore"}},
+                            "hint": "body_text",
+                        }
+                    )
+                    explanation = await collection.find(
+                        {"$text": {"$search": "Ada"}},
+                        hint="body_text",
+                    ).explain()
+
+                    self.assertEqual(
+                        [document["_id"] for document in title_results],
+                        ["1", "3"],
+                    )
+                    self.assertEqual(
+                        [document["_id"] for document in body_results],
+                        ["2", "3"],
+                    )
+                    self.assertEqual(
+                        [document["_id"] for document in command_result["cursor"]["firstBatch"]],
+                        ["2", "3"],
+                    )
+                    self.assertEqual(explanation["hinted_index"], "body_text")
+                    self.assertEqual(explanation["details"]["textQuery"]["index"], "body_text")
+
+                    with self.assertRaisesRegex(OperationFailure, "text index"):
+                        await collection.find(
+                            {"$text": {"$search": "Ada"}},
+                            hint="rank_1",
+                        ).to_list()
+
     async def test_collection_supports_local_geo_queries_and_geo_near(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

@@ -62,6 +62,7 @@ from mongoeco.core.search import (
     attach_text_score,
     classic_text_score,
     resolve_classic_text_index,
+    resolve_classic_text_index_for_hint,
     SearchVectorQuery,
 )
 from mongoeco.core.sorting import sort_documents
@@ -3439,7 +3440,7 @@ class SQLiteEngine(AsyncStorageEngine):
         if text_query is None:
             return documents
         indexes = self._load_indexes(db_name, coll_name)
-        index_name, fields = resolve_classic_text_index(indexes)
+        index_name, fields = resolve_classic_text_index_for_hint(indexes, semantics.hint)
         matched_index = next((index for index in indexes if index.name == index_name), None)
         weights = matched_index.weights if matched_index is not None else None
 
@@ -4741,12 +4742,28 @@ class SQLiteEngine(AsyncStorageEngine):
             max_time_ms=semantics.max_time_ms,
             hint=semantics.hint,
         )
-        hinted_index = await self._run_blocking(
-            self._resolve_hint_index,
-            db_name,
-            coll_name,
-            semantics.hint,
-        )
+        text_index_name: str | None = None
+        text_fields: tuple[str, ...] | None = None
+        text_index_metadata: EngineIndexRecord | None = None
+        if semantics.text_query is None:
+            hinted_index = await self._run_blocking(
+                self._resolve_hint_index,
+                db_name,
+                coll_name,
+                semantics.hint,
+            )
+        else:
+            text_indexes = await self._run_blocking(self._load_indexes, db_name, coll_name)
+            text_index_name, text_fields = resolve_classic_text_index_for_hint(text_indexes, semantics.hint)
+            text_index_metadata = next(
+                (
+                    index
+                    for index in text_indexes
+                    if index.name == text_index_name
+                ),
+                None,
+            )
+            hinted_index = text_index_metadata if semantics.hint is not None else None
         execution_plan = await self.plan_find_semantics(
             db_name,
             coll_name,
@@ -4784,16 +4801,7 @@ class SQLiteEngine(AsyncStorageEngine):
             if isinstance(details, dict):
                 details = {**details, **virtual_details}
         if semantics.text_query is not None:
-            indexes = await self._run_blocking(self._load_indexes, db_name, coll_name)
-            text_index_name, text_fields = resolve_classic_text_index(indexes)
-            text_index_metadata = next(
-                (
-                    index
-                    for index in indexes
-                    if index.name == text_index_name
-                ),
-                None,
-            )
+            assert text_index_name is not None and text_fields is not None
             text_details = {
                 "textQuery": {
                     "backend": "python",

@@ -55,6 +55,7 @@ from mongoeco.core.search import (
     matches_search_text_query,
     matches_search_wildcard_query,
     resolve_classic_text_index,
+    resolve_classic_text_index_for_hint,
     split_classic_text_filter,
     score_vector_document,
     search_near_distance,
@@ -265,6 +266,65 @@ class SearchCoreTests(unittest.TestCase):
                     EngineIndexRecord(name="title_text", fields=["title"], key=[("title", "text")], unique=False),
                 ]
             )
+
+    def test_resolve_classic_text_index_for_hint_supports_name_and_key_pattern(self) -> None:
+        indexes = [
+            EngineIndexRecord(
+                name="title_text_rank_desc",
+                fields=["title", "rank"],
+                key=[("title", "text"), ("rank", -1)],
+                unique=False,
+            ),
+            EngineIndexRecord(
+                name="rank_1",
+                fields=["rank"],
+                key=[("rank", 1)],
+                unique=False,
+            ),
+        ]
+        self.assertEqual(
+            resolve_classic_text_index_for_hint(indexes, "title_text_rank_desc"),
+            ("title_text_rank_desc", ("title",)),
+        )
+        self.assertEqual(
+            resolve_classic_text_index_for_hint(indexes, [("title", "text"), ("rank", -1)]),
+            ("title_text_rank_desc", ("title",)),
+        )
+        with self.assertRaisesRegex(OperationFailure, "text index"):
+            resolve_classic_text_index_for_hint(indexes, [("rank", 1)])
+        with self.assertRaisesRegex(OperationFailure, "existing index"):
+            resolve_classic_text_index_for_hint(indexes, [("missing", 1)])
+
+        hidden_text_index = [
+            EngineIndexRecord(
+                name="hidden_text",
+                fields=["title"],
+                key=[("title", "text")],
+                unique=False,
+                hidden=True,
+            )
+        ]
+        with self.assertRaisesRegex(OperationFailure, "usable index"):
+            resolve_classic_text_index_for_hint(hidden_text_index, "hidden_text")
+        with self.assertRaisesRegex(OperationFailure, "usable index"):
+            resolve_classic_text_index_for_hint(hidden_text_index, [("title", "text")])
+
+        duplicate_key_text_indexes = [
+            EngineIndexRecord(
+                name="title_text_a",
+                fields=["title"],
+                key=[("title", "text")],
+                unique=False,
+            ),
+            EngineIndexRecord(
+                name="title_text_b",
+                fields=["title"],
+                key=[("title", "text")],
+                unique=False,
+            ),
+        ]
+        with self.assertRaisesRegex(OperationFailure, "hint by name"):
+            resolve_classic_text_index_for_hint(duplicate_key_text_indexes, [("title", "text")])
 
     def test_validate_search_index_definition_accepts_extended_scalar_mapping_types(self) -> None:
         normalized = validate_search_index_definition(

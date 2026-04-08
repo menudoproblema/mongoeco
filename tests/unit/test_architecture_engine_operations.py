@@ -212,12 +212,12 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
                 sort={"score": {"$meta": "textScore"}},
             )
 
-    def test_compile_find_operation_rejects_hint_with_classic_text_query(self):
-        with self.assertRaisesRegex(Exception, "classic \\$text local runtime does not support hint"):
-            compile_find_operation(
-                {"$text": {"$search": "Ada"}},
-                hint="content_text",
-            )
+    def test_compile_find_operation_accepts_hint_with_classic_text_query(self):
+        operation = compile_find_operation(
+            {"$text": {"$search": "Ada"}},
+            hint="content_text",
+        )
+        self.assertEqual(operation.hint, "content_text")
 
     def test_compile_update_semantics_returns_typed_write_semantics(self):
         operation = compile_update_operation(

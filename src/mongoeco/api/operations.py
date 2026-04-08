@@ -132,8 +132,6 @@ def compile_find_operation(
     normalized_batch_size = _normalize_batch_size(batch_size)
     normalized_skip = _normalize_skip(skip)
     normalized_limit = _normalize_limit(limit)
-    if text_query is not None and normalized_hint is not None:
-        raise OperationFailure("classic $text local runtime does not support hint")
     if text_query is None:
         if _projection_requests_text_score(normalized_projection):
             raise OperationFailure("$meta textScore projection requires a $text query")
