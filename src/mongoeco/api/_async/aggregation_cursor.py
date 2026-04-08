@@ -510,6 +510,12 @@ class AsyncAggregationCursor:
             for stage in pipeline
         )
 
+    def _collect_list_sessions_requested(self, pipeline: Pipeline) -> bool:
+        return any(
+            isinstance(stage, dict) and len(stage) == 1 and "$listSessions" in stage
+            for stage in pipeline
+        )
+
     async def _load_collstats_snapshots(self, pipeline: Pipeline) -> dict[int, Document]:
         snapshots: dict[int, Document] = {}
         scales = self._collect_collstats_scales(pipeline)
@@ -573,6 +579,39 @@ class AsyncAggregationCursor:
                 "cachedPlan": deepcopy(diagnostics),
             }
         ]
+
+    def _load_list_sessions_snapshot(self, pipeline: Pipeline) -> list[Document]:
+        if not self._collect_list_sessions_requested(pipeline):
+            return []
+        captured_at = datetime.datetime.now(datetime.UTC)
+        snapshot_by_id: dict[str, Document] = {}
+        if self._session is not None:
+            snapshot_by_id[self._session.session_id] = {
+                "_id": {"id": self._session.session_id},
+                "lastUse": captured_at,
+                "causalConsistency": self._session.causal_consistency,
+                "inTransaction": self._session.in_transaction,
+                "transactionNumber": self._session.transaction_number,
+                "engineState": deepcopy(self._session.engine_state),
+            }
+        snapshot_active_operations = getattr(self._collection._engine, "_snapshot_active_operations", None)
+        operation_snapshot = snapshot_active_operations() if callable(snapshot_active_operations) else []
+        if isinstance(operation_snapshot, list):
+            for operation in operation_snapshot:
+                if not isinstance(operation, dict):
+                    continue
+                session_id = operation.get("sessionId")
+                if not isinstance(session_id, str) or not session_id:
+                    continue
+                snapshot_by_id.setdefault(
+                    session_id,
+                    {
+                        "_id": {"id": session_id},
+                        "lastUse": captured_at,
+                        "fromCurrentOp": True,
+                    },
+                )
+        return list(snapshot_by_id.values())
 
     def _scan_collection_with_operation(
         self,
@@ -662,6 +701,7 @@ class AsyncAggregationCursor:
                         or "$indexStats" in remaining_pipeline[0]
                         or "$currentOp" in remaining_pipeline[0]
                         or "$planCacheStats" in remaining_pipeline[0]
+                        or "$listSessions" in remaining_pipeline[0]
                     )
                 ):
                     documents = []
@@ -674,6 +714,8 @@ class AsyncAggregationCursor:
             index_stats_snapshot = await self._load_index_stats_snapshot(remaining_pipeline)
             current_op_requested = self._collect_current_op_requested(remaining_pipeline)
             plan_cache_stats_snapshot = self._load_plan_cache_stats_snapshot(remaining_pipeline)
+            list_sessions_requested = self._collect_list_sessions_requested(remaining_pipeline)
+            list_sessions_snapshot = self._load_list_sessions_snapshot(remaining_pipeline)
             snapshot_active_operations = getattr(self._collection._engine, "_snapshot_active_operations", None)
             current_op_snapshot = (
                 snapshot_active_operations()
@@ -702,6 +744,9 @@ class AsyncAggregationCursor:
             plan_cache_stats_resolver = None
             if plan_cache_stats_snapshot:
                 plan_cache_stats_resolver = lambda: deepcopy(plan_cache_stats_snapshot)
+            list_sessions_resolver = None
+            if list_sessions_requested:
+                list_sessions_resolver = lambda: deepcopy(list_sessions_snapshot)
             result = apply_pipeline(
                 documents,
                 remaining_pipeline,
@@ -710,6 +755,7 @@ class AsyncAggregationCursor:
                 index_stats_resolver=index_stats_resolver,
                 current_op_resolver=current_op_resolver,
                 plan_cache_stats_resolver=plan_cache_stats_resolver,
+                list_sessions_resolver=list_sessions_resolver,
                 variables=self._let,
                 dialect=dialect,
                 collation=self._collation,

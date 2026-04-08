@@ -405,6 +405,41 @@ class AggregationPipelineCoreTests(unittest.TestCase):
         with self.assertRaisesRegex(OperationFailure, "supports only an empty document"):
             apply_pipeline([], [{"$planCacheStats": {"future": True}}], plan_cache_stats_resolver=resolver)
 
+    def test_pipeline_supports_list_sessions_stage_with_resolver_snapshot(self):
+        snapshot = [
+            {
+                "_id": {"id": "session-1"},
+                "lastUse": datetime.datetime(2026, 4, 8, tzinfo=datetime.UTC),
+                "inTransaction": False,
+            }
+        ]
+
+        result = apply_pipeline(
+            [{"_id": "ignored"}],
+            [{"$listSessions": {}}],
+            list_sessions_resolver=lambda: snapshot,
+        )
+
+        self.assertEqual(result, snapshot)
+        result[0]["_id"]["id"] = "mutated"
+        self.assertEqual(snapshot[0]["_id"]["id"], "session-1")
+
+    def test_list_sessions_stage_requires_first_position_and_supported_options(self):
+        resolver = lambda: [{"_id": {"id": "session-1"}}]
+
+        with self.assertRaisesRegex(OperationFailure, "\\$listSessions is only valid as the first pipeline stage"):
+            apply_pipeline(
+                [{"_id": 1}],
+                [{"$match": {"_id": 1}}, {"$listSessions": {}}],
+                list_sessions_resolver=resolver,
+            )
+        with self.assertRaisesRegex(OperationFailure, "requires a list sessions resolver"):
+            apply_pipeline([], [{"$listSessions": {}}])
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            apply_pipeline([], [{"$listSessions": []}], list_sessions_resolver=resolver)
+        with self.assertRaisesRegex(OperationFailure, "supports only an empty document"):
+            apply_pipeline([], [{"$listSessions": {"allUsers": True}}], list_sessions_resolver=resolver)
+
     def test_pipeline_supports_geo_near_for_local_points(self):
         documents = [
             {"_id": "a", "name": "Ada", "location": {"type": "Point", "coordinates": [0, 0]}, "active": True},

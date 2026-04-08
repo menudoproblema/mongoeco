@@ -102,6 +102,7 @@ class AggregationStageContext:
     index_stats_resolver: Callable[[], list[Document]] | None = None
     current_op_resolver: Callable[[], list[Document]] | None = None
     plan_cache_stats_resolver: Callable[[], list[Document]] | None = None
+    list_sessions_resolver: Callable[[], list[Document]] | None = None
     variables: dict[str, Any] | None = None
     dialect: MongoDialect = MONGODB_DIALECT_70
     collation: CollationSpec | None = None

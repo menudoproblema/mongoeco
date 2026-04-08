@@ -11,4 +11,3 @@ arquitectonica y las decisiones de endurecimiento del diseno viven ya en
 | 11.5      | Ampliar mappings locales de `$search` mas alla de `string`/`token`/`autocomplete`/`number`/`date`/`boolean`/`objectId`/`uuid`/`document`/`embeddedDocuments` | Medio-Alto  | Medio       | `search.py:29`<br>`TODO.md:29`                                    |
 | 14        | Llevar `vectorSearch` mas alla del retrieval hibrido local actual | Medio-Alto  | Alto        | `README.md:20`<br>`search.py:187`<br>`TODO.md:25`                 |
 | 18        | `codec options` avanzadas                                         | Medio       | Medio       | `types.py:1244`                                                   |
-| 21        | Stages admin/introspeccion restantes en agregacion (`$listSessions`) | Bajo        | Medio       | `stages.py:256`                                                   |

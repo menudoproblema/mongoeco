@@ -20,6 +20,7 @@ from mongoeco.core.query_plan import MatchAll
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import ExecutionTimeout, InvalidOperation, OperationFailure
+from mongoeco.session import ClientSession
 from mongoeco.types import PlanningIssue, PlanningMode
 
 
@@ -1010,6 +1011,8 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(cursor._collect_current_op_requested([{"$project": {"_id": 1}}]))
         self.assertTrue(cursor._collect_plan_cache_stats_requested([{"$planCacheStats": {}}]))
         self.assertFalse(cursor._collect_plan_cache_stats_requested([{"$project": {"_id": 1}}]))
+        self.assertTrue(cursor._collect_list_sessions_requested([{"$listSessions": {}}]))
+        self.assertFalse(cursor._collect_list_sessions_requested([{"$project": {"_id": 1}}]))
 
         search_cursor = AsyncAggregationCursor(collection, [{"$search": {"text": {"query": "Ada", "path": "name"}}}], batch_size=2)
         with patch.object(search_cursor, "_materialize", return_value=[{"_id": "a"}]) as materialize:
@@ -1117,6 +1120,38 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]["cachedPlan"], {})
+
+    async def test_aggregation_cursor_supports_list_sessions_stage_with_explicit_session(self):
+        collection = _FakeCollection([])
+        session = ClientSession()
+
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$listSessions": {}}],
+            batch_size=2,
+            session=session,
+        )
+        result = await cursor.to_list()
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["_id"]["id"], session.session_id)
+        self.assertFalse(result[0]["inTransaction"])
+        self.assertFalse(result[0].get("fromCurrentOp", False))
+
+    async def test_aggregation_cursor_list_sessions_stage_uses_current_op_session_ids(self):
+        collection = _FakeCollection([])
+        collection._engine._snapshot_active_operations = lambda: [  # type: ignore[attr-defined]
+            1,
+            {"opid": "op-1", "command": "find", "sessionId": "sess-1"},
+            {"opid": "op-2", "command": "find"},
+        ]
+
+        cursor = AsyncAggregationCursor(collection, [{"$listSessions": {}}], batch_size=2)
+        result = await cursor.to_list()
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["_id"]["id"], "sess-1")
+        self.assertTrue(result[0]["fromCurrentOp"])
 
     async def test_aggregation_cursor_additional_stream_and_merge_branches(self):
         database = AsyncDatabase(MemoryEngine(), "db")
