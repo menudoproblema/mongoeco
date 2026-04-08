@@ -158,6 +158,14 @@ backed by canonical metadata for:
 That keeps the public export directly useful for profile-aware tooling without
 forcing every consumer to import `cxp` just to inspect profile shape.
 
+`mongoeco.cxp` is the canonical source for those CXP views. The `compat`
+helpers are projections that delegate to the canonical `mongoeco.cxp` exports
+for:
+
+* `profiles`
+* `profileSupport`
+* `operations`
+
 The top-level `mongoeco.cxp` package is intentionally narrower than the full
 `cxp` toolkit. It is a curated facade for:
 
@@ -168,7 +176,11 @@ Generic CXP toolkit types and lower-level helper exports stay in explicit
 submodules such as `mongoeco.cxp.capabilities`,
 `mongoeco.cxp.catalogs.interfaces.execution`, or in `cxp` itself.
 
-If a consumer only wants the reusable profile catalog, `mongoeco` also exposes:
+If a consumer only wants the reusable profile catalog, `mongoeco` exposes:
+
+* `mongoeco.cxp.export_cxp_profile_catalog()`
+
+and the projected `compat` equivalent:
 
 * `mongoeco.compat.export_cxp_profile_catalog()`
 
@@ -188,6 +200,9 @@ messages for each reusable profile and decide whether to run or skip.
 The operation catalog is the complementary view for questions like "what does
 `find` support?" or "under which profiles does `update_one` fit?" without
 walking the full capability tree.
+Each operation entry now also includes canonical telemetry requirements for its
+capability view (spans, metrics and events with required fields), so tooling
+can validate observability contracts without inferring signal names.
 
 The same requirement shape is now reused in `explain()["cxp"]` whenever
 `mongoeco` can infer a minimal reusable profile honestly, through:

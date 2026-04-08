@@ -2,6 +2,7 @@ from mongoeco.cxp.capabilities import (
     build_mongodb_explain_projection,
     export_cxp_capability_catalog,
     export_cxp_operation_catalog,
+    export_cxp_profile_catalog,
     export_cxp_profile_support_catalog,
 )
 from mongoeco.cxp.catalogs.interfaces.database import (
@@ -29,6 +30,7 @@ _FACADE_EXPORTS = (
     'build_mongodb_explain_projection',
     'export_cxp_capability_catalog',
     'export_cxp_operation_catalog',
+    'export_cxp_profile_catalog',
     'export_cxp_profile_support_catalog',
 )
 

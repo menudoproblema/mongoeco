@@ -36,6 +36,9 @@ _READ_COMMANDS = {
 _SEARCH_STAGE_NAME = "$search"
 _VECTOR_SEARCH_STAGE_NAME = "$vectorSearch"
 _SEARCH_NON_OPERATOR_KEYS = {"index"}
+_CXP_RESOURCE_NAME = "cxp.resource.name"
+_CXP_RESOURCE_KIND = "cxp.resource.kind"
+_MONGODB_RESOURCE_KIND = "database/mongodb"
 
 
 @dataclass(slots=True)
@@ -278,15 +281,21 @@ def _build_classification(
     vector_similarity: str | None = None,
 ) -> dict[str, Any]:
     span_attributes: dict[str, Any] = {
+        _CXP_RESOURCE_NAME: namespace,
+        _CXP_RESOURCE_KIND: _MONGODB_RESOURCE_KIND,
         "db.system.name": "mongodb",
         "db.operation.name": operation_name,
         "db.namespace.name": namespace,
     }
     metric_labels: dict[str, str] = {
+        _CXP_RESOURCE_NAME: namespace,
+        _CXP_RESOURCE_KIND: _MONGODB_RESOURCE_KIND,
         "db.system.name": "mongodb",
         "db.operation.name": operation_name,
     }
     event_payload: dict[str, Any] = {
+        _CXP_RESOURCE_NAME: namespace,
+        _CXP_RESOURCE_KIND: _MONGODB_RESOURCE_KIND,
         "db.system.name": "mongodb",
         "db.operation.name": operation_name,
         "db.namespace.name": namespace,

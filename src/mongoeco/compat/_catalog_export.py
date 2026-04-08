@@ -26,7 +26,12 @@ from mongoeco.compat._catalog_data import (
     SUPPORTED_UPDATE_OPERATORS,
     SUPPORTED_WINDOW_ACCUMULATORS,
 )
-from mongoeco.cxp import export_cxp_capability_catalog
+from mongoeco.cxp import (
+    export_cxp_capability_catalog,
+    export_cxp_operation_catalog as _export_cxp_operation_catalog_from_cxp,
+    export_cxp_profile_catalog as _export_cxp_profile_catalog_from_cxp,
+    export_cxp_profile_support_catalog as _export_cxp_profile_support_catalog_from_cxp,
+)
 from mongoeco.cxp.capabilities import export_legacy_runtime_subset_catalog
 
 
@@ -124,30 +129,15 @@ def export_cxp_catalog() -> dict[str, object]:
 
 
 def export_cxp_profile_catalog() -> dict[str, dict[str, object]]:
-    catalog = export_cxp_catalog()
-    profiles = catalog.get("profiles", {})
-    if not isinstance(profiles, dict):
-        message = 'cxp catalog profiles must serialize to a mapping'
-        raise TypeError(message)
-    return profiles
+    return _export_cxp_profile_catalog_from_cxp()
 
 
 def export_cxp_profile_support_catalog() -> dict[str, dict[str, object]]:
-    catalog = export_cxp_catalog()
-    profile_support = catalog.get("profileSupport", {})
-    if not isinstance(profile_support, dict):
-        message = 'cxp profile support must serialize to a mapping'
-        raise TypeError(message)
-    return profile_support
+    return _export_cxp_profile_support_catalog_from_cxp()
 
 
 def export_cxp_operation_catalog() -> dict[str, list[dict[str, object]]]:
-    catalog = export_cxp_catalog()
-    operations = catalog.get("operations", {})
-    if not isinstance(operations, dict):
-        message = 'cxp operation catalog must serialize to a mapping'
-        raise TypeError(message)
-    return operations
+    return _export_cxp_operation_catalog_from_cxp()
 
 
 def export_full_compat_catalog() -> dict[str, object]:

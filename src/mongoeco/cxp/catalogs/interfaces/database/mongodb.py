@@ -1,4 +1,3 @@
-from cxp.catalogs.base import CapabilityProfile, CapabilityRequirement
 from cxp.catalogs.interfaces.database.mongodb import (
     MongoAggregationMetadata,
     MongoCollationMetadata,
@@ -40,6 +39,8 @@ from cxp.catalogs.interfaces.database.mongodb import (
     MONGODB_SEARCH_PROFILE_NAME,
     MONGODB_SEARCH_TIER,
     MONGODB_START_SESSION,
+    MONGODB_TEXT_SEARCH_PROFILE,
+    MONGODB_TEXT_SEARCH_PROFILE_NAME,
     MONGODB_TOPOLOGY_DISCOVERY,
     MONGODB_TRANSACTIONS,
     MONGODB_UPDATE_MANY,
@@ -49,57 +50,6 @@ from cxp.catalogs.interfaces.database.mongodb import (
     MONGODB_WITH_TRANSACTION,
     MONGODB_WRITE,
 )
-
-try:
-    from cxp.catalogs.interfaces.database.mongodb import (
-        MONGODB_TEXT_SEARCH_PROFILE,
-        MONGODB_TEXT_SEARCH_PROFILE_NAME,
-    )
-except ImportError:  # pragma: no cover - depends on upstream cxp build
-    MONGODB_TEXT_SEARCH_PROFILE_NAME = 'mongodb-text-search'
-    MONGODB_TEXT_SEARCH_PROFILE = CapabilityProfile(
-        name=MONGODB_TEXT_SEARCH_PROFILE_NAME,
-        interface=MONGODB_INTERFACE,
-        requirements=(
-            CapabilityRequirement(
-                capability_name=MONGODB_READ,
-                required_operations=(
-                    MONGODB_FIND,
-                    MONGODB_FIND_ONE,
-                    MONGODB_COUNT_DOCUMENTS,
-                    MONGODB_ESTIMATED_DOCUMENT_COUNT,
-                    MONGODB_DISTINCT,
-                ),
-            ),
-            CapabilityRequirement(
-                capability_name=MONGODB_WRITE,
-                required_operations=(
-                    MONGODB_INSERT_ONE,
-                    MONGODB_INSERT_MANY,
-                    MONGODB_UPDATE_ONE,
-                    MONGODB_UPDATE_MANY,
-                    MONGODB_REPLACE_ONE,
-                    MONGODB_DELETE_ONE,
-                    MONGODB_DELETE_MANY,
-                    MONGODB_BULK_WRITE,
-                ),
-            ),
-            CapabilityRequirement(
-                capability_name=MONGODB_AGGREGATION,
-                required_operations=(MONGODB_AGGREGATE,),
-                required_metadata_keys=('supportedStages',),
-            ),
-            CapabilityRequirement(
-                capability_name=MONGODB_SEARCH,
-                required_operations=(MONGODB_AGGREGATE,),
-                required_metadata_keys=('operators', 'aggregateStage'),
-            ),
-        ),
-        description=(
-            'Reusable profile for tests and resources that need textual $search '
-            'without requiring vector search.'
-        ),
-    )
 
 __all__ = (
     'MongoAggregationMetadata',

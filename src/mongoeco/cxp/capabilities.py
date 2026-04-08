@@ -82,6 +82,7 @@ __all__ = (
     'export_cxp_capability_catalog',
     'export_cxp_extension_catalog',
     'export_cxp_operation_catalog',
+    'export_cxp_profile_catalog',
     'export_cxp_profile_support_catalog',
     'export_legacy_runtime_subset_catalog',
     'mongoeco_public_cxp_capability_metadata',
@@ -392,6 +393,67 @@ def _serialize_profile(profile: CapabilityProfile, *, recommended_for: list[str]
     }
 
 
+def _serialize_telemetry_field_requirement(requirement: object) -> dict[str, object]:
+    return {
+        'name': str(getattr(requirement, 'name')),
+        'description': getattr(requirement, 'description'),
+    }
+
+
+def _serialize_capability_telemetry(catalog_capability: object | None) -> dict[str, object]:
+    if catalog_capability is None:
+        return {
+            'spans': [],
+            'metrics': [],
+            'events': [],
+        }
+    telemetry = getattr(catalog_capability, 'telemetry', None)
+    if telemetry is None:
+        return {
+            'spans': [],
+            'metrics': [],
+            'events': [],
+        }
+    return {
+        'description': getattr(telemetry, 'description', None),
+        'spans': [
+            {
+                'name': str(getattr(span, 'name')),
+                'description': getattr(span, 'description'),
+                'requiredAttributes': [
+                    _serialize_telemetry_field_requirement(requirement)
+                    for requirement in getattr(span, 'required_attributes', ())
+                ],
+            }
+            for span in getattr(telemetry, 'spans', ())
+        ],
+        'metrics': [
+            {
+                'name': str(getattr(metric, 'name')),
+                'unit': str(getattr(metric, 'unit')),
+                'description': getattr(metric, 'description'),
+                'requiredLabels': [
+                    _serialize_telemetry_field_requirement(requirement)
+                    for requirement in getattr(metric, 'required_labels', ())
+                ],
+            }
+            for metric in getattr(telemetry, 'metrics', ())
+        ],
+        'events': [
+            {
+                'eventType': str(getattr(event, 'event_type')),
+                'severity': getattr(event, 'severity'),
+                'description': getattr(event, 'description'),
+                'requiredPayloadKeys': [
+                    _serialize_telemetry_field_requirement(requirement)
+                    for requirement in getattr(event, 'required_payload_keys', ())
+                ],
+            }
+            for event in getattr(telemetry, 'events', ())
+        ],
+    }
+
+
 def _exported_profiles() -> dict[str, dict[str, object]]:
     return {
         MONGODB_CORE_PROFILE_NAME: _serialize_profile(
@@ -536,10 +598,17 @@ def _compatible_profile_names_for_capability(capability_name: str) -> list[str]:
 def _exported_operation_catalog() -> dict[str, list[dict[str, object]]]:
     operation_catalog: dict[str, list[dict[str, object]]] = {}
     profile_support = _exported_profile_support()
+    catalog_capability_by_name = {
+        capability.name: capability
+        for capability in MONGODB_CATALOG.capabilities
+    }
     for capability_name, metadata in _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA.items():
         operation_metadata = metadata.get('operationMetadata', {})
         if not isinstance(operation_metadata, dict):
             continue
+        serialized_telemetry = _serialize_capability_telemetry(
+            catalog_capability_by_name.get(capability_name)
+        )
         for operation_name, operation_entry in operation_metadata.items():
             if not isinstance(operation_entry, dict):
                 continue
@@ -555,6 +624,7 @@ def _exported_operation_catalog() -> dict[str, list[dict[str, object]]]:
                         for name in compatible_profiles
                     },
                     'metadata': deepcopy(operation_entry),
+                    'telemetry': deepcopy(serialized_telemetry),
                 }
             )
     return operation_catalog
@@ -1251,6 +1321,7 @@ def export_cxp_capability_catalog() -> dict[str, object]:
                 for operation in catalog_capability.operations
             ],
             'metadata': metadata,
+            'telemetry': _serialize_capability_telemetry(catalog_capability),
         }
 
     return {
@@ -1265,6 +1336,10 @@ def export_cxp_capability_catalog() -> dict[str, object]:
 
 def export_cxp_operation_catalog() -> dict[str, list[dict[str, object]]]:
     return _exported_operation_catalog()
+
+
+def export_cxp_profile_catalog() -> dict[str, dict[str, object]]:
+    return _exported_profiles()
 
 
 def export_cxp_profile_support_catalog() -> dict[str, dict[str, object]]:

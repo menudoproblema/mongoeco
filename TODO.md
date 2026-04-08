@@ -78,11 +78,6 @@ Pendientes:
 * revisar packaging y metadatos de distribución;
 * seguir endureciendo documentación pública de uso, alcance y posicionamiento;
 * decidir política de compatibilidad y de versiones;
-* seguir enriqueciendo la metadata pública por operación en CXP/compat,
-  especialmente en:
-  * `read`
-  * `write`
-  * `aggregation`
 * decidir si compensa publicar un adaptador CXP live opcional sobre `mongoeco`
   ahora que:
   * capabilities, operations y profiles ya salen del catálogo canónico
@@ -115,6 +110,12 @@ Ya no forman parte del backlog pendiente básico:
     `mongoeco.compat` y `mongoeco.cxp`;
   * aliases legacy de transport en `mongoeco.*` retirados; imports de
     transport concentrados en `mongoeco.driver`.
+  * cierre del contrato CXP-first: `mongoeco.cxp` como fuente canónica del
+    catálogo `database/mongodb` y `mongoeco.compat` como capa de proyección
+    pública sobre esa fuente.
+  * metadata pública por operación en CXP/compat cerrada como contrato
+    tooling-grade para `profiles`, `operations` y `telemetry` (sin heurísticas
+    implícitas en tooling).
 
 ## 5. Backends y extensibilidad
 
@@ -163,9 +164,6 @@ No es objetivo inmediato, pero sí conviene ir observando qué justificaría una
 
 Líneas a vigilar:
 
-* consolidar `mongoeco` como runtime claramente CXP-first, no solo alineado;
-* decidir si la metadata pública por operación llega al punto de sustituir
-  parte del relato legacy de `compat`;
 * evaluar si `$search` y `vectorSearch` pasan de subset útil a superficie de
   producto claramente diferenciada;
 * decidir si un provider CXP live opcional merece vivir como adaptador externo

@@ -62,7 +62,7 @@ Development install:
 python -m pip install -e .[dev]
 ```
 
-The base install now also includes `cxp>=2.0.0`, so `mongoeco` can expose the
+The base install now also includes `cxp>=3.0.0`, so `mongoeco` can expose the
 canonical `database/mongodb` contract directly.
 Reference:
 
@@ -110,6 +110,9 @@ That is enough to build simple test gates without coupling `mongoeco` to any
 particular runner or resource system.
 If it wants to consume support from the operation point of view, it can also
 use `mongoeco.compat.export_cxp_operation_catalog()`.
+That operation view now includes canonical telemetry requirements per
+capability binding, so tooling can validate profile and observability contracts
+without inferring signal names.
 
 The root `mongoeco` package is intentionally narrower than the full runtime
 internals. It centers on:
@@ -156,6 +159,10 @@ from `mongoeco.driver` directly.
 it exposes the canonical catalog and projects the active capability path
 through `compat` and `explain()`. External systems can wrap `mongoeco` if they
 want to negotiate profiles or instantiate resources through CXP.
+
+`mongoeco.cxp` is the canonical contract source; `mongoeco.compat` keeps
+projected reporting views over that same source instead of maintaining a
+parallel CXP catalog model.
 
 The direct path for CXP-facing tooling is:
 
