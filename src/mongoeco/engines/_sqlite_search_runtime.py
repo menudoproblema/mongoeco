@@ -174,6 +174,76 @@ def _safe_ratio(numerator: int | None, denominator: int | None) -> float | None:
     return float(numerator) / float(denominator)
 
 
+def _prefilter_intersection_summary(
+    *,
+    query_filter_applied: bool,
+    downstream_filter_applied: bool,
+    query_prefilter_candidate_count: int | None,
+    downstream_prefilter_candidate_count: int | None,
+    combined_prefilter_candidate_count: int | None,
+) -> dict[str, object]:
+    mode = (
+        "intersection"
+        if query_filter_applied and downstream_filter_applied
+        else "query-only"
+        if query_filter_applied
+        else "downstream-only"
+        if downstream_filter_applied
+        else "none"
+    )
+    query_reduction_count = (
+        max(0, query_prefilter_candidate_count - combined_prefilter_candidate_count)
+        if query_filter_applied
+        and query_prefilter_candidate_count is not None
+        and combined_prefilter_candidate_count is not None
+        else None
+    )
+    downstream_reduction_count = (
+        max(0, downstream_prefilter_candidate_count - combined_prefilter_candidate_count)
+        if downstream_filter_applied
+        and downstream_prefilter_candidate_count is not None
+        and combined_prefilter_candidate_count is not None
+        else None
+    )
+    intersection_gain_count = (
+        max(
+            0,
+            min(query_prefilter_candidate_count, downstream_prefilter_candidate_count)
+            - combined_prefilter_candidate_count,
+        )
+        if query_filter_applied
+        and downstream_filter_applied
+        and query_prefilter_candidate_count is not None
+        and downstream_prefilter_candidate_count is not None
+        and combined_prefilter_candidate_count is not None
+        else None
+    )
+    return {
+        "mode": mode,
+        "queryPrefilterCandidateCount": query_prefilter_candidate_count,
+        "downstreamPrefilterCandidateCount": downstream_prefilter_candidate_count,
+        "combinedPrefilterCandidateCount": combined_prefilter_candidate_count,
+        "queryReductionCount": query_reduction_count,
+        "downstreamReductionCount": downstream_reduction_count,
+        "queryReductionRatio": _safe_ratio(
+            query_reduction_count,
+            query_prefilter_candidate_count,
+        ),
+        "downstreamReductionRatio": _safe_ratio(
+            downstream_reduction_count,
+            downstream_prefilter_candidate_count,
+        ),
+        "intersectionGainCount": intersection_gain_count,
+        "intersectionGainRatio": _safe_ratio(
+            intersection_gain_count,
+            min(query_prefilter_candidate_count, downstream_prefilter_candidate_count)
+            if query_prefilter_candidate_count is not None
+            and downstream_prefilter_candidate_count is not None
+            else None,
+        ),
+    }
+
+
 def _vector_pruning_summary(
     *,
     documents_scanned: int | None,
@@ -2107,6 +2177,13 @@ def explain_search_documents_sync(
             "queryPrefilterCandidateCount": query_prefilter_candidate_count,
             "downstreamPrefilterCandidateCount": downstream_prefilter_candidate_count,
             "combinedPrefilterCandidateCount": vector_prefilter_candidate_count,
+            "prefilterIntersection": _prefilter_intersection_summary(
+                query_filter_applied=query.filter_spec is not None,
+                downstream_filter_applied=downstream_filter_spec is not None,
+                query_prefilter_candidate_count=query_prefilter_candidate_count,
+                downstream_prefilter_candidate_count=downstream_prefilter_candidate_count,
+                combined_prefilter_candidate_count=vector_prefilter_candidate_count,
+            ),
             "prefilterSources": [
                 source
                 for source in (

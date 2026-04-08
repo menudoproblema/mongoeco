@@ -136,6 +136,15 @@ def assert_filtered_vector_explanation(
         details["candidatePlan"]["prefilterCandidateCount"],
     )
     case.assertEqual(
+        details["candidatePlan"]["prefilterIntersection"]["mode"],
+        "query-only",
+    )
+    case.assertEqual(
+        details["candidatePlan"]["prefilterIntersection"]["queryReductionCount"],
+        0,
+    )
+    case.assertIsNone(details["candidatePlan"]["prefilterIntersection"]["downstreamReductionCount"])
+    case.assertEqual(
         details["hybridRetrieval"]["combinedPrefilterCandidateCount"],
         details["candidatePlan"]["prefilterCandidateCount"],
     )
@@ -234,6 +243,15 @@ def assert_vector_downstream_filter_explanation(
         details["candidatePlan"]["combinedPrefilterCandidateCount"],
         details["candidatePlan"]["downstreamPrefilterCandidateCount"],
     )
+    case.assertEqual(
+        details["candidatePlan"]["prefilterIntersection"]["mode"],
+        "downstream-only",
+    )
+    case.assertEqual(
+        details["candidatePlan"]["prefilterIntersection"]["downstreamReductionCount"],
+        0,
+    )
+    case.assertIsNone(details["candidatePlan"]["prefilterIntersection"]["queryReductionCount"])
     case.assertEqual(details["documentsFiltered"], 0)
     case.assertEqual(details["hybridRetrieval"]["documentsFilteredPostCandidate"], 0)
     case.assertTrue(details["downstreamFilterCandidatePrefilter"]["exact"])
@@ -308,6 +326,18 @@ def assert_vector_query_and_downstream_filter_explanation(
     case.assertLessEqual(
         details["candidatePlan"]["combinedPrefilterCandidateCount"],
         details["candidatePlan"]["downstreamPrefilterCandidateCount"],
+    )
+    case.assertEqual(
+        details["candidatePlan"]["prefilterIntersection"]["mode"],
+        "intersection",
+    )
+    case.assertGreaterEqual(
+        details["candidatePlan"]["prefilterIntersection"]["queryReductionCount"],
+        0,
+    )
+    case.assertGreaterEqual(
+        details["candidatePlan"]["prefilterIntersection"]["downstreamReductionCount"],
+        0,
     )
     case.assertEqual(details["documentsFiltered"], 0)
     case.assertEqual(details["hybridRetrieval"]["documentsFilteredPostCandidate"], 0)
@@ -528,6 +558,7 @@ def assert_vector_similarity_explanation(
     candidates_evaluated = details.get("candidatesEvaluated")
     if candidates_requested is not None and candidates_evaluated is not None:
         case.assertGreaterEqual(candidates_requested, candidates_evaluated)
+    case.assertEqual(details["candidatePlan"]["prefilterIntersection"]["mode"], "none")
 
 
 def assert_vector_min_score_explanation(
