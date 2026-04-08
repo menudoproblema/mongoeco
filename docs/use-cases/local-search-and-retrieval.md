@@ -140,11 +140,21 @@ When a local `$vectorSearch` is combined with structured filters
   * `queryFilter` means prefilter came from `$vectorSearch.filter`;
   * `downstreamFilter` means prefilter came from pipeline filter after
     `$vectorSearch`.
+* `candidatePlan.prefilterIntersection` tells you how both sources combined:
+  * `mode`: `none`, `query-only`, `downstream-only`, `intersection`;
+  * `queryReductionCount` / `downstreamReductionCount`: how many candidates
+    each source removed against the combined set;
+  * `intersectionGainCount`: extra reduction produced only by combining both
+    sources together.
 * Each prefilter source exposes:
   * `candidateable`: whether local prefiltering was possible;
   * `exact`: whether prefilter is complete or still needs residual filtering;
   * `supportedPaths` and `supportedOperators`: which structured subset was
     pushed down.
+* `candidatePlan` now also includes compact ratios useful for dashboards:
+  * `prefilterRetentionRatio`: prefilter candidates vs scanned vectors;
+  * `evaluationRetentionRatio`: evaluated candidates vs prefilter candidates;
+  * `matchedBeforeLimitRatio`: matched candidates vs evaluated candidates.
 * `pruningSummary` tells you if prefiltering is materially useful:
   * `prefilterPrunedRatio`: how much corpus was removed before scoring;
   * `candidateEvaluationRatio`: how many prefiltered candidates were actually
@@ -158,6 +168,9 @@ Practical interpretation:
 
 * good hybrid pushdown usually means high `prefilterPrunedRatio` and low
   `postCandidateFilteredRatio`;
+* in dual-filter queries, `prefilterIntersection.mode=intersection` with
+  non-zero `intersectionGainCount` means both filters are cooperating in
+  candidate pruning;
 * if `postCandidateFilteredRatio` is high, your structured filter is only
   partially pushable and residual filtering is still expensive;
 * if `prefilterSources` contains only one source, the other filter path is not
