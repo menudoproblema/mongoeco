@@ -1837,6 +1837,86 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(results["memory"], results["sqlite"])
 
+    async def test_vector_search_tie_order_and_explain_match_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.search_runtime.get_collection("docs")
+                await collection.insert_many(
+                    [
+                        {"_id": "a", "embedding": [1.0, 0.0, 0.0]},
+                        {"_id": "b", "embedding": [1.0, 0.0, 0.0]},
+                        {"_id": "c", "embedding": [0.0, 1.0, 0.0]},
+                    ]
+                )
+                await collection.create_search_index(
+                    SearchIndexModel(
+                        {
+                            "fields": [
+                                {
+                                    "type": "vector",
+                                    "path": "embedding",
+                                    "numDimensions": 3,
+                                    "similarity": "cosine",
+                                }
+                            ]
+                        },
+                        name="by_vector",
+                        type="vectorSearch",
+                    )
+                )
+
+                hits = await collection.aggregate(
+                    [
+                        {
+                            "$vectorSearch": {
+                                "index": "by_vector",
+                                "path": "embedding",
+                                "queryVector": [1.0, 0.0, 0.0],
+                                "limit": 2,
+                                "numCandidates": 3,
+                            }
+                        },
+                        {"$project": {"_id": 1, "vectorScore": {"$meta": "vectorSearchScore"}}},
+                    ]
+                ).to_list()
+                explanation = await collection.aggregate(
+                    [
+                        {
+                            "$vectorSearch": {
+                                "index": "by_vector",
+                                "path": "embedding",
+                                "queryVector": [1.0, 0.0, 0.0],
+                                "limit": 2,
+                                "numCandidates": 3,
+                            }
+                        }
+                    ]
+                ).explain()
+
+                results[engine_name] = {
+                    "hits": [
+                        {
+                            "_id": document["_id"],
+                            "vectorScore": round(float(document["vectorScore"]), 6),
+                        }
+                        for document in hits
+                    ],
+                    "explain": {
+                        "query_operator": explanation["engine_plan"]["details"]["queryOperator"],
+                        "path": explanation["engine_plan"]["details"]["path"],
+                        "limit": explanation["engine_plan"]["details"]["limit"],
+                        "num_candidates": explanation["engine_plan"]["details"]["numCandidates"],
+                        "path_summary": explanation["engine_plan"]["details"]["pathSummary"],
+                    },
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+        self.assertEqual(
+            [document["_id"] for document in results["memory"]["hits"]],
+            ["a", "b"],
+        )
+
     async def test_watch_event_shape_matches_in_memory_and_sqlite(self):
         results: dict[str, list[dict[str, object]]] = {}
         for engine_name in ("memory", "sqlite"):

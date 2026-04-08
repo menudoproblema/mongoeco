@@ -14,6 +14,7 @@ from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.search_filter_prefilter import evaluate_candidate_filter, flatten_candidate_filter_clauses
 from mongoeco.core.search import (
     MaterializedSearchDocument,
+    VECTOR_SEARCH_SCORE_FIELD,
     attach_vector_search_score,
     build_search_stage_option_previews,
     build_search_index_document,
@@ -43,6 +44,7 @@ from mongoeco.core.search import (
     SearchWildcardQuery,
     vector_field_paths,
 )
+from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.engines._sqlite_catalog import load_search_index_rows as _sqlite_load_search_index_rows
 from mongoeco.engines._sqlite_compound_prefilter import (
     clause_search_paths as _compound_clause_search_paths,
@@ -1231,8 +1233,26 @@ def exact_vector_hits_sync(
         if query.min_score is not None and score < query.min_score:
             continue
         vector_hits.append((score, document))
-    vector_hits.sort(key=lambda item: item[0], reverse=True)
+    vector_hits.sort(
+        key=lambda item: (
+            -float(item[0]),
+            _vector_result_tie_break_key(item[1]),
+        )
+    )
     return vector_hits
+
+
+def _vector_result_tie_break_key(document: Document) -> str:
+    return repr(bson_engine_key(document.get("_id")))
+
+
+def _sort_vector_scored_documents(documents: list[Document]) -> None:
+    documents.sort(
+        key=lambda document: (
+            -float(document.get(VECTOR_SEARCH_SCORE_FIELD, float("-inf"))),
+            _vector_result_tie_break_key(document),
+        )
+    )
 
 
 def _sqlite_vector_candidate_documents(
@@ -1331,6 +1351,7 @@ def _sqlite_vector_candidate_documents(
                 continue
             matched_documents.append(attach_vector_search_score(document, score))
             if len(matched_documents) >= query.limit:
+                _sort_vector_scored_documents(matched_documents)
                 return (
                     matched_documents[: query.limit],
                     current_request,
@@ -1353,6 +1374,7 @@ def _sqlite_vector_candidate_documents(
 
     if (query_filter_spec is not None or downstream_filter_spec is not None) and len(matched_documents) < query.limit:
         exact_fallback_reason = "candidate-prefilter-underflow" if prefilter_exact else "post-filter-underflow"
+    _sort_vector_scored_documents(matched_documents)
     return (
         matched_documents[: query.limit],
         current_request,

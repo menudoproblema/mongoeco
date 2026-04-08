@@ -317,11 +317,9 @@ def vector_scores_for_positions(
             return []
         scores = scores[matched_indexes]
         selected_positions = [selected_positions[int(index)] for index in matched_indexes]
-    if limit is not None and limit > 0 and len(scores) > limit:
-        top_indexes = np.argpartition(scores, -limit)[-limit:]
-        ordered_indexes = top_indexes[np.argsort(scores[top_indexes])[::-1]]
-        return [(float(scores[int(index)]), selected_positions[int(index)]) for index in ordered_indexes]
-    ordered_indexes = np.argsort(scores)[::-1]
+    ordered_indexes = np.argsort(-scores, kind="stable")
+    if limit is not None and limit > 0 and len(ordered_indexes) > limit:
+        ordered_indexes = ordered_indexes[:limit]
     return [(float(scores[int(index)]), selected_positions[int(index)]) for index in ordered_indexes]
 
 
@@ -351,7 +349,7 @@ def vector_scores_for_rows(
             denominator = candidate_norms * query_norm
             raw_scores = matrix @ query_vector
             scores = np.divide(raw_scores, denominator, out=np.zeros_like(raw_scores, dtype=np.float32), where=denominator > 0)
-        ordered_indexes = np.argsort(scores)[::-1]
+        ordered_indexes = np.argsort(-scores, kind="stable")
         cached_scores = tuple(
             (float(scores[int(index)]), int(index))
             for index in ordered_indexes
