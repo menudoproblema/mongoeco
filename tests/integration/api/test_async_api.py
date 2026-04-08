@@ -66,6 +66,7 @@ from tests.integration.api.admin_command_cases import (
     assert_client_server_info_reflects_target_dialect,
     assert_database_command_count_supports_skip_limit_hint_and_comment,
     assert_database_command_distinct_supports_hint_comment_and_max_time,
+    assert_database_command_supports_configure_fail_point,
     assert_database_command_index_commands_support_comment_and_max_time,
     assert_database_command_rejects_invalid_command_shapes,
     assert_database_command_rejects_unsupported_commands,
@@ -2669,6 +2670,9 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_database_command_supports_coll_stats_and_db_stats(self):
         await assert_database_command_supports_coll_stats_and_db_stats(self, ENGINE_FACTORIES, open_client)
+
+    async def test_database_command_supports_configure_fail_point(self):
+        await assert_database_command_supports_configure_fail_point(self, ENGINE_FACTORIES, open_client)
 
     async def test_database_command_rejects_unsupported_commands(self):
         await assert_database_command_rejects_unsupported_commands(self, open_client)

@@ -2,7 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from mongoeco.api._async import _database_command_contract as command_contract
 from mongoeco.api._async.database_commands import (
@@ -22,7 +22,7 @@ from mongoeco.api._async.database_commands import (
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import OperationFailure
+from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.types import CollectionStatsSnapshot, CollectionValidationSnapshot, DatabaseStatsSnapshot, FindAndModifyLastErrorObject, FindAndModifyCommandResult
 
 
@@ -255,6 +255,21 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
         self.assertIsInstance(service.parse_raw_command({"currentOp": 1}), service.CurrentOpCommand)
         self.assertIsInstance(service.parse_raw_command({"dbHash": 1}), service.DatabaseHashCommand)
         self.assertIsInstance(service.parse_raw_command({"killOp": 1, "op": "op-1"}), service.KillOpCommand)
+        self.assertIsInstance(
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": {"times": 1},
+                    "data": {
+                        "failCommands": ["count"],
+                        "closeConnection": True,
+                        "blockConnection": True,
+                        "blockTimeMS": 1,
+                    },
+                }
+            ),
+            service.ConfigureFailPointCommand,
+        )
         self.assertIsInstance(service.parse_raw_command({"validate": "users"}), service.ValidateCollectionCommand)
         self.assertIsInstance(service.parse_raw_command({"findAndModify": "users", "query": {}, "update": {"$set": {"a": 1}}}), service.FindAndModifyCommand)
         self.assertIsInstance(service.parse_raw_command({"find": "users"}), service.FindCommand)
@@ -284,6 +299,175 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
             service.parse_raw_command({"killOp": 0, "op": "op-1"})
         with self.assertRaisesRegex(TypeError, "slowms must be an integer"):
             service.parse_raw_command({"profile": 1, "slowms": "bad"})
+        with self.assertRaisesRegex(
+            OperationFailure, "only supports failCommand"
+        ):
+            service.parse_raw_command(
+                {"configureFailPoint": "other", "mode": "off"}
+            )
+        with self.assertRaisesRegex(
+            TypeError, "mode.times must be a positive integer"
+        ):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": {"times": 0},
+                    "data": {"failCommands": ["count"]},
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "mode must be"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": {"invalid": 1},
+                    "data": {"failCommands": ["count"]},
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "mode must be"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": 1,
+                    "data": {"failCommands": ["count"]},
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "requires a data document"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "data must be a document"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": [],
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "failCommands must be a non-empty list"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {"failCommands": []},
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "errorCode must be an integer"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "errorCode": "bad",
+                    },
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "errorMessage must be a non-empty string"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "errorMessage": 1,
+                    },
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "errorLabels must be a list of strings"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "errorLabels": ["RetryableWriteError", 1],
+                    },
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "blockTimeMS must be an integer"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "blockConnection": True,
+                        "blockTimeMS": "bad",
+                    },
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "blockTimeMS must be >= 0"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "blockConnection": True,
+                        "blockTimeMS": -1,
+                    },
+                }
+            )
+        parsed_with_null_labels = service.parse_raw_command(
+            {
+                "configureFailPoint": "failCommand",
+                "mode": "alwaysOn",
+                "data": {
+                    "failCommands": ["count"],
+                    "errorLabels": None,
+                },
+            }
+        )
+        self.assertIsInstance(parsed_with_null_labels, service.ConfigureFailPointCommand)
+        self.assertEqual(parsed_with_null_labels.error_labels, ())
+        with self.assertRaisesRegex(TypeError, "closeConnection must be a bool"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "closeConnection": "yes",
+                    },
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "blockConnection must be a bool"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "blockConnection": "yes",
+                    },
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "blockTimeMS requires blockConnection=true"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "blockTimeMS": 1,
+                    },
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "blockConnection=true requires blockTimeMS > 0"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "blockConnection": True,
+                        "blockTimeMS": 0,
+                    },
+                }
+            )
         with self.assertRaisesRegex(TypeError, "command name must be a string"):
             service.parse_raw_command({1: "bad"})  # type: ignore[arg-type]
         with self.assertRaisesRegex(OperationFailure, "Unsupported command"):
@@ -323,6 +507,86 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
 
             current = await service.execute_document({"currentOp": 1})
             self.assertEqual(current["inprog"], [])
+
+        asyncio.run(_run())
+
+    def test_configure_fail_point_injects_command_failures_and_can_be_disabled(self):
+        admin = _FakeAdmin()
+        service = AsyncDatabaseCommandService(admin)
+
+        async def _run() -> None:
+            configured = await service.execute_document(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": {"times": 1},
+                    "data": {
+                        "failCommands": ["count"],
+                        "errorCode": 91,
+                        "errorMessage": "forced count failure",
+                        "errorLabels": ["RetryableWriteError"],
+                    },
+                }
+            )
+            self.assertEqual(configured["ok"], 1.0)
+            self.assertTrue(configured["enabled"])
+            self.assertEqual(configured["data"]["failCommands"], ["count"])
+
+            with self.assertRaisesRegex(OperationFailure, "forced count failure"):
+                await service.execute_document({"count": "users"})
+            successful = await service.execute_document({"count": "users"})
+            self.assertEqual(successful["n"], 1)
+
+            await service.execute_document(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                    },
+                }
+            )
+            with self.assertRaisesRegex(OperationFailure, "failpoint"):
+                await service.execute_document({"count": "users"})
+
+            await service.execute_document(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": {"times": 1},
+                    "data": {
+                        "failCommands": ["count"],
+                        "errorMessage": "disconnect now",
+                        "closeConnection": True,
+                    },
+                }
+            )
+            with self.assertRaisesRegex(ConnectionFailure, "disconnect now"):
+                await service.execute_document({"count": "users"})
+
+            with patch(
+                "mongoeco.api._async.database_commands.asyncio.sleep",
+                new_callable=AsyncMock,
+            ) as sleep_mock:
+                await service.execute_document(
+                    {
+                        "configureFailPoint": "failCommand",
+                        "mode": {"times": 1},
+                        "data": {
+                            "failCommands": ["count"],
+                            "errorMessage": "delayed failpoint",
+                            "blockConnection": True,
+                            "blockTimeMS": 25,
+                        },
+                    }
+                )
+                with self.assertRaisesRegex(OperationFailure, "delayed failpoint"):
+                    await service.execute_document({"count": "users"})
+                sleep_mock.assert_awaited_once_with(0.025)
+
+            disabled = await service.execute_document(
+                {"configureFailPoint": "failCommand", "mode": "off"}
+            )
+            self.assertFalse(disabled["enabled"])
+            self.assertEqual((await service.execute_document({"count": "users"}))["n"], 1)
 
         asyncio.run(_run())
 

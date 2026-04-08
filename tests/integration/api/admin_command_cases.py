@@ -1,7 +1,7 @@
 import inspect
 from typing import Any, Awaitable, Callable
 
-from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
+from mongoeco.errors import BulkWriteError, CollectionInvalid, ConnectionFailure, OperationFailure
 
 
 OpenClient = Callable[..., Any]
@@ -907,6 +907,99 @@ async def assert_database_command_supports_coll_stats_and_db_stats(case, engine_
                 case.assertLessEqual(scaled_db_stats["storageSize"], db_stats["storageSize"])
                 case.assertLessEqual(scaled_db_stats["indexSize"], db_stats["indexSize"])
                 case.assertEqual(scaled_db_stats["scaleFactor"], 2)
+
+
+async def assert_database_command_supports_configure_fail_point(case, engine_names, open_client: OpenClient) -> None:
+    for engine_name in engine_names:
+        with case.subTest(engine=engine_name):
+            async with open_client(engine_name) as client:
+                configured = await _maybe_await(
+                    client.alpha.command(
+                        {
+                            "configureFailPoint": "failCommand",
+                            "mode": {"times": 1},
+                            "data": {
+                                "failCommands": ["count"],
+                                "errorCode": 91,
+                                "errorMessage": "forced count failure",
+                                "errorLabels": ["RetryableWriteError"],
+                            },
+                        }
+                    )
+                )
+                case.assertEqual(configured["ok"], 1.0)
+                case.assertTrue(configured["enabled"])
+                case.assertEqual(configured["data"]["failCommands"], ["count"])
+
+                with case.assertRaisesRegex(OperationFailure, "forced count failure"):
+                    await _maybe_await(client.alpha.command({"count": "events"}))
+
+                count_after_failpoint = await _maybe_await(
+                    client.alpha.command({"count": "events"})
+                )
+                case.assertEqual(count_after_failpoint["n"], 0)
+
+                await _maybe_await(
+                    client.alpha.command(
+                        {
+                            "configureFailPoint": "failCommand",
+                            "mode": "alwaysOn",
+                            "data": {"failCommands": ["distinct"]},
+                        }
+                    )
+                )
+                with case.assertRaisesRegex(OperationFailure, "failpoint"):
+                    await _maybe_await(
+                        client.alpha.command({"distinct": "events", "key": "kind"})
+                    )
+
+                await _maybe_await(
+                    client.alpha.command(
+                        {
+                            "configureFailPoint": "failCommand",
+                            "mode": {"times": 1},
+                            "data": {
+                                "failCommands": ["count"],
+                                "errorMessage": "disconnect once",
+                                "closeConnection": True,
+                            },
+                        }
+                    )
+                )
+                with case.assertRaisesRegex(ConnectionFailure, "disconnect once"):
+                    await _maybe_await(client.alpha.command({"count": "events"}))
+
+                await _maybe_await(
+                    client.alpha.command(
+                        {
+                            "configureFailPoint": "failCommand",
+                            "mode": {"times": 1},
+                            "data": {
+                                "failCommands": ["count"],
+                                "errorMessage": "slow failpoint",
+                                "blockConnection": True,
+                                "blockTimeMS": 1,
+                            },
+                        }
+                    )
+                )
+                with case.assertRaisesRegex(OperationFailure, "slow failpoint"):
+                    await _maybe_await(client.alpha.command({"count": "events"}))
+
+                disabled = await _maybe_await(
+                    client.alpha.command(
+                        {"configureFailPoint": "failCommand", "mode": "off"}
+                    )
+                )
+                case.assertFalse(disabled["enabled"])
+                case.assertEqual(
+                    (
+                        await _maybe_await(
+                            client.alpha.command({"distinct": "events", "key": "kind"})
+                        )
+                    )["values"],
+                    [],
+                )
 
 
 async def assert_database_command_rejects_unsupported_commands(case, open_client: OpenClient) -> None:

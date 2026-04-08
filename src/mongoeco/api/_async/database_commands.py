@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import datetime
 import os
 import platform
 import socket
 import sys
+import threading
 import time
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Generic, TypeVar
@@ -29,7 +31,7 @@ from mongoeco.core.collation import collation_backend_info
 from mongoeco.core.json_compat import get_json_backend_name
 from mongoeco.driver.topology import sdam_capabilities_info
 from mongoeco.engines.base import AsyncStorageEngine
-from mongoeco.errors import OperationFailure
+from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     BuildInfoDocument,
@@ -59,6 +61,8 @@ if TYPE_CHECKING:
 
 _PROCESS_STARTED_AT = datetime.datetime.now(datetime.UTC)
 CommandResultT = TypeVar("CommandResultT")
+_FAIL_COMMAND_DEFAULT_CODE = 10107
+_FAIL_COMMAND_DEFAULT_MESSAGE = "failCommand failpoint triggered"
 
 
 @contextmanager
@@ -69,6 +73,7 @@ SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
     "aggregate",
     "buildInfo",
     "collStats",
+    "configureFailPoint",
     "connectionStatus",
     "count",
     "create",
@@ -312,6 +317,92 @@ class ConnectionStatusResult:
             "authInfo": auth_info,
             "ok": 1.0,
         }
+
+
+@dataclass(slots=True)
+class _FailCommandInjection:
+    command_names: frozenset[str]
+    error_code: int
+    error_message: str
+    error_labels: tuple[str, ...]
+    close_connection: bool = False
+    block_time_ms: int = 0
+    remaining_times: int | None = None
+
+
+class _CommandFailPointState:
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._fail_command: _FailCommandInjection | None = None
+
+    def configure_fail_command(
+        self,
+        *,
+        mode: str,
+        times: int | None,
+        fail_commands: tuple[str, ...],
+        error_code: int,
+        error_message: str,
+        error_labels: tuple[str, ...],
+        close_connection: bool = False,
+        block_time_ms: int = 0,
+    ) -> dict[str, object]:
+        with self._lock:
+            if mode == "off":
+                self._fail_command = None
+                return {
+                    "ok": 1.0,
+                    "failPoint": "failCommand",
+                    "mode": "off",
+                    "enabled": False,
+                }
+            self._fail_command = _FailCommandInjection(
+                command_names=frozenset(fail_commands),
+                error_code=error_code,
+                error_message=error_message,
+                error_labels=error_labels,
+                close_connection=close_connection,
+                block_time_ms=block_time_ms,
+                remaining_times=times if mode == "times" else None,
+            )
+            return {
+                "ok": 1.0,
+                "failPoint": "failCommand",
+                "mode": {"times": times} if mode == "times" else "alwaysOn",
+                "enabled": True,
+                "data": {
+                    "failCommands": list(fail_commands),
+                    "errorCode": error_code,
+                    "errorMessage": error_message,
+                    "errorLabels": list(error_labels),
+                    "closeConnection": close_connection,
+                    "blockConnection": block_time_ms > 0,
+                    "blockTimeMS": block_time_ms,
+                },
+            }
+
+    def consume_fail_command(
+        self,
+        command_name: str,
+    ) -> _FailCommandInjection | None:
+        with self._lock:
+            fail_command = self._fail_command
+            if fail_command is None or command_name not in fail_command.command_names:
+                return None
+            consumed = _FailCommandInjection(
+                command_names=fail_command.command_names,
+                error_code=fail_command.error_code,
+                error_message=fail_command.error_message,
+                error_labels=fail_command.error_labels,
+                close_connection=fail_command.close_connection,
+                block_time_ms=fail_command.block_time_ms,
+                remaining_times=fail_command.remaining_times,
+            )
+            if fail_command.remaining_times is not None:
+                fail_command.remaining_times -= 1
+                if fail_command.remaining_times <= 0:
+                    self._fail_command = None
+            return consumed
 
 
 def build_info_document(mongodb_dialect: "MongoDialect") -> BuildInfoDocument:
@@ -621,6 +712,17 @@ class AsyncDatabaseCommandService:
         opid: str = ""
 
     @dataclass(frozen=True, slots=True)
+    class ConfigureFailPointCommand(AdminCommand[object]):
+        mode: str = "off"
+        times: int | None = None
+        fail_commands: tuple[str, ...] = ()
+        error_code: int = _FAIL_COMMAND_DEFAULT_CODE
+        error_message: str = _FAIL_COMMAND_DEFAULT_MESSAGE
+        error_labels: tuple[str, ...] = ()
+        close_connection: bool = False
+        block_time_ms: int = 0
+
+    @dataclass(frozen=True, slots=True)
     class DelegatedAdminCommand(AdminCommand[object]):
         route: AsyncDatabaseCommandService.Route | None = None
 
@@ -657,6 +759,121 @@ class AsyncDatabaseCommandService:
     @property
     def _mongodb_dialect(self) -> "MongoDialect":
         return self._admin._mongodb_dialect
+
+    @property
+    def _failpoints(self) -> _CommandFailPointState:
+        state = getattr(self._engine, "_command_failpoint_state", None)
+        if isinstance(state, _CommandFailPointState):
+            return state
+        state = _CommandFailPointState()
+        setattr(self._engine, "_command_failpoint_state", state)
+        return state
+
+    @staticmethod
+    def _normalize_fail_point_mode(mode_spec: object) -> tuple[str, int | None]:
+        if mode_spec == "off":
+            return "off", None
+        if mode_spec == "alwaysOn":
+            return "alwaysOn", None
+        if isinstance(mode_spec, dict):
+            if set(mode_spec) != {"times"}:
+                raise TypeError(
+                    "configureFailPoint mode must be 'off', 'alwaysOn' or {'times': <int>}"
+                )
+            times = mode_spec.get("times")
+            if not isinstance(times, int) or isinstance(times, bool) or times <= 0:
+                raise TypeError(
+                    "configureFailPoint mode.times must be a positive integer"
+                )
+            return "times", times
+        raise TypeError(
+            "configureFailPoint mode must be 'off', 'alwaysOn' or {'times': <int>}"
+        )
+
+    @staticmethod
+    def _normalize_fail_command_data(
+        data_spec: object | None,
+        *,
+        required: bool,
+    ) -> tuple[tuple[str, ...], int, str, tuple[str, ...], bool, int]:
+        if data_spec is None:
+            if required:
+                raise TypeError(
+                    "configureFailPoint failCommand requires a data document"
+                )
+            return (
+                (),
+                _FAIL_COMMAND_DEFAULT_CODE,
+                _FAIL_COMMAND_DEFAULT_MESSAGE,
+                (),
+                False,
+                0,
+            )
+        if not isinstance(data_spec, dict):
+            raise TypeError("configureFailPoint data must be a document")
+
+        fail_commands_spec = data_spec.get("failCommands")
+        if (
+            not isinstance(fail_commands_spec, list | tuple)
+            or not fail_commands_spec
+            or any(
+                not isinstance(command_name, str) or not command_name
+                for command_name in fail_commands_spec
+            )
+        ):
+            raise TypeError(
+                "configureFailPoint data.failCommands must be a non-empty list of command names"
+            )
+        fail_commands = tuple(dict.fromkeys(fail_commands_spec))
+
+        error_code = data_spec.get("errorCode", _FAIL_COMMAND_DEFAULT_CODE)
+        if not isinstance(error_code, int) or isinstance(error_code, bool):
+            raise TypeError("configureFailPoint data.errorCode must be an integer")
+
+        error_message = data_spec.get("errorMessage", _FAIL_COMMAND_DEFAULT_MESSAGE)
+        if not isinstance(error_message, str) or not error_message:
+            raise TypeError(
+                "configureFailPoint data.errorMessage must be a non-empty string"
+            )
+
+        labels_spec = data_spec.get("errorLabels", ())
+        if labels_spec is None:
+            labels_spec = ()
+        if not isinstance(labels_spec, list | tuple) or any(
+            not isinstance(label, str) or not label for label in labels_spec
+        ):
+            raise TypeError("configureFailPoint data.errorLabels must be a list of strings")
+        error_labels = tuple(labels_spec)
+        close_connection = data_spec.get("closeConnection", False)
+        if not isinstance(close_connection, bool):
+            raise TypeError("configureFailPoint data.closeConnection must be a bool")
+
+        block_connection = data_spec.get("blockConnection", False)
+        if not isinstance(block_connection, bool):
+            raise TypeError("configureFailPoint data.blockConnection must be a bool")
+
+        block_time_ms = data_spec.get("blockTimeMS", 0)
+        if not isinstance(block_time_ms, int) or isinstance(block_time_ms, bool):
+            raise TypeError("configureFailPoint data.blockTimeMS must be an integer")
+        if block_time_ms < 0:
+            raise TypeError("configureFailPoint data.blockTimeMS must be >= 0")
+        if not block_connection and block_time_ms:
+            raise TypeError(
+                "configureFailPoint data.blockTimeMS requires blockConnection=true"
+            )
+        if block_connection and block_time_ms <= 0:
+            raise TypeError(
+                "configureFailPoint data.blockConnection=true requires blockTimeMS > 0"
+            )
+
+        return (
+            fail_commands,
+            error_code,
+            error_message,
+            error_labels,
+            close_connection,
+            block_time_ms,
+        )
 
     def parse_raw_command(
         self,
@@ -755,6 +972,38 @@ class AsyncDatabaseCommandService:
                 command_name=command_name,
                 spec=spec,
                 opid=opid,
+            )
+        if command_name == "configureFailPoint":
+            if spec.get("configureFailPoint") != "failCommand":
+                raise OperationFailure(
+                    "configureFailPoint local runtime only supports failCommand"
+                )
+            mode, times = self._normalize_fail_point_mode(spec.get("mode"))
+            (
+                fail_commands,
+                error_code,
+                error_message,
+                error_labels,
+                close_connection,
+                block_time_ms,
+            ) = (
+                self._normalize_fail_command_data(
+                    spec.get("data"),
+                    required=mode != "off",
+                )
+            )
+            return self.ConfigureFailPointCommand(
+                db_name=self._admin._db_name,
+                command_name=command_name,
+                spec=spec,
+                mode=mode,
+                times=times,
+                fail_commands=fail_commands,
+                error_code=error_code,
+                error_message=error_message,
+                error_labels=error_labels,
+                close_connection=close_connection,
+                block_time_ms=block_time_ms,
             )
         if command_name == "profile":
             level = spec.get("profile")
@@ -912,6 +1161,17 @@ class AsyncDatabaseCommandService:
                 "numKilled": 1 if killed else 0,
                 "info": "operation cancelled" if killed else "operation not found or not killable",
             }  # type: ignore[return-value]
+        if isinstance(command, self.ConfigureFailPointCommand):
+            return self._failpoints.configure_fail_command(
+                mode=command.mode,
+                times=command.times,
+                fail_commands=command.fail_commands,
+                error_code=command.error_code,
+                error_message=command.error_message,
+                error_labels=command.error_labels,
+                close_connection=command.close_connection,
+                block_time_ms=command.block_time_ms,
+            )  # type: ignore[return-value]
         if isinstance(command, self.ProfileCommand):
             return await self._engine.set_profiling_level(
                 command.db_name,
@@ -1056,6 +1316,25 @@ class AsyncDatabaseCommandService:
         started_at = time.perf_counter_ns()
         should_track = parsed.command_name not in {"currentOp", "killOp"}
         try:
+            if parsed.command_name != "configureFailPoint":
+                fail_command = self._failpoints.consume_fail_command(parsed.command_name)
+                if fail_command is not None:
+                    if fail_command.block_time_ms > 0:
+                        await asyncio.sleep(float(fail_command.block_time_ms) / 1000.0)
+                    if fail_command.close_connection:
+                        raise ConnectionFailure(
+                            fail_command.error_message,
+                            error_labels=fail_command.error_labels,
+                        )
+                    raise OperationFailure(
+                        fail_command.error_message,
+                        code=fail_command.error_code,
+                        details={
+                            "failPoint": "failCommand",
+                            "commandName": parsed.command_name,
+                        },
+                        error_labels=fail_command.error_labels,
+                    )
             with track_active_operation(
                 self._engine,
                 command_name=parsed.command_name,
