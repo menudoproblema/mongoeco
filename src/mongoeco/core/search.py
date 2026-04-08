@@ -150,6 +150,7 @@ class SearchRegexQuery:
     raw_query: str
     paths: tuple[str, ...] | None = None
     flags: str = ""
+    allow_analyzed_field: bool = False
     stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
@@ -671,6 +672,46 @@ def compile_search_text_like_query(spec: object) -> SearchTextLikeQuery:
         facet=_compile_search_facet_spec(spec.get("facet")),
     )
     return replace(query, stage_options=stage_options)
+
+
+def compile_search_meta_text_like_query(spec: object) -> SearchTextLikeQuery:
+    if not isinstance(spec, dict):
+        raise OperationFailure("$searchMeta requires a document specification")
+    facet_spec = spec.get("facet")
+    if (
+        isinstance(facet_spec, dict)
+        and "operator" in facet_spec
+    ):
+        operator_spec = facet_spec.get("operator")
+        if not isinstance(operator_spec, dict):
+            raise OperationFailure("$searchMeta.facet.operator must be a document specification")
+        top_level_clause_names = [name for name in TEXT_SEARCH_OPERATOR_NAMES if name in spec]
+        if top_level_clause_names:
+            raise OperationFailure(
+                "$searchMeta.facet.operator cannot be combined with top-level search operators"
+            )
+        clause_names = [name for name in TEXT_SEARCH_OPERATOR_NAMES if name in operator_spec]
+        if len(clause_names) != 1:
+            raise OperationFailure(
+                "$searchMeta.facet.operator requires exactly one of "
+                + ", ".join(TEXT_SEARCH_OPERATOR_NAMES[:-1])
+                + " or "
+                + TEXT_SEARCH_OPERATOR_NAMES[-1]
+            )
+        unsupported_operator_keys = sorted(set(operator_spec) - set(TEXT_SEARCH_OPERATOR_NAMES))
+        if unsupported_operator_keys:
+            raise OperationFailure(
+                "$searchMeta.facet.operator supports only search operators; unsupported keys: "
+                + ", ".join(unsupported_operator_keys)
+            )
+        clause_name = clause_names[0]
+        normalized_spec = dict(spec)
+        normalized_facet_spec = dict(facet_spec)
+        normalized_facet_spec.pop("operator", None)
+        normalized_spec["facet"] = normalized_facet_spec
+        normalized_spec[clause_name] = operator_spec[clause_name]
+        return compile_search_text_like_query(normalized_spec)
+    return compile_search_text_like_query(spec)
 
 
 def _compile_search_count_spec(spec: object) -> SearchCountSpec | None:
@@ -1840,18 +1881,31 @@ def _compile_search_wildcard_clause(index_name: str, clause_spec: object) -> Sea
 def _compile_search_regex_clause(index_name: str, clause_spec: object) -> SearchRegexQuery:
     if not isinstance(clause_spec, dict):
         raise OperationFailure("$search.regex requires a document specification")
-    unsupported_options = sorted(set(clause_spec) - {"query", "path", "flags"})
+    unsupported_options = sorted(
+        set(clause_spec) - {"query", "path", "flags", "options", "allowAnalyzedField"}
+    )
     if unsupported_options:
         raise OperationFailure(
-            "$search.regex only supports query, path and flags; unsupported keys: "
+            "$search.regex only supports query, path, flags, options and allowAnalyzedField; unsupported keys: "
             + ", ".join(unsupported_options)
         )
     raw_query = clause_spec.get("query")
     if not isinstance(raw_query, str) or not raw_query.strip():
         raise OperationFailure("$search.regex.query must be a non-empty string")
-    flags = clause_spec.get("flags", "")
-    if not isinstance(flags, str):
+    raw_flags = clause_spec.get("flags")
+    raw_options = clause_spec.get("options")
+    if raw_flags is not None and not isinstance(raw_flags, str):
         raise OperationFailure("$search.regex.flags must be a string")
+    if raw_options is not None and not isinstance(raw_options, str):
+        raise OperationFailure("$search.regex.options must be a string")
+    flags = raw_flags if raw_flags is not None else raw_options
+    if flags is None:
+        flags = ""
+    if raw_flags is not None and raw_options is not None and raw_flags != raw_options:
+        raise OperationFailure("$search.regex.flags and $search.regex.options must match when both are provided")
+    allow_analyzed_field = clause_spec.get("allowAnalyzedField", False)
+    if not isinstance(allow_analyzed_field, bool):
+        raise OperationFailure("$search.regex.allowAnalyzedField must be a boolean")
     unsupported_flags = sorted(
         {flag for flag in flags if flag not in _SUPPORTED_REGEX_FLAGS}
     )
@@ -1871,6 +1925,7 @@ def _compile_search_regex_clause(index_name: str, clause_spec: object) -> Search
         raw_query=raw_query,
         paths=_normalize_search_paths(clause_spec.get("path")),
         flags=flags,
+        allow_analyzed_field=allow_analyzed_field,
     )
 
 
@@ -2212,6 +2267,7 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
             "matchingMode": "python-regex-local",
             "flags": query.flags,
             "supportsFlags": True,
+            "allowAnalyzedField": query.allow_analyzed_field,
             "atlasParity": "subset",
             "scope": "local-text-tier",
         }
@@ -3110,7 +3166,7 @@ def _explain_vector_query(query: SearchVectorQuery) -> dict[str, object | None]:
 
 _SEARCH_STAGE_COMPILERS: dict[str, Callable[[object], SearchQuery]] = {
     "$search": compile_search_text_like_query,
-    "$searchMeta": compile_search_text_like_query,
+    "$searchMeta": compile_search_meta_text_like_query,
     "$vectorSearch": compile_vector_search_query,
 }
 

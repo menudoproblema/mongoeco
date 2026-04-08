@@ -20,6 +20,7 @@ from mongoeco.api.operations import (
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.cxp import build_mongodb_explain_projection
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.core._search_contract import TEXT_SEARCH_OPERATOR_NAMES
 from mongoeco.core.aggregation import (
     AggregationCostPolicy,
     Pipeline,
@@ -312,12 +313,13 @@ class AsyncAggregationCursor:
         if not callable(search_documents):
             raise OperationFailure(f"{operator} is not supported by this engine")
         resolved_operator = "$search" if operator == "$searchMeta" else operator
+        resolved_spec = self._search_runtime_spec_for_stage(operator, spec)
         query = compile_search_stage(operator, spec) if operator == "$searchMeta" else None
         documents = await search_documents(
             self._collection._db_name,
             self._collection._collection_name,
             resolved_operator,
-            spec,
+            resolved_spec,
             max_time_ms=self._max_time_ms,
             context=self._session,
             result_limit_hint=result_limit_hint,
@@ -327,6 +329,27 @@ class AsyncAggregationCursor:
             return documents
         assert query is not None
         return [build_search_meta_document(documents, query=query)]
+
+    @staticmethod
+    def _search_runtime_spec_for_stage(operator: str, spec: object) -> object:
+        if operator != "$searchMeta" or not isinstance(spec, dict):
+            return spec
+        facet_spec = spec.get("facet")
+        if not isinstance(facet_spec, dict):
+            return spec
+        operator_spec = facet_spec.get("operator")
+        if not isinstance(operator_spec, dict):
+            return spec
+        clause_names = [name for name in TEXT_SEARCH_OPERATOR_NAMES if name in operator_spec]
+        if len(clause_names) != 1:
+            return spec
+        clause_name = clause_names[0]
+        normalized = dict(spec)
+        normalized_facet = dict(facet_spec)
+        normalized_facet.pop("operator", None)
+        normalized["facet"] = normalized_facet
+        normalized[clause_name] = operator_spec[clause_name]
+        return normalized
 
     async def _materialize_leading_search_pipeline(
         self,

@@ -22,12 +22,15 @@ Pendientes:
 
 * decidir si merece la pena ir más allá del tier textual local ya cerrado hacia features Atlas-like avanzadas, sobre todo:
   * collector `facet` y `searchMeta` más allá del preview local actual
-    (ya con `facet` tipado `string`/`number`/`date` en runtime local)
+    (ya con `facet` tipado `string`/`number`/`date` y
+    `facet.operator` en `$searchMeta` local)
   * `highlight` con semántica más rica que snippets locales
   * `count` como meta/collector más allá del preview local
   * semántica todavía más rica de `autocomplete`
   * semántica todavía más rica de `wildcard`
   * opciones/flags todavía más ricos de `regex`
+    (más allá del soporte local actual de `flags`/`options` y
+    `allowAnalyzedField`)
 * ampliar mappings locales más allá de:
   * `string`
   * `token`

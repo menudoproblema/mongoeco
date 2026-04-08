@@ -1451,6 +1451,7 @@
               "scope": "local-filter-tier"
             },
             "regex": {
+              "allowAnalyzedField": true,
               "atlasParity": "subset",
               "matchingMode": "python-regex-local",
               "scope": "local-text-tier",
@@ -1460,7 +1461,8 @@
                 "s",
                 "x"
               ],
-              "supportsFlags": true
+              "supportsFlags": true,
+              "supportsOptionsAlias": true
             },
             "text": {
               "matchingMode": "tokenized-any-term",
@@ -12018,6 +12020,7 @@
           "scope": "local-filter-tier"
         },
         "regex": {
+          "allowAnalyzedField": true,
           "atlasParity": "subset",
           "matchingMode": "python-regex-local",
           "scope": "local-text-tier",
@@ -12027,7 +12030,8 @@
             "s",
             "x"
           ],
-          "supportsFlags": true
+          "supportsFlags": true,
+          "supportsOptionsAlias": true
         },
         "text": {
           "matchingMode": "tokenized-any-term",

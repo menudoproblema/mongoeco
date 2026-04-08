@@ -550,6 +550,43 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             }
                         ],
                     )
+                    search_meta_collector = collection.aggregate(
+                        [
+                            {
+                                "$searchMeta": {
+                                    "index": "by_text",
+                                    "facet": {
+                                        "operator": {
+                                            "text": {
+                                                "query": "ada",
+                                                "path": ["title", "body"],
+                                            }
+                                        },
+                                        "facets": {
+                                            "kindFacet": {"path": "kind", "numBuckets": 5},
+                                        },
+                                    },
+                                }
+                            }
+                        ]
+                    ).to_list()
+                    self.assertEqual(
+                        search_meta_collector,
+                        [
+                            {
+                                "facet": {
+                                    "facets": {
+                                        "kindFacet": {
+                                            "type": "string",
+                                            "path": "kind",
+                                            "numBuckets": 5,
+                                            "buckets": [{"value": "note", "count": 2}],
+                                        },
+                                    }
+                                }
+                            }
+                        ],
+                    )
                     with self.assertRaisesRegex(OperationFailure, "\\$searchMeta does not support highlight"):
                         collection.aggregate(
                             [

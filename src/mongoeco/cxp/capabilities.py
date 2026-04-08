@@ -1123,7 +1123,9 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
         'regex': {
             'matchingMode': 'python-regex-local',
             'supportsFlags': True,
+            'supportsOptionsAlias': True,
             'supportedFlags': ['i', 'm', 's', 'x'],
+            'allowAnalyzedField': True,
             'atlasParity': 'subset',
             'scope': 'local-text-tier',
         },

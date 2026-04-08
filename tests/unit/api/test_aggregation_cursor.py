@@ -398,6 +398,59 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                 ],
             )._search_documents()
 
+    async def test_search_meta_helper_supports_facet_operator_collector_runtime_projection(self):
+        collection = _FakeCollection([])
+        seen_specs: list[object] = []
+
+        async def _search_documents(*args, **kwargs):
+            del kwargs
+            seen_specs.append(args[3])
+            return [{"_id": "1", "kind": "note"}]
+
+        collection._engine.search_documents = _search_documents
+        cursor = AsyncAggregationCursor(
+            collection,
+            [
+                {
+                    "$searchMeta": {
+                        "index": "by_text",
+                        "facet": {
+                            "operator": {"text": {"query": "ada", "path": "name"}},
+                            "facets": {"kindFacet": {"path": "kind", "numBuckets": 2}},
+                        },
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(
+            await cursor._search_documents(),
+            [
+                {
+                    "facet": {
+                        "facets": {
+                            "kindFacet": {
+                                "type": "string",
+                                "path": "kind",
+                                "numBuckets": 2,
+                                "buckets": [{"value": "note", "count": 1}],
+                            }
+                        }
+                    }
+                }
+            ],
+        )
+        self.assertEqual(
+            seen_specs,
+            [
+                {
+                    "index": "by_text",
+                    "facet": {"facets": {"kindFacet": {"path": "kind", "numBuckets": 2}}},
+                    "text": {"query": "ada", "path": "name"},
+                }
+            ],
+        )
+
     async def test_search_materialization_expands_prefix_for_match_then_limit(self):
         collection = _FakeCollection([])
         calls: list[int | None] = []

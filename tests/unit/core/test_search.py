@@ -1080,6 +1080,87 @@ class SearchCoreTests(unittest.TestCase):
             },
         )
 
+    def test_compile_search_meta_stage_supports_collector_operator_form(self) -> None:
+        query = compile_search_stage(
+            "$searchMeta",
+            {
+                "index": "by_text",
+                "count": {"type": "total"},
+                "facet": {
+                    "operator": {
+                        "text": {"query": "ada", "path": "title"},
+                    },
+                    "facets": {
+                        "kindFacet": {"path": "kind", "numBuckets": 2},
+                    },
+                },
+            },
+        )
+        self.assertEqual(
+            query,
+            SearchTextQuery(
+                index_name="by_text",
+                raw_query="ada",
+                terms=("ada",),
+                paths=("title",),
+                stage_options=search_module.SearchStageOptions(
+                    count=search_module.SearchCountSpec(mode="total"),
+                    facet=search_module.SearchFacetSpec(
+                        facets=(("kindFacet", "kind", "string", 2),),
+                    ),
+                ),
+            ),
+        )
+        self.assertEqual(
+            search_module.build_search_meta_document(
+                [
+                    {"title": "Ada", "kind": "note"},
+                    {"title": "Ada", "kind": "reference"},
+                ],
+                query=query,
+            ),
+            {
+                "count": {"total": 2},
+                "facet": {
+                    "facets": {
+                        "kindFacet": {
+                            "type": "string",
+                            "path": "kind",
+                            "numBuckets": 2,
+                            "buckets": [
+                                {"value": "note", "count": 1},
+                                {"value": "reference", "count": 1},
+                            ],
+                        }
+                    }
+                },
+            },
+        )
+        with self.assertRaisesRegex(
+            OperationFailure, "cannot be combined with top-level search operators"
+        ):
+            compile_search_stage(
+                "$searchMeta",
+                {
+                    "index": "by_text",
+                    "text": {"query": "ada", "path": "title"},
+                    "facet": {
+                        "operator": {"text": {"query": "ada", "path": "title"}},
+                        "facets": {"kindFacet": {"path": "kind"}},
+                    },
+                },
+            )
+        with self.assertRaisesRegex(
+            OperationFailure, "facet.operator requires exactly one of"
+        ):
+            compile_search_stage(
+                "$searchMeta",
+                {
+                    "index": "by_text",
+                    "facet": {"operator": {}, "facets": {"kindFacet": {"path": "kind"}}},
+                },
+            )
+
     def test_wrapper_compilers_reject_wrong_operator_shapes(self) -> None:
         with self.assertRaisesRegex(OperationFailure, "exists specification is required"):
             compile_search_exists_query({"index": "by_text", "text": {"query": "ada"}})
@@ -3272,6 +3353,7 @@ class SearchCoreTests(unittest.TestCase):
                 "matchingMode": "python-regex-local",
                 "flags": "i",
                 "supportsFlags": True,
+                "allowAnalyzedField": False,
                 "atlasParity": "subset",
                 "scope": "local-text-tier",
             },
@@ -3863,12 +3945,55 @@ class SearchCoreTests(unittest.TestCase):
                     "index": "by_text",
                     "regex": {"query": "Ada.*", "path": "title", "boost": 2},
                 },
-                "only supports query, path and flags",
+                "only supports query, path, flags, options and allowAnalyzedField",
+            ),
+            (
+                compile_search_regex_query,
+                {
+                    "index": "by_text",
+                    "regex": {"query": "Ada.*", "path": "title", "options": 1},
+                },
+                "options must be a string",
+            ),
+            (
+                compile_search_regex_query,
+                {
+                    "index": "by_text",
+                    "regex": {
+                        "query": "Ada.*",
+                        "path": "title",
+                        "flags": "i",
+                        "options": "m",
+                    },
+                },
+                "flags and .*options must match",
+            ),
+            (
+                compile_search_regex_query,
+                {
+                    "index": "by_text",
+                    "regex": {"query": "Ada.*", "path": "title", "allowAnalyzedField": "yes"},
+                },
+                "allowAnalyzedField must be a boolean",
             ),
         )
         for compiler, spec, pattern in invalid_queries:
             with self.subTest(spec=spec), self.assertRaisesRegex(OperationFailure, pattern):
                 compiler(spec)
+
+        query = compile_search_regex_query(
+            {
+                "index": "by_text",
+                "regex": {
+                    "query": "Ada.*",
+                    "path": "title",
+                    "options": "im",
+                    "allowAnalyzedField": True,
+                },
+            }
+        )
+        self.assertEqual(query.flags, "im")
+        self.assertTrue(query.allow_analyzed_field)
 
     def test_search_advanced_text_helpers_cover_private_branches(self) -> None:
         self.assertFalse(search_module._token_sequence_matches(("ada",), ()))
